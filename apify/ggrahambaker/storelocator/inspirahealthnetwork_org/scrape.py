@@ -1,100 +1,104 @@
-import json
-
-from bs4 import BeautifulSoup
-
-from sgscrape.sgwriter import SgWriter
-from sgscrape.sgrecord import SgRecord
-from sgscrape.sgrecord_id import RecommendedRecordIds
-from sgscrape.sgrecord_deduper import SgRecordDeduper
-
+from bs4 import BeautifulSoup as bs
 from sgrequests import SgRequests
+from sglogging import sglog
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+import json
+import re
+
+DOMAIN = "inspirahealthnetwork.com"
+BASE_URL = "https://www.inspirahealthnetwork.org"
+LOCATION_URL = "https://www.inspirahealthnetwork.org/locations?page={}"
+HEADERS = {
+    "Accept": "application/json, text/plain, */*",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
+}
+log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
+
+session = SgRequests()
 
 
-def fetch_data(sgw: SgWriter):
-    locator_domain = "https://www.inspirahealthnetwork.org"
-    ext = "/locations/"
+MISSING = "<MISSING>"
 
-    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
-    headers = {"User-Agent": user_agent}
 
-    session = SgRequests()
-    req = session.get(locator_domain + ext, headers=headers)
-    base = BeautifulSoup(req.text, "lxml")
+def pull_content(url):
+    log.info("Pull content => " + url)
+    soup = bs(session.get(url, headers=HEADERS).content, "lxml")
+    return soup
 
-    js = base.find(
-        "script", attrs={"data-drupal-selector": "drupal-settings-json"}
-    ).contents[0]
-    locs = json.loads(js)["locationsMap"]["data"]
 
-    link_list = []
-    for loc in locs:
-        stores = BeautifulSoup(loc["content"], "lxml").find_all(
-            class_="mapboxgl-popup--location-slider--wrap"
-        )
-        for store in stores:
-            link_tag = locator_domain + store.find(role="article").a["href"]
-            link_list.append(link_tag)
-
-    for link in link_list:
-        r = session.get(link, headers=headers)
-        soup = BeautifulSoup(r.content, "lxml")
-
-        country_code = "US"
-
-        info = soup.find("script", {"type": "application/ld+json"}).contents[0]
-        loc = json.loads(info)
-
-        addy = loc["address"]
-
-        street_address = addy["streetAddress"].replace("\n", " ").strip()
-        city = addy["addressLocality"].strip()
-        state = addy["addressRegion"].strip()
-        zip_code = addy["postalCode"].strip()
-
-        try:
-            phone_number = (
-                soup.find(class_="phone").a.text.replace("Get Directions", "").strip()
+def fetch_data():
+    log.info("Fetching store_locator data")
+    num = 0
+    while True:
+        soup = pull_content(LOCATION_URL.format(num))
+        contents = soup.select("div.location__info h2 a")
+        if not contents:
+            break
+        for row in contents:
+            page_url = BASE_URL + row["href"]
+            store = pull_content(page_url)
+            info = json.loads(
+                store.find("script", {"type": "application/ld+json"}).string
             )
-        except:
-            phone_number = "<MISSING>"
-
-        coords = loc["geo"]
-        lat = coords["latitude"]
-        longit = coords["longitude"]
-
-        try:
-            hours = loc["openingHours"].strip()
-        except:
-            hours = "<MISSING>"
-
-        location_name = loc["name"].strip()
-        store_number = "<MISSING>"
-        try:
-            location_type = ", ".join(
-                list(soup.find(class_="related-services-items").stripped_strings)
-            )
-        except:
-            location_type = "<MISSING>"
-
-        sgw.write_row(
-            SgRecord(
-                locator_domain=locator_domain,
-                page_url=link,
+            location_name = info["name"].replace(" ", " ").strip()
+            street_address = info["address"]["streetAddress"].replace("\n", ",").strip()
+            city = info["address"]["addressLocality"]
+            state = info["address"]["addressRegion"]
+            zip_postal = info["address"]["postalCode"]
+            country_code = "US"
+            try:
+                phone = re.sub(
+                    r"ext.*|Get.*",
+                    "",
+                    store.find(
+                        "span", {"class": "paragraph--type--phone-number--label"}
+                    )
+                    .find_next("a")
+                    .text.strip(),
+                ).strip()
+            except:
+                phone = MISSING
+            store_number = MISSING
+            try:
+                hours_of_operation = info["openingHours"].strip()
+            except:
+                hours_of_operation = MISSING
+            location_type = info["@type"]
+            latitude = info["geo"]["latitude"]
+            longitude = info["geo"]["longitude"]
+            log.info("Append {} => {}".format(location_name, street_address))
+            yield SgRecord(
+                locator_domain=DOMAIN,
+                page_url=page_url,
                 location_name=location_name,
                 street_address=street_address,
                 city=city,
                 state=state,
-                zip_postal=zip_code,
+                zip_postal=zip_postal,
                 country_code=country_code,
                 store_number=store_number,
-                phone=phone_number,
+                phone=phone,
                 location_type=location_type,
-                latitude=lat,
-                longitude=longit,
-                hours_of_operation=hours,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
             )
-        )
+        num += 1
 
 
-with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
-    fetch_data(writer)
+def scrape():
+    log.info("start {} Scraper".format(DOMAIN))
+    count = 0
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
+
+
+scrape()

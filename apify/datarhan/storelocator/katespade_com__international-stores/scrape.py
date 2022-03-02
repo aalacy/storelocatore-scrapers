@@ -15,7 +15,6 @@ def fetch_data():
     hdr = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.82 Safari/537.36"
     }
-
     response = session.get(start_url, headers=hdr)
     dom = etree.HTML(response.text)
     all_locations = dom.xpath('//div[@class="see-in-shop"]/div[@class="vcard"]')
@@ -49,6 +48,9 @@ def fetch_data():
             street_address += ", " + addr.street_address_2
         else:
             street_address = addr.street_address_2
+        country_code = addr.country
+        if not country_code:
+            country_code = poi_html.xpath(".//preceding-sibling::div[h2][1]/@id")[0]
 
         item = SgRecord(
             locator_domain=domain,
@@ -58,7 +60,7 @@ def fetch_data():
             city=addr.city,
             state=addr.state,
             zip_postal=addr.postcode,
-            country_code=addr.country,
+            country_code=country_code,
             store_number="",
             phone=phone,
             location_type="",

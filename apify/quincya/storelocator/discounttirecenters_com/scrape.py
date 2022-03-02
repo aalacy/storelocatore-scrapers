@@ -42,9 +42,7 @@ def fetch_data(sgw: SgWriter):
         city = location_name.split(" in")[1].split(",")[0].strip()
         state = location_name.split(" in")[1].split(",")[1].strip()
 
-        raw_data = list(
-            base.find_all("h4", attrs={"data-uialign": "center"})[-1].stripped_strings
-        )
+        raw_data = list(base.find_all("h4")[-1].stripped_strings)
 
         hours_of_operation = ""
         if len(raw_data) > 1:
@@ -66,30 +64,46 @@ def fetch_data(sgw: SgWriter):
             except:
                 pass
         else:
-            new_raw_data = base.find(class_="m-font-size-11 font-size-14").text.strip()
-            street_address = new_raw_data.split(city + ",")[0].replace(",", "").strip()
+            try:
+                new_raw_data = base.find(
+                    class_="m-font-size-11 font-size-14"
+                ).text.strip()
+                street_address = (
+                    new_raw_data.split(city + ",")[0].replace(",", "").strip()
+                )
 
-            if state in new_raw_data:
-                zip_code = new_raw_data.split(state)[-1].strip()
-            elif state in new_raw_data:
-                zip_code = new_raw_data.split(state)[-1].strip()
-            else:
-                zip_code = "<MISSING>"
+                if state in new_raw_data:
+                    zip_code = new_raw_data.split(state)[-1].strip()
+                elif state in new_raw_data:
+                    zip_code = new_raw_data.split(state)[-1].strip()
+                else:
+                    zip_code = "<MISSING>"
 
-            phone = base.find(class_="m-font-size-14 font-size-18").text.strip()
-            hours_of_operation = base.find_all(class_="dmNewParagraph")[3].get_text(" ")
-            if "day" not in hours_of_operation:
-                try:
-                    hours_of_operation = " ".join(
-                        list(base.find(id="main").stripped_strings)
-                    )
-                except:
-                    pass
+                phone = base.find(class_="m-font-size-14 font-size-18").text.strip()
+                hours_of_operation = base.find_all(class_="dmNewParagraph")[3].get_text(
+                    " "
+                )
+                if "day" not in hours_of_operation:
+                    try:
+                        hours_of_operation = " ".join(
+                            list(base.find(id="main").stripped_strings)
+                        )
+                    except:
+                        pass
+            except:
+                new_raw_data2 = list(
+                    base.find_all(class_="dmNewParagraph")[3].stripped_strings
+                )
+                street_address = new_raw_data2[0].split(city)[0].strip()
+                phone = new_raw_data2[1]
 
-        if not hours_of_operation:
+        if not hours_of_operation or "day" not in hours_of_operation:
             hours_of_operation = " ".join(
                 list(base.find(class_="open-hours-data").stripped_strings)
             )
+
+        if street_address[-1] == ",":
+            street_address = street_address[:-1]
 
         country_code = "US"
         store_number = "<MISSING>"

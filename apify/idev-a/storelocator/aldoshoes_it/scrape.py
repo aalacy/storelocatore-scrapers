@@ -34,9 +34,8 @@ def _p(val):
 
 def fetch_data():
     with SgRequests() as session:
-        locations = session.get(base_url, headers=_headers).text.split(
-            "gmap.addMarker("
-        )[1:]
+        res = session.get(base_url, headers=_headers).text
+        locations = res.split("gmap.addMarker(")[1:]
         for loc in locations:
             _ = json.loads(loc.split(");")[0])
             block = list(bs(_["infoWindow"]["content"], "lxml").stripped_strings)[1:]
@@ -62,6 +61,41 @@ def fetch_data():
                 phone=phone,
                 latitude=_["lat"],
                 longitude=_["lng"],
+                locator_domain=locator_domain,
+                raw_address=raw_address,
+            )
+
+        locations = bs(res, "lxml").select(
+            "div.weasy_page_content  div.row div.omw-sentence"
+        )[-6:-3]
+        for _ in locations:
+            if not _.p:
+                continue
+            block = []
+            for bb in _.select("p")[:-1]:
+                block += list(bb.stripped_strings)
+            if "@" in block[-1]:
+                del block[-1]
+            phone = ""
+            if "T:" in block[-1]:
+                phone = block[-1].replace("T:", "")
+                del block[-1]
+            raw_address = " ".join(block[1:])
+            addr = parse_address_intl(raw_address + ", Italy")
+            street_address = addr.street_address_1
+            if addr.street_address_2:
+                street_address += " " + addr.street_address_2
+            city = addr.city
+            if "Roma" in raw_address:
+                city = "Roma"
+            yield SgRecord(
+                page_url=base_url,
+                location_name=block[0],
+                street_address=street_address,
+                city=city,
+                zip_postal=addr.postcode,
+                country_code="Italy",
+                phone=phone,
                 locator_domain=locator_domain,
                 raw_address=raw_address,
             )

@@ -60,6 +60,8 @@ def fetch_data():
                 hours = line2.split('"openingHours": "')[1].split('"')[0].strip()
         if hours == "":
             hours = "<MISSING>"
+        if hours.lower().count("closed") == 7:
+            hours = "Temporarily Closed"
         if phone == "":
             phone = "<MISSING>"
         yield SgRecord(
