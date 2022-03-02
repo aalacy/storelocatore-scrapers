@@ -8,7 +8,7 @@ from sgscrape.sgwriter import SgWriter
 def fetch_data():
     session = SgRequests()
     domain = "bankozarks.com"
-    start_url = "https://www.ozk.com/locations/modules/multilocation/?near_location=0&geocoder_region=&limit=500&services__in=&language_code=en-us&published=1&within_business=true"
+    start_url = "https://www.ozk.com/locations/modules/multilocation/?near_location=10001&threshold=4000&geocoder_region=&distance_unit=miles&limit=2000&services__in=&language_code=en-us&published=1&within_business=true"
     data = session.get(start_url).json()
 
     for poi in data["objects"]:

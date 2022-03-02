@@ -66,7 +66,7 @@ def fetch_data():
         )[0]
         with SgFirefox() as driver:
             driver.get(page_url)
-            sleep(10)
+            sleep(15)
             loc_dom = etree.HTML(driver.page_source)
         geo = (
             loc_dom.xpath("//iframe/@src")[-1].split("q=")[-1].split("&")[0].split(",")
