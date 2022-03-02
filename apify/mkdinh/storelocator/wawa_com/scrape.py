@@ -97,7 +97,7 @@ def fetch_location(id, retry_count=0):
                 hours_of_operation=hours_of_operation,
                 phone=phone,
             )
-    except Exception as e:
+    except:
         if retry_count < 5:
             return fetch_location(id, retry_count + 1)
         else:
