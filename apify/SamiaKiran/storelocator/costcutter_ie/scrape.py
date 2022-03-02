@@ -1,3 +1,4 @@
+import json
 from sglogging import sglog
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
@@ -31,21 +32,25 @@ def fetch_data():
             )
             r = session.get(url, headers=headers)
             soup = BeautifulSoup(r.text, "html.parser")
-            loclist = soup.find("div", {"class": "gv-map-entries"}).findAll(
-                "div", {"class": "gv-map-view"}
-            )
+            temp = r.text.split('"markers_info":')[1].split(',"map_id_prefix"')[0]
+            loclist = json.loads(temp)
             for loc in loclist:
-                loc = loc.get_text(separator="|", strip=True).replace("|", " ")
-                if "Phone:" in loc:
-                    phone = loc.split("Phone:")[1]
+                store_number = loc["entry_id"]
+                latitude = loc["lat"]
+                longitude = loc["long"]
+                html = BeautifulSoup(loc["content"], "html.parser")
+                location_name = html.find("h4").text
+                log.info(location_name)
+                raw_address = (
+                    html.find("p")
+                    .text.replace("Address:", "")
+                    .replace("  County:", "")
+                    .strip()
+                )
+                if "Costcutter Lifford" in location_name:
+                    phone = "074 9141677"
                 else:
                     phone = MISSING
-                loc = loc.split("Store Address:")
-                location_name = loc[0].replace("Store Name:", "")
-                log.info(location_name)
-                address = loc[1].split(" Store County: ")
-                city = address[-1]
-                raw_address = address[0]
                 pa = parse_address_intl(raw_address)
 
                 street_address = pa.street_address_1
@@ -53,6 +58,9 @@ def fetch_data():
 
                 state = pa.state
                 state = state.strip() if state else MISSING
+
+                city = pa.city
+                city = city.strip() if city else MISSING
 
                 zip_postal = pa.postcode
                 zip_postal = zip_postal.strip() if zip_postal else MISSING
@@ -66,13 +74,13 @@ def fetch_data():
                     state=state.strip(),
                     zip_postal=zip_postal.strip(),
                     country_code=country_code,
-                    store_number=MISSING,
+                    store_number=store_number,
                     phone=phone,
                     location_type=MISSING,
-                    latitude=MISSING,
-                    longitude=MISSING,
+                    latitude=latitude,
+                    longitude=longitude,
                     hours_of_operation=MISSING,
-                    raw_address=address[0] + " " + address[1],
+                    raw_address=raw_address,
                 )
 
 

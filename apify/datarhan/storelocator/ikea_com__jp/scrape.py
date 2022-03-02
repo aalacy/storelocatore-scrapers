@@ -20,7 +20,7 @@ def fetch_data():
 
     all_locations = dom.xpath(
         '//pub-hide-empty-link//a[contains(@href, "/stores/")]/@href'
-    )[1:]
+    )
     for page_url in all_locations:
         if "public-safety-information" in page_url:
             continue
@@ -40,6 +40,10 @@ def fetch_data():
         street_address = addr.street_address_1
         if addr.street_address_2:
             street_address += " " + addr.street_address_2
+        city = addr.city
+        if not city:
+            c_adr = parse_address_intl(location_name)
+            city = c_adr.city
         geo = (
             loc_dom.xpath("//iframe/@src")[0]
             .split("!2d")[-1]
@@ -47,16 +51,33 @@ def fetch_data():
             .split("!3d")
         )
         hoo = loc_dom.xpath(
-            '//p[strong[contains(text(), "Store opening hours")]]/following-sibling::p/text()'
+            '//p[strong[contains(text(), "Store opening hours")]]/text()'
         )
-        hoo = " ".join(hoo).split("“Swedish")[0].strip()
+        if not hoo:
+            hoo = loc_dom.xpath(
+                '//p[strong[contains(text(), "Store opening hours")]]/following-sibling::p/text()'
+            )
+        if not hoo:
+            hoo = loc_dom.xpath(
+                '//strong[contains(text(), "Opening hours")]/following::text()'
+            )
+            hoo = [e.strip() for e in hoo if e.strip()][:4]
+        hoo = (
+            " ".join(hoo)
+            .split("“Swedish")[0]
+            .split("29, 30 ")[0]
+            .split("Restaurant")[0]
+            .strip()
+        )
+        if "*Open all year" in hoo:
+            hoo = ""
 
         item = SgRecord(
             locator_domain=domain,
             page_url=page_url,
             location_name=location_name,
             street_address=street_address,
-            city=addr.city,
+            city=city,
             state=addr.state,
             zip_postal=addr.postcode,
             country_code=addr.country,
