@@ -76,7 +76,6 @@ def fetch_data():
         for loc in loc_card:
             title = loc.find("h2", {"class": "title"}).find("a").text
             store_url = loc.find("h2", {"class": "title"}).find("a")["href"]
-            print(store_url)
             store_type = loc.find("div", {"class": "note"}).find("b").text
             address = loc.find("div", {"class": "details"}).find("a").text
             coords = loc.find("div", {"class": "details"}).find("div")
@@ -164,7 +163,6 @@ def fetch_data():
                         lng = MISSING
                         phone = MISSING
                         hours = MISSING
-                        print("Page does not exist")
                     try:
                         store_type = soup.find("div", {"class": "note"}).find("b").text
                         address = soup.find("div", {"class": "address"}).find("a").text
@@ -200,7 +198,6 @@ def fetch_data():
                                 lng = MISSING
                                 phone = MISSING
                                 hours = MISSING
-                                print("No data available for this location")
                     if (
                         store_url
                         == "https://www.multicare.org/location/multicare-rockwood-main-clinic/"
