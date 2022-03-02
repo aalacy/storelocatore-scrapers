@@ -52,11 +52,7 @@ def fetch_location(id, retry_count=0):
 
         with SgChrome(is_headless=True).driver() as driver:
             driver.get(url)
-
-            soup = BeautifulSoup(driver.page_source, 'html.parser')
-
-            if not soup.pre:
-                return None
+            soup = BeautifulSoup(driver.page_source, "html.parser")
 
             result = json.loads(soup.pre.text)
 
@@ -70,7 +66,9 @@ def fetch_location(id, retry_count=0):
 
             address = find_address_by_context("friendly", addresses)
 
-            street_address = re.sub(r'\s*\(.*\)?\s*|\s*@.*\s*', '', get(address, "address"))
+            street_address = re.sub(
+                r"\s*\(.*\)?\s*|\s*@.*\s*", "", get(address, "address")
+            )
             city = get(address, "city")
             state = get(address, "state")
             zip_postal = get(address, "zip")
@@ -104,7 +102,8 @@ def fetch_location(id, retry_count=0):
             return fetch_location(id, retry_count + 1)
         else:
             return None
-            
+
+
 def write_data(data):
     with SgWriter(
         SgRecordDeduper(
