@@ -4,6 +4,8 @@ from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import lxml.html
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
 website = "exclusivefurniture.com"
@@ -25,15 +27,15 @@ headers = {
 
 
 def split_fulladdress(address_info):
-    street_address = " ".join(address_info[0:-1]).strip(" ,.")
+    street_address = ", ".join(address_info[:-2]).strip(" ,.")
 
-    city_state_zip = (
+    state_zip = (
         address_info[-1].replace(",", " ").replace(".", " ").replace("  ", " ").strip()
     )
 
-    city = " ".join(city_state_zip.split(" ")[:-2]).strip()
-    state = city_state_zip.split(" ")[-2].strip()
-    zip = city_state_zip.split(" ")[-1].strip()
+    city = "".join(address_info[-2]).strip()
+    state = state_zip.split(" ")[-2].strip()
+    zip = state_zip.split(" ")[-1].strip()
     country_code = "US"
     return street_address, city, state, zip, country_code
 
@@ -58,32 +60,34 @@ def get_latlng(map_link):
 
 def fetch_data():
     # Your scraper here
-    base = "https://exclusivefurniture.com"
     search_url = "https://exclusivefurniture.com/store-locator"
     search_res = session.get(search_url, headers=headers)
 
     search_sel = lxml.html.fromstring(search_res.text)
 
-    store_list = list(search_sel.xpath('//div[contains(@class,"location-address")]'))
+    store_list = search_sel.xpath('//div[@class="card text-white bg-primary mb-3"]')
 
     for store in store_list:
 
-        page_url = base + "".join(store.xpath(".//h4/a/@href"))
+        page_url = search_url
         locator_domain = website
-        log.info(page_url)
-        store_res = session.get(page_url, headers=headers)
-        store_sel = lxml.html.fromstring(store_res.text)
 
-        location_name = "".join(store.xpath(".//h4//text()")).strip()
+        location_name = "".join(store.xpath("div[@class='card-header']/text()")).strip()
 
         full_address = list(
             filter(
                 str,
-                [x.strip() for x in store.xpath(".//p[.//@rel]/text()")],
+                [
+                    x.strip()
+                    for x in store.xpath(
+                        ".//*[./img[@src='https://www.exclusivefurniture.com/images/thumbs/0029235_000001-test-product.png']]/text()"
+                    )
+                ],
             )
         )
-
-        street_address, city, state, zip, country_code = split_fulladdress(full_address)
+        street_address, city, state, zip, country_code = split_fulladdress(
+            "".join(full_address).strip().split(",")
+        )
 
         store_number = "<MISSING>"
         phone = "".join(
@@ -103,17 +107,23 @@ def fetch_data():
         hours = list(
             filter(
                 str,
-                [x.strip() for x in store.xpath(".//p[last()]//text()")],
+                [
+                    x.strip()
+                    for x in store.xpath(
+                        ".//*[./img[@src='https://www.exclusivefurniture.com/images/thumbs/0029239_000001-test-product.png']]/text()"
+                    )
+                ],
             )
         )
-        hours = hours[1:]
         hours_of_operation = "; ".join(hours)
 
-        map_link = "".join(store_sel.xpath('//iframe[contains(@src,"maps")]/@src'))
+        map_link = "".join(
+            store.xpath(
+                './/a[@class="btn btn btn-primary btn-lg storebtnn cmap"]/@href'
+            )
+        )
 
         latitude, longitude = get_latlng(map_link)
-
-        raw_address = "<MISSING>"
 
         yield SgRecord(
             locator_domain=locator_domain,
@@ -130,14 +140,23 @@ def fetch_data():
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hours_of_operation,
-            raw_address=raw_address,
         )
 
 
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.CITY,
+                    SgRecord.Headers.ZIP,
+                }
+            )
+        )
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

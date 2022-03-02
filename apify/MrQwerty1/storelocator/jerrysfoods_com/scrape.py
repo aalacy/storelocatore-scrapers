@@ -1,47 +1,23 @@
-import csv
-
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
-
-    locator_domain = "https://www.jerrysfoods.com/"
-    api_url = "https://api.freshop.com/1/stores?app_key=jerrys_foods&has_address=true&is_selectable=true&token=3d4c4be74a3ca3f9ab0885a1d5702262"
-    session = SgRequests()
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
+def get_token():
+    data = {
+        "app_key": "jerrys_foods",
+        "referrer": "https://www.jerrysfoods.com/my-store/store-locator",
     }
-    r = session.get(api_url, headers=headers)
+    r = session.post("https://api.freshop.com/2/sessions/create", data=data)
+
+    return r.json()["token"]
+
+
+def fetch_data(sgw: SgWriter):
+    api = f"https://api.freshop.com/1/stores?app_key=jerrys_foods&has_address=true&is_selectable=true&token={token}"
+    r = session.get(api, headers=headers)
     js = r.json()["items"]
 
     for j in js:
@@ -61,31 +37,32 @@ def fetch_data():
         if hours_of_operation.find("Kitchen") != -1:
             hours_of_operation = hours_of_operation.split("Kitchen")[0].strip()
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
+        row = SgRecord(
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=location_type,
+            latitude=str(latitude),
+            longitude=str(longitude),
+            locator_domain=locator_domain,
+            hours_of_operation=hours_of_operation,
+        )
 
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    token = get_token()
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0"
+    }
+    locator_domain = "https://www.jerrysfoods.com/"
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        fetch_data(writer)

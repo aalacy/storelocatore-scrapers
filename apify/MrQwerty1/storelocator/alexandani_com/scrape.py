@@ -1,104 +1,130 @@
-import csv
+import time
+import json
 from sgrequests import SgRequests
+from sglogging import sglog
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+
+DOMAIN = "alexandani.com"
+website = "https://www.alexandani.com"
+page_url = "https://www.alexandani.com/pages/store-locator"
+json_url = "https://stockist.co/api/v1/u6591/locations/all.js"
+MISSING = SgRecord.MISSING
+
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+}
+
+session = SgRequests()
+log = sglog.SgLogSetup().get_logger(logger_name=website)
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def request_with_retries(url):
+    return session.get(url, headers=headers)
 
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
 
-        for row in data:
-            writer.writerow(row)
+def fetch_stores():
+    response = request_with_retries(json_url)
+    stores = json.loads(response.text)
+    return stores
+
+
+def get_var_name(value):
+    try:
+        return int(value)
+    except ValueError:
+        pass
+    return value
+
+
+def get_JSON_object_variable(Object, varNames, noVal=MISSING):
+    value = noVal
+    for varName in varNames.split("."):
+        varName = get_var_name(varName)
+        try:
+            value = Object[varName]
+            Object = Object[varName]
+        except Exception:
+            return noVal
+        if value is None:
+            return noVal
+    return value
+
+
+def get_hoo(data):
+    hoo = []
+    for d in data:
+        hoo.append(f"{d['name']}: {d['value']}")
+    if len(hoo) == 0:
+        return MISSING
+    return "; ".join(hoo)
 
 
 def fetch_data():
-    out = []
-    locator_domain = "https://www.alexandani.com/"
-    api_url = "https://stockist.co/api/v1/u6591/locations/search?&latitude=49.5898&longitude=34.5509&filters[]=6092"
+    stores = fetch_stores()
+    log.info(f"Total stores = {len(stores)}")
+    for store in stores:
 
-    session = SgRequests()
-    r = session.get(api_url)
-    js = r.json()["locations"]
-
-    for j in js:
+        store_number = str(get_JSON_object_variable(store, "id"))
+        location_name = get_JSON_object_variable(store, "name")
         street_address = (
-            f"{j.get('address_line_1')} {j.get('address_line_2') or ''}".strip()
-            or "<MISSING>"
+            get_JSON_object_variable(store, "address_line_1")
+            + " "
+            + get_JSON_object_variable(store, "address_line_2")
         )
-        city = j.get("city") or "<MISSING>"
-        state = j.get("state") or "<MISSING>"
-        postal = j.get("postal_code") or "<MISSING>"
-        if postal == "<MISSING>":
-            continue
-        country_code = j.get("country") or "<MISSING>"
+        street_address = street_address.replace(MISSING, "").strip()
+        city = get_JSON_object_variable(store, "city")
+        zip_postal = get_JSON_object_variable(store, "postal_code")
+        state = get_JSON_object_variable(store, "state")
+        country_code = get_JSON_object_variable(store, "country")
         if country_code == "United States":
             country_code = "US"
-        else:
-            continue
+        phone = get_JSON_object_variable(store, "phone")
+        latitude = get_JSON_object_variable(store, "latitude")
+        longitude = get_JSON_object_variable(store, "longitude")
+        location_type = get_JSON_object_variable(store, "filters.0.name")
+        hours_of_operation = get_hoo(get_JSON_object_variable(store, "custom_fields"))
 
-        if len(postal) > 5:
-            country_code = "CA"
-        store_number = j.get("id") or "<MISSING>"
-        page_url = "<MISSING>"
-        location_name = j.get("name")
-        phone = j.get("phone") or "<MISSING>"
-        latitude = j.get("latitude") or "<MISSING>"
-        longitude = j.get("longitude") or "<MISSING>"
-        location_type = "<MISSING>"
+        raw_address = f"{street_address}, {city}, {state} {zip_postal}".replace(
+            MISSING, ""
+        )
+        raw_address = " ".join(raw_address.split())
+        raw_address = raw_address.replace(", ,", ",").replace(",,", ",")
+        if raw_address[len(raw_address) - 1] == ",":
+            raw_address = raw_address[:-1]
 
-        _tmp = []
-        hours = j.get("custom_fields") or []
-        for h in hours:
-            day = h.get("name")
-            time = h.get("value")
-            _tmp.append(f"{day}: {time}")
-
-        hours_of_operation = ";".join(_tmp) or "<MISSING>"
-
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
-
-    return out
+        yield SgRecord(
+            locator_domain=DOMAIN,
+            store_number=store_number,
+            page_url=page_url,
+            location_name=location_name,
+            location_type=location_type,
+            street_address=street_address,
+            city=city,
+            zip_postal=zip_postal,
+            state=state,
+            country_code=country_code,
+            phone=phone,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+            raw_address=raw_address,
+        )
+    return []
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    log.info(f"Start Crawling {website} ...")
+    start = time.time()
+    with SgWriter(
+        deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
+    ) as writer:
+        for rec in fetch_data():
+            writer.write_row(rec)
+    end = time.time()
+    log.info(f"Scrape took {end-start} seconds.")
 
 
 if __name__ == "__main__":

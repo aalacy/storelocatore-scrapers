@@ -1,6 +1,9 @@
-import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 session = SgRequests()
 headers = {
@@ -8,33 +11,6 @@ headers = {
 }
 
 logger = SgLogSetup().get_logger("batterysystems_net")
-
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
 
 
 def fetch_data():
@@ -61,9 +37,9 @@ def fetch_data():
                     ilat = item.split('"lat":"')[1].split('"')[0]
                     ilng = item.split('"lng":"')[1].split('"')[0]
                     locinfo.append(iid + "|" + ilat + "|" + ilng)
-        if '<i class="porto-icon-down-open" style=""></i>' in line:
+        if 'MY<span style="color:black">STORE</span></p>' in line:
             store = line.split('id="')[1].split('"')[0]
-            name = line.split('">')[1].split("<")[0]
+            name = line.split('">')[1].split("<")[0].strip().replace("\t", "")
         if 'style="display:none">' in line:
             next(lines)
             g = next(lines)
@@ -156,27 +132,31 @@ def fetch_data():
             if sitem.split("|")[0] == item[8]:
                 item[11] = sitem.split("|")[1]
                 item[12] = sitem.split("|")[2]
-                yield [
-                    item[0],
-                    item[1],
-                    item[2],
-                    item[3],
-                    item[4],
-                    item[5],
-                    item[6],
-                    item[7],
-                    item[8],
-                    item[9],
-                    item[10],
-                    item[11],
-                    item[12],
-                    item[13],
-                ]
+                yield SgRecord(
+                    locator_domain=item[0],
+                    page_url=item[1],
+                    location_name=item[2],
+                    street_address=item[3],
+                    city=item[4],
+                    state=item[5],
+                    zip_postal=item[6],
+                    country_code=item[7],
+                    store_number=item[8],
+                    phone=item[9],
+                    location_type=item[10],
+                    latitude=item[11],
+                    longitude=item[12],
+                    hours_of_operation=item[13],
+                )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(
+        deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
+    ) as writer:
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()
