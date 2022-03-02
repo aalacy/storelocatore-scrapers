@@ -69,9 +69,12 @@ def fetch_records(search):
                     if "Hour" in hh:
                         continue
                     hours.append(hh.strip())
+                hours_of_operation = "; ".join(hours)
+                if "Temporarily-Closed" in hours_of_operation:
+                    hours_of_operation = "Temporarily-Closed"
                 yield SgRecord(
                     page_url="https://www.golden1.com/atm-branch-finder#",
-                    location_name=_["title"],
+                    location_name=". ".join(_["title"].split(".")[1:]),
                     street_address=_["address"],
                     city=_["city"],
                     state=_["state"],
@@ -81,7 +84,7 @@ def fetch_records(search):
                     country_code="US",
                     location_type=location_type,
                     locator_domain=locator_domain,
-                    hours_of_operation="; ".join(hours),
+                    hours_of_operation=hours_of_operation,
                 )
 
 
@@ -99,11 +102,9 @@ if __name__ == "__main__":
             deduper=SgRecordDeduper(
                 SgRecordID(
                     {
-                        SgRecord.Headers.LOCATION_NAME,
                         SgRecord.Headers.STREET_ADDRESS,
                         SgRecord.Headers.CITY,
-                        SgRecord.Headers.LATITUDE,
-                        SgRecord.Headers.LONGITUDE,
+                        SgRecord.Headers.STATE,
                     }
                 ),
                 duplicate_streak_failure_factor=1000,

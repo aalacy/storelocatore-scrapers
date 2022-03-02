@@ -28,7 +28,7 @@ def fetch_data():
             "section.vtex-store-components-3-x-container > div > div  div.items-stretch.pr0"
         )
         for _ in locations:
-            if not _.text.strip():
+            if not _.text.strip() or not _.p or len(_.select("p")) < 2:
                 break
             p = _.select("p")
             addr = list(p[1].stripped_strings)
@@ -43,7 +43,10 @@ def fetch_data():
             hours = list(p[2].stripped_strings)
             if hours:
                 hours = hours[1:]
-            coord = _.a["href"].split("/@")[1].split("/data")[0].split(",")
+            try:
+                coord = _.a["href"].split("/@")[1].split("/data")[0].split(",")
+            except:
+                coord = ["", ""]
             yield SgRecord(
                 page_url=base_url,
                 location_name=p[0].text.strip(),
