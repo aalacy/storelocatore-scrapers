@@ -35,12 +35,6 @@ def fetch_data():
                 store.xpath('.//p[@class="fdd-text fdd-text-name"]//text()')
             ).strip()
 
-            location_type = ", ".join(
-                store.xpath(
-                    './/div[@class="fdd-tag-wrapper"]//span[@class="fdd-tag-text"]/text()'
-                )
-            ).strip()
-
             store_info = list(
                 filter(
                     str,
@@ -68,16 +62,12 @@ def fetch_data():
                 store.xpath('.//a[contains(@href,"/locate-a-dealer")]/@href')
             )
 
-            if len(phone) <= 0:
-                log.info(page_url)
-                store_req = session.get(page_url, headers=headers)
-                store_sel = lxml.html.fromstring(store_req.text)
-                phone = "".join(
-                    store_sel.xpath(
-                        '//div[@class="locateDealerInfoDetailsItemWrapper"][./div[contains(text(),"Service")]]/div[@class="locateDealerInfoDetailsText"]/text()'
-                    )
-                ).strip()
-
+            log.info(page_url)
+            store_req = session.get(page_url, headers=headers)
+            store_sel = lxml.html.fromstring(store_req.text)
+            location_type = ", ".join(
+                store_sel.xpath('//li[contains(@class,"ldidTabsItem")]//text()')
+            ).strip()
             hours_of_operation = "<MISSING>"
 
             store_number = page_url.split("=")[1].strip()

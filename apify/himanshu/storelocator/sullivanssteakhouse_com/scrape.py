@@ -68,8 +68,7 @@ def fetch_data():
                 hours_of_operation = (
                     soup.find("div", {"class": "e9370-13 x-text"})
                     .findAll("p")[1]
-                    .get_text(separator="|", strip=True)
-                    .replace("|", " ")
+                    .get_text(separator=" ", strip=True)
                 )
             except:
                 text = soup.find("div", {"class": "e9370-13 x-text"}).text
@@ -79,6 +78,14 @@ def fetch_data():
                 elif "coming soon" in text.lower():
                     hours_of_operation = MISSING
                     location_type = "Coming Soon"
+            if "HAPPY HOUR" in hours_of_operation:
+                hours_of_operation = (
+                    soup.find("div", {"class": "e9370-13 x-text"})
+                    .find("p")
+                    .get_text(separator=" ", strip=True)
+                    .replace("OPEN FOR DINE-IN", "")
+                    .strip()
+                )
             temp = soup.find("div", {"class": "e9370-10 x-text"}).findAll("p")
             phone = temp[1].find("a").text
             raw_address = (
