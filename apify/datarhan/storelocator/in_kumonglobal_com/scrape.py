@@ -146,6 +146,7 @@ def fetch_data():
                 loc_dom.xpath('//li[span[contains(text(), "Phone: ")]]/text()')[-1]
                 .strip()
                 .split("/")[0]
+                .split(",")[0]
             )
             hoo = loc_dom.xpath(
                 '//li[span[strong[contains(text(), "Schedule")]]]//text()'

@@ -99,7 +99,7 @@ def fetch_data(sgw: SgWriter):
 
         try:
             hours_of_operation = (
-                " ".join(list(base.find(class_="c-hours-details").stripped_strings))
+                " ".join(list(base.find(class_="Hero-storeHours").stripped_strings))
                 .replace("Day of the Week Hours", "")
                 .strip()
             )
