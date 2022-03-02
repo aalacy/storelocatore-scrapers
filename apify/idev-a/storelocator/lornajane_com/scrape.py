@@ -12,7 +12,7 @@ from sgpostal.sgpostal import parse_address_intl
 
 logger = SgLogSetup().get_logger("lornajane")
 locator_domain = "https://www.lornajane.com"
-base_url = "https://www.lornajane.co.uk/on/demandware.store/Sites-LJUK-Site/en_GB/Stores-FindStores?country={}&latitude={}&longitude={}"
+base_url = "https://www.lornajane.co.uk/on/demandware.store/Sites-LJ{}-Site/en_GB/Stores-FindStores?country={}&latitude={}&longitude={}"
 
 _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
@@ -27,6 +27,8 @@ cc_map = {
     "sg": "Singapore",
 }
 
+url_map = {"gb": "UK", "sg": "SG", "us": "UK", "au": "UK"}
+
 
 class ExampleSearchIteration(SearchIteration):
     def do(
@@ -40,7 +42,9 @@ class ExampleSearchIteration(SearchIteration):
         lat = coord[0]
         lng = coord[1]
         with SgRequests() as session:
-            url = base_url.format(current_country.upper(), lat, lng)
+            url = base_url.format(
+                url_map[current_country], current_country.upper(), lat, lng
+            )
             locations = bs(session.get(url, headers=_headers).text, "lxml").select(
                 "div.results div.store-item"
             )
@@ -108,8 +112,7 @@ if __name__ == "__main__":
         par_search = ParallelDynamicSearch(
             search_maker=search_maker,
             search_iteration=search_iter,
-            country_codes=["us", "gb", "au", "nz", "my", "sg", "fr", "ae"],
+            country_codes=["us", "au", "nz", "sg"],
         )
-
         for rec in par_search.run():
             writer.write_row(rec)

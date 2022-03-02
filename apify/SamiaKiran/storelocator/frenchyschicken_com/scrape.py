@@ -29,7 +29,7 @@ def fetch_data():
             log.info(page_url)
             r = session.get(page_url, headers=headers)
             soup = BeautifulSoup(r.text, "html.parser")
-            location_name = soup.find("h1").text
+            location_name = soup.find("h1", {"aria-label": "Location title"}).text
             temp = soup.find("div", {"class": "location-text-info"}).findAll("a")
             coords = soup.select_one("a[href*=maps]")
             latitude, longitude = coords["href"].split("query=")[1].split(",")
@@ -63,6 +63,11 @@ def fetch_data():
                 if temp[1].find("ZipCode") != -1:
                     zip_postal = zip_postal + " " + temp[0]
                 i += 1
+            if "Memorial" in city:
+                city = city.split()[1]
+                street_address = street_address.replace(
+                    "12062 Veterans", "12062 Veterans Memorial"
+                )
             phone = soup.select_one("a[href*=tel]").text
             country_code = "US"
             yield SgRecord(
