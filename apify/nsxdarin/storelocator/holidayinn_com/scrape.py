@@ -34,7 +34,6 @@ def fetch_data():
             lurl = line.split('href="')[1].split('"')[0]
             if lurl not in locs:
                 locs.append(lurl)
-    print(len(locs))
     for loc in locs:
         logger.info(loc)
         r2 = session.get(loc, headers=headers)
