@@ -291,6 +291,17 @@ def fetch_data_global(urlpartnum, urlpart, sgw: SgWriter):
             logger.info(f"[{idx1}] country_code: {country_code}")
 
             store_number = gitem["warehouseCode"]
+            # It is found store_number for stores in GB
+            # contain city data which needs to be removed.
+
+            if "GB" in country_code:
+                if store_number:
+                    if not store_number.isdigit():
+                        store_number = ""
+                    else:
+                        store_number = store_number
+                else:
+                    store_number = ""
             store_number = store_number if store_number else MISSING
             logger.info(f"[{idx1}] store_number: {store_number}")
 
@@ -370,6 +381,10 @@ def fetch_data_global(urlpartnum, urlpart, sgw: SgWriter):
             logger.info(f"[{idx1}] hoo: {hours_of_operation}")
             raw_address = MISSING
             logger.info(f"[{idx1}] raw_add: {raw_address}")
+
+            # Remove parenthesis from street_address
+            if "(" in street_address:
+                street_address = street_address.split("(")[0].strip()
             if "Warehouse" in location_type:
                 return
             item = SgRecord(
