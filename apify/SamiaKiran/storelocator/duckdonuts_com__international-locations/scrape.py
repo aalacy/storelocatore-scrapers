@@ -95,9 +95,9 @@ def fetch_data():
 
             if "Dubai" in location_name:
                 country_code = "Dubai"
-            if "Saudi Arabia" in location_name:
+            elif "Saudi Arabia" in location_name:
                 country_code = "Saudi Arabia"
-            if "Bayamon" in location_name:
+            elif "Bayamon" in location_name:
                 country_code = "Bayamon"
             else:
                 country_code = MISSING
