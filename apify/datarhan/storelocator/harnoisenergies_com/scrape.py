@@ -21,7 +21,7 @@ def fetch_data():
         .split("    );\n    mxoStore")[0]
         .split('{"stores')[-1]
     )
-    data = json.loads(response.text)
+    data = json.loads(data)
 
     for store_number, poi in data["stores"].items():
         item = SgRecord(
@@ -35,7 +35,7 @@ def fetch_data():
             country_code="",
             store_number=store_number,
             phone="",
-            location_type="",
+            location_type=poi["brand"],
             latitude=poi["location"]["coordinates"]["latitude"],
             longitude=poi["location"]["coordinates"]["longitude"],
             hours_of_operation="",
