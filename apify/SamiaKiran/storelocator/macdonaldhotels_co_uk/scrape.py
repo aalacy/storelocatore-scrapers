@@ -82,7 +82,7 @@ def fetch_data():
             longitude = MISSING
             if zip_postal == MISSING:
                 zip_postal = raw_address.split()
-                zip_postal = zip_postal[-2] + " " + zip_postal[-
+                zip_postal = zip_postal[-2] + " " + zip_postal[-1]
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url=page_url,
