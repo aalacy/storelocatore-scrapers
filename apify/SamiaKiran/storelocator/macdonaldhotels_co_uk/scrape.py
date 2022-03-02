@@ -30,6 +30,10 @@ def fetch_data():
             if "resorts.macdonaldhotels.co.uk" in page_url:
                 continue
             log.info(page_url)
+            if "Spain" in loc.text:
+                country_code = "SPAIN"
+            else:
+                country_code = "GB"
             r = session.get(page_url, headers=headers)
             try:
                 soup = BeautifulSoup(r.text, "html.parser")
@@ -52,7 +56,10 @@ def fetch_data():
                 .replace("|", " ")
                 .replace("View on map", "")
             )
-            phone = soup.find("div", {"class": "infoPanel__tel"}).find("a").text
+            try:
+                phone = soup.find("div", {"class": "infoPanel__tel"}).find("a").text
+            except:
+                phone = MISSING
             try:
                 hours_of_operation = soup.find("p", string=re.compile("Check")).text
             except:
@@ -75,8 +82,7 @@ def fetch_data():
             longitude = MISSING
             if zip_postal == MISSING:
                 zip_postal = raw_address.split()
-                zip_postal = zip_postal[-2] + " " + zip_postal[-1]
-            country_code = "GB"
+                zip_postal = zip_postal[-2] + " " + zip_postal[-
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url=page_url,
