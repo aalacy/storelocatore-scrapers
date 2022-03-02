@@ -59,7 +59,7 @@ def fetch_data():
                     street_address += ", " + addr.street_address_2
                 phone = poi_html.xpath(
                     './/div[@class="center-phone col-lg-12"]/div[2]/text()'
-                )[0].strip()
+                )[0][:8].strip()
                 geo = poi_html.xpath('.//button[@name="map"]/@onclick')[0].split(",")[
                     1:3
                 ]

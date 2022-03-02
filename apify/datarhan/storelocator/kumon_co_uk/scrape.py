@@ -88,6 +88,13 @@ def fetch_data():
         for store_url in list(set(all_locations)):
             loc_response = session.get(store_url)
             loc_dom = etree.HTML(loc_response.text)
+            if "/" in domain:
+                country_code = domain.split("/")[-1]
+            if len(domain.split(".")[0]) == 2:
+                country_code = domain.split(".")[0]
+            else:
+                country_code = domain.split(".")[-1]
+            country_code = country_code.split("/")[-1]
 
             location_name = loc_dom.xpath('//h1[@class="text-center"]/text()')[0]
             street_address = loc_dom.xpath('//span[@itemprop="streetAddress"]/text()')[
@@ -98,7 +105,6 @@ def fetch_data():
             state = state[0] if state else SgRecord.MISSING
             zip_code = loc_dom.xpath('//span[@itemprop="postalCode"]/text()')
             zip_code = zip_code[0] if zip_code else SgRecord.MISSING
-            country_code = ""
             phone = loc_dom.xpath('//span[@class="number"]/text()')
             phone = phone[0] if phone else SgRecord.MISSING
             latitude = loc_dom.xpath('//meta[@itemprop="latitude"]/@content')
