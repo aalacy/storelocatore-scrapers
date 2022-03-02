@@ -97,8 +97,6 @@ class _SearchIteration(SearchIteration):
             hours_list = []
             if store["hours"] is not None and len(store["hours"]) > 0:
                 hours = lxml.html.fromstring(store["hours"]).xpath("//tr")
-                hours_list = []
-                hours_of_operation = ""
                 for hour in hours:
                     day = "".join(hour.xpath("td[1]/text()")).strip()
                     time = "".join(hour.xpath("td[2]//text()")).strip()
