@@ -28,7 +28,6 @@ def fetch_data():
         locations = soup.select(
             "section.vtex-store-components-3-x-container > div > div  div.items-stretch.pr0"
         )
-        print(len(locations))
         for _ in locations:
             if not _.text.strip() or not _.p or len(_.select("p")) < 2:
                 break
