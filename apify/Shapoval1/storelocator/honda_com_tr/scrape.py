@@ -10,12 +10,26 @@ def fetch_data(sgw: SgWriter):
     locator_domain = "https://honda.com.tr/"
     session = SgRequests()
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0",
+        "Accept": "application/json, text/plain, */*",
+        "Accept-Language": "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3",
+        "Content-Type": "application/x-www-form-urlencoded",
+        "Origin": "https://www.honda.com.tr",
+        "Connection": "keep-alive",
+        "Referer": "https://www.honda.com.tr/otomobil/iletisim",
+        "Sec-Fetch-Dest": "empty",
+        "Sec-Fetch-Mode": "cors",
+        "Sec-Fetch-Site": "same-origin",
+        "Cache-Control": "max-age=0",
+        "TE": "trailers",
     }
+
     data = {"vehicle_type_id": "1"}
 
     r = session.post(
-        "https://honda.com.tr/backend/web/static/getDealers", headers=headers, data=data
+        "https://www.honda.com.tr/backend/web/static/getDealers",
+        headers=headers,
+        data=data,
     )
     js = r.json()["success"]["dealers"]
     for j in js:
