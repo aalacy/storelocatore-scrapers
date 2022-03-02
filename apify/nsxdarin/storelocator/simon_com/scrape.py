@@ -9,9 +9,10 @@ headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
 
+
 def fetch_data():
     url = "https://www.simon.com/search"
-    Found = True    
+    Found = True
     while Found:
         r = session.get(url, headers=headers)
         for line in r.iter_lines():
@@ -45,9 +46,9 @@ def fetch_data():
                                         )
                                         hrs = (
                                             hrs
-                                            + day.split('"OpenTimeDescription":"')[1].split(
-                                                '"'
-                                            )[0]
+                                            + day.split('"OpenTimeDescription":"')[
+                                                1
+                                            ].split('"')[0]
                                             + "-"
                                             + day.split('"CloseTimeDescription":"')[
                                                 1
@@ -79,7 +80,9 @@ def fetch_data():
                         zc = item.split('"Zip":"')[1].split('"')[0]
                         name = item.split('"DisplayName":"')[1].split('"')[0]
                         try:
-                            phone = item.split('"PhoneNumber":{"Origin":"')[1].split('"')[0]
+                            phone = item.split('"PhoneNumber":{"Origin":"')[1].split(
+                                '"'
+                            )[0]
                         except:
                             phone = "<MISSING>"
                         if hours == "":
@@ -101,9 +104,12 @@ def fetch_data():
                             hours_of_operation=hours,
                         )
 
+
 def scrape():
     results = fetch_data()
     with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         for rec in results:
             writer.write_row(rec)
+
+
 scrape()
