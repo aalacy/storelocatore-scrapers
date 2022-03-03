@@ -25,10 +25,18 @@ def fetch_data(sgw: SgWriter):
         if delivery or location_name.find("Coming Soon") != -1:
             continue
         ad = (
-            "".join(d.xpath(".//h3/following-sibling::p[2]/a[1]/text()"))
+            "".join(d.xpath(".//h3/following-sibling::p//text()"))
             .replace("(Directions)", "")
             .strip()
         )
+        if ad.find("Pickup Order") != -1:
+            ad = ad.split("Pickup Order")[1].strip()
+        if ad.find("Delivery") != -1:
+            ad = ad.split("Delivery")[1].strip()
+        if ad.find("  ") != -1:
+            ad = ad.split("  ")[0].strip()
+        if ad.find("Daily") != -1:
+            ad = ad.split("Daily")[0].strip()
         street_address = " ".join(ad.split(",")[:-2]).strip()
         street_address = " ".join(street_address.split())
         state = ad.split(",")[-1].split()[0].strip()
