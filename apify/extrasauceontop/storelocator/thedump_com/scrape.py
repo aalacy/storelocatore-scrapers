@@ -53,9 +53,13 @@ def get_data():
         page_url = locator_domain + grid.find("h3").find("a")["href"]
         location_name = grid.find("h3").text.strip()
 
-        address_part = grid.find(
-            "div", attrs={"class": "thedump-location-address"}
+        address_part = bs(
+            str(grid.find("div", attrs={"class": "thedump-location-address"})).replace(
+                "<br/>", " "
+            ),
+            "html.parser",
         ).text.strip()
+
         if "Newport News" in address_part:
             address_pieces = address_part.split(",")[0].split(" ")
             address = ""
@@ -101,10 +105,7 @@ def get_data():
 
         for iframe in iframes:
             try:
-                if (
-                    "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2958.101970893883!2d"
-                    in iframe["src"]
-                ):
+                if "https://www.google.com/maps/embed?pb" in iframe["src"]:
                     lat_lon_url = iframe["src"]
                     break
 
@@ -132,6 +133,7 @@ def get_data():
                 .replace("  ", " ")
                 .strip()
             )
+        hours = hours.split("More")[0]
         yield {
             "locator_domain": locator_domain,
             "page_url": page_url,

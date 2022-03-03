@@ -9,4 +9,5 @@ Please make sure that:
 * Your scraper can be run successfully by executing https://github.com/SafeGraphInc/crawl-service/blob/master/scripts/run_scraper.sh 
 * The resulting output passes https://github.com/SafeGraphInc/crawl-service/blob/master/scripts/validate.py
 
-validate.py data.csv --ignore LatLngDuplicationValidator
+NOTE:
+	fetching data using API but one location which is present on locator is not available in API. to fetch that missing location need to almost rewrite the script as it requires different method so just ignoring that location as per the discussion with MIA LITMAN.

@@ -5,6 +5,10 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 _headers = {
+    "Accept": "application/json, text/plain, */*",
+    "Accept-Encoding": "gzip, deflate, br",
+    "Accept-Language": "en-US,en;q=0.9",
+    "Content-Type": "application/json",
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
 }
 
@@ -13,7 +17,7 @@ base_url = "https://www.com1dav1rtual.com/api/em/store/get_filter"
 
 
 def fetch_data():
-    with SgRequests() as session:
+    with SgRequests(verify_ssl=False) as session:
         payload = {"business_partner": "4"}
         locations = session.post(base_url, headers=_headers, json=payload).json()
         for _ in locations:
@@ -25,7 +29,7 @@ def fetch_data():
             )
             hours = []
             for hh in _.get("general_range_hour", []):
-                hr = hh["name"].split(" ")
+                hr = hh["name"].split()
                 if hh["name"] == "null null":
                     times = "De 12:00 AM a 12:00 AM"
                 else:

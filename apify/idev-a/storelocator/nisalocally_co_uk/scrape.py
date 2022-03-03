@@ -17,7 +17,7 @@ _headers = {
 
 base_url = "https://www.nisalocally.co.uk/stores/index.html"
 locator_domain = "https://www.nisalocally.co.uk/"
-session = SgRequests().requests_retry_session()
+session = SgRequests()
 max_workers = 12
 
 
@@ -116,3 +116,5 @@ if __name__ == "__main__":
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
+
+    del session

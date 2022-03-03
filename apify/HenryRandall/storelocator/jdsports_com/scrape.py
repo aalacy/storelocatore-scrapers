@@ -5,7 +5,7 @@ from sgzip.static import static_zipcode_list
 from sgzip.dynamic import SearchableCountries
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 headers = {
@@ -30,11 +30,15 @@ def fetch_data(sgw: SgWriter):
                     "li", {"class": "location-list-result js-location-result"}
                 )
                 for location in info:
+                    loc_id = location.find(
+                        "h2", {"class": "location-card-title"}
+                    ).text.strip()
                     name = location.find(
                         "span", {"class": "location-name-geo"}
                     ).text.strip()
-                    if name not in ids:
-                        ids.append(name)
+
+                    if loc_id not in ids:
+                        ids.append(loc_id)
                         if (
                             location.find("a", {"class": "location-card-title-link"})
                             is None
@@ -129,7 +133,14 @@ def fetch_data(sgw: SgWriter):
 
 
 def scrape():
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PhoneNumberId)) as writer:
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.PHONE, SgRecord.Headers.STREET_ADDRESS},
+                fail_on_empty_id=True,
+            )
+        )
+    ) as writer:
         fetch_data(writer)
 
 

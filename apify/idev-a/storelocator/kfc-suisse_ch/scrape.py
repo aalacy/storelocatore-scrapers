@@ -26,24 +26,19 @@ def fetch_data():
             city = bs(_["city"], "lxml")
             hours = []
             temp = []
-            try:
-                for hh in bs(_["openingHours"], "lxml").stripped_strings:
-                    if "Dine" in hh or "Take" in hh:
-                        continue
-                    if "Delivery" in hh:
-                        break
-                    temp.append(hh)
-                for x in range(0, len(temp), 2):
-                    hours.append(f"{temp[x]} {temp[x+1]}")
-            except:
-                import pdb
-
-                pdb.set_trace()
+            for hh in bs(_["openingHours"], "lxml").stripped_strings:
+                if "Dine" in hh or "Take" in hh:
+                    continue
+                if "Delivery" in hh:
+                    break
+                temp.append(hh)
+            for x in range(0, len(temp), 2):
+                hours.append(f"{temp[x]} {temp[x+1]}")
             yield SgRecord(
                 page_url="https://www.kfc-suisse.ch/restaurants/",
                 store_number=_["uid"],
                 location_name=_["title"],
-                street_address=_["street"],
+                street_address=_["street"].replace("&#039;", "'"),
                 city=city.select_one(".city").text.strip(),
                 zip_postal=city.select_one(".zip").text.strip(),
                 latitude=_["lat"],

@@ -1,110 +1,90 @@
+from sglogging import sglog
 from bs4 import BeautifulSoup
-import csv
-import string
-import re, time
-
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-logger = SgLogSetup().get_logger('rubytuesday_com')
 
-
-
+website = "rubytuesday_com"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
-headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
-           }
 
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+headers = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.159 Safari/537.36",
+}
 
-        # Header
-        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-        # Body
-        for row in data:
-            writer.writerow(row)
+DOMAIN = "https://rubytuesday.com/"
+MISSING = SgRecord.MISSING
 
 
-def fetch_data():    
-    data = []
-    p= 0
-    pattern = re.compile(r'\s\s+')
-    cleanr = re.compile(r'<[^>]+>')
-    #link = 'https://rubytuesday.com/locations?locationId=4669'
-    link = 'https://rubytuesday.com/locations?address=AL'
+def fetch_data():
+    link = "https://rubytuesday.com/locations?address=AL"
     count = 1
-    while True:        
-        r = session.get(link)        
-        soup =BeautifulSoup(r.text, "html.parser")
-        #logger.info(soup)
-        divlist = soup.findAll('div',{'class':'restaurant-location-item'})
-        #logger.info(len(divlist))
+    while True:
+        r = session.get(link)
+        soup = BeautifulSoup(r.text, "html.parser")
+        divlist = soup.findAll("div", {"class": "restaurant-location-item"})
         for div in divlist:
-            title = div.find('h1').text
-            address = div.find('address').text.lstrip().splitlines()
-            street = address[0]
-            city = address[1].lstrip().replace(',','')
+            location_name = div.find("h1").text
+            log.info(location_name)
+            address = div.find("address").text.lstrip().splitlines()
+            street_address = address[0]
+            city = address[1].lstrip().replace(",", "")
             state = address[2].lstrip()
-            pcode = address[3].lstrip()            
-            phone = div.find('a').text.strip()
-            if phone.find('-') == -1:
-                phone = phone[0:3]+'-'+phone[3:6]+'-'+phone[6:10]
-            hourlist = div.find('table').findAll('tr',{'class':'hourstr'})
-            hours = ''
-            for hr in hourlist:
-                hrday = hr.findAll('td')[0].text
-                hrtime = hr.findAll('td')[1].text
-                start = hrtime.split('-')[0] + ':00 AM -'
-                temp = (int)(hrtime.split('-')[1].split(':')[0] )
-                if temp > 12:
-                    temp = temp -12
-                end = str(temp) + ':00 PM '
-                hours = hours + hrday +' ' + start +' '+ end
-                
-                
-                   
-            store = div['id'].split('-')[1]
-            coord = div.find('div',{'class':"map_info"})
-            lat = coord['data-lat']
-            longt = coord['data-lng']         
-            
-            data.append([
-                        'https://rubytuesday.com/',
-                        link,                   
-                        title,
-                        street,
-                        city,
-                        state,
-                        pcode,
-                        'US',
-                        store,
-                        phone,
-                        '<MISSING>',
-                        lat,
-                        longt,
-                        hours
-                    ])
-            #logger.info(p,data[p])
-            p += 1
-            #input()
+            zip_postal = address[3].lstrip()
+            phone = div.find("a").text.strip()
+            if phone.find("-") == -1:
+                phone = phone[0:3] + "-" + phone[3:6] + "-" + phone[6:10]
+            hourlist = div.find("table").findAll("tr", {"class": "hourstr"})
+            hours_of_operation = " ".join(
+                x.get_text(separator="|", strip=True).replace("|", " ")
+                for x in hourlist
+            )
+            store_number = div["id"].split("-")[1]
+            coord = div.find("div", {"class": "map_info"})
+            latitude = coord["data-lat"]
+            longitude = coord["data-lng"]
+            country_code = "US"
+            yield SgRecord(
+                locator_domain=DOMAIN,
+                page_url="https://rubytuesday.com/locations",
+                location_name=location_name,
+                street_address=street_address.strip(),
+                city=city.strip(),
+                state=state.strip(),
+                zip_postal=zip_postal.strip(),
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone.strip(),
+                location_type=MISSING,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
         try:
-            nextlink = soup.find('ul',{'class':'pages'}).findAll('a')[-1]
-            link = nextlink['href']
+            nextlink = soup.find("ul", {"class": "pages"}).findAll("a")[-1]
+            link = nextlink["href"]
             count = count + 1
-            #logger.info(count)
-            #input()
         except:
             break
-        
-  
-        
-    return data
 
 
 def scrape():
-    #logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
-    data = fetch_data()
-    write_output(data)
-    #logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    log.info("Started")
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.GeoSpatialId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
 
-scrape()
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
+
+
+if __name__ == "__main__":
+    scrape()

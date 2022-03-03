@@ -10,16 +10,17 @@ from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 
 
 def fetch_data():
-    # Your scraper here
     session = SgRequests()
-
     DOMAIN = "picturepeople.com"
     headers = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.67 Safari/537.36"
     }
-
     response = session.get(
-        "https://tpp.mystratus.com/21.07/(S(hykrg13jfpdr4q1kfwzfz3vj))/OnlineBooking/LocationSelection.aspx?loginoption=defaultnew&ReferenceGUID=449336912b0041bc8625f63e52e3fcb7",
+        "https://tpp.mystratus.com/21.13/OnlineBooking/verify.aspx?loginoption=defaultnew"
+    )
+    session_id = response.url.path.split("S(")[-1].split("))")[0]
+    response = session.get(
+        f"https://tpp.mystratus.com/21.13/(S({session_id}))/OnlineBooking/LocationSelection.aspx?loginoption=defaultnew",
         headers=headers,
     )
     dom = etree.HTML(response.text)
@@ -97,19 +98,19 @@ def fetch_data():
 
         item = SgRecord(
             locator_domain=DOMAIN,
-            page_url=SgRecord.MISSING,
+            page_url="",
             location_name=location_name,
             street_address=raw_address[0],
             city=raw_address[1].split(", ")[0],
             state=raw_address[1].split(", ")[-1].split()[0],
             zip_postal=zip_code,
-            country_code=SgRecord.MISSING,
-            store_number=SgRecord.MISSING,
+            country_code="",
+            store_number="",
             phone=phone,
-            location_type=SgRecord.MISSING,
-            latitude=SgRecord.MISSING,
-            longitude=SgRecord.MISSING,
-            hours_of_operation=SgRecord.MISSING,
+            location_type="",
+            latitude="",
+            longitude="",
+            hours_of_operation="",
         )
 
         yield item

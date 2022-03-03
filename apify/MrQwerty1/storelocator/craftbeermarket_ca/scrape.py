@@ -1,147 +1,59 @@
-import csv
-
-from concurrent import futures
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def get_urls():
-    session = SgRequests()
-    r = session.get("https://www.craftbeermarket.ca/locations")
+def fetch_data(sgw: SgWriter):
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:93.0) Gecko/20100101 Firefox/93.0",
+    }
+    api = "https://www.craftbeermarket.ca/locations/"
+    r = session.get(api, headers=headers)
     tree = html.fromstring(r.text)
+    divs = tree.xpath("//article[@class='loop-item location']")
 
-    return tree.xpath("//p/a[contains(text(), 'more info')]/@href")
-
-
-def get_postal(text):
-    try:
-        postal = " ".join(text.split("/@")[0].split("+")[-2:])
-        if len(postal) == 7:
-            return postal
-        else:
-            return "<MISSING>"
-    except IndexError:
-        return "<MISSING>"
-
-
-def get_data(page_url):
-    locator_domain = "https://www.craftbeermarket.ca/"
-
-    session = SgRequests()
-    r = session.get(page_url)
-    tree = html.fromstring(r.text)
-
-    location_name = "".join(
-        tree.xpath("//div[@class='locationContactInfo']/h4/text()")
-    ).strip()
-    line = tree.xpath("//div[@class='locationContactInfo']/p/text()")
-    line = "  ".join(list(filter(None, [l.strip() for l in line])))
-    line = line.split("  ")
-    phone = line.pop().strip()
-    line = line[0].replace("KELOWNA", ",KELOWNA").split(",")
-
-    state = line.pop().strip()
-    city = line.pop().strip()
-    if "BC" in city:
-        state = "BC"
-        city = city.replace("BC", "").strip()
-    street_address = line[0]
-    text = "".join(
-        tree.xpath(
-            "//a[@class='button _darkBrown' and contains(@href, 'google')]/@href"
-        )
-    )
-    postal = get_postal(text)
-    country_code = "CA"
-    store_number = "<MISSING>"
-    latitude = (
-        "".join(tree.xpath("//div[@data-latitude]/@data-latitude")) or "<MISSING>"
-    )
-    longitude = (
-        "".join(tree.xpath("//div[@data-longitude]/@data-longitude")) or "<MISSING>"
-    )
-    location_type = "<MISSING>"
-
-    _tmp = []
-    divs = tree.xpath("//h4[contains(text(), 'Hours')]/following-sibling::ul/li")
     for d in divs:
-        day = "".join(d.xpath("./strong/text()")).strip()
-        time = "".join(d.xpath("./text()")).strip()
-        if not day or not time:
-            continue
-        if "takeout" in time.lower() or "pation" in time.lower():
-            continue
-        _tmp.append(f"{day}: {time}")
+        location_name = "".join(d.xpath(".//h3/text()")).strip()
+        page_url = "".join(d.xpath(".//a[./img]/@href"))
+        line = "".join(d.xpath(".//h4/text()")).split(",")
+        state = line.pop().strip()
+        city = line.pop().strip()
+        street_address = ",".join(line).strip()
 
-    hours_of_operation = ";".join(_tmp) or "<MISSING>"
+        phone = "".join(
+            d.xpath(".//div[@class='location-contact-container']/a/text()")
+        ).strip()
+        o = tree.xpath(f"//option[text()='{location_name}']")[0]
+        latitude = "".join(o.xpath("./@data-lat"))
+        longitude = "".join(o.xpath("./@data-lng"))
+        store_number = "".join(o.xpath("./@value"))
+        hours = d.xpath(".//div[@class='location-contact-container']/p/text()")
+        hours = list(filter(None, [h.strip() for h in hours]))
+        hours_of_operation = ";".join(hours)
 
-    row = [
-        locator_domain,
-        page_url,
-        location_name,
-        street_address,
-        city,
-        state,
-        postal,
-        country_code,
-        store_number,
-        phone,
-        location_type,
-        latitude,
-        longitude,
-        hours_of_operation,
-    ]
+        row = SgRecord(
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            country_code="CA",
+            store_number=store_number,
+            latitude=latitude,
+            longitude=longitude,
+            phone=phone,
+            locator_domain=locator_domain,
+            hours_of_operation=hours_of_operation,
+        )
 
-    return row
-
-
-def fetch_data():
-    out = []
-    urls = get_urls()
-
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {executor.submit(get_data, url): url for url in urls}
-        for future in futures.as_completed(future_to_url):
-            row = future.result()
-            if row:
-                out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://www.craftbeermarket.ca/"
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        fetch_data(writer)

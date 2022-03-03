@@ -4,7 +4,8 @@ from time import sleep
 
 from sgrequests import SgRequests
 from sgselenium import SgChrome
-from sgscrape.sgpostal import parse_address_intl
+
+from sgpostal.sgpostal import parse_address_intl
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
@@ -73,13 +74,14 @@ def fetch_data():
             location_type = "temporarily closed"
         if loc_dom.xpath('//p[contains(text(), "temporarily closed")]'):
             location_type = "temporarily closed"
-        geo = loc_dom.xpath('//a[contains(@href, "/maps/")]/@href')
         latitude = "<MISSING>"
         longitude = "<MISSING>"
+        geo = loc_dom.xpath('//a[contains(@href, "maps")]/@href')
         if geo:
-            geo = geo[0].split("/@")[-1].split(",")[:2]
-            latitude = geo[0]
-            longitude = geo[1]
+            if "/@" in geo[0]:
+                geo = geo[0].split("/@")[-1].split(",")[:2]
+                latitude = geo[0]
+                longitude = geo[1]
         hours_of_operation = loc_dom.xpath(
             '//h3[contains(text(), "Store opening hours")]/following-sibling::ul/li//text()'
         )

@@ -1,119 +1,54 @@
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-from sgselenium import SgChrome
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.common.by import By
+from sgrequests import SgRequests
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 import json
-import ssl
 
-try:
-    _create_unverified_https_context = (
-        ssl._create_unverified_context
-    )  # Legacy Python that doesn't verify HTTPS certificates by default
-except AttributeError:
-    pass
-else:
-    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
+locator_domain = "https://www.dicarlospizza.com"
+base_url = "https://cdn5.editmysite.com/app/store/api/v17/editor/users/127469322/sites/289256851898694789/store-locations?page=1&per_page=100&include=address&lang=en&valid=1"
 
-
-def _valid(val):
-    return val.replace("\ufeff", "").strip()
+_headers = {
+    "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
+}
 
 
 def fetch_data():
-    with SgChrome() as driver:
-        locator_domain = "https://www.dicarlospizza.com/"
-        base_url = "https://www.dicarlospizza.com/locations"
-        driver.get(base_url)
-        WebDriverWait(driver, 5).until(
-            EC.presence_of_element_located(
-                (
-                    By.XPATH,
-                    "//html/body/div/div[1]/div[1]/div/div[1]/div[2]",
-                )
+    with SgRequests() as http:
+        locations = http.get(base_url, headers=_headers).json()["data"]
+        for _ in locations:
+            addr = _["address"]["data"]
+            street_address = addr["street"]
+            if addr["street2"]:
+                street_address += " " + addr["street2"]
+            page_url = (
+                locator_domain
+                + f'/{addr["region_code_full_name"].lower().replace(" ", "-")}'
             )
-        )
-        locations = json.loads(
-            driver.page_source.split("window.__BOOTSTRAP_STATE__ = ")[1]
-            .strip()
-            .split("</script>")[0]
-            .strip()[:-1]
-        )
-        for cell in locations["siteData"]["page"]["properties"]["contentAreas"][
-            "userContent"
-        ]["content"]["cells"]:
-            location_name = ""
-            street_address = ""
-            phone = ""
-            state = cell["content"]["elements"][1]["properties"]["title"]["quill"][
-                "ops"
-            ][0]["insert"].strip()
-            location = cell["content"]["elements"][2]["properties"]["title"]["quill"][
-                "ops"
-            ]
-            coord = ["", ""]
-            for x, _ in enumerate(location):
-                if (
-                    not _["insert"]
-                    or _valid(_["insert"]) == "ORDER PICKUP"
-                    or _valid(_["insert"]) == "ORDER DELIVERY"
-                ):
-                    continue
-
-                if "attributes" not in _:
-                    continue
-
-                if "color" not in _["attributes"]:
-                    continue
-
-                if _["insert"] == "(" or _valid(_["insert"]) == "|":
-                    continue
-
-                if not _valid(_["insert"]):
-                    continue
-
-                if (
-                    _["attributes"]["color"] == "var(--secondary-color)"
-                    and "wLink" not in _["attributes"]
-                    and not _["insert"][0].isdigit()
-                ):
-                    location_name += _valid(_["insert"])
-                elif _["attributes"].get("wLink", {}).get("type", "") == "phone":
-                    phone = _valid(_["insert"])
-                    if not phone.startswith("("):
-                        phone = "(" + phone
-                elif _["attributes"].get("wLink", {}).get("type", "") == "external" or (
-                    _["attributes"]["color"] == "var(--secondary-color)"
-                    and _["insert"][0].isdigit()
-                ):
-                    street_address = _valid(_["insert"])
-                    try:
-                        if "wLink" in _["attributes"]:
-                            map_link = _["attributes"]["wLink"]["link"]["external"]
-                            coord = map_link.split("/@")[1].split("/data")[0].split(",")
-                    except:
-                        coord = ["", ""]
-
-                if location_name and street_address and phone:
-                    yield SgRecord(
-                        page_url=base_url,
-                        location_name=location_name,
-                        street_address=street_address,
-                        city=location_name,
-                        state=state,
-                        country_code="US",
-                        phone=phone,
-                        latitude=coord[0],
-                        longitude=coord[1],
-                        locator_domain=locator_domain,
-                    )
-                    location_name = street_address = phone = ""
-                    coord = ["", ""]
+            hours = []
+            for hh in json.loads(_["square_business_hours"])["periods"]:
+                hours.append(
+                    f"{hh['day_of_week']}: {hh['start_local_time']} - {hh['end_local_time']}"
+                )
+            yield SgRecord(
+                page_url=page_url,
+                store_number=_["store_address_id"],
+                location_name=addr["business_name"],
+                street_address=street_address,
+                city=addr["city"],
+                state=addr["region_code"],
+                zip_postal=addr["postal_code"],
+                country_code=addr["country_code"],
+                phone=addr["phone"],
+                latitude=addr["latitude"],
+                longitude=addr["longitude"],
+                locator_domain=locator_domain,
+                hours_of_operation="; ".join(hours),
+            )
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

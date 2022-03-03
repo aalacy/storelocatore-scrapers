@@ -1,115 +1,106 @@
-import csv
 import re
 
-from bs4 import BeautifulSoup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 from sgrequests import SgRequests
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-                "page_url",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
+def fetch_data(sgw: SgWriter):
 
     user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
     headers = {"User-Agent": user_agent}
 
-    base_link = "https://www.hearinglife.com/webservices/centerlocator.svc/GetCenters/%7B28DE63F1-7F3B-4A11-B81E-114D3D91D052%7D/null/null/en-us/"
+    base_link = "https://www.hearinglife.com/api/clinics/getclinics/%7B04A27535-671F-4E6B-80C3-75F3CE5DC685%7D"
 
     session = SgRequests()
-    stores = session.get(base_link, headers=headers).json()["Centers"]
+    stores = session.get(base_link, headers=headers).json()
 
-    data = []
-    locator_domain = "hearinglife.com"
+    locator_domain = "https://www.hearinglife.com"
 
     for store in stores:
-        location_name = BeautifulSoup(store["Title"], "lxml").text.strip()
+        location_name = store["Name"]
+
+        raw_address = store["Address"]
         street_address = (
-            BeautifulSoup(store["Address"], "lxml").text.split("(")[0].strip()
+            raw_address.split(", " + location_name.split("-")[0].strip())[0]
+            .split("(")[0]
+            .strip()
         )
 
-        digit = re.search(r"\d", street_address).start(0)
-        if digit != 0:
-            street_address = street_address[digit:]
+        city = location_name.split(",")[0].strip()
+        state = store["Region"].replace("-", " ")
+        zip_code = raw_address.split()[-1]
+
+        if zip_code in street_address:
+            raw_address = (
+                store["Address"]
+                .replace("St Modesto", "St, Modesto")
+                .replace("7 Turlock", "7, Turlock")
+                .split(",")
+            )
+            if len(raw_address) < 5:
+                street_address = ",".join(raw_address[:-2])
+                city = raw_address[-2].strip()
+            elif len(raw_address) == 5:
+                street_address = ",".join(raw_address[:-3])
+                city = raw_address[-3].strip()
+            else:
+                raise
+
+        if re.search(r"\d", street_address):
+            digit = str(re.search(r"\d", street_address))
+            start = int(digit.split("(")[1].split(",")[0])
+            street_address = street_address[start:]
 
         if street_address[-1:] == ",":
-            street_address = street_address[:-1]
+            street_address = street_address[:-1].strip()
 
-        city = store["City"]
-        state = store["Region"]
-        zip_code = store["PostalCode"]
         if len(zip_code) == 4:
             zip_code = "0" + zip_code
+
+        street_address = street_address.split(", TJ Maxx")[0]
+        city = city.split("Spring Vall")[0].split("-")[0].strip()
+
         country_code = "US"
-        location_type = "<MISSING>"
-        phone = store["Phonenumber"].strip()
+        location_type = ""
+        phone = store["PhoneNumber"]
         hours_of_operation = ""
-        raw_hours = store["OpeningDayHours"]
+        raw_hours = store["BusinessHours"]
         for raw_hour in raw_hours:
             hours_of_operation = (
                 hours_of_operation
                 + " "
-                + raw_hour["Day"]
+                + raw_hour["DayName"]
                 + " "
-                + raw_hour["OpeningHours"]
+                + raw_hour["DayHours"]
             ).strip()
         latitude = store["Latitude"]
         longitude = store["Longitude"]
-        store_number = store["Id"]
-        link = "https://www.hearinglife.com/find-hearing-aid-center"
+        store_number = store["ClinicId"]
+        link = locator_domain + store["ItemUrl"]
 
-        # Store data
-        data.append(
-            [
-                locator_domain,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip_code,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-                link,
-            ]
+        sgw.write_row(
+            SgRecord(
+                locator_domain=locator_domain,
+                page_url=link,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_code,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
         )
-    return data
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    fetch_data(writer)
