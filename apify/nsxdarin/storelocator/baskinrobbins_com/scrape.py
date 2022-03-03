@@ -16,8 +16,8 @@ headers = {
 
 def fetch_data():
     coords = ["21,-155", "60,-150"]
-    for xlat in range(25, 55, 5):
-        for ylng in range(-125, -60, 5):
+    for xlat in range(25, 55, 2):
+        for ylng in range(-125, -60, 2):
             coords.append(str(xlat) + "," + str(ylng))
     for coord in coords:
         latc = coord.split(",")[0]
@@ -132,7 +132,7 @@ def fetch_data():
                 )
             except:
                 hours = "<MISSING>"
-            if add != "" and "INACTIVE" not in status:
+            if add != "":
                 yield SgRecord(
                     locator_domain=website,
                     page_url=loc,
