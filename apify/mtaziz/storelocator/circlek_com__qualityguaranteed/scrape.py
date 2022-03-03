@@ -175,7 +175,8 @@ def fetch_details(item_num, data_dict, sgw: SgWriter):
         street_address = data_dict["address"]
         city = data_dict["city"]
         state = data_dict["division_name"]
-        state = state.replace("franchise", "<MISSING>")
+        if state is not None:
+            state = state.replace("franchise", "")
         country_code = data_dict["country"]
         if MISSING not in street_address:
             location_name = "Circle K at" + " " + street_address
@@ -270,8 +271,8 @@ def fetch_details(item_num, data_dict, sgw: SgWriter):
                     state = ""
                 if state == "ON":
                     country_code = "Canada"
-                state = state.replace("franchise", "<MISSING>")
-
+                if state is not None:
+                    state = state.replace("franchise", "")
                 hours_of_operation = get_hoo(store_sel)
                 rec = SgRecord(
                     locator_domain=locator_domain,

@@ -54,7 +54,7 @@ class ExampleSearchIteration(SearchIteration):
                 logger.info(page_url)
                 sp1 = bs(http.get(page_url, headers=_headers))
                 hours = []
-                for hh in sp1.select("ul.list-horaires li"):
+                for hh in sp1.select("div.magInfo-mag-horaire ul li"):
                     if not hh.text.strip():
                         continue
                     ss = list(hh.stripped_strings)
