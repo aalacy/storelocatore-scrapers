@@ -42,9 +42,7 @@ def fetch_data(sgw: SgWriter):
         city = location_name.split(" in")[1].split(",")[0].strip()
         state = location_name.split(" in")[1].split(",")[1].strip()
 
-        raw_data = list(
-            base.find_all("h4", attrs={"data-uialign": "center"})[-1].stripped_strings
-        )
+        raw_data = list(base.find_all("h4")[-1].stripped_strings)
 
         hours_of_operation = ""
         if len(raw_data) > 1:
