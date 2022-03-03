@@ -22,7 +22,7 @@ else:
 
 locator_domain = "https://www.mcdonalds.at"
 base_url = "https://www.mcdonalds.at/restaurants"
-json_url = "https://www.mcdonalds.at/\?wpgb-ajax=render"
+json_url = r"https://www.mcdonalds.at/\?wpgb-ajax=render"
 detail_url = "https://www.mcdonalds.at/wp-admin/admin-ajax.php?action=wpgb_map_facet_tooltip&id={}&source=post_type"
 
 _headers = {
