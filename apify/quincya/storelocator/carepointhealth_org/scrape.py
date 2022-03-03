@@ -34,7 +34,7 @@ def fetch_data(sgw: SgWriter):
         if len(raw_data) > 3:
             location_name = raw_data[0]
             phone = raw_data[-1].replace("Phone:", "").strip()
-            link = item.a["href"]
+            link = "https://carepointhealth.org" + item.a["href"]
             raw_data.pop(0)
         street_address = raw_data[0].strip()
         city_line = raw_data[1]
