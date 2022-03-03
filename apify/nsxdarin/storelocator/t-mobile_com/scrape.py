@@ -92,8 +92,8 @@ def fetch_data():
                     name = store["name"]
                 else:
                     name = "<MISSING>"
-                store_id = store["id"]
-                location_type = compute_location_type(store)
+                store = store["id"]
+                typ = compute_location_type(store)
                 if "url" in store:
                     loc = store["url"]
                 else:
