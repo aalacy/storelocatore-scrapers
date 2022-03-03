@@ -21,6 +21,16 @@ def fetch_data():
         "x-requested-with": "XMLHttpRequest",
     }
 
+    frm_my = {
+        "store_locatore_search_input": "Kuala Lumpur Kuala Lumpur, Malaysia",
+        "store_locatore_search_lat": "3.139003",
+        "store_locatore_search_lng": "101.686855",
+        "store_locatore_search_radius": "2000",
+        "store_locator_category": "",
+        "action": "make_search_request",
+        "lat": "3.139003",
+        "lng": "101.686855",
+    }
     frm_in = {
         "store_locatore_search_input": "New Delhi, India , India",
         "store_locatore_search_lat": "28.6139391",
@@ -117,6 +127,7 @@ def fetch_data():
         "sg": frm_sg,
         "th": frm_th,
         "vn": frm_vn,
+        "my": frm_my,
     }
     for c, frm in countries.items():
         response = session.post(start_url.format(c), headers=hdr, data=frm)

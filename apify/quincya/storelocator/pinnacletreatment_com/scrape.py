@@ -152,6 +152,8 @@ def fetch_data(sgw: SgWriter):
                 .split("Groups:")[0]
                 .split("Licenses:")[0]
                 .split("Out of")[0]
+                .split("Walk")[0]
+                .split("OBOT")[0]
             ).strip()
 
             if (
