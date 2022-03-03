@@ -24,6 +24,11 @@ def get_data():
         hours = "<MISSING>"
         country_code = location["attributes"]["Country_1"]
 
+        if latitude < 26 or latitude > 48:
+            if longitude > -64 or longitude < -123:
+                if country_code == "United States":
+                    country_code = "<MISSING>"
+
         yield {
             "locator_domain": locator_domain,
             "page_url": page_url,

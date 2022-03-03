@@ -15,12 +15,15 @@ headers = {
 
 
 def fetch_data():
-    coords = ["35,-110", "45,-95", "35,-85", "45,-75", "21,-155", "60,-150"]
+    coords = ["21,-155", "60,-150"]
+    for xlat in range(25, 55, 5):
+        for ylng in range(-125, -60, 5):
+            coords.append(str(xlat) + "," + str(ylng))
     for coord in coords:
         latc = coord.split(",")[0]
         lngc = coord.split(",")[1]
         url = (
-            "https://api.baskinrobbins.com/mobilem8-web-service/rest/storeinfo/distance?radius=1500&attributes=&disposition=IN_STORE&latitude="
+            "https://api.baskinrobbins.com/mobilem8-web-service/rest/storeinfo/distance?radius=500&attributes=&disposition=IN_STORE&latitude="
             + latc
             + "&longitude="
             + lngc

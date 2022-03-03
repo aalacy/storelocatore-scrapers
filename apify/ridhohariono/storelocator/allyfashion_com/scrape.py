@@ -10,7 +10,7 @@ from sgscrape.sgpostal import parse_address_intl
 import json
 
 
-DOMAIN = "allyfashion_com.com.au"
+DOMAIN = "allyfashion.com"
 LOCATION_URL = "https://allyfashion.com/ally-fashion-stores"
 HEADERS = {
     "Accept": "application/json, text/plain, */*",

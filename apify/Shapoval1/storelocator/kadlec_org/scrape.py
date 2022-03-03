@@ -15,12 +15,14 @@ def get_urls():
     }
     r = session.get("https://www.providence.org/sitemap.xml", headers=headers)
     tree = html.fromstring(r.content)
-    return tree.xpath("//url/loc[contains(text(), '/locations/kadlec/')]/text()")
+    return tree.xpath(
+        "//url/loc[contains(text(), '/locations/kadlec/')]/text() | //url/loc[contains(text(), '/urgent-care/kadlec')]/text()"
+    )
 
 
 def get_data(url, sgw: SgWriter):
     locator_domain = "https://kadlec.org/"
-    page_url = url
+    page_url = "".join(url)
     if (
         page_url == "https://www.providence.org/locations/kadlec/home-health"
         or page_url == "https://www.providence.org/locations/kadlec/kadlec-clinic"
@@ -69,9 +71,55 @@ def get_data(url, sgw: SgWriter):
         hours_of_operation = hours_of_operation.split("X-Ray")[0].strip()
     if hours_of_operation.find("Phone") != -1:
         hours_of_operation = hours_of_operation.split("Phone")[0].strip()
-    latitude = js.get("geo").get("latitude") or "<MISSING>"
-    longitude = js.get("geo").get("longitude") or "<MISSING>"
-    location_type = js.get("@type") or "<MISSING>"
+    try:
+        latitude = js.get("geo").get("latitude")
+        longitude = js.get("geo").get("longitude")
+        location_type = js.get("@type") or "<MISSING>"
+    except:
+        latitude, longitude, location_type = "<MISSING>", "<MISSING>", "<MISSING>"
+    if location_name.find("Kadlec") != -1:
+        location_type = "Kadlec"
+    if page_url.find("/urgent-care/kadlec/") != -1:
+        location_name = (
+            "".join(tree.xpath('//div[@class="location-header-info"]/div[1]/h1/text()'))
+            .replace("\n", "")
+            .strip()
+            or "<MISSING>"
+        )
+        ad = (
+            " ".join(
+                tree.xpath(
+                    '//div[@class="location-header-info"]/div[1]/div[@class="loc-address"]//text()'
+                )
+            )
+            .replace("\n", "")
+            .strip()
+        )
+        ad = " ".join(ad.split())
+        city = ad.split(",")[-2].strip()
+        state = ad.split(",")[-1].split()[0].strip()
+        postal = ad.split(",")[-1].split()[1].strip()
+        street_address = " ".join(ad.split(",")[:-2]).strip()
+        latitude = (
+            "".join(
+                tree.xpath('//div[@class="location-header-info"]/div[1]/div/@data-lat')
+            )
+            or "<MISSING>"
+        )
+        longitude = (
+            "".join(
+                tree.xpath('//div[@class="location-header-info"]/div[1]/div/@data-lng')
+            )
+            or "<MISSING>"
+        )
+        phone = (
+            "".join(
+                tree.xpath(
+                    '//div[@class="location-header-info"]/div[1]/div[@class="loc-phone"]//text()'
+                )
+            )
+            or "<MISSING>"
+        )
 
     row = SgRecord(
         locator_domain=locator_domain,

@@ -36,7 +36,7 @@ def fetch_data():
                 if phone:
                     phone = phone.replace("暂不外送", "")
                 yield SgRecord(
-                    page_url="",
+                    page_url="https://www.papaonline.com.cn/#/restaurantList",
                     location_name=_["name"],
                     street_address=street_address,
                     city=city,

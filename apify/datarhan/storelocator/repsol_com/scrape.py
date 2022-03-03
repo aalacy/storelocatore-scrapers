@@ -10,7 +10,9 @@ from sgscrape.sgwriter import SgWriter
 def fetch_data():
     session = SgRequests()
 
-    start_url = "https://www.repsol.com/App/SA/CanalMovilREST/api/v1/EESS/list_lite.json?incluirPromociones=false&campsa=true"
+    start_url = (
+        "https://www.repsol.com/App/SA/CanalMovilREST/api/v1/EESS/list_lite.json"
+    )
     domain = "repsol.com"
     hdr = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
@@ -40,9 +42,7 @@ def fetch_data():
 def scrape():
     with SgWriter(
         SgRecordDeduper(
-            SgRecordID(
-                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
-            )
+            SgRecordID({SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STORE_NUMBER})
         )
     ) as writer:
         for item in fetch_data():

@@ -1,185 +1,110 @@
-import csv
-from bs4 import BeautifulSoup
-import re
+from sglogging import sglog
 from sgrequests import SgRequests
-import json
-import phonenumbers
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('steward_org')
-
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
-def write_output(data):
-	with open('data.csv', mode='w',newline="") as output_file:
-		writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+website = "steward_org"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+}
 
-		# Header
-		writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-						 "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
-		# Body
-		for row in data:
-			writer.writerow(row)
+DOMAIN = "https://www.steward.org/"
+MISSING = SgRecord.MISSING
+
+
+url = "https://locations.steward.org/s/sfsites/aura?r=5&aura.ApexAction.execute=2"
+
+headers = {
+    "authority": "locations.steward.org",
+    "user-agent": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.102 Mobile Safari/537.36",
+    "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
+    "accept": "*/*",
+    "origin": "https://locations.steward.org",
+}
+
 
 def fetch_data():
-    addresses = []
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
-        'accept': '*/*',
-        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
-    }
-    base_url="https://www.steward.org/"
-    locator_domain = base_url
-    r= session.get("https://locations.steward.org/?_ga=2.114374343.1517144285.1587465653-1472301885.1587465653",headers= headers)
-    soup = BeautifulSoup(r.text,"lxml")
-    state_list = soup.find("div",class_="state-list-column").find("div",class_="c-directory-list")
-    for link in state_list.find_all("a",class_="c-directory-list-content-item-link"):
-        a = "https://locations.steward.org/"+link["href"]
-        # logger.info(a)
-        r1 = session.get(a,headers=headers)
-        soup1 = BeautifulSoup(r1.text,"lxml")
-        try:
-            for city_link in soup1.find("ul",class_="c-directory-list-content").find_all("li",class_="c-directory-list-content-item"):
-                a1 = "https://locations.steward.org/"+city_link.find("a",class_="c-directory-list-content-item-link")["href"]
-                r2 = session.get(a1,headers=headers)
-                soup2 = BeautifulSoup(r2.text,"lxml")
-                for location in soup2.find_all("div",class_="c-location-grid-col"):
-                    location_name = location.find("span",class_="location-name-brand").text.strip()
-                    page_url = "https://locations.steward.org"+location.find("h1",class_="c-location-grid-item-title").find("a")["href"].replace("..","").strip()
-                    street_address = location.find("span",class_="c-address-street").text.split("Suite")[0].split("Ste")[0].split(",")[0].strip()
-                    if "Floor" in street_address:
-                        street_address =  " ".join(street_address.split()[:-2])
-                    street_address = street_address.split("\n")[0].strip()
-                    city = location.find("span",class_="c-address-city").text.replace(",","").strip()
-                    state = location.find("abbr",class_="c-address-state").text.strip()
-                    zipp = location.find("span",class_="c-address-postal-code").text.strip()
+    if True:
+        state_list = [
+            "Arizona",
+            "Arkansas",
+            "Massachusetts",
+            "New Hampshire",
+            "Texas",
+            "Florida",
+            "Ohio",
+            "Utah",
+            "Louisiana",
+            "Pennsylvania",
+        ]
+        for state_temp in state_list:
+            log.info(f"Fetching Locations from {state_temp}")
+            payload = (
+                "message=%7B%22actions%22%3A%5B%7B%22id%22%3A%22160%3Ba%22%2C%22descriptor%22%3A%22aura%3A%2F%2FApexActionController%2FACTION%24execute%22%2C%22callingDescriptor%22%3A%22UNKNOWN%22%2C%22params%22%3A%7B%22namespace%22%3A%22%22%2C%22classname%22%3A%22MapboxController%22%2C%22method%22%3A%22getSettings%22%2C%22cacheable%22%3Afalse%2C%22isContinuation%22%3Afalse%7D%7D%2C%7B%22id%22%3A%22161%3Ba%22%2C%22descriptor%22%3A%22aura%3A%2F%2FApexActionController%2FACTION%24execute%22%2C%22callingDescriptor%22%3A%22UNKNOWN%22%2C%22params%22%3A%7B%22namespace%22%3A%22%22%2C%22classname%22%3A%22ProviderSearchController%22%2C%22method%22%3A%22getProviders%22%2C%22params%22%3A%7B%22queryParams%22%3A%7B%22searchTerm%22%3A%22null%22%2C%22location%22%3A%22"
+                + state_temp
+                + "%22%2C%22geolocation%22%3Anull%2C%22gender%22%3Anull%2C%22proximity%22%3Anull%2C%22bookable%22%3Anull%2C%22newPatients%22%3Anull%2C%22ageGroup%22%3Anull%2C%22networkAffiliation%22%3Anull%2C%22hospitalAffiliations%22%3Anull%2C%22languages%22%3Anull%2C%22filter%22%3A%22basic%22%7D%7D%2C%22cacheable%22%3Afalse%2C%22isContinuation%22%3Afalse%7D%7D%5D%7D&aura.context=%7B%22mode%22%3A%22PROD%22%2C%22fwuid%22%3A%22QbIGjbUweWP5tLmFUE_dTw%22%2C%22app%22%3A%22siteforce%3AcommunityApp%22%2C%22loaded%22%3A%7B%22APPLICATION%40markup%3A%2F%2Fsiteforce%3AcommunityApp%22%3A%22KbCmDBVbE10iCy1inwbbzA%22%7D%2C%22dn%22%3A%5B%5D%2C%22globals%22%3A%7B%7D%2C%22uad%22%3Afalse%7D&aura.pageURI=%2Fs%2Fprovider-search-results%3FsearchTerm%3Dnull%26location%3D"
+                + state_temp
+                + "%26filter%3Dbasic&aura.token=null"
+            )
+            linklist = session.post(url, headers=headers, data=payload).json()[
+                "actions"
+            ][1]["returnValue"]["returnValue"]
+            for link in linklist:
+                loclist = link["Contact"]["Affiliations__r"]
+                for loc in loclist:
+                    page_url = (
+                        "https://locations.steward.org/s/affiliation/" + loc["Id"]
+                    )
+                    log.info(page_url)
+                    loc = loc["Account__r"]
+                    location_name = loc["Name"]
+                    address = loc["ShippingAddress"]
+                    street_address = address["street"].replace("\n", " ")
+                    city = address["city"]
+                    state = address["state"]
+                    zip_postal = address["postalCode"]
                     country_code = "US"
-                    store_number = "<MISSING>"
-                    phone = location.find("span",class_="c-phone-number-span c-phone-main-number-span").text.strip()
-                    location_type = "<MISSING>"
-                    
-                    r3 = session.get(page_url,headers = headers)
-                    soup3 = BeautifulSoup(r3.text,"lxml")
                     try:
-                        hours_of_operation = " ".join(list(soup3.find("table",class_="c-location-hours-details").stripped_strings)).replace("Day of the Week Hours","").strip()
+                        latitude = loc["ShippingLatitude"]
                     except:
-                        # logger.info("page_url == ",page_url)
-                        hours_of_operation = "<MISSING>"
-                    latitude = soup3.find("meta",{"itemprop":"latitude"})["content"]
-                    longitude   = soup3.find("meta",{"itemprop":"longitude"})["content"]
-                    # logger.info(city)
-                    store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
-                    store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
-                    store = [x if x else "<MISSING>" for x in store]
-
-                    if (store[1]+" "+store[2]+" "+store[-3]) in addresses:
-                        continue
-                    addresses.append(store[1]+" "+store[2]+" "+store[-3])
-                    #logger.info("data = " + str(store))
-                    #logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-                    yield store
-                    
-
-        except:
-            loc_grid = soup1.find("div",class_="c-location-grid")
-            if loc_grid != None:
-                for location in loc_grid.find_all("div",class_="c-location-grid-col"):
-                    location_name = location.find("span",class_="location-name-brand").text.strip()
-                    page_url = "https://locations.steward.org"+location.find("h1",class_="c-location-grid-item-title").find("a")["href"].replace("..","").strip()
-                    street_address = location.find("span",class_="c-address-street").text.split("Suite")[0].split("Ste")[0].split(",")[0].strip()
-                    if "Floor" in street_address:
-                        street_address =  " ".join(street_address.split()[:-2])
-                   
-                    street_address = street_address.split("\n")[0].strip()
-                    city = location.find("span",class_="c-address-city").text.replace(",","").strip()
-                    state = location.find("abbr",class_="c-address-state").text.strip()
-                    zipp = location.find("span",class_="c-address-postal-code").text.strip()
-                    country_code = "US"
-                    store_number = "<MISSING>"
-                    phone = location.find("span",class_="c-phone-number-span c-phone-main-number-span").text.strip()
-                    location_type = "<MISSING>"
-                    r3 = session.get(page_url,headers = headers)
-                    soup3 = BeautifulSoup(r3.text,"lxml")
+                        latitude = MISSING
                     try:
-                        hours_of_operation = " ".join(list(soup3.find("table",class_="c-location-hours-details").stripped_strings)).replace("Day of the Week Hours","").strip()
+                        longitude = loc["ShippingLongitude"]
                     except:
-                        # logger.info("page_url == ",page_url)
-                        hours_of_operation = "<MISSING>"
-                    latitude = soup3.find("meta",{"itemprop":"latitude"})["content"]
-                    longitude   = soup3.find("meta",{"itemprop":"longitude"})["content"]
-                    # logger.info(city)
-                    store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
-                    store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
-                    store = [x if x else "<MISSING>" for x in store]
+                        longitude = MISSING
+                    yield SgRecord(
+                        locator_domain=DOMAIN,
+                        page_url=page_url,
+                        location_name=location_name,
+                        street_address=street_address.strip(),
+                        city=city.strip(),
+                        state=state.strip(),
+                        zip_postal=zip_postal.strip(),
+                        country_code=country_code,
+                        store_number=MISSING,
+                        phone="<INACCESSIBLE>",
+                        location_type=MISSING,
+                        latitude=latitude,
+                        longitude=longitude,
+                        hours_of_operation="<INACCESSIBLE>",
+                    )
 
-                    if (store[1]+" "+store[2]+" "+store[-3]) in addresses:
-                        continue
-                    addresses.append(store[1]+" "+store[2]+" "+store[-3])
 
-                    # logger.info("data = " + str(store))
-                    # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-                    yield store
-            else:
-                page_url = a
-                location_name = "<MISSING>"
-                street_address = list(soup1.find("a",{"itemprop":"address"}).stripped_strings)[0]
-                city = list(soup1.find("a",{"itemprop":"address"}).stripped_strings)[-1].split()[0]
-                state = list(soup1.find("a",{"itemprop":"address"}).stripped_strings)[-1].split()[1]
-                zipp = list(soup1.find("a",{"itemprop":"address"}).stripped_strings)[-1].split()[-1]
-                country_code = "US"
-                phone = soup1.find("span",{"itemprop":"telephone"}).text
-                hours_of_operation = " ".join(list(soup1.find("table",class_="c-location-hours-details").stripped_strings)).replace("Day of the Week Hours","").strip()
-                location_type = "<MISSING>"
-                store_number = "<MISSING>"
-                latitude = soup1.find("meta",{"itemprop":"latitude"})["content"]
-                longitude   = soup1.find("meta",{"itemprop":"longitude"})["content"]
-                store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
-                store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
-                store = [x if x else "<MISSING>" for x in store]
-
-                if (store[1]+" "+store[2]+" "+store[-3]) in addresses:
-                        continue
-                addresses.append(store[1]+" "+store[2]+" "+store[-3])
-                # logger.info(street_address)
-                # logger.info("data = " + str(store))
-                # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-                yield store
-                
-    r = session.get("https://www.steward.org/network/our-hospitals",headers=headers)
-    soup = BeautifulSoup(r.text,"lxml")
-    for data in soup.find_all("div",{"col-md-4 col-sm-6 col-xs-12 state-location"}):
-        location_name = data.find("h3").text
-        addr = list(data.find("div",{"class":"state-location-left"}).find("div").stripped_strings)
-        street_address = addr[1]
-        city = addr[-1].split(",")[0]
-        state = addr[-1].split(",")[-1].split()[0]
-        zipp = addr[-1].split(",")[-1].split()[1]
-        phone = phonenumbers.format_number(phonenumbers.parse(str(data.find("a",{"class":"phone"})['href'].replace("tel:","")), 'US'), phonenumbers.PhoneNumberFormat.NATIONAL)
-        page_url = data.find("a",{"class":"website"})['href']
-        store =[]
-        store.append(base_url)
-        store.append(location_name)
-        store.append(street_address)
-        store.append(city)
-        store.append(state)
-        store.append(zipp)
-        store.append("US")
-        store.append("<MISSING>")
-        store.append(phone)
-        store.append("HOSPITAL")
-        store.append("<MISSING>")
-        store.append("<MISSING>")
-        store.append("<MISSING>")
-        store.append(page_url)
-        if (store[1]+" "+store[2]) in addresses:
-            continue
-        addresses.append(store[1]+" "+store[2])
-
-        store = [str(x).strip() if x else "<MISSING>" for x in store]
-
-        yield store
-    
 def scrape():
-    data = fetch_data()
-    write_output(data)
-scrape()
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
+
+
+if __name__ == "__main__":
+    scrape()
