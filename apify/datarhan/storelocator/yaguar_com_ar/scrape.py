@@ -66,11 +66,16 @@ def fetch_data():
         )[0]
         with SgFirefox() as driver:
             driver.get(page_url)
-            sleep(10)
+            sleep(15)
             loc_dom = etree.HTML(driver.page_source)
         geo = (
             loc_dom.xpath("//iframe/@src")[-1].split("q=")[-1].split("&")[0].split(",")
         )
+        latitude = ""
+        longitude = ""
+        if len(geo) == 2:
+            latitude = geo[0]
+            longitude = geo[1]
 
         item = SgRecord(
             locator_domain=domain,
@@ -84,8 +89,8 @@ def fetch_data():
             store_number="",
             phone=phone,
             location_type="",
-            latitude=geo[0],
-            longitude=geo[1],
+            latitude=latitude,
+            longitude=longitude,
             hours_of_operation=hoo,
             raw_address=raw_address,
         )
