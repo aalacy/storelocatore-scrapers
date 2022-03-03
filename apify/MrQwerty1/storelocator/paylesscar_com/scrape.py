@@ -1,135 +1,122 @@
-import csv
-import json
-
-from concurrent import futures
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
-
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from concurrent import futures
 
 
 def get_urls():
     urls = []
-    session = SgRequests()
-    countries = ["us", "ca", "pr"]
+    start = [
+        "https://www.paylesscar.com/en/locations/international",
+        "https://www.paylesscar.com/en/locations/us",
+    ]
 
-    for c in countries:
-        r = session.get(f"https://www.paylesscar.com/en/locations/{c}")
+    for s in start:
+        r = session.get(s, headers=headers, cookies=cookies)
         tree = html.fromstring(r.text)
         urls += tree.xpath("//a[@class='pl-loc-subtitle']/@href")
 
     return urls
 
 
-def get_data(url):
-    locator_domain = "https://www.paylesscar.com/"
-    page_url = f"https://www.paylesscar.com{url}"
+def remove_comma(text: str):
+    if text.endswith(","):
+        return text[:-1]
 
-    session = SgRequests()
-    r = session.get(page_url)
+    return text
+
+
+def get_data(slug, sgw: SgWriter):
+    page_url = f"https://www.paylesscar.com{slug}"
+    r = session.get(page_url, headers=headers)
+    if r.status_code == 404:
+        return
     tree = html.fromstring(r.text)
-    script = "".join(tree.xpath("//script[contains(text(), '@context')]/text()"))
-    j = json.loads(script)
-
-    location_name = (
-        tree.xpath("//span[@itemprop='name']/text()")[-1].strip() or "<MISSING>"
+    location_name = tree.xpath("//span[@itemprop='name']/text()")[-1].strip()
+    street_address = ", ".join(
+        tree.xpath("//p[@itemprop='streetAddress']/text()")
+    ).strip()
+    city = "".join(tree.xpath("//span[@itemprop='addressLocality']/text()")).strip()
+    state = "".join(tree.xpath("//span[@itemprop='addressRegion']/text()")).strip()
+    postal = "".join(tree.xpath("//span[@itemprop='postalCode']/text()")).strip()
+    country = "".join(tree.xpath("//p[@itemprop='addressCountry']/text()")).strip()
+    phone = "".join(tree.xpath("//p[@itemprop='telephone']//text()")).strip()
+    latitude = "".join(tree.xpath("//meta[@itemprop='latitude']/@content"))
+    longitude = "".join(tree.xpath("//meta[@itemprop='longitude']/@content"))
+    location_type = "".join(
+        tree.xpath(
+            "//div[./strong[contains(text(), 'Type')]]/following-sibling::div[1]/text()"
+        )
+    ).strip()
+    hours = tree.xpath(
+        "//div[./strong[contains(text(), 'Hours')]]/following-sibling::div[1]//text()"
     )
-    a = j.get("address", {})
-    street_address = a.get("streetAddress") or "<MISSING>"
-    city = a.get("addressLocality") or "<MISSING>"
-    state = (
-        "".join(tree.xpath("//span[@itemprop='addressRegion']/text()"))
-        .replace(",", "")
-        .strip()
-        or "<MISSING>"
+    hours = list(filter(None, [h.strip() for h in hours]))
+    hours_of_operation = ";".join(hours)
+
+    row = SgRecord(
+        page_url=page_url,
+        location_name=location_name,
+        street_address=street_address,
+        city=remove_comma(city),
+        state=remove_comma(state),
+        zip_postal=postal,
+        country_code=country,
+        latitude=latitude,
+        longitude=longitude,
+        location_type=location_type,
+        phone=phone,
+        locator_domain=locator_domain,
+        hours_of_operation=hours_of_operation,
     )
-    postal = a.get("postalCode") or "<MISSING>"
-    country = a.get("addressCountry") or "<MISSING>"
-    if country == "Canada":
-        country_code = "CA"
-    else:
-        country_code = "US"
-    store_number = "<MISSING>"
-    phone = a.get("telephone", "").replace("(1)", "").strip() or "<MISSING>"
-    latitude, longitude = j.get("map").split("=")[-1].split(",") or (
-        "<MISSING>",
-        "<MISSING>",
-    )
-    location_type = (
-        "".join(
-            tree.xpath(
-                "//div[./div/strong[contains(text(), 'Type')]]/div[@class='col-sm-7 col-xs-7']/text()"
-            )
-        ).strip()
-        or "<MISSING>"
-    )
-    hours_of_operation = j.get("openingHours", "").replace(",", ";") or "<MISSING>"
 
-    row = [
-        locator_domain,
-        page_url,
-        location_name,
-        street_address,
-        city,
-        state,
-        postal,
-        country_code,
-        store_number,
-        phone,
-        location_type,
-        latitude,
-        longitude,
-        hours_of_operation,
-    ]
-
-    return row
+    sgw.write_row(row)
 
 
-def fetch_data():
-    out = []
+def fetch_data(sgw: SgWriter):
     urls = get_urls()
 
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {executor.submit(get_data, url): url for url in urls}
+    with futures.ThreadPoolExecutor(max_workers=3) as executor:
+        future_to_url = {executor.submit(get_data, url, sgw): url for url in urls}
         for future in futures.as_completed(future_to_url):
-            row = future.result()
-            if row:
-                out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+            future.result()
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://www.paylesscar.com/"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:94.0) Gecko/20100101 Firefox/94.0",
+        "Accept": "application/json, text/plain, */*",
+        "Accept-Language": "ru,en-US;q=0.7,en;q=0.3",
+        "userName": "PAYLESSCOM",
+        "password": "PAYLESSCOM",
+        "channel": "Digital",
+        "domain": "us",
+        "locale": "en",
+        "bookingType": "car",
+        "deviceType": "bigbrowser",
+        "Connection": "keep-alive",
+        "Referer": "https://www.paylesscar.com/en/locations/us/al/birmingham/bhm",
+        "Sec-Fetch-Dest": "empty",
+        "Sec-Fetch-Mode": "cors",
+        "Sec-Fetch-Site": "same-origin",
+        "TE": "trailers",
+    }
+
+    cookies = {
+        "APISID": "dfca6acd-74bd-453a-a18d-7a8e09b4b936",
+        "DIGITAL_TOKEN": "c38112dc-2768-4aa2-b361-78551d53c8f3-01-cdal-ho5319",
+        "datacenter": "cdal",
+    }
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        fetch_data(writer)

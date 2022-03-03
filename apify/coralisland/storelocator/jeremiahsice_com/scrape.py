@@ -16,10 +16,14 @@ def fetch_data():
 
     all_locations = session.get(start_url, headers=hdr).json()
     for i, poi in all_locations.items():
+        if "duplicate" in poi["slug"]:
+            continue
         if poi["coming_soon"] == "1":
             continue
         hoo = []
         for k, time in poi.items():
+            if "summer" in k:
+                continue
             if "hours" in k:
                 hoo.append(f'{k.split("_")[0]} {time}')
         hours_of_operation = " ".join(hoo)

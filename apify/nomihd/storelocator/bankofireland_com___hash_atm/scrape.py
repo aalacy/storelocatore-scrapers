@@ -30,7 +30,7 @@ headers = {
 def fetch_data():
     # Your scraper here
 
-    search_url = "https://www.bankofireland.com/branch-locator/"
+    search_url = "https://www.bankofireland.com/branch-locator/125-oconnell-st/"
     search_res = session.get(search_url, headers=headers)
 
     json_str = (
@@ -43,6 +43,90 @@ def fetch_data():
     json_res = json.loads(json_str)
 
     store_list = json_res["atms"]
+    branches = json_res["branches"]
+    for store_key in branches.keys():
+
+        if branches[store_key]["elatm"] is True:
+            page_url = (
+                "https://www.bankofireland.com/branch-locator/"
+                + branches[store_key]["slug"]
+            )
+
+            locator_domain = website
+
+            raw_address = (
+                branches[store_key]["address"]
+                .strip()
+                .replace("Bank of Ireland,", "")
+                .strip()
+            )
+
+            formatted_addr = parser.parse_address_intl(raw_address)
+            street_address = formatted_addr.street_address_1
+            if formatted_addr.street_address_2:
+                street_address = street_address + ", " + formatted_addr.street_address_2
+
+            city = formatted_addr.city
+            state = "<MISSING>"
+            zip = (
+                raw_address.split(",")[-1]
+                .strip()
+                .replace("Northern Ireland", "")
+                .strip()
+                .replace(".", "")
+                .strip()
+                .replace("  ", " ")
+                .strip()
+            )
+            try:
+                zip = " ".join(zip.rsplit(" ")[-2:]).strip()
+            except:
+                pass
+
+            try:
+                if zip[0].isalpha() is True and zip[1].isdigit() is not True:
+                    zip = "<MISSING>"
+            except:
+                pass
+
+            if zip == "W635":
+                zip = "F94 " + zip
+
+            country_code = "IE"
+            if "Northern Ireland" in raw_address:
+                country_code = "GB"
+
+            location_name = branches[store_key]["name"].strip()
+
+            phone = branches[store_key]["details"]["boi_direct"]
+            store_number = str(branches[store_key]["post_id"])
+
+            location_type = "External Lodging ATMs"
+
+            hours_of_operation = "24/7"
+
+            latitude, longitude = (
+                branches[store_key]["position"]["lat"],
+                branches[store_key]["position"]["lng"],
+            )
+
+            yield SgRecord(
+                locator_domain=locator_domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+                raw_address=raw_address,
+            )
 
     for store_key in store_list.keys():
         page_url = "<MISSING>"
@@ -60,6 +144,19 @@ def fetch_data():
         if city and city.isdigit():
             city = raw_address.split(",")[-2].strip().split(" ")[0].strip()
 
+        city_list = []
+        try:
+            temp_city = city.split(" ")
+            for ct in temp_city:
+                if ct.isdigit():
+                    break
+                else:
+                    city_list.append(ct)
+
+            city = " ".join(city_list).strip()
+        except:
+            pass
+
         state = formatted_addr.state
         zip = "<MISSING>"
 
@@ -70,9 +167,11 @@ def fetch_data():
         location_name = store_list[store_key]["name"].strip()
 
         phone = "<MISSING>"
-        store_number = store_list[store_key]["id"]
+        store_number = str(store_list[store_key]["id"])
 
         location_type = "<MISSING>"
+        if store_list[store_key]["elatm"] is True:
+            location_type = "External Lodging ATMs"
 
         hours_of_operation = "24/7"
 

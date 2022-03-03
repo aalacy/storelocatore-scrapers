@@ -1,130 +1,154 @@
-import csv
-import re
-import pdb
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 from lxml import etree
-import json
 import time
 from random import randint
 from sglogging import sglog
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 log = sglog.SgLogSetup().get_logger(logger_name="blomedry.com")
 
-base_url = 'https://blomedry.com'
 
-def validate(item):    
+def validate(item):
     if type(item) == list:
-        item = ' '.join(item)
+        item = " ".join(item)
     while True:
-        if item[-1:] == ' ':
+        if item[-1:] == " ":
             item = item[:-1]
         else:
             break
-    return item.replace(u'\u2013', '-').strip()
+    return item.replace("\u2013", "-").strip()
+
 
 def get_value(item):
-    if item == None :
-        item = '<MISSING>'
+    if item is None:
+        item = "<MISSING>"
     item = validate(item)
-    if item == '':
-        item = '<MISSING>'
+    if item == "":
+        item = "<MISSING>"
     return item
 
-def eliminate_space(items):
-    rets = []
-    for item in items:
-        item = validate(item)
-        if item != '':
-            rets.append(item)
-    return rets
-
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-        for row in data:
-            writer.writerow(row)
-
-def replace_last(source_string, replace_what, replace_with):
-    head, _sep, tail = source_string.rpartition(replace_what)
-    return head + replace_with + tail
 
 def fetch_data():
 
-    user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36'
-    headers = {'User-Agent' : user_agent}
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36"
+    headers = {"User-Agent": user_agent}
 
-    session = SgRequests()
-    output_list = []
-    countries = ["CA","US"]
-    for country in countries:
-        url = "https://blomedry.com/locations/?country=" + country
-        request = session.get(url, headers=headers)
-        time.sleep(randint(2,4))
-        response = etree.HTML(request.text)
-        store_list = response.xpath('//li[contains(@class, "article-location")]')
-        log.info(url)
-        for i, store in enumerate(store_list):
-            # print("Link %s of %s" %(i+1,len(store_list)))
-            detail_url = store.xpath(".//h2/a/@href")[0]
-            # print(detail_url)
-            latitude = store.xpath("@data-lat")[0]
-            longitude = store.xpath("@data-lng")[0]
+    countries = ["US", "CA", "PH"]
+    with SgRequests() as session:
+        for country in countries:
+            url = "https://blomedry.com/locations/?country=" + country
+            request = session.get(url, headers=headers)
+            time.sleep(randint(2, 4))
+            response = etree.HTML(request.text)
+            store_list = response.xpath('//li[contains(@class, "article-location")]')
+            log.info(url)
+            for i, store in enumerate(store_list):
+                detail_url = store.xpath(".//h2/a/@href")[0]
+                latitude = store.xpath("@data-lat")[0]
+                longitude = store.xpath("@data-lng")[0]
 
-            title = store.xpath(".//h2/a/text()")[0]
-            address = store.xpath(".//p/text()")
-            if not address[-1].strip():
-                address.pop(-1)
-            try:
-                street_address = get_value(address[-3]).replace(","," ").strip() + " " + get_value(address[-2]).replace(","," ").strip()
-            except:
-                street_address = get_value(address[-2]).replace(","," ").strip()
-            city_state = validate(address[-1])
-            city = city_state.split(",")[0]
-            if country == "US":                
-                state = city_state.split(",")[1][:-6].strip()
-            else:
-                state = city_state.split(",")[1][:-7].strip()
-            if country == "US":
-                zipcode = city_state.split(",")[1][-6:].strip()
-                if zipcode == "90595" and city == "Torrance":
-                    zipcode = "90505"
-            else:
-                zipcode = city_state.split(",")[1][-7:].strip()
-            try:
-                phone = store.xpath(".//p/a/text()")[0]
-            except:
-                continue
+                title = store.xpath(".//h2/a/text()")[0]
+                address = store.xpath(".//p/text()")
+                if country == "PH":
+                    street_address = address[0].strip()
+                    city = address[1].strip().split(",")[0].strip()
+                    state = "<MISSING>"
+                    zipcode = "<MISSING>"
+                else:
+                    if not address[-1].strip():
+                        address.pop(-1)
+                    try:
+                        street_address = (
+                            get_value(address[-3]).replace(",", " ").strip()
+                            + " "
+                            + get_value(address[-2]).replace(",", " ").strip()
+                        )
+                    except:
+                        street_address = (
+                            get_value(address[-2]).replace(",", " ").strip()
+                        )
+                    city_state = validate(address[-1])
+                    city = city_state.split(",")[0]
+                    if country == "US":
+                        state = city_state.split(",")[1][:-6].strip()
+                    else:
+                        state = city_state.split(",")[1][:-7].strip()
+                    if country == "US":
+                        zipcode = city_state.split(",")[1][-6:].strip()
+                        if zipcode == "90595" and city == "Torrance":
+                            zipcode = "90505"
+                    else:
+                        zipcode = city_state.split(",")[1][-7:].strip()
 
-            try:
-                req = session.get(detail_url, headers = headers)
-                base = BeautifulSoup(req.text,"lxml")
-                hours = base.find(class_="schedule__body").ul.text.replace("\n"," ").strip()
-            except:
-                hours = "<INACCESSIBLE>"
+                phone = "<MISSING>"
+                try:
+                    phone = store.xpath(".//p/a/text()")[0]
+                except:
+                    continue
 
-            output = []
-            output.append(base_url) # url
-            output.append(detail_url) # page_url
-            output.append(title) #location name
-            output.append(street_address) #address
-            output.append(city) #city
-            output.append(state) #state
-            output.append(zipcode) #zipcode
-            output.append(country) #country code
-            output.append("<MISSING>") #store_number
-            output.append(phone) #phone
-            output.append("<MISSING>") #location type
-            output.append(latitude) #latitude
-            output.append(longitude) #longitude
-            output.append(hours) #opening hours
-            output_list.append(output)
-        
-    return output_list
+                hours = "<MISSING>"
+                try:
+                    req = session.get(detail_url, headers=headers)
+                    log.info(detail_url)
+                    base = BeautifulSoup(req.text, "lxml")
+                    hours = (
+                        base.find(class_="schedule__body")
+                        .ul.text.replace("\n", "; ")
+                        .strip()
+                    )
+                except:
+                    hours = "<INACCESSIBLE>"
+
+                if hours[0] == ";":
+                    hours = "".join(hours[1:]).strip()
+
+                if street_address[-1] == ",":
+                    street_address = "".join(street_address[:-1]).strip()
+                yield SgRecord(
+                    locator_domain="blomedry.com",
+                    page_url=detail_url,
+                    location_name=title,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=zipcode,
+                    country_code=country,
+                    store_number="<MISSING>",
+                    phone=phone,
+                    location_type="<MISSING>",
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=hours,
+                )
+
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    log.info("Started")
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.LOCATION_NAME,
+                    SgRecord.Headers.CITY,
+                    SgRecord.Headers.ZIP,
+                }
+            )
+        )
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
 
-scrape()
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
+
+
+if __name__ == "__main__":
+    scrape()

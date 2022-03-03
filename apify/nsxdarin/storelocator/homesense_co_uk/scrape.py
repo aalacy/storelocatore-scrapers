@@ -14,30 +14,130 @@ logger = SgLogSetup().get_logger("homesense_co_uk")
 
 
 def fetch_data():
-    locs = []
+    locs = ["https://www.homesense.com/stores/Cork"]
     cities = [
         "London",
-        "Edinburgh",
         "Birmingham",
-        "Leeds",
         "Glasgow",
-        "Belfast",
-        "Sheffield",
-        "Bradford",
-        "Plymouth",
-        "Manchester",
         "Liverpool",
-        "Wakefield",
-        "Southend",
-        "Leicester",
-        "Cardiff",
-        "Stoke",
+        "Blanchardstown",
         "Bristol",
+        "Manchester",
+        "Sheffield",
+        "Leeds",
+        "Edinburgh",
+        "Leicester",
+        "Coventry",
+        "Bradford",
+        "Cardiff",
+        "Belfast",
         "Nottingham",
-        "Hull",
-        "Newcastle",
+        "Kingston upon Hull",
+        "Newcastle upon Tyne",
+        "Stoke on Trent",
         "Southampton",
         "Derby",
+        "Portsmouth",
+        "Brighton and Hove",
+        "Plymouth",
+        "Northampton",
+        "Reading",
+        "Luton",
+        "Wolverhampton",
+        "Bournemouth",
+        "Aberdeen",
+        "Bolton",
+        "Norwich",
+        "Swindon",
+        "Swansea",
+        "Milton Keynes",
+        "Southend on Sea",
+        "Middlesbrough",
+        "Sunderland",
+        "Peterborough",
+        "Warrington",
+        "Oxford",
+        "Huddersfield",
+        "Slough",
+        "York",
+        "Poole",
+        "Cambridge",
+        "Dundee",
+        "Ipswich",
+        "Telford",
+        "Gloucester",
+        "Blackpool",
+        "Birkenhead",
+        "Watford",
+        "Sale",
+        "Colchester",
+        "Newport",
+        "Solihull",
+        "High Wycombe",
+        "Exeter",
+        "Gateshead",
+        "Cheltenham",
+        "Blackburn",
+        "Maidstone",
+        "Chelmsford",
+        "Basildon",
+        "Salford",
+        "Basingstoke",
+        "Worthing",
+        "Eastbourne",
+        "Doncaster",
+        "Crawley",
+        "Rotherham",
+        "Rochdale",
+        "Stockport",
+        "Gillingham",
+        "Sutton Coldfield",
+        "Woking",
+        "Wigan",
+        "Lincoln",
+        "St Helens",
+        "Oldham",
+        "Worcester",
+        "Wakefield",
+        "Hemel Hempstead",
+        "Bath",
+        "Preston",
+        "Rayleigh",
+        "Barnsley",
+        "Stevenage",
+        "Southport",
+        "Hastings",
+        "Bedford",
+        "Darlington",
+        "Halifax",
+        "Hartlepool",
+        "Chesterfield",
+        "Grimsby",
+        "Nuneaton",
+        "Weston super Mare",
+        "Chester",
+        "St Albans",
+        "Harlow",
+        "Guildford",
+        "Stockton on Tees",
+        "Aylesbury",
+        "Derry",
+        "Bracknell",
+        "Dudley",
+        "Redditch",
+        "Batley",
+        "Scunthorpe",
+        "Burnley",
+        "Eastleigh",
+        "Chatham",
+        "Mansfield",
+        "Bury",
+        "Newcastle under Lyme",
+        "Paisley",
+        "West Bromwich",
+        "South Shields",
+        "Carlisle",
+        "East Kilbride",
     ]
     website = "homesense.co.uk"
     typ = "<MISSING>"
@@ -45,6 +145,7 @@ def fetch_data():
     for cname in cities:
         url = "https://www.homesense.com/find-a-store?address=" + cname
         r = session.get(url, headers=headers)
+        r = session.get("https://www.homesense.com/search-results", headers=headers)
         logger.info(cname)
         for line in r.iter_lines():
             line = str(line.decode("utf-8"))
@@ -114,23 +215,36 @@ def fetch_data():
             city = "Manchester"
         if "Staples" in name:
             city = "London"
-        if add != "":
-            yield SgRecord(
-                locator_domain=website,
-                page_url=loc,
-                location_name=name,
-                street_address=add,
-                city=city,
-                state=state,
-                zip_postal=zc,
-                country_code=country,
-                phone=phone,
-                location_type=typ,
-                store_number=store,
-                latitude=lat,
-                longitude=lng,
-                hours_of_operation=hours,
-            )
+        city = city.replace("Hedge_End", "Hedge End")
+        city = city.replace("Kingston_Park", "Kingston Park")
+        city = city.replace("Merthyr_Tydfil", "Merthyr Tydfil")
+        city = city.replace("Fort_Kinnaird", "Fort Kinnaird")
+        city = city.replace("Milton_Keynes", "Milton Keynes")
+        city = city.replace("Tunbridge_Wells", "Tunbridge Wells")
+        if "_" in city:
+            city = city.split("_")[0]
+        if "stores/Cork" in loc:
+            country = "IE"
+            add = "The Capitol 14-23 Grand Parade"
+            state = "<MISSING>"
+            name = "Cork"
+            zc = "T12 RF85"
+        yield SgRecord(
+            locator_domain=website,
+            page_url=loc,
+            location_name=name,
+            street_address=add,
+            city=city,
+            state=state,
+            zip_postal=zc,
+            country_code=country,
+            phone=phone,
+            location_type=typ,
+            store_number=store,
+            latitude=lat,
+            longitude=lng,
+            hours_of_operation=hours,
+        )
 
 
 def scrape():
