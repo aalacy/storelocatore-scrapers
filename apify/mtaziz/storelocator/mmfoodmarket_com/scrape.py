@@ -7,6 +7,8 @@ from sgscrape.sgrecord_id import SgRecordID
 import json
 from lxml import html
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from tenacity import retry, stop_after_attempt
+import tenacity
 
 
 website = "mmfoodmarket_com"
@@ -19,14 +21,18 @@ MISSING = SgRecord.MISSING
 MAX_WORKERS = 10
 
 
-def get_response(url):
-    with SgRequests() as http:
+@retry(stop=stop_after_attempt(5), wait=tenacity.wait_fixed(10))
+def get_response_new(url):
+    with SgRequests(verify_ssl=False) as http:
         r1 = http.get(url, headers=headers)
         if r1.status_code == 200:
             logger.info(f"HTTP Status Code: {r1.status_code}")
             return r1
-        else:
+        elif r1.status_code == 404:
+            logger.info(f"URL does not exist! {r1.status_code}")
             return
+        else:
+            raise Exception(f"Please fix the issue of redirection{url}")
 
 
 def get_hoo(sel):
@@ -44,8 +50,11 @@ def get_hoo(sel):
 
 def fetch_records(storenum, sgw: SgWriter):
     url = f"https://mmfoodmarket.com/en/store_locations/{storenum}"
-    r = get_response(url)
+    logger.info(f"[{storenum}] Pulling data from {url}")
+
+    r = get_response_new(url)
     if r is None:
+        logger.info(f"[{storenum}] URL does not exist: {url}")
         return
     else:
         sel = html.fromstring(r.text, "lxml")
