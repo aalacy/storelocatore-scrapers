@@ -43,7 +43,7 @@ def compute_location_type(store):
     hasTmobileStack = store["hasTmobileStack"]
     tags = store["storeTag"]
     if (
-        statusDefinition == None
+        statusDefinition is None
         and hasSprintStack is False
         and hasTmobileStack is False
     ):
