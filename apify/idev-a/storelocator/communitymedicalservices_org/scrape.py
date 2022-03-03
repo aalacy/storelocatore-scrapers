@@ -72,7 +72,7 @@ def fetch_data():
                 city=addr[-1].split(",")[0].strip(),
                 state=addr[-1].split(",")[1].strip().split(" ")[0].strip(),
                 zip_postal=addr[-1].split(",")[1].strip().split(" ")[-1].strip(),
-                country_code='US',
+                country_code="US",
                 phone=phone,
                 locator_domain=locator_domain,
                 latitude=_["location"]["geoPoint"]["lat"],
