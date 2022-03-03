@@ -8,7 +8,6 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from bs4 import BeautifulSoup as bs
 import json
 import re
-import time
 from sglogging import SgLogSetup
 
 from sgselenium import SgChrome
@@ -22,9 +21,6 @@ ssl._create_default_https_context = ssl._create_unverified_context
 
 logger = SgLogSetup().get_logger("yha")
 
-user_agent = (
-    "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0"
-)
 
 locator_domain = "https://www.yha.org.uk"
 base_url = "https://www.yha.org.uk/hostels/all-youth-hostels"
