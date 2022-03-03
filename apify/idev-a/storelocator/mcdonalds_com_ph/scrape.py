@@ -28,7 +28,7 @@ def fetch_data():
             if addr.street_address_2:
                 street_address += " " + addr.street_address_2
             if street_address:
-                street_address = street_address.replace("Sm City")
+                street_address = street_address.replace("Sm City", "")
             if street_address == "Juan":
                 street_address = ", ".join(_["address"].split(",")[:2])
             yield SgRecord(
