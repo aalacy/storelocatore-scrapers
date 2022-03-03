@@ -63,7 +63,7 @@ def fetch_data():
                         country = "US"
                     if add == "" or add is None:
                         add = "<MISSING>"
-                    if phone == "NULL" or "-" not in phone:
+                    if phone == "NULL":
                         phone = "<MISSING>"
                     if "locations/huntsville" in loc:
                         phone = "5032068396"
