@@ -38,7 +38,7 @@ def random_sleep(driver, start=5, limit=3):
 def fetch_stores():
     with SgChrome() as driver:
         driver.get(store_url)
-        random_sleep(driver, 20)
+        random_sleep(driver, 30)
         return json.loads(driver.page_source.split("fnacStoreData =")[1].split(";")[0])[
             "Store"
         ]

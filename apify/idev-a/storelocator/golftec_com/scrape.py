@@ -3,12 +3,14 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
+from sgzip.dynamic import SearchableCountries, Grain_2
+from sgzip.parallel import DynamicSearchMaker, ParallelDynamicSearch, SearchIteration
+from typing import Iterable, Tuple, Callable
 from sglogging import SgLogSetup
 from bs4 import BeautifulSoup as bs
 import dirtyjson as json
 import re
-from tenacity import retry, stop_after_attempt
+from tenacity import retry, stop_after_attempt, wait_fixed
 
 logger = SgLogSetup().get_logger("golftec")
 headers = {
@@ -114,20 +116,29 @@ def fetch_jp(http, url):
         )
 
 
-@retry(stop=stop_after_attempt(2))
+@retry(wait=wait_fixed(1), stop=stop_after_attempt(2))
 def get_locs(http, url):
     res = http.get(url, headers=headers)
     return res.json()
 
 
-def fetch_records(search):
-    # Need to add dedupe. Added it in pipeline.
-    maxZ = search.items_remaining()
+class ExampleSearchIteration(SearchIteration):
+    def do(
+        self,
+        coord: Tuple[float, float],
+        zipcode: str,
+        current_country: str,
+        items_remaining: int,
+        found_location_at: Callable[[float, float], None],
+    ) -> Iterable[SgRecord]:
+        # Need to add dedupe. Added it in pipeline.
+        maxZ = items_remaining
 
-    for lat, lng in search:
+        lat = coord[0]
+        lng = coord[1]
         with SgRequests(proxy_country="us") as http:
-            if search.items_remaining() > maxZ:
-                maxZ = search.items_remaining()
+            if items_remaining > maxZ:
+                maxZ = items_remaining
             url = f"https://wcms.golftec.com/loadmarkers_6.php?thelong={lng}&thelat={lat}&georegion=North+America&pagever=prod&maptype=closest10"
 
             try:
@@ -137,7 +148,7 @@ def fetch_records(search):
                 locations = {}
 
             if "centers" in locations:
-                search.found_location_at(lat, lng)
+                found_location_at(lat, lng)
                 for _ in locations["centers"]:
                     page_url = f"{locator_domain}{_['link']}"
                     res = http.get(page_url, headers=headers)
@@ -176,9 +187,7 @@ def fetch_records(search):
                         locator_domain=locator_domain,
                     )
 
-                progress = (
-                    str(round(100 - (search.items_remaining() / maxZ * 100), 2)) + "%"
-                )
+                progress = str(round(100 - (items_remaining / maxZ * 100), 2)) + "%"
 
                 logger.info(
                     f"[{lat}, {lng}] [{len(locations['centers'])}] | [{progress}]"
@@ -186,14 +195,8 @@ def fetch_records(search):
 
 
 if __name__ == "__main__":
-    search = DynamicGeoSearch(
-        country_codes=[
-            SearchableCountries.USA,
-            SearchableCountries.CANADA,
-            SearchableCountries.CHINA,
-            SearchableCountries.SINGAPORE,
-        ],
-        expected_search_radius_miles=500,
+    search_maker = DynamicSearchMaker(
+        search_type="DynamicGeoSearch", granularity=Grain_2()
     )
     with SgWriter(
         SgRecordDeduper(
@@ -207,5 +210,16 @@ if __name__ == "__main__":
             for rec in fetch_jp(http, jp_url):
                 writer.write_row(rec)
 
-            for rec in fetch_records(search):
+            search_iter = ExampleSearchIteration()
+            par_search = ParallelDynamicSearch(
+                search_maker=search_maker,
+                search_iteration=search_iter,
+                country_codes=[
+                    SearchableCountries.USA,
+                    SearchableCountries.CANADA,
+                    SearchableCountries.SINGAPORE,
+                ],
+            )
+
+            for rec in par_search.run():
                 writer.write_row(rec)

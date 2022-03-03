@@ -7,7 +7,7 @@ from sglogging import sglog
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 
 DOMAIN = "annabella.ca"
 
@@ -47,7 +47,7 @@ def fetch_stores():
     location_names = mainDiv.xpath('//div[contains(@class, "PageContent")]/h4/text()')
     map_links = mainDiv.xpath('//div[contains(@class, "PageContent")]/p/a/@href')
     p1s = mainDiv.xpath(
-        '//div[contains(@class, "PageContent")]/h4/span/text() | //div[contains(@class, "PageContent")]/p/text() | //div[contains(@class, "PageContent")]/p/span/text() | //div[contains(@class, "PageContent")]/div/text()'
+        '//div[contains(@class, "PageContent")]/h4/span/text() | //div[contains(@class, "PageContent")]/p/a/text() | //div[contains(@class, "PageContent")]/p/text() | //div[contains(@class, "PageContent")]/p/span/text() | //div[contains(@class, "PageContent")]/div/text()'
     )
 
     status = ""
@@ -55,7 +55,7 @@ def fetch_stores():
     allPs = []
     ps = []
     for p in p1s:
-        if len(p) == 1:
+        if p == "Map":
             allPs.append(ps)
             ps = []
             loc_status.append(status)
@@ -70,26 +70,49 @@ def fetch_stores():
 
     stores = []
     count = 0
-    for ps in allPs:
+    for ps in allPs[:-1]:
         location_name = location_names[count].strip()
         status = loc_status[count].strip()
         street_address = ps[0]
+        street_address = street_address.replace("\xa0", "")
+        if street_address == "":
+            street_address = ps[1]
         phone = get_phone(" ".join(ps))
 
         if len(ps) == 4:
             raw_address = f"{ps[2]} {ps[0]} {ps[1]} {ps[3]}"
+            log.info(f"From Length 4: {raw_address}")
             [city, state] = ps[1].split(", ")
             zip_postal = ps[3]
 
         elif len(ps) == 6:
             raw_address = f"{ps[2]} {ps[3]} {ps[0]} {ps[1]} {ps[4]}"
-            [city, state] = ps[1].split(", ")
+            log.info(f"From Length 6: {raw_address}")
+            if "," in ps[2]:
+                [city, state] = ps[2].split(", ")
+            else:
+                [city, state] = ps[1].split(", ")
+
             zip_postal = ps[4]
 
+        elif len(ps) == 7:
+            raw_address = f"{ps[2]} {ps[3]} {ps[0]} {ps[1]} {ps[4]} {ps[5]}"
+            log.info(f"From Length 7: {raw_address}")
+            if "," in ps[2]:
+                [city, state] = ps[2].split(", ")
+            else:
+                [city, state] = ps[1].split(", ")
+
+            zip_postal = ps[5]
+
         else:
-            raw_address = f"{ps[2]} {ps[0]} {ps[1]} {ps[3]}"
-            [city, state] = ps[1].split(", ")
-            zip_postal = ps[3]
+            raw_address = f"{ps[2]} {ps[0]} {ps[1]} {ps[3]} {ps[4]}"
+            if "," in ps[2]:
+                [city, state] = ps[2].split(", ")
+            else:
+                [city, state] = ps[1].split(", ")
+
+            zip_postal = ps[4]
 
             if phone == MISSING:
                 zip_postal = ps[4]
@@ -156,9 +179,10 @@ def fetch_data():
 
         raw_address = f"{street_address}, {city}, {state} {zip_postal}"
         longitude, latitude = get_lat_long_from_gmap(store["map_link"])
+        page_url = f"{website}/pages/store-location"
         yield SgRecord(
             locator_domain=DOMAIN,
-            page_url=website,
+            page_url=page_url,
             location_type=location_type,
             location_name=location_name,
             street_address=street_address,
@@ -179,7 +203,14 @@ def scrape():
     start = time.time()
 
     with SgWriter(
-        deduper=SgRecordDeduper(RecommendedRecordIds.PhoneNumberId)
+        SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.PHONE,
+                }
+            )
+        )
     ) as writer:
         for rec in fetch_data():
             writer.write_row(rec)

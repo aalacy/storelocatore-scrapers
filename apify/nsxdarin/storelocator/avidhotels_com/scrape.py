@@ -22,7 +22,6 @@ def fetch_data():
     Found = False
     cities = []
     for line in r.iter_lines():
-        line = str(line.decode("utf-8"))
         if '-hotels"><span>' in line:
             if (
                 'href="https://www.ihg.com/destinations/us/en/mexico/' in line
@@ -50,13 +49,10 @@ def fetch_data():
             r = session.get(url, headers=headers)
             lines = r.iter_lines()
             for line in lines:
-                line = str(line.decode("utf-8"))
                 if '<li class="listingItem"><a' in line:
                     g = next(lines)
-                    g = str(g.decode("utf-8"))
                     if 'href="' not in g:
                         g = next(lines)
-                        g = str(g.decode("utf-8"))
                     curl = g.split('href="')[1].split('"')[0]
                     if curl not in cities:
                         cities.append(curl)
@@ -77,7 +73,6 @@ def fetch_data():
             r = session.get(url, headers=headers)
             lines = r.iter_lines()
             for line in lines:
-                line = str(line.decode("utf-8"))
                 if '"@type":"Hotel","' in line:
                     curl = (
                         line.split('"@type":"Hotel","')[1]
@@ -114,7 +109,6 @@ def fetch_data():
         lng2 = ""
         store = loc.split("/hoteldetail")[0].rsplit("/", 1)[1]
         for line2 in r2.iter_lines():
-            line2 = str(line2.decode("utf-8"))
             if 'value="MXN"' in line2:
                 country = "MX"
             if 'property="og:title" content="' in line2 and name == "":

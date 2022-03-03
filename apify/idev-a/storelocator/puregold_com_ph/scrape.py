@@ -57,30 +57,50 @@ def fetch_data():
                 if not _.text.strip():
                     continue
 
-                addr = []
-                hours = ""
-                for pp in _.select("p"):
-                    _pp = []
-                    for hr in pp.stripped_strings:
-                        _hr = hr.strip()
-                        if "Hour" in _hr:
-                            hours = _hr.split("Hours")[-1].replace(":", "").strip()
-                            break
-                        if not _hr or _p(_hr):
-                            continue
-                        _pp.append(_hr)
-                    addr.append(" ".join(_pp))
-                raw_address = " ".join(addr).replace("'", "").strip()
+                hours = []
+                block = sum([list(pp.stripped_strings) for pp in _.select("p")], [])
+                addr = block
+                for x, bb in enumerate(block):
+                    if "Hours" in bb:
+                        addr = block[:x]
+                        hours = [bb.split("Hours")[-1].strip()]
+                        if not hours and x < len(block) - 1:
+                            for hh in block[x + 1 :]:
+                                if _p(hh):
+                                    break
+                                hours.append(hh)
+                        break
+                    if "Tel" in bb:
+                        addr = block[:x]
+                        break
+                hours_of_operation = "; ".join(hours)
+                if hours_of_operation.startswith(":"):
+                    hours_of_operation = hours_of_operation[1:]
+                raw_address = (
+                    " ".join(addr)
+                    .replace("'", "")
+                    .replace("Sta.rosa", "Sta. rosa")
+                    .split("(")[0]
+                    .strip()
+                )
                 addr = parse_address_intl(raw_address + ", Philippines")
                 street_address = addr.street_address_1
                 if addr.street_address_2:
                     street_address += " " + addr.street_address_2
+                city = addr.city
+                if city:
+                    city = (
+                        city.replace("Subic Bay Freeport Zone", "")
+                        .replace("Guitnang Bayan 1", "")
+                        .strip()
+                    )
                 phone = ""
                 if _.select_one("span.telno"):
                     phone = (
                         _.select_one("span.telno")
                         .text.split("/")[0]
                         .replace("'", "")
+                        .split("No.")[-1]
                         .strip()
                     )
                 coord = ["", ""]
@@ -91,11 +111,19 @@ def fetch_data():
                         .split(")")[0]
                         .split(",")
                     )
+                name = _.strong.text.split("-")[0].strip()
+                location_name = ""
+                if name == "PG JR":
+                    location_name = "PureGold Jr"
+                elif name == "PG EXTRA":
+                    location_name = "PureGold Extra"
+                elif name == "PPCI":
+                    location_name = "PureGold"
                 yield SgRecord(
                     page_url=base_url,
-                    location_name=_.strong.text.strip(),
+                    location_name=location_name,
                     street_address=street_address,
-                    city=addr.city,
+                    city=city,
                     state=addr.state,
                     zip_postal=addr.postcode,
                     country_code="PH",
@@ -103,7 +131,7 @@ def fetch_data():
                     latitude=coord[0],
                     longitude=coord[1],
                     locator_domain=locator_domain,
-                    hours_of_operation=hours,
+                    hours_of_operation=hours_of_operation,
                     raw_address=raw_address,
                 )
 

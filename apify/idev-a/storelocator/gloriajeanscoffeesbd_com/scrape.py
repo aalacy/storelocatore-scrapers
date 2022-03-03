@@ -22,7 +22,7 @@ def fetch_data():
         locations = soup.select('div[data-elementor-type="footer"] ul')[-1].select("li")
         for _ in locations:
             block = list(_.stripped_strings)
-            addr = block[1].split(",")
+            addr = block[1].replace(".", ",").split(",")
             yield SgRecord(
                 page_url=base_url,
                 location_name=block[0].replace(":", "").strip(),

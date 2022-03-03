@@ -36,6 +36,10 @@ def get_data(page_url, sgw: SgWriter):
     ).strip()
     raw_address = "".join(tree.xpath("//div[@class='copy']/h5/text()"))
     street_address, city, state, postal = get_international(raw_address)
+    if not city:
+        city = " ".join(raw_address.split(", ")[-1].split()[:-1])
+    if "1" in city:
+        city = SgRecord.MISSING
     phone = "".join(tree.xpath("//div[@class='copy']/h4/text()")).strip()
     text = "".join(tree.xpath("//script[contains(text(), 'var restaurant =')]/text()"))
     try:
@@ -87,6 +91,6 @@ def fetch_data(sgw: SgWriter):
 
 if __name__ == "__main__":
     locator_domain = "https://nandos.com.my/"
-    session = SgRequests()
+    session = SgRequests(verify_ssl=False)
     with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         fetch_data(writer)

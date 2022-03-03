@@ -36,7 +36,7 @@ def fetch_data():
         for region in regions:
             stores = region["regionPos"]
             for store in stores:
-                page_url = "<MISSING>"
+                page_url = "https://www.smythstoys.com/ie/en-ie/store-finder"
 
                 locator_domain = website
                 location_name = store["displayName"]

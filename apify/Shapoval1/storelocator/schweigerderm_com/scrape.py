@@ -36,39 +36,97 @@ def fetch_data(sgw: SgWriter):
             f"https://knowledgetags.yextpages.net/embed?key=LshOHdaZaCFDUjs4KsmkvqHaDYrNMnI-a56D78q6U2rvn5uE051HZyS2URSiQw5x&account_id=6629542544138241976&location_id={id_key}",
             headers=headers,
         )
-        js_block = r.text.split("Yext._embed(")[1]
-        js_block = "".join(js_block[:-1])
-        js = json.loads(js_block)
-        b = js.get("entities")
-        for j in b:
-            k = j.get("attributes")
-            location_name = k.get("name") or "<MISSING>"
-            types = k.get("schemaTypes")
-            tmp = []
-            for t in types:
-                line = f"{t}"
-                tmp.append(line)
-            location_type = ", ".join(tmp) or "<MISSING>"
+        try:
+            js_block = r.text.split("Yext._embed(")[1]
+            js_block = "".join(js_block[:-1])
+
+            js = json.loads(js_block)
+            b = js.get("entities")
+            for j in b:
+                k = j.get("attributes")
+                location_name = k.get("name") or "<MISSING>"
+                types = k.get("schemaTypes")
+                tmp = []
+                for t in types:
+                    line = f"{t}"
+                    tmp.append(line)
+                location_type = ", ".join(tmp) or "<MISSING>"
+                street_address = (
+                    f"{k.get('address1')} {k.get('address2')}".replace("None", "")
+                    .replace("Hackensack Medical Plaza", "")
+                    .replace("Holy Redeemer Medical Office Building", "")
+                    .strip()
+                    or "<MISSING>"
+                )
+                state = k.get("state") or "<MISSING>"
+                postal = k.get("zip") or "<MISSING>"
+                country_code = "US"
+                city = k.get("city") or "<MISSING>"
+                latitude = k.get("yextDisplayLat") or "<MISSING>"
+                longitude = k.get("yextDisplayLng") or "<MISSING>"
+                phone = k.get("phone") or "<MISSING>"
+                hours = k.get("hours")
+                hrs = []
+                for h in hours:
+                    line = f"{h}"
+                    hrs.append(line)
+                hours_of_operation = "; ".join(hrs) or "<MISSING>"
+
+                row = SgRecord(
+                    locator_domain=locator_domain,
+                    page_url=page_url,
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=postal,
+                    country_code=country_code,
+                    store_number=SgRecord.MISSING,
+                    phone=phone,
+                    location_type=location_type,
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=hours_of_operation,
+                    raw_address=f"{street_address} {city}, {state} {postal}",
+                )
+
+                sgw.write_row(row)
+
+        except:
+            r = session.get(page_url, headers=headers)
+            tree = html.fromstring(r.text)
+
+            location_name = "".join(tree.xpath("//h1/text()"))
             street_address = (
-                f"{k.get('address1')} {k.get('address2')}".replace("None", "")
-                .replace("Hackensack Medical Plaza", "")
-                .replace("Holy Redeemer Medical Office Building", "")
+                "".join(tree.xpath("//h1/following-sibling::p[1]/text()[1]"))
+                .replace(",", "")
                 .strip()
-                or "<MISSING>"
             )
-            state = k.get("state") or "<MISSING>"
-            postal = k.get("zip") or "<MISSING>"
+            ad = (
+                "".join(tree.xpath("//h1/following-sibling::p[1]/text()[2]"))
+                .replace("\n", "")
+                .strip()
+            )
+            city = ad.split(",")[0].strip()
+            state = ad.split(",")[1].split()[0].strip()
+            postal = ad.split(",")[1].split()[1].strip()
             country_code = "US"
-            city = k.get("city") or "<MISSING>"
-            latitude = k.get("yextDisplayLat") or "<MISSING>"
-            longitude = k.get("yextDisplayLng") or "<MISSING>"
-            phone = k.get("phone") or "<MISSING>"
-            hours = k.get("hours")
-            hrs = []
-            for h in hours:
-                line = f"{h}"
-                hrs.append(line)
-            hours_of_operation = "; ".join(hrs) or "<MISSING>"
+            phone = "".join(
+                tree.xpath(
+                    '//h1/following-sibling::p[1]/a[contains(@href, "tel")]/text()'
+                )
+            ).strip()
+            latitude, longitude = "<MISSING>", "<MISSING>"
+            location_type = "<MISSING>"
+            hours_of_operation = (
+                " ".join(
+                    tree.xpath(
+                        '//h2[text()="Office Hours"]/following-sibling::div[1]/ul/li/text()'
+                    )
+                )
+                .replace("\n", "")
+                .strip()
+            )
 
             row = SgRecord(
                 locator_domain=locator_domain,
