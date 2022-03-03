@@ -52,7 +52,6 @@ def fetch_data():
         if street_address and "Ph1 5Js" in street_address:
             zip_code = "PH1 5JS"
             street_address = street_address.replace(" Ph1 5Js", "")
-        country_code = addr.country
         phone = loc_dom.xpath('//a[contains(@href, "tel")]/text()')
         phone = phone[0].split(":")[-1].strip() if phone else ""
         geo = loc_dom.xpath('//img[contains(@data-src, "map")]/@data-src')
@@ -71,8 +70,6 @@ def fetch_data():
         hoo = loc_dom.xpath('//div[@class="franchise_tile col-md-4"]//table//text()')
         hoo = [elem.strip() for elem in hoo if elem.strip()]
         hours_of_operation = " ".join(hoo) if hoo else ""
-        if "Monday Appointment Only" in hours_of_operation:
-            hours_of_operation = ""
 
         item = SgRecord(
             locator_domain=domain,
@@ -82,7 +79,7 @@ def fetch_data():
             city=city,
             state=state,
             zip_postal=zip_code,
-            country_code=country_code,
+            country_code="UK",
             store_number="",
             phone=phone,
             location_type="",

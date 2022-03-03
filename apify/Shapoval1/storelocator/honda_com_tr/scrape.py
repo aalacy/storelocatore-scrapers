@@ -3,6 +3,7 @@ from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgpostal.sgpostal import International_Parser, parse_address
 
 
 def fetch_data(sgw: SgWriter):
@@ -36,9 +37,14 @@ def fetch_data(sgw: SgWriter):
 
         page_url = "https://honda.com.tr/otomobil/iletisim"
         location_name = j.get("title")
-        street_address = j.get("address")
+
+        ad = j.get("address")
+        a = parse_address(International_Parser(), ad)
+        street_address = f"{a.street_address_1} {a.street_address_2}".replace(
+            "None", ""
+        ).strip()
         state = j.get("county").get("name")
-        postal = "<MISSING>"
+        postal = a.postcode or "<MISSING>"
         country_code = "TR"
         city = j.get("city").get("name")
         coords = j.get("coords")
@@ -62,6 +68,9 @@ def fetch_data(sgw: SgWriter):
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=SgRecord.MISSING,
+            raw_address=f"{street_address} {city}, {state} {postal}".replace(
+                "<MISSING>", ""
+            ).strip(),
         )
 
         sgw.write_row(row)

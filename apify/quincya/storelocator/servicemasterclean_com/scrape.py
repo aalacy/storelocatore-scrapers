@@ -1,3 +1,5 @@
+import time
+
 from bs4 import BeautifulSoup
 
 from sglogging import SgLogSetup
@@ -68,8 +70,15 @@ def fetch_data(sgw: SgWriter):
             if link not in found:
                 logger.info(link)
                 found.append(link)
-                req = session.get(link, headers=headers)
-                base = BeautifulSoup(req.text, "lxml")
+
+                try:
+                    req = session.get(link, headers=headers)
+                    base = BeautifulSoup(req.text, "lxml")
+                except:
+                    session = SgRequests()
+                    time.sleep(10)
+                    req = session.get(link, headers=headers)
+                    base = BeautifulSoup(req.text, "lxml")
 
                 if (
                     "COMING SOON" in base.h1.text.upper()
