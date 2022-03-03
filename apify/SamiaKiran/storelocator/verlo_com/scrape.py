@@ -9,7 +9,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
 session = SgRequests()
-website = "simplyfresh_info"
+website = "verlo_com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
 
@@ -29,20 +29,26 @@ def fetch_data():
         log.info("Fetching Item Id ...")
         r = session.get(url, headers=headers)
         Itemid = r.text.split("Itemid=")[1].split('"')[0]
-        url = (
+        api_url = (
             "http://code.metalocator.com/index.php?option=com_locator&view=directory&layout=combined&Itemid="
             + Itemid
             + "Itemid+&tmpl=component&framed=1&source=js"
         )
-        r = session.get(url, headers=headers)
+        r = session.get(api_url, headers=headers)
         loclist = r.text.split("var location_data =")[1].split("[]}]")[0]
         loclist = json.loads(loclist + "[]}]")
-        for loc in loclist[:-1]:
-            page_url = "http:" + loc["link"]
+        for loc in loclist:
+            try:
+                page_url = "http:" + loc["link"]
+            except:
+                continue
             location_name = loc["name"]
             log.info(page_url)
             store_number = loc["id"]
-            phone = loc["phone"]
+            try:
+                street_address = loc["address"]
+            except:
+                continue
             try:
                 street_address = loc["address"] + " " + loc["address2"]
             except:
@@ -53,7 +59,11 @@ def fetch_data():
             country_code = "US"
             latitude = loc["lat"]
             longitude = loc["lng"]
-            hours_of_operation = loc["fields"]["hours"]["meta"]
+            phone = loc["phone"]
+            try:
+                hours_of_operation = loc["fields"]["hours"]["meta"]
+            except:
+                continue
             hours_of_operation = BeautifulSoup(hours_of_operation, "html.parser")
             hours_of_operation = hours_of_operation.findAll("meta")
             hours_of_operation = " ".join(x["content"] for x in hours_of_operation)

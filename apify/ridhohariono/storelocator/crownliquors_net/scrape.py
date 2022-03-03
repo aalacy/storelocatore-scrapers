@@ -114,8 +114,12 @@ def fetch_data():
         hours_of_operation = ", ".join(hoo_phone).replace("STORE HOURS,", "")
         country_code = "US"
         location_type = "crownliquors"
-        map_link = row.find("a", {"href": re.compile(r".*(com|uk)/maps.*")})["href"]
-        latitude, longitude = get_latlong(map_link)
+        try:
+            map_link = row.find("a", {"href": re.compile(r".*(com|uk)/maps.*")})["href"]
+            latitude, longitude = get_latlong(map_link)
+        except:
+            latitude = MISSING
+            longitude = MISSING
         log.info("Append {} => {}".format(location_name, street_address))
         yield SgRecord(
             locator_domain=DOMAIN,

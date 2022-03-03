@@ -16,16 +16,13 @@ def fetch_data():
     url = "https://locations.tonyromas.com/sitemap"
     r = session.get(url, headers=headers)
     soup = BeautifulSoup(r.text, "html.parser")
-    checklist = []
-    linklist = soup.select("a[href*=canada]")
-    linklist = linklist + soup.select("a[href*=united-states]")
+    linklist = soup.select('a:contains("Details")')
+
     for link in linklist:
         link = link["href"]
-        check = link.split("/")
-        if len(check) < 4 or link in checklist:
-            continue
-        checklist.append(link)
+
         link = "https://locations.tonyromas.com/" + link
+
         r = session.get(link, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
         coord = soup.find("span", {"class": "coordinates"}).findAll("meta")
@@ -36,14 +33,24 @@ def fetch_data():
         city = address[0]["content"]
         street = address[1]["content"]
         address = soup.find("address", {"class": "c-address"}).findAll("abbr")
-        state = address[0].text
-        ccode = address[1].text
-        pcode = (
-            soup.find("address", {"class": "c-address"})
-            .find("span", {"class": "c-address-postal-code"})
-            .text
-        )
-        phone = soup.find("span", {"id": "telephone"}).text
+        if len(address) == 1:
+            ccode = address[0].text
+            state = "<MISSING>"
+        else:
+            state = address[0].text
+            ccode = address[1].text
+        try:
+            pcode = (
+                soup.find("address", {"class": "c-address"})
+                .find("span", {"class": "c-address-postal-code"})
+                .text
+            )
+        except:
+            pcode = "<MISSING>"
+        try:
+            phone = soup.find("span", {"id": "telephone"}).text
+        except:
+            phone = "<MISSING>"
         try:
             hours = soup.find("table", {"class": "c-location-hours-details"}).text
             hours = (

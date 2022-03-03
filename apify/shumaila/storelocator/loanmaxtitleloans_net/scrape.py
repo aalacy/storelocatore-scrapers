@@ -1,96 +1,85 @@
-from bs4 import BeautifulSoup
-import csv
-
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgzip.dynamic import SearchableCountries
+from sgzip.static import static_zipcode_list
 
 session = SgRequests()
 headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36",
+    "content-type": "application/json; charset=UTF-8",
 }
-
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
 
 
 def fetch_data():
     data = []
-    name = []
-    p = 0
+    url = "https://api.selectmgmt.com/api/apiMarketing/GetStores"
+    zips = static_zipcode_list(radius=200, country_code=SearchableCountries.USA)
 
-    url = "https://www.loanmaxtitleloans.net/SiteMap.xml"
-    r = session.get(url, headers=headers, verify=False)
-    soup = BeautifulSoup(r.text, "html.parser")
-    linklist = soup.findAll("loc")
-    for link in linklist:
-        link = link.text
-        if len(link.split("/")) < 5:
-            continue
-        r = session.get(link, headers=headers, verify=False)
-        soup = BeautifulSoup(r.text, "html.parser")
-        street = soup.find("span", {"itemprop": "streetAddress"}).text
-        city = soup.find("span", {"itemprop": "addressLocality"}).text
-        state = soup.find("span", {"itemprop": "addressRegion"}).text
-        pcode = soup.find("span", {"itemprop": "postalCode"}).text
-        title = "Loanmax - " + city + ", " + state
-        phone = soup.find("span", {"itemprop": "telephone"}).text
-        hours = soup.find("div", {"class": "store_hours"}).text.replace("\n", " ")
-        if street in name:
-            continue
-        name.append(street)
-        data.append(
-            [
-                "https://www.loanmaxtitleloans.net",
-                link,
-                title,
-                street,
-                city,
-                state,
-                pcode,
-                "US",
-                "<MISSING>",
-                phone,
-                "<MISSING>",
-                "<MISSING>",
-                "<MISSING>",
-                hours,
-            ]
+    for zip_code in zips:
+
+        dataobj = (
+            '{"lat":0,"lon":0,"zip":'
+            + str(zip_code)
+            + ',"distance":1000,"webSite":"www.loanmaxtitleloans.net","state":"","city":"","addr":""}'
         )
+        try:
+            loclist = session.post(url, data=dataobj, headers=headers).json()[
+                "locations"
+            ]
+        except:
+            continue
+        for loc in loclist:
 
-        p += 1
-    return data
+            store = loc["id"]
+            title = loc["fullName"]
+            street = loc["street"]
+            state = loc["state"]
+            city = loc["city"]
+            pcode = loc["zip"]
+            lat = loc["lat"]
+            longt = loc["lon"]
+            phone = loc["phone"]
+            hourlist = loc["StoreHoursFormatted"]
+            link = "https://www.loanmaxtitleloans.net/locations" + loc["urlParams"]
+            hours = ""
+
+            for hr in hourlist:
+                day = hr["MinDay"] + "-" + hr["MaxDay"]
+                timestr = hr["HourRange"]
+                hours = hours + day + " " + timestr + " "
+            if link in data:
+                continue
+            data.append(link)
+            yield SgRecord(
+                locator_domain="https://www.loanmaxtitleloans.net/",
+                page_url=link,
+                location_name=title,
+                street_address=street.strip(),
+                city=city.strip(),
+                state=state.strip(),
+                zip_postal=pcode.strip(),
+                country_code="US",
+                store_number=str(store),
+                phone=phone.strip(),
+                location_type=SgRecord.MISSING,
+                latitude=str(lat),
+                longitude=str(longt),
+                hours_of_operation=hours,
+            )
 
 
 def scrape():
 
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()

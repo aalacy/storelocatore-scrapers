@@ -37,15 +37,13 @@ def fetch_data():
             for hh in _["businessHours"]:
                 day = hr_obj.get(str(hh["startDay"]))
                 hours.append(f"{day}: {hh['openTimeFormat']} - {hh['closeTimeFormat']}")
-            phone = _["contact"]["phone"]
-            page_url = _["contact"]["url"]
-            if not phone:
-                logger.info(page_url)
-                phone = json.loads(
-                    bs(session.get(page_url, headers=_headers).text, "lxml")
-                    .find("script", type="application/ld+json")
-                    .string
-                )["telephone"]
+            page_url = f"https://winkels.carrefour.be/nl/s/carrefour/{_['slug']}/{_['externalId']}"
+            logger.info(page_url)
+            phone = json.loads(
+                bs(session.get(page_url, headers=_headers).text, "lxml")
+                .find("script", type="application/ld+json")
+                .string
+            )["telephone"]
             yield SgRecord(
                 page_url=page_url,
                 store_number=_["externalId"],
@@ -58,7 +56,7 @@ def fetch_data():
                 country_code=addr["country"],
                 phone=phone,
                 locator_domain=locator_domain,
-                location_type=_["brand"],
+                location_type=_["brandSlug"],
                 hours_of_operation="; ".join(hours),
                 raw_address=addr["fullAddress"],
             )

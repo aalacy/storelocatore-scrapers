@@ -1,5 +1,5 @@
 from lxml import html
-from sgscrape.sgpostal import International_Parser, parse_address
+from sgpostal.sgpostal import International_Parser, parse_address
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
@@ -27,12 +27,13 @@ def fetch_data(sgw: SgWriter):
         tree = html.fromstring(r.text)
 
         location_name = "".join(tree.xpath("//h1/text()"))
-        ad = ";".join(
-            tree.xpath('//h3[text()="Áruház"]/following-sibling::p[1]//text()')
+        ad = (
+            "".join(tree.xpath('//h2[text()="Cím"]/following-sibling::p[1]/text()[1]'))
+            .replace("\n", "")
+            .strip()
         )
-        adr = ad.split(";")[0].strip()
 
-        a = parse_address(International_Parser(), adr)
+        a = parse_address(International_Parser(), ad)
         street_address = f"{a.street_address_1} {a.street_address_2}".replace(
             "None", ""
         ).strip()
@@ -53,13 +54,12 @@ def fetch_data(sgw: SgWriter):
 
         hours_of_operation = (
             " ".join(
-                tree.xpath(
-                    '//h3[text()="Svéd Finomságok Boltja"]/preceding-sibling::p//text()'
-                )
+                tree.xpath('//h2[text()="Nyitvatartás"]/following-sibling::p[1]/text()')
             )
             .replace("\n", "")
             .strip()
         )
+        hours_of_operation = " ".join(hours_of_operation.split())
 
         row = SgRecord(
             locator_domain=locator_domain,
@@ -76,6 +76,7 @@ def fetch_data(sgw: SgWriter):
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hours_of_operation,
+            raw_address=ad,
         )
 
         sgw.write_row(row)
@@ -88,7 +89,7 @@ def fetch_data(sgw: SgWriter):
     }
     r = session.get(api_url, headers=headers)
     tree = html.fromstring(r.text)
-    div = tree.xpath('//a[.//span[text()="Opening hours and where to find us"]]')
+    div = tree.xpath('//a[.//span[contains(text(), "Go to")]]')
     for d in div:
 
         page_url = "".join(d.xpath(".//@href"))
@@ -150,7 +151,7 @@ def fetch_data(sgw: SgWriter):
         hours_of_operation = (
             " ".join(
                 tree.xpath(
-                    '//h2[text()="Opening hours"]/following-sibling::p[1]/text()'
+                    '//h2[./strong[text()="Opening hours"]]/following-sibling::p[1]/text()'
                 )
             )
             .replace("\n", "")
@@ -160,7 +161,9 @@ def fetch_data(sgw: SgWriter):
         if hours_of_operation == "<MISSING>":
             hours_of_operation = (
                 " ".join(
-                    tree.xpath('//strong[text()="Store:"]/following-sibling::text()')
+                    tree.xpath(
+                        '//h2[text()="Opening hours"]/following-sibling::p[1]/text()'
+                    )
                 )
                 .replace("\n", "")
                 .strip()
@@ -181,6 +184,7 @@ def fetch_data(sgw: SgWriter):
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hours_of_operation,
+            raw_address=ad,
         )
 
         sgw.write_row(row)

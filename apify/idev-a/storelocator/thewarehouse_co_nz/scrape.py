@@ -41,7 +41,9 @@ def fetch_data():
                     page_url=page_url,
                     store_number=ss["ID"],
                     location_name=ss["name"],
-                    street_address=street_address,
+                    street_address=street_address.replace("The Warehouse", "").replace(
+                        ",", ""
+                    ),
                     city=ss["city"],
                     state=ss["stateCode"],
                     zip_postal=ss["postalCode"],

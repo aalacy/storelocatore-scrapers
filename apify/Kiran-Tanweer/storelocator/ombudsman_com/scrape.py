@@ -1,21 +1,24 @@
-from bs4 import BeautifulSoup
 import re
 import json
+import usaddress
+from sglogging import sglog
 from sgrequests import SgRequests
+from bs4 import BeautifulSoup
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
+website = "ombudsman_com"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
+session = SgRequests()
 headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
 }
 
 
 def fetch_data():
-    cleanr = re.compile(r"<[^>]+>")
-    pattern = re.compile(r"\s\s+")
     url = "https://www.ombudsman.com/locations/"
     r = session.get(url, headers=headers)
     soup = BeautifulSoup(r.text, "html.parser")
@@ -24,79 +27,127 @@ def fetch_data():
         stlink = st["href"]
         r = session.get(stlink, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
-        loclist = soup.findAll("div", {"class": "location-group"})
-        coordlist = (
-            "["
-            + r.text.split("mapp.data.push( ", 1)[1].split("[", 1)[1].split("]", 1)[0]
-            + "]"
-        )
-        coordlist = json.loads(coordlist)
-
-        for loc in loclist:
-            divlist = loc.findAll("li")
-            for div in divlist:
-                try:
-                    link = div.find("h4").find("a")["href"]
-                    link = stlink.replace("/locations/", "") + link
-                except:
-                    link = stlink
-                content = re.sub(cleanr, "\n", str(div)).strip()
-                content = re.sub(pattern, "\n", str(content)).strip()
-
-                if (
-                    "(" in content.splitlines()[-1]
-                    or ")" in content.splitlines()[-1]
-                    or "-" in content.splitlines()[-1]
-                ):
-                    title = content.split("\n", 1)[0]
-                    phone = content.splitlines()[-1]
-                    pcode = content.splitlines()[-2]
-                    state = content.splitlines()[-3]
-                    city = content.splitlines()[-4]
-                    title = content.splitlines()[0]
-                    street = (
-                        content.split(title, 1)[1]
-                        .split(city + "\n", 1)[0]
-                        .replace("\n", " ")
-                        .strip()
-                    )
-                else:
-                    if "Learn" in content:
-                        content = content.split("Learn", 1)[0]
-                    content = content.splitlines()
-                    title = content[0]
-                    street = content[1]
-                    try:
-                        state = content[2].strip().split(" ")[-2]
-                        city = content[2].split(" " + state, 1)[0]
-                        pcode = content[2].split(state + " ", 1)[1]
-                    except:
-                        city = content[-2]
-                        state, pcode = content[-1].split(" ", 1)
-                    phone = "<MISSING>"
-                lat = longt = "<MISSING>"
-                for coord in coordlist:
-                    if coord["title"] == title or "Campus" in coord["title"]:
-                        lat = coord["point"]["lat"]
-                        longt = coord["point"]["lng"]
-                        break
-                title = title.encode("ascii", "ignore").decode("ascii")
+        if r.url == "https://az.ombudsman.com/locations/":
+            loclist = r.text.split('<script type="application/ld+json">')[1:]
+            phone_list = soup.findAll("div", {"class": "cl-lgmap_location-list-item"})
+            for loc, temp in zip(loclist, phone_list):
+                temp = temp.get_text(separator="|", strip=True).split("|")
+                phone = temp[-1]
+                if "Fax:" in phone:
+                    phone = temp[-2]
+                loc = json.loads(loc.split("</script>")[0])
+                location_name = loc["name"]
+                page_url = loc["url"]
+                log.info(page_url)
+                address = loc["address"]
+                street_address = address["streetAddress"]
+                city = address["addressLocality"]
+                state = address["addressRegion"]
+                zip_postal = address["postalCode"]
+                country_code = address["addressCountry"]
+                latitude = loc["geo"]["latitude"]
+                longitude = loc["geo"]["longitude"]
                 yield SgRecord(
                     locator_domain="https://www.ombudsman.com/",
-                    page_url=link,
-                    location_name=title,
-                    street_address=street.strip(),
-                    city=city.replace(",", "").strip(),
+                    page_url=page_url,
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city,
                     state=state.strip(),
-                    zip_postal=pcode.strip(),
-                    country_code="US",
+                    zip_postal=zip_postal.strip(),
+                    country_code=country_code,
                     store_number=SgRecord.MISSING,
                     phone=phone.strip(),
                     location_type=SgRecord.MISSING,
-                    latitude=str(lat),
-                    longitude=str(longt),
+                    latitude=latitude,
+                    longitude=longitude,
                     hours_of_operation=SgRecord.MISSING,
                 )
+
+        else:
+            loclist = soup.findAll("div", {"class": "location-group"})
+            coordlist = (
+                "["
+                + r.text.split("mapp.data.push( ", 1)[1]
+                .split("[", 1)[1]
+                .split("]", 1)[0]
+                + "]"
+            )
+            coordlist = json.loads(coordlist)
+            for loc in loclist:
+                divlist = loc.findAll("li")
+                for div in divlist:
+                    try:
+                        link = div.find("h4").find("a")["href"]
+                        link = stlink.replace("/locations/", "") + link
+                    except:
+                        link = stlink
+                    log.info(link)
+                    div = div.get_text(separator="|", strip=True).split("|")
+                    if len(div) > 3:
+                        if re.match(
+                            r"^(\([0-9]{3}\) |[0-9]{3}-)[0-9]{3}-[0-9]{4}$", div[3]
+                        ):
+                            phone = div[3]
+                        else:
+                            phone = SgRecord.MISSING
+                    else:
+                        phone = SgRecord.MISSING
+                    location_name = div[0]
+                    address = div[1] + " " + div[2]
+                    address = address.replace(",", " ")
+                    address = usaddress.parse(address)
+                    i = 0
+                    street_address = ""
+                    city = ""
+                    state = ""
+                    zip_postal = ""
+                    while i < len(address):
+                        temp = address[i]
+                        if (
+                            temp[1].find("Address") != -1
+                            or temp[1].find("Street") != -1
+                            or temp[1].find("Recipient") != -1
+                            or temp[1].find("Occupancy") != -1
+                            or temp[1].find("BuildingName") != -1
+                            or temp[1].find("USPSBoxType") != -1
+                            or temp[1].find("USPSBoxID") != -1
+                        ):
+                            street_address = street_address + " " + temp[0]
+                        if temp[1].find("PlaceName") != -1:
+                            city = city + " " + temp[0]
+                        if temp[1].find("StateName") != -1:
+                            state = state + " " + temp[0]
+                        if temp[1].find("ZipCode") != -1:
+                            zip_postal = zip_postal + " " + temp[0]
+                        i += 1
+                    for coord in coordlist:
+                        if (
+                            coord["title"] == location_name
+                            or "Campus" in coord["title"]
+                        ):
+                            lat = coord["point"]["lat"]
+                            longt = coord["point"]["lng"]
+                            break
+                    location_name = location_name.encode("ascii", "ignore").decode(
+                        "ascii"
+                    )
+                    yield SgRecord(
+                        locator_domain="https://www.ombudsman.com/",
+                        page_url=link,
+                        location_name=location_name,
+                        street_address=street_address.strip(),
+                        city=city.replace(",", "").strip(),
+                        state=state.strip(),
+                        zip_postal=zip_postal.strip(),
+                        country_code="US",
+                        store_number=SgRecord.MISSING,
+                        phone=phone.strip(),
+                        location_type=SgRecord.MISSING,
+                        latitude=str(lat),
+                        longitude=str(longt),
+                        hours_of_operation=SgRecord.MISSING,
+                    )
 
 
 def scrape():
