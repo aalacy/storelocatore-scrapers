@@ -30,7 +30,7 @@ def fetch_data():
     start_url = "https://themobilegeneration.com/locations/"
     domain = "themobilegeneration.com"
 
-    with SgFirefox(is_headless=False, firefox_options=options) as driver:
+    with SgFirefox(firefox_options=options) as driver:
         driver.get(start_url)
         sleep(5)
         driver.execute_script("window.scrollBy(0, 250)")

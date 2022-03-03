@@ -39,7 +39,10 @@ def fetch_data():
             coords = soup.find("div", {"id": "js__location-single-map"})
             latitude = coords["data-lat"]
             longitude = coords["data-long"]
-            phone = temp[0].select_one("a[href*=tel]").text
+            try:
+                phone = temp[0].select_one("a[href*=tel]").text
+            except:
+                phone = MISSING
             raw_address = (
                 temp[0]
                 .findAll("p")[-1]
@@ -62,6 +65,8 @@ def fetch_data():
             hours_of_operation = (
                 temp[1].get_text(separator="|", strip=True).replace("|", " ")
             )
+            if "currently closed" in hours_of_operation:
+                hours_of_operation = MISSING
             country_code = "GB"
 
             yield SgRecord(
