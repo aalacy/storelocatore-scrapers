@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from sgrequests import SgRequests
+from sgrequests import SgRequests, SgRequestError
 from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
@@ -42,6 +42,8 @@ def fetch_data():
             ("radius", "-1"),
         )
         stores_req = session.get(search_url, headers=headers, params=params)
+        if isinstance(stores_req, SgRequestError):
+            continue
         stores = json.loads(stores_req.text)
         for store in stores:
             store_number = store["store_number"]

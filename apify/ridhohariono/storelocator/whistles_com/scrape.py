@@ -5,7 +5,6 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
-from sgscrape.sgpostal import parse_address_intl
 import re
 
 
@@ -21,20 +20,6 @@ MISSING = "<MISSING>"
 log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
 
 session = SgRequests()
-
-
-def getAddress(raw_address):
-    try:
-        if raw_address is not None and raw_address != MISSING:
-            data = parse_address_intl(raw_address)
-            street_address = data.street_address_1
-            if data.street_address_2 is not None:
-                street_address = street_address + " " + data.street_address_2
-            return street_address
-    except Exception as e:
-        log.info(f"No valid address {e}")
-        pass
-    return MISSING
 
 
 def fetch_data():
@@ -64,17 +49,23 @@ def fetch_data():
                 street_address = street_address + " " + row["address2"]
             except:
                 pass
-            city = row["city"]
-            try:
-                addr = getAddress(street_address).strip()
-            except:
-                addr = street_address
-            street_address = re.sub(
-                r",?\s?.*Shopping Centre|" + city,
-                "",
-                addr,
-                flags=re.IGNORECASE,
+            city = row["city"] or MISSING
+            shopping_centre_end = re.search(
+                r"Shopping Centre$", street_address, flags=re.IGNORECASE
             )
+            if shopping_centre_end:
+                street_address = (
+                    street_address.replace("Shopping Centre", "")
+                    .replace(city, "")
+                    .strip()
+                )
+            else:
+                street_address = re.sub(
+                    r",?\s?.*Shopping Centre|" + city,
+                    "",
+                    street_address,
+                    flags=re.IGNORECASE,
+                )
             if search.current_country().upper() in ["US", "AU", "IRELAND"]:
                 try:
                     state = row["stateCode"]
@@ -82,7 +73,7 @@ def fetch_data():
                     state = MISSING
             else:
                 state = MISSING
-            zip_postal = row["postalCode"]
+            zip_postal = row["postalCode"] or MISSING
             if zip_postal and "Admiralty" in zip_postal:
                 city = "Admiralty"
                 zip_postal = MISSING

@@ -121,11 +121,16 @@ def fetch_data():
             ):
                 city = ""
 
+        street_address = street_address.strip()
+        if street_address.startswith("."):
+            street_address = street_address[1:]
+        if street_address.startswith(","):
+            street_address = street_address[1:]
         yield SgRecord(
             page_url=store["storeURL"],
             store_number=store["locId"],
             location_name=store["storeName"],
-            street_address=street_address.strip(),
+            street_address=street_address,
             city=city,
             state=state,
             zip_postal=zip_postal,
