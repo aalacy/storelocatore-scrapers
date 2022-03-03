@@ -7,7 +7,7 @@ from sgpostal.sgpostal import parse_address_intl
 
 
 def fetch_data():
-    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
+    session = SgRequests()
 
     start_url = "https://app.burgerking.co.za/management/api/store/locations"
     domain = "burgerking.co.za"
@@ -34,14 +34,19 @@ def fetch_data():
                     opens = e["OpenTime"][:-3]
                     closes = e["CloseTime"][:-3]
                     hoo.append(f"{day} {opens} - {closes}")
-                hours_of_operation = " ".join(hoo) if hoo else SgRecord.MISSING
+                hours_of_operation = " ".join(hoo) if hoo else ""
+                city = addr.city
+                if city and city.isnumeric():
+                    city = ""
+                if street_address and street_address.isnumeric():
+                    street_address = ""
 
                 item = SgRecord(
                     locator_domain=domain,
                     page_url=page_url,
                     location_name=poi["Name"],
                     street_address=street_address,
-                    city=addr.city,
+                    city=city,
                     state=addr.state,
                     zip_postal=addr.postcode,
                     country_code=addr.country,
@@ -51,6 +56,7 @@ def fetch_data():
                     latitude=poi["Latitude"],
                     longitude=poi["Longitude"],
                     hours_of_operation=hours_of_operation,
+                    raw_address=poi["Address"],
                 )
 
                 yield item

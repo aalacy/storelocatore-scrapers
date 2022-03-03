@@ -24,9 +24,11 @@ def fetch_data():
         )
         logger.info(f"{len(links)} found")
         for link in links:
-            if not link.p or not link.h3:
+            if not link.p or not link.strong:
                 continue
-            page_url = link.h3.a["href"]
+            page_url = link.strong.a["href"]
+            if page_url == "https://www.simonpearce.com/store-locator":
+                continue
             if not page_url.startswith("https"):
                 page_url = locator_domain + page_url
             logger.info(page_url)
@@ -41,7 +43,7 @@ def fetch_data():
                 hours = list(_hh.stripped_strings)
             try:
                 coord = (
-                    sp1.find("a", string=re.compile(r"VIEW MAP"))["href"]
+                    sp1.find("a", string=re.compile(r"^VIEW MAP"))["href"]
                     .split("ll=")[1]
                     .split("&")[0]
                     .split(",")
@@ -58,7 +60,7 @@ def fetch_data():
                     coord = ["", ""]
             yield SgRecord(
                 page_url=page_url,
-                location_name=link.h3.text.strip(),
+                location_name=link.strong.text.strip(),
                 street_address=addr[0],
                 city=addr[1].split(",")[0].strip(),
                 state=" ".join(addr[1].split(",")[1].strip().split(" ")[:-1]),

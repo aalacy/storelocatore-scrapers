@@ -1,77 +1,98 @@
-import json
+from concurrent import futures
+from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
-from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
+from sgscrape.sgrecord_id import RecommendedRecordIds
+
+
+def get_tree(url):
+    r = session.get(url, headers=headers)
+    return html.fromstring(r.text)
+
+
+def get_urls_from_regions(regions):
+    urls = []
+    for region in regions:
+        tree = get_tree(f"https://stores.rainbowshops.com{region}")
+        urls += tree.xpath("//div[@class='state-infobox-title']/a/@href")
+
+    return urls
+
+
+def get_urls():
+    tree = get_tree("https://stores.rainbowshops.com/")
+    regions = tree.xpath("//div[@class='state']/a/@href")
+
+    return get_urls_from_regions(regions)
+
+
+def get_data(slug, sgw: SgWriter):
+    page_url = f"https://stores.rainbowshops.com{slug}"
+    store_number = page_url.split("/")[-2]
+    tree = get_tree(page_url)
+    location_name = "".join(tree.xpath("//div[@id='main-content']/h1/text()")).strip()
+    div = tree.xpath("//div[@role='main']")[0]
+    line = div.xpath(".//div[@id='locdetails']//div[@class='loc-address']/div/text()")
+    line = list(filter(None, [li.strip() for li in line]))
+
+    street_address = ", ".join(line[:-1])
+    csz = line.pop()
+    city = csz.split(", ")[0]
+    csz = csz.split(", ")[1]
+    state, postal = csz.split()
+
+    phone = "".join(
+        div.xpath(".//div[@id='locdetails']//a[contains(@href, 'tel:')]/text()")
+    ).strip()
+    latitude = "".join(div.xpath(".//div/@data-lat"))
+    longitude = "".join(div.xpath(".//div/@data-lng"))
+
+    _tmp = []
+    hours = div.xpath(".//div[@id='locdetails']//tr")
+    for h in hours:
+        day = "".join(h.xpath("./td[1]//text()")).strip()
+        inter = "".join(h.xpath("./td[2]//text()")).strip()
+        _tmp.append(f"{day}: {inter}")
+
+    hours_of_operation = ";".join(_tmp)
+
+    row = SgRecord(
+        page_url=page_url,
+        location_name=location_name,
+        street_address=street_address,
+        city=city,
+        state=state,
+        zip_postal=postal,
+        country_code="US",
+        store_number=store_number,
+        phone=phone,
+        latitude=latitude,
+        longitude=longitude,
+        locator_domain=locator_domain,
+        hours_of_operation=hours_of_operation,
+    )
+
+    sgw.write_row(row)
 
 
 def fetch_data(sgw: SgWriter):
-    search = DynamicGeoSearch(
-        country_codes=[SearchableCountries.USA], expected_search_radius_miles=100
-    )
-    for lat, lng in search:
-        api = f"https://stores.rainbowshops.com/umbraco/api/location/GetDataByCoordinates?longitude={lng}&latitude={lat}&distance=100&units=miles"
-        r = session.get(api)
-        js = json.loads(r.json())["StoreLocations"]
+    urls = get_urls()
 
-        for j in js:
-            l = j.get("Location") or {}
-            e = j.get("ExtraData") or {}
-            a = e.get("Address") or {}
-            coords = l.get("coordinates") or [SgRecord.MISSING, SgRecord.MISSING]
-            longitude, latitude = coords
-
-            location_name = j.get("Name") or SgRecord.MISSING
-            store_number = e.get("ReferenceCode")
-            street_address = f'{a.get("AddressNonStruct_Line1")} {a.get("AddressNonStruct_Line2") or ""}'.strip()
-            city = a.get("Locality")
-            state = a.get("Region") or a.get("CountryCode")
-            postal = a.get("PostalCode")
-            country_code = "US"
-            phone = e.get("Phone")
-            page_url = f"https://stores.rainbowshops.com/{state}/{city}/{store_number}/"
-
-            _tmp = []
-            days = [
-                "Sunday",
-                "Monday",
-                "Tuesday",
-                "Wednesday",
-                "Thursday",
-                "Friday",
-                "Saturday",
-            ]
-            hours = e.get("HoursOfOperations")
-            if hours:
-                for day, hour in zip(days, hours.split("|")):
-                    _tmp.append(f"{day}: {hour}")
-
-            hours_of_operation = ";".join(_tmp)
-
-            row = SgRecord(
-                page_url=page_url,
-                location_name=location_name,
-                street_address=street_address,
-                city=city,
-                state=state,
-                zip_postal=postal,
-                country_code=country_code,
-                store_number=store_number,
-                phone=phone,
-                location_type=SgRecord.MISSING,
-                latitude=latitude,
-                longitude=longitude,
-                locator_domain=locator_domain,
-                hours_of_operation=hours_of_operation,
-            )
-
-            sgw.write_row(row)
+    with futures.ThreadPoolExecutor(max_workers=3) as executor:
+        future_to_url = {executor.submit(get_data, url, sgw): url for url in urls}
+        for future in futures.as_completed(future_to_url):
+            future.result()
 
 
 if __name__ == "__main__":
+    locator_domain = "https://www.rainbowshops.com/"
+
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:95.0) Gecko/20100101 Firefox/95.0",
+        "Accept": "*/*",
+    }
     session = SgRequests()
-    locator_domain = "https://rainbowshops.com/"
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         fetch_data(writer)

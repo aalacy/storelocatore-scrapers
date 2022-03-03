@@ -1,7 +1,10 @@
-import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
 import usaddress
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 session = SgRequests()
 headers = {
@@ -9,34 +12,6 @@ headers = {
 }
 
 logger = SgLogSetup().get_logger("staterbros_com")
-
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "raw_address",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
 
 
 def fetch_data():
@@ -48,7 +23,6 @@ def fetch_data():
     country = "US"
     logger.info("Pulling Stores")
     for line in r.iter_lines():
-        line = str(line.decode("utf-8"))
         if "<loc>https://www.staterbros.com/stores/" in line:
             locs.append(line.split("<loc>")[1].split("<")[0])
     for loc in locs:
@@ -68,14 +42,12 @@ def fetch_data():
             r2 = session.get(loc, headers=headers)
             lines = r2.iter_lines()
             for line2 in lines:
-                line2 = str(line2.decode("utf-8"))
                 if (
                     '<div class="elementor-text-editor elementor-clearfix">' in line2
                     and phone == ""
                     and rawadd != ""
                 ):
                     g = next(lines)
-                    g = str(g.decode("utf-8"))
                     ph = g.split("<")[0].strip().replace("\t", "")
                     if ph.count("-") == 2:
                         phone = ph
@@ -88,7 +60,6 @@ def fetch_data():
                     and rawadd == ""
                 ):
                     g = next(lines)
-                    g = str(g.decode("utf-8"))
                     rawadd = g.split("<")[0].strip().replace("\t", "")
                     try:
                         add = usaddress.tag(rawadd)
@@ -120,25 +91,15 @@ def fetch_data():
                         zc = add[0]["ZipCode"]
                     except:
                         pass
-                if '<p class="elementor-icon-box-description"><p><b>' in line2:
-                    if hours == "":
+                if '<p class="elementor-icon-box-description">' in line2:
+                    g = next(lines)
+                    if "PM" in g:
                         hours = (
-                            line2.split(
-                                '<p class="elementor-icon-box-description"><p><b>'
-                            )[1]
+                            g.strip()
+                            .split("<p>")[1]
                             .split("</p>")[0]
-                            .replace("</b>", ": ")
-                            .replace("&#8211;", "-")
-                        )
-                    else:
-                        hours = (
-                            hours
-                            + "; "
-                            + line2.split(
-                                '<p class="elementor-icon-box-description"><p><b>'
-                            )[1]
-                            .split("</p>")[0]
-                            .replace("</b>", ": ")
+                            .replace("<b>", "")
+                            .replace("</b>", ":")
                             .replace("&#8211;", "-")
                         )
             if add != "":
@@ -160,28 +121,33 @@ def fetch_data():
                     add = "1850 E Ave. J"
                 if "2845 W Ave L" in rawadd:
                     add = "2845 W Ave L"
-                yield [
-                    website,
-                    loc,
-                    name,
-                    rawadd,
-                    address,
-                    city,
-                    state,
-                    zc,
-                    country,
-                    store,
-                    phone,
-                    typ,
-                    lat,
-                    lng,
-                    hours,
-                ]
+                name = name.replace("</title>", "")
+                if " | " in name:
+                    name = name.split(" | ")[0]
+                yield SgRecord(
+                    locator_domain=website,
+                    page_url=loc,
+                    location_name=name,
+                    street_address=address,
+                    raw_address=rawadd,
+                    city=city,
+                    state=state,
+                    zip_postal=zc,
+                    country_code=country,
+                    phone=phone,
+                    location_type=typ,
+                    store_number=store,
+                    latitude=lat,
+                    longitude=lng,
+                    hours_of_operation=hours,
+                )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()

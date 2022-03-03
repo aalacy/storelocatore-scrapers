@@ -1,118 +1,140 @@
-import csv
-from sgrequests import SgRequests
+# -*- coding: utf-8 -*-
+from typing import Iterable, Tuple, Callable
+from sgrequests import SgRequests, SgRequestError
+from sglogging import sglog
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.pause_resume import CrawlStateSingleton
+from sgzip.dynamic import SearchableCountries
+from sgzip.parallel import DynamicSearchMaker, ParallelDynamicSearch, SearchIteration
 
-session = SgRequests(proxy_rotation_failure_threshold=2)
-
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-                "page_url",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
+website = "weedmaps.com"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
+headers = {
+    "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.96 Safari/537.36",
+}
 
 
-def fetch_data():
-    address = []
-    headers = {
-        "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.96 Safari/537.36",
-        "accept": "*/*",
-    }
-    page = 1
-    while True:
-        loc_url = (
-            "https://api-g.weedmaps.com/discovery/v2/listings?&filter%5Bbounding_radius%5D=75000000mi&filter%5Bbounding_latlng%5D=32.79148101806641%2C-86.82768249511719&latlng=32.79148101806641%2C-86.82768249511719&page_size=150&page="
-            + str(page)
-        )
-        jd = session.get(loc_url, headers=headers).json()
-        page += 1
-        if "errors" in jd.keys():
-            break
-        for loc in jd["data"]["listings"]:
-            store = []
-            location_name = loc["name"]
-            street_address = loc["address"]
-            if len(street_address.split(":")) > 1:
-                continue
-            city = loc["city"]
-            state = loc["state"]
-            temp_zipp = loc["zip_code"]
-            a = temp_zipp.split("-")[0]
-            if len(a) < 5:
-                zipp = "<MISSING>"
-            else:
-                zipp = a
-            temp_country_code = zipp
-            if len(temp_country_code) == 5:
-                country_code = "US"
-            else:
-                country_code = "CA"
-            store_number = "<MISSING>"
-            phone = loc["phone_number"]
-            location_type = loc["type"]
-            latitude = loc["latitude"]
-            longitude = loc["longitude"]
-            page_url = loc["web_url"]
+class _SearchIteration(SearchIteration):
+    """
+    Here, you define what happens with each iteration of the search.
+    The `do(...)` method is what you'd do inside of the `for location in search:` loop
+    It provides you with all the data you could get from the search instance, as well as
+    a method to register found locations.
+    """
 
-            h_o_o = "<INACCESSIBLE>"
+    def __init__(self, http: SgRequests):
+        self.__http = http
+        self.__state = CrawlStateSingleton.get_instance()
 
-            if (
-                "https://weedmaps.com/dispensaries/tokyo-smoke-3003-danforth"
-                == page_url
-            ):
-                state = "ON"
-                zipp = "M4C 1M9"
-            if (
-                "https://weedmaps.com/dispensaries/dutch-love-toronto-theatre-district"
-                == page_url
-            ):
-                state = "ON"
-                zipp = "M5V 2E4"
+    def do(
+        self,
+        coord: Tuple[float, float],
+        zipcode: str,
+        current_country: str,
+        items_remaining: int,
+        found_location_at: Callable[[float, float], None],
+    ) -> Iterable[SgRecord]:
 
-            store.append("https://weedmaps.com/")
-            store.append(location_name)
-            store.append(street_address)
-            store.append(city)
-            store.append(state)
-            store.append(zipp)
-            store.append(country_code)
-            store.append(store_number)
-            store.append(phone)
-            store.append(location_type)
-            store.append(latitude)
-            store.append(longitude)
-            store.append(h_o_o)
-            store.append(page_url)
-            if store[2] in address:
-                continue
-            address.append(store[2])
-            store = [str(x).strip() if x else "<MISSING>" for x in store]
-            yield store
+        lat = coord[0]
+        lng = coord[1]
+        log.info(f"coord:{lat},{lng}")
+        search_url = "https://api-g.weedmaps.com/discovery/v2/listings?&filter%5Bbounding_radius%5D=75mi&filter%5Bbounding_latlng%5D={},{}&latlng={},{}&page_size=150&page={}"
+        page_no = 1
+        while True:
+
+            try:
+                jd = self.__http.get(
+                    search_url.format(lat, lng, lat, lng, page_no), headers=headers
+                )
+                if isinstance(jd, SgRequestError):
+                    break
+
+                jd = jd.json()
+                page_no += 1
+                loc_list = jd["data"]["listings"]
+                if len(loc_list) <= 0:
+                    break
+                for loc in loc_list:
+                    locator_domain = website
+                    location_name = loc["name"] if loc["name"] else "<MISSING>"
+                    street_address = loc["address"] if loc["address"] else "<MISSING>"
+                    city = loc["city"] if loc["city"] else "<MISSING>"
+                    state = loc["state"] if loc["state"] else "<MISSING>"
+                    zip = loc["zip_code"] if loc["zip_code"] else "<MISSING>"
+                    country_code = loc.get("country", "<MISSING>")
+                    store_number = loc["id"]
+                    phone = loc["phone_number"] if loc["phone_number"] else "<MISSING>"
+                    location_type = loc["type"] if loc["type"] else "<MISSING>"
+                    latitude = loc["latitude"] if loc["latitude"] else "<MISSING>"
+                    longitude = loc["longitude"] if loc["longitude"] else "<MISSING>"
+                    hours_list = []
+
+                    try:
+                        days = loc["business_hours"].keys()
+                        for day in days:
+                            time = (
+                                loc["business_hours"][day]["open"]
+                                + "-"
+                                + loc["business_hours"][day]["close"]
+                            )
+                            hours_list.append(day + ": " + time)
+
+                    except:
+                        pass
+                    hours_of_operation = "; ".join(hours_list).strip()
+                    page_url = loc["web_url"] if loc["web_url"] else "<MISSING>"
+
+                    found_location_at(latitude, longitude)
+                    yield SgRecord(
+                        locator_domain=locator_domain,
+                        page_url=page_url,
+                        location_name=location_name,
+                        street_address=street_address,
+                        city=city,
+                        state=state,
+                        zip_postal=zip,
+                        country_code=country_code,
+                        store_number=store_number,
+                        phone=phone,
+                        location_type=location_type,
+                        latitude=latitude,
+                        longitude=longitude,
+                        hours_of_operation=hours_of_operation,
+                    )
+
+            except:
+                raise
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    log.info("Started")
+    # additionally to 'search_type', 'DynamicSearchMaker' has all options that all `DynamicXSearch` classes have.
+    search_maker = DynamicSearchMaker(
+        search_type="DynamicGeoSearch",
+        expected_search_radius_miles=100,
+    )
+
+    with SgWriter(
+        deduper=SgRecordDeduper(
+            RecommendedRecordIds.StoreNumberId, duplicate_streak_failure_factor=-1
+        )
+    ) as writer:
+        countries = SearchableCountries.ALL
+        with SgRequests(dont_retry_status_codes=([404, 422])) as http:
+            for country in countries:
+                search_iter = _SearchIteration(http=http)
+                par_search = ParallelDynamicSearch(
+                    search_maker=search_maker,
+                    search_iteration=search_iter,
+                    country_codes=[country],
+                )
+
+                for rec in par_search.run():
+                    writer.write_row(rec)
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()

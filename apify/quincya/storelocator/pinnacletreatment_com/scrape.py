@@ -38,6 +38,12 @@ def fetch_data(sgw: SgWriter):
             raw_address = list(
                 item.find(class_="locations-grid-address").stripped_strings
             )
+            if "Same Day" in raw_address[-1]:
+                raw_address.pop(-1)
+            if "Walk-in" in raw_address[-1]:
+                raw_address.pop(-1)
+            if "admissions" in raw_address[-1]:
+                raw_address.pop(-1)
             street_address = raw_address[-4]
             city = raw_address[-3].split(",")[0].replace("5th St", "").strip()
             state = raw_address[-3].split(",")[1].split()[0]
@@ -146,6 +152,8 @@ def fetch_data(sgw: SgWriter):
                 .split("Groups:")[0]
                 .split("Licenses:")[0]
                 .split("Out of")[0]
+                .split("Walk")[0]
+                .split("OBOT")[0]
             ).strip()
 
             if (
