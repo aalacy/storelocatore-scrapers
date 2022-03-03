@@ -21,7 +21,12 @@ def fetch_data():
         for code in all_codes:
             driver.get(start_url)
             sleep(3)
-            driver.find_element_by_xpath('//div[contains(text(), "100 Miles")]').click()
+            try:
+                driver.find_element_by_xpath(
+                    '//div[contains(text(), "100 Miles")]'
+                ).click()
+            except Exception:
+                pass
             sleep(2)
             q = driver.find_element_by_xpath('//input[@id="storelocator-query"]')
             q.send_keys(code)
