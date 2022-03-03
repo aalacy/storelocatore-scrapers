@@ -4,3 +4,4 @@ lxml==4.6.2
 sgscrape==0.2.6
 sglogging==0.0.4
 sgvalidator==0.0.71
+tenacity==7.0.0
