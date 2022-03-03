@@ -12,7 +12,6 @@ session = SgRequests()
 headers = {
     "authority": "api.dineengine.io",
     "method": "GET",
-    "path": "/baddaddys/custom/dineengine/vendor/olo/restaurants/near?lat=34.0200966&long=-80.9704379&radius=25&limit=10&calendarstart=20211222&calendarend=20211229",
     "path": "/baddaddys/custom/dineengine/vendor/olo/restaurants/near?lat=35.262082&long=-81.18730049999999&radius=25&limit=10&calendarstart=20220301&calendarend=20220308",
     "scheme": "https",
     "accept": "application/json",
@@ -28,7 +27,6 @@ headers = {
     "sec-fetch-mode": "cors",
     "sec-fetch-site": "cross-site",
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36",
-    "x-device-id": "4fe345e6-b69b-4dbd-8458-193700344783",
     "x-device-id": "ce7713f7-4eea-452d-beca-84922d992c25",
 }
 
@@ -36,7 +34,6 @@ headers = {
 def fetch_data():
     linklist = []
     EndDate = date.today() + timedelta(days=6)
-    print(EndDate, ",", date.today())
     mylist = static_coordinate_list(40, SearchableCountries.USA)
     for lat, lng in mylist:
         url = (
