@@ -1,5 +1,3 @@
-import re
-
 from bs4 import BeautifulSoup
 
 from sgpostal.sgpostal import parse_address_intl
@@ -63,14 +61,14 @@ def fetch_data(sgw: SgWriter):
         location_type = ""
         store_number = ""
         phone = item.find(class_="phone-number").text.strip()
-        hours_of_operation = " ".join(
-            list(item.find(class_="working-times").stripped_strings)
+        hours_of_operation = (
+            " ".join(list(item.find(class_="working-times").stripped_strings))
+            .split("Public")[0]
+            .strip()
         )
         map_str = item.find(class_="directions")["href"]
         try:
-            geo = re.findall(r"[0-9]{2}\.[0-9]+,[0-9]{2,3}\.[0-9]+", map_str)[0].split(
-                ","
-            )
+            geo = map_str.split("=")[-1].split(",")
             latitude = geo[0]
             longitude = geo[1].strip()
         except:

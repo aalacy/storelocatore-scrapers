@@ -38,9 +38,16 @@ def fetch_data(sgw: SgWriter):
         source = source.replace("</br>", "<br/>")
         root = html.fromstring(source)
         lines = root.xpath("//text()")
-        store_number = lines.pop(1).split("Loja ")[1].split()[0]
+        if ", " not in lines[1]:
+            store_number = lines.pop(1).split("Loja ")[1].split()[0]
+        else:
+            _tmp = lines.pop(1)
+            store_number = _tmp.split("Loja ")[1].split()[0]
+            lines.insert(1, _tmp.split(", ")[0])
+
         raw_address = ", ".join(lines)
         street_address, city, state, postal = get_international(raw_address)
+        street_address = lines.pop(1)
         hours = j.get("schedule") or ""
         hours_of_operation = hours.replace("</br>", ";")
 

@@ -26,17 +26,23 @@ def fetch_data():
         for e in poi["openingHoursSpecification"]:
             day = e["dayOfWeek"][0]
             hours = e["opens"]
-            hoo.append(f"{day}: {hours}")
+            if hours:
+                hoo.append(f"{day}: {hours}")
+            else:
+                hoo.append(f"{day}: Closed")
         hoo = " ".join(hoo)
         zip_code = poi["address"]["postalCode"]
         if zip_code == "00000":
             zip_code = ""
+        street_address = poi["address"]["streetAddress"].strip().replace(",,", ",")
+        if street_address.endswith(","):
+            street_address = street_address[:-1]
 
         item = SgRecord(
             locator_domain=domain,
             page_url=start_url,
             location_name=poi["name"],
-            street_address=poi["address"]["streetAddress"],
+            street_address=street_address,
             city=poi["address"]["addressLocality"],
             state=poi["address"]["addressRegion"],
             zip_postal=zip_code,

@@ -44,6 +44,7 @@ def parse_cn():
                 country_code="China",
                 latitude=_["latitude"],
                 longitude=_["longitude"],
+                location_type="sales",
                 phone=_["service_phone_jaguar"],
                 locator_domain=locator_domain,
                 hours_of_operation="; ".join(hours),
@@ -175,6 +176,7 @@ def _d(country, c_code, session, url, zip=None):
             phone=phone,
             latitude=_["data-lat"],
             longitude=_["data-lng"],
+            location_type=", ".join(_.select_one("ul.services").stripped_strings),
             locator_domain=locator_domain,
             raw_address=raw_address,
         )

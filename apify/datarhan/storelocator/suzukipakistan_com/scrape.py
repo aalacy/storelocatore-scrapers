@@ -23,8 +23,6 @@ def fetch_data():
     all_locations = dom.xpath("//div[@dealer-id]")
     for poi_html in all_locations:
         poi = json.loads(poi_html.xpath(".//input/@value")[0])
-        if poi["SuzukiDealersData"]["OfferedServices"]["Text"] != "2":
-            continue
         raw_address = poi["SuzukiDealersData"]["DealerAddress"]["Text"]
         addr = parse_address_intl(raw_address)
         street_address = addr.street_address_1
@@ -36,14 +34,21 @@ def fetch_data():
         hoo = f"Open: {opens}, Closes {closes}, Close On: {closed}"
         phone = poi["SuzukiDealersData"]["DealerContactNumber"]["Text"]
         if phone:
-            phone = phone.split(",")[0].split("/")[0]
+            phone = (
+                phone.split(",")[0].split("/")[0].split(";")[0].split(" - ")[0].strip()
+            )
+        if phone and len(phone) > 14 and "(" not in phone:
+            phone = phone.split()[0]
+        city = addr.city
+        if city and city.endswith("."):
+            city = city[:-1]
 
         item = SgRecord(
             locator_domain=domain,
             page_url=start_url,
             location_name=poi["TitlePart"]["Title"],
             street_address=street_address,
-            city=addr.city,
+            city=city,
             state="",
             zip_postal=addr.postcode,
             country_code="Pakistan",

@@ -22,7 +22,6 @@ else:
 
 DOMAIN = "hokben.co.id"
 LOCATION_URL = "https://www.hokben.co.id/outlet"
-API_URL = "https://digital.hokben.co.id/api/v2/pups/?lat=&lon=&radius1000000=&page=1&size=4000"
 HEADERS = {
     "Accept": "application/json, text/plain, */*",
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
@@ -44,7 +43,8 @@ CITIES = [
     "Bengkulu",
     "Yogyakarta",
     "Gorontalo",
-    "Jakarta" "Jakarta Barat",
+    "Jakarta",
+    "Jakarta Barat",
     "Jakarta Pusat",
     "Jakarta Selatan",
     "Jakarta Timur",
@@ -156,18 +156,37 @@ def getAddress(raw_address):
     return MISSING, MISSING, MISSING, MISSING
 
 
+def search_location(driver, city, num=0):
+    num += 1
+    input = driver.find_element_by_id("findAddress")
+    input.clear()
+    input.send_keys(city)
+    try:
+        driver.find_element_by_xpath("/html/body/div[5]/div[1]").click()
+        driver.implicitly_wait(5)
+    except:
+        try:
+            driver.find_element_by_xpath("/html/body/div[6]/div[1]").click()
+            driver.implicitly_wait(5)
+        except:
+            if num <= 3:
+                log.info(f"Search failed for {city}. retry num {num}")
+                return search_location(driver, city, num)
+            else:
+                driver.refresh()
+                driver.implicitly_wait(10)
+                return search_location(driver, city)
+    time.sleep(2)
+    return driver
+
+
 def fetch_data():
     log.info("Fetching store_locator data")
     driver = SgSelenium().chrome()
     driver.get(LOCATION_URL)
     driver.implicitly_wait(10)
     for city in CITIES:
-        input = driver.find_element_by_id("findAddress")
-        input.clear()
-        input.send_keys(city)
-        driver.implicitly_wait(5)
-        driver.find_element_by_xpath("/html/body/div[5]/div[1]").click()
-        time.sleep(3)
+        driver = search_location(driver, city)
         soup = bs(driver.page_source, "lxml")
         contents = soup.find("div", id="list-store").find_all(
             "div", {"class": "col-12 col-md-4 mb-3"}
@@ -212,6 +231,7 @@ def fetch_data():
                 hours_of_operation=hours_of_operation,
                 raw_address=raw_address,
             )
+    driver.quit()
 
 
 def scrape():

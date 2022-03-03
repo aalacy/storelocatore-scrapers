@@ -131,17 +131,40 @@ def fetch_data():
                                     location_type = "Branch"
 
                             hours = store_sel.xpath(
-                                '//div[@class="branchLobby"]//tr[@class="times"]'
+                                '//div[@class="branchLobby"]//tr[contains(@class,"times")]'
                             )
                             if len(hours) > 0:
                                 hours = hours[1:]
                             hours_list = []
                             for hour in hours:
                                 day = "".join(hour.xpath(".//th//text()")).strip()
-                                time = "".join(hour.xpath(".//td//text()")).strip()
-                                hours_list.append(day + ":" + time)
+                                time = (
+                                    "".join(
+                                        hour.xpath(".//td//p[@class='times']/text()")
+                                    )
+                                    .strip()
+                                    .split("-")
+                                )
+                                if len("".join(time)) <= 0:
+                                    time = "".join(hour.xpath(".//td//text()")).strip()
+                                    hours_list.append(day + ":" + time)
 
-                            hours_of_operation = "; ".join(hours_list).strip()
+                                else:
+                                    time_list = []
+                                    for tm in time:
+                                        if len("".join(tm).strip()) > 0:
+                                            time_list.append("".join(tm).strip())
+
+                                    hours_list.append(day + ":" + " - ".join(time_list))
+
+                            hours_of_operation = (
+                                "; ".join(hours_list)
+                                .strip()
+                                .replace("\r\n", "")
+                                .strip()
+                                .replace("\n", "")
+                                .strip()
+                            )
                             latitude = ""
                             try:
                                 latitude = (
