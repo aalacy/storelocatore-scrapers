@@ -72,7 +72,8 @@ def fetch_data():
         ).text.strip()
         raw_address = (
             row.find("div", {"class": "stores-list__store-info"})
-            .get_text(strip=True, separator=",").replace(" ", "")
+            .get_text(strip=True, separator=",")
+            .replace(" ", "")
             .strip()
             .rstrip(",")
         )
