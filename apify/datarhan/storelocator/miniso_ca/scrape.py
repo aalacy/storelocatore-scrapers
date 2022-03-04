@@ -19,7 +19,7 @@ def fetch_data():
     response = session.get(start_url, headers=hdr)
     dom = etree.HTML(response.text)
     all_locations = dom.xpath('//div[@id="addresses_list"]/ul/li')
-    all_coords = re.findall("markersCoords.push\((.+?)\);", response.text)[:-2]
+    all_coords = re.findall(r"markersCoords.push\((.+?)\);", response.text)[:-2]
     all_coords = [demjson.decode(e) for e in all_coords]
 
     for poi_html in all_locations:
