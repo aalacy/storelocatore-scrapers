@@ -88,12 +88,3 @@ def scrape():
 
 if __name__ == "__main__":
     scrape()
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-if __name__ == "__main__":
-    scrape()
