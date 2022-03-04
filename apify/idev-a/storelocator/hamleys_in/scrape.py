@@ -1,4 +1,3 @@
-from encodings import utf_8
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
@@ -20,7 +19,7 @@ def dms2dec(dms_str):
 
     sign = -1 if re.search("[swSW]", dms_str) else 1
 
-    numbers = [*filter(len, re.split("\D+", dms_str, maxsplit=4))]
+    numbers = [*filter(len, re.split(r"\D+", dms_str, maxsplit=4))]
 
     degree = numbers[0]
     minute = numbers[1] if len(numbers) >= 2 else "0"
