@@ -1,4 +1,3 @@
-from pydoc import stripid
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -34,7 +33,7 @@ def get_page_urls():
             response = session.get(url, headers=headers).text
 
         except Exception:
-            print(url)
+            log.info(url)
             break
         if "looks like nothing was found at this location" in response:
             break
