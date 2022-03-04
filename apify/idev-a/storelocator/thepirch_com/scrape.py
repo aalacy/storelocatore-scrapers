@@ -3,8 +3,8 @@ from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
-import dirtyjson as json
-from sgscrape.sgpostal import parse_address_intl
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 logger = SgLogSetup().get_logger("pirch")
 
@@ -19,33 +19,29 @@ def _c(val):
     return val
 
 
+locator_domain = "https://www.pirch.com"
+base_url = "https://www.pirch.com/showrooms/"
+
+
 def fetch_data():
-    locator_domain = "https://www.pirch.com"
-    base_url = "https://www.pirch.com/home"
     with SgRequests() as session:
-        locations = json.loads(
-            session.get(base_url, headers=_headers)
-            .text.split("var StoreLocation =")[1]
-            .split("DATA.Stores")[0]
-            .strip()[:-1]
+        locations = bs(session.get(base_url, headers=_headers).text, "lxml").select(
+            "div.elementor-column.elementor-col-14"
         )
         logger.info(f"{len(locations)} found")
         for _ in locations:
-            page_url = locator_domain + _["st_page_url"]
+            page_url = _.a["href"]
             logger.info(page_url)
             sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
-            addr = parse_address_intl(
-                " ".join(list(sp1.select_one("div.store_info p").stripped_strings)[:-1])
-            )
-            street_address = addr.street_address_1
-            if addr.street_address_2:
-                street_address += " " + addr.street_address_2
+            addr = list(_.p.stripped_strings)
             hours = []
-            for hh in _["st_schedule"]:
-                hours.append(f"{hh['day']}: {hh['open']}-{hh['close']}")
+            for hh in sp1.select("table.uael-table tr"):
+                hours.append(": ".join(hh.stripped_strings))
             try:
                 coord = (
-                    sp1.select_one("a#mapStoreLocationDesktop")["href"]
+                    sp1.select(
+                        "div#content section.elementor-section-height-default.elementor-section-boxed div.elementor-button-wrapper a"
+                    )[1]["href"]
                     .split("/%40")[1]
                     .split("/data")[0]
                     .split(",")
@@ -54,26 +50,23 @@ def fetch_data():
                 coord = ["", ""]
             yield SgRecord(
                 page_url=page_url,
-                location_name=_["name"],
-                street_address=street_address,
-                city=addr.city,
-                state=_["st_address"].split(",")[-1].strip().split(" ")[0].strip(),
-                zip_postal=_["st_address"]
-                .split(",")[-1]
-                .strip()
-                .split(" ")[-1]
-                .strip(),
+                location_name=_.h3.text.replace("\n", " ").strip(),
+                street_address=" ".join(addr[:-1]),
+                city=addr[-1].split(",")[0].strip(),
+                state=addr[-1].split(",")[1].strip().split()[0].strip(),
+                zip_postal=addr[-1].split(",")[1].strip().split()[-1].strip(),
                 country_code="US",
-                phone=sp1.select_one("div.store_info a.phone-link").text.strip(),
+                phone=_.strong.text.strip(),
                 locator_domain=locator_domain,
                 latitude=_c(coord[0]),
                 longitude=_c(coord[1]),
                 hours_of_operation="; ".join(hours).replace("–", "-"),
+                raw_address=" ".join(addr),
             )
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

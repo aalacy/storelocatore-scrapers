@@ -68,6 +68,8 @@ def fetch_data(sgw: SgWriter):
         ad = "".join(a.get("addressSecondary"))
         country_code = "CO"
         city = ad.split(",")[0].strip() or "<MISSING>"
+        if ad.find("Bogotá") != -1:
+            city = "Bogotá"
         latitude = a.get("location").get("lat") or "<MISSING>"
         longitude = a.get("location").get("lng") or "<MISSING>"
         phone = j.get("phone") or "<MISSING>"

@@ -35,15 +35,24 @@ def fetch_data():
                 hoo = " ".join(
                     [" ".join([l for l in e.strip().split()]) for e in hoo if e.strip()]
                 )
+                if hoo == "-":
+                    hoo = ""
+                hoo = hoo.replace("<o:p></o:p>", "")
+            street_address = poi["address"]["address1"]
+            city = poi["address"]["city"]
+            zip_code = poi["address"]["zip"]
+            street_address = street_address.split(zip_code)[0]
+            if street_address.endswith(","):
+                street_address = street_address[:-1]
 
             item = SgRecord(
                 locator_domain=domain,
                 page_url=page_url,
                 location_name=poi["name"],
-                street_address=poi["address"]["address1"],
-                city=poi["address"]["city"],
+                street_address=street_address,
+                city=city,
                 state=poi["address"]["region"],
-                zip_postal=poi["address"]["zip"],
+                zip_postal=zip_code,
                 country_code=poi["country"],
                 store_number=poi.get("localDealerID"),
                 phone=poi["phone"],

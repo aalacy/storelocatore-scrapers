@@ -86,6 +86,7 @@ class ExampleSearchIteration(SearchIteration):
 
 
 if __name__ == "__main__":
+    logger = sglog.SgLogSetup().get_logger(logger_name="bp.com")
     CrawlStateSingleton.get_instance().save(override=True)
     headers = {
         "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:93.0) Gecko/20100101 Firefox/93.0",
@@ -110,4 +111,3 @@ if __name__ == "__main__":
                 writer.write_row(rec)
 
     state = CrawlStateSingleton.get_instance()
-    logger = sglog.SgLogSetup().get_logger(logger_name="bp.com")
