@@ -66,9 +66,11 @@ def fetch_data():
                 street_address=street_address,
                 city=city,
                 zip_postal=addr["postalCode"],
-                latitude=loc.select_one("span.storeAddressData")["data-storelongitude"],
-                longitude=loc.select_one("span.storeAddressData")["data-storelatitude"],
-                country_code="US",
+                latitude=loc.select_one("span.storeAddressData")["data-storelatitude"],
+                longitude=loc.select_one("span.storeAddressData")[
+                    "data-storelongitude"
+                ],
+                country_code="UK",
                 phone=_["telephone"],
                 locator_domain=locator_domain,
                 hours_of_operation="; ".join(hours),
