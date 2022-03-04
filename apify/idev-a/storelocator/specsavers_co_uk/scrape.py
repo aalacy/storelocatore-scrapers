@@ -50,7 +50,8 @@ def fetchConcurrentList(list, occurrence=max_workers):
 
 
 def request_with_retries(url):
-    with SgRequests() as session:
+    with SgRequests(proxy_country="us") as session:
+        logger.info(url)
         return session.get(url, headers=_headers)
 
 
@@ -59,7 +60,6 @@ def fetch_data():
         soup = bs(session.get(base_url, headers=_headers).text, "lxml")
         store_links = soup.select("div.item-list ul li a")
         for page_url, soup in fetchConcurrentList(store_links):
-            logger.info(page_url)
             detail_url = soup.find(
                 "script", src=re.compile(r"https://knowledgetags.yextpages.net")
             )["src"].replace("&amp;", "&")
