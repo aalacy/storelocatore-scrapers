@@ -25,12 +25,6 @@ def pull_content(url):
     return soup
 
 
-def handle_missing(field):
-    if field is None or (isinstance(field, str) and len(field.strip()) == 0):
-        return "<MISSING>"
-    return field
-
-
 def parse_hours(table):
     try:
         data = table.find("tbody")
@@ -62,20 +56,16 @@ def fetch_data():
     page_urls = fetch_store_urls()
     for page_url in page_urls:
         soup = pull_content(page_url)
-        location_name = handle_missing(
-            soup.find("h1", {"id": "location-name"}).get_text(
-                strip=True, separator=" | "
-            )
+        location_name = soup.find("h1", {"id": "location-name"}).get_text(
+            strip=True, separator=" | "
         )
         address = soup.find("address", {"id": "address"})
         street_address = address.find("meta", {"itemprop": "streetAddress"})["content"]
-        city = handle_missing(
-            address.find("meta", {"itemprop": "addressLocality"})["content"]
-        )
-        state = handle_missing(address.find("abbr", {"itemprop": "addressRegion"}).text)
-        zip_postal = handle_missing(
-            address.find("span", {"class": "c-address-postal-code"}).text.strip()
-        )
+        city = address.find("meta", {"itemprop": "addressLocality"})["content"]
+        state = address.find("abbr", {"itemprop": "addressRegion"}).text
+        zip_postal = address.find(
+            "span", {"class": "c-address-postal-code"}
+        ).text.strip()
         country_code = address["data-country"]
         store_number = "<MISSING>"
         phone = soup.find("span", {"id": "telephone"}).text.strip()
