@@ -16,6 +16,7 @@ HEADERS = {
 log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
 
 session = SgRequests()
+MISSING = "<MISSING>"
 
 
 def pull_content(url):
@@ -31,13 +32,16 @@ def handle_missing(field):
 
 
 def parse_hours(table):
-    data = table.find("tbody")
-    days = data.find_all("td", {"class": "c-location-hours-details-row-day"})
-    hours = data.find_all("td", {"class": "c-location-hours-details-row-intervals"})
-    hoo = []
-    for i in range(len(days)):
-        hours_formated = "{}: {}".format(days[i].text, hours[i].text)
-        hoo.append(hours_formated)
+    try:
+        data = table.find("tbody")
+        days = data.find_all("td", {"class": "c-location-hours-details-row-day"})
+        hours = data.find_all("td", {"class": "c-location-hours-details-row-intervals"})
+        hoo = []
+        for i in range(len(days)):
+            hours_formated = "{}: {}".format(days[i].text, hours[i].text)
+            hoo.append(hours_formated)
+    except:
+        return MISSING
     return ", ".join(hoo)
 
 
