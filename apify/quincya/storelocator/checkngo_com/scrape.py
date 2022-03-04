@@ -17,7 +17,6 @@ def fetch_data(sgw: SgWriter):
 
     session = SgRequests()
 
-    data = []
     locator_domain = "checkngo.com"
 
     base_link = "https://www.checkngo.com/service/location/getlocationsnear?latitude=40.8145&longitude=-96.7009&radius=10000&brandFilter=Check%20`n%20Go"
