@@ -75,7 +75,7 @@ def fetch_data():
                             hours = "<MISSING>"
                         yield SgRecord(
                             locator_domain=website,
-                            page_url=loc,
+                            page_url=lurl,
                             location_name=name,
                             street_address=add,
                             city=city,
