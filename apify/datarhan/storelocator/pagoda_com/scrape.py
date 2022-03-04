@@ -10,7 +10,6 @@ from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 
 def fetch_data():
     domain = "pagoda.com"
-    start_url = "https://www.pagoda.com/store-finder/view-all-states"
     session = SgRequests()
 
     all_codes = DynamicZipSearch(
