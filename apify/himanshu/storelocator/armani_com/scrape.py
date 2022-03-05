@@ -45,14 +45,18 @@ def fetch_data(sgw: SgWriter):
         street_address = formatted_addr.street_address_1
         if street_address is not None and formatted_addr.street_address_2:
             street_address = street_address + ", " + formatted_addr.street_address_2
+        if not street_address and formatted_addr.street_address_2:
+            street_address = formatted_addr.street_address_2
 
         state = formatted_addr.state
         if state is None:
             state = "<MISSING>"
 
         zip = formatted_addr.postcode
-        if zip is None:
-            zip = "<MISSING>"
+
+        if zip and ";" in zip:
+            street_address = street_address + ", " + zip.split(";")[-1]
+            zip = zip.split(";")[1]
 
         city = store_data["address"]["city"]
 
@@ -63,12 +67,23 @@ def fetch_data(sgw: SgWriter):
             if street_address[-1:] == ",":
                 street_address = street_address[:-1]
 
-        if street_address in found:
-            continue
-        found.append(street_address)
-
         country_code = store_data["address"]["countryCode"].upper()
         store_number = store_data["storeNumber"]
+
+        if not zip and country_code == "GB":
+            if " W1" in street_address:
+                zip = street_address[street_address.find("W1") :]
+            elif "Sw1X7Xl" in street_address:
+                zip = "Sw1X7Xl"
+            if zip:
+                street_address = (
+                    street_address.replace(zip, "").replace(" ,", ",").strip()
+                )
+
+        if location_name.strip() + street_address.strip() in found:
+            continue
+        found.append(location_name.strip() + street_address.strip())
+
         try:
             phone = store_data["address"]["phone1"]
         except:

@@ -67,13 +67,26 @@ def fetch_data():
             "div",
             {"class": re.compile(r"u_(.*) dmRespRow fullBleedChanged fullBleedMode")},
         )
-        location_name = info.find("h1").text.replace("|", "")
+        location_name = row.text.strip()
         addr_info = info.find("div", {"data-type": "inlineMap"})
         raw_address = addr_info["data-address"].strip()
+        if "boise---state" in page_url:
+            raw_address = "1190 W State St, Downtown Boise, Boise, ID, United States"
         street_address, city, state, zip_postal = getAddress(raw_address)
+        street_address = street_address.replace("Winstead Park", "").replace(
+            "Yakima", ""
+        )
         store_number = MISSING
         try:
             phone = info.find("a", {"href": re.compile(r"tel:.*")}).text.strip()
+            if len(phone) < 2:
+                phone = info.find(
+                    "a",
+                    {
+                        "href": re.compile(r"tel:.*"),
+                        "class": "font-size-24 m-font-size-17",
+                    },
+                ).text.strip()
         except:
             phone = MISSING
         country_code = "US"

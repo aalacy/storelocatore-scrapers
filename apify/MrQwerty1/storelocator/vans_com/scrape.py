@@ -78,7 +78,6 @@ def fetch_data(http: SgRequests, search: DynamicZipSearch) -> Iterable[SgRecord]
             stores = get_XML_object_variable(root, "collection.poi", [], True)
 
             for store in stores:
-                location_type = MISSING
                 store_number = get_XML_object_variable(store, "clientkey")
                 location_name = get_XML_object_variable(store, "name")
                 street_address = get_XML_object_variable(store, "address1")
@@ -118,6 +117,10 @@ def fetch_data(http: SgRequests, search: DynamicZipSearch) -> Iterable[SgRecord]
                     page_url = f"https://stores.vans.com/{state}/{city.lower().replace(' ', '_')}/{store_number}"
                 if "missing" in str(page_url):
                     page_url = MISSING
+
+                location_type = get_XML_object_variable(store, "icon")
+                if location_type == "default":
+                    location_type = "store"
 
                 yield SgRecord(
                     locator_domain=DOMAIN,

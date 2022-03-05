@@ -18,38 +18,9 @@ def fetch_data():
     states = []
     url = "https://bananarepublic.gap.com/stores/"
     website = "bananarepublic.com"
-    loc = "https://bananarepublic.gap.com/stores/hi/waipahu/"
-    name = "WAIKELE CENTER"
-    add = "94-815a Lumiaina"
-    city = "Waipahu"
-    state = "HI"
-    country = "US"
-    phone = "(808) 638-2603"
-    hours = "Mon-Sat: 11:00am - 7:00pm; Sun: 12:00pm - 6:00pm"
-    typ = "<MISSING>"
-    store = "<MISSING>"
-    lat = "21.4007488"
-    lng = "-158.001703"
-    zc = "96797-5025"
-    yield SgRecord(
-        locator_domain=website,
-        page_url=loc,
-        location_name=name,
-        street_address=add,
-        city=city,
-        state=state,
-        zip_postal=zc,
-        country_code=country,
-        phone=phone,
-        location_type=typ,
-        store_number=store,
-        latitude=lat,
-        longitude=lng,
-        hours_of_operation=hours,
-    )
     r = session.get(url, headers=headers)
     for line in r.iter_lines():
-        line = str(line.decode("utf-8"))
+        line = str(line)
         if '<a href="/stores/' in line:
             stname = line.split('<a href="/stores/')[1].split('"')[0]
             if stname not in stnames:
@@ -60,7 +31,7 @@ def fetch_data():
         logger.info("Pulling State %s..." % state)
         r2 = session.get(state, headers=headers)
         for line2 in r2.iter_lines():
-            line2 = str(line2.decode("utf-8"))
+            line2 = str(line2)
             if '<a href="/stores/' in line2:
                 cities.append(
                     "https://bananarepublic.gap.com"
@@ -71,7 +42,7 @@ def fetch_data():
             logger.info("Pulling City %s..." % city)
             r3 = session.get(city, headers=headers)
             for line3 in r3.iter_lines():
-                line3 = str(line3.decode("utf-8"))
+                line3 = str(line3)
                 if "View Store Details</a>" in line3:
                     locs.append(
                         "https://bananarepublic.gap.com"
@@ -99,10 +70,10 @@ def fetch_data():
                 r4 = session.get(loc, headers=headers)
                 lines = r4.iter_lines()
                 for line4 in lines:
-                    line4 = str(line4.decode("utf-8"))
+                    line4 = str(line4)
                     if '<div class="location-name"' in line4:
                         g = next(lines)
-                        g = str(g.decode("utf-8"))
+                        g = str(g)
                         name = g.split("<")[0].strip().replace("\t", "")
                     if '"latitude": "' in line4:
                         lat = line4.split('"latitude": "')[1].split('"')[0]
@@ -129,7 +100,7 @@ def fetch_data():
                 name = "Banana Republic"
                 if Outlet:
                     name = "Banana Republic Outlet"
-                if name != "":
+                if name != "" and ".html" in loc:
                     yield SgRecord(
                         locator_domain=website,
                         page_url=loc,

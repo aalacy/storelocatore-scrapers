@@ -29,11 +29,11 @@ def fetch_data():
             link = link.find("a")["href"]
             r = session.get(link, headers=headers)
             soup = BeautifulSoup(r.text, "html.parser")
-            loclist = soup.findAll("div", {"class": "fusion-aligncenter"})
+            loclist = soup.findAll("a", {"class": "local-button"})
             for loc in loclist:
                 if "Details" not in loc.text:
                     continue
-                page_url = loc.find("a")["href"]
+                page_url = loc["href"]
                 log.info(page_url)
                 r = session.get(page_url, headers=headers)
                 soup = BeautifulSoup(r.text, "html.parser")
