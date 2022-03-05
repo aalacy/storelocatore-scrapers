@@ -1,10 +1,12 @@
-from sgzip.static import static_zipcode_list, SearchableCountries
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
 import json
 import ssl
+from sgzip.dynamic import SearchableCountries, DynamicZipSearch
 
 try:
     _create_unverified_https_context = (
@@ -24,11 +26,7 @@ headers_authority_simple = {
     "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.77 Safari/537.36",
 }
 
-
-# Cralwer tested 200, 100, and 50 radius
-# that returns samenumber of items
-zips = static_zipcode_list(radius=200, country_code=SearchableCountries.USA)
-session = SgRequests()
+EXPECTED_SEARCH_RADIUS_MILES_US = 100
 
 
 def get_phone(data):
@@ -65,99 +63,111 @@ def fetch_data():
     # If Radius  is greater than 1000 it does not work, meaning the URL does not work
     # We must keep the radius at 1000 or less than 1000 miles
     # 'level' must be equal to 1000 or less than 1000
-    start_url = "https://maps.bankofamerica.com/api/getAsyncLocations?template=search&radius=1000&limit=1000&level=search&search="
+    start_url = "https://maps.bankofamerica.com/api/getAsyncLocations?template=search&radius=1000&limit=500&level=search&search="
+    search = DynamicZipSearch(
+        country_codes=[SearchableCountries.USA],
+        expected_search_radius_miles=EXPECTED_SEARCH_RADIUS_MILES_US,
+        use_state=False,
+    )
     s = set()
-    for idx, zipcode in enumerate(zips):
-        url = f"{start_url}{zipcode}"
-        logger.info(f"Pulling the data from at: {idx} | {zipcode}| {url} ")
-        data = session.get(url, headers=headers_authority_simple).json()
-        data_markers = data["markers"]
-
-        # Phone Number
-        plist = get_phone(data)
-
-        # ATM Hours of Operations
-        atm_hours_l = get_atm_hours(data)
-        if data_markers:
-            logger.info(f"Number of stores found: {len(data_markers)}")
-            for idx1, markers in enumerate(data_markers):
-                info_raw = markers["info"]
-                info_raw1 = info_raw.replace('<div class="tlsmap_popup">', "").replace(
-                    "</div>", ""
-                )
-                info_json = json.loads(info_raw1)
-
-                locator_domain = DOMAIN
-                page_url = info_json["url"]
-                if info_json["address_1"]:
-                    street_address = info_json["address_1"]
-                    if info_json["address_2"]:
-                        street_address = street_address + ", " + info_json["address_2"]
-                    else:
-                        street_address = street_address
-                else:
-                    street_address = MISSING
-                location_name = info_json["location_name"]
-                location_name = location_name if location_name else MISSING
-                city = info_json["city"]
-                city = city if city else MISSING
-                state = info_json["region"]
-                state = state if state else MISSING
-                zip_postal = info_json["post_code"]
-                zip_postal = zip_postal if zip_postal else MISSING
-                country_code = "US"
-                store_number = info_json["lid"]
-                store_number = store_number if store_number else MISSING
+    for zipcode in search:
+        url = f"{start_url}{zipcode}"  # noqa
+        logger.info(f"Pulling the data from at: {zipcode}| {url} ")
+        try:
+            with SgRequests(verify_ssl=False) as http:
+                data = http.get(url, headers=headers_authority_simple).json()
+                data_markers = data["markers"]
 
                 # Phone Number
-                phone = plist[idx1]
-                location_type = "ATM"
-                latitude = info_json["lat"]
-                latitude = latitude if latitude else MISSING
-                longitude = info_json["lng"]
-                longitude = longitude if longitude else MISSING
+                plist = get_phone(data)
 
-                hours_of_operation = atm_hours_l[idx1]
-                if "Limited" in hours_of_operation:
-                    hours_of_operation = "<MISSING>"
-                raw_address = "<MISSING>"
+                # ATM Hours of Operations
+                atm_hours_l = get_atm_hours(data)
+                if data_markers:
+                    logger.info(f"Number of stores found: {len(data_markers)}")
+                    for idx1, markers in enumerate(data_markers):
+                        info_raw = markers["info"]
+                        info_raw1 = info_raw.replace(
+                            '<div class="tlsmap_popup">', ""
+                        ).replace("</div>", "")
+                        info_json = json.loads(info_raw1)
 
-                # Making sure there is no duplicates
-                if store_number in s:
-                    continue
-                s.add(store_number)
+                        locator_domain = DOMAIN
+                        page_url = info_json["url"]
+                        if info_json["address_1"]:
+                            street_address = info_json["address_1"]
+                            if info_json["address_2"]:
+                                street_address = (
+                                    street_address + ", " + info_json["address_2"]
+                                )
+                            else:
+                                street_address = street_address
+                        else:
+                            street_address = MISSING
+                        location_name = info_json["location_name"]
+                        location_name = location_name if location_name else MISSING
+                        city = info_json["city"]
+                        city = city if city else MISSING
+                        state = info_json["region"]
+                        state = state if state else MISSING
+                        zip_postal = info_json["post_code"]
+                        zip_postal = zip_postal if zip_postal else MISSING
+                        country_code = "US"
+                        store_number = info_json["lid"]
+                        store_number = store_number if store_number else MISSING
 
-                # Make sure it only scrapes the branch/office/ATM which has ATM
-                #  services available
-                location_types = []
-                for i in markers["specialties"]:
-                    location_types.append(i["group"])
-                if "ATM Services" not in location_types:
-                    continue
+                        # Phone Number
+                        phone = plist[idx1]
+                        location_type = "ATM"
+                        latitude = info_json["lat"]
+                        latitude = latitude if latitude else MISSING
+                        longitude = info_json["lng"]
+                        longitude = longitude if longitude else MISSING
 
-                yield SgRecord(
-                    locator_domain=locator_domain,
-                    page_url=page_url,
-                    location_name=location_name,
-                    street_address=street_address,
-                    city=city,
-                    state=state,
-                    zip_postal=zip_postal,
-                    country_code=country_code,
-                    store_number=store_number,
-                    phone=phone,
-                    location_type=location_type,
-                    latitude=latitude,
-                    longitude=longitude,
-                    hours_of_operation=hours_of_operation,
-                    raw_address=raw_address,
-                )
+                        hours_of_operation = atm_hours_l[idx1]
+                        if "Limited" in hours_of_operation:
+                            hours_of_operation = "<MISSING>"
+                        raw_address = "<MISSING>"
+
+                        # Making sure there is no duplicates
+                        if store_number in s:
+                            continue
+                        s.add(store_number)
+
+                        # Make sure it only scrapes the branch/office/ATM which has ATM
+                        # services available
+                        location_types = []
+                        for i in markers["specialties"]:
+                            location_types.append(i["group"])
+                        if "ATM Services" not in location_types:
+                            continue
+
+                        yield SgRecord(
+                            locator_domain=locator_domain,
+                            page_url=page_url,
+                            location_name=location_name,
+                            street_address=street_address,
+                            city=city,
+                            state=state,
+                            zip_postal=zip_postal,
+                            country_code=country_code,
+                            store_number=store_number,
+                            phone=phone,
+                            location_type=location_type,
+                            latitude=latitude,
+                            longitude=longitude,
+                            hours_of_operation=hours_of_operation,
+                            raw_address=raw_address,
+                        )
+        except Exception as e:
+            logger.info(f"Please FetchRecordsError at {url}")
 
 
 def scrape():
     logger.info(" Scraping Started")
     count = 0
-    with SgWriter() as writer:
+    deduper = SgRecordDeduper(SgRecordID({SgRecord.Headers.STORE_NUMBER}))
+    with SgWriter(deduper) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
