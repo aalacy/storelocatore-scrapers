@@ -34,7 +34,7 @@ def get_response(pagenum, url):
     with SgRequests() as http:
         response = http.get(url, headers=headers)
         if response.status_code == 200:
-            logger.info(f"<< {pagenum} | {response.status_code} OK!! >>")
+            logger.info(f"<< {pagenum} | {response.status_code} OK!! >>")  # noqa
             return response
         raise Exception(f"<< Please Fix StoreUrlError {url} | {response.status_code}>>")
 
@@ -56,18 +56,18 @@ def extract_store_urls():
         locs = [url.replace("amp;", "").replace("&#39;", "'") for url in locs]
         logger.info(
             ("Found %s Locations and it contains Duplicate Locations." % str(len(locs)))
-        )
+        )  # noqa
     for i in locs:
         if "chickensandwich" not in i:
             locs_deduped.append(i)
-    logger.info(f"Found {len(locs_deduped)} Unique locations.")
+    logger.info(f"Found {len(locs_deduped)} Unique locations.")  # noqa
     return locs_deduped
 
 
 def fetch_data():
     locs = extract_store_urls()
     for idx, loc in enumerate(locs[0:]):
-        logger.info(f"Pulling the data from {idx} : {loc}")
+        logger.info(f"Pulling the data from {idx} : {loc}")  # noqa
         r2 = get_response(idx, loc)
         if r2 is not None:
             sel = html.fromstring(r2.text, "lxml")
@@ -170,14 +170,14 @@ def scrape():
     logger.info("Started")
     count = 0
     deduper = SgRecordDeduper(SgRecordID({SgRecord.Headers.STORE_NUMBER}))
-    with SgWriter() as writer:
+    with SgWriter(deduper) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
             count = count + 1
 
-    logger.info(f"No of records being processed: {count}")
-    logger.info("Finished")
+    logger.info(f"No of records being processed: {count}")  # noqa
+    logger.info("Finished")  # noqa
 
 
 if __name__ == "__main__":
