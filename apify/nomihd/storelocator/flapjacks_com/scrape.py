@@ -65,7 +65,15 @@ def fetch_data():
             location_name = "".join(store.xpath("p[1]//text()")).strip()
 
             store_info = store.xpath("p[2]/text()")
-            full_address = store_info[:-2]
+            phone = "<MISSING>"
+            index = 0
+            for info in store_info:
+                index = index + 1
+                if info.count("-") == 2:
+                    phone = "".join(info).strip()
+                    break
+
+            full_address = store_info[: index - 2]
             street_address = ", ".join(full_address[:-1]).strip()
             city_state_zip = (
                 full_address[-1]
@@ -80,7 +88,6 @@ def fetch_data():
             country_code = "US"
 
             store_number = "<MISSING>"
-            phone = store_info[-1].strip()
 
             location_type = "<MISSING>"
 

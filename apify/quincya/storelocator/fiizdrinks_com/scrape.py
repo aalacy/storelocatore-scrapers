@@ -62,7 +62,7 @@ def fetch_data(sgw: SgWriter):
             except:
                 hours_of_operation = ""
 
-            phone = item.a.text
+            phone = item.a.text.replace("NOW OPEN!", "").strip()
             if not phone[2].isdigit():
                 phone = ""
             if "follow" in hours_of_operation:
@@ -98,5 +98,9 @@ def fetch_data(sgw: SgWriter):
             )
 
 
-with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))) as writer:
+with SgWriter(
+    SgRecordDeduper(
+        SgRecordID({SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS})
+    )
+) as writer:
     fetch_data(writer)

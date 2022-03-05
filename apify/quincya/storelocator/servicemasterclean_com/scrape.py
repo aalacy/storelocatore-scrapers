@@ -1,3 +1,5 @@
+import time
+
 from bs4 import BeautifulSoup
 
 from sglogging import SgLogSetup
@@ -65,13 +67,23 @@ def fetch_data(sgw: SgWriter):
             hours_of_operation = store["LocationHours"]
             link = locator_domain + store["Path"]
 
-            if link not in found and not hours_of_operation:
+            if link not in found:
                 logger.info(link)
                 found.append(link)
-                req = session.get(link, headers=headers)
-                base = BeautifulSoup(req.text, "lxml")
 
-                if "COMING SOON" in base.h1.text.upper():
+                try:
+                    req = session.get(link, headers=headers)
+                    base = BeautifulSoup(req.text, "lxml")
+                except:
+                    session = SgRequests()
+                    time.sleep(10)
+                    req = session.get(link, headers=headers)
+                    base = BeautifulSoup(req.text, "lxml")
+
+                if (
+                    "COMING SOON" in base.h1.text.upper()
+                    or "COMING SOON" in base.title.text.upper()
+                ):
                     continue
 
                 try:
@@ -97,24 +109,24 @@ def fetch_data(sgw: SgWriter):
                 except:
                     pass
 
-            sgw.write_row(
-                SgRecord(
-                    locator_domain=locator_domain,
-                    page_url=link,
-                    location_name=location_name,
-                    street_address=street_address,
-                    city=city,
-                    state=state,
-                    zip_postal=zip_code,
-                    country_code=country_code,
-                    store_number=store_number,
-                    phone=phone,
-                    location_type=location_type,
-                    latitude=latitude,
-                    longitude=longitude,
-                    hours_of_operation=hours_of_operation,
+                sgw.write_row(
+                    SgRecord(
+                        locator_domain=locator_domain,
+                        page_url=link,
+                        location_name=location_name,
+                        street_address=street_address,
+                        city=city,
+                        state=state,
+                        zip_postal=zip_code,
+                        country_code=country_code,
+                        store_number=store_number,
+                        phone=phone,
+                        location_type=location_type,
+                        latitude=latitude,
+                        longitude=longitude,
+                        hours_of_operation=hours_of_operation,
+                    )
                 )
-            )
 
 
 with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:

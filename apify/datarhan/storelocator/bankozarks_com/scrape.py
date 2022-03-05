@@ -19,11 +19,13 @@ def fetch_data():
         street_address = poi["street"]
         if poi["street2"]:
             street_address += ", " + poi["street2"]
+        location_name = f'{poi["location_name"]} {poi["city"]}'
+        location_type = "ATM" if "ATM" in location_name else "BRANCH"
 
         item = SgRecord(
             locator_domain=domain,
             page_url=poi["location_url"],
-            location_name=poi["location_name"],
+            location_name=location_name,
             street_address=street_address,
             city=poi["city"],
             state=poi["state"],
@@ -31,7 +33,7 @@ def fetch_data():
             country_code=poi["country"],
             store_number=poi["id"],
             phone=poi["phones"][0]["number"],
-            location_type="",
+            location_type=location_type,
             latitude=poi["lat"],
             longitude=poi["lon"],
             hours_of_operation=hoo,

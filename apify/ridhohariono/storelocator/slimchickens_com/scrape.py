@@ -121,6 +121,7 @@ def fetch_data():
             if hours_of_operation
             else SgRecord.MISSING
         )
+        hours_of_operation = hours_of_operation.replace("Hours:", "").strip()
         phone = [e for e in row["fields"] if e["name"] == "Phone"]
         phone = phone[0]["pivot_field_value"] if phone else SgRecord.MISSING
         if not row["country"]:
@@ -150,14 +151,15 @@ def fetch_data():
             raw_address=raw_address,
         )
 
+    def load_json(content):
+        return json.loads(html.unescape(content))
+
     # Scrape UK
     soup = pull_content(UK_LOCATION_URL)
-    stores = json.loads(
-        html.unescape(
-            str(soup.find("div", id="app").find("locations-controller"))
-            .split(':restaurants="')[1]
-            .split('"></locations')[0]
-        )
+    stores = load_json(
+        str(soup.find("div", id="app").find("locations-controller"))
+        .split(':restaurants="')[1]
+        .split('"></locations')[0]
     )
     for row in stores:
         page_url = row["yext_link"]
@@ -171,12 +173,28 @@ def fetch_data():
         state = MISSING
         zip_postal = row["post_code"]
         country_code = "UK"
-        phone = row["telephone_number"]
+        phone = row["telephone_number"].replace("TBC", "") or MISSING
         store_number = MISSING
         location_type = "slimchickens-" + country_code
         if not page_url:
             page_url = row["permalink"]
-            hours_of_operation = MISSING
+            content = pull_content(page_url)
+            json_content = load_json(
+                str(content.find("div", id="app").find("restaurant-page"))
+                .split(":restaurant-data='")[1]
+                .split("'></restaurant")[0]
+            )
+            hoo = ""
+            for hday in json_content["opening_hours"]:
+                hoo += (
+                    hday["day_range"]
+                    + ": "
+                    + hday["opening_time"]
+                    + " - "
+                    + hday["closing_time"]
+                    + ", "
+                )
+            hours_of_operation = hoo.strip().rstrip(",")
         else:
             content = pull_content(page_url)
             hours = (
@@ -193,6 +211,8 @@ def fetch_data():
             for i in range(len(days)):
                 hoo += days[i] + ": " + hours[i].text.strip() + ", "
             hours_of_operation = hoo.strip().rstrip(",")
+            if phone == MISSING:
+                phone = content.find("a", {"href": re.compile(r"tel:.*")}).text.strip()
         latitude = row["latitude"]
         longitude = row["longitude"]
         log.info("Append {} => {}".format(location_name, street_address))
