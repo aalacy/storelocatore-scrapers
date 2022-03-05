@@ -21,58 +21,51 @@ def fetch_data(sgw: SgWriter):
     req = session.get(base_link, headers=headers)
     base = BeautifulSoup(req.text, "lxml")
 
+    locator_domain = "lovealondras.com"
+
     raw_data = base.find(id="popmenu-apollo-state").contents[0]
     js = raw_data.split("STATE =")[1].strip()[:-1]
     store_data = json.loads(js)
 
-    items = base.find(class_="pm-location-search-list").find_all("section")
+    for loc in store_data:
+        if "RestaurantLocation:" in loc:
+            store = store_data[loc]
 
-    for i, item in enumerate(items):
-        locator_domain = "lovealondras.com"
-        location_name = item.h4.text
-        street_address = item.p.span.text.replace("\xa0", " ").strip()
-        city_line = list(item.p.a.stripped_strings)[-1].split(",")
-        city = city_line[0].strip()
-        state = city_line[-1].strip().split()[0].strip()
-        zip_code = city_line[-1].strip().split()[1].strip()
-        country_code = "US"
-        location_type = "<MISSING>"
-        phone = item.find_all("p")[1].text.strip()
-        hours_of_operation = " ".join(list(item.find(class_="hours").stripped_strings))
-        link = (
-            "https://www.lovealondras.com" + item.find("a", string="View Menu")["href"]
-        )
-
-        store_number = ""
-        latitude = ""
-        longitude = ""
-
-        for loc in store_data:
-            if "RestaurantLocation:" in loc:
-                store = store_data[loc]
-                if store["city"] in location_name:
-                    store_number = store["id"]
-                    latitude = store["lat"]
-                    longitude = store["lng"]
-
-        sgw.write_row(
-            SgRecord(
-                locator_domain=locator_domain,
-                page_url=link,
-                location_name=location_name,
-                street_address=street_address,
-                city=city,
-                state=state,
-                zip_postal=zip_code,
-                country_code=country_code,
-                store_number=store_number,
-                phone=phone,
-                location_type=location_type,
-                latitude=latitude,
-                longitude=longitude,
-                hours_of_operation=hours_of_operation,
+            location_name = store["name"]
+            street_address = store["streetAddress"]
+            city = store["city"]
+            state = store["state"]
+            zip_code = store["postalCode"]
+            country_code = "US"
+            location_type = "<MISSING>"
+            phone = store["displayPhone"]
+            hours_of_operation = " ".join(store["schemaHours"])
+            link = (
+                "https://www.lovealondras.com/"
+                + store["slug"].replace("alondras-", "").strip()
             )
-        )
+            store_number = store["id"]
+            latitude = store["lat"]
+            longitude = store["lng"]
+
+            sgw.write_row(
+                SgRecord(
+                    locator_domain=locator_domain,
+                    page_url=link,
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=zip_code,
+                    country_code=country_code,
+                    store_number=store_number,
+                    phone=phone,
+                    location_type=location_type,
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=hours_of_operation,
+                )
+            )
 
 
 with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:

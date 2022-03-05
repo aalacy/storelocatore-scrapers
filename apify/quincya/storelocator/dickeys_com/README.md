@@ -1,2 +1,1 @@
-lat/lng available on page_url but requires selenium making scrape unstable & inefficient
---ignore StreetAddressHasNumber --ignore StateLevelCountValidator (Confirmed on website)
+ --ignore StreetAddressHasNumber --ignore StateLevelCountValidator --ignore GeoConsistencyValidator --ignore CountryValidator (Confirmed on website)

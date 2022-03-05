@@ -32,8 +32,11 @@ def fetch_data(sgw: SgWriter):
         for j in js:
             location_name = j.get("name")
             page_url = j.get("url")
-            street_address = " ".join(j.get("addressLines") or [])
-            city = j.get("city")
+            lines = j.get("addressLines") or []
+            street_address = " ".join(lines)
+            if "(" in street_address:
+                street_address = street_address.split("(")[0].strip()
+            city = j.get("city") or ""
             postal = j.get("zipCode") or ""
             if str(postal) == "0":
                 postal = SgRecord.MISSING
@@ -43,6 +46,7 @@ def fetch_data(sgw: SgWriter):
             phone = SgRecord.MISSING
             if phones:
                 phone = phones.pop(0)
+            phone = phone.replace("-", "").strip()
             latitude = j.get("latitude")
             longitude = j.get("longitude")
             location_type = j.get("nameStoreType")
@@ -76,6 +80,7 @@ def fetch_data(sgw: SgWriter):
                     _tmp.append(f"{day}: {start}-{end}")
 
             hours_of_operation = ";".join(_tmp)
+            raw_address = " ".join(f"{street_address} {city} {postal}".split())
 
             row = SgRecord(
                 page_url=page_url,
@@ -91,6 +96,7 @@ def fetch_data(sgw: SgWriter):
                 longitude=longitude,
                 locator_domain=locator_domain,
                 hours_of_operation=hours_of_operation,
+                raw_address=raw_address,
             )
 
             sgw.write_row(row)

@@ -3,6 +3,7 @@ from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgpostal.sgpostal import International_Parser, parse_address
 
 
 def fetch_data(sgw: SgWriter):
@@ -22,7 +23,20 @@ def fetch_data(sgw: SgWriter):
         location_type = "<MISSING>"
         if "EL CORTE INGLÉS" in location_name:
             location_type = "El Corto Ingles"
-        street_address = j.get("address1") or "<MISSING>"
+        ad = "".join(j.get("address1"))
+        if ad.find("Email") != -1:
+            ad = ad.split("Email")[0].strip()
+        a = parse_address(International_Parser(), ad)
+        street_address = (
+            f"{a.street_address_1} {a.street_address_2}".replace("None", "").strip()
+            or "<MISSING>"
+        )
+        if (
+            street_address.isdigit()
+            or street_address == "<MISSING>"
+            or len(street_address) < 10
+        ):
+            street_address = ad.split(",")[0].strip()
         state = j.get("stateCode") or "<MISSING>"
         postal = j.get("postalCode") or "<MISSING>"
         country_code = j.get("countryCode")
@@ -50,6 +64,9 @@ def fetch_data(sgw: SgWriter):
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hours_of_operation,
+            raw_address=f"{ad} {city}, {state} {postal}".replace(
+                "<MISSING>", ""
+            ).strip(),
         )
 
         sgw.write_row(row)

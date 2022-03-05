@@ -63,7 +63,11 @@ def fetch_data(sgw: SgWriter):
             zip_code = base.find(itemprop="postalCode").text.strip()
         except:
             zip_code = ""
-        country_code = base.find(itemprop="addressCountry").text.strip()
+
+        try:
+            country_code = base.find(itemprop="addressCountry").text.strip()
+        except:
+            country_code = final_link.split("locator/")[1].split("/")[0].title()
 
         try:
             phone = base.find(id="phone-main").text.strip()

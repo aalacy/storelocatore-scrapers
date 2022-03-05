@@ -1,5 +1,5 @@
 import json
-import unicodedata
+import html
 from sglogging import sglog
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
@@ -19,13 +19,6 @@ DOMAIN = "https://www.parfois.com/pt/ao/home/"
 MISSING = SgRecord.MISSING
 
 
-def strip_accents(text):
-
-    text = unicodedata.normalize("NFD", text).encode("ascii", "ignore").decode("utf-8")
-
-    return str(text)
-
-
 def fetch_data():
     if True:
         url = "https://www.parfois.com/on/demandware.store/Sites-Parfois_South_Europe-Site/en_US/Stores-FindStoresState"
@@ -40,13 +33,13 @@ def fetch_data():
             loclist = r.text.split("markersData.push(")[1:]
             for loc in loclist:
                 loc = json.loads(loc.split(");")[0])
-                location_name = strip_accents(loc["name"])
+                location_name = html.unescape(loc["name"])
                 log.info(location_name)
                 store_number = loc["id"]
-                phone = loc["phone"]
-                street_address = strip_accents(loc["address1"])
-                city = strip_accents(loc["city"])
-                state = strip_accents(loc["state"])
+                phone = html.unescape(loc["phone"])
+                street_address = html.unescape(loc["address1"])
+                city = html.unescape(loc["city"])
+                state = html.unescape(loc["state"])
                 zip_postal = loc["postalCode"]
                 latitude = loc["latitude"]
                 longitude = loc["longitude"]
@@ -63,6 +56,13 @@ def fetch_data():
                     latitude = MISSING
                 if "null" in longitude:
                     longitude = MISSING
+                if len(zip_postal) < 3:
+                    zip_postal = MISSING
+                raw_address = (
+                    street_address + " " + city + " " + state + " " + zip_postal
+                )
+                raw_address = raw_address.replace(MISSING, "")
+                raw_address = html.unescape(raw_address)
                 yield SgRecord(
                     locator_domain=DOMAIN,
                     page_url=country_url,
@@ -78,6 +78,7 @@ def fetch_data():
                     latitude=latitude,
                     longitude=longitude,
                     hours_of_operation=hours_of_operation.strip(),
+                    raw_address=raw_address,
                 )
 
 

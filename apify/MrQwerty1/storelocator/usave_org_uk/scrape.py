@@ -20,6 +20,8 @@ def fetch_data(sgw: SgWriter):
     for j in js:
         location_name = j.get("store") or ""
         location_name = location_name.replace("&#038;", "&")
+        if "blank" in location_name.lower():
+            continue
         street_address = f'{j.get("address")} {j.get("address2") or ""}'.strip()
         city = j.get("city") or ""
         if not city:

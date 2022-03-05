@@ -25,6 +25,12 @@ def fetch_data():
         loc_dom = etree.HTML(loc_response.text)
         poi = loc_dom.xpath('//script[contains(text(), "alternateName")]/text()')[0]
         poi = json.loads(poi.replace("\r\n", ""))
+        geo = (
+            loc_dom.xpath('//img[@id="mapimage"]/@src')[0]
+            .split("center=")[-1]
+            .split("&")[0]
+            .split(",")
+        )
 
         item = SgRecord(
             locator_domain=domain,
@@ -38,8 +44,8 @@ def fetch_data():
             store_number="",
             phone=poi["telephone"],
             location_type=poi["@type"],
-            latitude="",
-            longitude="",
+            latitude=geo[0],
+            longitude=geo[1],
             hours_of_operation=poi["openingHours"],
         )
 
