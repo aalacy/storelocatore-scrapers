@@ -185,7 +185,7 @@ def fetch_data():
                 city=addr.city,
                 state=addr.state,
                 zip_postal=addr.postcode,
-                country_code=addr.country,
+                country_code=c,
                 store_number="",
                 phone=phone,
                 location_type="",
