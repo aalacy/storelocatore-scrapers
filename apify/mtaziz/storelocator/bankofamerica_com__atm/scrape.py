@@ -160,7 +160,7 @@ def fetch_data():
                             raw_address=raw_address,
                         )
         except Exception as e:
-            logger.info(f"Please FetchRecordsError at {url}")
+            logger.info(f"Please FetchRecordsError =>> {e} <<= at {url}")
 
 
 def scrape():
