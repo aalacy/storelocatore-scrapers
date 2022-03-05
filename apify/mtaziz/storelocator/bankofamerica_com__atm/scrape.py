@@ -26,7 +26,7 @@ headers_authority_simple = {
     "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.77 Safari/537.36",
 }
 
-EXPECTED_SEARCH_RADIUS_MILES_US = 100
+EXPECTED_SEARCH_RADIUS_MILES_US = 50
 
 
 def get_phone(data):
@@ -63,7 +63,7 @@ def fetch_data():
     # If Radius  is greater than 1000 it does not work, meaning the URL does not work
     # We must keep the radius at 1000 or less than 1000 miles
     # 'level' must be equal to 1000 or less than 1000
-    start_url = "https://maps.bankofamerica.com/api/getAsyncLocations?template=search&radius=1000&limit=500&level=search&search="
+    start_url = "https://maps.bankofamerica.com/api/getAsyncLocations?template=search&radius=1000&limit=1000&level=search&search="
     search = DynamicZipSearch(
         country_codes=[SearchableCountries.USA],
         expected_search_radius_miles=EXPECTED_SEARCH_RADIUS_MILES_US,
