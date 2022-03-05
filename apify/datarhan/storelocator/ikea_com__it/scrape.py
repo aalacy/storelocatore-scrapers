@@ -21,7 +21,7 @@ def fetch_data():
     dom = etree.HTML(response.text)
 
     all_locations = dom.xpath(
-        '//div[div[div[p[strong[contains(text(), "Trova il negozio IKEA più vicino a te")]]]]]//a/@href'
+        '//h2[contains(text(), "Orari negozi IKEA")]/following-sibling::p/a/@href'
     )
     for page_url in all_locations:
         loc_response = session.get(page_url)

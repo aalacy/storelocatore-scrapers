@@ -68,7 +68,7 @@ def fetch_data():
     )["mapParagraph"]["24771"]["results"]
     driver.quit()
     logger.info(f"Total stores = {len(locations)}")
-    for _ in locations[0:5]:
+    for _ in locations:
         info = bs(_["markup"], "lxml")
         addr = info.select_one("p.location").text.strip().split(",")
         page_url = info.select_one("a.search-teaser__link")["href"]
