@@ -87,9 +87,12 @@ def fetch_data():
             "div", {"class": "restaurant__content__title"}
         ).text.strip()
         if "Temporarily Closed" in row.text.strip():
-            raw_address = row.find(
-                "div", {"class": "restaurant__content__address"}
-            ).text.strip()
+            raw_address = " ".join(
+                row.find("div", {"class": "restaurant__content__address"})
+                .text.strip()
+                .replace("Leave feedback here", "")
+                .split()
+            ).strip()
             phone = MISSING
             hours_of_operation = MISSING
             location_type = "TEMP_CLOSED"
@@ -123,8 +126,14 @@ def fetch_data():
                 location_type = "TEMP_CLOSED"
             else:
                 location_type = MISSING
-            map_link = info.find("a", {"href": re.compile(r"\/maps\/place")})["href"]
-            latitude, longitude = get_latlong(map_link)
+            try:
+                map_link = info.find("a", {"href": re.compile(r"\/maps\/place")})[
+                    "href"
+                ]
+                latitude, longitude = get_latlong(map_link)
+            except:
+                latitude = MISSING
+                longitude = MISSING
         street_address, city, state, zip_postal = getAddress(raw_address)
         if city == MISSING:
             city = location_name
