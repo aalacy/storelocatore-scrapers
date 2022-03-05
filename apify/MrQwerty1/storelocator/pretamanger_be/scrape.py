@@ -41,7 +41,6 @@ def fetch_data(sgw: SgWriter):
         ","
     )
 
-    _tmp = []
     hours_of_operation = tree.xpath(
         "//h3[@class='opening-title']/following-sibling::p/text()"
     )[0].strip()
