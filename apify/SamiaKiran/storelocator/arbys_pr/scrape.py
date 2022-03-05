@@ -51,6 +51,8 @@ def fetch_data():
             country_code = pa.country
             country_code = country_code.strip() if country_code else MISSING
             log.info(street_address)
+            if city == MISSING:
+                city = raw_address.split(",")[-3]
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url=url,

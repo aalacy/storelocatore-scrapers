@@ -25,22 +25,36 @@ def fetch_data():
         for poi in data["location"]:
             if poi["locationType"] == "Branch":
                 continue
+            street_address = poi["locationAddress"]["address1"]
+            city = poi["locationAddress"]["city"]
+            state = poi["locationAddress"]["state"]
+            zip_code = poi["locationAddress"]["zipCode"]
+            ls = street_address.replace(" ", "-")
+            page_url = f"https://www.truist.com/atm/{state}/{city}/{zip_code}/{ls}"
+            h_check = ""
+            if poi.get("locationService"):
+                h_check = [
+                    e["serviceDesc"]
+                    for e in poi["locationService"]
+                    if e["serviceDesc"] == "24 HOUR ACCESS"
+                ]
+            hoo = "24 hrs" if h_check else ""
 
             item = SgRecord(
                 locator_domain=domain,
-                page_url="https://www.truist.com/locations",
+                page_url=page_url,
                 location_name=poi["locationName"],
-                street_address=poi["locationAddress"]["address1"],
-                city=poi["locationAddress"]["city"],
-                state=poi["locationAddress"]["state"],
-                zip_postal=poi["locationAddress"]["zipCode"],
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_code,
                 country_code="",
                 store_number="",
                 phone=poi["phone"],
                 location_type=poi["locationType"],
                 latitude=poi["locationAddress"]["lat"],
                 longitude=poi["locationAddress"]["long"],
-                hours_of_operation="",
+                hours_of_operation=hoo,
             )
 
             yield item

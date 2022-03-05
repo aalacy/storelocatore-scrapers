@@ -53,11 +53,12 @@ def fetch_data():
             addr = list(sp1.select_one("div.loc-address p").stripped_strings)
             phone = ""
             if _p(addr[-1]):
-                del addr[-1]
                 phone = addr[-1]
+                del addr[-1]
             hours_of_operation = sp1.select("div.loc-address p")[-1].text.strip()
             nn = _.img["data-id"].replace("marker", "")
             latlng = _coord(locs, nn)
+            location_type = _.img["alt"].split("for")[-1].strip()
             yield SgRecord(
                 page_url=page_url,
                 location_name=sp1.h1.text.strip(),
@@ -67,6 +68,7 @@ def fetch_data():
                 zip_postal=addr[-1].split(",")[1].strip().split()[-1].strip(),
                 latitude=latlng["lat"],
                 longitude=latlng["lng"],
+                location_type=location_type,
                 country_code="US",
                 phone=phone,
                 locator_domain=locator_domain,

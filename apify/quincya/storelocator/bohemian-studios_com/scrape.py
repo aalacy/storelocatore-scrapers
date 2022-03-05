@@ -33,6 +33,8 @@ def fetch_data(sgw: SgWriter):
 
     location_name = raw_address[0]
     street_address = raw_address[1]
+    if street_address[-1:] == ",":
+        street_address = street_address[:-1]
     city_line = raw_address[2].strip().split(",")
     city = city_line[0].strip()
     state = city_line[1].strip()
