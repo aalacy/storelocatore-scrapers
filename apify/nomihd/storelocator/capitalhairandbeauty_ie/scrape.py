@@ -99,10 +99,15 @@ def fetch_data():
             "; ".join(hours[1:-1]).replace("day;", "day:").replace(":;", ":").strip()
         )
 
-        latitude, longitude = (
-            store_res.text.split("lat:")[1].split(",")[0].strip(),
-            store_res.text.split("lng:")[1].split("};")[0].strip(),
-        )
+        try:
+            latitude = store_res.text.split("lat:")[1].split(",")[0].strip()
+        except:
+            latitude = "<MISSING>"
+
+        try:
+            longitude = store_res.text.split("lng:")[1].split("};")[0].strip()
+        except:
+            longitude = "<MISSING>"
 
         yield SgRecord(
             locator_domain=locator_domain,

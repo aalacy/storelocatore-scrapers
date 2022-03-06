@@ -30,6 +30,8 @@ def fetch_data():
         }
         all_locations = session.post(start_url, headers=hdr, data=frm).json()
         for i, poi in all_locations.items():
+            if poi["ca"]["0"] == "Coming Soon":
+                continue
             page_url = poi["gu"]
             loc_response = session.get(page_url, headers=hdr)
             loc_dom = etree.HTML(loc_response.text)
