@@ -77,7 +77,8 @@ def fetch_data():
             else:
                 city = address[1].strip()
         else:
-            city = MISSING
+            city = location_name
+        city = re.sub(r"\(.*\)", "", city).strip()
         state = MISSING
         zip_postal = address[-1].strip()
         phone = store_info["phone"][i]

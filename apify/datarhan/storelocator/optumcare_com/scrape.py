@@ -52,7 +52,7 @@ def fetch_data():
             country_code="",
             store_number="",
             phone=phone,
-            location_type="",
+            location_type=poi["provider"]["locations"][0]["plans"][0]["networkName"],
             latitude=geo[0],
             longitude=geo[1],
             hours_of_operation="",
