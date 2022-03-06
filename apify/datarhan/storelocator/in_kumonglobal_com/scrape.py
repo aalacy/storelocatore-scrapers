@@ -119,15 +119,15 @@ def fetch_data():
         "lng": "106.6296638",
     }
     countries = {
-        # "in": frm_in,
-        # "bn": frm_bn,
-        # "kh": frm_kh,
-        # "id": frm_id,
-        # "ph": frm_ph,
-        # "sg": frm_sg,
+        "in": frm_in,
+        "bn": frm_bn,
+        "kh": frm_kh,
+        "id": frm_id,
+        "ph": frm_ph,
+        "sg": frm_sg,
         "th": frm_th,
-        # "vn": frm_vn,
-        # "my": frm_my,
+        "vn": frm_vn,
+        "my": frm_my,
     }
     for c, frm in countries.items():
         response = session.post(start_url.format(c), headers=hdr, data=frm)
