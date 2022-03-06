@@ -21,7 +21,7 @@ session = SgRequests()
 
 
 def pull_content(url):
-    # log.info("Pull content => " + url)
+    log.info("Pull content => " + url)
     soup = bs(session.get(url, headers=HEADERS).content, "lxml")
     return soup
 
@@ -87,8 +87,7 @@ def fetch_data():
         longitude = store_info["lng"][i]
         hours_of_operation = get_hours(page_url)
         location_type = MISSING
-        # log.info("Append {} => {}".format(location_name, street_address))
-        print(city)
+        log.info("Append {} => {}".format(location_name, street_address))
         yield SgRecord(
             locator_domain=DOMAIN,
             page_url=page_url,
