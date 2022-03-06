@@ -66,14 +66,14 @@ def fetch_data():
     all_areas = dom.xpath('//ul[@class="areas"]/li/a/@href')
     for url in all_areas:
         response = session.get(urljoin(start_url, url))
-        logger.info(f"{url} >> Response 2: {response}")
+        logger.info(f"{urljoin(start_url, url)} >> Response 2: {response}")
         dom = etree.HTML(response.text)
         all_cities = dom.xpath('//ul[@class="cities"]/li/a/@href')
         logger.info(f"Total Cities: {len(all_cities)}")
         for url in all_cities:
             url = urljoin(start_url, url)
             response = session.get(url)
-            logger.info(f"{url} >> Response 2: {response}")
+            logger.info(f"{urljoin(start_url, url)} >> Response 3: {response}")
             dom = etree.HTML(response.text)
             all_locations = dom.xpath('//ul[@class="list"]/li')
 
