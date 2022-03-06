@@ -137,6 +137,11 @@ def fetch_data():
         street_address, city, state, zip_postal = getAddress(raw_address)
         if city == MISSING:
             city = location_name
+        if zip_postal == MISSING:
+            zip_postal = raw_address.split(",")[-1].replace(city, "").strip()
+            street_address = re.sub(
+                city + r".*|" + zip_postal + r".*", "", street_address
+            )
         store_number = MISSING
         country_code = "GB"
         log.info("Append {} => {}".format(location_name, street_address))
