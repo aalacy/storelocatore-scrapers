@@ -69,6 +69,12 @@ def fetch_data(sgw: SgWriter):
         cms = "".join(tree.xpath('//*[text()="COMING SOON"]/text()'))
         if cms:
             hours_of_operation = "Coming Soon"
+        if page_url == "https://samandlouies.com/locations/corpus-christi-tx/":
+            street_address = (
+                "".join(tree.xpath('//a[contains(text(), "Blvd")]/text()'))
+                .split("|")[0]
+                .strip()
+            )
 
         row = SgRecord(
             locator_domain=locator_domain,

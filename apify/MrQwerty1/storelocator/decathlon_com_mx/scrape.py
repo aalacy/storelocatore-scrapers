@@ -46,7 +46,7 @@ def fetch_data(sgw: SgWriter):
         ["https://www.decathlon.ci/nous-contacter", "https://www.decathlon.ci/", "CI"],
         ["https://www.decathlon.cl/contactenos", "https://www.decathlon.cl/", "CL"],
         [
-            "https://www.decathlon.co.ke/en/contact-us",
+            "https://www.decathlon.co.ke/contact-us",
             "https://www.decathlon.co.ke/",
             "KE",
         ],

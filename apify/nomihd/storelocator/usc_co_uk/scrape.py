@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from sgrequests import SgRequests
+from sgrequests import SgRequests, SgRequestError
 from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
@@ -33,6 +33,8 @@ def fetch_data():
             locator_domain = website
 
             store_req = session.get(page_url, headers=headers)
+            if isinstance(store_req, SgRequestError):
+                continue
 
             retry_count = 0
             while "var store =" not in store_req.text and retry_count < 3:
