@@ -3,7 +3,9 @@ from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
-from sgscrape.sgpostal import parse_address_intl
+from sgpostal.sgpostal import parse_address_intl
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 logger = SgLogSetup().get_logger("bennigans")
 
@@ -67,7 +69,9 @@ def fetch_data():
                 latitude=coord[0],
                 longitude=coord[1],
                 locator_domain=locator_domain,
+                raw_address=" ".join(addr),
             )
+
         locations = (
             soup.select_one("div#international")
             .find_next_sibling()
@@ -75,6 +79,8 @@ def fetch_data():
         )
         logger.info(f"{len(locations)} found")
         for _ in locations:
+            if "Delivery Only" in _.text:
+                continue
             _addr = []
             for aa in _.h5.find_next_siblings():
                 _addr += list(aa.stripped_strings)
@@ -83,7 +89,8 @@ def fetch_data():
             if _p(_addr[-1]):
                 phone = _addr[-1].split("and")[0]
                 del _addr[-1]
-            addr = parse_address_intl(", ".join(_addr).replace("\xa0", " "))
+            raw_address = ", ".join(_addr).replace("\xa0", " ")
+            addr = parse_address_intl(raw_address)
             street_address = addr.street_address_1
             if addr.street_address_2:
                 street_address += " " + addr.street_address_2
@@ -118,11 +125,14 @@ def fetch_data():
                 latitude=coord[0],
                 longitude=coord[1],
                 locator_domain=locator_domain,
+                raw_address=raw_address,
             )
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.RAW_ADDRESS}))
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

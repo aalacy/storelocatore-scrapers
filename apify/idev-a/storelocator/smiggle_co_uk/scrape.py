@@ -57,6 +57,9 @@ def fetch_data():
             "" if street_address == "." or street_address == "" else street_address
         )
 
+        if store["shopAddress"]:
+            street_address = store["shopAddress"] + " " + street_address
+
         zip_postal = store["zipcode"].replace(".", "")
         city = store["city"].replace("&amp;", "&").replace("&#039;", "'")
 
@@ -80,10 +83,6 @@ def fetch_data():
             raw_address += ", " + country_code
 
         addr = parse_address_intl(raw_address)
-        street_address = addr.street_address_1 or ""
-        if addr.street_address_2:
-            street_address += " " + addr.street_address_2
-
         city = addr.city
         state = addr.state
         if store["country"] != "GB":
@@ -111,11 +110,27 @@ def fetch_data():
                 city = raw_address.split(",")[1]
             if city == "Floors":
                 street_address += " Floors"
+
+        if store["country"] == "AU" and not city:
+            city = raw_address.split(",")[-4].strip()
+            if (
+                "Waters" in city
+                or "Mount" in city
+                or "Centre" in city
+                or "South" in city
+            ):
+                city = ""
+
+        street_address = street_address.strip()
+        if street_address.startswith("."):
+            street_address = street_address[1:]
+        if street_address.startswith(","):
+            street_address = street_address[1:]
         yield SgRecord(
             page_url=store["storeURL"],
             store_number=store["locId"],
             location_name=store["storeName"],
-            street_address=street_address.strip(),
+            street_address=street_address,
             city=city,
             state=state,
             zip_postal=zip_postal,

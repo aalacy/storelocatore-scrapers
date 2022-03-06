@@ -33,8 +33,12 @@ def fetch_data():
             location_name = loc["title"]
             log.info(location_name)
             phone = loc["content"]
-            phone = BeautifulSoup(phone, "html.parser")
-            phone = phone.find("a").text.replace("+", "")
+            try:
+                phone = BeautifulSoup(phone, "html.parser")
+                phone = phone.find("a").text.replace("+", "")
+            except:
+                phone = phone.text.split()[-1]
+
             raw_address = loc["address"]
             pa = parse_address_intl(raw_address)
 

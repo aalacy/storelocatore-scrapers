@@ -36,7 +36,7 @@ def fetch_data(sgw: SgWriter):
             if "opening" in item.text.lower() or "coming" in item.text.lower():
                 continue
             try:
-                location_name = item.h3.text.strip()
+                location_name = item.h3.text.replace("CREEKCOL", "CREEK COL").strip()
             except:
                 continue
             raw_address = list(item.h5.stripped_strings)
@@ -44,6 +44,8 @@ def fetch_data(sgw: SgWriter):
                 raw_address = (
                     raw_address[0].replace("Rd Cedar", "Rd, Cedar").split(" Rd, ")
                 )
+            if "Rd, Ste" in raw_address[0]:
+                raw_address = raw_address[0].replace("Rd, Ste", "Rd Ste").split("88,")
             street_address = " ".join(raw_address[:-1])
             city_line = raw_address[-1]
             city = city_line.split(",")[0]
@@ -60,7 +62,7 @@ def fetch_data(sgw: SgWriter):
             except:
                 hours_of_operation = ""
 
-            phone = item.a.text
+            phone = item.a.text.replace("NOW OPEN!", "").strip()
             if not phone[2].isdigit():
                 phone = ""
             if "follow" in hours_of_operation:
@@ -96,5 +98,9 @@ def fetch_data(sgw: SgWriter):
             )
 
 
-with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))) as writer:
+with SgWriter(
+    SgRecordDeduper(
+        SgRecordID({SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS})
+    )
+) as writer:
     fetch_data(writer)

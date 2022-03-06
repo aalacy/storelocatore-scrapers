@@ -9,6 +9,8 @@ from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 from bs4 import BeautifulSoup as bs
 import dirtyjson as json
 import ssl
+from webdriver_manager.chrome import ChromeDriverManager
+from tenacity import retry, stop_after_attempt, wait_fixed
 
 try:
     _create_unverified_https_context = (
@@ -28,12 +30,32 @@ bs_url = "https://www.bupa.co.uk/BDC/SearchPractices"
 json_url = "https://www.bupa.co.uk/BDC/GoogleMapSearch"
 
 
+def get_driver():
+    return SgChrome(
+        executable_path=ChromeDriverManager().install(),
+        user_agent="Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0",
+        is_headless=True,
+    ).driver()
+
+
+@retry(wait=wait_fixed(2), stop=stop_after_attempt(2))
+def get_url(driver=None, url=None):
+    if not driver:
+        driver = get_driver()
+    try:
+        driver.get(url)
+    except:
+        driver = get_driver()
+        raise Exception
+
+
 def fetch_records(driver, http, search):
     for zip in search:
         del driver.requests
         headers = {}
-        driver.get(
-            f'https://www.bupa.co.uk/dental/dental-care/practices?loc={zip.replace(" ", "%20")}'
+        get_url(
+            driver,
+            f'https://www.bupa.co.uk/dental/dental-care/practices?loc={zip.replace(" ", "%20")}',
         )
         try:
             rr = driver.wait_for_request(json_url, timeout=30)
@@ -41,15 +63,18 @@ def fetch_records(driver, http, search):
             continue
 
         for key, val in rr.headers.items():
-            if key != "content-length":
+            if key.lower() != "content-length":
                 headers[key] = val
         page = 1
         payload = json.loads(rr.body)
         while True:
             payload["pageIndex"] = page
-            locations = bs(
-                http.post(bs_url, headers=headers, json=payload).text, "lxml"
-            ).select("div.centervalign-outerwrapper")
+            try:
+                locations = bs(
+                    http.post(bs_url, headers=headers, json=payload).text, "lxml"
+                ).select("div.centervalign-outerwrapper")
+            except:
+                break
             if locations:
                 page += 1
             else:
@@ -85,14 +110,16 @@ def fetch_records(driver, http, search):
 
 
 if __name__ == "__main__":
-    with SgChrome() as driver:
-        with SgRequests() as http:
-            search = DynamicZipSearch(country_codes=[SearchableCountries.BRITAIN])
-            with SgWriter(
-                SgRecordDeduper(
-                    SgRecordID({SgRecord.Headers.RAW_ADDRESS}),
-                    duplicate_streak_failure_factor=100,
-                )
-            ) as writer:
-                for rec in fetch_records(driver, http, search):
-                    writer.write_row(rec)
+    driver = get_driver()
+    with SgRequests() as http:
+        search = DynamicZipSearch(country_codes=[SearchableCountries.BRITAIN])
+        with SgWriter(
+            SgRecordDeduper(
+                SgRecordID({SgRecord.Headers.RAW_ADDRESS}),
+                duplicate_streak_failure_factor=100,
+            )
+        ) as writer:
+            for rec in fetch_records(driver, http, search):
+                writer.write_row(rec)
+    if driver:
+        driver.close()
