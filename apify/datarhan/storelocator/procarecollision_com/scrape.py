@@ -23,6 +23,8 @@ def fetch_data():
         store_url = poi["permalink"]
         location_name = poi["store"].replace("&#8211;", "-")
         street_address = poi["address"]
+        if "USA" in street_address:
+            street_address = street_address.split(",")[0]
         city = poi["city"]
         state = poi["state"]
         zip_code = poi["zip"]
