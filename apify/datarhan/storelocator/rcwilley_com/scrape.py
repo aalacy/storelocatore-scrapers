@@ -7,7 +7,6 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
-from sgselenium.sgselenium import SgFirefox
 
 
 def fetch_data():
@@ -32,15 +31,8 @@ def fetch_data():
         phone = loc_dom.xpath('//a[contains(@href, "tel")]/@href')[0].split(":")[-1]
         hoo = loc_dom.xpath('//time[@itemprop="openingHours"]//text()')
         hoo = " ".join([e.strip() for e in hoo if e.strip()])
-        with SgFirefox() as driver:
-            driver.get(page_url)
-            sleep(10)
-            loc_dom = etree.HTML(driver.page_source)
-            geo = (
-                loc_dom.xpath('//a[contains(@href, "@")]/@href')[0]
-                .split("@")[-1]
-                .split(",")[:2]
-            )
+        latitude = loc_dom.xpath('//meta[@itemprop="latitude"]/@content')[0]
+        longitude = loc_dom.xpath('//meta[@itemprop="longitude"]/@content')[0]
 
         item = SgRecord(
             locator_domain=domain,
@@ -54,8 +46,8 @@ def fetch_data():
             store_number="",
             phone=phone,
             location_type="",
-            latitude=geo[0],
-            longitude=geo[1],
+            latitude=latitude,
+            longitude=longitude,
             hours_of_operation=hoo,
         )
 
