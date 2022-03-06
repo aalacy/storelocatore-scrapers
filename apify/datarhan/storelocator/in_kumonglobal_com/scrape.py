@@ -167,7 +167,12 @@ def fetch_data():
             hoo = [e.strip() for e in hoo if e.strip()]
             hoo = " ".join(hoo)
             if "Schedule" in hoo:
-                hoo = hoo.split("Schedule")[1]
+                if "Schedule:" in hoo:
+                    hoo = hoo.split("Parent")[0].replace("Kasthuri", "")
+                else:
+                    hoo = hoo.split("Schedule")[1]
+            if "Schedule " in hoo:
+                hoo = hoo.split("Schedule ")[1]
             hoo = (
                 hoo.split("Parent Orientation")[0]
                 .split(".com ")[-1]
@@ -185,7 +190,7 @@ def fetch_data():
                 city=addr.city,
                 state=addr.state,
                 zip_postal=addr.postcode,
-                country_code=addr.country,
+                country_code=c,
                 store_number="",
                 phone=phone,
                 location_type="",
