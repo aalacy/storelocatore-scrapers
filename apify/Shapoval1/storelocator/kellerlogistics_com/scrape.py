@@ -1,4 +1,6 @@
 import json
+import time
+from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
@@ -49,6 +51,28 @@ def fetch_data(sgw: SgWriter):
             phone = "<MISSING>"
         if phone.find(",") != -1:
             phone = phone.split(",")[0].strip()
+        if state == "OH":
+            page_url = "https://kellerlogistics.com/warehousing/facilities/ohio/"
+        if state == "TX":
+            page_url = "https://kellerlogistics.com/warehousing/facilities/texas/"
+        if state == "GA":
+            page_url = "https://kellerlogistics.com/warehousing/facilities/georgia/"
+        if state == "KY":
+            page_url = "https://kellerlogistics.com/warehousing/facilities/kentucky/"
+        if state == "IL":
+            page_url = "https://kellerlogistics.com/warehousing/facilities/illinois/"
+        r = session.get(
+            "https://kellerlogistics.com/warehousing/facilities/", headers=headers
+        )
+        try:
+            tree = html.fromstring(r.text)
+        except:
+            time.sleep(5)
+            r = session.get(
+                "https://kellerlogistics.com/warehousing/facilities/", headers=headers
+            )
+            tree = html.fromstring(r.text)
+        phone = "".join(tree.xpath('//span[@id="et-info-phone"]/text()'))
 
         row = SgRecord(
             locator_domain=locator_domain,
