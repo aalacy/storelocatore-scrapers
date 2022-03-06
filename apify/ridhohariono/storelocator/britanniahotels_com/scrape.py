@@ -72,7 +72,12 @@ def fetch_data():
         },
     ).json()
     for row in data["locations"]:
-        page_url = BASE_URL + row["URL"]
+        if BASE_URL in row["URL"]:
+            page_url = (
+                "https://www.britanniahotels.com/hotels/the-britannia-hotel-birmingham"
+            )
+        else:
+            page_url = BASE_URL + row["URL"]
         info = pull_content(page_url)
         location_name = row["NAME"]
         raw_address = " ".join(
