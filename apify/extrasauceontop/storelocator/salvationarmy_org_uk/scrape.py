@@ -26,9 +26,7 @@ def get_data():
         for grid in grids:
             locator_domain = "salvationarmy.org.uk"
 
-            page_url = (
-                "salvationarmy.org.uk" + grid.find_all("p")[-1].find("a")["href"]
-            )
+            page_url = "salvationarmy.org.uk" + grid.find_all("p")[-1].find("a")["href"]
             country_code = "UK"
 
             location_name = grid.find(
