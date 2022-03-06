@@ -120,14 +120,14 @@ def fetch_data():
     }
     countries = {
         "in": frm_in,
-        "bn": frm_bn,
-        "kh": frm_kh,
-        "id": frm_id,
-        "ph": frm_ph,
-        "sg": frm_sg,
-        "th": frm_th,
-        "vn": frm_vn,
-        "my": frm_my,
+        # "bn": frm_bn,
+        # "kh": frm_kh,
+        # "id": frm_id,
+        # "ph": frm_ph,
+        # "sg": frm_sg,
+        # "th": frm_th,
+        # "vn": frm_vn,
+        # "my": frm_my,
     }
     for c, frm in countries.items():
         response = session.post(start_url.format(c), headers=hdr, data=frm)
@@ -167,7 +167,12 @@ def fetch_data():
             hoo = [e.strip() for e in hoo if e.strip()]
             hoo = " ".join(hoo)
             if "Schedule" in hoo:
-                hoo = hoo.split("Schedule")[1]
+                if "Schedule:" in hoo:
+                    hoo = hoo.split("Parent")[0].replace("Kasthuri", "")
+                else:
+                    hoo = hoo.split("Schedule")[1]
+            if "Schedule " in hoo:
+                hoo = hoo.split("Schedule ")[1]
             hoo = (
                 hoo.split("Parent Orientation")[0]
                 .split(".com ")[-1]
