@@ -25,16 +25,10 @@ def get_data():
         x = 0
         for grid in grids:
             locator_domain = "salvationarmy.org.uk"
-            try:
-                page_url = (
-                    "salvationarmy.org.uk" + grid.find_all("p")[-1].find("a")["href"]
-                )
 
-            except Exception:
-                print(zip_code)
-                print(grid)
-                print("")
-                raise Exception
+            page_url = (
+                "salvationarmy.org.uk" + grid.find_all("p")[-1].find("a")["href"]
+            )
             country_code = "UK"
 
             location_name = grid.find(
