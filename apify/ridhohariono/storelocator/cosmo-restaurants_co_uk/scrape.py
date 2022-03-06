@@ -90,7 +90,6 @@ def fetch_data():
             raw_address = " ".join(
                 row.find("div", {"class": "restaurant__content__address"})
                 .text.strip()
-                .replace("Leave feedback here", "")
                 .split()
             ).strip()
             phone = MISSING
@@ -101,12 +100,7 @@ def fetch_data():
         else:
             store = pull_content(page_url)
             info = store.find("div", {"class": "restaurant-location"})
-            raw_address = (
-                info.find("p")
-                .get_text(strip=True, separator=" ")
-                .replace("Leave feedback here", "")
-                .strip()
-            )
+            raw_address = info.find("p").get_text(strip=True, separator=" ").strip()
             phone = row.find(
                 "div", {"class": "restaurant__content__contact"}
             ).text.strip()
@@ -134,11 +128,19 @@ def fetch_data():
             except:
                 latitude = MISSING
                 longitude = MISSING
+        raw_address = re.sub(r"Leave.*|2nd Floor,", "", raw_address).strip()
         street_address, city, state, zip_postal = getAddress(raw_address)
+        street_address = (
+            street_address.replace("2Nd Floor", "")
+            .replace("Liffey Valley Shopping Centre", "")
+            .strip()
+        )
         if city == MISSING:
             city = location_name
         if zip_postal == MISSING:
             zip_postal = raw_address.split(",")[-1].replace(city, "").strip()
+            if len(zip_postal) < 4:
+                zip_postal == MISSING
             street_address = re.sub(
                 city + r".*|" + zip_postal + r".*", "", street_address
             )
