@@ -119,15 +119,15 @@ def fetch_data():
         "lng": "106.6296638",
     }
     countries = {
-        "in": frm_in,
-        "bn": frm_bn,
-        "kh": frm_kh,
-        "id": frm_id,
-        "ph": frm_ph,
-        "sg": frm_sg,
+        # "in": frm_in,
+        # "bn": frm_bn,
+        # "kh": frm_kh,
+        # "id": frm_id,
+        # "ph": frm_ph,
+        # "sg": frm_sg,
         "th": frm_th,
-        "vn": frm_vn,
-        "my": frm_my,
+        # "vn": frm_vn,
+        # "my": frm_my,
     }
     for c, frm in countries.items():
         response = session.post(start_url.format(c), headers=hdr, data=frm)
@@ -176,6 +176,11 @@ def fetch_data():
             )
             if "Please contact the center for more details" in hoo:
                 hoo = ""
+            if not hoo:
+                hoo = loc_dom.xpath(
+                    '//div[@class="store_locator_content"]/ul/li[4]/text()'
+                )
+                hoo = " ".join([e.strip() for e in hoo if "pm" in e.lower()])
 
             item = SgRecord(
                 locator_domain=domain,
