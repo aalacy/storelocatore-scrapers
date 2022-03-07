@@ -1,75 +1,110 @@
-import csv
+from bs4 import BeautifulSoup as bs
 from sgrequests import SgRequests
-from bs4 import BeautifulSoup
-import json
+from sglogging import sglog
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgpostal import parse_address_usa
+import re
 
+
+DOMAIN = "sevabeauty.com"
+BASE_URL = "https://sevabeauty.com"
+LOCATION_URL = "http://sevabeauty.com/location/"
+HEADERS = {
+    "Accept": "application/json, text/plain, */*",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
+}
+MISSING = "<MISSING>"
+log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
 
 session = SgRequests()
 
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
-        # Body
-        for row in data:
-            writer.writerow(row)
+
+def getAddress(raw_address):
+    try:
+        if raw_address is not None and raw_address != MISSING:
+            data = parse_address_usa(raw_address)
+            street_address = data.street_address_1
+            if data.street_address_2 is not None:
+                street_address = street_address + " " + data.street_address_2
+            city = data.city
+            state = data.state
+            zip_postal = data.postcode
+            if street_address is None or len(street_address) == 0:
+                street_address = MISSING
+            if city is None or len(city) == 0:
+                city = MISSING
+            if state is None or len(state) == 0:
+                state = MISSING
+            if zip_postal is None or len(zip_postal) == 0:
+                zip_postal = MISSING
+            return street_address, city, state, zip_postal
+    except Exception as e:
+        log.info(f"No valid address {e}")
+        pass
+    return MISSING, MISSING, MISSING, MISSING
+
+
+def pull_content(url):
+    log.info("Pull content => " + url)
+    soup = bs(session.get(url, headers=HEADERS).content, "lxml")
+    return soup
 
 
 def fetch_data():
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
-    }
-    adressess = []
-    base_url = "http://sevabeauty.com/"
-    get_url = "http://sevabeauty.com/location/"
-    r = session.get(get_url, headers=headers)
-    soup = BeautifulSoup(r.text, "lxml")
+    log.info("Fetching store_locator data")
+    soup = pull_content(LOCATION_URL)
+    contents = soup.find("div", {"class": "page-content"}).find_all("p")[1:]
+    for row in contents:
+        info = (
+            re.sub(r"@@?Contact Us.*", "", row.get_text(strip=True, separator="@@"))
+            .strip()
+            .split("@@")
+        )
+        location_name = info[0]
+        raw_address = re.sub(r"\(.*\)", "", ", ".join(info[1:-1])).strip()
+        street_address, city, state, zip_postal = getAddress(raw_address)
+        country_code = "US"
+        phone = info[-1].strip()
+        location_type = MISSING
+        hours_of_operation = MISSING
+        store_number = MISSING
+        latitude = MISSING
+        longitude = MISSING
+        log.info("Append {} => {}".format(location_name, street_address))
+        yield SgRecord(
+            locator_domain=DOMAIN,
+            page_url=LOCATION_URL,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zip_postal,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+            raw_address=raw_address,
+        )
 
-    loc = soup.find("div",{"class":"page-content"})
-    for i in loc.find_all("p")[1:]:
-        locator_domain = base_url
-        location = i.text.split("\n")
-        location_name = location[0]
-        street_address = location[1].split("(")[0].strip()
-        temp_ad = location[2].split(" ")
-        if len(temp_ad) == 3:
-            city = temp_ad[0].replace(",","")
-            state = temp_ad[1]
-            if city == "Cayey":
-                zipp = "00" + temp_ad[2]
-            else:
-                zipp = temp_ad[2]
-        else:
-            city = temp_ad[0] +" "+temp_ad[1]
-            state = temp_ad[2]
-            zipp = temp_ad[3]
 
-        phone = location[3]
-
-        store = []
-        store.append(locator_domain)
-        store.append(location_name)
-        store.append(street_address)
-        store.append(city)
-        store.append(state)
-        store.append(zipp)
-        store.append("US")
-        store.append("<MISSING>")
-        store.append(phone)
-        store.append("SEVA BEAUTY")
-        store.append("<MISSING>")
-        store.append("<MISSING>")
-        store.append("<MISSING>")
-        store.append("<MISSING>")
-        if store[2] in adressess:
-            continue
-        adressess.append(store[2])
-        store = [str(x).strip() if x else "<MISSING>" for x in store]
-        yield store
 def scrape():
-    # fetch_data()
-    data = fetch_data()
-    write_output(data)
+    log.info("start {} Scraper".format(DOMAIN))
+    count = 0
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.RAW_ADDRESS}))
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
+
+
 scrape()

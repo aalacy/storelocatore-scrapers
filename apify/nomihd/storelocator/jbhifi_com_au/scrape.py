@@ -6,6 +6,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgpostal import sgpostal as parser
 
 website = "jbhifi.com.au"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -44,32 +45,48 @@ def fetch_data():
         for store in stores:
             store_number = store["shopId"]
             locator_domain = website
-            location_name = store["storeName"]
+            location_name = store["storeName"].strip()
 
             page_url = (
                 "https://www.jbhifi.com.au/pages/"
                 + location_name.replace(" ", "-").strip()
             )
 
-            street_address = store["storeAddress"]["Line1"]
+            page_url = page_url.replace("---", "-").strip()
+            raw_address = store["storeAddress"]["Line1"]
             add_2 = store["storeAddress"]["Line2"]
             add_3 = store["storeAddress"]["Line3"]
 
             if add_2 is not None and len(add_2) > 0:
-                street_address = street_address + ", " + add_2
+                raw_address = raw_address + ", " + add_2
 
             if add_3 is not None and len(add_3) > 0:
-                street_address = street_address + ", " + add_3
+                raw_address = raw_address + ", " + add_3
 
-            street_address = street_address.replace(", ,", ",").strip()
-            if "Centre," in street_address:
-                street_address = street_address.split("Centre,")[1].strip()
+            raw_address = raw_address.replace(", ,", ",").strip()
 
             city = store["storeAddress"]["Suburb"]
+            if len(city) > 0:
+                raw_address = raw_address + ", " + city
 
             state = store["storeAddress"]["State"]
-            zip = store["storeAddress"]["Postcode"]
+            if len(state) > 0:
+                raw_address = raw_address + ", " + state
 
+            zip = store["storeAddress"]["Postcode"]
+            if len(zip) > 0:
+                raw_address = raw_address + ", " + zip
+
+            formatted_addr = parser.parse_address_intl(raw_address)
+            street_address = formatted_addr.street_address_1
+            if street_address:
+                if formatted_addr.street_address_2:
+                    street_address = (
+                        street_address + ", " + formatted_addr.street_address_2
+                    )
+            else:
+                if formatted_addr.street_address_2:
+                    street_address = formatted_addr.street_address_2
             country_code = "AU"
             phone = store.get("phone", "<MISSING>")
 
@@ -121,6 +138,7 @@ def fetch_data():
                 latitude=latitude,
                 longitude=longitude,
                 hours_of_operation=hours_of_operation,
+                raw_address=raw_address,
             )
 
 
