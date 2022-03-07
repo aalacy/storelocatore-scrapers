@@ -39,6 +39,10 @@ def fetch_data():
                         .replace(", ", ",")
                     )
                     formatted_addr = parse_address_intl(rawadd)
+                    add = ""
+                    city = ""
+                    state = ""
+                    zc = ""
                     add = formatted_addr.street_address_1
                     if formatted_addr.street_address_2:
                         add = add + ", " + formatted_addr.street_address_2
@@ -59,21 +63,50 @@ def fetch_data():
                     days = (
                         item.split("<operatingHours")[1]
                         .split("</operatingHours>")[0]
-                        .split('text-align: left;">')
+                        .split("text-align: left;&quot;&gt;")
                     )
                     for day in days:
-                        if 'text-align: right;">' in day:
+                        if "text-align: right;&quot;&gt;" in day:
                             hrs = (
-                                day.split("<")[0]
+                                day.split("&lt;")[0]
                                 + ": "
-                                + day.split('text-align: right;">')[1].split("<")[0]
+                                + day.split("text-align: right;&quot;&gt;")[1].split(
+                                    "&lt;"
+                                )[0]
                             )
                             if hours == "":
                                 hours = hrs
                             else:
                                 hours = hours + "; " + hrs
-                    loc = "<MISSING>"
-                    name = name.replace("&amp;#44;", ",")
+                    loc = "https://mobilebitz.co.uk/store-list/"
+                    if "Bluewater" in name:
+                        city = "Bluewater"
+                    if "BD1 1US" in rawadd:
+                        zc = "BD1 1US"
+                    if "SW19 8YA" in rawadd:
+                        zc = "SW19 8YA"
+                    if "Meadowhall" in name:
+                        zc = "S9 1EN"
+                        city = "Meadowhall"
+                        add = "91a High Street"
+                    add = (
+                        add.replace("&amp;#44;", ",")
+                        .replace("&amp;", "&")
+                        .replace("&amp", "&")
+                        .replace("&Amp", "&")
+                    )
+                    rawadd = (
+                        rawadd.replace("&amp;#44;", ",")
+                        .replace("&amp;", "&")
+                        .replace("&amp", "&")
+                        .replace("&Amp", "&")
+                    )
+                    name = (
+                        name.replace("&amp;#44;", ",")
+                        .replace("&amp;", "&")
+                        .replace("&amp", "&")
+                        .replace("&Amp", "&")
+                    )
                     yield SgRecord(
                         locator_domain=website,
                         page_url=loc,

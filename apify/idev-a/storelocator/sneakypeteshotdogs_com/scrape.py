@@ -30,6 +30,9 @@ def fetch_data():
             phone = hours_of_operation = ""
             if res.status_code == 200:
                 soup = bs(res.text, "lxml")
+                raw_address = phone = (
+                    soup.select_one("h1.single-title small").text.split("•")[0].strip()
+                )
                 phone = (
                     soup.select_one("h1.single-title small")
                     .text.split("P:")[-1]
@@ -37,6 +40,10 @@ def fetch_data():
                     .split("•")[0]
                     .strip()
                 )
+                addr = parse_address_intl(raw_address)
+                street_address = addr.street_address_1
+                if addr.street_address_2:
+                    street_address += " " + addr.street_address_2
                 hours_of_operation = soup.select_one("div.location-top h3").text
                 hours_of_operation = (
                     "<MISSING>"
