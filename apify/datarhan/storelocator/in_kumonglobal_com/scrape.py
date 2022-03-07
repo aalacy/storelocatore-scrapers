@@ -167,7 +167,12 @@ def fetch_data():
             hoo = [e.strip() for e in hoo if e.strip()]
             hoo = " ".join(hoo)
             if "Schedule" in hoo:
-                hoo = hoo.split("Schedule")[1]
+                if "Schedule:" in hoo:
+                    hoo = hoo.split("Parent")[0].replace("Kasthuri", "")
+                else:
+                    hoo = hoo.split("Schedule")[1]
+            if "Schedule " in hoo:
+                hoo = hoo.split("Schedule ")[1]
             hoo = (
                 hoo.split("Parent Orientation")[0]
                 .split(".com ")[-1]
@@ -176,6 +181,11 @@ def fetch_data():
             )
             if "Please contact the center for more details" in hoo:
                 hoo = ""
+            if not hoo:
+                hoo = loc_dom.xpath(
+                    '//div[@class="store_locator_content"]/ul/li[4]/text()'
+                )
+                hoo = " ".join([e.strip() for e in hoo if "pm" in e.lower()])
 
             item = SgRecord(
                 locator_domain=domain,

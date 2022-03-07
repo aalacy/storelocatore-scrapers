@@ -3,7 +3,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests.sgrequests import SgRequests
-from sgzip.dynamic import SearchableCountries, Grain_4
+from sgzip.dynamic import SearchableCountries, Grain_1_KM
 from sgzip.dynamic import DynamicGeoSearch
 from sglogging import sglog
 
@@ -181,8 +181,9 @@ if __name__ == "__main__":
     tocrawl = tocrawl + SearchableCountries.ByGeography["CONTINENTAL_EUROPE"]
     search = DynamicGeoSearch(
         country_codes=tocrawl,
-        granularity=Grain_4(),
-        expected_search_radius_miles=2,
+        granularity=Grain_1_KM(),
+        expected_search_radius_miles=0.621371,
+        max_search_results=25,
     )
     with SgWriter(
         deduper=SgRecordDeduper(
