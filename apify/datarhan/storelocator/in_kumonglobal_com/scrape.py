@@ -185,7 +185,7 @@ def fetch_data():
                 hoo = loc_dom.xpath(
                     '//div[@class="store_locator_content"]/ul/li[4]/text()'
                 )
-                hoo = " ".join([e.strip() for e in hoo if "pm" in e.lower()])
+                hoo = " ".join([e.strip() for e in hoo])
 
             item = SgRecord(
                 locator_domain=domain,
