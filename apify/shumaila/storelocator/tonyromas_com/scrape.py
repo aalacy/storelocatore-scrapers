@@ -32,6 +32,7 @@ def fetch_data():
             link = link["href"]
             r = session.get(link, headers=headers)
             soup = BeautifulSoup(r.text, "html.parser")
+            title = soup.find("div", {"class": "page-title"}).text
             address = soup.find("div", {"class": "ad1"}).text.replace("\n", " ").strip()
             phone = (
                 soup.find("div", {"class": "phone"}).text.replace("Phone:", "").strip()
