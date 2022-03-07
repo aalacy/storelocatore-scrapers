@@ -36,12 +36,12 @@ def fetch_data():
             + "&action=cities"
         )
         try:
-            loclist = session.get(url, headers=headers, verify=False).json()["data"]
+            loclist = session.get(url, headers=headers).json()["data"]
         except:
             continue
         for loc in loclist:
             link = "https://www.redapplestores.com" + loc["val"]
-            r = session.get(link, headers=headers, verify=False)
+            r = session.get(link, headers=headers)
             content = r.text.split('"locations":[', 1)[1].split("],", 1)[0]
             content = json.loads(content)
             ccode = content["country"]
