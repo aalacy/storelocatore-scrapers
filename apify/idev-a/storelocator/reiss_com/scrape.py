@@ -27,13 +27,13 @@ def fetch_data():
             sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
             info = json.loads(sp1.find("script", type="application/ld+json").string)
             addr = info["address"]
-            for hh in _.get("openingHoursSpecification", []):
+            for hh in info.get("openingHoursSpecification", []):
                 hours.append(f"{hh['dayOfWeek']}: {hh['opens']} - {hh['closes']}")
             yield SgRecord(
                 page_url=page_url,
                 store_number=_["BR"],
                 location_name=info["name"],
-                street_address=addr["streetAddress"],
+                street_address=addr["streetAddress"].replace("Reiss,", "").strip(),
                 city=addr["addressLocality"],
                 state=addr.get("addressRegion"),
                 zip_postal=addr.get("postalCode"),
