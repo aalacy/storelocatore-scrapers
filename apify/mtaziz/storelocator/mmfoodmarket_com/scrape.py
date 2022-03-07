@@ -9,6 +9,7 @@ from lxml import html
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from tenacity import retry, stop_after_attempt
 import tenacity
+from sgpostal.sgpostal import parse_address_intl
 
 
 website = "mmfoodmarket_com"
@@ -46,6 +47,22 @@ def get_hoo(sel):
         hoo.append(ho1)
     hoo = ", ".join(hoo)
     return hoo
+
+
+def parse_sta(rawadd):
+    pai = parse_address_intl(rawadd)
+    sta1 = pai.street_address_1
+    sta2 = pai.street_address_2
+    street_address = ""
+    if sta1 is not None and sta2 is None:
+        street_address = sta1
+    elif sta1 is None and sta2 is not None:
+        street_address = sta2
+    elif sta1 is not None and sta2 is not None:
+        street_address = sta1 + ", " + sta2
+    else:
+        street_address = "<MISSING>"
+    return street_address
 
 
 def fetch_records(storenum, sgw: SgWriter):
@@ -107,12 +124,16 @@ def fetch_records(storenum, sgw: SgWriter):
         raw_address = ll_js_points["simpleAddress"]
         if raw_address == "5124 AB-2A #1 Lacombe AB T4L 1Y8":
             pcode = "T4L 1Y8"
+        parsed_street_address = parse_sta(raw_address)
+
+        if street == "72, boulevard St. Jean Baptiste local 156":
+            parsed_street_address = street
 
         item = SgRecord(
             locator_domain=DOMAIN,
             page_url=link,
             location_name=title,
-            street_address=street,
+            street_address=parsed_street_address,
             city=city,
             state=state,
             zip_postal=pcode,

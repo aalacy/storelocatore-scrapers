@@ -49,21 +49,33 @@ def fetch_data():
             hours = []
             _hh = sp1.find("h5", string=re.compile(r"^Hours:"))
             if _hh:
+                if "Opening Soon" in _hh.find_next_sibling().text:
+                    continue
                 hours = [
                     ": ".join(hh.stripped_strings)
                     for hh in _hh.find_next_sibling().findChildren(recursive=False)
                 ]
+                if not hours:
+                    hours = list(_hh.find_next_sibling().stripped_strings)
             else:
-                _hr = sp1.find(
-                    "script",
-                    src=re.compile(r"https://knowledgetags.yextpages.net/embed"),
-                )
-                if _hr:
-                    res = session.get(_hr["src"], headers=_headers).text
-                    if "Entity not found" not in res:
-                        hours = json.loads(res.split("Yext._embed(")[1][:-1].strip())[
-                            "entities"
-                        ][0]["attributes"]["hours"]
+                _hh = sp1.find("h3", string=re.compile(r"^Hours:"))
+                if _hh:
+                    hours = list(_hh.find_next_sibling().stripped_strings)
+
+            _hr = sp1.find(
+                "script",
+                src=re.compile(r"https://knowledgetags.yextpages.net/embed"),
+            )
+            if _hr:
+                res = session.get(_hr["src"], headers=_headers).text
+                if "Entity not found" not in res:
+                    hours = json.loads(res.split("Yext._embed(")[1][:-1].strip())[
+                        "entities"
+                    ][0]["attributes"]["hours"]
+
+            if hours and "Please call" in hours[0]:
+                hours = []
+
             yield SgRecord(
                 page_url=page_url,
                 store_number=_["id"],

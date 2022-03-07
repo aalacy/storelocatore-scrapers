@@ -55,7 +55,7 @@ def fetch_data():
                 yield SgRecord(
                     page_url=_["url"],
                     store_number=_["id"],
-                    location_name=_["store"],
+                    location_name=_["store"].replace("&#8211;", "-"),
                     street_address=street_address,
                     city=_["city"].replace(",", ""),
                     state=_["state"],

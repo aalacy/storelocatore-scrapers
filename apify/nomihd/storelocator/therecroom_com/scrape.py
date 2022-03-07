@@ -28,7 +28,7 @@ def fetch_data():
     # Your scraper here
     base = "https://www.therecroom.com"
     search_url = "https://www.therecroom.com/Home/BootstrapDialog"
-    with SgRequests() as session:
+    with SgRequests(dont_retry_status_codes=([404])) as session:
         search_res = session.get(search_url, headers=headers)
 
         search_sel = lxml.html.fromstring(search_res.text)
@@ -40,8 +40,8 @@ def fetch_data():
             page_url = base + "".join(store.xpath(".//a/@href")).strip()
             locator_domain = website
             log.info(page_url)
-            store_res = session.post(page_url, headers=headers)
-
+            session.get(page_url, headers=headers)
+            store_res = session.get("https://www.therecroom.com/")
             store_sel = lxml.html.fromstring(store_res.text)
 
             location_name = "".join(store.xpath(".//h2//text()"))
