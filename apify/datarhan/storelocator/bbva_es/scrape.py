@@ -87,7 +87,6 @@ def fetch_data():
                 while len(store_number) < 4:
                     store_number = "0" + store_number
                 poi_data_url = f"https://www.bbva.es/ASO/branches/V01/ES0182{store_number}?$fields=indicators,closingDate,address,schedules"
-                print(poi_data_url)
                 try:
                     poi_data = session.get(poi_data_url, headers=hdr).json()
                     geo = poi_data["items"][0]["address"]["location"].split(",")
