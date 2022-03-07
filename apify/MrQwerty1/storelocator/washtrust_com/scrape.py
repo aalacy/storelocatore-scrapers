@@ -1,44 +1,57 @@
-import csv
 import json
 import usaddress
-
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def get_address(line):
+    tag = {
+        "Recipient": "recipient",
+        "AddressNumber": "address1",
+        "AddressNumberPrefix": "address1",
+        "AddressNumberSuffix": "address1",
+        "StreetName": "address1",
+        "StreetNamePreDirectional": "address1",
+        "StreetNamePreModifier": "address1",
+        "StreetNamePreType": "address1",
+        "StreetNamePostDirectional": "address1",
+        "StreetNamePostModifier": "address1",
+        "StreetNamePostType": "address1",
+        "CornerOf": "address1",
+        "IntersectionSeparator": "address1",
+        "USPSBoxGroupID": "address1",
+        "USPSBoxGroupType": "address1",
+        "USPSBoxID": "address1",
+        "USPSBoxType": "address1",
+        "OccupancyType": "address2",
+        "OccupancyIdentifier": "address2",
+        "SubaddressIdentifier": "address2",
+        "SubaddressType": "address2",
+        "PlaceName": "city",
+        "StateName": "state",
+        "ZipCode": "postal",
+    }
 
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
+    a = usaddress.tag(line, tag_mapping=tag)[0]
+    adr1 = a.get("address1") or ""
+    adr2 = a.get("address2") or ""
+    street_address = f"{adr1} {adr2}".strip()
+    if not street_address:
+        street_address = line.split(",")[0].strip()
+    city = a.get("city")
+    state = a.get("state")
+    postal = a.get("postal")
 
-        for row in data:
-            writer.writerow(row)
+    return street_address, city, state, postal
 
 
 def get_hours(page_url):
     li = []
     _tmp = []
-    session = SgRequests()
     r = session.get(page_url)
     tree = html.fromstring(r.text)
     ul = tree.xpath("//div[@class='full-content']/ul")
@@ -72,43 +85,12 @@ def get_hours(page_url):
             if "Monday" in t:
                 _tmp.append(t.strip())
 
-    return ";".join(_tmp) or "<MISSING>"
+    return ";".join(_tmp)
 
 
-def fetch_data():
-    out = []
-    locator_domain = "https://www.washtrust.com/"
-    api_url = "https://www.washtrust.com/about/locations"
-    tag = {
-        "Recipient": "recipient",
-        "AddressNumber": "address1",
-        "AddressNumberPrefix": "address1",
-        "AddressNumberSuffix": "address1",
-        "StreetName": "address1",
-        "StreetNamePreDirectional": "address1",
-        "StreetNamePreModifier": "address1",
-        "StreetNamePreType": "address1",
-        "StreetNamePostDirectional": "address1",
-        "StreetNamePostModifier": "address1",
-        "StreetNamePostType": "address1",
-        "CornerOf": "address1",
-        "IntersectionSeparator": "address1",
-        "LandmarkName": "address1",
-        "USPSBoxGroupID": "address1",
-        "USPSBoxGroupType": "address1",
-        "USPSBoxID": "address1",
-        "USPSBoxType": "address1",
-        "OccupancyType": "address2",
-        "OccupancyIdentifier": "address2",
-        "SubaddressIdentifier": "address2",
-        "SubaddressType": "address2",
-        "PlaceName": "city",
-        "StateName": "state",
-        "ZipCode": "postal",
-    }
-
-    session = SgRequests()
-    r = session.get(api_url)
+def fetch_data(sgw: SgWriter):
+    api = "https://www.washtrust.com/about/locations"
+    r = session.get(api)
     tree = html.fromstring(r.text)
     li = tree.xpath("//div[@class='location-results']/ul/li")
     coords = dict()
@@ -116,8 +98,11 @@ def fetch_data():
     text = "".join(tree.xpath("//div[@data-dna]/@data-dna"))
     js = json.loads(text)[1:]
     for j in js:
-        lat = j["locations"][0]["lat"]
-        lng = j["locations"][0]["lng"]
+        try:
+            lat = j["locations"][0]["lat"]
+            lng = j["locations"][0]["lng"]
+        except:
+            continue
         source = j["options"]["infoWindowOptions"]["content"]
         root = html.fromstring(source)
         name = "".join(root.xpath("./h3/text()")).strip()
@@ -125,56 +110,50 @@ def fetch_data():
 
     for l in li:
         location_name = "".join(l.xpath("./strong/text()|./a/text()")).strip()
-        line = "".join(l.xpath("./span[@class='address']/text()")).strip()
-        a = usaddress.tag(line, tag_mapping=tag)[0]
-        street_address = f"{a.get('address1')} {a.get('address2') or ''}".strip()
-        if street_address == "None":
-            street_address = "<MISSING>"
-        city = a.get("city") or "<INACCESSIBLE>"
-        state = a.get("state") or "<INACCESSIBLE>"
-        postal = a.get("postal") or "<INACCESSIBLE>"
-        country_code = "US"
-        store_number = "<MISSING>"
-        page_url = "".join(l.xpath(".//a[@class='arrow-link']/@href")) or api_url
-        phone = "".join(l.xpath("./span[@class='phone']/text()")).strip() or "<MISSING>"
+        raw_address = "".join(l.xpath("./span[@class='address']/text()")).strip()
+        street_address, city, state, postal = get_address(raw_address)
+
+        page_url = "".join(l.xpath(".//a[@class='arrow-link']/@href")) or api
+        phone = "".join(l.xpath("./span[@class='phone']/text()")).strip()
         latitude, longitude = coords.get(location_name) or ["<MISSING>", "<MISSING>"]
         if "ATM" in location_name:
             location_type = "ATM"
         else:
             location_type = "Branch"
 
-        if page_url != api_url:
+        if page_url != api:
             hours_of_operation = get_hours(page_url)
         else:
-            hours_of_operation = "<MISSING>"
+            hours_of_operation = SgRecord.MISSING
         if "Opening" in location_name:
             hours_of_operation = "Coming Soon"
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
+        row = SgRecord(
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code="US",
+            location_type=location_type,
+            phone=phone,
+            latitude=latitude,
+            longitude=longitude,
+            locator_domain=locator_domain,
+            hours_of_operation=hours_of_operation,
+            raw_address=raw_address,
+        )
 
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://www.washtrust.com/"
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID({SgRecord.Headers.RAW_ADDRESS, SgRecord.Headers.LOCATION_NAME})
+        )
+    ) as writer:
+        fetch_data(writer)

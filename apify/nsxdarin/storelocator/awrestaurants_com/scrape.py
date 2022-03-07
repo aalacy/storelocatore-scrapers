@@ -28,6 +28,7 @@ def fetch_data():
                 )
             )
     for loc in locs:
+        Closed = False
         logger.info(("Pulling Location %s..." % loc))
         website = "awrestaurants.com"
         typ = "Restaurant"
@@ -49,22 +50,23 @@ def fetch_data():
         for line2 in lines:
             if '<div class="hours__row">' in line2:
                 g = next(lines)
-                while "<span>" in g:
+                while "</div>" not in g:
                     g = next(lines)
-                hrs = (
-                    g.replace("</span><span>", ": ")
-                    .replace("<span>", "")
-                    .replace("</span>", "")
-                    .replace("-->", "")
-                    .strip()
-                    .replace("\t", "")
-                    .replace("\n", "")
-                    .replace("\r", "")
-                )
-                if hours == "":
-                    hours = hrs
-                else:
-                    hours = hours + "; " + hrs
+                    if "00" in g or "30" in g or "am-" in g or "am -" in g:
+                        if "-->" not in g:
+                            hrs = (
+                                g.strip()
+                                .replace("\r", "")
+                                .replace("\t", "")
+                                .replace("\n", "")
+                                .replace("&nbsp;", " ")
+                            )
+                            if ">" in hrs:
+                                hrs = hrs.split(">")[1].split("<")[0]
+                            if hours == "":
+                                hours = hrs
+                            else:
+                                hours = hours + "; " + hrs
             if 'main-name"><h1>' in line2:
                 name = line2.split('main-name"><h1>')[1].split("<")[0]
             if '"store":{"address":"' in line2:
@@ -78,19 +80,15 @@ def fetch_data():
                     phone = line2.split(',"phone":"')[1].split('"')[0]
                 except:
                     phone = "<MISSING>"
+            if "This location is temporarily closed" in line2:
+                Closed = True
         if hours == "":
             hours = "<MISSING>"
+        if Closed:
+            hours = "Temporarily Closed"
         if add != "":
             add = add.replace("\\u0026", "&")
             name = name.replace("\\u0026", "&")
-            if ";" in hours:
-                hours = hours.split(";")[0].strip()
-            hours = (
-                hours.replace("<p>", "")
-                .replace("</p>", "")
-                .replace("&nbsp", "")
-                .strip()
-            )
             yield SgRecord(
                 locator_domain=website,
                 page_url=loc,

@@ -1,44 +1,18 @@
 from sglogging import SgLogSetup
 from sgrequests import SgRequests
-import csv
-from lxml import html
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 logger = SgLogSetup().get_logger(logger_name="anthropologie_com")
-session = SgRequests()
 
 locator_domain_url = "https://www.anthropologie.com"
 headers = {
     "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.90 Safari/537.36",
 }
 
-MISSING = "<MISSING>"
-
-FIELDS = [
-    "locator_domain",
-    "page_url",
-    "location_name",
-    "street_address",
-    "city",
-    "state",
-    "zip",
-    "country_code",
-    "store_number",
-    "phone",
-    "location_type",
-    "latitude",
-    "longitude",
-    "hours_of_operation",
-]
-
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(FIELDS)
-        for row in data:
-            writer.writerow(row)
+MISSING = SgRecord.MISSING
 
 
 def get_hoo(hours):
@@ -59,48 +33,39 @@ def get_hoo(hours):
     if hoo:
         return hoo
     else:
-        return "<MISSING>"
+        return MISSING
 
 
 def fetch_data():
-
-    url_stores = "https://www.anthropologie.com/stores#?viewAll=true"
-    r_page_url = session.get(url_stores, headers=headers)
-    locations = html.fromstring(r_page_url.text, "lxml")
-
-    url_api = "https://www.anthropologie.com/api/misl/v1/stores/search?brandId=54%7C04&distance=25&urbn_key=937e0cfc7d4749d6bb1ad0ac64fce4d5"
-    data = session.get(url_api, headers=headers).json()
-    items = []
-    for d in data["results"]:
-        country_code = d["country"]
-        country_code_UK = "UK"
-        country_code_CA = "CA"
-        country_code_US = "US"
-        if (
-            country_code == country_code_UK
-            or country_code == country_code_CA
-            or country_code == country_code_US
-        ):
+    with SgRequests() as session:
+        url_api = "https://www.anthropologie.com/api/misl/v1/stores/search?brandId=54%7C04&distance=25&urbn_key=937e0cfc7d4749d6bb1ad0ac64fce4d5"
+        data = session.get(url_api, headers=headers).json()
+        for idx, d in enumerate(data["results"]):
+            country_code = d["country"]
             locator_domain = locator_domain_url
+
             location_name = d["addresses"]["marketing"]["name"]
-            url_store = locations.xpath('//a[contains(., "%s")]/@href' % location_name)[
-                0
-            ]
-            if url_store:
-                page_url = "https://www.anthropologie.com" + url_store
+
+            page_url = ""
+            if "slug" in d:
+                slug = d["slug"]
+                if slug:
+                    page_url = f"https://www.anthropologie.com/stores/{slug}"
+                else:
+                    page_url = MISSING
             else:
                 page_url = MISSING
 
             street_address = d["addressLineOne"] if d["addressLineOne"] else MISSING
             city = d["city"] if d["city"] else MISSING
             state = d["state"] if d["state"] else MISSING
-            zip = d["zip"] if d["zip"] else MISSING
+            zipcode = d["zip"] if d["zip"] else MISSING
             country_code = d["country"] if d["country"] else MISSING
             store_number = d["storeNumber"] if d["storeNumber"] else MISSING
             try:
                 phone = d["addresses"]["marketing"]["phoneNumber"]
             except KeyError:
-                phone = "<MISSING>"
+                phone = MISSING
 
             try:
                 location_type = d["storeType"]
@@ -124,35 +89,39 @@ def fetch_data():
             else:
                 if page_url == "https://www.anthropologie.com/stores":
                     page_url = MISSING
-
-                row = [
-                    locator_domain,
-                    page_url,
-                    location_name,
-                    street_address,
-                    city,
-                    state,
-                    zip,
-                    country_code,
-                    store_number,
-                    phone,
-                    location_type,
-                    latitude,
-                    longitude,
-                    hours_of_operation,
-                ]
-
-                items.append(row)
-        else:
-            continue
-    return items
+            raw_address = MISSING
+            yield SgRecord(
+                locator_domain=locator_domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zipcode,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+                raw_address=raw_address,
+            )
 
 
 def scrape():
-    logger.info("Scraping Started...")
-    data = fetch_data()
-    logger.info(f"Scraping Finished | Total Store Count: {len(data)}")
-    write_output(data)
+    logger.info("Started")
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    logger.info(f"No of records being processed: {count}")
+    logger.info("Finished")
 
 
 if __name__ == "__main__":

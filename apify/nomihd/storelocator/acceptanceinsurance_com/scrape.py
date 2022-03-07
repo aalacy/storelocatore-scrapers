@@ -54,7 +54,7 @@ def fetch_data():
                 temp_url = store.replace(
                     "https://locations.acceptanceinsurance.com", ""
                 ).strip()
-                page_url = stat + "/" + temp_url.split("/")[2].strip()
+                page_url = stat + temp_url.split("/")[2].strip()
                 log.info(page_url)
                 store_req = session.get(page_url, headers=headers)
                 store_sel = lxml.html.fromstring(store_req.text)

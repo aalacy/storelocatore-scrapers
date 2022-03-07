@@ -46,6 +46,14 @@ def fetch_data():
                 hours = (
                     _hr.find_parent().find_next_sibling("blockquote").stripped_strings
                 )
+            else:
+                _hr = link.find("strong", string=re.compile(r"Branch Hours"))
+                if _hr:
+                    hours = (
+                        _hr.find_parent()
+                        .find_next_sibling("blockquote")
+                        .stripped_strings
+                    )
             addr = list(link.select("p")[1].stripped_strings)
             if "temporarily closed" in addr[0].lower():
                 hours = ["Temporarily Closed"]

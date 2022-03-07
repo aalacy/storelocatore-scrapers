@@ -1,42 +1,16 @@
-import csv
 import re
 
 from bs4 import BeautifulSoup
 
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+
 from sgrequests import SgRequests
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
+def fetch_data(sgw: SgWriter):
 
     base_link = "https://www.southcentralbank.com/wp-json/wpgmza/v1/features/base64eJyrVkrLzClJLVKyUqqOUcpNLIjPTIlRsopRMoxR0gEJFGeUFni6FAPFomOBAsmlxSX5uW6ZqTkpELFapVoABU0Wug"
 
@@ -46,15 +20,20 @@ def fetch_data():
     session = SgRequests()
     store_data = session.get(base_link, headers=headers).json()["markers"]
 
-    data = []
     locator_domain = "southcentralbank.com"
 
     for store in store_data:
         location_name = store["title"].upper()
+        if "ATM" in location_name:
+            location_type = "ATM Location"
+        elif "office" in location_name.lower() or "operations" in location_name.lower():
+            location_type = "Office Location"
+        else:
+            location_type = "Loan Production Office"
 
         raw_data = BeautifulSoup(store["description"], "lxml")
         raw_address = list(raw_data.stripped_strings)[:2]
-        if "LOCATION WILL BE" in raw_address[0]:
+        if "LOCATION" in raw_address[0]:
             raw_address = list(raw_data.stripped_strings)[1:3]
 
         street_address = raw_address[0].strip()
@@ -63,7 +42,6 @@ def fetch_data():
         zip_code = raw_address[1].split(",")[1].split()[1]
         country_code = "US"
         store_number = store["id"]
-        location_type = "<MISSING>"
 
         try:
             phone = re.findall(r"[(\d)]{3}-[\d]{3}-[\d]{4}", store["description"])[0]
@@ -92,31 +70,26 @@ def fetch_data():
             link = ("https://www.southcentralbank.com" + store["link"]).replace(
                 "locations", "locations-and-team-members"
             )
-        data.append(
-            [
-                locator_domain,
-                link,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip_code,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
+
+        sgw.write_row(
+            SgRecord(
+                locator_domain=locator_domain,
+                page_url=link,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_code,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
         )
 
-    return data
 
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+    fetch_data(writer)

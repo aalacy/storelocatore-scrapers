@@ -1,49 +1,25 @@
-import csv
 import json
-
 from concurrent import futures
 from lxml import html
 from sgrequests import SgRequests
+from sglogging import sglog
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
+website = "e-arc.com"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
+session = SgRequests()
 
 
 def get_hours(url):
     _id = url.split("/")[-2]
-    session = SgRequests()
+    log.info(url)
     r = session.get(url)
     tree = html.fromstring(r.text)
     hours = (
-        ";".join(
-            tree.xpath("//p[./span/i[@class='icon icon-office-hours']]/text()")
-        ).strip()
+        ";".join(tree.xpath("//p[./span[contains(text(),'Hours:')]]/text()")).strip()
         or "<MISSING>"
     )
 
@@ -59,10 +35,8 @@ def get_hours(url):
 
 
 def fetch_data():
-    out = []
     urls = []
     hours = []
-    session = SgRequests()
     locator_domain = "https://www.e-arc.com"
     r = session.get("https://www.e-arc.com/location/")
     tree = html.fromstring(r.text)
@@ -103,6 +77,9 @@ def fetch_data():
             street_address = street_address.split("(")[0].strip()
         city = j.get("city") or "<MISSING>"
         state = j.get("province") or "<MISSING>"
+        if city == state:
+            state = j.get("regions")
+
         postal = j.get("postalcodes") or "<MISSING>"
         country = j.get("country_name") or "<MISSING>"
         if country == "United States":
@@ -119,39 +96,45 @@ def fetch_data():
             phone = phone.split(" or ")[0].strip()
         elif phone.find(" - ") != -1:
             phone = phone.split(" - ")[0].strip()
-        elif phone == "<MISSING>":
-            phone = j.get("fax") or "<MISSING>"
 
         latitude = j.get("location_latitude") or "<MISSING>"
         longitude = j.get("location_longitude") or "<MISSING>"
         location_type = "<MISSING>"
         hours_of_operation = hours.get(_id)
+        if hours_of_operation[-1] == ";":
+            hours_of_operation = "".join(hours_of_operation[:-1]).strip()
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-
-        out.append(row)
-
-    return out
+        yield SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+        )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    log.info("Started")
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
 
 
 if __name__ == "__main__":

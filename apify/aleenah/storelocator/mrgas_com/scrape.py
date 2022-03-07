@@ -1,108 +1,100 @@
-import csv
-from sgrequests import SgRequests
+import usaddress
+from sglogging import sglog
 from bs4 import BeautifulSoup
-
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-                "page_url",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
+from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
 
 session = SgRequests()
+website = "mrgas_com"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
+session = SgRequests()
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+}
 
-import ssl
-
-try:
-    _create_unverified_https_context = (
-        ssl._create_unverified_context
-    )  # Legacy Python that doesn't verify HTTPS certificates by default
-except AttributeError:
-    pass
-else:
-    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
+DOMAIN = "https://www.mrgas.com/"
+MISSING = SgRecord.MISSING
 
 
 def fetch_data():
-
-    all = []
-
-    res = session.get("http://mrgas.com")
-
-    soup = BeautifulSoup(res.text, "html.parser")
-
-    stores = soup.find("section", {"id": "comp-keeh2c47"}).find_all(
-        "div", {"class": "_2bafp"}
-    )
-
-    del stores[0]  # Location title
-    for store in stores:
-        ps = store.find_all("p")
-        loc = ps[0].text.strip()
-
-        addr = ps[1].text.strip().split(",")
-        sz = addr[-1].strip().split(" ")
-        zip = sz[1]
-        state = sz[0]
-        del addr[-1]
-        city = addr[-1]
-        del addr[-1]
-        street = ", ".join(addr)
-        phone = ps[2].text
-        tim = ps[3].text
-        if "#" in loc:
-            id = loc.split("#")[-1]
-        else:
-            id = "<MISSING>"
-        all.append(
-            [
-                "http://mrgas.com",
-                loc,
-                street,
-                city,
-                state,
-                zip,
-                "US",
-                id,  # store #
-                phone,  # phone
-                "<MISSING>",  # type
-                "<MISSING>",  # lat
-                "<MISSING>",  # long
-                tim.strip(),  # timing
-                "<MISSING>",
-            ]
+    if True:
+        url = DOMAIN
+        r = session.get(url, headers=headers)
+        soup = BeautifulSoup(r.text, "html.parser")
+        loclist = soup.find("section", {"id": "comp-keeh2c47"}).findAll(
+            "div", {"data-testid": "richTextElement"}
         )
+        for loc in loclist[1:]:
+            loc = loc.get_text(separator="|", strip=True).split("|")
+            location_name = loc[0]
+            log.info(location_name)
+            if len(loc) > 4:
+                address = loc[1:-2]
+                address = " ".join(x for x in address)
+            else:
+                address = loc[1]
+            address = address.replace(",", "")
+            address = usaddress.parse(address)
+            i = 0
+            street_address = ""
+            city = ""
+            state = ""
+            zip_postal = ""
+            while i < len(address):
+                temp = address[i]
+                if (
+                    temp[1].find("Address") != -1
+                    or temp[1].find("Street") != -1
+                    or temp[1].find("Recipient") != -1
+                    or temp[1].find("Occupancy") != -1
+                    or temp[1].find("BuildingName") != -1
+                    or temp[1].find("USPSBoxType") != -1
+                    or temp[1].find("USPSBoxID") != -1
+                ):
+                    street_address = street_address + " " + temp[0]
+                if temp[1].find("PlaceName") != -1:
+                    city = city + " " + temp[0]
+                if temp[1].find("StateName") != -1:
+                    state = state + " " + temp[0]
+                if temp[1].find("ZipCode") != -1:
+                    zip_postal = zip_postal + " " + temp[0]
+                i += 1
 
-    return all
+            phone = loc[-2]
+            hours_of_operation = loc[-1]
+            country_code = "US"
+            yield SgRecord(
+                locator_domain=DOMAIN,
+                page_url=DOMAIN,
+                location_name=location_name,
+                street_address=street_address.strip(),
+                city=city.strip(),
+                state=state.strip(),
+                zip_postal=zip_postal.strip(),
+                country_code=country_code,
+                store_number=MISSING,
+                phone=phone.strip(),
+                location_type=MISSING,
+                latitude=MISSING,
+                longitude=MISSING,
+                hours_of_operation=hours_of_operation.strip(),
+            )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()

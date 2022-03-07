@@ -4,22 +4,19 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from sgselenium.sgselenium import SgChrome
 from webdriver_manager.chrome import ChromeDriverManager
-import pandas as pd
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
-locator_domains = []
-page_urls = []
-location_names = []
-street_addresses = []
-citys = []
-states = []
-zips = []
-country_codes = []
-store_numbers = []
-phones = []
-location_types = []
-latitudes = []
-longitudes = []
-hours_of_operations = []
+from sglogging import sglog
+
+import ssl
+
+ssl._create_default_https_context = ssl._create_unverified_context
+
+locator_domain = "super1foods.com"
+log = sglog.SgLogSetup().get_logger(logger_name=locator_domain)
 
 
 def get_driver(url, class_name, driver=None):
@@ -54,139 +51,122 @@ def get_driver(url, class_name, driver=None):
     return driver
 
 
-x = 0
-while True:
-    x = x + 1
-    class_name = "store-preview__info"
-    url = "https://www.super1foods.com/stores/?coordinates=36.01301919805139,-124.22992541516308&zoom=1"
-    if x == 1:
-        driver = get_driver(url, class_name)
-    else:
-        driver = get_driver(url, class_name, driver=driver)
-    soup = bs(driver.page_source, "html.parser")
-    grids = soup.find("div", class_="store-list__scroll-container").find_all("li")
-    if len(grids) == 0:
-        continue
-    else:
-        break
+def fetch_data():
 
+    x = 0
+    while True:
+        x = x + 1
+        class_name = "store-preview__info"
+        url = "https://www.super1foods.com/stores/?coordinates=36.01301919805139,-124.22992541516308&zoom=1"
+        if x == 1:
+            driver = get_driver(url, class_name)
+        else:
+            driver = get_driver(url, class_name, driver=driver)
+        soup = bs(driver.page_source, "html.parser")
+        grids = soup.find("div", class_="store-list__scroll-container").find_all("li")
+        log.info(f"Total Locations: {len(grids)}")
+        if len(grids) == 0:
+            continue
+        else:
+            break
 
-for grid in grids:
-    name = grid.find(
-        "span", attrs={"ng-if": "!$ctrl.store._match.storeName"}
-    ).text.strip()
-    number = grid.find(
-        "span",
-        attrs={
-            "ng-if": ":: $ctrl.FEATURES.addStoreNumbers && !$ctrl.store._match.storeID"
-        },
-    ).text.strip()
-    page_url = (
-        "https://www.super1foods.com/stores/"
-        + name.split("\n")[0].replace(" ", "-").replace(".", "").lower()
-        + "-"
-        + number.split("\n")[0].split("#")[-1]
-        + "/"
-        + grid["id"].split("-")[-1]
-    )
-    try:
-        driver.get(page_url)
-        WebDriverWait(driver, 20).until(
-            EC.presence_of_element_located(
-                (By.CLASS_NAME, "store-details-store-hours__content")
+    for grid in grids:
+        name = grid.find(
+            "span", attrs={"ng-class": "{ 'sr-only': $ctrl.store._match }"}
+        ).text.strip()
+        number = grid.find(
+            "span",
+            attrs={"ng-if": "$ctrl.showStoreNumber && $ctrl.store.storeNumber"},
+        ).text.strip()
+        page_url = (
+            "https://www.super1foods.com/stores/"
+            + name.split("\n")[0].replace(" ", "-").replace(".", "").lower()
+            + "-"
+            + number.split("\n")[0].split("#")[-1]
+            + "/"
+            + grid["id"].split("-")[-1]
+        )
+        try:
+            driver.get(page_url)
+            WebDriverWait(driver, 20).until(
+                EC.presence_of_element_located(
+                    (By.CLASS_NAME, "store-details-store-hours__content")
+                )
             )
+        except Exception:
+            driver = get_driver(
+                page_url, "store-details-store-hours__content", driver=driver
+            )
+
+        location_soup = bs(driver.page_source, "html.parser")
+
+        location_name = location_soup.find("meta", attrs={"property": "og:title"})[
+            "content"
+        ]
+        address = location_soup.find("meta", attrs={"property": "og:street-address"})[
+            "content"
+        ]
+        city = location_soup.find("meta", attrs={"property": "og:locality"})["content"]
+        state = location_soup.find("meta", attrs={"property": "og:region"})["content"]
+        zipp = location_soup.find("meta", attrs={"property": "og:postal-code"})[
+            "content"
+        ]
+        country_code = location_soup.find(
+            "meta", attrs={"property": "og:country-name"}
+        )["content"]
+        store_number = location_name.split("#")[-1]
+        phone = location_soup.find("meta", attrs={"property": "og:phone_number"})[
+            "content"
+        ]
+        location_type = "<MISSING>"
+        latitude = location_soup.find(
+            "meta", attrs={"property": "og:location:latitude"}
+        )["content"]
+        longitude = location_soup.find(
+            "meta", attrs={"property": "og:location:longitude"}
+        )["content"]
+
+        hours = ""
+        days = location_soup.find("dl", attrs={"aria-label": "Store Hours"}).find_all(
+            "dt"
         )
-    except Exception:
-        driver = get_driver(
-            page_url, "store-details-store-hours__content", driver=driver
+        hours_list = location_soup.find(
+            "dl", attrs={"aria-label": "Store Hours"}
+        ).find_all("dd")
+
+        for x in range(len(days)):
+            day = days[x].text.strip()
+            hour = hours_list[x].text.strip()
+            hours = hours + day + " " + hour + ", "
+
+        hours = hours[:-2]
+
+        yield SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=address,
+            city=city,
+            state=state,
+            zip_postal=zipp,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours,
+            location_type=location_type,
         )
 
-    location_soup = bs(driver.page_source, "html.parser")
 
-    locator_domain = "super1foods.com"
-    location_name = location_soup.find("meta", attrs={"property": "og:title"})[
-        "content"
-    ]
-    address = location_soup.find("meta", attrs={"property": "og:street-address"})[
-        "content"
-    ]
-    city = location_soup.find("meta", attrs={"property": "og:locality"})["content"]
-    state = location_soup.find("meta", attrs={"property": "og:region"})["content"]
-    zipp = location_soup.find("meta", attrs={"property": "og:postal-code"})["content"]
-    country_code = location_soup.find("meta", attrs={"property": "og:country-name"})[
-        "content"
-    ]
-    store_number = location_name.split("#")[-1]
-    phone = location_soup.find("meta", attrs={"property": "og:phone_number"})["content"]
-    location_type = "<MISSING>"
-    latitude = location_soup.find("meta", attrs={"property": "og:location:latitude"})[
-        "content"
-    ]
-    longitude = location_soup.find("meta", attrs={"property": "og:location:longitude"})[
-        "content"
-    ]
+def scrape():
+    log.info(f"Start Crawling {locator_domain} ...")
+    result = fetch_data()
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        for rec in result:
+            writer.write_row(rec)
+    log.info("Data Grabbing Finished!!")
 
-    hours = ""
-    days = location_soup.find("dl", attrs={"aria-label": "Store Hours"}).find_all("dt")
-    hours_list = location_soup.find("dl", attrs={"aria-label": "Store Hours"}).find_all(
-        "dd"
-    )
 
-    for x in range(len(days)):
-        day = days[x].text.strip()
-        hour = hours_list[x].text.strip()
-        hours = hours + day + " " + hour + ", "
-
-    hours = hours[:-2]
-
-    locator_domains.append(locator_domain)
-    page_urls.append(page_url)
-    location_names.append(location_name)
-    street_addresses.append(address)
-    citys.append(city)
-    states.append(state)
-    zips.append(zipp)
-    country_codes.append(country_code)
-    store_numbers.append(store_number)
-    phones.append(phone)
-    location_types.append(location_type)
-    latitudes.append(latitude)
-    longitudes.append(longitude)
-    hours_of_operations.append(hours)
-
-df = pd.DataFrame(
-    {
-        "locator_domain": locator_domains,
-        "page_url": page_urls,
-        "location_name": location_names,
-        "street_address": street_addresses,
-        "city": citys,
-        "state": states,
-        "zip": zips,
-        "store_number": store_numbers,
-        "phone": phones,
-        "latitude": latitudes,
-        "longitude": longitudes,
-        "hours_of_operation": hours_of_operations,
-        "country_code": country_codes,
-        "location_type": location_types,
-    }
-)
-
-df = df.fillna("<MISSING>")
-df = df.replace(r"^\s*$", "<MISSING>", regex=True)
-
-df["dupecheck"] = (
-    df["location_name"]
-    + df["street_address"]
-    + df["city"]
-    + df["state"]
-    + df["location_type"]
-)
-
-df = df.drop_duplicates(subset=["dupecheck"])
-df = df.drop(columns=["dupecheck"])
-df = df.replace(r"^\s*$", "<MISSING>", regex=True)
-df = df.fillna("<MISSING>")
-
-df.to_csv("data.csv", index=False)
+if __name__ == "__main__":
+    scrape()

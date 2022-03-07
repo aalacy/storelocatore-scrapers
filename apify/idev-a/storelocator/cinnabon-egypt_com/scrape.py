@@ -1,0 +1,54 @@
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sgrequests import SgRequests
+from bs4 import BeautifulSoup as bs
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgpostal import parse_address_intl
+
+_headers = {
+    "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
+}
+
+locator_domain = "https://www.cinnabon-egypt.com"
+base_url = "https://www.cinnabon-egypt.com/store-locator/"
+
+
+def fetch_data():
+    with SgRequests() as session:
+        soup = bs(session.get(base_url, headers=_headers).text, "lxml")
+        locations = soup.select("div.marker")
+        for _ in locations:
+            raw_address = " ".join(_.select("p")[-1].stripped_strings)
+            addr = parse_address_intl(raw_address + ", Egypt")
+            street_address = addr.street_address_1
+            if addr.street_address_2:
+                street_address += " " + addr.street_address_2
+            state = addr.state
+            if state:
+                state = state.replace("Floor", "")
+            city = addr.city
+            if city:
+                city = (
+                    city.replace("S2-04", "").replace("City.", "").replace("City", "")
+                )
+            yield SgRecord(
+                page_url=base_url,
+                location_name=_.strong.text.strip(),
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=addr.postcode,
+                country_code="Egypt",
+                latitude=_["data-lat"],
+                longitude=_["data-lng"],
+                locator_domain=locator_domain,
+                raw_address=raw_address,
+            )
+
+
+if __name__ == "__main__":
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)

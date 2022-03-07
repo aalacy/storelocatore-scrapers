@@ -1,6 +1,9 @@
-import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 session = SgRequests()
 headers = {
@@ -10,35 +13,8 @@ headers = {
 logger = SgLogSetup().get_logger("kellyservices_co_uk")
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
-
-
 def fetch_data():
-    locs = []
+    locs = ["https://www.kellyservices.co.uk/branches/newcastle"]
     url = "https://www.kellyservices.co.uk/branches/"
     r = session.get(url, headers=headers)
     website = "kellyservices.co.uk"
@@ -47,10 +23,10 @@ def fetch_data():
     logger.info("Pulling Stores")
     for line in r.iter_lines():
         line = str(line.decode("utf-8"))
-        if 'class="clearfix"><h4 class="branch-name">' in line:
+        if 'a  href="/branches/' in line and "branches/united-kingdom" not in line:
             locs.append(
-                "https://www.kellyservices.co.uk"
-                + line.split('href="')[1].split('"')[0]
+                "https://www.kellyservices.co.uk/branches/"
+                + line.split('a  href="/branches/')[1].split('"')[0]
             )
     for loc in locs:
         logger.info(loc)
@@ -60,57 +36,58 @@ def fetch_data():
         state = "<MISSING>"
         zc = ""
         store = "<MISSING>"
-        phone = ""
-        lat = ""
-        lng = ""
+        phone = "<MISSING>"
+        lat = "<MISSING>"
+        lng = "<MISSING>"
         hours = "<MISSING>"
         r2 = session.get(loc, headers=headers)
         for line2 in r2.iter_lines():
             line2 = str(line2.decode("utf-8"))
-            if "<h4>Address</h4>" in line2:
+            if '<p class="address">' in line2:
                 add = (
-                    line2.split("<h4>Address</h4>")[1]
-                    .replace("\n", "")
-                    .replace("\r", "")
+                    line2.split('<p class="address">')[1]
+                    .split("</p>")[0]
+                    .replace(
+                        '<i class="fa fa-map-marker fa-fw" aria-hidden="true"></i>', ""
+                    )
                     .strip()
                 )
             if '<h1 class="page-title ">' in line2:
                 name = line2.split('<h1 class="page-title ">')[1].split("<")[0]
-            if '"item__link">' in line2:
-                city = line2.split('"item__link">')[1].split("<")[0]
-            if '"item__postcode">' in line2:
-                zc = line2.split('"item__postcode">')[1].split("<")[0]
-            if 'phone" href="tel:' in line2:
+            if '<p class="city">' in line2:
+                city = line2.split('<p class="city">')[1].split("<")[0]
+            if '<p class="postcode">' in line2:
+                zc = line2.split('<p class="postcode">')[1].split("<")[0]
+            if '"tel" href="tel:' in line2:
                 phone = (
-                    line2.split('phone" href="tel:')[1]
+                    line2.split('"tel" href="tel:')[1]
                     .split('"')[0]
                     .strip()
                     .replace("\t", "")
                 )
-            if "www.google.com/maps/" in line2:
-                lat = line2.split("!3d")[1].split("!")[0]
-                lng = line2.split("!2d")[1].split("!")[0]
-        yield [
-            website,
-            loc,
-            name,
-            add,
-            city,
-            state,
-            zc,
-            country,
-            store,
-            phone,
-            typ,
-            lat,
-            lng,
-            hours,
-        ]
+        yield SgRecord(
+            locator_domain=website,
+            page_url=loc,
+            location_name=name,
+            street_address=add,
+            city=city,
+            state=state,
+            zip_postal=zc,
+            country_code=country,
+            phone=phone,
+            location_type=typ,
+            store_number=store,
+            latitude=lat,
+            longitude=lng,
+            hours_of_operation=hours,
+        )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()

@@ -84,6 +84,11 @@ def fetch_data():
         for raw in temp_address:
             if len("".join(raw).strip()) > 0:
                 raw_list.append("".join(raw).strip())
+                if (
+                    "Everyday" in "".join(raw).strip()
+                    or "Everday" in "".join(raw).strip()
+                ):
+                    break
 
         raw_address = ", ".join(raw_list[:-1]).strip()
         formatted_addr = parser.parse_address_usa(raw_address)
@@ -103,7 +108,9 @@ def fetch_data():
 
         hours_of_operation = raw_list[-1].strip()
 
-        map_link = "".join(raw_info.xpath('.//a[@title="Map"]/@href')).strip()
+        map_link = "".join(
+            page_sel.xpath('//iframe[contains(@data-src,"maps/embed?")]/@data-src')
+        ).strip()
         latitude, longitude = get_latlng(map_link)
 
         yield SgRecord(

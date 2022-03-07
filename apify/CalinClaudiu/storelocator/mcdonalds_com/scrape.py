@@ -10,7 +10,7 @@ from bs4 import BeautifulSoup as b4
 from sgzip.utils import earth_distance
 import json
 import os
-from sgscrape import sgpostal as parser
+from sgpostal.sgpostal import parse_address_intl
 
 logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
 os.environ["HTTPX_LOG_LEVEL"] = "trace"
@@ -209,14 +209,25 @@ class CleanRecord:
                 cleanRecord["locator_domain"], country, locale, identifier
             )
         else:
-            cleanRecord["page_url"] = "https://{}/{}/{}/location/{}.html".format(
-                cleanRecord["locator_domain"],
-                country,
-                locale,
-                badRecord["properties"]["identifiers"]["storeIdentifier"][1][
-                    "identifierValue"
-                ],
-            )
+            try:
+                cleanRecord["page_url"] = "https://{}/{}/{}/location/{}.html".format(
+                    cleanRecord["locator_domain"],
+                    country,
+                    locale,
+                    badRecord["properties"]["identifiers"]["storeIdentifier"][1][
+                        "identifierValue"
+                    ],
+                )
+            except Exception:
+                cleanRecord["page_url"] = "https://{}/{}/{}/location/{}.html".format(
+                    cleanRecord["locator_domain"],
+                    country,
+                    locale,
+                    badRecord["properties"]["identifiers"]["storeIdentifier"][0][
+                        "identifierValue"
+                    ],
+                )
+
         return cleanRecord
 
     def DEDUPE(badRecord):
@@ -286,7 +297,7 @@ class CleanRecord:
             cleanRecord["raw_address"] = ""
         else:
             newdata = copy
-            parsed = parser.parse_address_intl(
+            parsed = parse_address_intl(
                 newdata.replace(",", " ").replace("\r", "").replace("\n", "")
             )
             cleanRecord = {}
@@ -302,10 +313,89 @@ class CleanRecord:
             cleanRecord["city"] = parsed.city
             cleanRecord["state"] = parsed.state
             cleanRecord["zipcode"] = parsed.postcode
+            cleanRecord["zipcode"] = cleanRecord["zipcode"].replace("None", "<MISSING>")
             cleanRecord["country_code"] = parsed.country
+            cleanRecord["country_code"] = cleanRecord["country_code"].replace(
+                "None", "<MISSING>"
+            )
             cleanRecord["phone"] = ""
             cleanRecord["store_number"] = badRecord["id"]
             cleanRecord["hours_of_operation"] = ""
+            cleanRecord["location_type"] = badRecord["services"]
+            cleanRecord["raw_address"] = newdata
+        return cleanRecord
+
+    def EcuadorEspecial(badRecord, config):
+        copy = badRecord["name"]
+        if "<" and ">" in copy:
+            copy = copy.replace("<", "<?<")
+            copy = copy.split("<?")
+            newdata = []
+            for string in copy:
+                topop = []
+                i = 0
+                while i < len(string):
+                    if string[i] == "<":
+                        topop.append(i)
+                        i += 1
+                        while string[i] != ">" and i < len(string):
+                            topop.append(i)
+                            i += 1
+                        topop.append(i)
+                    i += 1
+                string = list(string)
+                for i in reversed(topop):
+                    string.pop(i)
+                string = "".join(string)
+                if len(string) > 0:
+                    newdata.append(string.strip())
+            cleanRecord = {}
+            cleanRecord["locator_domain"] = config.get("Domain")
+            cleanRecord["page_url"] = ""
+            cleanRecord["location_name"] = newdata[0]
+            cleanRecord["latitude"] = badRecord["latitude"]
+            cleanRecord["longitude"] = badRecord["longitude"]
+            cleanRecord["street_address1"] = newdata[1]
+            cleanRecord["street_address2"] = ""
+            cleanRecord["street_address3"] = ""
+            cleanRecord["street_address4"] = ""
+            cleanRecord["city"] = ""
+            cleanRecord["state"] = ""
+            cleanRecord["zipcode"] = ""
+            cleanRecord["country_code"] = ""
+            cleanRecord["phone"] = ""
+            cleanRecord["store_number"] = badRecord["id"]
+            cleanRecord["hours_of_operation"] = cleanRecord["street_address1"]
+            cleanRecord["street_address1"] = ""
+            cleanRecord["location_type"] = badRecord["services"]
+            cleanRecord["raw_address"] = ""
+        else:
+            newdata = copy
+            parsed = parse_address_intl(
+                newdata.replace(",", " ").replace("\r", "").replace("\n", "")
+            )
+            cleanRecord = {}
+            cleanRecord["locator_domain"] = config.get("Domain")
+            cleanRecord["page_url"] = ""
+            cleanRecord["location_name"] = ""
+            cleanRecord["latitude"] = badRecord["latitude"]
+            cleanRecord["longitude"] = badRecord["longitude"]
+            cleanRecord["street_address1"] = parsed.street_address_1
+            cleanRecord["street_address2"] = parsed.street_address_2
+            cleanRecord["street_address3"] = ""
+            cleanRecord["street_address4"] = ""
+            cleanRecord["city"] = parsed.city
+            cleanRecord["state"] = parsed.state
+            cleanRecord["zipcode"] = parsed.postcode
+            cleanRecord["zipcode"] = cleanRecord["zipcode"].replace("None", "<MISSING>")
+            cleanRecord["country_code"] = parsed.country
+            cleanRecord["country_code"] = cleanRecord["country_code"].replace(
+                "None", "<MISSING>"
+            )
+            cleanRecord["phone"] = ""
+            cleanRecord["store_number"] = badRecord["id"]
+            cleanRecord["hours_of_operation"] = cleanRecord["street_address1"]
+            cleanRecord["street_address1"] = ""
             cleanRecord["location_type"] = badRecord["services"]
             cleanRecord["raw_address"] = newdata
         return cleanRecord
@@ -799,15 +889,38 @@ def fetch_data():
     logzilla.info(f"Finished grabbing data!!")  # noqa
 
 
+def strip_parantheses(x):
+    result = []
+    c = 0
+    inside = False
+    waitfor = None
+    this = {"{": "}", "[": "]", "(": ")"}
+    length = len(x)
+    while c < length:
+        if any(i == x[c] for i in ["{", "[", "("]):
+            inside = True
+            waitfor = this[x[c]]
+        if x[c] != waitfor:
+            if not inside:
+                result.append(x[c])
+        else:
+            inside = False
+        c += 1
+
+    return "".join(result)
+
+
 def fix_comma(x):
     h = []
+    result = None
     try:
         for i in x.split(","):
             if len(i.strip()) >= 1:
                 h.append(i)
-        return ", ".join(h).replace("  ", " ")
+        result = ", ".join(h).replace("  ", " ")
     except Exception:
-        return x.replace("  ", " ")
+        result = x.replace("  ", " ")
+    return strip_parantheses(result)
 
 
 def scrape():
@@ -854,7 +967,9 @@ def scrape():
             is_required=False,
         ),
         hours_of_operation=sp.MappingField(
-            mapping=["hours_of_operation"], is_required=False
+            mapping=["hours_of_operation"],
+            is_required=False,
+            value_transform=lambda x: x.replace("\n", " ").replace("\r", " "),
         ),
         location_type=sp.MappingField(mapping=["location_type"], is_required=False),
         raw_address=sp.MappingField(mapping=["raw_address"], is_required=False),

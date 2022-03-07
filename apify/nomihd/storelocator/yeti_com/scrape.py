@@ -5,7 +5,9 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import lxml.html
 import re
-from sgscrape import sgpostal as parser
+from sgpostal import sgpostal as parser
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
 website = "yeti.com"
@@ -61,7 +63,9 @@ def fetch_data():
         store_res = session.get(page_url, headers=headers)
         store_sel = lxml.html.fromstring(store_res.text)
 
-        location_name = "".join(store_sel.xpath("//title/text()"))
+        if "Coming Soon" in store_res.text or "We're Moving" in store_res.text:
+            continue
+        location_name = "".join(store_sel.xpath("//div/h1/text()"))
 
         store_info = list(
             filter(
@@ -72,13 +76,46 @@ def fetch_data():
                 ],
             )
         )
+        full_address = ""
+        phone = ""
+        if len(store_info) > 0:
+            for phn_idx, x in enumerate(store_info):
+                if bool(re.search("^[0-9-() ]{1,15}$", x)):
+                    break
 
-        for phn_idx, x in enumerate(store_info):
-            if bool(re.search("^[0-9-() ]{1,15}$", x)):
-                break
+            full_address = store_info[:phn_idx] + store_info[phn_idx + 1 :]
+            phone = store_info[phn_idx].strip()
 
-        full_address = store_info[:phn_idx] + store_info[phn_idx + 1 :]
+        else:
+            store_info = list(
+                filter(
+                    str,
+                    [
+                        x.strip()
+                        for x in store_sel.xpath(
+                            '//div[@class="page-content page-with-banner"]/p[position()<=2]/text()'
+                        )
+                    ],
+                )
+            )
+            full_address = store_info
 
+        if len(full_address) == 1:
+            store_info = list(
+                filter(
+                    str,
+                    [
+                        x.strip()
+                        for x in store_sel.xpath(
+                            '//div[@class="page-content page-with-banner"]/p[position()<=2]/text()'
+                        )
+                    ],
+                )
+            )
+            full_address = store_info
+
+        if len(phone) <= 0:
+            phone = "".join(store_sel.xpath('//a[contains(@href,"tel:")]/text()'))
         raw_address = " ".join(full_address).replace("\n", " ").split("(")[0]
 
         formatted_addr = parser.parse_address_usa(raw_address)
@@ -94,8 +131,6 @@ def fetch_data():
 
         store_number = "<MISSING>"
 
-        phone = store_info[phn_idx].strip()
-
         location_type = "<MISSING>"
 
         hours = list(
@@ -109,8 +144,30 @@ def fetch_data():
                 ],
             )
         )
+        if len(hours) <= 0:
+            hours = list(
+                filter(
+                    str,
+                    [
+                        x.strip()
+                        for x in store_sel.xpath(
+                            '//p[contains(.//text(),"Hours")]/following-sibling::p/text()'
+                        )
+                    ],
+                )
+            )
+        hours_of_operation = "; ".join(hours).strip()
+        if "regular business hours:;" in hours_of_operation:
+            hours_of_operation = hours_of_operation.split("regular business hours:;")[
+                1
+            ].strip()
 
-        hours_of_operation = "; ".join(hours)
+        hours_of_operation = (
+            hours_of_operation.split("; Bar Open Effective")[0]
+            .strip()
+            .split("; Hey Scottsdale")[0]
+            .strip()
+        )
 
         map_link = "".join(store_sel.xpath('//iframe[contains(@src,"maps")]/@src'))
 
@@ -138,7 +195,9 @@ def fetch_data():
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

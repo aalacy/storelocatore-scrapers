@@ -1,81 +1,88 @@
-import csv
+import json
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
-import json
-import sgzip
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sglogging import SgLogSetup
 
-logger = SgLogSetup().get_logger('clarksoneyecare_com')
-
+logger = SgLogSetup().get_logger("clarksoneyecare_com")
 
 
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation",
-                         "page_url"])
-        # Body
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         for row in data:
-            writer.writerow(row)
+            writer.write_row(row)
+
 
 session = SgRequests()
-all=[]
+
+
 def fetch_data():
     # Your scraper here
-    page_url=[]
 
-    key_set=set([])
-    coords = sgzip.coords_for_radius(50)
-    for coord in coords:
-        #logger.info(coord)
-        url="https://www.clarksoneyecare.com/wp-json/352inc/v1/locations/coordinates?lat="+coord[0]+"&lng="+coord[1]
-        
+    url = "https://www.clarksoneyecare.com/locations"
+    res = session.get(url)
+    soup = BeautifulSoup(res.text, "html.parser")
+    script = (
+        str(soup.find("script", {"id": "__NEXT_DATA__"}))
+        .replace('<script id="__NEXT_DATA__" type="application/json">', "")
+        .replace("</script>", "")
+    )
+
+    loc_list = json.loads(script)["props"]["pageProps"]["locations"]
+    logger.info(len(loc_list))
+
+    for loc in loc_list:
+
+        url = "https://www.clarksoneyecare.com/locations/" + loc["slug"]
+        logger.info(url)
+        logger.info(loc)
+
         res = session.get(url)
-        try:
-            jso=res.json()
+        soup = BeautifulSoup(res.text, "html.parser")
 
-        except:
-            continue
-        for js in jso:
-            data=js["name"]+js["address1"]+" "+js["address2"]+" "+js["address3"].strip()+js["city"]+js["state"]
-            if data in key_set:
-                continue
-            key_set.add(data)
-            res = session.get(js['permalink'])
-            soup = BeautifulSoup(res.text, 'html.parser')
-            try:
-                tim = soup.find('div', {'class': 'col-lg-4 times'}).text.replace("\n"," ").strip()
-            except:
-                tim='<MISSING>'
-            logger.info(url)
-            name=js["name"].replace(";s ","; ").replace( u'\u200b','')
-            if ";" in name:
-                name=name.split(';')[-1]
-            all.append([
-                "https://www.clarksoneyecare.com",
-                name.replace( u'\u200b','').replace( u'\u202c',''),
-                js["address1"]+" "+js["address2"]+" "+js["address3"].strip().replace( u'\u200b','').replace( u'\u202c','').replace('â€™','').replace('â€‹',''),
-                js["city"].replace( u'\u200b','').replace( u'\u202c',''),
-                js["state"].replace( u'\u200b','').replace( u'\u202c',''),
-                js["zip_code"].replace( u'\u200b','').replace( u'\u202c',''),
-                "US",
-                "<MISSING>",  # store #
-                js["phone_number"].replace( u'\u200b','').replace( u'\u202c',''),  # phone
-                "<MISSING>",  # type
-                js["lat"].replace( u'\u200b','').replace( u'\u202c',''),  # lat
-                js["lng"].replace( u'\u200b','').replace( u'\u202c',''),  # long
-                tim.replace( u'\u200b','').replace( u'\u202c',''),  # timing
-                url.replace( u'\u200b','').replace( u'\u202c','')])
+        script = (
+            str(soup.find("script", {"type": "application/ld+json"}))
+            .replace('<script type="application/ld+json">', "")
+            .replace("</script>", "")
+        )
+        days = json.loads(script)["openingHoursSpecification"]
+        tim = ""
+        for day in days:
+            tim += day["dayOfWeek"] + ": " + day["opens"] + " - " + day["closes"] + ", "
 
-    return all
+        tim = tim.strip(", ")
 
-    # query the store locator using lat, lng
+        street = loc["address1"].strip()
+
+        if "address2" in loc:
+            street += " " + loc["address2"].strip()
+
+        if "address3" in loc:
+            street += " " + loc["address3"].strip()
+
+        yield SgRecord(
+            locator_domain="https://www.clarksoneyecare.com",
+            page_url=url,
+            location_name=loc["name"],
+            street_address=street,
+            city=loc["city"],
+            state=loc["state"],
+            zip_postal=loc["zipCode"],
+            country_code="US",
+            store_number="<MISSING>",
+            phone=loc["phoneNumber"],
+            location_type="<MISSING>",
+            latitude=loc["map"]["lat"],
+            longitude=loc["map"]["lon"],
+            hours_of_operation=tim,
+        )
+
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    write_output(fetch_data())
+
 
 scrape()

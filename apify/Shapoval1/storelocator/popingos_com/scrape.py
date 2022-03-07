@@ -1,107 +1,60 @@
-import csv
-from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
+def fetch_data(sgw: SgWriter):
 
     locator_domain = "https://popingos.com"
-    api_url = "https://popingos.com/js/mapData/oxbowConvertCsv.json?v20180711"
+    api_url = "https://api.storerocket.io/api/user/DMJbBjNJXe/locations?radius=50000&units=miles"
     session = SgRequests()
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
     r = session.get(api_url, headers=headers)
-    js = r.json()
+    js = r.json()["results"]["locations"]
 
     for j in js:
-
-        page_url = f"https://{j.get('url')}"
-        location_name = "".join(j.get("name"))
-
-        location_type = "<MISSING>"
-        street_address = f"{j.get('address')} {j.get('address 2')}".replace(
-            "None", ""
-        ).strip()
+        slug = j.get("slug")
+        page_url = f"https://www.popingos.com/store-locator?location={slug}"
+        location_name = j.get("name")
+        location_type = j.get("location_type_name")
+        street_address = f"{j.get('address_line_1')} {j.get('address_line_2')}".strip()
         phone = j.get("phone")
         state = j.get("state")
-        postal = j.get("postal_code")
+        postal = j.get("postcode")
         country_code = j.get("country")
         city = j.get("city")
-        try:
-            store_number = page_url.split("-")[-1].replace("/", "").strip()
-        except:
-            store_number = "<MISSING>"
-        latitude = j.get("Latitude")
-        longitude = j.get("Longitude")
-        session = SgRequests()
-        r = session.get(page_url, headers=headers)
-        tree = html.fromstring(r.text)
+        latitude = j.get("lat")
+        longitude = j.get("lng")
+        adr = j.get("address")
+        hours_of_operation = f"Mon {j.get('mon')}; Tue {j.get('tue')}; Wed {j.get('wed')}; Thu {j.get('thu')}; Fri {j.get('fri')}; Sat {j.get('sat')}; Sun {j.get('sun')}"
 
-        hours_of_operation = (
-            " ".join(
-                tree.xpath(
-                    '//h2[contains(text(), "Business")]/following-sibling::p//text()'
-                )
-            )
-            .replace("\n", "")
-            .strip()
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=SgRecord.MISSING,
+            phone=phone,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+            raw_address=adr,
         )
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
 
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    locator_domain = "https://popingos.com"
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
+        fetch_data(writer)

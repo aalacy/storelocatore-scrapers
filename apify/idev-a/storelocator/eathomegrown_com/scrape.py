@@ -23,9 +23,8 @@ def fetch_data():
         links = soup.select("li#region-list ul li a")
         logger.info(f"{len(links)} found")
         for link in links:
-            page_url = locator_domain + link["href"]
-            logger.info(page_url)
-            sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
+            url = locator_domain + link["href"]
+            sp1 = bs(session.get(url, headers=_headers).text, "lxml")
             scripts = sp1.find_all("script", string=re.compile(r"var phoneNumber;"))
             for script in scripts:
                 phone = (
@@ -41,10 +40,11 @@ def fetch_data():
                 if _["street2"]:
                     street_address += " " + _["street2"]
                 hours = []
-                for hh in _["hours"].split(","):
-                    if "&amp;" in hh:
-                        continue
-                    hours.append(hh)
+                for hh in _["hours"].split(". "):
+                    if " on" in hh or "closing " in hh.lower() or "opens" in hh.lower():
+                        break
+                    hours.append(hh.replace("&amp;", "&").split("*")[0].strip())
+                page_url = f"http://www.eathomegrown.com/locations?location={_['slug']}"
                 yield SgRecord(
                     page_url=page_url,
                     location_name=_["storeName"].replace("&amp;", "&"),
