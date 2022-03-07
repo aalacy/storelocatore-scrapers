@@ -42,10 +42,8 @@ def fetch_data():
             state = address["administrativeArea"]
             zip_postal = address["postalCode"]
             country_code = address["country"]
-
             try:
                 page_url = "https://www.levinfurniture.com/store" + loc["storeUrl"]
-                r = session.get(url, headers=headers)
             except:
                 page_url = MISSING
             hour_list = loc["storeHours"]
