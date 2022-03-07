@@ -134,7 +134,9 @@ def fetch_data():
         expected_search_radius_miles=15,
         max_search_results=5,
     )
-    for lat, long in search:
+    coords = [x for x in search]
+    coords.append((18.097019874365, -63.042554855347))
+    for lat, long in coords:
         driver, data = get_stores(driver, lat, long)
         try:
             data["data"]["storeList"]
