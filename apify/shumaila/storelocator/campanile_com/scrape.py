@@ -55,7 +55,6 @@ def fetch_data():
             store = loc["id"]
             r = session.get(link, headers=headers1)
 
-            link = r.url
             try:
                 content = r.text.split('<script type="application/ld+json">', 1)[
                     1

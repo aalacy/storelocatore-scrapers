@@ -68,7 +68,7 @@ def fetch_data():
     )["mapParagraph"]["24771"]["results"]
     driver.quit()
     logger.info(f"Total stores = {len(locations)}")
-    for _ in locations[0:5]:
+    for _ in locations:
         info = bs(_["markup"], "lxml")
         addr = info.select_one("p.location").text.strip().split(",")
         page_url = info.select_one("a.search-teaser__link")["href"]
@@ -89,6 +89,17 @@ def fetch_data():
             .text.strip()
             .split(",")
         )
+        hours = ""
+        _hr = sp1.find("strong", string=re.compile(r"Hostel opening hours:"))
+        if _hr:
+            try:
+                hours = (
+                    list(_hr.find_parent().stripped_strings)[-1]
+                    .split("public")[-1]
+                    .strip()
+                )
+            except:
+                pass
         phone = ""
         if sp1.find("a", href=re.compile(r"tel:")):
             phone = sp1.find("a", href=re.compile(r"tel:")).text.strip()
@@ -112,9 +123,11 @@ def fetch_data():
             country_code="UK",
             phone=phone,
             locator_domain=locator_domain,
+            hours_of_operation=hours,
             raw_address=", ".join(_addr),
         )
-        driver.quit()
+        if driver:
+            driver.quit()
 
 
 if __name__ == "__main__":
