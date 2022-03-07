@@ -123,6 +123,7 @@ def fetch_data():
                 )[1].split("&")[0]
         if hours == "":
             hours = "<MISSING>"
+        name = name.replace("&amp;", "&").replace("&Amp;", "&").replace("&amp", "&")
         yield SgRecord(
             locator_domain=website,
             page_url=loc,

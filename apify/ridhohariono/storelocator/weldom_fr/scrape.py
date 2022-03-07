@@ -76,14 +76,42 @@ def get_stores(driver, lat, long, num=0):
         data = driver.execute_script(script)
         data["data"]["storeList"]
     except:
-        log.info("Failed geting store locations, retry for => " + str(num))
-        driver.quit()
-        time.sleep(5)
-        driver = SgSelenium().chrome()
-        driver.get(BASE_URL)
-        set_cookie(driver)
-        return get_stores(driver, lat, long, num)
+        if num <= 5:
+            log.info("Failed geting store locations, retry for => " + str(num))
+            driver.quit()
+            driver = SgSelenium().chrome()
+            driver.get(BASE_URL)
+            set_cookie(driver)
+            return get_stores(driver, lat, long, num)
     return driver, data
+
+
+def get_hoo(days, data):
+    hoo = ""
+    for i in range(len(days)):
+        if data[i]["slots"]:
+            if len(data[i]["slots"]) > 1:
+                hour = data[i]["slots"]
+                hoo += (
+                    days[i]
+                    + ": "
+                    + hour[0]["start_time"]
+                    + " - "
+                    + hour[0]["end_time"]
+                    + " / "
+                    + hour[1]["start_time"]
+                    + " - "
+                    + hour[1]["end_time"]
+                    + ","
+                )
+            else:
+                hour = data[i]["slots"][0]
+                hoo += (
+                    days[i] + ": " + hour["start_time"] + " - " + hour["end_time"] + ","
+                )
+        else:
+            hoo += days[i] + ": Closed,"
+    return hoo.strip().rstrip(",")
 
 
 def fetch_data():
@@ -103,12 +131,15 @@ def fetch_data():
     driver.implicitly_wait(10)
     search = DynamicGeoSearch(
         country_codes=[SearchableCountries.FRANCE],
-        max_search_distance_miles=50,
         expected_search_radius_miles=15,
         max_search_results=5,
     )
     for lat, long in search:
-        data = get_stores(driver, lat, long)
+        driver, data = get_stores(driver, lat, long)
+        try:
+            data["data"]["storeList"]
+        except:
+            continue
         for row in data["data"]["storeList"]:
             search.found_location_at(lat, long)
             page_url = BASE_URL + "magasin/" + str(row["id"])
@@ -120,36 +151,7 @@ def fetch_data():
             zip_postal = addr["postcode"]
             country_code = addr["country_id"]
             phone = row["contact_phone"].strip()
-            hoo = ""
-            for i in range(len(days)):
-                if row["opening_hours"][i]["slots"]:
-                    if len(row["opening_hours"][i]["slots"]) > 1:
-                        hour = row["opening_hours"][i]["slots"]
-                        hoo += (
-                            days[i]
-                            + ": "
-                            + hour[0]["start_time"]
-                            + " - "
-                            + hour[0]["end_time"]
-                            + " / "
-                            + hour[1]["start_time"]
-                            + " - "
-                            + hour[1]["end_time"]
-                            + ","
-                        )
-                    else:
-                        hour = row["opening_hours"][i]["slots"][0]
-                        hoo += (
-                            days[i]
-                            + ": "
-                            + hour["start_time"]
-                            + " - "
-                            + hour["end_time"]
-                            + ","
-                        )
-                else:
-                    hoo += days[i] + ": Closed,"
-            hours_of_operation = hoo.strip().rstrip(",")
+            hours_of_operation = get_hoo(days, row["opening_hours"])
             store_number = row["id"]
             location_type = MISSING
             latitude = addr["latitude"]
