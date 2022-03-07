@@ -39,7 +39,6 @@ def fetch_data():
         raw_data = [e.strip() for e in raw_data if e.strip()]
         hoo = loc_dom.xpath('//div[@class="opening-hours"]//text()')
         hoo = " ".join([e.strip() for e in hoo if e.strip()]).split(" Monday")[0]
-        print(page_url)
         with SgFirefox() as driver:
             driver.get(page_url)
             sleep(5)
