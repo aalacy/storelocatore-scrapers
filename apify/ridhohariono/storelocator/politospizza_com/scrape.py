@@ -79,7 +79,6 @@ def fetch_data():
         phone = addr[-1].strip()
         location_type = MISSING
         hours_of_operation = row.find("h6").get_text(strip=True, separator=",")
-        print(hours_of_operation)
         store_number = MISSING
         latitude = MISSING
         longitude = MISSING
