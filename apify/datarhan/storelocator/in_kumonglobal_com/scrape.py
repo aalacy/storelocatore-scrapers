@@ -181,6 +181,11 @@ def fetch_data():
             )
             if "Please contact the center for more details" in hoo:
                 hoo = ""
+            if not hoo:
+                hoo = loc_dom.xpath(
+                    '//div[@class="store_locator_content"]/ul/li[4]/text()'
+                )
+                hoo = " ".join([e.strip() for e in hoo])
 
             item = SgRecord(
                 locator_domain=domain,
