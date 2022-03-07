@@ -108,7 +108,7 @@ def fetch_data():
             hours_list = []
             for day in hours.keys():
                 time = hours[day]
-                hours_list.append(day + ":" + time)
+                hours_list.append(day + time)
 
             hours_of_operation = "; ".join(hours_list).strip()
             latitude, longitude = (
