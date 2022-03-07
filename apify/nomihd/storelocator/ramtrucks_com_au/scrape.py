@@ -68,7 +68,11 @@ def fetch_data():
             location_type = ", ".join(
                 store_sel.xpath('//li[contains(@class,"ldidTabsItem")]//text()')
             ).strip()
-            hours_of_operation = "<MISSING>"
+            hours_of_operation = "; ".join(
+                store_sel.xpath(
+                    '//div[@data-id="ldidSales"]/div[./div[contains(text(),"Hours")]]/div[@class="ldidText"]/text()'
+                )
+            ).strip()
 
             store_number = page_url.split("=")[1].strip()
 

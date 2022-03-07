@@ -44,7 +44,7 @@ def fetch_data(sgw: SgWriter):
                 raw_address.pop(-1)
             if "admissions" in raw_address[-1]:
                 raw_address.pop(-1)
-            street_address = raw_address[-4]
+            street_address = " ".join(raw_address[:-3])
             city = raw_address[-3].split(",")[0].replace("5th St", "").strip()
             state = raw_address[-3].split(",")[1].split()[0]
             zip_code = raw_address[-3].split(",")[1].split()[1]
