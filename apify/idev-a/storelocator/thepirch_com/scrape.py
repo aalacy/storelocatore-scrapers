@@ -5,6 +5,7 @@ from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgpostal.sgpostal import parse_address_intl
 
 logger = SgLogSetup().get_logger("pirch")
 
@@ -33,7 +34,11 @@ def fetch_data():
             page_url = _.a["href"]
             logger.info(page_url)
             sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
-            addr = list(_.p.stripped_strings)
+            raw_address = " ".join(_.p.stripped_strings)
+            addr = parse_address_intl(raw_address)
+            street_address = addr.street_address_1
+            if addr.street_address_2:
+                street_address += " " + addr.street_address_2
             hours = []
             for hh in sp1.select("table.uael-table tr"):
                 hours.append(": ".join(hh.stripped_strings))
@@ -51,17 +56,17 @@ def fetch_data():
             yield SgRecord(
                 page_url=page_url,
                 location_name=_.h3.text.replace("\n", " ").strip(),
-                street_address=" ".join(addr[:-1]),
-                city=addr[-1].split(",")[0].strip(),
-                state=addr[-1].split(",")[1].strip().split()[0].strip(),
-                zip_postal=addr[-1].split(",")[1].strip().split()[-1].strip(),
+                street_address=street_address,
+                city=addr.city,
+                state=addr.state,
+                zip_postal=addr.postcode,
                 country_code="US",
                 phone=_.strong.text.strip(),
                 locator_domain=locator_domain,
                 latitude=_c(coord[0]),
                 longitude=_c(coord[1]),
                 hours_of_operation="; ".join(hours).replace("–", "-"),
-                raw_address=" ".join(addr),
+                raw_address=raw_address,
             )
 
 
