@@ -15,9 +15,6 @@ def fetch_data():
 
     start_url = "https://www.peakpharmacy.co.uk/pharmacy-results/?lat={}&long={}"
     domain = "murrays.co.uk"
-    hdr = {
-        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
-    }
 
     all_coords = DynamicGeoSearch(
         country_codes=[SearchableCountries.BRITAIN], expected_search_radius_miles=50
