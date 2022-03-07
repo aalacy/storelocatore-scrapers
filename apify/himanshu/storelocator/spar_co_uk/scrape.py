@@ -1,4 +1,3 @@
-from asyncio.log import logger
 import re
 import math
 import json
@@ -131,9 +130,7 @@ def fetchStores():
                 )
             except:
                 pass
-                import pdb
 
-                pdb.set_trace()
             stores.append(
                 {
                     "url": page_url,
