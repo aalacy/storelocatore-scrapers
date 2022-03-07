@@ -52,7 +52,7 @@ def fetch_data():
 
         yield SgRecord(
             locator_domain="https://www.belowthebelt.com/",
-            page_url=url,
+            page_url="https://www.belowthebelt.com/pages/store-locator",
             location_name=title,
             street_address=street.replace("<span>", "").replace("</span>", "").strip(),
             city=city.replace("<span>", "").replace("</span>", "").strip(),
