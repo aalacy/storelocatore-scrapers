@@ -136,6 +136,10 @@ def fetch_data():
     )
     for lat, long in search:
         driver, data = get_stores(driver, lat, long)
+        try:
+            data["data"]["storeList"]
+        except:
+            continue
         for row in data["data"]["storeList"]:
             search.found_location_at(lat, long)
             page_url = BASE_URL + "magasin/" + str(row["id"])

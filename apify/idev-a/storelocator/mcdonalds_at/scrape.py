@@ -52,6 +52,8 @@ def fetch_data():
                 for hh in sp2.select("div#restaurants p"):
                     if not hh.text.strip():
                         continue
+                    if "Drive" in hh.text:
+                        break
                     hr = list(hh.stripped_strings)
                     if len(hr) > 2:
                         hr = hr[:-1]
