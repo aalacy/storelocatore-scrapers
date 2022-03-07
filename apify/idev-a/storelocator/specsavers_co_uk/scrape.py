@@ -56,7 +56,7 @@ def request_with_retries(url):
 
 
 def fetch_data():
-    with SgRequests(proxy_country='us') as session:
+    with SgRequests(proxy_country="us") as session:
         soup = bs(session.get(base_url, headers=_headers).text, "lxml")
         store_links = soup.select("div.item-list ul li a")
         for page_url, soup in fetchConcurrentList(store_links):
