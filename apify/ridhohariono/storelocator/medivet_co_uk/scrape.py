@@ -75,6 +75,8 @@ def fetch_data():
         if not info:
             continue
         location_name = info["name"].strip()
+        if "Permanently closed" in location_name:
+            continue
         address = info["address"][0]
         street_address = address["streetAddress"].strip()
         if "https://www.medivet.co.uk/vet-practices/basildon/" in page_url:
