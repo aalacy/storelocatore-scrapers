@@ -1,79 +1,96 @@
-import csv
 import re
-import pdb
-import requests
-from lxml import etree
-import json
+from sglogging import sglog
+from bs4 import BeautifulSoup
+from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+import ssl
 
-base_url = 'https://www.shopamericanrental.com'
+try:
+    _create_unverified_https_context = ssl._create_unverified_context
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context
 
-def validate(item):
-    if type(item) == list:
-        item = ' '.join(item)
-    while True:
-        if item[-1:] == ' ':
-            item = item[:-1]
-        else:
-            break
-    return item.strip()
 
-def get_value(item):
-    if item == None :
-        item = '<MISSING>'
-    item = validate(item)
-    if item == '':
-        item = '<MISSING>'    
-    return item
+session = SgRequests()
+website = "shopamericanrental_com"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
+session = SgRequests()
 
-def eliminate_space(items):
-    rets = []
-    for item in items:
-        item = validate(item)
-        if item != '':
-            rets.append(item)
-    return rets
 
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-        for row in data:
-            writer.writerow(row)
+headers = {
+    "User-Agent": "Mozilla/5.0 (iPad; CPU OS 11_0 like Mac OS X) AppleWebKit/604.1.34 (KHTML, like Gecko) Version/11.0 Mobile/15A5341f Safari/604.1",
+}
+
+DOMAIN = "https://www.shopamericanrental.com"
+MISSING = SgRecord.MISSING
+
 
 def fetch_data():
-    output_list = []
-    url = "https://www.shopamericanrental.com/locations"
-    request = requests.get(url)
-    response = etree.HTML(request.text)
-    store_list = response.xpath('//div[contains(@class, "location-blocks")]//div[contains(@class, "block")]')
-    for store in store_list:
-        detail_url = validate(store.xpath("./a/@href"))
-        detail_request = requests.get(base_url + detail_url)
-        detail = etree.HTML(detail_request.text)
-        zipcode = validate(detail.xpath('.//p/a/@href')[1].split('+').pop())
-        city_state = validate(store.xpath('.//p[@class="address"]/span//text()'))
-        hours = validate(detail.xpath('.//text()')).split('HOURS')[1].split('Contact the')[0]
+    if True:
+        url = "https://www.shopamericanrental.com/locations"
+        r = session.get(url, headers=headers)
+        soup = BeautifulSoup(r.text, "html.parser")
+        loclist = soup.findAll("a", string=re.compile("View Page"))
+        for loc in loclist:
+            page_url = DOMAIN + loc["href"]
+            log.info(page_url)
+            r = session.get(page_url, headers=headers)
+            soup = BeautifulSoup(r.text, "html.parser")
+            temp = soup.findAll("div", {"class": "col-md"})[-1]
+            phone = temp.find("h4").text
+            temp = temp.findAll("p")
+            location_name = soup.find("h2").text
+            address = temp[0].get_text(separator="|", strip=True).split("|")
+            street_address = address[0].replace("NEW LOCATION:", "")
+            address = address[1].split(",")
+            city = address[0]
+            address = address[1].split()
+            state = address[0]
+            zip_postal = address[1]
+            hours_of_operation = (
+                temp[-1]
+                .get_text(separator="|", strip=True)
+                .replace("|", " ")
+                .split("facebook")[0]
+                .replace("OPEN NOW", "")
+            )
+            yield SgRecord(
+                locator_domain=DOMAIN,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_postal,
+                country_code="US",
+                store_number=MISSING,
+                phone=phone,
+                location_type=MISSING,
+                latitude=MISSING,
+                longitude=MISSING,
+                hours_of_operation=hours_of_operation,
+            )
 
-        output = []
-        output.append(base_url) # url
-        output.append(validate(detail.xpath(".//h2//text()"))) #location name
-        output.append(validate(store.xpath('.//p[@class="address"]/text()'))) #address
-        output.append(city_state.split(', ')[0]) #city
-        output.append(city_state.split(', ')[1]) #state
-        output.append(zipcode) #zipcode
-        output.append('US') #country code
-        output.append("<MISSING>") #store_number
-        output.append(validate(store.xpath('.//p[@class="phone"]//text()'))) #phone
-        output.append("Shop online with American Rental to enjoy today's newest products and enhance your home.") #location type
-        output.append("<MISSING>") #latitude
-        output.append("<MISSING>") #longitude
-        output.append(get_value(hours)) #opening hours
-        output_list.append(output)
-
-    return output_list
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    log.info("Started")
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
 
-scrape()
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
+
+
+if __name__ == "__main__":
+    scrape()

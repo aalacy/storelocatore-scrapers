@@ -84,6 +84,8 @@ def fetch_data():
                 .strip()
                 .replace("Alfresco dining available", "")
                 .strip()
+                .split("Delivery")[0]
+                .strip()
             )
 
             hours = list(

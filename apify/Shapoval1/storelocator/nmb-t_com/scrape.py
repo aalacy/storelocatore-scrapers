@@ -1,42 +1,16 @@
-import csv
 import json
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
+def fetch_data(sgw: SgWriter):
 
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
     locator_domain = "https://www.nmb-t.com/"
     api_url = "https://www.nmb-t.com/locations"
-    session = SgRequests()
 
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:88.0) Gecko/20100101 Firefox/88.0",
@@ -64,42 +38,48 @@ def fetch_data():
         longitude = js.get("coordinates")[0]
         location_type = "Branch"
         hours_of_operation = (
-            " ".join(
-                d.xpath(
-                    './/b[contains(text(), "Lobby hours:")]/following-sibling::text() | .//b[contains(text(), "Lobby hours:")]/following-sibling::p/text()'
-                )
-            )
+            " ".join(d.xpath(".//text()"))
             .replace("\n", "")
-            .replace("   ", " ")
+            .split("Lobby hours:")[1]
+            .split("Drive-up")[0]
             .replace("CT", "")
             .strip()
         )
-        phone = "".join(d.xpath(".//div/p[position()>1]/text()"))
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
+        hours_of_operation = " ".join(hours_of_operation.split())
+        phone = (
+            "".join(
+                d.xpath(
+                    './/div[@class="addressfield-container-inline locality-block country-US"]/following-sibling::text()[2]'
+                )
+            )
+            .replace("\n", "")
+            .strip()
+        )
 
-    return out
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+            raw_address=f"{street_address} {city}, {state} {postal}",
+        )
 
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
+    ) as writer:
+        fetch_data(writer)

@@ -63,7 +63,7 @@ def fetch_data():
             page_url = LOCATION_URL
         location_name = row.find("h5", {"class": "headline"}).text.strip()
         info = row.find("address").get_text(strip=True, separator="@").split("@")
-        raw_address = "".join(info[:-1]).replace("\n", "").strip()
+        raw_address = "".join(info[:-1]).replace("\n", " ").strip()
         street_address, city, state, zip_postal = getAddress(raw_address)
         country_code = "US"
         store_number = MISSING

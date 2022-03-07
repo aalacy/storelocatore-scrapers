@@ -24,12 +24,20 @@ def fetch_data():
             street_address = addr.street_address_1
             if addr.street_address_2:
                 street_address += " " + addr.street_address_2
+            state = addr.state
+            if state:
+                state = state.replace("Floor", "")
+            city = addr.city
+            if city:
+                city = (
+                    city.replace("S2-04", "").replace("City.", "").replace("City", "")
+                )
             yield SgRecord(
                 page_url=base_url,
                 location_name=_.strong.text.strip(),
                 street_address=street_address,
-                city=addr.city,
-                state=addr.state,
+                city=city,
+                state=state,
                 zip_postal=addr.postcode,
                 country_code="Egypt",
                 latitude=_["data-lat"],

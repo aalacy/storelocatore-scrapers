@@ -1,72 +1,91 @@
-import csv
-import re
-import pdb
-import requests
+from bs4 import BeautifulSoup
+
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+
+from sgrequests import SgRequests
 from lxml import etree
 import json
 
-base_url = 'https://www.opensesamegrill.com'
+base_url = "https://www.opensesamegrill.com"
 
-def validate(item):    
-    if item == None:
-        item = ''
+
+def validate(item):
+    if item is None:
+        item = ""
     if type(item) == int or type(item) == float:
         item = str(item)
     if type(item) == list:
-        item = ' '.join(item)
+        item = " ".join(item)
     return item.strip()
 
+
 def get_value(item):
-    if item == None :
-        item = '<MISSING>'
+    if item is None:
+        item = "<MISSING>"
     item = validate(item)
-    if item == '':
-        item = '<MISSING>'    
+    if item == "":
+        item = "<MISSING>"
     return item
+
 
 def eliminate_space(items):
     rets = []
     for item in items:
         item = validate(item)
-        if item != '':
+        if item != "":
             rets.append(item)
     return rets
 
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-        for row in data:
-            writer.writerow(row)
 
-def fetch_data():
-    output_list = []
+def fetch_data(sgw: SgWriter):
     url = "https://www.opensesamegrill.com"
-    session = requests.Session()
+    session = SgRequests()
     source = session.get(url).text
     response = etree.HTML(source)
-    store_list = json.loads(validate(response.xpath('.//script[@type="application/ld+json"]//text()')[0]))['subOrganization']
+    store_list = json.loads(
+        validate(response.xpath('.//script[@type="application/ld+json"]//text()')[0])
+    )["subOrganization"]
     for store in store_list:
-        output = []
-        output.append(base_url) # url
-        output.append(get_value(store['name'])) #location name
-        output.append(get_value(store['address']['streetAddress'])) #address
-        output.append(get_value(store['address']['addressLocality'])) #city
-        output.append(get_value(store['address']['addressRegion'])) #state
-        output.append(get_value(store['address']['postalCode'])) #zipcode
-        output.append('US') #country code
-        output.append('<MISSING>') #store_number
-        output.append(get_value(store['telephone'])) #phone
-        output.append(get_value(store['@type'])) #location type
-        output.append('<INACCESSIBLE>') #latitude
-        output.append('<INACCESSIBLE>') #longitude
-        store_hours = eliminate_space(etree.HTML(session.get(validate(store['url'])).text).xpath('.//section[@id="intro"]//p')[-1].xpath('.//text()'))
-        output.append(get_value(','.join(store_hours))) #opening hours
-        output_list.append(output)
-    return output_list
+        location_name = get_value(store["name"])  # location name
+        street_address = get_value(store["address"]["streetAddress"])  # address
+        city = get_value(store["address"]["addressLocality"])  # city
+        state = get_value(store["address"]["addressRegion"])  # state
+        zip_code = get_value(store["address"]["postalCode"])  # zipcode
+        country_code = "US"
+        store_number = ""
+        phone = get_value(store["telephone"])
+        location_type = get_value(store["@type"])
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        link = store["url"]
+        req = session.get(link)
+        base = BeautifulSoup(req.text, "lxml")
 
-scrape()
+        latitude = base.find(class_="gmaps")["data-gmaps-lat"]
+        longitude = base.find(class_="gmaps")["data-gmaps-lng"]
+        store_hours = base.find(id="intro").get_text(" ").split("Hours")[-1].strip()
+
+        sgw.write_row(
+            SgRecord(
+                locator_domain=url,
+                page_url=link,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_code,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=store_hours,
+            )
+        )
+
+
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    fetch_data(writer)

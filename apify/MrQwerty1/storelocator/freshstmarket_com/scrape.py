@@ -37,6 +37,8 @@ def get_data(page_url, sgw: SgWriter):
         filter(None, [h.replace("(", "").replace(")", "").strip() for h in hours])
     )
     hours_of_operation = ";".join(hours)
+    if ";;" in hours_of_operation:
+        hours_of_operation = hours_of_operation.split(";;")[0]
 
     row = SgRecord(
         page_url=page_url,

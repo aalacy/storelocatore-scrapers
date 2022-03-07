@@ -11,6 +11,9 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 import json
 import time
+import ssl
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 logger = SgLogSetup().get_logger("olivegarden_ca")
 session = SgRequests()
@@ -24,16 +27,13 @@ def fetch_data():
     urls = []
     url = "https://www.olivegarden.ca/ca-locations-sitemap.xml"
     r = session.get(url, headers=headers)
-
-    if r.encoding is None:
-        r.encoding = "utf-8"
-    for line in r.iter_lines(decode_unicode=True):
+    for line in r.iter_lines():
         if "<loc>" in line:
             urls.append(line.split("<loc>")[1].split("<")[0])
-
     for url_store in urls:
         with SgChrome() as driver:
             driver.get(url_store)
+            driver.implicitly_wait(30)
             wait_xpath = '//*[@id="/locations/location-search"]'
             WebDriverWait(driver, 40).until(
                 EC.element_to_be_clickable((By.XPATH, wait_xpath))
