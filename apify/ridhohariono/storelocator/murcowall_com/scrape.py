@@ -63,7 +63,7 @@ def fetch_data():
         location_name = row.find(re.compile(r"h2|h3")).text.strip()
         raw_address = row.find("p").get_text(strip=True, separator=",")
         street_address, city, state, zip_postal = getAddress(raw_address)
-        phone = row.find("span", {"style": "text-decoration:underline"}).text.strip()
+        phone = row.find("span", {"style": "text-decoration:underline;"}).text.strip()
         country_code = "US"
         store_number = MISSING
         hours_of_operation = " ".join(

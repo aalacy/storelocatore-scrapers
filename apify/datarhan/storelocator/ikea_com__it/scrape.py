@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from lxml import etree
 
 from sgrequests import SgRequests
@@ -9,7 +10,7 @@ from sgpostal.sgpostal import parse_address_intl
 
 
 def fetch_data():
-    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
+    session = SgRequests()
 
     start_url = "https://www.ikea.com/it/it/stores/"
     domain = "ikea.com"
@@ -20,7 +21,7 @@ def fetch_data():
     dom = etree.HTML(response.text)
 
     all_locations = dom.xpath(
-        '//div[div[div[p[strong[contains(text(), "Trova il negozio IKEA più vicino a te")]]]]]//a/@href'
+        '//h2[contains(text(), "Orari negozi IKEA")]/following-sibling::p/a/@href'
     )
     for page_url in all_locations:
         loc_response = session.get(page_url)
@@ -28,11 +29,12 @@ def fetch_data():
 
         location_name = loc_dom.xpath("//h1/text()")[0]
         raw_adr = loc_dom.xpath(
-            '//h3[contains(text(), "Indirizzo")]/following-sibling::p/text()'
+            '//*[contains(text(), "Indirizzo")]/following-sibling::p/text()'
         )
+        raw_adr = [e.strip() for e in raw_adr if e.strip()]
         if not raw_adr:
             continue
-        raw_adr = " ".join(raw_adr)
+        raw_adr = " ".join(" ".join(raw_adr).split())
         addr = parse_address_intl(raw_adr)
         street_address = addr.street_address_1
         if addr.street_address_2:
@@ -40,7 +42,19 @@ def fetch_data():
         hoo = loc_dom.xpath(
             '//h3[contains(text(), "apertura negozio")]/following-sibling::p/text()'
         )
-        hoo = " ".join([e.strip() for e in hoo])
+        if not hoo:
+            hoo = loc_dom.xpath(
+                '//h2[contains(text(), "Negozio")]/following-sibling::dl//text()'
+            )
+        if not hoo:
+            hoo = loc_dom.xpath(
+                '//h3[contains(text(), "Orari di apertura")]/following-sibling::p/text()'
+            )
+        if not hoo:
+            hoo = loc_dom.xpath(
+                '//h3[contains(text(), "Orari d")]/following-sibling::p/text()'
+            )
+        hoo = " ".join([e.strip() for e in hoo if e.strip()])
 
         item = SgRecord(
             locator_domain=domain,

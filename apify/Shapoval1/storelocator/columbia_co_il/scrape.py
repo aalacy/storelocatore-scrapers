@@ -60,31 +60,19 @@ def fetch_data(sgw: SgWriter):
         for i in info:
             if "טלפון:" in i:
                 phone = str(i).replace("טלפון:", "").strip()
-        try:
-            hours_of_operation = (
-                " ".join(
-                    d.xpath(
-                        './div[@class="store-locator-content"]/ul/li/text() | ./div/p/text()'
-                    )
+        hours_of_operation = (
+            " ".join(
+                d.xpath(
+                    './/li[contains(text(), "שעות פתיחה")]/following-sibling::li//text()'
                 )
-                .replace("\n", "")
-                .split("שעות פתיחה:")[1]
-                .split("נגישות:")[0]
-                .strip()
             )
-        except:
-
-            hours_of_operation = (
-                " ".join(
-                    d.xpath(
-                        './div[@class="store-locator-content"]/ul/li/text() | ./div/p/text()'
-                    )
-                )
-                .replace("\n", "")
-                .split(":שעות פתיחה")[1]
-                .split("טלפון:")[0]
-                .strip()
-            )
+            .replace("\n", "")
+            .strip()
+            or "<MISSING>"
+        )
+        hours_of_operation = " ".join(hours_of_operation.split())
+        if hours_of_operation.find("נגישות:") != -1:
+            hours_of_operation = hours_of_operation.split("נגישות:")[0].strip()
 
         row = SgRecord(
             locator_domain=locator_domain,

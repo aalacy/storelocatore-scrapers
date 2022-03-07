@@ -28,7 +28,7 @@ def fetch_data():
         city = row["city"]
         state = row["state"]
         zip_postal = row["zip"]
-        phone = row["phone"]
+        phone = row["phone"].replace("\u202d", "").replace("\u202c", "").strip()
         country_code = "US" if row["country"] == "United States" else row["country"]
         store_number = row["id"]
         if row["hours"]:
