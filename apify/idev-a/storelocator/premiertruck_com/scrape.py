@@ -71,11 +71,9 @@ def fetch_data():
             days = list(
                 sp1.select_one("div#section-hours table thead tr").stripped_strings
             )
-            times = list(
-                sp1.select("div#section-hours table tbody tr")[0].stripped_strings
-            )[1:]
+            times = sp1.select("div#section-hours table tbody tr")[0].select("td")[1:]
             for x in range(len(days)):
-                hours.append(f"{days[x]}: {times[x]}")
+                hours.append(f"{days[x]}: {' '.join(times[x].stripped_strings)}")
 
             street_address = _["address"]
             if _["address2"]:
@@ -102,9 +100,7 @@ def fetch_data():
 
 
 if __name__ == "__main__":
-    with SgWriter(
-        deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
-    ) as writer:
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
