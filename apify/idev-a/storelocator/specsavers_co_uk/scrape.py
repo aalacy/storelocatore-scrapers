@@ -20,7 +20,7 @@ _headers = {
 }
 
 
-max_workers = 12
+max_workers = 4
 
 
 def fetchConcurrentSingle(link):
@@ -56,7 +56,7 @@ def request_with_retries(url):
 
 
 def fetch_data():
-    with SgRequests() as session:
+    with SgRequests(proxy_country="us") as session:
         soup = bs(session.get(base_url, headers=_headers).text, "lxml")
         store_links = soup.select("div.item-list ul li a")
         for page_url, soup in fetchConcurrentList(store_links):

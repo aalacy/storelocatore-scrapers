@@ -55,7 +55,9 @@ def fetch_store_urls():
         "https://www.medivet.co.uk/vet-practices/hyde-park/hyde-park-pet-boutique/",
         "https://www.medivet.co.uk/vet-practices/hyde-park/hyde-park-grooming-service/",
     ]
-    for val in soup.find_all("loc", text=re.compile(r"\/vet-practices\/\D+")):
+    for val in soup.find_all(
+        "loc", text=re.compile(r"\/vet-practices\/\D+|\/24-hour-emergency-vet\/.+")
+    ):
         if val.text not in excluded:
             store_urls.append(val.text)
     log.info("Found {} URL ".format(len(store_urls)))
@@ -94,7 +96,10 @@ def fetch_data():
         country_code = address["addressCountry"]
         store_number = MISSING
         phone = info["telephone"]
-        hours_of_operation = ", ".join(info["openingHours"])
+        if "24-hour-emergency-vet" in page_url:
+            hours_of_operation = "Open 24 hours"
+        else:
+            hours_of_operation = ", ".join(info["openingHours"])
         location_type = MISSING
         geo = soup.find("div", {"class": "googleMap loading"})
         latitude = geo["data-lat"]
