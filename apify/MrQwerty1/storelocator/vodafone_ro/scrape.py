@@ -55,8 +55,9 @@ def request_with_retries(url):
 
 def fetch_stores():
     response = request_with_retries(js_url)
+    log.info(f"Response : {response}")
     text = response.text.encode().decode("utf-8-sig")
-    data = text.split("f=[{nu")[1]
+    data = text.split("m=[{nu")[1]
     data = "[{nu" + data.split("}]")[0] + "}]"
     data = data.replace(" - ", "-")
     for key in keys:

@@ -56,7 +56,7 @@ def fetch_data():
             yield SgRecord(
                 page_url=page_url,
                 store_number=_["id"],
-                location_name="Kipling",
+                location_name=_["name"],
                 street_address=addr["street"],
                 city=addr["city"],
                 state=addr["state"],
