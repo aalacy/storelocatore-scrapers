@@ -1,133 +1,72 @@
-import csv
-import json
-
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
-from concurrent import futures
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def fetch_data(sgw: SgWriter):
 
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def get_urls():
-    session = SgRequests()
-    ur = []
-    api_url = "https://api.merlins.com/api/stores/"
-    r = session.get(api_url)
-    js = json.loads(r.text)["message"]["stores"]
-    for j in js:
-        store_number = j.get("storeId")
-        ur.append(store_number)
-    return ur
-
-
-def get_data(url):
     locator_domain = "https://www.merlins.com/"
-    api_url = f"https://api.merlins.com/api/store/{url}"
+    api_url = "https://api.merlins.com/api/stores/"
     session = SgRequests()
-    r = session.get(api_url)
-    js = json.loads(r.text)["message"]
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
+    }
+    r = session.get(api_url, headers=headers)
+    js = r.json()["message"]["stores"]
     for j in js:
-        store_number = j.get("storeId")
-        street_address = (
-            f"{j.get('streetAddress1')} {j.get('streetAddress2')}" or "<MISSING>"
-        )
-        city = "".join(j.get("locationCity"))
-        state = "".join(j.get("locationState"))
-        postal = j.get("locationPostalCode")
+
+        slug = j.get("locationCitySlug")
+        street_address = j.get("streetAddress1") or "<MISSING>"
+        state = j.get("locationState") or "<MISSING>"
+        postal = j.get("locationPostalCode") or "<MISSING>"
         country_code = "US"
-        page_url = j.get("storeURL") or "<MISSING>"
-        if page_url.find("plainfieldsouth") != -1:
-            page_url = f"https://www.merlins.com/locations/{state.lower()}/{city.lower()}-{store_number}"
-        if page_url.find("plainfieldnorth") != -1:
-            page_url = f"https://www.merlins.com/locations/{state.lower()}/{city.lower()}-{store_number}"
-        phone = j.get("phone")
-        latitude = j.get("lat")
-        longitude = j.get("lng")
-        location_type = "<MISSING>"
-        r = session.get(page_url)
+        city = j.get("locationCity") or "<MISSING>"
+        store_number = j.get("storeId") or "<MISSING>"
+        page_url = f"https://www.merlins.com/locations/{str(state).lower()}/{slug}-{store_number}/"
+        latitude = j.get("latitude") or "<MISSING>"
+        longitude = j.get("longitude") or "<MISSING>"
+        phone = j.get("rawPhone") or "<MISSING>"
+        r = session.get(page_url, headers=headers)
         tree = html.fromstring(r.text)
-        text = tree.xpath('///div[@class="centerinfo-hours"]')
-        location_name_text = tree.xpath('///div[@class="centerinfo-general"]')
-        titles = []
-        for l in location_name_text:
-            title = "".join(l.xpath("./h1/text()"))
-            titles.append(title)
-        location_name = "".join(titles) or "<MISSING>"
-        for t in text:
-            hours = t.xpath("./p[position()>1]")
-            times = []
-            for h in hours:
-                day = "".join(h.xpath("./strong/text()"))
-                time = "".join(h.xpath("text()"))
-                line = f"{day} - {time}".replace("\xa0 - ", "")
-                times.append(line)
-            hours_of_operation = "|".join(times) or "<MISSING>"
+        hours_of_operation = (
+            " ".join(
+                tree.xpath(
+                    '//p[contains(text(), "HOURS")]/following-sibling::p//text()'
+                )
+            )
+            .replace("\n", "")
+            .strip()
+            or "<MISSING>"
+        )
+        hours_of_operation = " ".join(hours_of_operation.split())
+        location_name = " ".join(tree.xpath("//h1//text()")).replace("\n", "").strip()
+        location_name = " ".join(location_name.split()) or "<MISSING>"
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+            raw_address=f"{street_address} {city}, {state} {postal}",
+        )
 
-        return row
-
-
-def fetch_data():
-    out = []
-    urls = get_urls()
-
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {executor.submit(get_data, url): url for url in urls}
-        for future in futures.as_completed(future_to_url):
-            row = future.result()
-            if row:
-                out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))) as writer:
+        fetch_data(writer)

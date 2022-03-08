@@ -13,32 +13,34 @@ def fetch_data(sgw: SgWriter):
     dr = csv.DictReader(r.content.decode("utf8").splitlines())
 
     for j in dr:
-        location_name = j.get("StoreName")
-        street_address = j.get("Address")
-        city = j.get("City")
+        location_name = j.get("StoreName") or ""
+        location_name = location_name.replace("&#44;", ",")
+        street_address = j.get("Address") or ""
+        city = j.get("City") or ""
         state = j.get("State") or ""
         postal = j.get("Zip")
         country_code = "US"
         store_number = j.get("StoreNumber")
         phone = j.get("Phone") or ""
         latitude = j.get("Lat") or ""
-        longitude = j.get("Lng")
+        longitude = j.get("Lng") or ""
 
-        if len(state) > 2 or phone.startswith("52 ") or latitude.find(".") == -1:
+        if "." not in latitude:
             continue
+        if len(state.strip()) > 2 or state.lower() == "bc" or state == "":
+            country_code = "MX"
 
         row = SgRecord(
-            location_name=location_name,
-            street_address=street_address,
-            city=city,
-            state=state,
+            location_name=location_name.strip(),
+            street_address=street_address.replace("&#44;", ",").strip(),
+            city=city.strip(),
+            state=state.strip(),
             zip_postal=postal,
             country_code=country_code,
             store_number=store_number,
-            phone=phone,
-            location_type=SgRecord.MISSING,
-            latitude=latitude,
-            longitude=longitude,
+            phone=phone.strip(),
+            latitude=latitude.strip(),
+            longitude=longitude.strip(),
             locator_domain=locator_domain,
         )
 

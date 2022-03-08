@@ -27,7 +27,7 @@ def fetch_data():
         loclist = r.text.split('"ItemID":')[1:]
         for loc in loclist:
             loc = json.loads('{"ItemID":' + loc.split(',"Offices":')[0] + "}")
-            page_url = "https://www.brident.com/en-us" + loc["DocumentUrlPath"]
+            page_url = "https://www.brident.com/en-us" + loc["DocumentUrlPath"].lower()
             latitude = loc["Latitude"]
             longitude = loc["Longitude"]
             store_number = loc["StoreID"]

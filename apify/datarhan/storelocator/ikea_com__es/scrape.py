@@ -10,7 +10,7 @@ from sgpostal.sgpostal import parse_address_intl
 
 
 def fetch_data():
-    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
+    session = SgRequests()
 
     start_url = "https://www.ikea.com/es/en/stores/"
     domain = "ikea.com"
@@ -30,10 +30,22 @@ def fetch_data():
         if "ikea-dis" in page_url:
             continue
         loc_dom = etree.HTML(loc_response.text)
-        raw_adr = loc_dom.xpath('//a[contains(@href, "maps")]/text()')
+        raw_adr = loc_dom.xpath('//p[strong[contains(text(), "Address")]]/a/text()')
+        if not raw_adr:
+            raw_adr = loc_dom.xpath(
+                '//p[strong[contains(text(), "How to get here")]]/following-sibling::p/a/text()'
+            )
+        if not raw_adr:
+            raw_adr = loc_dom.xpath(
+                '//p[strong[contains(text(), "Address")]]/following-sibling::p/a/text()'
+            )
+        if not raw_adr:
+            raw_adr = loc_dom.xpath(
+                '//p[strong[contains(text(), "Adress")]]/strong/a/text()'
+            )
         if not raw_adr:
             continue
-        addr = parse_address_intl(raw_adr[0])
+        addr = parse_address_intl(" ".join(raw_adr))
         location_name = loc_dom.xpath('//h2[contains(text(), "Offers IKEA")]/text()')
         if not location_name:
             location_name = loc_dom.xpath("//h1/text()")
@@ -54,6 +66,10 @@ def fetch_data():
             hoo = loc_dom.xpath(
                 '//li[strong[contains(text(), "Schedule:")]]/strong/text()'
             )[1:]
+        if not hoo:
+            hoo = loc_dom.xpath(
+                '//p[strong[contains(text(), "Opening hours:")]]/following-sibling::p/text()'
+            )[:-1]
         hoo = (
             " ".join([e.strip() for e in hoo if e.strip()])
             .replace("Store opening hours", "")
@@ -82,14 +98,14 @@ def fetch_data():
             city=addr.city,
             state=addr.state,
             zip_postal=addr.postcode,
-            country_code=addr.country,
+            country_code="ES",
             store_number="",
             phone=phone,
             location_type="",
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hoo,
-            raw_address=raw_adr[0],
+            raw_address=" ".join(raw_adr),
         )
 
         yield item

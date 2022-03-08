@@ -1,5 +1,6 @@
+import json
 from lxml import html
-from sgscrape.sgpostal import International_Parser, parse_address
+from sgpostal.sgpostal import International_Parser, parse_address
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
@@ -35,9 +36,10 @@ def fetch_data(sgw: SgWriter):
         if len(ad) > 3:
             adr = " ".join(ad[2:]).strip()
         a = parse_address(International_Parser(), adr)
-        street_address = f"{a.street_address_1} {a.street_address_2}".replace(
-            "None", ""
-        ).strip()
+        street_address = (
+            f"{a.street_address_1} {a.street_address_2}".replace("None", "").strip()
+            or "<MISSING>"
+        )
         country_code = "CH"
         state = a.state or "<MISSING>"
         postal = a.postcode or "<MISSING>"
@@ -92,6 +94,36 @@ def fetch_data(sgw: SgWriter):
         hours_of_operation = " ".join(hours_of_operation.split())
         if hours_of_operation.find("Aperto Aperto") != -1:
             hours_of_operation = hours_of_operation.split("Aperto Aperto")[0].strip()
+        if hours_of_operation == "<MISSING>":
+            hours_of_operation = (
+                "".join(
+                    tree.xpath(
+                        '//p[./strong[text()="Öffnungszeiten "]]/following-sibling::p//text()'
+                    )
+                )
+                .replace("\n", "")
+                .strip()
+            )
+            hours_of_operation = " ".join(hours_of_operation.split())
+        if street_address == "<MISSING>":
+            js = "".join(
+                tree.xpath('//script[contains(text(), "streetAddress")]/text()')
+            )
+            j = json.loads(js)
+            street_address = j.get("address").get("streetAddress")
+            city = j.get("address").get("addressLocality")
+            postal = j.get("address").get("postalCode")
+            latitude = j.get("geo").get("latitude")
+            longitude = j.get("geo").get("longitude")
+            hours_of_operation = (
+                " ".join(
+                    tree.xpath(
+                        '//p[contains(text(), "Öffnungszeiten:")]/text()[position() > 1]'
+                    )
+                )
+                .replace("\n", "")
+                .strip()
+            )
 
         row = SgRecord(
             locator_domain=locator_domain,

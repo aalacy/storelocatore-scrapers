@@ -1,105 +1,70 @@
-import csv
-import json
 from sgrequests import SgRequests
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from bs4 import BeautifulSoup as bs
+import re
+from sglogging import SgLogSetup
 
-session = SgRequests()
+logger = SgLogSetup().get_logger("hf")
 
+locator_domain = "https://www.heightsfinance.com/"
+base_url = "https://www.heightsfinance.com/wp-json/wp/v2/loan_office_location?_fields=acf,link,title&per_page=100&page={}"
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+_headers = {
+    "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
+}
 
 
 def fetch_data():
-    base_url = "https://www.heightsfinance.com/"
-    data = []
+    with SgRequests() as http:
+        page = 1
+        while True:
+            try:
+                res = http.get(base_url.format(page), headers=_headers)
+                if res.status_code != 200:
+                    break
+                store_list = res.json()
+                logger.info(f"[page {page}] {len(store_list)} found")
+                page += 1
+                for store in store_list:
+                    page_url = store["link"]
+                    logger.info(page_url)
+                    street_address = store["acf"]["branch_address_1"]
+                    if store["acf"]["branch_address_2"]:
+                        street_address += " " + store["acf"]["branch_address_2"]
+                    hours = []
+                    _hr = bs(http.get(page_url, headers=_headers).text, "lxml").find(
+                        "strong", string=re.compile(r"Office Hours:")
+                    )
+                    if _hr:
+                        hours = list(
+                            _hr.find_parent().find_next_sibling().stripped_strings
+                        )
+                        yield SgRecord(
+                            page_url=page_url,
+                            store_number=store["acf"]["branch_id"],
+                            location_name=store["title"]["rendered"],
+                            street_address=street_address,
+                            city=store["acf"]["branch_city"],
+                            state=store["acf"]["branch_state"],
+                            zip_postal=store["acf"]["branch_zip"],
+                            country_code="US",
+                            locator_domain=locator_domain,
+                            latitude=store["acf"].get("branch_latitude"),
+                            longitude=store["acf"].get("branch_longitude"),
+                            phone=store["acf"]["branch_phone_number"],
+                            hours_of_operation="; ".join(hours),
+                        )
+            except:
+                import pdb
 
-    api_urls = [
-        "https://www.heightsfinance.com/wp-json/wp/v2/loan_office_location?_fields=acf,slug&per_page=100&page=1",
-        "https://www.heightsfinance.com/wp-json/wp/v2/loan_office_location?_fields=acf,slug&per_page=100&page=2",
-    ]
-
-    for api_url in api_urls:
-        r = session.get(api_url)
-        store_list = json.loads(r.text)
-
-        for store in store_list:
-
-            location_name = store["slug"]
-            page_url = (
-                "https://www.heightsfinance.com/loan-office-location/" + location_name
-            )
-            street_address = (
-                store["acf"]["branch_address_1"] + store["acf"]["branch_address_2"]
-            )
-            store_number = store["acf"]["branch_id"]
-            hours_of_operation = store["acf"]["branch_normal_hours"].replace(
-                "<br />\r\n", " "
-            )
-
-            hours_of_operation = hours_of_operation.replace("<br />", "")
-            city = store["acf"]["branch_city"]
-            state = store["acf"]["branch_state"]
-            zip = store["acf"]["branch_zip"]
-            country_code = "US"
-            phone = store["acf"]["branch_phone_number"]
-            location_type = "<MISSING>"
-            latitude = store["acf"]["branch_latitude"]
-            longitude = store["acf"]["branch_longitude"]
-            if "close" in store["acf"]["branch_special_hours"]:
-                hours_of_operation += " (Temporarily closed)"
-
-            data.append(
-                [
-                    base_url,
-                    page_url,
-                    location_name,
-                    street_address,
-                    city,
-                    state,
-                    zip,
-                    country_code,
-                    store_number,
-                    phone,
-                    location_type,
-                    latitude,
-                    longitude,
-                    hours_of_operation,
-                ]
-            )
-
-    return data
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+                pdb.set_trace()
 
 
 if __name__ == "__main__":
-    scrape()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)

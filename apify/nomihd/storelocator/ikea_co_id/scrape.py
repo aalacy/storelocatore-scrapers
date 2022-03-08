@@ -53,11 +53,37 @@ def fetch_data():
     with SgRequests() as session:
         search_res = session.get(search_url, headers=headers)
 
+        temp_stores = (
+            search_res.text.split("const pups = ")[1].strip().split("},];")[0].strip()
+            + "},]"
+        )
+        names = temp_stores.split("name: '")
+        addresses = temp_stores.split("address: '")
+        phones = temp_stores.split("telephone: '")
+        store_dict = {}
+        for index in range(1, len(names)):
+            temp_name = names[index].strip().split("',")[0].strip()
+            if "IKEA" not in temp_name:
+                continue
+            temp_addr = (
+                addresses[index]
+                .strip()
+                .split("',")[0]
+                .strip()
+                .replace("<br>", ", ")
+                .strip()
+            )
+            temp_phone = phones[index].strip().split("',")[0].strip()
+
+            store_dict[temp_name.replace("Click & Collect - ", "").strip()] = (
+                temp_addr,
+                temp_phone,
+            )
+
         search_sel = lxml.html.fromstring(search_res.text)
         store_list = search_sel.xpath(
             '//div[@class="container"]/div[@class="row" and ./div/div/h5[contains(text(), "IKEA")]]'
         )
-        log.info(len(store_list))
         for store in store_list:
 
             page_url = store.xpath(".//@href")[0].strip()
@@ -79,11 +105,18 @@ def fetch_data():
                     ],
                 )
             )
+            location_name = "".join(store_sel.xpath("//h1/text()")).strip()
 
             if store_info:
                 raw_address = store_info[-2].strip()
             else:
-                raw_address = ""
+                raw_address = (
+                    store_dict[location_name][0]
+                    .replace("Customer Relation Area (Counter 6),", "")
+                    .strip()
+                    .replace("Customer Relations Area (Counter no. 8),", "")
+                    .strip()
+                )
 
             formatted_addr = parser.parse_address_intl(raw_address)
             street_address = formatted_addr.street_address_1
@@ -96,20 +129,7 @@ def fetch_data():
 
             country_code = "ID"
 
-            location_name = "".join(store_sel.xpath("//h1/text()")).strip()
-
-            phone = list(
-                filter(
-                    str,
-                    [
-                        x.strip()
-                        for x in store_sel.xpath(
-                            '//a[contains(@href,"tel:")]//text() | //tr[td="Phone"]/td[2]/text()'
-                        )
-                    ],
-                )
-            )
-            phone = "<MISSING>"
+            phone = store_dict[location_name][1]
             store_number = "<MISSING>"
             location_type = "<MISSING>"
             hours = list(
@@ -118,10 +138,11 @@ def fetch_data():
                     [x.strip() for x in store.xpath(".//h5/../text()")],
                 )
             )
-
             hours_of_operation = (
                 "; ".join(hours[1:]).replace("day;", "day:").replace("day:;", "day:")
             )
+            if len(hours_of_operation) > 0:
+                hours_of_operation = "Monday - Sunday: " + hours_of_operation
 
             map_link = "".join(store_sel.xpath('//a[contains(@href,"/maps")]/@href'))
             if not map_link:

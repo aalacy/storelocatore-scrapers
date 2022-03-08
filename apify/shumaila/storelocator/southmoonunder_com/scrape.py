@@ -3,7 +3,7 @@ import re
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
-from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
@@ -24,6 +24,7 @@ def fetch_data():
 
     for div in divlist:
         content = re.sub(pattern, "\n", div.text).strip().splitlines()
+
         m = 0
         title = content[m]
         m = m + 1
@@ -41,8 +42,7 @@ def fetch_data():
             pcode = state[2:]
             state = state[0:2]
         phone = content[-1]
-        hours = " ".join(content[m : m + 7]).replace("|", "").strip()
-
+        hours = " ".join(content[m : len(content) - 2]).replace("|", "").strip()
         lat, longt = (
             div.find("a")["href"].split("@", 1)[1].split("data", 1)[0].split(",", 1)
         )
@@ -69,7 +69,7 @@ def fetch_data():
 def scrape():
 
     with SgWriter(
-        deduper=SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.GeoSpatialId)
     ) as writer:
         results = fetch_data()
         for rec in results:
