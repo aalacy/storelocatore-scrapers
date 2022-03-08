@@ -47,7 +47,7 @@ def fetch_data(sgw: SgWriter):
             if i.text.split(",")[0] in item.text:
                 link = "https://www.rebounderz.com" + i["href"]
                 break
-        print(link)
+
         req = session.get(link, headers=headers)
         base = BeautifulSoup(req.text, "lxml")
 
