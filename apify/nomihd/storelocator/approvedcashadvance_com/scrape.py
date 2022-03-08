@@ -169,7 +169,7 @@ def fetch_data():
                                     hours_of_operation=hours_of_operation,
                                 )
                 else:
-                    page_url = "<MISSING>"
+                    page_url = domain + state_url
                     locator_domain = website
                     location_name = "".join(store.xpath("span/text()")).strip()
                     if "-" in location_name:
@@ -191,7 +191,6 @@ def fetch_data():
                     latitude = store_loc_array[count][1]
                     longitude = store_loc_array[count][2]
                     hours_of_operation = "<MISSING>"
-                    count = count + 1
 
                     yield SgRecord(
                         locator_domain=locator_domain,
@@ -211,7 +210,7 @@ def fetch_data():
                     )
             else:
 
-                page_url = "<MISSING>"
+                page_url = domain + state_url
                 locator_domain = website
                 location_name = "".join(store.xpath("span/text()")).strip()
                 if "-" in location_name:
@@ -233,7 +232,6 @@ def fetch_data():
                 latitude = store_loc_array[count][1]
                 longitude = store_loc_array[count][2]
                 hours_of_operation = "<MISSING>"
-                count = count + 1
 
                 yield SgRecord(
                     locator_domain=locator_domain,
@@ -251,6 +249,8 @@ def fetch_data():
                     longitude=longitude,
                     hours_of_operation=hours_of_operation,
                 )
+
+            count = count + 1
 
 
 def scrape():
