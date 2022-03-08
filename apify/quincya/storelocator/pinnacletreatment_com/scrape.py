@@ -32,6 +32,8 @@ def fetch_data(sgw: SgWriter):
         items = base.find(id="locations-grid").find_all("li")
 
         for item in items:
+            if "coming soon" in item.text.lower():
+                continue
 
             location_name = item.h2.text.strip()
 
@@ -78,6 +80,7 @@ def fetch_data(sgw: SgWriter):
                 latitude = "<MISSING>"
                 longitude = "<MISSING>"
 
+            hours_of_operation = ""
             try:
                 hours_of_operation = " ".join(
                     page_base.find(class_="right")
@@ -85,7 +88,7 @@ def fetch_data(sgw: SgWriter):
                     .split("\n\r\n")[0]
                     .split("Hours:")[1:]
                 ).strip()
-                if len(hours_of_operation) < 10:
+                if len(hours_of_operation) < 10 and "24" not in hours_of_operation:
                     hours_of_operation = (
                         page_base.find(class_="right")
                         .text.strip()
@@ -94,15 +97,25 @@ def fetch_data(sgw: SgWriter):
                         .strip()
                     )
 
-                hours_of_operation = (
-                    hours_of_operation.replace("\r\n", " ")
-                    .replace("\nGroups:", " Groups:")
-                    .split("\n\n")[0]
-                    .replace("Clinic:", "")
-                    .replace("Clinic", "")
-                    .replace("We're open", "")
-                    .strip()
-                )
+                if "Lunch" in hours_of_operation:
+                    raw_hours = hours_of_operation.split("\r\n")
+                    hours_of_operation = ""
+                    for row in raw_hours:
+                        if "Lunch" not in row:
+                            hours_of_operation = (
+                                hours_of_operation + " " + row
+                            ).strip()
+                    lunch_loc = hours_of_operation.find("Lunch")
+                else:
+                    hours_of_operation = (
+                        hours_of_operation.replace("\r\n", " ")
+                        .replace("\nGroups:", " Groups:")
+                        .split("\n\n")[0]
+                        .replace("Clinic:", "")
+                        .replace("Clinic", "")
+                        .replace("We're open", "")
+                        .strip()
+                    )
 
                 if hours_of_operation == "Dispensing:":
                     hours_of_operation = (
@@ -128,7 +141,7 @@ def fetch_data(sgw: SgWriter):
                         .replace("\r\n", " ")
                     ).strip()
             except:
-                hours_of_operation = "<MISSING>"
+                hours_of_operation = ""
 
             if (
                 " Hours" in hours_of_operation
@@ -147,6 +160,7 @@ def fetch_data(sgw: SgWriter):
                 .replace("Dosing", "")
                 .replace("Business:", "")
                 .replace(": Mon", "Mon")
+                .replace("Hours", "")
                 .replace("  ", " ")
                 .replace("\n", " ")
                 .split("Groups:")[0]
@@ -163,6 +177,12 @@ def fetch_data(sgw: SgWriter):
                 hours_of_operation = hours_of_operation.split("Hours ")[1].strip()
 
             hours_of_operation = (re.sub(" +", " ", hours_of_operation)).strip()
+
+            if (
+                not hours_of_operation
+                and "opening " in page_base.find(class_="entry-content").text.lower()
+            ):
+                continue
 
             sgw.write_row(
                 SgRecord(
