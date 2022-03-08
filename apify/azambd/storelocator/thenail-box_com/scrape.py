@@ -3,7 +3,8 @@ import time
 from sglogging import sglog
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
-
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 from sgselenium.sgselenium import SgChrome
 from webdriver_manager.chrome import ChromeDriverManager
@@ -66,9 +67,8 @@ def fetchStores():
             ).driver()
             driver.get(website)
             try:
-                driverWaitTillUrl(driver, "Take Us Home With You", 50)
                 log.debug("find pop up")
-                driverSleep(driver, 3)
+                time.sleep(20)
                 button = driver.find_element_by_xpath(
                     '//div[contains(@title, "Back to site")]'
                 )
@@ -154,7 +154,9 @@ def scrape():
     log.info(f"Start scrapping {website} ...")
     start = time.time()
     result = fetchData()
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(RecommendedRecordIds.PhoneNumberId)
+    ) as writer:
         for rec in result:
             writer.write_row(rec)
     end = time.time()

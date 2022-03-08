@@ -37,6 +37,11 @@ def fetch_data():
             else:
                 hoo.append(f"{day}: closed")
         hoo = " ".join(hoo)
+        phone = poi["cms_content"]["phone"]
+        if not phone:
+            loc_response = session.get(store_url)
+            loc_dom = etree.HTML(loc_response.text)
+            phone = loc_dom.xpath('//a[contains(@href, "tel")]/@href')[0].split(":")[-1]
 
         item = SgRecord(
             locator_domain=domain,
@@ -48,7 +53,7 @@ def fetch_data():
             zip_postal=poi["address"]["postal_code"],
             country_code=poi["address"]["country_code"],
             store_number="",
-            phone=poi["cms_content"]["phone"],
+            phone=phone,
             location_type="",
             latitude=poi["cms_content"]["map_details"]["latitude"],
             longitude=poi["cms_content"]["map_details"]["longitude"],
