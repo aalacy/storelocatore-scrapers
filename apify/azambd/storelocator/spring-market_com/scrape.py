@@ -16,7 +16,7 @@ DOMAIN = "spring-market.com"
 website = "https://www.spring-market.com"
 log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
 
-# without CLASS NAME
+
 def get_driver(url, driver=None):
     if driver is not None:
         driver.quit()
