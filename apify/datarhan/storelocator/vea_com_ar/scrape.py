@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-# --extra-index-url https://dl.cloudsmith.io/KVaWma76J5VNwrOm/crawl/crawl/python/simple/
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
@@ -24,7 +23,7 @@ def fetch_data():
             locator_domain=domain,
             page_url="https://www.vea.com.ar/sucursales",
             location_name=poi["name"],
-            street_address=poi["address"].split(" - ")[0],
+            street_address=poi["address"].split(" - ")[0].replace("Sin info", ""),
             city=poi["grouping"],
             state=poi["state"],
             zip_postal=poi["postalCode"],
@@ -34,7 +33,11 @@ def fetch_data():
             location_type="",
             latitude=geo[0],
             longitude=geo[1],
-            hours_of_operation=poi["schedule"].replace("Atención: ", ""),
+            hours_of_operation=poi["schedule"]
+            .replace("Atención: ", "")
+            .split("Horarios")[0]
+            .replace("Sin info", "")
+            .strip(),
         )
 
         yield item
