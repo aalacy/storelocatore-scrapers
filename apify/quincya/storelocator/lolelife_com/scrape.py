@@ -59,7 +59,7 @@ def fetch_data(sgw: SgWriter):
         latitude = store["geometry"]["location"]["lat"]
         longitude = store["geometry"]["location"]["lng"]
 
-        if "315 W" in location_name:
+        if "Beaver Creek" in city:
             location_name = "Lolë Beaver Creek"
 
         if "3720 N" in location_name:

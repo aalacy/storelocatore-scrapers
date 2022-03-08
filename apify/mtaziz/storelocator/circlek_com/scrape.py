@@ -24,13 +24,13 @@ headers = {
 
 
 @retry(stop=stop_after_attempt(5), wait=tenacity.wait_fixed(5))
-def get_api_response(url):
+def get_api_response(apinum, url):
     with SgRequests() as http:
         response = http.get(url, headers=headers)
         if response.status_code == 200:
-            logger.info(f"{url} >> HTTP STATUS: {response.status_code}")
+            logger.info(f"<< {apinum} | {response.status_code} >>")
             return response
-        raise Exception(f"{url} >> HTTP Error Code: {response.status_code}")
+        raise Exception(f"<< Please fix ApiUrlError {url} | {response.status_code}>>")
 
 
 def get_flatten_data_list(data):
@@ -56,8 +56,8 @@ def get_flatten_data_list(data):
 
 def fetch_api_res(api_page_num):
     location_url = f"https://www.circlek.com/stores_new.php?lat=33.6&lng=-112.12&distance=10000000&services=&region=global&page={api_page_num}&limit=300"
-    logger.info(f"Pulling data & Store URLs from API: {location_url} ")
-    r = get_api_response(location_url)
+    logger.info(f"Pulling from API PageNum: {api_page_num}")
+    r = get_api_response(api_page_num, location_url)
     stores = r.json()["stores"]
     flatten_data = None
     if stores:
@@ -84,13 +84,13 @@ def fetch_data_from_api_res(start_pn, end_pn):
 
 
 @retry(stop=stop_after_attempt(5), wait=tenacity.wait_fixed(5))
-def get_purl_response(url):
+def get_purl_response(snum, url):
     with SgRequests() as http:
         response = http.get(url, headers=headers)
         if response.status_code == 200:
-            logger.info(f"{url} >> HTTP STATUS: {response.status_code}")
+            logger.info(f"<< StoreNum:{snum} | HTTP: {response.status_code} OK >>")
             return response
-        raise Exception(f"{url} >> HTTP Error Code: {response.status_code}")
+        raise Exception(f"{url} >> Please FixPageURlError: {response.status_code}")
 
 
 def get_hoo(store_sel):
@@ -155,7 +155,7 @@ def get_rawadd(store_sel):
 
 
 def fetch_details(item_num, data_dict, sgw: SgWriter):
-    logger.info(f"[{item_num}] Pulling the data from {data_dict['page_url']} ")  # noqa
+    logger.info(f"[{item_num}] | {data_dict['page_url']} ")  # noqa
     locator_domain = "https://www.circlek.com"
     location_name = ""
     street_address = ""
@@ -175,7 +175,8 @@ def fetch_details(item_num, data_dict, sgw: SgWriter):
         street_address = data_dict["address"]
         city = data_dict["city"]
         state = data_dict["division_name"]
-        state = state.replace("franchise", "<MISSING>")
+        if state is not None:
+            state = state.replace("franchise", "")
         country_code = data_dict["country"]
         if MISSING not in street_address:
             location_name = "Circle K at" + " " + street_address
@@ -204,7 +205,7 @@ def fetch_details(item_num, data_dict, sgw: SgWriter):
         )
         sgw.write_row(rec)
     else:
-        store_res = get_purl_response(page_url)
+        store_res = get_purl_response(item_num, page_url)
         store_sel = html.fromstring(store_res.text)
         json_list = store_sel.xpath('//script[@type="application/ld+json"]/text()')
         for js in json_list:
@@ -237,6 +238,7 @@ def fetch_details(item_num, data_dict, sgw: SgWriter):
                     country_code = page_url.split(
                         "https://www.circlek.com/store-locator/"
                     )[-1].split("/")[0]
+                    country_code = country_code.replace("Canada", "CA")
 
                 # Latitude
                 latitude = store_json["geo"]["latitude"].replace(",", ".")
@@ -258,7 +260,7 @@ def fetch_details(item_num, data_dict, sgw: SgWriter):
                     longitude = ""
 
                 logger.info(
-                    f"Latitude: {latitude} | Longitude: {longitude} | {page_url} "
+                    f"[{item_num}] Lat: {latitude} | Lng: {longitude} | {page_url} "
                 )
 
                 raw_address = get_rawadd(store_sel)
@@ -269,8 +271,9 @@ def fetch_details(item_num, data_dict, sgw: SgWriter):
                 if country_code.lower()[:2] == "ca" and state == "CA":
                     state = ""
                 if state == "ON":
-                    country_code = "Canada"
-                state = state.replace("franchise", "<MISSING>")
+                    country_code = "CA"
+                if state is not None:
+                    state = state.replace("franchise", "")
 
                 hours_of_operation = get_hoo(store_sel)
                 rec = SgRecord(
@@ -309,7 +312,9 @@ def fetch_data(sgw: SgWriter):
     START_PAGENUM = 0
     END_PAGENUM = 980
     data_from_api = fetch_data_from_api_res(START_PAGENUM, END_PAGENUM)
-    logger.info("API endpoints urls page_url extraction done!!")
+    logger.info(
+        f"API endpoints URLs page_url extraction done!!\n\n Total Store Count: {len(data_from_api)}"
+    )
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
         tasks = []
         store_data = [
