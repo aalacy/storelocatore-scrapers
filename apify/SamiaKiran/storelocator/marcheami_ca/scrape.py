@@ -65,7 +65,7 @@ def fetch_data():
 
             if len(zip_postal) < 5:
                 zip_postal = street_address.split()[-1] + " " + zip_postal
-                street_address = street_address.replace(zip_postal, "")
+                street_address = street_address.replace(street_address.split()[-1], "")
             if "null" in latitude:
                 latitude = MISSING
                 longitude = MISSING
