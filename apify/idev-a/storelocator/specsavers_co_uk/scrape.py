@@ -93,7 +93,7 @@ def fetch_data():
                     hours_of_operation="; ".join(hours),
                     location_type=location_type,
                     country_code="UK",
-                    raw_address=" ".join(addr).replace('\n', '').replace('\r',''),
+                    raw_address=" ".join(addr).replace("\n", "").replace("\r", ""),
                 )
 
 
