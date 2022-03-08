@@ -7,6 +7,9 @@ from sgscrape.sgrecord_id import SgRecordID
 import json
 from lxml import html
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from tenacity import retry, stop_after_attempt
+import tenacity
+from sgpostal.sgpostal import parse_address_intl
 
 
 website = "mmfoodmarket_com"
@@ -19,14 +22,18 @@ MISSING = SgRecord.MISSING
 MAX_WORKERS = 10
 
 
-def get_response(url):
-    with SgRequests() as http:
+@retry(stop=stop_after_attempt(5), wait=tenacity.wait_fixed(10))
+def get_response_new(url):
+    with SgRequests(verify_ssl=False) as http:
         r1 = http.get(url, headers=headers)
         if r1.status_code == 200:
             logger.info(f"HTTP Status Code: {r1.status_code}")
             return r1
-        else:
+        elif r1.status_code == 404:
+            logger.info(f"URL does not exist! {r1.status_code}")
             return
+        else:
+            raise Exception(f"Please fix the issue of redirection{url}")
 
 
 def get_hoo(sel):
@@ -42,10 +49,29 @@ def get_hoo(sel):
     return hoo
 
 
+def parse_sta(rawadd):
+    pai = parse_address_intl(rawadd)
+    sta1 = pai.street_address_1
+    sta2 = pai.street_address_2
+    street_address = ""
+    if sta1 is not None and sta2 is None:
+        street_address = sta1
+    elif sta1 is None and sta2 is not None:
+        street_address = sta2
+    elif sta1 is not None and sta2 is not None:
+        street_address = sta1 + ", " + sta2
+    else:
+        street_address = "<MISSING>"
+    return street_address
+
+
 def fetch_records(storenum, sgw: SgWriter):
     url = f"https://mmfoodmarket.com/en/store_locations/{storenum}"
-    r = get_response(url)
+    logger.info(f"[{storenum}] Pulling data from {url}")
+
+    r = get_response_new(url)
     if r is None:
+        logger.info(f"[{storenum}] URL does not exist: {url}")
         return
     else:
         sel = html.fromstring(r.text, "lxml")
@@ -98,12 +124,16 @@ def fetch_records(storenum, sgw: SgWriter):
         raw_address = ll_js_points["simpleAddress"]
         if raw_address == "5124 AB-2A #1 Lacombe AB T4L 1Y8":
             pcode = "T4L 1Y8"
+        parsed_street_address = parse_sta(raw_address)
+
+        if street == "72, boulevard St. Jean Baptiste local 156":
+            parsed_street_address = street
 
         item = SgRecord(
             locator_domain=DOMAIN,
             page_url=link,
             location_name=title,
-            street_address=street,
+            street_address=parsed_street_address,
             city=city,
             state=state,
             zip_postal=pcode,

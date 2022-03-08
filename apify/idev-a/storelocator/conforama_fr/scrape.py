@@ -57,17 +57,24 @@ class ExampleSearchIteration(SearchIteration):
                 for hh in sp1.select("div.magInfo-mag-horaire ul li"):
                     if not hh.text.strip():
                         continue
+                    if "Ouvert" in hh.text:
+                        break
+
                     ss = list(hh.stripped_strings)
                     hours.append(f"{ss[0]}: {' '.join(ss[1:])}")
 
                 phone = ""
                 if sp1.select_one("div#telSurTaxeOrder"):
                     phone = sp1.select_one("div#telSurTaxeOrder").text.strip()
+                street_address = " ".join(_["address"][:-1]).strip()
+                if street_address.endswith("-"):
+                    street_address = street_address[:-1]
+
                 yield SgRecord(
                     page_url=page_url,
                     location_name=_["title"],
                     store_number=_["storeId"],
-                    street_address=" ".join(_["address"][:-1]),
+                    street_address=street_address,
                     city=" ".join(_["address"][2].split(",")[0].strip().split()[1:]),
                     zip_postal=_["address"][2].split(",")[0].strip().split()[0],
                     country_code=_["address"][2].split(",")[-1],
