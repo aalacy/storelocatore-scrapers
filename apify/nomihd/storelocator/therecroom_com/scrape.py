@@ -48,7 +48,6 @@ def fetch_data():
             locator_domain = website
             log.info(page_url)
             store_res = session.get(page_url, headers=headers)
-            # store_res = session.get("https://www.therecroom.com/")
             store_sel = lxml.html.fromstring(store_res.text)
 
             location_name = "".join(store.xpath(".//h2//text()"))
@@ -69,23 +68,19 @@ def fetch_data():
             country_code = "CA"
             store_number = "<MISSING>"
 
-            phone = (
-                "".join(
-                    list(
-                        filter(
-                            str,
-                            [
-                                x.strip()
-                                for x in store_sel.xpath(
-                                    '//a[contains(@href,"tel:")]/text()'
-                                )
-                            ],
-                        )
+            phone = "".join(
+                list(
+                    filter(
+                        str,
+                        [
+                            x.strip()
+                            for x in store_sel.xpath(
+                                '//a[contains(@href,"tel:")]/text()'
+                            )
+                        ],
                     )
                 )
-                .replace("Tel:", "")
-                .strip()
-            )
+            ).strip()
 
             location_type = "<MISSING>"
 
