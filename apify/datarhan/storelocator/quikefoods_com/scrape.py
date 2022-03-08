@@ -38,6 +38,11 @@ def fetch_data():
             store_number = ""
             phone = loc_dom.xpath('//a[contains(@href, "tel")]/text()')
             phone = phone[0] if phone else ""
+            if phone and "#" in phone:
+                store_number = phone.split("#")[-1]
+                phone = phone.split("Store")[0]
+            else:
+                store_number = poi_html.xpath("text()")[-1].split("#")[-1]
             location_type = ""
             latitude = ""
             longitude = ""
@@ -68,10 +73,28 @@ def fetch_data():
             country_code = country_code if country_code else ""
             store_number = poi_html.xpath("text()")[0].split()[-1][1:-1]
             phone = "(" + poi_html.xpath("text()")[0].split("(")[1]
+            store_number = ""
+            if phone and "#" in phone:
+                store_number = phone.split("#")[-1]
+                phone = phone.split("Store")[0]
+            else:
+                store_number = poi_html.xpath("text()")[-1].split("#")[-1]
             location_type = ""
             latitude = ""
             longitude = ""
             hours_of_operation = ""
+            if "quikefoods" in store_url:
+                loc_response = session.get(store_url)
+                loc_dom = etree.HTML(loc_response.text)
+                geo = (
+                    loc_dom.xpath("//iframe/@src")[0]
+                    .split("!2d")[-1]
+                    .split("!3m")[0]
+                    .split("!3d")
+                )
+                latitude = geo[1].split("!")[0]
+                longitude = geo[0]
+        store_number = store_number.replace(")", "")
 
         item = SgRecord(
             locator_domain=domain,
