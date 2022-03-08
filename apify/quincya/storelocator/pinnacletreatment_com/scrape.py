@@ -96,26 +96,15 @@ def fetch_data(sgw: SgWriter):
                         .split("Hours:")[2]
                         .strip()
                     )
-
-                if "Lunch" in hours_of_operation:
-                    raw_hours = hours_of_operation.split("\r\n")
-                    hours_of_operation = ""
-                    for row in raw_hours:
-                        if "Lunch" not in row:
-                            hours_of_operation = (
-                                hours_of_operation + " " + row
-                            ).strip()
-                    lunch_loc = hours_of_operation.find("Lunch")
-                else:
-                    hours_of_operation = (
-                        hours_of_operation.replace("\r\n", " ")
-                        .replace("\nGroups:", " Groups:")
-                        .split("\n\n")[0]
-                        .replace("Clinic:", "")
-                        .replace("Clinic", "")
-                        .replace("We're open", "")
-                        .strip()
-                    )
+                hours_of_operation = (
+                    hours_of_operation.replace("\r\n", " ")
+                    .replace("\nGroups:", " Groups:")
+                    .split("\n\n")[0]
+                    .replace("Clinic:", "")
+                    .replace("Clinic", "")
+                    .replace("We're open", "")
+                    .strip()
+                )
 
                 if hours_of_operation == "Dispensing:":
                     hours_of_operation = (
