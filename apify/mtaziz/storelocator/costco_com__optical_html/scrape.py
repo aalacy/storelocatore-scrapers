@@ -100,6 +100,8 @@ def fetch_data_us_ca(idx, loc, sgw: SgWriter):
     try:
         # This section scrapes the data for US and CA
         warehouse_number = loc.split("-")[-1].replace(".html", "")
+        # Example Warehouse Number: 21
+
         api_endpoint_url = f"https://www.costco.com/AjaxWarehouseBrowseLookupView?langId=-1&storeId=10301&numOfWarehouses=&hasGas=&hasTires=&hasFood=&hasHearing=&hasPharmacy=&hasOptical=&hasBusiness=&hasPhotoCenter=&tiresCheckout=0&isTransferWarehouse=false&populateWarehouseDetails=true&warehousePickupCheckout=false&warehouseNumber={warehouse_number}&countryCode="
         data = fetch_json_data(api_endpoint_url)
         if len(data) < 2:
@@ -140,9 +142,10 @@ def fetch_data_us_ca(idx, loc, sgw: SgWriter):
             store_number = data["stlocID"] if data["stlocID"] else MISSING
             logger.info(f"[{idx}] store_number: {store_number}")
 
-            phone = " ".join(data["phone"].split())
-            phone = phone if phone else MISSING
-            logger.info(f"[{idx}] Phone: {phone}")
+            phone = ""
+            phone_wh = " ".join(data["phone"].split())
+            phone_wh = phone_wh if phone_wh else MISSING
+            logger.info(f"[{idx}] Phone Warehouse: {phone_wh}")
 
             # Location Type
             location_type = "Warehouse"
@@ -166,19 +169,24 @@ def fetch_data_us_ca(idx, loc, sgw: SgWriter):
             logger.info(f"[{idx}] raw_add: {raw_address}")
 
             # Identifying those warehouse having Optical services
-
+            phone_opt = ""
             has_optical_department = data["hasOpticalDepartment"]
             if has_optical_department is True:
                 location_type = "Optical"
-                hours_of_operation = MISSING
                 if "coreServices" in data:
                     core_services = data["coreServices"]
                     for cs in core_services:
                         cs_name = cs["name"]
                         if "Optical Department" in cs_name:
-                            phone = cs["phone"]
-                            phone = phone if phone else MISSING
-
+                            phone_opt = cs["phone"]
+                            phone_opt = " ".join(phone_opt.split())
+                            if phone_opt:
+                                phone = phone_opt
+                            else:
+                                if MISSING not in phone_wh:
+                                    phone = phone_wh
+                                else:
+                                    phone = MISSING
             else:
                 return
 
@@ -308,11 +316,12 @@ def fetch_data_global(urlpartnum, urlpart, sgw: SgWriter):
             # Phone numbers in Taiwanese store contain additional info.
             # 449-9909 (手機撥打請加02), this say while calling from mobile,
             # add 02. However this note has been removed from the phone number
-            phone = gitem["phone"]
-            phone = " ".join(phone.split())
-            phone = phone if phone else MISSING
-            phone = phone.replace("(手機撥打請加02)", "").strip()
-            logger.info(f"[{idx1}] Phone: {phone}")
+            phone = ""
+            phone_wh = gitem["phone"]
+            phone_wh = " ".join(phone_wh.split())
+            phone_wh = phone_wh if phone_wh else MISSING
+            phone_wh = phone_wh.replace("(手機撥打請加02)", "").strip()
+            logger.info(f"[{idx1}] Phone: {phone_wh}")
 
             # Location Type
             location_type = "Warehouse"
@@ -325,7 +334,8 @@ def fetch_data_global(urlpartnum, urlpart, sgw: SgWriter):
             lng = gitem["longitude"]
             longitude = lng if lng else MISSING
             logger.info(f"[{idx1}] long: {longitude}")
-            hours_of_operation = get_hoo_global(gitem)
+            hours_of_operation = ""
+            hours_of_operation_wh = get_hoo_global(gitem)
 
             # It is found that the city of AU data contains the state data
             # This extracts the state data from city and assign it back to the state
@@ -350,7 +360,13 @@ def fetch_data_global(urlpartnum, urlpart, sgw: SgWriter):
 
                         # Phone
                         as_phone = as_["phone"]
-                        phone = as_phone if as_phone else MISSING
+                        if as_phone:
+                            phone = as_phone
+                        else:
+                            if MISSING not in phone_wh:
+                                phone = phone_wh
+                            else:
+                                phone = MISSING
 
                         # Phone raw data contains <br> along with additional information
                         # which needs to be cleaned up
@@ -366,15 +382,23 @@ def fetch_data_global(urlpartnum, urlpart, sgw: SgWriter):
                             if optical_global_hoo:
                                 hours_of_operation = "; ".join(optical_global_hoo)
                             else:
-                                hours_of_operation = MISSING
+                                hours_of_operation = hours_of_operation_wh
                             if "JP" in country_code:
                                 optical_global_hoo_jp = sel_hoo.xpath("//text()")
                                 if optical_global_hoo_jp:
                                     hours_of_operation = " ".join(optical_global_hoo_jp)
                                 else:
-                                    hours_of_operation = MISSING
+                                    hours_of_operation = hours_of_operation_wh
                             if "please see warehouse" in as_opening_hours.lower():
                                 hours_of_operation = get_hoo_global(gitem)
+                            # Fix Iceland Unstructured HOO data
+                            if (
+                                "Fax: ; 0766-57-0626; E-mail: ; w5168opt@costco.com.is"
+                                in hours_of_operation
+                            ):
+                                hours_of_operation = MISSING
+                        else:
+                            hours_of_operation = hours_of_operation_wh
 
                     else:
                         continue

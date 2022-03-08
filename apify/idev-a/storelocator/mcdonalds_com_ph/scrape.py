@@ -31,6 +31,7 @@ def fetch_data():
                 street_address = street_address.replace("Sm City", "")
             if street_address == "Juan":
                 street_address = ", ".join(_["address"].split(",")[:2])
+
             yield SgRecord(
                 page_url=base_url,
                 store_number=_["id"],
@@ -42,6 +43,12 @@ def fetch_data():
                 latitude=_["latitude"],
                 longitude=_["longitude"],
                 locator_domain=locator_domain,
+                hours_of_operation=_["preview_description"]
+                .split("):")[-1]
+                .split("14:")[-1]
+                .replace("Clo...", "Closed")
+                .replace("P...", "PM")
+                .replace("30...", "30PM"),
                 raw_address=_["address"],
             )
 
