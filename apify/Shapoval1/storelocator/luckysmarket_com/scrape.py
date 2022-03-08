@@ -1,8 +1,10 @@
+import datetime
+import json
 from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
@@ -16,7 +18,7 @@ def fetch_data(sgw: SgWriter):
     }
     r = session.get(api_url, headers=headers)
     tree = html.fromstring(r.text)
-    div = tree.xpath('//p[./span[@style="font-size:16px"]]')
+    div = tree.xpath('//p[@style="font-size:16px; line-height:1.7em;"]')
     for d in div:
 
         ad = "".join(d.xpath(".//following-sibling::p[2]//text()")).replace(
@@ -41,16 +43,27 @@ def fetch_data(sgw: SgWriter):
             .upper()
             .strip()
         )
-        page_url = "".join(
-            d.xpath(
-                f'.//preceding::p[text()="STORES"]/following::a[contains(text(), "{slug}")][1]/@href'
-            )
+
+        page_urls = d.xpath(
+            f'.//preceding::p[text()="STORES"]/following::ul[1]/li/a[contains(text(), "{slug}")][1]/@href'
         )
-        api_url2 = "https://api.freshop.com/1/stores?app_key=luckys_market&has_address=true&limit=10&token=355d3f4fb7329e1bc1767cefec756e85"
+        page_url = "".join(page_urls[-1])
         session = SgRequests()
-        r = session.get(api_url2, headers=headers)
-        js = r.json()["items"]
-        for j in js:
+
+        api_url = "https://api.freshop.com/1/stores?app_key=luckys_market&has_address=true&limit=100&token={}"
+        d = datetime.datetime.now()
+        unixtime = datetime.datetime.timestamp(d) * 1000
+        frm = {
+            "app_key": "luckys_market",
+            "referrer": "https://www.luckysmarket.com/",
+            "utc": str(unixtime).split(".")[0],
+        }
+        r = session.post("https://api.freshop.com/2/sessions/create", data=frm).json()
+        token = r["token"]
+
+        r = session.get(api_url.format(token))
+        js = json.loads(r.text)
+        for j in js["items"]:
             adr = "".join(j.get("address_1")).split()[0].strip()
             if street_address.find(f"{adr}") != -1:
                 latitude = j.get("latitude")
@@ -80,5 +93,7 @@ def fetch_data(sgw: SgWriter):
 
 if __name__ == "__main__":
     session = SgRequests()
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
+    ) as writer:
         fetch_data(writer)

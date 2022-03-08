@@ -22,12 +22,17 @@ def fetch_data():
     for url in all_locations:
         store_url = urljoin(start_url, url)
         loc_response = session.get(store_url)
+        if loc_response.status_code != 200:
+            continue
         loc_dom = etree.HTML(loc_response.text)
         poi = loc_dom.xpath('//script[contains(text(), "streetAddress")]/text()')[0]
         poi = json.loads(poi)
         hoo = loc_dom.xpath('//div[@class="location-info__hours"]//text()')
         hoo = [e.strip() for e in hoo if e.strip()]
         hours_of_operation = " ".join(hoo) if hoo else SgRecord.MISSING
+        phone = poi["telephone"]
+        if phone == "+1":
+            phone = ""
 
         item = SgRecord(
             locator_domain=domain,
@@ -39,7 +44,7 @@ def fetch_data():
             zip_postal=poi["address"]["postalCode"],
             country_code=poi["address"]["addressCountry"],
             store_number=SgRecord.MISSING,
-            phone=poi["telephone"],
+            phone=phone,
             location_type=poi["@type"],
             latitude=poi["geo"]["latitude"],
             longitude=poi["geo"]["longitude"],

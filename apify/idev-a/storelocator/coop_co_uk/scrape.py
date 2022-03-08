@@ -2,6 +2,8 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 logger = SgLogSetup().get_logger("coop")
 
@@ -17,8 +19,8 @@ def fetch_data():
     interval = 3000
     total = 0
     _urls = []
-    with SgRequests() as session:
-        while True:
+    while True:
+        with SgRequests(proxy_country="us") as session:
             url = base_url.format(distance + interval, distance)
             locations = session.get(url, headers=_headers).json()["results"]
             if not locations:
@@ -56,7 +58,15 @@ def fetch_data():
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.PAGE_URL,
+                }
+            )
+        )
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
