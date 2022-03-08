@@ -49,6 +49,8 @@ def fetch_data():
         country_code = country_code if country_code else SgRecord.MISSING
         phone = store_data["telephone"]
         phone = phone if phone else SgRecord.MISSING
+        if phone == "none":
+            phone = SgRecord.MISSING
         location_type = store_data["@type"]
         location_type = location_type if location_type else SgRecord.MISSING
         latitude = store_data["geo"]["latitude"]

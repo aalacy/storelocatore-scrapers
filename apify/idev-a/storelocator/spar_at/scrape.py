@@ -51,6 +51,7 @@ def fetch_data():
                     latitude=_["latitude"],
                     longitude=_["longitude"],
                     country_code="Austria",
+                    location_type=_["plantType"]["name"],
                     phone=_["telephone"],
                     locator_domain=locator_domain,
                     hours_of_operation="; ".join(hours),
@@ -60,7 +61,7 @@ def fetch_data():
 if __name__ == "__main__":
     with SgWriter(
         SgRecordDeduper(
-            SgRecordID({SgRecord.Headers.STORE_NUMBER, SgRecord.Headers.PAGE_URL}),
+            SgRecordID({SgRecord.Headers.PAGE_URL}),
             duplicate_streak_failure_factor=10,
         )
     ) as writer:

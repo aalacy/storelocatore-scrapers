@@ -58,13 +58,18 @@ def fetch_data():
         country_code = "US"
 
         location_name = "".join(store.xpath(".//h2//text()")).strip()
+        if "coming soon" in location_name.lower():
+            continue
         phone = list(
             filter(
                 str,
                 [x.strip() for x in store.xpath('.//a[contains(@href,"tel:")]/text()')],
             )
         )
-        phone = phone[0].strip()
+        if len(phone) > 0:
+            phone = phone[0].strip()
+        else:
+            phone = "<MISSING>"
 
         store_number = "".join(store.xpath("./@data-id"))
 

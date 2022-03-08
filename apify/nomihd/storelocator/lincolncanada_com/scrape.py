@@ -1,56 +1,36 @@
-import csv
 from sgrequests import SgRequests
 from tenacity import retry, stop_after_attempt
 from sglogging import SgLogSetup
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+import httpx
 
 logger = SgLogSetup().get_logger("lincolncanada_com")
 headers = {
     "authority": "www.lincolncanada.com",
+    "sec-ch-ua": '" Not A;Brand";v="99", "Chromium";v="98", "Google Chrome";v="98"',
+    "sec-ch-ua-mobile": "?0",
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.102 Safari/537.36",
     "accept": "application/json, text/javascript, */*; q=0.01",
+    "application-id": "07152898-698b-456e-be56-d3d83011d0a6",
     "x-dtreferer": "https://www.lincolncanada.com/dealerships/?gnav=header-finddealer",
     "x-requested-with": "XMLHttpRequest",
-    "sec-ch-ua-mobile": "?0",
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.104 Safari/537.36",
-    "sec-ch-ua": '"Chromium";v="88", "Google Chrome";v="88", ";Not A Brand";v="99"',
+    "sec-ch-ua-platform": '"Windows"',
     "sec-fetch-site": "same-origin",
     "sec-fetch-mode": "cors",
     "sec-fetch-dest": "empty",
-    "referer": "https://www.lincolncanada.com/dealerships/?gnav=header-finddealer",
+    "referer": "https://www.lincolncanada.com/",
     "accept-language": "en-US,en-GB;q=0.9,en;q=0.8",
 }
 
 
 @retry(stop=stop_after_attempt(10))
 def api_call(url):
-    session = SgRequests()
-    return session.get(url, headers=headers, timeout=10).json()
-
-
-def write_output(data):
-    with open("data.csv", newline="", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
+    timeout = httpx.Timeout(10.0, connect=20.0)
+    session = SgRequests(timeout_config=timeout)
+    return session.get(url, headers=headers).json()
 
 
 def fetch_data():
@@ -257,17 +237,15 @@ def fetch_data():
         "White Rock,BC",
         "St Lazare,QC",
     ]
-    loc_list = []
     for loc in canada:
         logger.info("Pulling City %s..." % loc)
         ccity = loc.split(",")[0].strip()
         cprov = loc.split(",")[1].strip()
         url = (
-            "https://www.lincolncanada.com/services/dealer/Dealers.json?make=Lincoln&radius=500&filter=&minDealers=1&maxDealers=100&city="
+            "https://www.lincolncanada.com/cxservices/dealer/Dealers.json?make=Lincoln&radius=500&filter=&minDealers=1&maxDealers=100&city="
             + ccity
             + "&province="
             + cprov
-            + "&api_key=3b0d0b6c-56fb-a02c-a0d03a98-2e06d595"
         )
         js = api_call(url)
         if "Dealer" in js["Response"]:
@@ -323,36 +301,39 @@ def fetch_data():
                     purl = "<MISSING>"
                 if store not in ids:
                     ids.append(store)
-                    if hours == "":
-                        hours = "<MISSING>"
-                    if phone == "":
-                        phone = "<MISSING>"
-                    if purl == "" or purl is None:
-                        purl = "<MISSING>"
-                    curr_list = [
-                        website,
-                        purl,
-                        name,
-                        add,
-                        city,
-                        state,
-                        zc,
-                        country,
-                        store,
-                        phone,
-                        typ,
-                        lat,
-                        lng,
-                        hours,
-                    ]
-                    loc_list.append(curr_list)
 
-    return loc_list
+                    yield SgRecord(
+                        locator_domain=website,
+                        page_url=purl,
+                        location_name=name,
+                        street_address=add,
+                        city=city,
+                        state=state,
+                        zip_postal=zc,
+                        country_code=country,
+                        store_number=store,
+                        phone=phone,
+                        location_type=typ,
+                        latitude=lat,
+                        longitude=lng,
+                        hours_of_operation=hours,
+                    )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    logger.info("Started")
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.StoreNumberId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    logger.info(f"No of records being processed: {count}")
+    logger.info("Finished")
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()

@@ -5,11 +5,13 @@ from sgzip.dynamic import DynamicGeoSearch, SearchableCountries, Grain_4
 
 def get_data():
     search = DynamicGeoSearch(
-        country_codes=[SearchableCountries.USA], granularity=Grain_4()
+        country_codes=[SearchableCountries.USA],
+        granularity=Grain_4(),
     )
 
     session = SgRequests()
     headers = {"accept": "application/json"}
+    visited = []
 
     for search_lat, search_lon in search:
         url = (
@@ -17,6 +19,11 @@ def get_data():
             + str(search_lat)
             + "%2C"
             + str(search_lon)
+            + "&qp="
+            + str(search_lat)
+            + "%2C"
+            + str(search_lon)
+            + "&staffed=on&fdxType=5644121&fdxType=5644112&fdxType=5644117&fdxType=5644122&fdxType=5644123&fdxType=5644127&l=en"
         )
         response = session.get(url, headers=headers).json()
 
@@ -105,6 +112,11 @@ def get_data():
             ):
                 continue
 
+            location_data = [location_name, latitude, longitude]
+            if location_data in visited:
+                continue
+            else:
+                visited.append(location_data)
             yield {
                 "locator_domain": locator_domain,
                 "page_url": page_url,

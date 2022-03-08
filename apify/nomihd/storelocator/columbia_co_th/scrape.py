@@ -46,7 +46,7 @@ def get_latlng(map_link):
         longitude = map_link.split("&q=")[1].split(",")[1].strip()
     elif "?q=" in map_link:
         latitude = map_link.split("?q=")[1].split(",")[0].strip()
-        longitude = map_link.split("?q=")[1].split(",")[1].strip()
+        longitude = map_link.split("?q=")[1].split(",")[1].strip().split("&")[0].strip()
     else:
         latitude = "<MISSING>"
         longitude = "<MISSING>"

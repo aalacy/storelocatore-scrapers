@@ -25,7 +25,7 @@ def fetch_data():
     domain = re.findall(r"://(.+?)/", start_url)[0].replace("www.", "")
     response = session.get(start_url, headers=headers)
     dom = etree.HTML(response.text)
-    all_locations = dom.xpath("//a[img]/@href")[1:]
+    all_locations = dom.xpath("//header/a/@href")
     for url in all_locations:
         if domain not in url:
             continue

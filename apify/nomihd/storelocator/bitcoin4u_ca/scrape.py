@@ -10,8 +10,6 @@ from sgpostal import sgpostal as parser
 
 website = "bitcoin4u.ca"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
-session = SgRequests()
-
 headers = {
     "authority": "cdn.storelocatorwidgets.com",
     "cache-control": "max-age=0",
@@ -34,59 +32,63 @@ def fetch_data():
     search_url = (
         "https://cdn.storelocatorwidgets.com/json/1072950dea7de5d0fa3f12fd8dd742e5"
     )
-    stores_req = session.get(search_url, headers=headers)
-    stores = json.loads(
-        stores_req.text.split("slw(")[1].strip().rsplit(")", 1)[0].strip()
-    )["stores"]
+    with SgRequests() as session:
+        stores_req = session.get(search_url, headers=headers)
+        stores = json.loads(
+            stores_req.text.split("slw(")[1].strip().rsplit(")", 1)[0].strip()
+        )["stores"]
 
-    for store_json in stores:
-        page_url = store_json["data"]["website"]
+        for store_json in stores:
+            page_url = store_json["data"]["website"]
 
-        location_name = store_json["name"]
-        location_type = "<MISSING>"
-        locator_domain = website
+            location_name = store_json["name"]
+            location_type = "<MISSING>"
+            locator_domain = website
 
-        raw_address = store_json["data"]["address"]
-        formatted_addr = parser.parse_address_intl(raw_address)
-        street_address = formatted_addr.street_address_1
-        if formatted_addr.street_address_2:
-            street_address = street_address + ", " + formatted_addr.street_address_2
+            raw_address = store_json["data"]["address"]
+            formatted_addr = parser.parse_address_intl(raw_address)
+            street_address = formatted_addr.street_address_1
+            if formatted_addr.street_address_2:
+                street_address = street_address + ", " + formatted_addr.street_address_2
 
-        city = formatted_addr.city
-        state = formatted_addr.state
-        zip = formatted_addr.postcode
+            city = formatted_addr.city
+            state = formatted_addr.state
+            zip = formatted_addr.postcode
+            if not zip:
+                if page_url == "https://bitcoin4u.ca/atm/north-york-3/":
+                    zip = "M2J 2K8"
 
-        country_code = "CA"
-        store_number = store_json["storeid"]
-        phone = store_json["data"]["phone"]
-        hours_list = []
-        for key in store_json["data"].keys():
-            if "hours_" in key:
-                day = key.replace("hours_", "").strip()
-                time = store_json["data"][key]
-                hours_list.append(day + ":" + time)
+            country_code = "CA"
+            store_number = store_json["storeid"]
+            phone = store_json["data"]["phone"]
+            hours_list = []
+            for key in store_json["data"].keys():
+                if "hours_" in key:
+                    day = key.replace("hours_", "").strip()
+                    time = store_json["data"][key]
+                    hours_list.append(day + ":" + time)
 
-        hours_of_operation = "; ".join(hours_list).strip()
-        latitude = store_json["data"]["map_lat"]
-        longitude = store_json["data"]["map_lng"]
+            hours_of_operation = "; ".join(hours_list).strip()
+            latitude = store_json["data"]["map_lat"]
+            longitude = store_json["data"]["map_lng"]
 
-        yield SgRecord(
-            locator_domain=locator_domain,
-            page_url=page_url,
-            location_name=location_name,
-            street_address=street_address,
-            city=city,
-            state=state,
-            zip_postal=zip,
-            country_code=country_code,
-            store_number=store_number,
-            phone=phone,
-            location_type=location_type,
-            latitude=latitude,
-            longitude=longitude,
-            hours_of_operation=hours_of_operation,
-            raw_address=raw_address,
-        )
+            yield SgRecord(
+                locator_domain=locator_domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+                raw_address=raw_address,
+            )
 
 
 def scrape():

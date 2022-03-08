@@ -44,18 +44,24 @@ def fetch_data(sgw: SgWriter):
         phone = store["mainPhone"]
         latitude = store["yextDisplayCoordinate"]["latitude"]
         longitude = store["yextDisplayCoordinate"]["longitude"]
-        link = "https://fruttabowls.com/location/?location_id=" + store_number
+        try:
+            link = store["c_pagesURL"]
+        except:
+            link = "https://fruttabowls.com/location/?location_id=" + store_number
 
         hours_of_operation = ""
-        raw_hours = store["hours"]
-        for day in raw_hours:
-            try:
-                opens = raw_hours[day]["openIntervals"][0]["start"]
-                closes = raw_hours[day]["openIntervals"][0]["end"]
-                clean_hours = day.title() + " " + opens + "-" + closes
-            except:
-                clean_hours = day.title() + " Closed"
-            hours_of_operation = (hours_of_operation + " " + clean_hours).strip()
+        try:
+            raw_hours = store["hours"]
+            for day in raw_hours:
+                try:
+                    opens = raw_hours[day]["openIntervals"][0]["start"]
+                    closes = raw_hours[day]["openIntervals"][0]["end"]
+                    clean_hours = day.title() + " " + opens + "-" + closes
+                except:
+                    clean_hours = day.title() + " Closed"
+                hours_of_operation = (hours_of_operation + " " + clean_hours).strip()
+        except:
+            continue
 
         sgw.write_row(
             SgRecord(

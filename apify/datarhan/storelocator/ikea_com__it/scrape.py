@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+import json
 from lxml import etree
 
 from sgrequests import SgRequests
@@ -5,11 +7,10 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
-from sgpostal.sgpostal import parse_address_intl
 
 
 def fetch_data():
-    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
+    session = SgRequests()
 
     start_url = "https://www.ikea.com/it/it/stores/"
     domain = "ikea.com"
@@ -20,44 +21,41 @@ def fetch_data():
     dom = etree.HTML(response.text)
 
     all_locations = dom.xpath(
-        '//div[div[div[p[strong[contains(text(), "Trova il negozio IKEA più vicino a te")]]]]]//a/@href'
+        '//h2[contains(text(), "Orari negozi IKEA")]/following-sibling::p/a/@href'
     )
     for page_url in all_locations:
         loc_response = session.get(page_url)
         loc_dom = etree.HTML(loc_response.text)
 
-        location_name = loc_dom.xpath("//h1/text()")[0]
-        raw_adr = loc_dom.xpath(
-            '//h3[contains(text(), "Indirizzo")]/following-sibling::p/text()'
-        )
-        if not raw_adr:
-            continue
-        raw_adr = " ".join(raw_adr)
-        addr = parse_address_intl(raw_adr)
-        street_address = addr.street_address_1
-        if addr.street_address_2:
-            street_address += " " + addr.street_address_2
         hoo = loc_dom.xpath(
             '//h3[contains(text(), "apertura negozio")]/following-sibling::p/text()'
         )
-        hoo = " ".join([e.strip() for e in hoo])
+        if not hoo:
+            hoo = loc_dom.xpath(
+                '//h2[contains(text(), "Negozio")]/following-sibling::dl//text()'
+            )
+        hoo = " ".join([e.strip() for e in hoo if e.strip()]).split(": 25")[0]
+        poi = loc_dom.xpath('//div[@data-pub-type="store"]/script/text()')
+        if not poi:
+            continue
+        poi = json.loads(poi[0])
 
         item = SgRecord(
             locator_domain=domain,
             page_url=page_url,
-            location_name=location_name,
-            street_address=street_address,
-            city=addr.city,
+            location_name=poi["name"],
+            street_address=poi["address"]["streetAddress"],
+            city=poi["address"]["addressLocality"],
             state="",
-            zip_postal=addr.postcode,
-            country_code=addr.country,
+            zip_postal=poi["address"]["postalCode"],
+            country_code=poi["address"]["addressCountry"],
             store_number="",
             phone="",
-            location_type="",
-            latitude="",
-            longitude="",
+            location_type=poi["@type"],
+            latitude=poi["geo"]["latitude"],
+            longitude=poi["geo"]["longitude"],
             hours_of_operation=hoo,
-            raw_address=raw_adr,
+            raw_address="",
         )
 
         yield item
