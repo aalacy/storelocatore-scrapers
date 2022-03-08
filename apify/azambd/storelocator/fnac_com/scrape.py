@@ -134,7 +134,9 @@ def fetch_data():
 def scrape():
     log.info(f"Start Crawling {website} ...")
     start = time.time()
-    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
+    ) as writer:
         for rec in fetch_data():
             writer.write_row(rec)
     end = time.time()
