@@ -63,7 +63,9 @@ def get_data():
             locator_domain = "mattressfirm.com"
             page_url = json_objects["url"]
             location_name = json_objects["location_name"]
-            address = (json_objects["address_1"] + " " + json_objects["address_2"]).strip()
+            address = (
+                json_objects["address_1"] + " " + json_objects["address_2"]
+            ).strip()
             city = json_objects["city"]
             state = json_objects["region"]
             zipp = json_objects["post_code"]
@@ -88,7 +90,7 @@ def get_data():
                 day = part.find("span", attrs={"class": "daypart"}).text.strip()
                 hour = part.find("span", attrs={"class": "time"}).text.strip()
                 hours = hours + day + " " + hour + ", "
-            
+
             hours = hours[:-2]
             page_urls.append(page_url)
 
@@ -108,6 +110,7 @@ def get_data():
                 "hours": hours,
                 "country_code": country_code,
             }
+
 
 def scrape():
     field_defs = sp.SimpleScraperPipeline.field_definitions(
