@@ -9,8 +9,7 @@ from sgscrape.sgpostal import parse_address_intl
 import re
 
 DOMAIN = "viabcp.com"
-BASE_URL = "https://viabcp.com"
-LOCATION_URL = "https://viabcp.com/puntos-de-atencion"
+LOCATION_URL = "https://www.viabcp.com/canales-presenciales"
 API_URL = [
     "https://www.viabcp.com/wcm/connect/resources/userstories/JSON/dataJSON_ubicanos_grupo1.json?subtype=json",
     "https://www.viabcp.com/wcm/connect/resources/userstories/JSON/dataJSON_ubicanos_grupo2.json?subtype=json",
