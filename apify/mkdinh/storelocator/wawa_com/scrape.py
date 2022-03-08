@@ -118,7 +118,6 @@ def write_data(data):
 
 def fetch_data():
     store_numbers = fetch_store_numbers()
-
     for num in store_numbers:
         location = fetch_location(num)
         if location:
