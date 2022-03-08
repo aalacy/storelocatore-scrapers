@@ -38,7 +38,7 @@ def fetch_data():
             .split(", ")
         )
         phone = loc_dom.xpath(
-            '//p[contains(text(), "Telephone")]/following-sibling::p[1]/text()'
+            '//h5[contains(text(), "Telephone")]/following-sibling::p[1]/text()'
         )[0].strip()
         hoo = loc_dom.xpath('//table[@class="store-openings weekday_openings"]//text()')
         hoo = " ".join([e.strip() for e in hoo if e.strip()])
