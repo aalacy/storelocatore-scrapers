@@ -3,7 +3,6 @@ import json
 from sgscrape import simple_scraper_pipeline as sp
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 from bs4 import BeautifulSoup as bs
-import json
 
 
 def extract_json(html_string):
