@@ -23,9 +23,9 @@ def fetch_data(sgw: SgWriter):
 
     session = SgRequests()
     req = session.get(base_link, headers=headers)
-    base = str(BeautifulSoup(req.text, "lxml"))
+    base_str = str(BeautifulSoup(req.text, "lxml"))
 
-    raw_data = base.split("markerLocations =")[1].split("var ")[0].split("],")
+    raw_data = base_str.split("markerLocations =")[1].split("var ")[0].split("],")
 
     locator_domain = "altaconvenience.com"
 
