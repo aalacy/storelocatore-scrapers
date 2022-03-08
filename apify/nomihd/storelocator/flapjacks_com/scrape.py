@@ -53,18 +53,20 @@ def fetch_data():
 
         search_sel = lxml.html.fromstring(search_res.text)
 
-        store_list = list(
-            search_sel.xpath('//div[@class="wpb_wrapper" and ./p and .//a]')
+        store_list = search_sel.xpath(
+            '//div[@class="wpb_column vc_column_container vc_col-sm-4"]'
+        ) + search_sel.xpath(
+            '//div[@class="wpb_column vc_column_container vc_col-sm-3"]'
         )
 
         for store in store_list:
 
-            page_url = search_url
             locator_domain = website
 
-            location_name = "".join(store.xpath("p[1]//text()")).strip()
-
-            store_info = store.xpath("p[2]/text()")
+            location_name = "".join(store.xpath(".//p[1]//text()")).strip()
+            if len(location_name) <= 0:
+                continue
+            store_info = store.xpath(".//p[2]/text()")
             phone = "<MISSING>"
             index = 0
             for info in store_info:
@@ -96,6 +98,18 @@ def fetch_data():
             map_link = "".join(store.xpath(".//a/@href"))
 
             latitude, longitude = get_latlng(map_link)
+            page_url = "".join(store.xpath('.//a[@itemprop="url"]/@href')).strip()
+            if page_url:
+                page_url = "https://flapjacks.com" + page_url
+                log.info(page_url)
+                store_req = session.get(page_url, headers=headers)
+                store_sel = lxml.html.fromstring(store_req.text)
+                map_link = "".join(
+                    store_sel.xpath('//iframe[contains(@src,"/maps/embed")]/@src')
+                ).strip()
+                latitude, longitude = get_latlng(map_link)
+            else:
+                page_url = search_url
 
             yield SgRecord(
                 locator_domain=locator_domain,
