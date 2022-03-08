@@ -40,28 +40,51 @@ def fetch_data(sgw: SgWriter):
                 .split("CLOSED FOR THE ")[0]
             )
             location_type = "Temporarily Closed"
-            phone = MISSING
-            hours_of_operation = MISSING
         else:
             temp = (
                 soup.findAll("div", {"data-testid": "richTextElement"})[1]
                 .get_text(separator="|", strip=True)
                 .replace("|", " ")
             )
+            if "THE COUNTDOWN HAS BEGUN" in temp:
+                temp = (
+                    soup.findAll("div", {"data-testid": "richTextElement"})[3]
+                    .get_text(separator="|", strip=True)
+                    .replace("|", " ")
+                    .split("Opening for the")[0]
+                )
             try:
                 address = temp.split("for employment.")[1].split("Phone")[0]
             except:
-                address = temp.split("Liberty Court Plaza")[1].split("Phone")[0]
+                try:
+                    address = temp.split("Liberty Court Plaza")[1].split("Phone")[0]
+                except:
+                    address = (
+                        soup.findAll("div", {"data-testid": "richTextElement"})[3]
+                        .get_text(separator="|", strip=True)
+                        .replace("|", " ")
+                        .split("Opening for the")[0]
+                    )
             try:
                 phone = temp.split("Phone :")[1].split("Winter")[0]
             except:
-                phone = temp.split("Phone :")[1]
-            try:
-                hours_of_operation = temp.split("Hours:")[1].split("OPEN 7 DAYS ")[0]
-            except:
-                hours_of_operation = temp.split("Hours")[1].split(
-                    "Liberty Court Plaza"
-                )[0]
+                try:
+                    phone = temp.split("Phone :")[1]
+                except:
+                    phone = MISSING
+            if "OPEN DAILY:" in phone:
+                phone = phone.split("OPEN DAILY:")[0]
+        if "OPEN DAILY:" in r.text:
+            hours_of_operation = (
+                "OPEN DAILY:" + r.text.split("OPEN DAILY:")[1].split("</span>")[0]
+            )
+        elif "Open &nbsp;Daily" in r.text:
+            hours_of_operation = (
+                "OPEN DAILY:"
+                + temp.split("Open  Daily")[1].split("Liberty Court Plaza")[0]
+            )
+        else:
+            hours_of_operation = MISSING
         address = address.replace(",", " ")
         address = usaddress.parse(address)
         i = 0

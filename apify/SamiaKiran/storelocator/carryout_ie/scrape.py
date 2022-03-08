@@ -39,7 +39,7 @@ def fetch_data():
             temp = html.findAll("p")
             raw_address = temp[0].text.replace("Address:", "")
             try:
-                phone = temp[1].text.replace("Phone:", "")
+                phone = temp[1].get_text(separator="|", strip=True).split("|")[1]
             except:
                 phone = MISSING
             pa = parse_address_intl(raw_address)
@@ -47,14 +47,15 @@ def fetch_data():
             street_address = pa.street_address_1
             street_address = street_address if street_address else MISSING
 
-            city = pa.city
-            city = city.strip() if city else MISSING
-
             state = pa.state
             state = state.strip() if state else MISSING
-
-            zip_postal = pa.postcode
-            zip_postal = zip_postal.strip() if zip_postal else MISSING
+            try:
+                zip_postal = raw_address.split(",")
+                city = zip_postal[-2]
+                zip_postal = zip_postal[-1]
+            except:
+                zip_postal = MISSING
+                city = MISSING
             country_code = "Ireland"
             yield SgRecord(
                 locator_domain=DOMAIN,
