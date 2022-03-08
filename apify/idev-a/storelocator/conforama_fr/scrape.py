@@ -38,6 +38,9 @@ def fetch_records():
                 ss = list(hh.stripped_strings)
                 hours.append(f"{ss[0]}: {' '.join(ss[1:])}")
 
+            if sp1.summary and "fermé définitivement" in sp1.summary.text:
+                hours = ["permanently closed"]
+
             phone = ""
             if sp1.select_one("div#telSurTaxeOrder"):
                 phone = sp1.select_one("div#telSurTaxeOrder").text.strip()
