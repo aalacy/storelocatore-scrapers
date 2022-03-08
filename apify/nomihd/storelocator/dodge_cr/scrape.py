@@ -85,13 +85,17 @@ def fetch_data():
                     street_address = street_address.replace("Ste", "Suite")
                 if not street_address:
                     street_address = raw_address
-                city = formatted_addr.city
-                if not city:
-                    city = (
-                        location_name.split("de ")[1]
-                        if "de " in location_name
-                        else "<MISSING>"
-                    )
+                city = (
+                    location_name.split("de ")[1]
+                    if "de " in location_name
+                    else "<MISSING>"
+                )
+
+                if city == "<MISSING>":
+                    city = formatted_addr.city
+
+                if "Sucursal de Santa" in location_name:
+                    street_address = raw_address.split(",")[0].strip()
                 state = formatted_addr.state
                 zip = formatted_addr.postcode
 

@@ -1,59 +1,72 @@
-from sgrequests import SgRequests
 from lxml import html
 from sgscrape.sgrecord import SgRecord
+from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
-from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from concurrent import futures
+from sgscrape.sgpostal import parse_address, International_Parser
 
 
-def get_coords(page_url):
-    r = session.get(page_url, headers=headers)
+def get_international(line):
+    adr = parse_address(International_Parser(), line)
+    street_address = f"{adr.street_address_1} {adr.street_address_2 or ''}".replace(
+        "None", ""
+    ).strip()
+    city = adr.city or ""
+    state = adr.state
+    postal = adr.postcode
+
+    return street_address, city, state, postal
+
+
+def get_urls():
+    r = session.get("https://www.thereformation.com/stores.html")
     tree = html.fromstring(r.text)
-    text = "".join(tree.xpath("//a[contains(@href, 'google')]/@href"))
 
-    try:
-        lat = text.split("@")[1].split(",")[0]
-        lng = text.split("@")[1].split(",")[1]
-    except:
-        lat, lng = SgRecord.MISSING, SgRecord.MISSING
-
-    return lat, lng
+    return set(tree.xpath("//a[contains(@href, '/stores/')]/@href"))
 
 
-def get_data(page_url, sgw):
-    r = session.get(page_url, headers=headers)
+def get_data(page_url, sgw: SgWriter):
+    r = session.get(page_url)
     tree = html.fromstring(r.text)
 
-    location_name = "".join(tree.xpath("//div[@class='wysiwyg__p']/text()")).strip()
-    line = tree.xpath(
-        "//span[contains(text(), 'Hours')]/a[not(contains(@href, 'tel:'))]/text()"
-    )
-    line = list(filter(None, [l.replace("Address:", "").strip() for l in line]))
-    if not line:
+    location_name = "".join(tree.xpath("//h1/text()")).strip()
+    line = tree.xpath("//div[@class='col-12 col-lg-6 store-page__details']//text()")
+    line = list(filter(None, [" ".join(l.split()).strip() for l in line]))
+    if "coming soon" in line[0].lower():
         return
 
-    street_address = line.pop(0)
-    city = line.pop(0)
-    state = SgRecord.MISSING
-    postal = SgRecord.MISSING
-    country_code = "US"
-    phone = "".join(
-        tree.xpath(
-            "//span[contains(text(), 'Hours')]/a[contains(@href, 'tel:')]/text()"
-        )
-    ).strip()
+    text = "".join(tree.xpath("//span[@class='store-details']/a/@href"))
+    latitude, longitude = SgRecord.MISSING, SgRecord.MISSING
+    if "/@" in text:
+        latitude, longitude = text.split("/@")[1].split(",")[:2]
 
-    text = "".join(tree.xpath("//a[contains(@href, 'google')]/@href"))
-    latitude = text.split("@")[1].split(",")[0]
-    longitude = text.split("@")[1].split(",")[1]
+    cnt = 0
+    for li in line:
+        if "Hours:" in li:
+            break
+        cnt += 1
 
-    hours = tree.xpath("//a[contains(@href, 'tel:')]/preceding-sibling::text()")
-    hours = list(
-        filter(
-            None, [h.replace("Hours:", "").replace("Call:", "").strip() for h in hours]
-        )
-    )
-    hours_of_operation = ";".join(hours)
+    adr = line[line.index("Address:") + 1 : cnt]
+    raw_address = ", ".join(adr).replace(",,", ",")
+    street_address, city, state, postal = get_international(raw_address)
+    if "East" in street_address:
+        street_address = street_address.replace("East", "").strip()
+        city = f"East {city}"
+    if not city:
+        city = raw_address.split(",")[-1].strip()
+
+    if "london" in raw_address.lower():
+        country = "GB"
+    elif "toronto" in raw_address.lower():
+        country = "CA"
+    else:
+        country = "US"
+
+    phone = line[line.index("Call:") + 1]
+    hours = line[cnt + 1 : line.index("Call:")] or line[cnt : line.index("Call:")]
+    hours_of_operation = ";".join(hours).replace("Hours:", "").strip()
 
     row = SgRecord(
         page_url=page_url,
@@ -62,87 +75,29 @@ def get_data(page_url, sgw):
         city=city,
         state=state,
         zip_postal=postal,
-        country_code=country_code,
-        store_number=SgRecord.MISSING,
-        phone=phone,
-        location_type=SgRecord.MISSING,
+        country_code=country,
         latitude=latitude,
         longitude=longitude,
+        phone=phone,
         locator_domain=locator_domain,
         hours_of_operation=hours_of_operation,
+        raw_address=raw_address,
     )
 
     sgw.write_row(row)
 
 
 def fetch_data(sgw: SgWriter):
-    api = "https://www.thereformation.com/pages/stores"
-    r = session.get(api, headers=headers)
-    tree = html.fromstring(r.text)
-    blocks = tree.xpath("//a[@class='image-new-content-block__content-link']/@href")
+    urls = get_urls()
 
-    for b in blocks:
-        if b.startswith("/"):
-            continue
-
-        d = tree.xpath(f"//div[@class='store-summary' and .//a[@href='{b}']]")
-        if d:
-            d = d.pop()
-            location_name = "".join(
-                d.xpath(".//span[@itemprop='location']/text()")
-            ).strip()
-            page_url = "".join(d.xpath(".//a[@class='store-summary__image']/@href"))
-
-            line = d.xpath(".//div[@class='store-summary__street']/text()")
-            line = list(filter(None, [l.strip() for l in line]))
-            street_address = ", ".join(line[:-1])
-            line = line[-1]
-            city = line.split(",")[0].strip()
-            line = line.split(",")[1].strip()
-            state = line.split()[0]
-            postal = line.replace(state, "").strip()
-            country_code = "US"
-
-            if city == "North York":
-                country_code = "CA"
-            if city == "London":
-                country_code = "GB"
-                state = SgRecord.MISSING
-
-            phone = "".join(d.xpath(".//span[@itemprop='telephone']/a/text()")).strip()
-            latitude, longitude = get_coords(page_url)
-
-            hours = d.xpath(".//div[@class='store-summary__text']/text()")
-            hours = list(filter(None, [h.strip() for h in hours]))
-            hours_of_operation = ";".join(hours)
-
-            row = SgRecord(
-                page_url=page_url,
-                location_name=location_name,
-                street_address=street_address,
-                city=city,
-                state=state,
-                zip_postal=postal,
-                country_code=country_code,
-                store_number=SgRecord.MISSING,
-                phone=phone,
-                location_type=SgRecord.MISSING,
-                latitude=latitude,
-                longitude=longitude,
-                locator_domain=locator_domain,
-                hours_of_operation=hours_of_operation,
-            )
-
-            sgw.write_row(row)
-        else:
-            get_data(b, sgw)
+    with futures.ThreadPoolExecutor(max_workers=10) as executor:
+        future_to_url = {executor.submit(get_data, url, sgw): url for url in urls}
+        for future in futures.as_completed(future_to_url):
+            future.result()
 
 
 if __name__ == "__main__":
     locator_domain = "https://www.thereformation.com/"
     session = SgRequests()
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0"
-    }
     with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         fetch_data(writer)

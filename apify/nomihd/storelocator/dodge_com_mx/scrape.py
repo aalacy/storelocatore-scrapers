@@ -66,9 +66,11 @@ def fetch_data():
                     if street_address is not None:
                         street_address = street_address.replace("Ste", "Suite")
                     city = formatted_addr.city
-                    state = formatted_addr.state
+                    state = "<MISSING>"
 
                     zip = formatted_addr.postcode
+                    if zip:
+                        zip = zip.replace("C.P.", "").strip()
 
                     country_code = "MX"
 
@@ -84,22 +86,28 @@ def fetch_data():
                             store_res = SgRequests.raise_on_err(
                                 session.get(page_url, headers=headers)
                             )
-                            store_sel = lxml.html.fromstring(store_res.text)
+                            try:
+                                store_sel = lxml.html.fromstring(store_res.text)
 
-                            hours = list(
-                                filter(
-                                    str,
-                                    [
-                                        x.strip()
-                                        for x in store_sel.xpath(
-                                            '//h6[contains(text(),"Horario de Ventas")]/../ul/li//text()'
-                                        )
-                                    ],
+                                hours = list(
+                                    filter(
+                                        str,
+                                        [
+                                            x.strip()
+                                            for x in store_sel.xpath(
+                                                '//h6[contains(text(),"Horario de Ventas")]/../ul/li//text()'
+                                            )
+                                        ],
+                                    )
                                 )
-                            )
-                            hours_of_operation = (
-                                "; ".join(hours).replace(".;", ":").strip()
-                            )
+                                hours_of_operation = (
+                                    "; ".join(hours).replace(".;", ":").strip()
+                                )
+                                if "Por favor contacta al" in hours_of_operation:
+                                    hours_of_operation = "<MISSING>"
+
+                            except:
+                                pass
                     except SgRequestError as e:
                         log.error(e.status_code)
 

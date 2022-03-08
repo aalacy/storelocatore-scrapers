@@ -38,7 +38,7 @@ def random_sleep(driver, start=5, limit=3):
 def fetch_stores():
     with SgChrome() as driver:
         driver.get(store_url)
-        random_sleep(driver, 20)
+        random_sleep(driver, 30)
         return json.loads(driver.page_source.split("fnacStoreData =")[1].split(";")[0])[
             "Store"
         ]
@@ -134,7 +134,9 @@ def fetch_data():
 def scrape():
     log.info(f"Start Crawling {website} ...")
     start = time.time()
-    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
+    ) as writer:
         for rec in fetch_data():
             writer.write_row(rec)
     end = time.time()

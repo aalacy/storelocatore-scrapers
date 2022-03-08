@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from lxml import etree
 
 from sgrequests import SgRequests
@@ -21,9 +22,7 @@ def fetch_data():
     countries = [
         "Suriname",
         "Bhutan",
-        "Brunei",
         "Cambodia",
-        "Malaysia",
         "Egypt",
         "Republic of Djibouti",
         "Seychelles",
@@ -32,6 +31,7 @@ def fetch_data():
         "French Polynesia",
         "Papua New Guinea",
         "Republic of Palau",
+        "Kenya",
     ]
 
     for country_code in countries:
@@ -60,6 +60,21 @@ def fetch_data():
             if phone
             else ""
         )
+        hoo = ""
+        if not phone:
+            phone = (
+                poi_html.xpath('.//span[contains(text(), "Phone")]/text()')[0]
+                .split(":")[-1]
+                .replace("\u3000", " ")
+                .split()[0]
+            )
+            hoo = (
+                poi_html.xpath('.//span[contains(text(), "Phone")]/text()')[0]
+                .split(":")[-1]
+                .replace("\u3000", " ")
+                .split("(")[-1][:-1]
+            )
+        phone = phone.split(" 2482")[0]
 
         item = SgRecord(
             locator_domain=domain,
@@ -75,7 +90,7 @@ def fetch_data():
             location_type="",
             latitude="",
             longitude="",
-            hours_of_operation="",
+            hours_of_operation=hoo,
             raw_address=", ".join(raw_address)
             .split("Phone")[0]
             .replace("Address : ", "")

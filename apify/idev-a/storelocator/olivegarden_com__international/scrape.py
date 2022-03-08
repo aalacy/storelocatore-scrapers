@@ -87,8 +87,7 @@ def fetch_data():
                 for cc in _.find_parent().find_previous_siblings():
                     if cc.name != "p":
                         country = cc.text.strip()
-            if country in ["HAWAII", "Guam", ""]:
-                country = "US"
+                        break
             yield SgRecord(
                 page_url=base_url,
                 location_name=block[0],
