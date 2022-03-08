@@ -1,80 +1,103 @@
-import csv
-from sgrequests import SgRequests
+import usaddress
+from sglogging import sglog
 from bs4 import BeautifulSoup
-import re
-import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('fundltc_com')
-
+from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
+website = "fundltc_com"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+}
 
-def write_output(data):
-    with open('data.csv', mode='w', encoding="utf-8", newline='') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
-        # Body
-        for row in data:
-            writer.writerow(row)
+DOMAIN = "https://fundltc.com/"
+MISSING = SgRecord.MISSING
 
 
 def fetch_data():
-    headers = {
-             'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.79 Safari/537.36',    
-    }
+    if True:
+        url = "https://www.fundltc.com/healthcare%20facility%20locator/Facility_Locator.aspx"
+        r = session.get(url, headers=headers)
+        soup = BeautifulSoup(r.text, "html.parser")
+        loclist = soup.find("table", {"width": "100%"}).find_all("a")
+        for loc in loclist:
+            page_url = loc["href"]
+            store_number = page_url.split("locationID=")[1]
+            log.info(page_url)
+            r = session.get(page_url, headers=headers)
+            soup = BeautifulSoup(r.text, "html.parser")
+            location_name = loc.text
+            address = (
+                soup.find("span", {"id": "ctl00_ctl00_cphRight_cphText_lblAddress"})
+                .get_text(separator="|", strip=True)
+                .replace("|", " ")
+            )
+            address = address.replace(",", " ")
+            address = usaddress.parse(address)
+            i = 0
+            street_address = ""
+            city = ""
+            state = ""
+            zip_postal = ""
+            while i < len(address):
+                temp = address[i]
+                if (
+                    temp[1].find("Address") != -1
+                    or temp[1].find("Street") != -1
+                    or temp[1].find("Recipient") != -1
+                    or temp[1].find("Occupancy") != -1
+                    or temp[1].find("BuildingName") != -1
+                    or temp[1].find("USPSBoxType") != -1
+                    or temp[1].find("USPSBoxID") != -1
+                ):
+                    street_address = street_address + " " + temp[0]
+                if temp[1].find("PlaceName") != -1:
+                    city = city + " " + temp[0]
+                if temp[1].find("StateName") != -1:
+                    state = state + " " + temp[0]
+                if temp[1].find("ZipCode") != -1:
+                    zip_postal = zip_postal + " " + temp[0]
+                i += 1
+            phone = soup.find(
+                "span", {"id": "ctl00_ctl00_cphRight_cphText_lblPhone"}
+            ).text
+            country_code = "US"
+            yield SgRecord(
+                locator_domain=DOMAIN,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address.strip(),
+                city=city.strip(),
+                state=state.strip(),
+                zip_postal=zip_postal.strip(),
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone.strip(),
+                location_type=MISSING,
+                latitude=MISSING,
+                longitude=MISSING,
+                hours_of_operation=MISSING,
+            )
 
-    base_url = "https://fundltc.com/"   
-    
-
-    r = session.get("https://fundltc.com/Healthcare%20Facility%20Locator/Facility_Locator.aspx", headers=headers)
-    soup = BeautifulSoup(r.text, "lxml")
-    for link in soup.find("table",{"width":"100%"}).find_all("a"):
-        page_url = link['href']
-        # logger.info(page_url)
-        store_number = page_url.split("=")[-1]
-
-        location_r = session.get(page_url)
-        location_soup = BeautifulSoup(location_r.text, "lxml")
-
-        location_name = location_soup.find("span",{"id":"ctl00_ctl00_cphRight_cphText_lblFacilityName"}).text
-        addr = list(location_soup.find("span",{"id":"ctl00_ctl00_cphRight_cphText_lblAddress"}).stripped_strings)
-        try:
-            street_address = addr[0]
-        except:
-            # logger.info("No data..skipping")
-            continue
-        city = addr[1].split(",")[0]
-        state = addr[1].split(",")[1].split(" ")[1]
-        zipp = addr[1].split(",")[1].split(" ")[2]
-        phone = location_soup.find("span",{"id":"ctl00_ctl00_cphRight_cphText_lblPhone"}).text
-
-        store = []
-        store.append(base_url)
-        store.append(location_name)
-        store.append(street_address)
-        store.append(city)
-        store.append(state)
-        store.append(zipp if zipp else "<MISSING>")   
-        store.append("US")
-        store.append(page_url.split("=")[-1])
-        store.append(phone)
-        store.append("<MISSING>")
-        store.append("<MISSING>")
-        store.append("<MISSING>")
-        store.append("<MISSING>")
-        store.append(page_url)
-        # logger.info("data==="+str(store))
-        # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
-
-        yield store
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    log.info("Started")
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()

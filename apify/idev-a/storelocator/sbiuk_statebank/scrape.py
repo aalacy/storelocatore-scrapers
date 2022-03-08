@@ -23,11 +23,16 @@ def fetch_data():
         soup = bs(session.get(base_url, headers=_headers).text, "lxml")
         locations = soup.select("div.panel")
         for _ in locations:
-            raw_address = _.select(
-                "div.panel-body > div.inner-page-content >  div.inner-row-content > p"
-            )[-1].text.strip()
-            if "Phone" in raw_address:
+            aa = list(
+                _.select_one(
+                    "div.inner-page-content div.inner-row-content"
+                ).stripped_strings
+            )
+            raw_address = aa[-1]
+            if "Business Hours:" in aa[0]:
                 raw_address = ""
+            if not raw_address:
+                raw_address = _.h4.text.strip()
             addr = parse_address_intl(raw_address + ", United Kingdom")
             street_address = addr.street_address_1 or ""
             if addr.street_address_2:
@@ -68,9 +73,7 @@ def fetch_data():
 
 if __name__ == "__main__":
     with SgWriter(
-        SgRecordDeduper(
-            SgRecordID({SgRecord.Headers.RAW_ADDRESS, SgRecord.Headers.LOCATION_NAME})
-        )
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.RAW_ADDRESS}))
     ) as writer:
         results = fetch_data()
         for rec in results:

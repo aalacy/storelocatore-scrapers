@@ -31,14 +31,14 @@ def fetch_data(sgw: SgWriter):
         city = " ".join(ad.split()[:-2])
         r = session.get(page_url, headers=headers)
         tree = html.fromstring(r.text)
-        hours_of_operation = (
-            " ".join(
-                tree.xpath('//h2[text()="Buys and Loans:"]/following-sibling::*/text()')
-            )
-            .replace("\n", "")
-            .strip()
-        )
-        hours_of_operation = " ".join(hours_of_operation.split()) or "<MISSING>"
+        hours = tree.xpath('//h2[text()="Buys and Loans:"]/following-sibling::*/text()')
+        hours = list(filter(None, [a.strip() for a in hours]))
+        tmp = []
+        for h in hours:
+            if "Jan" in h:
+                continue
+            tmp.append(h)
+        hours_of_operation = "; ".join(tmp) or "<MISSING>"
 
         row = SgRecord(
             locator_domain=locator_domain,

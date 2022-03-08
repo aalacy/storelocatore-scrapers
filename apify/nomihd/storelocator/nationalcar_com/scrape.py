@@ -39,17 +39,25 @@ def fetch_data():
 
             store_info = store["address"]
             street_address = ", ".join(store_info["street_addresses"])
+            if street_address:
+                street_address = street_address.replace(
+                    "Enterprise Rent A Car,", ""
+                ).strip()
             city = store_info["city"]
 
             state = store_info["country_subdivision_code"]
+            if state and len(state) == 1:
+                state = "<MISSING>"
 
             zip = store_info["postal"]
+            if zip and zip == "0":
+                zip = "<MISSING>"
 
             country_code = store_info["country_code"]
 
             phone = store["phones"]
             if phone:
-                phone = phone[0]["phone_number"]
+                phone = phone[0]["phone_number"].split(",")[0].strip()
             else:
                 phone = "<MISSING>"
 

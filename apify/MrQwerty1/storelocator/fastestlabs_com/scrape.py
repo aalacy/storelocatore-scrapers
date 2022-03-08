@@ -44,7 +44,8 @@ def fetch_data(sgw: SgWriter):
         try:
             hours_of_operation = get_hoo(store_number, page_url)
         except:
-            hours_of_operation = SgRecord.MISSING
+            hours_of_operation = "Coming Soon"
+
         row = SgRecord(
             page_url=page_url,
             location_name=location_name,

@@ -34,6 +34,8 @@ def get_data(page_url, sgw: SgWriter):
     location_name = "".join(tree.xpath("//h1/text()")).strip()
     line = tree.xpath("//div[@class='col-12 col-lg-6 store-page__details']//text()")
     line = list(filter(None, [" ".join(l.split()).strip() for l in line]))
+    if "coming soon" in line[0].lower():
+        return
 
     text = "".join(tree.xpath("//span[@class='store-details']/a/@href"))
     latitude, longitude = SgRecord.MISSING, SgRecord.MISSING
@@ -47,8 +49,11 @@ def get_data(page_url, sgw: SgWriter):
         cnt += 1
 
     adr = line[line.index("Address:") + 1 : cnt]
-    raw_address = ", ".join(adr)
+    raw_address = ", ".join(adr).replace(",,", ",")
     street_address, city, state, postal = get_international(raw_address)
+    if "East" in street_address:
+        street_address = street_address.replace("East", "").strip()
+        city = f"East {city}"
     if not city:
         city = raw_address.split(",")[-1].strip()
 

@@ -90,6 +90,9 @@ def fetch_data():
                 lat = "<MISSING>"
                 lng = "<MISSING>"
             name = name.replace("&amp;", "&").replace("&rsquo;", "'")
+            hours = hours.replace("; SUNDAY: 11AM-6PMNM", "")
+            if "130 Tucker" in add:
+                hours = "SUNDAY: 12PM-6PM; MONDAY; 9AM-9PM; TUESDAY; 9AM-9PM; WEDNESDAY; 9AM-9PM; THURSDAY; 9AM-9PM; FRIDAY; 9AM-9PM; SATURDAY; 9AM-9PM"
             yield SgRecord(
                 locator_domain=website,
                 page_url=loc,

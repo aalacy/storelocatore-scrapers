@@ -23,64 +23,107 @@ def fetch_data():
     logger.info("Pulling Stores")
     for line in r.iter_lines():
         if "<item><location>" in line:
-            name = line.split("<item><location>")[1].split("<")[0]
-            rawadd = (
-                line.split("<address>")[1]
-                .split("<")[0]
-                .replace("&amp;#44;", ",")
-                .replace("&amp;#39;", "'")
-                .replace("  ", " ")
-                .replace("&#44;", ",")
-                .replace("&#39;", "'")
-                .replace(" ,", ",")
-                .replae(", ", ",")
-            )
-            formatted_addr = parse_address_intl(rawadd)
-            add = formatted_addr.street_address_1
-            if formatted_addr.street_address_2:
-                add = add + ", " + formatted_addr.street_address_2
-            city = formatted_addr.city
-            state = formatted_addr.state if formatted_addr.state else "<MISSING>"
-            zc = formatted_addr.postcode if formatted_addr.postcode else "<MISSING>"
-            store = line.split("<storeId>")[1].split("<")[0]
-            lat = line.split("<latitude>")[1].split("<")[0]
-            lng = line.split("<longitude>")[1].split("<")[0]
-            phone = line.split("<telephone>")[1].split("<")[0]
-            hours = ""
-            days = (
-                line.split("<operatingHours")[1]
-                .split("</operatingHours>")[0]
-                .split('text-align: left;">')
-            )
-            for day in days:
-                if 'text-align: right;">' in day:
-                    hrs = (
-                        day.split("<")[0]
-                        + ": "
-                        + day.split('text-align: right;">')[1].split("<")[0]
+            items = line.split("<item><location>")
+            for item in items:
+                if "<storeId>" in item:
+                    name = item.split("<")[0]
+                    rawadd = (
+                        item.split("<address>")[1]
+                        .split("<")[0]
+                        .replace("&amp;#44;", ",")
+                        .replace("&amp;#39;", "'")
+                        .replace("  ", " ")
+                        .replace("&#44;", ",")
+                        .replace("&#39;", "'")
+                        .replace(" ,", ",")
+                        .replace(", ", ",")
                     )
-                    if hours == "":
-                        hours = hrs
-                    else:
-                        hours = hours + "; " + hrs
-            loc = "<MISSING>"
-            yield SgRecord(
-                locator_domain=website,
-                page_url=loc,
-                location_name=name,
-                street_address=add,
-                city=city,
-                state=state,
-                zip_postal=zc,
-                country_code=country,
-                phone=phone,
-                location_type=typ,
-                store_number=store,
-                latitude=lat,
-                longitude=lng,
-                raw_address=rawadd,
-                hours_of_operation=hours,
-            )
+                    formatted_addr = parse_address_intl(rawadd)
+                    add = ""
+                    city = ""
+                    state = ""
+                    zc = ""
+                    add = formatted_addr.street_address_1
+                    if formatted_addr.street_address_2:
+                        add = add + ", " + formatted_addr.street_address_2
+                    city = formatted_addr.city
+                    state = (
+                        formatted_addr.state if formatted_addr.state else "<MISSING>"
+                    )
+                    zc = (
+                        formatted_addr.postcode
+                        if formatted_addr.postcode
+                        else "<MISSING>"
+                    )
+                    store = item.split("<storeId>")[1].split("<")[0]
+                    lat = item.split("<latitude>")[1].split("<")[0]
+                    lng = item.split("<longitude>")[1].split("<")[0]
+                    phone = item.split("<telephone>")[1].split("<")[0]
+                    hours = ""
+                    days = (
+                        item.split("<operatingHours")[1]
+                        .split("</operatingHours>")[0]
+                        .split("text-align: left;&quot;&gt;")
+                    )
+                    for day in days:
+                        if "text-align: right;&quot;&gt;" in day:
+                            hrs = (
+                                day.split("&lt;")[0]
+                                + ": "
+                                + day.split("text-align: right;&quot;&gt;")[1].split(
+                                    "&lt;"
+                                )[0]
+                            )
+                            if hours == "":
+                                hours = hrs
+                            else:
+                                hours = hours + "; " + hrs
+                    loc = "https://mobilebitz.co.uk/store-list/"
+                    if "Bluewater" in name:
+                        city = "Bluewater"
+                    if "BD1 1US" in rawadd:
+                        zc = "BD1 1US"
+                    if "SW19 8YA" in rawadd:
+                        zc = "SW19 8YA"
+                    if "Meadowhall" in name:
+                        zc = "S9 1EN"
+                        city = "Meadowhall"
+                        add = "91a High Street"
+                    add = (
+                        add.replace("&amp;#44;", ",")
+                        .replace("&amp;", "&")
+                        .replace("&amp", "&")
+                        .replace("&Amp", "&")
+                    )
+                    rawadd = (
+                        rawadd.replace("&amp;#44;", ",")
+                        .replace("&amp;", "&")
+                        .replace("&amp", "&")
+                        .replace("&Amp", "&")
+                    )
+                    name = (
+                        name.replace("&amp;#44;", ",")
+                        .replace("&amp;", "&")
+                        .replace("&amp", "&")
+                        .replace("&Amp", "&")
+                    )
+                    yield SgRecord(
+                        locator_domain=website,
+                        page_url=loc,
+                        location_name=name,
+                        street_address=add,
+                        city=city,
+                        state=state,
+                        zip_postal=zc,
+                        country_code=country,
+                        phone=phone,
+                        location_type=typ,
+                        store_number=store,
+                        latitude=lat,
+                        longitude=lng,
+                        raw_address=rawadd,
+                        hours_of_operation=hours,
+                    )
 
 
 def scrape():

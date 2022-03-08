@@ -159,9 +159,7 @@ class _SearchIteration(SearchIteration):
 def scrape():
     log.info("Started")
     search_maker = DynamicSearchMaker(
-        search_type="DynamicGeoSearch",
-        expected_search_radius_miles=20,
-        max_search_results=5,
+        search_type="DynamicGeoSearch", expected_search_radius_miles=100
     )
     with SgWriter(
         deduper=SgRecordDeduper(

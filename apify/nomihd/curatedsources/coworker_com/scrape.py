@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from sgrequests import SgRequests
 from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
@@ -7,24 +6,18 @@ from sgpostal import sgpostal as parser
 import lxml.html
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgselenium import SgChrome
+import ssl
+import time
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 website = "coworker.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 
-headers = {
-    "authority": "www.coworker.com",
-    "sec-ch-ua": '" Not;A Brand";v="99", "Google Chrome";v="97", "Chromium";v="97"',
-    "sec-ch-ua-mobile": "?0",
-    "sec-ch-ua-platform": '"Windows"',
-    "upgrade-insecure-requests": "1",
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.99 Safari/537.36",
-    "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-    "sec-fetch-site": "none",
-    "sec-fetch-mode": "navigate",
-    "sec-fetch-user": "?1",
-    "sec-fetch-dest": "document",
-    "accept-language": "en-US,en;q=0.9,ar;q=0.8",
-}
+user_agent = (
+    "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0"
+)
 
 
 def fetch_data():
@@ -32,10 +25,10 @@ def fetch_data():
 
     search_url = "https://www.coworker.com/office-space/cities"
 
-    with SgRequests() as session:
-        search_res = session.get(search_url, headers=headers)
-
-        search_sel = lxml.html.fromstring(search_res.text)
+    with SgChrome(user_agent=user_agent) as driver:
+        driver.get(search_url)
+        time.sleep(10)
+        search_sel = lxml.html.fromstring(driver.page_source)
 
         cities = search_sel.xpath(
             '//div[@class="col-xs-12 pade_none around_city_con"]//ul/li/a'
@@ -46,11 +39,18 @@ def fetch_data():
             locator_domain = website
 
             city_url = "".join(_city.xpath("./@href")).strip()
-            log.info(city_url)
             city = "".join(_city.xpath(".//text()")).strip()
 
-            city_res = session.get(city_url, headers=headers)
-            city_sel = lxml.html.fromstring(city_res.text)
+            is_city_req_timeout = True
+            while is_city_req_timeout is True:
+                try:
+                    log.info(city_url)
+                    driver.get(city_url)
+                    is_city_req_timeout = False
+                except:
+                    pass
+
+            city_sel = lxml.html.fromstring(driver.page_source)
 
             stores = city_sel.xpath('//div[@class="item"]//a')
 
@@ -58,10 +58,15 @@ def fetch_data():
 
                 page_url = "".join(store.xpath("./@href"))
 
-                log.info(page_url)
-
-                store_res = session.get(page_url, headers=headers)
-                store_sel = lxml.html.fromstring(store_res.text)
+                is_timeout = True
+                while is_timeout is True:
+                    try:
+                        log.info(page_url)
+                        driver.get(page_url)
+                        is_timeout = False
+                    except:
+                        pass
+                store_sel = lxml.html.fromstring(driver.page_source)
 
                 location_name = " ".join(store.xpath(".//h4//text()")).strip()
 
@@ -83,13 +88,14 @@ def fetch_data():
 
                 formatted_addr = parser.parse_address_intl(raw_address)
                 street_address = formatted_addr.street_address_1
-                if formatted_addr.street_address_2:
-                    street_address = (
-                        street_address + ", " + formatted_addr.street_address_2
-                    )
-
-                if street_address is not None:
-                    street_address = street_address.replace("Ste", "Suite")
+                if street_address:
+                    if formatted_addr.street_address_2:
+                        street_address = (
+                            street_address + ", " + formatted_addr.street_address_2
+                        )
+                else:
+                    if formatted_addr.street_address_2:
+                        street_address = formatted_addr.street_address_2
 
                 city = page_url.split("/")[-2]
                 state = formatted_addr.state
@@ -103,8 +109,8 @@ def fetch_data():
                 hours_list = []
                 for hour in hours:
                     day = "".join(hour.xpath("span/text()")).strip()
-                    time = "".join(hour.xpath("text()")).strip()
-                    hours_list.append(day + ":" + time)
+                    tim = "".join(hour.xpath("text()")).strip()
+                    hours_list.append(day + ":" + tim)
 
                 hours_of_operation = (
                     "; ".join(hours_list)

@@ -33,6 +33,8 @@ def fetch_data():
             continue
         raw_address = poi_html.xpath('.//div[@class="address"]/text()')
         raw_address = [e.strip() for e in raw_address]
+        if len(raw_address) == 3:
+            raw_address = [", ".join(raw_address[:2])] + raw_address[2:]
         phone = loc_dom.xpath('//span[@class="phone-number"]/text()')
         if not phone:
             phone = loc_dom.xpath(

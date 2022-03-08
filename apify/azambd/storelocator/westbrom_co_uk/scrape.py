@@ -1,26 +1,17 @@
 import time
 import re
 from lxml import html
-import random
 import ssl
-from selenium.webdriver.common.by import By
-from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from webdriver_manager.chrome import ChromeDriverManager
-from sgselenium.sgselenium import SgChrome
-
 from sgrequests import SgRequests
 from sglogging import sglog
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
-from sgscrape.pause_resume import CrawlStateSingleton
-
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
+DOMAIN = "westbrom.co.uk"
 website = "https://www.westbrom.co.uk"
 branch_page = f"{website}/customer-support/branch-finder"
 MISSING = SgRecord.MISSING
@@ -38,89 +29,18 @@ def request_with_retries(url):
     return html.fromstring(response.text, "lxml")
 
 
-def driver_sleep(driver, time=2):
-    try:
-        WebDriverWait(driver, time).until(
-            EC.presence_of_element_located((By.ID, MISSING))
-        )
-    except Exception:
-        pass
-
-
-def random_sleep(driver, start=5, limit=2):
-    driver_sleep(driver, random.randint(start, start + limit))
-
-
-def fetch_branch(driver, zip_code):
-    try:
-        input_field = driver.find_element(By.XPATH, "//input[@id='branch_search']")
-        input_field.send_keys(str(zip_code))
-        input_field.send_keys(Keys.ENTER)
-        time.sleep(3)
-        input_field.send_keys(Keys.ENTER)
-        time.sleep(6)
-        driver.find_element(By.ID, "btnBranchSearch").click()
-        time.sleep(3)
-        log.info("input " + input_field.get_attribute("value"))
-        body = html.fromstring(driver.page_source, "lxml")
-        urls = body.xpath('//a[contains(text(), "Branch Details")]/@href')
-        return urls
-    except Exception as e:
-        log.error(f"error {e}")
-        pass
-    return []
-
-
 def fetch_stores():
     page_urls = []
-    zip_codes = [
-        "B66 4BL",
-        "B65 0DR",
-        "B61 8EX",
-        "B64 5HE",
-        "DY1 1PJ",
-        "B42 1TN",
-        "DY4 7AY",
-        "B21 9LP",
-        "B17 9PN",
-        "B14 7JZ",
-        "B44 9SU",
-        "DY6 9JU",
-        "B93 0HL",
-        "SY16 2LU",
-        "B31 2NN",
-        "SY11 2SP",
-        "B42 1AA",
-        "B97 4ET",
-        "DY3 1RP",
-        "B90 3AH",
-        "SY1 1ST",
-        "B66 4PB",
-        "B66 1DT",
-        "B71 3HR",
-        "DY8 1DX",
-        "B72 1PH",
-        "DY4 8EZ",
-        "WS1 1JY",
-        "B8 2NG",
-        "WS10 7AY",
-        "SY21 7AD",
-        "WV1 3NP",
-    ]
-    with SgChrome(executable_path=ChromeDriverManager().install()) as driver:
-        driver.get(branch_page)
-        random_sleep(driver)
-        count = 0
-        for zip_code in zip_codes:
-            count = count + 1
-            urls = fetch_branch(driver, zip_code)
-            for url in urls:
-                if url not in page_urls:
-                    page_urls.append(url)
-            log.debug(
-                f"{count}. from {zip_code} store={len(urls)}, total={len(page_urls)}"
-            )
+    body = request_with_retries(
+        "https://www.bankopeningtimes.co.uk/west-bromwich-building-society/west-bromwich-building-society.html"
+    )
 
+    for a in body.xpath("//li/a"):
+        if "West Bromwich Building Society In" in a.xpath(".//text()")[0]:
+            loc = a.xpath(".//@href")[0].replace(".html", "")
+            page_urls.append(
+                "http://www.westbrom.co.uk/customer-support/branch-finder/" + loc
+            )
     return page_urls
 
 
@@ -171,7 +91,7 @@ def get_address(raw_address):
             sa = sa + ", " + parts[index].strip()
         return sa, parts[count - 2].strip(), MISSING, parts[count - 1].strip()
     except Exception as e:
-        log.info(f"Address Err: {e}")
+        log.info(f"Address Error: {e}")
         pass
     return MISSING, MISSING, MISSING, MISSING
 
@@ -187,7 +107,11 @@ def fetch_data():
         count = count + 1
         log.debug(f"{count}. scrapping {page_url} ...")
         body = request_with_retries(page_url)
-        location_name = body.xpath("//h1/text()")[0]
+        try:
+            location_name = body.xpath("//h1/text()")[0]
+        except Exception as e:
+            log.info(f"Location Name Error: {e}")
+            continue
         raw_address = (
             stringify_nodes(body, '//div[@class="branch-details__location"]')
             .replace("Location", "")
@@ -207,7 +131,7 @@ def fetch_data():
         )
 
         yield SgRecord(
-            locator_domain="westbrom.co.uk",
+            locator_domain=DOMAIN,
             store_number=store_number,
             page_url=page_url,
             location_name=location_name,
@@ -227,7 +151,6 @@ def fetch_data():
 
 
 def scrape():
-    CrawlStateSingleton.get_instance().save(override=False)
     log.info(f"Start scrapping {website} ...")
     start = time.time()
     with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:

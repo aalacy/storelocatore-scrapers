@@ -18,7 +18,7 @@ def fetch_data(sgw: SgWriter):
     js = r.json()
     for j in js:
 
-        page_url = "https://www.cashconverters.be/magasins/"
+        page_url = j.get("permalink")
         location_name = "".join(j.get("store")).replace("&#8217;", "’").strip()
         street_address = f"{j.get('address')} {j.get('address2')}".strip()
         postal = j.get("zip")

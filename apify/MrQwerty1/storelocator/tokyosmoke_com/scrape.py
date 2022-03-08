@@ -28,6 +28,8 @@ def get_data(url, sgw: SgWriter):
         return
     r = session.get(url)
     j = r.json()["profile"]
+    if j.get("c_pagesAboutDescription") == "Coming Soon":
+        return
 
     page_url = url.replace(".json", "")
     location_name = j.get("name")
@@ -35,6 +37,8 @@ def get_data(url, sgw: SgWriter):
 
     street_address = f"{a.get('line1')} {a.get('line2') or ''}".strip()
     city = a.get("city")
+    if f", {city}" in street_address:
+        street_address = street_address.split(f", {city}")[0].strip()
     state = a.get("region")
     postal = a.get("postalCode")
     country_code = a.get("countryCode")
@@ -88,7 +92,7 @@ def get_data(url, sgw: SgWriter):
 def fetch_data(sgw: SgWriter):
     urls = generate_links()
 
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
+    with futures.ThreadPoolExecutor(max_workers=5) as executor:
         future_to_url = {executor.submit(get_data, url, sgw): url for url in urls}
         for future in futures.as_completed(future_to_url):
             future.result()

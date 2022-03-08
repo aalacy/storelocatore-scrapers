@@ -40,11 +40,16 @@ def fetch_data():
             store_res = session.get(page_url, headers=headers)
             store_sel = lxml.html.fromstring(store_res.text)
 
-            location_name = " ".join(
-                store_sel.xpath(
-                    '//h3[@class="home-hero__title single-workspace-title"]//text()'
+            location_name = (
+                " ".join(
+                    store_sel.xpath(
+                        '//h3[@class="home-hero__title single-workspace-title"]//text()'
+                    )
                 )
-            ).strip()
+                .strip()
+                .split("-")[0]
+                .strip()
+            )
 
             location_type = "<MISSING>"
 

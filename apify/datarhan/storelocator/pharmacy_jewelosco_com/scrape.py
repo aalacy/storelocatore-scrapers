@@ -8,7 +8,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
-from sgselenium.sgselenium import SgChrome
+from sgselenium.sgselenium import SgFirefox
 
 try:
     _create_unverified_https_context = ssl._create_unverified_context
@@ -23,10 +23,10 @@ def fetch_data():
     domain = "pharmacy.jewelosco.com"
 
     all_coords = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA], expected_search_radius_miles=200
+        country_codes=[SearchableCountries.USA], expected_search_radius_miles=100
     )
     for code in all_coords:
-        with SgChrome() as driver:
+        with SgFirefox() as driver:
             all_poi_html = []
 
             driver.get(start_url)
@@ -41,7 +41,11 @@ def fetch_data():
                 all_locations[i].click()
                 sleep(5)
                 all_poi_html.append(etree.HTML(driver.page_source))
-                driver.back()
+                try:
+                    driver.back()
+                except Exception:
+                    sleep(120)
+                    driver.back()
                 sleep(5)
                 all_locations = driver.find_elements_by_xpath(
                     '//button[contains(text(), "Store details")]'
