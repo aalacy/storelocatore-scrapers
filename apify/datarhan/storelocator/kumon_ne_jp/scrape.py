@@ -63,6 +63,8 @@ def fetch_data():
                     if addr.street_address_2:
                         street_address += ", " + addr.street_address_2
                     loc_response = session.get(page_url)
+                    if loc_response.status_code != 200:
+                        continue
                     loc_dom = etree.HTML(loc_response.text)
                     hoo = loc_dom.xpath('//div[@class="days"]//text()')
                     hoo = " ".join([e.strip() for e in hoo if e.strip()])
