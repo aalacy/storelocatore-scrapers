@@ -33,12 +33,12 @@ def fetch_data():
             sleep(30)
             driver.find_element_by_id("searchData").send_keys(code)
             driver.find_element_by_id("submitbutton").click()
-            sleep(5)
+            sleep(15)
             all_locations = driver.find_elements_by_xpath(
                 '//button[contains(text(), "Store details")]'
             )
             for i, loc in enumerate(all_locations):
-                all_locations[i].click()
+                loc.click()
                 sleep(5)
                 all_poi_html.append(etree.HTML(driver.page_source))
                 try:
