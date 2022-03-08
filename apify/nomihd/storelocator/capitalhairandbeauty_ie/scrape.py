@@ -64,6 +64,9 @@ def fetch_data():
             street_address = street_address + ", " + formatted_addr.street_address_2
 
         city = formatted_addr.city
+        if not city:
+            city = location_name.split(" ")[0].strip()
+
         state = "<MISSING>"
         zip = store_info[-1].strip()
         country_code = "IE"
