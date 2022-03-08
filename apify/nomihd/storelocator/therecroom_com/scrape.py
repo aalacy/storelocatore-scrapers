@@ -37,11 +37,18 @@ def fetch_data():
 
         for store in store_list:
 
-            page_url = base + "".join(store.xpath(".//a/@href")).strip()
+            page_url = (
+                base
+                + "".join(store.xpath(".//a/@href"))
+                .strip()
+                .replace("Home/SetCookie?location=", "")
+                .strip()
+                + "/info"
+            )
             locator_domain = website
             log.info(page_url)
-            session.get(page_url, headers=headers)
-            store_res = session.get("https://www.therecroom.com/")
+            store_res = session.get(page_url, headers=headers)
+            # store_res = session.get("https://www.therecroom.com/")
             store_sel = lxml.html.fromstring(store_res.text)
 
             location_name = "".join(store.xpath(".//h2//text()"))
@@ -70,7 +77,7 @@ def fetch_data():
                             [
                                 x.strip()
                                 for x in store_sel.xpath(
-                                    '//*[contains(text(),"Tel:")]/text()'
+                                    '//a[contains(@href,"tel:")]/text()'
                                 )
                             ],
                         )
@@ -82,7 +89,14 @@ def fetch_data():
 
             location_type = "<MISSING>"
 
-            hours_of_operation = "<MISSING>"
+            hours = store_sel.xpath('//table[@class="hours"]//tr[./td]')
+            hours_list = []
+            for hour in hours:
+                day = "".join(hour.xpath('td[@class="date"]/text()')).strip()
+                time = "".join(hour.xpath('td[@class="time"]/text()')).strip()
+                hours_list.append(day + time)
+
+            hours_of_operation = "; ".join(hours_list).strip()
 
             latitude, longitude = "<MISSING>", "<MISSING>"
 
