@@ -10,6 +10,7 @@ from sglogging import sglog
 import json
 import re
 import ssl
+import time
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
@@ -17,8 +18,8 @@ DOMAIN = "spring-market.com"
 website = "https://www.spring-market.com"
 log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
 
-
-def get_driver(url, class_name, driver=None):
+# without CLASS NAME
+def get_driver(url, driver=None):
     if driver is not None:
         driver.quit()
 
@@ -35,10 +36,7 @@ def get_driver(url, class_name, driver=None):
                 is_headless=True,
             ).driver()
             driver.get(url)
-
-            WebDriverWait(driver, 60).until(
-                EC.presence_of_element_located((By.CLASS_NAME, class_name))
-            )
+            time.sleep(60)
             break
         except Exception:
             driver.quit()
@@ -55,12 +53,12 @@ def fetch_data():
     x = 0
     while True:
         x = x + 1
-        class_name = "MapListView-sc-1qbfljw"
+
         url = "https://www.spring-market.com/sm/planning/rsid/713/store"
         if x == 1:
-            driver = get_driver(url, class_name)
+            driver = get_driver(url)
         else:
-            driver = get_driver(url, class_name, driver=driver)
+            driver = get_driver(url, driver=driver)
         soup = bs(driver.page_source, "html.parser")
         grids = json.loads(
             (
