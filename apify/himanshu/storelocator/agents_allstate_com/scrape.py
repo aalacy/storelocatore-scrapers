@@ -1,335 +1,110 @@
-import csv
-from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
-from sglogging import SgLogSetup
+from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-logger = SgLogSetup().get_logger("agents_allstate_com")
 session = SgRequests()
-
-
-def write_output(data):
-    with open("data.csv", mode="w", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-                "page_url",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+}
 
 
 def fetch_data():
-    base_url = "https://agents.allstate.com/"
-    r = session.get(base_url)
-    soup = BeautifulSoup(r.text, "lxml")
 
-    address123 = []
+    pattern = re.compile(r"\s\s+")
+    cleanr = re.compile(r"<[^>]+>")
+    url = "https://agents.allstate.com/sitemap.xml"
+    r = session.get(url, headers=headers)
+    soup = BeautifulSoup(r.text, "html.parser")
+    mainlist = soup.findAll("loc")
+    for mlink in mainlist:
+        mlink = mlink.text
+        r = session.get(mlink, headers=headers)
+        soup = BeautifulSoup(r.text, "html.parser")
+        linklist = soup.findAll("loc")
+        for link in linklist:
+            link = link.text
 
-    k = soup.find_all(
-        "a",
-        {
-            "class": "Directory-listLink",
-            "data-ya-track": "directorylink",
-            "data-allstate-web-analytics": "Directory-listLink",
-        },
-    )
-    k = soup.find_all("a", {"class": re.compile("Directory-listLink")})
-
-    for i in k:
-
-        try:
-            r1 = session.get("https://agents.allstate.com/" + i["href"])
-        except:
-            continue
-        soup1 = BeautifulSoup(r1.text, "lxml")
-        link_state = soup1.find_all("a", {"class": re.compile("Directory-listLink")})
-        for link in link_state:
-            try:
-                r2 = session.get(
-                    "https://agents.allstate.com" + link["href"].replace("..", "")
-                )
-            except:
+            if (".amp.") in link:
                 continue
-            soup2 = BeautifulSoup(r2.text, "lxml")
-            try:
-                st = soup2.find_all("span", {"class": "c-address-street-1"})
-            except:
+            if len(link.split("/")) > 4:
                 continue
-            st1 = soup2.find_all("span", {"class": "c-address-street-2"})
-            city = soup2.find_all("span", {"class": "c-address-city"})
-            state = soup2.find_all("abbr", {"class": "c-address-state"})
-            zip1 = soup2.find_all("span", {"class": "c-address-postal-code"})
-            phone = soup2.find_all("span", {"class": "Teaser-phoneText"})
-            name = soup2.find_all("span", {"class": "Teaser-name"})
-            a = soup2.find_all("a", {"class": "Teaser-title js-quote-cta"})
-            if a != []:
-                for loc in range(len(st)):
-                    tem_var = []
-                    store_link = "https://agents.allstate.com/" + a[loc][
-                        "href"
-                    ].replace("../../", "")
-                    r3 = session.get(store_link)
-                    soup3 = BeautifulSoup(r3.text, "lxml")
-                    phone = soup3.find("span", {"class": "Core-phoneText"}).text
-                    try:
-                        lat = soup3.find("meta", {"itemprop": "latitude"}).attrs[
-                            "content"
-                        ]
-                        lng = soup3.find("meta", {"itemprop": "longitude"}).attrs[
-                            "content"
-                        ]
-                    except:
-                        lat = "<MISSING>"
-                        lng = "<MISSING>"
-                    try:
-                        day = soup3.find("table", {"class": "c-hours-details"}).text
-
-                        hours_of_operation = ""
-                        hours_of_operation = (
-                            day.replace("Day of the WeekHours", "")
-                            .replace("Available by appointment", "")
-                            .replace("Mon", " Mon ")
-                            .replace("Tue", " Tue ")
-                            .replace("Wed", " Wed ")
-                            .replace("Thu", " Thu ")
-                            .replace("Fri", " Fri ")
-                            .replace("Sat", " Sat ")
-                            .replace("Sun", " Sun ")
-                            .strip()
-                        )
-                    except:
-                        hours_of_operation = "<MISSING>"
-
-                    tem_var.append("https://agents.allstate.com")
-                    tem_var.append(re.sub(r"\s+", " ", name[loc].text.strip()))
-                    try:
-                        new1 = st1[loc].text.strip()
-                    except:
-                        new1 = ""
-                    tem_var.append(
-                        re.sub(r"\s+", " ", st[loc].text.strip() + " " + new1)
-                        .strip()
-                        .lstrip()
-                        .replace("\n", "")
-                        .replace("\t", "")
-                        .replace("\r", "")
-                    )
-                    tem_var.append(
-                        re.sub(r"\s+", " ", city[loc].text.strip())
-                        .strip()
-                        .lstrip()
-                        .replace("\n", "")
-                        .replace("\t", "")
-                        .replace("\r", "")
-                    )
-                    tem_var.append(
-                        re.sub(r"\s+", " ", state[loc].text.strip())
-                        .strip()
-                        .lstrip()
-                        .replace("\n", "")
-                        .replace("\t", "")
-                        .replace("\r", "")
-                    )
-                    tem_var.append(
-                        re.sub(r"\s+", " ", (zip1[loc]).text.strip())
-                        .strip()
-                        .lstrip()
-                        .replace("\n", "")
-                        .replace("\t", "")
-                        .replace("\r", "")
-                    )
-                    tem_var.append("US")
-                    tem_var.append("<MISSING>")
-                    tem_var.append(
-                        re.sub(r"\s+", " ", str(phone))
-                        .strip()
-                        .lstrip()
-                        .replace("\n", "")
-                        .replace("\t", "")
-                        .replace("\r", "")
-                    )
-                    tem_var.append("<MISSING>")
-                    tem_var.append(
-                        re.sub(r"\s+", " ", str(lat))
-                        .strip()
-                        .lstrip()
-                        .replace("\n", "")
-                        .replace("\t", "")
-                        .replace("\r", "")
-                    )
-                    tem_var.append(
-                        re.sub(r"\s+", " ", str(lng))
-                        .strip()
-                        .lstrip()
-                        .replace("\n", "")
-                        .replace("\t", "")
-                        .replace("\r", "")
-                    )
-                    tem_var.append(
-                        re.sub(r"\s+", " ", hours_of_operation)
-                        .strip()
-                        .lstrip()
-                        .replace("\n", "")
-                        .replace("\t", "")
-                        .replace("\r", "")
-                    )
-                    tem_var.append(
-                        "https://agents.allstate.com/"
-                        + a[loc]["href"].replace("../../", "")
-                    )
-                    if tem_var[2] in address123:
-                        continue
-                    address123.append(tem_var[2])
-                    yield tem_var
-
-            else:
-                tem_var = []
-                name = soup2.find("div", {"class": "Hero-type"})
+            r = session.get(link, headers=headers)
+            soup = BeautifulSoup(r.text, "html.parser")
+            try:
+                street = soup.find("span", {"class": "c-address-street-1"}).text
                 try:
-                    st = soup2.find(
-                        "span", {"class": "c-address-street-1"}
-                    ).text.strip()
+                    street = (
+                        street
+                        + " "
+                        + soup.find("span", {"class": "c-address-street-2"}).text
+                    )
                 except:
-                    st = ""
+                    pass
+                city = soup.find("span", {"class": "c-address-city"}).text
+                state = soup.find("abbr", {"class": "c-address-state"}).text
+                pcode = soup.find("span", {"class": "c-address-postal-code"}).text
+                lat = soup.find("meta", {"itemprop": "latitude"})["content"]
+                longt = soup.find("meta", {"itemprop": "longitude"})["content"]
+            except:
+                street = pcode = lat = longt = "<MISSING>"
                 try:
-                    st1 = soup2.find(
-                        "span", {"class": "c-address-street-2"}
-                    ).text.strip()
-                except:
-                    st1 = ""
-                try:
-                    city = soup2.find("span", {"class": "c-address-city"}).text.strip()
-                    state = soup2.find(
-                        "abbr", {"class": "c-address-state"}
-                    ).text.strip()
+                    city, state = soup.find("span", {"class": "Hero-geo"}).text.split(
+                        ", "
+                    )
                 except:
                     continue
-                try:
-                    day = soup2.find("table", {"class": "c-hours-details"}).text
-
-                    hours_of_operation = ""
-                    hours_of_operation = (
-                        day.replace("Day of the WeekHours", "")
-                        .replace("Available by appointment", "")
-                        .replace("Mon", " Mon ")
-                        .replace("Tue", " Tue ")
-                        .replace("Wed", " Wed ")
-                        .replace("Thu", " Thu ")
-                        .replace("Fri", " Fri ")
-                        .replace("Sat", " Sat ")
-                        .replace("Sun", " Sun ")
-                        .strip()
-                    )
-                except:
-                    hours_of_operation = "<MISSING>"
-                zip1 = soup2.find(
-                    "span", {"class": "c-address-postal-code"}
-                ).text.strip()
-                phone = soup2.find("span", {"class": "Core-phoneText"}).text.strip()
-                lat = soup2.find("meta", {"itemprop": "latitude"}).attrs["content"]
-                lng = soup2.find("meta", {"itemprop": "longitude"}).attrs["content"]
-                tem_var.append("https://agents.allstate.com")
-                tem_var.append(
-                    re.sub(r"\s+", " ", name.text.strip())
+            try:
+                phone = soup.findAll("span", {"class": "Core-phoneText"})[-1].text
+            except:
+                phone = "<MISSING>"
+            try:
+                hours = soup.find("table", {"class": "c-hours-details"})
+                hours = re.sub(cleanr, "\n", str(hours))
+                hours = (
+                    re.sub(pattern, " ", str(hours))
+                    .replace("Day of the Week Hours", "")
+                    .replace("Available by appointment", "")
+                    .replace("PM", "PM ")
+                    .replace("Closed", " Closed ")
                     .strip()
-                    .lstrip()
-                    .replace("\n", "")
-                    .replace("\t", "")
-                    .replace("\r", "")
                 )
-                tem_var.append(
-                    re.sub(r"\s+", " ", st + " " + st1)
-                    .strip()
-                    .lstrip()
-                    .replace("\n", "")
-                    .replace("\t", "")
-                    .replace("\r", "")
-                )
-                tem_var.append(
-                    re.sub(r"\s+", " ", city)
-                    .strip()
-                    .lstrip()
-                    .replace("\n", "")
-                    .replace("\t", "")
-                    .replace("\r", "")
-                )
-                tem_var.append(
-                    re.sub(r"\s+", " ", state)
-                    .strip()
-                    .lstrip()
-                    .replace("\n", "")
-                    .replace("\t", "")
-                    .replace("\r", "")
-                )
-                tem_var.append(
-                    re.sub(r"\s+", " ", zip1)
-                    .strip()
-                    .lstrip()
-                    .replace("\n", "")
-                    .replace("\t", "")
-                    .replace("\r", "")
-                )
-                tem_var.append("US")
-                tem_var.append("<MISSING>")
-                tem_var.append(
-                    re.sub(r"\s+", " ", phone)
-                    .strip()
-                    .lstrip()
-                    .replace("\n", "")
-                    .replace("\t", "")
-                    .replace("\r", "")
-                )
-                tem_var.append("<MISSING>")
-                tem_var.append(
-                    re.sub(r"\s+", " ", lat)
-                    .strip()
-                    .lstrip()
-                    .replace("\n", "")
-                    .replace("\t", "")
-                    .replace("\r", "")
-                )
-                tem_var.append(
-                    re.sub(r"\s+", " ", lng)
-                    .strip()
-                    .lstrip()
-                    .replace("\n", "")
-                    .replace("\t", "")
-                    .replace("\r", "")
-                )
-                tem_var.append(
-                    re.sub(r"\s+", " ", hours_of_operation)
-                    .strip()
-                    .lstrip()
-                    .replace("\n", "")
-                    .replace("\t", "")
-                    .replace("\r", "")
-                )
-                tem_var.append(
-                    "https://agents.allstate.com" + link["href"].replace("..", "")
-                )
-                yield tem_var
+            except:
+                hours = "<MISSING>"
+            if "None" in hours:
+                hours = "<MISSING>"
+            title = soup.find("span", {"class": "MiniHero-name"}).text
+            title = title.encode("ascii", "ignore").decode("ascii")
+            yield SgRecord(
+                locator_domain="https://agents.allstate.com/",
+                page_url=link,
+                location_name=title,
+                street_address=street.strip(),
+                city=city.strip(),
+                state=state.strip(),
+                zip_postal=pcode.strip(),
+                country_code="US",
+                store_number=SgRecord.MISSING,
+                phone=phone.strip(),
+                location_type=SgRecord.MISSING,
+                latitude=str(lat),
+                longitude=str(longt),
+                hours_of_operation=hours,
+            )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()

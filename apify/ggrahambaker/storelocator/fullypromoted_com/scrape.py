@@ -1,159 +1,151 @@
-import csv
-import json
-
-from bs4 import BeautifulSoup
-
+from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgpostal.sgpostal import International_Parser, parse_address
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def fetch_data(sgw: SgWriter):
 
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
-def addy_ext(addy):
-    address = addy.split(",")
-    city = address[0]
-    state_zip = address[1].strip().split(" ")
-    state = state_zip[0]
-    zip_code = state_zip[1]
-    return city, state, zip_code
-
-
-def addy_ext_can(addy):
-    address = addy.split(",")
-    city = address[0]
-    state_zip = address[1].strip().split(" ")
-    state = state_zip[0]
-    zip_code = state_zip[1] + " " + state_zip[2]
-    return city, state, zip_code
-
-
-def fetch_data():
     locator_domain = "https://fullypromoted.com"
-    ext = "/locations/"
+    api_urls = [
+        "https://fullypromoted.com/locations/",
+        "https://fullypromoted.com/locations/country/mex/",
+    ]
+    for api_url in api_urls:
+        session = SgRequests()
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
+        }
+        r = session.get(api_url, headers=headers)
+        tree = html.fromstring(r.text)
+        div = tree.xpath('//div[./div[@class="col-md-6"]]')
+        for d in div:
+            slug = "".join(d.xpath('./div[@class="col-md-6"]/a/@href'))
+            page_url = "https://fullypromoted.com/locations/country/mex/"
+            if slug.find("locations") != -1:
+                page_url = f"https://fullypromoted.com{slug}"
 
-    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
-    headers = {"User-Agent": user_agent}
-
-    session = SgRequests()
-    req = session.get(locator_domain + ext, headers=headers)
-    base = BeautifulSoup(req.text, "lxml")
-
-    found = []
-    all_store_data = []
-
-    locs = base.find_all(class_="py-4 brdr-b1 brdr-c-grey")
-
-    for loc in locs:
-        content = list(loc.stripped_strings)
-
-        location_name = "Fully Promoted " + content[0]
-        phone_number = content[-1].strip()
-        try:
-            street_address = " ".join(content[1:-2])
-            city, state, zip_code = addy_ext(content[-2])
-        except:
-            pass
-
-        if "http" in loc.a["href"]:
-            link = loc.a["href"].replace("/locations/htt", "htt")
-        else:
-            link = locator_domain + loc.a["href"]
-
-        try:
-            req = session.get(link, headers=headers)
-            base = BeautifulSoup(req.text, "lxml")
-
-            loc_j = (
-                base.find_all("script", attrs={"type": "application/ld+json"})[-1]
-                .contents[0]
+            location_name = (
+                "Fully Promoted "
+                + "".join(d.xpath('.//div[@class="col-md-6"]//text()'))
                 .replace("\n", "")
                 .strip()
             )
+            adr = (
+                " ".join(d.xpath('.//div[@class="col-md-6 text-right"]/text()'))
+                .replace("\n", "")
+                .strip()
+            )
+            adr = " ".join(adr.split())
+            a = parse_address(International_Parser(), adr)
+            street_address = (
+                f"{a.street_address_1} {a.street_address_2}".replace("None", "").strip()
+                or "<MISSING>"
+            )
+            state = a.state or "<MISSING>"
+            postal = a.postcode or "<MISSING>"
+            country_code = "US"
+            if state == "IL":
+                country_code = "US"
+            if page_url.find("mex") != -1:
+                country_code = "Mexico"
+            city = a.city or "<MISSING>"
+            if city == "<MISSING>" and page_url.find("mex") != -1:
+                city = adr.split(",")[0].split()[-1].strip()
+                state = adr.split(",")[1].split()[0].strip()
+                postal = adr.split(",")[1].split()[1].strip()
+            phone = (
+                "".join(d.xpath('.//a[contains(@href, "tel")]/text()')) or "<MISSING>"
+            )
 
-            loc_json = json.loads(loc_j)
+            latitude = "<MISSING>"
+            longitude = "<MISSING>"
+            hours_of_operation = "<MISSING>"
+            if page_url.find("mex") == -1:
+                r = session.get(page_url, headers=headers)
+                tree = html.fromstring(r.text)
+                try:
+                    latitude = (
+                        "".join(
+                            tree.xpath(
+                                '//script[contains(text(), "ProfessionalService")]/text()'
+                            )
+                        )
+                        .split('"latitude":')[1]
+                        .split(",")[0]
+                        .strip()
+                    )
+                    longitude = (
+                        "".join(
+                            tree.xpath(
+                                '//script[contains(text(), "ProfessionalService")]/text()'
+                            )
+                        )
+                        .split('"longitude":')[1]
+                        .split("}")[0]
+                        .strip()
+                    )
+                except:
+                    latitude, longitude = "<MISSING>", "<MISSING>"
+                hours_of_operation = (
+                    " ".join(tree.xpath("//table//tr/td/text()"))
+                    .replace("\n", "")
+                    .strip()
+                    or "<MISSING>"
+                )
+                hours_of_operation = " ".join(hours_of_operation.split())
+                if street_address == "<MISSING>":
+                    street_address = (
+                        "".join(
+                            tree.xpath(
+                                '//div[@class="pt-2 pb-4 px-4"]/h4[1]/following::p[1]/span/text()'
+                            )
+                        )
+                        or "<MISSING>"
+                    )
+                    ad = (
+                        "".join(
+                            tree.xpath(
+                                '//div[@class="pt-2 pb-4 px-4"]/h4[1]/following::p[1]/text()'
+                            )
+                        )
+                        .replace("\n", "")
+                        .replace("\r", "")
+                        .strip()
+                    )
+                    state = ad.split(",")[1].split()[0].strip()
+                    postal = " ".join(ad.split(",")[1].split()[1:]).strip()
+                    country_code = "CA"
+                    if state == "IL":
+                        country_code = "US"
+                    city = ad.split(",")[0].strip()
 
-            lat = loc_json["geo"]["latitude"]
-            longit = loc_json["geo"]["longitude"]
+            row = SgRecord(
+                locator_domain=locator_domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=postal,
+                country_code=country_code,
+                store_number=SgRecord.MISSING,
+                phone=phone,
+                location_type=SgRecord.MISSING,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
 
-            if (lat + longit) in found:
-                continue
-            found.append(lat + longit)
-
-            try:
-                content = list(base.find(class_="pt-2 pb-4 px-4").stripped_strings)
-            except:
-                content = list(base.find(class_="col-md-7 col-lg-4").stripped_strings)
-
-            location_name = content[0]
-            street_address = content[1]
-            city, state, zip_code = addy_ext(content[2])
-            phone_number = content[3].replace("Call us:", "").strip()
-
-            try:
-                hours = " ".join(list(base.find("table").stripped_strings))
-            except:
-                hours = "<MISSING>"
-        except:
-            lat = "<MISSING>"
-            longit = "<MISSING>"
-            hours = "<MISSING>"
-            link = locator_domain + ext
-
-        country_code = "US"
-        store_number = "<MISSING>"
-        location_type = "<MISSING>"
-
-        store_data = [
-            locator_domain,
-            link,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip_code,
-            country_code,
-            store_number,
-            phone_number,
-            location_type,
-            lat,
-            longit,
-            hours,
-        ]
-        all_store_data.append(store_data)
-
-    return all_store_data
+            sgw.write_row(row)
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+if __name__ == "__main__":
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
+    ) as writer:
+        fetch_data(writer)

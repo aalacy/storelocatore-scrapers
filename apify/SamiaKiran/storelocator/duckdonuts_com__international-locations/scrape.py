@@ -18,15 +18,31 @@ headers = {
 DOMAIN = "https://www.duckdonuts.com"
 MISSING = SgRecord.MISSING
 
+headers_2 = {
+    "Connection": "keep-alive",
+    "Accept": "*/*",
+    "X-Requested-With": "XMLHttpRequest",
+    "User-Agent": "Mozilla/5.0 (iPad; CPU OS 11_0 like Mac OS X) AppleWebKit/604.1.34 (KHTML, like Gecko) Version/11.0 Mobile/15A5341f Safari/604.1",
+    "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+    "Origin": "https://www.duckdonuts.com",
+    "Sec-Fetch-Site": "same-origin",
+    "Sec-Fetch-Mode": "cors",
+    "Sec-Fetch-Dest": "empty",
+    "Accept-Language": "en-US,en;q=0.9",
+}
+
 
 def fetch_data():
     if True:
         url = "https://www.duckdonuts.com/international-locations/"
         r = session.get(url, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
-        loclist = soup.find("ul", {"class": "flex items-3"}).findAll("li")
+        loclist = soup.find("div", {"id": "LocationsCont"}).findAll("li")
         for loc in loclist:
+            hours_of_operation = MISSING
             location_name = loc.find("h2").text
+            if "COMING SOON" in location_name:
+                continue
             raw_address = (
                 loc.find("address")
                 .get_text(separator="|", strip=True)
@@ -37,6 +53,17 @@ def fetch_data():
             page_url = "https://www.duckdonuts.com" + page_url
             r = session.get(page_url, headers=headers)
             soup = BeautifulSoup(r.text, "html.parser")
+            if "View All Hours" in r.text:
+                payload = (
+                    "_m_=HoursPopup&HoursPopup%24_edit_=16580&HoursPopup%24_command_="
+                )
+                r2 = session.post(page_url, headers=headers_2, data=payload)
+                hours_of_operation = (
+                    BeautifulSoup(r2.text, "html.parser")
+                    .find("table")
+                    .get_text(separator="|", strip=True)
+                    .replace("|", " ")
+                )
             try:
                 longitude, latitude = (
                     soup.select_one("iframe[src*=maps]")["src"]
@@ -66,8 +93,14 @@ def fetch_data():
             zip_postal = pa.postcode
             zip_postal = zip_postal.strip() if zip_postal else MISSING
 
-            country_code = pa.country
-            country_code = country_code.strip() if country_code else MISSING
+            if "Dubai" in location_name:
+                country_code = "Dubai"
+            elif "Saudi Arabia" in location_name:
+                country_code = "Saudi Arabia"
+            elif "Bayamon" in location_name:
+                country_code = "Bayamon"
+            else:
+                country_code = MISSING
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url=page_url,
@@ -82,7 +115,7 @@ def fetch_data():
                 location_type=MISSING,
                 latitude=latitude,
                 longitude=longitude,
-                hours_of_operation=MISSING,
+                hours_of_operation=hours_of_operation,
                 raw_address=raw_address,
             )
 

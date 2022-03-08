@@ -21,7 +21,26 @@ def fetch_data(sgw: SgWriter):
         slug = "".join(d.xpath('.//a[@class="btn-yellow"]/@href'))
         page_url = f"{locator_domain}{slug}"
         location_name = "".join(d.xpath(".//h4/text()"))
-        street_address = "".join(d.xpath('.//span[@class="address-line1"]/text()'))
+        street_address = (
+            "".join(d.xpath('.//span[@class="address-line1"]/text()'))
+            + " "
+            + "".join(d.xpath('.//span[@class="address-line2"]/text()'))
+        )
+        street_address = (
+            street_address.replace("in Quil Ceda Village", "")
+            .replace("Concord Mills Mall", "")
+            .strip()
+        )
+        if street_address.find("Grove City Premium Outlets") != -1:
+            street_address = street_address.split("Grove City Premium Outlets")[
+                0
+            ].strip()
+        if street_address.find("Tanger Outlet Center") != -1:
+            street_address = street_address.split("Tanger Outlet Center ")[0].strip()
+        if street_address.find("Suite #816 Suite #816") != -1:
+            street_address = street_address.replace(
+                "Suite #816 Suite #816", "Suite #816"
+            ).strip()
         phone = "".join(d.xpath('.//a[contains(@href, "tel")]/text()')) or "<MISSING>"
         state = (
             "".join(d.xpath('.//span[@class="administrative-area"]/text()'))

@@ -1,104 +1,138 @@
-import csv
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgpostal.sgpostal import International_Parser, parse_address
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def fetch_data(sgw: SgWriter):
 
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
-    locator_domain = "https://wavescoffee.com/"
-    api_url = "https://wavescoffee.com/wp-admin/admin-ajax.php?action=store_search&lat=49.2827291&lng=-123.1207375&max_results=50&search_radius=25&autoload=1"
-
+    locator_domain = "https://wavescoffee.com"
+    api_url = "https://wavescoffee.com/locations"
     session = SgRequests()
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:86.0) Gecko/20100101 Firefox/86.0",
-        "Accept": "*/*",
-        "Accept-Language": "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3",
-        "X-Requested-With": "XMLHttpRequest",
-        "Proxy-Authorization": "Basic YWNjZXNzX3Rva2VuOmc3NzExNnBzajZqbGZhaHM5dHJwMDdocm0ydTlxNGVzM3BhaGNrYm9oY2kzOGEzMWtpdQ==",
-        "Connection": "keep-alive",
-        "Referer": "https://wavescoffee.com/locations",
-        "Pragma": "no-cache",
-        "Cache-Control": "no-cache",
-        "TE": "Trailers",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
     r = session.get(api_url, headers=headers)
-    js = r.json()
-    for j in js:
+    tree = html.fromstring(r.text)
+    div = tree.xpath('//div[@id="all-locations-tab"]/ul/li')
+    for d in div:
 
-        street_address = j.get("address")
-        city = j.get("city")
-        postal = j.get("zip")
-        state = j.get("state")
-        phone = j.get("phone")
-        country_code = j.get("country")
-        store_number = "<MISSING>"
-        location_name = "".join(j.get("store")).replace("&#038;", "&")
-        latitude = j.get("lat")
-        longitude = j.get("lng")
-        location_type = "<MISSING>"
-        page_url = j.get("permalink")
-        hours = str(j.get("hours"))
-        hours = html.fromstring(hours)
-        hours_of_operation = (
-            " ".join(hours.xpath("//*/text()")).replace("\n", "").strip()
+        location_name = (
+            "".join(
+                d.xpath(
+                    './/div[contains(@class, "post-details padding-3")]/*[1]/text()'
+                )
+            )
+            .replace("\n", "")
+            .strip()
         )
-        if hours_of_operation == "None":
-            hours_of_operation = "<MISSING>"
+        if not location_name:
+            continue
+        slug = "".join(
+            d.xpath('.//div[contains(@class, "post-details padding-3")]/*[1]//@href')
+        )
+        page_url = "https://wavescoffee.com/locations"
+        if slug:
+            page_url = f"https://wavescoffee.com/{slug}"
+        street_address = "<MISSING>"
+        state = "<MISSING>"
+        postal = "<MISSING>"
+        country_code = "CA"
+        city = "<MISSING>"
+        if page_url == "https://wavescoffee.com/locations":
+            street_address = "".join(
+                d.xpath(
+                    './/div[contains(@class, "post-details padding-3")]/*[1]/following-sibling::p[1]/text()[1]'
+                )
+            )
+            city = (
+                "".join(
+                    d.xpath(
+                        './/div[contains(@class, "post-details padding-3")]/*[1]/following-sibling::p[1]/text()[2]'
+                    )
+                )
+                .split(",")[0]
+                .strip()
+            )
+            state = (
+                "".join(
+                    d.xpath(
+                        './/div[contains(@class, "post-details padding-3")]/*[1]/following-sibling::p[1]/text()[2]'
+                    )
+                )
+                .split(",")[1]
+                .strip()
+            )
+        cms = "".join(d.xpath('.//*[contains(text(), "Opening Early")]/text()'))
+        phone = "<MISSING>"
+        hours_of_operation = "<MISSING>"
+        if cms:
+            hours_of_operation = "Coming Soon"
+        if slug:
+            r = session.get(page_url, headers=headers)
+            tree = html.fromstring(r.text)
+            ad = (
+                " ".join(
+                    tree.xpath('//*[text()="Address"]/following-sibling::*[1]/text()')
+                )
+                .replace("\n", " ")
+                .strip()
+            )
+            a = parse_address(International_Parser(), ad)
+            street_address = f"{a.street_address_1} {a.street_address_2}".replace(
+                "None", ""
+            ).strip()
+            state = a.state or "<MISSING>"
+            postal = a.postcode or "<MISSING>"
+            country_code = "CA"
+            city = a.city or "<MISSING>"
+            phone = (
+                "".join(
+                    tree.xpath('//*[text()="Phone"]/following-sibling::*[1]/text()')
+                )
+                .replace("\n", "")
+                .replace("T:", "")
+                .strip()
+            )
+            hours_of_operation = (
+                " ".join(
+                    tree.xpath(
+                        '//*[contains(text(), "Hours")]/following-sibling::div[1]/div//text()'
+                    )
+                )
+                .replace("\n", "")
+                .strip()
+            )
+            hours_of_operation = " ".join(hours_of_operation.split())
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=SgRecord.MISSING,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=SgRecord.MISSING,
+            longitude=SgRecord.MISSING,
+            hours_of_operation=hours_of_operation,
+        )
 
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID({SgRecord.Headers.PAGE_URL, SgRecord.Headers.LOCATION_NAME})
+        )
+    ) as writer:
+        fetch_data(writer)

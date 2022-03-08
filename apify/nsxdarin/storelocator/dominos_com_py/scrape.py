@@ -30,7 +30,6 @@ def fetch_data():
     zc = "<MISSING>"
     logger.info("Pulling Stores")
     for line in r.iter_lines():
-        line = str(line.decode("utf-8"))
         if '<option value="' in line:
             sids.append(
                 line.split('<option value="')[1].split('"')[0]
@@ -61,6 +60,10 @@ def fetch_data():
             phone = "+595 984 528865"
         if "Itaugua" in name:
             phone = "0983111222"
+            city = "Itaugua"
+        if "San Bernardino" in name:
+            phone = "595214135000"
+            city = "San Bernardino"
         yield SgRecord(
             locator_domain=website,
             page_url=loc,
@@ -118,7 +121,7 @@ def fetch_data():
         hours_of_operation=hours,
     )
     name = "Villa Aurelia"
-    city = "<MISSING>"
+    city = "Villa Aurelia"
     add = "<MISSING>"
     phone = "0986407419"
     yield SgRecord(

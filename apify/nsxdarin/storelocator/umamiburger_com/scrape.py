@@ -122,7 +122,7 @@ def fetch_data():
             if TC:
                 hours = "Temporarily Closed"
             if CS is False:
-                if city != "<MISSING>":
+                if city != "<MISSING>" and "www.umamiburger.com/careers" not in loc:
                     yield SgRecord(
                         locator_domain=website,
                         page_url=loc,

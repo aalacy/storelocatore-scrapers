@@ -26,8 +26,9 @@ another internal API to pull all data fields.
 - Parse all locator data from here 
 
 ## Note: 
-- First API : `https://cde-assets-planetfitness.s3.amazonaws.com/locations.json`  this API endpoint is not valid now. 
-- New API Endpoint: `https://www.planetfitness.com/gyms/pfx/api/clubs/locations` 
+- First API : `https://cde-assets-planetfitness.s3.amazonaws.com/locations.json`  
+- New API Endpoint: `https://www.planetfitness.com/gyms/pfx/api/clubs/locations` this API endpoint is not valid now.  [ Dec 10, 2021]
+- First API is valid now, `https://cde-assets-planetfitness.s3.amazonaws.com/locations.json`  [ Dec 10, 2021]
 
 ### Results: 
 - Total Locations:  2192 as of May 12, 2021

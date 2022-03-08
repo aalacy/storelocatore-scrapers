@@ -43,6 +43,7 @@ def fetch_data():
             check1 = 0
             if check3 == 0:
                 stlink = "https://stores.sunglasshut.com/" + stnow["href"]
+
                 r = session.get(stlink, headers=headers)
                 soup = BeautifulSoup(r.text, "html.parser")
             else:
@@ -76,7 +77,7 @@ def fetch_data():
                 except:
 
                     branchlist = []
-                    branchlist.append(citylink)
+                    branchlist.append(r.url)
                     check2 = 1
                 for branch in branchlist:
                     if check2 == 0:
@@ -106,7 +107,7 @@ def fetch_data():
                     try:
                         state = soup.find("abbr", {"class": "c-address-state"}).text
                     except:
-                        continue
+                        state = "<MISSING>"
                     pcode = soup.find("span", {"class": "c-address-postal-code"}).text
                     phone = soup.find("div", {"id": "phone-main"}).text
                     try:

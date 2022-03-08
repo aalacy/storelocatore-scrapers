@@ -24,105 +24,132 @@ headers = {
 
 def fetch_data():
     # Your scraper here
-    search_url = "https://www.goodfeet.com/locations"
-    search_res = session.get(search_url, headers=headers)
+    search_urls = [
+        "https://www.goodfeet.com/locations",
+        "https://www.goodfeet.com/au/locations",
+    ]
+    for search_url in search_urls:
+        search_res = session.get(search_url, headers=headers)
 
-    stores = (
-        search_res.text.split("var addresses = ")[1]
-        .split("]];")[0]
-        .strip(' []"')
-        .replace("\\u003C", "<")
-        .replace("\\u003E", ">")
-        .replace("\\u0022", '"')
-        .replace("\\u0026", ",")
-        .replace(" ,", ",")
-        .replace("\\u0027", "")
-        .replace("\\u0071", "")
-        .replace("\\/", "/")
-        .replace("\\n", "")
-        .replace("\\r", "")
-        .split('"],["')
-    )
+        stores = (
+            search_res.text.split("var addresses = ")[1]
+            .split("]];")[0]
+            .strip(' []"')
+            .replace("\\u003C", "<")
+            .replace("\\u003E", ">")
+            .replace("\\u0022", '"')
+            .replace("\\u0026", ",")
+            .replace(" ,", ",")
+            .replace("\\u0027", "")
+            .replace("\\u0071", "")
+            .replace("\\/", "/")
+            .replace("\\n", "")
+            .replace("\\r", "")
+            .split('"],["')
+        )
 
-    for store in stores:
-        if "Opening Soon!" in store:
-            continue
+        for store in stores:
+            if "Opening Soon!" in store:
+                continue
 
-        locator_domain = website
+            locator_domain = website
 
-        store_info = store.split(',"')[1]
+            store_info = store.split(',"')[1]
 
-        store_number = store_info.split('",')[1].strip()
+            store_number = "<MISSING>"
 
-        html_str = store_info.split('",')[0].strip()
-        page_sel = lxml.html.fromstring(html_str)
+            html_str = store_info.split('",')[0].strip()
+            page_sel = lxml.html.fromstring(html_str)
 
-        location_name = "".join(page_sel.xpath("//h4//text()"))
+            location_name = "".join(page_sel.xpath("//h4//text()"))
 
-        page_url = "".join(page_sel.xpath("//h4/a/@href")).strip()
-        if page_url.split("/")[-1] == "test":
-            continue
+            page_url = "".join(page_sel.xpath("//h4/a/@href")).strip()
+            if page_url.split("/")[-1] == "test":
+                continue
 
-        phone = "".join(page_sel.xpath("//a[contains(@href,'tel:')]/text()"))
+            phone = "".join(page_sel.xpath("//a[contains(@href,'tel:')]/text()"))
 
-        address_info = page_sel.xpath('//p[./i[contains(@class,"map-marked")]]//text()')
-        if len(address_info) == 1:
-            address_info = "".join(address_info).split(",")
+            address_info = page_sel.xpath(
+                '//p[./i[contains(@class,"map-marked")]]//text()'
+            )
+            if len(address_info) == 1:
+                address_info = "".join(address_info).split(",")
 
-        street_address = ", ".join(address_info[0:-2]).strip()
-        city = address_info[-2].split(", ")[-1].strip(' ",')
-        state = address_info[-1].strip().split(" ")[0].strip()
-        zip = address_info[-1].strip().split(" ")[-1].strip()
+            street_address = ", ".join(address_info[0:-2]).strip()
+            city = address_info[-2].split(", ")[-1].strip(' ",')
+            state = address_info[-1].strip().split(" ")[0].strip()
+            zip = address_info[-1].strip().split(" ")[-1].strip()
 
-        country_code = "US"
-        if not us.states.lookup(state):
-            if re.search("[A-Za-z]", zip):
-                country_code = "CA"
-            else:
+            country_code = "US"
+            if not us.states.lookup(state):
+                if re.search("[A-Za-z]", zip):
+                    country_code = "CA"
+
+            if "au/" in search_url:
                 country_code = "AU"
 
-        location_type = "<MISSING>"
+            if "kor/" in page_url:
+                country_code = "KR"
 
-        hours_of_operation = (
-            "; ".join(page_sel.xpath("//p[not(./i)]/text()"))
-            .replace(";  ;  ;  ;", "")
-            .replace(";  ;  ; ", "")
-            .strip()
-        )
+            if "sa-i/" in page_url:
+                country_code = "SA"
 
-        try:
-            latitude = store.split(',"')[2].strip(' "')
-            longitude = store.split(',"')[3].strip(' "')
-        except IndexError:
-            latitude = "<MISSING>"
-            longitude = "<MISSING>"
+            if "pr/" in page_url:
+                country_code = "PR"
 
-        raw_address = "<MISSING>"
+            location_type = "<MISSING>"
 
-        yield SgRecord(
-            locator_domain=locator_domain,
-            page_url=page_url,
-            location_name=location_name,
-            street_address=street_address,
-            city=city,
-            state=state,
-            zip_postal=zip,
-            country_code=country_code,
-            store_number=store_number,
-            phone=phone,
-            location_type=location_type,
-            latitude=latitude,
-            longitude=longitude,
-            hours_of_operation=hours_of_operation,
-            raw_address=raw_address,
-        )
+            hours_of_operation = (
+                "; ".join(page_sel.xpath("//p[not(./i)]/text()"))
+                .replace(";  ;  ;  ;", "")
+                .replace(";  ;  ; ", "")
+                .strip()
+                .split("; Located")[0]
+                .strip()
+                .replace("; ,nbsp;", "")
+                .strip()
+                .split("; Appointments")[0]
+                .strip()
+                .split("; Christmas Eve")[0]
+                .strip()
+            )
+
+            if "call the store for more information" in hours_of_operation.lower():
+                hours_of_operation = "<MISSING>"
+
+            try:
+                latitude = store.split(',"')[2].strip(' "')
+                longitude = store.split(',"')[3].strip(' "')
+            except IndexError:
+                latitude = "<MISSING>"
+                longitude = "<MISSING>"
+
+            raw_address = "<MISSING>"
+
+            yield SgRecord(
+                locator_domain=locator_domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+                raw_address=raw_address,
+            )
 
 
 def scrape():
     log.info("Started")
     count = 0
     with SgWriter(
-        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.StoreNumberId)
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
     ) as writer:
         results = fetch_data()
         for rec in results:
