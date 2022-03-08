@@ -55,6 +55,8 @@ def fetch_data():
             zip = "<MISSING>"
             if len(state.split(" ")) > 1:
                 zip = state.split(" ")[-1].strip()
+                state = state.split(" ")[0].strip()
+
             country_code = "US"
 
             store_number = "<MISSING>"
