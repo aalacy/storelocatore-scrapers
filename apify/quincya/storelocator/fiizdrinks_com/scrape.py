@@ -24,6 +24,8 @@ def fetch_data(sgw: SgWriter):
     response = session.get(base_link, headers=headers)
     base = BeautifulSoup(response.text, "lxml")
 
+    found = []
+
     sections = base.find(class_="elementor-section-wrap").find_all(
         "section", recursive=False
     )[1:]
@@ -47,6 +49,10 @@ def fetch_data(sgw: SgWriter):
             if "Rd, Ste" in raw_address[0]:
                 raw_address = raw_address[0].replace("Rd, Ste", "Rd Ste").split("88,")
             street_address = " ".join(raw_address[:-1])
+            if street_address in found:
+                continue
+            if "Lagoon" not in street_address:
+                found.append(street_address)
             city_line = raw_address[-1]
             city = city_line.split(",")[0]
             state = city_line.split(",")[1].split()[0].strip()
@@ -62,9 +68,10 @@ def fetch_data(sgw: SgWriter):
             except:
                 hours_of_operation = ""
 
-            phone = item.a.text
+            phone = item.a.text.replace("NOW OPEN!", "").strip()
             if not phone[2].isdigit():
                 phone = ""
+
             if "follow" in hours_of_operation:
                 hours_of_operation = ""
             store_number = ""
@@ -98,5 +105,9 @@ def fetch_data(sgw: SgWriter):
             )
 
 
-with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))) as writer:
+with SgWriter(
+    SgRecordDeduper(
+        SgRecordID({SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS})
+    )
+) as writer:
     fetch_data(writer)

@@ -21,6 +21,16 @@ def fetch_data():
         "x-requested-with": "XMLHttpRequest",
     }
 
+    frm_my = {
+        "store_locatore_search_input": "Kuala Lumpur Kuala Lumpur, Malaysia",
+        "store_locatore_search_lat": "3.139003",
+        "store_locatore_search_lng": "101.686855",
+        "store_locatore_search_radius": "2000",
+        "store_locator_category": "",
+        "action": "make_search_request",
+        "lat": "3.139003",
+        "lng": "101.686855",
+    }
     frm_in = {
         "store_locatore_search_input": "New Delhi, India , India",
         "store_locatore_search_lat": "28.6139391",
@@ -117,6 +127,7 @@ def fetch_data():
         "sg": frm_sg,
         "th": frm_th,
         "vn": frm_vn,
+        "my": frm_my,
     }
     for c, frm in countries.items():
         response = session.post(start_url.format(c), headers=hdr, data=frm)
@@ -156,7 +167,12 @@ def fetch_data():
             hoo = [e.strip() for e in hoo if e.strip()]
             hoo = " ".join(hoo)
             if "Schedule" in hoo:
-                hoo = hoo.split("Schedule")[1]
+                if "Schedule:" in hoo:
+                    hoo = hoo.split("Parent")[0].replace("Kasthuri", "")
+                else:
+                    hoo = hoo.split("Schedule")[1]
+            if "Schedule " in hoo:
+                hoo = hoo.split("Schedule ")[1]
             hoo = (
                 hoo.split("Parent Orientation")[0]
                 .split(".com ")[-1]
@@ -165,6 +181,11 @@ def fetch_data():
             )
             if "Please contact the center for more details" in hoo:
                 hoo = ""
+            if not hoo:
+                hoo = loc_dom.xpath(
+                    '//div[@class="store_locator_content"]/ul/li[4]/text()'
+                )
+                hoo = " ".join([e.strip() for e in hoo])
 
             item = SgRecord(
                 locator_domain=domain,
@@ -174,7 +195,7 @@ def fetch_data():
                 city=addr.city,
                 state=addr.state,
                 zip_postal=addr.postcode,
-                country_code=addr.country,
+                country_code=c,
                 store_number="",
                 phone=phone,
                 location_type="",

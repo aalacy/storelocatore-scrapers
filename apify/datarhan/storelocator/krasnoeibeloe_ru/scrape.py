@@ -52,8 +52,6 @@ def fetch_data():
                 store_number = poi_html.xpath(".//input/@value")[0]
                 city = dom.xpath('//select[@name="city"]/option/text()')
                 city = city[0] if city else ""
-                if not city:
-                    continue
                 state = dom.xpath('//select[@name="region"]/option/text()')[0]
                 hoo = poi_html.xpath('.//div[@class="shop_l_time"]/div/text()')
                 hoo = " ".join([e.strip() for e in hoo])
@@ -77,6 +75,7 @@ def fetch_data():
                 )
 
                 yield item
+
             all_cities = driver.find_elements_by_xpath(
                 '//select[@name="city"]/following-sibling::div[1]//div[@class="option"]'
             )
@@ -123,9 +122,7 @@ def scrape():
         SgRecordDeduper(
             SgRecordID(
                 {
-                    SgRecord.Headers.STREET_ADDRESS,
                     SgRecord.Headers.STORE_NUMBER,
-                    SgRecord.Headers.CITY,
                 }
             )
         )
