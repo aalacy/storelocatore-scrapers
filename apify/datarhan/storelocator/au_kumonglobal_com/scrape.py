@@ -49,7 +49,9 @@ def fetch_data():
             hoo = " ".join([e.strip() for e in hoo if e.strip()])
             country_code = start_url.split(".")[-1][:-1]
             if country_code == "au":
-                city = " ".join(raw_address.split(",")[-1].strip().split(" ")[:-2]).strip()
+                city = " ".join(
+                    raw_address.split(",")[-1].strip().split(" ")[:-2]
+                ).strip()
             else:
                 city = addr.city
 
