@@ -39,10 +39,17 @@ def fetch_data():
             temp = html.findAll("p")
             raw_address = temp[0].text.replace("Address:", "")
             try:
-                phone = temp[1].get_text(separator="|", strip=True).split("|")[1]
+                phone = (
+                    temp[1]
+                    .get_text(separator="|", strip=True)
+                    .split("|")[1]
+                    .replace("053-9481660 053-9481665", "053-9481660")
+                )
             except:
                 phone = MISSING
-            pa = parse_address_intl(raw_address)
+            address = raw_address.split(",")[:-1]
+            address = ", ".join(address)
+            pa = parse_address_intl(address)
 
             street_address = pa.street_address_1
             street_address = street_address if street_address else MISSING
