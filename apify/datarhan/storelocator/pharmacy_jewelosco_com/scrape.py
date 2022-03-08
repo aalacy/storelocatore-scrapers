@@ -25,12 +25,12 @@ def fetch_data():
     all_coords = DynamicZipSearch(
         country_codes=[SearchableCountries.USA], expected_search_radius_miles=100
     )
-    for code in all_coords:
-        with SgFirefox() as driver:
+    with SgFirefox() as driver:
+        for code in all_coords:
             all_poi_html = []
 
             driver.get(start_url)
-            sleep(15)
+            sleep(30)
             driver.find_element_by_id("searchData").send_keys(code)
             driver.find_element_by_id("submitbutton").click()
             sleep(5)
