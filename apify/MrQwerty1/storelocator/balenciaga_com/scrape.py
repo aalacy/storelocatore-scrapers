@@ -72,7 +72,7 @@ def fetch_data(sgw: SgWriter):
             ]
             for d in days:
                 part = d[:3].lower()
-                time = j.get(f"{part}Hours")
+                time = j.get(f"{part}Hours") or ""
                 if time.lower().find("no data") != -1:
                     continue
                 _tmp.append(f"{d}: {time}")

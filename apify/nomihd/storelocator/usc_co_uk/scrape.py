@@ -52,10 +52,26 @@ def fetch_data():
                 )
 
                 location_name = store_json["formattedStoreNameLong"]
-                street_address = store_json["address"]
+                street_address = (
+                    store_json["address"]
+                    .replace("\r\n", "")
+                    .strip()
+                    .replace("\n", "")
+                    .strip()
+                )
+                raw_address = street_address
                 city = store_json["town"]
+                if city and len(city) > 0:
+                    raw_address = raw_address + ", " + city
+
                 state = store_json["county"]
+                if state and len(state) > 0:
+                    raw_address = raw_address + ", " + state
+
                 zip = store_json["postCode"]
+                if zip and len(zip) > 0:
+                    raw_address = raw_address + ", " + zip
+
                 country_code = store_json["countryCode"]
 
                 store_number = str(store_json["code"])
@@ -113,6 +129,7 @@ def fetch_data():
                     latitude=latitude,
                     longitude=longitude,
                     hours_of_operation=hours_of_operation,
+                    raw_address=raw_address,
                 )
             else:
                 location_name = "".join(
@@ -188,6 +205,7 @@ def fetch_data():
                     latitude=latitude,
                     longitude=longitude,
                     hours_of_operation=hours_of_operation,
+                    raw_address=raw_address,
                 )
 
 
