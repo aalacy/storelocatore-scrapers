@@ -1,5 +1,4 @@
 from bs4 import BeautifulSoup as bs
-from sgrequests import SgRequests
 from sgselenium import SgChrome
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
@@ -43,62 +42,34 @@ def _headers():
 def fetch_data():
     with SgChrome() as driver:
         driver.get(base_url)
-        with SgRequests() as session:
-            session.get(locator_domain, headers=_headers())
-            locations = bs(driver.page_source, "lxml").select(
-                "div.accordions .location-sm"
+        locations = bs(driver.page_source, "lxml").select("div.accordions .location-sm")
+        for location in locations:
+            addr = list(location.select_one("address").stripped_strings)
+            phone = location.find("a", href=re.compile("tel:")).text.strip()
+            street_address = (
+                " ".join(addr[:-1])
+                .replace("Ackerman Student Union", "")
+                .replace("New York, NY 10007", "")
+                .strip()
             )
-            for location in locations:
-                addr = list(location.select_one("address").stripped_strings)
-                phone = location.find("a", href=re.compile("tel:")).text.strip()
-                page_url = base_url
-                hours = []
-                coord = ["<INACCESIBLE>", "<INACCESIBLE>"]
-                if location.select("a.btn"):
-                    page_url = location.select("a.btn")[-1]["href"]
-                    logger.info(page_url)
-                    soup1 = bs(session.get(page_url, headers=_headers()).text, "lxml")
-                    try:
-                        coord = (
-                            soup1.address.find_next_sibling("a")["href"]
-                            .split("/@")[1]
-                            .split("/data")[0]
-                            .split(",")
-                        )
-                    except:
-                        coord = ["<INACCESIBLE>", "<INACCESIBLE>"]
-
-                    labels = [_.text for _ in soup1.select("dl.hours dt")]
-                    values = [_.text.strip() for _ in soup1.select("dl.hours dd")]
-                    for x in range(len(labels)):
-                        hours.append(f"{labels[x]}: {values[x]}")
-                street_address = (
-                    " ".join(addr[:-1])
-                    .replace("Ackerman Student Union", "")
-                    .replace("New York, NY 10007", "")
-                    .strip()
-                )
-                if street_address.endswith(","):
-                    street_address = street_address[:-1]
-                city = addr[-1].split(",")[0].strip()
-                if city == "New Yor":
-                    city = "New York"
-                yield SgRecord(
-                    page_url=page_url,
-                    store_number=location["id"],
-                    location_name=location.b.text.strip(),
-                    street_address=street_address,
-                    city=city,
-                    state=addr[-1].split(",")[1].strip().split(" ")[0].strip(),
-                    zip_postal=addr[-1].split(",")[1].strip().split(" ")[-1].strip(),
-                    country_code="US",
-                    phone=phone,
-                    latitude=coord[0],
-                    longitude=coord[1],
-                    locator_domain=locator_domain,
-                    hours_of_operation="; ".join(hours),
-                    raw_address=" ".join(addr).replace("Ackerman Student Union", ""),
-                )
+            if street_address.endswith(","):
+                street_address = street_address[:-1]
+            city = addr[-1].split(",")[0].strip()
+            if city == "New Yor":
+                city = "New York"
+            yield SgRecord(
+                page_url=base_url,
+                store_number=location["id"],
+                location_name=location.b.text.strip(),
+                street_address=street_address,
+                city=city,
+                state=addr[-1].split(",")[1].strip().split(" ")[0].strip(),
+                zip_postal=addr[-1].split(",")[1].strip().split(" ")[-1].strip(),
+                country_code="US",
+                phone=phone,
+                locator_domain=locator_domain,
+                raw_address=" ".join(addr).replace("Ackerman Student Union", ""),
+            )
 
 
 if __name__ == "__main__":
