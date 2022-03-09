@@ -5,7 +5,6 @@ from bs4 import BeautifulSoup as bs
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sglogging import SgLogSetup
-import json
 
 logger = SgLogSetup().get_logger("schoolofrock")
 
