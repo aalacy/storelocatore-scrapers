@@ -6,7 +6,7 @@ from sgrequests import SgRequests
 from sgscrape.pause_resume import CrawlStateSingleton
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
 from sgzip.dynamic import SearchableCountries
 from sgzip.parallel import DynamicSearchMaker, ParallelDynamicSearch, SearchIteration
@@ -95,10 +95,17 @@ if __name__ == "__main__":
     locator_domain = "https://www.bp.com/"
     page_url = "https://www.bp.com/en_us/united-states/home/find-a-gas-station.html"
     search_maker = DynamicSearchMaker(
-        search_type="DynamicGeoSearch", expected_search_radius_miles=500
+        search_type="DynamicGeoSearch", expected_search_radius_miles=2
     )
 
-    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.STREET_ADDRESS, SgRecord.Headers.LOCATION_NAME}
+            ),
+            duplicate_streak_failure_factor=-1,
+        )
+    ) as writer:
         with SgRequests() as https:
             search_iter = ExampleSearchIteration(http=https)
             par_search = ParallelDynamicSearch(
