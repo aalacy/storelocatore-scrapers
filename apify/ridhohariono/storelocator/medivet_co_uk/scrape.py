@@ -28,13 +28,6 @@ def pull_content(url):
     return soup
 
 
-def parse_hours(table):
-    if not table:
-        return MISSING
-    hoo = table.get_text(strip=True, separator=",").replace("day,", "day: ")
-    return hoo
-
-
 def parse_json(soup):
     info = soup.find("script", type="application/ld+json")
     if not info:
@@ -75,8 +68,10 @@ def fetch_data():
         if not info:
             continue
         location_name = info["name"].strip()
+        if "Permanently closed" in location_name:
+            continue
         address = info["address"][0]
-        street_address = address["streetAddress"].strip()
+        street_address = address["streetAddress"].replace(" ,", ", ").strip()
         if "https://www.medivet.co.uk/vet-practices/basildon/" in page_url:
             city = address["addressLocality"].strip()
             zip_postal = address["addressRegion"].strip()
@@ -96,11 +91,27 @@ def fetch_data():
         country_code = address["addressCountry"]
         store_number = MISSING
         phone = info["telephone"]
-        if "24-hour-emergency-vet" in page_url:
+        is_24hour = soup.find("h2", text="Open 24 hours, 365 days a year")
+        if is_24hour or "24-hour-emergency-vet" in page_url:
             hours_of_operation = "Open 24 hours"
         else:
-            hours_of_operation = ", ".join(info["openingHours"])
-        location_type = MISSING
+            hoo = soup.select("div.operatingHours div[class='hoursTable'] div.day")
+            if hoo:
+                hours_of_operation = ""
+                for hday in hoo:
+                    exclude = hday.find_all("span", {"class": "time opening"})
+                    for x in exclude:
+                        x.decompose()
+                    hours_of_operation += (
+                        hday.get_text(strip=True, separator=" ") + ", "
+                    )
+                hours_of_operation = hours_of_operation.strip().rstrip(",")
+            else:
+                hours_of_operation = ", ".join(info["openingHours"])
+        if "Temporarily closed" in location_name:
+            location_type = "TEMP_CLOSED"
+        else:
+            location_type = MISSING
         geo = soup.find("div", {"class": "googleMap loading"})
         latitude = geo["data-lat"]
         longitude = geo["data-lng"]
