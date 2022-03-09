@@ -18,9 +18,7 @@ _headers = {
 def fetch_data():
     locator_domain = "https://lifestance.com/"
     base_url = "https://lifestance.com/location-sitemap.xml"
-    with SgRequests(
-        proxy_country="us", dont_retry_status_codes_exceptions=set([400, 403])
-    ) as session:
+    with SgRequests(proxy_country="us") as session:
         locations = bs(session.get(base_url, headers=_headers).text, "lxml").select(
             "url loc"
         )
@@ -30,8 +28,7 @@ def fetch_data():
             if "telehealth" in page_url.lower():
                 continue
             logger.info(f"{page_url}")
-            response = session.get(page_url, headers=_headers)
-            sp1 = bs(response.text, "lxml")
+            sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
             location_name = sp1.select_one("h1.h1").text.strip()
             street_address = city = ""
             if sp1.select_one("div.self-center div.p"):

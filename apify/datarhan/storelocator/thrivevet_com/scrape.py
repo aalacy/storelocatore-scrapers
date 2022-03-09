@@ -21,19 +21,29 @@ def fetch_data():
     for code in all_codes:
         all_locations = session.get(start_url.format(code), headers=hdr).json()
         for poi in all_locations:
-            location_name = poi["name"]
+            location_name = poi["vanityName"]
+            if not location_name:
+                location_name = poi["name"]
             street_address = poi["addressLine1"].strip()
             if poi["addressLine2"].strip():
                 street_address += " " + poi["addressLine2"].strip()
             city = poi["city"]
             state = poi["state"]
-            page_url = f'https://www.thrivepetcare.com/locations/{state.lower().replace(" ", "-")}/{city.lower().replace(" ", "-")}/{location_name.lower().replace(".", "").replace(" ", "-")}'
             hoo = []
             for e in poi["workdays"]:
                 hoo.append(
                     f'{e["dayOfWeek"]}: {e["openTime"][:-3]} - {e["closeTime"][:-3]}'
                 )
             hoo = " ".join(hoo)
+            hdr = {
+                "authorization": "Bearer i_SbzNYIH9E46sD9b4vIreJwelXDt96f8HAhhZWIpmA"
+            }
+            poi_data = session.get(
+                f'https://cdn.contentful.com/spaces/8hq8guzcncfs/environments/master/entries?content_type=location&limit=1&fields.storeNumber={poi["marketingId"]}',
+                headers=hdr,
+            ).json()
+            slug = poi_data["items"][0]["fields"]["slug"]
+            page_url = f'https://www.thrivepetcare.com/locations/{state.lower().replace(" ", "-")}/{city.lower().replace(" ", "-")}/{slug}'
 
             item = SgRecord(
                 locator_domain=domain,

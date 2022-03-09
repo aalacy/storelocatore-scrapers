@@ -47,9 +47,15 @@ def fetch_data(sgw: SgWriter):
         try:
             stores = session.get(base_link, headers=headers).json()["pointsOfService"]
         except:
-            session = SgRequests()
-            time.sleep(2)
-            stores = session.get(base_link, headers=headers).json()["pointsOfService"]
+            try:
+                session = SgRequests()
+                time.sleep(5)
+                stores = session.get(base_link, headers=headers).json()[
+                    "pointsOfService"
+                ]
+            except:
+                log.info("Error..No stores!")
+                continue
 
         for store in stores:
             location_name = store["displayName"]
@@ -102,12 +108,18 @@ def fetch_data(sgw: SgWriter):
                             hours_of_operation = (
                                 hours_of_operation + " " + day_hours
                             ).strip()
-                    phone = i["phone"]
+                    try:
+                        phone = i["phone"]
+                    except:
+                        phone = ""
 
             if "pharmacy" not in location_type.lower():
                 continue
             if not phone:
-                phone = store["phone"]
+                try:
+                    phone = store["phone"]
+                except:
+                    phone = ""
 
             sgw.write_row(
                 SgRecord(

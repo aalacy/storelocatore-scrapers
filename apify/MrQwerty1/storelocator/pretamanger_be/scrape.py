@@ -37,15 +37,13 @@ def fetch_data(sgw: SgWriter):
     street_address, city, state, postal = get_international(raw_address)
     country_code = "BE"
 
-    latitude, longitude = "".join(
-        tree.xpath("//div[@data-position]/@data-position")
-    ).split(",")
+    latitude, longitude = tree.xpath("//div[@data-position]/@data-position")[0].split(
+        ","
+    )
 
-    _tmp = []
-    li = tree.xpath("//h3[@class='opening-title']/following-sibling::p")
-    for l in li:
-        _tmp.append(" ".join("".join(l.xpath("./text()")).split()))
-    hours_of_operation = ";".join(_tmp)
+    hours_of_operation = tree.xpath(
+        "//h3[@class='opening-title']/following-sibling::p/text()"
+    )[0].strip()
 
     row = SgRecord(
         page_url=page_url,

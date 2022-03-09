@@ -79,6 +79,15 @@ def fetch_data():
                 phone = line2.split('href="tel:')[1].split('"')[0]
         if hours == "":
             hours = "<MISSING>"
+        if state == "PR":
+            country = "Puerto Rico"
+            state = "<MISSING>"
+        if state == "VI":
+            country = "US Virgin Islands"
+            state = "<MISSING>"
+        if state == "GU":
+            country = "Guam"
+            state = "<MISSING>"
         if "/designcenter" not in loc:
             yield SgRecord(
                 locator_domain=website,
