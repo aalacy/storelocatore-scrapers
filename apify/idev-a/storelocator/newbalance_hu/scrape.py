@@ -1,4 +1,3 @@
-from socket import timeout
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgselenium import SgChrome
