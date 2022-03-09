@@ -19,12 +19,14 @@ def fetch_data(sgw: SgWriter):
         line = list(filter(None, [l.strip() for l in line]))
 
         phone = line.pop()
-        csz = line.pop().replace(', ', '').split()
+        csz = line.pop().replace(", ", "").split()
         postal = csz.pop()
         state = csz.pop()
-        city = ' '.join(csz)
-        street_address = ', '.join(line)
-        hours_of_operation = ";".join(d.xpath(".//h4[text()='HOURS']/following-sibling::p/text()"))
+        city = " ".join(csz)
+        street_address = ", ".join(line)
+        hours_of_operation = ";".join(
+            d.xpath(".//h4[text()='HOURS']/following-sibling::p/text()")
+        )
 
         row = SgRecord(
             page_url=page_url,
