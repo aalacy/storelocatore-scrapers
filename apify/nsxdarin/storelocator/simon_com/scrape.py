@@ -34,7 +34,7 @@ def fetch_data():
         if loc == "":
             loc = "https://www.simon.com/mall/" + item["urlFriendlyName"]
             r2 = session.get(loc, headers=headers)
-            time.sleep(3)
+            time.sleep(10)
             for line2 in r2.iter_lines():
                 if '"Longitude":' in line2:
                     lng = line2.split('"Longitude":')[1].split(",")[0]
