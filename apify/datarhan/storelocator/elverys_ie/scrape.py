@@ -11,8 +11,9 @@ from sgscrape.sgwriter import SgWriter
 
 def fetch_data():
     session = SgRequests()
-
-    start_url = "https://www.elverys.ie/store-finder/position"
+    start_url = (
+        "https://www.elverys.ie/store-finder?latitude=0.0&longitude=0.0&q=&page=0"
+    )
     domain = "elverys.ie"
     hdr = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
@@ -21,10 +22,21 @@ def fetch_data():
     dom = etree.HTML(response.text)
 
     all_locations = dom.xpath('//form[contains(@id, "bindStore")]/@action')
+    total_pages = dom.xpath('//div[@class="cus-pagnation"]/div/text()')[0][-1]
+    for p in range(1, int(total_pages)):
+        np = f"https://www.elverys.ie/store-finder?latitude=0.0&longitude=0.0&q=&page={p}"
+        response = session.get(np)
+        dom = etree.HTML(response.text)
+        all_locations += dom.xpath('//form[contains(@id, "bindStore")]/@action')
+
     for url in all_locations:
         page_url = "https://www.elverys.ie" + url
         loc_response = session.get(page_url)
-        loc_dom = etree.HTML(loc_response.text.replace('17 O" Connell', "17 O Connell"))
+        loc_dom = etree.HTML(
+            loc_response.text.replace('17 O" Connell', "17 O Connell")
+            .replace('Baker" s Lane', "Baker s Lane")
+            .replace('7 O" Connell', "7 O Connell")
+        )
 
         location_name = loc_dom.xpath('//div[@class="col-sm-8 store"]//h5/text()')[1]
         poi = loc_dom.xpath("//@data-stores")[0]
@@ -37,9 +49,13 @@ def fetch_data():
             .replace("< div>", "")
             .split(", ")
         )
-        phone = loc_dom.xpath(
-            '//h5[contains(text(), "Telephone")]/following-sibling::p[1]/text()'
-        )[0].strip()
+        phone = (
+            loc_dom.xpath(
+                '//h5[contains(text(), "Telephone")]/following-sibling::p[1]/text()'
+            )[0]
+            .split("s")[-1]
+            .strip()
+        )
         hoo = loc_dom.xpath('//table[@class="store-openings weekday_openings"]//text()')
         hoo = " ".join([e.strip() for e in hoo if e.strip()])
 
