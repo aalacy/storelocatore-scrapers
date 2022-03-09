@@ -8,7 +8,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
-from sgzip.dynamic import SearchableCountries
+from sgzip.dynamic import SearchableCountries, Grain_1_KM
 from sgzip.parallel import DynamicSearchMaker, ParallelDynamicSearch, SearchIteration
 from tenacity import retry, stop_after_attempt
 
@@ -95,7 +95,10 @@ if __name__ == "__main__":
     locator_domain = "https://www.bp.com/"
     page_url = "https://www.bp.com/en_us/united-states/home/find-a-gas-station.html"
     search_maker = DynamicSearchMaker(
-        search_type="DynamicGeoSearch", expected_search_radius_miles=2
+        search_type="DynamicGeoSearch",
+        granularity=Grain_1_KM(),
+        expected_search_radius_miles=0.5,
+        max_search_distance_miles=1,
     )
 
     with SgWriter(
@@ -111,7 +114,7 @@ if __name__ == "__main__":
             par_search = ParallelDynamicSearch(
                 search_maker=search_maker,
                 search_iteration=search_iter,
-                country_codes=SearchableCountries.ALL,
+                country_codes=[SearchableCountries.USA],
             )
 
             for rec in par_search.run():
