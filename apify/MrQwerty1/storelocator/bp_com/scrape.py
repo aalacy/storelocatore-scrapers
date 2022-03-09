@@ -95,7 +95,7 @@ if __name__ == "__main__":
     locator_domain = "https://www.bp.com/"
     page_url = "https://www.bp.com/en_us/united-states/home/find-a-gas-station.html"
     search_maker = DynamicSearchMaker(
-        search_type="DynamicGeoSearch", expected_search_radius_miles=500
+        search_type="DynamicGeoSearch", expected_search_radius_miles=2
     )
 
     with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
