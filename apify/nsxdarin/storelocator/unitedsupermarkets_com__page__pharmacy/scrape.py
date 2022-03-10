@@ -24,7 +24,6 @@ def fetch_data():
     country = "US"
     logger.info("Pulling Stores")
     for line in r.iter_lines():
-        line = str(line.decode("utf-8"))
         if '{"Distance":' in line:
             items = line.split('{"Distance":')
             for item in items:
