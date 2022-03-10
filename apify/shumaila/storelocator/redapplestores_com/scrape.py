@@ -40,8 +40,11 @@ def fetch_data():
         except:
             continue
         for loc in loclist:
+
             link = "https://www.redapplestores.com" + loc["val"]
+
             r = session.get(link, headers=headers)
+
             content = r.text.split('"locations":[', 1)[1].split("],", 1)[0]
             content = json.loads(content)
             ccode = content["country"]
@@ -51,6 +54,13 @@ def fetch_data():
             city = content["city"]
             phone = content["phone"]
             street = content["address"]
+            title = (
+                r.text.split('{"meta":{"title":"', 1)[1].split('"', 1)[0]
+                + " - "
+                + city
+                + ", "
+                + state.upper()
+            )
             hourlist = (
                 r.text.split('"google_structured_data":"', 1)[1]
                 .split('}"', 1)[0]
@@ -81,7 +91,6 @@ def fetch_data():
                     + closetime.split(":", 1)[1]
                     + " PM "
                 )
-            title = "Red Apple - " + city + ", " + state.upper()
             store = link.split("/store/", 1)[1].split("/", 1)[0]
 
             yield SgRecord(

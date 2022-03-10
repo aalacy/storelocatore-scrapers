@@ -50,7 +50,7 @@ def fetch_data(sgw: SgWriter):
                     final_links.append(new_link)
                     link_num = link_num + 1
         logger.info("Expected: " + str(state_count) + " / Found: " + str(link_num))
-        if state_count - link_num > 8:
+        if state_count - link_num > 5:
             logger.info("RECHECK!")
             session = SgRequests()
             time.sleep(5)
