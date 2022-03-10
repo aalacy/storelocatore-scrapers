@@ -24,7 +24,7 @@ search = DynamicGeoSearch(
 def fetch_data():
     locs = []
     for clat, clng in search:
-        logger.info(zipcode)
+        logger.info(str(clat) + "," + str(clng))
         url = (
             "https://www.hearusa.com/wp-admin/admin-ajax.php?action=store_search&lat="
             + str(clat)
