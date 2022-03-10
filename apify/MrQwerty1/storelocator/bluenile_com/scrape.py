@@ -27,7 +27,8 @@ def get_urls(driver):
 
 def fetch_data(sgw: SgWriter):
     with SgFirefox(user_agent=user_agent, is_headless=True) as driver:
-        stealth(driver,
+        stealth(
+            driver,
             languages=["en-US", "en"],
             vendor="Google Inc.",
             platform="Win32",
