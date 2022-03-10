@@ -8,7 +8,6 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgselenium import SgFirefox
 from urllib.parse import unquote
 from sglogging import SgLogSetup
-from selenium import Driver
 from selenium_stealth import stealth
 
 logger = SgLogSetup().get_logger("bluenile.com")
