@@ -145,7 +145,7 @@ def fetch_data():
         yield item
     maxZ = search.items_remaining()
     total = 0
-    for item in other_source(session):
+    for item in fetch_other(session, state):
         yield item
     for code in search:
         if search.items_remaining() > maxZ:
@@ -178,34 +178,37 @@ def fetch_data():
 
 
 def human_hours(k):
-    if not k["open24Hours"]:
-        unwanted = ["open24", "todayHr", "tomorrowHr"]
-        h = []
-        for day in list(k):
-            if not any(i in day for i in unwanted):
-                if k[day]:
-                    if "temporaryHour" not in day:
-                        if k[day]["closed"]:
-                            h.append(str(day).capitalize() + ": Closed")
-                        else:
-                            if k[day]["openFullDay"]:
-                                h.append(str(day).capitalize() + ": 24Hours")
+    try:
+        if not k["open24Hours"]:
+            unwanted = ["open24", "todayHr", "tomorrowHr"]
+            h = []
+            for day in list(k):
+                if not any(i in day for i in unwanted):
+                    if k[day]:
+                        if "temporaryHour" not in day:
+                            if k[day]["closed"]:
+                                h.append(str(day).capitalize() + ": Closed")
                             else:
-                                h.append(
-                                    str(day).capitalize()
-                                    + ": "
-                                    + str(k[day]["startHr"])
-                                    + "-"
-                                    + str(k[day]["endHr"])
-                                )
+                                if k[day]["openFullDay"]:
+                                    h.append(str(day).capitalize() + ": 24Hours")
+                                else:
+                                    h.append(
+                                        str(day).capitalize()
+                                        + ": "
+                                        + str(k[day]["startHr"])
+                                        + "-"
+                                        + str(k[day]["endHr"])
+                                    )
+                        else:
+                            if k[day]:
+                                h.append("Temporary hours: " + str(k[day].items()))
                     else:
-                        if k[day]:
-                            h.append("Temporary hours: " + str(k[day].items()))
-                else:
-                    h.append(str(day).capitalize() + ": <MISSING>")
-        return "; ".join(h)
-    else:
-        return "24/7"
+                        h.append(str(day).capitalize() + ": <MISSING>")
+            return "; ".join(h)
+        else:
+            return "24/7"
+    except Exception:
+        return str(k)
 
 
 def add_walmart(x):
@@ -221,7 +224,7 @@ def scrape():
             part_of_record_identity=True,
         ),
         location_name=sp.MappingField(
-            mapping=["storeType", "name"],
+            mapping=["storeType", "name"], value_transform=add_walmart
         ),
         latitude=sp.MappingField(
             mapping=["geoPoint", "latitude"],
@@ -264,6 +267,7 @@ def scrape():
         data_fetcher=fetch_data,
         field_definitions=field_defs,
         log_stats_interval=5,
+        duplicate_streak_failure_factor=-1,
     )
 
     pipeline.run()

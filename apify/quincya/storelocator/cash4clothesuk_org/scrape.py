@@ -37,8 +37,8 @@ def fetch_data(sgw: SgWriter):
         location_name = "Cash For Clothes"
         phone = ""
         for i, row in enumerate(raw_data):
-            if "only call" in row:
-                phone = row.split("only call")[1].split(")")[0].strip()
+            if "call" in row:
+                phone = row.split("number ")[1].split(" ")[0].strip()
             if "monday" in row.lower():
                 hours_of_operation = (
                     " ".join(raw_data[i:])

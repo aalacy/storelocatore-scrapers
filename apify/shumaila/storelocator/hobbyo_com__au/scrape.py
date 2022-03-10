@@ -40,7 +40,6 @@ def fetch_data():
 
             try:
                 title = div.find("h2").text
-
                 address = div.find("p")
                 address = re.sub(cleanr, "\n", str(address))
                 address = re.sub(pattern, "\n", str(address)).strip()
@@ -63,14 +62,18 @@ def fetch_data():
                 content = re.sub(cleanr, "\n", str(div))
                 content = re.sub(pattern, "\n", str(content)).strip()
                 phone = content.split("PHONE", 1)[1].split("\n", 1)[1].split("\n", 1)[0]
-
+                try:
+                    if MISSING in city:
+                        city = address.split(street, 1)[1].split(state, 1)[0].strip()
+                except:
+                    pass
                 hours = (
                     content.split("OPENING HOURS", 1)[1]
                     .split("\n", 1)[1]
                     .replace("\n", " ")
                     .strip()
                 )
-
+                hours = hours.replace("AM ", "AM - ")
                 r = session.get(coordlist[i]["src"], headers=headers)
 
                 lat, longt = (
@@ -93,6 +96,7 @@ def fetch_data():
                     latitude=str(lat),
                     longitude=str(longt),
                     hours_of_operation=hours.encode("ascii", "ignore").decode("ascii"),
+                    raw_address=address,
                 )
             except:
                 continue
