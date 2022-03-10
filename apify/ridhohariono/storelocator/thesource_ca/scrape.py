@@ -46,7 +46,12 @@ def fetch_data():
         for row in contents:
             info = row.find("div", {"class": "details"})
             location_name = info.find("div", {"class": "itemName"}).text.strip()
-            raw_address = info.find("ul").get_text(strip=True, separator="@@")
+            raw_address = (
+                info.find("ul")
+                .get_text(strip=True, separator="@@")
+                .replace("HAPPY VALLEY,", "")
+                .strip()
+            )
             addr = raw_address.split("@@")
             if len(addr) == 4:
                 street_address = " ".join((addr[0] + "," + addr[1]).split())

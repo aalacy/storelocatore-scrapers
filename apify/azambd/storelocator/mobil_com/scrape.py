@@ -47,7 +47,12 @@ def request_with_retries(payload):
         if store["AddressLine2"]:
             street_address += ", " + store["AddressLine2"]
 
-        location_type = store["EntityType"]
+        if "exxon" in store["BrandingImage"]:
+            location_type = "exxon"
+        elif "mobil" in store["BrandingImage"]:
+            location_type = "mobil"
+        else:
+            location_type = store["EntityType"]
 
         city = store["City"]
         state = store["StateProvince"]

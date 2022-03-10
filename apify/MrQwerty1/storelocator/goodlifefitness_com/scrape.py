@@ -29,13 +29,13 @@ def fetch_data(lat, lng, sgw: SgWriter):
 
         _tmp = []
         days = [
-            "sunday",
             "monday",
             "tuesday",
             "wednesday",
             "thursday",
             "friday",
             "saturday",
+            "sunday",
         ]
         hours = j.get("OperatingHours") or []
 
@@ -43,10 +43,7 @@ def fetch_data(lat, lng, sgw: SgWriter):
             day = days[h.get("Day") - 1]
             start = h.get("StartTime").split("T")[1][:-3]
             end = h.get("EndTime").split("T")[1][:-3]
-            if start.find("00:00") == -1:
-                _tmp.append(f"{day.capitalize()}: {start} - {end}")
-            else:
-                _tmp.append(f"{day.capitalize()}: Closed")
+            _tmp.append(f"{day.capitalize()}: {start} - {end}")
 
         hours_of_operation = ";".join(_tmp)
         if j.get("Is247"):

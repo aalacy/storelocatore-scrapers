@@ -6,13 +6,13 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from bs4 import BeautifulSoup
 from sgscrape import sgpostal as parser
+import re
 
 
 session = SgRequests()
 website = "multicare_org"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
-headers2 = {"Cookie": "PHPSESSID=ke2qqbtfeur9d308jlm16mdhj6"}
 
 headers = {
     "authority": "www.multicare.org",
@@ -34,183 +34,440 @@ headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/94.0.4606.71 Safari/537.36",
 }
 
-
-headers3 = {
-    "authority": "www.multicare.org",
-    "method": "GET",
-    "scheme": "https",
-    "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-    "accept-encoding": "identity",
-    "accept-language": "en-US,en;q=0.9",
-    "cache-control": "max-age=0",
-    "cookie": "_gcl_au=1.1.977307351.1635524123; _ga_95Z1PX6SEZ=GS1.1.1635524123.1.0.1635524123.0; _tq_id.TV-8154818163-1.389f=cd00533e3cf6dae2.1635524128.0.1635524128..; _ga=GA1.2.1786571781.1635524127; _gid=GA1.2.171897333.1635524128; nmstat=9ad47ff6-3a35-39f3-dc21-204628dd0f71; _hjid=3683150a-eb8b-4dc0-bd42-4278ed4fa480; _hjFirstSeen=1; _mkto_trk=id:512-OWW-241&token:_mch-multicare.org-1635524127906-56452; _fbp=fb.1.1635524128181.2021748016; _hjIncludedInPageviewSample=1; _hjAbsoluteSessionInProgress=1; _hjIncludedInSessionSample=0; www._km_id=85EajWMyPipxe33HdqBkLfsu646e2Za2; www._km_user_name=Suave Eel; www._km_lead_collection=false",
-    "if-modified-since": "Thu, 28 Oct 2021 19:09:33 GMT",
-    "sec-ch-ua": '"Google Chrome";v="95", "Chromium";v="95", ";Not A Brand";v="99"',
-    "sec-ch-ua-mobile": "?0",
-    "sec-ch-ua-platform": '"Windows"',
-    "sec-fetch-dest": "document",
-    "sec-fetch-mode": "navigate",
-    "sec-fetch-site": "none",
-    "sec-fetch-user": "?1",
-    "upgrade-insecure-requests": "1",
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.54 Safari/537.36",
-}
-
 DOMAIN = "https://www.multicare.org/"
 MISSING = SgRecord.MISSING
 
-location_type = {
-    "Emergency Department",
-    "Hospital",
-    "Laboratory Services",
-    "Occupational Medicine",
-    "Primary Care Clinic",
-    "Urgent Care",
-}
-
 
 def fetch_data():
-    if True:
-        rawlinks = []
-        links = []
-        titles = []
-        streets = []
-        citys = []
-        states = []
-        pcodes = []
-        phones = []
-        lats = []
-        lngs = []
-        storeids = []
-        loc_types = []
-        hoo = []
-        web = []
-        for j in location_type:
-            for i in range(1, 11):
-                weburl = (
-                    "https://www.multicare.org/find-a-location/?query="
-                    + j
-                    + "&searchloc=&coordinates=&locationType=&sortBy=&radius=1000&page_num="
-                    + str(i)
-                )
-                web.append(weburl)
-                web.append(
-                    "https://www.multicare.org/find-a-location/?locationType=23&sortBy=alphabetical"
-                )
-                web.append(
-                    "https://www.multicare.org/find-a-location/?locationType=27&sortBy=alphabetical"
-                )
-        for weburl in web:
-            session = SgRequests()
-            r = session.get(weburl, headers=headers)
-            soup = BeautifulSoup(r.text, "html.parser")
-            locations = soup.findAll("div", {"class": "location-list-card"})
-            for loc in locations:
-                title = loc.find("h2", {"class": "title"}).text
-                link = loc.find("h2", {"class": "title"}).find("a")["href"]
-                storeid = loc["data-mcid"]
-                loc_type = loc.find("div", {"class": "note"}).text
-                address = loc.find("div", {"class": "details"}).text
-                address = address.split("\n")[1]
-                coords = loc.find("div", {"class": "note distance js-distance-calc"})
-                lat = coords["data-latitude"]
-                lng = coords["data-longitude"]
-                phone = loc.find("a", {"class": "btn btn--solid"})["href"].lstrip(
-                    "tel:"
-                )
-                phone = phone.replace("Urogynecology: ", "").strip()
-                address = address.replace(",", "")
-                address = address.strip()
-                parsed = parser.parse_address_usa(address)
-                street1 = (
-                    parsed.street_address_1 if parsed.street_address_1 else "<MISSING>"
-                )
-                street = (
-                    (street1 + ", " + parsed.street_address_2)
-                    if parsed.street_address_2
-                    else street1
-                )
-                city = parsed.city if parsed.city else "<MISSING>"
-                state = parsed.state if parsed.state else "<MISSING>"
-                pcode = parsed.postcode if parsed.postcode else "<MISSING>"
+    urls = []
+    for num in range(1, 4):
+        url1 = (
+            "https://www.multicare.org/find-a-location/?queryl=&locationType=15&sortBy=alphabetical&page_num="
+            + str(num)
+        )
+        urls.append(url1)
+        url2 = (
+            "https://www.multicare.org/find-a-location/?locationType=23&sortBy=alphabetical&page_num="
+            + str(num)
+        )
+        urls.append(url2)
+    for num in range(1, 5):
+        url = (
+            "https://www.multicare.org/find-a-location/?locationType=27&sortBy=alphabetical&page_num="
+            + str(num)
+        )
+        urls.append(url)
+    for num in range(1, 9):
+        url = (
+            "https://www.multicare.org/find-a-location/?locationType=13&sortBy=alphabetical&page_num="
+            + str(num)
+        )
+        urls.append(url)
+    for num in range(1, 62):
+        url = (
+            "https://www.multicare.org/find-a-location/?query=multicare&page_num="
+            + str(num)
+        )
+        urls.append(url)
+    for url in urls:
+        r = session.get(url, headers=headers)
+        soup = BeautifulSoup(r.text, "html.parser")
+        loc_card = soup.findAll("div", {"class": "location-list-card__content"})
+        for loc in loc_card:
+            title = loc.find("h2", {"class": "title"}).find("a").text
+            store_url = loc.find("h2", {"class": "title"}).find("a")["href"]
+            store_type = loc.find("div", {"class": "note"}).find("b").text
+            address = loc.find("div", {"class": "details"}).find("a").text
+            coords = loc.find("div", {"class": "details"}).find("div")
+            lat = coords["data-latitude"]
+            lng = coords["data-longitude"]
+            try:
+                phone = loc.find("div", {"class": "contact"}).find("a").text
+            except AttributeError:
+                phone = MISSING
+            try:
+                req = session.get(store_url, headers=headers)
+                bs = BeautifulSoup(req.text, "html.parser")
+            except AttributeError:
+                hours = MISSING
+            try:
+                hours = bs.find("div", {"class": "hours-content"}).text
+                hours = hours.strip()
+                if hours == "":
+                    hours = MISSING
+            except AttributeError:
+                hours = "Open 24 hours"
+            if hours.find("1/3/22:") != -1:
+                hours = "Temporarily Closed"
+            if hours.find("appointment") != -1:
+                hours = MISSING
+            if hours.find("Call") != -1:
+                hours = MISSING
+            address = address.replace(",", "")
+            address = address.strip()
+            parsed = parser.parse_address_usa(address)
+            street1 = (
+                parsed.street_address_1 if parsed.street_address_1 else "<MISSING>"
+            )
+            street = (
+                (street1 + ", " + parsed.street_address_2)
+                if parsed.street_address_2
+                else street1
+            )
+            city = parsed.city if parsed.city else "<MISSING>"
+            state = parsed.state if parsed.state else "<MISSING>"
+            pcode = parsed.postcode if parsed.postcode else "<MISSING>"
 
-                if link.find("indigo") != -1:
-                    link = link.split("indigo-")[1]
-                    link = "https://www.indigourgentcare.com/locations/" + link
-                    link = link.rstrip("/")
-                if link.find("indigo") == -1:
-                    req = session.get(link, headers=headers3)
-                    bs = BeautifulSoup(req.text, "html.parser")
-                    hours = bs.find("div", {"class": "hours-content"})
-                    if hours is None:
-                        hours = "<MISSING>"
-                        hoo.append(hours)
-                    elif hours.text.strip() == "":
-                        hours = "<MISSING>"
-                        hoo.append(hours)
-                    else:
-                        hours = hours.text.strip()
-                        hours = hours.replace("\n", " ").strip()
-                        hours = hours.replace("Open 7 days a week", "Mon-Sun").strip()
-                        hours = hours.lstrip("Hours ").strip()
-                        hoo.append(hours)
+            yield SgRecord(
+                locator_domain=DOMAIN,
+                page_url=store_url,
+                location_name=title,
+                street_address=street,
+                city=city,
+                state=state,
+                zip_postal=pcode,
+                country_code="US",
+                store_number=MISSING,
+                phone=phone,
+                location_type=store_type,
+                latitude=lat,
+                longitude=lng,
+                hours_of_operation=hours.strip(),
+                raw_address=address,
+            )
+
+    pulse = []
+    indigo = []
+    url = "https://www.multicare.org/find-a-location/rockwood-clinic/locations/"
+    r = session.get(url, headers=headers)
+    soup = BeautifulSoup(r.text, "html.parser")
+    locations = soup.findAll("div", {"class": "link-list-box__content"})
+    for locs in locations:
+        ref = locs.findAll("a")
+        for loc in ref:
+            store_url = loc["href"]
+            title = loc.text.strip()
+            if title != "":
+                if store_url.find("pulse") != -1:
+                    pulse.append("store_url")
+                elif store_url.find("indigo") != -1:
+                    indigo.append("store_url")
                 else:
                     try:
-                        request = session.get(link, headers=headers2)
-                        hours = BeautifulSoup(request.text, "html.parser")
-                        hours = hours.findAll(
-                            "div", {"class": "col-lg-6 col-md-6 col-xs-12"}
-                        )[2]
-                        hours = hours.text
-                        hours = hours.replace("\n", " ").strip()
-                        hours = hours.replace("Open 7 days a week", "Mon-Sun").strip()
-                        hours = hours.lstrip("Hours ").strip()
-                        hoo.append(hours)
+                        r = session.get(store_url, headers=headers)
+                        soup = BeautifulSoup(r.text, "html.parser")
                     except AttributeError:
-                        hours = "<MISSING>"
-                        hoo.append(hours)
-                hours = hours.replace("By appointment", "<MISSING>")
-                titles.append(title)
-                streets.append(street)
-                citys.append(city)
-                states.append(state)
-                pcodes.append(pcode)
-                lats.append(lat)
-                lngs.append(lng)
-                storeids.append(storeid)
-                loc_types.append(loc_type)
-                rawlinks.append(link)
-                phones.append(phone)
-    for url in rawlinks:
-        if url.find("indigo") != -1:
-            links.append(url)
-        else:
-            links.append(url)
+                        store_type = MISSING
+                        address = MISSING
+                        lat = MISSING
+                        lng = MISSING
+                        phone = MISSING
+                        hours = MISSING
+                    try:
+                        store_type = soup.find("div", {"class": "note"}).find("b").text
+                        address = soup.find("div", {"class": "address"}).find("a").text
+                        coords = soup.find("div", {"class": "address"}).find("div")
+                        lat = coords["data-latitude"]
+                        lng = coords["data-longitude"]
+                        phone = soup.find(
+                            "div", {"class": "contact flex-row"}
+                        ).text.strip()
+                        phone = phone.split("\n")[0].split("Phone: ")[1].strip()
+                        hours = soup.find("div", {"class": "hours-content"}).text
+                        hours = hours.replace("\n", " ").strip()
+                    except AttributeError:
+                        try:
+                            store_type = soup.find(
+                                "div", {"class": "details-box__title"}
+                            ).text.strip()
+                        except AttributeError:
+                            if (
+                                store_url
+                                == "https://www.multicare.org/provider/lora-jasman/"
+                            ):
+                                address = (
+                                    soup.find("div", {"class": "location"})
+                                    .find("a")
+                                    .text
+                                )
+                                phone = soup.find("h3", {"class": "phone"}).text.strip()
+                            else:
+                                store_type = MISSING
+                                address = MISSING
+                                lat = MISSING
+                                lng = MISSING
+                                phone = MISSING
+                                hours = MISSING
+                    if (
+                        store_url
+                        == "https://www.multicare.org/location/multicare-rockwood-main-clinic/"
+                    ):
+                        store_type = "Clinic"
+                    address = address.replace(",", "")
+                    address = address.strip()
+                    parsed = parser.parse_address_usa(address)
+                    street1 = (
+                        parsed.street_address_1
+                        if parsed.street_address_1
+                        else "<MISSING>"
+                    )
+                    street = (
+                        (street1 + ", " + parsed.street_address_2)
+                        if parsed.street_address_2
+                        else street1
+                    )
+                    city = parsed.city if parsed.city else "<MISSING>"
+                    state = parsed.state if parsed.state else "<MISSING>"
+                    pcode = parsed.postcode if parsed.postcode else "<MISSING>"
 
-    for i in range(0, len(titles)):
+                    yield SgRecord(
+                        locator_domain=DOMAIN,
+                        page_url=store_url,
+                        location_name=title,
+                        street_address=street,
+                        city=city,
+                        state=state,
+                        zip_postal=pcode,
+                        country_code="US",
+                        store_number=MISSING,
+                        phone=phone,
+                        location_type=store_type,
+                        latitude=lat,
+                        longitude=lng,
+                        hours_of_operation=hours.strip(),
+                        raw_address=address,
+                    )
+
+    url = "https://www.pulseheartinstitute.org/locations/"
+    r = session.get(url, headers=headers)
+    soup = BeautifulSoup(r.text, "html.parser")
+    main = soup.findAll("section", {"class": "container mx1800"})[0].findAll(
+        "div", {"class": "flex-row"}
+    )
+    for loc in main:
+        store_url = (
+            "https://www.pulseheartinstitute.org"
+            + loc.find("div", {"class": "col-side"}).find("a")["href"]
+        )
+        address = loc.find("div", {"class": "address"}).text.strip()
+        title = loc.find("h2", {"class": "name"}).text.strip()
+        phone = loc.find("div", {"class": "phone"}).find("a").text.strip()
+        address = address.split("\n")[0].strip()
+        hours = MISSING
+        lat = MISSING
+        lng = MISSING
+        store_type = "Clinic"
+        address = address.replace(",", "")
+        address = address.strip()
+        parsed = parser.parse_address_usa(address)
+        street1 = parsed.street_address_1 if parsed.street_address_1 else "<MISSING>"
+        street = (
+            (street1 + ", " + parsed.street_address_2)
+            if parsed.street_address_2
+            else street1
+        )
+        city = parsed.city if parsed.city else "<MISSING>"
+        state = parsed.state if parsed.state else "<MISSING>"
+        pcode = parsed.postcode if parsed.postcode else "<MISSING>"
+
         yield SgRecord(
             locator_domain=DOMAIN,
-            page_url=links[i],
-            location_name=titles[i],
-            street_address=streets[i].strip(),
-            city=citys[i].strip(),
-            state=states[i].strip(),
-            zip_postal=pcodes[i],
+            page_url=store_url,
+            location_name=title,
+            street_address=street,
+            city=city,
+            state=state,
+            zip_postal=pcode,
             country_code="US",
-            store_number=storeids[i],
-            phone=phones[i],
-            location_type=loc_types[i],
-            latitude=lats[i],
-            longitude=lngs[i],
-            hours_of_operation=hoo[i].strip(),
+            store_number=MISSING,
+            phone=phone,
+            location_type=store_type,
+            latitude=lat,
+            longitude=lng,
+            hours_of_operation=hours.strip(),
+            raw_address=address,
         )
-        i = i + 1
+
+    pattern = re.compile(r"\s\s+")
+    cleanr = re.compile(r"<[^>]+>")
+    url = "https://www.marybridge.org/locations/"
+    r = session.get(url, headers=headers)
+    soup = BeautifulSoup(r.text, "html.parser")
+    locs = soup.findAll("a", {"class": "caret orange btn shadow"})
+    for loc in locs:
+        store_url = "https://www.marybridge.org" + loc["href"]
+        req = session.get(store_url, headers=headers)
+        bs = BeautifulSoup(req.text, "html.parser")
+        title = bs.find("h1", {"class": "loc-main-title"}).text
+        details = bs.find("div", {"class": "loc-details"}).text.strip()
+        details = re.sub(pattern, "", details)
+        details = re.sub(cleanr, "", details)
+        details = details.replace("Contact", "")
+        details = details.replace("Address", "")
+        details = details.replace("Hours", "")
+        details = details.replace("Get Directions", "")
+        details = details.replace('"Specialty services vary by days of the week', "")
+        details = details.replace("Parking Information", "")
+        details = details.replace(
+            "Appointments are scheduled through Mary Bridge Children's.", ""
+        )
+        details = details.replace("By appointment", "")
+        details = details.replace(", by appointment", "")
+        details = details.replace("Hours", "")
+        details = details.replace("Hours", "")
+        details = details.strip()
+        lat = MISSING
+        lng = MISSING
+        store_type = "Clinic"
+        details = details.split("\n")
+        while "" in details:
+            details.remove("")
+        if len(details) == 2:
+            address = details[0].strip()
+            phone = details[1].strip()
+            if phone.find("only") != -1:
+                phone = address.split("P.")[1].strip()
+        if len(details) == 3:
+            address = details[0].strip()
+            phone = details[1].strip()
+            hours = details[2].strip()
+            if hours.find("only") != -1:
+                hours = MISSING
+        if len(details) == 4:
+            address = details[0].strip()
+            phone = details[1].strip()
+            hours = details[2].strip()
+            if hours.find("open 24/7") != -1:
+                hours = "Mon-Sun 24-hours"
+            phone = phone.rstrip("Specialty clinics vary by days of the week.")
+        if len(details) == 5:
+            address = details[0].strip()
+            phone = details[1].strip()
+            hours = details[2] + " " + details[3] + " " + details[4]
+        if len(details) == 7:
+            address = details[0].strip()
+            phone = details[1].strip()
+            hours = details[2] + " " + details[3]
+            hours = hours.split("Our")[0]
+        phone = phone.split("F")[0].strip()
+        phone = phone.replace("P. ", "").strip()
+        phone = phone.replace("(Specialties)", "").strip()
+        hours = hours.replace(
+            ".  Specialties or Therapy Services (253-697-5200) to schedule.Reserve appointment for Urgent Care online.",
+            "<MISSING>",
+        )
+        hours = hours.replace("Specialty services vary by days of the week, ", "")
+        hours = hours.replace(
+            "Varies by each specialty service and by appointment.Facility open ", ""
+        )
+        hours = hours.replace("Suite 200 - Specialty clinics, Lab & X-ray: ", "")
+        hours = hours.replace(
+            "Pediatric Specialty Care vary by days of the week. Appointments scheduled through Mary Bridge Children's.",
+            "<MISSING>",
+        )
+
+        address = address.replace(",", "")
+        address = address.strip()
+        parsed = parser.parse_address_usa(address)
+        street1 = parsed.street_address_1 if parsed.street_address_1 else "<MISSING>"
+        street = (
+            (street1 + ", " + parsed.street_address_2)
+            if parsed.street_address_2
+            else street1
+        )
+        city = parsed.city if parsed.city else "<MISSING>"
+        state = parsed.state if parsed.state else "<MISSING>"
+        pcode = parsed.postcode if parsed.postcode else "<MISSING>"
+
+        yield SgRecord(
+            locator_domain=DOMAIN,
+            page_url=store_url,
+            location_name=title,
+            street_address=street,
+            city=city,
+            state=state,
+            zip_postal=pcode,
+            country_code="US",
+            store_number=MISSING,
+            phone=phone,
+            location_type=store_type,
+            latitude=lat,
+            longitude=lng,
+            hours_of_operation=hours.strip(),
+            raw_address=address,
+        )
+
+    url = "https://www.multicare.org/find-a-location/womens-specialty-care-locations/"
+    r = session.get(url, headers=headers)
+    soup = BeautifulSoup(r.text, "html.parser")
+    locs = soup.findAll("div", {"class": "rtecontent"})[1].findAll("a")
+    for loc in locs:
+        store_url = loc["href"]
+        if store_url.find("/location/") != -1:
+            title = loc.text.strip()
+            r = session.get(store_url, headers=headers)
+            soup = BeautifulSoup(r.text, "html.parser")
+            try:
+                store_type = soup.find("div", {"class": "note"}).text
+            except AttributeError:
+                store_type = MISSING
+                address = MISSING
+                lat = MISSING
+                lng = MISSING
+                phone = MISSING
+                hours = MISSING
+                city = MISSING
+                state = MISSING
+                street = MISSING
+                pcode = MISSING
+                continue
+            address = soup.find("div", {"class": "address"}).find("a").text
+            coords = soup.find("div", {"class": "address"}).find("div")
+            lat = coords["data-latitude"]
+            lng = coords["data-longitude"]
+            phone = soup.find("div", {"class": "contact flex-row"}).text.strip()
+            phone = phone.split("\n")[0].split("Phone: ")[1].strip()
+            hours = soup.find("div", {"class": "hours-content"}).text
+            hours = hours.replace("\n", " ").strip()
+
+            address = address.replace(",", "")
+            address = address.strip()
+            parsed = parser.parse_address_usa(address)
+            street1 = (
+                parsed.street_address_1 if parsed.street_address_1 else "<MISSING>"
+            )
+            street = (
+                (street1 + ", " + parsed.street_address_2)
+                if parsed.street_address_2
+                else street1
+            )
+            city = parsed.city if parsed.city else "<MISSING>"
+            state = parsed.state if parsed.state else "<MISSING>"
+            pcode = parsed.postcode if parsed.postcode else "<MISSING>"
+
+            yield SgRecord(
+                locator_domain=DOMAIN,
+                page_url=store_url,
+                location_name=title,
+                street_address=street,
+                city=city,
+                state=state,
+                zip_postal=pcode,
+                country_code="US",
+                store_number=MISSING,
+                phone=phone,
+                location_type=store_type,
+                latitude=lat,
+                longitude=lng,
+                hours_of_operation=hours.strip(),
+                raw_address=address,
+            )
 
 
 def scrape():
     log.info("Started")
     count = 0
-    deduper = SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
+    deduper = SgRecordDeduper(SgRecordID({SgRecord.Headers.LOCATION_NAME}))
     with SgWriter(deduper) as writer:
         results = fetch_data()
         for rec in results:

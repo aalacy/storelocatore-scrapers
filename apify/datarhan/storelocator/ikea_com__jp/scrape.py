@@ -51,13 +51,24 @@ def fetch_data():
             .split("!3d")
         )
         hoo = loc_dom.xpath(
-            '//p[strong[contains(text(), "Store opening hours")]]/following-sibling::p/text()'
+            '//p[strong[contains(text(), "Store opening hours")]]/text()'
         )
         if not hoo:
             hoo = loc_dom.xpath(
+                '//p[strong[contains(text(), "Store opening hours")]]/following-sibling::p/text()'
+            )
+        if not hoo:
+            hoo = loc_dom.xpath(
                 '//strong[contains(text(), "Opening hours")]/following::text()'
-            )[:2]
-        hoo = " ".join(hoo).split("“Swedish")[0].split("29, 30 ")[0].strip()
+            )
+            hoo = [e.strip() for e in hoo if e.strip()][:4]
+        hoo = (
+            " ".join(hoo)
+            .split("“Swedish")[0]
+            .split("29, 30 ")[0]
+            .split("Restaurant")[0]
+            .strip()
+        )
         if "*Open all year" in hoo:
             hoo = ""
 

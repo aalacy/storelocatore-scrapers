@@ -59,7 +59,7 @@ def fetch_data():
                     )
                     hours = [
                         ": ".join(hh.stripped_strings)
-                        for hh in sp1.select("table.hours-table")[0].select("tbody tr")
+                        for hh in sp1.select("table.hours-table")[0].select("tr")
                     ]
                 yield SgRecord(
                     page_url=page_url,
