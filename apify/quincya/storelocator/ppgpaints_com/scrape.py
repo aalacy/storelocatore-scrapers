@@ -26,9 +26,6 @@ def fetch_data(sgw: SgWriter):
     dup_tracker = []
 
     for postcode in search:
-        print(
-            f"Coordinates remaining: {search.items_remaining()} For country: {search.current_country()}"
-        )
         base_link = (
             "https://www.ppgpaints.com/store-locator/search?value=%s&latitude=&longitude=&filter=Store"
             % postcode
