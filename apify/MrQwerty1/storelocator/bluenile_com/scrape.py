@@ -9,7 +9,7 @@ from sgselenium import SgChrome
 from urllib.parse import unquote
 from sglogging import SgLogSetup
 
-logger = SgLogSetup().get_logger('bluenile.com')
+logger = SgLogSetup().get_logger("bluenile.com")
 
 
 def get_urls(driver):
