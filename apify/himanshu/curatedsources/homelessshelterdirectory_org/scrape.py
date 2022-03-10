@@ -142,6 +142,9 @@ def get_data(page_url, sgw: SgWriter):
         if "p.o" in raw_address.lower():
             street_address = raw_address.split(",")[0]
 
+        if street_address is MISSING and "box" in raw_address.lower():
+            street_address = raw_address.split(",")[0]
+
         row = SgRecord(
             locator_domain=DOMAIN,
             store_number=store_number,
