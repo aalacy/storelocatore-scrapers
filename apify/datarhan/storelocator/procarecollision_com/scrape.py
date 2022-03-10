@@ -18,9 +18,8 @@ def fetch_data():
     }
 
     all_locations = session.get(start_url, headers=hdr).json()
-
     for poi in all_locations:
-        store_url = poi["permalink"]
+        page_url = poi["permalink"]
         location_name = poi["store"].replace("&#8211;", "-")
         street_address = poi["address"]
         if "USA" in street_address:
@@ -31,6 +30,13 @@ def fetch_data():
         country_code = poi["country"]
         store_number = poi["id"]
         phone = poi["phone"].split("(c")[0]
+        if not phone:
+            loc_response = session.get(page_url)
+            loc_dom = etree.HTML(loc_response.text)
+            phone = loc_dom.xpath('//span[@class="tel"]/text()')
+            if not phone:
+                phone = loc_dom.xpath('//a[@class="tel"]/span/text()')
+            phone = phone[0]
         latitude = poi["lat"]
         longitude = poi["lng"]
         hoo = etree.HTML(poi["hours"]).xpath("//text()")
@@ -38,7 +44,7 @@ def fetch_data():
 
         item = SgRecord(
             locator_domain=domain,
-            page_url=store_url,
+            page_url=page_url,
             location_name=location_name,
             street_address=street_address,
             city=city,

@@ -9,6 +9,7 @@ from bs4 import BeautifulSoup as bs
 from tenacity import retry, stop_after_attempt, wait_fixed
 from webdriver_manager.chrome import ChromeDriverManager
 import ssl
+import re
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
@@ -71,11 +72,9 @@ def fetch_data():
             days = list(
                 sp1.select_one("div#section-hours table thead tr").stripped_strings
             )
-            times = list(
-                sp1.select("div#section-hours table tbody tr")[0].stripped_strings
-            )[1:]
+            times = sp1.select("div#section-hours table tbody tr")[0].select("td")[1:]
             for x in range(len(days)):
-                hours.append(f"{days[x]}: {times[x]}")
+                hours.append(f"{days[x]}: {' '.join(times[x].stripped_strings)}")
 
             street_address = _["address"]
             if _["address2"]:
@@ -84,6 +83,9 @@ def fetch_data():
             country_code = "US"
             if _["state"] in ca_provinces_codes:
                 country_code = "CA"
+            phone = _["phone"]
+            if not phone and sp1.find("a", href=re.compile(r"tel:")):
+                phone = sp1.find("a", href=re.compile(r"tel:")).text.strip()
             yield SgRecord(
                 page_url=page_url,
                 store_number=_["id"],
@@ -91,20 +93,18 @@ def fetch_data():
                 street_address=street_address,
                 city=_["city"],
                 state=_["state"],
-                zip_postal=_["postal"],
+                zip_postal=_["postal"].replace("Canada", "").strip(),
                 latitude=_["lat"],
                 longitude=_["lng"],
                 country_code=country_code,
-                phone=_["phone"],
+                phone=phone,
                 locator_domain=locator_domain,
                 hours_of_operation="; ".join(hours),
             )
 
 
 if __name__ == "__main__":
-    with SgWriter(
-        deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
-    ) as writer:
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
