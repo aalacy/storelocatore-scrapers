@@ -6,6 +6,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
 from sgselenium.sgselenium import SgFirefox
+from sgpostal.sgpostal import parse_address_intl
 
 
 def fetch_data():
@@ -22,8 +23,13 @@ def fetch_data():
         location_name = poi_html.xpath(
             './/a[@class="storelocator-viewlink storelocator-storename"]/text()'
         )[0]
+
         raw_addr = poi_html.xpath('.//p[@class="storelocator-address"]/text()')
-        raw_addr = [e.strip() for e in raw_addr if e.strip()]
+        raw_addr = " ".join([e.strip() for e in raw_addr if e.strip()])
+        addr = parse_address_intl(raw_addr)
+        street_address = addr.street_address_1
+        if addr.street_address_2:
+            street_address += ", " + addr.street_address_2
         phone = poi_html.xpath('.//a[contains(@href, "tel")]/text()')
         phone = phone[0] if phone else ""
         hoo = poi_html.xpath('.//p[@class="storelocator-opening-daily "]//text()')
@@ -33,10 +39,10 @@ def fetch_data():
             locator_domain=domain,
             page_url=start_url,
             location_name=location_name,
-            street_address=raw_addr[-3],
-            city=raw_addr[-2],
+            street_address=street_address,
+            city=addr.city,
             state="",
-            zip_postal=raw_addr[-1],
+            zip_postal=addr.postcode,
             country_code="",
             store_number="",
             phone=phone,
@@ -44,6 +50,7 @@ def fetch_data():
             latitude="",
             longitude="",
             hours_of_operation=hoo,
+            raw_address=raw_addr,
         )
 
         yield item

@@ -1,4 +1,4 @@
-import unicodedata
+import usaddress
 from sglogging import sglog
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
@@ -19,33 +19,62 @@ DOMAIN = "https://silverminesubs.com/"
 MISSING = SgRecord.MISSING
 
 
-def strip_accents(text):
-
-    text = unicodedata.normalize("NFD", text).encode("ascii", "ignore").decode("utf-8")
-
-    return str(text)
-
-
 def fetch_data():
     if True:
         url = "https://www.silverminesubs.com/locations/"
         r = session.get(url, headers=headers)
-        state_list = r.text.split("<h2>")[2:]
-        for temp_state in state_list:
-            state = temp_state.split("</h2>")[0]
-            loclist = temp_state.split('<div class="storerow">')[1:]
-            for loc in loclist:
-                loc = loc.split('<div class="break"></div>')[0]
-                loc = BeautifulSoup(loc, "html.parser")
-                loc = loc.get_text(separator="|", strip=True).split("|")
-                location_name = strip_accents(loc[0])
+        soup = BeautifulSoup(r.text, "html.parser")
+        loclist = soup.findAll("div", {"class": "fl-col-small"})
+        for loc in loclist:
+            if "Order Online" in loc.text:
+                try:
+                    location_name = (
+                        loc.find("h3", {"class": "heading-title"})
+                        .get_text(separator="|", strip=True)
+                        .replace("|", " ")
+                    )
+                except:
+                    continue
                 log.info(location_name)
-                city = location_name.split()[0]
-                street_address = loc[1]
-                raw_address = street_address + " " + city + " " + state
-                if "Fort" in city:
-                    city = "Fort Collins"
-                phone = loc[2]
+                hours_of_operation = (
+                    loc.find("div", {"class": "pp-sub-heading"}).findAll("p")[-1].text
+                )
+                address = (
+                    loc.find("iframe")["src"]
+                    .split("q=")[1]
+                    .split("&key")[0]
+                    .replace("+", " ")
+                    .replace("%2C", ",")
+                    .replace("%0A", "")
+                    .replace("Silver Mine Subs,", "")
+                )
+                address = address.replace(",", " ")
+                address = usaddress.parse(address)
+                i = 0
+                street_address = ""
+                city = ""
+                state = ""
+                zip_postal = ""
+                while i < len(address):
+                    temp = address[i]
+                    if (
+                        temp[1].find("Address") != -1
+                        or temp[1].find("Street") != -1
+                        or temp[1].find("Recipient") != -1
+                        or temp[1].find("Occupancy") != -1
+                        or temp[1].find("BuildingName") != -1
+                        or temp[1].find("USPSBoxType") != -1
+                        or temp[1].find("USPSBoxID") != -1
+                    ):
+                        street_address = street_address + " " + temp[0]
+                    if temp[1].find("PlaceName") != -1:
+                        city = city + " " + temp[0]
+                    if temp[1].find("StateName") != -1:
+                        state = state + " " + temp[0]
+                    if temp[1].find("ZipCode") != -1:
+                        zip_postal = zip_postal + " " + temp[0]
+                    i += 1
+                phone = MISSING
                 yield SgRecord(
                     locator_domain=DOMAIN,
                     page_url=url,
@@ -53,15 +82,14 @@ def fetch_data():
                     street_address=street_address.strip(),
                     city=city,
                     state=state,
-                    zip_postal=MISSING,
+                    zip_postal=zip_postal,
                     country_code="US",
                     store_number=MISSING,
                     phone=phone.strip(),
                     location_type=MISSING,
                     latitude=MISSING,
                     longitude=MISSING,
-                    hours_of_operation=MISSING,
-                    raw_address=raw_address,
+                    hours_of_operation=hours_of_operation,
                 )
 
 

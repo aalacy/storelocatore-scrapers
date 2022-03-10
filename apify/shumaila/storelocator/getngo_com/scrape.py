@@ -1,141 +1,101 @@
-# https://orthodontist.smiledoctors.com/
-# https://www.getngo.com/locations/
-
-import requests
 from bs4 import BeautifulSoup
-import csv
-import string
-import re, time
-from sglogging import SgLogSetup
+import usaddress
+from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-logger = SgLogSetup().get_logger('getngo_com')
-
-
-
-
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
-        # Header
-        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-        # Body
-        for row in data:
-            writer.writerow(row)
+session = SgRequests()
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+}
 
 
 def fetch_data():
-    # Your scraper here
 
-    data = []
-    pattern = re.compile(r'\s\s+')
-    url = 'https://www.getngo.com/locations/'
-    page = requests.get(url)
-    soup = BeautifulSoup(page.text, "html.parser")
-    maind = soup.find('div',{'class':'ccm-block-styles'})
-    link_list = maind.findAll('a')
-    logger.info(len(link_list))
-    for alink in link_list:
+    url = "https://www.getngo.com/locations/"
 
-        link = "https://www.getngo.com/" + alink['href']
+    r = session.get(url, headers=headers)
+    soup = BeautifulSoup(r.text, "html.parser")
+    linklist = soup.select("a[href*=locations]")
+    for link in linklist:
+        link = link["href"]
+        if "getngo" not in link:
+            continue
+        link = "https://www.getngo.com" + link
+        store = link.split("/getngo", 1)[1].split("/", 1)[0]
+        r = session.get(link, headers=headers)
+        soup = BeautifulSoup(r.text, "html.parser")
+        title = soup.find("h2").text
+        address = soup.find("h3").text
+        phone = (
+            soup.select_one('p:contains("Phone")').text.replace("Phone: ", "").strip()
+        )
+        hours = (
+            soup.select_one('p:contains("Hours")').text.replace("Hours: ", "").strip()
+        )
+        lat, longt = r.text.split("maps.LatLng(", 1)[1].split(")", 1)[0].split(", ", 1)
+        address = usaddress.parse(address)
+        i = 0
+        street = ""
+        city = ""
+        state = ""
+        pcode = ""
+        while i < len(address):
+            temp = address[i]
+            if (
+                temp[1].find("Address") != -1
+                or temp[1].find("Street") != -1
+                or temp[1].find("Recipient") != -1
+                or temp[1].find("Occupancy") != -1
+                or temp[1].find("BuildingName") != -1
+                or temp[1].find("USPSBoxType") != -1
+                or temp[1].find("USPSBoxID") != -1
+            ):
+                street = street + " " + temp[0]
+            if temp[1].find("PlaceName") != -1:
+                city = city + " " + temp[0]
+            if temp[1].find("StateName") != -1:
+                state = state + " " + temp[0]
+            if temp[1].find("ZipCode") != -1:
+                pcode = pcode + " " + temp[0]
+            i += 1
+        if len(city) < 3 and "Sioux Falls" in street:
+            city = "Sioux Falls"
+            street = street.replace("Sioux Falls", "")
+        street = street.lstrip().replace(",", "")
+        city = city.lstrip().replace(",", "")
+        state = state.lstrip().replace(",", "")
+        pcode = pcode.lstrip().replace(",", "")
 
-        page = requests.get(link)
-        soup = BeautifulSoup(page.text, "html.parser")
-        maindiv = soup.find('div',{'class': 'ccm-layout-2-col-1 ccm-layout-cell ccm-layout-col ccm-layout-col-1 first'})
-        title = maindiv.find('h2').text
-        address1 = maindiv.find('h3')
-        start = title.find("#") + 1
-        store = title[start:len(title)]
-        try:
-            address = address1.findAll('span')
-            street = address[0].text
-            city = address[1].text
-            state= address[2].text
-            try:
-                pcode =  address[3].text
-                if len(pcode) < 4:
-                    try:
-                        pcode = address[4].text
-                    except:
-                        pcode = "<MISSING>"
-
-            except:
-                pcode = "<MISSING>"
-
-        except:
-            address = address1.text
-            start = address.find("Street")
-            if start != -1:
-                start = address.find(' ', start)
-                street = address[0:start]
-                start = start + 1
-                end = address.find(',', start)
-                city = address[start:end]
-                start = end + 2
-                end = address.find(' ', start)
-                if end == -1:
-                    end = len(address)
-                    state = address[start:end]
-                    pcode = "<MISSING>"
-                else:
-                    state = address[start:end]
-                    start = end + 1
-                    end = address.find(' ', start)
-                    pcode = address[start:end]
-
-        maindiv = soup.find('div',{'class': 'ccm-layout-col-spacing'})
-        maindiv = maindiv.findAll('p')
-        phone = maindiv[1].text
-        phone = phone.replace("Phone: ","")
-        hours = maindiv[3].text
-        hours = hours.replace("Hours: ","")
-
-        soup = str(soup)
-        start = soup.find("latlng",0)
-        start = soup.find("(", start) + 1
-        end = soup.find(",", start)
-        lat = soup[start:end]
-        start = end + 2
-        end = soup.find(")", start)
-        longt = soup[start:end]
-
-
-
-        city = city.replace(",","")
-        logger.info(link)
-        logger.info(store)
-        logger.info(title)
-        logger.info(address1)
-        logger.info(street)
-        logger.info(city)
-        logger.info(state)
-        logger.info(pcode)
-        logger.info(phone)
-        logger.info(hours)
-        logger.info(lat)
-        logger.info(longt)
-        data.append([
-            'https://www.getngo.com/',
-            link,
-            title,
-            street,
-            city,
-            state,
-            pcode,
-            'US',
-            store,
-            phone,
-            "<MISSING>",
-            lat,
-            longt,
-            hours
-        ])
-    return data
+        yield SgRecord(
+            locator_domain="https://www.getngo.com/",
+            page_url=link,
+            location_name=title,
+            street_address=street.strip(),
+            city=city.strip(),
+            state=state.strip(),
+            zip_postal=pcode.strip(),
+            country_code="US",
+            store_number=str(store),
+            phone=phone.strip(),
+            location_type=SgRecord.MISSING,
+            latitude=str(lat),
+            longitude=str(longt),
+            hours_of_operation=hours,
+        )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+
 
 scrape()
-

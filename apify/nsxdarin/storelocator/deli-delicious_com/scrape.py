@@ -1,9 +1,11 @@
-import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 logger = SgLogSetup().get_logger("deli-delicious_com")
-
 
 session = SgRequests()
 headers = {
@@ -11,121 +13,80 @@ headers = {
 }
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
-
-
 def fetch_data():
-    locs = []
-    coords = []
-    url = "https://app.mapply.net/front-end/iframe.php?api_key=mapply.1912a876a35b8b709f3f1be5fa28f2b2&id=6eae593f-03dd-4dd6-bd8d-12e94a173fdf&ga=0&msid=00000000-0000-0000-0000-000000000000&spmid=51fbe951-f66f-43e9-99cc-0e98d060d71c&pgid=6eae593f-03dd-4dd6-bd8d-12e94a173fdf&siteid=7316a0f9-bfb1-420e-bf72-c4cd78ecedec&locale=en&pid=3426a993-ea79-433c-a715-d4493d114760"
+    url = "https://viewer.blipstar.com/searchdbnew?uid=2070622&lat=45.00580&lng=-93.41930&type=nearest&value=5000&keyword=&sp=&son=&product=&product2=&cnt=us&mb=false&state=&r=0.536340923462526"
     r = session.get(url, headers=headers)
     website = "deli-delicious.com"
     typ = "<MISSING>"
     country = "US"
     loc = "<MISSING>"
-    store = "<MISSING>"
-    hours = "<MISSING>"
-    lat = "<MISSING>"
-    lng = "<MISSING>"
     for line in r.iter_lines():
-        line = str(line.decode("utf-8"))
-        if "{lat: " in line and "id:2503388, marker_colour" in line:
-            items = line.split("{lat: ")
+        if '{"n":"' in line:
+            items = line.split('{"n":"')
             for item in items:
-                if ", lng:" in item:
-                    lid = item.split(", id:")[1].split(",")[0]
-                    lidlat = item.split(",")[0]
-                    lidlng = item.split(", lng: ")[1].split(",")[0]
-                    coords.append(lid + "|" + lidlat + "|" + lidlng)
-        if "onmouseover='hoverStart(" in line:
-            items = line.split("onmouseover='hoverStart(")
-            for item in items:
-                if "onmouseout='hoverStop(" in item:
-                    locs.append(item.split(")")[0])
-    for loc in locs:
-        logger.info(loc)
-        for coord in coords:
-            if coord.split("|")[0] == loc:
-                lat = coord.split("|")[1]
-                lng = coord.split("|")[2]
-        lurl = (
-            "https://app.mapply.net/front-end//get_store_info.php?api_key=mapply.1912a876a35b8b709f3f1be5fa28f2b2&data=detailed&store_id="
-            + loc
-        )
-        r2 = session.get(lurl, headers=headers)
-        for line2 in r2.iter_lines():
-            line2 = str(line2.decode("utf-8"))
-            if "<span class='name'>" in line2:
-                name = line2.split("<span class='name'>")[1].split("<")[0].strip()
-                store = loc
-                loc = "<MISSING>"
-                add = line2.split("<span class='address'>")[1].split("<")[0].strip()
-                city = line2.split("<span class='city'>")[1].split("<")[0].strip()
-                state = (
-                    line2.split("<span class='prov_state'>")[1].split("<")[0].strip()
-                )
-                zc = line2.split("<span class='postal_zip'>")[1].split("<")[0].strip()
-                try:
-                    phone = (
-                        line2.split("><span class='phone'>")[1].split("<")[0].strip()
+                if '"s":"' in item:
+                    name = item.split('"')[0]
+                    state = item.split('"s":"')[1].split('"')[0]
+                    add = item.split('"ad":"')[1].split('"')[0].split(",")[0].strip()
+                    city = (
+                        item.split('"a":"')[1]
+                        .split("<span class='storecity'>")[1]
+                        .split("<")[0]
                     )
-                except:
-                    phone = "<MISSING>"
-                try:
-                    hours = (
-                        line2.split("<span class='hours'>")[1]
-                        .split("<\\/span>")[0]
-                        .strip()
-                        .replace("day<br \\/>", "day: ")
-                        .replace("<br \\/>", "; ")
+                    zc = item.split('"pc":"')[1].split('"')[0]
+                    phone = item.split('"p":"')[1].split('"')[0]
+                    try:
+                        loc = item.split('"w":"')[1].split('"')[0].replace("\\", "")
+                    except:
+                        loc = "<MISSING>"
+                    store = item.split('"bpid":')[1].split(",")[0]
+                    lat = item.split('"lat":"')[1].split('"')[0]
+                    lng = item.split('"lng":"')[1].split('"')[0]
+                    try:
+                        hours = "Mon: " + item.split('"mon":"')[1].split('"')[0]
+                        hours = (
+                            hours + "; Tue: " + item.split('"tue":"')[1].split('"')[0]
+                        )
+                        hours = (
+                            hours + "; Wed: " + item.split('"wed":"')[1].split('"')[0]
+                        )
+                        hours = (
+                            hours + "; Thu: " + item.split('"thu":"')[1].split('"')[0]
+                        )
+                        hours = (
+                            hours + "; Fri: " + item.split('"fri":"')[1].split('"')[0]
+                        )
+                        hours = (
+                            hours + "; Sat: " + item.split('"sat":"')[1].split('"')[0]
+                        )
+                        hours = (
+                            hours + "; Sun: " + item.split('"sun":"')[1].split('"')[0]
+                        )
+                    except:
+                        hours = "<MISSING>"
+                    yield SgRecord(
+                        locator_domain=website,
+                        page_url=loc,
+                        location_name=name,
+                        street_address=add,
+                        city=city,
+                        state=state,
+                        zip_postal=zc,
+                        country_code=country,
+                        phone=phone,
+                        location_type=typ,
+                        store_number=store,
+                        latitude=lat,
+                        longitude=lng,
+                        hours_of_operation=hours,
                     )
-                except:
-                    hours = "<MISSING>"
-                yield [
-                    website,
-                    loc,
-                    name,
-                    add,
-                    city,
-                    state,
-                    zc,
-                    country,
-                    store,
-                    phone,
-                    typ,
-                    lat,
-                    lng,
-                    hours,
-                ]
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()

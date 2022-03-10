@@ -55,6 +55,18 @@ def fetch_data(sgw: SgWriter):
             latitude = "<MISSING>"
             longitude = "<MISSING>"
 
+        if city:
+            city = (
+                city.replace("Cara Sucia", "")
+                .replace("Etapa Ii", "")
+                .replace(".", "")
+                .strip()
+            )
+            if "La Libertad" in city:
+                state = "La Libertad"
+        if state:
+            state = state.replace("Departamento De", "").strip()
+
         sgw.write_row(
             SgRecord(
                 locator_domain=locator_domain,

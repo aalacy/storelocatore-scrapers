@@ -18,8 +18,8 @@ def fetch_data(sgw: SgWriter):
 
     session = SgRequests()
 
-    max_distance = 500
-    max_results = 40
+    max_distance = 100
+    max_results = 10
 
     search = DynamicZipSearch(
         country_codes=[SearchableCountries.USA],

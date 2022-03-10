@@ -1,6 +1,11 @@
-from bs4 import BeautifulSoup
-import csv
 import re
+from bs4 import BeautifulSoup
+
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -9,49 +14,20 @@ headers = {
 }
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def fetch_data(sgw: SgWriter):
 
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-
-    data = []
     pattern = re.compile(r"\s\s+")
     url = "https://www.sterlingoptical.com/locations"
-    r = session.get(url, headers=headers, verify=False)
+    r = session.get(url, headers=headers)
     soup = BeautifulSoup(r.text, "html.parser")
     divlist = soup.select('a:contains("Store Details")')
 
-    p = 0
     for div in divlist:
         link = div["href"]
-        r = session.get(link, headers=headers, verify=False)
+        r = session.get(link, headers=headers)
+        if r.status_code == 404 and "pottstown" in link:
+            link = "https://www.sterlingoptical.com/locations/pottstown-details/"
+            r = session.get(link, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
         title = (
             soup.find("a", {"class": "location-page-link-city"})
@@ -59,7 +35,13 @@ def fetch_data():
             .strip()
         )
         try:
-            street = soup.find("span", {"class": "street-address"}).text
+            street = (
+                soup.find("span", {"class": "street-address"})
+                .text.replace(" , ", ", ")
+                .split(", Cross")[0]
+                .split(", Jefferson")[0]
+                .strip()
+            )
         except:
             continue
         city = soup.find("span", {"class": "locality"}).text
@@ -70,38 +52,33 @@ def fetch_data():
         except:
             if "Coming Soon!" in soup.find("span", {"class": "is-coming-soon"}):
                 continue
+        store_number = soup.find(class_="location-modal")["id"].replace("location", "")
         try:
             hours = soup.find("ul", {"class": "location-hours-list"}).text
             hours = re.sub(pattern, " ", hours).replace("\n", " ").strip()
+            hours = hours.split("-----")[0].split("alternative")[0].strip()
         except:
             hours = "<MISSING>"
-        data.append(
-            [
-                "https://www.sterlingoptical.com/",
-                link,
-                title,
-                street,
-                city,
-                state,
-                pcode,
-                "US",
-                "<MISSING>",
-                phone,
-                "<MISSING>",
-                "<MISSING>",
-                "<MISSING>",
-                hours,
-            ]
+
+        sgw.write_row(
+            SgRecord(
+                locator_domain="https://www.sterlingoptical.com/",
+                page_url=link,
+                location_name=title,
+                street_address=street,
+                city=city,
+                state=state,
+                zip_postal=pcode,
+                country_code="US",
+                store_number=store_number,
+                phone=phone,
+                location_type="",
+                latitude="",
+                longitude="",
+                hours_of_operation=hours,
+            )
         )
 
-        p += 1
-    return data
 
-
-def scrape():
-
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    fetch_data(writer)
