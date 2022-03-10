@@ -33,6 +33,10 @@ def fetch_data():
         hoo = " ".join([e.strip() for e in hoo if e.strip()])
         store_number = poi_html.xpath("@onmouseover")[0].split("(")[-1][:-1]
         geo = [e for e in all_coords if store_number == str(e["id"])][0]
+        location_type = ""
+        if "TEMPORARILY CLOSED" in hoo:
+            location_type = "TEMPORARILY CLOSED"
+            hoo = hoo.replace("TEMPORARILY CLOSED", "")
 
         item = SgRecord(
             locator_domain=domain,
@@ -45,7 +49,7 @@ def fetch_data():
             country_code=country_code,
             store_number=store_number,
             phone="",
-            location_type="",
+            location_type=location_type,
             latitude=geo["lat"],
             longitude=geo["lng"],
             hours_of_operation=hoo,
