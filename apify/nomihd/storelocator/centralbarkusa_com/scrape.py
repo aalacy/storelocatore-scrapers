@@ -4,7 +4,9 @@ from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import lxml.html
-from sgscrape import sgpostal as parser
+from sgpostal import sgpostal as parser
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
 website = "centralbarkusa.com"
@@ -59,6 +61,15 @@ def fetch_data():
             store_page_res = session.get(page_url, headers=headers)
             store_page_sel = lxml.html.fromstring(store_page_res.text)
 
+            if (
+                len(
+                    "".join(
+                        store_page_sel.xpath('//span[@class="coming-soon"]/text()')
+                    ).strip()
+                )
+                > 0
+            ):
+                continue
             hours = store_page_sel.xpath('//div[@class="location-hours"]/p')
             hours_list = []
             for hour in hours:
@@ -102,7 +113,18 @@ def fetch_data():
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.LOCATION_NAME,
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.CITY,
+                    SgRecord.Headers.ZIP,
+                }
+            )
+        )
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
