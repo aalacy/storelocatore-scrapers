@@ -20,7 +20,7 @@ base_url = "https://www.ffb1.com/about-us/locations-hours.html"
 def fetch_data():
     with SgRequests() as session:
         soup = bs(session.get(base_url, headers=_headers).text, "lxml")
-        locations = soup.select("ul.locList li")
+        locations = soup.select("ul#locList li")
         for _ in locations:
             street_address = _["data-address1"]
             if _["data-address2"]:
@@ -40,9 +40,9 @@ def fetch_data():
             if _p:
                 phone = _p.find_next_sibling().text.strip()
             _hr = _.select_one("div.hours .lobbyHours")
-            hours = []
+            hours = ""
             if _hr:
-                hours = _hr.select_one("div").stripped_strings
+                hours = ": ".join(_hr.select_one("div").stripped_strings)
             yield SgRecord(
                 page_url=page_url,
                 location_name=_["data-title"].replace("–", "-"),
@@ -56,7 +56,7 @@ def fetch_data():
                 phone=phone,
                 location_type=location_type,
                 locator_domain=locator_domain,
-                hours_of_operation="; ".join(hours).replace("–", "-"),
+                hours_of_operation=hours.replace("–", "-"),
             )
 
 

@@ -36,8 +36,8 @@ def fetch_data():
                 state=addr.state,
                 zip_postal=addr.postcode,
                 country_code="Indonesia",
-                latitude=coord[1],
-                longitude=coord[0],
+                latitude=coord[0],
+                longitude=coord[1],
                 locator_domain=locator_domain,
                 raw_address=raw_address,
             )

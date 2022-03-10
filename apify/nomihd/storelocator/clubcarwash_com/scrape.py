@@ -58,7 +58,7 @@ def fetch_data():
 
             location_type = "<MISSING>"
             hours = store["description"]
-            if "coming" in hours.lower():
+            if "coming" in hours.lower() or "opening" in hours.lower():
                 continue
             hours_sel = lxml.html.fromstring(hours)
             hours_info = hours_sel.xpath("//text()")[1:]
@@ -66,6 +66,11 @@ def fetch_data():
             latitude = store["lat"]
             longitude = store["lng"]
 
+            if (
+                page_url
+                == "https://clubcarwash.com/locations/overland-park-mo-w-121st-street/"
+            ):
+                hours_of_operation = "Mon - Sat: 7 AM to 8 PM; Sunday: 8 AM to 8 PM"
             yield SgRecord(
                 locator_domain=locator_domain,
                 page_url=page_url,

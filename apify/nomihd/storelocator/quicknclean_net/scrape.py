@@ -6,6 +6,7 @@ from sgscrape.sgwriter import SgWriter
 import json
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+import lxml.html
 
 website = "quicknclean.net"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -34,12 +35,35 @@ def fetch_data():
         )
         stores = json.loads(stores_req.text)
 
+        stores_html_req = session.get(
+            "https://quicknclean.net/all-locations/", headers=headers
+        )
+
+        stores_html_sel = lxml.html.fromstring(stores_html_req.text)
+
+        url_dict = {}
+        stores_section = stores_html_sel.xpath(
+            '//div[@class="wpgmza-grid-item-content"]'
+        )
+        for sec in stores_section:
+            url_dict[
+                "".join(sec.xpath('.//p[@class="address-label"]/text()'))
+                .strip()
+                .replace(", USA", "")
+                .strip()
+            ] = "".join(
+                sec.xpath('.//a[./span[contains(text(),"Learn More")]]/@href')
+            ).strip()
+
         for store in stores:
 
-            page_url = "https://quicknclean.net/all-locations/"
+            page_url = "<MISSING>"
             locator_domain = website
 
             raw_address = store["address"].replace(", USA", "").strip().split(",")
+            if ",".join(raw_address) in url_dict:
+                page_url = url_dict[",".join(raw_address)]
+
             street_address = ", ".join(raw_address[:-2]).strip()
             city = raw_address[-2].strip()
             state = raw_address[-1].strip().split(" ")[0].strip()

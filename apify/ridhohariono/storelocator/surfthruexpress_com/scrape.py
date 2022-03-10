@@ -68,13 +68,25 @@ def fetch_data():
             },
         )
         .find("div", {"class": "et_pb_text_inner"})
-        .find("strong")
+        .find_all("strong")
+    )
+    hoo_winter = (
+        hoo[0]
         .get_text(strip=True, separator="@")
         .replace("Fall/Winter Hours@", "")
         .split("@")
     )
-    hoo1 = re.split(r"(?: - )", hoo[0])
-    hoo2 = re.split(r"(?: - )", hoo[1])
+    hoo_spring = (
+        hoo[1]
+        .get_text(strip=True, separator="@")
+        .replace("Spring/Summer Hours@", "")
+        .split("@")
+    )
+    winter_hoo1 = re.split(r"(?: - )", hoo_winter[0])
+    winter_hoo2 = re.split(r"(?: - )", hoo_winter[1])
+    winter_name = (
+        winter_hoo2[0].replace(", ", ",").replace(" & ", ",").strip().split(",")
+    )
     for row in data:
         page_url = row["pricing_url"]
         location_name = row["store"].replace("&#038;", "&")
@@ -94,14 +106,12 @@ def fetch_data():
         location_type = MISSING
         latitude = row["lat"]
         longitude = row["lng"]
-        hoos = hoo2[0].split(",")
         hours_of_operation = ""
-        for name in hoos:
-            if name in location_name:
-                hours_of_operation = " - ".join(hoo2[1:])
-                break
-        if hours_of_operation == "":
-            hours_of_operation = hoo1[1]
+        if state in winter_name or city in winter_name:
+            hours_of_operation = "Fall/Winter: " + " - ".join(winter_hoo2[1:])
+        else:
+            hours_of_operation = "Fall/Winter: " + winter_hoo1[1]
+        hours_of_operation = hours_of_operation + ", Spring/Summer: " + hoo_spring[0]
         log.info("Append {} => {}".format(location_name, street_address))
         yield SgRecord(
             locator_domain=DOMAIN,

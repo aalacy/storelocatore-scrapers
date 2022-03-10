@@ -1,0 +1,5 @@
+--ignore StreetAddressHasNumber (Some page doesn't have store address)
+Found 2 concerning rows. Examples:
+   street_address              REASON  rowNumber
+10      <MISSING>  ADDR_HAS_NO_NUMBER         10
+25      <MISSING>  ADDR_HAS_NO_NUMBER         25
