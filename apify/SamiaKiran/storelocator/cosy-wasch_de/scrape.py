@@ -51,9 +51,11 @@ def fetch_data():
                     break
                 hours_of_operation = hours_of_operation + " " + hour
             hours_of_operation = strip_accents(
-                hours_of_operation.replace(" Sommer (01.04. – 31.10.):", "")
+                hours_of_operation.replace("Sommer (01.04. – 31.10.):", "")
             )
             phone = temp[2].get_text(separator="|", strip=True).replace("|", "")
+            if "SB-WASC" in phone:
+                phone = temp[3].get_text(separator="|", strip=True).replace("|", "")
             coords = soup.find("div", {"class": "bt_bb_google_maps_location"})
             latitude = coords["data-lat"]
             longitude = coords["data-lng"]
@@ -70,6 +72,12 @@ def fetch_data():
 
             zip_postal = pa.postcode
             zip_postal = zip_postal.strip() if zip_postal else MISSING
+            if street_address.isdigit():
+                street_address = (
+                    raw_address.replace(city, "")
+                    .replace(zip_postal, "")
+                    .replace("  ", " ")
+                )
             country_code = "DE"
             yield SgRecord(
                 locator_domain=DOMAIN,

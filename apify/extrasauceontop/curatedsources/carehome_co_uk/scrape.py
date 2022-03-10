@@ -120,7 +120,7 @@ def get_data():
         soup = bs(response_text, "html.parser")
 
         strong_tags = soup.find(
-            "div", attrs={"class": "row", "style": "margin-bottom:30px"}
+            "div", attrs={"class": "seo_links seo_links_country"}
         ).find_all("strong")
         country_urls = []
         location_urls = []
@@ -129,7 +129,7 @@ def get_data():
             url = a_tag["href"]
 
             if "searchcountry" in url:
-                country_urls.append(url)
+                country_urls.append("https://www.carehome.co.uk" + url)
 
         for country_url in country_urls:
 
@@ -224,11 +224,20 @@ def get_data():
             response = s.get(location_url, headers=headers)
 
         except Exception:
-            new_sess = reset_sessions(location_url)
+            x = 0
+            while True:
+                x = x + 1
+                try:
+                    new_sess = reset_sessions(location_url)
 
-            s = new_sess[0]
-            headers = new_sess[1]
-            response_text = new_sess[2]
+                    s = new_sess[0]
+                    headers = new_sess[1]
+                    response_text = new_sess[2]
+                    break
+
+                except Exception:
+                    if x == 10:
+                        raise Exception
 
         response_text = response.text
         log.info("URL " + str(x) + "/" + str(num_urls))
@@ -279,16 +288,31 @@ def get_data():
         address_parts = soup.find("meta", attrs={"property": "og:title"})[
             "content"
         ].split(",")
-        address = address_parts[1].strip()
-        city = address_parts[-2].strip()
-        state_zipp_parts = address_parts[-1].split(" |")[0].split(" ")
-        state_parts = state_zipp_parts[:-2]
-        state = ""
-        for part in state_parts:
-            state = state + part + " "
-        state = state.strip().replace("County ", "")
 
-        zipp = state_zipp_parts[-2] + " " + state_zipp_parts[-1]
+        try:
+            address = address_parts[1].strip()
+            city = address_parts[-2].strip()
+            state_zipp_parts = address_parts[-1].split(" |")[0].split(" ")
+            state_parts = state_zipp_parts[:-2]
+            state = ""
+            for part in state_parts:
+                state = state + part + " "
+            state = state.strip().replace("County ", "")
+
+            zipp = state_zipp_parts[-2] + " " + state_zipp_parts[-1]
+        except Exception:
+            if len(address_parts) == 1:
+                address = "<MISSING>"
+                city = "<MISSING>"
+                state = "".join(part for part in address_parts[0].split(" ")[:-2])
+                zipp = (
+                    address_parts[0].split(" ")[1]
+                    + " "
+                    + address_parts[0].split(" ")[2]
+                )
+
+            else:
+                raise Exception
 
         country_code = "UK"
         store_number = location_url.split("/")[-1]

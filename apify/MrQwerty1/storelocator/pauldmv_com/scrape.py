@@ -1,3 +1,4 @@
+import ssl
 import time
 from lxml import html
 from sgscrape.sgrecord import SgRecord
@@ -64,5 +65,6 @@ def fetch_data(sgw: SgWriter):
 
 if __name__ == "__main__":
     locator_domain = "https://www.pauldmv.com/"
+    ssl._create_default_https_context = ssl._create_unverified_context
     with SgWriter(SgRecordDeduper(RecommendedRecordIds.PhoneNumberId)) as writer:
         fetch_data(writer)

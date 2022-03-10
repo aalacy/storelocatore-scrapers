@@ -21,7 +21,7 @@ def fetch_data(sgw: SgWriter):
     for d in div:
 
         page_url = "https://johnsonfitness.com.my/outlets/"
-        location_name = "".join(d.xpath(".//preceding::p[1]/strong/text()"))
+        location_name = "".join(d.xpath(".//preceding-sibling::div[1]//text()"))
         ad = (
             "".join(
                 d.xpath('.//b[contains(text(), "Address:")]/following-sibling::text()')

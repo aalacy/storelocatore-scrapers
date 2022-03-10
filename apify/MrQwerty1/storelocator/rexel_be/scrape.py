@@ -1,4 +1,5 @@
 import json
+import re
 from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
@@ -9,50 +10,45 @@ from concurrent import futures
 
 
 def get_urls():
-    urls = []
-    r = session.get(
-        "https://rexel.be/wp-json/wpgmza/v1/datatables/base64eJy1krFqwzAURf-lziokTbNoCx26NCTQQqFxKK-Wiy0qy+ZJNgGTf4-sONCtS72Jq3uPBp0eTdk8OwoBGh-7l+3nJsu2JD8srzZE64ss25iOfM7mnb4dQyFEkgi9UHDsi1hCPywVKmq+rEmUVarktWsrn5iHHoYijW1PFaf7gcAkeTnidJSWFWoxLL+DWwW6R0eunXbCBZ+hT+QCXy7qzl7OyH6ckb2akf00I3v9-+zjNBuNudkz-quxKQKFHEPlb5DCybrIksTdk1CVFOxTWHcsYg1PTu+Gp944Dudwn14BTzQDrw"
-    )
-    for j in r.json()["meta"]:
-        text = j.get("link") or "<html></html>"
-        tree = html.fromstring(text)
-        url = "".join(tree.xpath("//a/@href"))
-        if url.startswith("/"):
-            url = f"https://rexel.be{url}"
-        urls.append(url)
+    r = session.get("https://rexel.be/filialen/")
+    tree = html.fromstring(r.text)
 
-    return urls
+    return tree.xpath("//a[./span/span[contains(text(), 'Meer')]]/@href")
 
 
 def get_data(page_url, sgw: SgWriter):
     r = session.get(page_url)
     tree = html.fromstring(r.text.replace("og:description", "description"))
 
-    location_name = " ".join("".join(tree.xpath("//h2//text()")).split())
-    if "KNX" in location_name:
-        location_name = location_name.split("KNX")[0].strip()
-    line = tree.xpath("//p[./strong[contains(text(), 'Adres')]]//text()")
+    location_name = " ".join("".join(tree.xpath("//h1/text()")).split())
+    line = tree.xpath(
+        "//span[./span[contains(text(), 'Adres')]]/following-sibling::p[1]/text()"
+    )
     line = list(filter(None, [l.strip().replace("\xa0", " ") for l in line]))
 
-    line.pop(0)
-    if "REXEL" in line[0] or "HAVEN" in line[0]:
-        line.pop(0)
-    if len(line) == 3 and "(" not in line[1]:
-        line[-1] = " ".join(line[1:])
-    if "WEYLER" in line[-1]:
-        line[-1] = line[-1].split("WEYLER")[-1].strip()
+    if len(line) == 1:
+        text = line[0]
+        p = re.findall(r"\d{4}", text).pop()
+        line = text.split(p)
+        line[1] = f"{p}{line[1]}"
 
     street_address = line.pop(0).strip()
     csz = line.pop()
-    postal = csz.split()[0]
+    if " " not in csz:
+        postal = street_address.split()[-1]
+        street_address = street_address.replace(postal, "").strip()
+    else:
+        postal = csz.split()[0]
     city = csz.replace(postal, "").strip()
     phone = (
-        tree.xpath("//strong[contains(text(), 'Tel:')]/following-sibling::text()")[0]
+        "".join(
+            tree.xpath(
+                "//span[./span[contains(text(), 'Telefoon')]]/following-sibling::p[1]/text()"
+            )
+        )
         .replace("/", " ")
         .strip()
     )
-    if "(" in phone:
-        phone = phone.split("(")[0].strip()
 
     try:
         text = "".join(tree.xpath("//script[contains(text(), 'addresses:')]/text()"))
@@ -63,25 +59,18 @@ def get_data(page_url, sgw: SgWriter):
     except:
         latitude, longitude = SgRecord.MISSING, SgRecord.MISSING
 
-    try:
-        _tmp = []
-        write = False
-        source = "".join(tree.xpath("//meta[@property='description']/@content"))
-        for line in source.split("\r\n"):
-            if "openingsuren" in line.lower():
-                write = True
-                continue
-            if (
-                "commercieel" in line.lower()
-                or "tel:" in line.lower()
-                or "cash" in line
-            ):
-                break
-            if write:
-                _tmp.append(line.strip())
-        hours_of_operation = ";".join(_tmp).replace("/", "|").replace("u", ":")
-    except:
-        hours_of_operation = SgRecord.MISSING
+    _tmp = []
+    hours = tree.xpath(
+        "//span[./span[contains(text(), 'Openingsuren')]]/following-sibling::p[1]/text()"
+    )
+    for h in hours:
+        if not h.strip():
+            continue
+        if "bureau" in h or "cash" in h:
+            break
+        _tmp.append(h.strip())
+
+    hours_of_operation = ";".join(_tmp)
 
     row = SgRecord(
         page_url=page_url,

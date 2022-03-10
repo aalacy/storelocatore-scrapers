@@ -40,8 +40,11 @@ def fetch_data():
             store_res = session.get(page_url, headers=headers)
             store_sel = lxml.html.fromstring(store_res.text)
 
-            raw_address = store["FullAddress"].replace("\r\n", ", ").replace("\n", ", ")
-
+            raw_address = (
+                store["FullAddress"].replace("\r\n", ", ").replace("\n", ", ").strip()
+            )
+            if raw_address[-1] == ",":
+                raw_address = "".join(raw_address[:-1]).strip()
             formatted_addr = parser.parse_address_intl(raw_address)
             street_address = formatted_addr.street_address_1
             if formatted_addr.street_address_2:

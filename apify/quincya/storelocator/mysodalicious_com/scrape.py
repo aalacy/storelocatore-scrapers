@@ -31,6 +31,8 @@ def fetch_data(sgw: SgWriter):
         raw_address = list(item.find("p").stripped_strings)
         street_address = raw_address[0].strip()
         city_line = raw_address[1].strip().split(",")
+        if "," not in raw_address[1]:
+            city_line = raw_address[2].strip().split(",")
         city = city_line[0].strip()
         state = city_line[-1].strip().split()[0].strip()
         zip_code = city_line[-1].strip().split()[1].strip()
@@ -48,7 +50,7 @@ def fetch_data(sgw: SgWriter):
             except:
                 pass
 
-        if "@" in phone:
+        if "@" in phone or "," in phone:
             phone = ""
 
         location_type = "<MISSING>"
@@ -67,24 +69,29 @@ def fetch_data(sgw: SgWriter):
         if "temporarily closed" in item.text.lower():
             hours_of_operation = "Temporarily Closed"
         else:
-            raw_hours = (
-                item.find_all("h3")[-2].text + " " + item.find_all("h3")[-1].text
-            )
-            if "hours:" not in raw_hours:
-                try:
-                    raw_hours = (
-                        item.find_all("h3")[-3].text
-                        + " "
-                        + item.find_all("h3")[-2].text
-                        + " "
-                        + item.find_all("h3")[-1].text
-                    )
-                except:
-                    raw_hours = (
-                        item.find_all("h3")[-2].text
-                        + " "
-                        + item.find_all("h3")[-1].text
-                    )
+            try:
+                raw_hours = (
+                    item.find_all("h3")[-2].text + " " + item.find_all("h3")[-1].text
+                )
+                if "hours:" not in raw_hours:
+                    try:
+                        raw_hours = (
+                            item.find_all("h3")[-3].text
+                            + " "
+                            + item.find_all("h3")[-2].text
+                            + " "
+                            + item.find_all("h3")[-1].text
+                        )
+                    except:
+                        raw_hours = (
+                            item.find_all("h3")[-2].text
+                            + " "
+                            + item.find_all("h3")[-1].text
+                        )
+            except:
+                hours_of_operation = (
+                    item.find("strong", string="Hours:").find_previous().text
+                )
             hours_of_operation = (
                 (raw_hours).replace("Hours:", "hours:").split("hours:")[-1].strip()
             )

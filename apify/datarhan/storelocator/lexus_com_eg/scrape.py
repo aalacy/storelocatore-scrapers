@@ -8,7 +8,7 @@ from sgpostal.sgpostal import parse_address_intl
 
 
 def fetch_data():
-    session = SgRequests()
+    session = SgRequests(verify_ssl=False)
 
     start_url = "https://www.lexus.com.eg/api/v1/getCenters?location={}"
     domain = "lexus.com.eg"

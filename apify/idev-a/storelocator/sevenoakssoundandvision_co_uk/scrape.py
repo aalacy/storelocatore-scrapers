@@ -31,6 +31,11 @@ def fetch_data():
             if _.select_one("a.store-number"):
                 phone = _.select_one("a.store-number").text
             info = json.loads(res.split("new GMaps(")[1].split(");")[0])
+            hours = []
+            for hh in sp1.select("div.open-hours"):
+                if "holiday" in hh["class"]:
+                    continue
+                hours.append(": ".join(hh.stripped_strings))
             yield SgRecord(
                 page_url=page_url,
                 location_name=_.select_one("span.store-name").text.strip(),
@@ -42,6 +47,7 @@ def fetch_data():
                 latitude=info["lat"],
                 longitude=info["lng"],
                 locator_domain=locator_domain,
+                hours_of_operation="; ".join(hours),
                 raw_address=" ".join(addr[:2]),
             )
 

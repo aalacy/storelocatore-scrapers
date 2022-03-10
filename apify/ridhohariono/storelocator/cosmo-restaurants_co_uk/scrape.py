@@ -9,8 +9,8 @@ from sgscrape.sgpostal import parse_address_intl
 import re
 
 
-DOMAIN = ".cosmo-restaurants.co.uk"
-BASE_URL = "https://www..cosmo-restaurants.co.uk"
+DOMAIN = "cosmo-restaurants.co.uk"
+BASE_URL = "https://www.cosmo-restaurants.co.uk"
 LOCATION_URL = "https://www.cosmo-restaurants.co.uk/restaurants"
 HEADERS = {
     "Accept": "application/json, text/plain, */*",
@@ -87,9 +87,11 @@ def fetch_data():
             "div", {"class": "restaurant__content__title"}
         ).text.strip()
         if "Temporarily Closed" in row.text.strip():
-            raw_address = row.find(
-                "div", {"class": "restaurant__content__address"}
-            ).text.strip()
+            raw_address = " ".join(
+                row.find("div", {"class": "restaurant__content__address"})
+                .text.strip()
+                .split()
+            ).strip()
             phone = MISSING
             hours_of_operation = MISSING
             location_type = "TEMP_CLOSED"
@@ -98,12 +100,7 @@ def fetch_data():
         else:
             store = pull_content(page_url)
             info = store.find("div", {"class": "restaurant-location"})
-            raw_address = (
-                info.find("p")
-                .get_text(strip=True, separator=" ")
-                .replace("Leave feedback here", "")
-                .strip()
-            )
+            raw_address = info.find("p").get_text(strip=True, separator=" ").strip()
             phone = row.find(
                 "div", {"class": "restaurant__content__contact"}
             ).text.strip()
@@ -119,10 +116,34 @@ def fetch_data():
                     {"type": "Dinner", "content": hoo_dinner},
                 ]
             )
-            location_type = MISSING
-            map_link = info.find("a", {"href": re.compile(r"\/maps\/place")})["href"]
-            latitude, longitude = get_latlong(map_link)
+            if "Temporarily Closed" in hours_of_operation:
+                location_type = "TEMP_CLOSED"
+            else:
+                location_type = MISSING
+            try:
+                map_link = info.find("a", {"href": re.compile(r"\/maps\/place")})[
+                    "href"
+                ]
+                latitude, longitude = get_latlong(map_link)
+            except:
+                latitude = MISSING
+                longitude = MISSING
+        raw_address = re.sub(r"Leave.*|2nd Floor,", "", raw_address).strip()
         street_address, city, state, zip_postal = getAddress(raw_address)
+        street_address = (
+            street_address.replace("2Nd Floor", "")
+            .replace("Liffey Valley Shopping Centre", "")
+            .strip()
+        )
+        if city == MISSING:
+            city = location_name
+        if zip_postal == MISSING:
+            zip_postal = raw_address.split(",")[-1].replace(city, "").strip()
+            if len(zip_postal) < 4:
+                zip_postal == MISSING
+            street_address = re.sub(
+                city + r".*|" + zip_postal + r".*", "", street_address
+            )
         store_number = MISSING
         country_code = "GB"
         log.info("Append {} => {}".format(location_name, street_address))

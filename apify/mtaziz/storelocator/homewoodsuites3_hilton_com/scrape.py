@@ -9,9 +9,11 @@ import tenacity
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as b4
 import json
+from datetime import datetime
+import dateutil.parser
 import ssl
 
-logger = SgLogSetup().get_logger(logger_name="Scraper")
+logger = SgLogSetup().get_logger(logger_name="hiltongardeninn3_hilton_com")
 ssl._create_default_https_context = ssl._create_unverified_context
 
 headers_c = {
@@ -252,9 +254,26 @@ def fetch_records(idx, country_n_url, sgw: SgWriter):
                         ph = _["contactInfo"]["phoneNumber"]
                         phone = ph if ph else MISSING
 
+                        hours_of_operation = MISSING
+
                         lt = _["brandCode"]
                         location_type = lt if lt else MISSING
-                        hours_of_operation = MISSING
+
+                        # Coming Soon based on whether hotel is open or close
+                        # Get the local time based on the system the crawler is running on
+                        local_time = datetime.now(datetime.now().astimezone().tzinfo)
+
+                        # Hotel open or close status refers False or True
+                        open_or_close = _["display"]["open"]
+
+                        # Open Date refers to the opening date.
+                        # If this is None then nothing required to do
+                        open_date = _["display"]["openDate"]
+                        parsed_open_date = None
+                        if open_date is not None and open_or_close is False:
+                            parsed_open_date = dateutil.parser.parse(open_date)
+                            if parsed_open_date.timestamp() > local_time.timestamp():
+                                hours_of_operation = "Coming Soon"
                         raw_address = a["addressFmt"]
                         raw_address = raw_address if raw_address else MISSING
 
