@@ -36,7 +36,11 @@ def fetch_data(sgw: SgWriter):
         )
 
         log.info(base_link)
-        stores = session.get(base_link, headers=headers).json()["pointsOfService"]
+        try:
+            stores = session.get(base_link, headers=headers).json()["pointsOfService"]
+        except:
+            log.info("Error..No stores!")
+            continue
         for store in stores:
             location_name = store["displayName"]
             street_address = store["address"]["line1"].strip()
@@ -49,7 +53,10 @@ def fetch_data(sgw: SgWriter):
             search.found_location_at(latitude, longitude)
             store_number = store["name"]
             location_type = "<MISSING>"
-            phone = store["phone"]
+            try:
+                phone = store["phone"]
+            except:
+                phone = ""
             hours_of_operation = "<INACCESSIBLE>"
             link = "<MISSING>"
 
