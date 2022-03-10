@@ -83,6 +83,7 @@ class ExampleSearchIteration(SearchIteration):
 
                     yield SgRecord(
                         page_url=page_url,
+                        locator_domain=locator_domain,
                         location_name=location_type,
                         street_address=loc["address"].split("--- ")[-1].strip(),
                         city=loc["city"],

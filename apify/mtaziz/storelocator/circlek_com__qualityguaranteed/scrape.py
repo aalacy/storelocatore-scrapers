@@ -261,8 +261,16 @@ def fetch_details(item_num, data_dict, sgw: SgWriter):
                 logger.info(
                     f"Latitude: {latitude} | Longitude: {longitude} | {page_url} "
                 )
+                rawadd = ""
 
                 raw_address = get_rawadd(store_sel)
+                logger.info(f"Length of raw address: {len(raw_address)}")
+
+                # If comma or comma with space found then replaced with <MISSING>
+                if raw_address == "," or raw_address.strip() == ",":
+                    rawadd = MISSING
+                else:
+                    rawadd = raw_address
                 formatted_addr = parse_address_intl(raw_address)
                 state = formatted_addr.state
                 if state:
@@ -289,7 +297,7 @@ def fetch_details(item_num, data_dict, sgw: SgWriter):
                     latitude=latitude,
                     longitude=longitude,
                     hours_of_operation=hours_of_operation,
-                    raw_address=raw_address,
+                    raw_address=rawadd,
                 )
                 sgw.write_row(rec)
 
@@ -307,8 +315,10 @@ def fetch_data(sgw: SgWriter):
     # to be made to get all the stores.
     # Start Page Number: 0
     # End Page Number: 980
+
     START_PAGENUM = 0
     END_PAGENUM = 340
+
     data_from_api = fetch_data_from_api_res(START_PAGENUM, END_PAGENUM)
     logger.info("API endpoints urls page_url extraction done!!")
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:

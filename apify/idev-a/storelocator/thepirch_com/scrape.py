@@ -34,6 +34,9 @@ def fetch_data():
             page_url = _.a["href"]
             logger.info(page_url)
             sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
+            note = sp1.select_one("div.elementor-widget-container p strong span")
+            if note and "Showroom Opening" in note.text:
+                continue
             raw_address = " ".join(_.p.stripped_strings)
             addr = parse_address_intl(raw_address)
             street_address = addr.street_address_1

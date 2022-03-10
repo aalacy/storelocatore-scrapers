@@ -66,12 +66,25 @@ def fetch_data():
                 "script",
                 src=re.compile(r"https://knowledgetags.yextpages.net/embed"),
             )
+            latitude = longitude = ""
             if _hr:
                 res = session.get(_hr["src"], headers=_headers).text
                 if "Entity not found" not in res:
-                    hours = json.loads(res.split("Yext._embed(")[1][:-1].strip())[
+                    ii = json.loads(res.split("Yext._embed(")[1][:-1].strip())[
                         "entities"
-                    ][0]["attributes"]["hours"]
+                    ][0]
+                    hours = ii["attributes"]["hours"]
+            try:
+                coord = (
+                    sp1.select_one("div#main-content iframe")["src"]
+                    .split("!2d")[1]
+                    .split("!2m")[0]
+                    .split("!3m")[0]
+                    .split("!3d")
+                )
+                longitude, latitude = coord
+            except:
+                pass
 
             if hours and "Please call" in hours[0]:
                 hours = []
@@ -87,8 +100,8 @@ def fetch_data():
                 country_code="US",
                 phone=phone,
                 locator_domain=locator_domain,
-                latitude=_["location"]["geoPoint"]["lat"],
-                longitude=_["location"]["geoPoint"]["lng"],
+                latitude=latitude,
+                longitude=longitude,
                 hours_of_operation="; ".join(hours).replace("–", "-"),
                 raw_address=_["location"]["address"]["formatted"],
             )

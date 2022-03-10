@@ -79,7 +79,28 @@ def fetch_data():
                 phone = line2.split('href="tel:')[1].split('"')[0]
         if hours == "":
             hours = "<MISSING>"
+        if state == "PR":
+            country = "Puerto Rico"
+            state = "<MISSING>"
+        if state == "VI":
+            country = "US Virgin Islands"
+            state = "<MISSING>"
+        if state == "GU":
+            country = "Guam"
+            state = "<MISSING>"
         if "/designcenter" not in loc:
+            if "New-Braunfels/7813" in loc:
+                name = "New Braunfels #8520"
+                city = "New Braunfels"
+                state = "TX"
+                add = "1360 N Ih 35"
+                zc = "78130"
+                phone = "(830)625-4089"
+                hours = "Mon-Sat: 6:00am - 9:00pm; Sun: 8:00am - 8:00pm"
+                lat = "29.701206"
+                lng = "-98.089531"
+                store = "8520"
+                country = "US"
             yield SgRecord(
                 locator_domain=website,
                 page_url=loc,
