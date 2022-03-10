@@ -7,6 +7,9 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 import re
 from sgselenium import SgChrome
 import dirtyjson as json
+import ssl
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 logger = SgLogSetup().get_logger("pier49")
 
