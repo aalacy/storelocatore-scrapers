@@ -27,90 +27,92 @@ headers = {
 
 def fetch_data():
     with SgRequests() as session:
-        countries_req = session.get(
-            "https://store-data-service.services.dmtech.com/stores/cluster/85.999%2C-179.999%2C-89.999%2C179.999/3",
-            headers=headers,
-        )
-        countries_json = countries_req.json()
-        for country in countries_json.keys():
-            lat = countries_json[country]["centerPoint"]["lat"]
-            lng = countries_json[country]["centerPoint"]["lon"]
-            lat1 = lat
-            lat2 = lat - 0.09
-            lng1 = lng
-            lng2 = lng + 0.09
-
-            BBOX = f"{lat1},{lng1},{lat2},{lng2}"
-            log.info(BBOX)
-            stores_req = session.get(
-                "https://store-data-service.services.dmtech.com/stores/bbox/" + BBOX,
+        for index in range(1, 4):
+            countries_req = session.get(
+                f"https://store-data-service.services.dmtech.com/stores/cluster/85.999%2C-179.999%2C-89.999%2C179.999/{index}",
                 headers=headers,
             )
-            stores = json.loads(stores_req.text)["stores"]
+            countries_json = countries_req.json()
+            for country in countries_json.keys():
+                lat = countries_json[country]["centerPoint"]["lat"]
+                lng = countries_json[country]["centerPoint"]["lon"]
+                lat1 = lat
+                lat2 = lat - 0.09
+                lng1 = lng
+                lng2 = lng + 0.09
 
-            for store in stores:
-                page_url = store["storeUrlPath"]
-                if page_url:
-                    page_url = "https://www.dm.de/store" + page_url
-                locator_domain = website
-                location_name = store["address"]["street"]
-                street_address = store["address"]["street"]
-                city = store["address"]["city"]
-                state = "<MISSING>"
-                zip = store["address"]["zip"]
-
-                country_code = store["countryCode"]
-
-                store_number = store["storeNumber"]
-                phone = store["phone"]
-
-                location_type = "<MISSING>"
-                hours_list = []
-                hours = store["openingHours"]
-                for hour in hours:
-                    if hour["weekDay"] == 1:
-                        day = "Monday:"
-                    if hour["weekDay"] == 2:
-                        day = "Tuesday:"
-                    if hour["weekDay"] == 3:
-                        day = "Wednesday:"
-                    if hour["weekDay"] == 4:
-                        day = "Thursday:"
-                    if hour["weekDay"] == 5:
-                        day = "Friday:"
-                    if hour["weekDay"] == 6:
-                        day = "Saturday:"
-                    if hour["weekDay"] == 7:
-                        day = "Sunday:"
-
-                    time = (
-                        hour["timeRanges"][0]["opening"]
-                        + " - "
-                        + hour["timeRanges"][0]["closing"]
-                    )
-                    hours_list.append(day + time)
-
-                hours_of_operation = "; ".join(hours_list).strip()
-
-                latitude = store["location"]["lat"]
-                longitude = store["location"]["lon"]
-
-                yield SgRecord(
-                    locator_domain=locator_domain,
-                    page_url=page_url,
-                    location_name=location_name,
-                    street_address=street_address,
-                    city=city,
-                    state=state,
-                    zip_postal=zip,
-                    country_code=country_code,
-                    store_number=store_number,
-                    phone=phone,
-                    location_type=location_type,
-                    latitude=latitude,
-                    longitude=longitude,
-                    hours_of_operation=hours_of_operation,
+                BBOX = f"{lat1},{lng1},{lat2},{lng2}"
+                log.info(BBOX)
+                stores_req = session.get(
+                    "https://store-data-service.services.dmtech.com/stores/bbox/"
+                    + BBOX,
+                    headers=headers,
                 )
+                stores = json.loads(stores_req.text)["stores"]
+
+                for store in stores:
+                    page_url = store["storeUrlPath"]
+                    if page_url:
+                        page_url = "https://www.dm.de/store" + page_url
+                    locator_domain = website
+                    location_name = store["address"]["street"]
+                    street_address = store["address"]["street"]
+                    city = store["address"]["city"]
+                    state = "<MISSING>"
+                    zip = store["address"]["zip"]
+
+                    country_code = store["countryCode"]
+
+                    store_number = store["storeNumber"]
+                    phone = store["phone"]
+
+                    location_type = "<MISSING>"
+                    hours_list = []
+                    hours = store["openingHours"]
+                    for hour in hours:
+                        if hour["weekDay"] == 1:
+                            day = "Monday:"
+                        if hour["weekDay"] == 2:
+                            day = "Tuesday:"
+                        if hour["weekDay"] == 3:
+                            day = "Wednesday:"
+                        if hour["weekDay"] == 4:
+                            day = "Thursday:"
+                        if hour["weekDay"] == 5:
+                            day = "Friday:"
+                        if hour["weekDay"] == 6:
+                            day = "Saturday:"
+                        if hour["weekDay"] == 7:
+                            day = "Sunday:"
+
+                        time = (
+                            hour["timeRanges"][0]["opening"]
+                            + " - "
+                            + hour["timeRanges"][0]["closing"]
+                        )
+                        hours_list.append(day + time)
+
+                    hours_of_operation = "; ".join(hours_list).strip()
+
+                    latitude = store["location"]["lat"]
+                    longitude = store["location"]["lon"]
+
+                    yield SgRecord(
+                        locator_domain=locator_domain,
+                        page_url=page_url,
+                        location_name=location_name,
+                        street_address=street_address,
+                        city=city,
+                        state=state,
+                        zip_postal=zip,
+                        country_code=country_code,
+                        store_number=store_number,
+                        phone=phone,
+                        location_type=location_type,
+                        latitude=latitude,
+                        longitude=longitude,
+                        hours_of_operation=hours_of_operation,
+                    )
 
 
 def scrape():
