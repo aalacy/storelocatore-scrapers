@@ -1,6 +1,6 @@
+import json
 import usaddress
 from sglogging import sglog
-from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
@@ -8,54 +8,51 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
-website = "rejuvenation_com"
+website = "towncaredental_com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
-session = SgRequests()
+
 headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36"
 }
 
-DOMAIN = "https://www.rejuvenation.com"
+DOMAIN = "https://www.towncaredental.com/"
 MISSING = SgRecord.MISSING
 
 
 def fetch_data():
     if True:
-        url = "https://www.rejuvenation.com/landing/store-search"
+        url = "https://www.towncaredental.com/locations"
         r = session.get(url, headers=headers)
-        soup = BeautifulSoup(r.text, "html.parser")
-        loclist = soup.findAll(
-            "div",
-            {
-                "class": "cms-equal_width_column_control-col cms-image-block-col mobile-only"
-            },
+        loclist = (
+            r.text.split("window.app_data = JSON.parse('")[1]
+            .replace("\\u0022", '"')
+            .split('"stores":[{')[1]
+            .split(',"userLocation"')[0]
         )
-        for loc in loclist[:-1]:
-            if "PERMANENTLY CLOSED" in loc.text:
-                continue
-            temp = loc.findAll("p")
-            try:
-                page_url = (
-                    loc.findAll("button")[1]["onclick"]
-                    .replace("window.location.href = '", "")
-                    .replace("';", "")
-                )
-            except:
-                continue
-            if DOMAIN not in page_url:
-                page_url = DOMAIN + page_url
-            r = session.get(page_url, headers=headers)
-            latitude = r.text.split('"latitude": "')[1].split('"')[0]
-            longitude = r.text.split('"longitude": "')[1].split('"')[0]
-            soup = BeautifulSoup(r.text, "html.parser")
+        loclist = json.loads("[{" + loclist)
+        for loc in loclist:
+            page_url = loc["uri"].replace("\\/", "/")
             log.info(page_url)
-            location_name = temp[1].text
-            phone = loc.select_one("a[href*=tel]").text
-            hours_of_operation = (
-                temp[5].get_text(separator="|", strip=True).replace("|", " ")
-            )
-            raw_address = temp[2].get_text(separator="|", strip=True).replace("|", " ")
-            address = raw_address.replace(",", " ")
+            temp_url = page_url + "/about-our-practice"
+            r = session.get(temp_url, headers=headers)
+            hour_list = r.text.split('"openingHoursSpecification":[{')[1].split("]}")[0]
+            hour_list = json.loads("[{" + hour_list + "]")
+            hours_of_operation = ""
+            for hour in hour_list:
+                hours_of_operation = (
+                    hours_of_operation
+                    + " "
+                    + hour["dayOfWeek"]
+                    + " "
+                    + hour["opens"]
+                    + "-"
+                    + hour["closes"]
+                )
+            location_name = loc["name"]
+            store_number = loc["id"]
+            phone = loc["phone_number"]
+            address = " ".join(loc["addressLines"])
+            address = address.replace(",", " ")
             address = usaddress.parse(address)
             i = 0
             street_address = ""
@@ -82,6 +79,8 @@ def fetch_data():
                     zip_postal = zip_postal + " " + temp[0]
                 i += 1
             country_code = "US"
+            latitude = loc["position"]["lat"]
+            longitude = loc["position"]["lng"]
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url=page_url,
@@ -91,13 +90,12 @@ def fetch_data():
                 state=state.strip(),
                 zip_postal=zip_postal.strip(),
                 country_code=country_code,
-                store_number=MISSING,
+                store_number=store_number,
                 phone=phone.strip(),
                 location_type=MISSING,
                 latitude=latitude,
                 longitude=longitude,
-                hours_of_operation=hours_of_operation.strip(),
-                raw_address=raw_address,
+                hours_of_operation=hours_of_operation,
             )
 
 
@@ -105,7 +103,7 @@ def scrape():
     log.info("Started")
     count = 0
     with SgWriter(
-        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.GeoSpatialId)
     ) as writer:
         results = fetch_data()
         for rec in results:
