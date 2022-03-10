@@ -42,7 +42,9 @@ def fetch_data(sgw: SgWriter):
             )
         )
         location_name = "".join(tree.xpath("//h1/text()")) or "<MISSING>"
-        street_address = ad.split("-")[0].strip()
+        street_address = ad.split("-")[0].strip() or "<MISSING>"
+        if street_address == "<MISSING>":
+            continue
         postal = ad.split("-")[-2].strip()
         country_code = "ES"
         city = ad.split("-")[-1].strip()
