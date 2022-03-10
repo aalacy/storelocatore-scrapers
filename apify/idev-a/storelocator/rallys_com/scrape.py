@@ -1,119 +1,73 @@
-from sgscrape import simple_scraper_pipeline as sp
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
-import us
 
-logger = SgLogSetup().get_logger("rallys")
+logger = SgLogSetup().get_logger("")
 
-headers = {
-    "accept": "application/json",
-    "accept-encoding": "gzip, deflate, br",
-    "accept-language": "en-US,en;q=0.9,ko;q=0.8",
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36",
+_headers = {
+    "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
 }
 
 locator_domain = "https://www.rallys.com/"
+start_url = "https://locations.rallys.com/index.html"
+base_url = "https://liveapi.yext.com/v2/accounts/me/answers/vertical/query?experienceKey=checkers_answers&api_key=3a0695216a74763b09659ee6021687a0&v=20190101&version=PRODUCTION&locale=en&input={}&verticalKey=restaurants&limit=50&offset={}&facetFilters=%7B%7D&session_id=0396ea7e-3878-4d7d-9e94-0a1b61f30d1f&sessionTrackingEnabled=true&sortBys=%5B%5D&referrerPageUrl=https%3A%2F%2Flocations.rallys.com%2F&source=STANDARD&jsLibVersion=v1.11.0"
+
+days = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
 
 
 def fetch_data():
-    # Need to add dedupe. Added it in pipeline.
-    session = SgRequests(proxy_rotation_failure_threshold=20)
-    total = 0
-    for state in us.states.STATES:
-        logger.info(("Pulling Geo Code %s..." % state.name))
-        url = f"https://locations.rallys.com/search?region={state.abbr}&country=US&qp={state.name},%20United%20States&l=en"
-        locations = session.get(url, headers=headers, timeout=15).json()
-        total += len(locations)
-        if "response" in locations:
-            for _ in locations["response"]["entities"]:
-                store = _["profile"]
-                try:
-                    if "displayCoordinate" in store:
-                        store["lat"] = store["displayCoordinate"]["lat"]
-                        store["lng"] = store["displayCoordinate"]["long"]
-                    if "geocodedCoordinate" in store:
-                        store["lat"] = store["geocodedCoordinate"]["lat"]
-                        store["lng"] = store["geocodedCoordinate"]["long"]
-                    elif "cityCoordinate" in store:
-                        store["lat"] = store["cityCoordinate"]["lat"]
-                        store["lng"] = store["cityCoordinate"]["long"]
-                except:
-                    import pdb
+    with SgRequests() as session:
+        states = bs(session.get(start_url, headers=_headers).text, "lxml").select(
+            "div.Main-content span.Directory-listLinkText"
+        )
+        for state in states:
+            offset = 0
+            while True:
+                st = state.text.strip()
+                locations = session.get(
+                    base_url.format(st, offset), headers=_headers
+                ).json()["response"]["results"]
+                cnt = len(locations)
+                logger.info(f"[{st}] [{offset}] {cnt} found")
+                offset += cnt
+                if not cnt:
+                    break
 
-                    pdb.set_trace()
-                store["street"] = store["address"]["line1"]
-                if store["address"]["line2"]:
-                    store["street"] += " " + store["address"]["line2"]
-                if store["address"]["line3"]:
-                    store["street"] += " " + store["address"]["line3"]
-                store["city"] = store["address"]["city"]
-                store["state"] = store["address"]["region"]
-                store["zip_postal"] = store["address"]["postalCode"]
-                store["country"] = store["address"]["countryCode"]
-                store["phone"] = store["mainPhone"]["display"]
-                hours = []
-                for hh in store["hours"]["normalHours"]:
-                    time = "closed"
-                    if not hh["isClosed"]:
-                        time = (
-                            f"{hh['intervals'][0]['start']}-{hh['intervals'][0]['end']}"
-                        )
-                    hours.append(f"{hh['day']}: {time}")
-                store["hours"] = "; ".join(hours) or "<MISSING>"
-                yield store
-            logger.info(f"[{state.abbr}] found: {len(locations)} | total: {total}")
-
-
-def scrape():
-    field_defs = sp.SimpleScraperPipeline.field_definitions(
-        locator_domain=sp.ConstantField(locator_domain),
-        page_url=sp.MappingField(
-            mapping=["websiteUrl"],
-            part_of_record_identity=True,
-        ),
-        location_name=sp.MappingField(
-            mapping=["c_storeName"],
-        ),
-        latitude=sp.MappingField(
-            mapping=["lat"],
-        ),
-        longitude=sp.MappingField(
-            mapping=["lng"],
-        ),
-        street_address=sp.MappingField(
-            mapping=["street"],
-        ),
-        city=sp.MappingField(
-            mapping=["city"],
-        ),
-        state=sp.MappingField(
-            mapping=["state"],
-        ),
-        zipcode=sp.MappingField(
-            mapping=["zip_postal"],
-        ),
-        country_code=sp.MappingField(
-            mapping=["country"],
-        ),
-        phone=sp.MappingField(
-            mapping=["phone"],
-            part_of_record_identity=True,
-        ),
-        hours_of_operation=sp.MappingField(mapping=["hours"]),
-        store_number=sp.MissingField(),
-        location_type=sp.MissingField(),
-        raw_address=sp.MissingField(),
-    )
-
-    pipeline = sp.SimpleScraperPipeline(
-        scraper_name="pipeline",
-        data_fetcher=fetch_data,
-        field_definitions=field_defs,
-        log_stats_interval=5,
-    )
-
-    pipeline.run()
+                for loc in locations:
+                    _ = loc["data"]
+                    addr = _["address"]
+                    hours = []
+                    for day, hh in _.get("hours", {}).items():
+                        if day not in days:
+                            break
+                        times = []
+                        for hr in hh.get("openIntervals", []):
+                            times.append(f"{hr['start']} - {hr['end']}")
+                        hours.append(f"{day}: {' '.join(times)}")
+                    yield SgRecord(
+                        page_url=_["website"],
+                        store_number=_["id"],
+                        location_name=_["name"],
+                        street_address=addr["line1"],
+                        city=addr["city"],
+                        state=addr["region"],
+                        zip_postal=addr["postalCode"],
+                        latitude=_["yextDisplayCoordinate"]["latitude"],
+                        longitude=_["yextDisplayCoordinate"]["longitude"],
+                        country_code=addr["countryCode"],
+                        phone=_["mainPhone"],
+                        location_type=_["type"],
+                        locator_domain=locator_domain,
+                        hours_of_operation="; ".join(hours),
+                    )
 
 
 if __name__ == "__main__":
-    scrape()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
