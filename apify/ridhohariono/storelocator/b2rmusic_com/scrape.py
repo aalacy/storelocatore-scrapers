@@ -67,25 +67,18 @@ def fetch_data():
             latitude = MISSING
             longitude = MISSING
         else:
-            street_address = store.find(
-                "span", {"itemprop": "streetAddress"}
-            ).text.strip()
+            street_address = row.find("a", {"href": re.compile(r"maps.*")}).text.strip()
             city = store.find("span", {"itemprop": "addressLocality"}).text.strip()
             state = store.find("span", {"itemprop": "addressRegion"}).text.strip()
             zip_postal = store.find("span", {"itemprop": "postalCode"}).text.strip()
-
             phone = store.find("span", {"itemprop": "telephone"}).text.strip()
-            hours_of_operation = (
-                ", ".join(
-                    [
-                        x.text
-                        for x in store.find_all("time", {"itemprop": "openingHours"})
-                    ]
-                )
-                .strip()
-                .rstrip(",")
+            hours_of_operation = re.sub(
+                r",?\s+?\(.*\)|Hours of Operation,?",
+                "",
+                store.find("b", text="Hours of Operation").parent.get_text(
+                    strip=True, separator=","
+                ),
             )
-
             try:
                 map_link = store.find(
                     "a", {"href": re.compile(r"@(-?[\d]*\.[\d]*),(-?[\d]*\.[\d]*)")}

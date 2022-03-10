@@ -34,7 +34,10 @@ def fetch_data():
             phone = loc["store_phone"]
             street_address = loc["store_address"]
             city = loc["store_city"]
-            page_url = DOMAIN + city.replace(" ", "_").lower()
+            page_url = (
+                "https://www.kentsgrocery.com/locations/"
+                + city.replace(" ", "-").lower()
+            )
             log.info(page_url)
             state = loc["store_state"]
             zip_postal = loc["store_zip"]
