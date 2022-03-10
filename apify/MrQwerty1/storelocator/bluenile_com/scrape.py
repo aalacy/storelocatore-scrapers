@@ -5,7 +5,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
-from sgselenium import SgFirefox
+from sgselenium import SgChrome
 from urllib.parse import unquote
 from sglogging import SgLogSetup
 from selenium_stealth import stealth
@@ -25,7 +25,7 @@ def get_urls(driver):
 
 
 def fetch_data(sgw: SgWriter):
-    with SgFirefox(user_agent=user_agent, is_headless=True) as driver:
+    with SgChrome(user_agent=user_agent, is_headless=True) as driver:
         stealth(
             driver,
             languages=["en-US", "en"],
