@@ -16,7 +16,7 @@ def get_urls(driver):
     driver.refresh()
     time.sleep(60)
     source = driver.page_source
-
+    print(source)
     tree = html.fromstring(source)
     return tree.xpath("//a[@class='store-name']/@href")
 
