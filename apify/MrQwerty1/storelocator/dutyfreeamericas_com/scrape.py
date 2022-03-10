@@ -98,7 +98,7 @@ def get_data(param, sgw: SgWriter):
 def fetch_data(sgw: SgWriter):
     params = get_params()
 
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
+    with futures.ThreadPoolExecutor(max_workers=2) as executor:
         future_to_url = {
             executor.submit(get_data, param, sgw): param for param in params
         }

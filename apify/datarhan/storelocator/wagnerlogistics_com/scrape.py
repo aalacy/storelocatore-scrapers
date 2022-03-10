@@ -38,11 +38,12 @@ def fetch_data():
     all_locations = data[1][6][0][12][0][13][0]
     for poi in all_locations:
         location_name = poi[5][0][1][0].strip()
-        street_address = "<MISSING>"
-        city = "<MISSING>"
-        state = "<MISSING>"
-        zip_code = "<MISSING>"
-        phone = "<MISSING>"
+        street_address = ""
+        city = ""
+        state = ""
+        zip_code = ""
+        phone = ""
+        addr_raw = ""
         if poi[5][1]:
             raw_data = (
                 poi[5][1][1][0]
