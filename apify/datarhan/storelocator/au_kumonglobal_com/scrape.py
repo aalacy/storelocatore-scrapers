@@ -7,6 +7,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
+from sgpostal.sgpostal import parse_address_intl
 
 
 def fetch_data():
@@ -22,8 +23,8 @@ def fetch_data():
 
         all_locations = dom.xpath('//div[@class="centres"]/div')
         for poi_html in all_locations:
-            latitude = poi_html.xpath("@data-long")[0]
-            longitude = poi_html.xpath("@data-lat")[0]
+            longitude = poi_html.xpath("@data-long")[0]
+            latitude = poi_html.xpath("@data-lat")[0]
             location_name = " ".join(
                 poi_html.xpath('.//span[@class="centre-heading"]/text()')
             )
@@ -32,6 +33,12 @@ def fetch_data():
             raw_address = poi_html.xpath(
                 './/div[@class="centre-info no-number-label clearfix"]/p/text()'
             )
+            raw_address = ", ".join([e.strip() for e in raw_address if e.strip()])
+            addr = parse_address_intl(raw_address)
+            street_address = addr.street_address_1
+            if addr.street_address_2:
+                street_address += ", " + addr.street_address_2
+
             phone = poi_html.xpath('.//a[contains(@href, "tel:")]/@href')
             phone = phone[0].split(":")[-1] if phone else ""
             loc_response = session.get(page_url)
@@ -40,16 +47,13 @@ def fetch_data():
                 '//div[@class="study-periods-for-day-of-week clearfix"]//text()'
             )
             hoo = " ".join([e.strip() for e in hoo if e.strip()])
-            if ".au" in page_url:
-                street_address = raw_address[1]
-                city = " ".join(raw_address[-1].split()[:-2])
-                state = raw_address[-1].split()[-2]
-                zip_code = raw_address[-1].split()[-1]
+            country_code = start_url.split(".")[-1][:-1]
+            if country_code == "au":
+                city = " ".join(
+                    raw_address.split(",")[-1].strip().split(" ")[:-2]
+                ).strip()
             else:
-                street_address = raw_address[0]
-                city = " ".join(raw_address[-1].split()[:-2])
-                state = raw_address[-1].split()[-2]
-                zip_code = raw_address[-1].split()[-1]
+                city = addr.city
 
             item = SgRecord(
                 locator_domain=domain,
@@ -57,15 +61,16 @@ def fetch_data():
                 location_name=location_name,
                 street_address=street_address,
                 city=city,
-                state=state,
-                zip_postal=zip_code,
-                country_code="",
+                state=addr.state,
+                zip_postal=addr.postcode,
+                country_code=country_code,
                 store_number="",
                 phone=phone,
                 location_type="",
                 latitude=latitude,
                 longitude=longitude,
                 hours_of_operation=hoo,
+                raw_address=raw_address,
             )
 
             yield item

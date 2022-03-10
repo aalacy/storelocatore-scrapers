@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 # --extra-index-url https://dl.cloudsmith.io/KVaWma76J5VNwrOm/crawl/crawl/python/simple/
 from lxml import etree
+from time import sleep
 
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
@@ -51,15 +52,30 @@ def fetch_data():
             .split("/")[0]
             .strip()
         )
+        phone = (
+            phone.replace("rotativas", "")
+            .split(" (")[0]
+            .split("- 15")[0]
+            .split("-  15")[0]
+            .strip()
+        )
+        if phone.endswith("-"):
+            phone = phone[:-1]
         hoo = loc_dom.xpath(
             '//i[@class="fas fa-clock"]/following-sibling::div[1]/text()'
         )[0]
         with SgFirefox() as driver:
             driver.get(page_url)
+            sleep(15)
             loc_dom = etree.HTML(driver.page_source)
         geo = (
             loc_dom.xpath("//iframe/@src")[-1].split("q=")[-1].split("&")[0].split(",")
         )
+        latitude = ""
+        longitude = ""
+        if len(geo) == 2:
+            latitude = geo[0]
+            longitude = geo[1]
 
         item = SgRecord(
             locator_domain=domain,
@@ -73,8 +89,8 @@ def fetch_data():
             store_number="",
             phone=phone,
             location_type="",
-            latitude=geo[0],
-            longitude=geo[1],
+            latitude=latitude,
+            longitude=longitude,
             hours_of_operation=hoo,
             raw_address=raw_address,
         )

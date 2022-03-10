@@ -1,18 +1,17 @@
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-from sgrequests import SgRequests
+from sgselenium import SgChrome
 from bs4 import BeautifulSoup as bs
 import bs4
 from sglogging import SgLogSetup
 from sgpostal.sgpostal import parse_address_intl
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+import ssl
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 logger = SgLogSetup().get_logger("seagullbook")
-
-_headers = {
-    "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
-}
 
 locator_domain = "https://www.seagullbook.com"
 base_url = "https://www.seagullbook.com/our-stores.html"
@@ -41,24 +40,26 @@ def _d(location_name, raw_address, coord, hours, phone):
 
 
 def fetch_data():
-    with SgRequests() as session:
-        soup = bs(session.get(base_url, headers=_headers).text, "lxml")
+    with SgChrome() as driver:
+        driver.get(base_url)
+        soup = bs(driver.page_source, "lxml")
         divs = soup.select("div#STORES div")
-        import pdb
-
-        pdb.set_trace()
         for div in divs:
             location_name = raw_address = phone = hours = ""
             coord = []
             children = div.findChildren(recursive=False)
             blocks = [children[0]] + [aa for aa in children[0].next_siblings]
-            for ch in blocks:
+            for x, ch in enumerate(blocks):
                 if isinstance(ch, bs4.element.Tag) and ch.name == "a":
                     tt = ch.text.strip()
                     if not tt:
                         continue
-                    if "tel" in ch["href"]:
-                        phone = tt
+                    if "tel:" in ch["href"]:
+                        if len(tt.split("\n")) > 1:
+                            phone = tt.split("\n")[0]
+                            hours = tt.split("\n")[-1].replace("Hours:", "").strip()
+                        else:
+                            phone = tt
                     else:
                         location_name = tt
                         try:
@@ -67,6 +68,7 @@ def fetch_data():
                             )
                         except:
                             coord = ["", ""]
+
                 if isinstance(ch, bs4.element.NavigableString):
                     if not ch.strip():
                         continue
