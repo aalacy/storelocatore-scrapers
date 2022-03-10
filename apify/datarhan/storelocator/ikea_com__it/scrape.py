@@ -7,6 +7,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
+from sgpostal.sgpostal import parse_address_intl
 
 
 def fetch_data():
@@ -34,28 +35,61 @@ def fetch_data():
             hoo = loc_dom.xpath(
                 '//h2[contains(text(), "Negozio")]/following-sibling::dl//text()'
             )
+        if not hoo:
+            hoo = loc_dom.xpath(
+                '//h3[contains(text(), "Orari d")]/following-sibling::p/text()'
+            )
         hoo = " ".join([e.strip() for e in hoo if e.strip()]).split(": 25")[0]
         poi = loc_dom.xpath('//div[@data-pub-type="store"]/script/text()')
-        if not poi:
-            continue
-        poi = json.loads(poi[0])
+        latitude = ""
+        longitude = ""
+        if poi:
+            poi = json.loads(poi[0])
+            location_name = poi["name"]
+            street_address = poi["address"]["streetAddress"]
+            city = poi["address"]["addressLocality"]
+            zip_code = poi["address"]["postalCode"]
+            country_code = poi["address"]["addressCountry"]
+            location_type = poi["@type"]
+            latitude = poi["geo"]["latitude"]
+            longitude = poi["geo"]["longitude"]
+            raw_adr = ""
+        else:
+            location_name = loc_dom.xpath("//h1/text()")[0]
+            raw_adr = loc_dom.xpath(
+                '//*[contains(text(), "Indirizzo")]/following-sibling::p/text()'
+            )
+            if not raw_adr:
+                raw_adr = loc_dom.xpath(
+                    '//h3[contains(text(), "Dove siamo")]/following-sibling::p[1]/text()'
+                )
+            raw_adr = [e.strip() for e in raw_adr if e.strip() and "Google" not in e]
+            raw_adr = " ".join(" ".join(raw_adr).split())
+            addr = parse_address_intl(raw_adr)
+            street_address = addr.street_address_1
+            if addr.street_address_2:
+                street_address += " " + addr.street_address_2
+            city = addr.city
+            zip_code = addr.postcode
+            country_code = addr.country
+            location_type = ""
 
         item = SgRecord(
             locator_domain=domain,
             page_url=page_url,
-            location_name=poi["name"],
-            street_address=poi["address"]["streetAddress"],
-            city=poi["address"]["addressLocality"],
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
             state="",
-            zip_postal=poi["address"]["postalCode"],
-            country_code=poi["address"]["addressCountry"],
+            zip_postal=zip_code,
+            country_code=country_code,
             store_number="",
             phone="",
-            location_type=poi["@type"],
-            latitude=poi["geo"]["latitude"],
-            longitude=poi["geo"]["longitude"],
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
             hours_of_operation=hoo,
-            raw_address="",
+            raw_address=raw_adr,
         )
 
         yield item
