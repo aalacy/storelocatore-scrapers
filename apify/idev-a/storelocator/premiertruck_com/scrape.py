@@ -9,6 +9,7 @@ from bs4 import BeautifulSoup as bs
 from tenacity import retry, stop_after_attempt, wait_fixed
 from webdriver_manager.chrome import ChromeDriverManager
 import ssl
+import re
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
@@ -82,6 +83,9 @@ def fetch_data():
             country_code = "US"
             if _["state"] in ca_provinces_codes:
                 country_code = "CA"
+            phone = _["phone"]
+            if not phone and sp1.find("a", href=re.compile(r"tel:")):
+                phone = sp1.find("a", href=re.compile(r"tel:")).text.strip()
             yield SgRecord(
                 page_url=page_url,
                 store_number=_["id"],
@@ -89,11 +93,11 @@ def fetch_data():
                 street_address=street_address,
                 city=_["city"],
                 state=_["state"],
-                zip_postal=_["postal"],
+                zip_postal=_["postal"].replace("Canada", "").strip(),
                 latitude=_["lat"],
                 longitude=_["lng"],
                 country_code=country_code,
-                phone=_["phone"],
+                phone=phone,
                 locator_domain=locator_domain,
                 hours_of_operation="; ".join(hours),
             )
