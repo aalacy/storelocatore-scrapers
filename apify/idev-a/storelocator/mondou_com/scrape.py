@@ -51,6 +51,8 @@ def fetch_data():
             )
             logger.info(page_url)
             sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
+            if "Ouverture le" in sp1.select_one("h5.col-12").text:
+                continue
             addr = list(sp1.select_one("div.store-address a").stripped_strings)
             hours = []
             _hr = sp1.find("h5", string=re.compile(r"^Horaire"))
