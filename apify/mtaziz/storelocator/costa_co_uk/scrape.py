@@ -24,7 +24,7 @@ else:
 logger = SgLogSetup().get_logger("costa_co_uk")
 DOMAIN = "costa.co.uk"
 MISSING = SgRecord.MISSING
-MAX_WORKERS = 12
+MAX_WORKERS = 10
 
 
 headers = {
@@ -35,7 +35,7 @@ headers = {
 
 @retry(stop=stop_after_attempt(5), wait=tenacity.wait_fixed(50))
 def get_response(url):
-    with SgRequests() as http:
+    with SgRequests(verify_ssl=False, timeout_config=400) as http:
         response = http.get(url, headers=headers)
         if response.status_code == 200:
             logger.info(f"{url} >> HTTP STATUS: {response.status_code}")

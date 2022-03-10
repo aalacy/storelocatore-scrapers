@@ -384,7 +384,7 @@ def fetch_main(state, http):
                 http.get(urlB + next_r.url, headers=headers)
             ).text
         except Exception as e:
-            if "404" in str(e):
+            if "404" in str(e) or "503" in str(e):
                 continue
             else:
                 raise str(e)

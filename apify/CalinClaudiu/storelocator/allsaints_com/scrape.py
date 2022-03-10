@@ -134,7 +134,7 @@ def onlydigits(x):
             new.append(i)
     if len(new) < 3:
         return "<MISSING>"
-    return "".join(i)
+    return "".join(new)
 
 
 def scrape():
