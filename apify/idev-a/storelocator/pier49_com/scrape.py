@@ -81,17 +81,17 @@ def fetch_data():
                             ss = json.loads(rr.response.body)["restaurant"]
                             latitude = ss["latitude"]
                             longitude = ss["longitude"]
-                        else:
-                            import pdb
-
-                            pdb.set_trace()
 
             _hr = link.find("", string=re.compile(r"^Hours")).find_parent("h3")
             hours = []
             if _hr:
                 for hh in _hr.find_next_siblings("p"):
                     _hh = hh.text.strip()
-                    if "open" in _hh.lower() or "delivery" in _hh.lower():
+                    if (
+                        "open" in _hh.lower()
+                        or "delivery" in _hh.lower()
+                        or "lunch" in _hh.lower()
+                    ):
                         break
                     hours.append(_hh)
 

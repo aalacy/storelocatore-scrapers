@@ -35,6 +35,14 @@ def fetch_data():
                 location_name = location_name[-1]
             else:
                 location_name = location_name[0]
+            page_url = poi_html.xpath(
+                './/following-sibling::a[contains(@href, "menu")]/@href'
+            )
+            if not page_url:
+                page_url = poi_html.xpath('.//a[contains(@href, "menu")]/@href')
+            page_url = page_url[0] if page_url else ""
+            if page_url and location_name.lower().split()[-1] not in page_url:
+                page_url = ""
             raw_data = poi_html.xpath(".//following::text()")
             clear_data = []
             for e in raw_data:
@@ -56,10 +64,14 @@ def fetch_data():
                 zip_code = clear_data[2].split(", ")[-1].split()[-1]
                 city = clear_data[2].split(", ")[0]
                 clear_data = [", ".join(clear_data[:2])] + [clear_data[3]]
+            if location_name == "bethesda":
+                page_url = (
+                    "https://order.matchboxrestaurants.com/menu/matchbox-bethesda"
+                )
 
             item = SgRecord(
                 locator_domain=domain,
-                page_url=start_url,
+                page_url=page_url,
                 location_name=location_name,
                 street_address=clear_data[0],
                 city=city,
