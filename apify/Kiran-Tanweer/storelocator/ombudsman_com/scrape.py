@@ -49,6 +49,7 @@ def fetch_data():
                 country_code = address["addressCountry"]
                 latitude = loc["geo"]["latitude"]
                 longitude = loc["geo"]["longitude"]
+                location_name = location_name.replace("&#8211;", "-")
                 yield SgRecord(
                     locator_domain="https://www.ombudsman.com/",
                     page_url=page_url,
@@ -71,10 +72,34 @@ def fetch_data():
             soup = BeautifulSoup(r.text, "html.parser")
             loclist = soup.find("div", {"id": "content"})
             locations = loclist.findAll("div", {"class": "location-group clearfix"})
+            coords = soup.find("script", {"id": "mappress-js-after"})
+            coords = str(coords)
+            coords = coords.replace(
+                '<script id="mappress-js-after" type="text/javascript">//', ""
+            )
+            coords = coords.replace(
+                "window.mapp = window.mapp || {}; mapp.data = mapp.data || [];", ""
+            )
+            coords = coords.replace(
+                "if (typeof mapp.load != 'undefined') { mapp.load(); };", ""
+            )
+            coords = coords.replace("//</script>", "")
+            coords = coords.replace("mapp.data.push( ", "")
+            coords = coords.replace(");", "")
+            coords = json.loads(coords)
             for loc in locations:
                 stores = loc.findAll("li")
                 for store in stores:
                     location_name = store.find("h4").text.strip()
+                    location_name = location_name.replace("&#8211;", "-")
+                    for geo in coords["pois"]:
+                        title = geo["title"]
+                        title = title.replace("&#8211;", "-")
+                        if location_name.strip() == title.strip():
+                            lat = geo["point"]["lat"]
+                            lng = geo["point"]["lng"]
+                        else:
+                            lat, lng = MISSING
                     details = store.find("p")
                     details = str(details)
                     details = details.replace("</p>", "")
@@ -118,8 +143,8 @@ def fetch_data():
                         store_number=SgRecord.MISSING,
                         phone=phone.strip(),
                         location_type=SgRecord.MISSING,
-                        latitude=SgRecord.MISSING,
-                        longitude=SgRecord.MISSING,
+                        latitude=lat,
+                        longitude=lng,
                         hours_of_operation=SgRecord.MISSING,
                     )
 
