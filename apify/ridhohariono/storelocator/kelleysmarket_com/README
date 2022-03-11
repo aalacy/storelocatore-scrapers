@@ -1,0 +1,4 @@
+--ignore LatLngDuplicationValidator (CONFIRMED ON WEBSITE)
+Found 1 <lat, lng> pair(s) that belong to multiple addresses. Examples:
+     latitude   longitude                                street_address  num_addrs
+10  42.224560  -89.109930  {550 South Rock Drive, 515 E. Jefferson St.}          2

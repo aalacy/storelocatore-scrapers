@@ -114,6 +114,12 @@ def fetch_data():
                 pass
             if hours == "":
                 hours = "<MISSING>"
+            if "Greenock" in city:
+                hours = "Mon 09:00 - 19:00; Tue 09:00 - 18:00; Wed 09:00 - 19:00; Thu 09:00 - 18:00; Fri 08:30 - 19:00; Sat 09:00 - 18:00; Sun 12:00 - 18:00"
+            if "Caffyn" in name:
+                hours = "Mon 08:30 - 18:00 Tue: 08:30 - 18:00; Wed 08:30 - 18:00; Thu 08:30 - 18:00; Fri 08:30 - 18:00; Sat 09:00 - 17:00; Sun 10:00 - 16:00"
+            if "Helston Garages" in name:
+                hours = "Mon 08:30 - 18:00 Tue: 08:30 - 18:00; Wed 08:30 - 18:00; Thu 08:30 - 18:00; Fri 08:30 - 18:00; Sat 08:30 - 17:00; Sun Closed"
             yield SgRecord(
                 locator_domain=website,
                 page_url=lurl,
