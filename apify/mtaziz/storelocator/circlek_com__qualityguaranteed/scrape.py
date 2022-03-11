@@ -175,7 +175,8 @@ def fetch_details(item_num, data_dict, sgw: SgWriter):
         street_address = data_dict["address"]
         city = data_dict["city"]
         state = data_dict["division_name"]
-        state = state.replace("franchise", "<MISSING>")
+        if state is not None:
+            state = state.replace("franchise", "")
         country_code = data_dict["country"]
         if MISSING not in street_address:
             location_name = "Circle K at" + " " + street_address
@@ -260,8 +261,16 @@ def fetch_details(item_num, data_dict, sgw: SgWriter):
                 logger.info(
                     f"Latitude: {latitude} | Longitude: {longitude} | {page_url} "
                 )
+                rawadd = ""
 
                 raw_address = get_rawadd(store_sel)
+                logger.info(f"Length of raw address: {len(raw_address)}")
+
+                # If comma or comma with space found then replaced with <MISSING>
+                if raw_address == "," or raw_address.strip() == ",":
+                    rawadd = MISSING
+                else:
+                    rawadd = raw_address
                 formatted_addr = parse_address_intl(raw_address)
                 state = formatted_addr.state
                 if state:
@@ -270,8 +279,8 @@ def fetch_details(item_num, data_dict, sgw: SgWriter):
                     state = ""
                 if state == "ON":
                     country_code = "Canada"
-                state = state.replace("franchise", "<MISSING>")
-
+                if state is not None:
+                    state = state.replace("franchise", "")
                 hours_of_operation = get_hoo(store_sel)
                 rec = SgRecord(
                     locator_domain=locator_domain,
@@ -288,7 +297,7 @@ def fetch_details(item_num, data_dict, sgw: SgWriter):
                     latitude=latitude,
                     longitude=longitude,
                     hours_of_operation=hours_of_operation,
-                    raw_address=raw_address,
+                    raw_address=rawadd,
                 )
                 sgw.write_row(rec)
 
@@ -306,8 +315,10 @@ def fetch_data(sgw: SgWriter):
     # to be made to get all the stores.
     # Start Page Number: 0
     # End Page Number: 980
+
     START_PAGENUM = 0
     END_PAGENUM = 340
+
     data_from_api = fetch_data_from_api_res(START_PAGENUM, END_PAGENUM)
     logger.info("API endpoints urls page_url extraction done!!")
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:

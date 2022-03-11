@@ -17,7 +17,10 @@ def fetch_data():
     urls = ["https://stores.advanceautoparts.com/"]
     states = []
     cities = []
-    locs = []
+    locs = [
+        "https://www.carquest.com/stores/dc/washington/14461",
+        "https://www.carquest.com/stores/dc/washington/6360",
+    ]
     website = "advanceautoparts.com"
     typ = "<MISSING>"
     country = "<MISSING>"
@@ -40,8 +43,9 @@ def fetch_data():
                                 + item.split('"')[0].replace("..", "")
                             )
     for state in states:
-        logger.info("Pulling State %s..." % state)
-        r = session.get(state, headers=headers)
+        surl = state.replace("https://stores.advanceautoparts.com/https", "https")
+        logger.info("Pulling State %s..." % surl)
+        r = session.get(surl, headers=headers)
         for line in r.iter_lines():
             if '<a class="Directory-listLink" href="' in line:
                 items = line.split('<a class="Directory-listLink" href="')

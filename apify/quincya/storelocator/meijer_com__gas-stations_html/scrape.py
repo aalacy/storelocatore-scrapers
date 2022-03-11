@@ -51,8 +51,10 @@ def fetch_data(sgw: SgWriter):
             state = store["address"]["region"]["isocode"].replace("US-", "")
             zip_code = store["address"]["postalCode"]
             country_code = "US"
-            phone = store["phone"]
-            main_link = "https://www.meijer.com/gas-stations.html"
+            try:
+                phone = store["phone"]
+            except:
+                phone = ""
             latitude = store["geoPoint"]["latitude"]
             longitude = store["geoPoint"]["longitude"]
             search.found_location_at(latitude, longitude)
@@ -97,10 +99,16 @@ def fetch_data(sgw: SgWriter):
             if "GAS" not in location_type:
                 continue
 
+            page_url = (
+                "https://www.meijer.com/shopping/store-locator/"
+                + str(store_number)
+                + ".html"
+            )
+
             sgw.write_row(
                 SgRecord(
                     locator_domain=locator_domain,
-                    page_url=main_link,
+                    page_url=page_url,
                     location_name=location_name,
                     street_address=street_address,
                     city=city,

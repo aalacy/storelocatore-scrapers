@@ -53,12 +53,15 @@ def fetch_data():
                 city = dom.xpath('//select[@name="city"]/option/text()')
                 city = city[0] if city else ""
                 state = dom.xpath('//select[@name="region"]/option/text()')[0]
+                hoo = poi_html.xpath('.//div[@class="shop_l_time"]/div/text()')
+                hoo = " ".join([e.strip() for e in hoo])
+                street_address = raw_data[0].replace("&quot;", '"')
 
                 item = SgRecord(
                     locator_domain=domain,
                     page_url=start_url,
                     location_name="",
-                    street_address=raw_data[0],
+                    street_address=street_address,
                     city=city,
                     state=state,
                     zip_postal="",
@@ -68,10 +71,11 @@ def fetch_data():
                     location_type="",
                     latitude="",
                     longitude="",
-                    hours_of_operation=raw_data[1],
+                    hours_of_operation=hoo,
                 )
 
                 yield item
+
             all_cities = driver.find_elements_by_xpath(
                 '//select[@name="city"]/following-sibling::div[1]//div[@class="option"]'
             )
@@ -118,7 +122,6 @@ def scrape():
         SgRecordDeduper(
             SgRecordID(
                 {
-                    SgRecord.Headers.STREET_ADDRESS,
                     SgRecord.Headers.STORE_NUMBER,
                 }
             )

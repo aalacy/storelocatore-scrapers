@@ -77,6 +77,10 @@ def fetch_data():
         lng = ""
         r2 = session.get(loc, headers=headers)
         for line2 in r2.iter_lines():
+            if '<div class="Heading--lead ContentBanner-title">' in line2:
+                name = line2.split('<div class="Heading--lead ContentBanner-title">')[
+                    1
+                ].split("<")[0]
             if '"normalHours":[' in line2:
                 days = (
                     line2.split('"normalHours":[')[1].split(']},"')[0].split('"day":"')
@@ -119,6 +123,20 @@ def fetch_data():
                 )[1].split("&")[0]
         if hours == "":
             hours = "<MISSING>"
+        add = add.replace("&#39;", "'")
+        name = name.replace("&#39;", "'")
+        hours = hours.replace(": 1000", ": 10:00 AM ")
+        hours = hours.replace(": 900", ": 9:00 AM ")
+        hours = hours.replace(": 800", ": 8:00 AM ")
+        hours = hours.replace("-2000", "- 8:00 PM")
+        hours = hours.replace("-2100", "- 9:00 PM")
+        hours = hours.replace("-2200", "- 10:00 PM")
+        hours = hours.replace("-2300", "- 11:00 PM")
+        hours = hours.replace("-1900", "- 7:00 PM")
+        hours = hours.replace("-1800", "- 6:00 PM")
+        hours = hours.replace("-1700", "- 5:00 PM")
+        hours = hours.replace("-1600", "- 4:00 PM")
+        name = name.replace("&amp;", "&").replace("&Amp;", "&").replace("&amp", "&")
         yield SgRecord(
             locator_domain=website,
             page_url=loc,

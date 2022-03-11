@@ -24,17 +24,8 @@ DOMAIN = "https://www.hollandandbarrett.com"
 URL_LOCATION = "https://www.hollandandbarrett.com/stores/"
 MISSING = SgRecord.MISSING
 
-headers = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:84.0) Gecko/20100101 Firefox/84.0",
-    "Accept": "*/*",
-    "Accept-Language": "uk-UA,uk;q=0.8,en-US;q=0.5,en;q=0.3",
-    "Referer": "https://www.hollandandbarrett.com/stores/",
-    "Origin": "https://www.hollandandbarrett.com",
-    "Connection": "keep-alive",
-    "TE": "Trailers",
-    "Pragma": "no-cache",
-    "Cache-Control": "no-cache",
-}
+user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
+headers = {"User-Agent": user_agent}
 
 session = SgRequests()
 
@@ -118,6 +109,12 @@ def fetch_data(http: SgRequests):
             .replace("CRICK", "")
             .replace("None", "")
         )
+        if zip_postal == "NL":
+            zip_postal = ""
+            country_code = "NL"
+            if "Warehouse" in city:
+                street_address = city
+                city = "Netherlands"
         zip_postal = zip_postal if zip_postal else MISSING
         if MISSING not in zip_postal:
             country_code = get_country_code(zip_postal)
