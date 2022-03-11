@@ -66,6 +66,8 @@ def fetch_data():
                             )
     for city in cities:
         curl = city.replace("https://stores.advanceautoparts.com/https", "https")
+        if "carquest.com/stores/or/bend" in curl:
+            curl = "https://stores.advanceautoparts.com/or/bend"
         logger.info("Pulling City %s..." % curl)
         r = session.get(curl, headers=headers)
         for line in r.iter_lines():
