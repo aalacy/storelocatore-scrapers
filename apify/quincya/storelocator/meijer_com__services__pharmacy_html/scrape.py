@@ -129,7 +129,7 @@ def fetch_data(sgw: SgWriter):
             sgw.write_row(
                 SgRecord(
                     locator_domain=locator_domain,
-                    page_url=main_link,
+                    page_url=page_url,
                     location_name=location_name,
                     street_address=street_address,
                     city=city,
