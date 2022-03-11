@@ -127,6 +127,12 @@ def get_data(page_url, sgw: SgWriter):
 
         street_address, city, state, zip_postal = get_address(raw_address)
         phone = get_text(body, '//a[contains(@href, "tel:")]/@href', "tel:")
+        if "ext" in phone.lower():
+            phone = (phone.lower()).split("ext")[0]
+        if "or" in phone.lower():
+            phone = (phone.lower()).split("or")[0]
+        if "()" in phone:
+            phone = phone.replace("()", "")
 
         hours = body.xpath('//div[@class="col col_12_of_12 hours"]/ul/li')
         hours_list = []
