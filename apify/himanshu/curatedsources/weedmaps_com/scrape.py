@@ -54,7 +54,10 @@ class _SearchIteration(SearchIteration):
 
                 jd = jd.json()
                 page_no += 1
-                for loc in jd["data"]["listings"]:
+                loc_list = jd["data"]["listings"]
+                if len(loc_list) <= 0:
+                    break
+                for loc in loc_list:
                     locator_domain = website
                     location_name = loc["name"] if loc["name"] else "<MISSING>"
                     street_address = loc["address"] if loc["address"] else "<MISSING>"
@@ -112,7 +115,6 @@ def scrape():
     search_maker = DynamicSearchMaker(
         search_type="DynamicGeoSearch",
         expected_search_radius_miles=100,
-        max_search_results=150,
     )
 
     with SgWriter(
@@ -121,8 +123,8 @@ def scrape():
         )
     ) as writer:
         countries = SearchableCountries.ALL
-        for country in countries:
-            with SgRequests(dont_retry_status_codes=([404, 422])) as http:
+        with SgRequests(dont_retry_status_codes=([404, 422])) as http:
+            for country in countries:
                 search_iter = _SearchIteration(http=http)
                 par_search = ParallelDynamicSearch(
                     search_maker=search_maker,

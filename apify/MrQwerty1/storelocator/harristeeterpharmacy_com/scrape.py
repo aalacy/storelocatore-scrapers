@@ -5,6 +5,22 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgzip.dynamic import SearchableCountries, DynamicZipSearch
 
+import tenacity
+from tenacity import retry, stop_after_attempt
+from sglogging import sglog
+
+logger = sglog.SgLogSetup().get_logger(logger_name="harristeeterpharmacy.com")
+
+
+@retry(stop=stop_after_attempt(10), wait=tenacity.wait_fixed(5))
+def get_response(api_url):
+    with SgRequests() as http:
+        response = http.get(api_url, headers=headers)
+        logger.info(f"HTTP STATUS Return: {response.status_code}")
+        if response.status_code == 200:
+            return response
+        raise Exception(f"HTTP Error Code: {response.status_code}")
+
 
 def fetch_data(sgw: SgWriter):
     search = DynamicZipSearch(
@@ -14,6 +30,11 @@ def fetch_data(sgw: SgWriter):
     for _zip in search:
         api = f"https://www.harristeeterpharmacy.com/atlas/v1/stores/v1/search?filter.query={_zip}"
         r = session.get(api, headers=headers)
+        response_status = r.status_code
+        logger.info(f"Page: {api} => Response: {response_status}")
+        if response_status != 200:
+            r = get_response(api)
+
         js = r.json()["data"]["storeSearch"]["results"]
 
         for j in js:

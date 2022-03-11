@@ -40,6 +40,9 @@ def fetch_data():
             )[0]
         except:
             continue
+        store = (
+            r.text.split("var facility =", 1)[1].split("id: ", 1)[1].split(",", 1)[0]
+        )
         loc = json.loads(loc.replace("\n", ""))
         title = loc["name"]
         street = loc["address"]["streetAddress"]
@@ -78,7 +81,7 @@ def fetch_data():
             state=state.strip(),
             zip_postal=pcode.strip(),
             country_code="US",
-            store_number=SgRecord.MISSING,
+            store_number=str(store),
             phone=phone.strip(),
             location_type=SgRecord.MISSING,
             latitude=str(lat),
@@ -90,7 +93,7 @@ def fetch_data():
 def scrape():
 
     with SgWriter(
-        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.StoreNumberId)
     ) as writer:
         results = fetch_data()
         for rec in results:
