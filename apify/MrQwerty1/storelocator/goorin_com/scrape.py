@@ -1,47 +1,12 @@
-import csv
-
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
-    locator_domain = "https://www.goorin.com/"
-    page_url = "https://www.goorin.com/pages/goorin-retail-locations"
-
-    session = SgRequests()
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0"
-    }
+def fetch_data(sgw: SgWriter):
     r = session.get(page_url, headers=headers)
     tree = html.fromstring(r.text)
     divs = tree.xpath("//div[@class='find-shop-item']")
@@ -53,48 +18,40 @@ def fetch_data():
         line = d.xpath(".//div[@class='address-blog'][1]/p/text()")
         line = list(filter(None, [l.strip() for l in line]))
 
-        phone = line[2]
-        street_address = line[0]
-        line = line[1]
-        city = line.split(",")[0].strip()
-        line = line.split(",")[1].strip()
-        postal = line.split()[-1]
-        state = line.replace(postal, "").strip()
-        country_code = "US"
-        store_number = "<MISSING>"
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
-        location_type = "<MISSING>"
-        hours_of_operation = (
-            ";".join(d.xpath(".//h4[text()='HOURS']/following-sibling::p/text()"))
-            or "<MISSING>"
+        phone = line.pop()
+        csz = line.pop().replace(", ", "").split()
+        postal = csz.pop()
+        state = csz.pop()
+        city = " ".join(csz)
+        street_address = ", ".join(line)
+        hours_of_operation = ";".join(
+            d.xpath(".//h4[text()='HOURS']/following-sibling::p/text()")
         )
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
+        row = SgRecord(
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code="US",
+            phone=phone,
+            locator_domain=locator_domain,
+            hours_of_operation=hours_of_operation,
+        )
 
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://www.goorin.com/"
+    page_url = "https://www.goorin.com/pages/goorin-retail-locations"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0"
+    }
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.LOCATION_NAME}))
+    ) as writer:
+        fetch_data(writer)
