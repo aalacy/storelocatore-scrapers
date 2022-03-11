@@ -120,6 +120,11 @@ def fetch_data(sgw: SgWriter):
                     phone = store["phone"]
                 except:
                     phone = ""
+            page_url = (
+                "https://www.meijer.com/shopping/store-locator/"
+                + str(store_number)
+                + ".html"
+            )
 
             sgw.write_row(
                 SgRecord(
