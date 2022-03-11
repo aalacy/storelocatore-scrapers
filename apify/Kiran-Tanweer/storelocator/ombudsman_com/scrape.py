@@ -99,7 +99,8 @@ def fetch_data():
                             lat = geo["point"]["lat"]
                             lng = geo["point"]["lng"]
                         else:
-                            lat, lng = MISSING
+                            lng = MISSING
+                            lat = MISSING
                     details = store.find("p")
                     details = str(details)
                     details = details.replace("</p>", "")
