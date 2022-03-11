@@ -26,6 +26,10 @@ def fetch_data(sgw: SgWriter):
     ).find_all(class_="fl-rich-text")
     locator_domain = "rebounderz.com"
 
+    all_links = base.find(
+        class_="fl-module fl-module-rich-text fl-node-5e67c3c34714e"
+    ).find_all("a")
+
     for item in items:
         location_name = item.h3.text.strip()
 
@@ -39,41 +43,55 @@ def fetch_data(sgw: SgWriter):
         location_type = "<MISSING>"
         phone = item.find_all("p")[-2].text.replace("Tel:", "").strip()
 
-        link = "https://www.rebounderz.com" + item.find_all("a")[-1]["href"]
+        for i in all_links:
+            if i.text.split(",")[0] in item.text:
+                link = "https://www.rebounderz.com" + i["href"]
+                if "apopka" in link:
+                    link = "https://www.rebounderz.com/city/wekiva-springs"
+                break
+
         req = session.get(link, headers=headers)
         base = BeautifulSoup(req.text, "lxml")
 
-        hours_of_operation = base.find_all(
-            "div",
-            {
-                "class": re.compile(
-                    r"fl-col-group fl-node-.+fl-col-group-nested fl-col-group-custom-width"
-                )
-            },
-        )[0].text.replace("\n", " ")
-        hours_of_operation = (re.sub(" +", " ", hours_of_operation)).strip()
-        hours_of_operation = (
-            hours_of_operation.replace("Munchkin and Me UNAVAILABLE", "")
-            .replace("*Glow Night from 6PM to 10PM*", "")
-            .replace("Munchkin and Me TBD", "")
-            .split("Munchkin")[0]
-            .strip()
-        )
-        hours_of_operation = (re.sub(" +", " ", hours_of_operation)).strip()
+        try:
+            hours_of_operation = base.find_all(
+                "div",
+                {
+                    "class": re.compile(
+                        r"fl-col-group fl-node-.+fl-col-group-nested fl-col-group-custom-width"
+                    )
+                },
+            )[0].text.replace("\n", " ")
+            hours_of_operation = (re.sub(" +", " ", hours_of_operation)).strip()
+            hours_of_operation = (
+                hours_of_operation.replace("Munchkin and Me UNAVAILABLE", "")
+                .replace("*Glow Night from 6PM to 10PM*", "")
+                .replace("Munchkin and Me TBD", "")
+                .split("Munchkin")[0]
+                .strip()
+            )
+            hours_of_operation = (re.sub(" +", " ", hours_of_operation)).strip()
+        except:
+            hours_of_operation = ""
+
         if "coming soon" in hours_of_operation.lower():
             continue
 
-        map_link = base.iframe["src"]
-        req = session.get(map_link, headers=headers)
-        map_str = BeautifulSoup(req.text, "lxml")
-        geo = (
-            re.findall(r"\[[0-9]{2}\.[0-9]+,-[0-9]{2,3}\.[0-9]+\]", str(map_str))[0]
-            .replace("[", "")
-            .replace("]", "")
-            .split(",")
-        )
-        latitude = geo[0]
-        longitude = geo[1]
+        try:
+            map_link = base.find(class_="fl-map").iframe["src"]
+            req = session.get(map_link, headers=headers)
+            map_str = BeautifulSoup(req.text, "lxml")
+            geo = (
+                re.findall(r"\[[0-9]{2}\.[0-9]+,-[0-9]{2,3}\.[0-9]+\]", str(map_str))[0]
+                .replace("[", "")
+                .replace("]", "")
+                .split(",")
+            )
+            latitude = geo[0]
+            longitude = geo[1]
+        except:
+            latitude = ""
+            longitude = ""
 
         sgw.write_row(
             SgRecord(
