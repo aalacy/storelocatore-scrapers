@@ -82,7 +82,7 @@ def fetch_data():
             + str(llat)
             + "&longitude="
             + str(llng)
-            + "&count=50&radius=100&ignoreLoadin{%22id%22:%22gBar=false"
+            + "&count=50&radius=100&ignoreLoadingBar=false"
         )
         try:
             stores = session.get(url, headers=headers).json()
