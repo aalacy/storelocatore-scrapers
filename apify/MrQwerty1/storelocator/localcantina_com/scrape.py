@@ -1,125 +1,88 @@
-import csv
-
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def get_coords(_id):
-    session = SgRequests()
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
-        "Accept": "*/*",
-        "Accept-Language": "uk-UA,uk;q=0.8,en-US;q=0.5,en;q=0.3",
-        "X-Requested-With": "XMLHttpRequest",
-        "Connection": "keep-alive",
-        "Referer": "https://www.localcantina.com/locations",
-    }
+def get_coords():
+    out = dict()
     r = session.get(
-        f"https://www.localcantina.com/locations?m={_id}&getGeometry=true&mch=true",
-        headers=headers,
+        "https://www.google.com/maps/d/kml?forcekml=1&mid=1GOcPBmfa1u1f8ZORKRWPRbVd6nhmC-wJ"
     )
-    js = next(iter(r.json().values()))
-
-    return js.get("lat"), js.get("lon")
-
-
-def fetch_data():
-    out = []
-    locator_domain = "https://www.localcantina.com/"
-    page_url = "https://www.localcantina.com/locations"
-
-    session = SgRequests()
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
-        "Accept": "*/*",
-        "Accept-Language": "uk-UA,uk;q=0.8,en-US;q=0.5,en;q=0.3",
-        "X-Requested-With": "XMLHttpRequest",
-        "Connection": "keep-alive",
-    }
-    r = session.get(page_url, headers=headers)
-    tree = html.fromstring(r.text)
-    divs = tree.xpath(
-        "//div[(@class='col col-md-4 col-sm-12' or @class='col col-sm-12 col-md-4') and .//a]"
-    )
-
-    for d in divs:
-        location_name = "".join(
-            d.xpath(".//p[@class='bodytext']/strong/text()")
-        ).strip()
-        store_number = "".join(d.xpath(".//div[@data-url]/@id"))
-        latitude, longitude = get_coords(store_number)
-        line = d.xpath(
-            ".//p[@class='bodytext' and ./strong]/text()|.//p[@class='bodytext' and ./strong]/span/text()"
+    tree = html.fromstring(r.content)
+    markers = tree.xpath("//placemark")
+    for m in markers:
+        name = (
+            "".join(m.xpath("./name/text()"))
+            .lower()
+            .replace("-", "")
+            .replace("local cantina", "")
+            .strip()
         )
-        line = list(filter(None, [l.replace("Phone:", "").strip() for l in line]))
-
-        street_address = ", ".join(line[:-1])
-        line = line[-1]
-        city = line.split(",")[0].strip()
-        line = line.split(",")[1].strip()
-        state = line.split()[0]
-        postal = line.split()[1]
-        country_code = "US"
-        phone = (
-            "".join(d.xpath(".//a[@data-global='phone']/text()")).strip() or "<MISSING>"
-        )
-        location_type = "<MISSING>"
-        hours_of_operation = "<MISSING>"
-
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
+        lat, lng = "".join(m.xpath(".//coordinates/text()")).split(",")[:2]
+        lng, lat = lat.strip(), lng.strip()
+        out[name] = (lat, lng)
 
     return out
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
+def fetch_data(sgw: SgWriter):
+    r = session.get(page_url, headers=headers)
+    tree = html.fromstring(r.text)
+    divs = tree.xpath(
+        "//div[@class='wpb_column vc_column_container vc_col-sm-12 vc_col-lg-4 vc_col-md-4']"
+    )
+    coords = get_coords()
+
+    for d in divs:
+        location_name = "".join(d.xpath(".//h1/text()")).strip()
+        raw_address = "".join(d.xpath(".//h1/following-sibling::p/text()"))
+        if not raw_address:
+            continue
+
+        line = raw_address.split(", ")
+        state, postal = line.pop().split()
+        city = line.pop()
+        street_address = ", ".join(line)
+
+        phone = (
+            "".join(d.xpath(".//a[contains(@href, 'tel:')]/@href"))
+            .replace("%20", "")
+            .replace("tel:", "")
+        )
+        key = location_name.lower()
+        if key == "gahana":
+            key = "gahanna"
+        if key == "hillard":
+            key = "hilliard"
+        latitude, longitude = coords.get(key) or (SgRecord.MISSING, SgRecord.MISSING)
+
+        row = SgRecord(
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code="US",
+            phone=phone,
+            latitude=latitude,
+            longitude=longitude,
+            locator_domain=locator_domain,
+            raw_address=raw_address,
+        )
+
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://localcantina.com/"
+    page_url = "https://localcantina.com/locations/"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:91.0) Gecko/20100101 Firefox/91.0"
+    }
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PhoneNumberId)) as writer:
+        fetch_data(writer)
