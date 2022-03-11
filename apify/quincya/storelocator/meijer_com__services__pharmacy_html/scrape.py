@@ -66,7 +66,6 @@ def fetch_data(sgw: SgWriter):
             state = store["address"]["region"]["isocode"].replace("US-", "")
             zip_code = store["address"]["postalCode"]
             country_code = "US"
-            main_link = "https://www.meijer.com/services/pharmacy.html"
             latitude = store["geoPoint"]["latitude"]
             longitude = store["geoPoint"]["longitude"]
             search.found_location_at(latitude, longitude)
