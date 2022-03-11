@@ -32,7 +32,8 @@ def fetch_data(sgw: SgWriter):
 
     driver = SgChrome(user_agent=user_agent).driver()
     driver.get(base_link)
-    WebDriverWait(driver, 30).until(
+    time.sleep(10)
+    WebDriverWait(driver, 50).until(
         ec.presence_of_element_located((By.CLASS_NAME, "store-list__scroll-container"))
     )
     time.sleep(10)
