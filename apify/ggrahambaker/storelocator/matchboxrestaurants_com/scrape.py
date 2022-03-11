@@ -1,104 +1,105 @@
-import csv
-import os
-from sgselenium import SgSelenium
-from selenium.webdriver.common.action_chains import ActionChains
-from selenium.common.exceptions import NoSuchElementException
+# -*- coding: utf-8 -*-
+from lxml import etree
 
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+from sgrequests import SgRequests
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
 
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-def addy_ext(addy):
-    address = addy.split(',')
-    city = address[0]
-    state_zip = address[1].strip().split(' ')
-    state = state_zip[0]
-    zip_code = state_zip[1]
-    return city, state, zip_code
-
-def check_exists(selector, driver):
-    try:
-        driver.find_element_by_css_selector(selector)
-    except NoSuchElementException:
-        return False
-    return True
 
 def fetch_data():
-    locator_domain = 'https://www.matchboxrestaurants.com/'
+    session = SgRequests()
 
-    driver = SgSelenium().chrome()
-    driver.get(locator_domain)
-    driver.implicitly_wait(10)
+    start_url = "https://www.matchboxrestaurants.com/home-locations"
+    domain = "matchboxrestaurants.com"
+    hdr = {
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
+    }
+    response = session.get(start_url, headers=hdr)
+    dom = etree.HTML(response.text)
 
-    if check_exists('a.sqs-popup-overlay-close', driver):
-        element = driver.find_element_by_css_selector('a.sqs-popup-overlay-close')
-        driver.execute_script("arguments[0].click();", element)
+    all_states = dom.xpath(
+        '//div[@class="row sqs-row"]/div[@class="col sqs-col-2 span-2"]'
+    )[:3]
+    for state_html in all_states:
+        all_locations = state_html.xpath(".//p/strong")
+        for poi_html in all_locations:
+            if not poi_html.xpath(".//text()"):
+                continue
+            location_name = poi_html.xpath(".//text()")
+            if not location_name:
+                continue
+            if len(location_name) == 2:
+                state = location_name[0]
+                location_name = location_name[-1]
+            else:
+                location_name = location_name[0]
+            page_url = poi_html.xpath(
+                './/following-sibling::a[contains(@href, "menu")]/@href'
+            )
+            if not page_url:
+                page_url = poi_html.xpath('.//a[contains(@href, "menu")]/@href')
+            page_url = page_url[0] if page_url else ""
+            if page_url and location_name.lower().split()[-1] not in page_url:
+                page_url = ""
+            raw_data = poi_html.xpath(".//following::text()")
+            clear_data = []
+            for e in raw_data:
+                if not e.strip():
+                    continue
+                clear_data.append(e)
+                if "order online" in e:
+                    break
+            clear_data = [e.strip() for e in clear_data if "now open" not in e][:-1]
+            if "coming soon!" in clear_data:
+                continue
+            if len(clear_data) == 3:
+                location_name = clear_data[0]
+                clear_data = clear_data[1:]
+            city = location_name
+            zip_code = ""
+            if "suite" in clear_data[1]:
+                state = clear_data[2].split(", ")[-1].split()[0]
+                zip_code = clear_data[2].split(", ")[-1].split()[-1]
+                city = clear_data[2].split(", ")[0]
+                clear_data = [", ".join(clear_data[:2])] + [clear_data[3]]
+            if location_name == "bethesda":
+                page_url = (
+                    "https://order.matchboxrestaurants.com/menu/matchbox-bethesda"
+                )
 
-    element_to_hover_over = driver.find_element_by_css_selector("a.Header-nav-folder-title")
+            item = SgRecord(
+                locator_domain=domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=clear_data[0],
+                city=city,
+                state=state,
+                zip_postal=zip_code,
+                country_code="",
+                store_number="",
+                phone=clear_data[1],
+                location_type="",
+                latitude="",
+                longitude="",
+                hours_of_operation="",
+            )
 
-    hover = ActionChains(driver).move_to_element(element_to_hover_over)
-    hover.perform()
+            yield item
 
-    hrefs = driver.find_element_by_css_selector('span.Header-nav-folder').find_elements_by_css_selector('a')
-
-    link_list = []
-    for href in hrefs:
-        link_list.append(href.get_attribute('href'))
-
-    all_store_data = []
-    for link in link_list:
-        if link == 'https://matchboxrestaurants.com/':
-            continue
-        driver.implicitly_wait(10)
-        driver.get(link)
-        
-        main = driver.find_element_by_css_selector('section.Main-content')
-        content = main.text.split('\n')[:17]
-
-        location_name = link[link.find('.com/') + 5: ].replace('-', ' ')
-        street_address = content[1]
-        city, state, zip_code = addy_ext(content[2])
-        phone_number = content[3].replace('call', '').strip()
-        hours = ''
-        for h in content[11:]:
-            if 'order online' in h:
-                break
-            hours += h + ' '
-
-        if 'ellsworth' in street_address or 'potomac' in street_address:
-            href = main.find_elements_by_css_selector('a')[0].get_attribute('href')
-
-        else:
-            href = main.find_elements_by_css_selector('a')[1].get_attribute('href')
-
-        start_idx = href.find('/@')
-        if start_idx > 0:
-            end_idx = href.find('z/data')
-            coords = href[start_idx + 2: end_idx].split(',')
-            lat = coords[0]
-            longit = coords[1]
-        else:
-            lat = '<MISSING>'
-            longit = '<MISSING>'
-        country_code = 'US'
-        store_number = '<MISSING>'
-        location_type = '<MISSING>'
-
-        store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
-                      store_number, phone_number, location_type, lat, longit, hours, link]
-        all_store_data.append(store_data)
-
-    driver.quit()
-    return all_store_data
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
-scrape()
+
+if __name__ == "__main__":
+    scrape()

@@ -1,37 +1,13 @@
-import csv
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 session = SgRequests()
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
-
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
 
 
 def fetch_data():
@@ -114,17 +90,20 @@ def fetch_data():
                 name = line2.split("<title>")[1].split("&")[0].strip()
                 if "|" in name:
                     name = name.split("|")[0].strip()
-            if "<span >" in line2 and "<span ><" not in line2 and "</span>" in line2:
+            if "DAY" in line2 and "</span>" in line2:
+                day = line2.split("</span>")[0].strip().replace("\t", "")
+                next(lines)
+                next(lines)
                 g = next(lines)
                 g = str(g.decode("utf-8"))
-                if "<p" not in g:
-                    g = next(lines)
-                    g = str(g.decode("utf-8"))
-                if 'font-weight: 500;">' in g:
-                    hinfo = g.split('font-weight: 500;">')[1].split("<")[0]
-                else:
-                    hinfo = g.split('">')[1].split("<")[0]
-                hrs = line2.split("<span >")[1].split("<")[0] + ": " + hinfo
+                hrs = day + ": " + g.split("</p>")[0].strip().replace("\t", "")
+                hrs = hrs.replace(
+                    '<span style="font-size: 27px; font-style: normal; font-weight: 500;">',
+                    "",
+                ).replace("</span>", "")
+                hrs = hrs.replace(
+                    '<span style=""font-size: 27px; font-style: normal;"">', ""
+                )
                 if hours == "":
                     hours = hrs
                 else:
@@ -143,27 +122,33 @@ def fetch_data():
                 hours = "<MISSING>"
             if "allentown" in purl:
                 phone = "(484) 656 7277"
-            yield [
-                website,
-                purl,
-                name,
-                add,
-                city,
-                state,
-                zc,
-                country,
-                store,
-                phone,
-                typ,
-                lat,
-                lng,
-                hours,
-            ]
+            if "granby" in purl:
+                hours = "MONDAY - FRIDAY: 11AM - 2:30PM, 4:30PM - 10PM; SATURDAY: 12PM - 2:30PM, 4:30PM - 10PM; SUNDAY: 12PM - 2:30PM, 4:30PM - 9PM"
+            if "state-college" in purl:
+                hours = "MONDAY - SATURDAY: 11AM - 10PM; SUNDAY: 11AM - 9PM"
+            yield SgRecord(
+                locator_domain=website,
+                page_url=purl,
+                location_name=name,
+                street_address=add,
+                city=city,
+                state=state,
+                zip_postal=zc,
+                country_code=country,
+                phone=phone,
+                location_type=typ,
+                store_number=store,
+                latitude=lat,
+                longitude=lng,
+                hours_of_operation=hours,
+            )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()

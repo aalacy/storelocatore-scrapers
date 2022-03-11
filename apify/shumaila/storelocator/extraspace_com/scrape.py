@@ -1,152 +1,122 @@
+from sglogging import sglog
 from bs4 import BeautifulSoup
-import csv
-import json
-
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgpostal.sgpostal import parse_address_intl
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
+website = "extraspace_com"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
+session = SgRequests()
 headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+    "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36",
+    "Accept": "application/json",
 }
 
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+DOMAIN = "https://www.extraspace.com/"
+MISSING = SgRecord.MISSING
 
 
 def fetch_data():
-    data = []
-    titlelist = []
-    state_list = []
-    url = "https://www.extraspace.com/help/accessibility-commitment/"
-    try:
-        r = session.get(url)
-    except:
-        pass
-    soup = BeautifulSoup(r.text, "html.parser")
-    maindiv = soup.findAll("a")
-    for lt in maindiv:
-        try:
-            if lt["href"].find("SiteMap-") > -1:
-                state_list.append("https://www.extraspace.com" + lt["href"])
-        except:
-            pass
-    p = 0
-    for alink in state_list:
-        statelink = alink
-        try:
-            r1 = session.get(statelink, headers=headers, verify=False)
-        except:
-            pass
-        soup1 = BeautifulSoup(r1.text, "html.parser")
-        maindiv1 = soup1.find("div", {"id": "acc-main"})
-        link_list = maindiv1.findAll("a")
-        for alink in link_list:
-            if alink.text.find("Extra Space Storage #") > -1:
-                link = "https://www.extraspace.com" + alink["href"]
-                r2 = session.get(link, headers=headers, verify=False)
+    if True:
+        url = "https://www.extraspace.com/storage/facilities/"
+        r = session.get(url, headers=headers)
+        soup = BeautifulSoup(r.text, "html.parser")
+        statelist = soup.find("div", {"class": "light-gray"}).findAll("a")
+        for state in statelist:
+            stiteMap_url = "https://www.extraspace.com" + state["href"]
+            r = session.get(stiteMap_url, headers=headers, timeout=180)
+            soup = BeautifulSoup(r.text, "html.parser")
+            loclist = soup.findAll("a", {"class": "electric-gray"})
+            for loc in loclist:
+                page_url = "https://www.extraspace.com" + loc["href"]
+                log.info(page_url)
                 try:
-                    content = r2.text.split(' "@type": "SelfStorage",', 1)[1].split(
-                        "</script>"
-                    )[0]
+                    store_number = page_url.split("/")[-2]
                 except:
-                    continue
-                content = "{" + content
-                content = json.loads(content)
-                city = content["address"]["addressLocality"]
-                state = content["address"]["addressRegion"]
-                pcode = content["address"]["postalCode"]
-                street = content["address"]["streetAddress"]
-                title = content["name"]
-                phone = content["telephone"].replace("+1-", "")
-                lat = content["geo"]["latitude"]
-                longt = content["geo"]["longitude"]
+                    store_number = MISSING
+                r = session.get(page_url, headers=headers, timeout=15)
+                soup = BeautifulSoup(r.text, "html.parser")
                 try:
-                    hourslist = (
-                        BeautifulSoup(r2.text, "html.parser")
-                        .text.split("Storage Office Hours", 1)[1]
-                        .splitlines()[0:10]
+                    raw_address = (
+                        soup.find("div", {"class": "address-info"})
+                        .get_text(separator="|", strip=True)
+                        .replace("|", " ")
                     )
                 except:
-                    if "COMING SOON" in BeautifulSoup(r2.text, "html.parser").text:
-                        continue
-                hours = ""
-                for hr in hourslist:
-                    if ("am" in hr and "pm" in hr) or "closed" in hr:
-                        hours = hours + hr + " "
-                    elif hr == " ":
-                        break
-                hours = (
-                    hours.replace("am", " am ")
-                    .replace("pm", " pm ")
-                    .replace("-", " - ")
-                )
-                try:
-                    hours = hours.split("CUT THE LIN", 1)[0].strip()
-                except:
-                    pass
-                try:
-                    hours = hours.split("closed", 1)[0]
-                    hours = hours + "closed"
-                except:
-                    pass
-                store = link.split("/")[-2]
-
-                if street in titlelist:
                     continue
-                titlelist.append(street)
-                data.append(
-                    [
-                        "https://www.extraspace.com",
-                        link,
-                        title.replace("?", ""),
-                        street.replace("<br />", " "),
-                        city,
-                        state,
-                        pcode,
-                        "US",
-                        store,
-                        phone,
-                        "<MISSING>",
-                        lat,
-                        longt,
-                        hours,
-                    ]
-                )
+                address_raw = raw_address.replace(",", " ")
+                pa = parse_address_intl(address_raw)
 
-                p += 1
-    return data
+                street_address = pa.street_address_1
+                street_address = street_address if street_address else MISSING
+
+                city = pa.city
+                city = city.strip() if city else MISSING
+
+                state = pa.state
+                state = state.strip() if state else MISSING
+
+                zip_postal = pa.postcode
+                zip_postal = zip_postal.strip() if zip_postal else MISSING
+                location_name = soup.find("h1").text
+                phone = (
+                    soup.find("div", {"class": "current-customer-container"})
+                    .find("a")
+                    .text
+                )
+                hours_of_operation = (
+                    soup.find("div", {"class": "office-hours"})
+                    .get_text(separator="|", strip=True)
+                    .replace("|", " ")
+                    .replace("Office Hours", "")
+                )
+                try:
+                    latitude = r.text.split('"latitude": "')[1].split('"')[0]
+                    longitude = r.text.split('"longitude": "')[1].split('"')[0]
+                except:
+                    latitude = r.text.split('"latitude":')[1].split('"')[0]
+                    longitude = r.text.split('"longitude":')[1].split('"')[0]
+                longitude = longitude.replace('"', "").replace("},", "")
+                latitude = latitude.replace('"', "").replace(",", "")
+                hours_of_operation = hours_of_operation.replace("Storage", "")
+                country_code = "US"
+                yield SgRecord(
+                    locator_domain=DOMAIN,
+                    page_url=page_url,
+                    location_name=location_name,
+                    street_address=street_address.strip(),
+                    city=city.strip(),
+                    state=state.strip(),
+                    zip_postal=zip_postal.strip(),
+                    country_code=country_code,
+                    store_number=store_number,
+                    phone=phone.strip(),
+                    location_type=MISSING,
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=hours_of_operation.strip(),
+                    raw_address=raw_address,
+                )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    log.info("Started")
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()

@@ -1,0 +1,6 @@
+--ignore LatLngDuplicationValidator
+
+Different location names have the same address
+
+https://appliancefactory.com/locations/parkerfl.html
+https://appliancefactory.com/locations/parker.html

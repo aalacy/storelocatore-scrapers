@@ -1,220 +1,185 @@
-import csv
-import os
-from sgselenium import SgSelenium
+from bs4 import BeautifulSoup as bs
+from sgrequests import SgRequests
+import re
+from sglogging import sglog
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgpostal import parse_address_intl
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 
-from bs4 import BeautifulSoup
+DOMAIN = "propark.com"
+BASE_URL = "https://stores.propark.com/"
+LOCATION_URL = "https://www.propark.com/search/"
+LOCATION_FORMAT = "https://www.propark.com/search/?lat={}&lng={}"
+API_URL = "https://www.propark.com/wp-admin/admin-ajax.php"
+HEADERS = {
+    "Accept": "application/json, text/plain, */*",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
+    "Accept-Encoding": "gzip, deflate, sdch",
+    "Accept-Language": "en-US,en;q=0.8",
+    "Upgrade-Insecure-Requests": "1",
+    "Cache-Control": "max-age=0",
+    "Connection": "keep-alive",
+}
+log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
 
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+session = SgRequests()
 
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
-        # Body
-        for row in data:
-            writer.writerow(row)
+MISSING = "<MISSING>"
+
+
+def getAddress(raw_address):
+    try:
+        if raw_address is not None and raw_address != MISSING:
+            data = parse_address_intl(raw_address)
+            street_address = data.street_address_1
+            if data.street_address_2 is not None:
+                street_address = street_address + " " + data.street_address_2
+            city = data.city
+            state = data.state
+            zip_postal = data.postcode
+
+            if street_address is None or len(street_address) == 0:
+                street_address = MISSING
+            if city is None or len(city) == 0:
+                city = MISSING
+            if state is None or len(state) == 0:
+                state = MISSING
+            if zip_postal is None or len(zip_postal) == 0:
+                zip_postal = MISSING
+            return street_address, city, state, zip_postal
+    except Exception as e:
+        log.info(f"No valid address {e}")
+        pass
+    return MISSING, MISSING, MISSING, MISSING
+
+
+def handle_missing(field):
+    if field is None or (isinstance(field, str) and len(field.strip()) == 0):
+        return "<MISSING>"
+    return field
+
+
+def get_latlong(url):
+    latlong = re.search(r"center=(-?[\d]*\.[\d]*),(-[\d]*\.[\d]*)", url)
+    if not latlong:
+        return "<MISSING>", "<MISSING>"
+    return latlong.group(1), latlong.group(2)
+
+
+def get_all_stores_ids(latitude, longitude):
+    payloads = {
+        "action": "hourly_parking_query",
+        "showAllFacilities": "true",
+        "lat": latitude,
+        "lng": longitude,
+        "radius": "100",
+    }
+    ids = []
+    req = session.post(API_URL, headers=HEADERS, data=payloads).json()
+    if req["status"] == "success":
+        ids = req["facilityIds"]
+    log.info(f"Found ({len(ids)}) stores id {latitude, longitude}")
+    return ids
+
+
+def get_store_by_id(store_id):
+    log.info(f"Get contents with store id: {store_id}")
+    payloads = {
+        "action": "facility_modal",
+        "facilityId": store_id,
+        "parkingType": "hourly",
+    }
+    req = session.post(API_URL, headers=HEADERS, data=payloads)
+    try:
+        check = req.json()
+        if "have_posts" in check:
+            return False
+    except:
+        pass
+    soup = bs(req.content, "lxml")
+    return soup
+
 
 def fetch_data():
-
-    locator_domain = 'https://www.propark.com/' 
-    ext = 'locations/'
-    driver = SgSelenium().chrome()
-    driver.get(locator_domain + ext)
-
-    page_source = driver.page_source
-
-    driver.quit()
-
-    soup = BeautifulSoup(page_source, 'html.parser')
-
-    locs = soup.find_all('div', {'class': 'box-wrap'})
-
-    pop_up_tracker = []
-    all_store_data = []
-    dup_tracker = []
-    for loc in locs:
-
-        addy = loc.find('h4').text
-        links = loc.find_all('a')
-        if len(links) == 1:
-            pop_up_link = links[0]['href'].replace('#', '').strip()
-            coords = ['<MISSING>', '<MISSING>']
-        else:        
-            google_link = links[0]['href']
-            start = google_link.find('@')
-            if start < 0:
-                if 'goo.gl/' in google_link:
-                    coords = ['<MISSING>', '<MISSING>']
-                elif google_link.find('?ll=') > 0:
-                    start = google_link.find('?ll=')
-                    end = google_link.find('&')
-                    coords = google_link[start + 4:end].split(',')[:2]
-                else:
-                    nice = 0
-                    
+    log.info("Fetching store_locator data")
+    search = DynamicGeoSearch(
+        country_codes=[SearchableCountries.USA],
+        max_search_distance_miles=100,
+        expected_search_radius_miles=20,
+    )
+    for lat, lng in search:
+        store_ids = get_all_stores_ids(lat, lng)
+        if len(store_ids) > 0:
+            search.found_location_at(lat, lng)
+        for row in store_ids:
+            soup = get_store_by_id(row)
+            if not soup:
+                continue
+            location_name = soup.find("h1", {"class": "card-header-title"}).text
+            raw_address = (
+                soup.find("section", {"id": "directions"}).find("p").text.strip()
+            )
+            street_address, city, state, zip_postal = getAddress(raw_address)
+            phone = soup.find("a", {"href": re.compile(r"tel:.*")})
+            if not phone:
+                phone = MISSING
             else:
-                end = google_link.find(',17z')
-                coords = google_link[start + 1:end].split(',')[:2]
+                phone = phone.text.strip()
+            hours_of_operation = (
+                soup.find("section", {"id": "hours"})
+                .find("ul")
+                .get_text(strip=True, separator=",")
+            )
+            store_number = row
+            country_code = "US"
+            location_type = "propark"
+            latlong = soup.find("article", {"class": "card"})
+            latitude = latlong["data-latitude"]
+            longitude = latlong["data-longitude"]
+            page_url = LOCATION_FORMAT.format(latitude, longitude)
+            log.info("Append {} => {}".format(location_name, street_address))
+            yield SgRecord(
+                locator_domain=DOMAIN,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_postal,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+                raw_address=raw_address,
+            )
 
-            pop_up_link = links[1]['href'].replace('#', '').strip()
-
-        if pop_up_link not in pop_up_tracker:
-            pop_up_tracker.append(pop_up_link)
-        else:
-            continue
-
-        pop = soup.find('div', {'id': pop_up_link})
-        location_name = pop.find('h3').text
-        tds = pop.find_all('td')
-        hours = ''
-        phone_number = ''
-        for td in tds:
-            
-            if 'PHONE' in td.text:
-                phone_number = td.text.replace('PHONE', '')
-                phone_number = ' '.join(phone_number.split())  
-                
-            if 'HOURS' in td.text:
-                hours = td.text.replace('HOURS OF OPERATION', '')
-                hours = ' '.join(hours.split())  
-                
-        if hours == '':
-            hours = '<MISSING>'
-        if phone_number == '':
-            phone_number = '<MISSING>'
-        
-        if 'or' in phone_number:
-            phone_number = phone_number.split('or')[0].strip()
-        
-        if '&' in phone_number:
-            phone_number = phone_number.split('&')[0].strip()
-
-        if '51 Depot Road Berlin' in addy:
-            street_address = '51 Depot Road'
-            city = 'Berlin'
-            state = 'CT'
-            zip_code = '06037'
-        elif '24 Colony Street' in addy:
-            street_address = '24 Colony Street'
-            city = 'Meriden'
-            state = 'CT'
-            zip_code = '06450'
-            
-        elif '60 State Street' in addy:
-            street_address = '60 State Street'
-            city = 'Meriden'
-            state = 'CT'
-            zip_code = '06450'
-        elif '40, 50, 60 Weston St' in addy:
-            street_address = '40, 50, 60 Weston St'
-            city = 'Hartford'
-            state = 'CT'
-            zip_code = '06103'
-        
-        else:
-            if 'Enter from either: 93 Union St.' in addy:
-                addy = '52 Olive St, New Haven, CT 06510'
-            
-            if '343 N Cherry Street Wallingford CT 06492' in addy:
-                addy = '343 N Cherry Street, Wallingford, CT 06492'
-                
-            if '9810 August Drive Jacksonville' in addy:
-                addy = '9810 August Drive, Jacksonville, FL 32226'
-
-            if '2 Battery Wharf, Boston.' in addy:
-                addy = '2 Battery Wharf, Boston, MA 02114'
-
-            if '34 Valley Road Montclair' in addy:
-                addy = '34 Valley Road, Montclair, New Jersey 07042'
-                
-            if '108-03 Beach Channel Dr Far' in addy:
-                addy = '108-03 Beach Channel Dr, Far Rockaway, NY 11694'
-                
-            if '110-45 Queens Blvd,' in addy:
-                addy = '110-45 Queens Blvd, Forest Hill, NY 11375'
-                
-            if '44 South Broadway White Plains' in addy:
-                addy = '44 South Broadway, White Plains, New York 10601'
-                
-            if '1000 Casteel Dr. Coraopolis' in addy:
-                addy = '1000 Casteel Dr, Coraopolis, PA 15108'
-                
-            if '1671 Murfreesboro Pike Nashville' in addy:
-                addy = '1671 Murfreesboro Pike, Nashville, TN 37217'
-            if '945 Market Street' in addy:
-                addy = '945 Market Street, San Francisco, CA 94103'
-            if '9300 Wilshire Boulevard' in addy:
-                addy = '9300 Wilshire Boulevard, Beverly Hills, CA 90212'
-
-            if '425 1st Street' in addy:
-                addy = '425 1st Street, San Francisco, California 94105'
-
-            if '1729 H Street Northwest' in addy:
-                addy = '1729 H Street Northwest, Washington, DC 20006'
-
-            if '902 Quentin Rd' in addy:
-                addy = '902 Quentin Rd, Brooklyn, NY 11223'
-
-            if '600 Columbus Avenue' in addy:
-                addy = '600 Columbus Avenue, New York, New York 10024'
-
-            if '840 Stelzer Rd' in addy:
-                addy = '840 Stelzer Rd, Columbus, Ohio 43219'
-            
-            addy = addy.split(',')
-            if len(addy) > 1:
-                if len(addy) == 4:
-                    street_address = addy[0].strip() + ' ' + addy[1].strip()
-                    off = 1
-                else:
-                    street_address = addy[0].strip()
-                    off = 0
-
-                city = addy[1 + off].strip()
-
-                if street_address not in dup_tracker:
-                    dup_tracker.append(street_address)
-                else:
-                    continue
-                
-                state_zip = ' '.join(addy[2 + off].strip().split()).split(' ')
-                if len(state_zip) == 1:
-                    if len(state_zip[0]) == 2:
-                        state = state_zip[0]
-                        zip_code = '<MISSING>'
-                    else:
-                        zip_code = state_zip[0]
-                        state = '<MISSING>'
-                elif len(state_zip) == 3:
-                    state = state_zip[0] + ' ' + state_zip[1]
-                    zip_code = state_zip[2]
-                else:
-                    state = state_zip[0]
-                    zip_code = state_zip[1]
-            else:
-                street_address = addy[0]
-                city = '<MISSING>'
-                state = '<MISSING>'
-                zip_code = '<MISSING>'
-
-        if len(zip_code) == 4:
-            zip_code = '<MISSING>'
-
-        country_code = 'US'
-        page_url = '<MISSING>'
-        lat = coords[0]
-        longit = coords[1]
-        location_type = '<MISSING>'
-        store_number = '<MISSING>'
-        store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
-                    store_number, phone_number, location_type, lat, longit, hours, page_url]
-
-        all_store_data.append(store_data)
-        
-    return all_store_data
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    log.info("start {} Scraper".format(DOMAIN))
+    count = 0
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.STORE_NUMBER,
+                    SgRecord.Headers.RAW_ADDRESS,
+                }
+            )
+        )
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
+
 
 scrape()

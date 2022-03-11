@@ -20,9 +20,7 @@ def fetch_data():
     cities = []
     countries = []
     r = session.get(main_url, headers=headers)
-    if r.encoding is None:
-        r.encoding = "utf-8"
-    for line in r.iter_lines(decode_unicode=True):
+    for line in r.iter_lines():
         if 'name="dwfrm_storelocator_address_international" >' in line:
             info = (
                 line.split('name="dwfrm_storelocator_address_international" >')[1]
@@ -32,7 +30,12 @@ def fetch_data():
             for item in info:
                 if "</option>" in item:
                     ccode = item.split('"')[0]
-                    if len(ccode) > 1:
+                    if (
+                        len(ccode) > 1
+                        and ccode != "CA"
+                        and ccode != "GB"
+                        and ccode != "US"
+                    ):
                         countries.append(ccode)
     for ccode in countries:
         CFound = True
@@ -53,7 +56,6 @@ def fetch_data():
             r2 = session.get(url, headers=headers)
             allinfo = ""
             for line2 in r2.iter_lines():
-                line2 = str(line2.decode("utf-8"))
                 allinfo = allinfo + line2.replace("\r", "").replace("\n", "").replace(
                     "\t", ""
                 )
@@ -103,27 +105,33 @@ def fetch_data():
                         if phone == "":
                             phone = "<MISSING>"
                         phone = phone.replace("&#40;", "(").replace("&#41;", ")")
-                        yield SgRecord(
-                            locator_domain=website,
-                            page_url=loc,
-                            location_name=name,
-                            street_address=add,
-                            city=city,
-                            state=state,
-                            zip_postal=zc,
-                            country_code=country,
-                            phone=phone,
-                            location_type=typ,
-                            store_number=store,
-                            latitude=lat,
-                            longitude=lng,
-                            hours_of_operation=hours,
-                        )
+                        if "outlet" in name.lower():
+                            typ = "Coach Outlet"
+                            name = "Coach Outlet"
+                        else:
+                            typ = "Coach"
+                            name = "Coach"
+                        if "popup" not in name.lower() and "pop-up" not in name.lower():
+                            yield SgRecord(
+                                locator_domain=website,
+                                page_url=loc,
+                                location_name=name,
+                                street_address=add,
+                                city=city,
+                                state=state,
+                                zip_postal=zc,
+                                country_code=country,
+                                phone=phone,
+                                location_type=typ,
+                                store_number=store,
+                                latitude=lat,
+                                longitude=lng,
+                                hours_of_operation=hours,
+                            )
     main_url = "https://www.coach.com/stores/"
     locs = []
     r = session.get(main_url, headers=headers)
     for line in r.iter_lines():
-        line = str(line.decode("utf-8"))
         if '<a class="Directory-listLink" href="' in line:
             items = line.split('<a class="Directory-listLink" href="')
             for item in items:
@@ -138,7 +146,6 @@ def fetch_data():
         logger.info(state)
         r2 = session.get(state, headers=headers)
         for line2 in r2.iter_lines():
-            line2 = str(line2.decode("utf-8"))
             if 'class="Directory-listLink" href="' in line2:
                 items = line2.split('class="Directory-listLink" href="')
                 for item in items:
@@ -156,7 +163,6 @@ def fetch_data():
         logger.info(city)
         r2 = session.get(city, headers=headers)
         for line2 in r2.iter_lines():
-            line2 = str(line2.decode("utf-8"))
             if '"visitpage" href="../' in line2:
                 items = line2.split('"visitpage" href="../')
                 for item in items:
@@ -182,7 +188,6 @@ def fetch_data():
         store = "<MISSING>"
         r2 = session.get(loc, headers=headers)
         for line2 in r2.iter_lines():
-            line2 = str(line2.decode("utf-8"))
             if 'emprop="openingHours" content="' in line2:
                 days = line2.split('emprop="openingHours" content="')
                 for day in days:
@@ -211,26 +216,35 @@ def fetch_data():
                 lng = line2.split('itemprop="longitude" content="')[1].split('"')[0]
             if 'id="phone-main">' in line2:
                 phone = line2.split('id="phone-main">')[1].split("<")[0]
-        if "Outlet In" in name:
+        if "outlet" in name.lower():
             typ = "Coach Outlet"
         else:
             typ = "Coach"
-        yield SgRecord(
-            locator_domain=website,
-            page_url=loc,
-            location_name=name,
-            street_address=add,
-            city=city,
-            state=state,
-            zip_postal=zc,
-            country_code=country,
-            phone=phone,
-            location_type=typ,
-            store_number=store,
-            latitude=lat,
-            longitude=lng,
-            hours_of_operation=hours,
-        )
+        if "COACH in" in name:
+            name = "Coach"
+        if "COACH" in name and " In " in name:
+            name = "Coach"
+        if "Outlet In " in name:
+            name = "Coach Outlet"
+        if "outlet" in typ.lower():
+            name = "Coach Outlet"
+        if "popup" not in name.lower() and "pop-up" not in name.lower():
+            yield SgRecord(
+                locator_domain=website,
+                page_url=loc,
+                location_name=name,
+                street_address=add,
+                city=city,
+                state=state,
+                zip_postal=zc,
+                country_code=country,
+                phone=phone,
+                location_type=typ,
+                store_number=store,
+                latitude=lat,
+                longitude=lng,
+                hours_of_operation=hours,
+            )
 
     states = []
     cities = []
@@ -239,7 +253,6 @@ def fetch_data():
     locs = []
     r = session.get(main_url, headers=headers)
     for line in r.iter_lines():
-        line = str(line.decode("utf-8"))
         if '<a class="Directory-listLink" href="' in line:
             items = line.split('<a class="Directory-listLink" href="')
             for item in items:
@@ -254,7 +267,6 @@ def fetch_data():
         logger.info(state)
         r2 = session.get(state, headers=headers)
         for line2 in r2.iter_lines():
-            line2 = str(line2.decode("utf-8"))
             if 'class="Directory-listLink" href="' in line2:
                 items = line2.split('class="Directory-listLink" href="')
                 for item in items:
@@ -272,7 +284,6 @@ def fetch_data():
         logger.info(city)
         r2 = session.get(city, headers=headers)
         for line2 in r2.iter_lines():
-            line2 = str(line2.decode("utf-8"))
             if '"visitpage" href="../' in line2:
                 items = line2.split('"visitpage" href="../')
                 for item in items:
@@ -298,7 +309,6 @@ def fetch_data():
         store = "<MISSING>"
         r2 = session.get(loc, headers=headers)
         for line2 in r2.iter_lines():
-            line2 = str(line2.decode("utf-8"))
             if 'emprop="openingHours" content="' in line2:
                 days = line2.split('emprop="openingHours" content="')
                 for day in days:
@@ -327,26 +337,122 @@ def fetch_data():
                 lng = line2.split('itemprop="longitude" content="')[1].split('"')[0]
             if 'id="phone-main">' in line2:
                 phone = line2.split('id="phone-main">')[1].split("<")[0]
-        if "Outlet In" in name:
+        if "outlet" in name.lower():
             typ = "Coach Outlet"
         else:
             typ = "Coach"
-        yield SgRecord(
-            locator_domain=website,
-            page_url=loc,
-            location_name=name,
-            street_address=add,
-            city=city,
-            state=state,
-            zip_postal=zc,
-            country_code=country,
-            phone=phone,
-            location_type=typ,
-            store_number=store,
-            latitude=lat,
-            longitude=lng,
-            hours_of_operation=hours,
-        )
+        if "COACH in" in name:
+            name = "Coach"
+        if "COACH" in name and " In " in name:
+            name = "Coach"
+        if "Outlet In " in name:
+            typ = "Coach Outlet"
+        if "outlet" in typ.lower():
+            name = "Coach Outlet"
+        if "popup" not in name.lower() and "pop-up" not in name.lower():
+            yield SgRecord(
+                locator_domain=website,
+                page_url=loc,
+                location_name=name,
+                street_address=add,
+                city=city,
+                state=state,
+                zip_postal=zc,
+                country_code=country,
+                phone=phone,
+                location_type=typ,
+                store_number=store,
+                latitude=lat,
+                longitude=lng,
+                hours_of_operation=hours,
+            )
+
+    for y in range(1, 6):
+        for x in range(0, 100, 15):
+            url = (
+                "https://uk.coach.com/on/demandware.store/Sites-Coach_EU-Site/en_GB/Stores-FilterResult?firstQuery=GB_country&showRFStoreDivider=true&showRStoreDivider=true&showDStoreDivider=true&showFStoreDivider=false&start="
+                + str(x)
+                + "&sz=15&format=ajax"
+            )
+            r = session.get(url, headers=headers)
+            website = "uk.coach.com"
+            typ = "<MISSING>"
+            country = "GB"
+            logger.info("Pulling Stores...")
+            for line in r.iter_lines():
+                if 'meta itemprop="name" content="' in line:
+                    items = line.split('meta itemprop="name" content="')
+                    for item in items:
+                        if 'data-address="' in item:
+                            name = item.split('"')[0]
+                            loc = "<MISSING>"
+                            add = (
+                                item.split('"streetAddress">')[1]
+                                .split("</span>")[0]
+                                .replace("<br />", "")
+                                .strip()
+                                .replace("  ", " ")
+                            )
+                            city = item.split('rop="addressLocality">')[1].split("<")[0]
+                            state = "<MISSING>"
+                            zc = item.split('"postalCode">')[1].split("<")[0]
+                            try:
+                                phone = item.split('itemprop="telephone">')[1].split(
+                                    "<"
+                                )[0]
+                            except:
+                                phone = "<MISSING>"
+                            phone = phone.replace("&#40;", "(").replace("&#41;", ")")
+                            lat = "<MISSING>"
+                            lng = "<MISSING>"
+                            store = "<MISSING>"
+                            try:
+                                hours = (
+                                    item.split('<span itemprop="openingHours">')[1]
+                                    .split("<")[0]
+                                    .strip()
+                                )
+                            except:
+                                hours = "<MISSING>"
+                            name = name.replace("&amp;", "&")
+                            add = add.replace("&amp;", "&")
+                            name = name.replace("&#39;", "'")
+                            add = add.replace("&#39;", "'")
+                            if "outlet" in name.lower():
+                                typ = "Coach Outlet"
+                            else:
+                                typ = "Coach"
+                            if "coach house" in name.lower():
+                                typ = "Coach Flagship Store"
+                            if (
+                                "coach fenwick" in name.lower()
+                                or "coach harvey" in name.lower()
+                                or "coach john lewis" in name.lower()
+                                or "coach selfridges" in name.lower()
+                                or "coach williams &" in name.lower()
+                            ):
+                                typ = "Coach Department & Specialty Store"
+                            name = typ
+                            if (
+                                "popup" not in name.lower()
+                                and "pop-up" not in name.lower()
+                            ):
+                                yield SgRecord(
+                                    locator_domain=website,
+                                    page_url=loc,
+                                    location_name=name,
+                                    street_address=add,
+                                    city=city,
+                                    state=state,
+                                    zip_postal=zc,
+                                    country_code=country,
+                                    phone=phone,
+                                    location_type=typ,
+                                    store_number=store,
+                                    latitude=lat,
+                                    longitude=lng,
+                                    hours_of_operation=hours,
+                                )
 
 
 def scrape():

@@ -1,45 +1,16 @@
-import csv
+import re
 
 from bs4 import BeautifulSoup
 
-from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 from sgrequests import SgRequests
 
-logger = SgLogSetup().get_logger("cmxcinemas.com")
 
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
+def fetch_data(sgw: SgWriter):
 
     session = SgRequests()
 
@@ -54,20 +25,16 @@ def fetch_data():
     base = BeautifulSoup(req.text, "lxml")
 
     states = list(base.find(id="drpStateloc").stripped_strings)[1:]
-    all_store_data = []
-
     api_link = "https://www.cmxcinemas.com/Locations/FilterLocations?state="
 
     for st in states:
         stores = session.get(api_link + st, headers=headers).json()["listloc"][0][
             "city"
         ]
-        logger.info(st)
 
         for store in stores:
 
             link = "https://www.cmxcinemas.com/Locationdetail/" + store["slugname"]
-            logger.info(link)
 
             location_name = store["cinemaname"]
             street_address = store["address"].split(", MN")[0].strip()
@@ -77,7 +44,6 @@ def fetch_data():
             country_code = "US"
 
             store_number = "<MISSING>"
-            phone = "<MISSING>"
             hours_of_operation = "<MISSING>"
             location_type = "<MISSING>"
 
@@ -85,7 +51,21 @@ def fetch_data():
             base = BeautifulSoup(req.text, "lxml")
 
             try:
-                map_link = base.iframe["src"]
+                map_link = base.find(class_="map-blk").iframe["src"]
+            except:
+                continue
+
+            try:
+                phone = (
+                    re.findall(
+                        r"Contact Us:.+[0-9]{4}", str(base.find(class_="aboutus-cont"))
+                    )[0]
+                    .split(":")[1]
+                    .strip()
+                )
+            except:
+                phone = "<MISSING>"
+            try:
                 lat_pos = map_link.rfind("!3d")
                 latitude = map_link[
                     lat_pos + 3 : map_link.find("!", lat_pos + 5)
@@ -98,31 +78,25 @@ def fetch_data():
                 latitude = "<MISSING>"
                 longitude = "<MISSING>"
 
-            all_store_data.append(
-                [
-                    locator_domain,
-                    link,
-                    location_name,
-                    street_address,
-                    city,
-                    state,
-                    zip_code,
-                    country_code,
-                    store_number,
-                    phone,
-                    location_type,
-                    latitude,
-                    longitude,
-                    hours_of_operation,
-                ]
+            sgw.write_row(
+                SgRecord(
+                    locator_domain=locator_domain,
+                    page_url=link,
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=zip_code,
+                    country_code=country_code,
+                    store_number=store_number,
+                    phone=phone,
+                    location_type=location_type,
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=hours_of_operation,
+                )
             )
 
-    return all_store_data
 
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    fetch_data(writer)
