@@ -65,7 +65,7 @@ def fetch_data():
                                 + item.split('"')[0].replace("..", "")
                             )
     for city in cities:
-        curl = curl.replace("https://stores.advanceautoparts.com/https", "https")
+        curl = city.replace("https://stores.advanceautoparts.com/https", "https")
         logger.info("Pulling City %s..." % curl)
         r = session.get(curl, headers=headers)
         for line in r.iter_lines():
