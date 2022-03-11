@@ -7,4 +7,4 @@ sgvalidator==0.0.71
 --extra-index-url https://dl.cloudsmith.io/snjnnLURl1gQtgOE/crawl/sgzip/python/simple/
 sgpostal==0.1.0
 sgscrape==0.1.11
-sgzip==0.7.7
+sgzip==0.10.9
