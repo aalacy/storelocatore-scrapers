@@ -1,4 +1,4 @@
-import ssl
+# import ssl
 import time
 from lxml import html
 from sgscrape.sgrecord import SgRecord
