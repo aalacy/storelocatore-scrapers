@@ -26,19 +26,19 @@ headers = {
 
 
 @retry(stop=stop_after_attempt(10), wait=tenacity.wait_fixed(5))
-def get_response(idx, url, http: SgRequests):
-    response = http.get(url, headers=headers)
-    time.sleep(random.randint(1, 5))
-    if response.status_code == 200:
-        logger.info(f"[{idx}] | {url} >> HTTP STATUS: {response.status_code}")
-        return response
-    raise Exception(f"[{idx}] | {url} >> HTTP Error Code: {response.status_code}")
+def get_response(idx, url):
+    with SgRequests(proxy_country="us", timeout_config=300) as http:
+        response = http.get(url, headers=headers)
+        time.sleep(random.randint(10, 30))
+        if response.status_code == 200:
+            logger.info(f"[{idx}] | {url} >> HTTP STATUS: {response.status_code}")
+            return response
+        raise Exception(f"[{idx}] | {url} >> HTTP Error Code: {response.status_code}")
 
 
-def fetch_data(sgw: SgWriter, http: SgRequests):
+def fetch_data(sgw: SgWriter):
     for idx, api_url in enumerate(API_ENDPOINT_URLS):
-        r = get_response(idx, api_url, http)
-        r = http.get(api_url, headers=headers)
+        r = get_response(idx, api_url)
         js_init = r.json()["maplist"]
         line = (
             "["
@@ -102,10 +102,11 @@ def fetch_data(sgw: SgWriter, http: SgRequests):
 
 
 if __name__ == "__main__":
-    with SgRequests(proxy_country="us") as http:
-        with SgWriter(
-            SgRecordDeduper(
-                SgRecordID({SgRecord.Headers.STORE_NUMBER, SgRecord.Headers.PAGE_URL})
-            )
-        ) as writer:
-            fetch_data(writer, http)
+    logger.info(f"Scrape Started!")  # noqa
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID({SgRecord.Headers.STORE_NUMBER, SgRecord.Headers.PAGE_URL})
+        )
+    ) as writer:
+        fetch_data(writer)
+    logger.info(f"Scrape Finished!")  # noqa
