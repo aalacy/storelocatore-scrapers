@@ -87,7 +87,6 @@ def fetch_data():
                             locs.append(curl)
         except:
             pass
-    print(len(locs))
     for loc in locs:
         time.sleep(3)
         logger.info(loc)
