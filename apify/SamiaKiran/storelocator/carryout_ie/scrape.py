@@ -4,8 +4,8 @@ from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import SgRecordID
 from sgpostal.sgpostal import parse_address_intl
-from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
@@ -39,10 +39,17 @@ def fetch_data():
             temp = html.findAll("p")
             raw_address = temp[0].text.replace("Address:", "")
             try:
-                phone = temp[1].get_text(separator="|", strip=True).split("|")[1]
+                phone = (
+                    temp[1]
+                    .get_text(separator="|", strip=True)
+                    .split("|")[1]
+                    .replace("053-9481660 053-9481665", "053-9481660")
+                )
             except:
                 phone = MISSING
-            pa = parse_address_intl(raw_address)
+            address = raw_address.split(",")[:-1]
+            address = ", ".join(address)
+            pa = parse_address_intl(address)
 
             street_address = pa.street_address_1
             street_address = street_address if street_address else MISSING
@@ -77,18 +84,11 @@ def fetch_data():
 
 
 def scrape():
-    log.info("Started")
-    count = 0
     with SgWriter(
-        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.LOCATION_NAME}))
     ) as writer:
-        results = fetch_data()
-        for rec in results:
-            writer.write_row(rec)
-            count = count + 1
-
-    log.info(f"No of records being processed: {count}")
-    log.info("Finished")
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":
