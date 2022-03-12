@@ -299,7 +299,7 @@ def start():
     brandsA = state.get_misc_value(
         "brandsA",
         default_factory=lambda: [
-            # {"code": "pii", "name": "Park Inn by Radisson", "done": False},
+            {"code": "pii", "name": "Park Inn by Radisson", "done": False},
             {"code": "rdb", "name": "Radisson Blu", "done": False},
             {"code": "rdr", "name": "Radisson RED", "done": False},
             {"code": "art", "name": "art'otel", "done": False},
