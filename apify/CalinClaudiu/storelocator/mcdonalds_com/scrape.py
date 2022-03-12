@@ -815,12 +815,15 @@ class getData(CrawlMethod):
 
     def Done(self):
         if self._errors:
-            func = getattr(CrawlMethod, self._config.get("ErrorMethod"))
-            self._search = DataSource.ErrorRetry(self._errors)
-            attempted = 0
-            while attempted < self._errorRetries:
-                attempted += 1
-                yield func(self)
+            try:
+                func = getattr(CrawlMethod, self._config.get("ErrorMethod"))
+                self._search = DataSource.ErrorRetry(self._errors)
+                attempted = 0
+                while attempted < self._errorRetries:
+                    attempted += 1
+                    yield func(self)
+            except Exception:
+                pass
         getData.Close(self)
 
 
