@@ -84,9 +84,6 @@ def fetch_data(search_url, driver):
     with SgRequests(verify_ssl=False, timeout_config=400) as session:
         search_res = session.get(search_url, headers=headers)
         search_sel = html.fromstring(search_res.text)
-        store_list = list(
-            search_sel.xpath('//div[contains(@id,"grid-locations")]//div[./iframe]')
-        )
         details_section = search_sel.xpath(
             '//div[contains(@class, "detail-sections")]/div[contains(@class, "block__map block__")]'
         )
