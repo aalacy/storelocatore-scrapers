@@ -43,7 +43,7 @@ def fetch_data():
                 country_code="Azerbaijan",
                 phone=phone,
                 locator_domain=locator_domain,
-                hours_of_operation="; ".join(hours).replace("–", "-"),
+                hours_of_operation="".join(hours).replace("–", "-"),
                 raw_address=raw_address,
             )
 

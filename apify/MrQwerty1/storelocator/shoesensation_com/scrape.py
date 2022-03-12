@@ -63,18 +63,16 @@ def fetch_data(sgw: SgWriter):
         country_code = "US"
         store_number = page_url.split("-")[-1]
         if store_number.isalpha():
-            store_number = "<MISSING>"
-        phone = (
-            "".join(tree.xpath("//a[@class='btn btn-link phone']/text()")).strip()
-            or "<MISSING>"
-        )
+            store_number = SgRecord.MISSING
+
+        phone = "".join(tree.xpath("//a[@class='btn btn-link phone']/text()")).strip()
         text = "".join(tree.xpath("//iframe/@src"))
         try:
             latitude, longitude = text.split("&center=")[1].split(",")
             if "0.00" in latitude:
                 raise IndexError
         except IndexError:
-            latitude, longitude = "<MISSING>", "<MISSING>"
+            latitude, longitude = SgRecord.MISSING, SgRecord.MISSING
 
         _tmp = []
         divs = tree.xpath("//div[@class='mw-sl__infotable__row']")
@@ -83,9 +81,7 @@ def fetch_data(sgw: SgWriter):
             time = "".join(di.xpath("./span[2]/text()")).strip()
             _tmp.append(f"{day}: {time}")
 
-        hours_of_operation = ";".join(_tmp).replace("<br />", " ") or "<MISSING>"
-        if hours_of_operation.count("-;") > 2:
-            hours_of_operation = "<MISSING>"
+        hours_of_operation = ";".join(_tmp).replace("<br />", " ")
 
         row = SgRecord(
             locator_domain=locator_domain,

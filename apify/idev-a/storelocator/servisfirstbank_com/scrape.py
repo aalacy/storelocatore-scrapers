@@ -2,8 +2,21 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
-from sgselenium import SgFirefox
+from sgselenium import SgChrome
 import re
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+import ssl
+
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
+
 
 logger = SgLogSetup().get_logger("servisfirstbank")
 
@@ -15,17 +28,19 @@ _headers = {
 def fetch_data():
     locator_domain = "https://www.servisfirstbank.com"
     base_url = "https://www.servisfirstbank.com/locations/"
-    with SgFirefox() as driver:
+    with SgChrome() as driver:
         driver.get(base_url)
         soup = bs(driver.page_source, "lxml")
         links = soup.select("div#locations_squares > a")
-        logger.info(f"{len(links)} found")
+        logger.info(f"{len(links)} states found")
         for link in links:
             page_url = locator_domain + link["href"]
             logger.info(page_url)
             driver.get(page_url)
             sp1 = bs(driver.page_source, "lxml")
-            for _ in sp1.select("div#location_spots > div"):
+            locations = sp1.select("div#location_spots > div.main_spot")
+            locations += sp1.select("div#location_spots > div.other_spots div.spot")
+            for _ in locations:
                 if not _.text.strip():
                     continue
                 addr = list(_.select_one(".spot_text").stripped_strings)
@@ -57,7 +72,19 @@ def fetch_data():
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.PHONE,
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.CITY,
+                    SgRecord.Headers.ZIP,
+                    SgRecord.Headers.PAGE_URL,
+                }
+            )
+        )
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

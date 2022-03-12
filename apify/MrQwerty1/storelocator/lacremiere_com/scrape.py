@@ -1,47 +1,15 @@
-import csv
-
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgpostal import parse_address, International_Parser
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
-    locator_domain = "https://lacremiere.com/"
-    api_url = "https://lacremiere.com/wp-content/plugins/superstorefinder-wp/ssf-wp-xml.php?wpml_lang=en"
-    page_url = "https://lacremiere.com/trouvez-une-cremiere/"
-
-    session = SgRequests()
-    r = session.get(api_url)
+def fetch_data(sgw: SgWriter):
+    api = "https://lacremiere.com/wp-content/plugins/superstorefinder-wp/ssf-wp-xml.php?wpml_lang=en"
+    r = session.get(api)
     tree = html.fromstring(r.text)
     items = tree.xpath("//item")
 
@@ -53,51 +21,41 @@ def fetch_data():
             .replace("  ", " ")
         )
         adr = parse_address(International_Parser(), line)
-        street_address = (
-            f"{adr.street_address_1} {adr.street_address_2 or ''}".replace(
-                "None", ""
-            ).strip()
-            or "<MISSING>"
-        )
-        city = adr.city or "<MISSING>"
+        street_address = f"{adr.street_address_1} {adr.street_address_2 or ''}".replace(
+            "None", ""
+        ).strip()
+        city = adr.city
         if city == "Chambly":
             street_address += " Périgny"
-        state = adr.state or "<MISSING>"
-        postal = adr.postcode or "<MISSING>"
-        country_code = "CA"
+        state = adr.state
+        postal = adr.postcode
         location_name = "".join(i.xpath("./location/text()"))
-        store_number = "".join(i.xpath("./storeid/text()")) or "<MISSING>"
-        phone = "".join(i.xpath("./telephone/text()")) or "<MISSING>"
-        latitude = "".join(i.xpath("./latitude/text()")) or "<MISSING>"
-        longitude = "".join(i.xpath("./longitude/text()")) or "<MISSING>"
-        location_type = "<MISSING>"
-        hours_of_operation = "<MISSING>"
+        store_number = "".join(i.xpath("./storeid/text()"))
+        phone = "".join(i.xpath("./telephone/text()"))
+        latitude = "".join(i.xpath("./latitude/text()"))
+        longitude = "".join(i.xpath("./longitude/text()"))
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
+        row = SgRecord(
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code="CA",
+            store_number=store_number,
+            phone=phone,
+            latitude=latitude,
+            longitude=longitude,
+            locator_domain=locator_domain,
+        )
 
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://lacremiere.com/"
+    page_url = "https://lacremiere.com/trouvez-une-cremiere/"
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+        fetch_data(writer)
