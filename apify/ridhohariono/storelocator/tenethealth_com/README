@@ -1,0 +1,39 @@
+--ignore StreetAddressHasNumber (Confirmed on website)
+
+
+--ignore StreetAddressHasStateName (No State name)
+Found 2 concerning rows. Examples:
+                               street_address                    REASON  rowNumber
+64   2011 Church Street, Plaza I, Lower Level  ADDR_CONTAINS_STATE_NAME         64
+331              18555 N 79th Ave, Building C  ADDR_CONTAINS_STATE_NAME        331
+
+
+--ignore GeoConsistencyValidator (Confirmed on website)
+Found 2 concerning rows. Examples:
+       zip state                REASON  rowNumber
+296  77304    TN  ZIPCODE_NOT_IN_STATE        296
+436  47365    IN  ZIPCODE_NOT_IN_STATE        436
+
+
+--ignore CountryValidator (Confirmed on website)
+Found 3 concerning rows. Examples:
+    state                phone    zip            REASON  rowNumber
+176    TX  915-577-8467 (THOP)  79902  INVALID_US_PHONE        176
+430    TX  830-500-7FIT (7348)  78130  INVALID_US_PHONE        430
+568    SC  843-757-TIDE (8433)  29910  INVALID_US_PHONE        568
+
+
+--ignore LatLngDuplicationValidator (Confirmed on website)
+
+Found 17 <lat, lng> pair(s) that belong to multiple addresses. Examples:
+       latitude     longitude                                     street_address  num_addrs
+155      31.106      -97.6475  {12101 Edgemere Boulevard, 1717 Treasure Hills...          7
+455     39.0724      -76.7902  {215 Schilling Circle, 8710 Cameron Street, 16...          4
+55      27.8333       -81.717  {7070 West Palmetto Park Road, 9143 Phillips H...          3
+289     33.7712     -111.3877  {2000 W. Bethany Home Road, 1030 W 24th Street...          3
+36   26.7558058    -80.062508                     {901 45th St, 901 45th Street}          2
+290   33.802169  -118.3452008  {3445 Pacific Coast Hwy, Ste 110, 3445 Pacific...          2
+430  38.6681088   -90.4479737  {633 Emerson Rd, Ste 140, 633 Emerson Rd, Suit...          2
+390  37.5282518  -120.8485406                     {3900 Geer Rd, 3900 Geer Road}          2
+316  34.1660665  -118.5282695  {18133 Ventura Boulevard, 18133 Ventura Blvd, ...          2
+298   33.838731   -116.543459  {1150 N. Indian Canyon Dr., 1150 N Indian Cany...          2

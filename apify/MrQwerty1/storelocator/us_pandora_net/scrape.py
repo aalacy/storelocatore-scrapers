@@ -1,9 +1,44 @@
 import json
+from datetime import datetime, timedelta
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+
+
+def override(js):
+    days = [
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday",
+        "Sunday",
+    ]
+    j = (
+        json.loads(js.get("hours_sets:primary"))
+        .get("children", {})
+        .get("holiday")
+        .get("overrides")
+    )
+    date_list = [
+        (datetime.today() + timedelta(days=x)).date().strftime("%Y-%m-%d")
+        for x in range(7)
+    ]
+
+    _tmp = []
+    for date in date_list:
+        day = days[datetime.strptime(date, "%Y-%m-%d").weekday()]
+        if type(j.get(date)) == list:
+            time = f"{j[date][0].get('open')} - {j[date][0].get('close')}"
+            _tmp.append(f"{day}: {time}")
+        else:
+            _tmp.append(f"{day}: Closed")
+
+    hoo = ";".join(_tmp)
+    return hoo
 
 
 def fetch_data(sgw: SgWriter):
@@ -45,6 +80,11 @@ def fetch_data(sgw: SgWriter):
                 _tmp.append(f"{day} Closed")
 
         hours_of_operation = ";".join(_tmp)
+
+        try:
+            hours_of_operation = override(j)
+        except:
+            pass
 
         row = SgRecord(
             page_url=page_url,

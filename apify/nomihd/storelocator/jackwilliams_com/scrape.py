@@ -28,21 +28,17 @@ headers = {
     "accept-language": "en-US,en-GB;q=0.9,en;q=0.8",
 }
 
-data = {"currentUrl": "https://jackwilliams.com/default/location"}
-
 
 def fetch_data():
     # Your scraper here
     with SgRequests() as session:
-        search_res = session.post(
-            "https://jackwilliams.com/iwd_sa/ajax/addressSearch",
-            headers=headers,
-            data=data,
+        search_res = session.get(
+            "https://jackwilliams.com/default/location", headers=headers
         )
         search_sel = lxml.html.fromstring(search_res.text)
 
         store_list = search_sel.xpath(
-            '//a[contains(@href,"https://jackwilliams.com/location/")]/@href'
+            '//a[contains(@href,"https://jackwilliams.com/default/location/")]/@href'
         )
 
         for store_url in store_list:

@@ -1,136 +1,95 @@
+import re
+import json
 from sgrequests import SgRequests
-from bs4 import BeautifulSoup
-import csv
-import time
-from random import randint
-import re 
-from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-logger = SgLogSetup().get_logger('batteriesplus_com')
+session = SgRequests()
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+}
 
-
-
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
-        # Body
-        for row in data:
-            writer.writerow(row)
 
 def fetch_data():
-    locator_domain = 'https://www.batteriesplus.com/'
-    ext = 'store-locator'
-    location_url = locator_domain + ext
 
-    user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36'
-    HEADERS = {'User-Agent' : user_agent}
+    pattern = re.compile(r"\s\s+")
 
-    session = SgRequests()
+    url = "https://maps.stores.batteriesplus.com.prod.rioseo.com/api/getAsyncLocations?template=search&level=search&radius=5000"
+    loclist = session.get(url, headers=headers).json()["maplist"]
+    loclist = loclist.split(">{", 1)[1].split("<", 1)[0].split("},{")
 
-    req = session.get(location_url, headers = HEADERS)
-    time.sleep(randint(1,2))
-    try:
-        base = BeautifulSoup(req.text,"lxml")
-    except (BaseException):
-        logger.info('[!] Error Occured. ')
-        logger.info('[?] Check whether system is Online.')
-
-    main = base.find(class_='mobile-collapse')
-    states = main.find_all('a')
-    state_list = []
-    for state in states:
-        state_link = state['href']
-        if state_link:
-            state_list.append("https://www.batteriesplus.com" + state_link)
-
-    city_list = []
-    for state in state_list:
-        req = session.get(state, headers = HEADERS)
-        logger.info(state)
-        time.sleep(randint(1,2))
+    for loc in loclist:
+        loc = "{" + loc + "}"
         try:
-            base = BeautifulSoup(req.text,"lxml")
-        except (BaseException):
-            logger.info('[!] Error Occured. ')
-            logger.info('[?] Check whether system is Online.')
-
-        
-        cities = base.find_all(class_="map-list-item is-single")
-        
-        for c in cities:
-            city_list.append("https://www.batteriesplus.com" + c.a['href'])
-
-    all_store_data = []
-    dup_tracker = []
-    total_links = len(city_list)
-    for i, link in enumerate(city_list):
-
-        if link not in dup_tracker:
-            dup_tracker.append(link)
-        else:
-            continue
-
-        logger.info("Link %s of %s" %(i+1,total_links))
-        req = session.get(link, headers = HEADERS)
-        time.sleep(randint(1,2))
+            loc = json.loads(re.sub(pattern, " ", loc).strip())
+        except:
+            loc = json.loads(re.sub(pattern, " ", loc[0 : len(loc) - 2]).strip())
+        street = loc["address_1"] + " " + str(loc["address_2"])
+        store = loc["lid"]
+        city = loc["city"]
+        state = loc["region"]
+        pcode = loc["post_code"]
+        title = loc["location_name"] + " " + city + ", " + state + " # " + str(store)
+        link = loc["url"]
+        lat = loc["lat"]
+        longt = loc["lng"]
+        phone = loc["local_phone"]
+        ccode = loc["country"]
         try:
-            item = BeautifulSoup(req.text,"lxml")
-            logger.info(link)
-        except (BaseException):
-            logger.info('[!] Error Occured. ')
-            logger.info('[?] Check whether system is Online.')
+            hourslist = json.loads(loc["hours_sets:primary"])["days"]
+            hours = ""
+            for day in hourslist:
+                try:
+                    closestr = hourslist[day][0]["close"]
+                    close = int(closestr.split(":", 1)[0])
+                    if close > 12:
+                        close = close - 12
+                    hours = (
+                        hours
+                        + day
+                        + " "
+                        + hourslist[day][0]["open"]
+                        + " am - "
+                        + str(close)
+                        + ":"
+                        + str(closestr.split(":", 1)[1])
+                        + " pm "
+                    )
+                except:
+                    hours = hours + day + " " + hourslist[day] + " "
+        except:
+            hours = "<MISSING>"
+            if "Opening" in loc["location_alert_message"]:
+                hours = "Coming Soon"
+        yield SgRecord(
+            locator_domain="https://www.batteriesplus.com/",
+            page_url=link,
+            location_name=title,
+            street_address=street.strip(),
+            city=city.strip(),
+            state=state.strip(),
+            zip_postal=pcode.strip(),
+            country_code=ccode,
+            store_number=str(store),
+            phone=phone.strip(),
+            location_type=SgRecord.MISSING,
+            latitude=str(lat),
+            longitude=str(longt),
+            hours_of_operation=hours,
+        )
 
-        items = item.find(class_="city-locator").find_all(class_="map-list-item-right")
-
-        for item in items:
-            raw_address = item.find(class_="address mt-10").find_all('div')
-            street_address = raw_address[0].text.strip()
-
-            city_line = raw_address[1].text.strip()
-            city = city_line[:city_line.find(",")]
-            state = city_line[city_line.find(",")+1:city_line.rfind(" ")].strip()
-            zip_code = city_line[city_line.rfind(" "):].strip()
-            
-            store_number = item.find(class_="map-list-item-header").a['title'].split("#")[-1]
-            
-            try:
-                raw_gps = item.find('a', attrs={'title': 'Directions'})['href']
-                lat = raw_gps[raw_gps.rfind("=")+1:raw_gps.rfind(",")].strip()
-                longit = raw_gps[raw_gps.rfind(",")+1:].strip()
-            except:
-                lat = '<MISSING>'
-                longit = '<MISSING>'
-
-            phone_number = item.find(class_="phone ga-link hover").text.strip()
-
-            country_code = 'US'
-
-            location_name = city + ', ' + state
-            location_type = '<MISSING>'
-            page_url = link
-            
-            try:
-                hours_link = "https://www.batteriesplus.com" + item.find(class_="view-details ga-link btn btn-black ml-10")['href']
-                req = session.get(hours_link, headers = HEADERS)
-                time.sleep(randint(1,2))                
-                hour_page = BeautifulSoup(req.text,"lxml")
-                hours = hour_page.find(class_="hours").text.replace("\n"," ").replace("  "," ").strip()
-                hours = re.sub(' +', ' ', hours)
-            except (BaseException):
-                hours = '<MISSING>'
-
-            store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
-                            store_number, phone_number, location_type, lat, longit, hours, page_url]
-            
-            all_store_data.append(store_data)
-
-    return all_store_data
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+
 
 scrape()

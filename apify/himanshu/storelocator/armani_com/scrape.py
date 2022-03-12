@@ -80,9 +80,9 @@ def fetch_data(sgw: SgWriter):
                     street_address.replace(zip, "").replace(" ,", ",").strip()
                 )
 
-        if street_address in found:
+        if location_name.strip() + street_address.strip() in found:
             continue
-        found.append(street_address)
+        found.append(location_name.strip() + street_address.strip())
 
         try:
             phone = store_data["address"]["phone1"]

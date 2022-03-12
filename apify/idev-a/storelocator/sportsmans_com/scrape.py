@@ -35,15 +35,18 @@ def fetch_data():
                     street_address += " " + _["line2"]
                 page_url = _["url"]
                 logger.info(page_url)
-                sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
                 hours = []
-                for hh in sp1.select("table.c-location-hours-details tbody tr"):
-                    td = hh.select("td")
-                    hours.append(
-                        f"{td[0].text.strip()}: {' - '.join(td[1].stripped_strings)}"
-                    )
+                if not page_url and _["town"] == "Pittsburgh":
+                    page_url = "https://stores.sportsmans.com/sportsmans-warehouse/us/pa/pittsburgh/120-quinn-drive"
+                if page_url:
+                    sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
+                    for hh in sp1.select("table.c-location-hours-details tbody tr"):
+                        td = hh.select("td")
+                        hours.append(
+                            f"{td[0].text.strip()}: {' '.join(td[1].stripped_strings)}"
+                        )
                 yield SgRecord(
-                    page_url=_["url"],
+                    page_url=page_url,
                     store_number=_["name"],
                     location_name=location_name,
                     street_address=street_address,
@@ -60,7 +63,7 @@ def fetch_data():
 
 
 if __name__ == "__main__":
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

@@ -1,4 +1,5 @@
 import json
+import time
 
 from bs4 import BeautifulSoup
 
@@ -33,7 +34,8 @@ def fetch_data(sgw: SgWriter):
     log.info("Processing " + str(len(items)) + " links ...")
     for i, item in enumerate(items):
         link = item.text
-        if "stores/details" in link:
+        if "stores/search" not in link:
+            log.info(link)
 
             try:
                 req = session.get(link, headers=headers)
@@ -42,12 +44,24 @@ def fetch_data(sgw: SgWriter):
                 if "Pharmacy" not in base.find(class_="StoreServices-section").text:
                     continue
             except:
-                session = SgRequests()
-                req = session.get(link, headers=headers)
-                base = BeautifulSoup(req.text, "lxml")
+                try:
+                    time.sleep(5)
+                    session = SgRequests()
+                    time.sleep(4)
+                    req = session.get(link, headers=headers)
+                    base = BeautifulSoup(req.text, "lxml")
 
-                if "Pharmacy" not in base.find(class_="StoreServices-section").text:
-                    continue
+                    if "Pharmacy" not in base.find(class_="StoreServices-section").text:
+                        continue
+                except:
+                    time.sleep(10)
+                    session = SgRequests()
+                    time.sleep(10)
+                    req = session.get(link, headers=headers)
+                    base = BeautifulSoup(req.text, "lxml")
+
+                    if "Pharmacy" not in base.find(class_="StoreServices-section").text:
+                        continue
 
             try:
                 script = base.find(

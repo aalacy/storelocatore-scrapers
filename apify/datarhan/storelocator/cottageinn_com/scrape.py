@@ -22,30 +22,22 @@ def fetch_data():
         data = json.loads(response.text)
         all_locations = data["response"]["entities"]
         for poi in all_locations:
+            if not poi.get("address"):
+                continue
             store_url = poi.get("landingPageUrl")
             if not store_url:
                 store_url = poi.get("websiteUrl", {}).get("url")
-            store_url = store_url if store_url else "<MISSING>"
             location_name = poi["name"]
-            location_name = location_name if location_name else "<MISSING>"
             street_address = poi["address"]["line1"]
-            street_address = street_address if street_address else "<MISSING>"
             city = poi["address"]["city"]
-            city = city if city else "<MISSING>"
             state = poi["address"]["region"]
             zip_code = poi["address"]["postalCode"]
-            zip_code = zip_code if zip_code else "<MISSING>"
             country_code = poi["address"]["countryCode"]
-            country_code = country_code if country_code else "<MISSING>"
             store_number = poi["meta"]["id"]
-            store_number = store_number if store_number else "<MISSING>"
-            phone = poi.get("localPhone")
-            phone = phone if phone else "<MISSING>"
+            phone = poi.get("mainPhone")
             location_type = poi["meta"]["entityType"]
             latitude = poi["geocodedCoordinate"]["latitude"]
-            latitude = latitude if latitude else "<MISSING>"
             longitude = poi["geocodedCoordinate"]["longitude"]
-            longitude = longitude if longitude else "<MISSING>"
             hours_of_operation = []
             if poi.get("hours"):
                 for day, hours in poi["hours"].items():
