@@ -166,10 +166,18 @@ class CleanRecord:
         cleanRecord["longitude"] = badRecord["geometry"]["coordinates"][0]
         cleanRecord["street_address1"] = badRecord["properties"]["addressLine1"]
         if not cleanRecord["location_name"]:
-            cleanRecord["location_name"] = badRecord["properties"]["addressLine2"]
-            cleanRecord["street_address2"] = ""
+            try:
+                cleanRecord["location_name"] = badRecord["properties"]["addressLine2"]
+            except Exception:
+                cleanRecord["street_address2"] = ""
         else:
-            cleanRecord["street_address2"] = badRecord["properties"]["addressLine2"]
+            try:
+                badRecord["properties"]["addressLine2"] = badRecord["properties"][
+                    "addressLine2"
+                ]
+                cleanRecord["street_address2"] = badRecord["properties"]["addressLine2"]
+            except Exception:
+                cleanRecord["street_address2"] = ""
         cleanRecord["street_address3"] = ""
         cleanRecord["street_address4"] = ""
         cleanRecord["city"] = badRecord["properties"]["addressLine3"]
@@ -640,6 +648,65 @@ class CrawlMethod(CleanRecord):
             record = record_cleaner(data, self._config, country, locale)
             yield record
 
+    def USA2(self):
+        def getAllData(headers, country, locale, Point):
+            if self._config.get("apiCountry"):
+                country = self._config.get("apiCountry")
+            api = "https://www.mcdonalds.com/googleappsv2/geolocation?latitude={}&longitude={}&radius=100000&maxResults=25000&country={}&language={}"
+            api = api.format(Point[0], Point[1], country, locale)
+            return self._session.get(api, headers=headers).json()
+
+        def getLocale(headers):
+            link = headers["referer"]
+            return link.split("/")[3:5]
+
+        def getReferer(url):
+            soup = b4(self._session.get(url).text, "lxml")
+            link = url.split("/")[:3]
+            link = "/".join(link)
+            link = (
+                link
+                + soup.find("a", {"href": lambda x: x and "restaurant-locator" in x})[
+                    "href"
+                ]
+            )
+            return link
+
+        record_cleaner = getattr(CleanRecord, self._config.get("cleanupMethod"))
+        maxZ = self._search.items_remaining()
+        total = 0
+        for Point in self._search:
+            remaining = self._search.items_remaining()
+            if remaining == 0:
+                remaining = 1
+            if maxZ < remaining:
+                maxZ = remaining
+            found = 0
+            try:
+                headers = {}
+                headers["referer"] = getReferer(self._config.get("Url"))
+                country, locale = getLocale(headers)
+                results = results = getAllData(headers, country, locale, Point)
+            except Exception as e:
+                self.Oopsie(Point, str(e))
+                continue
+            try:
+                for data in results[str(self._config.get("pathToResults"))]:
+                    record = record_cleaner(data, self._config, country, locale)
+                    self._search.found_location_at(
+                        record["latitude"], record["longitude"]
+                    )
+                    found += 1
+                    yield record
+            except Exception as e:
+                self.Oopsie(Point, str(e))
+                continue
+                progress = str(round(100 - (remaining / maxZ * 100), 2)) + "%"
+                total += found
+                logzilla.info(
+                    f"{[*Point]} | found: {found} | total: {total} | progress: {progress}"
+                )
+
     def QuickDedupe(self):
         record_cleaner = CleanRecord.DEDUPE
         files = str(self._config.get("DedupeFiles"))
@@ -706,7 +773,7 @@ class getData(CrawlMethod):
         ]
         self._search = search(
             country_codes=Countries,
-            max_radius_miles=self._config.getint("sgzipmax_radius_miles")  # type: ignore
+            expected_search_radius_miles=self._config.getint("sgzipmax_radius_miles")  # type: ignore
             if self._config.getint("sgzipmax_radius_miles")  # type: ignore
             else None,
             max_search_results=self._config.getint("sgzipmax_search_results")  # type: ignore
@@ -820,6 +887,24 @@ def checkFail(countries, fromConfig):
     for section in fromConfig:
         to_check.add(section[0])
     for Country in countries:
+        if any(
+            i in Country["text"]
+            for i in [
+                "Русский",
+                "қазақ",
+                "Detsch",
+                "عربي",
+                "Italiano",
+                "Русский",
+                "беларуская",
+                "ქართული",
+                "Ελληνικά",
+                "Français",
+                "Español",
+                "Azərbaycan",
+            ]
+        ):
+            continue
         if Country["text"] not in to_check:
             logzilla.error(
                 "\n\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\nThis country: {}\n is missing from mcconfig.ini\n Please add it like this at the end of mcconfig.ini to ignore:\n\n[{}]\nUrl = {}\n\n".format(
@@ -931,6 +1016,7 @@ def scrape():
         page_url=sp.MappingField(
             mapping=["page_url"],
             is_required=False,
+            value_transform=lambda x: x.replace("None", "<MISSING>"),
         ),
         location_name=sp.MappingField(
             mapping=["location_name"],
@@ -979,7 +1065,8 @@ def scrape():
         scraper_name="pipeline",
         data_fetcher=fetch_data,
         field_definitions=field_defs,
-        log_stats_interval=5000,
+        log_stats_interval=1000,
+        duplicate_streak_failure_factor=-1,
     )
 
     pipeline.run()

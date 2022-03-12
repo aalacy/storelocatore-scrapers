@@ -1,6 +1,5 @@
 import re
 import json
-from lxml import etree
 from urllib.parse import urljoin
 from sgselenium.sgselenium import SgChrome
 from webdriver_manager.chrome import ChromeDriverManager
@@ -14,6 +13,8 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import ssl
+import time
+from lxml import html
 
 try:
     _create_unverified_https_context = (
@@ -34,34 +35,7 @@ headers = {
 USER_AGENT = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/94.0.4606.81 Safari/537.36"
 start_url = "https://www.worldwidegolfshops.com/vans-golf-shops"
 logger = SgLogSetup().get_logger("worldwidegolfshops_com__vans-golf-shops_aspx")
-
-
-def get_store_urls():
-    with SgRequests() as session:
-        response = session.get(start_url, headers=headers)
-        dom = etree.HTML(response.text)
-        data = dom.xpath(
-            '//script[contains(text(), "store.custom.find-a-store")]/text()'
-        )[2]
-        data = json.loads(data)
-        all_poi_raw = []
-        for k, v in data.items():
-            if (
-                "find-a-store-vansContainer/flex-layout.col#find-a-store-vans-col/flex-layout.row"
-                in k
-            ):
-                all_poi_raw.append(v)
-
-        all_locations = []
-        for poi in all_poi_raw:
-            if poi["props"].get("text"):
-                try:
-                    all_locations.append(
-                        poi["props"]["text"].split("](")[1].split(")\n")[0]
-                    )
-                except Exception:
-                    continue
-        return all_locations
+MISSING = SgRecord.MISSING
 
 
 def get_driver(url, xpath, driver=None):
@@ -91,8 +65,123 @@ def get_driver(url, xpath, driver=None):
     return driver
 
 
+def get_driver1(url, driver=None):
+    if driver is not None:
+        driver.quit()
+    x = 0
+    while True:
+        x = x + 1
+        try:
+            driver = SgChrome(
+                executable_path=ChromeDriverManager().install(),
+                user_agent=USER_AGENT,
+                is_headless=True,
+            ).driver()
+            driver.get(url)
+            time.sleep(20)
+            break
+        except Exception:
+            driver.quit()
+            if x == 10:
+                raise Exception(
+                    "Make sure this ran with a Proxy, will fail without one"
+                )
+            continue
+    return driver
+
+
+def get_store_urls():
+    with SgRequests() as session:
+        response = session.get(start_url, headers=headers)
+        dom = html.fromstring(response.text, "lxml")
+        data = dom.xpath(
+            '//script[contains(text(), "store.custom.find-a-store")]/text()'
+        )[2]
+        data = json.loads(data)
+        all_poi_raw = []
+        for k, v in data.items():
+            if (
+                "find-a-store-vansContainer/flex-layout.col#find-a-store-vans-col/flex-layout.row"
+                in k
+            ):
+                all_poi_raw.append(v)
+
+        all_locations = []
+        for poi in all_poi_raw:
+            if poi["props"].get("text"):
+                try:
+                    all_locations.append(
+                        poi["props"]["text"].split("](")[1].split(")\n")[0]
+                    )
+                except Exception:
+                    continue
+        return all_locations
+
+
+def get_data_for_mesa(page_url):
+    domain = re.findall(r"://(.+?)/", start_url)[0].replace("www.", "")
+    driver1 = get_driver1(start_url)
+    sel_mesa = html.fromstring(driver1.page_source, "lxml")
+
+    data = sel_mesa.xpath(
+        '//script[contains(text(), "store.custom.find-a-store")]/text()'
+    )[2]
+    data = json.loads(data)
+    all_poi_raw = []
+    for k, v in data.items():
+        if "text" in k:
+            all_poi_raw.append(v)
+
+    props_text_list = ""
+    for i in all_poi_raw:
+        props_text = i["props"]["text"]
+        if "Power Road" in props_text:
+            props_text_list = props_text
+    props_text_list = props_text_list.split("\n")
+    rdl = re.findall(r"\[(.*)\]", props_text_list[1])
+    location_name = "".join(rdl)
+    try:
+        street_address = props_text_list[2]
+        city = props_text_list[3].strip().split(" ")[0]
+        state = props_text_list[3].strip().split(" ")[1]
+        zip_postal = props_text_list[3].strip().split(" ")[2]
+        phone = props_text_list[4].split("tel")
+        phone = phone[0].lstrip("[").rstrip("(").rstrip("]")
+
+    except:
+        street_address = MISSING
+        city = MISSING
+        state = MISSING
+        zip_postal = MISSING
+        phone = MISSING
+    item = SgRecord(
+        locator_domain=domain,
+        page_url=page_url,
+        location_name=location_name,
+        street_address=street_address,
+        city=city,
+        state=state,
+        zip_postal=zip_postal,
+        country_code="US",
+        store_number=MISSING,
+        phone=phone,
+        location_type="SportingGoodsStore",
+        latitude=MISSING,
+        longitude=MISSING,
+        hours_of_operation=MISSING,
+    )
+    logger.info(f"Data: {item.as_dict()}")
+    yield item
+
+
 def fetch_data():
     all_locations = get_store_urls()
+    if "/store/vans-golf-shops-az-85206/APA" in all_locations:
+        all_locations.remove("/store/vans-golf-shops-az-85206/APA")
+    if "/store/vans-golf-shops-az-85705/TUC" in all_locations:
+        all_locations.remove("/store/vans-golf-shops-az-85705/TUC")
+    if "/store/vans-golf-shops-az-85705/ORA" not in all_locations:
+        all_locations.append("/store/vans-golf-shops-az-85705/ORA")
     for idx, url in enumerate(all_locations[0:]):
         domain = re.findall(r"://(.+?)/", start_url)[0].replace("www.", "")
         page_url = urljoin(start_url, url)
@@ -101,7 +190,7 @@ def fetch_data():
         if "##" in page_url:
             continue
         driver = get_driver(page_url, xpath_store_hours)
-        loc_dom = etree.HTML(driver.page_source)
+        loc_dom = html.fromstring(driver.page_source, "lxml")
         poi = loc_dom.xpath('//script[contains(text(), "address")]/text()')[0]
         poi = json.loads(poi)
         location_name = "".join(loc_dom.xpath("//title/text()"))
@@ -119,7 +208,6 @@ def fetch_data():
         country_code = "US"
         if "store/the-golf-mart-nm-87111/ABQ" in page_url:
             country_code = "MX"
-
         item = SgRecord(
             locator_domain=domain,
             page_url=page_url,
@@ -129,7 +217,7 @@ def fetch_data():
             state=poi["address"]["addressRegion"],
             zip_postal=poi["address"]["postalCode"],
             country_code=country_code,
-            store_number=poi["@id"],
+            store_number=MISSING,
             phone=poi["telephone"],
             location_type=poi["@type"][0],
             latitude=poi["geo"]["latitude"],
@@ -138,6 +226,11 @@ def fetch_data():
         )
 
         yield item
+    page_url_mesa = (
+        "https://www.worldwidegolfshops.com/store/vans-golf-shops-az-85206/APA"
+    )
+    if page_url_mesa:
+        yield from get_data_for_mesa(page_url_mesa)
 
 
 def scrape():

@@ -64,12 +64,14 @@ def fetch_data():
         page_url = row["url"]
         info = pull_content(page_url)
         location_name = row["name"]
-        street_address = row["address"]["streetAddress"]
+        street_address = row["address"]["streetAddress"].replace(
+            ", Donaldson Dining Hall", ""
+        )
         city = row["address"]["addressLocality"]
         state = row["address"]["addressRegion"]
         zip_postal = row["address"]["postalCode"]
         country_code = "US"
-        phone = row["telephone"]
+        phone = MISSING if not row["telephone"] else row["telephone"]
         store_number = MISSING
         location_type = row["@type"]
         latlong = info.find("div", {"class": "gmaps"})
@@ -93,6 +95,9 @@ def fetch_data():
             .replace(",,", ",")
             .strip()
         )
+        if "OPENING DECEMBER" in hours_of_operation:
+            location_type = "COMING_SOON"
+            hours_of_operation = "COMING_SOON"
         log.info("Append {} => {}".format(location_name, street_address))
         yield SgRecord(
             locator_domain=DOMAIN,

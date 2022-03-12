@@ -39,9 +39,11 @@ def get_address(line):
     }
 
     a = usaddress.tag(line, tag_mapping=tag)[0]
-    street_address = f"{a.get('address1')} {a.get('address2') or ''}".replace(
-        "None", ""
-    ).strip()
+    adr1 = a.get("address1") or ""
+    adr2 = a.get("address2") or ""
+    if "," in adr2:
+        adr2 = adr2.split(",")[0].strip()
+    street_address = f"{adr1} {adr2}".strip()
     city = a.get("city")
     state = a.get("state")
     postal = a.get("postal")

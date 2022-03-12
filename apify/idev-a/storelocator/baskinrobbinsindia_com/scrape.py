@@ -4,6 +4,7 @@ from sgrequests import SgRequests
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 import json
+from sgpostal.sgpostal import parse_address_intl
 
 _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
@@ -16,7 +17,7 @@ json_url = "https://baskinrobbinsindia.com/getcat/getStoresbycityid/{}"
 
 
 def fetch_data():
-    with SgRequests() as session:
+    with SgRequests(verify_ssl=False) as session:
         locations = json.loads(
             session.get(base_url, headers=_headers)
             .text.split("var saarcCountrys =")[1]
@@ -48,12 +49,19 @@ def fetch_data():
                     _lat = latitude.split(".")
                     latitude = ".".join(_lat[:2])
                     longitude = ".".join(_lat[2:])
+
+                raw_address = f'{_["address"]}, {_["city_name"]}, {_["state_name"]}, {_["country_name"]}'
+                addr = parse_address_intl(raw_address)
+                street_address = addr.street_address_1
+                if addr.street_address_2:
+                    street_address += " " + addr.street_address_2
                 yield SgRecord(
                     store_number=_["store_id"],
                     location_name=_["name"],
-                    street_address=_["address"],
+                    street_address=street_address,
                     city=_["city_name"],
                     state=_["state_name"],
+                    zip_postal=addr.postcode,
                     country_code=_["country_name"],
                     phone=_["phone"],
                     locator_domain=locator_domain,

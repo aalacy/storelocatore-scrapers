@@ -89,13 +89,20 @@ def fetch_data(sgw: SgWriter):
             continue
 
         for loc in loclist:
-            title = ""
+
+            title = "<MISSING>"
             street = loc.h5.text
             raw_data = list(loc.p.stripped_strings)
             city_line = raw_data[0].strip().split(",")
             city = city_line[0].strip()
             state = city_line[-1].strip().split()[0].strip()
             pcode = city_line[-1].strip().split()[1].strip().replace("v", "")
+            if len(loc.findAll("h2")) < 2:
+                temp = loc.find(
+                    "i", {"class": "icon icon-saving-bank-fill text-primary"}
+                )
+                if not temp:
+                    continue
             try:
                 phone = raw_data[1].split("(")[0]
             except:
@@ -116,9 +123,9 @@ def fetch_data(sgw: SgWriter):
                     state=state,
                     zip_postal=pcode,
                     country_code="US",
-                    store_number="",
+                    store_number="<MISSING>",
                     phone=phone,
-                    location_type="Branch",
+                    location_type="<MISSING>",
                     latitude=lat,
                     longitude=longt,
                     hours_of_operation=hours,

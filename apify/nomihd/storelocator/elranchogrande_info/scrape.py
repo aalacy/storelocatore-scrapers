@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
-from sgrequests import SgRequests
+from sgrequests import SgRequests, SgRequestError
 from sglogging import sglog
 import lxml.html
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import json
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "elranchogrande.info"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -29,53 +31,86 @@ def fetch_data():
     search_url = "https://elranchogrande.info/online-order/"
     stores_req = session.get(search_url, headers=headers)
     stores_sel = lxml.html.fromstring(stores_req.text)
-    stores = stores_sel.xpath('//a[contains(@href,"livewireorders.com")]/@href')
-    for store_url in stores:
-        page_url = store_url
+    stores = stores_sel.xpath(
+        '//div[@class="fusion-column-wrapper fusion-flex-justify-content-flex-start fusion-content-layout-column"][.//a[contains(@href,"livewireorders.com")]]'
+    )
+    for store in stores:
+        page_url = "".join(
+            store.xpath('.//a[contains(@href,"livewireorders.com")]/@href')
+        ).strip()
         location_type = "<MISSING>"
         locator_domain = website
         log.info(page_url)
         store_req = session.get(page_url, headers=headers)
-        restaurantUID = (
-            store_req.text.split("restaurantUID = '")[1].strip().split("'")[0].strip()
-        )
-        companyUID = (
-            store_req.text.split("companyUID = '")[1].strip().split("'")[0].strip()
-        )
+        if isinstance(store_req, SgRequestError):
+            page_url = "https://elranchogrande.info/online-order/"
+            location_name = "".join(store.xpath(".//h1/text()")).strip()
+            raw_address = store.xpath(
+                './/div[contains(@class,"fusion-text fusion-text-")]/p/span/text()'
+            )
+            phone = "".join(
+                store.xpath(
+                    './/div[contains(@class,"fusion-text fusion-text-")]/p/a/span/text()'
+                )
+            ).strip()
 
-        data = {
-            "#": None,
-            "company_uid": companyUID,
-            "restaurant_uid": restaurantUID,
-            "facebook": "true",
-            "payload": {
-                "language_code": "en",
-                "init": 1,
-                "source": "facebook",
-                "reference": None,
-            },
-        }
-        store_req = session.post(
-            "https://www.livewireorders.com/api/cart/init", json=data, headers=headers
-        )
+            street_address = ", ".join(raw_address[:-1]).strip()
+            city = raw_address[-1].strip().split(",")[0].strip()
+            state = raw_address[-1].strip().split(",")[-1].strip().split(" ")[0].strip()
+            zip = raw_address[-1].strip().split(",")[-1].strip().split(" ")[-1].strip()
+            country_code = "US"
 
-        json_data = json.loads(store_req.text)["restaurant"]
+            hours_of_operation = "<MISSING>"
+            store_number = "<MISSING>"
 
-        location_name = json_data["name"]
+            latitude = "<MISSING>"
+            longitude = "<MISSING>"
+        else:
+            restaurantUID = (
+                store_req.text.split("restaurantUID = '")[1]
+                .strip()
+                .split("'")[0]
+                .strip()
+            )
+            companyUID = (
+                store_req.text.split("companyUID = '")[1].strip().split("'")[0].strip()
+            )
 
-        street_address = json_data["terms"]["address"]
-        city = json_data["terms"]["city"]
-        state = json_data["terms"]["state_code"]
-        zip = json_data["terms"]["zip"]
-        country_code = json_data["terms"]["country_code"]
+            data = {
+                "#": None,
+                "company_uid": companyUID,
+                "restaurant_uid": restaurantUID,
+                "facebook": "true",
+                "payload": {
+                    "language_code": "en",
+                    "init": 1,
+                    "source": "facebook",
+                    "reference": None,
+                },
+            }
+            store_req = session.post(
+                "https://www.livewireorders.com/api/cart/init",
+                json=data,
+                headers=headers,
+            )
 
-        phone = json_data["terms"]["phone"].replace("+1 ", "").strip()
+            json_data = json.loads(store_req.text)["restaurant"]
 
-        hours_of_operation = "<INACCESSIBLE>"
-        store_number = "<MISSING>"
+            location_name = json_data["name"]
 
-        latitude = json_data["latitude"]
-        longitude = json_data["longitude"]
+            street_address = json_data["terms"]["address"]
+            city = json_data["terms"]["city"]
+            state = json_data["terms"]["state_code"]
+            zip = json_data["terms"]["zip"]
+            country_code = json_data["terms"]["country_code"]
+
+            phone = json_data["terms"]["phone"].replace("+1 ", "").strip()
+
+            hours_of_operation = "<INACCESSIBLE>"
+            store_number = "<MISSING>"
+
+            latitude = json_data["latitude"]
+            longitude = json_data["longitude"]
 
         yield SgRecord(
             locator_domain=locator_domain,
@@ -98,7 +133,18 @@ def fetch_data():
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.CITY,
+                    SgRecord.Headers.STATE,
+                    SgRecord.Headers.ZIP,
+                }
+            )
+        )
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
