@@ -172,7 +172,9 @@ class CleanRecord:
                 cleanRecord["street_address2"] = ""
         else:
             try:
-                badRecord["properties"]["addressLine2"] = badRecord["properties"]["addressLine2"]
+                badRecord["properties"]["addressLine2"] = badRecord["properties"][
+                    "addressLine2"
+                ]
                 cleanRecord["street_address2"] = badRecord["properties"]["addressLine2"]
             except Exception:
                 cleanRecord["street_address2"] = ""
@@ -610,6 +612,7 @@ class CrawlMethod(CleanRecord):
             logzilla.info(
                 f"{[*Point]} | found: {found} | total: {total} | progress: {progress}"
             )
+
     def USA(self):
         def getAllData(headers, country, locale):
             if self._config.get("apiCountry"):
@@ -644,7 +647,7 @@ class CrawlMethod(CleanRecord):
         for data in results[str(self._config.get("pathToResults"))]:
             record = record_cleaner(data, self._config, country, locale)
             yield record
-            
+
     def USA2(self):
         def getAllData(headers, country, locale, Point):
             if self._config.get("apiCountry"):
@@ -703,7 +706,6 @@ class CrawlMethod(CleanRecord):
                 logzilla.info(
                     f"{[*Point]} | found: {found} | total: {total} | progress: {progress}"
                 )
-       
 
     def QuickDedupe(self):
         record_cleaner = CleanRecord.DEDUPE
@@ -771,7 +773,7 @@ class getData(CrawlMethod):
         ]
         self._search = search(
             country_codes=Countries,
-            expected_search_radius_miles = self._config.getint("sgzipmax_radius_miles")  # type: ignore
+            expected_search_radius_miles=self._config.getint("sgzipmax_radius_miles")  # type: ignore
             if self._config.getint("sgzipmax_radius_miles")  # type: ignore
             else None,
             max_search_results=self._config.getint("sgzipmax_search_results")  # type: ignore
@@ -885,7 +887,23 @@ def checkFail(countries, fromConfig):
     for section in fromConfig:
         to_check.add(section[0])
     for Country in countries:
-        if any(i in Country["text"] for i in ["Русский","қазақ","Detsch","عربي","Italiano","Русский","беларуская","ქართული","Ελληνικά","Français","Español","Azərbaycan"]):
+        if any(
+            i in Country["text"]
+            for i in [
+                "Русский",
+                "қазақ",
+                "Detsch",
+                "عربي",
+                "Italiano",
+                "Русский",
+                "беларуская",
+                "ქართული",
+                "Ελληνικά",
+                "Français",
+                "Español",
+                "Azərbaycan",
+            ]
+        ):
             continue
         if Country["text"] not in to_check:
             logzilla.error(
@@ -998,7 +1016,7 @@ def scrape():
         page_url=sp.MappingField(
             mapping=["page_url"],
             is_required=False,
-            value_transform = lambda x : x.replace("None","<MISSING>")
+            value_transform=lambda x: x.replace("None", "<MISSING>"),
         ),
         location_name=sp.MappingField(
             mapping=["location_name"],
@@ -1048,7 +1066,7 @@ def scrape():
         data_fetcher=fetch_data,
         field_definitions=field_defs,
         log_stats_interval=1000,
-        duplicate_streak_failure_factor = -1,
+        duplicate_streak_failure_factor=-1,
     )
 
     pipeline.run()
