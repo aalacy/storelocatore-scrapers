@@ -6,7 +6,9 @@ from sgscrape import simple_scraper_pipeline as sp
 
 
 def get_data():
-    search = DynamicZipSearch(country_codes=[SearchableCountries.BRITAIN], granularity=Grain_2())
+    search = DynamicZipSearch(
+        country_codes=[SearchableCountries.BRITAIN], granularity=Grain_2()
+    )
 
     session = SgRequests()
 
