@@ -6,10 +6,9 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgpostal import sgpostal as parser
-
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+from sgselenium import SgChrome
 from webdriver_manager.chrome import ChromeDriverManager
+
 from lxml import html
 import time
 import ssl
@@ -174,26 +173,22 @@ def scrape():
     # Google MAP API calls by sites internal calls being
     # denied to be loaded that lead to use selenium
     # instead of sgselenium.
-    options = Options()
-    options.add_argument("--headless")
-    options.add_argument("--no-sandbox")
-    options.add_argument("--disable-dev-shm-usage")
-    driver = webdriver.Chrome(
-        executable_path=ChromeDriverManager().install(), options=options
-    )
-    search_url = "https://nobakedcookiedough.com/pages/visit-us"
-    logger.info("Started")
-    count = 0
-    with SgWriter(
-        deduper=SgRecordDeduper(SgRecordID({SgRecord.Headers.RAW_ADDRESS}))
-    ) as writer:
-        results = fetch_data(search_url, driver)
-        for rec in results:
-            writer.write_row(rec)
-            count = count + 1
-    driver.quit()
-    logger.info(f"No of records being processed: {count}")
-    logger.info("Finished")
+    with SgChrome(
+        executable_path=ChromeDriverManager().install(), is_headless=True
+    ) as driver:
+        search_url = "https://nobakedcookiedough.com/pages/visit-us"
+        logger.info("Started")
+        count = 0
+        with SgWriter(
+            deduper=SgRecordDeduper(SgRecordID({SgRecord.Headers.RAW_ADDRESS}))
+        ) as writer:
+            results = fetch_data(search_url, driver)
+            for rec in results:
+                writer.write_row(rec)
+                count = count + 1
+        driver.quit()
+        logger.info(f"No of records being processed: {count}")
+        logger.info("Finished")
 
 
 if __name__ == "__main__":
