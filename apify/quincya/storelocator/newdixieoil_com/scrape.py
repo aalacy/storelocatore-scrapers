@@ -7,10 +7,6 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger("newdixieoil_com")
-
 
 def fetch_data(sgw: SgWriter):
     base_link = "https://newdixieoil.com/new-dixie-mart-locations.html"
