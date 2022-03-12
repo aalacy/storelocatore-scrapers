@@ -153,6 +153,18 @@ def determine_hours(k, brand, which):
     return hours
 
 
+def remove_chars_from_zc(pc):
+    zc = ""
+    zipcodes = []
+    pc = " ".join(pc.split())
+    isalpha_ = [i.isalpha() for i in pc]
+    if True in isalpha_:
+        zc = pc.split(" ")[0]
+    else:
+        zc = pc
+    return zc
+
+
 def fix_comma(x):
     h = []
     try:
@@ -294,6 +306,9 @@ def fetch_records(idx, store_url_tuple, headers_apikey, sgw: SgWriter):
 
             hours_of_operation = determine_hours(d, "SMT", "SALES")
             raw_address = MISSING
+
+            # Remove unwanted characters from Zip Codes
+            zipcode = remove_chars_from_zc(zipcode)
 
             item = SgRecord(
                 locator_domain="mbusa.com",
