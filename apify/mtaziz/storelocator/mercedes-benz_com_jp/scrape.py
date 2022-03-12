@@ -155,7 +155,6 @@ def determine_hours(k, brand, which):
 
 def remove_chars_from_zc(pc):
     zc = ""
-    zipcodes = []
     pc = " ".join(pc.split())
     isalpha_ = [i.isalpha() for i in pc]
     if True in isalpha_:
