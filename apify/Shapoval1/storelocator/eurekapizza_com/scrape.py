@@ -47,6 +47,12 @@ def fetch_data(sgw: SgWriter):
         country_code = "US"
         city = " ".join(ad.split()[:-2]).strip()
         phone = "".join(d.xpath('.//p[contains(text(), "(")]//text()'))
+        latitude, longitude = "<MISSING>", "<MISSING>"
+        if page_url != "https://www.eurekapizza.com/order-now":
+            r = session.get(page_url, headers=headers)
+            tree = html.fromstring(r.text)
+            latitude = "".join(tree.xpath("//div/@data-lat"))
+            longitude = "".join(tree.xpath("//div/@data-lng"))
 
         row = SgRecord(
             locator_domain=locator_domain,
@@ -60,8 +66,8 @@ def fetch_data(sgw: SgWriter):
             store_number=SgRecord.MISSING,
             phone=phone,
             location_type=SgRecord.MISSING,
-            latitude=SgRecord.MISSING,
-            longitude=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
             hours_of_operation=SgRecord.MISSING,
             raw_address=f"{street_address} {ad}",
         )
