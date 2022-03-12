@@ -25,12 +25,72 @@ def fetch_data(sgw: SgWriter):
     for store in stores:
         location_name = store["name"]
         raw_address = (store["address1"] + " " + store["address2"]).strip()
-        street_address = raw_address
+        street_address = (
+            store["address1"]
+            .replace("   ", " ")
+            .replace("Crystal Run Mall,", "")
+            .replace("Plaza Carolina Mall,", "")
+            .replace("(", ",")
+            .replace(")", "")
+            .replace(" ,", ",")
+        )
 
         if re.search(r"\d", street_address):
             digit = str(re.search(r"\d", street_address))
             start = int(digit.split("(")[1].split(",")[0])
             street_address = street_address[start:]
+            if street_address.isdigit():
+                street_address = raw_address
+        if len(street_address) < 5:
+            street_address = raw_address
+
+        words = [
+            "center",
+            "plaza",
+            "shopping",
+            "mall",
+            "crossing",
+            "square",
+            "centre",
+            "commons",
+        ]
+        for word in words:
+            if word in street_address.lower() and "," in street_address:
+                if street_address.lower().rfind(word) > street_address.lower().find(
+                    ","
+                ):
+                    street_address = street_address.split(",")[0]
+
+        if " - " in street_address:
+            street_address = street_address.split(" - ")[0]
+
+        street_address = (
+            street_address.split(", Unversity")[0]
+            .split(", Village")[0]
+            .split(", Village")[0]
+            .split(", Cerritos")[0]
+            .split(", Market")[0]
+            .split(", Shopping")[0]
+            .split(", Bouquet")[0]
+            .split(", Santa")[0]
+            .split(", Wesfield ")[0]
+            .split(", Shadow")[0]
+            .split(", Regency")[0]
+            .split(", North ")[0]
+            .split(", Dadeland")[0]
+            .split(", Melbourne")[0]
+            .split("Wrentham")[0]
+            .split(", Harlem")[0]
+            .split(", Glengarry")[0]
+            .split(", Crossings")[0]
+            .split(", Fashion ")[0]
+            .split(", The")[0]
+            .split("Strabane")[0]
+            .split(", Katy")[0]
+            .split(", Fairlane")[0]
+            .split(", Eastgate")[0]
+            .replace("Shore Premium Outlets", "Shore")
+        ).strip()
 
         city = store["city"]
         state = store["stateCode"]
