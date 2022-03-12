@@ -89,7 +89,7 @@ if __name__ == "__main__":
     logger = sglog.SgLogSetup().get_logger(logger_name="bp.com")
     CrawlStateSingleton.get_instance().save(override=True)
     headers = {
-        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:93.0) Gecko/20100101 Firefox/93.0",
+        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.51 Safari/537.36",
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
     }
     locator_domain = "https://www.bp.com/"
