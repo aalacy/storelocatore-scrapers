@@ -178,9 +178,6 @@ class CleanRecord:
                 cleanRecord["street_address2"] = badRecord["properties"]["addressLine2"]
             except Exception:
                 cleanRecord["street_address2"] = ""
-                logzilla.error(
-                    f"(false alarm in method USA2):\n Couldn't figure out street address for record:\n\n{badRecord}"
-                )
         cleanRecord["street_address3"] = ""
         cleanRecord["street_address4"] = ""
         cleanRecord["city"] = badRecord["properties"]["addressLine3"]
