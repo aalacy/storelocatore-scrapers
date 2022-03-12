@@ -95,6 +95,8 @@ def fetch_data():
             page_url = row["url"]
         else:
             page_url = BASE_URL + row["url"]
+        if "news" in page_url:
+            page_url = page_url.replace("news", "store-locations")
         location_name = row["name"]
         raw_address = row["address"].replace("\n", "")
         street_address, city, state, zip_postal = getAddress(raw_address)

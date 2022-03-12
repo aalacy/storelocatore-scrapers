@@ -1,9 +1,11 @@
 from bs4 import BeautifulSoup
-import csv
 import re
 import json
-
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
 headers = {
@@ -11,51 +13,17 @@ headers = {
 }
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
 def fetch_data():
-    data = []
+
     pattern = re.compile(r"\s\s+")
     url = "https://www.judesbarbershop.com/location/"
-    r = session.get(url, headers=headers, verify=False)
+    r = session.get(url, headers=headers)
     soup = BeautifulSoup(r.text, "html.parser")
-    divlist = (
-        soup.find("ul", {"id": "nv-primary-navigation-main"})
-        .findAll("ul", {"class": "sub-menu"})[1]
-        .findAll("li", {"class": "menu-item"})
-    )
-    p = 0
+    divlist = soup.find("nav").select_one('li:contains("Locations")').findAll("li")
+
     for div in divlist:
         link = div.find("a")["href"]
-        r = session.get(link, headers=headers, verify=False)
+        r = session.get(link, headers=headers)
         try:
             loclist = r.text.split('"@context": "https://schema.org",', 1)[1].split(
                 "</script>", 1
@@ -111,32 +79,33 @@ def fetch_data():
                     + " PM  "
                 )
                 break
-        data.append(
-            [
-                "https://www.judesbarbershop.com",
-                link,
-                title,
-                street,
-                city,
-                state,
-                pcode,
-                "US",
-                "<MISSING>",
-                phone,
-                "<MISSING>",
-                lat,
-                longt,
-                hours,
-            ]
+        yield SgRecord(
+            locator_domain="https://www.judesbarbershop.com",
+            page_url=link,
+            location_name=title,
+            street_address=street.strip(),
+            city=city.strip(),
+            state=state.strip(),
+            zip_postal=pcode.strip(),
+            country_code="US",
+            store_number=SgRecord.MISSING,
+            phone=phone.strip(),
+            location_type=SgRecord.MISSING,
+            latitude=str(lat),
+            longitude=str(longt),
+            hours_of_operation=hours,
         )
-
-        p += 1
-    return data
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()

@@ -40,7 +40,10 @@ def fetch_data(sgw: SgWriter):
             location_type = "<MISSING>"
             phone = store["displayPhone"]
             hours_of_operation = " ".join(store["schemaHours"])
-            link = "https://www.lovealondras.com/" + store["slug"]
+            link = (
+                "https://www.lovealondras.com/"
+                + store["slug"].replace("alondras-", "").strip()
+            )
             store_number = store["id"]
             latitude = store["lat"]
             longitude = store["lng"]
