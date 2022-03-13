@@ -49,7 +49,6 @@ def fetch_data():
                     + hour["closes"]
                 )
             location_name = loc["name"].replace("G\\u0026G", "G&G")
-            print(location_name)
             store_number = loc["id"]
             phone = loc["phone_number"]
             address = " ".join(loc["addressLines"])
