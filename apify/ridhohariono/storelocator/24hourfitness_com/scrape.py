@@ -59,7 +59,6 @@ def fetch_data():
         zip_postal = row["address"]["zip"]
         phone = row["phoneNumber"]
         hours_of_operation = get_hoo(page_url)
-        print(hours_of_operation)
         location_type = row["type"]
         country_code = "US"
         latitude = row["coordinate"]["latitude"]
