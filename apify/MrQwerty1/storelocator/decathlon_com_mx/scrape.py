@@ -100,9 +100,12 @@ def fetch_data(sgw: SgWriter):
             page_url = j.get("link") or api
             location_name = j.get("title")
             raw_address = j.get("address") or ""
+            raw_address = raw_address.replace("&#039", "'").replace(";", "")
             street_address, city, state, postal = get_international(raw_address)
             if len(street_address) <= 7:
                 street_address = raw_address.split(", ")[0]
+            if not city:
+                city = raw_address.split(",")[-2].strip()
             store_number = j.get("store_number")
             phone = j.get("phone")
             latitude = j.get("lat")

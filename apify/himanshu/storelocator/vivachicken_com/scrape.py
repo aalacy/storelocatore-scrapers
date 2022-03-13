@@ -23,11 +23,17 @@ def fetch_data():
         url = "https://www.vivachicken.com/locations"
         r = session.get(url, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
-        loclist = soup.find("ul", {"class": "dmGeoMLocList"}).findAll("li")
+        loclist = soup.find("ul", {"class": "listWidgetContainer"}).findAll(
+            "li", {"class": "listItem"}
+        )
         for loc in loclist:
-            location_name = loc.find("span", {"class": "dmGeoMLocItemTitle"}).text
-            address = loc.find("span", {"class": "dmGeoMLocItemDetails"}).text
-            address = address.replace(",", " ").replace("United States", "")
+            location_name = loc.find("span", {"class": "itemName"}).text
+            address = (
+                loc.find("span", {"class": "itemText"})
+                .get_text(separator="|", strip=True)
+                .replace("|", " ")
+            )
+            address = address.replace(",", " ")
             address = usaddress.parse(address)
             i = 0
             street_address = ""
@@ -53,7 +59,6 @@ def fetch_data():
                 if temp[1].find("ZipCode") != -1:
                     zip_postal = zip_postal + " " + temp[0]
                 i += 1
-
             log.info(location_name)
             country_code = "US"
             yield SgRecord(
