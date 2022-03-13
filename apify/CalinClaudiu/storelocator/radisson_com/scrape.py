@@ -11,6 +11,7 @@ EXPECTED_TOTAL = 0
 logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
 
 
+@retry(wait=wait_random(min=1, max=3), stop=(stop_after_attempt(5)))
 def get_main(url, headers, session):
     response = session.get(url, headers=headers)
     return response.json()
@@ -108,7 +109,6 @@ def fetch_data(index: int, url: str, headers, session) -> dict:
     return data
 
 
-@retry
 def get_brand2(brand_code, brand_name, url, url2, session):
     headers = {}
     headers["accept"] = "application/json, text/plain, */*"
@@ -145,7 +145,6 @@ def get_brand2(brand_code, brand_name, url, url2, session):
     return results
 
 
-@retry
 def get_brand(brand_code, brand_name, url, url2, session):
 
     headers = {}
