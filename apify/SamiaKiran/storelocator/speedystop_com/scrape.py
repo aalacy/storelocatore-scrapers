@@ -69,7 +69,7 @@ def fetch_data():
             longitude = loc["longitude"]
             yield SgRecord(
                 locator_domain=DOMAIN,
-                page_url="https://www.rplumber.com/locations",
+                page_url="https://speedystop.com/pages/locations",
                 location_name=location_name,
                 street_address=street_address.strip(),
                 city=city.strip(),
