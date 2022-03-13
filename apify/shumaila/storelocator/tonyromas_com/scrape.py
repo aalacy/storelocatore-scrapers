@@ -63,10 +63,13 @@ def fetch_data():
                 )
             except:
                 lat = longt = "<MISSING>"
-            if len(address) < 5:
-                address = (
-                    r.text.split('"Tony Roma')[3].split(", ", 1)[1].split('"', 1)[0]
-                )
+            try:
+                if len(address) < 5:
+                    address = (
+                        r.text.split('"Tony Roma')[3].split(", ", 1)[1].split('"', 1)[0]
+                    )
+            except:
+                continue
             raw_address = address
             pa = parse_address_intl(raw_address)
 
@@ -100,6 +103,7 @@ def fetch_data():
                 latitude=str(lat),
                 longitude=str(longt),
                 hours_of_operation=hours,
+                raw_address=raw_address,
             )
 
 
