@@ -178,9 +178,6 @@ class CleanRecord:
                 cleanRecord["street_address2"] = badRecord["properties"]["addressLine2"]
             except Exception:
                 cleanRecord["street_address2"] = ""
-                logzilla.error(
-                    f"(false alarm in method USA2):\n Couldn't figure out street address for record:\n\n{badRecord}"
-                )
         cleanRecord["street_address3"] = ""
         cleanRecord["street_address4"] = ""
         cleanRecord["city"] = badRecord["properties"]["addressLine3"]
@@ -818,12 +815,15 @@ class getData(CrawlMethod):
 
     def Done(self):
         if self._errors:
-            func = getattr(CrawlMethod, self._config.get("ErrorMethod"))
-            self._search = DataSource.ErrorRetry(self._errors)
-            attempted = 0
-            while attempted < self._errorRetries:
-                attempted += 1
-                yield func(self)
+            try:
+                func = getattr(CrawlMethod, self._config.get("ErrorMethod"))
+                self._search = DataSource.ErrorRetry(self._errors)
+                attempted = 0
+                while attempted < self._errorRetries:
+                    attempted += 1
+                    yield func(self)
+            except Exception:
+                pass
         getData.Close(self)
 
 

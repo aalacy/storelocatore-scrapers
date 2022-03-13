@@ -36,15 +36,20 @@ def fetch_data(sgw: SgWriter):
             location_type = "GNC"
             phone = j.get("phone")
             days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+            hours_of_operation = "<MISSING>"
+            hours = j.get("openings")
             tmp = []
-            for d in days:
-                day = d
-                times = j.get("openings").get(f"{d}")
-                line = f"{day} {times}"
-                tmp.append(line)
-            hours_of_operation = (
-                "; ".join(tmp).replace("Sat  - ; Sun  -", "").strip() or "<MISSING>"
-            )
+            if hours:
+                for d in days:
+                    day = d
+                    times = j.get("openings").get(f"{d}")
+                    line = f"{day} {times}"
+                    tmp.append(line)
+                hours_of_operation = (
+                    "; ".join(tmp).replace("Sat  - ; Sun  -", "").strip() or "<MISSING>"
+                )
+            if str(location_name).find("Temporarily closed") != -1:
+                hours_of_operation = "Temporarily closed"
 
             row = SgRecord(
                 locator_domain=locator_domain,
