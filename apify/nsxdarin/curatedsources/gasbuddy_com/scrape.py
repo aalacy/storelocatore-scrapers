@@ -97,9 +97,6 @@ def get_data():
             headers = response_stuff[1]
             response = response_stuff[2]
 
-        if x == 1000:
-            break
-
         if len(str(search_code)) == 4:
             search_code = "0" + str(search_code)
 
