@@ -15,7 +15,7 @@ headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
 }
 
-DOMAIN = "https://credobeauty.com/"
+DOMAIN = "https://credobeauty.com"
 MISSING = SgRecord.MISSING
 
 
@@ -26,21 +26,13 @@ def fetch_data():
         soup = BeautifulSoup(r.text, "html.parser")
         loclist = soup.findAll("div", {"class": "store-article"})
         for loc in loclist[:-1]:
+            page_url = DOMAIN + loc.find("a")["href"]
+            log.info(page_url)
             location_name = loc.find("h2", {"class": "store-name"}).text
-            log.info(location_name)
             phone = loc.find("a", {"class": "tel-store"}).text
             temp = loc.find("div", {"class": "address-store"})
-            try:
-                coords = temp.find("a")["href"].split("!3d")[1].split("!4d")
-                latitude = coords[0]
-                longitude = coords[1]
-            except:
-                latitude = MISSING
-                longitude = MISSING
-            if "!4m" in longitude:
-                longitude = longitude.split("!4m")[0]
             address = temp.get_text(separator="|", strip=True).replace("|", " ")
-            address = address.replace(",", " ")
+            address = address.replace(",", " ").replace("The Shops At Legacy West", "")
             address = usaddress.parse(address)
             i = 0
             street_address = ""
@@ -66,11 +58,26 @@ def fetch_data():
                 if temp[1].find("ZipCode") != -1:
                     zip_postal = zip_postal + " " + temp[0]
                 i += 1
-
+            r = session.get(page_url, headers=headers)
+            soup = BeautifulSoup(r.text, "html.parser")
+            hours_of_operation = (
+                soup.find("div", {"class": "store-hours"})
+                .get_text(separator="|", strip=True)
+                .replace("|", " ")
+                .replace("Store Hours", "")
+            )
+            coords = (
+                r.text.split("var LatLng =")[1]
+                .split(".split('@')[1].split(',');')")[0]
+                .split("@")[1]
+                .split(",")
+            )
+            latitude = coords[0]
+            longitude = coords[1]
             country_code = "US"
             yield SgRecord(
                 locator_domain=DOMAIN,
-                page_url=url,
+                page_url=page_url,
                 location_name=location_name,
                 street_address=street_address.strip(),
                 city=city.strip(),
@@ -82,7 +89,7 @@ def fetch_data():
                 location_type=MISSING,
                 latitude=latitude,
                 longitude=longitude,
-                hours_of_operation=MISSING,
+                hours_of_operation=hours_of_operation,
             )
 
 

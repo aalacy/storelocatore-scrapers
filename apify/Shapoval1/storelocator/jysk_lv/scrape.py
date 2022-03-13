@@ -46,6 +46,16 @@ def fetch_data(sgw: SgWriter):
                 0
             ].strip()
         hours_of_operation = hours_of_operation.replace("Darba laiks", "").strip()
+        if (
+            hours_of_operation.find("Galvenā noliktava") != -1
+            and hours_of_operation.find("Birojs") != -1
+        ):
+            hours_of_operation = (
+                hours_of_operation.split("Galvenā noliktava")[1]
+                .split("Birojs")[0]
+                .strip()
+            )
+
         ad = f"{street_address} {city}, {state} {postal}"
 
         row = SgRecord(

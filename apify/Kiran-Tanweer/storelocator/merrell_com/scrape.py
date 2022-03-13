@@ -3,6 +3,8 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
+
 
 session = SgRequests()
 headers = {
@@ -12,12 +14,14 @@ headers = {
 
 def fetch_data():
 
-    urllist = [
-        "https://merrell.locally.com/stores/conversion_data?has_data=true&company_id=62&store_mode=&style=&color=&upc=&category=&inline=1&show_links_in_list=&parent_domain=&map_center_lat=39.27451781299348&map_center_lng=-76.81424000000064&map_distance_diag=2894.9778656173057&sort_by=proximity&no_variants=0&only_retailer_id=&dealers_company_id=&only_store_id=false&uses_alt_coords=false&q=false&zoom_level=4",
-        "https://merrell.locally.com/stores/conversion_data?has_data=true&company_id=62&store_mode=&style=&color=&upc=&category=&inline=1&show_links_in_list=&parent_domain=&map_center_lat=60.946062671857504&map_center_lng=-149.89490000000052&map_distance_diag=1823.6235546997798&sort_by=proximity&no_variants=0&only_retailer_id=&dealers_company_id=&only_store_id=false&uses_alt_coords=false&q=anchorage&zoom_level=4&forced_coords=1",
-    ]
-    for url in urllist:
-        data_list = session.get(url, headers=headers).json()["markers"]
+    start_url = "https://merrell.locally.com/stores/conversion_data?has_data=true&company_id=62&store_mode=&style=&color=&upc=&category=&inline=1&show_links_in_list=&parent_domain=&map_center_lat={}&map_center_lng={}&map_distance_diag=500&sort_by=proximity&no_variants=0&only_retailer_id=&dealers_company_id=&only_store_id=false&uses_alt_coords=false&q=false&zoom_level=4"
+    all_coords = DynamicGeoSearch(
+        country_codes=SearchableCountries.ALL, expected_search_radius_miles=500
+    )
+    for lat, lng in all_coords:
+        data_list = session.get(start_url.format(lat, lng), headers=headers).json()[
+            "markers"
+        ]
         weeklist = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]
         for store in data_list:
             ccode = store["country"]
@@ -36,23 +40,26 @@ def fetch_data():
             phone = tel.lstrip("+1")
             title = store["name"]
             hours = ""
-            if store["mon_time_open"] > 0:
-                for day in weeklist:
-                    closestr = str(store[day + "_time_close"])
-                    openstr = str(store[day + "_time_open"])
-                    if len(openstr) == 3:
-                        openstr = "0" + openstr
-                    if len(closestr) == 3:
-                        closestr = "0" + closestr
-                    if int(closestr[0:2]) < 12:
-                        closestr = closestr[0:2] + ":" + closestr[2:4] + " PM "
-                    else:
-                        check = int(closestr[0:2]) - 12
-                        closestr = str(check) + ":" + closestr[2:4] + " PM "
-                    openstr = openstr[0:2] + ":" + openstr[2:4] + " AM "
+            try:
+                if store["mon_time_open"] > 0:
+                    for day in weeklist:
+                        closestr = str(store[day + "_time_close"])
+                        openstr = str(store[day + "_time_open"])
+                        if len(openstr) == 3:
+                            openstr = "0" + openstr
+                        if len(closestr) == 3:
+                            closestr = "0" + closestr
+                        if int(closestr[0:2]) < 12:
+                            closestr = closestr[0:2] + ":" + closestr[2:4] + " PM "
+                        else:
+                            check = int(closestr[0:2]) - 12
+                            closestr = str(check) + ":" + closestr[2:4] + " PM "
+                        openstr = openstr[0:2] + ":" + openstr[2:4] + " AM "
 
-                    hours = hours + day + " " + openstr + closestr
-            else:
+                        hours = hours + day + " " + openstr + closestr
+                else:
+                    hours = "<MISSING>"
+            except:
                 hours = "<MISSING>"
             yield SgRecord(
                 locator_domain="https://www.merrell.com/",

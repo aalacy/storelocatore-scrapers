@@ -36,7 +36,10 @@ def fetch_data():
     with SgRequests(proxy_country="us") as session:
         for key in session.get(base_url, headers=_headers).json()["storeKeys"]:
             url = f"https://api.kfc.es/find-a-kfc/{key}"
-            locations = session.get(url, headers=_headers).json()["Value"]
+            try:
+                locations = session.get(url, headers=_headers).json()["Value"]
+            except:
+                locations = []
             logger.info(f"[{key}] {len(locations)} found")
             for store in locations:
                 _ = store["googleBusinessData"]

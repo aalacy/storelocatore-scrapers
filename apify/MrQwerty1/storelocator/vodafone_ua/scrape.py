@@ -1,4 +1,5 @@
 import json
+from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
@@ -7,16 +8,28 @@ from sgscrape.sgrecord_id import SgRecordID
 from concurrent import futures
 
 
+def get_token():
+    r = session.get("https://www.vodafone.ua/support/search-shop")
+    tree = html.fromstring(r.text)
+
+    return "".join(tree.xpath("//meta[@name='csrf-token']/@content"))
+
+
+def get_session():
+    r = session.get("https://www.vodafone.ua/")
+
+    return r.cookies.get("www_vodafone_ua_session")
+
+
 def get_data(_id, sgw: SgWriter):
     data = json.dumps({"city_id": _id})
-    try:
-        r = session.post(
-            "https://www.vodafone.ua/shops", data=data, headers=headers, cookies=cookies
-        )
-        jso = r.json()
-    except:
+    r = session.post(
+        "https://www.vodafone.ua/shops", data=data, headers=headers, cookies=cookies
+    )
+    if r.status_code == 500:
         return
 
+    jso = r.json()
     js = jso["data"]
     c = jso["city"]
     city = c.get("label")
@@ -62,13 +75,13 @@ def fetch_data(sgw: SgWriter):
 if __name__ == "__main__":
     locator_domain = "https://www.vodafone.ua/"
     session = SgRequests()
+
     headers = {
         "Content-Type": "application/json; charset=UTF-8",
-        "X-CSRF-TOKEN": "l9ADbj6Ye1ly3vIzerkcgBS8VsmL1gzUnNB88xMc",
+        "X-CSRF-TOKEN": get_token(),
     }
-    cookies = {
-        "www_vodafone_ua_session": "eyJpdiI6InU5MlRYY1hBRWJKbXd6VUQ2dTV6ekE9PSIsInZhbHVlIjoiWkJnZUwwOTZkdU1aUGlpS1BYUmhJSEsrc0ZUaU96ZUhnQkdGVUhNQjFEUmpKNk5aSUlYcW13ejJwalZTdjFZcENpWXArSVRNS21DVzYyc0JCZ0xkcGJNdlRIbFdnaG1LelV6WmZSb1hwMGdhaWh6M2ZCR0g2K3MrUjR1M2hpbUsiLCJtYWMiOiJjMWJmMDA5NjAxMmMxMzZiNTAxZDc2YTQ0YmJmNTEzNTM0YzYyNWNmM2RhMzA0MzRkYWZmNWQ5NzczODRmZmNkIn0%3D",
-    }
+    cookies = {"www_vodafone_ua_session": get_session()}
+
     with SgWriter(
         SgRecordDeduper(
             SgRecordID({SgRecord.Headers.STREET_ADDRESS, SgRecord.Headers.CITY})

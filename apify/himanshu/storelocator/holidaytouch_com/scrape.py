@@ -53,7 +53,7 @@ def fetch_data(sgw: SgWriter):
             hours = (
                 " ".join(
                     tree.xpath(
-                        '//h2[contains(text(), "Senior Apartments")]/following-sibling::div[1]/p/span/text()'
+                        '//div[.//h2[contains(text(), "Senior Apartments")]]/following-sibling::div[1]/p/span/text()'
                     )
                 )
                 .replace("\n", "")

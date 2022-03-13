@@ -47,14 +47,12 @@ def get_latlng(map_link):
 
 def fetch_data():
     # Your scraper here
-    search_url = "https://sleepsherpa.com/home-page/showrooms/"
+    search_url = "https://sleepsherpa.com/about/"
     search_res = session.get(search_url, headers=headers)
 
     search_sel = lxml.html.fromstring(search_res.text)
 
-    store_list = list((search_sel.xpath('//a[contains(@href,"showrooms/") ]/@href')))[
-        :-1
-    ]
+    store_list = search_sel.xpath('//a[contains(@href,".com/showroom/") ]/@href')
 
     for store in store_list:
 

@@ -24,7 +24,10 @@ def get_data(page_url, sgw: SgWriter):
     j = r.json()["profile"]
     a = j.get("address") or {}
 
-    location_name = f'{j.get("name")} {j.get("geomodifier") or ""}'.strip()
+    try:
+        location_name = j["c_heroSection"]["storeName"]
+    except:
+        location_name = j.get("name")
     street_address = f'{a.get("line1")} {a.get("line2") or ""}'.strip()
     city = a.get("city")
     state = a.get("region")
@@ -66,8 +69,8 @@ def get_data(page_url, sgw: SgWriter):
         zip_postal=postal,
         country_code=country_code,
         phone=phone,
-        latitude=str(latitude),
-        longitude=str(longitude),
+        latitude=latitude,
+        longitude=longitude,
         locator_domain=locator_domain,
         hours_of_operation=hours_of_operation,
     )
@@ -85,7 +88,7 @@ def fetch_data(sgw: SgWriter):
 
 
 if __name__ == "__main__":
-    locator_domain = "https://www.westfieldbank.com/"
+    locator_domain = "https://jollibeeusa.com/"
     session = SgRequests()
     with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         fetch_data(writer)
