@@ -27,6 +27,7 @@ def fetch_data(coords, sgw: SgWriter):
         phone = j.get("telephone")
         latitude = j.get("lat")
         longitude = j.get("lng")
+        location_type = j.get("site_brand")
 
         _tmp = []
         hours = j.get("opening_hours") or []
@@ -47,6 +48,7 @@ def fetch_data(coords, sgw: SgWriter):
             state=state,
             zip_postal=postal,
             country_code=country,
+            location_type=location_type,
             phone=phone,
             latitude=latitude,
             longitude=longitude,
