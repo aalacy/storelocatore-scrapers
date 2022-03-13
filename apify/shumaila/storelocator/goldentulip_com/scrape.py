@@ -77,7 +77,6 @@ def fetch_data():
             lat, longt = content["hasMap"].split("=")[-1].split(",")
             hours = str(content["checkinTime"]) + " - " + str(content["checkoutTime"])
             raw_address = street + " " + city + " " + pcode
-            print(raw_address)
             if pcode == "0":
                 pcode = SgRecord.MISSING
             yield SgRecord(
