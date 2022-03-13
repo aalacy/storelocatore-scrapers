@@ -55,6 +55,7 @@ def fetch_data():
             pcode = zip_postal.strip() if zip_postal else MISSING
             if "Address" in title:
                 title = raw_address
+            pcode = pcode.replace("CEP ", "").replace("-DONG", "").replace("-GA", "")
             yield SgRecord(
                 locator_domain="https://www.outback.com/",
                 page_url="<MISSING>",
