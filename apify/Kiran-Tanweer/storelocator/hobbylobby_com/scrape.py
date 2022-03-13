@@ -103,7 +103,8 @@ def scrape():
     log.info("Started")
     count = 0
     deduper = SgRecordDeduper(
-        SgRecordID({SgRecord.Headers.LATITUDE, SgRecord.Headers.LONGITUDE})
+        SgRecordID({SgRecord.Headers.LATITUDE, SgRecord.Headers.LONGITUDE}),
+        duplicate_streak_failure_factor=-1,
     )
     with SgWriter(deduper) as writer:
         results = fetch_data()
