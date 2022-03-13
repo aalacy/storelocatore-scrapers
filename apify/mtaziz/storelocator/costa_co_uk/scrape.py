@@ -159,6 +159,10 @@ def fetch_records(latlng, sgw):
                 ):
                     hours_of_operation = MISSING
 
+                # Clean street_address
+                if street_address is not None or street_address:
+                    street_address = " ".join(street_address.split())
+
                 raw_address = MISSING
                 item = SgRecord(
                     locator_domain=locator_domain,
