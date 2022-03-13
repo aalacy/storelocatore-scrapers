@@ -1,9 +1,11 @@
-from sgscrape import simple_scraper_pipeline as sp
 from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
-from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries, Grain_8
 from sglogging import SgLogSetup
 from bs4 import BeautifulSoup as bs
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 logger = SgLogSetup().get_logger("firstwatch")
 
@@ -15,116 +17,80 @@ _headers = {
 }
 
 locator_domain = "https://www.firstwatch.com"
-base_url = "https://www.firstwatch.com/api/get_locations.php?latitude={}&longitude={}"
-
-search = DynamicGeoSearch(
-    country_codes=[SearchableCountries.USA],
-    expected_search_radius_miles=50,
-)
+base_url = "https://www.firstwatch.com/api/locations.php?latitude={}&longitude={}"
 
 
-def _p(val):
-    return (
-        val.replace("(", "")
-        .replace(")", "")
-        .replace("-", "")
-        .replace(" ", "")
-        .strip()
-        .isdigit()
-    )
-
-
-def fetch_data():
-    # Need to add dedupe. Added it in pipeline.
-    session = SgRequests(proxy_rotation_failure_threshold=20)
-    maxZ = search.items_remaining()
-    total = 0
-    for lat, lng in search:
-        if search.items_remaining() > maxZ:
-            maxZ = search.items_remaining()
-        logger.info(("Pulling Geo Code %s..." % lat, lng))
-        locations = session.get(base_url.format(lat, lng)).json()
-        total += len(locations)
-        for store in locations:
-            if store["openstatus"] != "open":
+def fetch_records(search):
+    with SgRequests() as session:
+        maxZ = search.items_remaining()
+        total = 0
+        for lat, lng in search:
+            if search.items_remaining() > maxZ:
+                maxZ = search.items_remaining()
+            logger.info(("Pulling Geo Code %s..." % lat, lng))
+            res = session.get(base_url.format(lat, lng), headers=_headers)
+            if res.status_code != 200:
                 continue
-            hours = []
-            search.found_location_at(
-                store["latitude"],
-                store["longitude"],
+            locations = res.json()
+            total += len(locations)
+            for store in locations:
+                location_type = ""
+                if store["openstatus"] != "open":
+                    location_type = store["openstatus"]
+                search.found_location_at(
+                    store["latitude"],
+                    store["longitude"],
+                )
+
+                street_address = store["address"]
+                if store.get("address_extended"):
+                    street_address += " " + store["address_extended"]
+
+                page_url = f"https://www.firstwatch.com/locations/{store['slug']}"
+                logger.info(page_url)
+
+                h_list = bs(
+                    session.get(page_url, headers=_headers).text, "lxml"
+                ).select_one("div.location-details-main-1 p")
+                hours_of_operation = SgRecord.MISSING
+                if h_list:
+                    hours_of_operation = h_list.text.strip()
+
+                yield SgRecord(
+                    page_url=page_url,
+                    location_name=store["name"],
+                    store_number=store["id"],
+                    street_address=street_address,
+                    city=store["city"],
+                    state=store["state"],
+                    zip_postal=store["zip"],
+                    country_code="US",
+                    phone=store["phone"],
+                    latitude=store["latitude"],
+                    longitude=store["longitude"],
+                    location_type=location_type,
+                    locator_domain=locator_domain,
+                    hours_of_operation=hours_of_operation,
+                )
+
+            progress = (
+                str(round(100 - (search.items_remaining() / maxZ * 100), 2)) + "%"
             )
-            store["street"] = store["address"]
-            if store["address_extended"]:
-                store["street"] += " " + store["address_extended"]
-            store["hours"] = "; ".join(hours) or "<MISSING>"
-            store["page_url"] = f"https://www.firstwatch.com/locations/{store['slug']}"
-            h_list = bs(
-                session.get(store["page_url"], headers=_headers).text, "lxml"
-            ).find("script", {"id": "locations-detail"})
-            hours_of_operation = SgRecord.MISSING
-            if h_list is not None:
-                _hr = bs(h_list.string, "lxml").select("div.loc-item address")
-                if len(_hr) > 1:
-                    hours_of_operation = list(_hr[-1].stripped_strings)[0]
-            store["hours"] = hours_of_operation
-            yield store
-        progress = str(round(100 - (search.items_remaining() / maxZ * 100), 2)) + "%"
 
-        logger.info(f"found: {len(locations)} | total: {total} | progress: {progress}")
-
-
-def scrape():
-    field_defs = sp.SimpleScraperPipeline.field_definitions(
-        locator_domain=sp.ConstantField(locator_domain),
-        page_url=sp.MappingField(
-            mapping=["page_url"],
-            part_of_record_identity=True,
-        ),
-        location_name=sp.MappingField(
-            mapping=["name"],
-        ),
-        latitude=sp.MappingField(
-            mapping=["latitude"],
-            part_of_record_identity=True,
-        ),
-        longitude=sp.MappingField(
-            mapping=["longitude"],
-            part_of_record_identity=True,
-        ),
-        street_address=sp.MappingField(
-            mapping=["street"],
-        ),
-        city=sp.MappingField(
-            mapping=["city"],
-        ),
-        state=sp.MappingField(
-            mapping=["state"],
-        ),
-        zipcode=sp.MappingField(
-            mapping=["zip"],
-        ),
-        country_code=sp.ConstantField("US"),
-        phone=sp.MappingField(
-            mapping=["phone"],
-            part_of_record_identity=True,
-        ),
-        hours_of_operation=sp.MappingField(mapping=["hours"]),
-        location_type=sp.MissingField(),
-        store_number=sp.MappingField(
-            mapping=["id"],
-        ),
-        raw_address=sp.MissingField(),
-    )
-
-    pipeline = sp.SimpleScraperPipeline(
-        scraper_name="pipeline",
-        data_fetcher=fetch_data,
-        field_definitions=field_defs,
-        log_stats_interval=5,
-    )
-
-    pipeline.run()
+            logger.info(
+                f"found: {len(locations)} | total: {total} | progress: {progress}"
+            )
 
 
 if __name__ == "__main__":
-    scrape()
+    search = DynamicGeoSearch(
+        country_codes=[SearchableCountries.USA], granularity=Grain_8()
+    )
+
+    with SgWriter(
+        SgRecordDeduper(
+            RecommendedRecordIds.StoreNumberId, duplicate_streak_failure_factor=100
+        )
+    ) as writer:
+        for rec in fetch_records(search):
+            writer.write_row(rec)

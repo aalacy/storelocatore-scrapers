@@ -57,7 +57,7 @@ def fetch_data():
                 g = next(lines)
                 g = str(g.decode("utf-8"))
                 phone = g.strip().replace("\t", "").replace("\r", "").replace("\n", "")
-            if "PM</option>" in line2:
+            if "&#8211;" in line2 and "PM<" in line2:
                 hrs = line2.split(">")[1].split("<")[0].replace("&#8211;", "-")
                 if hours == "":
                     hours = "Today: " + hrs
@@ -66,6 +66,20 @@ def fetch_data():
         country = "US"
         if "denver-international-airport" in loc:
             phone = "303-342-6612"
+        if "Sun:" not in hours:
+            hours = hours.replace("Today:", "Sun:")
+        if "Mon:" not in hours:
+            hours = hours.replace("Today:", "Mon:")
+        if "Tue:" not in hours:
+            hours = hours.replace("Today:", "Tue:")
+        if "Wed:" not in hours:
+            hours = hours.replace("Today:", "Wed:")
+        if "Thu:" not in hours:
+            hours = hours.replace("Today:", "Thu:")
+        if "Fri:" not in hours:
+            hours = hours.replace("Today:", "Fri:")
+        if "Sat:" not in hours:
+            hours = hours.replace("Today:", "Sat:")
         yield SgRecord(
             locator_domain=website,
             page_url=loc,

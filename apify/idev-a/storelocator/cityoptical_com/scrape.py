@@ -3,6 +3,8 @@ from sgscrape.sgwriter import SgWriter
 from sgselenium import SgChrome
 from bs4 import BeautifulSoup as bs
 import ssl
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 try:
     _create_unverified_https_context = (
@@ -36,7 +38,19 @@ def fetch_data():
         for x in range(0, len(links), 2):
             h2 = links[x].select("h2")
             addr = h2[1].text.replace("\xa0", " ").split(",")
-            hours = [hh.text for hh in links[x + 1].select("p")][1:]
+            hours = [hh.text for hh in links[x + 1].select("p")]
+            if "Hours" in hours[0]:
+                del hours[0]
+
+            hours_of_operation = (
+                "; ".join(hours)
+                .replace("–", "-")
+                .replace("\xa0", "")
+                .replace("  ", " ")
+            )
+            hours_of_operation = " ".join(
+                [hh for hh in hours_of_operation.split() if hh.strip()]
+            )
             yield SgRecord(
                 page_url=base_url,
                 location_name=h2[0].text.strip(),
@@ -47,15 +61,15 @@ def fetch_data():
                 country_code="US",
                 phone=h2[2].text.strip(),
                 locator_domain=locator_domain,
-                hours_of_operation="; ".join(hours)
-                .replace("–", "-")
-                .replace("\xa0", "")
-                .replace("  ", " "),
+                hours_of_operation=hours_of_operation,
+                raw_address=" ".join(addr),
             )
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.RAW_ADDRESS}))
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

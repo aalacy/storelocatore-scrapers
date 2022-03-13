@@ -8,9 +8,30 @@ from sgscrape import simple_scraper_pipeline as sp
 import time
 import ssl
 from sglogging import sglog
+from tenacity import retry  # noqa
+from tenacity import stop_after_attempt  # noqa
 
 ssl._create_default_https_context = ssl._create_unverified_context
 log = sglog.SgLogSetup().get_logger(logger_name="ynhh")
+
+
+@retry(stop=stop_after_attempt(10))
+def driver_retry(user_agent, url, class_name):
+    try:
+        driver = SgChrome(
+            executable_path=ChromeDriverManager().install(),
+            user_agent=user_agent,
+            is_headless=True,
+        ).driver()
+        driver.get(url)
+        WebDriverWait(driver, 60).until(
+            EC.presence_of_element_located((By.CLASS_NAME, class_name))
+        )
+        return driver
+
+    except Exception:
+        driver.quit()
+        raise Exception("10 consecutive attempts blocked. Retry with a proxy")
 
 
 def get_driver(url, class_name, driver=None):
@@ -20,29 +41,8 @@ def get_driver(url, class_name, driver=None):
     user_agent = (
         "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0"
     )
-    x = 0
-    while True:
-        x = x + 1
-        try:
-            driver = SgChrome(
-                executable_path=ChromeDriverManager().install(),
-                user_agent=user_agent,
-                is_headless=True,
-            ).driver()
-            driver.get(url)
-            WebDriverWait(driver, 20).until(
-                EC.presence_of_element_located((By.CLASS_NAME, class_name))
-            )
-            break
-        except Exception as e:
-            log.info("")
-            log.info(e)
-            driver.quit()
-            if x == 10:
-                raise Exception(
-                    "Make sure this ran with a Proxy, will fail without one"
-                )
-            continue
+    driver = driver_retry(user_agent, url, class_name)
+
     return driver
 
 
@@ -74,6 +74,7 @@ def get_data():
             location_name = grid.find(
                 "a", attrs={"class": "CoveoResultLink"}
             ).text.strip()
+            log.info(location_name)
             locator_domain = "ynhh.org"
             page_url = (
                 "https://www.ynhh.org"
@@ -120,7 +121,7 @@ def get_data():
             location_soup = bs(driver.page_source, "html.parser")
             latitude = location_soup.find(
                 "input", attrs={"class": "location-geo", "type": "hidden"}
-            )["value"].split(", ")[0]
+            )["value"].split(",")[0]
             longitude = (
                 location_soup.find(
                     "input", attrs={"class": "location-geo", "type": "hidden"}
@@ -129,34 +130,50 @@ def get_data():
                 .strip()
             )
 
-            hours_parts = [
-                part
-                for part in location_soup.find("div", attrs={"class": "card"})
-                .text.strip()
-                .split("\n")
-                if part != "" and part.lower() != "hours"
-            ]
+            try:
+                hours_parts = [
+                    part
+                    for part in location_soup.find("div", attrs={"class": "card"})
+                    .text.strip()
+                    .split("\n")
+                    if part != "" and part.lower() != "hours"
+                ]
 
-            if hours_parts[0] != "M":
+            except Exception:
                 hours = "<MISSING>"
 
-            else:
-                hours = ""
-                for part in hours_parts:
+            try:
+                if hours_parts[0] != "M":
+                    hours = "<MISSING>"
 
-                    if "vary" in part:
-                        hours = "<MISSING>"
-                        break
+                else:
+                    hours = ""
+                    for part in hours_parts:
 
-                    if "(" in part:
-                        break
+                        if "vary" in part:
+                            hours = "<MISSING>"
+                            break
 
-                    if ": " in part:
-                        break
+                        if "(" in part:
+                            break
 
-                    hours = hours + part + " "
+                        if ": " in part:
+                            break
+
+                        hours = hours + part + " "
+
+            except Exception:
+                hours = "<MISSING>"
 
             hours = hours.strip()
+            if zipp in state:
+                state = zipp
+                zipp = "<MISSING>"
+
+            if "Fax" in phone:
+                phone = location_soup.find(
+                    "a", attrs={"class": "phone-number"}
+                ).text.strip()
 
             yield {
                 "locator_domain": locator_domain,
@@ -169,7 +186,7 @@ def get_data():
                 "street_address": address,
                 "state": state,
                 "zip": zipp,
-                "phone": phone,
+                "phone": phone.replace("203-867-5254", "").strip(),
                 "location_type": location_type,
                 "hours": hours,
                 "country_code": country_code,

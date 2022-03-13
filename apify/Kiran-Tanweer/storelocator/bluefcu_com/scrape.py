@@ -1,147 +1,95 @@
 from bs4 import BeautifulSoup
-import csv
-import re
-import time
-from sgrequests import SgRequests
-from sglogging import SgLogSetup
+import json
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgselenium.sgselenium import SgChrome
+import ssl
 
+ssl._create_default_https_context = ssl._create_unverified_context
 
-logger = SgLogSetup().get_logger("bluefcu_com")
-
-session = SgRequests()
-
-
-headers = {
-    "authority": "www.bluefcu.com",
-    "method": "POST",
-    "path": "/api",
-    "scheme": "https",
-    "accept": "application/json, text/plain, */*",
-    "accept-encoding": "gzip, deflate, br",
-    "accept-language": "en-US,en;q=0.9",
-    "authorization": "Bearer",
-    "content-length": "568",
-    "content-type": "application/json;charset=UTF-8",
-    "cookie": "__cfduid=dda80f6c82a4dd02fae9a98be176b61591614863508; _6c2bf=https://172.17.0.4:443; _ga=GA1.2.1126236999.1614863531; _gid=GA1.2.983958741.1614863531; _dc_gtm_UA-22110146-1=1; _fbp=fb.1.1614863537789.226611464",
-    "origin": "https://www.bluefcu.com",
-    "referer": "https://www.bluefcu.com/locations",
-    "sec-fetch-dest": "empty",
-    "sec-fetch-mode": "cors",
-    "sec-fetch-site": "same-origin",
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.190 Safari/537.36",
-    "x-requested-with": "XMLHttpRequest",
-}
-headers2 = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.190 Safari/537.36",
-}
-
-
-def write_output(data):
-    with open("data.csv", mode="w", newline="", encoding="utf8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        temp_list = []
-        for row in data:
-            comp_list = [
-                row[2].strip(),
-                row[3].strip(),
-                row[4].strip(),
-                row[5].strip(),
-                row[6].strip(),
-                row[8].strip(),
-                row[10].strip(),
-            ]
-            if comp_list not in temp_list:
-                temp_list.append(comp_list)
-                writer.writerow(row)
-        logger.info(f"No of records being processed: {len(temp_list)}")
+user_agent = (
+    "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0"
+)
 
 
 def fetch_data():
-    data = []
-    pattern = re.compile(r"\s\s+")
-    cleanr = re.compile(r"<[^>]+>")
-    url = "https://www.bluefcu.com/api"
-    payload = {
-        "query": "\n  query($section:[String],$orderBy:String) {\n    entries(\n      section: $section\n      orderBy: $orderBy\n    ) \n    {\n      ... on locations_locations_Entry {\n        id\n        title\n        uri\n        url\n        address1\n        address2\n        city\n        state\n        zipCode\n        phoneNumber\n        map {\n          lat,\n          lng,\n          distance\n          parts {\n            state\n          }\n        }\n      }\n    }\n\n  }\n",
-        "variables": {
-            "section": "locations",
-            "orderBy": "state ASC, city ASC, title ASC",
-        },
-    }
-    req = session.post(url, headers=headers, json=payload).json()
-    for locs in req["data"]["entries"]:
-        storeid = locs["id"]
-        title = locs["title"]
-        link = locs["url"]
-        street = locs["address1"]
-        street2 = locs["address2"]
-        city = locs["city"]
-        state = locs["state"]
-        pcode = locs["zipCode"]
-        phone = locs["phoneNumber"]
-        lat = locs["map"]["lat"]
-        lng = locs["map"]["lng"]
-        if street2 is not None:
-            street = street + " " + street2
-        r = session.get(link, headers=headers2)
-        soup = BeautifulSoup(r.text, "html.parser")
-        hours = (
-            soup.find("div", {"class": "block-accordion"})
-            .find("div", {"class": "accordion-content"})
-            .text
-        )
-        hours = re.sub(pattern, " ", hours)
-        hours = re.sub(cleanr, " ", hours)
-        hours = hours.replace("\n", " ").strip()
 
-        data.append(
-            [
-                "https://www.bluefcu.com/",
-                link,
-                title,
-                street,
-                city,
-                state,
-                pcode,
-                "US",
-                storeid,
-                phone,
-                "<MISSING>",
-                lat,
-                lng,
-                hours,
-            ]
-        )
-    return data
+    url = "https://www.bluefcu.com/sitemaps-1-section-locations-1-sitemap.xml"
+    with SgChrome(user_agent=user_agent) as driver:
+        driver.get(url)
+        soup = BeautifulSoup(driver.page_source, "html.parser")
+        linklist = soup.select("a[href*=locations]")
+        for link in linklist:
+            link = link["href"]
+            driver.get(link)
+            content1 = driver.page_source.split(
+                '<script type="application/ld+json">', 1
+            )[1].split("</script>", 1)[0]
+            content1 = json.loads(content1)
+            content = content1["@graph"][0]
+            address = content["address"]
+            ccode = address["addressCountry"]
+            city = address["addressLocality"]
+            state = address["addressRegion"]
+            pcode = address["postalCode"]
+            street = address["streetAddress"]
+            title = content["name"]
+            phone = content["telephone"]
+
+            hourslist = content["openingHoursSpecification"]
+            hours = ""
+            for hr in hourslist:
+                day = hr["dayOfWeek"]
+                openstr = hr["opens"] + " am - "
+                closestr = hr["closes"]
+                close = int(closestr.split(":", 1)[0])
+                if close > 12:
+                    close = close - 12
+                hours = (
+                    hours
+                    + day
+                    + " "
+                    + openstr
+                    + str(close)
+                    + ":"
+                    + closestr.split(":", 1)[1]
+                    + " pm "
+                )
+            lat, longt = (
+                driver.page_source.split("destination=", 1)[1]
+                .split('"', 1)[0]
+                .split(",", 1)
+            )
+
+            yield SgRecord(
+                locator_domain="https://www.bluefcu.com/",
+                page_url=link,
+                location_name=title,
+                street_address=street.strip(),
+                city=city.strip(),
+                state=state.strip(),
+                zip_postal=pcode.strip(),
+                country_code=ccode,
+                store_number=SgRecord.MISSING,
+                phone=phone.strip(),
+                location_type=SgRecord.MISSING,
+                latitude=str(lat),
+                longitude=str(longt),
+                hours_of_operation=hours,
+            )
 
 
 def scrape():
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
-    data = fetch_data()
-    write_output(data)
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
+
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()

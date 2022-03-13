@@ -10,7 +10,7 @@ from sgpostal import sgpostal as parser
 
 website = "pizzahut.com.bn"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
-session = SgRequests()
+session = SgRequests(retry_behavior=None, proxy_rotation_failure_threshold=0)
 headers = {
     "sec-ch-ua": '"Chromium";v="92", " Not A;Brand";v="99", "Google Chrome";v="92"',
     "sec-ch-ua-mobile": "?0",
