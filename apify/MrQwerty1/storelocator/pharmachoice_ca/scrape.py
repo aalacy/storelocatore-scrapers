@@ -91,7 +91,7 @@ def get_data(page_url, sgw: SgWriter):
 
 
 def fetch_data(sgw: SgWriter):
-    urls = list(get_urls())[:20]
+    urls = list(get_urls())
 
     with futures.ThreadPoolExecutor(max_workers=2) as executor:
         future_to_url = {executor.submit(get_data, url, sgw): url for url in urls}
