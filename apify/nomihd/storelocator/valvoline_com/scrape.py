@@ -86,6 +86,8 @@ class _SearchIteration(SearchIteration):
                 store_number = store["lid"]
 
                 page_url = store["website"]
+                if not page_url:
+                    page_url = "https://www.valvoline.com/en/locations/"
                 location_type = "<MISSING>"
 
                 phone = store["local_phone"]
