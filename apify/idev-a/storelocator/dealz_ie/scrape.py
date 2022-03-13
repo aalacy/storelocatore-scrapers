@@ -14,7 +14,7 @@ _headers = {
 }
 
 locator_domain = "https://www.dealz.ie"
-base_url = "https://www.dealz.ie/rest/dealz/V1/locator/?searchCriteria%5Bscope%5D=store-locator&searchCriteria%5Blatitude%5D=51.55&searchCriteria%5Blongitude%5D=-9.2667&searchCriteria%5Bcurrent_page%5D=1&searchCriteria%5Bpage_size%5D=1000"
+base_url = "https://www.dealz.ie/rest/dealz/V1/locator/?searchCriteria%5Bscope%5D=store-locator&searchCriteria%5Blatitude%5D=51.9143321&searchCriteria%5Blongitude%5D=-8.1726276&searchCriteria%5Bcurrent_page%5D=1&searchCriteria%5Bpage_size%5D=1000"
 
 
 def fetch_records(http):
