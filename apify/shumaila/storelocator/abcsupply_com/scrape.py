@@ -9,12 +9,12 @@ session = SgRequests()
 headers = {
     "authority": "www.abcsupply.com",
     "method": "GET",
-    "path": "/wp-admin/admin-ajax.php?action=fetch_all_locations&_ajax_nonce=e9b967bfa9",
+    "path": "/wp-admin/admin-ajax.php?action=fetch_all_locations&_ajax_nonce=1bd2076898",
     "scheme": "https",
     "accept": "*/*",
     "accept-encoding": "identity",
     "accept-language": "en-US,en;q=0.9",
-    "cookie": "visid_incap_2507554=jUC6BZVQSryokfX2vJNMwNxuJ2IAAAAAQUIPAAAAAACrtYVsiutTtumHKsiV658E; nlbi_2507554=FO/FczOL1y+cYAxHHQSnxAAAAADzDoHrb2JthtgcFIOrSozG; incap_ses_961_2507554=8MZCfBWpHwchBWGt9ihWDd5uJ2IAAAAAvt61f7MgfBEjvGte9I6Ovg==; _gcl_au=1.1.1632423397.1646751457; wp-wpml_current_language=en; _ga=GA1.2.481318390.1646751457; _gid=GA1.2.315332355.1646751457; _gat_UA-24726652-1=1; _fbp=fb.1.1646751457232.1823540262; reese84=3:vguabBU4gZMJxdxlGN20sA==:mEFQOfLsS2eDwzbU7zrrvIdJYoIlAbpXnMzu0zTBiyCJ8hJyAlsDRaisOTeC46kvCY3dR0X3r+ljCjaij4EqzCinEORWje86qjTsxdctIvsy2XlDkk84T0RFrpk28Dm5wXrtvIQfW0hb+boVcSzErxrmf5AyrGUm5K9TKDka1SFvzLQUJITRcFahnu3Yrwa5i3EeyfgIoLYm2NAksON2EAp2P9EbT5LH6S0DfwZIhgbIbMBiouLqcKheJEyQV0erge7nYGJ3E62tQNCIvBuaOBGoIVQNDr6+MInzLUE160oDVgsLw/vrjrlTFaXjv0fuffmvT0UpDuAjPYnjoVJbTKe/UUG7w8FBt520f4VZnjyolWP89/x1sU5jbsXhZiV/cA0HLZxxf2NkSB2qkl+dVMaMlTZ8rzEyVIMjk75qef26Z7LDkmu3Dl5NYRZxO5z6:QjQjX8X+Nf9caiiIsk/LhyqDszj30rCSie5UPIG6dAo=; _hjFirstSeen=1; _hjSession_1637281=eyJpZCI6IjllODEwZDQ3LWI5MDgtNGUzNC1hYjAxLTQ0ZGIwNDBlMzQ5MSIsImNyZWF0ZWQiOjE2NDY3NTE0NTc5NDUsImluU2FtcGxlIjp0cnVlfQ==; _hjIncludedInPageviewSample=1; _hjAbsoluteSessionInProgress=1; _hjSessionUser_1637281=eyJpZCI6IjFmYTIzMDQ3LWFmMTktNWIxNS1iZDBmLThmM2EwMmMxMzJjMiIsImNyZWF0ZWQiOjE2NDY3NTE0NTc5MjgsImV4aXN0aW5nIjp0cnVlfQ==; nlbi_2507554_2147483392=it1BeqoS/2VrZg1hHQSnxAAAAABhRgwM30jeRHE0607Ztm6U",
+    "cookie": "_gcl_au=1.1.1632423397.1646751457; _ga=GA1.2.481318390.1646751457; _fbp=fb.1.1646751457232.1823540262; _hjSessionUser_1637281=eyJpZCI6IjFmYTIzMDQ3LWFmMTktNWIxNS1iZDBmLThmM2EwMmMxMzJjMiIsImNyZWF0ZWQiOjE2NDY3NTE0NTc5MjgsImV4aXN0aW5nIjp0cnVlfQ==; nlbi_2507554=Uieod477VXgo2/UQHQSnxAAAAACfUfjTMMFZVc8EuoUfd2tK; incap_ses_217_2507554=8+S4QbIT6UiKnh4X6vACA+7zLWIAAAAAi0iq2ikKFVe0U8Dzy9OPUw==; reese84=3:zcRSr7f8gK2gKpxhH4S0zg==:YgeetTz/jwqkF/B3j06UHpSfrTVdYxZiONBrQPoo8wa3jJkywXl7wdKYjXVXYB02uxA2aBjmTbOOvEPwImdhCEcxsgD1FHGLHg67PsDgxey4m2PlSm0WM9X1+Vu8ITZwizRsFUVXUbDIz1wuV5HXT8U/QNMu3mrbSTLRPNeZDkBwoVKHX+O2OVANlE7+yI3hIcsObKKgcezMsFMqdre+8IzFmBwWz5oBqtUUosjHsoXa5k2csx7wLRnKO+Yd/VUZMZWKrsatfq3tJtNX1fEgGxOovgnUqs5t+Mlxfwnk26gYdaqMRTNi4ruwdoVCzKV4jupswjMPg2/oLrTuHTtonrqsK5/6fRDt8bfhp/CPGmOoj7rzJbdg5Y7iIzh3UI2xQOw/7fOVhyAxth/RsuBwkDU9PbJetufw0eLiUhOWPQDXjVXNbJ9PhG18Jo9qOLKf:Q+WL80medoTKWx2CfQj2axXVT9jTZwHZApim2tt7k9g=; incap_ses_1564_2507554=82qhD7dhdFAPMe9Uu3G0FRP0LWIAAAAApCHS8T/70DG5pGUXPqhqJw==; incap_sh_2507554=GfQtYgAAAAD5ItJ+DAAImei3kQYQk+i3kQbgA+AnD5NKCVLeRKFihpte; visid_incap_2507554=jUC6BZVQSryokfX2vJNMwNxuJ2IAAAAAQkIPAAAAAACAM+aiASchi9hkvLchYjNEDm4vKBaCJ/pw; wp-wpml_current_language=en; _gid=GA1.2.1124066357.1647178783; _gat_UA-24726652-1=1; _hjIncludedInPageviewSample=1; _hjSession_1637281=eyJpZCI6IjViNjQxNTcwLTUwZTQtNDBmYi05NTQ0LTMxOGNlY2NlMmQxOCIsImNyZWF0ZWQiOjE2NDcxNzg3ODM4NzUsImluU2FtcGxlIjp0cnVlfQ==; _hjAbsoluteSessionInProgress=0; nlbi_2507554_2147483392=pDHqJAp4h1CtvCJsHQSnxAAAAADzwgHk8sF8iOWmSxX+MD8Y",
     "referer": "https://www.abcsupply.com/locations/",
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36",
     "x-requested-with": "XMLHttpRequest",
@@ -23,7 +23,7 @@ headers = {
 
 def fetch_data():
     os.environ["NO_PROXY"] = "abcsupply.com/"
-    url = "https://www.abcsupply.com/wp-admin/admin-ajax.php?action=fetch_all_locations&_ajax_nonce=e9b967bfa9"
+    url = "https://www.abcsupply.com/wp-admin/admin-ajax.php?action=fetch_all_locations&_ajax_nonce=1bd2076898"
     session.trust_env = False
 
     divlist = session.get(url, headers=headers).json()

@@ -40,12 +40,20 @@ def fetch_data():
                 hours = []
                 if _["WeeklyOperatingHours"]:
                     hours = bs(_["WeeklyOperatingHours"], "lxml").stripped_strings
+                city = _["City"]
+                state = _["StateProvince"]
+                if city:
+                    cc = city.split(",")
+                    if not state and len(cc) > 1:
+                        city = cc[0]
+                        state = cc[1]
+
                 yield SgRecord(
                     store_number=_["LocationID"],
                     location_name=_["LocationName"],
                     street_address=street_address,
-                    city=_["City"],
-                    state=_["StateProvince"],
+                    city=city,
+                    state=state,
                     zip_postal=_["PostalCode"],
                     latitude=_["Latitude"],
                     longitude=_["Longitude"],
