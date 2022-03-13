@@ -18,9 +18,14 @@ def fetch_data(sgw: SgWriter):
     tree = html.fromstring(r.text)
     div = tree.xpath("//span[./h3[text()]]")
     for d in div:
-        slug = "".join(d.xpath('.//a[./span[text()="Visit Us"]]/@href'))
-        page_url = "https://www.eurekapizza.com/order-now"
-        if slug:
+
+        slug = "".join(
+            d.xpath(
+                './/a[./span[text()="Visit Us"]]/@href | .//a[./span[text()="Order Now"]]/@href'
+            )
+        )
+        page_url = slug
+        if page_url.find("http") == -1:
             page_url = f"{locator_domain}{slug}"
         location_name = "".join(d.xpath(".//h3//text()"))
         street_address = (
@@ -48,11 +53,26 @@ def fetch_data(sgw: SgWriter):
         city = " ".join(ad.split()[:-2]).strip()
         phone = "".join(d.xpath('.//p[contains(text(), "(")]//text()'))
         latitude, longitude = "<MISSING>", "<MISSING>"
-        if page_url != "https://www.eurekapizza.com/order-now":
+        if page_url.find("id") == -1:
             r = session.get(page_url, headers=headers)
             tree = html.fromstring(r.text)
             latitude = "".join(tree.xpath("//div/@data-lat"))
             longitude = "".join(tree.xpath("//div/@data-lng"))
+        if page_url.find("id") != -1:
+            r = session.get(page_url, headers=headers)
+            tree = html.fromstring(r.text)
+            latitude = (
+                "".join(tree.xpath('//script[contains(text(), "Latitude")]/text()'))
+                .split('"Latitude":"')[1]
+                .split('"')[0]
+                .strip()
+            )
+            longitude = (
+                "".join(tree.xpath('//script[contains(text(), "Latitude")]/text()'))
+                .split('"Longitude":"')[1]
+                .split('"')[0]
+                .strip()
+            )
 
         row = SgRecord(
             locator_domain=locator_domain,
