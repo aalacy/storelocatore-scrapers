@@ -86,8 +86,8 @@ def fetch_data():
                 .text.replace("Dirección: ", "")
                 .strip(),
             )
-            street_address, _, _, zip_postal = getAddress(addr)
-            zip_postal = zip_postal.replace("34-URBANIZACIÓN", "")
+            street_address, _, _, _ = getAddress(addr)
+            zip_postal = MISSING
             state = row.find("div", {"class": "titulo-departamento"}).text.strip()
             country_code = "PE"
             hours_of_operation = MISSING
