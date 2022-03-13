@@ -107,6 +107,42 @@ def fetch_data(index: int, url: str, headers, session) -> dict:
     return data
 
 
+def get_brand2(brand_code, brand_name, url, url2, session):
+    headers = {}
+    headers["accept"] = "application/json, text/plain, */*"
+    headers["accept-encoding"] = "gzip, deflate, br"
+    headers["accept-language"] = "en-us"
+    headers["cache-control"] = "no-cache"
+    headers["pragma"] = "no-cache"
+    headers["referer"] = "https://www.radissonhotels.com/en-us/destination"
+    headers[
+        "sec-ch-ua"
+    ] = '" Not A;Brand";v="99", "Chromium";v="99", "Google Chrome";v="99"'
+    headers["sec-ch-ua-mobile"] = "?0"
+    headers["sec-ch-ua-platform"] = '"Windows"'
+    headers["sec-fetch-dest"] = "empty"
+    headers["sec-fetch-mode"] = "cors"
+    headers["sec-fetch-site"] = "same-origin"
+    headers[
+        "user-agent"
+    ] = "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.51 Safari/537.36"
+    son = get_main(str(url + url2 + brand_code), headers, session)
+    results = []
+    total_records = len(son["hotels"])
+    global EXPECTED_TOTAL
+    EXPECTED_TOTAL += total_records
+    for index, record in enumerate(son["hotels"]):
+        z = fetch_data(index, record["overviewPath"], headers, session)
+        results.append(
+            {
+                "main": son["hotels"][z["index"]],
+                "sub": z,
+                "@type": brand_name,
+            }
+        )
+    return results
+
+
 def get_brand(brand_code, brand_name, url, url2, session):
 
     headers = {}
@@ -298,13 +334,23 @@ def start():
                     if not brand["done"]:
                         start_time = time.monotonic()
                         logzilla.info(f"Selected brand: {brand}")
-                        data = get_brand(
-                            brand["code"],
-                            brand["name"],
-                            url,
-                            url2,
-                            session,
-                        )
+                        try:
+                            data = get_brand(
+                                brand["code"],
+                                brand["name"],
+                                url,
+                                url2,
+                                session,
+                            )
+                        except Exception:
+                            data = get_brand2(
+                                brand["code"],
+                                brand["name"],
+                                url,
+                                url2,
+                                session,
+                            )
+
                         for i in data:
                             k = clean_record(i)
                             if k["sub"]["STATUS"]:
