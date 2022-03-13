@@ -54,7 +54,7 @@ def fetch_data():
                     latitude = json_data["geo"]["lattitude"]
                     longitude = json_data["geo"]["longitude"]
                 else:
-                    lattitude, longitude = "<MISSING>", "<MISSING>"
+                    latitude, longitude = "<MISSING>", "<MISSING>"
 
                 hours_of_operation = "<MISSING>"
                 hours = json_data["openingHoursSpecification"]
