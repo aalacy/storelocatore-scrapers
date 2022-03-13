@@ -20,7 +20,6 @@ def fetch_data(sgw: SgWriter):
 
     session = SgRequests()
 
-    found_poi = []
     max_distance = 1000
 
     search = DynamicZipSearch(
