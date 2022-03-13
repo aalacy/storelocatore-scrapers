@@ -1,11 +1,10 @@
-import ssl
 import time
 from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
-from sgselenium import SgFirefox
+from sgselenium import SgChrome
 from urllib.parse import unquote
 from sglogging import SgLogSetup
 from selenium_stealth import stealth
@@ -25,7 +24,7 @@ def get_urls(driver):
 
 
 def fetch_data(sgw: SgWriter):
-    with SgFirefox(user_agent=user_agent, is_headless=True) as driver:
+    with SgChrome(user_agent=user_agent, is_headless=True) as driver:
         stealth(
             driver,
             languages=["en-US", "en"],
@@ -97,7 +96,6 @@ def fetch_data(sgw: SgWriter):
 
 if __name__ == "__main__":
     locator_domain = "https://www.bluenile.com/"
-    ssl._create_default_https_context = ssl._create_unverified_context
     user_agent = "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firedriver/78.0"
     with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         fetch_data(writer)
