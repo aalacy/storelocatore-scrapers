@@ -11,7 +11,7 @@ EXPECTED_TOTAL = 0
 logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
 
 
-@retry(wait=wait_random(min=1, max=3), stop=(stop_after_attempt(5)))
+@retry(wait=wait_random(min=1, max=3), stop=(stop_after_attempt(5)))  # noqa
 def get_main(url, headers, session):
     response = session.get(url, headers=headers)
     return response.json()
