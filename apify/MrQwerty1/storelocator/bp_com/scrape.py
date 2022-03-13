@@ -8,7 +8,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
-from sgzip.dynamic import SearchableCountries
+from sgzip.dynamic import SearchableCountries, Grain_1_KM
 from sgzip.parallel import DynamicSearchMaker, ParallelDynamicSearch, SearchIteration
 from tenacity import retry, stop_after_attempt
 
@@ -89,13 +89,16 @@ if __name__ == "__main__":
     logger = sglog.SgLogSetup().get_logger(logger_name="bp.com")
     CrawlStateSingleton.get_instance().save(override=True)
     headers = {
-        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:93.0) Gecko/20100101 Firefox/93.0",
+        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.51 Safari/537.36",
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
     }
     locator_domain = "https://www.bp.com/"
     page_url = "https://www.bp.com/en_us/united-states/home/find-a-gas-station.html"
     search_maker = DynamicSearchMaker(
-        search_type="DynamicGeoSearch", expected_search_radius_miles=2
+        search_type="DynamicGeoSearch",
+        granularity=Grain_1_KM(),
+        expected_search_radius_miles=0.5,
+        max_search_distance_miles=1,
     )
 
     with SgWriter(

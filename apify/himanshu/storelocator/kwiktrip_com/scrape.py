@@ -60,7 +60,12 @@ def fetch_data():
             .replace("Yes", "MISSING")
         )
         longitude = list(loc.stripped_strings)[8]
-        if "Yes" in latitude or "Yes" in longitude:
+        if (
+            "Yes" in latitude
+            or "Yes" in longitude
+            or "No" in latitude
+            or "No" in longitude
+        ):
             latitude = MISSING
             longitude = MISSING
         country_code = "US"
