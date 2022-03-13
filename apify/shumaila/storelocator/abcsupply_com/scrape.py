@@ -7,39 +7,46 @@ import json
 import re
 
 from sgselenium import SgSelenium
+
 driver = SgSelenium().chrome()
 
 
 def fetch_data():
-    
-    cleanr = re.compile(r'<[^>]+>')
-    url = 'https://www.abcsupply.com/wp-admin/admin-ajax.php?action=fetch_all_locations&_ajax_nonce=1bd2076898'
-    driver.get(url)   
-    divlist = json.loads(re.sub(cleanr,'',driver.page_source))   
+
+    cleanr = re.compile(r"<[^>]+>")
+    url = "https://www.abcsupply.com/wp-admin/admin-ajax.php?action=fetch_all_locations&_ajax_nonce=1bd2076898"
+    driver.get(url)
+    divlist = json.loads(re.sub(cleanr, "", driver.page_source))
     for div in divlist:
         loclist = div["locations"]
         for loc in loclist:
-           
-            store = loc['branchNumber']
-            street = loc['address1']+ str(loc['address2'])
-            street = street.replace('None','')
-            city = loc['city']
-            state = loc['state']
-            pcode = loc['postalCode']
-            lat = loc['latitude']
-            longt = loc['longitude']
+
+            store = loc["branchNumber"]
+            street = loc["address1"] + str(loc["address2"])
+            street = street.replace("None", "")
+            city = loc["city"]
+            state = loc["state"]
+            pcode = loc["postalCode"]
+            lat = loc["latitude"]
+            longt = loc["longitude"]
             try:
-                phone = loc['phoneNumber'].strip()
+                phone = loc["phoneNumber"].strip()
             except:
-                phone = '<MISSING>'
-            
+                phone = "<MISSING>"
+
             try:
-                hourslist = loc['seasonalHours'][0][ 'hourDetails'][0]
-                hours = hourslist['hoursText']+ ' '+hourslist['openTime']+' - '+hourslist['closeTime']
+                hourslist = loc["seasonalHours"][0]["hourDetails"][0]
+                hours = (
+                    hourslist["hoursText"]
+                    + " "
+                    + hourslist["openTime"]
+                    + " - "
+                    + hourslist["closeTime"]
+                )
             except:
-                hours = '<MISSING>'
-            link = 'https://www.abcsupply.com/locations/location/?id='+str(store)
-            title = 'ABC Supply - '+city +', '+state
+                hours = "<MISSING>"
+            link = "https://www.abcsupply.com/locations/location/?id=" + str(store)
+            title = "ABC Supply - " + city + ", " + state
             yield SgRecord(
                 locator_domain="https://www.abcsupply.com/",
                 page_url=link,
@@ -48,10 +55,10 @@ def fetch_data():
                 city=city.strip(),
                 state=state.strip(),
                 zip_postal=pcode.strip(),
-                country_code='US',
+                country_code="US",
                 store_number=str(store),
                 phone=phone.strip(),
-                location_type='<MISSING>',
+                location_type="<MISSING>",
                 latitude=str(lat),
                 longitude=str(longt),
                 hours_of_operation=hours,
