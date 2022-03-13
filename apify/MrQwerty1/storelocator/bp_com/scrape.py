@@ -25,7 +25,9 @@ def get_response(co_ord, retry=1):
                 logger.info(f"From {lat,lng} stores = {len(data)}")
                 return data
         except Exception as e:
-            log.error(f"HTTP Error Code: {response.status_code}; retry={retry}")
+            logger.error(
+                f"HTTP Error Code: {response.status_code}; retry={retry} >> {e}"
+            )
             if retry == 10:
                 return []
             return get_response(co_ord, retry + 1)
