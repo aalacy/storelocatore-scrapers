@@ -5,6 +5,7 @@ from sgrequests.sgrequests import SgRequests
 import json
 import time
 from sgscrape.pause_resume import CrawlStateSingleton
+from tenacity import retry
 
 EXPECTED_TOTAL = 0
 logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
@@ -107,6 +108,7 @@ def fetch_data(index: int, url: str, headers, session) -> dict:
     return data
 
 
+@retry
 def get_brand2(brand_code, brand_name, url, url2, session):
     headers = {}
     headers["accept"] = "application/json, text/plain, */*"
@@ -114,7 +116,7 @@ def get_brand2(brand_code, brand_name, url, url2, session):
     headers["accept-language"] = "en-us"
     headers["cache-control"] = "no-cache"
     headers["pragma"] = "no-cache"
-    headers["referer"] = "https://www.radissonhotels.com/en-us/destination"
+    headers["referer"] = str(url) + "/en-us/destination"
     headers[
         "sec-ch-ua"
     ] = '" Not A;Brand";v="99", "Chromium";v="99", "Google Chrome";v="99"'
@@ -143,6 +145,7 @@ def get_brand2(brand_code, brand_name, url, url2, session):
     return results
 
 
+@retry
 def get_brand(brand_code, brand_name, url, url2, session):
 
     headers = {}
@@ -305,6 +308,7 @@ def start():
             {"code": "art", "name": "art'otel", "done": False},
             {"code": "rad", "name": "Radisson", "done": False},
             {"code": "ri", "name": "Radisson Individuals", "done": False},
+            {"code": "ry", "name": "I have no clue", "done": False},
             {"code": "prz", "name": "prizeotel", "done": False},
             {"code": "pph", "name": "Park Plaza", "done": False},
             {"code": "cis", "name": "Country Inn & Suites", "done": False},
@@ -320,6 +324,7 @@ def start():
             {"code": "art", "name": "art'otel", "done": False},
             {"code": "rad", "name": "Radisson", "done": False},
             {"code": "ri", "name": "Radisson Individuals", "done": False},
+            {"code": "ry", "name": "I have no clue", "done": False},
             {"code": "prz", "name": "prizeotel", "done": False},
             {"code": "pph", "name": "Park Plaza", "done": False},
             {"code": "cis", "name": "Country Inn & Suites", "done": False},
