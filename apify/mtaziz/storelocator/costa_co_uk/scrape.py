@@ -24,7 +24,7 @@ else:
 logger = SgLogSetup().get_logger("costa_co_uk")
 DOMAIN = "costa.co.uk"
 MISSING = SgRecord.MISSING
-MAX_WORKERS = 12
+MAX_WORKERS = 10
 
 
 headers = {
@@ -35,10 +35,10 @@ headers = {
 
 @retry(stop=stop_after_attempt(5), wait=tenacity.wait_fixed(50))
 def get_response(url):
-    with SgRequests() as http:
+    with SgRequests(verify_ssl=False, timeout_config=400) as http:
         response = http.get(url, headers=headers)
         if response.status_code == 200:
-            logger.info(f"{url} >> HTTP STATUS: {response.status_code}")
+            logger.info(f"{url} <<= {response.status_code} OK!==>")  # noqa
             return response
         raise Exception(f"{url} >> HTTP Error Code: {response.status_code}")
 
@@ -185,7 +185,7 @@ def fetch_records(latlng, sgw):
             return
 
     except Exception as e:
-        logger.info(f"Please fix FetchRecordsError: << {e} >> << {url} >> ")
+        logger.info(f"Please fix FetchRecordsError: << {e} >> << {url} >> ")  # noqa
 
 
 def fetch_data(sgw: SgWriter):
