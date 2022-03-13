@@ -71,7 +71,16 @@ def fetch_data():
             zip = raw_address[-1].strip().split(" ")[-1].strip()
 
             country_code = "US"
-            phone = "".join(store.xpath("td[1]//text()")).strip()
+            phone = (
+                "".join(store.xpath("td[2]//text()"))
+                .strip()
+                .split("Ext")[0]
+                .strip()
+                .split("x")[0]
+                .strip()
+                .split("X")[0]
+                .strip()
+            )
             hours_of_operation = "<MISSING>"
             store_number = "<MISSING>"
 
