@@ -298,55 +298,49 @@ def start():
                     if not brand["done"]:
                         start_time = time.monotonic()
                         logzilla.info(f"Selected brand: {brand}")
-                        try:
-                            data = get_brand(
-                                brand["code"],
-                                brand["name"],
-                                url,
-                                url2,
-                                session,
-                            )
-                            for i in data:
-                                k = clean_record(i)
-                                if k["sub"]["STATUS"]:
-                                    yield k
-                                else:
-                                    badrecords.append(k)
-                                    yield k
-                            logzilla.info(
-                                f"Finished brand {brand['name']}, it took {round(time.monotonic()-start_time,5)}\n it has {len(data)} locations"
-                            )
-                            brand["done"] = True
-                            state.set_misc_value("brandsA", brandsA)
-                        except Exception:
-                            continue
+                        data = get_brand(
+                            brand["code"],
+                            brand["name"],
+                            url,
+                            url2,
+                            session,
+                        )
+                        for i in data:
+                            k = clean_record(i)
+                            if k["sub"]["STATUS"]:
+                                yield k
+                            else:
+                                badrecords.append(k)
+                                yield k
+                        logzilla.info(
+                            f"Finished brand {brand['name']}, it took {round(time.monotonic()-start_time,5)}\n it has {len(data)} locations"
+                        )
+                        brand["done"] = True
+                        state.set_misc_value("brandsA", brandsA)
             if url == urlB:
                 for brand in brandsB:
                     if not brand["done"]:
                         start_time = time.monotonic()
                         logzilla.info(f"Selected brand: {brand}")
-                        try:
-                            data = get_brand(
-                                brand["code"],
-                                brand["name"],
-                                url,
-                                url2,
-                                session,
-                            )
-                            for i in data:
-                                k = clean_record(i)
-                                if k["sub"]["STATUS"]:
-                                    yield k
-                                else:
-                                    badrecords.append(k)
-                                    yield k
-                            logzilla.info(
-                                f"Finished brand {brand['name']}, it took {round(time.monotonic()-start_time,5)}\n it has {len(data)} locations"
-                            )
-                            brand["done"] = True
-                            state.set_misc_value("brandsB", brandsB)
-                        except Exception:
-                            continue
+                        data = get_brand(
+                            brand["code"],
+                            brand["name"],
+                            url,
+                            url2,
+                            session,
+                        )
+                        for i in data:
+                            k = clean_record(i)
+                            if k["sub"]["STATUS"]:
+                                yield k
+                            else:
+                                badrecords.append(k)
+                                yield k
+                        logzilla.info(
+                            f"Finished brand {brand['name']}, it took {round(time.monotonic()-start_time,5)}\n it has {len(data)} locations"
+                        )
+                        brand["done"] = True
+                        state.set_misc_value("brandsB", brandsB)
 
     logzilla.info(f"Badrecords :\n\n{badrecords}")
     global EXPECTED_TOTAL
@@ -434,5 +428,3 @@ def scrape():
 
 if __name__ == "__main__":
     scrape()
-    scrape()
-    # This is intentional to catch any brands that were not done/retry them
