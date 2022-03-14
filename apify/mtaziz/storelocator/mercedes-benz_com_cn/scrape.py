@@ -155,7 +155,7 @@ def determine_hours(k, brand, which):
 
 def remove_inner_info_of_paren(pareninfo):
     j = ""
-    found_extra = re.findall("\(([^)]+)", pareninfo)
+    found_extra = re.findall(r"\(([^)]+)", pareninfo)
     if len(found_extra) > 1:
         temp = pareninfo.replace("(" + found_extra[0] + ")", "")
         j = temp.replace("(" + found_extra[1] + ")", "")
