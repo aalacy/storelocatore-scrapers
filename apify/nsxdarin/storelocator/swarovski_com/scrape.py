@@ -71,7 +71,8 @@ def fetch_data():
                         longitude=lng,
                         hours_of_operation=hours,
                     )
-            except:
+            except Exception as e:
+                logger.info(f"Failed for {str(x)} - {str(y)}: {e}")
                 pass
 
 
