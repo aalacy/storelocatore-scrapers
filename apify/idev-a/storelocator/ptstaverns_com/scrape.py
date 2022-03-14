@@ -1,9 +1,11 @@
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
-from sgscrape.sgpostal import parse_address_intl
 from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+import dirtyjson as json
 
 logger = SgLogSetup().get_logger("ptstaverns")
 
@@ -12,56 +14,71 @@ _headers = {
 }
 
 
-def _v(val):
-    return val.replace("’", "'").replace("\\", "").strip()
+def _p(val):
+    if (
+        val
+        and val.replace("(", "")
+        .replace(")", "")
+        .replace("+", "")
+        .replace("-", "")
+        .replace(".", " ")
+        .replace("to", "")
+        .replace(" ", "")
+        .strip()
+        .isdigit()
+    ):
+        return val
+    else:
+        return ""
+
+
+def _coord(locs, nn):
+    for loc in locs:
+        if loc.split(";marker")[1].split("=")[0] == nn:
+            return json.loads(loc.split(";contentString")[0])
 
 
 def fetch_data():
     locator_domain = "https://www.ptstaverns.com"
-    base_url = "https://www.ptstaverns.com/wp-json/wpgmza/v1/features/base64eJyrVkrLzClJLVKyUqqOUcpNLIjPTIlRsopRMoxR0gEJFGeUFni6FAPFomOBAsmlxSX5uW6ZqTkpELFapVoABU0Wug"
+    base_url = "https://www.ptstaverns.com/locations"
     with SgRequests() as session:
-        locations = session.get(base_url, headers=_headers).json()
-        logger.info(f'{len(locations["markers"])} found')
-        for _ in locations["markers"]:
-            addr = parse_address_intl(_["address"])
-            street_address = addr.street_address_1
-            if addr.street_address_2:
-                street_address += " " + addr.street_address_2
-            page_url = _["link"]
-            if not page_url.startswith("https"):
-                page_url = locator_domain + _["link"]
+        res = session.get(base_url, headers=_headers).text
+        locs = res.split("latLng=")[1:]
+        locations = bs(res, "lxml").select("table#location-list tbody tr")
+        logger.info(f"{len(locations)} found")
+        for _ in locations:
+            page_url = locator_domain + _.a["href"]
             logger.info(page_url)
             sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
-            hours_of_operation = ""
-            hours = [
-                hh.text.strip() for hh in sp1.select("div.et_pb_blurb_container > h4")
-            ][::-1]
-            for x, hh in enumerate(hours):
-                if "View Menu" in hh:
-                    if "Kitchen" in hours[x + 1]:
-                        hours_of_operation = hours[x + 2]
-                    else:
-                        hours_of_operation = hours[x + 1]
-                    break
+            addr = list(sp1.select_one("div.loc-address p").stripped_strings)
+            phone = ""
+            if _p(addr[-1]):
+                phone = addr[-1]
+                del addr[-1]
+            hours_of_operation = sp1.select("div.loc-address p")[-1].text.strip()
+            nn = _.img["data-id"].replace("marker", "")
+            latlng = _coord(locs, nn)
+            location_type = _.img["alt"].split("for")[-1].strip()
             yield SgRecord(
                 page_url=page_url,
-                location_name=_v(_["title"]),
-                store_number=_["id"],
-                street_address=street_address,
-                city=addr.city,
-                state=addr.state,
-                zip_postal=addr.postcode,
-                latitude=_["lat"],
-                longitude=_["lng"],
+                location_name=sp1.h1.text.strip(),
+                street_address=" ".join(addr[:-1]),
+                city=addr[-1].split(",")[0].strip(),
+                state=addr[-1].split(",")[1].strip().split()[0].strip(),
+                zip_postal=addr[-1].split(",")[1].strip().split()[-1].strip(),
+                latitude=latlng["lat"],
+                longitude=latlng["lng"],
+                location_type=location_type,
                 country_code="US",
-                phone=bs(_["description"], "lxml").text.strip(),
+                phone=phone,
                 locator_domain=locator_domain,
                 hours_of_operation=hours_of_operation,
+                raw_address=" ".join(addr),
             )
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

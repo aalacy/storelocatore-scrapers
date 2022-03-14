@@ -79,12 +79,19 @@ def fetch_data(sgw: SgWriter):
                     base = BeautifulSoup(req.text, "lxml")
 
             hours_of_operation = ""
-            raw_hours = list(base.find(class_="opening-hours").stripped_strings)
-            for hours in raw_hours:
-                if "festive hours" in hours.lower():
-                    break
-                hours_of_operation = (hours_of_operation + " " + hours).strip()
-            hours_of_operation = hours_of_operation.replace("Opening Hours", "").strip()
+            try:
+                raw_hours = list(base.find(class_="opening-hours").stripped_strings)
+                for hours in raw_hours:
+                    if "festive hours" in hours.lower():
+                        break
+                    hours_of_operation = (
+                        hours_of_operation + " " + hours.split("/")[0]
+                    ).strip()
+                hours_of_operation = hours_of_operation.replace(
+                    "Opening Hours", ""
+                ).strip()
+            except:
+                hours_of_operation = ""
 
         sgw.write_row(
             SgRecord(

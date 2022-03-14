@@ -18,14 +18,15 @@ headers = {
 def fetch_data():
     # Your scraper here
 
-    search_url = "https://brassicas.com/"
+    search_url = "https://brassicas.com/locations/"
     search_res = session.get(search_url, headers=headers)
     search_sel = lxml.html.fromstring(search_res.text)
 
-    stores_list = search_sel.xpath('//div[contains(@class,"locations")]//li/a/@href')
+    stores_list = search_sel.xpath('//div[@class="tile"]//a/@href')
 
     for store_url in stores_list:
-
+        if "/locations/" not in store_url:
+            continue
         page_url = store_url
         locator_domain = website
         log.info(store_url)

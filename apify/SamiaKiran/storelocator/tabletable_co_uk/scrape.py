@@ -3,8 +3,8 @@ from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
-from sgscrape.sgrecord_id import SgRecordID
 from sgpostal.sgpostal import parse_address_intl
+from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
@@ -35,6 +35,9 @@ def get_data(soup):
 
     zip_postal = pa.postcode
     zip_postal = zip_postal.strip() if zip_postal else MISSING
+    if zip_postal == MISSING:
+        zip_postal = raw_address.split()
+        zip_postal = zip_postal[-2] + " " + zip_postal[-1]
     phone = soup.select_one("a[href*=tel]").text
     hours_of_operation = (
         soup.findAll("div", {"class": "info-container__details"})[1]
@@ -140,19 +143,18 @@ def fetch_data():
 
 
 def scrape():
+    log.info("Started")
+    count = 0
     with SgWriter(
-        SgRecordDeduper(
-            SgRecordID(
-                {
-                    SgRecord.Headers.STREET_ADDRESS,
-                    SgRecord.Headers.PHONE,
-                    SgRecord.Headers.LOCATION_NAME,
-                }
-            )
-        )
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
     ) as writer:
-        for item in fetch_data():
-            writer.write_row(item)
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
 
 
 if __name__ == "__main__":
