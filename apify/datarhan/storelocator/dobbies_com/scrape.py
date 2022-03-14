@@ -1,6 +1,6 @@
 from lxml import etree
 from time import sleep
-from selenium import webdriver
+from selenium.webdriver.firefox.options import Options
 
 from sgrequests import SgRequests
 from sgselenium import SgFirefox
@@ -10,7 +10,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
 
-geoAllowed = webdriver.FirefoxOptions()
+geoAllowed = Options()
 geoAllowed.set_preference("geo.prompt.testing", True)
 geoAllowed.set_preference("geo.prompt.testing.allow", True)
 geoAllowed.set_preference(
@@ -37,7 +37,6 @@ def fetch_data():
     all_locations = dom.xpath(
         '//a[@class="ms-store-select__location-line-shop-link"]/@href'
     )
-    print(all_locations)
     for store_url in list(set(all_locations)):
         if store_url == "https://www.dobbies.com/atherstone-outlet":
             store_url = "https://www.dobbies.com/atherstone"
