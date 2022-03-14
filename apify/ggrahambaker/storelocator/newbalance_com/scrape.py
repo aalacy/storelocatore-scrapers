@@ -67,26 +67,23 @@ class ExampleSearchIteration(SearchIteration):
                         location_type = loc["enhanced_categories"][cat]["value"]
                     except:
                         location_type = "<MISSING>"
-                    r = session.get(page_url, headers=HEADERS)
 
-                    if page_url == "https://stores.newbalance.com/shop/new-balance":
-                        hours = "<MISSING>"
-                    else:
-                        soup = BeautifulSoup(r.content, "lxml")
-                        app_json_html = soup.find(
-                            "script", {"type": "application/ld+json"}
+                    hours = []
+                    if page_url != "https://stores.newbalance.com/shop/new-balance":
+                        soup = BeautifulSoup(
+                            session.get(page_url, headers=HEADERS).content, "lxml"
                         )
-                        loc_json = json.loads(app_json_html.text)
-
-                        if "openingHours" not in loc_json:
-                            hours = "<MISSING>"
-                        else:
-                            hours = ""
-                            for h in loc_json["openingHours"]:
-                                hours += h + " "
+                        loc_json = json.loads(
+                            soup.find("script", {"type": "application/ld+json"}).text
+                        )
+                        for hh in loc_json.get("openingHoursSpecification", []):
+                            hours.append(
+                                f"{', '.join(hh['dayOfWeek'])}: {hh['opens']} - {hh['closes']}"
+                            )
 
                     yield SgRecord(
                         page_url=page_url,
+                        locator_domain=locator_domain,
                         location_name=location_type,
                         street_address=loc["address"].split("--- ")[-1].strip(),
                         city=loc["city"],
@@ -96,7 +93,7 @@ class ExampleSearchIteration(SearchIteration):
                         latitude=loc["lat"],
                         longitude=loc["lng"],
                         phone=loc["phone"].replace("tel:", "").strip(),
-                        hours_of_operation=hours,
+                        hours_of_operation="; ".join(hours),
                     )
 
 
