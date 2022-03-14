@@ -3,6 +3,8 @@ from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 logger = SgLogSetup().get_logger("chickencottage")
 
@@ -30,30 +32,25 @@ def fetch_data():
                 .select("li")[-1]
                 .text.strip()
             )
-            try:
-                yield SgRecord(
-                    page_url=store["website"],
-                    location_name=store["title"],
-                    street_address=store["street"],
-                    city=store["city"].replace("LShepherd", "Shepherd"),
-                    zip_postal=store["postal_code"],
-                    state=store["state"],
-                    phone=store["phone"],
-                    locator_domain=locator_domain,
-                    country_code=store["country"],
-                    store_number=store["id"],
-                    latitude=store["lat"],
-                    longitude=store["lng"],
-                    hours_of_operation=hours,
-                )
-            except:
-                import pdb
-
-                pdb.set_trace()
+            yield SgRecord(
+                page_url=store["website"],
+                location_name=store["title"],
+                street_address=store["street"],
+                city=store["city"].replace("LShepherd", "Shepherd"),
+                zip_postal=store["postal_code"],
+                state=store["state"],
+                phone=store["phone"],
+                locator_domain=locator_domain,
+                country_code=store["country"],
+                store_number=store["id"],
+                latitude=store["lat"],
+                longitude=store["lng"],
+                hours_of_operation=hours,
+            )
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
