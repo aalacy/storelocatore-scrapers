@@ -35,15 +35,21 @@ def fetch_data():
         divlist = soup.findAll("section")
         coordlist = soup.findAll("iframe")
 
-        i = 0
         for div in divlist:
 
             try:
+
                 title = div.find("h2").text
                 address = div.find("p")
                 address = re.sub(cleanr, "\n", str(address))
                 address = re.sub(pattern, "\n", str(address)).strip()
                 address = address.replace("\n", " ").strip()
+                coordlist = div.find("iframe")["src"]
+                r = session.get(coordlist, headers=headers)
+
+                lat, longt = (
+                    r.text.split('",null,[null,null,', 1)[1].split("]", 1)[0].split(",")
+                )
 
                 pa = parse_address_intl(address)
 
@@ -74,13 +80,7 @@ def fetch_data():
                     .strip()
                 )
                 hours = hours.replace("AM ", "AM - ")
-                r = session.get(coordlist[i]["src"], headers=headers)
 
-                lat, longt = (
-                    r.text.split('",null,[null,null,', 1)[1].split("]", 1)[0].split(",")
-                )
-
-                i = i + 1
                 yield SgRecord(
                     locator_domain="https://www.hobbyco.com.au/",
                     page_url="<MISSING>",

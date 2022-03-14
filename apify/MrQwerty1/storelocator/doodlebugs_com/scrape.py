@@ -62,6 +62,7 @@ def get_data(page_url, sgw: SgWriter):
             "//div[@class='row single-location-map js-doodle-locations']//p[contains(text(), 'Hours')]/text()"
         )
     )
+    hours_of_operation = hours_of_operation.replace("Hours:", "").strip()
 
     row = SgRecord(
         page_url=page_url,

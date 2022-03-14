@@ -1,123 +1,71 @@
-import csv
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgpostal.sgpostal import USA_Best_Parser, parse_address
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def fetch_data(sgw: SgWriter):
 
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
-
-    locator_domain = "https://supremofoods.com"
-    page_url = "https://supremofoods.com/locations.html"
+    locator_domain = "https://supremofoods.com/"
+    page_url = "https://supremofoods.com/stores-specials/"
     session = SgRequests()
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
     r = session.get(page_url, headers=headers)
     tree = html.fromstring(r.text)
-    div = tree.xpath('//div[./p[@class="Circular-Text-Head"]]')
+    div = tree.xpath("//div[./h4]")
     for d in div:
-        location_name = (
-            "".join(d.xpath('.//a[@class="nonblock"]/@href'))
-            .split("place/")[1]
-            .split("/")[0]
-            .strip()
-            .replace("+", " ")
-            .replace("%26", "&")
-            .replace("CitiGrocer", "Citi Grocer")
-        )
-        if location_name.find("323") != -1:
-            location_name = "Supremo Food Market"
 
-        location_type = "<MISSING>"
-        street_address = "".join(d.xpath(".//p[1]/text()"))
-        if street_address.find("117") != -1 or street_address.find("7500") != -1:
-            street_address = street_address + " " + "".join(d.xpath(".//p[2]/text()"))
-        ad = "".join(d.xpath(".//p[2]/text()"))
-        if street_address.find("117") != -1 or street_address.find("7500") != -1:
-            ad = "".join(d.xpath(".//p[3]/text()"))
-        phone = "".join(d.xpath(".//p[3]/text()")).strip()
-        if street_address.find("117") != -1 or street_address.find("7500") != -1:
-            phone = "".join(d.xpath(".//p[4]//text()")).strip()
-        phone = phone.replace("Tel:", "").replace("(Store)", "").strip()
-        state = ad.split(",")[1].split()[0].strip()
-        postal = ad.split(",")[1].split()[-1].strip()
+        location_name = "".join(d.xpath(".//h4//text()"))
+        info = d.xpath(".//h4/following-sibling::div[1]/p//text()")
+        info = list(filter(None, [a.strip() for a in info]))
+        ad = " ".join(info).split("Tel")[0].strip()
+        a = parse_address(USA_Best_Parser(), ad)
+        street_address = f"{a.street_address_1} {a.street_address_2}".replace(
+            "None", ""
+        ).strip()
+        state = a.state or "<MISSING>"
+        postal = a.postcode or "<MISSING>"
         country_code = "US"
-        city = ad.split(",")[0].strip()
-        store_number = "<MISSING>"
-        text = "".join(d.xpath('.//a[contains(text(), "Get")]/@href'))
-        try:
-            if text.find("ll=") != -1:
-                latitude = text.split("ll=")[1].split(",")[0]
-                longitude = text.split("ll=")[1].split(",")[1].split("&")[0]
-            else:
-                latitude = text.split("@")[1].split(",")[0]
-                longitude = text.split("@")[1].split(",")[1]
-        except IndexError:
-            latitude, longitude = "<MISSING>", "<MISSING>"
-        if street_address.find("25 South Broad St.") != -1:
-            latitude, longitude = "<MISSING>", "<MISSING>"
-        hours_of_operation = "".join(d.xpath(".//p[6]//text()")).strip()
-        if (
-            street_address.find("117") != -1
-            or street_address.find("7500") != -1
-            or street_address.find("249") != -1
-        ):
-            hours_of_operation = "".join(d.xpath(".//p[7]//text()")).strip()
+        city = a.city or "<MISSING>"
+        tmp_phone = []
+        for i in info:
+            if "(" in i:
+                tmp_phone.append(i)
+                break
+        phone = "".join(tmp_phone).replace("Tel:", "").replace("(Store)", "").strip()
+        hours_of_operation = (
+            " ".join(info).split("Store Hours:")[1].split("Get")[0].strip()
+        )
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=SgRecord.MISSING,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=SgRecord.MISSING,
+            longitude=SgRecord.MISSING,
+            hours_of_operation=hours_of_operation,
+            raw_address=ad,
+        )
 
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
+    ) as writer:
+        fetch_data(writer)

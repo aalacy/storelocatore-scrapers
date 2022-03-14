@@ -43,6 +43,8 @@ def fetch_data(sgw: SgWriter):
             page_url = f"https://suncrestcare.com{page_url}"
         line = d.xpath(".//div[@class='g-mosaicgrid-item-desc']/text()")
         line = list(filter(None, [l.strip() for l in line]))
+        if len(line) == 1:
+            continue
         if line[0][0].isalpha():
             line.pop(0)
         if len(line) == 2:
