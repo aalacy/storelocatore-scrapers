@@ -6,6 +6,7 @@ import json
 import time
 from sgscrape.pause_resume import CrawlStateSingleton
 from tenacity import retry, wait_random, stop_after_attempt
+# Major code change
 
 EXPECTED_TOTAL = 0
 logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
