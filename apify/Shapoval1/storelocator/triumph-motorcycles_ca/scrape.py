@@ -75,52 +75,6 @@ def fetch_data(sgw: SgWriter):
                         "".join(j.get("OpeningTimes")).replace("<br/>", " ").strip()
                     ) or "<MISSING>"
                     hours_of_operation = " ".join(hours_of_operation.split())
-                    country_code = "<MISSING>"
-                    if page_url.find("/dealers") != -1:
-                        country_code = (
-                            page_url.split("/dealers")[0].split(".")[-1].strip()
-                        )
-                    if page_url.find("bahrain") != -1:
-                        country_code = "Bahrain"
-                    if page_url.find("/Dealers") != -1:
-                        country_code = (
-                            page_url.split("/Dealers")[0].split(".")[-1].strip()
-                        )
-                    if page_url.find("/concessionnaires") != -1:
-                        country_code = (
-                            page_url.split("/concessionnaires")[0]
-                            .split(".")[-1]
-                            .strip()
-                        )
-                    if page_url.find("/haendler") != -1:
-                        country_code = (
-                            page_url.split("/haendler")[0].split(".")[-1].strip()
-                        )
-                    if page_url.find("/rivenditori") != -1:
-                        country_code = (
-                            page_url.split("/rivenditori")[0].split(".")[-1].strip()
-                        )
-                    if page_url.find("Malta") != -1:
-                        country_code = "Malta"
-                    if page_url.find("nicaragua") != -1:
-                        country_code = "Nicaragua"
-                    if page_url.find("/concesionarios") != -1:
-                        country_code = (
-                            page_url.split("/concesionarios")[0].split(".")[-1].strip()
-                        )
-                    if page_url.find("usa") != -1:
-                        country_code = "usa"
-                    if country_code == "<MISSING>":
-                        try:
-                            country_code = (
-                                page_url.split("//")[1]
-                                .split("/")[0]
-                                .split(".")[-1]
-                                .strip()
-                            )
-                        except:
-                            country_code = "<MISSING>"
-                    country_code = country_code.upper()
                     if hours_of_operation == "<MISSING>" and page_url.count("/") > 3:
                         try:
                             r = http.get(url=page_url, headers=headers)
@@ -151,7 +105,7 @@ def fetch_data(sgw: SgWriter):
                         city=city,
                         state=state,
                         zip_postal=postal,
-                        country_code=country_code,
+                        country_code=SgRecord.MISSING,
                         store_number=SgRecord.MISSING,
                         phone=phone,
                         location_type=SgRecord.MISSING,

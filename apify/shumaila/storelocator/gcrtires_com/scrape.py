@@ -1,10 +1,10 @@
+from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgzip.dynamic import SearchableCountries
-from sgzip.static import static_coordinate_list
+import re
 
 session = SgRequests()
 headers = {
@@ -13,114 +13,60 @@ headers = {
 
 
 def fetch_data():
-    mylist = static_coordinate_list(100, SearchableCountries.USA)
-    mylist = mylist + static_coordinate_list(70, SearchableCountries.CANADA)
-    daylist = [
-        "monday",
-        "tuesday",
-        "wednesday",
-        "thursday",
-        "friday",
-        "saturday",
-        "sunday",
-    ]
-    for lat, lng in mylist:
-        url = (
-            "https://www.gcrtires.com/bcsutil/commercial/locations?lat="
-            + str(lat)
-            + "&lon="
-            + str(lng)
-            + "&radius="
-            + "1000"
-            + "&bu=tbr&collection=aem_commercial_dealers"
-        )
+    pattern = re.compile(r"\s\s+")
+    url = "https://local.gcrtires.com/"
+    r = session.get(url, headers=headers)
+    soup = BeautifulSoup(r.text, "html.parser")
+    statelist = soup.find("div", {"id": "contains-place"}).findAll("a")
+    for st in statelist:
+        stlink = "https://local.gcrtires.com" + st["href"]
+        r = session.get(stlink, headers=headers)
+        soup = BeautifulSoup(r.text, "html.parser")
+        divlist = soup.find("div", {"id": "contains-place"}).findAll("a")
+        for div in divlist:
+            divlink = "https://local.gcrtires.com" + div["href"]
+            r = session.get(divlink, headers=headers)
+            soup = BeautifulSoup(r.text, "html.parser")
+            loclist = soup.findAll("div", {"id": "location-list"})
+            for loc in loclist:
+                store = loc["data-currentlocation"]
+                loc = loc.find("div", {"class": "place"})
 
-        try:
-            loclist = session.get(url, headers=headers).json()
-        except:
-            continue
-        if len(loclist) == 0:
-            continue
-        for loc in loclist:
-            store = loc["locationNo"]
-            title = loc["legalName"].replace("\u0026", "&").strip()
-
-            street = loc["streetAddress"]
-            city = loc["city"]
-            state = loc["state"]
-            pcode = loc["postalCode"]
-            ccode = loc["country"]
-            lat = loc["latitude"]
-            longt = loc["longitude"]
-            phone = loc["businessPhone"]
-            phone = phone[0:3] + "-" + phone[4:6] + "-" + phone[6:10]
-            hours = ""
-            for day in daylist:
-                try:
-                    if len(loc[day + "Close"]) == 0:
-                        hours = hours + day + " Closed "
-                        continue
-                except:
-                    continue
-                close = 0
-                flag = 0
-                try:
-                    try:
-                        close = int(loc[day + "Close"].split(":", 1)[0])
-                    except:
-                        close = int(loc[day + "Close"].split(".", 1)[0])
-                        flag = 1
-                    if close > 12:
-                        close = close - 12
-                    if flag == 0:
-                        hours = (
-                            hours
-                            + day
-                            + " "
-                            + loc[day + "Open"]
-                            + " am - "
-                            + str(close)
-                            + ":"
-                            + loc[day + "Close"].split(":", 1)[1]
-                            + " pm "
-                        )
-                    elif flag == 1:
-                        hours = (
-                            hours
-                            + day
-                            + " "
-                            + loc[day + "Open"]
-                            + " am - "
-                            + str(close)
-                            + ":"
-                            + loc[day + "Close"].split(".", 1)[1]
-                            + " pm "
-                        )
-                except:
-                    hours = hours + day + " Closed "
-            try:
-                ltype = loc["locationType"]
-            except:
-                ltype = "<MISSING>"
-            link = "https://www.gcrtires.com/stores" + loc["externalPath"]
-            if "--" in phone.strip():
-                phone = SgRecord.MISSING
-            yield SgRecord(
-                locator_domain="https://www.gcrtires.com/",
-                page_url=link,
-                location_name=title,
-                street_address=street.strip(),
-                city=city.strip(),
-                state=state.strip(),
-                zip_postal=pcode.strip(),
-                country_code=ccode,
-                store_number=store,
-                phone=phone.strip(),
-                location_type=ltype,
-                latitude=str(lat),
-                longitude=str(longt),
-                hours_of_operation=hours,
-            )
+                title = loc.find("strong").text
+                link = "https://local.gcrtires.com" + loc.find("a")["href"]
+                street = loc.find("div", {"class": "street"}).text
+                city, state = loc.find("div", {"class": "locality"}).text.split(", ", 1)
+                state, pcode = state.split(" ", 1)
+                phone = loc.find("a", {"class": "list-location-phone-number"}).text
+                r = session.get(link, headers=headers)
+                soup = BeautifulSoup(r.text, "html.parser")
+                hours = (
+                    soup.find("div", {"class": "hours"})
+                    .text.replace("Hours Today", "")
+                    .strip()
+                )
+                lat, longt = (
+                    loc.find("a", {"class": "list-location-cta-button"})["href"]
+                    .split("/")[-1]
+                    .split(",", 1)
+                )
+                hours = re.sub(pattern, " ", hours).strip().replace("Hours:", "")
+                yield SgRecord(
+                    locator_domain="https://www.gcrtires.com/",
+                    page_url=link,
+                    location_name=title,
+                    street_address=street.strip(),
+                    city=city.strip(),
+                    state=state.strip(),
+                    zip_postal=pcode.strip(),
+                    country_code="US",
+                    store_number=str(store),
+                    phone=phone.strip(),
+                    location_type="<MISSING>",
+                    latitude=str(lat),
+                    longitude=str(longt),
+                    hours_of_operation=hours,
+                )
 
 
 def scrape():

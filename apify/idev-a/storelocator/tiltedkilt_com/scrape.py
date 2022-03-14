@@ -2,9 +2,10 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger("tiltedkilt")
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgpostal.sgpostal import parse_address_intl
+import re
 
 _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
@@ -13,41 +14,40 @@ _headers = {
 
 def fetch_data():
     locator_domain = "https://tiltedkilt.com/"
-    base_url = "https://tiltedkilt.com/locations/"
+    base_url = "https://tiltedkilt.com/wp-json/wpgmza/v1/features/base64eJyrVkrLzClJLVKyUqqOUcpNLIjPTIlRsopRMo1R0gEJFGeUFni6FAPFomOBAsmlxSX5uW6ZqTkpELFapVoABfkWvg"
     with SgRequests() as session:
-        soup = bs(session.get(base_url, headers=_headers).text, "lxml")
-        locations = soup.select("div.state-container .location-row")
-        logger.info(f"{len(locations)} found")
+        locations = session.get(base_url, headers=_headers).json()["markers"]
         for _ in locations:
-            page_url = _.a["href"]
-            logger.info(page_url)
-            sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
-            addr = list(_.select_one(".address").stripped_strings)
-            street_address = " ".join(addr[:-1])
-            hours = [
-                "".join(hh.stripped_strings)
-                for hh in sp1.select("div.hours-tooltip div.line")
-            ]
-            if len(hours) == 1 and hours[0].startswith(":"):
-                hours = ["closed"]
+            info = bs(_["description"], "lxml")
+            addr = parse_address_intl(_["address"])
+            street_address = addr.street_address_1
+            if addr.street_address_2:
+                street_address += " " + addr.street_address_2
+            hours = list(
+                info.find("strong", string=re.compile(r"OPEN"))
+                .find_parent()
+                .stripped_strings
+            )[1:]
             yield SgRecord(
-                page_url=page_url,
-                location_name=_.select_one("div.name").text.strip(),
+                page_url="https://tiltedkilt.com/locations",
+                store_number=_["id"],
+                location_name=_["title"],
                 street_address=street_address,
-                city=addr[-1].split(",")[0].strip(),
-                state=addr[-1].split(",")[1].strip().split(" ")[0].strip(),
-                zip_postal=addr[-1].split(",")[1].strip().split(" ")[-1].strip(),
+                city=addr.city,
+                state=addr.state,
+                zip_postal=addr.postcode,
                 country_code="US",
-                phone=_.select_one("div.phone").text.strip(),
+                phone=info.a.text.strip(),
+                latitude=_["lat"],
+                longitude=_["lng"],
                 locator_domain=locator_domain,
-                latitude=sp1.select_one("div#gMap")["data-lat"],
-                longitude=sp1.select_one("div#gMap")["data-lng"],
-                hours_of_operation="; ".join(hours).replace("–", "-"),
+                hours_of_operation="; ".join(hours).replace("|", "; "),
+                raw_address=_["address"],
             )
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

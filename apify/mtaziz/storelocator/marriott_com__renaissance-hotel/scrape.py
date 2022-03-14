@@ -109,12 +109,14 @@ def fetch_data_for_non_api_based_child_brands():
     with SgChrome(
         executable_path=ChromeDriverManager().install(), is_headless=True
     ) as driver:
+        driver.get("https://www.marriott.com/search/findHotels.mi")
+        time.sleep(random.randint(20, 40))
         for idx, url_base_city_state in enumerate(regions_submit_search_urls[0:]):
             page_number_second = 1
             url_base_findHotels = "https://www.marriott.com/search/findHotels.mi"
             logger.info(f"[{idx}] Pulling the data from >> : {url_base_city_state} ")
             driver.get(url_base_city_state)
-            time.sleep(random.randint(15, 30))
+            time.sleep(random.randint(15, 40))
             pgsrc = driver.page_source
             search_list_records_total = re.findall(
                 r"search_list_records_total\":\s\d+,", pgsrc

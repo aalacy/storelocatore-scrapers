@@ -44,10 +44,14 @@ def fetch_data():
             logger.info(page_url)
             sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
             _ad = sp1.find("", string=re.compile(r"^ADDRESS"))
+            _parent = None
             if _ad.find_parent("h3"):
-                addr = list(_ad.find_parent("h3").find_next_sibling().stripped_strings)
+                _parent = _ad.find_parent("h3")
             elif _ad.find_parent("h4"):
-                addr = list(_ad.find_parent("h4").find_next_sibling().stripped_strings)
+                _parent = _ad.find_parent("h4")
+            elif _ad.find_parent("h5"):
+                _parent = _ad.find_parent("h5")
+            addr = list(_parent.find_next_sibling().stripped_strings)
             if not addr[0].split()[0].isdigit():
                 del addr[0]
 
@@ -62,18 +66,25 @@ def fetch_data():
                 tt = _hr.find_parent("h3").find_next_siblings()
             elif _hr.find_parent("h4"):
                 tt = _hr.find_parent("h4").find_next_siblings()
+            elif _hr.find_parent("h5"):
+                tt = _hr.find_parent("h5").find_next_siblings()
 
             for hh in tt:
-                if hh.span or not hh.text.strip():
+                if not hh.text.strip():
                     continue
-                if hh.strong or hh.b:
+                if hh.span and hh.span.strong:
+                    hours.append(hh.text.strip())
+                elif hh.strong or hh.b:
                     temp = list(hh.stripped_strings)
                     if "Hour" in temp[-1]:
                         del temp[-1]
                     for x in range(0, len(temp), 2):
                         hours.append(f"{temp[x]} {temp[x+1]}")
                 else:
-                    hours += ["; ".join(hh.stripped_strings)]
+                    for hr in hh.stripped_strings:
+                        if "Hour" in hr:
+                            break
+                        hours.append(hr)
             yield SgRecord(
                 page_url=page_url,
                 location_name=link.text.strip(),

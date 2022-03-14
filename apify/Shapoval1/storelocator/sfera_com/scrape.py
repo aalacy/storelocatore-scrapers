@@ -21,21 +21,38 @@ def fetch_data(sgw: SgWriter):
         tree = html.fromstring(r.text)
         div = "".join(
             tree.xpath(
-                '//script[contains(text(), "location3 = new google.maps.LatLng(")]/text()'
+                '//script[contains(text(), "location3 = new woosmap.map.LatLng(")]/text()'
             )
-        ).split("location3 = new google.maps.LatLng(")[1:]
+        ).split("location3 = new woosmap.map.LatLng(")[1:]
         for d in div:
             latitude = d.split(",")[0].strip()
             longitude = d.split(",")[1].split(")")[0].strip()
             location_name = d.split("title:")[1].split(",")[0].replace("'", "").strip()
+
+            headers = {
+                "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0",
+                "Accept": "*/*",
+                "Accept-Language": "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3",
+                "Content-Type": "application/x-www-form-urlencoded",
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Pragma": "no-cache",
+                "Expires": "0",
+                "X-Requested-With": "XMLHttpRequest",
+                "Origin": "https://www.sfera.com",
+                "Connection": "keep-alive",
+                "Referer": "https://www.sfera.com/ae/stores/",
+                "Sec-Fetch-Dest": "empty",
+                "Sec-Fetch-Mode": "cors",
+                "Sec-Fetch-Site": "same-origin",
+                "TE": "trailers",
+            }
             data = {
                 "lat": f"{latitude}",
                 "lng": f"{longitude}",
                 "cont": "1",
-                "entrada": "116",
+                "entrada": "1",
                 "busca": f"{location_name}",
             }
-
             api_url_1 = "https://www.sfera.com/one/mod/tiendas_ajax.php"
 
             r = http.post(url=api_url_1, headers=headers, data=data)
@@ -51,7 +68,6 @@ def fetch_data(sgw: SgWriter):
                 )
                 ad = " ".join(ad.split())
                 page_url = f"https://www.sfera.com/pl/stores/?tiendas_buscar={location_name}&coord={latitude}@@{longitude}"
-
                 a = parse_address(International_Parser(), ad)
                 street_address = (
                     f"{a.street_address_1} {a.street_address_2}".replace(

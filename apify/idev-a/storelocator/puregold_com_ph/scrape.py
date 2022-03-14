@@ -63,7 +63,7 @@ def fetch_data():
                 for x, bb in enumerate(block):
                     if "Hours" in bb:
                         addr = block[:x]
-                        hours = [bb.split("Hours")[-1].replace(":", "").strip()]
+                        hours = [bb.split("Hours")[-1].strip()]
                         if not hours and x < len(block) - 1:
                             for hh in block[x + 1 :]:
                                 if _p(hh):
@@ -73,7 +73,9 @@ def fetch_data():
                     if "Tel" in bb:
                         addr = block[:x]
                         break
-
+                hours_of_operation = "; ".join(hours)
+                if hours_of_operation.startswith(":"):
+                    hours_of_operation = hours_of_operation[1:]
                 raw_address = (
                     " ".join(addr)
                     .replace("'", "")
@@ -109,9 +111,17 @@ def fetch_data():
                         .split(")")[0]
                         .split(",")
                     )
+                name = _.strong.text.split("-")[0].strip()
+                location_name = ""
+                if name == "PG JR":
+                    location_name = "PureGold Jr"
+                elif name == "PG EXTRA":
+                    location_name = "PureGold Extra"
+                elif name == "PPCI":
+                    location_name = "PureGold"
                 yield SgRecord(
                     page_url=base_url,
-                    location_name=_.strong.text.strip(),
+                    location_name=location_name,
                     street_address=street_address,
                     city=city,
                     state=addr.state,
@@ -121,7 +131,7 @@ def fetch_data():
                     latitude=coord[0],
                     longitude=coord[1],
                     locator_domain=locator_domain,
-                    hours_of_operation="; ".join(hours),
+                    hours_of_operation=hours_of_operation,
                     raw_address=raw_address,
                 )
 
