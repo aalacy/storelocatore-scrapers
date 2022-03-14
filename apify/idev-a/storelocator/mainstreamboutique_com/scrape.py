@@ -84,9 +84,15 @@ def fetch_data():
                 elif "COMING SOON" in sp1.select("div.shg-row > div")[1].text:
                     continue
                 else:
-                    hh = list(sp1.select("div.shg-row > div")[1].stripped_strings)[1:]
-                    for x in range(0, len(hh), 2):
-                        hours.append(f"{hh[x]} {hh[x+1]}")
+                    txt = sp1.select("div.shg-row > div")[1].text
+                    if "temporarily closed" in txt.lower():
+                        hours = ["Temporarily Closed"]
+                    else:
+                        hh = list(sp1.select("div.shg-row > div")[1].stripped_strings)[
+                            1:
+                        ]
+                        for x in range(0, len(hh), 2):
+                            hours.append(f"{hh[x]} {hh[x+1]}")
                 phone = (
                     sp1.select("div.shg-row > div")[2]
                     .p.text.strip()
