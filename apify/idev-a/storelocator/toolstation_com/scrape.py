@@ -20,6 +20,13 @@ base_url = "https://www.toolstation.com/branches"
 max_workers = 16
 
 
+def _time(val):
+    val = str(val)
+    if len(val) == 3:
+        val = "0" + val
+    return val[:2] + ":" + val[2:]
+
+
 def fetchConcurrentSingle(link):
     page_url = link["href"]
     response = request_with_retries(page_url)
@@ -54,7 +61,7 @@ def request_with_retries(url):
 
 def fetch_data():
     with SgRequests() as session:
-        locations = bs(session.get(base_url, headers=_headers).text).select(
+        locations = bs(session.get(base_url, headers=_headers).text, "lxml").select(
             "ul.branches-ul > li a"
         )
         for page_url, res, sp1 in fetchConcurrentList(locations):
@@ -67,9 +74,14 @@ def fetch_data():
             if sp1.select_one('a[itemprop="telephone"]'):
                 phone = sp1.select_one('a[itemprop="telephone"]').text.strip()
 
-            hours_of_operation = ""
+            hours = []
             if len(bb) > 1:
-                hours_of_operation = bb[1]
+                for hh in bb[1].split(","):
+                    day = hh.split(":")[0].strip()
+                    times = hh.split(":")[-1].strip()
+                    start = _time(times.split("-")[0].strip())
+                    end = _time(times.split("-")[-1].strip())
+                    hours.append(f"{day}: {start} - {end}")
             yield SgRecord(
                 page_url=page_url,
                 store_number=_["site_id"],
@@ -82,7 +94,7 @@ def fetch_data():
                 country_code=_["country"],
                 phone=phone,
                 locator_domain=locator_domain,
-                hours_of_operation=hours_of_operation,
+                hours_of_operation="; ".join(hours),
                 raw_address=raw_address,
             )
 

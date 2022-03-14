@@ -95,9 +95,14 @@ def fetch_data():
                 )
             )
             .strip()
-            .split("; Opening hours may vary")[0]
+            .split("Opening hours may vary")[0]
+            .strip()
+            .replace("\r\n", "")
+            .replace("\n", "")
             .strip()
         )
+        if len(hours_of_operation) > 0 and hours_of_operation[-1] == ";":
+            hours_of_operation = "".join(hours_of_operation[:-1]).strip()
 
         latitude, longitude = (
             "".join(store.xpath("@data-lat")).strip(),

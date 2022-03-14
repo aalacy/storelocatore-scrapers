@@ -49,7 +49,9 @@ def fetch_records(session, search):
                 page_url=page_url,
                 store_number=_["Id"],
                 location_name=_["LocationName"],
-                street_address=street_address,
+                street_address=street_address.replace("PDSA SHOP", "").replace(
+                    "PDSA", ""
+                ),
                 city=_["Town"],
                 state=_["County"],
                 zip_postal=_["PostCode"],

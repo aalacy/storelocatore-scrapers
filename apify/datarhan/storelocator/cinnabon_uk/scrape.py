@@ -1,48 +1,51 @@
-from lxml import etree
-from time import sleep
+import json
 
+from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
-from sgselenium.sgselenium import SgFirefox
 
 
 def fetch_data():
-    start_url = "https://www.cinnabon.uk/stores"
+    session = SgRequests()
+    start_url = "https://cdn.storelocatorwidgets.com/json/eec4d05bca098b89dc086655f7f5e047?callback=slw"
     domain = "cinnabon.uk"
-    with SgFirefox() as driver:
-        driver.get(start_url)
-        sleep(10)
-        driver.switch_to.frame(driver.find_element_by_name("htmlComp-iframe"))
-        dom = etree.HTML(driver.page_source)
+    data = session.get(start_url)
+    data = json.loads(data.text.replace("slw(", "")[:-1])
+    for poi in data["stores"]:
+        hoo = ""
+        raw_data = poi["data"]["address"].replace("\r\n", ", ").split(", ")
+        if len(raw_data) == 2:
+            raw_data.insert(1, "")
+        if len(raw_data) == 1:
+            raw_data.insert(0, "")
+            raw_data.insert(1, "")
 
-    all_locations = dom.xpath('//div[@class="storelocator-store"]')
-    for poi_html in all_locations:
-        location_name = poi_html.xpath(
-            './/a[@class="storelocator-viewlink storelocator-storename"]/text()'
-        )[0]
-        raw_addr = poi_html.xpath('.//p[@class="storelocator-address"]/text()')
-        raw_addr = [e.strip() for e in raw_addr if e.strip()]
-        phone = poi_html.xpath('.//a[contains(@href, "tel")]/text()')
-        phone = phone[0] if phone else ""
-        hoo = poi_html.xpath('.//p[@class="storelocator-opening-daily "]//text()')
-        hoo = " ".join([e.strip() for e in hoo])
+        if poi["data"].get("hours_Monday"):
+            mon = f'Monday: {poi["data"]["hours_Monday"]}'
+            tue = f'Tuesday: {poi["data"]["hours_Tuesday"]}'
+            wed = f'Wednesday: {poi["data"]["hours_Wednesday"]}'
+            thu = f'Thursday: {poi["data"]["hours_Thursday"]}'
+            fri = f'Friday" {poi["data"]["hours_Friday"]}'
+            sat = f'Saturday: {poi["data"]["hours_Saturday"]}'
+            sun = f'Sunday: {poi["data"]["hours_Sunday"]}'
+            hoo = f"{mon}, {tue}, {wed}, {thu}, {fri}, {sat}, {sun}"
 
         item = SgRecord(
             locator_domain=domain,
-            page_url=start_url,
-            location_name=location_name,
-            street_address=raw_addr[-3],
-            city=raw_addr[-2],
+            page_url="https://www.cinnabon.uk/stores",
+            location_name=poi["name"],
+            street_address=raw_data[0],
+            city=raw_data[1],
             state="",
-            zip_postal=raw_addr[-1],
+            zip_postal=raw_data[2],
             country_code="",
-            store_number="",
-            phone=phone,
+            store_number=poi["storeid"],
+            phone=poi["data"].get("phone"),
             location_type="",
-            latitude="",
-            longitude="",
+            latitude=poi["data"]["map_lat"],
+            longitude=poi["data"]["map_lng"],
             hours_of_operation=hoo,
         )
 

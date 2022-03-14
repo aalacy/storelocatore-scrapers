@@ -1,4 +1,3 @@
-# --extra-index-url https://dl.cloudsmith.io/KVaWma76J5VNwrOm/crawl/crawl/python/simple/
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
@@ -16,11 +15,10 @@ def fetch_data():
         "https://www.toyota.es/api/dealer/drive/2.163867/41.416735?count=2000&extraCountries=&isCurrentLocation=false",
         "https://www.toyota.com.cy/api/dealer/drive/34.078641056678606/35.36332843131831?count=2000",
         "https://www.toyota.cz/api/dealer/drive/34.078641056678606/35.36332843131831?count=2000",
-        "https://www.toyota.dk/api/dealer/drive/12.535313/55.704887?count=2000&extraCountries=&isCurrentLocation=false",
         "https://www.toyota.ee/api/dealer/drive/25.7615268448868/58.7783968568071?count=2000&extraCountries=&isCurrentLocation=false",
         "https://www.toyota.fi/api/dealer/drive/22.75/60.5?count=2000&extraCountries=&isCurrentLocation=false",
         "https://www.toyota.fr/api/dealer/drive/2.86867370889921/42.7408489339116?count=2000&extraCountries=ad",
-        "https://www.toyota.de/api/dealer/drive/11.599134/48.125228?count=2000&extraCountries=&isCurrentLocation=false",
+        "https://www.toyota.de/api/dealer/drive/10.0183432948567/51.1334813439932?count=1000&extraCountries=&isCurrentLocation=false",
         "https://www.toyota.hu/api/dealer/drive/19.042863/47.511472?count=2000&extraCountries=&isCurrentLocation=false",
         "https://www.toyota.ie/api/dealer/drive/19.042863/47.511472?count=2000&extraCountries=&isCurrentLocation=false",
         "https://www.toyota.it/api/dealer/drive/19.042863/47.511472?count=2000&extraCountries=&isCurrentLocation=false",
@@ -32,10 +30,7 @@ def fetch_data():
         "https://www.toyota.pl/api/dealer/drive/19.95/50.06667?count=2000&extraCountries=&limitSearchDistance=60&isCurrentLocation=false",
         "https://www.toyota.pt/api/dealer/drive/-8.6108/41.1495?count=2000&extraCountries=&isCurrentLocation=false",
         "https://www.toyota.ru/api/dealer/drive/37.4121287410622/55.9698601178023?count=2000&extraCountries=by&limitSearchDistance=150&isCurrentLocation=false",
-        "https://www.toyota.sk/api/dealer/drive/19.042863/47.511472?count=2000&extraCountries=&isCurrentLocation=false",
-        "https://www.toyota.se/api/dealer/drive/16.9104983/58.7871654?count=2000&extraCountries=&isCurrentLocation=false",
         "https://www.toyota.com.tr/api/dealer/drive/30.68333/36.9?count=2000&extraCountries=&isCurrentLocation=false",
-        "https://www.toyota.ua/api/dealer/drive/30.517621/50.451497?count=2000&extraCountries=&isCurrentLocation=false",
     ]
     domain = "toyota.co.uk"
     hdr = {
@@ -58,15 +53,28 @@ def fetch_data():
                     end_hours = h["hours"][0]["endTime"]
                     hoo.append(f"{start_day} - {end_day}: {start_hours} - {end_hours}")
             hoo = " ".join(hoo).replace("SAT - SAT", "SAT").replace("SUN - SUN", "SUN")
+            if not hoo:
+                continue
+            street_address = (
+                poi["address"]["address1"].strip().split("/İST")[0].split(" Tekirda")[0]
+            )
+            city = poi["address"]["city"].strip()
+            if street_address.lower().endswith(city.lower()):
+                street_address = street_address[: -len(city)].replace("/", "").strip()
+            zip_code = poi["address"]["zip"]
+            if zip_code and "," in zip_code:
+                zip_code = ""
+            if zip_code and poi["country"] == "ie":
+                zip_code = ""
 
             item = SgRecord(
                 locator_domain=domain,
                 page_url=poi["url"],
                 location_name=poi["name"],
-                street_address=poi["address"]["address1"],
-                city=poi["address"]["city"],
+                street_address=street_address,
+                city=city,
                 state=poi["address"]["region"],
-                zip_postal=poi["address"]["zip"],
+                zip_postal=zip_code,
                 country_code=poi["country"],
                 store_number=poi.get("localDealerID"),
                 phone=poi["phone"],

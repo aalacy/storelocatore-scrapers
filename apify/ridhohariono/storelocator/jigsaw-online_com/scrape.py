@@ -5,12 +5,12 @@ from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 DOMAIN = "jigsaw-online.com"
 BASE_URL = "https://jigsaw-online.com"
 LOCATION_URL = "https://www.jigsaw-online.com/pages/store-locator"
-API_URL = "https://jigsawimagestorage.blob.core.windows.net/jigsaw-logos/google-map-data.json?cache=1631183163019"
+API_URL = "https://jigsawimagestorage.blob.core.windows.net/jigsaw-logos/google-map-data-V3.json"
 HEADERS = {
     "Accept": "application/json, text/plain, */*",
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
@@ -40,15 +40,15 @@ def fetch_data():
         phone = info["branch_phone"]
         hours_of_operation = (
             info["branch_opening_hours"]
-            .replace("<li>", "")
             .replace("</li><li>", ",")
+            .replace("<li>", "")
             .replace("</li>", "")
         )
         store_number = re.sub(r"\D+", "", info["branch_info"])
         country_code = info["branch_country"]
         location_type = row["type"]
-        latitude = row["geometry"]["coordinates"][0]
-        longitude = row["geometry"]["coordinates"][1]
+        latitude = row["geometry"]["coordinates"][1]
+        longitude = row["geometry"]["coordinates"][0]
         log.info("Append {} => {}".format(location_name, street_address))
         yield SgRecord(
             locator_domain=DOMAIN,
@@ -72,15 +72,7 @@ def fetch_data():
 def scrape():
     log.info("start {} Scraper".format(DOMAIN))
     count = 0
-    with SgWriter(
-        SgRecordDeduper(
-            SgRecordID(
-                {
-                    SgRecord.Headers.STORE_NUMBER,
-                }
-            )
-        )
-    ) as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

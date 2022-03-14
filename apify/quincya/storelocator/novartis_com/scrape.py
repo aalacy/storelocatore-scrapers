@@ -125,6 +125,8 @@ def fetch_data(sgw: SgWriter):
                     if zip_code:
                         if zip_code in street_address:
                             street_address = street_address.replace(zip_code, "")
+                        if "-" in zip_code and not zip_code[0].isdigit():
+                            zip_code = " ".join(zip_code.split("-")[1:])
 
                     if "Jardim Pirajussara" in street_address:
                         city = "Jardim Pirajussara"
@@ -143,6 +145,8 @@ def fetch_data(sgw: SgWriter):
                     phone = (
                         item.find(class_="off-phone").text.replace("Phone:", "").strip()
                     )
+                    if "N" in phone.upper():
+                        phone = ""
                     latitude = "<MISSING>"
                     longitude = "<MISSING>"
                     hours_of_operation = "<MISSING>"

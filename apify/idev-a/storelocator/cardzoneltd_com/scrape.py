@@ -26,19 +26,48 @@ def fetch_data():
             )["wsl_store_details_json"].replace('\\\\"', "'")
         )
         for _ in locations:
-            addr = parse_address_intl(_["wsl_street"] + ", United Kingdom")
+            raw_address = _["wsl_street"].replace("\\/", "/").replace("\\u00a0", " ")
+            if raw_address.endswith("UK"):
+                raw_address = raw_address.replace("UK", "United Kingdom")
+            else:
+                raw_address = raw_address + ", United Kingdom"
+            addr = parse_address_intl(raw_address)
             street_address = addr.street_address_1 or ""
             if addr.street_address_2:
                 street_address += " " + addr.street_address_2
+
+            city = addr.city
+            if not city:
+                if "Hull" in raw_address:
+                    street_address = raw_address.split("Hull")[0].strip()
+                    city = "Hull"
+                elif "Yorkshire" in raw_address:
+                    street_address = raw_address.split("Yorkshire")[0].strip()
+                    city = "Yorkshire"
+                elif "Belfast" in raw_address:
+                    street_address = raw_address.split("Belfast")[0].strip()
+                    city = "Belfast"
+                elif "Doncaster" in raw_address:
+                    street_address = raw_address.split("Doncaster")[0].strip()
+                    city = "Doncaster"
+                elif "Ballymena" in raw_address:
+                    street_address = raw_address.split("Ballymena")[0].strip()
+                    city = "Ballymena"
+                elif "Antrim" in raw_address:
+                    street_address = raw_address.split("Antrim")[0].strip()
+                    city = "Antrim"
+
+            if street_address.isdigit() and city:
+                street_address = raw_address.split(city)[0].strip()
             hours = list(bs(_["wsl_description"], "lxml").stripped_strings)
             if hours:
                 hours = hours[1:]
             yield SgRecord(
                 page_url=base_url,
                 store_number=_["wsl_id"],
-                location_name=_["wsl_name"],
+                location_name=_["wsl_name"].replace("\\/", "/"),
                 street_address=street_address,
-                city=addr.city,
+                city=city,
                 state=addr.state,
                 zip_postal=addr.postcode,
                 latitude=_["wsl_latitude"],
@@ -47,7 +76,7 @@ def fetch_data():
                 phone=_["wsl_phone"],
                 locator_domain=locator_domain,
                 hours_of_operation="; ".join(hours),
-                raw_address=_["wsl_street"],
+                raw_address=raw_address,
             )
 
 

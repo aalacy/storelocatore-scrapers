@@ -91,8 +91,6 @@ def get_data():
 
         latitude = coords[x - 1][0]
         longitude = coords[x - 1][1]
-        latitude = "<LATER>"
-        longitude = "<LATER>"
 
         hours = location["openingHours"][0]
         if hours == "":

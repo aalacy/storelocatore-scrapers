@@ -28,24 +28,21 @@ headers = {
     "accept-language": "en-US,en-GB;q=0.9,en;q=0.8",
 }
 
-data = {
-    "lat": "0",
-    "lng": "0",
-    "radius": "31.068559611866696",
-    "product": "0",
-    "category": "0",
-    "sortByDistance": "1",
-}
-
 
 def fetch_data():
     # Your scraper here
 
-    stores_req = session.post(
-        "https://www.boots.eu/amlocator/index/ajax/", headers=headers, data=data
+    stores_req = session.get("https://www.bootsapotheek.nl/stores", headers=headers)
+    jsonLocations = json.loads(
+        stores_req.text.split("jsonLocations: ")[1]
+        .strip()
+        .split("imageLocations")[0]
+        .strip()[:-1]
     )
-    stores = json.loads(stores_req.text)["items"]
-    for store in stores:
+    stores = jsonLocations["items"]
+    htmlLocations = lxml.html.fromstring(jsonLocations["block"])
+    html_stores = htmlLocations.xpath('//div[@class="amlocator-store"]')
+    for index, store in enumerate(stores):
         popup_sel = lxml.html.fromstring(store["popup_html"])
         page_url = "".join(
             popup_sel.xpath("//a[@class='amlocator-link']/@href")
@@ -57,7 +54,7 @@ def fetch_data():
         location_type = "<MISSING>"
         locator_domain = website
         location_name = "".join(
-            store_sel.xpath("//h1[@class='amlocator-banner-info-title']//text()")
+            store_sel.xpath("//h1[@class='page-title']//text()")
         ).strip()
 
         raw_address = "".join(
@@ -89,6 +86,39 @@ def fetch_data():
 
         latitude = store["lat"]
         longitude = store["lng"]
+
+        if len(location_name) <= 0:
+            location_name = "".join(
+                html_stores[index].xpath('.//div[@class="amlocator-title"]//text()')
+            ).strip()
+
+        if len(raw_address) <= 0:
+            raw_address = "".join(html_stores[index].xpath(".//address/text()")).strip()
+            add_list = raw_address.split(" ")
+            street_address = " ".join(add_list[:2]).strip()
+            city = "".join(add_list[-1]).strip()
+            state = "<MISSING>"
+            zip = " ".join(add_list[2:4]).strip()
+
+        if len(phone) <= 0:
+            phone = "".join(
+                html_stores[index].xpath('.//a[@class="phone"]/text()')
+            ).strip()
+
+        if len(hours_list) <= 0:
+            hours = html_stores[index].xpath('.//span[@class="store-hours"]/span')
+
+            hours_list = []
+            days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+            for day_index, hour in enumerate(hours):
+                day = days[day_index]
+                time = "".join(hour.xpath("text()")).strip()
+                hours_list.append(day + ":" + time)
+
+            hours_of_operation = "; ".join(hours_list).strip()
+            if hours_of_operation:
+                if hours_of_operation.count("Gesloten") == 7:
+                    continue
 
         yield SgRecord(
             locator_domain=locator_domain,

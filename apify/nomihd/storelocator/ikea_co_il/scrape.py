@@ -35,7 +35,7 @@ def fetch_data():
 
     search_sel = lxml.html.fromstring(search_res.text)
 
-    store_list = search_sel.xpath("//div[@data-pub-id and ./h2]")
+    store_list = search_sel.xpath("//div[@data-pub-id and ./h2]")[1:]
 
     for store in store_list:
 
