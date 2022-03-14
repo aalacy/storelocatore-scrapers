@@ -45,7 +45,7 @@ def fetch_data():
             state = loc["Postcode"]
         except:
             street = street + " " + loc["Locality"]
-            city, state, pcode = loc["Postcode"].split(",", 2)
+            city, pcode, state = loc["Postcode"].split(",", 2)
         phone = loc["Phone_number"]
         lat = loc["Ycoord"]
         longt = loc["Xcoord"]
@@ -60,7 +60,7 @@ def fetch_data():
             zip_postal=pcode.replace("<span>", "").replace("</span>", "").strip(),
             country_code="CA",
             store_number=SgRecord.MISSING,
-            phone=phone.strip(),
+            phone=phone.replace("<span>", "").replace("</span>", "").strip(),
             location_type=SgRecord.MISSING,
             latitude=str(lat),
             longitude=str(longt),

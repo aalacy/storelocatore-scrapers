@@ -35,15 +35,16 @@ def fetch_data():
             hours_of_operation = "Open 24 hours a day"
         else:
             hour_list = temp["hours"]
-            hours_of_operation = ""
+            hoo = ""
             try:
                 for hour in hour_list:
                     day = hour["dayOfWeek"]
                     time = hour["openTime"] + "-" + hour["closeTime"]
-                    hours_of_operation += day + " " + time + ","
+                    hoo += day + " " + time + ","
             except:
-                hours_of_operation = MISSING
-            hours_of_operation.strip().rstrip(",")
+                hoo = MISSING
+            hoo.strip().rstrip(",")
+            hours_of_operation = hoo.strip().rstrip(",")
         address = temp["address"]
         try:
             street_address = address["address1"] + " " + address["address2"]
@@ -60,7 +61,12 @@ def fetch_data():
             .replace("Yes", "MISSING")
         )
         longitude = list(loc.stripped_strings)[8]
-        if "Yes" in latitude or "Yes" in longitude:
+        if (
+            "Yes" in latitude
+            or "Yes" in longitude
+            or "No" in latitude
+            or "No" in longitude
+        ):
             latitude = MISSING
             longitude = MISSING
         country_code = "US"
@@ -85,7 +91,7 @@ def fetch_data():
             location_type=MISSING,
             latitude=latitude,
             longitude=longitude,
-            hours_of_operation=hours_of_operation.strip(),
+            hours_of_operation=hours_of_operation,
         )
 
 
