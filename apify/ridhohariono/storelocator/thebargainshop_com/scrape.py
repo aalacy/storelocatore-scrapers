@@ -59,6 +59,12 @@ def pull_content(url):
     return soup
 
 
+def get_name_and_type(label, roles):
+    for x in roles:
+        if x["meta"]:
+            return (x["meta"]["title"] + " - " + label).strip(), x["meta"]["title"]
+
+
 def fetch_data():
     log.info("Fetching store_locator data")
     states = session.get(STATE_INFO, headers=HEADERS).json()
@@ -83,7 +89,9 @@ def fetch_data():
                 .string,
             )
             info = json.loads(info.group(1))
-            location_name = row["label"]
+            location_name, location_type = get_name_and_type(
+                row["label"], info["roles"]
+            )
             street_address = info["locations"][0]["address"]
             city = info["locations"][0]["city"]
             state = info["locations"][0]["provstate"]
@@ -91,7 +99,6 @@ def fetch_data():
             country_code = info["locations"][0]["country"]
             phone = info["locations"][0]["phone"]
             store_number = info["name"]
-            location_type = MISSING
             latitude = info["locations"][0]["lat"]
             longitude = info["locations"][0]["lon"]
             hoo = json.loads(info["meta"]["google_structured_data"])[

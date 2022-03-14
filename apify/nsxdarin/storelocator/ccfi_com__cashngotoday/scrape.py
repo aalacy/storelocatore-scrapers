@@ -49,54 +49,57 @@ def fetch_data():
                         except:
                             typ = ""
                         store = "<MISSING>"
-                        hours = (
-                            "Sun: "
-                            + item.split('"sunday_open":"')[1].split('"')[0]
-                            + "-"
-                            + item.split('"sunday_close":"')[1].split('"')[0]
-                        )
-                        hours = (
-                            hours
-                            + "; Mon: "
-                            + item.split('"monday_open":"')[1].split('"')[0]
-                            + "-"
-                            + item.split('"monday_close":"')[1].split('"')[0]
-                        )
-                        hours = (
-                            hours
-                            + "; Tue: "
-                            + item.split('"tuesday_open":"')[1].split('"')[0]
-                            + "-"
-                            + item.split('"tuesday_close":"')[1].split('"')[0]
-                        )
-                        hours = (
-                            hours
-                            + "; Wed: "
-                            + item.split('"wednesday_open":"')[1].split('"')[0]
-                            + "-"
-                            + item.split('"wednesday_close":"')[1].split('"')[0]
-                        )
-                        hours = (
-                            hours
-                            + "; Thu: "
-                            + item.split('"thursday_open":"')[1].split('"')[0]
-                            + "-"
-                            + item.split('"thursday_close":"')[1].split('"')[0]
-                        )
-                        hours = (
-                            hours
-                            + "; Fri: "
-                            + item.split('"friday_open":"')[1].split('"')[0]
-                            + "-"
-                            + item.split('"friday_close":"')[1].split('"')[0]
-                        )
-                        hours = (
-                            hours
-                            + "; Sat: "
-                            + item.split('"saturday_open":"')[1].split('"')[0]
-                            + "-"
-                            + item.split('"saturday_close":"')[1].split('"')[0]
-                        )
+                        try:
+                            hours = (
+                                "Sun: "
+                                + item.split('"sunday_open":"')[1].split('"')[0]
+                                + "-"
+                                + item.split('"sunday_close":"')[1].split('"')[0]
+                            )
+                            hours = (
+                                hours
+                                + "; Mon: "
+                                + item.split('"monday_open":"')[1].split('"')[0]
+                                + "-"
+                                + item.split('"monday_close":"')[1].split('"')[0]
+                            )
+                            hours = (
+                                hours
+                                + "; Tue: "
+                                + item.split('"tuesday_open":"')[1].split('"')[0]
+                                + "-"
+                                + item.split('"tuesday_close":"')[1].split('"')[0]
+                            )
+                            hours = (
+                                hours
+                                + "; Wed: "
+                                + item.split('"wednesday_open":"')[1].split('"')[0]
+                                + "-"
+                                + item.split('"wednesday_close":"')[1].split('"')[0]
+                            )
+                            hours = (
+                                hours
+                                + "; Thu: "
+                                + item.split('"thursday_open":"')[1].split('"')[0]
+                                + "-"
+                                + item.split('"thursday_close":"')[1].split('"')[0]
+                            )
+                            hours = (
+                                hours
+                                + "; Fri: "
+                                + item.split('"friday_open":"')[1].split('"')[0]
+                                + "-"
+                                + item.split('"friday_close":"')[1].split('"')[0]
+                            )
+                            hours = (
+                                hours
+                                + "; Sat: "
+                                + item.split('"saturday_open":"')[1].split('"')[0]
+                                + "-"
+                                + item.split('"saturday_close":"')[1].split('"')[0]
+                            )
+                        except:
+                            hours = "<MISSING>"
                         hours = hours.replace("Closed-Closed", "Closed")
                         if typ == "":
                             typ = "ccfi"

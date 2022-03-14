@@ -59,7 +59,7 @@ def fetch_data():
                     hours_of_operation="; ".join(_.get("hours", [])),
                     location_type=location_type,
                     country_code=_["countryCode"],
-                    raw_address=" ".join(addr),
+                    raw_address=" ".join(addr).replace("\n", "").replace("\r", ""),
                 )
             except:
                 street_address = " ".join(addr[:-3])
