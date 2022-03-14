@@ -87,8 +87,16 @@ def fetch_data():
                     phone = [e.strip() for e in raw_data if "(" in e]
                 phone = phone[0] if phone else ""
 
-            hoo = loc_dom.xpath('//strong[contains(text(), "am to ")]/text()')
-            hoo = " ".join(hoo)
+            hoo = loc_dom.xpath('//*[contains(text(), "am to ")]/text()')
+            if not hoo:
+                hoo = loc_dom.xpath('//strong[contains(text(), "AM ")]/text()')
+            if not hoo:
+                hoo = loc_dom.xpath('//*[contains(text(), "am –")]/text()')
+            if not hoo:
+                hoo = loc_dom.xpath(
+                    '//p[strong[contains(text(), "SUN – SAT")]]//text()'
+                )
+            hoo = " ".join(hoo).split("My")[0]
 
             item = SgRecord(
                 locator_domain=domain,
