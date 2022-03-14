@@ -22,6 +22,7 @@ def fetch_data():
         soup = bs(session.get(base_url, headers=_headers).text, "lxml")
         links = soup.select("div.restaurants-item")
         logger.info(f"{len(links)} found")
+
         for link in links:
             page_url = urljoin(locator_domain, link.a["href"])
             logger.info(page_url)

@@ -4,7 +4,7 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-
+import re
 
 session = SgRequests()
 headers = {
@@ -13,54 +13,60 @@ headers = {
 
 
 def fetch_data():
+    pattern = re.compile(r"\s\s+")
     url = "https://local.gcrtires.com/"
     r = session.get(url, headers=headers)
     soup = BeautifulSoup(r.text, "html.parser")
-    divlist = soup.find("div", {"id": "contains-city"}).findAll("a")
-    for div in divlist:
-
-        divlink = "https://local.gcrtires.com" + div["href"]
-
-        r = session.get(divlink, headers=headers)
+    statelist = soup.find("div", {"id": "contains-place"}).findAll("a")
+    for st in statelist:
+        stlink = "https://local.gcrtires.com" + st["href"]
+        r = session.get(stlink, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
-        loclist = soup.findAll("div", {"id": "location-list"})
-        for loc in loclist:
-            store = loc["data-currentlocation"]
-            loc = loc.find("div", {"class": "place"})
+        divlist = soup.find("div", {"id": "contains-place"}).findAll("a")
+        for div in divlist:
+            divlink = "https://local.gcrtires.com" + div["href"]
+            r = session.get(divlink, headers=headers)
+            soup = BeautifulSoup(r.text, "html.parser")
+            loclist = soup.findAll("div", {"id": "location-list"})
+            for loc in loclist:
+                store = loc["data-currentlocation"]
+                loc = loc.find("div", {"class": "place"})
 
-            title = loc.find("strong").text
-            link = "https://local.gcrtires.com" + loc.find("a")["href"]
-            street = loc.find("div", {"class": "street"}).text
-            city, state = loc.find("div", {"class": "locality"}).text.split(", ", 1)
-            state, pcode = state.split(" ", 1)
-            phone = loc.find("a", {"class": "list-location-phone-number"}).text
-            hours = (
-                loc.find("div", {"class": "hours"})
-                .text.replace("Hours Today", "")
-                .strip()
-            )
-            lat, longt = (
-                loc.find("a", {"class": "list-location-cta-button"})["href"]
-                .split("/")[-1]
-                .split(",", 1)
-            )
-
-            yield SgRecord(
-                locator_domain="https://www.gcrtires.com/",
-                page_url=link,
-                location_name=title,
-                street_address=street.strip(),
-                city=city.strip(),
-                state=state.strip(),
-                zip_postal=pcode.strip(),
-                country_code="US",
-                store_number=str(store),
-                phone=phone.strip(),
-                location_type="<MISSING>",
-                latitude=str(lat),
-                longitude=str(longt),
-                hours_of_operation=hours,
-            )
+                title = loc.find("strong").text
+                link = "https://local.gcrtires.com" + loc.find("a")["href"]
+                street = loc.find("div", {"class": "street"}).text
+                city, state = loc.find("div", {"class": "locality"}).text.split(", ", 1)
+                state, pcode = state.split(" ", 1)
+                phone = loc.find("a", {"class": "list-location-phone-number"}).text
+                r = session.get(link, headers=headers)
+                soup = BeautifulSoup(r.text, "html.parser")
+                hours = (
+                    soup.find("div", {"class": "hours"})
+                    .text.replace("Hours Today", "")
+                    .strip()
+                )
+                lat, longt = (
+                    loc.find("a", {"class": "list-location-cta-button"})["href"]
+                    .split("/")[-1]
+                    .split(",", 1)
+                )
+                hours = re.sub(pattern, " ", hours).strip().replace("Hours:", "")
+                yield SgRecord(
+                    locator_domain="https://www.gcrtires.com/",
+                    page_url=link,
+                    location_name=title,
+                    street_address=street.strip(),
+                    city=city.strip(),
+                    state=state.strip(),
+                    zip_postal=pcode.strip(),
+                    country_code="US",
+                    store_number=str(store),
+                    phone=phone.strip(),
+                    location_type="<MISSING>",
+                    latitude=str(lat),
+                    longitude=str(longt),
+                    hours_of_operation=hours,
+                )
 
 
 def scrape():
