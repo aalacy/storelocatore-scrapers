@@ -339,58 +339,74 @@ def start():
                         start_time = time.monotonic()
                         logzilla.info(f"Selected brand: {brand}")
                         try:
-                            data = get_brand(
-                                brand["code"],
-                                brand["name"],
-                                url,
-                                url2,
-                                session,
-                            )
-                        except Exception:
-                            data = get_brand2(
-                                brand["code"],
-                                brand["name"],
-                                url,
-                                url2,
-                                session,
-                            )
+                            try:
+                                data = get_brand(
+                                    brand["code"],
+                                    brand["name"],
+                                    url,
+                                    url2,
+                                    session,
+                                )
+                            except Exception:
+                                data = get_brand2(
+                                    brand["code"],
+                                    brand["name"],
+                                    url,
+                                    url2,
+                                    session,
+                                )
 
-                        for i in data:
-                            k = clean_record(i)
-                            if k["sub"]["STATUS"]:
-                                yield k
-                            else:
-                                badrecords.append(k)
-                                yield k
-                        logzilla.info(
-                            f"Finished brand {brand['name']}, it took {round(time.monotonic()-start_time,5)}\n it has {len(data)} locations"
-                        )
-                        brand["done"] = True
-                        state.set_misc_value("brandsA", brandsA)
+                            for i in data:
+                                k = clean_record(i)
+                                if k["sub"]["STATUS"]:
+                                    yield k
+                                else:
+                                    badrecords.append(k)
+                                    yield k
+                            logzilla.info(
+                                f"Finished brand {brand['name']}, it took {round(time.monotonic()-start_time,5)}\n it has {len(data)} locations"
+                            )
+                            brand["done"] = True
+                            state.set_misc_value("brandsA", brandsA)
+                        except Exception:
+                            continue
             if url == urlB:
                 for brand in brandsB:
                     if not brand["done"]:
                         start_time = time.monotonic()
                         logzilla.info(f"Selected brand: {brand}")
-                        data = get_brand(
-                            brand["code"],
-                            brand["name"],
-                            url,
-                            url2,
-                            session,
-                        )
-                        for i in data:
-                            k = clean_record(i)
-                            if k["sub"]["STATUS"]:
-                                yield k
-                            else:
-                                badrecords.append(k)
-                                yield k
-                        logzilla.info(
-                            f"Finished brand {brand['name']}, it took {round(time.monotonic()-start_time,5)}\n it has {len(data)} locations"
-                        )
-                        brand["done"] = True
-                        state.set_misc_value("brandsB", brandsB)
+                        try:
+                            try:
+                                data = get_brand(
+                                    brand["code"],
+                                    brand["name"],
+                                    url,
+                                    url2,
+                                    session,
+                                )
+                            except Exception:
+                                data = get_brand2(
+                                    brand["code"],
+                                    brand["name"],
+                                    url,
+                                    url2,
+                                    session,
+                                )
+
+                            for i in data:
+                                k = clean_record(i)
+                                if k["sub"]["STATUS"]:
+                                    yield k
+                                else:
+                                    badrecords.append(k)
+                                    yield k
+                            logzilla.info(
+                                f"Finished brand {brand['name']}, it took {round(time.monotonic()-start_time,5)}\n it has {len(data)} locations"
+                            )
+                            brand["done"] = True
+                            state.set_misc_value("brandsB", brandsB)
+                        except Exception:
+                            continue
 
     logzilla.info(f"Badrecords :\n\n{badrecords}")
     global EXPECTED_TOTAL
