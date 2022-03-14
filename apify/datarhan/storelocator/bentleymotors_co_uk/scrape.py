@@ -37,10 +37,15 @@ def fetch_data():
                     hoo.append(f"{day} closed")
 
         hours_of_operation = ", ".join(hoo) if hoo else ""
+        if "Saturday" not in hours_of_operation:
+            hours_of_operation += ", Saturday closed Sunday closed"
+        if "Sunday" not in hours_of_operation:
+            hours_of_operation += ", Sunday closed"
+        page_url = f"https://www.bentleymotors.com/en/apps/dealer-locator.html/partner/{store_number}-{location_name.replace(' ', '-')}"
 
         item = SgRecord(
             locator_domain=domain,
-            page_url="https://www.bentleymotors.com/en/apps/dealer-locator.html/",
+            page_url=page_url,
             location_name=location_name,
             street_address=street_address,
             city=city,
