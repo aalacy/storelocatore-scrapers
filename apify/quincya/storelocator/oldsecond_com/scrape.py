@@ -16,7 +16,6 @@ def fetch_data(sgw: SgWriter):
     base_link = "https://www.oldsecond.com/resources-services/locations/"
 
     user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36"
-    headers = {"User-Agent": user_agent}
 
     driver = SgChrome(user_agent=user_agent).driver()
     driver.get(base_link)
