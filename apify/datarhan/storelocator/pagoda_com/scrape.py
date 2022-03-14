@@ -13,7 +13,7 @@ def fetch_data():
     session = SgRequests()
 
     all_codes = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA], expected_search_radius_miles=100
+        country_codes=[SearchableCountries.USA], expected_search_radius_miles=5
     )
     for code in all_codes:
         url = f"https://www.banter.com/store-finder/find?q={code}&page=0"
@@ -52,7 +52,10 @@ def fetch_data():
 
 def scrape():
     with SgWriter(
-        SgRecordDeduper(SgRecordID({SgRecord.Headers.LOCATION_NAME}))
+        SgRecordDeduper(
+            SgRecordID({SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STORE_NUMBER}),
+            duplicate_streak_failure_factor=-1,
+        )
     ) as writer:
         for item in fetch_data():
             writer.write_row(item)

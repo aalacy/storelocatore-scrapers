@@ -16,11 +16,22 @@ def fetch_data():
     with SgRequests() as session:
         locations = session.get(base_url, headers=_headers).json()
         for _ in locations:
-            hours = [f"{day}: {hh}" for day, hh in _.get("hours", {}).items()]
+            if "Opening Soon" in _["reason_closed"]:
+                continue
+            hours = []
+            closed_cnt = 0
+            for day, hh in _.get("hours", {}).items():
+                if not hh.strip():
+                    hh = "closed"
+                    closed_cnt += 1
+                hours.append(f"{day}: {hh}")
             location_type = ""
             if "Permanently Closed" in _["reason_closed"]:
                 location_type = "Permanently Closed"
                 hours = []
+            elif closed_cnt == 7:
+                hours = []
+                location_type = "temporarily Closed"
             yield SgRecord(
                 page_url=_["permalink"],
                 store_number=_["storeNumber"],

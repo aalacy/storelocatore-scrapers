@@ -74,7 +74,11 @@ def fetch_data():
                     zip = "".join(
                         store.xpath('.//*[@itemprop="postalCode"]//text()')
                     ).strip()
-                    country_code = "US"
+                    country_code = "".join(
+                        store_sel.xpath(
+                            '//meta[@property="restaurant:contact_info:country_name"]/@content'
+                        )
+                    ).strip()
 
                     store_number = "<MISSING>"
 
