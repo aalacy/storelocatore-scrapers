@@ -1,144 +1,200 @@
 import re
-from lxml import etree
-from urllib.parse import urljoin
-from sglogging import sglog
+import random
+import ssl
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from sgselenium.sgselenium import SgChrome
+from lxml import html
+from sgpostal.sgpostal import parse_address_intl
+import time
+from xml.etree import ElementTree as ET
 from sgrequests import SgRequests
+from sglogging import sglog
+from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.sgrecord_id import SgRecordID
-from sgscrape.sgwriter import SgWriter
-
-from sgselenium import SgChrome
-from webdriver_manager.chrome import ChromeDriverManager
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.common.by import By
-import ssl
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
-logger = sglog.SgLogSetup().get_logger("swatch.com")
+website = "https://www.telepizza.es"
+sitemap_url = f"{website}/sitemap.xml"
+MISSING = SgRecord.MISSING
+
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+}
+
+session = SgRequests()
+log = sglog.SgLogSetup().get_logger(logger_name=website)
 
 
-def get_driver(url, class_name, driver=None):
-    if driver is not None:
-        driver.quit()
+def request_with_retries(url):
+    return session.get(url, headers=headers)
 
-    user_agent = (
-        "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0"
-    )
-    x = 0
-    while True:
-        x = x + 1
-        try:
-            driver = SgChrome(
-                executable_path=ChromeDriverManager().install(),
-                user_agent=user_agent,
-                is_headless=True,
-            ).driver()
-            driver.get(url)
 
-            WebDriverWait(driver, 20).until(
-                EC.presence_of_element_located((By.CLASS_NAME, class_name))
-            )
-            break
-        except Exception:
-            driver.quit()
-            if x == 10:
-                raise Exception(
-                    "Make sure this ran with a Proxy, will fail without one"
-                )
+def driver_sleep(driver, time=2):
+    try:
+        WebDriverWait(driver, time).until(
+            EC.presence_of_element_located((By.ID, MISSING))
+        )
+    except Exception:
+        pass
+
+
+def random_sleep(driver, start=3, limit=3):
+    driver_sleep(driver, random.randint(start, start + limit))
+
+
+def fetch_stores():
+    response = request_with_retries(sitemap_url)
+    page_urls = []
+    root = ET.fromstring(response.text)
+    for elem in root:
+        for var in elem:
+            if "loc" in var.tag and "https://www.telepizza.es/pizzeria/" in var.text:
+                page_urls.append(var.text)
+    return page_urls
+
+
+def fetch_store(driver, page_url):
+    try:
+        driver.get(page_url)
+        return html.fromstring(driver.page_source, "lxml"), driver.page_source
+    except Exception as e:
+        log.error(f"Error msg={e}")
+        pass
+    return None, None
+
+
+def stringify_nodes(body, xpath):
+    nodes = body.xpath(xpath)
+    values = []
+    for node in nodes:
+        for text in node.itertext():
+            text = text.strip()
+            if text:
+                values.append(text)
+    if len(values) == 0:
+        return MISSING
+    return " ".join((" ".join(values)).split())
+
+
+def get_address(raw_address):
+    try:
+        if raw_address is not None and raw_address != MISSING:
+            data = parse_address_intl(raw_address)
+            street_address = data.street_address_1
+            if data.street_address_2 is not None:
+                street_address = street_address + " " + data.street_address_2
+            city = data.city
+            state = data.state
+            zip_postal = data.postcode
+
+            if street_address is None or len(street_address) == 0:
+                street_address = MISSING
+            if city is None or len(city) == 0:
+                city = MISSING
+            if state is None or len(state) == 0:
+                state = MISSING
+            if zip_postal is None or len(zip_postal) == 0:
+                zip_postal = MISSING
+            return street_address, city, state, zip_postal
+    except Exception as e:
+        log.info(f"Address Missing : {e}")
+        pass
+    return MISSING, MISSING, MISSING, MISSING
+
+
+def get_txt(response, var):
+    try:
+        return response.split(f"var {var} =")[1].split(";")[0].strip()
+    except Exception:
+        pass
+    return MISSING
+
+
+def get_phone(Source):
+    phone = MISSING
+
+    if Source is None or Source == "":
+        return phone
+
+    for match in re.findall(r"[\+\(]?[1-9][0-9 .\-\(\)]{8,}[0-9]", Source):
+        phone = match
+        return phone
+    return phone
+
+
+def fetch_data(driver):
+    page_urls = fetch_stores()
+    log.info(f"Total stores = {len(page_urls)}")
+
+    location_type = MISSING
+    country_code = "ES"
+
+    count = 0
+    for page_url in page_urls:
+        count = count + 1
+        log.debug(f"{count}. scrapping {page_url}...")
+        store_number = page_url.split("-")
+        store_number = store_number[len(store_number) - 1]
+        body, response = fetch_store(driver, page_url)
+        if body is None or response is None:
+            log.error("Can't scrape")
             continue
-    return driver
+        location_name = stringify_nodes(body, '//h1[contains(@class, "heading-xl")]')
+        raw_address = stringify_nodes(
+            body, '//div[contains(@class, "mod_generic_promotion shopTitle")]/address'
+        )
+        if location_name == MISSING or raw_address == MISSING:
+            log.error("Can't scrape")
+            continue
+        street_address, city, state, zip_postal = get_address(raw_address)
+        phone = get_phone(stringify_nodes(body, '//a[contains(@href, "tel")]'))
+        hours_of_operation = stringify_nodes(
+            body,
+            '//div[contains(@class, "hours")]/div[contains(@class, "columns")][2]/table',
+        )
+        latitude = get_txt(response, "lat")
+        longitude = get_txt(response, "lng")
 
+        if latitude == "0" or longitude == "0":
+            latitude = MISSING
+            longitude = MISSING
 
-def fetch_data():
-    session = SgRequests()
-    class_name = "heading-xl"
-    start_url = "https://www.telepizza.es/pizzerias"
-    domain = "telepizza.es"
-    hdr = {
-        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
-    }
-    response = session.get(start_url, headers=hdr)
-    logger.info(f"{start_url} : Response 1: {response}")
-    dom = etree.HTML(response.text)
-    all_areas = dom.xpath('//ul[@class="areas"]/li/a/@href')
-    for url in all_areas:
-        response = session.get(urljoin(start_url, url))
-        logger.info(f"{url} >> Response 2: {response}")
-        dom = etree.HTML(response.text)
-        all_cities = dom.xpath('//ul[@class="cities"]/li/a/@href')
-        logger.info(f"Total Cities: {len(all_cities)}")
-        for url in all_cities:
-            url = urljoin(start_url, url)
-            response = session.get(url)
-            logger.info(f"{url} >> Response 2: {response}")
-            dom = etree.HTML(response.text)
-            all_locations = dom.xpath('//ul[@class="list"]/li')
-
-            for poi_html in all_locations:
-                page_url = poi_html.xpath('.//a[@class="moreInfoLinkFromList"]/@href')
-                if not page_url:
-                    page_url = poi_html.xpath("//@urltienda")
-                page_url = urljoin(start_url, page_url[0])
-
-                logger.info(f" Crawling by selenium {page_url}")
-                try:
-                    driver = get_driver(page_url, class_name, driver=None)
-                except Exception:
-                    driver = get_driver(page_url, class_name)
-
-                loc_html = driver.page_source
-
-                loc_dom = etree.HTML(loc_html)
-                location_name = poi_html.xpath(".//h2/text()")[0]
-                raw_address = poi_html.xpath('.//p[@class="prs"]/text()')
-                zip_code = loc_dom.xpath("//address/span[2]/text()")[0]
-                logger.info(f"Zip Code: {zip_code}")
-                city = raw_address[-1]
-                if city.startswith("."):
-                    city = city[1:]
-                phone = poi_html.xpath('.//p[span[@class="i_phone"]]/span[2]/text()')[0]
-                latitude = re.findall("lat = (.+?);", loc_html)[0]
-                longitude = re.findall("lng = (.+?);", loc_html)[0]
-                hoo = loc_dom.xpath(
-                    '//h4[contains(text(), "A recoger")]/following-sibling::table//text()'
-                )
-                hoo = " ".join([e.strip() for e in hoo if e.strip()])
-
-                item = SgRecord(
-                    locator_domain=domain,
-                    page_url=page_url,
-                    location_name=location_name,
-                    street_address=raw_address[0],
-                    city=city,
-                    state="",
-                    zip_postal=zip_code,
-                    country_code="ES",
-                    store_number="",
-                    phone=phone,
-                    location_type="",
-                    latitude=latitude,
-                    longitude=longitude,
-                    hours_of_operation=hoo,
-                )
-
-                yield item
-
-            driver.quit()
+        yield SgRecord(
+            locator_domain="telepizza.es",
+            store_number=store_number,
+            page_url=page_url,
+            location_name=location_name,
+            location_type=location_type,
+            street_address=street_address,
+            city=city,
+            zip_postal=zip_postal,
+            state=state,
+            country_code=country_code,
+            phone=phone,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+            raw_address=raw_address,
+        )
+    return []
 
 
 def scrape():
-    with SgWriter(
-        SgRecordDeduper(
-            SgRecordID(
-                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
-            )
-        )
-    ) as writer:
-        for item in fetch_data():
-            writer.write_row(item)
+    log.info(f"Start Crawling {website} ...")
+    start = time.time()
+    with SgChrome() as driver:
+        with SgWriter(
+            deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)
+        ) as writer:
+            for rec in fetch_data(driver):
+                writer.write_row(rec)
+    end = time.time()
+    log.info(f"Scrape took {end-start} seconds.")
 
 
 if __name__ == "__main__":
