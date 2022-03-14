@@ -19,9 +19,7 @@ MISSING = SgRecord.MISSING
 
 
 def strip_accents(text):
-
     text = unicodedata.normalize("NFD", text).encode("ascii", "ignore").decode("utf-8")
-
     return str(text)
 
 
@@ -43,6 +41,8 @@ def fetch_data():
             temp = json.loads(temp)
             hours_of_operation = temp["14"].replace("|", "").split("\r\n")
             hours_of_operation = " ".join(hours_of_operation)
+            if "Ou" in hours_of_operation:
+                hours_of_operation = hours_of_operation.split("Ou")[0]
             phone = temp["8"]
             street_address = strip_accents(temp["nmLogradouro"])
             city = strip_accents(temp["txBairro"])

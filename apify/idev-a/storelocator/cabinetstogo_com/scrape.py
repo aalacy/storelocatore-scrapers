@@ -32,6 +32,8 @@ def fetch_data():
         for _ in locations:
             if "COMING SOON" in _["showroom"]:
                 continue
+            if "RELOCATED" in _["showroom"]:
+                continue
             hours = list(bs(_["hours"], "lxml").stripped_strings)
             if "Please contact store" in hours[0]:
                 del hours[0]

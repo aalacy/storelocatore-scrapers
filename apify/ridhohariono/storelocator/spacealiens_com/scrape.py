@@ -103,7 +103,7 @@ def fetch_data():
         raw_address = info["addr"].strip()
         street_address, city, state, zip_postal = getAddress(raw_address)
         country_code = "US"
-        phone = info["phone"].strip()
+        phone = info["phone"].replace(":", "").strip()
         store_number = MISSING
         location_type = MISSING
         hours_of_operation = (

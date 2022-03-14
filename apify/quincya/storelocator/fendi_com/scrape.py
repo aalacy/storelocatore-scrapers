@@ -53,8 +53,21 @@ def fetch_data(sgw: SgWriter):
         req = session.get(final_link, headers=headers)
         base = BeautifulSoup(req.text, "lxml")
         location_name = base.find(id="location-name").text.strip()
-        street_address = base.find(itemprop="streetAddress")["content"]
+        raw_address = base.find(itemprop="streetAddress")["content"].replace(
+            "Bejing", "Beijing"
+        )
+        raw_low = raw_address.lower()
+        if "shop " in raw_low:
+            loc = raw_low.find("shop")
+            street_address = (
+                raw_address[:loc] + " " + raw_address[raw_address.find(" ", loc + 6) :]
+            ).strip()
+        else:
+            street_address = raw_address.split(", Florentia")[0].strip()
         city = base.find(class_="Address-field Address-city").text.strip()
+        if ", " + city in street_address:
+            street_address = street_address.split(", " + city)[0].strip()
+        street_address = street_address.replace("   ", " ")
         try:
             state = base.find(itemprop="addressRegion").text.strip()
         except:
@@ -63,7 +76,11 @@ def fetch_data(sgw: SgWriter):
             zip_code = base.find(itemprop="postalCode").text.strip()
         except:
             zip_code = ""
-        country_code = base.find(itemprop="addressCountry").text.strip()
+
+        try:
+            country_code = base.find(itemprop="addressCountry").text.strip()
+        except:
+            country_code = final_link.split("locator/")[1].split("/")[0].title()
 
         try:
             phone = base.find(id="phone-main").text.strip()
@@ -102,6 +119,7 @@ def fetch_data(sgw: SgWriter):
                 latitude=latitude,
                 longitude=longitude,
                 hours_of_operation=hours_of_operation,
+                raw_address=raw_address,
             )
         )
 

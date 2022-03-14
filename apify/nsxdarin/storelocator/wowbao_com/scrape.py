@@ -15,64 +15,45 @@ logger = SgLogSetup().get_logger("wowbao_com")
 
 
 def fetch_data():
-    for xlat in range(10, 65, 3):
-        for ylng in range(-165, -55, 3):
-            url = (
-                "https://api2.storepoint.co/v1/15fe0bd667ae7b/locations?lat="
-                + str(xlat)
-                + "&long="
-                + str(ylng)
-                + "&radius=5000"
-            )
-            r = session.get(url, headers=headers)
-            website = "wowbao.com"
-            typ = "<MISSING>"
-            country = "US"
-            loc = "<MISSING>"
-            hours = "<MISSING>"
-            logger.info(str(xlat) + "," + str(ylng))
-            for item in json.loads(r.content)["results"]["locations"]:
-                store = item["id"]
-                lat = item["loc_lat"]
-                lng = item["loc_long"]
-                name = item["name"]
-                addinfo = item["streetaddress"]
-                add = "<MISSING>"
-                if addinfo.count(",") == 1:
-                    city = addinfo.split(",")[0]
-                    state = addinfo.split(",")[1].strip()
-                else:
-                    add = addinfo.split(",")[0]
-                    city = addinfo.split(",")[1].strip()
-                    state = addinfo.split(",")[2].strip()
-                zc = "<MISSING>"
-                phone = "<MISSING>"
-                ueurl = item["extra"].replace("\\", "")
-                logger.info(store)
-                try:
-                    r2 = session.get(ueurl, headers=headers)
-                    for line in r2.iter_lines():
-                        line = str(line.decode("utf-8"))
-                        if '"streetAddress":"' in line:
-                            add = line.split('"streetAddress":"')[1].split('"')[0]
-                except:
-                    pass
-                yield SgRecord(
-                    locator_domain=website,
-                    page_url=loc,
-                    location_name=name,
-                    street_address=add,
-                    city=city,
-                    state=state,
-                    zip_postal=zc,
-                    country_code=country,
-                    phone=phone,
-                    location_type=typ,
-                    store_number=store,
-                    latitude=lat,
-                    longitude=lng,
-                    hours_of_operation=hours,
-                )
+    url = "https://api.storepoint.co/v1/15fe0bd667ae7b/locations?lat=41.8756&long=-87.6244&radius=500000"
+    r = session.get(url, headers=headers)
+    website = "wowbao.com"
+    typ = "<MISSING>"
+    country = "US"
+    loc = "<MISSING>"
+    hours = "<MISSING>"
+    for item in json.loads(r.content)["results"]["locations"]:
+        store = item["id"]
+        lat = item["loc_lat"]
+        lng = item["loc_long"]
+        name = item["name"]
+        addinfo = item["streetaddress"]
+        add = "<MISSING>"
+        if addinfo.count(",") == 1:
+            city = addinfo.split(",")[0]
+            state = addinfo.split(",")[1].strip()
+        else:
+            add = addinfo.split(",")[0]
+            city = addinfo.split(",")[1].strip()
+            state = addinfo.split(",")[2].strip()
+        zc = "<MISSING>"
+        phone = "<MISSING>"
+        yield SgRecord(
+            locator_domain=website,
+            page_url=loc,
+            location_name=name,
+            street_address=add,
+            city=city,
+            state=state,
+            zip_postal=zc,
+            country_code=country,
+            phone=phone,
+            location_type=typ,
+            store_number=store,
+            latitude=lat,
+            longitude=lng,
+            hours_of_operation=hours,
+        )
 
 
 def scrape():
