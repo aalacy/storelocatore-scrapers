@@ -69,7 +69,7 @@ def fetch_data():
                 continue
             title = content["name"]
 
-            street = content["address"]["streetAddress"]
+            street = str(content["address"]["streetAddress"]).replace("\n", " ").strip()
             city = content["address"]["addressLocality"]
             pcode = content["address"]["postalCode"]
             ccode = content["address"]["addressCountry"]
