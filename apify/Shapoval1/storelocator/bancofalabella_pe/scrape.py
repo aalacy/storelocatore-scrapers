@@ -41,6 +41,8 @@ def fetch_data(sgw: SgWriter):
         )
         state = a.state or "<MISSING>"
         postal = a.postcode or "<MISSING>"
+        if postal.find(".") != -1:
+            postal = "<MISSING>"
         country_code = "PE"
         city = a.city or "<MISSING>"
         latitude = b.get("coordinates").get("lat")
@@ -50,6 +52,10 @@ def fetch_data(sgw: SgWriter):
         )
         if hours_of_operation.find("CAJA:") != -1:
             hours_of_operation = hours_of_operation.split("CAJA:")[1].strip()
+        if hours_of_operation.find("100%") != -1:
+            hours_of_operation = hours_of_operation.split("PLATAFORMA:")[1].strip()
+        if hours_of_operation.find("PLATAFORMA:") != -1:
+            hours_of_operation = hours_of_operation.split(", ENTREGA")[0].strip()
 
         row = SgRecord(
             locator_domain=locator_domain,
