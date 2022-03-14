@@ -1,0 +1,28 @@
+--ignore CountryCodeFillRateChecker (PERU)
+
+--ignore StreetAddressHasNumber (Confirmed on website)
+Found 3 concerning rows. Examples:
+                                         street_address              REASON  rowNumber
+4841  Camal Municipal Lote Avenida Gustavo Pinto Puesto  ADDR_HAS_NO_NUMBER       4841
+5859  Carretera Asfaltada Margen Derecho Carretera A...  ADDR_HAS_NO_NUMBER       5859
+7961                               S/N Catastral Unidad  ADDR_HAS_NO_NUMBER       7961
+
+--ignore CentroidValidator (Confirmed on website)
+Found 2 concerning rows. Examples:
+          latitude    longitude                              REASON  rowNumber
+5276  -166.3855223  -71.5161326  EITHER_LAT_OR_LNG_OUTSIDE_OF_RANGE       5276
+6695   -112.056970   -75.213818  EITHER_LAT_OR_LNG_OUTSIDE_OF_RANGE       6695
+
+--ignore LatLngDuplicationValidator (Same coords with different location_name or address)
+Found 186 <lat, lng> pair(s) that belong to multiple addresses. Examples:
+         latitude   longitude                                     street_address  num_addrs
+2483    -12.04302   -76.93736  {06 Puesto, Numero 4233 Avenida Nicolas Ayllon...          3
+6693    -5.183100  -80.623400  {33 Y 33B Esq. Av. Andrés Avelino Cáceres Con ...          3
+7290  -6.77301892  -79.839597  {Numero 00579 Calle Maria Izaga, 579 Manuel Ma...          3
+2838   -12.056400  -76.969400  {Francisco Bolognesi/Nicolas Ayllon C. Bancari...          3
+2849   -12.057047  -77.101305  {Nro. 580-590 Y Jr. José Chávez, Av. Oscar R. ...          3
+4232   -12.161609  -76.982547  {Manzana Z Lote 4 Cooperativa Vivienda America...          3
+5416   -14.065404  -75.728288  {18 125 Interior, Numero 101 -125 Lote 06 Call...          3
+3149   -12.068800  -75.210300  {Esq. Calle Real 505 / Paseo La Brena, Esq. Ca...          3
+6711    -5.185647  -80.607932  {Asentamiento Humano La Primavera Manzana M, M...          2
+6585    -4.930099  -80.341638  {3 Calle Fernando H Panta Manzana B Lote, 3 Ca...          2

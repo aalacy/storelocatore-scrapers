@@ -94,21 +94,13 @@ def fetch_data(sgw: SgWriter):
             country_code = item["countryCode"]
             store_number = item["ID"]
             phone = item["phone"]
-            location_type = ""
-            if item["isClosed"]:
-                continue
-            if item["isTemporaryClosed"]:
-                location_type = "Temporary Closed"
-            if item["isRetailShop"]:
-                location_type = ", ".join([location_type, "Retail Shop"])
-            if item["isKiosk"]:
-                location_type = ", ".join([location_type, "Kiosk"])
-            if item["isKioskOrShop"]:
-                location_type = ", ".join([location_type, "Kiosk Or Shop"])
-            if item["isServiceCenter"]:
-                location_type = ", ".join([location_type, "Service Center"])
-            if location_type[:1] == ",":
-                location_type = location_type[1:].strip()
+            # ----------Location Type -----------#
+            brands = []
+            for b in item["brands"]:
+                brand = b["value"]
+                brands.append(brand)
+            location_type = (",").join(brands)
+
             latitude = item["lat"]
             longitude = item["lng"]
             if "." not in str(latitude):
