@@ -60,7 +60,7 @@ def get_res(url):
 
 
 def fetch_global():
-    with SgRequests() as session:
+    with SgRequests(proxy_country="us") as session:
         sp2 = bs(session.get(country_selector, headers=_headers).text, "lxml")
         countries = sp2.select("div.country-option-container")
         for country in countries:
