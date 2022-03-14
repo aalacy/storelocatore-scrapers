@@ -1,24 +1,22 @@
-import ssl
 from lxml import etree
 from time import sleep
+from selenium import webdriver
 
 from sgrequests import SgRequests
-from sgselenium import SgChrome
-
+from sgselenium import SgFirefox
 from sgpostal.sgpostal import parse_address_intl
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
 
-try:
-    _create_unverified_https_context = (
-        ssl._create_unverified_context
-    )  # Legacy Python that doesn't verify HTTPS certificates by default
-except AttributeError:
-    pass
-else:
-    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
+geoAllowed = webdriver.FirefoxOptions()
+geoAllowed.set_preference("geo.prompt.testing", True)
+geoAllowed.set_preference("geo.prompt.testing.allow", True)
+geoAllowed.set_preference(
+    "geo.provider.network.url",
+    'data:application/json,{"location": {"lat": 51.47, "lng": 0.0}, "accuracy": 100.0}',
+)
 
 
 def fetch_data():
@@ -27,17 +25,19 @@ def fetch_data():
     domain = "dobbies.com"
     start_url = "https://www.dobbies.com/store-locator"
 
-    with SgChrome() as driver:
+    with SgFirefox(firefox_options=geoAllowed) as driver:
         driver.get(start_url)
+        sleep(20)
         driver.find_element_by_xpath(
             '//div[@class="ms-store-select__search-see-all-stores"]'
         ).click()
-        sleep(15)
+        sleep(5)
         dom = etree.HTML(driver.page_source)
 
     all_locations = dom.xpath(
         '//a[@class="ms-store-select__location-line-shop-link"]/@href'
     )
+    print(all_locations)
     for store_url in list(set(all_locations)):
         if store_url == "https://www.dobbies.com/atherstone-outlet":
             store_url = "https://www.dobbies.com/atherstone"
