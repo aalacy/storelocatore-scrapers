@@ -1,13 +1,13 @@
-import ssl
 import time
 from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
-from sgselenium import SgFirefox
+from sgselenium import SgChrome
 from urllib.parse import unquote
 from sglogging import SgLogSetup
+from selenium_stealth import stealth
 
 logger = SgLogSetup().get_logger("bluenile.com")
 
@@ -17,9 +17,6 @@ def get_urls(driver):
     driver.execute_script("open('https://www.bluenile.com/jewelry-stores')")
     time.sleep(120)
     driver.refresh()
-    time.sleep(60)
-    driver.refresh()
-    time.sleep(30)
     source = driver.page_source
     logger.info(source)
     tree = html.fromstring(source)
@@ -27,7 +24,17 @@ def get_urls(driver):
 
 
 def fetch_data(sgw: SgWriter):
-    with SgFirefox(user_agent=user_agent, is_headless=True) as driver:
+    with SgChrome(user_agent=user_agent, is_headless=True) as driver:
+        stealth(
+            driver,
+            languages=["en-US", "en"],
+            vendor="Google Inc.",
+            platform="Win32",
+            webgl_vendor="Intel Inc.",
+            renderer="Intel Iris OpenGL Engine",
+            fix_hairline=True,
+        )
+
         urls = get_urls(driver)
         for page_url in urls:
             driver.get(page_url)
@@ -89,7 +96,6 @@ def fetch_data(sgw: SgWriter):
 
 if __name__ == "__main__":
     locator_domain = "https://www.bluenile.com/"
-    ssl._create_default_https_context = ssl._create_unverified_context
     user_agent = "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firedriver/78.0"
     with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         fetch_data(writer)
