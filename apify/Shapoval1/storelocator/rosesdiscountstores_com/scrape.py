@@ -1,39 +1,12 @@
-import csv
 import usaddress
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
+def fetch_data(sgw: SgWriter):
 
     locator_domain = "https://www.rosesdiscountstores.com"
     apis = [
@@ -48,7 +21,6 @@ def fetch_data():
         "https://api.zenlocator.com/v1/apps/app_vfde3mfb/locations/search?northeast=60.678584%2C-29.944849&southwest=20.148833%2C-121.351099",
         "https://api.zenlocator.com/v1/apps/app_vfde3mfb/locations/search?northeast=36.795595%2C-85.664657&southwest=32.791309%2C-93.591418",
     ]
-    s = set()
     for i in apis:
         session = SgRequests()
         tag = {
@@ -110,39 +82,53 @@ def fetch_data():
                 hours = j.get("hours").get("hoursOfOperation")
             except AttributeError:
                 hours = "<MISSING>"
+            hours_id = j.get("hours")
             hours_of_operation = "<MISSING>"
             if hours != "<MISSING>":
                 hours_of_operation = f"MON {hours.get('mon')} TUE {hours.get('tue')} WED {hours.get('wed')} THU {hours.get('thu')} FRI {hours.get('fri')} SAT {hours.get('sat')} SUN {hours.get('sun')}"
-            ids = j.get("id")
-            line = ids
-            if line in s:
-                continue
-            s.add(line)
-            row = [
-                locator_domain,
-                page_url,
-                location_name,
-                street_address,
-                city,
-                state,
-                postal,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
-            out.append(row)
+            if hours_of_operation == "<MISSING>":
+                r = session.get(
+                    "https://api.zenlocator.com/v1/apps/app_vfde3mfb/init?widget=MAP"
+                )
+                js = r.json()["hours"]
+                for j in js:
+                    hrs_id = j.get("id")
+                    if hrs_id == hours_id:
+                        a = j.get("hoursOfOperation")
+                        days = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]
+                        tmp = []
+                        for d in days:
+                            day = d
+                            time = a.get(f"{d}")
+                            line = f"{day} {time}"
+                            tmp.append(line)
+                        hours_of_operation = "; ".join(tmp)
 
-    return out
+            row = SgRecord(
+                locator_domain=locator_domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=postal,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
 
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+            sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID({SgRecord.Headers.LATITUDE, SgRecord.Headers.STREET_ADDRESS})
+        )
+    ) as writer:
+        fetch_data(writer)

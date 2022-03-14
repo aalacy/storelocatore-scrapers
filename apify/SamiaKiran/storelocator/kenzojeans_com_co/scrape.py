@@ -28,7 +28,7 @@ def strip_accents(text):
 
 def fetch_data():
     if True:
-        url = "https://kenzojeans.com.co/wp-admin/admin-ajax.php?action=store_search&lat=4.7109886&lng=-74.072092&max_results=500&search_radius=1000&autoload=1"
+        url = "https://kenzojeans.com.co/wp-admin/admin-ajax.php?action=store_search&lat=4.570868&lng=-74.297333&max_results=100&search_radius=500"
         loclist = session.get(url, headers=headers).json()
         for loc in loclist:
             location_name = loc["store"]
@@ -48,6 +48,7 @@ def fetch_data():
                 .get_text(separator="|", strip=True)
                 .replace("|", " ")
             )
+            raw_address = street_address + " " + city + " " + zip_postal
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url="https://kenzojeans.com.co/tiendas/",
@@ -63,6 +64,7 @@ def fetch_data():
                 latitude=latitude,
                 longitude=longitude,
                 hours_of_operation=hours_of_operation,
+                raw_address=raw_address,
             )
 
 

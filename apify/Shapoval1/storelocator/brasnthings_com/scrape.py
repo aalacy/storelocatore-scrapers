@@ -75,6 +75,8 @@ def fetch_data(sgw: SgWriter):
             ).strip()
             if hours_of_operation.count("<MISSING>") == 7:
                 hours_of_operation = "<MISSING>"
+            if hours_of_operation.count("<MISSING>") > 2:
+                hours_of_operation = "<MISSING>"
 
             row = SgRecord(
                 locator_domain=locator_domain,
