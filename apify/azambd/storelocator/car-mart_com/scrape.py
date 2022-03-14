@@ -52,7 +52,7 @@ def get_address(raw_address):
 
 def fetch_data(driver):
     driver.get("https://www.car-mart.com/locations/")
-    time.sleep(5)
+    time.sleep(15)
     htmlpage = driver.page_source
     soup = bs(htmlpage, "html.parser")
     nodes = soup.findAll("div", class_="loc")

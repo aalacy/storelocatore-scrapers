@@ -74,7 +74,7 @@ def fetch_data():
                 store_number = "<MISSING>"
                 phone = store.xpath(".//p[@class='offices--phone-number']/text()")
                 if len(phone) > 0:
-                    phone = phone[0]
+                    phone = phone[0].replace("Main:", "").strip()
                 else:
                     phone = "<MISSING>"
 
