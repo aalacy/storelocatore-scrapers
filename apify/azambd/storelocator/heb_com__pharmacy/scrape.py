@@ -1,7 +1,5 @@
 from sgscrape import simple_scraper_pipeline as sp
 from sglogging import sglog
-from lxml import html
-
 from bs4 import BeautifulSoup as bs
 from sgselenium import SgChrome
 from webdriver_manager.chrome import ChromeDriverManager
@@ -70,12 +68,12 @@ def parse(location):
     data["country_code"] = "US"
     data["zip_postal"] = location.select_one("span[itemprop=postalCode]").text
     data["phone"] = location.select_one("p[itemtype*=Pharmacy]").a["content"]
-    data["latitude"] = re.findall("(\d+.\d+,-\d+.\d+)", location.script.text)[1].split(
+    data["latitude"] = re.findall(r"(\d+.\d+,-\d+.\d+)", location.script.text)[1].split(
         ","
     )[0]
-    data["longitude"] = re.findall("(\d+.\d+,-\d+.\d+)", location.script.text)[1].split(
-        ","
-    )[1]
+    data["longitude"] = re.findall(r"(\d+.\d+,-\d+.\d+)", location.script.text)[
+        1
+    ].split(",")[1]
     data["hours_of_operation"] = ", ".join(
         loc.text.strip()
         for loc in location.select_one("p[itemtype*=Pharmacy]")
