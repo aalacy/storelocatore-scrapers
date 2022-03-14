@@ -82,49 +82,52 @@ def fetch_data():
             + str(llat)
             + "&longitude="
             + str(llng)
-            + "&count=50&radius=100&ignoreLoadin{%22id%22:%22gBar=false"
+            + "&count=50&radius=100&ignoreLoadingBar=false"
         )
-        stores = session.get(url, headers=headers).json()
-        website = "t-mobile.com"
-        if "code" not in stores:
-            for store in stores:
-                if "name" in store:
-                    name = store["name"]
-                else:
-                    name = "<MISSING>"
-                store = store["id"]
-                typ = compute_location_type(store)
-                if "url" in store:
-                    loc = store["url"]
-                else:
-                    loc = "<MISSING>"
-                phone = handle_missing(store["telephone"])
-                location = store["location"]
-                address = location["address"]
-                add = handle_missing(address["streetAddress"])
-                city = handle_missing(address["addressLocality"])
-                state = handle_missing(address["addressRegion"])
-                zc = handle_missing(address["postalCode"])
-                country = "US"
-                lat = location["latitude"]
-                lng = location["longitude"]
-                hours = parse_hours(store)
-                yield SgRecord(
-                    locator_domain=website,
-                    page_url=loc,
-                    location_name=name,
-                    street_address=add,
-                    city=city,
-                    state=state,
-                    zip_postal=zc,
-                    country_code=country,
-                    phone=phone,
-                    location_type=typ,
-                    store_number=store,
-                    latitude=lat,
-                    longitude=lng,
-                    hours_of_operation=hours,
-                )
+        try:
+            stores = session.get(url, headers=headers).json()
+            website = "t-mobile.com"
+            if "code" not in stores:
+                for store in stores:
+                    if "name" in store:
+                        name = store["name"]
+                    else:
+                        name = "<MISSING>"
+                    store = store["id"]
+                    typ = compute_location_type(store)
+                    if "url" in store:
+                        loc = store["url"]
+                    else:
+                        loc = "<MISSING>"
+                    phone = handle_missing(store["telephone"])
+                    location = store["location"]
+                    address = location["address"]
+                    add = handle_missing(address["streetAddress"])
+                    city = handle_missing(address["addressLocality"])
+                    state = handle_missing(address["addressRegion"])
+                    zc = handle_missing(address["postalCode"])
+                    country = "US"
+                    lat = location["latitude"]
+                    lng = location["longitude"]
+                    hours = parse_hours(store)
+                    yield SgRecord(
+                        locator_domain=website,
+                        page_url=loc,
+                        location_name=name,
+                        street_address=add,
+                        city=city,
+                        state=state,
+                        zip_postal=zc,
+                        country_code=country,
+                        phone=phone,
+                        location_type=typ,
+                        store_number=store,
+                        latitude=lat,
+                        longitude=lng,
+                        hours_of_operation=hours,
+                    )
+        except:
+            pass
 
 
 def scrape():
