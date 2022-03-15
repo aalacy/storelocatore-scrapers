@@ -4,9 +4,9 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.pause_resume import SerializableRequest, CrawlStateSingleton
 from sglogging import SgLogSetup
-from sgscrape.sgpostal import parse_address_intl
+from sgpostal.sgpostal import parse_address_intl
+import re
 
 logger = SgLogSetup().get_logger("sknclinics")
 
@@ -17,21 +17,13 @@ locator_domain = "https://www.sknclinics.co.uk"
 base_url = "https://www.sknclinics.co.uk/wp-json/wpgmza/v1/features/base64eJyrVkrLzClJLVKyUqqOUcpNLIjPTIlRsopRMrQ0ilHSAQkVZ5QWeLoUA0WjY4ECyaXFJfm5bpmpOSkQsVqlWgAoVxcl"
 
 
-def record_initial_requests(http, state):
+def fetch_records(http):
     markders = http.get(base_url, headers=_headers).json()["markers"]
-    for marker in markders:
-        url = marker["link"]
+    for _ in markders:
+        url = _["link"]
         if not url.startswith("http"):
             url = locator_domain + url
-        state.push_request(SerializableRequest(url=url, context={"marker": marker}))
-
-    return True
-
-
-def fetch_records(http, state):
-    for next_r in state.request_stack_iter():
-        logger.info(next_r.url)
-        _ = next_r.context.get("marker")
+        logger.info(url)
         if _["description"]:
             _addr = list(bs(_["description"], "lxml").stripped_strings)
         else:
@@ -49,15 +41,29 @@ def fetch_records(http, state):
             street_address += " " + addr.street_address_2
         city = addr.city
         if city and city.lower() in zip_postal.lower():
-            city = ""
+            zip_postal = zip_postal.replace(city, "").strip()
         state = addr.state
-        phone = (
-            bs(http.get(next_r.url, headers=_headers).text, "lxml")
-            .select_one("a.map-times-001__link")
-            .text.strip()
-        )
+        res = http.get(url, headers=_headers)
+        phone = ""
+        hours = []
+        if res and res.status_code == 200:
+            sp1 = bs(res.text, "lxml")
+            if sp1.select("div.map-times-001__times div.map-times-001__time-row"):
+                hours = [
+                    ": ".join(hh.stripped_strings)
+                    for hh in sp1.select(
+                        "div.map-times-001__times div.map-times-001__time-row"
+                    )
+                ]
+            try:
+                phone = sp1.select_one("a.map-times-001__link").text.strip()
+            except:
+                if sp1.main:
+                    pp = sp1.main.find("a", href=re.compile(r"tel:"))
+                    if pp:
+                        phone = pp.text.strip()
         yield SgRecord(
-            page_url=next_r.url,
+            page_url=url,
             store_number=_["id"],
             location_name=_["title"],
             street_address=street_address,
@@ -69,16 +75,13 @@ def fetch_records(http, state):
             latitude=_["lat"],
             longitude=_["lng"],
             locator_domain=locator_domain,
+            hours_of_operation="; ".join(hours),
             raw_address=raw_address,
         )
 
 
 if __name__ == "__main__":
-    state = CrawlStateSingleton.get_instance()
     with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         with SgRequests() as http:
-            state.get_misc_value(
-                "init", default_factory=lambda: record_initial_requests(http, state)
-            )
-            for rec in fetch_records(http, state):
+            for rec in fetch_records(http):
                 writer.write_row(rec)
