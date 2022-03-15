@@ -24,7 +24,12 @@ def fetch_data():
                 continue
 
             try:
-                coord = link.a["href"].split("/@")[1].split("/data")[0].split(",")
+                coord = (
+                    link.find("a", string=re.compile(r"Get Directions"))["href"]
+                    .split("/@")[1]
+                    .split("/data")[0]
+                    .split(",")
+                )
             except:
                 coord = ["", ""]
 
@@ -45,6 +50,8 @@ def fetch_data():
                 addr = list(link.h3.find_next_sibling().stripped_strings)
             else:
                 location_name = children[0].text.replace("–", "-").strip()
+                if not location_name:
+                    location_name = children[1].text.replace("–", "-").strip()
                 aa = children[-1]
                 if not aa.text.strip():
                     aa = children[-2]
@@ -52,6 +59,11 @@ def fetch_data():
                     addr = list(aa.stripped_strings)
                 else:
                     addr = list(aa.p.stripped_strings)
+
+            if not location_name:
+                import pdb
+
+                pdb.set_trace()
             yield SgRecord(
                 page_url=base_url,
                 location_name=location_name,

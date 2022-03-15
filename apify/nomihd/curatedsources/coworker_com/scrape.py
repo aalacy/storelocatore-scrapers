@@ -39,10 +39,17 @@ def fetch_data():
             locator_domain = website
 
             city_url = "".join(_city.xpath("./@href")).strip()
-            log.info(city_url)
             city = "".join(_city.xpath(".//text()")).strip()
 
-            driver.get(city_url)
+            is_city_req_timeout = True
+            while is_city_req_timeout is True:
+                try:
+                    log.info(city_url)
+                    driver.get(city_url)
+                    is_city_req_timeout = False
+                except:
+                    pass
+
             city_sel = lxml.html.fromstring(driver.page_source)
 
             stores = city_sel.xpath('//div[@class="item"]//a')
@@ -51,9 +58,14 @@ def fetch_data():
 
                 page_url = "".join(store.xpath("./@href"))
 
-                log.info(page_url)
-
-                driver.get(page_url)
+                is_timeout = True
+                while is_timeout is True:
+                    try:
+                        log.info(page_url)
+                        driver.get(page_url)
+                        is_timeout = False
+                    except:
+                        pass
                 store_sel = lxml.html.fromstring(driver.page_source)
 
                 location_name = " ".join(store.xpath(".//h4//text()")).strip()
@@ -135,7 +147,10 @@ def scrape():
     log.info("Started")
     count = 0
     with SgWriter(
-        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+        deduper=SgRecordDeduper(
+            record_id=RecommendedRecordIds.PageUrlId,
+            duplicate_streak_failure_factor=-1,
+        )
     ) as writer:
         results = fetch_data()
         for rec in results:

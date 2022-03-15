@@ -5,9 +5,11 @@ from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgzip.dynamic import SearchableCountries, Grain_4
+from sgzip.dynamic import SearchableCountries
 from sgzip.parallel import DynamicSearchMaker, ParallelDynamicSearch, SearchIteration
 from typing import Iterable, Tuple, Callable
+import math
+from concurrent.futures import ThreadPoolExecutor
 
 logger = SgLogSetup().get_logger("carrossier")
 
@@ -18,6 +20,48 @@ locator_domain = "https://carrossier-procolor.com/"
 base_url = "https://www.procolor.com/wp-admin/admin-ajax.php?action=store_search&lat={}&lng={}&max_results=50&search_radius=6000&filter={}&autoload=1"
 
 country_map = {"us": "129", "ca": "128"}
+
+max_workers = 12
+
+
+def fetchConcurrentSingle(_):
+    location_name = _["store"].replace("&#8217;", "'")
+    slug = (
+        location_name.replace("'", "")
+        .replace("é", "e")
+        .replace("ô", "o")
+        .replace("/", "")
+        .lower()
+    )
+    slug = "-".join([ss.strip() for ss in slug.split() if ss.strip()])
+    page_url = f"https://www.procolor.com/en-ca/shop/{slug}/"
+    response = request_with_retries(page_url)
+    return page_url, _, response
+
+
+def fetchConcurrentList(list, occurrence=max_workers):
+    output = []
+    total = len(list)
+    reminder = math.floor(total / 50)
+    if reminder < occurrence:
+        reminder = occurrence
+
+    count = 0
+    with ThreadPoolExecutor(
+        max_workers=occurrence, thread_name_prefix="fetcher"
+    ) as executor:
+        for result in executor.map(fetchConcurrentSingle, list):
+            if result:
+                count = count + 1
+                if count % reminder == 0:
+                    logger.debug(f"Concurrent Operation count = {count}")
+                output.append(result)
+    return output
+
+
+def request_with_retries(url):
+    with SgRequests(proxy_country="us") as session:
+        return session.get(url, headers=_headers)
 
 
 class ExampleSearchIteration(SearchIteration):
@@ -39,7 +83,7 @@ class ExampleSearchIteration(SearchIteration):
             except:
                 return
             logger.info(f"[{current_country}] {len(locations)} found")
-            for _ in locations:
+            for page_url, _, res in fetchConcurrentList(locations):
                 found_location_at(_["lat"], _["lng"])
                 hours = []
                 if _["hours"]:
@@ -48,18 +92,7 @@ class ExampleSearchIteration(SearchIteration):
                 street_address = _["address"]
                 if _["address2"]:
                     street_address += " " + _["address2"]
-                location_name = _["store"].replace("&#8217;", "'")
-                slug = (
-                    location_name.replace("'", "")
-                    .replace("é", "e")
-                    .replace("ô", "o")
-                    .replace("/", "")
-                    .lower()
-                )
-                slug = "-".join([ss.strip() for ss in slug.split() if ss.strip()])
-                page_url = f"https://www.procolor.com/en-ca/shop/{slug}/"
                 logger.info(page_url)
-                res = session.get(page_url, headers=_headers)
                 if res.status_code == 200:
                     sp1 = bs(res.text, "lxml")
                     hours = []
@@ -89,7 +122,9 @@ if __name__ == "__main__":
         )
     ) as writer:
         search_maker = DynamicSearchMaker(
-            use_state=False, search_type="DynamicGeoSearch", granularity=Grain_4()
+            use_state=False,
+            search_type="DynamicGeoSearch",
+            expected_search_radius_miles=500,
         )
         search_iter = ExampleSearchIteration()
         par_search = ParallelDynamicSearch(
