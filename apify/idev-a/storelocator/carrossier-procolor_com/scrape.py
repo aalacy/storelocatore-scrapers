@@ -109,7 +109,7 @@ class ExampleSearchIteration(SearchIteration):
                     for hh in sp1.select("div.working-hours div.row"):
                         day = hh.select_one("div.day").text.strip()
                         times = ", ".join(
-                            list(hh.select_one("div.hours").stripped_strings)
+                            hh.select_one("div.hours").stripped_strings
                         ).replace("0013", "00, 13")
                         hours.append(f"{day}: {times}")
                     pp = sp1.find("a", href=re.compile(r"tel:"))
