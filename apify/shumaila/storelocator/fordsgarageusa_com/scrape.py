@@ -1,5 +1,6 @@
 from bs4 import BeautifulSoup
 import csv
+import re
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -41,83 +42,67 @@ def write_output(data):
 def fetch_data():
     data = []
     p = 0
+    cleanr = re.compile(r"<[^>]+>")
+    pattern = re.compile(r"\s\s+")
     url = "https://www.fordsgarageusa.com/locations/"
     r = session.get(url, headers=headers, verify=False)
-    soup = BeautifulSoup(r.text, "html.parser")
-    link_list = soup.findAll("div", {"class": "service-content"})
-    p = 0
-    for rep in link_list:
-        title = rep.find("h4").text
-        det = rep.find("div", {"class": "service-details"}).text.splitlines()
-        try:
-            hours = rep.find("p", {"class": "hours-row"}).text.replace("\n", " ")
-        except:
-            hours = rep.findAll("p")[3].text
-            if hours.find("VIEW") > -1:
-                hours = rep.findAll("p")[2].text
-        if hours.find("Opening") > -1:
-            continue
-        street = det[1]
+    soup1 = BeautifulSoup(r.text, "html.parser")
+    divlist = soup1.findAll("div", {"class": "service-content"})
+    for div in divlist:
         flag = 0
-
+        title = div.find("h4").text
+        link = "https://www.fordsgarageusa.com" + div.find("a")["href"]
         try:
-            city, state = det[2].split(", ")
-            state, pcode = state.lstrip().split(" ")
+            hours = div.find("p", {"class": "hours-row"}).text
         except:
-            flag = 1
-            pass
-        link = rep.find("p", {"class": "location-links"})
-        link = link.find("a")
-        link = "https://www.fordsgarageusa.com" + link["href"]
-        r = session.get(link, headers=headers, verify=False)
-
-        soup = BeautifulSoup(r.text, "html.parser")
-        coord = soup.findAll("iframe")
-        coord = str(coord[1]["src"])
-        coord = coord.split("!2d", 1)[1].split("!2m")[0]
-        longt, lat = coord.split("!3d")
-        if flag == 1:
-            addresslist = soup.findAll("p", {"class": "hours-row"})
-            for adr in addresslist:
-                try:
-                    address = adr.select_one("a[href*=maps]").text.replace("\n", ",")
-                except:
-                    pass
-            address = address.split(",")
-            if len(address) == 4:
-                street = address[0] + " " + address[1]
-                city = address[2]
-                state = address[3]
-            elif len(address) == 3:
-                street = address[0]
-                city = address[1]
-                state = address[2]
-            state, pcode = state.lstrip().split(" ", 1)
-        det = rep.find("div", {"class": "service-details"}).findAll("p")
-        phone = ""
-        for dt in det:
-            if dt.text.find("Phone") > -1 and phone == "":
-                phone = dt.text
-            elif dt.text.find("Thursday") > -1 and (
-                hours == "" or hours.find("Phone") > -1
-            ):
-                hours = dt.text
-        phone = phone.replace("Phone:", "")
-        phone = phone.lstrip()
-        hours = hours.replace("\n", " ")
-        if "OPENING SOON" in hours:
+            hours = div.select_one('p:contains("Monday")').text
+        if "OPENING SOON!" in hours:
             continue
+        phone = div.select_one("a[href*=tel]").text
+        plist = div.findAll("p")
+        count = 0
+        for adr in plist:
+            if "phone" in adr.text.lower():
+                break
+            else:
+                count = count + 1
+        if "Phone" in plist[1].text:
+            content = re.sub(cleanr, "\n", str(plist[0]))
+            content = re.sub(pattern, "\n", str(content)).strip().splitlines()
+            street = content[0]
+            city, state = content[1].split(", ")
+        else:
+            if count == 2:
+                street = plist[0].text
+                try:
+                    city, state = plist[1].text.split(", ")
+                except:
+                    street = plist[0].text + " " + plist[1].text
+                    flag = 1
+            elif count == 3:
+                street = plist[0].text + " " + plist[1].text
+                city, state = plist[2].text.split(", ")
+        r = session.get(link, headers=headers, verify=False)
+        soup = BeautifulSoup(r.text, "html.parser")
+        if flag == 1:
+            adr = soup.select_one("a[href*=map]").text
+            city, state = adr.split(plist[1].text, 1)[1].split(", ", 1)
         try:
-            lat = lat.split("!3m", 1)[0]
+            maplink = soup.select_one("a[href*=map]")["href"]
+            r = session.get(maplink, headers=headers, verify=False)
+            lat, longt = r.url.split("@", 1)[1].split("data", 1)[0].split(",", 1)
+            longt = longt.split(",", 1)[0]
         except:
-            pass
+            lat = longt = "<MISSING>"
+        state, pcode = state.strip().split(" ", 1)
+
         data.append(
             [
-                "https://www.fordsgarageusa.com/",
+                "https://www.fordsgarageusa.com",
                 link,
                 title,
                 street,
-                city,
+                city.replace("\n", "").strip(),
                 state,
                 pcode,
                 "US",
@@ -126,7 +111,7 @@ def fetch_data():
                 "<MISSING>",
                 lat,
                 longt,
-                hours,
+                hours.replace("\n", " ").strip(),
             ]
         )
 

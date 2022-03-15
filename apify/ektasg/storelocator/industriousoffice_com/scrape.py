@@ -1,149 +1,144 @@
 from bs4 import BeautifulSoup
-import csv
-import string
-import re, time
 import json
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-logger = SgLogSetup().get_logger('industriousoffice_com')
+log = SgLogSetup().get_logger("industriousoffice_com")
 
 session = SgRequests()
 headers = {
-    'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
-    }
-
-
-def write_output(data):
-    with open('data.csv', mode='w',encoding='utf-8') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
-        # Header
-        writer.writerow(
-            ["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code",
-             "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-        # Body
-        for row in data:
-            writer.writerow(row)
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+}
 
 
 def fetch_data():
     # Your scraper here
-    data = []
     titlelist = []
-    titlelist.append('none')
-    url = 'https://www.industriousoffice.com/locations'
+    titlelist.append("none")
+    url = "https://www.industriousoffice.com/locations"
     r = session.get(url, headers=headers, verify=False)
-    soup = BeautifulSoup(r.text, "html.parser")
-    state_list = soup.find('section', {'class': 'section-all-locations-v2 my-lg'}).findAll('li', {'class': 'market'})
-    # logger.info("states = ",len(state_list))
+    soup = BeautifulSoup(r.text, "lxml")
+    state_list = soup.find(
+        "section", {"class": "section-all-locations-v2 my-lg"}
+    ).findAll("li", {"class": "market"})
     p = 0
-    cleanr = re.compile(r'<[^>]+>')
     for states in state_list:
-        # logger.info(states.find('a').text)
-        '''if states.find('a').text.lower().find('coming soon') > -1 :
-            continu
-            e
-        states = states.find('a')['href']
-        if states.find('techspace') > -1:
-            continue'''
-        ##logger.info(states.find('a').text)
-        statenow = states.find('a').text
-        states = states.find('a')['href']
-        logger.info(states)
+        states = states.find("a")["href"]
+        log.info(states)
         rr = session.get(states, headers=headers, verify=False)
 
         try:
-            r = rr.text.split('var marketLocations = ', 1)[1].split('];', 1)[0]
-            loclist = json.loads(r + ']')
-            # logger.info(len(loclist))
+            r = rr.text.split("var marketLocations = ", 1)[1].split("];", 1)[0]
+            loclist = json.loads(r + "]")
             for loc in loclist:
 
-                city = loc['city']
-                state = loc['abbr']
-                pcode = loc['zip']
-                phone = loc['phone']
-                street = loc['address']
-                title = loc['location_title']
-                lat = loc['latitude']
-                longt = loc['longitude']
+                city = loc["city"]
+                state = loc["abbr"]
+                pcode = loc["zip"]
+                phone = loc["phone"]
+                street = loc["address"]
+                title = loc["location_title"]
+                lat = loc["latitude"]
+                longt = loc["longitude"]
                 status = loc["text_status"]
-                if status.find('Coming') > -1:
-                    continue
-                ccode = 'US'
-                link = loc['permalink'].replace('\\', '')
-                if state == 'Wisconsin':
-                    state = 'WI'
+                if status:
+                    if status.find("Coming") > -1 or status.find("Opening") > -1:
+                        continue
+                link = loc["permalink"].replace("\\", "")
+                if state == "Wisconsin":
+                    state = "WI"
                 try:
                     if len(state) < 2:
-                        state = loc['state']
+                        state = loc["state"]
                 except:
-                    state = loc['state']
-                if phone != '' and title not in titlelist:
+                    state = loc["state"]
+
+                country_code = "US"
+                try:
+                    country_code = loc["country"]
+                except:
+                    pass
+
+                if country_code == "UK":
+                    state = "<MISSING>"
+
+                if phone != "" and title not in titlelist:
                     titlelist.append(title)
-                    data.append([
-                        'https://www.industriousoffice.com/',
-                        link,
-                        title,
-                        street,
-                        city,
-                        state,
-                        pcode,
-                        'US',
-                        '<MISSING>',
-                        phone,
-                        '<MISSING>',
-                        str(lat),
-                        str(longt),
-                        '<MISSING>'
-                    ])
-                    # logger.info(p,data[p])
+
+                    yield SgRecord(
+                        locator_domain="https://www.industriousoffice.com/",
+                        page_url=link,
+                        location_name=title,
+                        street_address=street,
+                        city=city,
+                        state=state,
+                        zip_postal=pcode,
+                        country_code=country_code,
+                        store_number="<MISSING>",
+                        phone=phone,
+                        location_type="<MISSING>",
+                        latitude=lat,
+                        longitude=longt,
+                        hours_of_operation="<MISSING>",
+                    )
                     p += 1
 
         except:
 
-            r = rr.text.split('<script type="application/ld+json">', 1)[1].split('</script>', 1)[0]
+            r = rr.text.split('<script type="application/ld+json">', 1)[1].split(
+                "</script>", 1
+            )[0]
             r = json.loads(r)
             link = states
-            title = r['name']
-            phone = r['telephone']
-            street = r['address']['streetAddress']
-            city = r['address']['addressLocality']
-            state = r['address']['addressRegion']
-            pcode = r['address']['postalCode']
-            lat = r['geo']['latitude']
-            longt = r['geo']['longitude']
-            if state == 'Wisconsin':
-                state = 'WI'
-            if phone != '' and title not in titlelist:
+            title = r["name"]
+            phone = r["telephone"]
+            street = r["address"]["streetAddress"]
+            city = r["address"]["addressLocality"]
+            state = r["address"]["addressRegion"]
+            pcode = r["address"]["postalCode"]
+            lat = r["geo"]["latitude"]
+            longt = r["geo"]["longitude"]
+            if state == "Wisconsin":
+                state = "WI"
+            if phone != "" and title not in titlelist:
                 titlelist.append(title)
-                data.append([
-                    'https://www.industriousoffice.com/',
-                    link,
-                    title,
-                    street,
-                    city,
-                    state,
-                    pcode,
-                    'US',
-                    '<MISSING>',
-                    phone,
-                    '<MISSING>',
-                    str(lat),
-                    str(longt),
-                    '<MISSING>'
-                ])
-                # logger.info(p,data[p])
+                yield SgRecord(
+                    locator_domain="https://www.industriousoffice.com/",
+                    page_url=link,
+                    location_name=title,
+                    street_address=street,
+                    city=city,
+                    state=state,
+                    zip_postal=pcode,
+                    country_code="US",
+                    store_number="<MISSING>",
+                    phone=phone,
+                    location_type="<MISSING>",
+                    latitude=lat,
+                    longitude=longt,
+                    hours_of_operation="<MISSING>",
+                )
                 p += 1
-
-    return data
 
 
 def scrape():
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
-    data = fetch_data()
-    write_output(data)
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    log.info("Started")
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()

@@ -3,21 +3,22 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import time
-import sgzip
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger("rbcroyalbank_com")
-
-
 session = SgRequests()
 
 
 def write_output(data):
     with open("data.csv", mode="w") as output_file:
         writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+            output_file,
+            delimiter=",",
+            quotechar='"',
+            quoting=csv.QUOTE_ALL,
+            lineterminator="\n",
         )
-
         writer.writerow(
             [
                 "locator_domain",
@@ -49,7 +50,8 @@ def request_wrapper(url, method, headers, data=None):
                 return r
                 break
             except:
-                time.sleep(2)
+                logger.info("Wait inside request wrapper")
+                time.sleep(10)
                 request_counter = request_counter + 1
                 if request_counter > 10:
                     return None
@@ -64,6 +66,7 @@ def request_wrapper(url, method, headers, data=None):
                 return r
                 break
             except:
+                logger.info("Wait inside ")
                 time.sleep(2)
                 request_counter = request_counter + 1
                 if request_counter > 10:
@@ -75,21 +78,27 @@ def request_wrapper(url, method, headers, data=None):
 
 def fetch_data():
 
-    addressess = []
-    search = sgzip.ClosestNSearch()
-    search.initialize(include_canadian_fsas=True)
-
-    MAX_RESULTS = 25
-    current_results_len = 0
+    addressess = dict()
+    search = DynamicZipSearch(
+        country_codes=[SearchableCountries.CANADA],
+        max_search_results=100,
+    )
 
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36",
         "x-requested-with": "XMLHttpRequest",
-        "referer": "https://www.thetinfishrestaurants.com/locations-menus/find-a-tin-fish-location-near-you/",
         "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
     }
-    coord = search.next_zip()
-    while coord:
+
+    ziplist = list(search)
+    logger.info(len(ziplist))
+
+    for count, coord in enumerate(ziplist, 1):
+
+        if count % 200 is False:
+            logger.info(f"next 200 zip -- {count} checked/searched! Now Waiting")
+            time.sleep(10)
+
         result_coords = []
         locator_domain = "https://www.rbcroyalbank.com"
         location_name = ""
@@ -105,34 +114,40 @@ def fetch_data():
         longitude = ""
         hours_of_operation = ""
         page_url = ""
-        data = (
-            "useCookies=1&lang=&q="
-            + str(search.current_zip)
-            + "&searchBranch=1&searchATM=1"
-        )
+        data = "useCookies=1&lang=&q=" + str(coord) + "&searchBranch=1"
+
         try:
             r = session.post(
                 "https://maps.rbcroyalbank.com/index.php", headers=headers, data=data
             )
         except:
+            logger.info(f"Zip ({coord}) request failed !!! ")
             continue
-        soup = BeautifulSoup(r.text, "lxml")
-        if "markerData[1]" in soup.text:
+
+        soup = str(BeautifulSoup(r.text, "lxml"))
+        if "markerData[1]" in soup:
             script = (
-                soup.text.split("markerData[1]=")[1]
+                soup.split("markerData[1]=")[1]
                 .split("=true;for(var")[0]
                 .split("{label:")
             )
-            current_results_len = len(script) - 1
-            for i in range(len(script))[1:]:
+            for i in range(len(script))[1:]:  # 50
                 latitude = script[i].split("lat:")[1].split(",")[0]
                 longitude = script[i].split("lat:")[1].split(",")[1].split("lng:")[1]
+                search.found_location_at(latitude, longitude)
                 id1 = script[i].split("locationId:'")[1].split("',t")[0]
-                http = (
+                page_url = (
                     "https://maps.rbcroyalbank.com/locator/locationDetails.php?l="
                     + str(id1)
                 )
-                r1 = request_wrapper(http, "post", headers=headers, data=data)
+
+                if addressess.get(page_url):
+                    continue
+                else:
+                    addressess[page_url] = True
+
+                logger.info(page_url)
+                r1 = request_wrapper(page_url, "get", headers=headers)
                 if r1 is None:
                     continue
                 soup1 = BeautifulSoup(r1.text, "lxml")
@@ -156,13 +171,12 @@ def fetch_data():
                     },
                 )
 
-                if loc_dat1 is not None:
-                    location_name = list(loc_dat1.stripped_strings)[0]
-                    street_address = list(loc_dat1.stripped_strings)[1]
-                    city_state_zipp = (
-                        list(loc_dat1.stripped_strings)[2].strip().lstrip()
-                    )
+                if loc_dat1:
+                    stripped_strings = list(loc_dat1.stripped_strings)
 
+                    location_name = stripped_strings[0]
+                    street_address = stripped_strings[1]
+                    city_state_zipp = stripped_strings[2].strip().lstrip()
                     ca_zip_list = re.findall(
                         r"[A-Z]{1}[0-9]{1}[A-Z]{1}\s*[0-9]{1}[A-Z]{1}[0-9]{1}",
                         str(city_state_zipp),
@@ -190,10 +204,14 @@ def fetch_data():
                         .replace(",", "")
                     )
 
-                if loc_dat is not None:
-                    location_name = list(loc_dat.stripped_strings)[0]
-                    street_address = list(loc_dat.stripped_strings)[1]
-                    city_state_zipp = list(loc_dat.stripped_strings)[2].strip().lstrip()
+                if loc_dat:
+                    stripped_strings = list(loc_dat.stripped_strings)
+                    if stripped_strings[0].upper() == "IMPORTANT":
+                        stripped_strings = stripped_strings[2:]  # Skip 0 and 1
+
+                    location_name = stripped_strings[0]
+                    street_address = stripped_strings[1]
+                    city_state_zipp = stripped_strings[2].strip().lstrip()
                     ca_zip_list = re.findall(
                         r"[A-Z]{1}[0-9]{1}[A-Z]{1}\s*[0-9]{1}[A-Z]{1}[0-9]{1}",
                         str(city_state_zipp),
@@ -220,8 +238,16 @@ def fetch_data():
                         .replace(state, "")
                         .replace(",", "")
                     )
-                    phone = "<MISSING>"
                     hours_of_operation = " ".join(list(loc_dat.stripped_strings)[8:22])
+                    if "ours:" in hours_of_operation:
+                        hours_of_operation = hours_of_operation.split("ours:")[
+                            1
+                        ].strip()
+
+                if location_type == "Branch":
+                    phone = stripped_strings[4]
+                else:
+                    phone = "<MISSING>"
 
                 store = []
                 result_coords.append((latitude, longitude))
@@ -240,16 +266,11 @@ def fetch_data():
                 store.append(hours_of_operation if hours_of_operation else "<MISSING>")
                 store.append(page_url if page_url else "<MISSING>")
 
-                if store[2] in addressess:
-                    continue
-                addressess.append(store[2])
                 yield store
-
-        if current_results_len < MAX_RESULTS:
-            search.max_count_update(result_coords)
-        else:
-            raise Exception("expected at most " + str(MAX_RESULTS) + " results")
-        coord = search.next_zip()
+                if len(addressess) % 50 is False:
+                    logger.info("50 more scraped! Now Waiting")
+                    time.sleep(5)
+    logger.info(f">>> Total zip searched : {len(ziplist)}")
 
 
 def scrape():

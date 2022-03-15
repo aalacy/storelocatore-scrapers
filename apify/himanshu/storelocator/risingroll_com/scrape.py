@@ -1,109 +1,116 @@
-import csv
-from sgrequests import SgRequests
-from bs4 import BeautifulSoup
 import re
-import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('risingroll_com')
-
-
-
-
+import usaddress
+from sglogging import sglog
+from bs4 import BeautifulSoup
+from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
+website = "risingroll_com"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
 
-def write_output(data):
-    with open('data.csv', 'w') as output_file:
-        writer = csv.writer(output_file, delimiter=",")
 
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36",
+}
 
-        # logger.info("data::" + str(data))
-        for i in data or []:
-            writer.writerow(i)
+
+DOMAIN = "https://risingroll.com"
+MISSING = SgRecord.MISSING
 
 
 def fetch_data():
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
-    }
+    if True:
+        url = "https://risingroll.com/locations/"
+        r = session.get(url, headers=headers)
+        soup = BeautifulSoup(r.text, "html.parser")
+        loclist = soup.findAll("div", {"class": "pm-location"})
+        for loc in loclist:
+            if "coming soon" in loc.text.lower():
+                continue
+            page_url = loc.find("a", string=re.compile("View Location & Menu"))
+            if not page_url:
+                page_url = url
+            else:
+                page_url = DOMAIN + page_url["href"]
+            location_name = loc.find("h4").text
+            log.info(page_url)
+            address = (
+                loc.find("a", {"class": "address-link"})
+                .get_text(separator="|", strip=True)
+                .replace("|", " ")
+            )
+            try:
+                hours_of_operation = (
+                    loc.find("div", {"class": "hours"})
+                    .get_text(separator="|", strip=True)
+                    .replace("|", " ")
+                )
+            except:
+                hours_of_operation = MISSING
+            try:
+                phone = loc.select_one("a[href*=tel]").text
+            except:
+                phone = MISSING
+            address = address.replace(",", " ")
+            address = usaddress.parse(address)
+            i = 0
+            street_address = ""
+            city = ""
+            state = ""
+            zip_postal = ""
+            while i < len(address):
+                temp = address[i]
+                if (
+                    temp[1].find("Address") != -1
+                    or temp[1].find("Street") != -1
+                    or temp[1].find("Recipient") != -1
+                    or temp[1].find("Occupancy") != -1
+                    or temp[1].find("BuildingName") != -1
+                    or temp[1].find("USPSBoxType") != -1
+                    or temp[1].find("USPSBoxID") != -1
+                ):
+                    street_address = street_address + " " + temp[0]
+                if temp[1].find("PlaceName") != -1:
+                    city = city + " " + temp[0]
+                if temp[1].find("StateName") != -1:
+                    state = state + " " + temp[0]
+                if temp[1].find("ZipCode") != -1:
+                    zip_postal = zip_postal + " " + temp[0]
+                i += 1
 
-    base_url = "https://risingroll.com"
-    r = session.get(
-        "https://risingroll.com/locations-menu/", headers=headers)
-    soup = BeautifulSoup(r.text, "lxml")
-    # logger.info(soup.prettify())
-
-    return_main_object = []
-
-    # it will used in store data.
-    locator_domain = base_url
-    location_name = ""
-    street_address = "<MISSING>"
-    city = "<MISSING>"
-    state = "<MISSING>"
-    zip = "<MISSING>"
-    country_code = "US"
-    store_number = "<MISSING>"
-    phone = "<MISSING>"
-    location_type = "<MISSING>"
-    latitude = "<MISSING>"
-    longitude = "<MISSING>"
-    raw_address = ""
-    hours_of_operation = "<MISSING>"
-
-    for val in soup.find_all('div', class_="et_section_regular"):
- 
-        for location in val.find_all('div', {'id': 'locdesc'}):
-            if location != []:
-                location_name = location.find('h1').text
-                location_details = location.find('a')
-                r_location = session.get(
-                    base_url + location_details['href'], headers=headers)
-                page_url = base_url + location_details['href']
-                soup_loc = BeautifulSoup(r_location.text, "lxml")
-                supersup=soup_loc.find("iframe",{"src":re.compile("mapquest.com")})['src']
-                try:
-                    ph = str(soup_loc.find("div",{"class":"et_pb_column_5"})).split("<strong>P")[1]
-                    phone_list = re.findall(re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(ph))
-                    phone = phone_list[0]
-                except:
-                    phone = "<MISSING>"
-                    pass
-                r_locations = BeautifulSoup(session.get(supersup, headers=headers).text,'lxml')
-                data = json.loads(r_locations.find("script",{"id":"MQPlace"}).text)
-                location_name = (soup_loc.find("div",{"class":"et_pb_column_5"}).find("strong").text)
-                street_address=data['address']['address1']
-                city=data['address']['locality']
-                state=data['address']['region']
-                zip=data['address']['postalCode']
-                latitude = data['displayLatLng']['lat']
-                longitude = data['displayLatLng']['lng']
-                if "https://risingroll.com/gainesville-fl-university-of-florida/" in page_url:
-                    phone = "352-294-2213"
-
-                if "https://risingroll.com/dunwoody-ga/" in page_url:
-                    phone = "770.698.8000"
-                store = [locator_domain, location_name.strip().replace("\n",' '), street_address, city, state, zip, country_code,
-                                     store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
-
-                store = ["<MISSING>" if x ==
-                            "" else x for x in store]
-                store = [str(x).strip() if x else "<MISSING>" for x in store]
-                # logger.info("data = " + str(store))
-                # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-                yield store
-
-
-
-
+            yield SgRecord(
+                locator_domain=DOMAIN,
+                page_url=page_url,
+                location_name=location_name.strip(),
+                street_address=street_address.strip(),
+                city=city.strip(),
+                state=state.strip(),
+                zip_postal=zip_postal.strip(),
+                country_code="US",
+                store_number=MISSING,
+                phone=phone.strip(),
+                location_type=MISSING,
+                latitude=MISSING,
+                longitude=MISSING,
+                hours_of_operation=hours_of_operation.strip(),
+            )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()

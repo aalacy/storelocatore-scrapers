@@ -1,0 +1,3 @@
+lxml==4.6.2
+sgselenium==0.1.1
+sgvalidator==0.0.71

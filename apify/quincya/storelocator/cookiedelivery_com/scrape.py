@@ -58,17 +58,13 @@ def fetch_data():
             continue
         location_name = item.h6.text.strip()
 
-        raw_address = item.p.text.replace("\xa0", " ").strip().split("\r\n")
-        if "<!" in raw_address[0]:
-            raw_address.pop(0)
-            raw_address.pop(0)
-        if "Prosper -" in raw_address[0]:
-            raw_address.pop(0)
+        raw_address = list(item.p.stripped_strings)
 
-        street_address = raw_address[0].strip()
-        city = raw_address[1].strip().split(",")[0].strip()
-        state = raw_address[1].strip().split(",")[1][:-6].strip()
-        zip_code = raw_address[1].strip().split(",")[1][-6:].strip()
+        street_address = raw_address[-3].strip()
+        city_line = raw_address[-2].strip().replace("Cypress TX", "Cypress, TX")
+        city = city_line.split(",")[0].strip()
+        state = city_line.split(",")[1][:-6].strip()
+        zip_code = city_line.split(",")[1][-6:].strip()
 
         if city == "Prosper TX":
             city = "Prosper"

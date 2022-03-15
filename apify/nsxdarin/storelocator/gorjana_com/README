@@ -1,1 +1,1 @@
-rewrite of https://github.com/SafeGraphInc/crawl-service/blob/master/apify/richard/storelocator/gorjana_com/scrape.py
+--ignore StoreNumberColumnValidator (Confirmed on website)

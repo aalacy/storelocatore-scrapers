@@ -1,5 +1,6 @@
-sgselenium
-lxml==4.3.4
-sgrequests
-beautifulsoup4==4.7.1
-sglogging
+--extra-index-url https://dl.cloudsmith.io/KVaWma76J5VNwrOm/crawl/crawl/python/simple/
+sgrequests==0.2.9
+sgscrape==0.2.6
+sglogging==0.0.4
+sgvalidator==0.0.71
+beautifulsoup4==4.10.0

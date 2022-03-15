@@ -1,6 +1,9 @@
-import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 session = SgRequests()
 headers = {
@@ -8,33 +11,6 @@ headers = {
 }
 
 logger = SgLogSetup().get_logger("lkqcorp_com")
-
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
 
 
 def fetch_data():
@@ -54,7 +30,66 @@ def fetch_data():
         "NU",
         "BC",
     ]
-    for x in range(1, 240):
+    usstates = [
+        "AK",
+        "AL",
+        "AR",
+        "AS",
+        "AZ",
+        "CA",
+        "CO",
+        "CT",
+        "DC",
+        "DE",
+        "FL",
+        "GA",
+        "GU",
+        "HI",
+        "IA",
+        "ID",
+        "IL",
+        "IN",
+        "KS",
+        "KY",
+        "LA",
+        "MA",
+        "MD",
+        "ME",
+        "MI",
+        "MN",
+        "MO",
+        "MP",
+        "MS",
+        "MT",
+        "NC",
+        "ND",
+        "NE",
+        "NH",
+        "NJ",
+        "NM",
+        "NV",
+        "NY",
+        "OH",
+        "OK",
+        "OR",
+        "PA",
+        "PR",
+        "RI",
+        "SC",
+        "SD",
+        "TN",
+        "TX",
+        "UM",
+        "UT",
+        "VA",
+        "VI",
+        "VT",
+        "WA",
+        "WI",
+        "WV",
+        "WY",
+    ]
+    for x in range(1, 250):
         url = (
             "https://www.lkqcorp.com/wp-json/cf-elementor-modules/v1/location-finder/search?category_id=0&lat=&lng=&page="
             + str(x)
@@ -63,7 +98,6 @@ def fetch_data():
         r = session.get(url, headers=headers)
         logger.info("Pulling Stores Page %s..." % str(x))
         for line in r.iter_lines():
-            line = str(line.decode("utf-8"))
             if '{"post_id":"' in line:
                 items = line.split('{"post_id":"')
                 for item in items:
@@ -98,37 +132,44 @@ def fetch_data():
                                 state = addinfo.split(",")[3].strip().split(" ")[0]
                                 zc = addinfo.split(",")[3].strip().split(" ", 1)[1]
                         except:
-                            name = "none"
-                        if (
-                            "LKQ" in name[:3]
-                            and "Ireland" not in state
-                            and "Northern" not in state
-                        ):
-                            if state in canada:
-                                country = "CA"
-                            else:
-                                country = "US"
-                            yield [
-                                website,
-                                lurl,
-                                name,
-                                add,
-                                city,
-                                state,
-                                zc,
-                                country,
-                                store,
-                                phone,
-                                typ,
-                                lat,
-                                lng,
-                                hours,
-                            ]
+                            pass
+                        if "-" in name:
+                            name = name.split("-")[0].strip()
+                        country = "<MISSING>"
+                        if state in canada:
+                            country = "CA"
+                        if state in usstates:
+                            country = "US"
+                        if state not in canada and state not in usstates:
+                            country = addinfo.rsplit(",", 1)[1].strip()
+                            state = "<MISSING>"
+                            zc = "<INACCESSIBLE>"
+                            add = addinfo.split(",")[0].strip()
+                            city = "<INACCESSIBLE>"
+                        yield SgRecord(
+                            locator_domain=website,
+                            page_url=lurl,
+                            location_name=name,
+                            street_address=add,
+                            city=city,
+                            state=state,
+                            zip_postal=zc,
+                            country_code=country,
+                            phone=phone,
+                            location_type=typ,
+                            store_number=store,
+                            latitude=lat,
+                            longitude=lng,
+                            raw_address=addinfo,
+                            hours_of_operation=hours,
+                        )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()

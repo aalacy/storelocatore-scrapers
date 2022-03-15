@@ -110,23 +110,32 @@ def fetch_data():
         check_status = session.get(
             page_url + ".locationannouncement.json", headers=HEADERS
         ).json()
-        hoo_content = content.find("p", text="Opening times").find_parent("div")
-        hoo = hoo_content.find_all("p")
-        hoo.pop(0)
-        if check_status["show"] and "CLOSED" in check_status["message"]:
-            location_type = "TEMP_CLOSED"
-            hours_of_operation = ", ".join([x.text.strip() for x in hoo[:2]])
-        elif "CLOSED" in hoo_content.text.strip(","):
-            location_type = "TEMP_CLOSED"
-            hours_of_operation = "<MISSING>"
-        elif "In line with the latest government" in hoo_content.text.strip(","):
+        hoo_content = content.find("p", text="Opening times")
+        if not hoo_content:
             location_type = "OPEN"
-            hours_of_operation = re.sub(
-                r".*restrictions\s+", "", hoo[0].text.replace(".", "")
-            )
+            hours_of_operation = "Mon - Sun: 12AM - 9PM"
         else:
-            location_type = "OPEN"
-            hours_of_operation = ", ".join([x.text.strip() for x in hoo[:2]])
+            hoo_content = hoo_content.find_parent("div")
+            hoo = hoo_content.find_all("p")
+            hoo.pop(0)
+            if (
+                check_status["message"]
+                and check_status["show"]
+                and "CLOSED" in check_status["message"]
+            ):
+                location_type = "TEMP_CLOSED"
+                hours_of_operation = ", ".join([x.text.strip() for x in hoo[:2]])
+            elif "CLOSED" in hoo_content.text.strip(","):
+                location_type = "TEMP_CLOSED"
+                hours_of_operation = "<MISSING>"
+            elif "In line with the latest government" in hoo_content.text.strip(","):
+                location_type = "OPEN"
+                hours_of_operation = re.sub(
+                    r".*restrictions\s+", "", hoo[0].text.replace(".", "")
+                )
+            else:
+                location_type = "OPEN"
+                hours_of_operation = ", ".join([x.text.strip() for x in hoo[:2]])
         latitude = "<MISSING>"
         longitude = "<MISSING>"
         log.info("Append {} => {}".format(location_name, street_address))

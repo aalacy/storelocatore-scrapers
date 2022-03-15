@@ -78,7 +78,7 @@ def fetch_data():
                 add = line2.split(
                     '<span class="fa fa-location-pin m-location-info__icon"></span>'
                 )[1].split("<")[0]
-                addinfo = line2.split("<br/>")[1].split("<")[0].strip()
+                addinfo = line2.split("<br />")[1].split("<")[0].strip()
                 city = addinfo.split(",")[0]
                 state = addinfo.split(",")[1].strip().split(" ")[0]
                 zc = addinfo.rsplit(" ", 1)[1]
@@ -114,9 +114,9 @@ def fetch_data():
         hours = hours.replace("day", "day:").replace("::", "")
         if "Bedford Moore Farmers" in name:
             name = "Bedford Moore Farmers"
-        if "Guntown" in loc:
+        if "guntown" in loc or "Guntown" in loc:
             hours = "Monday - Friday 7:30 a.m. - 4:30 p.m."
-        if "Weakley-Farmers-Greenfield" in loc:
+        if "weakley-farmers-greenfield" in loc:
             hours = "Monday - Friday 7:30 am - 4:30 pm; Saturday 7:30 am - 12:00 pm"
         yield [
             website,

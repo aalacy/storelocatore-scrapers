@@ -84,6 +84,8 @@ def fetch_data():
         state = "<MISSING>"
         zip = location["cap"]
         phone = myutil._valid(location["phoneNumber1"])
+        if phone == "<MISSING>":
+            phone = myutil._valid(location.get("phoneNumber2"))
         location_type = location["type"]
         hours_of_operation = "<MISSING>"
         latitude = location["latitude"]

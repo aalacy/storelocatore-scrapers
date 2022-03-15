@@ -1,76 +1,94 @@
-from sgrequests import SgRequests
-from bs4 import BeautifulSoup
-import csv
-import time
-from random import randint
 import json
-import re
-from sglogging import SgLogSetup
 
-logger = SgLogSetup().get_logger('gbk_co_uk')
+from bs4 import BeautifulSoup
+
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+
+from sgrequests import SgRequests
 
 
+def fetch_data(sgw: SgWriter):
 
-def write_output(data):
-	with open('data.csv', mode='w', encoding="utf-8") as output_file:
-		writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+    base_link = "https://gbk.co.uk/find-your-gbk"
 
-		# Header
-		writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-		# Body
-		for row in data:
-			writer.writerow(row)
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
+    headers = {"User-Agent": user_agent}
 
-def fetch_data():
+    session = SgRequests()
 
-	base_link = "https://www.gbk.co.uk/distance/get-locations/search"
+    req = session.get(base_link, headers=headers)
+    base = BeautifulSoup(req.text, "lxml")
 
-	user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36'
-	HEADERS = {'User-Agent' : user_agent}
+    locator_domain = "https://gbk.co.uk"
 
-	session = SgRequests()
-	req = session.get(base_link, headers = HEADERS)
-	base = BeautifulSoup(req.text,"lxml")
+    js = (
+        str(base)
+        .replace("&quot;", '"')
+        .split('restaurants="')[1]
+        .split('" recaptcha')[0]
+    )
+    stores = json.loads(js)
 
-	data = []
+    for store_data in stores:
+        link = store_data["permalink"]
+        location_name = store_data["title"]
+        street_address = store_data["address_lines"][0]["address_line"]
+        city = store_data["city"]
+        if city in street_address.strip()[-len(city) :]:
+            street_address = " ".join(street_address.split(",")[:-1])
+        state = store_data["county_region"]
+        if not state:
+            state = "<MISSING>"
+        zip_code = store_data["zip_postal_code"]
+        country_code = "GB"
+        location_type = "<MISSING>"
+        store_number = store_data["restaurant_id"]
+        if not store_number:
+            store_number = "<MISSING>"
+        phone = store_data["telephone_display"]
+        if not phone:
+            phone = "<MISSING>"
+        latitude = store_data["latitude"]
+        longitude = store_data["longitude"]
 
-	locator_domain = "gbk.co.uk"
+        hours_of_operation = ""
+        raw_hours = store_data["opening_hours"]
+        for hours in raw_hours:
+            day = hours["day"]
+            if hours["restaurant_closed"]:
+                times = "Closed"
+            else:
+                opens = hours["opening_time"]
+                closes = hours["closing_time"]
+                times = opens + "-" + closes
+            if opens != "" and closes != "":
+                clean_hours = day + " " + times
+                hours_of_operation = (hours_of_operation + " " + clean_hours).strip()
+        if not hours_of_operation:
+            hours_of_operation = "<MISSING>"
 
-	stores = json.loads(base.text)["locations"]
+        sgw.write_row(
+            SgRecord(
+                locator_domain=locator_domain,
+                page_url=link,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_code,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
+        )
 
-	for store in stores:
-		link = "https://www.gbk.co.uk" + store["link"].split('"')[1]
-		logger.info(link)
 
-		location_name = store['title']
-		raw_address = store['full_address'].split(",")
-		street_address = " ".join(raw_address[:-2]).strip()
-		street_address = (re.sub(' +', ' ', street_address)).strip()
-		city = city = raw_address[-2].strip()
-		state = "<MISSING>"
-		zip_code = raw_address[-1].strip()
-		if zip_code == "The Moor S1 4PA":
-			zip_code = "S1 4PA"
-			street_address = "Unit 8, 24, The Moor"
-			city = "Sheffield"
-		country_code = "GB"
-		store_number = store['id']
-		location_type = "<MISSING>"
-		latitude = store['lat']
-		longitude = store['lng']
-
-		req = session.get(link, headers = HEADERS)
-		base = BeautifulSoup(req.text,"lxml")
-
-		phone = base.find(class_="gbk gbk-phone").text.strip()
-		hours_of_operation = base.find(class_="location-opening-times").text.replace("opening hours","").replace("Open","").strip().replace("\n"," ")
-		hours_of_operation = (re.sub(' +', ' ', hours_of_operation)).strip()
-
-		data.append([locator_domain, link, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
-	return data
-
-def scrape():
-	data = fetch_data()
-	write_output(data)
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    fetch_data(writer)

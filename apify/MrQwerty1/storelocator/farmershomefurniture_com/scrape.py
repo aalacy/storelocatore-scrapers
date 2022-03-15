@@ -38,8 +38,15 @@ def fetch_data():
     session = SgRequests()
     locator_domain = "https://www.farmershomefurniture.com"
     api_url = "https://secure.gotwww.com/gotlocations.com/microd/farmershomefurniture.com/index.php?bypass=y"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+        "Connection": "keep-alive",
+        "Referer": "https://secure.gotwww.com/gotlocations.com/microd/farmershomefurniture.com/responsive.wap.getloc.php?brand=",
+        "Upgrade-Insecure-Requests": "1",
+    }
 
-    r = session.get(api_url)
+    r = session.get(api_url, headers=headers)
     tree = html.fromstring(r.text)
     script = "".join(tree.xpath("//script[contains(text(),'L.marker')]/text()"))
 

@@ -1,139 +1,165 @@
+import json
+from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
-from bs4 import BeautifulSoup
-import csv
-import time
-from random import randint
-import re 
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('ashleyfurniture_com')
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
+def get_hours(hours) -> str:
+    tmp = []
+    for h in hours:
+        day = str(h.get("dayOfWeek"))
+        if day.find("/") != -1:
+            day = day.split("/")[-1].strip()
+        opens = h.get("opens")
+        closes = h.get("closes")
+        line = f"{day} {opens} - {closes}"
+        if opens == closes:
+            line = f"{day} Closed"
+        tmp.append(line)
+    hours_of_operation = "; ".join(tmp) or "<MISSING>"
+    return hours_of_operation
 
 
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+def fetch_data(sgw: SgWriter):
 
-        # Header
-        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-        # Body
-        for row in data:
-            writer.writerow(row)
+    locator_domain = "https://ashleyfurniture.com/"
+    api_url = "https://stores.ashleyfurniture.com/outlet"
+    session = SgRequests()
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
+    }
+    r = session.get(api_url, headers=headers)
+    tree = html.fromstring(r.text)
+    div = tree.xpath('//div[@class="state-col"]/a')
+    for d in div:
+        slug = "".join(d.xpath(".//@href"))
+        state_url = f"https://stores.ashleyfurniture.com{slug}"
+        r = session.get(state_url, headers=headers)
+        tree = html.fromstring(r.text)
+        div = tree.xpath('//div[@class="storeName"]/a')
+        for d in div:
+            slug = "".join(d.xpath(".//@href"))
+            page_url = f"https://stores.ashleyfurniture.com{slug}"
+            session = SgRequests()
+            r = session.get(page_url, headers=headers)
+            tree = html.fromstring(r.text)
+            div = "".join(tree.xpath('//script[contains(text(), "telephone")]/text()'))
+            j = json.loads(div)
+            a = j.get("address")
+            street_address = (
+                str(a.get("streetAddress"))
+                .replace("&#39;", "`")
+                .replace("&#194;", "Â")
+                .replace("&#233;", "é")
+                .strip()
+                or "<MISSING>"
+            )
+            city = a.get("addressLocality") or "<MISSING>"
+            state = a.get("addressRegion") or "<MISSING>"
+            postal = a.get("postalCode") or "<MISSING>"
+            country_code = a.get("addressCountry") or "<MISSING>"
+            location_name = j.get("name") or "<MISSING>"
+            phone = j.get("telephone") or "<MISSING>"
+            hours = j.get("openingHoursSpecification") or "<MISSING>"
+            hours_of_operation = "<MISSING>"
+            if hours != "<MISSING>":
+                hours_of_operation = get_hours(hours)
+            if hours_of_operation.count("Closed") == 7:
+                hours_of_operation = "Closed"
+            latitude = j.get("geo").get("latitude") or "<MISSING>"
+            longitude = j.get("geo").get("longitude") or "<MISSING>"
+            location_type = "outlet"
 
-def fetch_data():
+            row = SgRecord(
+                locator_domain=locator_domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=postal,
+                country_code=country_code,
+                store_number=SgRecord.MISSING,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
 
-	user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36'
-	HEADERS = {'User-Agent' : user_agent}
+            sgw.write_row(row)
 
-	session = SgRequests()
+    api_url = "https://stores.ashleyfurniture.com/sitemap.xml"
+    session = SgRequests()
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
+    }
+    r = session.get(api_url, headers=headers)
+    tree = html.fromstring(r.content)
+    div = tree.xpath("//url/loc")
+    for d in div:
 
-	# Begin scraper
+        page_url = "".join(d.xpath(".//text()"))
+        if page_url.count("/") < 7:
+            continue
 
-	base_url="https://www.ashleyfurniture.com"
-	location_url ="https://stores.ashleyfurniture.com/store"
-	page_urls = []
-	locs = []
-	streets = []
-	states=[]
-	cities = []
-	types=[]
-	phones = []
-	zips = []
-	longs = []
-	lats = []
-	timing = []
-	ids=[]
-	pages=[]
-	pages_url = []
+        r = session.get(page_url, headers=headers)
+        tree = html.fromstring(r.text)
+        div = "".join(tree.xpath('//script[contains(text(), "telephone")]/text()'))
+        j = json.loads(div)
+        a = j.get("address")
+        street_address = (
+            str(a.get("streetAddress"))
+            .replace("&#39;", "`")
+            .replace("&#194;", "Â")
+            .replace("&#233;", "é")
+            .strip()
+            or "<MISSING>"
+        )
+        city = a.get("addressLocality") or "<MISSING>"
+        state = a.get("addressRegion") or "<MISSING>"
+        postal = a.get("postalCode") or "<MISSING>"
+        country_code = a.get("addressCountry") or "<MISSING>"
+        location_name = j.get("name") or "<MISSING>"
+        phone = j.get("telephone") or "<MISSING>"
+        hours = j.get("openingHoursSpecification") or "<MISSING>"
+        hours_of_operation = "<MISSING>"
+        if hours != "<MISSING>":
+            hours_of_operation = get_hours(hours)
+        if hours_of_operation.count("Closed") == 7:
+            hours_of_operation = "Closed"
+        latitude = j.get("geo").get("latitude") or "<MISSING>"
+        longitude = j.get("geo").get("longitude") or "<MISSING>"
+        location_type = "store"
 
-	req = session.get(location_url, headers = HEADERS)
-	time.sleep(randint(1,2))
-	try:
-		item = BeautifulSoup(req.text,"lxml")
-	except (BaseException):
-		logger.info('[!] Error Occured. ')
-		logger.info('[?] Check whether system is Online.')
-	
-	link=item.find(class_="state-col")
-	links=link.find_all("a")
-	
-	for a in range(len(links)):
-		pages_url.append("https://stores.ashleyfurniture.com" + links[a]['href'])
-		
-	for u in pages_url:
-		req = session.get(u, headers = HEADERS)
-		time.sleep(randint(1,2))
-		try:
-			item = BeautifulSoup(req.text,"lxml")
-			logger.info(u)
-		except (BaseException):
-			logger.info('[!] Error Occured. ')
-			logger.info('[?] Check whether system is Online.')
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=SgRecord.MISSING,
+            phone=phone,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+        )
 
-		stores=item.find_all(class_="storeName")
-		for s in stores:
-			pages.append("https://stores.ashleyfurniture.com" + s.find("a")['href'])
+        sgw.write_row(row)
 
-	for i, p in enumerate(pages):
-		logger.info("Link %s of %s" %(i+1,len(pages)))
-		req = session.get(p, headers = HEADERS)
-		time.sleep(randint(1,2))
-		try:
-			item = BeautifulSoup(req.text,"lxml")
-			logger.info(p)
-		except (BaseException):
-			logger.info('[!] Error Occured. ')
-			logger.info('[?] Check whether system is Online.')
 
-		loc = item.find('h1').text.strip().split(',')[0]
-		if "coming soon" in loc.lower():
-			continue
-		page_urls.append(p)
-		locs.append(loc)
-		streets.append(item.find(class_='address').text.strip())
-		cities.append(item.find(class_='city-postal-code').text.split(',')[0])
-		states.append(item.find(class_='city-postal-code').text.split(',')[1].strip()[:3].strip())
-		zips.append(item.find(class_='city-postal-code').text.split(',')[1].strip()[3:].strip())
-		ids.append(str(p).split('/')[-2])
-		try:
-			phones.append(item.find_all(class_='phone')[-1].text.strip())
-		except:
-			phones.append("<MISSING>")
-		try:
-			hours = item.find(id='storeHours').text.replace('\n',' ').replace('  ',' ').strip()
-		except:
-			hours = "<MISSING>"
-		timing.append(hours)
-		types.append("<MISSING>")
-		lats.append(item.find(id='location-details')['data-lat'])
-		longs.append(item.find(id='location-details')['data-lng'])
-
-	return_main_object = []
-	for l in range(len(locs)):
-		row = []
-		row.append(base_url)
-		row.append(page_urls[l])
-		row.append(locs[l] if locs[l] else "<MISSING>")
-		row.append(streets[l] if streets[l] else "<MISSING>")
-		row.append(cities[l] if cities[l] else "<MISSING>")
-		row.append(states[l] if states[l] else "<MISSING>")
-		row.append(zips[l] if zips[l] else "<MISSING>")
-		row.append("US")
-		row.append(ids[l] if ids[l] else "<MISSING>")
-		row.append(phones[l] if phones[l] else "<MISSING>")
-		row.append(types[l])
-		row.append(lats[l] if lats[l] else "<MISSING>")
-		row.append(longs[l] if longs[l] else "<MISSING>")
-		row.append(timing[l] if timing[l] else "<MISSING>")
-		
-		return_main_object.append(row)
-	
-    # End scraper
-	return return_main_object
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-scrape()
+if __name__ == "__main__":
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID({SgRecord.Headers.PAGE_URL, SgRecord.Headers.LOCATION_TYPE})
+        )
+    ) as writer:
+        fetch_data(writer)

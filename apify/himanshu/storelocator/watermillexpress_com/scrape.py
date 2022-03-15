@@ -43,8 +43,7 @@ def fetch_data():
     addresses = []
     coords = DynamicGeoSearch(
         country_codes=[SearchableCountries.USA],
-        max_radius_miles=84,
-        max_search_results=75,
+        max_radius_miles=25,
     )
 
     headers = {
@@ -53,16 +52,14 @@ def fetch_data():
 
     base_url = "http://www.watermillexpress.com"
 
-    for index, coord in enumerate(coords):
-        lat = coord[0]
-        lng = coord[1]
+    for lat, lng in coords:
 
         location_url = (
             "https://watermillexpress.com/wp-admin/admin-ajax.php?action=store_search&lat="
             + str(lat)
             + "&lng="
             + str(lng)
-            + "&max_results=5000&search_radius=5000&search=&statistics="
+            + "&max_results=25&search_radius=25&search=&statistics="
         )
         try:
             r_locations = session.get(location_url, headers=headers)
@@ -88,11 +85,10 @@ def fetch_data():
             + str(lat)
             + "&lng="
             + str(lng)
-            + "&max_results=1000&search_radius=1000&search=&statistics="
+            + "&max_results=25&search_radius=25&search=&statistics="
         )
 
         for location in json_data:
-
             city = location["city"]
             state = location["state"]
             zipp = location["zip"]
@@ -107,7 +103,6 @@ def fetch_data():
             page_url = "<MISSING>"
             hours_of_operation = "Open 24/7"
 
-            coords.found_location_at(latitude, longitude)
             store = [
                 locator_domain,
                 location_name,

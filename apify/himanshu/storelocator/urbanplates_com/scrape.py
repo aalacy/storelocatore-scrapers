@@ -1,79 +1,123 @@
-import csv
-from sgrequests import SgRequests
-from bs4 import BeautifulSoup
 import re
+import csv
 import json
-import unicodedata
-session = SgRequests()
+from lxml import etree
+
+from sgselenium import SgChrome
+from sgscrape.sgpostal import parse_address_usa
+
+
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+    with open("data.csv", mode="w", encoding="utf-8") as output_file:
+        writer = csv.writer(
+            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+        )
+
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
+        writer.writerow(
+            [
+                "locator_domain",
+                "page_url",
+                "location_name",
+                "street_address",
+                "city",
+                "state",
+                "zip",
+                "country_code",
+                "store_number",
+                "phone",
+                "location_type",
+                "latitude",
+                "longitude",
+                "hours_of_operation",
+            ]
+        )
         # Body
         for row in data:
             writer.writerow(row)
+
+
 def fetch_data():
-    base_url = "https://urbanplates.com"
-    return_main_object=[]
-    headers={"User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"}
-    r = session.get(base_url+'/locations/',headers=headers)
-    soup=BeautifulSoup(r.text,'lxml')
-    main=soup.find_all('div',{"class":"locale-thum"})
-    for atag in main:
-        link=atag.find('a')['href']
-        r1 = session.get(link,headers=headers)
-        soup1=BeautifulSoup(r1.text,'lxml')
-        main1=soup1.find('section',{"id":"main"})
-        if main1!=None:
-            madd=list(main1.find('div').stripped_strings)
-            name=madd[0].strip()
-            if len(madd) == 12 :
-                address = madd[-4]
-                city = madd[-3].split(",")[0]
-                state = madd[-3].split(",")[1].strip().split(" ")[0]
-                if len(state) == 2:
-                    state = state
-                else:
-                    state = state[0:2]
-                zipp = madd[-3].split(",")[1].split(" ")[-1].replace(state,"")
-            else:
-                address = madd[-5]
-                city = madd[-4].split(",")[0]
-                state = madd[-4].split(",")[1].strip().split(" ")[0]
-                zipp = madd[-4].split(",")[1].split(" ")[-1]
-            phone=main1.find('div').find('span').text.strip()
-            lt=main1.find('a',text="Get Directions")['href'].split('@')[1].split(',')
-            lat=lt[0].strip()
-            lng=lt[1].strip()
-            hour=''
-            hr=list(main1.find('div',{"class":'storeHours'}).find('div',{'class':"days"}).stripped_strings)
-            hr1=list(main1.find('div',{"class":'storeHours'}).find('div',{'class':"hours"}).stripped_strings)
-            for i in range(len(hr)):
-                hour+=hr[i]+":"+hr1[i]+' '
-            store=[]
-            country="US"
-            store.append(base_url)
-            store.append(name if name else "<MISSING>")
-            store.append(address if address else "<MISSING>")
-            store.append(city if city else "<MISSING>")
-            store.append(state if state else "<MISSING>")
-            store.append(zipp if zipp else "<MISSING>")
-            store.append(country if country else "<MISSING>")
-            store.append("<MISSING>")
-            store.append(phone if phone else "<MISSING>")
-            store.append("<MISSING>")
-            store.append(lat if lat else "<MISSING>")
-            store.append(lng if lng else "<MISSING>")
-            store.append(hour if hour.strip() else "<MISSING>")
-            store.append(link)
-            for i in range(len(store)):
-                if type(store[i]) == str:
-                    store[i] = ''.join((c for c in unicodedata.normalize('NFD', store[i]) if unicodedata.category(c) != 'Mn'))
-            store = [x.replace("–","-") if type(x) == str else x for x in store]
-            store = [x.strip() if type(x) == str else x for x in store]
-            yield store
+    # Your scraper here
+    items = []
+
+    start_url = "https://urbanplates.com/locations/"
+    domain = re.findall("://(.+?)/", start_url)[0].replace("www.", "")
+    with SgChrome() as driver:
+        driver.get(start_url)
+        dom = etree.HTML(driver.page_source)
+    data = dom.xpath('//script[contains(text(), "gmpAllMapsInfo")]/text()')[0]
+    all_locations = re.findall("gmpAllMapsInfo = (.+);", data)[0]
+    all_locations = json.loads(all_locations)
+
+    for poi in all_locations[0]["markers"]:
+        location_name = poi["title"]
+        store_url = f'https://urbanplates.com/locations/{location_name.lower().replace(" ", "-")}'
+        with SgChrome() as driver:
+            driver.get(store_url)
+            loc_dom = etree.HTML(driver.page_source)
+
+        location_name = location_name if location_name else "<MISSING>"
+        poi_html = etree.HTML(poi["description"])
+        raw_address = poi_html.xpath("//text()")
+        raw_address = [
+            e.strip() for e in raw_address if e.strip() and "Get Directions" not in e
+        ]
+        addr = parse_address_usa(" ".join(raw_address))
+        street_address = addr.street_address_1
+        if addr.street_address_2:
+            street_address += " " + addr.street_address_2
+        street_address = street_address.split("Located")[0].strip()
+        if "Carlsbad" in location_name:
+            street_address += " Calle Barcelona"
+        if "1782M" in street_address:
+            street_address = "1782M Galleria at Tysons II"
+        city = addr.city
+        city = city if city else "<MISSING>"
+        if city == "Tysons Ii Tysons":
+            city = "Tysons"
+        state = addr.state
+        state = state if state else "<MISSING>"
+        zip_code = addr.postcode
+        zip_code = zip_code if zip_code else "<MISSING>"
+        country_code = addr.country
+        country_code = country_code if country_code else "<MISSING>"
+        store_number = poi["id"]
+        phone = "<MISSING>"
+        location_type = "<MISSING>"
+        latitude = poi["coord_x"]
+        longitude = poi["coord_y"]
+        days = loc_dom.xpath('//div[@class="days"]/text()')
+        hours = loc_dom.xpath('//div[@class="hours"]/text()')
+        hoo = list(map(lambda d, h: d.strip() + " " + h.strip(), days, hours))
+        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
+
+        item = [
+            domain,
+            store_url,
+            location_name,
+            street_address,
+            city,
+            state,
+            zip_code,
+            country_code,
+            store_number,
+            phone,
+            location_type,
+            latitude,
+            longitude,
+            hours_of_operation,
+        ]
+
+        items.append(item)
+
+    return items
+
+
 def scrape():
     data = fetch_data()
     write_output(data)
-scrape()
+
+
+if __name__ == "__main__":
+    scrape()

@@ -1,65 +1,20 @@
-import csv
-from sgrequests import SgRequests
 from sglogging import sglog
 from bs4 import BeautifulSoup
+from sgrequests import SgRequests
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
 
-website = "littlesprouts_com"
+session = SgRequests()
+website = "littlesprouts.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
-
-session = SgRequests()
 headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+    "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36",
+    "Accept": "application/json",
 }
 
 
-def write_output(data):
-    with open("data.csv", mode="w", newline="", encoding="utf8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        temp_list = []  # ignoring duplicates
-        for row in data:
-            comp_list = [
-                row[2].strip(),
-                row[3].strip(),
-                row[4].strip(),
-                row[5].strip(),
-                row[6].strip(),
-                row[8].strip(),
-                row[10].strip(),
-            ]
-            if comp_list not in temp_list:
-                temp_list.append(comp_list)
-                writer.writerow(row)
-        log.info(f"No of records being processed: {len(temp_list)}")
-
-
 def fetch_data():
-    # Your scraper here
-    final_data = []
-    link_list = []
     if True:
         url = "https://littlesprouts.com/schools/"
         r = session.get(url, headers=headers, verify=False)
@@ -69,82 +24,70 @@ def fetch_data():
             loclist = link.findAll("div", {"class": "x-column x-sm x-1-4"})
             for loc in loclist:
                 try:
-                    link = loc.find(
+                    page_url = loc.find(
                         "a", {"class": "x-btn purple-btn x-btn-small x-btn-block"}
                     )["href"]
                 except:
                     continue
-                if link in link_list:
-                    temp = loc.find(
-                        "h3",
-                        {"class": "h-custom-headline cs-ta-center mbs mtn h4 accent"},
-                    ).text
-                    temp = temp.lower()
-                    link = "http://littlesprouts.com/schools/" + temp + "/"
-                link_list.append(link)
-                r = session.get(link, headers=headers, verify=False)
+                page_url = "https://littlesprouts.com" + page_url
+                log.info(page_url)
+                r = session.get(page_url, headers=headers, verify=False)
                 soup = BeautifulSoup(r.text, "html.parser")
-                longt, lat = (
+                longitude, latitude = (
                     soup.select_one("iframe[src*=maps]")["src"]
                     .split("!2d", 1)[1]
                     .split("!2m", 1)[0]
                     .split("!3d")
                 )
-                if "!3m" in lat:
-                    lat = lat.split("!3m", 1)[0]
-                temp_address = soup.findAll("div", {"class": "x-text"})
-                if len(temp_address) == 7:
-                    hours = temp_address[6].text.split("\n")
-                    hours = hours[0] + " " + hours[1]
-                    address = temp_address[5].text.split("|", 1)[0].strip()
-                    if "Infant" in address:
-                        address = temp_address[4].text.split("|", 1)[0].strip()
-                else:
-                    hours = temp_address[5].text.split("\n")
-                    hours = hours[0] + " " + hours[1]
-                    address = temp_address[4].text.split("|", 1)[0].strip()
-                    if "Infant" in address:
-                        address = temp_address[3].text.split("|", 1)[0].strip()
-                    elif "Learn About Transportation Availability" in address:
-                        hours = temp_address[7].text.split("\n")
-                        hours = hours[0] + " " + hours[1]
-                        address = temp_address[6].text.split("|", 1)[0].strip()
-                address = address.split(",")
-                street = address[0]
-                city = address[1]
-                title = city
-                temp = address[2].split()
-                state = temp[0]
-                try:
-                    pcode = temp[1]
-                except:
-                    pcode = "<MISSING>"
-                phone = soup.find("a", {"id": "call-btn-desktop"}).text.strip()
-                final_data.append(
-                    [
-                        "https://littlesprouts.com/",
-                        link,
-                        title,
-                        street,
-                        city,
-                        state,
-                        pcode,
-                        "US",
-                        "<MISSING>",
-                        phone,
-                        "<MISSING>",
-                        lat,
-                        longt,
-                        hours,
-                    ]
+                if "!3m" in latitude:
+                    latitude = latitude.split("!3m")[0]
+                location_name = soup.find("h1").text
+                address = (
+                    soup.select_one('p:contains("View Map")').text.split("|")[0].strip()
                 )
-        return final_data
+                address = address.split(",")
+                street_address = address[0]
+                city = address[1]
+                address = address[2].split()
+                state = address[0]
+                try:
+                    zip_postal = address[1]
+                except:
+                    "<MISSING>"
+                hours_of_operation = (
+                    soup.select_one('h4:contains("Hours")')
+                    .get_text(separator="|", strip=True)
+                    .replace("|", " ")
+                )
+                phone = soup.select("a[href*=tel]")[1].text
+                yield SgRecord(
+                    locator_domain="https://littlesprouts.com/",
+                    page_url=page_url,
+                    location_name=location_name.strip(),
+                    street_address=street_address.strip(),
+                    city=city.strip(),
+                    state=state.strip(),
+                    zip_postal=zip_postal.strip(),
+                    country_code="US",
+                    store_number="<MISSING>",
+                    phone=phone,
+                    location_type="<MISSING>",
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=hours_of_operation,
+                )
 
 
 def scrape():
     log.info("Started")
-    data = fetch_data()
-    write_output(data)
+    count = 0
+    with SgWriter() as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    log.info(f"No of records being processed: {count}")
     log.info("Finished")
 
 

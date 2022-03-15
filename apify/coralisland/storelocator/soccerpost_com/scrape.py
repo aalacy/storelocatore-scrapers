@@ -1,87 +1,93 @@
-from bs4 import BeautifulSoup
-import csv
-import string
-import re, time
-import json
+from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('soccerpost_com')
-
-
-
-session = SgRequests()
-headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
-           }
-
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
-        # Header
-        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-        # Body
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-def fetch_data():
-    # Your scraper here
-    data = []
-    cleanr = re.compile(r'<[^>]+>')    
-    url = 'https://www.soccerpost.com'
-    p = 0
-    r = session.get(url, headers=headers, verify=False)
-    r = r.text.split('SP.stores = ')[1].split('];')[0]
-    r = r+']'
-    
-    logger.info(r)
-    loclist = r.replace('\n',' ').split('},')
-    for loc in loclist:
-        title = loc.split('name: "',1)[1].split('"',1)[0]
-        store = '<MISSING>'
-        lat = loc.split('latitude: ',1)[1].split(',',1)[0]
-        longt = loc.split('longitude: ',1)[1].split(',',1)[0]
-        street = loc.split('address: "',1)[1].split('"',1)[0]
-        city = loc.split('city: "',1)[1].split('"',1)[0]
-        state = loc.split('state: "',1)[1].split('"',1)[0]
-        pcode = loc.split('zip: "',1)[1].split('"',1)[0]
-        ccode = 'US'
-        
-        phone = loc.split('phone: "',1)[1].split('"',1)[0]
-        try:
-            longt = longt.split('}',1)[0]
-        except:
-            pass
-        if street.find('coming soon!') == -1:
-            data.append([
-                'https://www.soccerpost.com',
-                'https://www.soccerpost.com',                   
-                title,
-                street,
-                city,
-                state,
-                pcode,
-                ccode,
-                store,
-                phone,
-                '<MISSING>',
-                lat,
-                longt,
-                '<MISSING>'
-            ])
-            #logger.info(p,data[p])
-            p += 1
-        
-  
-    return data
+def fetch_data(sgw: SgWriter):
+
+    locator_domain = "https://www.soccerpost.com/"
+    api_url = "https://www.soccerpost.com/"
+    session = SgRequests()
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
+    }
+    r = session.get(api_url, headers=headers)
+    tree = html.fromstring(r.text)
+    jsblock = (
+        "".join(tree.xpath('//script[contains(text(), "latitude")]/text()'))
+        .split("SP.stores = ")[1]
+        .split(";")[0]
+        .replace("{", "{ ")
+        .strip()
+    )
+    jsblock = (
+        jsblock.replace("name", '"name"')
+        .replace("address:", '"address":')
+        .replace("address2", '"address2"')
+        .replace("city", '"city"')
+        .replace("state", '"state"')
+        .replace("zip", '"zip"')
+        .replace("phone", '"phone"')
+        .replace("url", '"url"')
+        .replace("latitude", '"latitude"')
+        .replace("longitude", '"longitude"')
+        .replace("email", '"email"')
+        .replace("home", '"home"')
+        .replace("true", "True")
+        .replace("prefix", '"prefix"')
+        .replace("false", "False")
+    )
+    js = eval(jsblock)
+
+    for j in js:
+        page_url = j.get("url") or "https://www.soccerpost.com/"
+        location_name = j.get("name") or "<MISSING>"
+        street_address = f"{j.get('address')} {j.get('address2') or ''}".strip()
+        if street_address.find("Severna Park Market") != -1:
+            street_address = street_address.split("Severna Park Market")[0].strip()
+        if street_address.find("Franklin Crossing Shopping Center") != -1:
+            street_address = street_address.split("Franklin Crossing Shopping Center")[
+                0
+            ].strip()
+        street_address = street_address.replace(
+            "Greenbriar Shopping Center", ""
+        ).strip()
+        if street_address == "NEW location opening soon!":
+            continue
+        state = j.get("state") or "<MISSING>"
+        postal = j.get("zip") or "<MISSING>"
+        country_code = "US"
+        city = j.get("city") or "<MISSING>"
+        latitude = j.get("latitude") or "<MISSING>"
+        longitude = j.get("longitude") or "<MISSING>"
+        phone = j.get("phone") or "<MISSING>"
+
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=SgRecord.MISSING,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=SgRecord.MISSING,
+        )
+
+        sgw.write_row(row)
 
 
-def scrape():
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
-    data = fetch_data()
-    write_output(data)
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
-
-scrape()
-
+if __name__ == "__main__":
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
+    ) as writer:
+        fetch_data(writer)

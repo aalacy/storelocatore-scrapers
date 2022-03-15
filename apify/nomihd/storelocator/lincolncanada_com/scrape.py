@@ -1,63 +1,43 @@
-import csv
 from sgrequests import SgRequests
 from tenacity import retry, stop_after_attempt
 from sglogging import SgLogSetup
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+import httpx
 
 logger = SgLogSetup().get_logger("lincolncanada_com")
 headers = {
     "authority": "www.lincolncanada.com",
+    "sec-ch-ua": '" Not A;Brand";v="99", "Chromium";v="98", "Google Chrome";v="98"',
+    "sec-ch-ua-mobile": "?0",
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.102 Safari/537.36",
     "accept": "application/json, text/javascript, */*; q=0.01",
+    "application-id": "07152898-698b-456e-be56-d3d83011d0a6",
     "x-dtreferer": "https://www.lincolncanada.com/dealerships/?gnav=header-finddealer",
     "x-requested-with": "XMLHttpRequest",
-    "sec-ch-ua-mobile": "?0",
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.104 Safari/537.36",
-    "sec-ch-ua": '"Chromium";v="88", "Google Chrome";v="88", ";Not A Brand";v="99"',
+    "sec-ch-ua-platform": '"Windows"',
     "sec-fetch-site": "same-origin",
     "sec-fetch-mode": "cors",
     "sec-fetch-dest": "empty",
-    "referer": "https://www.lincolncanada.com/dealerships/?gnav=header-finddealer",
+    "referer": "https://www.lincolncanada.com/",
     "accept-language": "en-US,en-GB;q=0.9,en;q=0.8",
 }
 
 
 @retry(stop=stop_after_attempt(10))
 def api_call(url):
-    session = SgRequests()
-    return session.get(url, headers=headers, timeout=10).json()
-
-
-def write_output(data):
-    with open("data.csv", newline="", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
+    timeout = httpx.Timeout(10.0, connect=20.0)
+    session = SgRequests(timeout_config=timeout)
+    return session.get(url, headers=headers).json()
 
 
 def fetch_data():
     ids = []
     canada = [
         "Toronto,ON",
-        "Montreal,QB",
+        "Montreal,QC",
         "Calgary,AB",
         "Ottawa,ON",
         "Edmonton,AB",
@@ -66,16 +46,16 @@ def fetch_data():
         "Vancouver,BC",
         "Brampton,ON",
         "Hamilton,ON",
-        "Quebec,QB",
+        "Quebec,QC",
         "Surrey,BC",
-        "Laval,QB",
+        "Laval,QC",
         "Halifax,NS",
         "London,ON",
         "Markham,ON",
         "Vaughan,ON",
-        "Gatineau,QB",
+        "Gatineau,QC",
         "Saskatoon,SK",
-        "Longueuil,QB",
+        "Longueuil,QC",
         "Kitchener,ON",
         "Burnaby,BC",
         "Windsor,ON",
@@ -85,14 +65,14 @@ def fetch_data():
         "Oakville,ON",
         "Burlington,ON",
         "Greater Sudbury,ON",
-        "Sherbrooke,QB",
+        "Sherbrooke,QC",
         "Oshawa,ON",
-        "Saguenay,QB",
-        "Levis,QB",
+        "Saguenay,QC",
+        "Levis,QC",
         "Barrie,ON",
         "Abbotsford,BC",
         "Coquitlam,BC",
-        "Trois Rivieres,QB",
+        "Trois Rivieres,QC",
         "St Catharines,ON",
         "Guelph,ON",
         "Cambridge,ON",
@@ -102,7 +82,7 @@ def fetch_data():
         "Ajax,ON",
         "Langley District Municipality,BC",
         "Saanich,BC",
-        "Terrebonne,QB",
+        "Terrebonne,QC",
         "Milton,ON",
         "St Johns,NL",
         "Thunder Bay,ON",
@@ -112,7 +92,7 @@ def fetch_data():
         "Red Deer,AB",
         "Strathcona County,AB",
         "Brantford,ON",
-        "St Jean sur Richelieu,QB",
+        "St Jean sur Richelieu,QC",
         "Cape Breton,NS",
         "Lethbridge,AB",
         "Clarington,ON",
@@ -122,15 +102,15 @@ def fetch_data():
         "Niagara Falls,ON",
         "North Vancouver District Municipality,BC",
         "Victoria,BC",
-        "Brossard,QB",
-        "Repentigny,QB",
+        "Brossard,QC",
+        "Repentigny,QC",
         "Newmarket,ON",
         "Chilliwack,BC",
         "Maple Ridge,BC",
         "Peterborough,ON",
         "Kawartha Lakes,ON",
-        "Drummondville,QB",
-        "St Jerome,QB",
+        "Drummondville,QC",
+        "St Jerome,QC",
         "Prince George,BC",
         "Sault Ste Marie,ON",
         "Moncton,NB",
@@ -139,7 +119,7 @@ def fetch_data():
         "New Westminster,BC",
         "St John,NB",
         "Caledon,ON",
-        "Granby,QB",
+        "Granby,QC",
         "St Albert,AB",
         "Norfolk County,ON",
         "Medicine Hat,AB",
@@ -148,37 +128,37 @@ def fetch_data():
         "Halton Hills,ON",
         "Port Coquitlam,BC",
         "Fredericton,NB",
-        "Blainville,QB",
-        "St Hyacinthe,QB",
+        "Blainville,QC",
+        "St Hyacinthe,QC",
         "Aurora,ON",
         "North Vancouver,BC",
         "Welland,ON",
         "North Bay,ON",
         "Belleville,ON",
-        "Mirabel,QB",
-        "Shawinigan,QB",
-        "Dollard Des Ormeaux,QB",
+        "Mirabel,QC",
+        "Shawinigan,QC",
+        "Dollard Des Ormeaux,QC",
         "Brandon,MB",
-        "Rimouski,QB",
-        "Chateauguay,QB",
-        "Mascouche,QB",
+        "Rimouski,QC",
+        "Chateauguay,QC",
+        "Mascouche,QC",
         "Cornwall,ON",
-        "Victoriaville,QB",
+        "Victoriaville,QC",
         "Whitchurch Stouffville,ON",
         "Haldimand County,ON",
         "Georgina,ON",
-        "St Eustache,QB",
+        "St Eustache,QC",
         "Quinte West,ON",
         "West Vancouver,BC",
-        "Rouyn Noranda,QB",
+        "Rouyn Noranda,QC",
         "Timmins,ON",
-        "Boucherville,QB",
+        "Boucherville,QC",
         "Woodstock,ON",
-        "Salaberry de Valleyfield,QB",
+        "Salaberry de Valleyfield,QC",
         "Vernon,BC",
         "St Thomas,ON",
         "Mission,BC",
-        "Vaudreuil Dorion,QB",
+        "Vaudreuil Dorion,QC",
         "Brant,ON",
         "Lakeshore,ON",
         "Innisfil,ON",
@@ -186,7 +166,7 @@ def fetch_data():
         "Prince Albert,SK",
         "Langford,BC",
         "Bradford West Gwillimbury,ON",
-        "Sorel Tracy,QB",
+        "Sorel Tracy,QC",
         "New Tecumseth,ON",
         "Spruce Grove,AB",
         "Moose Jaw,SK",
@@ -194,80 +174,78 @@ def fetch_data():
         "Port Moody,BC",
         "West Kelowna,BC",
         "Campbell River,BC",
-        "St Georges,QB",
-        "Val dOr,QB",
-        "Cote St Luc,QB",
+        "St Georges,QC",
+        "Val dOr,QC",
+        "Cote St Luc,QC",
         "Stratford,ON",
-        "Pointe Claire,QB",
+        "Pointe Claire,QC",
         "Orillia,ON",
-        "Alma,QB",
+        "Alma,QC",
         "Fort Erie,ON",
         "LaSalle,ON",
         "Leduc,AB",
-        "Ste Julie,QB",
+        "Ste Julie,QC",
         "North Cowichan,BC",
-        "Chambly,QB",
+        "Chambly,QC",
         "Orangeville,ON",
         "Okotoks,AB",
         "Leamington,ON",
-        "St Constant,QB",
+        "St Constant,QC",
         "Grimsby,ON",
-        "Boisbriand,QB",
-        "Magog,QB",
-        "St Bruno de Montarville,QB",
+        "Boisbriand,QC",
+        "Magog,QC",
+        "St Bruno de Montarville,QC",
         "Conception Bay South,NL",
-        "Ste Therese,QB",
+        "Ste Therese,QC",
         "Langley,BC",
         "Cochrane,AB",
         "Courtenay,BC",
-        "Thetford Mines,QB",
-        "Sept Iles,QB",
+        "Thetford Mines,QC",
+        "Sept Iles,QC",
         "Dieppe,NB",
         "Whitehorse,YT",
         "Prince Edward County,ON",
         "Clarence Rockland,ON",
         "Fort Saskatchewan,AB",
-        "La Prairie,QB",
+        "La Prairie,QC",
         "East Gwillimbury,ON",
         "Lincoln,ON",
         "Tecumseh,ON",
         "Mount Pearl,NL",
-        "Beloeil,QB",
-        "LAssomption,QB",
+        "Beloeil,QC",
+        "LAssomption,QC",
         "Amherstburg,ON",
-        "St Lambert,QB",
+        "St Lambert,QC",
         "Collingwood,ON",
         "Kingsville,ON",
-        "Baie Comeau,QB",
+        "Baie Comeau,QC",
         "Paradise,NL",
         "Brockville,ON",
         "Owen Sound,ON",
-        "Varennes,QB",
-        "Candiac,QB",
+        "Varennes,QC",
+        "Candiac,QC",
         "Strathroy Caradoc,ON",
-        "St Lin Laurentides,QB",
+        "St Lin Laurentides,QC",
         "Wasaga Beach,ON",
-        "Joliette,QB",
+        "Joliette,QC",
         "Essex,ON",
-        "Westmount,QB",
-        "Mont Royal,QB",
+        "Westmount,QC",
+        "Mont Royal,QC",
         "Fort St John,BC",
-        "Kirkland,QB",
+        "Kirkland,QC",
         "Cranbrook,BC",
         "White Rock,BC",
-        "St Lazare,QB",
+        "St Lazare,QC",
     ]
-    loc_list = []
     for loc in canada:
         logger.info("Pulling City %s..." % loc)
         ccity = loc.split(",")[0].strip()
         cprov = loc.split(",")[1].strip()
         url = (
-            "https://www.ford.ca/services/dealer/Dealers.json?make=Ford&radius=500&filter=&minDealers=1&maxDealers=100&city="
+            "https://www.lincolncanada.com/cxservices/dealer/Dealers.json?make=Lincoln&radius=500&filter=&minDealers=1&maxDealers=100&city="
             + ccity
             + "&province="
             + cprov
-            + "&api_key=3b0d0b6c-56fb-a02c-a0d03a98-2e06d595"
         )
         js = api_call(url)
         if "Dealer" in js["Response"]:
@@ -323,36 +301,39 @@ def fetch_data():
                     purl = "<MISSING>"
                 if store not in ids:
                     ids.append(store)
-                    if hours == "":
-                        hours = "<MISSING>"
-                    if phone == "":
-                        phone = "<MISSING>"
-                    if purl == "" or purl is None:
-                        purl = "<MISSING>"
-                    curr_list = [
-                        website,
-                        purl,
-                        name,
-                        add,
-                        city,
-                        state,
-                        zc,
-                        country,
-                        store,
-                        phone,
-                        typ,
-                        lat,
-                        lng,
-                        hours,
-                    ]
-                    loc_list.append(curr_list)
 
-    return loc_list
+                    yield SgRecord(
+                        locator_domain=website,
+                        page_url=purl,
+                        location_name=name,
+                        street_address=add,
+                        city=city,
+                        state=state,
+                        zip_postal=zc,
+                        country_code=country,
+                        store_number=store,
+                        phone=phone,
+                        location_type=typ,
+                        latitude=lat,
+                        longitude=lng,
+                        hours_of_operation=hours,
+                    )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    logger.info("Started")
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.StoreNumberId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    logger.info(f"No of records being processed: {count}")
+    logger.info("Finished")
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()

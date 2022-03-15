@@ -58,7 +58,11 @@ def fetch_data():
         location_name = poi["name"]
         location_name = location_name if location_name else "<MISSING>"
         street_address = poi["address"]
-        street_address = street_address if street_address else "<MISSING>"
+        street_address = (
+            street_address
+            if street_address and "online only" not in street_address.lower()
+            else "<MISSING>"
+        )
         city = poi["city"]
         city = city if city else "<MISSING>"
         state = poi["state"]

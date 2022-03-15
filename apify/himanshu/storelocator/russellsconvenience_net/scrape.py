@@ -1,207 +1,205 @@
-import csv
-from bs4 import BeautifulSoup
 import re
+import csv
+from lxml import etree
+
 from sgrequests import SgRequests
-import json
-from sglogging import SgLogSetup
 
-logger = SgLogSetup().get_logger('russellsconvenience_net')
-
-
-session = SgRequests()
 
 def write_output(data):
-	with open('data.csv', mode='w',newline="") as output_file:
-		writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+    with open("data.csv", mode="w", encoding="utf-8") as output_file:
+        writer = csv.writer(
+            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+        )
 
-		# Header
-		writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-						 "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
-		# Body
-		for row in data:
-			writer.writerow(row)
+        # Header
+        writer.writerow(
+            [
+                "locator_domain",
+                "page_url",
+                "location_name",
+                "street_address",
+                "city",
+                "state",
+                "zip",
+                "country_code",
+                "store_number",
+                "phone",
+                "location_type",
+                "latitude",
+                "longitude",
+                "hours_of_operation",
+            ]
+        )
+        # Body
+        for row in data:
+            writer.writerow(row)
+
 
 def fetch_data():
-    addressess = []
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
-        'accept': '*/*',
-        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+    # Your scraper here
+    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
+
+    items = []
+
+    start_url = "http://russellsconvenience.net/index.php/locations"
+    domain = re.findall(r"://(.+?)/", start_url)[0].replace("www.", "")
+    hdr = {
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
+    response = session.get(start_url, headers=hdr)
+    dom = etree.HTML(response.text)
 
-    # search.current_zip()
-    returnres=[]
-    base_url="http://russellsconvenience.net"
-    r = session.get("http://russellsconvenience.net/rcsver16/index.php/locations",headers=headers)
-    soup= BeautifulSoup(r.text,"lxml")
-    table =soup.find("div",{"class":"leading-0"}).find_all("tr",{"bgcolor":"#ccccff"})
-    for index,tab in enumerate(table):
-        if index>=9:
-            add=list(tab.stripped_strings)
-            zipp=''
-            try:
-                latitude = tab.find("a")['href'].split('/@')[1].split(',')[0]
-                longitude =tab.find("a")['href'].split('/@')[1].split(',')[1]
-                zipp =tab.find("a")['href'].split("+")[-1].split("/")[0]
-                # logger.info( )
-            except:
-                latitude="<MISSING>"
-                longitude="<MISSING>"
+    all_locations = dom.xpath('//a[contains(@href, "maps")]')[1:]
+    for poi_html in all_locations:
+        store_url = start_url
+        location_name = poi_html.xpath("text()")
+        if not location_name:
+            continue
+        location_name = location_name[0].strip() if location_name else "<MISSING>"
+        if location_name == "View On Larger Map":
+            continue
 
-            if len(add) > 1:
-                city=''
-                state=''
-                
-                if add[0][0].isdigit():
-                    # logger.info(add)
-                    if "333 Market Street" in add:
-                        name = "SAN FRANCISCO, CA"
-                    if "199 Fremont Street" in add:
-                        name = "SAN FRANCISCO, CA"
-                    address = add[0]
-                    city = add[1].split(',')[0]
-                    state = add[1].split(',')[1].strip().split()[0]
-                    zipp = add[1].split(',')[1].strip().split()[1]
-                    phone = add[2]
-                    hours = " ".join(add[3:])
-                else:
-                    name = add[0].replace("Russell's Fisher Pharmacy",'Fisher Building Russell s Fisher Pharmacy')
-                    if "Fisher Building"==add[0]:
-                        del add[0]
-                    if "The Russ Building" in add:
-                        name =  add[0]
-                        address = add[1]
-                        city = add[2].split(",")[0]
-                        state = add[2].split(",")[1].strip().split()[0]
-                        zipp =add[2].split(",")[1].strip().split()[1]
-                        phone = add[3]
-                        hours =" ".join(add[4:])
-                    else:
-                        name=add[0]
-                        address = add[1]
-                        # logger.info(address)
-                        if "505 S. Flower Street" in address or "333 S. Hope Street" in address:
-                            city = "LOS ANGELES"
-                            state = "CA"
-                        if "2863 Kalakaua Avenue" in address:
-                            city = "HONOLULU"
-                            state = "HI"
-                        if "3011 W. Grand Blvd." in address:
-                            city = "DETROIT"
-                            state = "MI"
+        raw_address = (
+            poi_html.xpath("@href")[0]
+            .split("place/")[-1]
+            .split("/")[0]
+            .replace("+", " ")
+            .split(",")
+        )
+        if len(raw_address) == 4:
+            raw_address = [" ".join(raw_address[:2])] + raw_address[2:]
+        street_address = raw_address[0]
+        street_address = street_address if street_address else "<MISSING>"
+        city = raw_address[1]
+        if street_address == "1670 Broadway  1670 Broadway":
+            street_address = "1670 Broadway"
+            city = "DENVER"
+        state = raw_address[-1].split()[0]
+        zip_code = raw_address[-1].split()[-1]
+        country_code = "<MISSING>"
+        store_number = "<MISSING>"
+        raw_data = dom.xpath(
+            '//span[strong[strong[a[contains(text(), "{}")]]]]/following-sibling::*//text()'.format(
+                location_name
+            )
+        )
+        if not raw_data:
+            raw_data = dom.xpath(
+                '//span[strong[span[span[a[contains(text(), "{}")]]]]]//text()'.format(
+                    location_name
+                )
+            )
+        if not raw_data:
+            raw_data = dom.xpath(
+                '//span[strong[a[contains(text(), "{}")]]]/following-sibling::span//text()'.format(
+                    location_name
+                )
+            )
+        if not raw_data:
+            raw_data = dom.xpath(
+                '//strong[a[contains(text(), "{}")]]/following-sibling::span/text()'.format(
+                    location_name
+                )
+            )
+        if not raw_data:
+            raw_data = dom.xpath(
+                '//div[strong[a[contains(text(), "{}")]]]/following-sibling::div//text()'.format(
+                    location_name
+                )
+            )
+        if not raw_data:
+            if location_name == "Russell's Xpress":
+                raw_data = ["720-881-2191"]
+        if not raw_data:
+            raw_data = dom.xpath(
+                '//strong[a[contains(text(), "{}")]]/following-sibling::span//text()'.format(
+                    location_name
+                )
+            )
+        if not raw_data:
+            raw_data = dom.xpath(
+                '//span[strong[a[contains(text(), "{}")]]]//text()'.format(
+                    location_name
+                )
+            )
+        raw_data = [e.strip() for e in raw_data if e.strip()]
+        phone = raw_data[-1]
+        phone = phone if phone else "<MISSING>"
+        location_type = "<MISSING>"
+        geo = poi_html.xpath("@href")[0].split("/@")[-1].split(",")[:2]
+        latitude = geo[0]
+        longitude = geo[1]
+        hoo = dom.xpath(
+            '//td[div[p[span[strong[strong[a[contains(text(), "{}")]]]]]]]/following-sibling::td[1]//text()'.format(
+                location_name
+            )
+        )
+        hoo = [e.strip() for e in hoo if e.strip()]
+        if not hoo:
+            hoo = dom.xpath(
+                '//td[*[*[*[*[a[contains(text(), "{}")]]]]]]/following-sibling::td[1]//text()'.format(
+                    location_name
+                )
+            )
+            hoo = [e.strip() for e in hoo if e.strip()]
+        if not hoo:
+            hoo = dom.xpath(
+                '//td[*[*[*[*[*[a[contains(text(), "{}")]]]]]]]/following-sibling::td[1]//text()'.format(
+                    location_name
+                )
+            )
+            hoo = [e.strip() for e in hoo if e.strip()]
+        if not hoo:
+            hoo = dom.xpath(
+                '//td[*[*[*[a[contains(text(), "{}")]]]]]/following-sibling::td[1]//text()'.format(
+                    location_name
+                )
+            )
+            hoo = [e.strip() for e in hoo if e.strip()]
+        if not hoo:
+            hoo = dom.xpath(
+                '//td[*[*[a[contains(text(), "{}")]]]]/following-sibling::td[1]//text()'.format(
+                    location_name
+                )
+            )
+            hoo = [e.strip() for e in hoo if e.strip()]
+        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
+        if location_name == "Russell's Xpress":
+            hours_of_operation = "temporarily closed due to Covid-19"
 
-                        phone = add[2]
-                        hours = " ".join(add[3:])
+        if "Open" in phone:
+            hours_of_operation = phone
+            phone = "303.623.9300"
 
-                    
-                store =[]
-                store.append(base_url)
-                store.append(name)
-                store.append(address)
-                store.append(city)
-                store.append(state)
-                store.append(zipp if zipp else "<MISSING>")
-                store.append("US")
-                store.append("<MISSING>")
-                store.append(phone if phone else "<MISSING>")
-                store.append("<MISSING>")
-                store.append(latitude if latitude else "<MISSING>")
-                store.append(longitude if longitude else "<MISSING>")
-                store.append(hours if hours else "<MISSING>")
-                store.append("<MISSING>")
-                store = [str(x).strip() if x else "<MISSING>" for x in store]
-        
-                yield store
-    vk = soup.find("div",{"class":"leading-0"}).find("table",{"align":"center","style":"width: 100%; background-color: #f4f646;","border":"1","cellspacing":"2","cellpadding":"3"})
-    name=vk.find("tr",{"bgcolor":"#ffffff"}).text.strip()
-    for d in vk.find_all("tr",{"bgcolor":"#ccccff"}):
-            for index,q in enumerate(str(d).split("#ffffff")):
-                soups= BeautifulSoup(q,"lxml")
-                add = list(soups.stripped_strings)
-                zipp=''
-                try:
-                    latitude = soups.find("a")['href'].split("/@")[1].split(",")[0]
-                    zipp = soups.find("a")['href'].split("+")[-1].split("/")[0]
-                    longitude = soups.find("a")['href'].split("/@")[1].split(",")[1]
-                except:
-                    latitude="<MISSING>"
-                    longitude="<MISSING>"
-                if "Corporate Office" in add or "**NEW**" in add:
-                    continue
-                if "17th Street Building" in add:
-                    name  ="DENVER, CO"
-                    address = add[1]
-                    # logger.info(address)
-                    phone = add[2]
-                    hours =add[3]
+        if "3011" in street_address:
+            location_name = "Fisher Building Russell's Fisher Pharmacy"
 
-                    store =[]
-                    store.append(base_url)
-                    store.append(name)
-                    store.append(address)
-                    store.append("DENVER")
-                    store.append("CO")
-                    store.append(zipp if zipp else "<MISSING>")
-                    store.append("US")
-                    store.append("<MISSING>")
-                    store.append(phone if phone else "<MISSING>")
-                    store.append("<MISSING>")
-                    store.append("<MISSING>")
-                    store.append("<MISSING>")
-                    store.append(hours if hours else "<MISSING>")
-                    store.append("<MISSING>")
-                    store = [str(x).strip() if x else "<MISSING>" for x in store]
-                    yield store
-                if "17th Street Building" in add:
-                    name  =add[4]
-                    address = add[5]
-                    phone = add[6]
-                    hours =add[7]
-                if "17th Street Building" in add:
-                    pass
-                elif len(add) >1:
-                    if '">' in add or '" width="2%">' in add:
-                        del add[0]
-                    if add[0][0].isdigit():
-                        name = 'DENVER, CO'
-                        address =add[0]
-                        phone = add[2]
-                        hours = " ".join(add[3:] )
-                    else:
-                        name =add[0]
-                        address = add[1]
-                        phone = add[2]
-                        hours = " ".join(add[3:])
-                        
+        item = [
+            domain,
+            store_url,
+            location_name,
+            street_address,
+            city,
+            state,
+            zip_code,
+            country_code,
+            store_number,
+            phone,
+            location_type,
+            latitude,
+            longitude,
+            hours_of_operation,
+        ]
 
-                store =[]
-                store.append(base_url)
-                store.append(name)
-                store.append(address)
-                store.append("DENVER")
-                store.append("CO")
-                store.append(zipp if zipp else "<MISSING>")
-                store.append("US")
-                store.append("<MISSING>")
-                store.append(phone if phone else "<MISSING>")
-                store.append("<MISSING>")
-                if "1225 17th Street" in address:
-                    store.append("<MISSING>")
-                    store.append("<MISSING>")
-                else:
-                    store.append(latitude if latitude else "<MISSING>")
-                    store.append(longitude if longitude else "<MISSING>")
-                store.append(hours if hours else "<MISSING>")
-                store.append("<MISSING>")
-                if store[2] in addressess:
-                    continue
-                addressess.append(store[2])
-                store = [str(x).strip() if x else "<MISSING>" for x in store]
-        
-                yield store
-        
+        items.append(item)
+
+    return items
+
 
 def scrape():
-    data = fetch_data();
+    data = fetch_data()
     write_output(data)
-scrape()
+
+
+if __name__ == "__main__":
+    scrape()

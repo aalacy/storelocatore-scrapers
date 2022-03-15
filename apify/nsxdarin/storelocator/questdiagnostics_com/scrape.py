@@ -99,7 +99,12 @@ def extract(loc):
     phone = loc["phone"]
     store_num = loc["siteCode"]
     hours = loc["hoursOfOperations"]
-
+    if "; Drug" in hours:
+        hours = hours.split("; Drug")[0]
+    if "Sa" not in hours:
+        hours = hours + "; Sa: Closed"
+    if "Sun" not in hours:
+        hours = hours + "; Su: Closed"
     lat = loc["latitude"]
     lng = loc["longitude"]
 

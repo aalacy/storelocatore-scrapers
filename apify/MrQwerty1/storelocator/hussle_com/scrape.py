@@ -1,146 +1,98 @@
-import csv
-import json
-
-from concurrent import futures
-from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
-from sgzip.static import static_zipcode_list, SearchableCountries
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgzip.dynamic import SearchableCountries, DynamicGeoSearch
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def fetch_data(coords, sgw):
+    lat, lng = coords
+    for i in range(1, 57):
+        api_url = f"https://public-api.hussle.com/search/gyms?filter[default][location_coords]={lat},{lng}&page[default][number]={i}&filter[default][location_distance]=50"
+        r = session.get(api_url)
+        js = r.json()["data"][0]["data"]["data"]
 
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
+        for j in js:
+            location_type = SgRecord.MISSING
+            location_name = j.get("name")
+            slug = j.get("b2c_gym_url")
+            page_url = f"https://www.hussle.com{slug}"
+            phone = j.get("telephone")
+            country_code = "GB"
+            store_number = j.get("id")
+
+            a = j.get("location") or {}
+            street_address = a.get("street_address")
+            city = a.get("locality")
+            postal = a.get("postcode")
+            latitude = a.get("latitude")
+            longitude = a.get("longitude")
+
+            _tmp = []
+            days = [
+                "Monday",
+                "Tuesday",
+                "Wednesday",
+                "Thursday",
+                "Friday",
+                "Saturday",
+                "Sunday",
             ]
-        )
+            hours = j.get("opening_times") or []
+            for d, t in zip(days, hours):
+                try:
 
-        for row in data:
-            writer.writerow(row)
+                    t = t["data"]
+                    if not t:
+                        _tmp.append(f"{d}: Closed")
+                        break
 
+                    start = t[0].get("opens_at")
+                    close = t[0].get("closes_at")
+                    _tmp.append(f"{d}: {start} - {close}")
 
-def get_urls(postal):
-    urls = []
-    session = SgRequests()
-    for i in range(1, 5000):
-        r = session.get(
-            f"https://www.hussle.com/search?distance=20&geo-location=&location={postal}&page={i}"
-        )
-        tree = html.fromstring(r.text)
-        links = tree.xpath("//a[@class='result__gym-name-link']/@href")
-        for l in links:
-            urls.append(f"https://www.hussle.com{l}")
+                except Exception:
+                    pass
 
-        if len(links) < 20:
+            hours_of_operation = ";".join(_tmp)
+
+            if j.get("is_temporarily_closed"):
+                location_type = "Temporarily Closed"
+
+            row = SgRecord(
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                zip_postal=postal,
+                country_code=country_code,
+                phone=phone,
+                latitude=latitude,
+                longitude=longitude,
+                store_number=store_number,
+                locator_domain=locator_domain,
+                location_type=location_type,
+                hours_of_operation=hours_of_operation,
+            )
+
+            sgw.write_row(row)
+
+        if len(js) < 18:
             break
-
-    return urls
-
-
-def get_data(page_url):
-    locator_domain = "https://www.hussle.com/"
-    session = SgRequests()
-    r = session.get(page_url)
-
-    if page_url != r.url:
-        return
-
-    tree = html.fromstring(r.text)
-    text = "".join(tree.xpath("//script[@type='application/ld+json']/text()"))
-    j = json.loads(text)
-
-    location_name = j.get("name")
-    phone = j.get("telephone") or "<MISSING>"
-    country_code = "GB"
-    store_number = "<MISSING>"
-    location_type = "<MISSING>"
-
-    a = j.get("address") or {}
-    street_address = a.get("streetAddress") or "<MISSING>"
-    city = a.get("addressLocality") or "<MISSING>"
-    state = a.get("addressRegion") or "<MISSING>"
-    postal = a.get("postalCode") or "<MISSING>"
-
-    g = j.get("geo") or {}
-    latitude = g.get("latitude") or "<MISSING>"
-    longitude = g.get("longitude") or "<MISSING>"
-
-    _tmp = []
-    hours = tree.xpath("//li[@class='col-xs-12 gym-details__list--opening-hours-item']")
-    for h in hours:
-        day = "".join(h.xpath("./div[1]/text()")).strip()
-        time = "".join(h.xpath("./div[2]/text()")).strip()
-        _tmp.append(f"{day}: {time}")
-
-    hours_of_operation = ";".join(_tmp) or "<MISSING>"
-
-    check = tree.xpath("//li[@class='alert alert-danger alert--with-icon']")
-    if check:
-        location_type = "Temporarily Closed"
-
-    row = [
-        locator_domain,
-        page_url,
-        location_name,
-        street_address,
-        city,
-        state,
-        postal,
-        country_code,
-        store_number,
-        phone,
-        location_type,
-        latitude,
-        longitude,
-        hours_of_operation,
-    ]
-
-    return row
-
-
-def fetch_data():
-    out = []
-    urls = set()
-
-    postals = static_zipcode_list(radius=20, country_code=SearchableCountries.BRITAIN)
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {executor.submit(get_urls, p): p for p in postals}
-        for future in futures.as_completed(future_to_url):
-            links = future.result()
-            for l in links:
-                urls.add(l)
-
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {executor.submit(get_data, url): url for url in urls}
-        for future in futures.as_completed(future_to_url):
-            row = future.result()
-            if row:
-                out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://www.hussle.com/"
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(
+            RecommendedRecordIds.PageUrlId, duplicate_streak_failure_factor=-1
+        )
+    ) as writer:
+        countries = [SearchableCountries.BRITAIN]
+        search = DynamicGeoSearch(
+            country_codes=countries, expected_search_radius_miles=50
+        )
+        for coord in search:
+            fetch_data(coord, writer)

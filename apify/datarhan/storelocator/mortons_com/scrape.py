@@ -1,5 +1,8 @@
+import re
 import csv
+import json
 from lxml import etree
+from urllib.parse import urljoin
 
 from sgrequests import SgRequests
 
@@ -45,44 +48,45 @@ def fetch_data():
 
     response = session.get(start_url)
     dom = etree.HTML(response.text)
-    all_locations = dom.xpath('//table[@id="location_listing"]//li/a/@href')[:-7]
+    data = dom.xpath("//script[contains(text(), locations)]/text()")
+    all_locations = re.findall("locations: (.+) apiKey:", data[7].replace("\n", ""))[
+        0
+    ].strip()[:-1]
+    all_locations = json.loads(all_locations)
 
-    for store_url in all_locations:
-        if "mortons.com" not in store_url:
+    for poi in all_locations:
+        store_url = urljoin(start_url, poi["url"])
+        loc_reponse = session.get(store_url)
+        loc_dom = etree.HTML(loc_reponse.text)
+
+        location_name = poi["name"]
+        location_name = location_name if location_name else "<MISSING>"
+        street_address = poi["street"]
+        street_address = street_address if street_address else "<MISSING>"
+        city = poi["city"]
+        city = city if city else "<MISSING>"
+        state = poi["state"]
+        state = state if state else "<MISSING>"
+        if len(state) != 2:
             continue
-        loc_response = session.get(store_url)
-        loc_dom = etree.HTML(loc_response.text)
-
-        location_name = loc_dom.xpath('//div[@id="content"]/h1/text()')
-        location_name = location_name[0].strip() if location_name else "<MISSING>"
-        address_raw = loc_dom.xpath('//td[strong[contains(text(), "Address")]]/text()')
-        addres_raw = [elem.strip() for elem in address_raw if elem.strip()]
-        if addres_raw[1].split()[0][0].isdigit():
-            addres_raw = [", ".join(addres_raw[:2])] + addres_raw[2:]
-        if "The Shops" in addres_raw[0]:
-            addres_raw = addres_raw[1:]
-        street_address = addres_raw[0]
-        city = addres_raw[1].split(", ")[0]
-        state = addres_raw[1].split(", ")[-1].split()[0]
-        zip_code = addres_raw[1].split(", ")[-1].split()[-1]
+        zip_code = poi["postal_code"]
+        zip_code = zip_code if zip_code else "<MISSING>"
         country_code = "<MISSING>"
-        store_number = "<MISSING>"
-        phone = [elem for elem in addres_raw if "phone" in elem.lower()]
-        phone = "<MISSING>"
+        store_number = poi["id"]
+        phone = poi["phone_number"]
+        phone = phone if phone else "<MISSING>"
         location_type = "<MISSING>"
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
-        if loc_dom.xpath('//iframe[@title="Google Map"]/@src'):
-            geo = (
-                loc_dom.xpath('//iframe[@title="Google Map"]/@src')[0]
-                .split("&ll=")[-1]
-                .split("&")[0]
-                .split(",")
-            )
-            if len(geo) == 2:
-                latitude = geo[0]
-                longitude = geo[1]
-        hours_of_operation = " ".join(addres_raw[4:])
+        latitude = poi["lat"]
+        latitude = latitude if latitude else "<MISSING>"
+        longitude = poi["lng"]
+        longitude = longitude if longitude else "<MISSING>"
+        hoo = loc_dom.xpath('//div[h2[@class="h1"]]/p[2]//text()')
+        hoo = [e.strip() for e in hoo if e.strip() and "We " not in e]
+        hours_of_operation = (
+            " ".join(hoo).split("Parties")[0].split("Inside")[0].strip()
+            if hoo
+            else "<MISSING>"
+        )
 
         item = [
             DOMAIN,

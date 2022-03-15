@@ -1,0 +1,2 @@
+--ignore CountValidator --ignore StateLevelCountValidator (Validation expexted 446 POI, but unfiltered has 500 POI)
+--ignore StreetAddressHasNumber --ignore StreetAddressHasStateName --ignore LatLngDuplicationValidator (Confirmed on website)

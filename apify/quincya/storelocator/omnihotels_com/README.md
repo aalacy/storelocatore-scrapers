@@ -1,1 +1,1 @@
---ignore StreetAddressHasNumber --ignore CountryValidator --ignore StateLevelCountValidator (Confirmed on website)
+--ignore StreetAddressHasNumber --ignore CountryValidator --ignore StateLevelCountValidator --ignore LatLngDuplicationValidator (Confirmed on website)

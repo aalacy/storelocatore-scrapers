@@ -1,72 +1,98 @@
-import csv
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
-from bs4 import BeautifulSoup
-import re
-import json
-session = SgRequests()
-def write_output(data):
-    with open('data.csv', mode='w', encoding="utf-8", newline= '') as output_file:
-        writer = csv.writer(output_file, delimiter=',',
-                            quotechar='"', quoting=csv.QUOTE_ALL)
-
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
-        # Body
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgpostal import USA_Best_Parser, parse_address
 
 
-def fetch_data():
+def fetch_data(sgw: SgWriter):
     headers = {
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0",
+        "Accept": "application/json, text/javascript, */*; q=0.01",
+        "Accept-Language": "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3",
+        "X-Requested-With": "XMLHttpRequest",
+        "Connection": "keep-alive",
+        "Referer": "https://www.lillypulitzer.com/stores/?showMap=true&horizontalView=true&isForm=true",
+        "Sec-Fetch-Dest": "empty",
+        "Sec-Fetch-Mode": "cors",
+        "Sec-Fetch-Site": "same-origin",
+        "Cache-Control": "max-age=0",
     }
-    base_url = "https://www.lillypulitzer.com"
-    rs= "https://www.lillypulitzer.com/on/demandware.store/Sites-lillypulitzer-sfra-Site/default/Stores-FindStores?showMap=true&storeType=ALL_STORES&radius=10000&latitude=39.5243169&longitude=-99.1421644"
-    # https://www.lillypulitzer.com/on/demandware.store/Sites-lillypulitzer-us-Site/default/Stores-GetNearestStores?latitude=37.751&longitude=-97.822&countryCode=US&distanceUnit=mi&maxdistance=10000
+    session = SgRequests()
+    rs = "https://www.lillypulitzer.com/on/demandware.store/Sites-lillypulitzer-sfra-Site/default/Stores-FindStores?showMap=true&storeType=ALL_STORES&radius=10000&latitude=39.5243169&longitude=-99.1421644"
     r = session.get(rs, headers=headers)
     data = r.json()["stores"]
-    return_main_object = []
+
     for store_data in data:
-        store = []
-        store_number = store_data['ID']
-        new_city  = store_data['city']
-        if "Lilly" in store_data['storeType']:
-            location_type = store_data['storeType']
+
+        store_number = store_data["ID"]
+        slug = store_data["city"]
+        if "Lilly" in store_data["storeType"]:
+            location_type = store_data["storeType"]
         else:
             location_type = "Other Lilly Destinations"
-        store.append("https://www.lillypulitzer.com")
-        store.append(store_data["name"])
-        address2=''
-        if store_data["address2"] != None:
-            address2 =store_data["address2"]
-        store.append(store_data["address1"] + " " + address2)
-        store.append(store_data["city"])
+        location_name = store_data["name"]
+        address2 = ""
+        if store_data["address2"] is not None:
+            address2 = store_data["address2"]
+        ad = store_data["address1"] + " " + address2
+        a = parse_address(USA_Best_Parser(), ad)
+        street_address = "".join(a.street_address_1)
+        if not street_address[0].isdigit():
+            for s in street_address:
+                if s.isdigit():
+                    ind = street_address.index(s)
+                    street_address = street_address[ind:]
+                    break
 
-        store.append(store_data["stateCode"])
-        if store[-1] == "ZZ":
-            store[-1] = store_data["city"].split(",")[1]
-            store[-2] = store_data["city"].split(",")[0]
-        store.append(store_data["postalCode"]
-                     if store_data["postalCode"] != "" else "<MISSING>")
-        store.append(store_data["countryCode"])
-        store.append(store_number)
-        store.append(store_data["phone"]
-                     if store_data["phone"] != "" else "<MISSING>")
-        store.append(location_type)
-        store.append(store_data["latitude"])
-        store.append(store_data["longitude"])
+        city = store_data["city"]
+
+        state = store_data["stateCode"]
+
+        postal = (
+            store_data["postalCode"] if store_data["postalCode"] != "" else "<MISSING>"
+        )
+        country_code = store_data["countryCode"]
+        phone = store_data["phone"] if store_data["phone"] != "" else "<MISSING>"
+        latitude = store_data["latitude"]
+        longitude = store_data["longitude"]
         hours = ""
         store_hours = store_data["customStoreHours"]
         for key in store_hours:
-            hours = hours + " " + key['day'] + " " + key['hours']
-        store.append(hours if hours != "" else "<MISSING>")
-        page_url = "https://www.lillypulitzer.com/store/details/?storeId="+store_number+"&city="+new_city
-        store.append(page_url
-                     if page_url != '' else "<MISSING>")
-        store = [str(x).strip() if x else "<MISSING>" for x in store]
-        yield store
-def scrape():
-    data = fetch_data()
-    write_output(data)
-scrape()
+            hours = hours + " " + key["day"] + " " + key["hours"]
+        hours_of_operation = hours.strip() if hours != "" else "<MISSING>"
+        if hours_of_operation.count("CLOSED") == 7:
+            hours_of_operation = "Closed"
+        page_url = (
+            "https://www.lillypulitzer.com/store/details/?storeId="
+            + store_number
+            + "&city="
+            + slug
+        )
+
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+        )
+
+        sgw.write_row(row)
+
+
+if __name__ == "__main__":
+    session = SgRequests()
+    locator_domain = "https://www.lillypulitzer.com"
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        fetch_data(writer)

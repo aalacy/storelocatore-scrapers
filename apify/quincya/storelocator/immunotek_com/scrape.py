@@ -1,68 +1,71 @@
-from sgrequests import SgRequests
-from bs4 import BeautifulSoup
-import csv
 import re
 
+from bs4 import BeautifulSoup
 
-def write_output(data):
-	with open('data.csv', mode='w') as output_file:
-		writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-		# Header
-		writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-		# Body
-		for row in data:
-			writer.writerow(row)
+from sgrequests import SgRequests
 
-def fetch_data():
 
-	base_link = "https://www.immunotek.com/?sm-xml-search=1&lat=36.3716117&lng=-89.7153981&radius=0&namequery=36.3711471%2C%20-89.71921320000001&query_type=all&limit=0&locname&address&city&state&zip&pid=11279"
+def fetch_data(sgw: SgWriter):
 
-	user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36'
-	HEADERS = {'User-Agent' : user_agent}
+    base_link = "https://www.immunotek.com/locations/"
 
-	session = SgRequests()
-	stores = session.get(base_link, headers = HEADERS).json()
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36"
+    headers = {"User-Agent": user_agent}
 
-	data = []
-	locator_domain = "immunotek.com"
+    session = SgRequests()
+    req = session.get(base_link, headers=headers)
+    base = BeautifulSoup(req.text, "lxml")
 
-	for store in stores:
-		location_name = "ImmunoTek " + store['name'].split(",")[0].replace("&#8211;","-").strip()
-		link = store['permalink'].replace("/map/","/location/")
+    locator_domain = "immunotek.com"
 
-		req = session.get(link, headers = HEADERS)
-		base = BeautifulSoup(req.text,"lxml")
+    items = base.find_all(class_="location_entry")
+    for i in items:
 
-		phone = base.find_all(style="text-align: center;")[1].text.strip()
-		hours_of_operation = base.find_all(style="text-align: center;")[-1].text.encode("ascii", "replace").decode().replace("?","-").strip()
+        location_name = "ImmunoTek " + i.find(class_="location_title").text
+        if "*" in location_name:
+            continue
 
-		if "coming-soon" in str(base).lower():
-			hours_of_operation = "Tuesday-Saturday 10am - 4pm"
-			if "greenwood" in base.find(style="text-align: center;").text.lower():
-				phone = "864-377-8115"
-			elif "williamsport" in base.find(style="text-align: center;").text.lower():
-				phone = "570-666-9290"
-			elif "horn lake" in base.find(style="text-align: center;").text.lower():
-				phone = "662-913-2506"
-			else:
-				continue
+        link = i.a["href"]
+        req = session.get(link, headers=headers)
+        item = BeautifulSoup(req.text, "lxml")
 
-		street_address = (store['address'] + " " + store['address2']).strip()
-		city = store['city']
-		state = store['state']
-		zip_code = store['zip']
-		country_code = "US"
-		store_number = store['ID']
-		location_type = "<MISSING>"
-		latitude = store['lat']
-		longitude = store['lng'].split(",")[0]
+        raw_address = list(item.find(class_="address").stripped_strings)
+        street_address = raw_address[0]
+        city = raw_address[1].split(",")[0]
+        state = raw_address[1].split(",")[1].split()[0]
+        zip_code = raw_address[1].split(",")[1].split()[1]
+        country_code = "US"
+        store_number = item.article["id"].split("-")[1]
+        location_type = "<MISSING>"
+        phone = item.find("a", {"href": re.compile(r"tel:")}).text
+        latitude = item.find(class_="marker")["data-lat"]
+        longitude = item.find(class_="marker")["data-lng"]
+        hours_of_operation = " ".join(list(item.find(class_="hours").stripped_strings))
 
-		data.append([locator_domain, link, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
-	return data
+        sgw.write_row(
+            SgRecord(
+                locator_domain=locator_domain,
+                page_url=link,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_code,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
+        )
 
-def scrape():
-	data = fetch_data()
-	write_output(data)
 
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    fetch_data(writer)

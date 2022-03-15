@@ -61,7 +61,7 @@ def fetch_data():
     # Your scraper here
     loc_list = []
 
-    search_url = "https://www.birkenstock.com/on/demandware.store/Sites-CA-Site/en_CA/Stores-GetStoresJson?latitude=45.447480&longitude=-73.441440&latituderef=45.447480&longituderef=-73.441440&storeid=&distance=25000&distanceunit=mi&searchText=&countryCode=CA&storeLocatorType=regular&storetype1=true"
+    search_url = "https://www.birkenstock.com/on/demandware.store/Sites-CA-Site/en_CA/Stores-GetStoresJson?latitude=45.447480&longitude=-73.441440&latituderef=45.447480&longituderef=-73.441440&storeid=&distance=19&distanceunit=mi&searchText=&countryCode=CA&storeLocatorType=regular"
     stores_req = session.get(search_url, headers=headers)
     stores = json.loads(stores_req.text)["stores"]
 
@@ -90,7 +90,7 @@ def fetch_data():
             zip = "<MISSING>"
 
         store_number = "<MISSING>"
-        phone = stores[key]["phoneAreaCode"] + " " + stores[key]["phone"]
+        phone = "".join(stores[key]["phoneAreaCode"][:3]) + " " + stores[key]["phone"]
         location_type = "<MISSING>"
         hours_of_operation = stores[key]["storeHoursHTML"]
 

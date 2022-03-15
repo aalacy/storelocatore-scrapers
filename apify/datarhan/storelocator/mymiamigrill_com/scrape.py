@@ -43,7 +43,11 @@ def fetch_data():
     DOMAIN = "mymiamigrill.com"
     start_url = "https://www.mymiamigrill.com/wp-json/miamigrill-locations/v1/locations"
 
-    response = session.get(start_url)
+    hdr = {
+        "accept": "application/json, text/plain, */*",
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.85 Safari/537.36",
+    }
+    response = session.get(start_url, headers=hdr)
     data = json.loads(response.text)
 
     for poi in data:
@@ -51,6 +55,8 @@ def fetch_data():
         store_url = store_url if store_url else "<MISSING>"
         location_name = poi["name"]
         location_name = location_name if location_name else "<MISSING>"
+        if "Coming Soon" in location_name:
+            continue
         street_address = poi["streetAddress"]
         city = poi["locality"]
         state = poi["region"]
@@ -60,8 +66,8 @@ def fetch_data():
         phone = poi["phone"]
         phone = phone if phone else "<MISSING>"
         location_type = "<MISSING>"
-        if store_url == "<MISSING>":
-            continue
+        # if store_url == "<MISSING>":
+        #     continue
         latitude = poi["lat"]
         latitude = latitude if latitude else "<MISSING>"
         longitude = poi["lng"]

@@ -1,130 +1,140 @@
-import csv
 from sgrequests import SgRequests
-from bs4 import BeautifulSoup
-import re
-import json
-from sglogging import SgLogSetup
+from sglogging import sglog
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+import lxml.html
 
-logger = SgLogSetup().get_logger('costulessdirect_com')
-
-
-
-
-
-session = SgRequests()
-
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
-        # Body
-        for row in data:
-            writer.writerow(row)
+website = "costulessdirect.com"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
+session = SgRequests(retry_behavior=None, proxy_rotation_failure_threshold=0)
+headers = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36",
+    "Content-Type": "application/x-www-form-urlencoded",
+}
 
 
 def fetch_data():
-    headers = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
-    "Content-Type":"application/x-www-form-urlencoded"
-    }
 
-    base_url= "https://www.costulessdirect.com/resources/locations/"
-    data ="page=1&rows=10000000&search=search&address=&radius=200"
-    r = session.post(base_url,headers=headers,data=data)
-    soup= BeautifulSoup(r.text,"lxml")
-    store_name=[]
-    store_detail=[]
-    return_main_object=[]
-    hours =[]
-    longitude=[]
-    latitude=[]
-    hours1=[]
-    r1 = session.post(base_url,headers=headers)
-    soup2= BeautifulSoup(r.text,"lxml")
-    script = soup2.find_all("script",{"type":"text/javascript"})
+    search_url = "https://www.costulessdirect.com/resources/locations/"
+    data = "page=1&rows=10000000&search=search&address=&radius=2000000"
+    stores_req = session.post(search_url, headers=headers, data=data)
+    stores_sel = lxml.html.fromstring(stores_req.text)
+    lng_list = []
+    lat_list = []
+    script = stores_sel.xpath('//script[@type="text/javascript"]/text()')
     for j in script:
-        if "var marcadores" in j.text:
-            con = j.text.split("var marcadores = [")[1].split("//end marcadores")[0].replace("];",'').strip()[:-1]
+        if "var marcadores" in j:
+            con = (
+                j.split("var marcadores = [")[1]
+                .split("//end marcadores")[0]
+                .replace("];", "")
+                .strip()[:-1]
+            )
             for geo_loc in con.split("positionMarcadores:")[1:]:
-                latitude.append(geo_loc.split("lat : ")[1].strip().split(",")[0].strip().replace("\t",""))
-                longitude.append(geo_loc.split("lng : ")[1].strip().split(",")[0].strip().replace("}","").replace("\t",""))
-       
-  
-    k= soup.find_all("div",{"class":"main_content"})
-    for i in k:
-        name = i.find_all("h2",{"itemprop":"name"})
-        
-        for index,n in enumerate(name):
-            tem_var=[]
-            name=(n.text.replace('\n',"").replace("\t","").strip())
-            base_url1= n.a['href']
-            r = session.get(base_url1,headers=headers)
-            soup1= BeautifulSoup(r.text,"lxml")
-            k1=soup1.find("div",{"class":"content_profile"})
+                lat_list.append(
+                    geo_loc.split("lat : ")[1]
+                    .strip()
+                    .split(",")[0]
+                    .strip()
+                    .replace("\t", "")
+                )
+                lng_list.append(
+                    geo_loc.split("lng : ")[1]
+                    .strip()
+                    .split(",")[0]
+                    .strip()
+                    .replace("}", "")
+                    .replace("\t", "")
+                )
 
-            st=list(k1.stripped_strings)[1]
-            city = list(k1.stripped_strings)[2]
-            state = list(k1.stripped_strings)[4]
-            zip1 = list(k1.stripped_strings)[6]
-            phone = list(k1.stripped_strings)[10]
+    stores = stores_sel.xpath('//div[@class="main_content"]')
+    for index in range(0, len(stores)):
+        page_url = "".join(stores[index].xpath('h2[@itemprop="name"]/a/@href')).strip()
+        locator_domain = website
+        location_name = "".join(
+            stores[index].xpath('h2[@itemprop="name"]/a/text()')
+        ).strip()
 
-            v= list(k1.stripped_strings)
-            stopwords ='Parking Lot'
-            new_words = [word for word in v if word not in stopwords]
+        street_address = "".join(
+            stores[index].xpath(
+                'div[@itemprop="address"]/p[@itemprop="streetAddress"]/text()'
+            )
+        ).strip()
 
-            stopwords ='Parking:'
-            new_words2 = [word for word in new_words if word not in stopwords]
-            phone  = new_words2[10]
-            v1= new_words2[12:]
-            if v1[-1]=="English,Spanish":
-                del v1[-1]
-            if v1[-1]=="Language Spoken:":
-                del v1[-1]
-            if v1[-1]=="English, Spanish":
-                del v1[-1]
-            if v1[-1]=="Language Spoken:":
-                del v1[-1]
+        city = "".join(
+            stores[index].xpath(
+                'div[@itemprop="address"]/p/span[@itemprop="addressLocality"]/text()'
+            )
+        ).strip()
+        state = "".join(
+            stores[index].xpath(
+                'div[@itemprop="address"]/p/span[@itemprop="addressRegion"]/text()'
+            )
+        ).strip()
+        zip = "".join(
+            stores[index].xpath(
+                'div[@itemprop="address"]/p/span[@itemprop="postalCode"]/text()'
+            )
+        ).strip()
 
-            if v1[0] !="Office Hours:":
-                del v1[0]
-            hours = " ".join(v1)
-            
-        store_name.append(name)
-        tem_var.append(st)
-        tem_var.append(city)
-        tem_var.append(state)
-        tem_var.append(zip1)
-        tem_var.append("US")
-        tem_var.append("<MISSING>")
-        tem_var.append(phone.replace("Mountain/San Antonio. In the Superior supermarket shopping center","909-218-8631"))
-        tem_var.append("<MISSING>")
-        hours1.append(hours.replace("/",""))
-        store_detail.append(tem_var)
-        
-    for i in range(len(store_name)):
-       store = list()
-       store.append("https://www.costulessdirect.com")
-       store.append(store_name[i])
-       store.extend(store_detail[i])
-       store.append(latitude[i])
-       store.append(longitude[i])
-       store.append(hours1[i])
-       store.append("https://www.costulessdirect.com/resources/locations")
-       #logger.info(store)
+        location_type = "<MISSING>"
 
-       return_main_object.append(store)
-   
-    return return_main_object
+        country_code = "CA"
+
+        store_number = "<MISSING>"
+        phone = "".join(
+            stores[index].xpath('p/span[@itemprop="telephone"]/text()')
+        ).strip()
+
+        log.info(page_url)
+        hours_of_operation = "<MISSING>"
+        if "#" not in page_url:
+            page_res = session.get(page_url, headers=headers)
+            page_sel = lxml.html.fromstring(page_res.text)
+            hours = page_sel.xpath(
+                '//div[@class="content_profile"]/div/p[@itemprop="openingHours"]/text()'
+            )
+            hours = list(filter(str, [x.strip() for x in hours]))
+            hours_of_operation = "; ".join(hours).strip()
+
+        else:
+            page_url = "<MISSING>"
+
+        latitude = lat_list[index]
+        longitude = lng_list[index]
+        raw_address = "<MISSING>"
+
+        yield SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zip,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+            raw_address=raw_address,
+        )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    log.info("Started")
+    count = 0
+    with SgWriter() as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
 
 
-scrape()
-
-
+if __name__ == "__main__":
+    scrape()

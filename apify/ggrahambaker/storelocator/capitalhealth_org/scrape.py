@@ -1,91 +1,121 @@
-import csv
-import os
-from sgselenium import SgSelenium
-import time
+from sgrequests import SgRequests
+from sglogging import sglog
+import lxml.html
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
 
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+log = sglog.SgLogSetup().get_logger(logger_name="capitalhealth.org")
+session = SgRequests()
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+    "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+}
 
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
-        # Body
-        for row in data:
-            writer.writerow(row)
 
 def fetch_data():
-    driver = SgSelenium().chrome()
+    locator_domain = "https://www.capitalhealth.org"
+    search_url = "https://www.capitalhealth.org/our-locations/result?field_services_target_id=All&field_search_city_target_id=All&field_location_type_target_id=All&field_location_name_value=&page=0"
+    while True:
 
-    link_list = []
+        stores_req = session.get(search_url, headers=headers)
+        stores_sel = lxml.html.fromstring(stores_req.text)
+        stores = stores_sel.xpath('//h2[@class="v-listing__title"]/a/@href')
+        for store_url in stores:
+            page_url = locator_domain + store_url
+            log.info(page_url)
 
-    locator_domain = 'https://www.capitalhealth.org'
+            store_req = session.get(page_url, headers=headers)
+            store_sel = lxml.html.fromstring(store_req.text)
+            location_name = "".join(store_sel.xpath("//h1//text()")).strip()
+            street_address = "".join(
+                store_sel.xpath(
+                    '//p[@class="address"]/span[@class="address-line1"]/text()'
+                )
+            ).strip()
+            city = "".join(
+                store_sel.xpath('//p[@class="address"]/span[@class="locality"]/text()')
+            ).strip()
+            state = "".join(
+                store_sel.xpath(
+                    '//p[@class="address"]/span[@class="administrative-area"]/text()'
+                )
+            ).strip()
+            zip = "".join(
+                store_sel.xpath(
+                    '//p[@class="address"]/span[@class="postal-code"]/text()'
+                )
+            ).strip()
+            country_code = "".join(
+                store_sel.xpath('//p[@class="address"]/span[@class="country"]/text()')
+            ).strip()
+            phone = "".join(
+                store_sel.xpath(
+                    '//div[@class="field field--name-field-phone field--type-telephone field--label-inline f-phone"]//a/text()'
+                )
+            ).strip()
+            location_type = "<MISSING>"
+            store_number = "<MISSING>"
+            hours_of_operation = ""
+            hours = store_sel.xpath(
+                '//div[@class="clearfix text-formatted field field--name-field-office-hours field--type-text-long field--label-hidden f-office-hours field__item"]/p'
+            )
+            hours_list = []
+            for hour in hours:
+                day = "".join(hour.xpath("strong/text()")).strip()
+                time = "".join(hour.xpath("text()")).strip()
+                if len(day) > 0 and len(time) > 0 and time != ".":
+                    hours_list.append(day + ":" + time)
 
-    for i in range(7):
-        url = 'https://www.capitalhealth.org/our-locations/result?field_services_target_id=All&field_search_city_target_id=All&field_location_type_target_id=All&field_location_name_value=&page=' + str(i)
-        driver.get(url)
-        driver.implicitly_wait(5)
-        time.sleep(3)
-        
-        locs = driver.find_elements_by_css_selector('div.view-empty')
-        if len(locs) > 0:
+            hours_of_operation = "; ".join(hours_list).strip()
+            latitude = ""
+            longitude = ""
+            map_link = "".join(
+                store_sel.xpath('//a[contains(@href,"/maps/dir")]/@href')
+            ).strip()
+            if len(map_link) > 0:
+                if "/@" in map_link:
+                    latitude = map_link.split("/@")[1].strip().split(",")[0].strip()
+                    longitude = map_link.split("/@")[1].strip().split(",")[1]
+
+            yield SgRecord(
+                locator_domain="https://interstatebatteries.com",
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
+
+        next_page = stores_sel.xpath('//a[@rel="next"]/@href')
+        if len(next_page) > 0:
+            search_url = (
+                "https://www.capitalhealth.org/our-locations/result" + next_page[0]
+            )
+            log.info(f"processing next page having url: {search_url}")
+        else:
             break
-            
-        titles = driver.find_elements_by_css_selector('h2.v-listing__title')
-        
-        links = [t.find_element_by_css_selector('a').get_attribute('href') for t in titles]
-        
-        for l in links:
-            link_list.append(l)
 
-    all_store_data = []
-    for link in link_list:
-        if 'multispecialty-care-lower-makefield' in link:
-            continue
-        driver.get(link)
-        driver.implicitly_wait(5)
-        time.sleep(3)
-        
-        location_name = driver.find_element_by_css_selector('h1').text
-        
-        street_address = driver.find_element_by_css_selector('span.address-line1').text
-        street_address = street_address.split(',')[0]
-        city = driver.find_element_by_css_selector('span.locality').text
-        state = driver.find_element_by_css_selector('span.administrative-area').text
-        zip_code = driver.find_element_by_css_selector('span.postal-code').text
-        
-        phone_number = driver.find_element_by_css_selector('div.field--name-field-phone').find_element_by_css_selector('div.field__item').text
-        
-        hours_div = driver.find_elements_by_css_selector('div.field--name-field-office-hours')
-        if len(hours_div) == 0:
-            hours = '<MISSING>'
-        else:
-            hours = hours_div[0].text.replace('\n', ' ')
-
-        google_link = driver.find_elements_by_xpath('//a[contains(@href,"/maps/")]')
-        if len(google_link) == 0:
-            lat, longit = '<MISSING>', '<MISSING>'
-        else:
-            
-            goog = google_link[0].get_attribute('href')
-            start = goog.find('@')
-            coords = goog[start + 1:].split(',')
-            lat = coords[0]
-            longit = coords[1]
-        
-        country_code = 'US'
-        store_number = '<MISSING>'
-        location_type = '<MISSING>'
-        page_url = link
-        store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
-                    store_number, phone_number, location_type, lat, longit, hours, page_url]
-
-        all_store_data.append(store_data)
-        
-    driver.quit()
-    return all_store_data
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    log.info("Started")
+    count = 0
+    with SgWriter() as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
 
-scrape()
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
+
+
+if __name__ == "__main__":
+    scrape()

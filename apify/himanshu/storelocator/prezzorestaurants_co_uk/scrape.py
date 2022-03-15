@@ -1,141 +1,178 @@
-import csv
-from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
+from sgrequests import SgRequests
+from sglogging import sglog
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgpostal import parse_address_intl
 import re
-import json
-import sgzip
-from sglogging import SgLogSetup
 
-logger = SgLogSetup().get_logger('prezzorestaurants_co_uk')
-
-
+DOMAIN = "prezzorestaurants.co.uk"
+BASE_URL = "https://www.prezzorestaurants.co.uk"
+STORES_URL = "https://www.prezzorestaurants.co.uk/find-and-book/search/?lat=51.502132&lng=-0.1887645&dist=2000&s=&p={}&f=&X-Requested-With=XMLHttpRequest"
+HEADERS = {
+    "Accept": "application/json, text/plain, */*",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
+}
+MISSING = "<MISSING>"
+log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
 
 session = SgRequests()
 
 
-def write_output(data):
-    with open('data.csv', mode='w', newline='') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+def getAddress(raw_address):
+    try:
+        if raw_address is not None and raw_address != MISSING:
+            data = parse_address_intl(raw_address)
+            street_address = data.street_address_1
+            if data.street_address_2 is not None:
+                street_address = f"{street_address} {data.street_address_2}"
+            city = data.city
+            state = data.state
+            zip_postal = data.postcode
+            if street_address is None or len(street_address) == 0:
+                street_address = MISSING
+            if city is None or len(city) == 0:
+                city = MISSING
+            if state is None or len(state) == 0:
+                state = MISSING
+            if zip_postal is None or len(zip_postal) == 0:
+                zip_postal = MISSING
+            return street_address, city, state, zip_postal
+    except Exception as e:
+        log.info(f"No valid address {e}")
+        pass
+    return MISSING, MISSING, MISSING, MISSING
 
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
-        # Body
-        for row in data:
-            writer.writerow(row)
+
+def pull_content(url):
+    log.info("Pull content => " + url)
+    try:
+        soup = bs(session.get(url, headers=HEADERS).content, "lxml")
+    except:
+        # Redirect and get current url
+        if "?X-Requested-With=XMLHttpRequest":
+            req = session.get(
+                url.replace("?X-Requested-With=XMLHttpRequest", ""), headers=HEADERS
+            )
+            redirect_url = req.url
+            soup = bs(
+                session.get(
+                    str(redirect_url) + "?X-Requested-With=XMLHttpRequest",
+                    headers=HEADERS,
+                ),
+                "lxml",
+            )
+    return soup
+
+
+def get_hoo(soup):
+    try:
+        hoo = re.sub(
+            r",Christmas.*",
+            "",
+            soup.find("h4", text=re.compile(r"Opening times.*"))
+            .find_next("div", {"class": "has-max-32-center has-text-left"})
+            .get_text(strip=True, separator=",")
+            .replace(":,", ": ")
+            .strip(),
+        )
+    except:
+        hoo = MISSING
+    return hoo
+
+
+def get_latlong(url):
+    latlong = re.search(r"@(-?[\d]*\.[\d]*),(-?[\d]*\.[\d]*)", url)
+    if not latlong:
+        try:
+            latlong = url.split("?ll=")[1].split("&z")[0].split(",")
+            return latlong
+        except:
+            return MISSING, MISSING
+    return latlong.group(1), latlong.group(2)
 
 
 def fetch_data():
-    return_main_object = []
-    addressess = []
-    search = sgzip.ClosestNSearch() # TODO: OLD VERSION [sgzip==0.0.55]. UPGRADE IF WORKING ON SCRAPER!
-    search.initialize(country_codes = ["UK"])
-    MAX_RESULTS = 50
-    MAX_DISTANCE = 10
-    current_results_len = 0     # need to update with no of count.
-    zip_code = search.next_zip()
-    location_name = ""
-    street_address = ""
-    city = ""
-    state = ""
-    zipp = ""
-    country_code = "UK"
-    store_number = ""
-    phone = ""
-    location_type = ""
-    latitude = ""
-    longitude = ""
-    raw_address = ""
-    hours_of_operation = ""
-    name=''
-   
-    while zip_code:
-        result_coords = []
-        # logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
-        url = "https://www.prezzorestaurants.co.uk/find-and-book/search/?lat=0&lng=0&f=&s="+str(zip_code)+"&dist=Dist500"
-        headers = {
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
-        'Host': 'www.prezzorestaurants.co.uk',
-        'Referer': 'https://www.prezzorestaurants.co.uk/find-and-book/search/?lat=0&lng=0&f=&s='+str(zip_code)+'&dist=Dist500',
-        'Sec-Fetch-Dest': 'document',
-        'Sec-Fetch-Mode': 'navigate',
-        'Upgrade-Insecure-Requests': '1',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.105 Safari/537.36',
-
-        }
-        response = session.get(url, headers=headers)
-        soup = bs(response.text,'lxml')
-        current_results_len = len(soup.find_all("a",text=re.compile("Restaurant info")))
-        for link in  soup.find_all("a",text=re.compile("Restaurant info")):
-            page_url = "https://www.prezzorestaurants.co.uk"+link['href']
-            # logger.info(page_url)
-            
-            responsees = session.get(page_url, headers=headers)
-            soup1 = bs(responsees.text,'lxml')
-            addr = list(soup1.find("div",{"class":"restaurant-information__address"}).stripped_strings)
-            street_address = " ".join(addr[:-2]).replace("Address","").strip()
-            city = addr[-2].split(",")[-1].strip()
-            zipp = addr[-1]
-            phone = soup1.find("span",{'itemprop':"telephone"}).text.strip()
-    
-            try:
-                hours_of_operation = " ".join(list(soup1.find("div",{'class':"restaurant-information__opening-times"}).stripped_strings)).replace("Temporarily Closed","<MISSING>")
-            except:
-                pass
-           
-            try:
-                phone =soup1.find("span",{'itemprop':"telephone"}).text.strip()
-            except:
-                pass
-            try:
-                name = soup1.find("h1",{'itemprop':"name"}).text.strip()
-            except:
-                pass
-            try:
-                if "@" in soup1.find("a",text=re.compile("Get Directions"))['href']:
-                    latitude = soup1.find("a",text=re.compile("Get Directions"))['href'].split("@")[-1].split(",")[0]
-                else:
-                    latitude = soup1.find("a",text=re.compile("Get Directions"))['href'].split("ll=")[1].split(",")[0]
-            except:
-                pass
-            try:
-                if "@" in soup1.find("a",text=re.compile("Get Directions"))['href']:
-                    longitude = soup1.find("a",text=re.compile("Get Directions"))['href'].split("@")[-1].split(",")[1].split("&")[0]
-                else:
-                    longitude = soup1.find("a",text=re.compile("Get Directions"))['href'].split("ll=")[1].split(",")[1].split("&")[0]
-
-            except:
-                pass
-
-
-
-            store_number=''
-            result_coords.append((latitude,longitude))
-            store = ["https://www.prezzorestaurants.co.uk/", name, street_address, city, state, zipp, "UK",
-                    store_number, phone, "<MISSING>", str(latitude), str(longitude), hours_of_operation.replace("Opening times",'').strip(),page_url]
-            store = [str(x).strip() if x else "<MISSING>" for x in store]
-            if store[2]  in addressess:
+    log.info("Fetching store_locator data")
+    num = 1
+    while True:
+        soup = pull_content(STORES_URL.format(num))
+        contents = soup.find_all(
+            "div", {"class": "column is-4 is-12-touch has-max-32-touch-center"}
+        )
+        if not contents:
+            break
+        for row in contents:
+            is_closed = row.find("div", {"data-autoheight": "description"}).text.strip()
+            if "Permanently closed" in is_closed:
                 continue
-            addressess.append(store[2])
-            store = [x.strip() if x else "<MISSING>" for x in  store]
-            # logger.info("data = " + str(store))
-            # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-            yield store
-        if current_results_len < MAX_RESULTS:
-            # logger.info("max distance update")
-            search.max_distance_update(MAX_DISTANCE)
-        elif current_results_len == MAX_RESULTS:
-            # logger.info("max count update")
-            search.max_count_update(result_coords)
-        else:
-            raise Exception("expected at most " + str(MAX_RESULTS) + " results")
-        zip_code = search.next_zip()
- 
+            page_url = (
+                BASE_URL
+                + row.find("a", {"class": "button secondary-button w-100 px-i"})["href"]
+            )
+            store = pull_content(page_url + "?X-Requested-With=XMLHttpRequest")
+            location_name = row.find("h4", {"data-autoheight": "header"}).text.strip()
+            raw_address = str(
+                " ".join(
+                    row.find("div", {"data-autoheight": "address"})
+                    .get_text(strip=True, separator=",")
+                    .split()
+                )
+                .strip()
+                .rstrip(",")
+                .replace(", ,", ",")
+            )
+            street_address, city, state, zip_postal = getAddress(raw_address)
+            if "None" in street_address or len(street_address) <= 3:
+                street_address = raw_address.split(",")[0].strip()
+            if city == MISSING:
+                city = raw_address.split(",")[-2].strip()
+            if "York" in city and city != "York":
+                city = "York"
+            if zip_postal == MISSING:
+                zip = raw_address.split(",")[-1].strip()
+                if len(zip) > 5 and len(zip) <= 8 and len(zip.split(" ")) > 1:
+                    zip_postal = zip
+            country_code = "UK"
+            phone = row.find("a", {"href": re.compile(r"tel:.*")}).text.strip()
+            hours_of_operation = get_hoo(store)
+            location_type = MISSING
+            store_number = MISSING
+            map_link = row.find("a", text="View on google maps")["href"]
+            latitude, longitude = get_latlong(map_link)
+            log.info("Append {} => {}".format(location_name, street_address))
+            yield SgRecord(
+                locator_domain=DOMAIN,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_postal,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+                raw_address=raw_address,
+            )
+        num += 1
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    log.info("start {} Scraper".format(DOMAIN))
+    count = 0
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
 
 
 scrape()
