@@ -24,7 +24,10 @@ def fetch_data():
             lurl = line.split("<loc>")[1].split("<")[0]
             if lurl.count("/") == 7:
                 locs.append(lurl)
-    urls = ["https://www.budget.com/en/locations/us"]
+    urls = [
+        "https://www.budget.com/en/locations/us",
+        "https://www.budget.com/en/locations/ca",
+    ]
     for url in urls:
         r = session.get(url, headers=headers)
         for line in r.iter_lines():
