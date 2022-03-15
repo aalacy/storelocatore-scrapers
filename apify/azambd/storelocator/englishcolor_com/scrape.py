@@ -147,6 +147,7 @@ def fetchStores():
                     "latitude": MISSING,
                     "longitude": MISSING,
                     "page_url": menuUrl,
+                    "location_name": title,
                 }
             )
         log.debug(f"Scrapped {menuUrl} total store = {cityCount}")
@@ -269,7 +270,8 @@ def fetchData():
         latitude = store["latitude"]
         longitude = store["longitude"]
         hours_of_operation = store["hoo"]
-
+        if longitude == MISSING or longitude == MISSING:
+            continue
         yield SgRecord(
             locator_domain=website,
             store_number=store_number,

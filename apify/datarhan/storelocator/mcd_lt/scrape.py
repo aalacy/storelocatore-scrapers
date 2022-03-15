@@ -1,3 +1,4 @@
+import re
 from lxml import etree
 
 from sgrequests import SgRequests
@@ -15,7 +16,9 @@ def fetch_data():
     hdr = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
-    frm = {"action": "get_locations", "token": "48bfdb48b0"}
+    response = session.get("https://mcd.lt/locate/")
+    token = re.findall('ajax_nonce":"(.+?)"', response.text)[0]
+    frm = {"action": "get_locations", "token": token}
     data = session.post(start_url, headers=hdr, data=frm).json()
 
     for poi in data["data"]:

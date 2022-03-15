@@ -1,0 +1,7 @@
+--ignore CentroidValidator (Confirmed scrape correctly)
+
+Found 3 concerning rows. Examples:
+    latitude longitude                       REASON  rowNumber
+135     31.1    -97.74  EITHER_LAT_OR_LNG_IMPRECISE        135
+136    34.62     -92.5  EITHER_LAT_OR_LNG_IMPRECISE        136
+139     35.3    -93.13  EITHER_LAT_OR_LNG_IMPRECISE        139

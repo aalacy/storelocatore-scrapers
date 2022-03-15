@@ -1,7 +1,3 @@
-import re
-
-from bs4 import BeautifulSoup
-
 from sgrequests import SgRequests
 
 from sgscrape.sgwriter import SgWriter
@@ -12,48 +8,42 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 def fetch_data(sgw: SgWriter):
 
-    base_link = "https://order.pizzapaisanos.com/"
+    base_link = "https://paisanospizza.com/wp-json/foodtec/v1/query/stores?lat=38.78185418400665&lng=-77.18659629956237&t=0.2704612493092069"
 
     user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36"
     headers = {"User-Agent": user_agent}
 
     session = SgRequests()
 
-    req = session.get(base_link, headers=headers)
-
-    base = BeautifulSoup(req.text, "lxml")
-    items = base.find_all(class_="StoreHeader")
+    items = session.get(base_link, headers=headers).json()["items"]
 
     for item in items:
-        locator_domain = "pizzapaisanos.com"
-        location_name = item.find(class_="lblStoreName").text
-        raw_address = list(item.find(id="StoreAddress").stripped_strings)
-        street_address = raw_address[0].split("*")[0].strip()
-        raw_line = raw_address[1]
-        city = raw_line[: raw_line.rfind(",")].strip()
-        state = raw_line[raw_line.rfind(",") + 1 : raw_line.rfind(" ")].strip()
-        zip_code = raw_line[raw_line.rfind(" ") + 1 :].strip()
+        locator_domain = "https://paisanospizza.com"
+        location_name = item["name"]
+        street_address = item["address"]
+        city = item["city"].replace(", DC", "")
+        state = item["state"]
+        zip_code = item["zip"]
         country_code = "US"
         store_number = "<MISSING>"
-        phone = item.find(id="StoreInfo").text.strip()
+        phone = item["telephone"]
         location_type = "<MISSING>"
-        hours = item.find_all(class_="HoursCenter")
-        days = item.find_all(class_="HoursLeft")
-        hours_of_operation = ""
-        for i, row in enumerate(days):
-            day = row.text.replace("Hours", "").strip()
-            hour = hours[i].text.strip()
-            hours_of_operation = hours_of_operation + " " + day + " " + hour
-        hours_of_operation = hours_of_operation.replace("Pick Up\r\n", "")
-        hours_of_operation = (re.sub(" +", " ", hours_of_operation)).strip()
 
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
+        hours = item["storeHours"]["any"]
+        hours_of_operation = ""
+        for row in hours:
+            day = row["day"].title()
+            hour = row["intervalTm"]
+            hours_of_operation = (hours_of_operation + " " + day + " " + hour).strip()
+
+        latitude = item["lat"]
+        longitude = item["lng"]
+        link = item["baseUrl"]
 
         sgw.write_row(
             SgRecord(
                 locator_domain=locator_domain,
-                page_url=base_link,
+                page_url=link,
                 location_name=location_name,
                 street_address=street_address,
                 city=city,

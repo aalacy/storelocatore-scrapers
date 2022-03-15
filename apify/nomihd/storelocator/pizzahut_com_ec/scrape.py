@@ -5,109 +5,114 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-import lxml.html
+import json
 
 website = "pizzahut.com.ec"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
 headers = {
-    "sec-ch-ua": '"Chromium";v="92", " Not A;Brand";v="99", "Google Chrome";v="92"',
+    "authority": "www.pizzahut.com.ec",
+    "cache-control": "max-age=0",
+    "sec-ch-ua": '" Not A;Brand";v="99", "Chromium";v="99", "Google Chrome";v="99"',
     "sec-ch-ua-mobile": "?0",
-    "Upgrade-Insecure-Requests": "1",
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.107 Safari/537.36",
+    "sec-ch-ua-platform": '"Windows"',
+    "upgrade-insecure-requests": "1",
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.51 Safari/537.36",
+    "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+    "sec-fetch-site": "same-origin",
+    "sec-fetch-mode": "navigate",
+    "sec-fetch-user": "?1",
+    "sec-fetch-dest": "document",
+    "referer": "https://www.pizzahut.com.ec/",
+    "accept-language": "en-US,en-GB;q=0.9,en;q=0.8",
 }
 
 
 def fetch_data():
     # Your scraper here
-    base = "https://www.pizzahut.com.ec"
-    search_url = "https://www.pizzahut.com.ec/pizzerias"
+    search_url = "https://www.pizzahut.com.ec/es/store-locator.html"
     search_res = session.get(search_url, headers=headers)
-    search_sel = lxml.html.fromstring(search_res.text)
-    states = search_sel.xpath('//ul[@class="areas"]/li/a')
+    json_str = (
+        search_res.text.split("window.pageData=")[1].strip().split("};")[0].strip()
+        + "}"
+    )
+    stores = json.loads(json_str)["chainStores"]["msg"]
+    for store in stores:
+        locator_domain = website
+        location_name = store["title"]["es_ES"]
+        page_url = (
+            "https://www.pizzahut.com.ec/es/store-locator/"
+            + location_name.replace(" ", "_").strip()
+            + ".html"
+        )
 
-    for stat in states:
-        state = "".join(stat.xpath("text()")).strip()
-        state_url = base + "".join(stat.xpath("@href")).strip()
+        street_address = store["address"]["formatted"]
+        city = "<MISSING>"
+        state = "<MISSING>"
+        zip = "<MISSING>"
+        country_code = store["address"]["countryCode"]
 
-        state_req = session.get(state_url, headers=headers)
-        state_sel = lxml.html.fromstring(state_req.text)
-        cities = state_sel.xpath('//ul[@class="cities"]/li/a')
-        for cty in cities:
-            city = "".join(cty.xpath("text()")).strip()
-            city_url = base + "".join(cty.xpath("@href")).strip()
-            stores_req = session.get(city_url, headers=headers)
-            stores_sel = lxml.html.fromstring(stores_req.text)
-            stores = stores_sel.xpath(
-                '//div[@class="mod_store_address"]/ul/li//a[@class="moreInfoLinkFromList"]/@href'
-            )
-            for store_url in stores:
-                page_url = base + store_url
-                log.info(page_url)
-                store_req = session.get(page_url, headers=headers)
-                store_sel = lxml.html.fromstring(store_req.text)
+        phone = store["contact"]["phone"]
+        store_number = store["id"]
 
-                locator_domain = website
-                location_name = "".join(
-                    store_sel.xpath(
-                        '//div[@class="mod_generic_promotion shopTitle"]/h1/text()'
-                    )
-                ).strip()
+        location_type = "<MISSING>"
 
-                street_address = "".join(
-                    store_sel.xpath("//address/span[1]/text()")
-                ).strip()
-                zip = "".join(store_sel.xpath("//address/span[2]/text()")).strip()
-                country_code = "EC"
+        hours_list = []
+        try:
+            hours = store["openingHours"][0]
+            if "es" in hours:
+                hours = hours["es"]
+            elif "en" in hours:
+                hours = hours["en"]
+            for index in range(0, len(hours)):
+                if index == 0:
+                    day = "Sun"
+                if index == 1:
+                    day = "Mon"
+                if index == 2:
+                    day = "Tue"
+                if index == 3:
+                    day = "Wed"
+                if index == 4:
+                    day = "Thu"
+                if index == 5:
+                    day = "Fri"
+                if index == 6:
+                    day = "Sat"
 
-                phone = "".join(
-                    store_sel.xpath('//span[@itemprop="telephone"]/a/text()')
-                ).strip()
-                store_number = page_url.split("-")[-1].strip()
+                tim = hours[index][0]
 
-                location_type = "<MISSING>"
+                hours_list.append(day + ": " + tim)
+        except:
+            pass
 
-                hours = store_sel.xpath(
-                    '//div[@class="hours clearfix pls prs pbs mts"]/div[1]/table//tr'
-                )
-                hours_list = []
-                for hour in hours:
-                    day = "".join(hour.xpath("td[1]/text()")).strip()
-                    time = "".join(hour.xpath("td[2]/text()")).strip()
-                    hours_list.append(day + ": " + time)
+        hours_of_operation = "; ".join(hours_list).strip()
+        latitude = store["address"]["latLng"]["lat"]
+        longitude = store["address"]["latLng"]["lng"]
 
-                hours_of_operation = "; ".join(hours_list).strip()
-
-                latitude = (
-                    store_req.text.split("var lat = ")[1].strip().split(";")[0].strip()
-                )
-                longitude = (
-                    store_req.text.split("var lng = ")[1].strip().split(";")[0].strip()
-                )
-
-                yield SgRecord(
-                    locator_domain=locator_domain,
-                    page_url=page_url,
-                    location_name=location_name,
-                    street_address=street_address,
-                    city=city,
-                    state=state,
-                    zip_postal=zip,
-                    country_code=country_code,
-                    store_number=store_number,
-                    phone=phone,
-                    location_type=location_type,
-                    latitude=latitude,
-                    longitude=longitude,
-                    hours_of_operation=hours_of_operation,
-                )
+        yield SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zip,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+        )
 
 
 def scrape():
     log.info("Started")
     count = 0
     with SgWriter(
-        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.StoreNumberId)
     ) as writer:
         results = fetch_data()
         for rec in results:

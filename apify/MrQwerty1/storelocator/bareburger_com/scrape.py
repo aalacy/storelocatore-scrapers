@@ -1,65 +1,29 @@
-import csv
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
-    locator_domain = "https://bareburger.com/"
+def fetch_data(sgw: SgWriter):
     headers = {"Client": "bareburger"}
-
-    session = SgRequests()
     r = session.post("https://patron.lunchbox.io/v0/locations", headers=headers)
-    js = r.json()
 
-    for j in js:
+    for j in r.json():
         a = j.get("address")
-        street_address = (
-            f"{a.get('street1')} {a.get('street2') or ''}".strip() or "<MISSING>"
-        )
-        city = a.get("city") or "<MISSING>"
-        state = a.get("state") or "<MISSING>"
-        postal = a.get("zip") or "<MISSING>"
+        street_address = f"{a.get('street1')} {a.get('street2') or ''}".strip()
+        city = a.get("city")
+        state = a.get("state")
+        postal = a.get("zip")
         if len(postal) == 6:
             postal = postal[1:]
-        country_code = "US"
-        store_number = "<MISSING>"
         location_name = j.get("name")
         slug = j.get("slug") or location_name
         page_url = f"https://order.bareburger.com/location/{slug}"
         phone = j.get("phone").get("value") or "<MISSING>"
         loc = a.get("geo")
-        latitude = loc.get("lat") or "<MISSING>"
-        longitude = loc.get("long") or "<MISSING>"
-        location_type = "<MISSING>"
+        latitude = loc.get("lat")
+        longitude = loc.get("long")
 
         _tmp = []
         days = [
@@ -79,33 +43,28 @@ def fetch_data():
             close = h.get("dineInClose")
             _tmp.append(f"{day}: {start} - {close}")
 
-        hours_of_operation = ";".join(_tmp) or "<MISSING>"
+        hours_of_operation = ";".join(_tmp)
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
+        row = SgRecord(
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code="US",
+            latitude=latitude,
+            longitude=longitude,
+            phone=phone,
+            locator_domain=locator_domain,
+            hours_of_operation=hours_of_operation,
+        )
 
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://bareburger.com/"
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        fetch_data(writer)

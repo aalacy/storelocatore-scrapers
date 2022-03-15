@@ -1,120 +1,98 @@
-import csv
-
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgzip.dynamic import SearchableCountries, DynamicGeoSearch
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def get_hours(url):
-    session = SgRequests()
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:86.0) Gecko/20100101 Firefox/86.0"
-    }
-    r = session.get(url, headers=headers)
-    tree = html.fromstring(r.text)
-
+def get_hoo(page_url):
     _tmp = []
-    hours = tree.xpath(
-        "//h1[contains(text(),'Hours')]/following-sibling::h2/text()|//h1[contains(text(), 'Hours')]/following-sibling::div[contains(@id, 'Sunday') and not(@style)]/h2/text()"
-    )
-    for h in hours:
-        if "Sun" in h:
-            _tmp.append(h.replace("\n", "").replace(",", ":").strip())
+    r = session.get(page_url, headers=headers)
+    tree = html.fromstring(r.text)
+    lines = tree.xpath("//div[@id='regStores']//h2/text()")
+    for line in lines:
+        if not line.strip():
+            continue
+        _tmp.append(line.strip())
+        if "Sun" in line:
             break
-        if h.strip():
-            _tmp.append(h.replace("\n", "").replace(",", ":").strip())
 
-    return ";".join(_tmp) or "<MISSING>"
+    return ";".join(_tmp)
 
 
-def fetch_data():
-    out = []
-    url = "https://athome.com/"
-    api_url = (
-        "https://www.athome.com/on/demandware.store/Sites-athome-sfra-Site/default/Stores-FindStores?showMap"
-        "=true&radius=5000&lat=40.7127753&long=-74.0059728"
-    )
-
-    session = SgRequests()
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:86.0) Gecko/20100101 Firefox/86.0"
-    }
-    r = session.get(api_url, headers=headers)
+def fetch_data(coords, sgw: SgWriter):
+    lat, lng = coords
+    api = f"https://www.athome.com/on/demandware.store/Sites-athome-sfra-Site/default/Stores-FindStores?radius=50&lat={lat}&long={lng}"
+    r = session.get(api, headers=headers)
     js = r.json()["stores"]
 
     for j in js:
-        locator_domain = url
         page_url = f'https://www.athome.com/store-detail/?StoreID={j.get("ID")}'
         location_name = j.get("name").strip()
-        street_address = (
-            f"{j.get('address1')} {j.get('address2') or ''}".strip() or "<MISSING>"
-        )
-        city = j.get("city") or "<MISSING>"
-        state = j.get("stateCode") or "<MISSING>"
-        postal = j.get("postalCode") or "<MISSING>"
-        country_code = j.get("countryCode") or "<MISSING>"
-        store_number = "<MISSING>"
-        phone = j.get("phone") or "<MISSING>"
-        if phone.find("Coming") != -1:
+        street_address = f"{j.get('address1')} {j.get('address2') or ''}".strip()
+        city = j.get("city")
+        state = j.get("stateCode")
+        postal = j.get("postalCode")
+        country_code = j.get("countryCode")
+        phone = j.get("phone") or ""
+        if "Coming" in phone:
             continue
-        latitude = j.get("latitude") or "<MISSING>"
-        longitude = j.get("longitude") or "<MISSING>"
-        location_type = "<MISSING>"
-        hours_of_operation = get_hours(page_url)
+        latitude = j.get("latitude")
+        longitude = j.get("longitude")
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
+        _tmp = []
+        hours = j.get("actualHours") or []
+        for h in hours:
+            day = h.get("day")
+            if h.get("isClosed"):
+                _tmp.append(f"{day}: Closed")
+                continue
+            start = h.get("start")
+            end = h.get("end")
+            _tmp.append(f"{day}: {start}-{end}")
 
-    return out
+        hours_of_operation = ";".join(_tmp)
+        if not hours_of_operation:
+            try:
+                hours_of_operation = get_hoo(page_url)
+            except:
+                pass
 
+        row = SgRecord(
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            phone=phone,
+            latitude=latitude,
+            longitude=longitude,
+            locator_domain=locator_domain,
+            hours_of_operation=hours_of_operation,
+        )
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:86.0) Gecko/20100101 Firefox/86.0"
+    }
+
+    locator_domain = "https://www.athome.com/"
+    search = DynamicGeoSearch(
+        country_codes=[SearchableCountries.USA],
+        expected_search_radius_miles=50,
+    )
+    with SgWriter(
+        SgRecordDeduper(
+            RecommendedRecordIds.PageUrlId, duplicate_streak_failure_factor=-1
+        )
+    ) as writer:
+        for p in search:
+            fetch_data(p, writer)
