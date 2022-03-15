@@ -30,6 +30,9 @@ def get_latlng(map_link):
     elif "!2d" in map_link and "!3d" in map_link:
         latitude = map_link.split("!3d")[1].strip().split("!")[0].strip()
         longitude = map_link.split("!2d")[1].strip().split("!")[0].strip()
+    elif "!1d" in map_link and "!2d" in map_link:
+        latitude = map_link.split("!1d")[1].strip().split("!")[0].strip()
+        longitude = map_link.split("!2d")[1].strip().split("!")[0].strip()
     elif "/@" in map_link:
         latitude = map_link.split("/@")[1].split(",")[0].strip()
         longitude = map_link.split("/@")[1].split(",")[1].strip()
@@ -110,12 +113,17 @@ def fetch_data():
                             .strip()
                             .replace("CAR WASH:;", "")
                             .strip()
+                            .replace(":;", ":")
+                            .strip()
                         )
 
                 map_link = "".join(
                     store.xpath('.//iframe[contains(@src,"maps/embed?")]/@src')
                 ).strip()
-
+                if len(map_link) <= 0:
+                    map_link = "".join(
+                        store.xpath('.//a[@class="GoogleMaps"]/@href')
+                    ).strip()
                 latitude, longitude = get_latlng(map_link)
 
                 yield SgRecord(

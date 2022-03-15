@@ -35,15 +35,26 @@ def fetch_data():
                 continue
             logger.info(page_url)
             hours = []
-            res1 = session.get(page_url, headers=_headers)
-            if res1.status_code == 200:
-                sp1 = bs(res1.text, "lxml")
-                hours = [
-                    ": ".join(hh.stripped_strings)
-                    for hh in sp1.select("div#hours div.row")
-                ]
+            if page_url:
+                res1 = session.get(page_url, headers=_headers)
+                if res1.status_code == 200:
+                    sp1 = bs(res1.text, "lxml")
+                    hours = [
+                        ": ".join(hh.stripped_strings)
+                        for hh in sp1.select("div#hours div.row")
+                    ]
+
+            is_coming_soon = False
+            for cat in _["categories"]:
+                if cat["name"] == "Coming Soon":
+                    is_coming_soon = True
+                    break
+
+            if is_coming_soon:
+                continue
+
             yield SgRecord(
-                page_url=page_url,
+                page_url=page_url or base_url,
                 store_number=_["id"],
                 location_name=_["title"],
                 street_address=_["address"],
@@ -60,7 +71,7 @@ def fetch_data():
 
 
 if __name__ == "__main__":
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

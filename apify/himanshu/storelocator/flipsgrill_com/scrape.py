@@ -1,143 +1,96 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[35]:
-
-
-import csv
-from sgrequests import SgRequests
+from sglogging import sglog
 from bs4 import BeautifulSoup
-import re
-
-
-# In[36]:
-
-
+from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import SgRecordID
+from sgpostal.sgpostal import parse_address_intl
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
+website = "flipsgrill_com"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
 
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',',
-                            quotechar='"', quoting=csv.QUOTE_ALL)
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+}
 
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
-# In[ ]:
-
-
-
-
-
-# In[ ]:
-
-
-
-
-
-# In[37]:
-
-
-base_url = 'https://flipsgrill.com' 
-r = session.get(base_url + '/locations')
-soup = BeautifulSoup(r.text, "lxml")
-soup
-
-
-# In[51]:
+DOMAIN = "https://flipsgrill.com/"
+MISSING = SgRecord.MISSING
 
 
 def fetch_data():
-    data = []
-    div = (soup.find("div", {"class": "et_pb_row et_pb_row_1"}))
-    cards = div.findChildren("div", {"class": "et_pb_column"})
-    for card in cards:
-        row = []
-        #locator_domain
-        row.append(base_url)
-        #location_name
-        title = card.find("h5", {"class": "et_pb_toggle_title"})
-        row.append('Flips Grill-' + title.text)
-        card_content = card.find("div", {"class": "et_pb_toggle_content"})
-        texts = card_content.findAll("p")
-        helpful_texts = []
-        for text in texts:
-            if text.text.strip() != '':
-                helpful_texts.append(text.text.strip())
+    if True:
+        url = "https://flipsgrill.com/locations/"
+        r = session.get(url, headers=headers)
+        soup = BeautifulSoup(r.text, "html.parser")
+        loclist = soup.find("div", {"class": "et_pb_row et_pb_row_1"}).findAll(
+            "div", {"class": "et_pb_css_mix_blend_mode_passthrough"}
+        )
+        for loc in loclist:
+            location_name = loc.find("h5").text
+            log.info(location_name)
+            temp_var = loc.findAll("p")
+            raw_address = (
+                temp_var[0].get_text(separator="|", strip=True).replace("|", " ")
+            )
+            pa = parse_address_intl(raw_address)
 
-        address = helpful_texts[0]
-        durations_and_phoneNumber = helpful_texts[1].split('\n')
-        duration = durations_and_phoneNumber[0]
-        phoneNumber = helpful_texts[1].split('\n')[len(durations_and_phoneNumber) - 1]
-        #street Address
-        row.append(address.split('\n')[0])
-        #city
-        row.append(title.text)
-        #state
-        address_last_parts = address.split('\n')[1].split(' ');
-        row.append(address_last_parts[len(address_last_parts)-2])
-        #zip
-        row.append(address_last_parts[len(address_last_parts)-1])
-        #country_code
-        row.append('US')
-        #store number
-        row.append('<MISSING>')
-        #phone number
-        row.append(phoneNumber)
-        #location_type
-        row.append(soup.find("div", {"class": "logo_container"}).findChildren('img')[0]['alt'])
-        #longitute
-        row.append('<INACCESSIBLE>')
-        #latitude
-        row.append('<INACCESSIBLE>')
-        #hours_of_operation
-        row.append(duration)        
-        data.append(row)
+            street_address = pa.street_address_1
+            street_address = street_address if street_address else MISSING
 
-    return data
+            city = pa.city
+            city = city.strip() if city else MISSING
 
+            state = pa.state
+            state = state.strip() if state else MISSING
 
-# In[ ]:
+            zip_postal = pa.postcode
+            zip_postal = zip_postal.strip() if zip_postal else MISSING
 
-
-
-
-
-# In[ ]:
-
-
-
-
-
-# In[ ]:
-
-
-
-
-
-# In[ ]:
-
-
-
-
-
-# In[52]:
+            country_code = "US"
+            phone = loc.select_one("a[href*=tel]").text
+            hours_of_operation = (
+                temp_var[1].get_text(separator="|", strip=True).split("|")[0]
+            )
+            longitude, latitude = (
+                loc.select_one("iframe[src*=maps]")["src"]
+                .split("!2d", 1)[1]
+                .split("!2m", 1)[0]
+                .split("!3d")
+            )
+            if "!3m" in latitude:
+                latitude = latitude.split("!3m")[0]
+            yield SgRecord(
+                locator_domain=DOMAIN,
+                page_url=url,
+                location_name=location_name,
+                street_address=street_address.strip(),
+                city=city.strip(),
+                state=state.strip(),
+                zip_postal=zip_postal.strip(),
+                country_code=country_code,
+                store_number=MISSING,
+                phone=phone,
+                location_type=MISSING,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+                raw_address=raw_address,
+            )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
-scrape()
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
-# In[ ]:
-
-
-
-
+if __name__ == "__main__":
+    scrape()

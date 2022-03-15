@@ -23,10 +23,9 @@ def fetch_data(sgw: SgWriter):
         div = tree.xpath('//select[@id="dealer-country-select"]/option')
         for d in div:
             slug = "".join(d.xpath(".//@value"))
-            country_code = "".join(d.xpath(".//text()"))
             with SgRequests() as http:
                 r = http.get(
-                    url=f"https://www.triumph-motorcycles.ca/api/v2/places/alldealers?LanguageCode={slug}&SiteLanguageCode=en-CA&Skip=0&Take=50&CurrentUrl=www.triumph-motorcycles.ca"
+                    url=f"https://www.triumph-motorcycles.ca/api/v2/places/alldealers?LanguageCode={slug}&SiteLanguageCode=en-CA&Skip=0&Take=50000&CurrentUrl=www.triumph-motorcycles.ca"
                 )
                 assert isinstance(r, httpx.Response)
                 assert 200 == r.status_code
@@ -76,6 +75,27 @@ def fetch_data(sgw: SgWriter):
                         "".join(j.get("OpeningTimes")).replace("<br/>", " ").strip()
                     ) or "<MISSING>"
                     hours_of_operation = " ".join(hours_of_operation.split())
+                    if hours_of_operation == "<MISSING>" and page_url.count("/") > 3:
+                        try:
+                            r = http.get(url=page_url, headers=headers)
+                            assert isinstance(r, httpx.Response)
+                            assert 200 == r.status_code
+                        except AssertionError:
+                            continue
+
+                        tree = html.fromstring(r.text)
+                        hours_of_operation = (
+                            " ".join(
+                                tree.xpath(
+                                    '//ul[@class="dealer-location__opening-times"]/li//text()'
+                                )
+                            )
+                            .replace("\n", "")
+                            .strip()
+                        )
+                        hours_of_operation = (
+                            " ".join(hours_of_operation.split()) or "<MISSING>"
+                        )
 
                     row = SgRecord(
                         locator_domain=locator_domain,
@@ -85,7 +105,7 @@ def fetch_data(sgw: SgWriter):
                         city=city,
                         state=state,
                         zip_postal=postal,
-                        country_code=country_code,
+                        country_code=SgRecord.MISSING,
                         store_number=SgRecord.MISSING,
                         phone=phone,
                         location_type=SgRecord.MISSING,
@@ -101,6 +121,6 @@ def fetch_data(sgw: SgWriter):
 if __name__ == "__main__":
     session = SgRequests()
     with SgWriter(
-        SgRecordDeduper(SgRecordID({SgRecord.Headers.RAW_ADDRESS}))
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
     ) as writer:
         fetch_data(writer)

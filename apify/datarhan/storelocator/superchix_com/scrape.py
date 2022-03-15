@@ -1,4 +1,3 @@
-import re
 from lxml import etree
 
 from sgrequests import SgRequests
@@ -6,15 +5,13 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
-from sgscrape.sgpostal import parse_address_intl
+from sgpostal.sgpostal import parse_address_intl
 
 
 def fetch_data():
-    # Your scraper here
-    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
-
+    session = SgRequests()
     start_url = "https://www.superchix.com/#LOCATIONS"
-    domain = re.findall("://(.+?)/", start_url)[0].replace("www.", "")
+    domain = "superchix.com"
     hdr = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
@@ -24,12 +21,6 @@ def fetch_data():
     all_locations = dom.xpath('//div[b[contains(text(), "ADDRESS:")]]')
     all_locations += dom.xpath('//div[p[span[contains(text(), "ADDRESS:")]]]')
     for poi_html in all_locations:
-        location_name = poi_html.xpath(".//preceding-sibling::div/b/span/span/text()")
-        if not location_name:
-            location_name = poi_html.xpath(".//preceding-sibling::div/font/span/text()")
-        if not location_name:
-            location_name = poi_html.xpath(".//preceding-sibling::div/p/span/text()")
-        location_name = location_name[0] if location_name else "<MISSING>"
         raw_address = poi_html.xpath(".//text()")[1:]
         raw_address = [e.strip() for e in raw_address]
         addr = parse_address_intl(" ".join(raw_address))
@@ -37,16 +28,11 @@ def fetch_data():
         if addr.street_address_2:
             street_address += " " + addr.street_address_2
         street_address = street_address if street_address else "<MISSING>"
-        if not location_name.strip():
-            location_name = dom.xpath(
-                '//div[div[p[span[contains(text(), "{}")]]]]/div[1]//span/text()'.format(
-                    street_address.upper()
-                )
-            )[0].strip()
         city = addr.city
         city = city if city else "<MISSING>"
         state = addr.state
         state = state if state else "<MISSING>"
+        location_name = f"{city}, {state}"
         zip_code = addr.postcode
         zip_code = zip_code if zip_code else "<MISSING>"
         country_code = addr.country
@@ -75,14 +61,13 @@ def fetch_data():
             phone = phone[0] if phone else "<MISSING>"
         else:
             phone = phone if phone else "<MISSING>"
-        location_type = "<MISSING>"
         if phone == "<MISSING>":
-            location_type = "coming soon"
+            continue
         hoo = poi_html.xpath(
-            './/following-sibling::div[b[contains(text(), "HOURS:")]]/div/text()'
+            './/following-sibling::div[descendant::*[contains(text(), "HOURS:")]]//text()'
         )
         hoo = [e.strip() for e in hoo if e.strip()]
-        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
+        hours_of_operation = " ".join(hoo).split("HOURS:")[-1] if hoo else "<MISSING>"
 
         item = SgRecord(
             locator_domain=domain,
@@ -95,7 +80,7 @@ def fetch_data():
             country_code=country_code,
             store_number=SgRecord.MISSING,
             phone=phone,
-            location_type=location_type,
+            location_type="",
             latitude=SgRecord.MISSING,
             longitude=SgRecord.MISSING,
             hours_of_operation=hours_of_operation,

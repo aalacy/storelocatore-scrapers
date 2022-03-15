@@ -35,6 +35,17 @@ def get_countries():
     return cs
 
 
+def get_raw_address(page_url):
+    r = session.get(page_url)
+    tree = html.fromstring(r.text)
+
+    return " ".join(
+        " ".join(
+            tree.xpath("//span[@class='sv-contact-header__location']/text()")
+        ).split()
+    )
+
+
 def get_data(_id, sgw: SgWriter):
     for i in range(1, 50):
         params = (
@@ -54,19 +65,16 @@ def get_data(_id, sgw: SgWriter):
         divs = tree.xpath("//div[@class='sv-col']")
 
         for d in divs:
+            slug = "".join(d.xpath(".//span[@class='sv-cta-link']/a/@href"))
+            page_url = f"https://www.savills.com{slug}"
             location_name = "".join(d.xpath(".//h3/text()")).strip()
-            raw_address = " ".join(
-                "".join(
-                    d.xpath(".//span[@class='sv-card-address__line']//text()")
-                ).split()
-            )
+            raw_address = get_raw_address(page_url)
             street_address, city, state, postal = get_international(raw_address)
             country_code = countries.get(_id)
             phone = "".join(
                 d.xpath(".//p[contains(@class, 'telephone')]//text()")
             ).strip()
-            slug = "".join(d.xpath(".//span[@class='sv-cta-link']/a/@href"))
-            page_url = f"https://www.savills.com{slug}"
+
             if slug:
                 store_number = slug.split("=")[-1]
             else:

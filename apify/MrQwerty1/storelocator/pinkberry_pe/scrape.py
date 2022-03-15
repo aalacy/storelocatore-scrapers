@@ -143,7 +143,7 @@ def fetchData():
             x = x + 1
             store_number = MISSING
             location_type = MISSING
-            page_url = website
+            page_url = MISSING
 
             location_name = store["location_name"]
             log.info(f"Pulling info:Location#{x}. {location_name}")
