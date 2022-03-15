@@ -1,0 +1,1 @@
+--ignore CentroidValidator --ignore GeoConsistencyValidator --ignore CountryValidator --ignore CountValidator --ignore StateLevelCountValidator (Confirmed on website)

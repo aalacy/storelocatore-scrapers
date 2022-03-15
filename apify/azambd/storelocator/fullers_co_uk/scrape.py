@@ -62,6 +62,17 @@ def fetch_data():
 
             store_number = get_JSON_object_variable(store, "PubId")
             location_name = get_JSON_object_variable(store, "PubSignageName")
+
+            if "Hotel" in str(location_name):
+                if store_number.startswith("H"):
+                    location_type = "Hotel"
+                elif store_number.startswith("P"):
+                    location_type = "Pub & Hotel"
+                elif store_number.startswith("T"):
+                    location_type = "Pub & Hotel"
+            else:
+                location_type = "Pub"
+
             street_address = (
                 get_JSON_object_variable(store, "PubAddressLine1")
                 + " "

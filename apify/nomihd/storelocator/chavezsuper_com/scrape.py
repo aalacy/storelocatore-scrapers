@@ -3,113 +3,91 @@ from sgrequests import SgRequests
 from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
+import json
 import lxml.html
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "chavezsuper.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
-session = SgRequests()
+
 headers = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.85 Safari/537.36",
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+    "Connection": "keep-alive",
+    "sec-ch-ua": '" Not A;Brand";v="99", "Chromium";v="98", "Google Chrome";v="98"',
+    "sec-ch-ua-mobile": "?0",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.82 Safari/537.36",
+    "sec-ch-ua-platform": '"Windows"',
+    "Content-type": "application/json",
+    "Accept": "*/*",
+    "Sec-Fetch-Site": "same-origin",
+    "Sec-Fetch-Mode": "cors",
+    "Sec-Fetch-Dest": "empty",
+    "Accept-Language": "en-US,en-GB;q=0.9,en;q=0.8",
 }
 
 
 def fetch_data():
     # Your scraper here
 
-    search_url = "https://www.chavezsuper.com/about"
-    search_res = session.get(search_url, headers=headers)
-    search_sel = lxml.html.fromstring(search_res.text)
+    with SgRequests() as session:
+        search_res = session.get(
+            "https://chavezsuper.com/manage/web/api/locations", headers=headers
+        )
+        stores = json.loads(search_res.text)
+        for store in stores:
 
-    store_list = search_sel.xpath(
-        '//div[contains(@class,"wrapperDiv_1oj30as") and .//h2[contains(@class,"heading")]]'
-    )
+            locator_domain = website
 
-    for store in store_list:
+            location_name = store["location_name"]
+            street_address = store["street"]
 
-        page_url = search_url
-        locator_domain = website
+            city = store["city"]
 
-        location_name = " ".join(
-            list(
-                filter(
-                    str,
-                    store.xpath(
-                        './p[(./following-sibling::div[./p]) and (./preceding-sibling::a[contains(@data-event,"get-directions")]) ]//text()'
-                    ),
-                )
+            state = store["province"]
+
+            zip = store["postal_code"]
+            country_code = "US"
+
+            store_number = store["store_number"]
+            page_url = "https://chavezsuper.com/store/" + str(store_number)
+
+            phone = store["phone"]
+
+            location_type = "<MISSING>"
+
+            hours = store["store_hours"]
+            hours_of_operation = ""
+            if hours:
+                hours_sel = lxml.html.fromstring(hours[0])
+                hours_of_operation = "; ".join(hours_sel.xpath("//span/text()")).strip()
+
+            latitude = store["lat"]
+            longitude = store["lng"]
+
+            yield SgRecord(
+                locator_domain=locator_domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
             )
-        ).strip()
-        address_info = list(
-            filter(
-                str,
-                store.xpath("./div[./p]//text()"),
-            )
-        )
-
-        address_info = list(filter(str, ([x.strip() for x in address_info])))
-        street_address = " ".join(address_info[0:-1]).strip()
-
-        city = address_info[-1].split(",")[0].strip()
-
-        state = (
-            "".join(address_info[-1].split(",")[1:]).strip().split(" ")[0].strip(" ,")
-        )
-        zip = "".join(address_info[-1].split(",")[1:]).strip().split(" ")[1].strip(" ,")
-
-        country_code = "US"
-
-        store_number = "<MISSING>"
-
-        phone = "".join(store.xpath("./div[./a[@href]]//text()")).strip()
-
-        location_type = "<MISSING>"
-
-        hours_info = list(
-            filter(str, store.xpath("./div[not(./p or ./a) and text()]//text()"))
-        )
-        hours_info = list(filter(str, [x.strip() for x in hours_info]))
-
-        hours_of_operation = ": ".join(hours_info)
-
-        lat_lng_href = "".join(store.xpath('./a[contains(@href,"maps")]/@href'))
-
-        if "z/data" in lat_lng_href:
-            lat_lng = lat_lng_href.split("@")[1].split("z/data")[0]
-            latitude = lat_lng.split(",")[0].strip()
-            longitude = lat_lng.split(",")[1].strip()
-        elif "ll=" in lat_lng_href:
-            lat_lng = lat_lng_href.split("ll=")[1].split("&")[0]
-            latitude = lat_lng.split(",")[0]
-            longitude = lat_lng.split(",")[1]
-        else:
-            latitude = "<MISSING>"
-            longitude = "<MISSING>"
-
-        raw_address = "<MISSING>"
-        yield SgRecord(
-            locator_domain=locator_domain,
-            page_url=page_url,
-            location_name=location_name,
-            street_address=street_address,
-            city=city,
-            state=state,
-            zip_postal=zip,
-            country_code=country_code,
-            store_number=store_number,
-            phone=phone,
-            location_type=location_type,
-            latitude=latitude,
-            longitude=longitude,
-            hours_of_operation=hours_of_operation,
-            raw_address=raw_address,
-        )
 
 
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.StoreNumberId)
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

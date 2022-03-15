@@ -57,7 +57,7 @@ def fetch_data():
                 g = next(lines)
                 g = str(g.decode("utf-8"))
                 phone = g.strip().replace("\t", "").replace("\r", "").replace("\n", "")
-            if "PM</option>" in line2:
+            if "&#8211;" in line2 and "PM<" in line2:
                 hrs = line2.split(">")[1].split("<")[0].replace("&#8211;", "-")
                 if hours == "":
                     hours = "Today: " + hrs

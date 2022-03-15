@@ -19,13 +19,7 @@ from sgscrape.pause_resume import CrawlStateSingleton
 
 import ssl
 
-try:
-    _create_unverified_https_context = ssl._create_unverified_context
-except AttributeError:
-    pass
-else:
-    ssl._create_default_https_context = _create_unverified_https_context
-
+ssl._create_default_https_context = ssl._create_unverified_context
 
 DOMAIN = "wyndhamdestinations.com"
 website = "https://worldmark.wyndhamdestinations.com"
@@ -36,7 +30,7 @@ user_agent = (
     "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0"
 )
 
-log = sglog.SgLogSetup().get_logger(logger_name=website)
+log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
 
 
 def initiateDriver(driver=None):
@@ -138,7 +132,7 @@ def fetchSingleStore(driver, page_url):
     driver.get(page_url)
     delay = 0
     driverSleep(driver)
-    while delay < 15:
+    while delay < 30:
         if "Sorry!" in driver.page_source:
             return None
         if '"latitude"' in driver.page_source:
@@ -328,32 +322,6 @@ def fetchData():
             country_code = "FJ"
         else:
             country_code = "US"
-
-        if "28.361397" in str(latitude):
-            height = driver.execute_script("return document.body.scrollHeight")
-            driver.implicitly_wait(10)
-            driver.execute_script("window.scrollTo(0, 0)")
-            for i in range(0, height, 60):
-                # load content
-                driver.execute_script("window.scrollTo(0, " + str(i) + ")")
-                time.sleep(0.4)
-            iframe = driver.find_element_by_xpath('//div[@class="map"]/iframe')
-            driver.switch_to.frame(iframe)
-            htmlmarkups = driver.page_source
-            body = html.fromstring(htmlmarkups, "lxml")
-            map_link = body.xpath('//div[@class="google-maps-link"]/a/@href')[0]
-            log.info(f"MAPS LINK: {map_link}")
-            try:
-                geo = re.findall(r"[0-9]{2}\.[0-9]+,-[0-9]{1,3}\.[0-9]+", map_link)[
-                    0
-                ].split(",")
-            except:
-                geo = re.findall(r"[0-9]{2}\.[0-9]+,[0-9]{1,3}\.[0-9]+", map_link)[
-                    0
-                ].split(",")
-            latitude = geo[0]
-            longitude = geo[1]
-            log.info(f"Pulled From Map: {latitude},{longitude}")
 
         yield SgRecord(
             locator_domain=DOMAIN,

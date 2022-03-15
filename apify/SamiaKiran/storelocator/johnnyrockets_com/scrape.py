@@ -23,7 +23,7 @@ header1 = {
 
 locator_domain = "https://www.johnnyrockets.com/"
 base_url = "https://locations.johnnyrockets.com/site-map/all"
-
+MISSING = SgRecord.MISSING
 hr_obj = {
     "1": "Monday",
     "2": "Tuesday",
@@ -73,7 +73,9 @@ def fetch_data():
         header1["authorization"] = token
         for store in locations:
             if store["open_or_closed"] != "open":
-                continue
+                location_type = "Temporarily Closed"
+            else:
+                location_type = MISSING
             url = store["llp_url"].split("/")
             street = _u(url[-1])
             locality = _u(url[-2])
@@ -108,7 +110,7 @@ def fetch_data():
                     longitude=_["longitude"],
                     country_code=_["country"],
                     phone=_["phone"],
-                    location_type=_["brand_name"],
+                    location_type=location_type,
                     locator_domain=locator_domain,
                     hours_of_operation="; ".join(hours),
                 )
