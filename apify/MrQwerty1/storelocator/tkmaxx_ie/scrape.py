@@ -40,6 +40,8 @@ def get_data(slug, sgw: SgWriter):
     hours_of_operation = "".join(
         b.xpath(".//span[@itemprop='openingHours']/text()")
     ).strip()
+    if "Bank" in hours_of_operation:
+        hours_of_operation = hours_of_operation.split("Bank")[0].strip()
 
     row = SgRecord(
         page_url=page_url,
