@@ -1,163 +1,129 @@
-import requests
-
-from Scraper import Scrape
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('mysagedental_com')
-
-
-
+from sgrequests import SgRequests, SgRequestError
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sglogging import sglog
+import lxml.html
 
 URL = "https://mysagedental.com/"
+website = "mysagedental.com"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
 
 
-class Scraper(Scrape):
-    def __init__(self, url):
-        Scrape.__init__(self, url)
-        self.data = []
-        self.seen = []
+def fetch_data():
+    # store data
 
-    def fetch_data(self):
-        # store data
-        locations_ids = []
-        locations_titles = []
-        street_addresses = []
-        cities = []
-        states = []
-        zip_codes = []
-        latitude_list = []
-        longitude_list = []
-        phone_numbers = []
-        hours = []
-        countries = []
-        location_types = []
-        page_urls = []
+    base_link = "https://mysagedental.com/wp-admin/admin-ajax.php?action=load_locations"
 
-        options = Options()
-        options.add_argument("--headless")
-        options.add_argument("--no-sandbox")
-        options.add_argument("--disable-dev-shm-usage")
-        driver = webdriver.Chrome(self.CHROME_DRIVER_PATH, options=options)
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36"
+    headers = {"User-Agent": user_agent}
 
-        headers = {
-            'Sec-Fetch-Mode': 'cors',
-            'Referer': 'https://mysagedental.com/find-locations/',
-            'DNT': '1',
-            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.120 Safari/537.36',
-        }
+    session = SgRequests()
+    stores = session.get(base_link, headers=headers).json()["locations_all"]
 
-        stores = requests.get('https://mysagedental.com/wp-content/themes/sharkbite-child/assets/js/google-maps-json.php', headers=headers).json()['features']
+    for store in stores:
+        # Store ID
+        location_id = store["id"]
 
+        # Type
+        location_type = "<MISSING>"
 
-        for store in stores:
-            # Store ID
-            location_id = '<MISSING>'
+        # Name
+        location_title = store["title"]
+        if "coming soon" in location_title.lower():
+            continue
 
-            # Page url
-            page_url = store['properties']['locpage']
-            logger.info(f"Now scraping {page_url}")
+        # Page url
+        page_url = (
+            URL
+            + location_title.lower()
+            .split("(")[0]
+            .replace("east boca", "boca")
+            .replace("hallandale beach", "hallandale")
+            .split("at 7")[0]
+            .strip()
+            .replace(" ", "-")
+            .replace(".", "-")
+            .strip()
+        )
 
-            # Type
-            location_type = store['properties']['category']
+        # Street
+        street_address = store["address_1"].strip()
 
-            # Name
-            location_title = store['properties']['name']
+        # city
+        city_line = store["address"].strip().split(",")
+        city = city_line[0].strip()
 
-            # Street
-            street_address = store['properties']['address1'] + store['properties']['address2']
+        # zip
+        zipcode = city_line[-1].strip().split()[1].strip()
 
-            # city
-            city = store['properties']['city']
+        # State
+        state = city_line[-1].strip().split()[0].strip()
 
-            # zip
-            zipcode = store['properties']['zip']
+        # Phone
+        phone = store["phone"]
 
-            # State
-            state = store['properties']['state']
+        # Lat
+        lat = store["latitude"]
 
-            # Phone
-            phone = store['properties']['phone']
+        # Long
+        lon = store["longitude"]
+        if not lon:
+            lat = "<MISSING>"
+            lon = "<MISSING>"
 
-            # Lat
-            lat = store['geometry']['coordinates'][1]
+        # Hour
+        log.info(page_url)
+        req = session.get(page_url, headers=headers)
+        if not isinstance(req, SgRequestError):
+            req_sel = lxml.html.fromstring(req.text)
+            hours = req_sel.xpath('//ul[@class="hours"]/li')
+            hours_list = []
+            for hour in hours:
+                hours_list.append(":".join(hour.xpath("text()")).strip())
 
-            # Long
-            lon = store['geometry']['coordinates'][0]
+            hour = "; ".join(hours_list).strip()
 
-            # Hour
-            driver.get(page_url)
-            hour = driver.find_element_by_css_selector('div.locHours').get_attribute('textContent').strip().replace('\n', '').replace('\t', '')
+        else:
+            page_url = "https://mysagedental.com/find-locations/"
+            hour = "<INACCESSIBLE>"
 
-            # Country
-            country = 'US'
+        # Country
+        country = "US"
 
-            # Store data
-            locations_ids.append(location_id)
-            locations_titles.append(location_title)
-            street_addresses.append(street_address)
-            states.append(state)
-            zip_codes.append(zipcode)
-            hours.append(hour)
-            latitude_list.append(lat)
-            longitude_list.append(lon)
-            phone_numbers.append(phone)
-            cities.append(city)
-            countries.append(country)
-            location_types.append(location_type)
-            page_urls.append(page_url)
-
-        for (
-                locations_title,
-                page_url,
-                street_address,
-                city,
-                state,
-                zipcode,
-                phone_number,
-                latitude,
-                longitude,
-                hour,
-                location_id,
-                country,
-                location_type,
-        ) in zip(
-            locations_titles,
-            page_urls,
-            street_addresses,
-            cities,
-            states,
-            zip_codes,
-            phone_numbers,
-            latitude_list,
-            longitude_list,
-            hours,
-            locations_ids,
-            countries,
-            location_types,
-        ):
-            self.data.append(
-                [
-                    self.url,
-                    page_url,
-                    locations_title,
-                    street_address,
-                    city,
-                    state,
-                    zipcode,
-                    country,
-                    location_id,
-                    phone_number,
-                    location_type,
-                    latitude,
-                    longitude,
-                    hour,
-                ]
-            )
-
-        driver.quit()
+        yield SgRecord(
+            locator_domain=website,
+            page_url=page_url,
+            location_name=location_title,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zipcode,
+            country_code=country,
+            store_number=location_id,
+            phone=phone,
+            location_type=location_type,
+            latitude=lat,
+            longitude=lon,
+            hours_of_operation=hour,
+        )
 
 
-scrape = Scraper(URL)
-scrape.scrape()
+def scrape():
+    log.info("Started")
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.StoreNumberId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
+
+
+if __name__ == "__main__":
+    scrape()

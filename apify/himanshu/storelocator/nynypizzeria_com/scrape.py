@@ -72,7 +72,7 @@ def fetch_data():
                 street_address = formatted_addr.street_address_2
             if formatted_addr.street_address_2:
                 street_address = street_address + ", " + formatted_addr.street_address_2
-            city = formatted_addr.city
+            city = formatted_addr.city.replace("Tamps", "Tampa")
             state = formatted_addr.state if formatted_addr.state else "<MISSING>"
             zip_postal = formatted_addr.postcode
             country_code = "US"

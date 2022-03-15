@@ -1,46 +1,20 @@
-import csv
 import re
 
 from bs4 import BeautifulSoup
 
 from sglogging import SgLogSetup
 
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+
 from sgrequests import SgRequests
 
 logger = SgLogSetup().get_logger("freshiesdeli_com")
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
+def fetch_data(sgw: SgWriter):
 
     base_link = "https://freshiesdeli.com/locations"
 
@@ -50,14 +24,17 @@ def fetch_data():
     session = SgRequests()
 
     all_links = []
-    data = []
 
     req = session.get(base_link, headers=headers)
-    base = str(BeautifulSoup(req.text, "lxml"))
+    base_str = str(BeautifulSoup(req.text, "lxml"))
 
-    all_links = re.findall(r"https://www.freshiesdeli.com/storelocations/[a-z]+", base)
-    geos = re.findall(r"LatLng\([0-9]{2}\.[0-9]+,-[0-9]{2,3}\.[0-9]+\);", base)[1:]
+    all_links = re.findall(
+        r"https://www.freshiesdeli.com/storelocations/[a-z]+", base_str
+    )
+    geos = re.findall(r"LatLng\([0-9]{2}\.[0-9]+,-[0-9]{2,3}\.[0-9]+\);", base_str)[1:]
     for i, link in enumerate(all_links):
+        if link == "https://www.freshiesdeli.com/storelocations/machiasfreshies":
+            link = "https://freshiesdeli.com/storelocations/machaisfreshies"
         logger.info(link)
 
         req = session.get(link, headers=headers)
@@ -68,19 +45,6 @@ def fetch_data():
         location_name = item.find("meta", attrs={"property": "og:title"})[
             "content"
         ].replace("—", "-")
-        if (
-            location_name == "Freshies Deli"
-            and link == "https://www.freshiesdeli.com/storelocations/machiasfreshies"
-        ):
-            link = "https://freshiesdeli.com/storelocations/machaisfreshies"
-            req = session.get(link, headers=headers)
-            item = BeautifulSoup(req.text, "lxml")
-            location_name = item.find("meta", attrs={"property": "og:title"})[
-                "content"
-            ].replace("—", "-")
-
-        logger.info(location_name)
-
         phone = item.find("meta", attrs={"itemprop": "description"})["content"][
             -15:
         ].strip()
@@ -110,48 +74,42 @@ def fetch_data():
 
         country_code = "US"
         store_number = "<MISSING>"
-        location_type = "<MISSING>"
 
-        hours_of_operation = ""
-        raw_hours = item.find_all(class_="sqs-block-content")[3].find_all("tr")[1:]
-        if not raw_hours:
-            raw_hours = item.find_all(class_="sqs-block-content")[2].find_all("tr")[1:]
-        for raw_hour in raw_hours:
-            day = raw_hour.td.text
-            hours = raw_hour.find_all("td")[2].text
-            hours_of_operation = hours_of_operation + " " + day + " " + hours
-        hours_of_operation = (re.sub(" +", " ", hours_of_operation)).strip()
-        if not hours_of_operation:
-            hours_of_operation = "<MISSING>"
+        location_type = ""
+        raw_types = item.find(
+            class_="summary-item-list-container sqs-gallery-container"
+        ).find_all(class_="summary-item")
+        for row in raw_types:
+            location_type = location_type + ", " + row.img["alt"]
+        location_type = location_type[1:].strip()
+
+        if "24 Hours" in location_type:
+            hours_of_operation = "Open 24 Hours"
+        else:
+            hours_of_operation = ""
 
         latitude = geos[i].split("(")[1].split(",")[0]
         longitude = geos[i].split(",")[1][:-2]
 
-        data.append(
-            [
-                locator_domain,
-                link,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip_code,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
+        sgw.write_row(
+            SgRecord(
+                locator_domain=locator_domain,
+                page_url=link,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_code,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
         )
 
-    return data
 
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    fetch_data(writer)

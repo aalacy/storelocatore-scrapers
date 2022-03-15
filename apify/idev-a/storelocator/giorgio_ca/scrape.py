@@ -11,24 +11,25 @@ _headers = {
 
 def fetch_data():
     locator_domain = "https://giorgio.ca/"
-    base_url = "https://giorgio.ca/restaurants/"
+    base_url = "https://giorgio.ca/en/restaurants/"
     with SgRequests() as session:
         soup = bs(session.get(base_url, headers=_headers).text, "lxml")
         locations = soup.select(
             "section.elementor-section.elementor-section-content-middle"
         )
         for _ in locations:
-            location_name = _.select("h2.elementor-heading-title")[1].text
+            location_name = _.select_one("h2.elementor-heading-title").text
             block = list(_.select_one("div.elementor-text-editor p").stripped_strings)
             phone = _.find("a", href=re.compile(r"tel:")).text
             hours = []
-            for hh in _.find(
-                "div", string=re.compile(r"POUR EMPORTER")
-            ).find_next_siblings("div"):
-                if not hh.text.strip():
-                    break
+            if _.find("div", string=re.compile(r"DINING ROOM", re.IGNORECASE)):
+                for hh in _.find(
+                    "div", string=re.compile(r"DINING ROOM")
+                ).find_next_siblings("div"):
+                    if "TERRACE" in hh.text.strip() or not hh.text.strip():
+                        break
+                    hours.append("; ".join(hh.stripped_strings))
 
-                hours.append(hh.text.strip())
             coord = (
                 _.find("a", href=re.compile(r"maps/"))["href"]
                 .split("/@")[1]

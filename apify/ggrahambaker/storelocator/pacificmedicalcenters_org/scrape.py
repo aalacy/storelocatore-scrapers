@@ -88,10 +88,12 @@ def fetch_data():
         country_code = "US"
         store_number = "<MISSING>"
         location_type = "<MISSING>"
-
-        phone_number = re.findall(
-            r"[(\d)]{5} [\d]{3}-[\d]{4}", str(soup.find(class_="page-content"))
-        )[0]
+        try:
+            phone_number = re.findall(
+                r"[(\d)]{5} [\d]{3}-[\d]{4}", str(soup.find(class_="page-content"))
+            )[0]
+        except:
+            phone_number = "<MISSING>"
 
         rows = list(soup.find(class_="page-content").stripped_strings)
         hours = ""

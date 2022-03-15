@@ -77,7 +77,7 @@ def fetch_data():
     for b in block:
 
         location_name = "".join(b.xpath('.//h4[@class="tsI_hd"]/text()'))
-        ad = "".join(
+        ad = " ".join(
             b.xpath(
                 ".//p[./a[contains(@href, '/maps/')]]/a/text() | .//p[./a[contains(@href, 'g.page')]]/a/text()"
             )
@@ -89,7 +89,7 @@ def fetch_data():
         street_address = f"{a.get('address1')} {a.get('address2')}".replace(
             "None", ""
         ).strip()
-        state = a.get("state").replace(".", "")
+        state = a.get("state").replace(".", "") or "<MISSING>"
         postal = a.get("postal")
         country_code = "US"
         city = a.get("city")

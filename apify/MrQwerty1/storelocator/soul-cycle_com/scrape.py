@@ -1,57 +1,23 @@
-import csv
-
-from concurrent import futures
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from concurrent import futures
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def get_ids():
-    ids = []
-    session = SgRequests()
+def get_urls():
     r = session.get("https://www.soul-cycle.com/studios/all/partial/")
     tree = html.fromstring(r.text)
-    links = tree.xpath("//a[@class='studio-link']/@href")
-    for l in links:
-        ids.append(f"https://www.soul-cycle.com{l}")
 
-    return ids
+    return tree.xpath("//a[@class='studio-link']/@href")
 
 
 def clean_adr(text):
-    # rule 1 - Remove any info in parentheses
     if text.find("(") != -1:
         text = text.split("(")[0].strip()
 
-    # rule 2 - Split address by ',' and takes the first component that starts with a number
     if text.find(",") != -1:
         lines = text.split(",")
         for line in lines:
@@ -59,7 +25,6 @@ def clean_adr(text):
                 text = line.strip()
                 break
 
-    # rule 3 - Split address by ':' and takes the first component that starts with a number
     if text.find(":") != -1:
         lines = text.split(":")
         for line in lines:
@@ -70,11 +35,8 @@ def clean_adr(text):
     return text
 
 
-def get_data(_id):
-    locator_domain = "https://soul-cycle.com/"
-    page_url = _id
-
-    session = SgRequests()
+def get_data(url, sgw: SgWriter):
+    page_url = f"https://www.soul-cycle.com{url}"
     r = session.get(page_url)
     tree = html.fromstring(r.text)
     d = tree.xpath("//div[@class='studio-location-container']")[0]
@@ -94,14 +56,12 @@ def get_data(_id):
         country_code = "US"
     else:
         if city == "London":
-            return
+            country_code = "GB"
         else:
             country_code = "CA"
 
     phone = "".join(d.xpath(".//a[@itemprop='telephone']/text()"))
     store_number = "".join(d.xpath(".//a[@itemprop='telephone']/@data-studio-id"))
-    location_type = "<MISSING>"
-    hours_of_operation = "<MISSING>"
 
     line = "".join(
         tree.xpath("//script[contains(text(), 'var myLatlng')]/text()")
@@ -116,47 +76,40 @@ def get_data(_id):
         latitude = _tmp.split("(")[1].split(",")[0]
         longitude = _tmp.split("(")[1].split(",")[1].split(")")[0]
     else:
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
+        latitude = SgRecord.MISSING
+        longitude = SgRecord.MISSING
 
-    row = [
-        locator_domain,
-        page_url,
-        location_name,
-        street_address,
-        city,
-        state,
-        postal,
-        country_code,
-        store_number,
-        phone,
-        location_type,
-        latitude,
-        longitude,
-        hours_of_operation,
-    ]
+    row = SgRecord(
+        page_url=page_url,
+        location_name=location_name,
+        street_address=street_address,
+        city=city,
+        state=state,
+        zip_postal=postal,
+        country_code=country_code,
+        store_number=store_number,
+        phone=phone,
+        location_type=SgRecord.MISSING,
+        latitude=latitude,
+        longitude=longitude,
+        locator_domain=locator_domain,
+        hours_of_operation=SgRecord.MISSING,
+    )
 
-    return row
+    sgw.write_row(row)
 
 
-def fetch_data():
-    out = []
-    ids = get_ids()
+def fetch_data(sgw: SgWriter):
+    urls = get_urls()
 
     with futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {executor.submit(get_data, _id): _id for _id in ids}
+        future_to_url = {executor.submit(get_data, url, sgw): url for url in urls}
         for future in futures.as_completed(future_to_url):
-            row = future.result()
-            if row:
-                out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+            future.result()
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://www.westfieldbank.com/"
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        fetch_data(writer)

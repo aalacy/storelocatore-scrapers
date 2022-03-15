@@ -24,6 +24,20 @@ def _valid(val):
     )
 
 
+def _p(val):
+    return (
+        val.replace("(", "")
+        .replace(")", "")
+        .replace("+", "")
+        .replace("-", "")
+        .replace(".", " ")
+        .replace("to", "")
+        .replace(" ", "")
+        .strip()
+        .isdigit()
+    )
+
+
 def fetch_data():
     with SgRequests() as session:
         locator_domain = "http://www.ccfoodmarts.com/"
@@ -39,17 +53,26 @@ def fetch_data():
                 if _.strip()
             ]
             log.info(page_url)
-            yield SgRecord(
-                page_url=page_url,
-                location_name=soup1.xpath("//h3/text()")[0],
-                street_address=" ".join(blocks[:-2]),
-                city=blocks[-2].split(",")[0].strip(),
-                state=blocks[-2].split(",")[1].strip().split(" ")[0],
-                zip_postal=blocks[-2].split(",")[1].strip().split(" ")[1],
-                country_code="US",
-                phone=blocks[-1].strip(),
-                locator_domain=locator_domain,
-            )
+            phone = ""
+            if _p(blocks[-1]):
+                phone = blocks[-1].strip()
+                del blocks[-1]
+            try:
+                yield SgRecord(
+                    page_url=page_url,
+                    location_name=soup1.xpath("//h3/text()")[0],
+                    street_address=" ".join(blocks[:-1]),
+                    city=blocks[-1].split(",")[0].strip(),
+                    state=blocks[-1].split(",")[1].strip().split(" ")[0],
+                    zip_postal=blocks[-1].split(",")[1].strip().split(" ")[1],
+                    country_code="US",
+                    phone=phone,
+                    locator_domain=locator_domain,
+                )
+            except:
+                import pdb
+
+                pdb.set_trace()
 
 
 if __name__ == "__main__":

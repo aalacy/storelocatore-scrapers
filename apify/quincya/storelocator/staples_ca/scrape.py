@@ -52,18 +52,25 @@ def fetch_data():
         .split('list">')[1]
         .split(",</div>")[0]
         .replace("\r\n", "")
-        .split(",{")
+        .split(",{   ")
     )
 
     data = []
     for i in stores:
         if i[0] != "{":
             i = "{" + i
+        i = i.replace('"{\\', "{\\").replace("\\", "").split(',"children')[0] + "}}"
         store = json.loads(i)
 
         locator_domain = "staples.ca"
         location_name = store["location_name"] + " " + store["fid"]
-        street_address = (store["address_1"] + " " + store["address_2"]).strip()
+        street_address = (
+            (store["address_1"] + " " + store["address_2"])
+            .replace("u00e9", "e")
+            .replace("u00e7", "c")
+            .replace("u00f4", "o")
+            .strip()
+        )
         city = store["city"]
         state = store["region"]
         zip_code = store["post_code"]
@@ -73,7 +80,7 @@ def fetch_data():
         phone = store["local_phone"]
 
         hours_of_operation = ""
-        raw_hours = json.loads(store["hours_sets:primary"])["days"]
+        raw_hours = store["hours_sets:primary"]["days"]
         for day in raw_hours:
             if raw_hours[day] == "closed":
                 clean_hours = day + " closed"

@@ -1,148 +1,129 @@
-import csv
-import json
 import urllib.parse
 
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 from sgrequests import SgRequests
 
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
 
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+def make_request(session, Point):
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:93.0) Gecko/20100101 Firefox/93.0",
+        "Accept": "application/json, text/javascript, */*; q=0.01",
+        "Accept-Language": "en",
+        "Accept-Encoding": "gzip, deflate, br",
+        "x-web-host": "www.marks.com",
+        "service-client": "mk/web",
+    }
+    url = "https://api.marks.com/hy/v1/marks/storelocators/near?code=&productIds=&count=20&location={}".format(
+        Point[:3] + " " + Point[3:]
+    )
+    hdr_opt = {
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:93.0) Gecko/20100101 Firefox/93.0",
+        "Accept": "*/*",
+        "Accept-Language": "en-US,ru-RU;q=0.8,ru;q=0.5,en;q=0.3",
+        "Accept-Encoding": "gzip, deflate, br",
+        "Access-Control-Request-Method": "GET",
+        "Access-Control-Request-Headers": "service-client,x-web-host",
+    }
+    response = session.request(url, method="OPTIONS", headers=hdr_opt)
+    response = session.get(url, headers=headers)
+    if response.status_code != 200:
+        return {}
+    return response.json()
+
+
+def clean_record(poi):
+    domain = "marks.com"
+    store_url = [
+        elem["value"] for elem in poi["urlLocalized"] if elem["locale"] == "en"
+    ]
+    store_url = (
+        urllib.parse.urljoin("https://www.marks.com/", store_url[0])
+        if store_url
+        else "<MISSING>"
+    )
+    location_name = poi["displayName"]
+    location_name = location_name if location_name else "<MISSING>"
+    street_address = poi["address"]["line1"]
+    if poi["address"]["line2"]:
+        street_address += ", " + poi["address"]["line2"]
+    city = poi["address"]["town"]
+    city = city if city else "<MISSING>"
+    state = poi["address"]["province"]
+    state = state if state else "<MISSING>"
+    zip_code = poi["address"]["postalCode"]
+    zip_code = zip_code if zip_code else "<MISSING>"
+    country_code = poi["address"]["country"]["isocode"]
+    country_code = country_code if country_code else "<MISSING>"
+    store_number = poi["name"]
+    store_number = store_number if store_number else "<MISSING>"
+    phone = poi["address"].get("phone")
+    phone = phone if phone else "<MISSING>"
+    location_type = ""
+    location_type = location_type if location_type else "<MISSING>"
+    latitude = poi["geoPoint"]["latitude"]
+    latitude = latitude if latitude else "<MISSING>"
+    longitude = poi["geoPoint"]["longitude"]
+    longitude = longitude if longitude else "<MISSING>"
+    hoo = poi.get("workingHours")
+    if hoo:
+        hoo = [e.strip() for e in hoo.split()]
+    hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
+
+    item = SgRecord(
+        locator_domain=domain,
+        page_url=store_url,
+        location_name=location_name,
+        street_address=street_address,
+        city=city,
+        state=state,
+        zip_postal=zip_code,
+        country_code=country_code,
+        store_number=store_number,
+        phone=phone,
+        location_type=location_type,
+        latitude=latitude,
+        longitude=longitude,
+        hours_of_operation=hours_of_operation,
+    )
+
+    return item
 
 
 def fetch_data():
-    # Your scraper here
-    session = SgRequests()
+    with SgRequests(verify_ssl=False) as session:
+        search = DynamicZipSearch(
+            country_codes=[SearchableCountries.CANADA],
+            expected_search_radius_miles=40,
+        )
 
-    items = []
-    scraped_items = []
-
-    DOMAIN = "marks.com"
-
-    all_codes = [
-        "T0H 1Z0",
-        "V0B 1G6",
-        "V8G 1R5",
-    ]
-    ca_zips = DynamicZipSearch(
-        country_codes=[SearchableCountries.CANADA],
-        max_radius_miles=25,
-        max_search_results=None,
-    )
-    for zip_code in ca_zips:
-        all_codes.append(zip_code)
-
-    hdr = {
-        "accept": "application/json, text/javascript, */*; q=0.01",
-        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.114 Safari/537.36",
-        "x-web-host": "www.marks.com",
-        "x-xsrf-token": "efe961be-c68a-44d6-a844-d18021f76f66",
-    }
-
-    start_url = "https://api.marks.com/hy/v1/marks/storelocators/bopis/nearLocation/filtered?location={}&pageSize=50"
-    for code in all_codes:
-        code = code + " 1A0"
-        try:
-            response = session.get(
-                start_url.format(code.replace(" ", "+")), headers=hdr
-            )
-        except:
-            pass
-        if response.status_code != 200:
-            continue
-        data = json.loads(response.text)
-
-        all_poi = data["pointsOfService"]
-        for poi in all_poi:
-            store_url = [
-                elem["value"] for elem in poi["urlLocalized"] if elem["locale"] == "en"
-            ]
-            store_url = (
-                urllib.parse.urljoin("https://www.marks.com/", store_url[0])
-                if store_url
-                else "<MISSING>"
-            )
-            location_name = poi["displayName"]
-            location_name = location_name if location_name else "<MISSING>"
-            street_address = poi["address"]["line1"]
-            if poi["address"]["line2"]:
-                street_address += ", " + poi["address"]["line2"]
-            street_address = street_address if street_address else "<MISSING>"
-            city = poi["address"]["town"]
-            city = city if city else "<MISSING>"
-            state = poi["address"]["province"]
-            state = state if state else "<MISSING>"
-            zip_code = poi["address"]["postalCode"]
-            zip_code = zip_code if zip_code else "<MISSING>"
-            country_code = poi["address"]["country"]["isocode"]
-            country_code = country_code if country_code else "<MISSING>"
-            store_number = poi["name"]
-            store_number = store_number if store_number else "<MISSING>"
-            phone = poi["address"].get("phone")
-            phone = phone if phone else "<MISSING>"
-            location_type = ""
-            location_type = location_type if location_type else "<MISSING>"
-            latitude = poi["geoPoint"]["latitude"]
-            latitude = latitude if latitude else "<MISSING>"
-            longitude = poi["geoPoint"]["longitude"]
-            longitude = longitude if longitude else "<MISSING>"
-            hoo = poi.get("workingHours")
-            hoo = [e.strip() for e in hoo.split()]
-            hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
-
-            item = [
-                DOMAIN,
-                store_url,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip_code,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
-            check = f"{location_name} {street_address}"
-            if check not in scraped_items:
-                scraped_items.append(check)
-                items.append(item)
-
-    return items
+        maxZ = search.items_remaining()
+        for Point in search:
+            if search.items_remaining() > maxZ:
+                maxZ = search.items_remaining()
+            data = make_request(session, Point)
+            if "error.storelocator.find.nostores.error" not in str(data):
+                if not data.get("storeLocatorPageData"):
+                    continue
+                for fullRecord in data["storeLocatorPageData"]["results"]:
+                    record = clean_record(fullRecord)
+                    yield record
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":

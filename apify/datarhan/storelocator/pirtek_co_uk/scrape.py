@@ -1,10 +1,9 @@
 import re
 import csv
+import demjson
 from lxml import etree
-from urllib.parse import urljoin
 
 from sgrequests import SgRequests
-from sgscrape.sgpostal import parse_address_intl
 
 
 def write_output(data):
@@ -45,53 +44,41 @@ def fetch_data():
     scraped_items = []
 
     DOMAIN = "pirtek.co.uk"
-    start_url = "https://www.pirtek.co.uk/service-centres"
+    start_url = "https://www.pirtek.co.uk/find-service-centre/"
 
     response = session.get(start_url)
-    dom = etree.HTML(response.text)
-
-    all_locations = dom.xpath('//select[@class="selectric jump smaller"]/option/@value')
-    for url in all_locations:
-        store_url = urljoin(start_url, url)
-        if store_url == "https://www.pirtek.co.uk/service-centres":
-            continue
+    all_locations = re.findall(r"addMarker\((.+?)\);", response.text)
+    all_locations = [
+        e.split(",")[-1].strip()[1:-1] for e in all_locations if "https" in e
+    ]
+    for store_url in all_locations:
         loc_response = session.get(store_url)
         loc_dom = etree.HTML(loc_response.text)
 
-        location_name = loc_dom.xpath('//h1[@class="serviceCentresTitle"]//span/text()')
-        location_name = [elem.strip() for elem in location_name if elem.strip()]
-        location_name = " ".join(location_name) if location_name else "<MISSING>"
-        raw_address = " ".join(
-            loc_dom.xpath(
-                '//p[strong[contains(text(), "Contact Details")]]/following-sibling::p[1]/text()'
-            )
-        )
-        addr = parse_address_intl(raw_address)
-        street_address = addr.street_address_1
-        if addr.street_address_2:
-            street_address = addr.street_address_2 + " " + addr.street_address_1
-        city = addr.city
-        city = city if city else "<MISSING>"
-        state = addr.state
-        state = state if state else "<MISSING>"
-        zip_code = " ".join(raw_address.split()[-2:])
-        zip_code = zip_code if zip_code else "<MISSING>"
-        phone = loc_dom.xpath('//p[contains(text(), "Tel:")]/text()')
-        phone = phone[0].split(": ")[-1] if phone else "<MISSING>"
-        country_code = addr.country
-        country_code = country_code if country_code else "<MISSING>"
-        if country_code == "Ireland":
-            continue
-        store_number = loc_response.url.split("/")[-2]
+        location_name = loc_dom.xpath('//h1[@class="post-details--info-title"]/text()')[
+            0
+        ]
+        street_address = loc_dom.xpath('//div[@class="unit-number"]/text()')[0]
+        street_address_2 = loc_dom.xpath('//div[@class="street"]/text()')
+        if street_address_2:
+            street_address += " " + street_address_2[0]
+        city = loc_dom.xpath('//div[@class="city"]/text()')[0]
+        state = loc_dom.xpath('//div[@class="county"]/text()')
+        state = state[0] if state else "<MISSING>"
+        zip_code = loc_dom.xpath('//div[@class="postcode"]/text()')
+        zip_code = zip_code[0] if zip_code else "<MISSING>"
+        phone = loc_dom.xpath('//a[contains(@href, "tel")]/text()')
+        phone = phone[0] if phone else "<MISSING>"
+        country_code = "<MISSING>"
+        store_number = "<MISSING>"
         location_type = "<MISSING>"
-        geo = re.findall(r"LatLng\((.+?)\),", loc_response.text)
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
-        if geo:
-            geo = geo[0].split(", ")
-            latitude = geo[0]
-            longitude = geo[1]
-        hours_of_operation = "<MISSING>"
+        geo = re.findall(r"center: (\{.+?\}),", loc_response.text)[0]
+        geo = demjson.decode(geo)
+        latitude = geo["lat"]
+        longitude = geo["lng"]
+        hoo = loc_dom.xpath('//div[@class="open-hours-table"]//text()')
+        hoo = [e.strip() for e in hoo if e.strip()]
+        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 
         item = [
             DOMAIN,

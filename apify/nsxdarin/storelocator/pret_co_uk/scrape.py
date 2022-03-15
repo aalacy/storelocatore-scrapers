@@ -1,6 +1,9 @@
-import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 session = SgRequests()
 headers = {
@@ -8,33 +11,6 @@ headers = {
 }
 
 logger = SgLogSetup().get_logger("pret_co_uk")
-
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
 
 
 def fetch_data():
@@ -47,7 +23,6 @@ def fetch_data():
     country = "GB"
     logger.info("Pulling Stores")
     for line in r.iter_lines():
-        line = str(line.decode("utf-8"))
         if '<a class="Directory-listLink" href="' in line:
             items = line.split('<a class="Directory-listLink" href="')
             for item in items:
@@ -67,7 +42,6 @@ def fetch_data():
         logger.info(city)
         r2 = session.get(city, headers=headers)
         for line2 in r2.iter_lines():
-            line2 = str(line2.decode("utf-8"))
             if '="Teaser-titleLink" href="' in line2:
                 items = line2.split('="Teaser-titleLink" href="')
                 for item in items:
@@ -90,7 +64,6 @@ def fetch_data():
         hours = ""
         r2 = session.get(loc, headers=headers)
         for line2 in r2.iter_lines():
-            line2 = str(line2.decode("utf-8"))
             if 'class="Hero-locationName" itemprop="name">' in line2:
                 name = line2.split('class="Hero-locationName" itemprop="name">')[
                     1
@@ -100,10 +73,8 @@ def fetch_data():
                 lng = line2.split('itemprop="longitude" content="')[1].split('"')[0]
             if 'itemprop="streetAddress" content="' in line2:
                 add = line2.split('itemprop="streetAddress" content="')[1].split('"')[0]
-            if 'c-AddressRow> <span class="c-address-city">' in line2 and city == "":
-                city = line2.split('c-AddressRow> <span class="c-address-city">')[
-                    1
-                ].split("<")[0]
+            if '<span class="c-address-city">' in line2 and city == "":
+                city = line2.split('<span class="c-address-city">')[1].split("<")[0]
                 state = "<MISSING>"
             if 'itemprop="postalCode">' in line2:
                 zc = line2.split('itemprop="postalCode">')[1].split("<")[0]
@@ -135,27 +106,29 @@ def fetch_data():
             phone = "<MISSING>"
         if hours == "":
             hours = "<MISSING>"
-        yield [
-            website,
-            loc,
-            name,
-            add,
-            city,
-            state,
-            zc,
-            country,
-            store,
-            phone,
-            typ,
-            lat,
-            lng,
-            hours,
-        ]
+        yield SgRecord(
+            locator_domain=website,
+            page_url=loc,
+            location_name=name,
+            street_address=add,
+            city=city,
+            state=state,
+            zip_postal=zc,
+            country_code=country,
+            phone=phone,
+            location_type=typ,
+            store_number=store,
+            latitude=lat,
+            longitude=lng,
+            hours_of_operation=hours,
+        )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()

@@ -1,111 +1,139 @@
-import csv
+import usaddress
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
+def fetch_data(sgw: SgWriter):
 
     locator_domain = "https://www.rocknjoe.com"
     page_url = "https://www.rocknjoe.com/locations"
     session = SgRequests()
+    tag = {
+        "Recipient": "recipient",
+        "AddressNumber": "address1",
+        "AddressNumberPrefix": "address1",
+        "AddressNumberSuffix": "address1",
+        "StreetName": "address1",
+        "StreetNamePreDirectional": "address1",
+        "StreetNamePreModifier": "address1",
+        "StreetNamePreType": "address1",
+        "StreetNamePostDirectional": "address1",
+        "StreetNamePostModifier": "address1",
+        "StreetNamePostType": "address1",
+        "CornerOf": "address1",
+        "IntersectionSeparator": "address1",
+        "LandmarkName": "address1",
+        "USPSBoxGroupID": "address1",
+        "USPSBoxGroupType": "address1",
+        "USPSBoxID": "address1",
+        "USPSBoxType": "address1",
+        "BuildingName": "address2",
+        "OccupancyType": "address2",
+        "OccupancyIdentifier": "address2",
+        "SubaddressIdentifier": "address2",
+        "SubaddressType": "address2",
+        "PlaceName": "city",
+        "StateName": "state",
+        "ZipCode": "postal",
+    }
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
     r = session.get(page_url, headers=headers)
     tree = html.fromstring(r.text)
-    div = tree.xpath('//div[./a[contains(@href, "facebook")]]')
+    div = tree.xpath('//div[./h6//span[text()="Hours"]]')
 
     for d in div:
 
-        location_type = "<MISSING>"
-        street_address = "".join(d.xpath(".//preceding-sibling::div[./p]/p[1]//text()"))
-        ad = "".join(d.xpath(".//preceding-sibling::div[./p]/p[2]//text()"))
-        phone = "".join(d.xpath(".//preceding-sibling::div[./p]/p[3]//text()"))
-        city = ad.split(",")[0].strip()
-        state = ad.split(",")[1].split()[0].strip()
-        postal = ad.split(",")[1].split()[-1].strip()
+        location_type = "Rock 'n' Joe Coffee"
+        adr = d.xpath(
+            './/preceding-sibling::div[./p[@style="line-height:1.7em; font-size:17px;"]][1]//text()'
+        )
+        adress = " ".join(adr[:-1]).replace("\n", "").strip()
+        if "404" in adress:
+            adress = " ".join(adr).replace("\n", "").strip()
+        if "".join(adr).find("Clinic") != -1:
+            adress = " ".join(adr).replace("\n", "").strip()
+        a = usaddress.tag(adress, tag_mapping=tag)[0]
+        phone = "".join(adr[-1])
+        if "".join(adr).find("420") != -1:
+            phone = "<MISSING>"
+        street_address = f"{a.get('address1')} {a.get('address2')}".replace(
+            "None", ""
+        ).strip()
+
+        city = a.get("city") or "<MISSING>"
+        state = a.get("state") or "<MISSING>"
+        postal = a.get("postal") or "<MISSING>"
         country_code = "US"
-        location_name = "".join(d.xpath(".//preceding-sibling::div/h6//text()"))
-        store_number = "<MISSING>"
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
-        tmpcls = "".join(
+        location_name = (
+            "".join(d.xpath(".//preceding-sibling::div[5]/h6//text()")) or "<MISSING>"
+        )
+        if location_name == "<MISSING>":
+            location_name = "".join(d.xpath(".//preceding-sibling::div[3]/h6//text()"))
+        if street_address.find("404 Wood Street") != -1:
+            location_name = "".join(
+                d.xpath(
+                    './/preceding-sibling::div[./h6[@style="font-size:22px;"]][1]//text()'
+                )
+            )
+        days = d.xpath(
+            ".//following-sibling::div[./p[@style='line-height:1.7em; font-size:17px;']][1]//text()"
+        )
+        days = list(filter(None, [a.strip() for a in days]))
+
+        times = (
             d.xpath(
-                './/following-sibling::div[5]/p/span[contains(text(), "Temporarily Closed")]/text()'
+                ".//following-sibling::div[./p[@style='line-height:1.7em; font-size:17px;']][2]//text()"
+            )
+            or "<MISSING>"
+        )
+        if times != "<MISSING>":
+            times = list(filter(None, [a.strip() for a in times]))
+        if times == "<MISSING>":
+            times = d.xpath(".//following::div[2]/p/span/text()")
+        _tmp = []
+        if days != "<MISSING>" and times != "<MISSING>":
+            for b, t in zip(days, times):
+                _tmp.append(f"{b.strip()}: {t.strip()}")
+        hours_of_operation = " ".join(_tmp) or "<MISSING>"
+        cms = "".join(
+            d.xpath(
+                './/following-sibling::div/p[./span[contains(text(), "Coming Soon")]]//text()'
             )
         )
-        _tmp = []
-        days = "<MISSING>"
-        times = "<MISSING>"
-        if not tmpcls:
-            days = d.xpath(".//following-sibling::div[4]/p//text()")
-            days = list(filter(None, [a.strip() for a in days]))
+        if cms and street_address.find("404") != -1:
+            phone = "<MISSING>"
+            hours_of_operation = "Coming Soon"
 
-            times = d.xpath(".//following-sibling::div[5]/p//text()")
-            times = list(filter(None, [a.strip() for a in times]))
-        if days != "<MISSING>" and times != "<MISSING>":
-            for d, t in zip(days, times):
-                _tmp.append(f"{d.strip()}: {t.strip()}")
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=SgRecord.MISSING,
+            phone=phone,
+            location_type=location_type,
+            latitude=SgRecord.MISSING,
+            longitude=SgRecord.MISSING,
+            hours_of_operation=hours_of_operation,
+            raw_address=adress,
+        )
 
-        hours_of_operation = " ".join(_tmp)
-        if tmpcls:
-            hours_of_operation = "Temporarily Closed"
-
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
+    ) as writer:
+        fetch_data(writer)

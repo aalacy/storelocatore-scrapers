@@ -1,5 +1,4 @@
 import csv
-import usaddress
 from lxml import html
 from sgrequests import SgRequests
 
@@ -39,34 +38,6 @@ def fetch_data():
     locator_domain = "https://www.musicarts.com/"
     api_url = "https://stores.musicarts.com/browse/"
     session = SgRequests()
-    tag = {
-        "Recipient": "recipient",
-        "AddressNumber": "address1",
-        "AddressNumberPrefix": "address1",
-        "AddressNumberSuffix": "address1",
-        "StreetName": "address1",
-        "StreetNamePreDirectional": "address1",
-        "StreetNamePreModifier": "address1",
-        "StreetNamePreType": "address1",
-        "StreetNamePostDirectional": "address1",
-        "StreetNamePostModifier": "address1",
-        "StreetNamePostType": "address1",
-        "CornerOf": "address1",
-        "IntersectionSeparator": "address1",
-        "LandmarkName": "address1",
-        "USPSBoxGroupID": "address1",
-        "USPSBoxGroupType": "address1",
-        "USPSBoxID": "address1",
-        "USPSBoxType": "address1",
-        "BuildingName": "address2",
-        "OccupancyType": "address2",
-        "OccupancyIdentifier": "address2",
-        "SubaddressIdentifier": "address2",
-        "SubaddressType": "address2",
-        "PlaceName": "city",
-        "StateName": "state",
-        "ZipCode": "postal",
-    }
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
@@ -98,20 +69,21 @@ def fetch_data():
                         '//div[@class="location-card-content"]//span[@class="location-name"]/text()'
                     )
                 )
-                ad = (
-                    " ".join(
+                adr = "".join(
+                    tree.xpath(
+                        '//div[@class="location-card-content"]//div[@class="address"]/div[last()]/text()'
+                    )
+                )
+                location_type = "Store"
+                street_address = (
+                    "".join(
                         tree.xpath(
-                            '//div[@class="location-card-content"]//div[@class="address"]/div/text()'
+                            '//div[@class="location-card-content"]//div[@class="address"]/span[1]/text()'
                         )
                     )
-                    .replace("\n", "")
+                    .replace("Hwyÿ6ÿN", "Hwy")
                     .strip()
                 )
-                a = usaddress.tag(ad, tag_mapping=tag)[0]
-                location_type = "Store"
-                street_address = f"{a.get('address1')} {a.get('address2')}".replace(
-                    "None", ""
-                ).strip()
                 phone = (
                     "".join(
                         tree.xpath(
@@ -120,11 +92,11 @@ def fetch_data():
                     )
                     or "<MISSING>"
                 )
-                state = a.get("state") or "<MISSING>"
-                postal = a.get("postal") or "<MISSING>"
-                city = a.get("city") or "<MISSING>"
+                city = adr.split(",")[0].strip()
+                postal = adr.split(",")[1].split()[1].strip()
+                state = adr.split(",")[1].split()[0].strip()
                 country_code = "US"
-                store_number = "<MISSING>"
+                store_number = page_url.split("-")[-1].split(".")[0].strip()
                 hours_of_operation = tree.xpath(
                     '//div[@class="day-hour-row"]/span//text()'
                 )

@@ -1,118 +1,125 @@
+import ssl
 from bs4 import BeautifulSoup
-import csv
-import time
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
+from sglogging import sglog
+from sgselenium import SgChrome
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from selenium.webdriver.support.ui import WebDriverWait
+from webdriver_manager.chrome import ChromeDriverManager
 
-logger = SgLogSetup().get_logger("sitnsleep_com")
+from lxml import html
 
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
+
+
+website = "sitnsleep_com"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
-
 headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.141 Safari/537.36",
+    "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36",
+    "Accept": "application/json",
 }
 
-
-def write_output(data):
-    with open("data.csv", mode="w", newline="", encoding="utf8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        temp_list = []
-        for row in data:
-            comp_list = [
-                row[2].strip(),
-                row[3].strip(),
-                row[4].strip(),
-                row[5].strip(),
-                row[6].strip(),
-                row[8].strip(),
-                row[10].strip(),
-            ]
-            if comp_list not in temp_list:
-                temp_list.append(comp_list)
-                writer.writerow(row)
-        logger.info(f"No of records being processed: {len(temp_list)}")
+DOMAIN = "https://www.sitnsleep.com/"
+MISSING = "<MISSING>"
 
 
 def fetch_data():
-    data = []
-    url = "https://www.sitnsleep.com/js/app.f4cb6e20.js"
-    r = session.get(url, headers=headers, verify=False)
-    soup = BeautifulSoup(r.text, "html.parser")
+    with SgChrome(
+        executable_path=ChromeDriverManager().install(), is_headless=True
+    ) as driver:
+        driver.get("https://www.sitnsleep.com/storelocator")
+        WebDriverWait(driver, 40)
+        response_text = driver.page_source
+        data = html.fromstring(response_text, "lxml")
+        js_app_slug = data.xpath('//link[contains(@href, "/js/app")]/@href')
+        js_app_slug = "".join(js_app_slug)
+        log.info(f"slug: {js_app_slug}")
+        url = f"{DOMAIN}{js_app_slug}"
+        log.info(f"js app file URL: {url}")
+        driver.get(url)
+        response_text2 = driver.page_source
+    soup = BeautifulSoup(response_text2, "html.parser")
     bs = str(soup)
     bs = bs.split("stores:")[1].split('}}};t["a"]=s},')[0]
     locs = bs.split("{about:")
     for loc in locs:
         if loc != "[":
-            title = loc.split(',name:"')[1].split('",')[0]
-            street = loc.split(',street:"')[1].split('",')[0]
-            street = street.replace("<br/>", " ")
+            page_url = loc.split('route:"')[1].split('",')[0]
+            page_url = "https://www.sitnsleep.com/store/" + page_url
+            page_url = page_url.replace('"},', "")
+            log.info(page_url)
+            loc = loc.split("address:")[1].split(",reviews:")[0]
+            location_name = loc.split(',name:"')[1].split('",')[0]
+
+            street_address = loc.split(',street:"')[1].split('",zip:')[0]
+            street_address = street_address.replace("<br/>", " ")
+            if "Long Beach" in location_name:
+                street_address = (
+                    loc.split(',street:"')[1].split('",zip:')[0].rsplit(";")[-1]
+                )
+            if "(" in street_address:
+                street_address = street_address.split("(")[0]
+            if "&" in street_address:
+                street_address = street_address.split("&")[0]
             city = loc.split('{city:"')[1].split('",')[0]
             state = loc.split(',state:"')[1].split('",')[0]
-            pcode = loc.split(',zip:"')[1].split('"}')[0]
-            country = loc.split(',country:"')[1].split('",')[0]
-            hours = loc.split(",hours:'")[1].split("',l")[0]
-            week = hours.split("<p><strong>")[1].split("</p>")[0]
-            week = week.replace("</strong>", "")
-            sat = hours.split('hours-saturday">')[1].split("</p>")[0]
-            sat = sat.replace("</strong>", "")
-            sun = hours.split('hours-sunday">')[1].split("</p>")[0]
-            sun = sun.replace("</strong>", "")
-            hoo = week + ", " + sat + ", " + sun
-            lat = loc.split('latitude:"')[1].split('",')[0]
-            lng = loc.split('longitude:"')[1].split('",')[0]
-            phone = loc.split(',phone:"')[1].split('",')[0]
-            link = loc.split('route:"')[1].split('",')[0]
-            link = link.rstrip('"},')
-            page = "https://www.sitnsleep.com/store/" + link
-
-            data.append(
-                [
-                    "www.sitnsleep.com",
-                    page,
-                    title,
-                    street,
-                    city,
-                    state,
-                    pcode,
-                    country,
-                    "<MISSING>",
-                    phone,
-                    "<MISSING>",
-                    lat,
-                    lng,
-                    hoo,
-                ]
+            zip_postal = loc.split(',zip:"')[1].split('"}')[0]
+            country_code = loc.split(',country:"')[1].split('",')[0]
+            hours_of_operation = loc.split(",hours:'")[1].split("',l")[0]
+            hours_of_operation = (
+                hours_of_operation.replace("&lt;p&gt;&lt;strong&gt;", "")
+                .replace("&lt;p&gt;", "")
+                .replace("&lt;/strong&gt;", "")
+                .replace("&lt;/p&gt;", "")
             )
-    return data
+            hours_of_operation = (
+                hours_of_operation.replace("pm", "pm ")
+                .replace('class="location__hours-saturday"&gt;', "")
+                .replace('class="location__hours-sunday"&gt;', "")
+                .replace("&lt;strong ", "")
+            )
+            latitude = loc.split('latitude:"')[1].split('",')[0]
+            longitude = loc.split('longitude:"')[1].split('",')[0]
+            phone = loc.split(',phone:"')[1].split('",')[0].replace('"', "")
+            yield SgRecord(
+                locator_domain=DOMAIN,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address.strip(),
+                city=city.strip(),
+                state=state.strip(),
+                zip_postal=zip_postal.strip(),
+                country_code=country_code,
+                store_number=MISSING,
+                phone=phone.strip(),
+                location_type=MISSING,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation.strip(),
+            )
 
 
 def scrape():
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
-    data = fetch_data()
-    write_output(data)
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    log.info("Started")
+    count = 0
+    with SgWriter() as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()

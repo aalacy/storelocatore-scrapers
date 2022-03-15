@@ -74,12 +74,12 @@ def fetch_location(loc, retry_count=0):
     try:
         with SgChrome(is_headless=True) as driver:
             driver.get(loc)
-            sleep(randint(2, 3))
+            sleep(randint(10, 15))
 
             text = driver.page_source
 
             if re.search("access denied", re.escape(text), re.IGNORECASE):
-                if retry_count > 3:
+                if retry_count > 10:
                     raise Exception()
 
                 return fetch_location(loc, retry_count + 1)
@@ -117,8 +117,18 @@ def fetch_location(loc, retry_count=0):
                 state = "MI"
                 zc = "48084"
                 phone = "(248) 649-5300"
-                lat = "<MISSING>"
-                lng = "<MISSING>"
+                lat = "42.562578"
+                lng = "-83.18373"
+            if "/il/rosemont/chicago-rosemont/8036" in loc:
+                name = "Chicago - Rosemont"
+                add = "5340 N River Road"
+                city = "Chicago"
+                state = "IL"
+                zc = "60018"
+                phone = "(847) 671-8125"
+                lat = "41.97486085"
+                lng = "-87.86304142"
+                hours = "Mon: 4:00PM - 9:00PM; Tue-Thu: 11:00AM - 9:00PM; Fri: 11:30AM - 10:00PM; Sat: 5:00PM - 10:00PM; Sun: 5:00 - 9:00PM"
             if "scottsdale/scottsdale/8024" in loc:
                 name = "Scottsdale"
                 add = "16489 North Scottsdale Rd"
@@ -128,6 +138,8 @@ def fetch_location(loc, retry_count=0):
                 phone = "(480) 348-1700"
                 lat = "33.63713300"
                 lng = "-111.92410500"
+                hours = "Mon-Thu: 11:00AM - 9:00PM; Fri: 11:00AM - 10:00PM; Sat: 5:00PM - 10:00PM; Sun: 5:00PM - 9:00PM"
+            if "austin/austin/8053" in loc:
                 hours = "Mon-Thu: 11:00AM - 9:00PM; Fri: 11:00AM - 10:00PM; Sat: 5:00PM - 10:00PM; Sun: 5:00PM - 9:00PM"
             if "tn/memphis/memphis/8051" in loc:
                 hours = "Mon-Thu: 11:30AM - 9:00PM; Fri: 11:30AM - 10:00PM; Sat: 5:00PM - 10:00PM; Sun: 4:00PM - 9:00PM"
@@ -143,10 +155,33 @@ def fetch_location(loc, retry_count=0):
                 lat = "33.92653800"
                 lng = "-84.34037200"
                 hours = "Mon-Thu: 11:30AM - 9:00PM; Fri: 11:30AM - 10:00PM; Sat: 5:00PM - 10:00PM; Sun: 4:00PM - 9:00PM"
+            if "chevy-chase/8041" in loc:
+                city = "Chevy Chase"
+                state = "MD"
+                add = "5310 Western Ave"
+                phone = "(301) 718-7812"
+                hours = "Mon-Fri: 11:30AM - 10:00PM; Sat: 12:00PM - 11:00PM; Sun: 4:00PM - 9:00PM"
+            if "va/fairfax/fairfax/8068" in loc:
+                hours = "Mon-Fri: 11:30AM - 10:00PM; Sat: 5:00PM - 11:00PM; Sun: 5:00PM - 9:00PM"
+            if "yndhurst/lyndhurst/8060" in loc:
+                hours = "Mon-Thu: 11:30AM - 9:00PM; Fri: 11:30AM - 10:00PM; Sat: 4:00PM - 10:00PM; Sun: 4:00PM - 9:00PM"
+            if "charlotte/charlotte/8011" in loc:
+                name = "Charlotte"
+                phone = "(704) 348-1400"
+                zc = "28202"
+                add = "201 N. Tryon Street"
+                city = "Charlotte"
+                state = "NC"
+            if "-the-galleria/8007" in loc:
+                state = "TX"
+                city = "Houston"
+                zc = "77056"
+                phone = "(713) 623-4600"
+                name = "Houston - The Galleria"
+                add = "5365 Westheimer Rd"
             if "mc/cuauhtemo" not in loc and "/nl/san-pedro" not in loc:
                 if CS:
                     name = name + " - Coming Soon"
-
                 return [
                     website,
                     loc,

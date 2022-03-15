@@ -2,12 +2,15 @@ import time
 
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgrequests import SgRequests
 from sglogging import sglog
+import tenacity
 
 session = SgRequests()
 
-MISSING = "<MISSING>"
+MISSING = SgRecord.MISSING
 
 DOMAIN = "planetfitness.com"
 
@@ -53,6 +56,7 @@ def reqFirstAPI(url):
     return session.get(url, headers=headersAPI).json()
 
 
+@tenacity.retry(wait=tenacity.wait_fixed(5))
 def reqDetailPageAPI(url):
     return session.get(url, headers=headersPFX).json()
 
@@ -131,7 +135,7 @@ def scrape():
     count = 0
     start = time.time()
     result = fetchData()
-    with SgWriter() as writer:
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         for rec in result:
             writer.write_row(rec)
             count = count + 1

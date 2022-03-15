@@ -155,6 +155,8 @@ def fetch_data():
             .replace("\n", "")
             .strip()
         )
+        if hours_of_operation.find("(") != -1:
+            hours_of_operation = hours_of_operation.split("(")[0].strip()
         session = SgRequests()
         r = session.get("https://pitfirepizza.olo.com/locations/ca", headers=headers)
         tree = html.fromstring(r.text)

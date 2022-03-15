@@ -1,7 +1,11 @@
 from bs4 import BeautifulSoup
-import csv
 import re
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+
 
 session = SgRequests()
 headers = {
@@ -9,38 +13,8 @@ headers = {
 }
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
 def fetch_data():
-    data = []
+
     pattern = re.compile(r"\s\s+")
     url = "https://www.sears.com/stores.html"
     page = session.get(url, headers=headers, verify=False)
@@ -50,10 +24,11 @@ def fetch_data():
     for state in statelist:
         if state["href"].find("404") == -1:
             statelink = "https://www.sears.com" + state["href"]
+
             state1 = state.text
             flag1 = True
-            while flag1:
-                try:
+            if flag1:
+                if True:
                     page1 = session.get(statelink, headers=headers, verify=False)
                     soup1 = BeautifulSoup(page1.text, "html.parser")
                     linklist = soup1.findAll(
@@ -67,12 +42,11 @@ def fetch_data():
                             and blinks.text.find("Sears Store") > -1
                         ):
                             link = "https://www.sears.com" + link
-                            flag = True
-                            while flag:
-                                try:
-                                    page2 = session.get(
-                                        link, headers=headers, verify=False
-                                    )
+
+                            if True:
+
+                                page2 = session.get(link, headers=headers)
+                                if True:
 
                                     if page2.url.find("closed") > -1:
                                         break
@@ -185,56 +159,40 @@ def fetch_data():
                                         )
                                         title = title.replace("Sears", "Sears ")
                                         title = title.replace("  ", " ")
-                                        flag = True
-                                        for i in range(0, len(data)):
 
-                                            if (
-                                                link == data[i][1]
-                                                and title == data[i][2]
-                                            ):
-
-                                                flag = False
-                                                break
                                         if (
-                                            flag
-                                            and title.lower().find(
+                                            title.lower().find(
                                                 "find your next closest Store"
                                             )
                                             == -1
                                         ):
-                                            data.append(
-                                                [
-                                                    "https://www.sears.com/",
-                                                    link,
-                                                    title,
-                                                    street,
-                                                    city,
-                                                    state1,
-                                                    pcode,
-                                                    "US",
-                                                    store,
-                                                    phone,
-                                                    "<MISSING>",
-                                                    lat,
-                                                    longt,
-                                                    hours,
-                                                ]
+
+                                            yield SgRecord(
+                                                locator_domain="https://www.sears.com/",
+                                                page_url=link,
+                                                location_name=title,
+                                                street_address=street.strip(),
+                                                city=city.strip(),
+                                                state=state1.strip(),
+                                                zip_postal=pcode.strip(),
+                                                country_code="US",
+                                                store_number=store,
+                                                phone=phone.strip(),
+                                                location_type="<MISSING>",
+                                                latitude=lat,
+                                                longitude=longt,
+                                                hours_of_operation=hours,
                                             )
-
-                                            flag = False
-                                except:
-
-                                    pass
                     flag1 = False
-                except:
-
-                    pass
-    return data
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()

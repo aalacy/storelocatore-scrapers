@@ -36,12 +36,13 @@ def write_output(data):
 
 def get_urls():
     session = SgRequests()
-    r = session.get("https://gasserhardware.com/")
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0"
+    }
+    r = session.get("https://gasserhardware.com/", headers=headers)
     tree = html.fromstring(r.text)
 
-    return tree.xpath(
-        "//ul[@id='main-nav']//a[./span[text()='Locations']]/following-sibling::ul//a/@href"
-    )
+    return tree.xpath("//a[@class='hfe-menu-item' and contains(text(), ',')]/@href")
 
 
 def get_coords_from_embed(text):
@@ -59,19 +60,22 @@ def get_coords_from_embed(text):
 
 def get_data(page_url):
     locator_domain = "https://gasserhardware.com/"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0"
+    }
 
     session = SgRequests()
-    r = session.get(page_url)
+    r = session.get(page_url, headers=headers)
     tree = html.fromstring(r.text)
 
-    location_name = "".join(tree.xpath("//h1/text()")).strip()
+    location_name = tree.xpath("//h2/text()")[1].strip()
     line = tree.xpath("//div[./b or ./strong]/text()|//p[./strong]/text()")
     if not line:
         line = tree.xpath("//div[@class='wpb_wrapper']/p[1]/text()")[1:]
     line = list(filter(None, [l.strip() for l in line]))
 
-    street_address = ", ".join(line[:-1])
-    line = line[-1]
+    street_address = line.pop(0)
+    line = line.pop(0)
     city = line.split(",")[0].strip()
     line = line.split(",")[1].strip()
     state = line.split()[0]
@@ -79,20 +83,17 @@ def get_data(page_url):
     country_code = "US"
     store_number = "<MISSING>"
     phone = "<MISSING>"
+    hours_of_operation = "<MISSING>"
     lines = tree.xpath("//div[@class='wpb_wrapper']//text()")
     for line in lines:
         if "Phone:" in line:
-            phone = line.replace("Phone:", "").strip()
-            break
+            phone = lines[lines.index(line) + 1].strip()
+        if "Hours" in line:
+            hours_of_operation = ";".join(lines[lines.index(line) + 1 :])
 
     text = "".join(tree.xpath("//iframe/@src"))
     latitude, longitude = get_coords_from_embed(text)
     location_type = "<MISSING>"
-
-    hours = tree.xpath("//p[contains(text(),'Hours:')]/text()")
-    hours = list(filter(None, [h.strip() for h in hours]))
-    hours.remove("Hours:")
-    hours_of_operation = ";".join(hours) or "<MISSING>"
 
     row = [
         locator_domain,

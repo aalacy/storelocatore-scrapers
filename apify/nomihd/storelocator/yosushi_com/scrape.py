@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
-from sgrequests import SgRequests
+from sgrequests import SgRequests, SgRequestError
 from sglogging import sglog
 import lxml.html
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import json
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "yosushi.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -18,24 +20,49 @@ headers = {
 def fetch_data():
     # Your scraper here
 
-    search_url = "https://yosushi.com/restaurants"
+    search_url = "https://yosushi.com/restaurants?location=&restaurantTypeFilter=&longitude=&latitude="
     while True:
         stores_req = session.get(search_url, headers=headers)
         stores_sel = lxml.html.fromstring(stores_req.text)
 
-        stores = stores_sel.xpath('//a[@class="content-link__link"]/@href')
-        for store_url in stores:
-            page_url = "https://yosushi.com" + store_url
-            log.info(page_url)
-            store_req = session.get(page_url, headers=headers)
-            store_sel = lxml.html.fromstring(store_req.text)
-            store_json = json.loads(
-                "".join(
-                    store_sel.xpath('//script[@type="application/ld+json"]/text()')
+        stores = stores_sel.xpath('//div[@class="restaurant-list"]/div')
+        for store in stores:
+            location_type = "<MISSING>"
+
+            if (
+                "Kiosk"
+                in "".join(
+                    store.xpath('.//div[@class="restaurant-card__badge"]/text()')
+                ).strip()
+            ):
+                location_type = "Kiosk"
+
+            page_url = (
+                "https://yosushi.com"
+                + "".join(
+                    store.xpath(
+                        './/a[@class="btn btn--primary restaurant-card__button"]/@href'
+                    )
                 ).strip()
             )
+            log.info(page_url)
+            try:
+                store_req = SgRequests.raise_on_err(
+                    session.get(page_url, headers=headers)
+                )
+            except SgRequestError as e:
+                log.info(e.status_code)
+                continue
 
-            location_type = "<MISSING>"
+            store_sel = lxml.html.fromstring(store_req.text)
+
+            json_str = "".join(
+                store_sel.xpath('//script[@type="application/ld+json"]/text()')
+            ).strip()
+            if len(json_str) <= 0:
+                continue
+            store_json = json.loads(json_str)
+
             location_name = store_json["name"]
 
             locator_domain = website
@@ -64,6 +91,20 @@ def fetch_data():
             if "openingHours" in store_json:
                 hours_of_operation = "; ".join(store_json["openingHours"])
 
+            if (
+                "opening"
+                in "".join(store_sel.xpath('//div[@class="hero__status"]/text()'))
+                .strip()
+                .lower()
+            ):
+                if (
+                    "2021"
+                    in "".join(
+                        store_sel.xpath('//div[@class="hero__status"]/text()')
+                    ).strip()
+                ):
+                    if len(hours_of_operation) <= 0:
+                        continue
             store_number = "<MISSING>"
 
             latitude = store_json["latitude"]
@@ -98,7 +139,9 @@ def fetch_data():
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

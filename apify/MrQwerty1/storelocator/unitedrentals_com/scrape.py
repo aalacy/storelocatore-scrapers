@@ -1,77 +1,124 @@
-import csv
-from sgrequests import SgRequests
+import json
+import ssl
+
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgselenium.sgselenium import SgChrome
+from webdriver_manager.chrome import ChromeDriverManager
 
 
-def write_output(data):
-    with open('data.csv', mode='w', encoding='utf8', newline='') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+def get_driver(url, driver=None):
+    if driver is not None:
+        driver.quit()
 
-        writer.writerow(
-            ["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code",
-             "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+    user_agent = (
+        "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0"
+    )
+    x = 0
+    while True:
+        x = x + 1
+        try:
+            driver = SgChrome(
+                executable_path=ChromeDriverManager().install(),
+                user_agent=user_agent,
+                is_headless=True,
+            ).driver()
+            driver.get(url)
+            break
+        except Exception:
+            driver.quit()
+            if x == 5:
+                raise Exception(
+                    "Make sure this ran with a Proxy, will fail without one"
+                )
+            continue
+    return driver
 
-        for row in data:
-            writer.writerow(row)
+
+def get_js(html_string):
+    html_string = (
+        html_string.replace("\n", "")
+        .replace("\r", "")
+        .replace("\t", "")
+        .replace("</pre></body></html>", "")
+    )
+    return html_string
 
 
-def fetch_data():
-    out = []
-    url = 'https://unitedrentals.com/'
-    api_url = 'https://www.unitedrentals.com/api/v2/branches'
+def fetch_data(sgw):
+    api_url = "https://www.unitedrentals.com/api/v2/branches"
 
-    session = SgRequests()
-    r = session.get(api_url)
-    js = r.json()['data']
+    driver = get_driver(api_url)
+    response = driver.page_source
+    text = get_js(response.split('pre-wrap;">')[1])
+    js = json.loads(text)["data"]
 
-    s = set()
     for j in js:
-        locator_domain = url
         page_url = f'https://www.unitedrentals.com{j.get("url")}'
-        location_name = j.get('name').strip()
-        street_address = f"{j.get('address1')} {j.get('address2') or ''}".strip() or '<MISSING>'
-        city = j.get('city') or '<MISSING>'
-        state = j.get('state') or '<MISSING>'
-        postal = j.get('zip') or '<MISSING>'
-        country_code = j.get('countryCode') or '<MISSING>'
-        store_number = j.get('branchId') or '<MISSING>'
-        phone = j.get('phone') or '<MISSING>'
-        if phone == '00':
-            phone = '<MISSING>'
-        latitude = j.get('latitude') or '<MISSING>'
-        longitude = j.get('longitude') or '<MISSING>'
-        location_type = '<MISSING>'
+        location_name = j.get("name").strip()
+        street_address = f"{j.get('address1')} {j.get('address2') or ''}".strip()
+        city = j.get("city")
+        state = j.get("state")
+        postal = j.get("zip")
+        country_code = j.get("countryCode")
+        store_number = j.get("branchId")
+        phone = j.get("phone")
+        if phone == "00":
+            phone = "<MISSING>"
+        latitude = j.get("latitude")
+        longitude = j.get("longitude")
 
         _tmp = []
-        start = j.get('weekdayHours').get('open')
-        close = j.get('weekdayHours').get('close')
-        days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
+        start = j.get("weekdayHours").get("open")
+        close = j.get("weekdayHours").get("close")
+        days = [
+            "monday",
+            "tuesday",
+            "wednesday",
+            "thursday",
+            "friday",
+            "saturday",
+            "sunday",
+        ]
         for d in days:
-            if d.startswith('sat') or d.startswith('sun') or not start:
-                _tmp.append(f'{d.capitalize()}: Closed')
+            if d.startswith("sat") or d.startswith("sun") or not start:
+                _tmp.append(f"{d.capitalize()}: Closed")
             else:
-                _tmp.append(f'{d.capitalize()}: {start} - {close}')
+                _tmp.append(f"{d.capitalize()}: {start} - {close}")
 
-        hours_of_operation = ';'.join(_tmp)
+        hours_of_operation = ";".join(_tmp)
+        if hours_of_operation.count("Closed") == 7:
+            hours_of_operation = "Closed"
 
-        if hours_of_operation.count('Closed') == 7:
-            continue
+        row = SgRecord(
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            locator_domain=locator_domain,
+            hours_of_operation=hours_of_operation,
+        )
 
-        line = (street_address, city, state, postal)
-        if line in s:
-            continue
-
-        s.add(line)
-        row = [locator_domain, page_url, location_name, street_address, city, state, postal,
-               country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation]
-        out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://www.unitedrentals.com"
+    try:
+        _create_unverified_https_context = ssl._create_unverified_context
+    except AttributeError:
+        pass
+    else:
+        ssl._create_default_https_context = _create_unverified_https_context
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+        fetch_data(writer)

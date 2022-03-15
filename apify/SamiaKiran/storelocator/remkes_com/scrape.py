@@ -15,7 +15,7 @@ headers = {
 
 def fetch_data():
     if True:
-        url = "https://api.freshop.com/1/stores?app_key=remke&has_address=true&limit=-1&token=2b968e1c187d21e26bb9b245811a55a1"
+        url = "https://api.freshop.com/1/stores?app_key=remke&has_address=true&is_selectable=true&limit=50"
         loclist = session.get(url, headers=headers).json()["items"]
         for loc in loclist:
             location_name = loc["name"]

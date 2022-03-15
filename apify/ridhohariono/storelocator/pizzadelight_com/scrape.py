@@ -1,7 +1,10 @@
-import csv
 import re
 from sgrequests import SgRequests
 from sglogging import sglog
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
 
 DOMAIN = "pizzadelight.com"
 BASE_URL = "https://pizzadelight.com/"
@@ -15,40 +18,12 @@ log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
 
 session = SgRequests()
 
-
-def write_output(data):
-    log.info("Write Output of " + DOMAIN)
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+MISSING = "<MISSING>"
 
 
 def handle_missing(field):
     if field is None or (isinstance(field, str) and len(field.strip()) == 0):
-        return "<MISSING>"
+        return MISSING
     return field
 
 
@@ -56,7 +31,7 @@ def parse_hours(data):
     hoo = []
     for key, row in data.items():
         if not row["dining"]["range"] and not row["dining"]["range"]:
-            return "<MISSING>"
+            return MISSING
         formated_hours = "{}: {} - {}".format(
             key, row["dining"]["range"][0]["from"], row["dining"]["range"][0]["to"]
         )
@@ -66,9 +41,8 @@ def parse_hours(data):
 
 def fetch_data():
     store_info = session.get(LOCATION_URL, headers=HEADERS).json()
-    locations = []
     for row in store_info:
-        page_url = "https://www.pizzadelight.com/find-a-restaurant"
+        page_url = row["links"]["self"]
         location_name = handle_missing(row["title"])
         city = handle_missing(row["address"]["city"])
         street_address = handle_missing(row["address"]["address"])
@@ -79,12 +53,12 @@ def fetch_data():
         state = handle_missing(row["address"]["province"])
         if state == "PEI":
             state = "Prince Edward Island"
-        zip_code = handle_missing(row["address"]["zip"])
+        zip_postal = handle_missing(row["address"]["zip"])
         country_code = "CA"
         store_number = row["id"]
         phone = handle_missing(row["phone"])
+        location_type = "OPEN"
         if row["description"]:
-            location_type = "OPEN"
             if "Coming soon" in row["description"]:
                 location_type = "COMING_SOON"
             elif "Closed for" in row["description"]:
@@ -93,33 +67,44 @@ def fetch_data():
         longitude = handle_missing(row["lng"])
         hours_of_operation = parse_hours(row["schedule"]["week"])
         log.info("Append {} => {}".format(location_name, street_address))
-        locations.append(
-            [
-                DOMAIN,
-                page_url,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip_code,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
+        yield SgRecord(
+            locator_domain=DOMAIN,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zip_postal,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+            raw_address=f"{street_address}, {city}, {state} {zip_postal}",
         )
-    return locations
 
 
 def scrape():
-    log.info("Start {} Scraper".format(DOMAIN))
-    data = fetch_data()
-    log.info("Found {} locations".format(len(data)))
-    write_output(data)
-    log.info("Finish processed " + str(len(data)))
+    log.info("start {} Scraper".format(DOMAIN))
+    count = 0
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.PAGE_URL,
+                }
+            )
+        )
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
 
 
 scrape()

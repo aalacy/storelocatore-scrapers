@@ -39,8 +39,10 @@ def fetch_data():
                 address = temp[0]
             if "DoorDash" in temp[-1]:
                 del temp[-1]
-                if "DoorDash" in temp[-1]:
+                if "DoorDash" or "Shopping Mall" in temp[-1]:
                     del temp[-1]
+            if "Shopping Mall" in temp[0]:
+                address = temp[1]
             hours_of_operation = temp[-2] + " " + temp[-1]
             hours_of_operation = (
                 hours_of_operation.replace("Opening Hours:", "")
@@ -48,7 +50,7 @@ def fetch_data():
                 .replace("Hours:", "")
                 .replace("Opening Hours", "")
             )
-            if "ShoppingMall Hours" in hours_of_operation:
+            if "Shopping Mall Hours" in hours_of_operation:
                 hours_of_operation = "<MISSING>"
             if len(temp) > 2:
                 if "Mon" in temp[-3]:

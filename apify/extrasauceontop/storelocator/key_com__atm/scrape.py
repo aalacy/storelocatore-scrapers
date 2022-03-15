@@ -80,6 +80,18 @@ def getdata():
                     else:
                         location_type = "<MISSING>"
 
+                    if (
+                        location_type == "ATM"
+                        and store_number.replace("ATM", "")[:2] == "KB"
+                    ):
+                        location_type = "KeyBank ATM"
+
+                    elif (
+                        location_type == "ATM"
+                        and store_number.replace("ATM", "")[:2] != "KB"
+                    ):
+                        location_type = "Partner ATM"
+
                 if loc_property["name"] == "Latitude":
                     latitude = loc_property["value"]
 

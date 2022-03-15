@@ -73,6 +73,7 @@ def fetch_data():
             "".join(js.get("textLocation"))
             .replace("Blvd,", "Blvd")
             .replace("New York", "New_York")
+            .replace("Wharf,", "Wharf")
         )
         street_address = " ".join(ad.split(",")[0].split()[:-1])
         phone = js.get("textPhoneNumber")
@@ -87,6 +88,7 @@ def fetch_data():
             "".join(js.get("body"))
             .split("__Store Hours:__")[1]
             .replace("\n", "")
+            .replace("<br>", "")
             .split("Now")[0]
             .strip()
         )

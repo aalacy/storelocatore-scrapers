@@ -5,12 +5,21 @@ from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
 import json
 from sgscrape.sgpostal import parse_address_intl
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 logger = SgLogSetup().get_logger("loropiana")
 
 _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
 }
+
+
+def _h(val):
+    if not val:
+        return []
+    else:
+        return val
 
 
 def fetch_data():
@@ -20,9 +29,9 @@ def fetch_data():
         soup = bs(session.get(base_url, headers=_headers).text, "lxml")
         links = soup.select("p.t-product-copy a")
         logger.info(f"{len(links)} found")
-        for link in links:
+        for kk, link in enumerate(links):
             page_url = locator_domain + link["href"]
-            logger.info(page_url)
+            logger.info(f"[{kk}] {page_url}")
             sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
             for script in sp1.find_all("script", type="application/ld+json"):
                 _ = json.loads(script.string.strip())
@@ -33,18 +42,33 @@ def fetch_data():
                     if type(hh["dayOfWeek"]) != list:
                         days = [hh["dayOfWeek"]]
                     for day in days:
-                        temp[day] = temp.get(day, {})
+                        temp[day] = temp.get(day, {"opens": [], "closes": []})
                         if hh["opens"]:
-                            temp[day]["opens"] = hh["opens"]
+                            temp[day]["opens"].append(hh["opens"])
                         if hh["closes"]:
-                            temp[day]["closes"] = hh["closes"]
+                            temp[day]["closes"].append(hh["closes"])
                 for day, hr in temp.items():
-                    hours.append(f"{day}: {hr['opens']}-{hr['closes']}")
+                    times = []
+                    for x in range(len(_h(hr["opens"]))):
+                        times.append(f"{hr['opens'][x]}-{hr['closes'][x]}")
+                    hours.append(f"{day}: {','.join(times)}")
 
                 zip_postal = _["address"]["postalCode"]
-                if zip_postal.lower() == "no zip":
+                if zip_postal.lower() == "no zip code":
                     zip_postal = ""
-                city = street_address = state = ""
+                city = _["address"]["addressLocality"]
+                street_address = _["address"]["streetAddress"]
+                state = _["address"]["addressRegion"]
+                if _["address"]["addressCountry"].lower() == "cn":
+                    if state == "CN":
+                        state = ""
+                    if city == "Shenyang":
+                        addr = parse_address_intl(_["address"]["streetAddress"])
+                        state = addr.state
+                        if addr.city:
+                            street_address = _["address"]["streetAddress"].split(
+                                addr.city
+                            )[-1]
                 if (
                     _["address"]["addressCountry"].lower() == "jp"
                     or _["address"]["addressCountry"].lower() == "japan"
@@ -59,9 +83,12 @@ def fetch_data():
                 elif (
                     _["address"]["addressCountry"].lower() == "kr"
                     or _["address"]["addressCountry"].lower() == "korea"
+                    or _["address"]["addressCountry"].lower() == "hk"
+                    or _["address"]["addressCountry"].lower() == "gb"
+                    or _["address"]["addressCountry"].lower() == "kz"
+                    or _["address"]["addressCountry"].lower() == "cn"
                 ):
-                    city = _["address"]["addressLocality"]
-                    street_address = _["address"]["streetAddress"]
+                    pass
                 else:
                     addr = parse_address_intl(
                         f'{_["address"]["streetAddress"]} {_["address"]["addressLocality"]} {_["address"]["addressRegion"]} {zip_postal} {_["address"]["addressCountry"]}'
@@ -76,9 +103,9 @@ def fetch_data():
                         city = _["address"]["addressLocality"]
                 latitude = _["geo"]["latitude"]
                 longitude = _["geo"]["longitude"]
-                if latitude == "0":
+                if latitude == "0.0":
                     latitude = ""
-                if longitude == "0":
+                if longitude == "0.0":
                     longitude = ""
                 yield SgRecord(
                     page_url=page_url,
@@ -98,7 +125,17 @@ def fetch_data():
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.PHONE,
+                    SgRecord.Headers.ZIP,
+                    SgRecord.Headers.PAGE_URL,
+                }
+            )
+        )
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

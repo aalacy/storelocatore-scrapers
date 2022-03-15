@@ -1,8 +1,6 @@
 from bs4 import BeautifulSoup
 import csv
-import re
 import time
-from sgscrape import sgpostal as parser
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
 
@@ -58,68 +56,62 @@ def write_output(data):
 
 def fetch_data():
     data = []
-    pattern = re.compile(r"\s\s+")
-    cleanr = re.compile(r"<[^>]+>")
-    for i in range(1, 5):
-        j = str(i)
-        url = "https://www.sullivantire.com/locations?resultsPerPage=73&page=" + j
-        r = session.get(url, headers=headers, verify=False)
-        soup = BeautifulSoup(r.text, "html.parser")
-        loclist = soup.findAll("div", {"class": "media-location--item"})
-        for loc in loclist:
-            link = loc.find(
-                "a",
-                {
-                    "class": "button button--extra-small button--clear-green button--store-info"
-                },
-            )["href"]
-            link = "https://www.sullivantire.com" + link
-            title = loc.find("h4", {"class": "big location-name"}).text
-            address = loc.find("div", {"class": "detail"}).text.strip()
-            address = re.sub(pattern, " ", address)
-            address = re.sub(cleanr, " ", address)
-            parsed = parser.parse_address_usa(address)
-            street1 = (
-                parsed.street_address_1 if parsed.street_address_1 else "<MISSING>"
-            )
-            street = (
-                (street1 + ", " + parsed.street_address_2)
-                if parsed.street_address_2
-                else street1
-            )
-            city = parsed.city if parsed.city else "<MISSING>"
-            state = parsed.state if parsed.state else "<MISSING>"
-            pcode = parsed.postcode if parsed.postcode else "<MISSING>"
 
-            phone = loc.find("a", {"class": "text-green--bright-medium"}).text
-            script = loc.find("script")
-            script = str(script)
-            coords = script.split('"GeoCoordinates",')[1].split("}")[0]
-            lat = coords.split('"latitude":"')[1].split('","')[0]
-            lng = coords.split('"longitude":"')[1].split('"')[0]
-            hours = script.split('"openingHours":')[1].split(',"contactPoint"')[0]
-            hours = hours.lstrip('"')
-            hours = hours.rstrip('"')
-            hours = hours.replace("PMSa", "PM Sat")
+    url = "https://www.sullivantire.com/locations?resultsPerPage=500&page=1&zipCode="
+    r = session.get(url, headers=headers, verify=False)
+    soup = BeautifulSoup(r.text, "html.parser")
+    loclist = soup.findAll("div", {"class": "media-location--item"})
+    for loc in loclist:
+        link = loc.find(
+            "a",
+            {
+                "class": "button button--extra-small button--clear-green button--store-info"
+            },
+        )["href"]
+        link = "https://www.sullivantire.com" + link
+        title = loc.find("h4", {"class": "big location-name"}).text
+        address = loc.find("div", {"class": "detail"}).text.strip()
 
-            data.append(
-                [
-                    "https://www.sullivantire.com/",
-                    link,
-                    title,
-                    street,
-                    city,
-                    state,
-                    pcode,
-                    "US",
-                    "<MISSING>",
-                    phone,
-                    "<MISSING>",
-                    lat,
-                    lng,
-                    hours,
-                ]
-            )
+        address_parts = [
+            item.strip()
+            for item in address.replace("\r", "").split("\n")
+            if item.strip() != ""
+        ]
+
+        street = address_parts[0]
+        city = address_parts[1].split(", ")[0]
+        state = address_parts[1].split(", ")[1].split(" ")[0]
+        pcode = address_parts[1].split(", ")[1].split(" ")[1]
+
+        phone = loc.find("a", {"class": "text-green--bright-medium"}).text
+        script = loc.find("script")
+        script = str(script)
+        coords = script.split('"GeoCoordinates",')[1].split("}")[0]
+        lat = coords.split('"latitude":"')[1].split('","')[0]
+        lng = coords.split('"longitude":"')[1].split('"')[0]
+        hours = script.split('"openingHours":')[1].split(',"contactPoint"')[0]
+        hours = hours.lstrip('"')
+        hours = hours.rstrip('"')
+        hours = hours.replace("PMSa", "PM Sat")
+
+        data.append(
+            [
+                "https://www.sullivantire.com/",
+                link,
+                title,
+                street,
+                city,
+                state,
+                pcode,
+                "US",
+                "<MISSING>",
+                phone,
+                "<MISSING>",
+                lat,
+                lng,
+                hours,
+            ]
+        )
     return data
 
 

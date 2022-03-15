@@ -23,7 +23,8 @@ def fetch_data():
         x = 0
         for loc in loclist:
             location_name = loc.find("location").text
-            store_number = loc.find("sortord").text
+            store_number = loc.find("storeid").text
+
             raw_address = loc.find("address").text
 
             raw_address = raw_address.replace(
@@ -51,7 +52,6 @@ def fetch_data():
                     pass
 
             street_address = html.unescape(street_address)
-            street_address = street_address.split(",")[0]
 
             zip_postal = loc.find("telephone").text.split(" (")[0]
             if not zip_postal:

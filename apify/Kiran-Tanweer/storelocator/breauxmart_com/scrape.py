@@ -59,7 +59,7 @@ def write_output(data):
 
 def fetch_data():
     data = []
-    url = "https://api.freshop.com/1/stores?app_key=breaux_mart&distance=10&fields=id%2Cname&has_address=true&q=LA&token=b9d5ebe8311a1e8691c9e16d0740383e"
+    url = "https://api.freshop.com/1/stores?app_key=breaux_mart&distance=10&fields=id%2Cname&has_address=true&q=LA"
     stores = session.get(url, headers=headers, verify=False).json()
     for loc in stores["items"]:
         storeid = loc["id"]

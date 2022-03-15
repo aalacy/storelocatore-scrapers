@@ -52,6 +52,7 @@ def fetch_data():
     return_main_object = []
     for location in r.json()["data"]:
         page_url = BeautifulSoup(location["info"], "lxml").find("a")["href"]
+
         location_type = page_url.split("/")[-3].strip().replace("-", " ").capitalize()
         location_request = session.get(page_url)
         location_soup = BeautifulSoup(location_request.text, "lxml")
@@ -67,13 +68,22 @@ def fetch_data():
             zip_code = location_soup.find("span", {"itemprop": "postalCode"}).text
         except:
             continue
-        phone = location_soup.find("span", {"itemprop": "telephone"}).text
+        try:
+            phone = location_soup.find("span", {"itemprop": "telephone"}).text
+        except:
+            phone = "<MISSING>"
         if location_soup.find("div", {"class": "hours"}) is None:
             location_hours = "<MISSING>"
         else:
             location_hours = " ".join(
                 list(location_soup.find("div", {"class": "hours"}).stripped_strings)
             ).replace("Location Hours", "")
+        try:
+            cms = BeautifulSoup(location["info"], "lxml").find("h4").text
+        except:
+            cms = "<MISSING>"
+        if "Coming Soon!" in cms:
+            location_hours = "Coming Soon"
         store = []
         store.append("https://www.carespot.com")
         store.append(

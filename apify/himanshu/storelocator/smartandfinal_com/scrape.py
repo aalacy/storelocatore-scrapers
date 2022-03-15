@@ -1,156 +1,182 @@
-import csv
-from sgrequests import SgRequests
+from bs4 import BeautifulSoup as bs
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from sgselenium.sgselenium import SgChrome
+from webdriver_manager.chrome import ChromeDriverManager
 from sglogging import sglog
-import cloudscraper
+import ssl
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
+
+log = sglog.SgLogSetup().get_logger(logger_name="smartandfinal.com")
 
 
-DOMAIN = "smartandfinal.com"
-log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
+def get_driver(url, class_name, driver=None):
+    if driver is not None:
+        driver.quit()
 
-session = SgRequests()
+    user_agent = (
+        "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:89.0) Gecko/20100101 Firefox/89.0"
+    )
+    x = 0
+    while True:
+        x = x + 1
+        try:
+            driver = SgChrome(
+                executable_path=ChromeDriverManager().install(),
+                user_agent=user_agent,
+                is_headless=True,
+            ).driver()
+            driver.get(url)
 
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
-def set_headers(scraper, headers):
-    init_url = "https://www.smartandfinal.com/proxy/init"
-    r = scraper.post(init_url, headers=headers)
-    csrf_token = r.json()["token"]
-    scraper.cookies["has_js"] = "1"
-    scraper.cookies["XSRF-TOKEN"] = csrf_token
-    headers["x-csrf-token"] = csrf_token
-    cookies = []
-    for cookie in scraper.cookies:
-        cookies.append("{}={}".format(cookie.name, cookie.value))
-    headers["cookie"] = "; ".join(cookies)
-    return headers
+            WebDriverWait(driver, 30).until(
+                EC.presence_of_element_located((By.CLASS_NAME, class_name))
+            )
+            break
+        except Exception:
+            driver.quit()
+            if x == 10:
+                raise Exception(
+                    "Make sure this ran with a Proxy, will fail without one"
+                )
+            continue
+    return driver
 
 
 def fetch_data():
+    x = 0
+    while True:
+        x = x + 1
+        class_name = "store-preview__info"
+        url = "https://www.smartandfinal.com/stores/?coordinates=36.01301919805139,-124.22992541516308&zoom=1"
+        if x == 1:
+            driver = get_driver(url, class_name)
+        else:
+            driver = get_driver(url, class_name, driver=driver)
+        soup = bs(driver.page_source, "lxml")
+        grids = soup.find("div", class_="store-list__scroll-container").find_all("li")
+        if len(grids) == 0:
+            continue
+        else:
+            break
 
-    addresses = []
-
-    headers = {
-        "Accept": "application/json, text/plain, */*",
-        "Accept-Encoding": "gzip, deflate, br",
-        "Accept-Language": "en-US,en;q=0.9,la;q=0.8",
-        "Cache-Control": "no-cache",
-        "Pragma": "no-cache",
-        "Referer": "https://www.smartandfinal.com/stores/?coordinates=22.056438388643095,167.97404364999997&zoom=2",
-        "Sec-Fetch-Dest": "empty",
-        "Sec-Fetch-Mode": "cors",
-        "Sec-Fetch-Site": "same-origin",
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.212 Safari/537.36",
-    }
-
-    session = SgRequests()
-    scraper = cloudscraper.create_scraper(sess=session)
-    new_headers = set_headers(scraper, headers)
-    url = "https://www.smartandfinal.com/proxy/store/getall?store_type_ids=1,2,3"
-    r = scraper.get(url, headers=new_headers)
-    data = r.json()
-    for loc in data["stores"]:
-        store_number = loc["store_number"]
-        location_type = ""
-        country_code = ""
-        hours_of_operation = ""
-        phone = ""
-        dictionary = {}
-        weekday = [
-            "Sunday",
-            "Monday",
-            "Tuesday",
-            "Wednesday",
-            "Thursday",
-            "Friday",
-            "Saturday",
-        ]
-        for day, h in enumerate(loc["store_hours"]):
-
-            dictionary[weekday[day]] = h["open"] + "-" + h["close"]
-        hours_of_operation = ""
-        for h1 in dictionary:
-            hours_of_operation = hours_of_operation + " " + h1 + " " + dictionary[h1]
-
-        phone = loc["phone"]
-        name = loc["storeName"].replace("-", "").replace(".", "")
+    for grid in grids:
+        name = grid.find("span", {"class": "store-name"}).text.strip()
+        number = grid.find(
+            "span",
+            attrs={"ng-if": "$ctrl.showStoreNumber && $ctrl.store.storeNumber"},
+        ).text.strip()
         page_url = (
             "https://www.smartandfinal.com/stores/"
-            + str(name.replace(" ", "-").lower())
+            + name.split("\n")[0].replace(" ", "-").replace(".", "").lower()
             + "-"
-            + str(store_number)
+            + number.split("\n")[0].split("#")[-1]
             + "/"
-            + str(loc["locationID"])
+            + grid["id"].split("-")[-1]
         )
-
-        store = [
-            DOMAIN,
-            page_url,
-            loc["storeName"].capitalize(),
-            loc["address"].capitalize(),
-            loc["city"].capitalize(),
-            loc["state"].capitalize(),
-            loc["zip"],
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            loc["latitude"],
-            loc["longitude"],
-            hours_of_operation,
-        ]
-
-        if str(store[2]) + str(store[-3]) not in addresses:
-            log.info(
-                "Append info to locations: {} : {}".format(
-                    loc["storeName"], loc["address"]
+        try:
+            driver.get(page_url)
+            log.info("Pull content => " + page_url)
+            WebDriverWait(driver, 20).until(
+                EC.presence_of_element_located(
+                    (By.CLASS_NAME, "store-details-store-hours__content")
                 )
             )
-            addresses.append(str(store[2]) + str(store[-3]))
+        except Exception:
+            driver = get_driver(
+                page_url, "store-details-store-hours__content", driver=driver
+            )
 
-            store = [
-                str(x).encode("ascii", "ignore").decode("ascii").strip()
-                if x
-                else "<MISSING>"
-                for x in store
-            ]
+        location_soup = bs(driver.page_source, "lxml")
 
-            yield store
+        locator_domain = "smartandfinal.com"
+        location_name = location_soup.find("meta", attrs={"property": "og:title"})[
+            "content"
+        ]
+        street_address = location_soup.find(
+            "meta", attrs={"property": "og:street-address"}
+        )["content"]
+        city = location_soup.find("meta", attrs={"property": "og:locality"})["content"]
+        state = location_soup.find("meta", attrs={"property": "og:region"})["content"]
+        zip = location_soup.find("meta", attrs={"property": "og:postal-code"})[
+            "content"
+        ]
+        country_code = location_soup.find(
+            "meta", attrs={"property": "og:country-name"}
+        )["content"]
+        store_number = location_name.split("#")[-1]
+        phone = location_soup.find("meta", attrs={"property": "og:phone_number"})
+        if not phone:
+            phone = "<MISSING>"
+        else:
+            phone = phone["content"]
+        location_type = "<MISSING>"
+        latitude = location_soup.find(
+            "meta", attrs={"property": "og:location:latitude"}
+        )["content"]
+        longitude = location_soup.find(
+            "meta", attrs={"property": "og:location:longitude"}
+        )["content"]
+
+        hours = ""
+        days = location_soup.find("dl", attrs={"aria-label": "Store Hours"}).find_all(
+            "dt"
+        )
+        hours_list = location_soup.find(
+            "dl", attrs={"aria-label": "Store Hours"}
+        ).find_all("dd")
+
+        for x in range(len(days)):
+            day = days[x].text.strip()
+            hour = hours_list[x].text.strip()
+            hours = hours + day + " " + hour + ", "
+
+        hours_of_operation = hours[:-2]
+
+        yield SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zip,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+        )
 
 
 def scrape():
-    log.info("Start {} Scraper".format(DOMAIN))
-    data = fetch_data()
-    write_output(data)
-    log.info("Finish processed")
+    log.info("Started")
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()

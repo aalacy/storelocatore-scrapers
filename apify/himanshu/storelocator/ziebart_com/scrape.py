@@ -1,4 +1,5 @@
 import csv
+import re
 
 from bs4 import BeautifulSoup
 
@@ -59,7 +60,7 @@ def fetch_data():
     for data in r_json["ARRSUCCURSALE"]:
         location_name = data["SUCCURSALENOM"]
         street_address = data["ADRESSE"]
-        city = data["VILLE"]
+        city = data["VILLE"].split("(")[0].strip()
         state = data["PROVINCE"]
         zipp = data["CP"]
         country_code = "CA"
@@ -104,6 +105,7 @@ def fetch_data():
     # ----- us locations ------#
 
     addresses = []
+    found = []
 
     max_distance = 1000
 
@@ -146,44 +148,15 @@ def fetch_data():
                         "https://www.ziebart.com"
                         + li.find("div", class_="location-info-div").find("a")["href"]
                     )
+                    if page_url in found:
+                        continue
+                    found.append(page_url)
+
                     location_name = (
                         li.find("div", class_="location-info-div")
                         .h4.text.split(",")[0]
                         .strip()
                     )
-                    try:
-                        latitude = (
-                            li.find("div", class_="topmapimg")
-                            .find("iframe")["src"]
-                            .split("sspn=")[1]
-                            .split(",")[0]
-                            .strip()
-                        )
-                        longitude = (
-                            li.find("div", class_="topmapimg")
-                            .find("iframe")["src"]
-                            .split("sspn=")[1]
-                            .split(",")[1]
-                            .split("&")[0]
-                            .strip()
-                        )
-                    except:
-                        latitude = (
-                            li.find("div", class_="topmapimg")
-                            .find("iframe")["data-src"]
-                            .split("sspn=")[1]
-                            .split(",")[0]
-                            .strip()
-                        )
-                        longitude = (
-                            li.find("div", class_="topmapimg")
-                            .find("iframe")["data-src"]
-                            .split("sspn=")[1]
-                            .split(",")[1]
-                            .split("&")[0]
-                            .strip()
-                        )
-                    search.found_location_at(latitude, longitude)
                     phone = li.find("span", class_="phone-digits").text.strip()
                     r1 = session.get(page_url, headers=headers)
                     soup1 = BeautifulSoup(r1.text, "lxml")
@@ -194,6 +167,21 @@ def fetch_data():
                     city = address[-1].split(",")[0].strip()
                     state = address[-1].split(",")[-1].split()[0].strip()
                     zipp = address[-1].split(",")[-1].split()[-1].strip()
+
+                    try:
+                        map_str = str(
+                            soup1.find(class_="w-layout-grid grid-3 store-detail")
+                        )
+                        geo = re.findall(
+                            r"[0-9]{2}\.[0-9]+,-[0-9]{2,3}\.[0-9]+", map_str
+                        )[0].split(",")
+                        latitude = geo[0]
+                        longitude = geo[1]
+                        search.found_location_at(latitude, longitude)
+                    except:
+                        latitude = "<INACCESSIBLE>"
+                        longitude = "<INACCESSIBLE>"
+
                     hours_of_operation = (
                         " ".join(
                             list(

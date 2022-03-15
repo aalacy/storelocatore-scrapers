@@ -1,5 +1,6 @@
 import csv
 import json
+import datetime
 
 from sgrequests import SgRequests
 
@@ -43,8 +44,15 @@ def fetch_data():
     DOMAIN = "sendiks.com"
     start_url = "https://api.freshop.com/1/stores?app_key=sendiks&has_address=true&limit=-1&token={}"
 
-    response = session.get(
-        "https://api.freshop.com/2/sessions/0eea009c14f38a08a2c321c36faa0926?app_key=sendiks"
+    d = datetime.datetime.now()
+    unixtime = datetime.datetime.timestamp(d) * 1000
+    frm = {
+        "app_key": "sendiks",
+        "referrer": "https://www.sendiks.com/",
+        "utc": str(unixtime).split(".")[0],
+    }
+    response = session.post(
+        "https://api.freshop.com/2/sessions/create", data=frm
     ).json()
     token = response["token"]
 

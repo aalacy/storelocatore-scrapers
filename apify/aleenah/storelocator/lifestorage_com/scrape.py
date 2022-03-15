@@ -1,61 +1,23 @@
-import csv
-from sgrequests import SgRequests
-from bs4 import BeautifulSoup
 import json
 from sglogging import sglog
-
-log = sglog.SgLogSetup().get_logger(logger_name="lifestorage.com")
-
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-                "page_url",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
+from bs4 import BeautifulSoup
+from sgrequests import SgRequests
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
 
 session = SgRequests()
+website = "lifestorage_com"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
+
+headers = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.77 Safari/537.36",
+}
+
+DOMAIN = "https://www.lifestorage.com/"
+MISSING = "<MISSING>"
 
 
 def fetch_data():
-    # Your scraper here
-    locs = []
-    street = []
-    states = []
-    cities = []
-    types = []
-    phones = []
-    zips = []
-    long = []
-    lat = []
-    timing = []
-    ids = []
-    page_url = []
-    countries = []
-
     res = session.get("https://www.lifestorage.com/")
     soup = BeautifulSoup(res.text, "html.parser")
     sls = soup.find("div", {"class": "footerStates"}).find_all("a")
@@ -66,70 +28,72 @@ def fetch_data():
         res = session.get(url)
         soup = BeautifulSoup(res.text, "html.parser")
         sa = soup.find_all("a", {"class": "btn store"})
-
         for a in sa:
-            url = "https://www.lifestorage.com" + a.get("href")
-            log.info(url)
-            req = session.get(url)
+            page_url = "https://www.lifestorage.com" + a.get("href")
+            log.info(page_url)
+            try:
+                req = session.get(page_url)
+            except:
+                continue
             soup = BeautifulSoup(req.text, "lxml")
             data = "".join(
                 soup.find_all("script", {"type": "application/ld+json"})[-1].contents
             )
-
             data = (
                 data.replace("[,", "[").replace("}{", "},{").split(',"priceRange"')[0]
                 + "}]}"
             )
-
             js = json.loads(data)["@graph"][0]
-
-            page_url.append(url)
-            locs.append(js["alternateName"])
-            ids.append(js["branchCode"])
+            location_name = js["alternateName"]
+            store_number = js["branchCode"]
             addr = js["address"]
-            street.append(addr["streetAddress"])
-            states.append(addr["addressRegion"])
-            cities.append(addr["addressLocality"])
-            zips.append(addr["postalCode"])
-            countries.append(addr["addressCountry"])
+            street_address = addr["streetAddress"]
+            state = addr["addressRegion"]
+            city = addr["addressLocality"]
+            zip_postal = addr["postalCode"]
+            country_code = addr["addressCountry"]
             timl = js["openingHoursSpecification"]
-            tim = ""
+            hours_of_operation = ""
             for l in timl:
-                tim += l["dayOfWeek"] + ": " + l["opens"] + " - " + l["closes"] + " "
-            if "Sunday:" not in tim:
-                tim += "Sunday: Closed"
-            timing.append(tim.strip())
-            phones.append(js["telephone"])
-            lat.append(js["geo"]["latitude"])
-            long.append(js["geo"]["longitude"])
-            types.append(js["@type"])
-
-    all = []
-    for i in range(0, len(locs)):
-        row = []
-        row.append("https://www.lifestorage.com/")
-        row.append(locs[i])
-        row.append(street[i])
-        row.append(cities[i])
-        row.append(states[i])
-        row.append(zips[i])
-        row.append(countries[i])
-        row.append(ids[i])  # store #
-        row.append(phones[i])  # phone
-        row.append(types[i])  # type
-        row.append(lat[i])  # lat
-        row.append(long[i])  # long
-        row.append(timing[i])  # timing
-        row.append(page_url[i])  # page url
-
-        all.append(row)
-
-    return all
+                hours_of_operation += (
+                    l["dayOfWeek"] + ": " + l["opens"] + " - " + l["closes"] + " "
+                )
+            if "Sunday:" not in hours_of_operation:
+                hours_of_operation += "Sunday: Closed"
+            phone = js["telephone"]
+            latitude = js["geo"]["latitude"]
+            longitude = js["geo"]["longitude"]
+            location_type = js["@type"]
+            yield SgRecord(
+                locator_domain=DOMAIN,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_postal,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation.strip(),
+            )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    log.info("Started")
+    count = 0
+    with SgWriter() as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()

@@ -1,4 +1,5 @@
 import json
+from datetime import datetime as dt
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from sgzip.static import static_coordinate_list, SearchableCountries
 from sgrequests import SgRequests
@@ -43,26 +44,25 @@ def write_output(data):
     df = pd.DataFrame(columns=FIELDS)
 
     for row in data:
-        for line in row:
-            df2 = pd.DataFrame(line)
-            df = df.append(df2)
+        df2 = pd.DataFrame(row)
+        df = df.append(df2)
 
-    df = df.fillna("<MISSING>")
-    df = df.replace(r"^\s*$", "<MISSING>", regex=True)
+        df = df.fillna("<MISSING>")
+        df = df.replace(r"^\s*$", "<MISSING>", regex=True)
 
-    df["dupecheck"] = (
-        df["location_name"].map(str)
-        + df["street_address"].map(str)
-        + df["city"].map(str)
-        + df["state"].map(str)
-        + df["location_type"].map(str)
-        + df["store_number"].map(str)
-    )
+        df["dupecheck"] = (
+            df["location_name"].map(str)
+            + df["street_address"].map(str)
+            + df["city"].map(str)
+            + df["state"].map(str)
+            + df["location_type"].map(str)
+            + df["store_number"].map(str)
+        )
 
-    df = df.drop_duplicates(subset=["dupecheck"])
-    df = df.drop(columns=["dupecheck"])
+        df = df.drop_duplicates(subset=["dupecheck"])
+        df = df.drop(columns=["dupecheck"])
 
-    df.to_csv("data.csv", index=False)
+        df.to_csv("data.csv", index=False)
 
 
 MISSING = "<MISSING>"
@@ -157,39 +157,54 @@ def set_jwt_token_header(session):
 
 
 def scrape_loc_urls(country, coordinates):
-
+    count = 0
+    results = []
     with ThreadPoolExecutor() as executor:
         futures = [
             executor.submit(parallel_run, lat, lng, country) for lat, lng in coordinates
         ]
         for future in as_completed(futures):
             try:
+                count += 1
+                logger.info(f"{country}: {count}/{len(coordinates)}")
                 record = future.result()
                 if record:
-                    yield record
+                    for poi in record:
+                        results.append(poi)
             except Exception:
                 pass
+
+    return results
+
+
+SEARCH_RADIUS = 10
 
 
 def fetch_data():
     all_coordinates = {}
-    us_search = static_coordinate_list(radius=10, country_code=SearchableCountries.USA)
+    us_search = static_coordinate_list(
+        radius=SEARCH_RADIUS, country_code=SearchableCountries.USA
+    )
     ca_search = static_coordinate_list(
-        radius=10, country_code=SearchableCountries.CANADA
+        radius=SEARCH_RADIUS, country_code=SearchableCountries.CANADA
     )
     uk_search = static_coordinate_list(
-        radius=10, country_code=SearchableCountries.BRITAIN
+        radius=SEARCH_RADIUS, country_code=SearchableCountries.BRITAIN
     )
     all_coordinates = {"US": us_search, "CA": ca_search, "UK": uk_search}
 
+    results = []
     for country, coordinates in all_coordinates.items():
 
         set_jwt_token_header(session)
         data = scrape_loc_urls(country, coordinates)
-        yield data
+        results.append(data)
+
+    return results
 
 
 def parallel_run(lat, lng, country):
+    pois = []
     try:
         locations = fetch(lat, lng, country)
 
@@ -200,20 +215,23 @@ def parallel_run(lat, lng, country):
                 pass
             else:
                 loc_id = get(location, "locationId")
-
                 poi = extract(location, loc_id, country)
                 if not poi:
                     pass
                 else:
-                    yield poi
+                    pois.append(poi)
 
-    except Exception as e:
-        logger.error(f"error fetching data for {lat} {lng} {country}: {e}")
+    except Exception:
+        return
+
+    return pois
 
 
 def scrape():
+    start = dt.now()
     data = fetch_data()
     write_output(data)
+    logger.info(f"duration: {dt.now() - start}")
 
 
 scrape()

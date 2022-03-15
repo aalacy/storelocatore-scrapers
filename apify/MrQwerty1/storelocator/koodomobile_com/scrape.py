@@ -43,7 +43,11 @@ def get_data(coord):
 
     session = SgRequests()
     r = session.get(api_url)
-    js = r.json()["js_data"]["stores"].values()
+    try:
+        js = r.json()["stores"].values()
+    except KeyError:
+        return []
+
     for j in js:
         location_name = j.get("name") or "<MISSING>"
         if "koodo" not in location_name.lower():

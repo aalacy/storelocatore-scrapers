@@ -1,139 +1,124 @@
-import csv
-import json
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
-from sgzip.static import static_zipcode_list, SearchableCountries
-from bs4 import BeautifulSoup
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from tenacity import retry, stop_after_attempt
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 logger = SgLogSetup().get_logger("walgreens_com__pharmacy")
 
 
 def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for rows in data:
-            writer.writerows(rows)
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        for row in data:
+            writer.write_row(row)
 
 
-search = static_zipcode_list(10, SearchableCountries.USA)
-
-session = SgRequests()
-headers = {
-    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36",
-    "content-type": "application/json; charset=UTF-8",
-}
+MISSING = "<MISSING>"
 
 
-def fetch_locations(code, ids):
-    logger.info(("Pulling Postal Code %s..." % code))
-    url = "https://www.walgreens.com/locator/v1/stores/search?requestor=search"
-    payload = {
-        "r": "50",
-        "requestType": "dotcom",
-        "s": "20",
-        "p": 1,
-        "q": code,
-        "lat": "",
-        "lng": "",
-        "zip": code,
+def get(obj, key, default=MISSING):
+    return obj.get(key, default) or default
+
+
+@retry(stop=stop_after_attempt(3), reraise=True)
+def fetch_stores():
+    data = {
+        "apiKey": "kBzrBap6mSlwPNQbX5uNbl4JiQRf7yJz",
+        "act": "storenumber",
+        "appVer": "2.0",
     }
-    data = session.post(url, headers=headers, data=json.dumps(payload)).json()
-    website = "walgreens.com/pharmacy"
 
-    locations = []
-    if not data.get("results"):
-        return locations
+    session = SgRequests()
+    response = session.post(
+        "https://services-qa.walgreens.com/api/util/storenumber/v1", json=data
+    ).json()
+    return [int(number) for number in response["store"]]
 
-    for item in data["results"]:
-        store = item["storeSeoUrl"].split("/id=")[1]
-        if store in ids:
-            continue
-        ids.append(store)
 
-        loc = "https://www.walgreens.com" + item["storeSeoUrl"]
-        lat = item["latitude"]
-        country = "US"
-        lng = item["longitude"]
-        add = item["store"]["address"]["street"]
-        zc = item["store"]["address"]["zip"]
-        city = item["store"]["address"]["city"]
-        state = item["store"]["address"]["state"]
-        name = item["store"]["name"]
-        phone = (
-            item["store"]["phone"]["areaCode"].strip()
-            + item["store"]["phone"]["number"].strip()
-        )
-        hours = ""
-        typ = "<MISSING>"
+@retry(stop=stop_after_attempt(3), reraise=True)
+def fetch_location(store_number, session):
+    page_url = f"https://www.walgreens.com/locator/v1/stores/{store_number}"
+    response = session.get(page_url)
 
-        page = session.get(loc, headers=headers).text
-        soup = BeautifulSoup(page, "html.parser")
+    data = response.json()
+    if data.get("messages"):  # invalid store number
+        if data["messages"]["type"] == "ERROR":
+            return None
+        else:
+            raise Exception()
 
-        try:
-            data = json.loads(soup.select_one("#jsonLD").string)
-            hours = data["openingHoursSpecification"]
+    locator_domain = "walgreens.com"
+    location_name = MISSING
 
-            hours_of_operation = []
-            for hour in hours:
-                day = hour["dayOfWeek"].split(" ").pop(0)
-                opens = hour["opens"]
-                closes = hour["closes"]
+    if not len(data):
+        logger.info(f"no data: {page_url}")
+        return None
 
-                hours_of_operation.append(f"{day}: {opens}-{closes}")
-        except:
-            hours = "<MISSING>"
+    address = data["address"]
+    street_address = get(address, "street")
+    city = get(address, "city")
+    postal = get(address, "zip")
+    state = get(address, "state")
+    country_code = "US"
+    latitude = get(data, "latitude")
+    longitude = get(data, "longitude")
 
-        locations.append(
-            [
-                website,
-                loc,
-                name,
-                add,
-                city,
-                state,
-                zc,
-                country,
-                store,
-                phone,
-                typ,
-                lat,
-                lng,
-                (",").join(hours_of_operation),
-            ]
-        )
+    phone = get(data, "phone", None)
+    phone_number = (
+        f"{get(phone, 'areaCode').strip()}{get(phone, 'number').strip()}"
+        if phone
+        else MISSING
+    )
 
-    return locations
+    info = get(data, "storeInfo", {})
+
+    location_type = (
+        "TelePharmacy Kiosk"
+        if get(data, "storeBrand") != "Walgreens"
+        else "Walgreens Pharmacy"
+    )
+
+    hours = get(info, "hrs", [])
+    hours_of_operation = (
+        ",".join([f'{hr["day"]}: {hr["open"]}-{hr["close"]}' for hr in hours])
+        if len(hours)
+        else MISSING
+    )
+
+    return SgRecord(
+        locator_domain=locator_domain,
+        page_url=page_url,
+        location_name=location_name,
+        street_address=street_address,
+        city=city,
+        state=state,
+        zip_postal=postal,
+        country_code=country_code,
+        store_number=store_number,
+        phone=phone_number,
+        location_type=location_type,
+        latitude=latitude,
+        longitude=longitude,
+        hours_of_operation=hours_of_operation,
+    )
 
 
 def fetch_data():
-    ids = []
+    store_numbers = fetch_stores()
+    all_store_numbers = range(0, max(store_numbers))
 
-    with ThreadPoolExecutor() as executor:
-        futures = [executor.submit(fetch_locations, code, ids) for code in search]
+    with ThreadPoolExecutor() as executor, SgRequests() as session:
+        futures = [
+            executor.submit(fetch_location, store_number, session)
+            for store_number in all_store_numbers
+        ]
         for future in as_completed(futures):
-            locations = future.result()
-            yield locations
+            poi = future.result()
+            if poi:
+                yield poi
 
 
 def scrape():
@@ -141,4 +126,5 @@ def scrape():
     write_output(data)
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()

@@ -1,11 +1,12 @@
 from bs4 import BeautifulSoup
 import csv
-
+import re
 from sgrequests import SgRequests
 
 session = SgRequests()
 headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.212 Safari/537.36",
+    "x-requested-with": "XMLHttpRequest",
 }
 
 
@@ -42,44 +43,51 @@ def write_output(data):
 def fetch_data():
 
     data = []
+    cleanr = re.compile(r"<[^>]+>")
+    pattern = re.compile(r"\s\s+")
     p = 0
-    url = "https://www.qcsupply.com/locations/"
-    r = session.get(url, headers=headers, verify=False)
-    soup = BeautifulSoup(r.text, "html.parser")
-    divlist = soup.findAll("div", {"class": "amlocator-store-desc"})
-    for div in divlist:
-        link = "https://www.qcsupply.com" + div.find(
-            "span", {"class": "location_link"}
-        ).find("span")["onclick"].split("=", 1)[1].replace("'", "")
+    url = "https://www.qcsupply.com/amlocator/index/ajax/"
+    myobj = {
+        "lat": "0",
+        "lng": "0",
+        "radius": "6.2137119223733395",
+        "product": "0",
+        "category": "0",
+    }
+    loclist = session.post(url, headers=headers, verify=False, data=myobj).json()[
+        "items"
+    ]
+    for loc in loclist:
+        store = loc["id"]
+        lat = loc["lat"]
+        longt = loc["lng"]
+        content = loc["popup_html"]
+        soup = BeautifulSoup(content, "html.parser")
+        title = soup.find("h2").text
+        link = soup.find("a")["href"]
+        soup = re.sub(cleanr, "\n", str(soup))
+        address = (
+            re.sub(pattern, "\n", str(soup))
+            .strip()
+            .split("Address:", 1)[1]
+            .split("Description: ", 1)[0]
+            .strip()
+            .splitlines()
+        )
+        street = address[0]
+        city, state = address[1].split(", ", 1)
+        pcode = address[2]
         r = session.get(link, headers=headers, verify=False)
         soup = BeautifulSoup(r.text, "html.parser")
-        street = (
-            soup.findAll("div", {"class": "location-address-inner"})[0]
-            .findAll("span", {"class": "address-line"})[0]
-            .text
-        )
-
-        city, state = (
-            soup.findAll("div", {"class": "location-address-inner"})[0]
-            .findAll("span", {"class": "address-line"})[1]
-            .text.replace("\xa0", " ")
-            .strip()
-            .split(", ", 1)
-        )
-        state, pcode = state.split(" ", 1)
-
-        phone = soup.select_one("a[href*=tel]").text
-        hours = (
-            soup.findAll("div", {"class": "location-address-inner"})[-2]
-            .text.replace("\n", " ")
-            .replace("\xa0", " ")
-            .strip()
-        )
-        title = city + ", " + state
+        hours = soup.find("div", {"class": "amlocator-schedule-table"}).text.strip()
         try:
-            lat, longt = r.text.split("LatLng(", 1)[1].split(")", 1)[0].split(",", 1)
+            phone = soup.findAll("a", {"class": "amlocator-link"})[1].text
         except:
-            lat = longt = "<MISSING>"
+            phone = "<MISSING>"
+        try:
+            phone = phone.split("/", 1)[0]
+        except:
+            pass
         data.append(
             [
                 "https://www.qcsupply.com/",
@@ -90,7 +98,7 @@ def fetch_data():
                 state,
                 pcode,
                 "US",
-                "<MISSING>",
+                store,
                 phone,
                 "<MISSING>",
                 lat,

@@ -54,7 +54,7 @@ def fetch_data():
         ad = (
             " ".join(
                 tree.xpath(
-                    '//h4[contains(text(), "Address")]/following-sibling::a/text()'
+                    '//h4[contains(text(), "Address")]/following-sibling::a//text()'
                 )
             )
             .replace("\n", "")
@@ -68,11 +68,13 @@ def fetch_data():
         postal = "<MISSING>"
         if ad != "" and ad.count(",") == 2:
             street_address = ad.split(",")[0].strip()
+
             city = ad.split(",")[1].strip()
             state = " ".join(ad.split(",")[2].split()[:-2]).strip()
             postal = " ".join(ad.split(",")[2].split()[-2:]).strip()
 
         if ad != "" and ad.count(",") == 3:
+
             street_address = ad.split(",")[0].strip() + " " + ad.split(",")[1].strip()
             city = ad.split(",")[2].strip()
 
@@ -117,7 +119,11 @@ def fetch_data():
         if street_address == city == state == postal:
             hours_of_operation = "Coming Soon"
 
-        cms = "".join(tree.xpath('//h3[contains(text(), "Coming Soon")]/text()'))
+        cms = "".join(
+            tree.xpath(
+                '//h3[contains(text(), "Coming Soon")]/text() | //h3[contains(text(), "Coming")]/text()'
+            )
+        )
         if cms:
             hours_of_operation = "Coming Soon"
 

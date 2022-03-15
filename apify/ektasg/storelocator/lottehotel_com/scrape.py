@@ -1,169 +1,147 @@
-from bs4 import BeautifulSoup
-import csv
-import time
-import usaddress
+from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger("lottehotel_com")
-
-
-session = SgRequests()
-headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
-}
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgpostal import International_Parser, parse_address
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+def fetch_data(sgw: SgWriter):
+
+    locator_domain = "https://www.lottehotel.com"
+    api_url = "https://www.lottehotel.com/global/en/hotel-finder.html"
+    session = SgRequests()
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
+    }
+    r = session.get(api_url, headers=headers)
+    tree = html.fromstring(r.text)
+    div = tree.xpath('//a[contains(@class, "hotel__image")]')
+    for d in div:
+        slug = "".join(d.xpath(".//@href"))
+        page_url = slug
+        if page_url.find("http") == -1:
+            page_url = f"https://www.lottehotel.com{slug}"
+        country_code = "".join(
+            d.xpath('.//preceding::strong[contains(@class, "nation__title")][1]/text()')
         )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    # Your scraper here
-    data = []
-    url = "https://www.lottehotel.com/global/en/hotel-finder.html"
-    r = session.get(url, headers=headers, verify=False)
-    soup = BeautifulSoup(r.text, "html.parser")
-    maindiv = (
-        soup.find("ul", {"class": "d596-nation"})
-        .findAll("li", {"class": "d596-nation__item"})[1]
-        .find("ul")
-    )
-    divlist = maindiv.findAll("li", {"class": "d596-city__item d596-accordion__item"})[
-        0
-    ].findAll("li")
-    for div in divlist:
-        temp = div.find("p", {"class": "d596-hotel__title"}).find("a")
-        link = temp["href"]
-        if link.find("http") == -1:
-            link = "https://www.lottehotel.com" + link
-        title = temp.find("strong", {"class": "d596-hotel__name"}).text
-        address = div.find("p", {"class": "d596-hotel__address"}).text
-        phone = (
-            div.find("p", {"class": "d596-hotel__tel"}).text.lstrip().split("\n", 1)[0]
-        )
-        address = usaddress.parse(address)
-        i = 0
-        street = ""
-        city = ""
-        state = ""
-        pcode = ""
-        while i < len(address):
-            temp = address[i]
-            if (
-                temp[1].find("Address") != -1
-                or temp[1].find("Street") != -1
-                or temp[1].find("Recipient") != -1
-                or temp[1].find("BuildingName") != -1
-                or temp[1].find("USPSBoxType") != -1
-                or temp[1].find("USPSBoxID") != -1
-            ):
-                street = street + " " + temp[0]
-            if temp[1].find("PlaceName") != -1:
-                city = city + " " + temp[0]
-            if temp[1].find("StateName") != -1:
-                state = state + " " + temp[0]
-            if temp[1].find("ZipCode") != -1:
-                pcode = pcode + " " + temp[0]
-
-            i += 1
-        r = session.get(link, headers=headers)
-        temp = BeautifulSoup(r.text, "html.parser")
-        try:
-            hour_list = temp.find("div", {"class": "d088-info__time"}).findAll("p")
-            hours = ""
-            for hour in hour_list:
-                day = hour.find("strong").text
-                time = hour.find("span").text
-                hours = hours + " " + day + " " + time
-        except:
-            hours = "<MISSING>"
-        soup = str(temp)
-        start = soup.find("data-latitude=")
-        if start == -1:
-            start = soup.find("latitude")
-            if start == -1:
-                lat = "<MISSING>"
-                longt = "<MISSING>"
-            else:
-                lat, longt = soup.split('"latitude":')[1].split(",", 1)
-                longt = (
-                    longt.split('"longitude":')[1]
-                    .split("}", 1)[0]
-                    .replace('"', "")
-                    .lstrip()
-                    .replace("\n", "")
-                    .rstrip()
+        if country_code == "Global":
+            country_code = (
+                "".join(
+                    d.xpath(
+                        './/preceding::button[contains(@class, "-city__title")][1]/text()'
+                    )
                 )
-                lat = lat.replace('"', "").lstrip()
-        else:
-            lat, longt = soup.split('data-latitude="')[1].split('"', 1)
-            longt = soup.split('data-longitude="')[1].split('"', 1)[0]
+                .split("(")[0]
+                .strip()
+            )
 
-        if pcode == "":
-            pcode = "<MISSING>"
-        try:
-            state = state.split(",")[0]
-        except:
-            pass
-        try:
-            city = city.split("LOTTE HOTEL")[0]
-        except:
-            city = "<MISSING>"
+        location_name = "".join(
+            d.xpath(
+                './/following::p[contains(@class, "hotel__title")][1]//strong/text()'
+            )
+        )
+        phone = (
+            "".join(
+                d.xpath('.//following::p[contains(@class, "hotel__tel")][1]/text()')
+            )
+            .replace("\n", "")
+            .strip()
+            or "<MISSING>"
+        )
+        ad = (
+            "".join(
+                d.xpath(
+                    './/following::p[contains(@class, "hotel__address")][1]//text()'
+                )
+            )
+            or "<MISSING>"
+        )
+        if ad == "<MISSING>" and location_name == "LOTTE RESORT BUYEO":
+            session = SgRequests()
+            r = session.get("https://www.lotteresort.com/buyeo/en/about")
+            tree = html.fromstring(r.text)
+            ad = (
+                "".join(tree.xpath('//strong[contains(text(), "Address")]/text()'))
+                .replace("Address :", "")
+                .strip()
+            )
+        a = parse_address(International_Parser(), ad)
 
-        data.append(
-            [
-                "https://www.lottehotel.com/",
-                link,
-                title,
-                street.lstrip().replace(",", ""),
-                city.lstrip().replace(",", ""),
-                state.lstrip().replace(",", ""),
-                pcode.lstrip().replace(",", ""),
-                "US",
-                "<MISSING>",
-                phone.replace("+1-", ""),
-                "<MISSING>",
-                lat,
-                longt,
-                hours.strip(),
-            ]
+        street_address = f"{a.street_address_1} {a.street_address_2}".replace(
+            "None", ""
+        ).strip()
+        if location_name == "LOTTE RESORT JEJU ART VILLAS":
+            street_address = " ".join(ad.split(",")[1:3]).strip()
+        if location_name == "LOTTE City Hotel Mapo":
+            street_address = " ".join(ad.split(",")[0:2]).strip()
+        if location_name == "LOTTE City Hotel Kinshicho":
+            street_address = ad.split(",")[0].strip()
+
+        state = a.state or "<MISSING>"
+        if location_name == "LOTTE HOTEL GUAM":
+            state = ad.split(",")[1].split()[0].strip()
+        postal = a.postcode or "<MISSING>"
+        city = a.city
+        if country_code == "Korea":
+            city = (
+                "".join(
+                    d.xpath(
+                        './/preceding::button[contains(@class, "-city__title")][1]/text()'
+                    )
+                )
+                .split("(")[0]
+                .strip()
+            )
+        if (
+            page_url == "https://www.lotteresort.com/main/en/index"
+            and location_name == "LOTTE RESORT JEJU ART VILLAS"
+        ):
+            page_url = "https://www.lotteresort.com/artvillas/en/about"
+        if (
+            page_url == "https://www.lotteresort.com/main/en/index"
+            and location_name == "LOTTE RESORT SOKCHO"
+        ):
+            page_url = "https://www.lotteresort.com/sokcho/en/about"
+        if (
+            page_url == "https://www.lotteresort.com/main/en/index"
+            and location_name == "LOTTE RESORT BUYEO"
+        ):
+            page_url = "https://www.lotteresort.com/buyeo/en/about"
+        session = SgRequests()
+        r = session.get(page_url, headers=headers)
+        tree = html.fromstring(r.text)
+        latitude = (
+            "".join(tree.xpath('//input[@id="locationLat"]/@value')) or "<MISSING>"
+        )
+        longitude = (
+            "".join(tree.xpath('//input[@id="locationLng"]/@value')) or "<MISSING>"
         )
 
-    return data
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=SgRecord.MISSING,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=SgRecord.MISSING,
+        )
+
+        sgw.write_row(row)
 
 
-def scrape():
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
-    data = fetch_data()
-    write_output(data)
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
-
-
-scrape()
+if __name__ == "__main__":
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
+    ) as writer:
+        fetch_data(writer)

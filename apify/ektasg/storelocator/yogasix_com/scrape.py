@@ -1,146 +1,102 @@
-import csv
 import json
-import re
-
+from sglogging import sglog
 from bs4 import BeautifulSoup
-
 from sgrequests import SgRequests
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
 
+session = SgRequests()
+website = "yogasix_com"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+headers = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.77 Safari/537.36",
+}
 
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+DOMAIN = "https://yogasix.com/"
+MISSING = "<MISSING>"
 
 
 def fetch_data():
+    if True:
+        url = "https://members.yogasix.com/api/brands/yogasix/locations?open_status=external&geoip=111.119.187.48&offer_slug="
+        loclist = session.get(url, headers=headers).json()["locations"]
+        for loc in loclist:
+            if loc["coming_soon"] is True:
+                continue
+            location_name = loc["name"]
+            store_number = loc["clubready_id"]
+            page_url = loc["site_url"]
+            log.info(page_url)
+            phone = loc["phone"]
+            try:
+                street_address = loc["address"] + " " + loc["address2"]
+            except:
+                street_address = loc["address"]
+            city = loc["city"]
+            zip_postal = loc["zip"]
+            country_code = loc["country_code"]
+            state = loc["state"]
+            latitude = loc["lat"]
+            longitude = loc["lng"]
+            if page_url is None:
+                hours_of_operation = MISSING
+                page_url = MISSING
+            else:
+                r = session.get(page_url, headers=headers)
+                soup = BeautifulSoup(r.text, "html.parser")
+                try:
+                    hours_js = soup.find(
+                        class_="location-info-map__icon fas fa-clock"
+                    ).find_next("span")["data-hours"]
+                    raw_hours = json.loads(hours_js)
+                    hours_of_operation = ""
+                    for day in raw_hours:
+                        hours_of_operation = (
+                            hours_of_operation
+                            + " "
+                            + day.title()
+                            + " "
+                            + str(raw_hours[day])
+                            .replace("], [", " | ")
+                            .replace("'", "")
+                            .replace(", ", " - ")
+                            .replace("[[", "")
+                            .replace("]]", "")
+                        ).strip()
+                except:
+                    hours_of_operation = MISSING
 
-    base_link = "https://www.yogasix.com/location-search"
-
-    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
-    headers = {"User-Agent": user_agent}
-
-    session = SgRequests()
-    req = session.get(base_link, headers=headers)
-    base = BeautifulSoup(req.text, "lxml")
-
-    js = base.find(class_="location-search__content")["data-locations"]
-    stores = json.loads(js)
-    for i in stores:
-        slug = (
-            i.replace("yogasix-", "")
-            .replace("westchase-fl", "westchase")
-            .replace("san-clemente-ca", "san-clemente")
-            .replace("mercer-island-wa", "mercer-island")
-        )
-        link = "https://www.yogasix.com/location/" + slug
-
-        req = session.get(link, headers=headers)
-        base = BeautifulSoup(req.text, "lxml")
-        try:
-            base.find(class_="location-hero hero--coming-soon hero--default").text
-            continue
-        except:
-            pass
-
-        try:
-            store_name = base.h1.text.strip()
-        except:
-            continue
-        try:
-            hours_js = base.find(
-                class_="location-info-map__icon fas fa-clock"
-            ).find_next("span")["data-hours"]
-            raw_hours = json.loads(hours_js)
-            store_opening_hours = ""
-            for day in raw_hours:
-                store_opening_hours = (
-                    store_opening_hours
-                    + " "
-                    + day.title()
-                    + " "
-                    + str(raw_hours[day])
-                    .replace("], [", " | ")
-                    .replace("'", "")
-                    .replace(", ", " - ")
-                    .replace("[[", "")
-                    .replace("]]", "")
-                ).strip()
-        except:
-            store_opening_hours = "<MISSING>"
-        if not store_opening_hours:
-            store_opening_hours = "<MISSING>"
-
-        try:
-            phone_no = (
-                base.find(class_="location-info-map__icon fas fa-phone")
-                .find_next("div")
-                .text.replace("\n", "")
-                .strip()
+            yield SgRecord(
+                locator_domain=DOMAIN,
+                page_url=url,
+                location_name=location_name,
+                street_address=street_address.strip(),
+                city=city.strip(),
+                state=state.strip(),
+                zip_postal=zip_postal.strip(),
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone.strip(),
+                location_type=MISSING,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation.strip(),
             )
-            phone_no = (re.sub(" +", " ", phone_no)).strip()
-        except:
-            phone_no = "<MISSING>"
-
-        store_address = base.find(class_="location-info-map__info").a.text.strip()
-        street_addr = store_address.split("\n")[0].strip()
-        state = store_address.split("\n")[1].split(",")[1].split(" ")[-2]
-        city = store_address.split("\n")[1].split(",")[0].strip()
-        zipcode = store_address.split("\n")[1].split(",")[1].split(" ")[-1]
-        coords = (
-            base.find(id="map")["data-location"]
-            .replace("[", "")
-            .replace("]", "")
-            .split(",")
-        )
-        lon = coords[0].strip()
-        lat = coords[1].strip()
-
-        yield [
-            "https://www.yogasix.com/",
-            link,
-            store_name,
-            street_addr,
-            city,
-            state,
-            zipcode,
-            "US",
-            "<MISSING>",
-            phone_no,
-            "<MISSING>",
-            lat,
-            lon,
-            store_opening_hours,
-        ]
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    log.info("Started")
+    count = 0
+    with SgWriter() as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()

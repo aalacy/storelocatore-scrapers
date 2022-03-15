@@ -1,2 +1,2 @@
---ignore StateLevelCountValidator --ignore CountValidator (6722 POI, but found 5923 active on website)
+--ignore StateLevelCountValidator --ignore CountValidator (6722 POI, but found 7042 active on website)
 --ignore CentroidValidator --ignore StreetAddressHasNumber --ignore LatLngDuplicationValidator --ignore GeoConsistencyValidator --ignore StreetAddressHasStateName --ignore CountryValidator (Confirmed on website)

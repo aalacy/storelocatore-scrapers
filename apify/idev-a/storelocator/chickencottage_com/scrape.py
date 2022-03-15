@@ -1,70 +1,56 @@
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
-import json
 from bs4 import BeautifulSoup as bs
+from sglogging import SgLogSetup
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+
+logger = SgLogSetup().get_logger("chickencottage")
 
 locator_domain = "https://chickencottage.com"
+base_url = "https://chickencottage.com/wp-admin/admin-ajax.php?action=asl_load_stores&nonce=74519c906c&load_all=1&layout=1"
+_headers = {
+    "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
+}
 
 
 def fetch_data():
     with SgRequests() as session:
-        res = session.post(
-            "https://chickencottage.com/restaurants/?/front/get/53.8337367/-2.4290148/1"
-        )
-        store_list = json.loads(res.text)
+        store_list = session.get(
+            base_url,
+            headers=_headers,
+        ).json()
         for store in store_list:
-            location_name = store["name"]
-            store_number = store["id"]
-            latitude = store["lat"]
-            longitude = store["lng"]
-            detail = bs(store["display"], "lxml")
-            address_detail = detail.select_one("li.lpr-location-address").contents
-            address_detail = [x for x in address_detail if x.string is not None]
-            country_code = "UK"
-            except_ids = ["124", "125", "126"]
-            if store_number == "1":
-                state = "<MISSING>"
-                address_detail = address_detail[:-1]
-            elif store_number in except_ids:
-                state = "<MISSING>"
-                city_zip = address_detail.pop()
-                city = " ".join(city_zip.split(" ")[:-2])
-                zip = " ".join(city_zip.split(" ")[-2:])
-            else:
-                address_detail = address_detail[:-1]
-                state = address_detail.pop()
-            address_detail = address_detail[0].split(",")
-            if store_number not in except_ids:
-                zip = address_detail.pop()
-                if " Scotland" in address_detail:
-                    state = address_detail.pop()
-                city = address_detail.pop()
-            street_address = ",".join(address_detail)
-            page_url = "https://chickencottage.com/restaurants/"
-            phone = detail.select_one("li.lpr-location-phone")
-            phone = (
-                phone.text.replace("Phone: ", "") if phone is not None else "<MISSING>"
+            logger.info(store["website"])
+            sp1 = bs(session.get(store["website"], headers=_headers).text, "lxml")
+            hh = sp1.select_one("div.elementor-slide-description")
+            if hh and "You can find your nearest store below" in hh.text:
+                continue
+            hours = (
+                sp1.select("ul.elementor-icon-list-items")[-1]
+                .select("li")[-1]
+                .text.strip()
             )
-            record = SgRecord(
-                page_url=page_url,
-                location_name=location_name,
-                street_address=street_address,
-                city=city,
-                zip_postal=zip,
-                state=state,
-                phone=phone,
+            yield SgRecord(
+                page_url=store["website"],
+                location_name=store["title"],
+                street_address=store["street"],
+                city=store["city"].replace("LShepherd", "Shepherd"),
+                zip_postal=store["postal_code"],
+                state=store["state"],
+                phone=store["phone"],
                 locator_domain=locator_domain,
-                country_code=country_code,
-                store_number=store_number,
-                latitude=latitude,
-                longitude=longitude,
+                country_code=store["country"],
+                store_number=store["id"],
+                latitude=store["lat"],
+                longitude=store["lng"],
+                hours_of_operation=hours,
             )
-            yield record
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

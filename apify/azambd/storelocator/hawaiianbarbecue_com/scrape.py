@@ -37,8 +37,15 @@ def fetchData():
         state = data["state"]["text"]
         zip_postal = data["zip_code"]["text"]
         phone = data["phone_number"]["text"]
-        latitude = data["coordinates"]["latitude"]
-        longitude = data["coordinates"]["longitude"]
+
+        try:
+            latitude = data["coordinates"]["latitude"]
+            longitude = data["coordinates"]["longitude"]
+        except Exception as e:
+            latitude, longitude = MISSING, MISSING
+            log.info(f"Invalid Location {e}")
+            pass
+
         store_number = i["uid"]
         country_code = data["country"]["text"]
         if country_code == "":

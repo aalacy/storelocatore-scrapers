@@ -35,18 +35,22 @@ def write_output(data):
 def fetch_data():
     out = []
     locator_domain = "https://frischs.com/"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+        "Connection": "keep-alive",
+        "Upgrade-Insecure-Requests": "1",
+        "Cache-Control": "max-age=0",
+    }
 
     session = SgRequests()
     for i in range(0, 100000, 50):
-        url = (
-            "https://liveapi.yext.com/v2/accounts/me/answers/vertical/query?v=20190101&api_key=bfdb2b2f2353a35445889a43252ad97b&jsLibVersion=v1.5.7&sessionTrackingEnabled=true&input=usa&experienceKey=frischsanswerstemplate&version=PRODUCTION&filters={}&facetFilters={}&verticalKey=Restaurants&limit=50"
-            + f"&offset={i}&locale=en&referrerPageUrl=https%3A%2F%2Flocations.frischs.com%2F"
-        )
-        r = session.get(url)
-        js = r.json()["response"]["results"]
+        url = f"https://liveapi.yext.com/v2/accounts/me/entities/geosearch?radius=1000&location=45011&limit=50&api_key=14efc7d52bdeb902194f4a9a47528a6f&v=20181201&resolvePlaceholders=true&searchIds=4385&offset={i}"
+
+        r = session.get(url, headers=headers)
+        js = r.json()["response"]["entities"]
 
         for j in js:
-            j = j["data"]
 
             a = j.get("address")
             street_address = f"{a.get('line1')}".strip() or "<MISSING>"

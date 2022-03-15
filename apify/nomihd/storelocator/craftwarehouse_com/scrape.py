@@ -4,6 +4,8 @@ from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import lxml.html
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "craftwarehouse.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -33,7 +35,7 @@ def fetch_data():
             continue
         address = "".join(
             store.xpath(
-                'div[@class="content-container"]/p[1]/a[contains(@href,"/maps")]/text()'
+                'div[@class="content-container"]//a[contains(@href,"/maps")]/text()'
             )
         ).strip()
         street_address = address.split(",")[0].strip()
@@ -46,7 +48,7 @@ def fetch_data():
         phone = (
             "".join(
                 store.xpath(
-                    'div[@class="content-container"]/p[1]/a[contains(@href,"tel:")]/text()'
+                    'div[@class="content-container"]//a[contains(@href,"tel:")]/text()'
                 )
             )
             .strip()
@@ -57,7 +59,11 @@ def fetch_data():
         location_type = "<MISSING>"
 
         hours_of_operation = (
-            "; ".join(store.xpath('div[@class="content-container"]/p[2]/text()'))
+            "; ".join(
+                store.xpath(
+                    'div[@class="content-container"]/p[./strong[contains(text(),"STORE HOURS")]]/text()'
+                )
+            )
             .strip()
             .replace("\n", "")
             .strip()
@@ -66,7 +72,9 @@ def fetch_data():
         latitude = "<MISSING>"
         longitude = "<MISSING>"
         map_link = "".join(
-            store.xpath('div[@class="content-container"]/p[1]/a/@href')
+            store.xpath(
+                'div[@class="content-container"]//a[contains(@href,"/maps")]/@href'
+            )
         ).strip()
         if len(map_link) > 0:
             if "/@" in map_link:
@@ -94,7 +102,17 @@ def fetch_data():
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.CITY,
+                    SgRecord.Headers.ZIP,
+                }
+            )
+        )
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

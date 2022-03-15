@@ -38,6 +38,7 @@ def write_output(data):
 
 
 def fetch_data():
+    locs = []
     url = "https://www.hyatt.com/explore-hotels/service/hotels"
     r = session.get(url, headers=headers, timeout=60, stream=True)
     website = "house.hyatt.com"
@@ -58,6 +59,7 @@ def fetch_data():
                     )
                     lat = item.split('"latitude":')[1].split(",")[0]
                     lng = item.split('"longitude":')[1].split("}")[0]
+                    hours = "<MISSING>"
                     typ = (
                         item.split('"brand":{"key":"')[1]
                         .split('"label":"')[1]
@@ -95,9 +97,12 @@ def fetch_data():
                                 and "Opening 20" in line2
                             ):
                                 CS = True
+                            if ">Coming " in line2:
+                                CS = True
                             if (
-                                "and beyond" in line2
-                                and "Now accepting reservations" in line2
+                                ">Opening " in line2
+                                and "hours" not in line2
+                                and "Hours" not in line2
                             ):
                                 CS = True
                             if '"telephone":"' in line2:
@@ -107,23 +112,27 @@ def fetch_data():
                     if "Club Maui, " in name:
                         name = "Hyatt Residence Club Maui, Kaanapali Beach"
                     if CS:
-                        name = name + " - Coming Soon"
-                    yield [
-                        website,
-                        loc,
-                        name,
-                        add,
-                        city,
-                        state,
-                        zc,
-                        country,
-                        store,
-                        phone,
-                        typ,
-                        lat,
-                        lng,
-                        hours,
-                    ]
+                        hours = "Coming Soon"
+                    if "wasxs" in loc:
+                        hours = "<MISSING>"
+                    if loc not in locs:
+                        locs.append(loc)
+                        yield [
+                            website,
+                            loc,
+                            name,
+                            add,
+                            city,
+                            state,
+                            zc,
+                            country,
+                            store,
+                            phone,
+                            typ,
+                            lat,
+                            lng,
+                            hours,
+                        ]
 
 
 def scrape():

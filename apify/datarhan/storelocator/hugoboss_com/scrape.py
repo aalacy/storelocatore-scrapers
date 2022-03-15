@@ -30,8 +30,13 @@ def write_output(data):
             ]
         )
         # Body
+        dupes = []
         for row in data:
-            writer.writerow(row)
+            if row[8] in dupes:
+                pass
+            else:
+                writer.writerow(row)
+                dupes.append(row[8])
 
 
 def fetch_data():
@@ -42,11 +47,10 @@ def fetch_data():
     scraped_items = []
 
     DOMAIN = "hugoboss.com"
-    start_url = "https://production-na01-hugoboss.demandware.net/s/US/dw/shop/v20_10/stores?client_id=871c988f-3549-4d76-b200-8e33df5b45ba&latitude=36.891083262550175&longitude=-95.71289100000001&count=100&maxDistance=1903.0609009592447&distanceUnit=mi&start=0"
+    start_url = "https://production-web-hugo.demandware.net/s/GLOBAL/dw/shop/v20_10/stores?client_id=871c988f-3549-4d76-b200-8e33df5b45ba&latitude=19.864474419903953&longitude=-53.17345318782168&count=200&maxDistance=100000&distanceUnit=km&start=0"
 
     all_locations = []
-    response = session.get(start_url, verify=False)
-    data = json.loads(response.text)
+    data = session.get(start_url, verify=False).json()
     all_locations += data["data"]
     next_page = data["next"]
     while next_page:
@@ -65,12 +69,12 @@ def fetch_data():
         city = city if city else "<MISSING>"
         state = poi.get("state_code")
         state = state if state else "<MISSING>"
+        if state.isdigit():
+            state = "<MISSING>"
         zip_code = poi.get("postal_code")
         zip_code = zip_code if zip_code else "<MISSING>"
         country_code = poi.get("country_code")
         country_code = country_code if country_code else "<MISSING>"
-        if country_code not in ["US", "CA", "GB"]:
-            continue
         poi_number = poi["id"]
         poi_number = poi_number if poi_number else "<MISSING>"
         phone = poi.get("phone")

@@ -1,114 +1,74 @@
-import csv
-from sgrequests import SgRequests
-from bs4 import BeautifulSoup
+# --extra-index-url https://dl.cloudsmith.io/KVaWma76J5VNwrOm/crawl/crawl/python/simple/
 import re
+from lxml import etree
 
-fields = ["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"]
-session = SgRequests()
-
-
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
-        # Header
-        writer.writerow(fields)
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
-def addy_ext(addy):
-    address = addy.split(',')
-    city = address[0]
-    state_zip = address[1].strip().split(' ')
-    state = state_zip[0]
-    zip_code = state_zip[1]
-    return city, state, zip_code
-
-
-MISSING = '<MISSING>'
-
-
-def get(data, key):
-    return data.get(key) or MISSING
-
-
-def extract(location):
-    page_url = get(location, 'url')
-    location_name = get(location, 'post_title')
-    location_type = MISSING
-    store_number = get(location, 'ID')
-    phone = get(location, 'phone')
-
-    street_address = get(location, 'address')
-    city = get(location, 'city')
-    state = get(location, 'state')
-    postal = get(location, 'zip')
-    country_code = get(location, 'country')
-    latitude = get(location, 'lat')
-    longitude = get(location, 'lng')
-
-    hours_of_operation = get_hours(page_url)
-
-    return {
-        'locator_domain': 'cobblestone.com',
-        'page_url': page_url,
-        'location_name': location_name,
-        'location_type': location_type,
-        'store_number': store_number,
-        'phone': phone,
-        'street_address': street_address,
-        'city': city,
-        'state': state,
-        'zip': postal,
-        'country_code': country_code,
-        'latitude': latitude,
-        'longitude': longitude,
-        'hours_of_operation': hours_of_operation
-    }
-
-
-def get_hours(page_url):
-    choices = ['Full Service', 'Express Service', 'Oil And Lube', 'Covenience Store', 'Gas Station']
-    page = session.get(page_url).text
-    soup = BeautifulSoup(page)
-
-    hours = soup.select_one('.location__hours')
-
-    for choice in choices:
-        nav_string = hours.find(text=re.compile(choice, re.IGNORECASE))
-        if nav_string:
-            hour = nav_string.parent.findNext('dd')
-            if hour:
-                open_close = hour.get_text().strip()
-                if open_close:
-                    return re.sub('\n', ',', open_close)
-
-    return MISSING
+from sgrequests import SgRequests
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
-    locator_domain = 'https://cobblestone.com/'
-    ext = 'locations/'
+    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
 
-    user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36'
-    headers = {'User-Agent': user_agent}
-    params = {
-        'sm-xml-search': 1,
-        'query_type': 'all'
+    start_url = "https://cobblestone.com/?sm-xml-search=1&lat=35.4376935&lng=-109.09931&radius=0&namequery=35.4483771%2C%20-109.085354&query_type=all&limit=0&sm_category&locname&address&city&state&zip&pid=260"
+    domain = re.findall(r"://(.+?)/", start_url)[0].replace("www.", "")
+    hdr = {
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
 
-    locations = session.get('https://cobblestone.com/', params=params, headers=headers).json()
+    all_locations = session.get(start_url, headers=hdr).json()
+    for poi in all_locations:
+        page_url = poi["url"]
+        loc_response = session.get(page_url)
+        loc_dom = etree.HTML(loc_response.text)
 
-    for location in locations:
-        data = extract(location)
-        yield [data[field] for field in fields]
+        street_address = poi["address"]
+        if poi["address2"]:
+            street_address += " " + poi["address2"]
+        phone = poi["phone"]
+        if not phone:
+            phone = loc_dom.xpath('//a[contains(@href, "tel")]/strong/text()')
+            phone = phone[0] if phone else ""
+        coming_soon = loc_dom.xpath('//h2/strong[contains(text(), "COMING SOON!")]')
+        if coming_soon:
+            continue
+        hoo = loc_dom.xpath('//div[@class="location__hours"]/dl//text()')
+        hoo = [e.strip() for e in hoo if e.strip()]
+        hoo = " ".join(hoo)
+
+        item = SgRecord(
+            locator_domain=domain,
+            page_url=page_url,
+            location_name=poi["post_title"],
+            street_address=street_address,
+            city=poi["city"],
+            state=poi["state"],
+            zip_postal=poi["zip"],
+            country_code=poi["country"],
+            store_number=poi["ID"],
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=poi["lat"],
+            longitude=poi["lng"],
+            hours_of_operation=hoo,
+        )
+
+        yield item
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()

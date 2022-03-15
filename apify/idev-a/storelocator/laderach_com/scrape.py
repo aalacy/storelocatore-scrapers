@@ -2,10 +2,15 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
-from sgselenium import SgFirefox
+from sgselenium import SgChrome
+from sgrequests import SgRequests
 from sgscrape.sgpostal import parse_address_intl
-import re
-import time
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.common.by import By
+
 import ssl
 
 try:
@@ -27,107 +32,70 @@ locator_domain = "https://laderach.com/"
 base_url = "https://us.laderach.com/our-locations/"
 
 
-def _p(val):
-    return (
-        val.replace("(", "")
-        .replace(")", "")
-        .replace("-", "")
-        .replace(" ", "")
-        .strip()
-        .isdigit()
-    )
-
-
-def _detail(_id, driver):
-    driver.switch_to.default_content()
-    time.sleep(1)
-    driver.switch_to.frame(driver.find_element_by_xpath(f'//div[@id="{_id}"]//iframe'))
-    sp1 = bs(driver.page_source, "lxml")
-    _addr = sp1.select_one("a.sk-google-business-profile-address-link").text.strip()
-    addr = parse_address_intl(_addr)
-    city = addr.city
-    state = addr.state
-    street_address = addr.street_address_1
-    if addr.street_address_2:
-        street_address += " " + addr.street_address_2
-    if street_address.isdigit() and len(_addr.split(",")) > 1:
-        street_address = _addr.split(",")[0]
-    country_code = addr.country
-    if not country_code and "Singapore" in _addr:
-        country_code = "Singapore"
-    if country_code == "United Arab Emirates":
-        street_address = " ".join(_addr.split("-")[:-3])
-        city = _addr.split("-")[-3]
-        state = _addr.split("-")[-2]
-    hours = []
-    _hr = sp1.find("label", string=re.compile(r"Business Hours"))
-    if _hr:
-        _temp = sp1.select("table.sk-ww-google-business-profile-content-container")
-        if _temp:
-            temp = _temp[-1].select("tr")
-            if temp and "Business Hours" in temp[0]:
-                del temp[0]
-            if temp:
-                hours = [":".join(hh.stripped_strings) for hh in temp]
-    _phone = list(
-        sp1.select("table.sk-ww-google-business-profile-main-info tr")[
-            -1
-        ].stripped_strings
-    )
-    phone = ""
-    if _phone and _p(_phone[-1]):
-        phone = _phone[-1]
-    _url = sp1.select_one("td.sk-google-profile-website a")
-    page_url = ""
-    if _url:
-        page_url = _url.text.strip()
-    return SgRecord(
-        page_url=page_url,
-        location_name=sp1.select_one(".name").text.strip(),
-        store_number=_id.split("-")[-1],
-        street_address=street_address,
-        city=city,
-        state=state,
-        zip_postal=addr.postcode,
-        country_code=country_code,
-        phone=phone,
-        locator_domain=locator_domain,
-        latitude=sp1.select_one(".place_lat").text.strip(),
-        longitude=sp1.select_one(".place_lng").text.strip(),
-        hours_of_operation="; ".join(hours),
-    )
-
-
-def fetch_data():
-    with SgFirefox() as driver:
+def fetch_data(session):
+    with SgChrome() as driver:
         driver.get(base_url)
         soup = bs(driver.page_source, "lxml")
         stores = soup.select("div.store-row-container div.store-row")
         logger.info(f"{len(stores)} found")
-        missing = []
         for store in stores:
-            _id = store["id"]
-            logger.info(_id)
+            store_number = store.iframe["src"].split("/")[-1]
+            logger.info(store_number)
+            if store_number == "50047" or store_number == "63198":
+                continue
+            driver.get(store.iframe["src"])
             try:
-                yield _detail(_id, driver)
-            except Exception as err:
-                logger.warning(str(err))
-                logger.info(f"missing {_id}")
-                missing.append(_id)
-
-        logger.info(f"{len(missing)} missing")
-        if missing:
-            time.sleep(2)
-        for _id in missing:
-            try:
-                yield _detail(_id, driver)
-            except Exception as err:
-                logger.warning(str(err))
-                logger.info(f"missing {_id}")
+                WebDriverWait(driver, 10).until(
+                    EC.presence_of_element_located(
+                        (
+                            By.XPATH,
+                            '//div[@class="sk-google-business-profile-container"]',
+                        )
+                    )
+                )
+            except:
+                continue
+            sp1 = bs(driver.page_source, "lxml")
+            if sp1.select_one(".sk-google-business-profile-coming-soon-text"):
+                continue
+            url = f"https://data.accentapi.com/feed/{store_number}.json?nocache=1622049836522"
+            _ = session.get(url, headers=_headers).json()
+            _addr = _["content"]["location"]
+            addr = parse_address_intl(_addr)
+            city = addr.city
+            state = addr.state
+            zip_postal = addr.postcode
+            street_address = addr.street_address_1
+            if addr.street_address_2:
+                street_address += " " + addr.street_address_2
+            if street_address.isdigit() and len(_addr.split(",")) > 1:
+                street_address = _addr.split(",")[0]
+            country_code = addr.country
+            if not country_code and "Singapore" in _addr:
+                country_code = "Singapore"
+            hours = _["content"].get("week_day_text", [])
+            yield SgRecord(
+                page_url=_["content"]["website"],
+                location_name=_["content"]["place_name"],
+                store_number=store_number,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_postal,
+                country_code=country_code,
+                phone=_["content"]["phone"],
+                locator_domain=locator_domain,
+                location_type=_["content"]["place_type"],
+                hours_of_operation="; ".join(hours),
+                latitude=sp1.select_one(".place_lat").text,
+                longitude=sp1.select_one(".place_lng").text,
+                raw_address=_["content"]["location"],
+            )
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
-        results = fetch_data()
-        for rec in results:
-            writer.write_row(rec)
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+        with SgRequests() as session:
+            results = fetch_data(session)
+            for rec in results:
+                writer.write_row(rec)

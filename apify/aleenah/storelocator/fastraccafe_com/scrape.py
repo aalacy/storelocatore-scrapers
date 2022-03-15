@@ -52,6 +52,7 @@ def fetch_data():
     lat = []
     timing = []
     ids = []
+    page_urls = []
 
     res = session.get("https://fastraccafe.com/locations/")
     soup = BeautifulSoup(res.text, "html.parser")
@@ -93,6 +94,15 @@ def fetch_data():
                 ids.append("<MISSING>")
             else:
                 ids.append(id[0])
+        try:
+            url = (
+                tr.find("td", {"class": "store-links"})
+                .find("a", {"class": "order"})
+                .get("href")
+            )
+        except:
+            url = "<MISSING>"
+        page_urls.append(url)
     all = []
     for i in range(0, len(locs)):
         row = []
@@ -109,7 +119,7 @@ def fetch_data():
         row.append(lat[i])  # lat
         row.append(long[i])  # long
         row.append(timing[i])  # timing
-        row.append("https://fastraccafe.com/locations/")  # page url
+        row.append(page_urls[i])  # page url
 
         all.append(row)
     return all

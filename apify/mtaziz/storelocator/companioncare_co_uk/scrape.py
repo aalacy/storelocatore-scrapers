@@ -57,6 +57,7 @@ def fetch_data():
         # Street Address from JSON also contains city or town names which is fixed using sgpostal
 
         street_address = pa.street_address_1
+        street_address = street_address.replace("Inside Pets At Home ", "")
         street_address = street_address if street_address else MISSING
         city = address["city"] or MISSING
 

@@ -105,7 +105,7 @@ def get_data(page_url):
 
     location_name = "".join(tree.xpath("//h1/text()")).strip()
     line = " ".join(
-        "".join(tree.xpath("//span[@class='location-detail__address']/text()")).split()
+        " ".join(tree.xpath("//span[@class='location-detail__address']/text()")).split()
     )
     if not line:
         return

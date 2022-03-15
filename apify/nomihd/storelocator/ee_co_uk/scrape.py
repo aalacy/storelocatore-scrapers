@@ -16,7 +16,7 @@ headers = {
 
 def fetch_data():
     # Your scraper here
-    search_url = "https://ee.co.uk/bin/eestore/storepage.json"
+    search_url = "https://ee.co.uk/stores/england.stores.html"
     stores_req = session.get(search_url, headers=headers)
     stores = json.loads(stores_req.text)["storesJson"]
 
@@ -81,6 +81,8 @@ def fetch_data():
                     .replace("<b>", "")
                     .replace("</b> ", ":")
                     .replace("<br/>", "; ")
+                    .strip()
+                    .replace("::", ":")
                     .strip()
                 )
 

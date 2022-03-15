@@ -91,6 +91,10 @@ def fetch_data():
             phone = soup.find("div", {"class": "col-md-4"}).findAll("p")[1].text
             phone = phone.split("Fax")[0].strip()
 
+            coords = str(soup)
+            lat = coords.split('"latitude":')[1].split(',"')[0]
+            lng = coords.split('"longitude":')[1].split("}")[0]
+
             data.append(
                 [
                     "https://www.hayssupermarkets.com",
@@ -104,8 +108,8 @@ def fetch_data():
                     "<MISSING>",
                     phone,
                     "<MISSING>",
-                    "<MISSING>",
-                    "<MISSING>",
+                    lat,
+                    lng,
                     hours,
                 ]
             )

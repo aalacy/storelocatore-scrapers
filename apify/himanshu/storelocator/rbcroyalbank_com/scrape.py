@@ -3,7 +3,7 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import time
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries, Grain_8
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger("rbcroyalbank_com")
@@ -50,7 +50,8 @@ def request_wrapper(url, method, headers, data=None):
                 return r
                 break
             except:
-                time.sleep(2)
+                logger.info("Wait inside request wrapper")
+                time.sleep(10)
                 request_counter = request_counter + 1
                 if request_counter > 10:
                     return None
@@ -65,6 +66,7 @@ def request_wrapper(url, method, headers, data=None):
                 return r
                 break
             except:
+                logger.info("Wait inside ")
                 time.sleep(2)
                 request_counter = request_counter + 1
                 if request_counter > 10:
@@ -76,11 +78,10 @@ def request_wrapper(url, method, headers, data=None):
 
 def fetch_data():
 
-    addressess = []
+    addressess = dict()
     search = DynamicZipSearch(
         country_codes=[SearchableCountries.CANADA],
         max_search_results=100,
-        granularity=Grain_8(),
     )
 
     headers = {
@@ -88,7 +89,16 @@ def fetch_data():
         "x-requested-with": "XMLHttpRequest",
         "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
     }
-    for coord in search:
+
+    ziplist = list(search)
+    logger.info(len(ziplist))
+
+    for count, coord in enumerate(ziplist, 1):
+
+        if count % 200 is False:
+            logger.info(f"next 200 zip -- {count} checked/searched! Now Waiting")
+            time.sleep(10)
+
         result_coords = []
         locator_domain = "https://www.rbcroyalbank.com"
         location_name = ""
@@ -111,6 +121,7 @@ def fetch_data():
                 "https://maps.rbcroyalbank.com/index.php", headers=headers, data=data
             )
         except:
+            logger.info(f"Zip ({coord}) request failed !!! ")
             continue
 
         soup = str(BeautifulSoup(r.text, "lxml"))
@@ -120,17 +131,20 @@ def fetch_data():
                 .split("=true;for(var")[0]
                 .split("{label:")
             )
-            for i in range(len(script))[1:]:
+            for i in range(len(script))[1:]:  # 50
                 latitude = script[i].split("lat:")[1].split(",")[0]
                 longitude = script[i].split("lat:")[1].split(",")[1].split("lng:")[1]
+                search.found_location_at(latitude, longitude)
                 id1 = script[i].split("locationId:'")[1].split("',t")[0]
                 page_url = (
                     "https://maps.rbcroyalbank.com/locator/locationDetails.php?l="
                     + str(id1)
                 )
-                if page_url in addressess:
+
+                if addressess.get(page_url):
                     continue
-                addressess.append(page_url)
+                else:
+                    addressess[page_url] = True
 
                 logger.info(page_url)
                 r1 = request_wrapper(page_url, "get", headers=headers)
@@ -253,6 +267,10 @@ def fetch_data():
                 store.append(page_url if page_url else "<MISSING>")
 
                 yield store
+                if len(addressess) % 50 is False:
+                    logger.info("50 more scraped! Now Waiting")
+                    time.sleep(5)
+    logger.info(f">>> Total zip searched : {len(ziplist)}")
 
 
 def scrape():
