@@ -59,6 +59,8 @@ def fetch_data():
             location_type = poi["ProfileType"]
 
             store_response = session.get(store_url, headers=usr_agent)
+            if store_response.status_code != 200:
+                continue
             store_dom = etree.HTML(store_response.text)
             hours_of_operation = ""
             if store_dom:
