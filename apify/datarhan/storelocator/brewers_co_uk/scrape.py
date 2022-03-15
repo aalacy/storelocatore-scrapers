@@ -34,7 +34,10 @@ def fetch_data():
             if loc_response.status_code != 200:
                 continue
             loc_dom = etree.HTML(loc_response.text)
-            data = loc_dom.xpath("//@ng-init")[0]
+            data = loc_dom.xpath("//@ng-init")
+            if not data:
+                continue
+            data = data[0]
             data = re.findall(r"initSingle\((.+)\)", data)[0]
             poi = json.loads(data)[0]
 

@@ -34,7 +34,7 @@ def fetch_data():
         if loc == "":
             loc = "https://www.simon.com/mall/" + item["urlFriendlyName"]
             r2 = session.get(loc, headers=headers)
-            time.sleep(10)
+            time.sleep(3)
             for line2 in r2.iter_lines():
                 if '"Longitude":' in line2:
                     lng = line2.split('"Longitude":')[1].split(",")[0]
@@ -70,6 +70,10 @@ def fetch_data():
             hours = "<MISSING>"
         if loc == "":
             loc = "<MISSING>"
+        if "outlet/puerto-rico" in loc:
+            lat = "18.438676"
+            lng = "-66.540878"
+            hours = "Monday - Thursday: 9:00AM - 8:00PM; Friday - Saturday: 9:00AM - 9:00PM; Sunday: 11:00AM - 6:00PM"
         yield SgRecord(
             locator_domain=website,
             page_url=loc,
@@ -90,7 +94,9 @@ def fetch_data():
 
 def scrape():
     results = fetch_data()
-    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
+    ) as writer:
         for rec in results:
             writer.write_row(rec)
 
