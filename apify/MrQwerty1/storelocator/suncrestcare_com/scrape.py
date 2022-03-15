@@ -6,24 +6,22 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 
 
-def get_coords_from_embed(text):
+def get_coords(page_url):
+    r = session.get(page_url)
+    if r.status_code == 404:
+        return SgRecord.MISSING, SgRecord.MISSING, False
+    tree = html.fromstring(r.text)
+    text = "".join(tree.xpath("//iframe/@src"))
     try:
         latitude = text.split("!3d")[1].strip().split("!")[0].strip()
         longitude = text.split("!2d")[1].strip().split("!")[0].strip()
     except IndexError:
         latitude, longitude = SgRecord.MISSING, SgRecord.MISSING
+    iscoming = False
+    if "Coming" in "".join(tree.xpath("//h1/text()")):
+        iscoming = True
 
-    return latitude, longitude
-
-
-def get_coords(page_url):
-    r = session.get(page_url)
-    if r.status_code == 404:
-        return SgRecord.MISSING, SgRecord.MISSING
-    tree = html.fromstring(r.text)
-    text = "".join(tree.xpath("//iframe/@src"))
-
-    return get_coords_from_embed(text)
+    return latitude, longitude, iscoming
 
 
 def fetch_data(sgw: SgWriter):
@@ -58,7 +56,10 @@ def fetch_data(sgw: SgWriter):
         state = csz.pop()
         city = " ".join(csz)
         phone = "".join(d.xpath(".//a[contains(@href, 'tel:')]/text()")).strip()
-        latitude, longitude = get_coords(page_url)
+        latitude, longitude, iscoming = get_coords(page_url)
+        hours_of_operation = SgRecord.MISSING
+        if iscoming:
+            hours_of_operation = "Coming Soon"
 
         row = SgRecord(
             page_url=page_url,
@@ -72,6 +73,7 @@ def fetch_data(sgw: SgWriter):
             latitude=latitude,
             longitude=longitude,
             locator_domain=locator_domain,
+            hours_of_operation=hours_of_operation,
         )
 
         sgw.write_row(row)
