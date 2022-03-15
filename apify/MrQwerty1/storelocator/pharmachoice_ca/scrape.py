@@ -42,7 +42,7 @@ def get_data(page_url, sgw: SgWriter):
     r = session.get(page_url)
     if r.status_code != 200:
         return
-    if "pharmachoice.com" not in r.url:
+    if "pharmachoice.com" not in str(r.url):
         return
     tree = html.fromstring(r.text)
 
