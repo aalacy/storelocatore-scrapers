@@ -45,6 +45,7 @@ CITIES = [
     "Gorontalo",
     "Jakarta",
     "Jakarta Barat",
+    "Cianjur",
     "Jakarta Pusat",
     "Jakarta Selatan",
     "Jakarta Timur",
@@ -54,6 +55,8 @@ CITIES = [
     "Bandung",
     "Bekasi",
     "Bogor",
+    "Pajajaran",
+    "Botani",
     "Cimahi",
     "Cirebon",
     "Depok",
@@ -202,6 +205,9 @@ def fetch_data():
             )
             street_address, _, state, zip_postal = getAddress(raw_address)
             street_address = " ".join(street_address.replace(city, "").split())
+            if "Pajajaran" in city:
+                city = "Bogor"
+                street_address = street_address.replace("bogor", "").strip()
             phone = MISSING
             country_code = "ID"
             hours_of_operation = (

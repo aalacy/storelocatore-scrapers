@@ -47,15 +47,22 @@ def fetch_data():
                 page_url = sp1.select_one("a.wso-to-restaurant-button")["href"]
                 logger.info(page_url)
                 sp2 = bs(http.get(page_url, headers=_headers).text, "lxml")
+                note = sp2.select_one("div.wso-restaurant-excerpt p")
+                if note and "Restaurant wird im" in note.text:
+                    continue
+
                 addr = list(sp2.h1.stripped_strings)
                 hours = []
                 for hh in sp2.select("div#restaurants p"):
                     if not hh.text.strip():
                         continue
+                    if "Drive" in hh.text:
+                        break
                     hr = list(hh.stripped_strings)
                     if len(hr) > 2:
                         hr = hr[:-1]
                     hours.append(": ".join(hr))
+
                 yield SgRecord(
                     page_url=page_url,
                     store_number=_["properties"]["id"],

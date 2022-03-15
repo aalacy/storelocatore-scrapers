@@ -42,7 +42,7 @@ def fetch_data(sgw: SgWriter):
             or "<MISSING>"
         )
         ad = "".join(tree.xpath('//h4[@class="f-30 m-text"]/a/text()[2]')).strip()
-        phone = "<MISSING>"
+        phone = "".join(tree.xpath('//a[contains(@href, "tel")]/text()')) or "<MISSING>"
 
         state = ad.split(",")[1].split()[0].strip()
         try:
