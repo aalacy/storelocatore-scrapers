@@ -1,3 +1,4 @@
+import json
 from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
@@ -9,40 +10,46 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 def fetch_data(sgw: SgWriter):
 
     locator_domain = "https://www.mcgrathsfishhouse.com/"
-    page_url = "https://www.mcgrathsfishhouse.com/Contact-Us"
+    api_url = "https://www.mcgrathsfishhouse.com/Directions"
     session = SgRequests()
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
-    r = session.get(page_url, headers=headers)
+    r = session.get(api_url, headers=headers)
     tree = html.fromstring(r.text)
-    div = tree.xpath("//div[./div/img]")
-    for d in div:
+    div = (
+        "".join(tree.xpath('//script[contains(text(), "latitude")]/text()'))
+        .split("dynamicData:")[1]
+        .split("csrfToken")[0]
+        .strip()
+    )
+    div = "".join(div[:-1])
+    js = json.loads(div)
+    for j in js["storeLocation"]["locations"]:
 
-        location_name = "".join(d.xpath(".//h3//text()"))
-        street_address = "".join(
-            d.xpath(
-                './/div[@class="rp-store-info-container rp-store-info-container-center"]/div/div[1]//text()'
-            )
-        )
-        ad = "".join(
-            d.xpath(
-                './/div[@class="rp-store-info-container rp-store-info-container-center"]/div/div[2]//text()'
-            )
-        )
-        state = ad.split(",")[1].split()[0].strip()
-        postal = ad.split(",")[1].split()[1].strip()
-        country_code = "USA"
-        city = ad.split(",")[0].strip()
-        phone = (
-            "".join(
-                d.xpath(
-                    './/div[@class="rp-store-info-container rp-store-info-container-center"]/div/div[3]//text()'
-                )
-            )
-            .replace("Phone:", "")
-            .strip()
-        )
+        page_url = "https://www.mcgrathsfishhouse.com/Directions"
+        location_name = j.get("name") or "<MISSING>"
+        street_address = j.get("street") or "<MISSING>"
+        state = j.get("state") or "<MISSING>"
+        postal = j.get("zip") or "<MISSING>"
+        country_code = "US"
+        city = j.get("city") or "<MISSING>"
+        latitude = j.get("latitude") or "<MISSING>"
+        longitude = j.get("longitude") or "<MISSING>"
+        phone = j.get("phone") or "<MISSING>"
+        hours = j.get("storeHoursSummary")
+        hours_of_operation = "<MISSING>"
+        tmp = []
+        if hours:
+            for h in hours:
+                day = h.get("daysSummary")
+                time = h.get("hoursSummary")
+                line = f"{day} {time}"
+                tmp.append(line)
+            hours_of_operation = " ".join(tmp)
+        store_number = j.get("locationId")
+        if store_number == -1:
+            store_number = "<MISSING>"
 
         row = SgRecord(
             locator_domain=locator_domain,
@@ -53,13 +60,13 @@ def fetch_data(sgw: SgWriter):
             state=state,
             zip_postal=postal,
             country_code=country_code,
-            store_number=SgRecord.MISSING,
+            store_number=store_number,
             phone=phone,
             location_type=SgRecord.MISSING,
-            latitude=SgRecord.MISSING,
-            longitude=SgRecord.MISSING,
-            hours_of_operation=SgRecord.MISSING,
-            raw_address=f"{street_address} {ad}",
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+            raw_address=f"{street_address} {city}, {state} {postal}",
         )
 
         sgw.write_row(row)
