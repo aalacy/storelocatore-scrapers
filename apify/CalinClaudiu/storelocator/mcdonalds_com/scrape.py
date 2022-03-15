@@ -674,7 +674,6 @@ class CrawlMethod(CleanRecord):
 
         record_cleaner = getattr(CleanRecord, self._config.get("cleanupMethod"))
         maxZ = self._search.items_remaining()
-        total = 0
         for Point in self._search:
             remaining = self._search.items_remaining()
             if remaining == 0:
