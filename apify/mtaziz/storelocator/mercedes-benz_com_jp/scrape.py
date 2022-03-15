@@ -153,6 +153,17 @@ def determine_hours(k, brand, which):
     return hours
 
 
+def remove_chars_from_zc(pc):
+    zc = ""
+    pc = " ".join(pc.split())
+    isalpha_ = [i.isalpha() for i in pc]
+    if True in isalpha_:
+        zc = pc.split(" ")[0]
+    else:
+        zc = pc
+    return zc
+
+
 def fix_comma(x):
     h = []
     try:
@@ -292,8 +303,32 @@ def fetch_records(idx, store_url_tuple, headers_apikey, sgw: SgWriter):
             else:
                 longitude = MISSING
 
+            # Fixing cities data, the city is having postcode data,
+            # as such data is appeared in the API response.
+            # City column contains the following postcodes which replaced with
+            # state
+            # 5330021
+            # 9638838
+            # 433-8105
+            # 601-8201
+            # 5900977
+
+            if city == "5330021":
+                city = state
+            if city == "9638838":
+                city = state
+            if city == "433-8105":
+                city = state
+            if city == "601-8201":
+                city = state
+            if city == "5900977":
+                city = state
+
             hours_of_operation = determine_hours(d, "SMT", "SALES")
             raw_address = MISSING
+
+            # Remove unwanted characters from Zip Codes
+            zipcode = remove_chars_from_zc(zipcode)
 
             item = SgRecord(
                 locator_domain="mbusa.com",
