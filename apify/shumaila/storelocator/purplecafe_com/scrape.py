@@ -1,5 +1,4 @@
 from bs4 import BeautifulSoup
-import re
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
@@ -13,24 +12,27 @@ headers = {
 
 
 def fetch_data():
-    pattern = re.compile(r"\s\s+")
+
     url = "https://www.purplecafe.com/"
     r = session.get(url, headers=headers)
     soup = BeautifulSoup(r.text, "html.parser")
-    linklist = soup.find("div", {"class": "links"}).findAll("div", {"class": "link"})
+    linklist = soup.findAll("div", {"class": "link"})
     for link in linklist:
         title = link.find("a").text
-        link = link.find("a")["href"]
+        try:
+            link = link.find("a")["href"]
+        except:
+            continue
         r = session.get(link, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
-        divlist = soup.findAll("div", {"class": "info"})
-        hours = divlist[1].text.replace("\n", " ").replace("Hours", "").strip()
-        location = divlist[2].text.strip().splitlines()
-        street = location[1]
-        city, state = location[2].split(", ", 1)
+        divlist = soup.findAll("div", {"class": "left"})
+        hours = divlist[0].text.replace("Hours", "").replace("\n", " ").strip()
+        address = divlist[1].text.replace("Location", "").strip().splitlines()
+        street = address[0]
+        city, state = address[1].split(", ")
         state, pcode = state.split(" ", 1)
-        phone = location[-1]
-        hours = re.sub(pattern, " ", hours).strip()
+        phone = address[-1]
+
         yield SgRecord(
             locator_domain="https://www.purplecafe.com/",
             page_url=link,
