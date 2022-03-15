@@ -33,11 +33,7 @@ def fetch_data():
             if loc_response.status_code != 200:
                 continue
             loc_dom = etree.HTML(loc_response.text)
-            location_name = (
-                loc_dom.xpath('//div[@class="callout"]/text()')[0]
-                + ", "
-                + poi["title"].split(":")[-1].strip()
-            )
+            location_name = loc_dom.xpath('//div[@class="callout"]/text()')[0]
             street_address = poi["address3"]
             city = poi["city"]
             state = poi["stateProvince"]

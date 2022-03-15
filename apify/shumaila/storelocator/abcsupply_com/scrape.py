@@ -4,7 +4,9 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 import json
 import re
+import ssl
 
+ssl._create_default_https_context = ssl._create_unverified_context
 from sgselenium import SgSelenium
 
 driver = SgSelenium().chrome()
