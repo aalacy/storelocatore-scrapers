@@ -40,6 +40,8 @@ def fetch_data():
                 temp_list = loc.get_text(separator="|", strip=True).split("DIRECTIONS")[
                     :-1
                 ]
+                if len(coords) != len(temp_list):
+                    coords = coords[1:]
                 for temp, coord in zip(temp_list, coords):
                     temp_coord = coord.find("a")["href"].split("@")[1].split(",")
                     latitude = temp_coord[0]
@@ -58,6 +60,9 @@ def fetch_data():
                         hours_of_operation = " ".join(x for x in temp[-2:])
                     location_name = temp[0]
                     log.info(location_name)
+                    raw_address = raw_address.replace(",", " ").replace(
+                        "(Food Court)", ""
+                    )
                     pa = parse_address_intl(raw_address)
 
                     street_address = pa.street_address_1
@@ -107,6 +112,7 @@ def fetch_data():
                     phone = temp[-3].replace(" (Catering)", "")
                     raw_address = " ".join(x for x in temp[1:-3])
                     hours_of_operation = " ".join(x for x in temp[-2:])
+                raw_address = raw_address.replace(",", " ")
                 location_name = temp[0]
                 log.info(location_name)
                 pa = parse_address_intl(raw_address)

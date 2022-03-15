@@ -9,7 +9,7 @@ from sgscrape.sgpostal import parse_address_intl
 import re
 
 DOMAIN = "gnc.co.id"
-LOCATION_URL = "https://gnc.co.id/store-locator?page={}"
+LOCATION_URL = "https://www.gnc.co.id/store-locator?page={}"
 HEADERS = {
     "Accept": "*/*",
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.82 Safari/537.36",
@@ -95,6 +95,8 @@ def fetch_data():
                 state = "D.K.I Jakarta"
             if "Guardian" or "Lt." or "Carrefour" in city:
                 city = MISSING
+            if zip_postal.isnumeric() is False:
+                zip_postal = MISSING
             phone = info[-1] if info[-1] != "0" else MISSING
             country_code = "ID"
             store_number = MISSING

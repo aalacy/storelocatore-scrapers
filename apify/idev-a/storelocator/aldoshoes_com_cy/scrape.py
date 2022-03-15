@@ -19,12 +19,12 @@ def fetch_data():
         soup = bs(session.get(base_url, headers=_headers).text, "lxml")
         locations = soup.select("div.weasy_page_content div.omw-sentence")
         for _ in locations:
-            if not _.p:
+            if not _.p or not _.text.strip():
                 continue
             block = []
             for bb in _.select("p")[:-1]:
                 block += list(bb.stripped_strings)
-            raw_address = " ".join(block[1:-1]).split("|")[0]
+            raw_address = " ".join(block[1:]).split("|")[0]
             addr = parse_address_intl(raw_address + ", Cyprus")
             street_address = addr.street_address_1
             if addr.street_address_2:
@@ -41,6 +41,8 @@ def fetch_data():
                     zip_postal = c_z[1]
             if street_address.isdigit():
                 street_address = block[2]
+            if street_address.split()[-1].lower() == city.lower():
+                street_address = " ".join(street_address.split()[:-1])
             yield SgRecord(
                 page_url=base_url,
                 location_name=block[0],

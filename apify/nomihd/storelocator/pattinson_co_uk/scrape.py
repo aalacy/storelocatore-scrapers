@@ -61,7 +61,7 @@ def fetch_data():
     base = "https://www.pattinson.co.uk"
     search_url = "https://www.pattinson.co.uk/about/branch-finder"
 
-    with SgRequests(dont_retry_status_codes=([404])) as session:
+    with SgRequests(dont_retry_status_codes=([404]), proxy_country="gb") as session:
         search_res = session.get(search_url, headers=headers)
         search_sel = lxml.html.fromstring(search_res.text)
 

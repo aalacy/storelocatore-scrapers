@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
-from sgrequests import SgRequests
+from sgrequests import SgRequests, SgRequestError
 from sglogging import sglog
 import lxml.html
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "postalconnections.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -45,7 +47,12 @@ def fetch_data():
         location_type = "<MISSING>"
         locator_domain = website
         log.info(page_url)
-        store_req = session.get(page_url, headers=headers)
+        try:
+            store_req = SgRequests.raise_on_err(session.get(page_url, headers=headers))
+        except SgRequestError as e:
+            log.error(e.status_code)
+            continue
+
         store_sel = lxml.html.fromstring(store_req.text)
 
         address = store_sel.xpath('//a[@class="c-header__location"]/text()')
@@ -197,7 +204,20 @@ def fetch_data():
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.LOCATION_NAME,
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.CITY,
+                    SgRecord.Headers.ZIP,
+                    SgRecord.Headers.LATITUDE,
+                    SgRecord.Headers.LONGITUDE,
+                }
+            )
+        )
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
