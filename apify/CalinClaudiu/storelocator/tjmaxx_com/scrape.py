@@ -183,7 +183,6 @@ if __name__ == "__main__":
         country_codes=tocrawl,
         granularity=Grain_1_KM(),
         expected_search_radius_miles=2.4,
-        max_search_results=25,
     )
     with SgWriter(
         deduper=SgRecordDeduper(
