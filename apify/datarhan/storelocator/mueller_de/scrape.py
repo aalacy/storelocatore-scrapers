@@ -18,6 +18,20 @@ def fetch_data():
     for country_code in all_countries:
         all_locations = session.get(start_url.format(country_code), headers=hdr).json()
         for poi in all_locations:
+            location_type = poi["sections"]
+            if location_type.startswith(","):
+                location_type = location_type[1:]
+            poi_data = session.get(
+                f'https://www.mueller.{country_code}/api/ccstore/byStoreNumber/{poi["storeNumber"]}/'
+            ).json()
+            hoo = []
+            if poi_data.get("cCStoreDtoDetails"):
+                for e in poi_data["cCStoreDtoDetails"]["openingHourWeek"]:
+                    if e["open"]:
+                        hoo.append(f'{e["dayOfWeek"]}: {e["fromTime"]} - {e["toTime"]}')
+                    else:
+                        hoo.append(f'{e["dayOfWeek"]}: closed')
+            hoo = " ".join(hoo)
 
             item = SgRecord(
                 locator_domain=domain,
@@ -29,11 +43,11 @@ def fetch_data():
                 zip_postal=poi["zip"],
                 country_code=poi["country"],
                 store_number=poi["storeNumber"],
-                phone="",
-                location_type=poi["sections"],
+                phone=poi_data["cCStoreDtoDetails"]["phone"],
+                location_type=location_type,
                 latitude=poi["latitude"],
                 longitude=poi["longitude"],
-                hours_of_operation="",
+                hours_of_operation=hoo,
             )
 
             yield item

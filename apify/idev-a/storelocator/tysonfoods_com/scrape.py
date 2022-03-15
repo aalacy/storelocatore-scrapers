@@ -36,10 +36,10 @@ def fetch_data(sgw, session):
     }
     r = session.get(page_url, headers=headers)
     tree = html.fromstring(r.text)
-    countries = tree.xpath("//div[contains(@class, 'brick brick-accordion_panel')]")
+    countries = tree.xpath("//div[contains(@class, 'brick-accordion_panel')]")
 
     for c in countries:
-        divs = c.xpath(".//div[@class='brick brick-dynamic_column']")
+        divs = c.xpath(".//div[contains(@class, 'brick-dynamic_column')]")
         country = "".join(
             c.xpath(
                 ".//div[@class='field field--name-title field--type-string field--label-hidden field__item']/text()"
