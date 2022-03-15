@@ -30,7 +30,6 @@ def fetch_data():
                 .replace("', '", "; ")
                 .replace("'", "")
             )
-            print(hours)
         except:
             hours = "<MISSING>"
         add = item["address"]["address1"]
