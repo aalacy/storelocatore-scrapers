@@ -9,7 +9,7 @@ from sgscrape.pause_resume import CrawlStateSingleton
 from sglogging import sglog
 
 logger = sglog.SgLogSetup().get_logger(logger_name="bp.com")
-max_workers = 24
+max_workers = 12
 
 
 def get_response(co_ord, retry=1):
@@ -25,7 +25,7 @@ def get_response(co_ord, retry=1):
                 logger.info(f"From {lat,lng} stores = {len(data)}")
                 return data
         except Exception as e:
-            logger.error(
+            logger.info(
                 f"HTTP Error Code: {response.status_code}; retry={retry} >> {e}"
             )
             if retry == 10:
