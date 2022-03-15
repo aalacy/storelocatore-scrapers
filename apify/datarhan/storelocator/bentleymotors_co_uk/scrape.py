@@ -9,13 +9,12 @@ from sgscrape.sgwriter import SgWriter
 
 def fetch_data():
     session = SgRequests()
-    domain = "bentleymotors.com"
+    domain = "bentleymotors.co.uk"
     start_url = "https://www.bentleymotors.com/content/brandmaster/global/bentleymotors/en/apps/dealer-locator/jcr:content.api.6cac2a5a11b46ea2d9c31ae3f98bfeb0.json"
 
     data = session.get(start_url).json()
     for poi in data["dealers"]:
         data = session.get(urljoin(start_url, poi["url"])).json()
-
         location_name = data["dealerName"]
         street_address = data["addresses"][0]["street"]
         city = data["addresses"][0]["city"]
@@ -23,7 +22,7 @@ def fetch_data():
         country_code = data["addresses"][0]["country"]
         store_number = data["id"]
         phone = data["addresses"][0]["departments"][0].get("phone")
-        store_url = data["addresses"][0]["departments"][0].get("website")
+        phone = phone.split("/")[0] if phone else ""
         latitude = data["addresses"][0]["wgs84"]["lat"]
         longitude = data["addresses"][0]["wgs84"]["lng"]
         hoo = []
@@ -38,10 +37,15 @@ def fetch_data():
                     hoo.append(f"{day} closed")
 
         hours_of_operation = ", ".join(hoo) if hoo else ""
+        if "Saturday" not in hours_of_operation:
+            hours_of_operation += ", Saturday closed Sunday closed"
+        if "Sunday" not in hours_of_operation:
+            hours_of_operation += ", Sunday closed"
+        page_url = f"https://www.bentleymotors.com/en/apps/dealer-locator.html/partner/{store_number}-{location_name.replace(' ', '-')}"
 
         item = SgRecord(
             locator_domain=domain,
-            page_url=store_url,
+            page_url=page_url,
             location_name=location_name,
             street_address=street_address,
             city=city,
@@ -50,7 +54,7 @@ def fetch_data():
             country_code=country_code,
             store_number=store_number,
             phone=phone,
-            location_type="",
+            location_type=", ".join(poi["coordinates"][0]["types"]),
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hours_of_operation,
