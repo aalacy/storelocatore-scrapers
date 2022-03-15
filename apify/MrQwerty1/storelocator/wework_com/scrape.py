@@ -61,8 +61,8 @@ def get_data(param, sgw: SgWriter):
     raw_address = " ".join(" ".join(line).split())
     street_address, city, state, postal = get_international(raw_address)
     if city == SgRecord.MISSING:
-        line = ", ".join(raw_address.split(", ")[:-1])
-        city = get_city(line)
+        _tmp = ", ".join(raw_address.split(", ")[:-1])
+        city = get_city(_tmp)
 
     cities = {
         "Paris": "Paris",
