@@ -80,10 +80,25 @@ def get_data():
 
             if page_url in page_urls:
                 continue
-            hours_response = session.get(page_url, headers=headers).text
+
+            counter = 0
+            while True:
+                counter = counter + 1
+                if counter == 10:
+                    raise Exception
+
+                hours_response = session.get(page_url, headers=headers).text
+                if "location-title" in hours_response:
+                    break
+
+                else:
+                    session = SgRequests(retry_behavior=None)
+                    continue
+
             hours_soup = bs(hours_response, "html.parser")
 
             hours_parts = hours_soup.find_all("div", attrs={"class": "day-hour-row"})
+
             hours = ""
             for part in hours_parts:
                 day = part.find("span", attrs={"class": "daypart"}).text.strip()
@@ -91,6 +106,9 @@ def get_data():
                 hours = hours + day + " " + hour + ", "
 
             hours = hours[:-2]
+            if len(hours_parts) == 0:
+                raise Exception
+
             page_urls.append(page_url)
 
             yield {
