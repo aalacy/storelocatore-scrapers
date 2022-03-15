@@ -7,6 +7,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
+from sgselenium.sgselenium import SgFirefox
 
 
 def fetch_data():
@@ -54,19 +55,38 @@ def fetch_data():
                 '//h5[contains(text(), "Telephone")]/following-sibling::p[1]/text()'
             )[0]
             .split("s")[-1]
+            .split("E")[0]
             .strip()
         )
         hoo = loc_dom.xpath('//table[@class="store-openings weekday_openings"]//text()')
         hoo = " ".join([e.strip() for e in hoo if e.strip()])
+        street_address = ", ".join(raw_address[:-3])
+        city = raw_address[-3].replace("16", "")
+        zip_code = raw_address[-2]
+        if city == "Edward Square":
+            street_address += ", " + city
+            city = zip_code
+            zip_code = ""
+        if "682" in phone:
+            with SgFirefox() as driver:
+                driver.get(page_url)
+                loc_dom = etree.HTML(driver.page_source)
+            phone = (
+                loc_dom.xpath(
+                    '//h5[contains(text(), "Telephone")]/following-sibling::p[1]/text()'
+                )[0]
+                .split("E")[0]
+                .strip()
+            )
 
         item = SgRecord(
             locator_domain=domain,
             page_url=page_url,
             location_name=location_name,
-            street_address=", ".join(raw_address[:-3]),
-            city=raw_address[-3],
+            street_address=street_address,
+            city=city,
             state="",
-            zip_postal=raw_address[-2],
+            zip_postal=zip_code,
             country_code=raw_address[-1],
             store_number="",
             phone=phone,

@@ -1,5 +1,3 @@
-from urllib.parse import urljoin
-
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
@@ -13,7 +11,7 @@ def fetch_data():
     domain = "lexus.com"
     zips = DynamicZipSearch(
         country_codes=[SearchableCountries.USA],
-        expected_search_radius_miles=200,
+        expected_search_radius_miles=100,
     )
     for code in zips:
         headers = {
@@ -35,8 +33,10 @@ def fetch_data():
                 for day, hours in poi["hoursOfOperation"]["Sales"].items():
                     hoo.append(f"{day}: {hours}")
                 hoo = " ".join(hoo)
-            page_url = urljoin(
-                "https://www.lexus.com/dealers/", poi["dealerDetailSlug"]
+            store_number = poi["id"]
+            page_url = (
+                f"https://www.lexus.com/dealers/{store_number}-"
+                + poi["dealerDetailSlug"]
             )
 
             item = SgRecord(
@@ -48,7 +48,7 @@ def fetch_data():
                 state=poi["dealerAddress"]["state"],
                 zip_postal=poi["dealerAddress"]["zipCode"],
                 country_code="",
-                store_number=poi["id"],
+                store_number=store_number,
                 phone=poi["dealerPhone"],
                 location_type="",
                 latitude=poi["dealerLatitude"],

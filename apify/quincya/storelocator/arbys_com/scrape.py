@@ -50,7 +50,7 @@ def fetch_data(sgw: SgWriter):
                     final_links.append(new_link)
                     link_num = link_num + 1
         logger.info("Expected: " + str(state_count) + " / Found: " + str(link_num))
-        if state_count - link_num > 8:
+        if state_count - link_num > 5:
             logger.info("RECHECK!")
             session = SgRequests()
             time.sleep(5)
@@ -96,7 +96,7 @@ def fetch_data(sgw: SgWriter):
         zip_code = store["address"]["postalCode"]
         if not zip_code:
             zip_code = "<MISSING>"
-        country_code = "US"
+        country_code = "CA"
         try:
             location_type = ", ".join(
                 list(item.find(class_="location-features-wrap mb-0").stripped_strings)

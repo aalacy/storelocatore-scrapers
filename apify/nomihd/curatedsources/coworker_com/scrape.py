@@ -147,7 +147,10 @@ def scrape():
     log.info("Started")
     count = 0
     with SgWriter(
-        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+        deduper=SgRecordDeduper(
+            record_id=RecommendedRecordIds.PageUrlId,
+            duplicate_streak_failure_factor=-1,
+        )
     ) as writer:
         results = fetch_data()
         for rec in results:
