@@ -47,7 +47,7 @@ def fetch_data():
                 """
                 CHECKS PRESENCE OF GRAPHQL ENDPOINT TO UPDATE CITY, STREET, ZIP and HOO etc
                 """
-                graphql_id = re.findall("(\d+)/", item["website"])[0]
+                graphql_id = re.findall(r"(\d+)/", item["website"])[0]
                 payload_ql = {
                     "operationName": "storepageFeed",
                     "variables": {
@@ -66,13 +66,13 @@ def fetch_data():
                     "street"
                 ]
                 zc = re.findall(
-                    "[A-Z]{2} ([A-Z0-9 ]*)",
+                    r"[A-Z]{2} ([A-Z0-9 ]*)",
                     response_ql["data"]["storepageFeed"]["storeHeader"]["address"][
                         "displayAddress"
                     ],
                 )[0]
                 state = re.findall(
-                    "[A-Z]{2}",
+                    r"[A-Z]{2}",
                     response_ql["data"]["storepageFeed"]["storeHeader"]["address"][
                         "displayAddress"
                     ],
