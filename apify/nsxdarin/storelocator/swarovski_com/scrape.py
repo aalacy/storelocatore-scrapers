@@ -71,14 +71,17 @@ def fetch_data():
                         longitude=lng,
                         hours_of_operation=hours,
                     )
-            except:
+            except Exception as e:
+                logger.info(f"Failed for {str(x)} - {str(y)}: {e}")
                 pass
 
 
 def scrape():
     results = fetch_data()
     with SgWriter(
-        deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
+        deduper=SgRecordDeduper(
+            RecommendedRecordIds.StoreNumberId, duplicate_streak_failure_factor=-1
+        )
     ) as writer:
         for rec in results:
             writer.write_row(rec)
