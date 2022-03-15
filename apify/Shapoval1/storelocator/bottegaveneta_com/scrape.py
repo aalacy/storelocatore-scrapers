@@ -1,70 +1,55 @@
-import csv
-import json
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
+def fetch_data(sgw: SgWriter):
 
     locator_domain = "https://www.bottegaveneta.com/"
-    countries = ["us", "ca"]
-    for c in countries:
-        api_url = f"https://www.bottegaveneta.com/en-{c}/storelocator"
+    api_url = "https://www.bottegaveneta.com/en-en/storelocator"
+    session = SgRequests()
+    r = session.get(api_url)
+    tree = html.fromstring(r.text)
+    div = tree.xpath('//select[@id="country"]/option[position()>1]')
+    for b in div:
+        country_code = "".join(b.xpath(".//@value"))
+        api_url = f"https://www.bottegaveneta.com/on/demandware.store/Sites-BV-INTL-Site/en_ZW/Stores-FindStoresData?countryCode={country_code}"
         session = SgRequests()
         headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
         }
         r = session.get(api_url, headers=headers)
-        tree = html.fromstring(r.text)
-        jsblock = (
-            "".join(
-                tree.xpath('//script[contains(text(), "window.exposedData = ")]/text()')
-            )
-            .split("window.exposedData = ")[1]
-            .split(";")[0]
-        )
-        js = json.loads(jsblock)
+        js = r.json()
         for j in js["storesData"]["stores"]:
-            page_url = j.get("detailsUrl")
+            page_url = "".join(j.get("detailsUrl")).replace("/en-en/", "/en-us/")
             location_name = j.get("name")
-            location_type = "<MISSING>"
-            street_address = f"{j.get('address1')} {j.get('address2') or ''}".replace(
-                "None", ""
-            ).strip()
+            street_address = (
+                f"{j.get('address1')} {j.get('address2') or ''}".replace("None", "")
+                .replace(",", "")
+                .replace("\n", " ")
+                .replace("\r", " ")
+                .strip()
+            )
+            if street_address.find("Colonia") != -1:
+                street_address = street_address.split("Colonia")[0].strip()
+            if street_address.find(" Av Presidente") != -1:
+                street_address = "Av. Pres. Juscelino Kubitschek, 2041"
+            street_address = " ".join(street_address.split())
             phone = j.get("phone")
             state = j.get("stateCode")
             postal = j.get("postalCode")
-            country_code = "".join(c).upper()
+            if postal == "00000":
+                postal = "<MISSING>"
+            postal = (
+                str(postal)
+                .replace("1012 JS", "1012")
+                .replace("1071 CA", "1071")
+                .replace("None", "")
+                .strip()
+            )
             city = j.get("city")
             store_number = j.get("ID")
             latitude = j.get("latitude")
@@ -72,39 +57,35 @@ def fetch_data():
             days = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]
             tmp = []
             for d in days:
-                days = d
+                day = d
                 time = j.get(f"{d}Hours")
-                line = f"{days} {time}".replace("NO DATA", "<MISSING>")
+                line = f"{day} {time}".replace("NO DATA", "Closed")
                 tmp.append(line)
             hours_of_operation = ";".join(tmp) or "<MISSING>"
-            if hours_of_operation.count("<MISSING>") == 7:
-                hours_of_operation = "<MISSING>"
+            if hours_of_operation.count("Closed") == 7:
+                hours_of_operation = "Closed"
 
-            row = [
-                locator_domain,
-                page_url,
-                location_name,
-                street_address,
-                city,
-                state,
-                postal,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
-            out.append(row)
+            row = SgRecord(
+                locator_domain=locator_domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=postal,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=SgRecord.MISSING,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
 
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+            sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))) as writer:
+        fetch_data(writer)

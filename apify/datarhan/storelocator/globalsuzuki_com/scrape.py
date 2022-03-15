@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from lxml import etree
 
 from sgrequests import SgRequests
@@ -21,9 +22,7 @@ def fetch_data():
     countries = [
         "Suriname",
         "Bhutan",
-        "Brunei",
         "Cambodia",
-        "Malaysia",
         "Egypt",
         "Republic of Djibouti",
         "Seychelles",

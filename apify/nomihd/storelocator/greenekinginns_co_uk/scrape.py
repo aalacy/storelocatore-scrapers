@@ -7,6 +7,16 @@ import lxml.html
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgselenium import SgChrome
+import ssl
+
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
 website = "greenekinginns.co.uk"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -86,6 +96,17 @@ def fetch_data():
                         .strip()
                     )
 
+                    if len(phone) <= 0:
+                        phone = (
+                            "".join(
+                                store_sel.xpath(
+                                    '//*[contains(text(),"Direct:")]/text()'
+                                )
+                            )
+                            .strip()
+                            .split("Direct:")[-1]
+                            .strip()
+                        )
                     store_number = (
                         "".join(store.xpath("@id"))
                         .strip()
@@ -96,7 +117,7 @@ def fetch_data():
                     if len(location_type) > 0:
                         location_type = "OldEnglish"
                     else:
-                        location_type = "<MISSING>"
+                        location_type = "Green King Inn"
 
                     hours_of_operation = "<MISSING>"
                     checkInTime = "".join(
@@ -104,6 +125,12 @@ def fetch_data():
                             '//ul[@class="hotel-info__details-list"]/li[./span[contains(text(),"Check in from")]]/span[2]/text()'
                         )
                     ).strip()
+                    if len(checkInTime) <= 0:
+                        checkInTime = "".join(
+                            store_sel.xpath(
+                                '//ul[@class="hotel-info__details-list"]/li[./span[contains(text(),"Check In From")]]/span[2]/text()'
+                            )
+                        ).strip()
                     checkOutTime = "".join(
                         store_sel.xpath(
                             '//ul[@class="hotel-info__details-list"]/li[./span[contains(text(),"Check out by")]]/span[2]/text()'
@@ -118,7 +145,26 @@ def fetch_data():
                     longitude = "".join(
                         store_sel.xpath('//div[@id="google-static-map"]/@data-lng')
                     ).strip()
+                    if len(latitude) <= 0:
+                        try:
+                            latitude = (
+                                store_req.text.split('"latitude": "')[1]
+                                .strip()
+                                .split('",')[0]
+                                .strip()
+                            )
+                        except:
+                            pass
 
+                        try:
+                            longitude = (
+                                store_req.text.split('"longitude": "')[1]
+                                .strip()
+                                .split('"}')[0]
+                                .strip()
+                            )
+                        except:
+                            pass
                     yield SgRecord(
                         locator_domain=locator_domain,
                         page_url=page_url,

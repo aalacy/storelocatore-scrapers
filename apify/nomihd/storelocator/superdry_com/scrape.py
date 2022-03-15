@@ -65,6 +65,19 @@ def get_store_data(store_sel, page_url):
         )
     ).strip()
 
+    raw_address = ""
+    if len(street_address) > 0:
+        raw_address = street_address
+
+    if len(city) > 0:
+        raw_address = raw_address + ", " + city
+
+    if len(state) > 0:
+        raw_address = raw_address + ", " + state
+
+    if len(zip) > 0:
+        raw_address = raw_address + ", " + zip
+
     country_code = "".join(
         store_sel.xpath('//abbr[@itemprop="addressCountry"]/text()')
     ).strip()
@@ -84,6 +97,18 @@ def get_store_data(store_sel, page_url):
             '//div[contains(@class,"location-map-wrapper")]//meta[@itemprop="longitude"]/@content'
         )
     ).strip()
+    if len(latitude) <= 0:
+        latitude = "".join(
+            store_sel.xpath(
+                '//span[@class="coordinates"]/meta[@itemprop="latitude"]/@content'
+            )
+        ).strip()
+        longitude = "".join(
+            store_sel.xpath(
+                '//span[@class="coordinates"]/meta[@itemprop="longitude"]/@content'
+            )
+        ).strip()
+
     hours = store_sel.xpath(
         '//div[@class="c-hours"]//table[@class="c-hours-details"]/tbody/tr'
     )
@@ -110,6 +135,7 @@ def get_store_data(store_sel, page_url):
         latitude=latitude,
         longitude=longitude,
         hours_of_operation=hours_of_operation,
+        raw_address=raw_address,
     )
     return store_output
 

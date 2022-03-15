@@ -46,6 +46,8 @@ def get_data(url, sgw: SgWriter):
     ).strip()
     state = a.state or "<MISSING>"
     postal = a.postcode or "<MISSING>"
+    if postal == "<MISSING>":
+        postal = " ".join(ad.split()[-2:])
     country_code = "GB"
     city = a.city or "<MISSING>"
     location_name = "".join(tree.xpath("//h1/text()"))

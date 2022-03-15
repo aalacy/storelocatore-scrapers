@@ -10,7 +10,8 @@ from sgscrape.sgpostal import parse_address, International_Parser
 
 
 def get_international(line):
-    adr = parse_address(International_Parser(), line)
+    postal = re.findall(r"\d{4}", line).pop()
+    adr = parse_address(International_Parser(), line, postcode=postal)
     street_address = f"{adr.street_address_1} {adr.street_address_2 or ''}".replace(
         "None", ""
     ).strip()
@@ -59,13 +60,17 @@ def get_data(page_url, sgw: SgWriter):
         )
     ).strip()
     street_address, city, state, postal = get_international(raw_address)
+    if postal in street_address:
+        street_address = raw_address.split(postal)[0].strip()[:-1]
     text = "".join(tree.xpath("//iframe/@src"))
     latitude, longitude = get_coords_from_embed(text)
     lines = tree.xpath("//div//h2/text()")
     phone = lines[0]
     if "," in phone:
         phone = phone.split(",")[0].strip()
-    hours_of_operation = lines.pop().strip()
+    hours_of_operation = ";".join(
+        tree.xpath("//div[@class='row']/div[@class='col-6'][last()]//h2/text()")
+    )
 
     row = SgRecord(
         page_url=page_url,

@@ -37,7 +37,7 @@ def fetch_data():
                 city=addr.city,
                 state=addr.state,
                 zip_postal=addr.postcode,
-                country_code=addr.country,
+                country_code=addr.country or "US",
                 phone=_["phone"],
                 latitude=_["lat"],
                 longitude=_["lng"],
