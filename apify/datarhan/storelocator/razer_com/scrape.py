@@ -97,16 +97,28 @@ def fetch_data():
         if len(geo) > 1:
             latitude = geo[0]
             longitude = geo[1]
+            if "las-vegas" in store_url:
+                latitude = geo[1]
+                longitude = geo[0]
         hours_of_operation = loc_dom.xpath(
             '//strong[contains(text(), "Opening Hours")]/following::text()'
-        )
+        )[:2]
         if not hours_of_operation:
-            hours_of_operation = raw_data[1:]
+            hours_of_operation = loc_dom.xpath(
+                '//*[contains(text(), "Opening Hours")]/following-sibling::text()'
+            )
         if hours_of_operation:
-            hoo = hours_of_operation[0].strip().split(" Hours: ")[-1]
+            if "AM" in hours_of_operation[1]:
+                hoo = (
+                    " ".join([e.strip() for e in hours_of_operation[:2] if e.strip()])
+                    .strip()
+                    .split(" Hours: ")[-1]
+                )
+            else:
+                hoo = hours_of_operation[0].strip().split(" Hours: ")[-1]
             if "Friday" in hours_of_operation[1] or "Sunday" in hours_of_operation[1]:
                 hoo += " " + hours_of_operation[1].strip()
-            if "Sunday" in hours_of_operation[2]:
+            if len(hours_of_operation) > 2 and "Sunday" in hours_of_operation[2]:
                 hoo += " " + " ".join([e.strip() for e in hours_of_operation[1:3]])
         if "taipei" in store_url:
             hoo = (
@@ -116,6 +128,9 @@ def fetch_data():
                 .replace("\n", " ")
                 .strip()
             )
+        hoo = hoo.replace(
+            "Sunday 11 AM - 6 PM Sunday 11 AM - 6 PM", "Sunday 11 AM - 6 PM"
+        )
 
         item = SgRecord(
             locator_domain=domain,

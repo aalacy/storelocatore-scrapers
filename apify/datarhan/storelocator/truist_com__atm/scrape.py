@@ -31,11 +31,13 @@ def fetch_data():
             zip_code = poi["locationAddress"]["zipCode"]
             ls = street_address.replace(" ", "-")
             page_url = f"https://www.truist.com/atm/{state}/{city}/{zip_code}/{ls}"
-            h_check = [
-                e["serviceDesc"]
-                for e in poi["locationService"]
-                if e["serviceDesc"] == "24 HOUR ACCESS"
-            ]
+            h_check = ""
+            if poi.get("locationService"):
+                h_check = [
+                    e["serviceDesc"]
+                    for e in poi["locationService"]
+                    if e["serviceDesc"] == "24 HOUR ACCESS"
+                ]
             hoo = "24 hrs" if h_check else ""
 
             item = SgRecord(

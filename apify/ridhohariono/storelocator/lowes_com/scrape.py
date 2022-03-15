@@ -14,6 +14,7 @@ SITE_MAP = "https://www.lowes.com/sitemap/store0.xml"
 HEADERS = {
     "Accept": "*/*",
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.82 Safari/537.36",
+    "upgrade-insecure-requests": "1",
 }
 log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
 
@@ -48,14 +49,16 @@ def getAddress(raw_address):
     return MISSING, MISSING, MISSING, MISSING
 
 
-def pull_content(url):
+def pull_content(url, session=session, num=0):
+    num += 1
     log.info("Pull content => " + url)
-    HEADERS["Referer"] = url
     try:
         soup = bs(session.get(url, headers=HEADERS).content, "lxml")
     except:
-        log.info("[RETRY] Pull content => " + url)
-        pull_content(url)
+        if num <= 3:
+            session = SgRequests(verify_ssl=False)
+            log.info("[RETRY] Pull content => " + url)
+            pull_content(url, session, num)
     return soup
 
 

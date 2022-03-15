@@ -53,7 +53,7 @@ def get_address(line):
 
 
 def fetch_data(sgw: SgWriter):
-    api = "https://kristoil.com/wp-content/themes/krist-theme-dec-2021/ajax/map.php"
+    api = "https://kristoil.com/wp-content/themes/krist-mar-2022/ajax/map.php"
     r = session.get(api, headers=headers)
     js = r.json().values()
     r = session.get(page_url, headers=headers)
