@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from lxml import etree
+from time import sleep
 
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
@@ -17,6 +18,7 @@ def fetch_data():
     domain = "zankouchicken.com"
     with SgFirefox() as driver:
         driver.get(start_url)
+        sleep(10)
         dom = etree.HTML(driver.page_source)
 
     all_locations = dom.xpath('//a[@class="vc_gitem-link vc-zone-link"]/@href')

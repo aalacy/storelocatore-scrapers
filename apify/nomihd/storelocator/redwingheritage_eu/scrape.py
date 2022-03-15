@@ -6,6 +6,7 @@ from sgscrape.sgwriter import SgWriter
 import json
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgpostal import sgpostal as parser
 
 website = "redwingheritage.eu"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -62,6 +63,12 @@ def fetch_data():
             zip = store["postalCode"]
 
             country_code = store["country"]
+            raw_address = "<MISSING>"
+            if country_code == "Japan":
+                raw_address = street_address
+                formatted_addr = parser.parse_address_intl(raw_address)
+                street_address = raw_address.split(",")[0].strip()
+                city = formatted_addr.city
 
             phone = store["phone"]
 
@@ -88,6 +95,7 @@ def fetch_data():
                 latitude=latitude,
                 longitude=longitude,
                 hours_of_operation=hours_of_operation,
+                raw_address=raw_address,
             )
 
 

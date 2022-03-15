@@ -27,6 +27,7 @@ def fetch_records(http, search):
         for _ in locations:
             street_address = _["address"]
             yield SgRecord(
+                page_url="https://www.texaco.com/en_us/home/find-a-station.html",
                 location_name=_["name"],
                 store_number=_["id"],
                 street_address=street_address,

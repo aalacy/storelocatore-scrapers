@@ -13,25 +13,31 @@ def fetch_data(sgw: SgWriter):
     divs = tree.xpath("//div[contains(@id, 'row-') and .//h1]")
 
     for d in divs:
-        location_name = "".join(d.xpath(".//h1/strong/text()")).strip()
-        raw_address = "".join(
-            d.xpath(".//h1[./strong]/following-sibling::*[1]/text()")
-        ).strip()
+        line = d.xpath(".//text()")
+        line = list(filter(None, [l.strip() for l in line]))
+        line.pop()
+        location_name = line.pop(0)
+        raw_address = line.pop(0)
+        if "hours" not in line[0]:
+            phone = line.pop(0)
+        else:
+            phone = raw_address.split(")")[-1].strip()
+            raw_address = raw_address.replace(phone, "").strip()
         street_address = raw_address.split(", S(")[0]
         postal = raw_address.split(", S(")[-1].replace(")", "")
-        phone = "".join(
-            d.xpath(".//h1[./strong]/following-sibling::*[2]/text()")
-        ).strip()
+
         if "/" in phone:
             phone = phone.split("/")[0].strip()
 
-        hours = d.xpath(
-            ".//*[contains(text(), 'hours')]/text()|.//*[contains(text(), 'hours')]/following-sibling::*//text()"
-        )
-        hours = list(filter(None, [h.strip() for h in hours]))
-        if hours:
-            hours.pop(0)
-        hours_of_operation = ";".join(hours)
+        _tmp = []
+        for _t in line:
+            if "hours" in _t or "Bakery" in _t:
+                continue
+            _tmp.append(_t)
+
+        hours_of_operation = ";".join(_tmp)
+        if "Restaurant" in hours_of_operation:
+            hours_of_operation = hours_of_operation.split("Restaurant;")[-1].strip()
 
         row = SgRecord(
             page_url=page_url,

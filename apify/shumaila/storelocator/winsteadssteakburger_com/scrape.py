@@ -32,8 +32,8 @@ def fetch_data():
             hours = hours.replace("\n", " ").replace("Hours of Operation", "").strip()
             yield SgRecord(
                 locator_domain="https://winsteadssteakburger.com/",
-                page_url=SgRecord.MISSING,
-                location_name=street.strip(),
+                page_url="https://winsteadssteakburger.com/",
+                location_name="Winsteads Steakburger",
                 street_address=street.strip(),
                 city=city.strip(),
                 state=state.strip(),

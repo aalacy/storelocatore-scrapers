@@ -19,6 +19,11 @@ def fetch_data():
     dom = etree.HTML(response.text)
 
     all_locations = dom.xpath('//a[@class="read-more"]/@href')
+    response = session.get(
+        "https://www.grandhf.com/StoreLocator/GetRemainingShops", headers=hdr
+    )
+    dom = etree.HTML(response.text)
+    all_locations += dom.xpath('//a[@class="shop-link"]/@href')
     for page_url in all_locations:
         page_url = urljoin(start_url, page_url)
         loc_response = session.get(page_url, headers=hdr)
@@ -55,9 +60,7 @@ def fetch_data():
 def scrape():
     with SgWriter(
         SgRecordDeduper(
-            SgRecordID(
-                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
-            )
+            SgRecordID({SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.PAGE_URL})
         )
     ) as writer:
         for item in fetch_data():

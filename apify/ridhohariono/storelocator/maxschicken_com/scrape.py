@@ -74,28 +74,28 @@ def fetch_data():
         "https://www.maxschicken.com/store_locator/get_area", headers=HEADERS
     ).json()
     exclude = ["United States", "Canada"]
-    for state in states:
+    for state_list in states:
         if (
-            state["area_description"] == "International"
-            or state["area_name"] in exclude
+            state_list["area_description"] == "International"
+            or state_list["area_name"] in exclude
         ):
             continue
         url_state = (
             "https://www.maxschicken.com/store_locator/get_cities_by/"
-            + state["area_id"]
+            + state_list["area_id"]
         )
         cities = session.get(url_state, headers=HEADERS).json()
-        log.info(f"Found {len(cities)} cities in state {state['area_name']}")
-        for city in cities:
+        log.info(f"Found {len(cities)} cities in state {state_list['area_name']}")
+        for city_list in cities:
             url_branch = (
                 "https://www.maxschicken.com/store_locator/get_branch_by/"
-                + city["city_id"]
+                + city_list["city_id"]
             )
             branches = session.get(url_branch, headers=HEADERS).json()
             if not branches:
-                log.info(f"Branch not found in city {city['city_name']}")
+                log.info(f"Branch not found in city {city_list['city_name']}")
                 continue
-            log.info(f"Found {len(branches)} branches in city {city['city_name']}")
+            log.info(f"Found {len(branches)} branches in city {city_list['city_name']}")
             for branch in branches:
                 url_store = (
                     "https://www.maxschicken.com/store_locator/get_store_by/"
@@ -110,29 +110,25 @@ def fetch_data():
                 )
                 for store in stores:
                     location_name = store["store_name"]
-                    temp_city = city["city_name"].replace("City", "")
-                    street_address = " ".join(
+                    raw_address = " ".join(
                         store["store_address"]
-                        .replace(city["city_name"], "")
-                        .replace(temp_city, "")
-                        .replace("City", "")
                         .replace("\u00a0", " ")
                         .replace(", ,", " ")
                         .strip()
+                        .replace(
+                            "Robinsons Magnolia Town Center Aurora Boulevard Corner Doña Hemady",
+                            "",
+                        )
                         .split()
-                    ).strip(",")
+                    )
+                    street_address, _, _, zip_postal = getAddress(raw_address)
                     zip_postal = MISSING
                     phone = store["store_contact"].split("/")[0].strip()
                     country_code = "PH"
-                    country_code = MISSING
                     store_number = store["store_id"]
-                    hours_of_operation = (
+                    hoo = (
                         bs(store["store_schedule"], "lxml")
-                        .text.replace("Business Hours:", "")
-                        .replace("Business Schedule:", "")
-                        .replace("STORE HOURS:", "")
-                        .replace("STORE HOURS", "")
-                        .replace(
+                        .text.replace(
                             "<!--td {border: 1px solid #ccc;}br {mso-data-placement:same-cell;}-->",
                             "",
                         )
@@ -141,17 +137,23 @@ def fetch_data():
                         .replace("\n", "")
                         .strip()
                     ).rstrip(",")
+                    hours_of_operation = re.sub(
+                        r"Business Hours:?|Business Schedule:?|STORE HOURS:?",
+                        "",
+                        hoo,
+                        flags=re.IGNORECASE,
+                    )
                     latitude = store["store_latitude"]
                     longitude = store["store_longtitude"]
-                    location_type = branch["branch_name"]
+                    location_type = MISSING
                     log.info("Append {} => {}".format(location_name, street_address))
                     yield SgRecord(
                         locator_domain=DOMAIN,
                         page_url=LOCATION_URL,
                         location_name=location_name,
                         street_address=street_address,
-                        city=city["city_name"],
-                        state=state["area_name"],
+                        city=city_list["city_name"],
+                        state=state_list["area_name"],
                         zip_postal=zip_postal,
                         country_code=country_code,
                         store_number=store_number,
@@ -160,6 +162,7 @@ def fetch_data():
                         latitude=latitude,
                         longitude=longitude,
                         hours_of_operation=hours_of_operation,
+                        raw_address=raw_address,
                     )
 
 
