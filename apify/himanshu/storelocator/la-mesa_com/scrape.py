@@ -40,7 +40,7 @@ def fetch_data():
             state = address[0]
             zip_postal = address[1]
             try:
-                coords = soup.find("div", {"class": "eet_pb_map_pin"})
+                coords = soup.find("div", {"class": "et_pb_map_pin"})
                 latitude = coords["data-lat"]
                 longitude = coords["data-lng"]
             except:
