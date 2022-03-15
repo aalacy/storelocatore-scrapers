@@ -36,6 +36,9 @@ def fetch_records(http):
             latitude = ""
         if longitude == "0.00000000":
             longitude = ""
+        phone = _["tel"]
+        if phone:
+            phone = phone.split("/")[0].strip()
         yield SgRecord(
             page_url=page_url,
             location_name=_["name"],
@@ -44,7 +47,7 @@ def fetch_records(http):
             city=addr["city"],
             zip_postal=addr["postcode"],
             country_code=addr["country"],
-            phone=_["tel"],
+            phone=phone,
             latitude=latitude,
             longitude=longitude,
             locator_domain=locator_domain,
