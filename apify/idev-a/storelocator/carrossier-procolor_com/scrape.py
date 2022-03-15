@@ -112,7 +112,7 @@ class ExampleSearchIteration(SearchIteration):
                             list(hh.select_one("div.hours").stripped_strings)
                         ).replace("0013", "00, 13")
                         hours.append(f"{day}: {times}")
-                    pp = sp1.find("a", href=re.compile(f"tel:"))
+                    pp = sp1.find("a", href=re.compile(r"tel:"))
                     if not phone and pp:
                         phone = pp.text.strip()
 
