@@ -55,14 +55,21 @@ def fetch_data():
                 ltype = "Coming Soon"
             coordlink = soup.find("iframe")["src"]
             r = session.get(coordlink, headers=headers)
-            lat, longt = (
-                r.text.split('",null,[null,null,', 1)[1].split("]", 1)[0].split(",", 1)
-            )
-
-            if len(address) < 5:
-                address = (
-                    r.text.split('"Tony Roma')[3].split(", ", 1)[1].split('"', 1)[0]
+            try:
+                lat, longt = (
+                    r.text.split('",null,[null,null,', 1)[1]
+                    .split("]", 1)[0]
+                    .split(",", 1)
                 )
+            except:
+                lat = longt = "<MISSING>"
+            try:
+                if len(address) < 5:
+                    address = (
+                        r.text.split('"Tony Roma')[3].split(", ", 1)[1].split('"', 1)[0]
+                    )
+            except:
+                continue
             raw_address = address
             pa = parse_address_intl(raw_address)
 
@@ -96,6 +103,7 @@ def fetch_data():
                 latitude=str(lat),
                 longitude=str(longt),
                 hours_of_operation=hours,
+                raw_address=raw_address,
             )
 
 
