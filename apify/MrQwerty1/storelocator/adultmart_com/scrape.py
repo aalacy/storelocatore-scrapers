@@ -1,37 +1,10 @@
-import csv
 import usaddress
-
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
-
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 
 def get_address(line):
@@ -64,36 +37,27 @@ def get_address(line):
     }
 
     a = usaddress.tag(line, tag_mapping=tag)[0]
-    street_address = f"{a.get('address1')} {a.get('address2') or ''}".strip()
-    if street_address == "None":
-        street_address = "<MISSING>"
-    city = a.get("city") or "<MISSING>"
-    state = a.get("state") or "<MISSING>"
-    postal = a.get("postal") or "<MISSING>"
+    adr1 = a.get("address1") or ""
+    adr2 = a.get("address2") or ""
+    street_address = f"{adr1} {adr2}".strip()
+    city = a.get("city")
+    state = a.get("state")
+    postal = a.get("postal")
 
     return street_address, city, state, postal
 
 
 def get_hours(page_url):
-    session = SgRequests()
     r = session.get(page_url)
     tree = html.fromstring(r.text)
 
-    return (
-        " ".join(";".join(tree.xpath("//div[@class='opening-hours']/p/text()")).split())
-        or "<MISSING>"
+    return " ".join(
+        ";".join(tree.xpath("//div[@class='opening-hours']/p/text()")).split()
     )
 
 
-def fetch_data():
-    out = []
-    locator_domain = "https://www.adultmart.com/"
+def fetch_data(sgw: SgWriter):
     api = "https://www.adultmart.com/storelocator/"
-
-    session = SgRequests()
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0"
-    }
     r = session.get(api, headers=headers)
     tree = html.fromstring(r.text)
     text = "".join(tree.xpath("//script[contains(text(), 'var markers =')]/text()"))
@@ -105,48 +69,41 @@ def fetch_data():
         location_name = "".join(d.xpath(".//h3/text()")).strip()
         page_url = "".join(d.xpath(".//a[text()='Details']/@href"))
 
-        line = (
+        raw_address = (
             "".join(d.xpath(".//h3/following-sibling::p[1]/text()"))
             .replace("United States", "")
             .strip()
         )
-        street_address, city, state, postal = get_address(line)
-        country_code = "US"
-        store_number = "<MISSING>"
-        phone = (
-            "".join(d.xpath(".//a[contains(@href, 'tel:')]/text()")).strip()
-            or "<MISSING>"
-        )
+        street_address, city, state, postal = get_address(raw_address)
+        phone = "".join(d.xpath(".//a[contains(@href, 'tel:')]/text()")).strip()
         latitude = loc[1]
         longitude = loc[2]
-        location_type = "<MISSING>"
         hours_of_operation = get_hours(page_url)
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
+        row = SgRecord(
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code="US",
+            latitude=latitude,
+            longitude=longitude,
+            phone=phone,
+            locator_domain=locator_domain,
+            hours_of_operation=hours_of_operation,
+            raw_address=raw_address,
+        )
 
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://www.adultmart.com/"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:97.0) Gecko/20100101 Firefox/97.0",
+    }
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        fetch_data(writer)
