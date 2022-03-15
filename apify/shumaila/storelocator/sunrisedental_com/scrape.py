@@ -1,7 +1,11 @@
 from bs4 import BeautifulSoup
-import csv
+import re
 import usaddress
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
 headers = {
@@ -9,61 +13,55 @@ headers = {
 }
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
 def fetch_data():
-    data = []
-    url = "https://sunrisedental.com/locations/"
-    p = 0
-    r = session.get(url, headers=headers, verify=False)
-    soup = BeautifulSoup(r.text, "html.parser")
-    divlist = soup.select("a[href*=dentist]")
-    for div in divlist:
 
-        title = div.text.strip().replace("\n", "")
-        link = div["href"]
-        if link.find("http") == -1:
-            link = "https://sunrisedental.com" + link
-        r = session.get(link, headers=headers, verify=False)
+    pattern = re.compile(r"\s\s+")
+    url = "https://sunrisedental.com/page-sitemap.xml"
+    r = session.get(url, headers=headers)
+    soup = BeautifulSoup(r.text, "html.parser")
+    divlist = soup.select('loc:contains("near-me")')
+    divlist = divlist + soup.select('loc:contains("top")')
+    for div in divlist:
+        link = div.text
+        r = session.get(link, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
         try:
-            address = soup.find("iframe")["title"].replace("United States", "").strip()
+            title = soup.find("strong").text
         except:
-            continue
-        phone = soup.find("small").text.strip()
+            title = (
+                soup.find("title")
+                .text.split("-", 1)[0]
+                .replace("Dentist Near Me ", "Sunrise Dental ")
+                .strip()
+            )
         try:
-            hours = soup.text.split("Monday:", 1)[1].splitlines()[0:7]
-            hours = "Monday:" + " ".join(hours)
+            title = title.split("offers", 1)[0]
         except:
-            hours = "<MISSING>"
+            pass
+        if "COMING SOON" in title:
+            continue
+        hours = soup.text.split("Monday", 1)[1]
+        try:
+            phone = soup.find("small").text
+
+            hours = "Monday" + hours.split("Your", 1)[0].replace("pm", "pm ")
+        except:
+            try:
+                phone = (
+                    soup.find("div", {"class": "elementor-text-editor"})
+                    .find("h2")
+                    .text.split("\n", 1)[0]
+                )
+            except:
+                phone = "360-639-3355"
+            if len(phone) < 3:
+                phone = soup.findAll("h2", {"class": "elementor-heading-title"})[
+                    2
+                ].text.strip()
+            hours = "Monday" + hours.split("Dental", 1)[0]
+        address = (
+            soup.findAll("iframe")[-1]["title"].replace(" United States", "").strip()
+        )
         address = usaddress.parse(address)
 
         i = 0
@@ -76,8 +74,8 @@ def fetch_data():
             if (
                 temp[1].find("Address") != -1
                 or temp[1].find("Street") != -1
-                or temp[1].find("Occupancy") != -1
                 or temp[1].find("Recipient") != -1
+                or temp[1].find("Occupancy") != -1
                 or temp[1].find("BuildingName") != -1
                 or temp[1].find("USPSBoxType") != -1
                 or temp[1].find("USPSBoxID") != -1
@@ -94,63 +92,42 @@ def fetch_data():
         city = city.lstrip().replace(",", "")
         state = state.lstrip().replace(",", "")
         pcode = pcode.lstrip().replace(",", "")
-        if len(pcode) < 3:
-            pcode = "<MISSING>"
-        state = state.replace("Washington", "WA")
-        try:
-            phone = phone.split("\n", 1)[0]
-        except:
-            pass
-        if pcode == "9850":
-            pcode = "98502"
-        if len(state) < 2:
-            try:
-                city, state = (
-                    soup.find("title")
-                    .text.split("Top Dentist ", 1)[1]
-                    .split(";", 1)[0]
-                    .split(" ", 1)
-                )
-            except:
-                if len(street) < 3 or "youtube Video Player" in street:
-                    street = "<MISSING>"
-                    state = "<MISSING>"
-                    pcode = "<MISSING>"
-                    city = "<MISSING>"
-            state = state.split(" ", 1)[0]
-        if "appointments" in phone:
-            phone = "<MISSING>"
-        if "E." in state:
-            state = "WA"
-            city = street
-            street = "<MISSING>"
-        data.append(
-            [
-                "https://sunrisedental.com/",
-                link,
-                title,
-                street,
-                city,
-                state.upper(),
-                pcode,
-                "US",
-                "<MISSING>",
-                phone,
-                "<MISSING>",
-                "<MISSING>",
-                "<MISSING>",
-                hours.replace("\xa0", " ").replace("pm", "pm ").replace("  ", " "),
-            ]
+        hours = re.sub(pattern, " ", hours).strip()
+        hours = (
+            str(hours.encode(encoding="ascii", errors="replace"))
+            .replace("?", "-")
+            .replace("b'", "")
+            .replace("'", "")
+            .strip()
         )
 
-        p += 1
-    return data
+        yield SgRecord(
+            locator_domain="https://sunrisedental.com/",
+            page_url=link,
+            location_name=title,
+            street_address=street.strip(),
+            city=city.strip(),
+            state=state.strip(),
+            zip_postal=pcode.strip(),
+            country_code="US",
+            store_number=SgRecord.MISSING,
+            phone=phone.strip(),
+            location_type=SgRecord.MISSING,
+            latitude=SgRecord.MISSING,
+            longitude="<MISSING>",
+            hours_of_operation=hours,
+        )
 
 
 def scrape():
 
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()

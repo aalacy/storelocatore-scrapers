@@ -1,5 +1,6 @@
 import csv
 import json
+import ssl
 
 from bs4 import BeautifulSoup
 
@@ -10,9 +11,20 @@ from selenium.webdriver.support.ui import WebDriverWait
 
 from sglogging import sglog
 
+from sgrequests import SgRequests
+
 from sgselenium import SgChrome
 
 log = sglog.SgLogSetup().get_logger(logger_name="siteone.com")
+
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
 
 def write_output(data):
@@ -47,7 +59,11 @@ def write_output(data):
 
 def fetch_data():
 
-    driver = SgChrome().chrome()
+    session = SgRequests()
+
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
+    headers = {"User-Agent": user_agent}
+
     data = []
     found = []
 
@@ -58,11 +74,8 @@ def fetch_data():
             "https://www.siteone.com/store-finder?q=60101&miles=2000&page=%s" % i
         )
         log.info(base_link)
-        driver.get(base_link)
-        base = BeautifulSoup(driver.page_source, "lxml")
-
         try:
-            stores = json.loads(base.text)["data"]
+            stores = session.get(base_link, headers=headers).json()["data"]
         except:
             break
 
@@ -110,7 +123,6 @@ def fetch_data():
                     hours_of_operation,
                 ]
             )
-    driver.close()
 
     if "https://www.siteone.com/en/store/396" not in found:
         driver = SgChrome().chrome()
@@ -127,11 +139,7 @@ def fetch_data():
 
         base = BeautifulSoup(driver.page_source, "lxml")
 
-        script = (
-            base.find("script", attrs={"type": "application/ld+json"})
-            .text.replace("\n", "")
-            .strip()
-        )
+        script = base.find("script", attrs={"type": "application/ld+json"}).contents[0]
         store = json.loads(script)
 
         location_name = store["name"]

@@ -4,7 +4,7 @@ import json
 from lxml import etree
 
 from sgrequests import SgRequests
-from sgselenium import SgChrome
+from sgselenium import SgFirefox
 
 
 def write_output(data):
@@ -46,7 +46,7 @@ def fetch_data():
     DOMAIN = "cadence-education.com"
     start_url = "https://www.cadence-education.com/locations/"
 
-    with SgChrome() as driver:
+    with SgFirefox() as driver:
         driver.get(start_url)
         dom = etree.HTML(driver.page_source)
         all_locations = dom.xpath(
@@ -117,11 +117,14 @@ def fetch_data():
         hours_of_operation = store_dom.xpath(
             '//div[@itemprop="openingHours"]/span/text()'
         )
+        hours_of_operation = [e.strip() for e in hours_of_operation if e.strip()]
         hours_of_operation = (
             " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
         )
         location_name = store_dom.xpath('//h5[@itemprop="name"]/a/text()')
-        location_name = location_name[0].strip() if location_name else "<MISSING>"
+        location_name = (
+            location_name[0].strip().split(",")[0] if location_name else "<MISSING>"
+        )
 
         item = [
             DOMAIN,

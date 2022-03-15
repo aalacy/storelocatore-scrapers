@@ -35,10 +35,22 @@ def get_page_url(_id):
     session = SgRequests()
     r = session.get(f"https://www.oneills.co.uk/cborms/pub/brands/521/outlets/{_id}")
     js = r.json()
+
+    _tmp = []
+    hours = js.get("effectiveOpeningTimes").get("periods")
+    for h in hours:
+        day = h.get("days").get("text")
+        time = h.get("times")[0].get("text")
+        _tmp.append(f"{day}: {time}")
+    hoo = ";".join(_tmp) or "<MISSING>"
+
     slug = js.get("outletStructure").get("uri")
     if slug:
-        return f"https://www.oneills.co.uk{slug}"
-    return "<MISSING>"
+        url = f"https://www.oneills.co.uk{slug}"
+    else:
+        url = "<MISSING>"
+
+    return url, hoo
 
 
 def fetch_data():
@@ -58,7 +70,7 @@ def fetch_data():
         postal = a.get("postcode") or "<MISSING>"
         country_code = "GB"
         store_number = j.get("bunCode") or "<MISSING>"
-        page_url = get_page_url(store_number)
+        page_url, hours_of_operation = get_page_url(store_number)
         location_name = j.get("name")
         phone = j.get("telephoneNumber") or "<MISSING>"
         g = j.get("gpsCoordinates")
@@ -69,8 +81,6 @@ def fetch_data():
         status = j.get("status")
         if status == "TEMP_CLOSED":
             hours_of_operation = "Temporarily Closed"
-        else:
-            hours_of_operation = "<MISSING>"
 
         row = [
             locator_domain,

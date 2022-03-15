@@ -1,6 +1,7 @@
 from bs4 import BeautifulSoup
 import csv
 from sgrequests import SgRequests
+from lxml import html
 import usaddress
 
 session = SgRequests()
@@ -52,10 +53,19 @@ def fetch_data():
         link = div["href"]
         r = session.get(link, headers=headers, verify=False)
         soup = BeautifulSoup(r.text, "html.parser")
+        tree = html.fromstring(r.text)
         title = soup.findAll("h1")[1].text
-        address = soup.find("h6").text
+        try:
+            address = soup.find("h6").text
+        except:
+            address = "".join(
+                tree.xpath(
+                    '//div[@class="section-heading headingstyle-default is-animation-group section-align-center"]/h5/text()'
+                )
+            )
+
         if "Add Me to Seating WaitList" in address:
-            address = soup.findAll("h5")[2].text
+            address = soup.findAll("h5", {"class": "entry-sub-title"})[1].text
         address = usaddress.parse(address)
 
         i = 0

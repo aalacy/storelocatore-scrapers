@@ -1,161 +1,109 @@
-from sgscrape import simple_scraper_pipeline as sp
-from sgscrape import sgpostal as parser
+import unicodedata
 from sglogging import sglog
-
-
+from bs4 import BeautifulSoup
 from sgrequests import SgRequests
-from bs4 import BeautifulSoup as b4
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sgpostal.sgpostal import parse_address_intl
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-from sgselenium import SgFirefox
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support import expected_conditions as EC
-import time
+session = SgRequests()
+website = "superecono_com"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
+session = SgRequests()
+headers = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36",
+    "Accept": "application/json",
+}
+
+DOMAIN = "https://www.superecono.com/"
+MISSING = "<MISSING>"
+
+
+def strip_accents(text):
+
+    text = unicodedata.normalize("NFD", text).encode("ascii", "ignore").decode("utf-8")
+
+    return str(text)
 
 
 def fetch_data():
-    logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
-    url = "https://www.superecono.com/tiendas"
-    headers = {
-        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
-    }
-    session = SgRequests()
-    soup = b4(session.get(url, headers=headers).text, "lxml")
-
-    pages = []
-    links = soup.find_all(
-        "a",
-        {
-            "class": lambda x: x
-            and all(i in x for i in ["mpc-button", "mpc-transition", "mpc-inited"])
-        },
-    )
-    for i in links:
-        pages.append(i["href"])
-    with SgFirefox() as driver:
-        driver.get(url)
-        soup = b4(driver.page_source, "lxml")
-        pages = []
-        links = soup.find_all(
-            "a",
-            {
-                "class": lambda x: x
-                and all(i in x for i in ["mpc-button", "mpc-transition", "mpc-inited"])
-            },
+    if True:
+        url = "https://www.superecono.com/tiendas/"
+        r = session.get(url, headers=headers)
+        soup = BeautifulSoup(r.text, "html.parser")
+        loclist = soup.findAll(
+            "div", {"class": "mpc-post__thumbnail mpc-post__thumbnail-full"}
         )
-        for i in links:
-            pages.append(i["href"])
-
-        for i in pages:
-            driver.get(i)
-
-            test = driver.page_source
-            soup = b4(test, "lxml")
-            holdon = WebDriverWait(driver, 30).until(  # noqa
-                EC.visibility_of_element_located(
-                    (By.XPATH, '//*[@id="mapa"]/div[1]/div/div/div/div/div/iframe')
-                )
+        for loc in loclist:
+            page_url = loc["data-mpc_link"]
+            log.info(page_url)
+            r = session.get(page_url, headers=headers)
+            soup = BeautifulSoup(r.text, "html.parser")
+            city = soup.find("h2").text
+            temp = soup.find("ul", {"class": "info-tiendas"})
+            hour_list = temp.findAll("li", {"class": "hora"})
+            hours_of_operation = " ".join(x.text for x in hour_list)
+            phone = temp.find("li", {"class": "tel"}).text
+            street_address = temp.find("li", {"class": "dir"}).text.strip()
+            street_address = strip_accents(street_address)
+            if not street_address:
+                street_address = MISSING
+            street_address = street_address.replace("\n", "").replace("/li>", "")
+            country_code = "US"
+            coords_link = soup.find("div", {"class": "wpb_map_wraper"}).find("iframe")[
+                "src"
+            ]
+            r = session.get(coords_link, headers=headers)
+            soup = BeautifulSoup(r.text, "html.parser")
+            temp_list = r.text.split("null,0,[[")[1].split("],")[0].split(",")[1:]
+            location_name = temp_list[0].replace('"', "")
+            latitude = temp_list[-2].replace("[", "").replace("]", "").replace("'", "")
+            longitude = temp_list[-1].replace("]", "").replace("'", "")
+            if street_address == MISSING:
+                address = temp_list[1:-2]
+                raw_address = " ".join(x for x in address)
+            else:
+                address = temp_list[2:-2]
+                address = " ".join(x for x in address)
+                raw_address = street_address + " " + address
+            parsed = parse_address_intl(raw_address.replace('"', ""))
+            city = parsed.city if parsed.city else "<MISSING>"
+            zip_postal = parsed.postcode if parsed.postcode else "<MISSING>"
+            state = parsed.country if parsed.postcode else "<MISSING>"
+            yield SgRecord(
+                locator_domain=DOMAIN,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address.strip(),
+                city=city.strip(),
+                state=state,
+                zip_postal=zip_postal,
+                country_code=country_code,
+                store_number=MISSING,
+                phone=phone.strip(),
+                location_type=MISSING,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation.strip(),
+                raw_address=raw_address,
             )
-            driver.switch_to.frame(holdon)
-            test = driver.page_source
-            attempts = 0
-            while 'class="address"' not in test and attempts < 30:
-                attempts += 1
-                time.sleep(1)
-                test = driver.page_source
-
-            soup1 = b4(test, "lxml")
-            k = {}
-            k["page_url"] = i
-
-            try:
-                k["location_name"] = soup.find(
-                    "div", {"class": "wbp_wrapper"}
-                ).text.strip()
-            except Exception:
-                k["location_name"] = "<MISSING>"
-
-            try:
-                raw_addr = soup1.find(
-                    "div", {"class": "address", "jstcache": True}
-                ).text
-            except Exception:
-                raw_addr = "<MISSING>"
-            parsed = parser.parse_address_intl(raw_addr)
-            k["street_address"] = parsed.street_address_1
-            if parsed.street_address_2:
-                k["street_address"] = (
-                    k["street_address"] + ", " + parsed.street_address_2
-                )
-            k["city"] = parsed.city
-            k["zipcode"] = parsed.postcode
-            try:
-                k["state"] = parsed.country.replace("Puerto Rico", "PR")
-            except Exception:
-                k["state"] = "<MISSING>"
-
-            try:
-                info = soup.find("ul", {"class": "info-tiendas"})
-            except Exception:
-                info = None
-
-            try:
-                k["phone"] = info.find("li", {"class": "tel"}).text.strip()
-            except Exception:
-                k["phone"] = "<MISSING>"
-            addressno = None
-            try:
-                addressno = info.find("li", {"class": "dir"}).text.strip()
-            except Exception:
-                pass
-
-            try:
-                k["hours"] = info.find_all("li", {"class": "hora"})
-                h = []
-                for j in k["hours"]:
-                    h.append(j.text.strip())
-                k["hours"] = "; ".join(h)
-            except Exception:
-                k["hours"] = "<MISSING>"
-            if addressno and k["street_address"]:
-                if len(addressno) > len(k["street_address"]):
-                    k["street_address"] = addressno
-            k["raw"] = addressno + ", " + raw_addr if addressno else raw_addr
-            yield k
-
-    logzilla.info(f"Finished grabbing data!!")  # noqa
 
 
 def scrape():
-    url = "https://www.superecono.com/"
-    field_defs = sp.SimpleScraperPipeline.field_definitions(
-        locator_domain=sp.ConstantField(url),
-        page_url=sp.MappingField(mapping=["page_url"]),
-        location_name=sp.MappingField(mapping=["location_name"]),
-        latitude=sp.MissingField(),
-        longitude=sp.MissingField(),
-        street_address=sp.MappingField(
-            mapping=["street_address"], part_of_record_identity=True
-        ),
-        city=sp.MappingField(mapping=["city"], part_of_record_identity=True),
-        state=sp.MappingField(mapping=["state"], part_of_record_identity=True),
-        zipcode=sp.MappingField(mapping=["zipcode"], part_of_record_identity=True),
-        country_code=sp.MissingField(),
-        phone=sp.MappingField(mapping=["phone"]),
-        store_number=sp.MissingField(),
-        hours_of_operation=sp.MappingField(mapping=["hours"]),
-        location_type=sp.MissingField(),
-        raw_address=sp.MappingField(mapping=["raw"]),
-    )
+    log.info("Started")
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PhoneNumberId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
 
-    pipeline = sp.SimpleScraperPipeline(
-        scraper_name="pipeline",
-        data_fetcher=fetch_data,
-        field_definitions=field_defs,
-        log_stats_interval=5,
-    )
-
-    pipeline.run()
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
 
 
 if __name__ == "__main__":

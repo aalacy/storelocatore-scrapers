@@ -1,110 +1,143 @@
-import csv
+import time
 from sgrequests import SgRequests
-import sgzip 
-import json
-from sglogging import SgLogSetup
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
+from sglogging import sglog
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
 
-logger = SgLogSetup().get_logger('regalnails_com')
 
+DOMAIN = "regalnails.com"
+BASE_URL = "https://regalnails.com"
+LOCATION_URL = "https://regalnails.com/salon-locator/"
+API_URL = "https://www.regalnails.com/wp-admin/admin-ajax.php?action=store_search&lat="
+HEADERS = {
+    "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
+}
+MISSING = "<MISSING>"
 
+session = SgRequests()
+log = sglog.SgLogSetup().get_logger("regalnails_com")
 
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
-        # Body
-        for row in data:
-            writer.writerow(row)
 
 def fetch_data():
-    session = SgRequests()
-    HEADERS = { 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36' }
+    max_results = 100
+    max_distance = 500
 
-    search = sgzip.ClosestNSearch() # TODO: OLD VERSION [sgzip==0.0.55]. UPGRADE IF WORKING ON SCRAPER!
-    search.initialize()
+    search = DynamicGeoSearch(
+        country_codes=[SearchableCountries.USA, SearchableCountries.CANADA],
+        max_search_distance_miles=max_distance,
+        expected_search_radius_miles=max_distance,
+    )
 
-    MAX_RESULTS = 100
-    MAX_DISTANCE = 500
+    for lat, lng in search:
+        log.info(
+            "Searching: %s, %s | Items remaining: %s"
+            % (lat, lng, search.items_remaining())
+        )
 
-    locator_domain = 'https://www.regalnails.com/'
+        url = (
+            API_URL
+            + str(lat)
+            + "&lng="
+            + str(lng)
+            + "&max_results="
+            + str(max_results)
+            + "&search_radius="
+            + str(max_distance)
+            + "&filter=10"
+        )
 
-    coord = search.next_coord()
-    all_store_data = []
-    dup_tracker = []
-    while coord:
-        #logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
-        x = coord[0]
-        y = coord[1]
-        #logger.info('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
-        url = 'https://www.regalnails.com/wp-admin/admin-ajax.php?action=store_search&lat=' + str(x) + '&lng=' + str(y) + '&max_results=' + str(MAX_RESULTS) + '&search_radius=' + str(MAX_DISTANCE) + '&filter=10&autoload=1'
-        r = session.get(url, headers=HEADERS)
-        
-        res_json = json.loads(r.content)
-
-        result_coords = []
-        
+        try:
+            res_json = session.get(url, headers=HEADERS).json()
+        except:
+            time.sleep(2)
+            res_json = session.get(url, headers=HEADERS).json()
         for loc in res_json:
-            location_name = loc['store'].replace('&#038;', '&')
-            phone_number = loc['phone']
+            location_name = loc["store"].replace("&#038;", "&")
+            phone = loc["phone"].split("/")[0].replace("48w", "48")
 
-            page_url = loc['url']
-            if page_url == '':
-                page_url = '<MISSING>'
-            lat = loc['lat']
-            longit = loc['lng']
-            if phone_number not in dup_tracker:
-                dup_tracker.append(phone_number)
-                
-            else:
-                result_coords.append((lat, longit))
-                continue
+            page_url = loc["url"]
+            if page_url == "":
+                page_url = LOCATION_URL
+            latitude = loc["lat"]
+            longitude = loc["lng"]
+            try:
 
-            street_address = loc['address'] + ' ' + loc['address2']
+                search.found_location_at(latitude, longitude)
+            except:
+                pass
+
+            street_address = loc["address"] + " " + loc["address2"]
             street_address = street_address.strip()
-            
-            city = loc['city']
-            state = loc['state']
-            zip_code = loc['zip']
-            if len(zip_code.split(' ')) == 2:
-                country_code = 'CA'
+
+            city = loc["city"]
+            state = loc["state"]
+            zip_postal = loc["zip"]
+            if len(zip_postal.split(" ")) == 2:
+                country_code = "CA"
             else:
-                if len(zip_code) == 6:
-                    if '4505 E McKellips Road' in street_address:
-                        zip_code = '<MISSING>'
-                        country_code = 'US'
+                if len(zip_postal) == 6:
+                    if "4505 E McKellips Road" in street_address:
+                        zip_postal = MISSING
+                        country_code = "US"
 
                     else:
-                        country_code = 'CA'
-                        zip_code = zip_code[:3] + ' ' + zip_code[3:]
+                        country_code = "CA"
+                        zip_postal = zip_postal[:3] + " " + zip_postal[3:]
                 else:
-                    country_code = 'US'
-            
-            result_coords.append((lat, longit))
-            
-            store_number = loc['id'].strip()
-            if store_number == '':
-                store_number = '<MISSING>'
-            
-            location_type = '<MISSING>'
-            hours = '<MISSING>'
-            
-            store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
-                        store_number, phone_number, location_type, lat, longit, hours, page_url]
+                    country_code = "US"
 
-            all_store_data.append(store_data)
-        
-        if len(res_json) == 0:
-            search.max_distance_update(MAX_DISTANCE)
-        else:
-            search.max_count_update(result_coords)
-        coord = search.next_coord()  
+            store_number = loc["id"].strip()
+            if store_number == "":
+                store_number = MISSING
 
-    return all_store_data
+            location_type = MISSING
+            hours_of_operation = MISSING
+
+            if len(phone) < 5:
+                phone = MISSING
+            yield SgRecord(
+                locator_domain=DOMAIN,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_postal,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
+
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    log.info("start {} Scraper".format(DOMAIN))
+    count = 0
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.STATE,
+                    SgRecord.Headers.CITY,
+                }
+            ),
+            duplicate_streak_failure_factor=250000,
+        )
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
+
 
 scrape()

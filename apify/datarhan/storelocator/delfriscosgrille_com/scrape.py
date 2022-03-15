@@ -4,7 +4,7 @@ import json
 from lxml import etree
 from urllib.parse import urljoin
 
-from sgselenium import SgChrome
+from sgrequests import SgRequests
 
 
 def write_output(data):
@@ -39,47 +39,49 @@ def write_output(data):
 
 def fetch_data():
     # Your scraper here
+    session = SgRequests()
+
     items = []
 
     DOMAIN = "delfriscosgrille.com"
     start_url = "https://delfriscosgrille.com/location-search/"
 
-    with SgChrome() as driver:
-        driver.get(start_url)
-        dom = etree.HTML(driver.page_source)
+    response = session.get(start_url)
+    dom = etree.HTML(response.text)
 
-    data = dom.xpath('//script[contains(text(), "ld_locations = ")]/text()')[0]
-    data = re.findall("locations = (.+)", data)[0]
-    data = json.loads(data)
+    data = dom.xpath('//script[contains(text(), "locations:")]/text()')[0]
+    data = re.findall(r"locations:(.+)", data)[0]
+    data = json.loads(data[:-1])
 
     for poi in data:
-        base_url = "https://delfriscosgrille.com"
-        store_url = urljoin(base_url, poi["id"])
-        with SgChrome() as driver:
-            driver.get(store_url)
-            loc_dom = etree.HTML(driver.page_source)
+        store_url = urljoin(start_url, poi["url"])
+        loc_response = session.get(store_url)
+        loc_dom = etree.HTML(loc_response.text)
 
-        location_name = poi["city_state"]
+        location_name = poi["name"]
         location_name = location_name if location_name else "<MISSING>"
-        street_address = poi["address"]
+        raw_address = poi["address"].split(", ")
+        if len(raw_address) == 4:
+            raw_address = [", ".join(raw_address[:2])] + raw_address[2:]
+        street_address = raw_address[0]
         street_address = street_address if street_address else "<MISSING>"
         city = poi["city"]
         city = city if city else "<MISSING>"
         state = poi["state"]
         state = state if state else "<MISSING>"
-        zip_code = poi["zip"]
+        zip_code = poi["postal_code"]
         zip_code = zip_code if zip_code else "<MISSING>"
         country_code = "<MISSING>"
         store_number = "<MISSING>"
-        phone = poi["phone"]
+        phone = poi["phone_number"]
         phone = phone if phone else "<MISSING>"
         location_type = "<MISSING>"
         latitude = poi["lat"]
         latitude = latitude if latitude else "<MISSING>"
-        longitude = poi["long"]
+        longitude = poi["lng"]
         longitude = longitude if longitude else "<MISSING>"
         hoo = loc_dom.xpath(
-            '//h2[contains(text(), "Hours")]/following-sibling::p/text()'
+            '//h2[contains(text(), "Hours & Location")]/following-sibling::p[2]//text()'
         )
         hoo = [elem.strip() for elem in hoo]
         hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"

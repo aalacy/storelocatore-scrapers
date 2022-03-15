@@ -1,87 +1,154 @@
-from sgscrape.simple_scraper_pipeline import *
-from sgscrape import simple_network_utils as net_utils
-from sgscrape import simple_utils as utils
-from sgrequests import SgRequests
+from sgscrape import simple_scraper_pipeline as sp
 from sglogging import sglog
-from bs4 import BeautifulSoup as b4
-import json
 
-def para(tup):
-    headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'}
-    k ={}
-    k['index'] = tup[0]
-    k['requrl'] = tup[1]
-    session = SgRequests()
-    son = session.get(k['requrl'], headers = headers)
-    soup = b4(son.text , 'lxml')
-    try:
-        k['hours'] = ' '.join(list(soup.find('dl',{'class':'available-hours','id':'available-business-hours-popover'}).stripped_strings))
-    except:
-        k['hours'] = '<MISSING>'
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 
-    return k
-    
+
+from sgrequests import SgRequests
+
+
 def fetch_data():
-    logzilla = sglog.SgLogSetup().get_logger(logger_name='Scraper')
-    url = "https://www.huddlehouse.com/api/olo/locations/"
-    headers = {
-                'User-Agent' : 'Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36'        }
+    logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
+    url = "https://locations.huddlehouse.com/search?q="
+    headers = {}
+    headers["accept"] = "application/json"
+    headers[
+        "user-agent"
+    ] = "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.190 Safari/537.36"
     session = SgRequests()
-    son = session.get(url, headers = headers).json()
 
-    lize = utils.parallelize(
-                search_space = [[counter,i['url']] for counter, i in enumerate(son['restaurants'])],
-                fetch_results_for_rec = para,
-                max_threads = 10,
-                print_stats_interval = 10
+    search = DynamicZipSearch(
+        country_codes=[SearchableCountries.CANADA, SearchableCountries.USA],
+        max_search_results=10,
+        max_radius_miles=10,
+    )
+    identities = set()
+    maxZ = search.items_remaining()
+    total = 0
+    for zipcode in search:
+        if search.items_remaining() > maxZ:
+            maxZ = search.items_remaining()
+        found = 0
+
+        son = session.get(url + zipcode + "", headers=headers).json()
+
+        for i in son["locations"]:
+
+            search.found_location_at(i["loc"]["latitude"], i["loc"]["longitude"])
+            if (
+                str(
+                    str(i["loc"]["latitude"])
+                    + str(i["loc"]["longitude"])
+                    + str(i["loc"]["id"])
                 )
+                not in identities
+            ):
+                identities.add(
+                    str(
+                        str(i["loc"]["latitude"])
+                        + str(i["loc"]["longitude"])
+                        + str(i["loc"]["id"])
+                    )
+                )
+                found += 1
+                yield i
 
+        progress = str(round(100 - (search.items_remaining() / maxZ * 100), 2)) + "%"
+        total += found
+        logzilla.info(
+            f"{zipcode} | found: {found} | total: {total} | progress: {progress}"
+        )
 
-    
-    for i in lize:
-        son['restaurants'][i['index']].update(i)
-        yield son['restaurants'][i['index']]
-        
-    logzilla.info(f'Finished grabbing data!!')
+    logzilla.info(f"Finished grabbing data!!")  # noqa
+
 
 def fix_comma(x):
     h = []
     try:
-        x = x.split(',')
-        for i in x:
-            if len(i)>1:
+        for i in x.split(","):
+            if len(i.strip()) >= 1:
                 h.append(i)
-        h = ', '.join(h)
-    except:
-        h = x
+        return ", ".join(h)
+    except Exception:
+        return x
 
-    return h
+
+def human_hours(x):
+    hours = []
+    for i in x["days"]:
+        string = str(i["day"]).capitalize() + ": "
+        for j in i["intervals"]:
+            string = (
+                string
+                + str(str(int(j["start"]) / 100) + ":" + str(int(j["start"]) % 100))
+                + "-"
+                + str(str(int(j["end"]) / 100) + ":" + str(int(j["end"]) % 100))
+                + " "
+            )
+    if len(hours) > 1:
+        return "; ".join(hours)
+    else:
+        return "<MISSING>"
+
 
 def scrape():
-    url="https://www.huddlehouse.com/"
-    field_defs = SimpleScraperPipeline.field_definitions(
-        locator_domain = ConstantField(url),
-        page_url=MappingField(mapping=['url']),
-        location_name=MappingField(mapping=['storename']),
-        latitude=MappingField(mapping=['latitude']),
-        longitude=MappingField(mapping=['longitude']),
-        street_address=MappingField(mapping=['streetaddress'], value_transform = fix_comma),
-        city=MappingField(mapping=['city'], value_transform = lambda x : x.replace('None','<MISSING>')),
-        state=MappingField(mapping=['state'], value_transform = lambda x : x.replace('None','<MISSING>')),
-        zipcode=MappingField(mapping=['zip'], value_transform = lambda x : x.replace('None','<MISSING>'), is_required = False),
-        country_code=MappingField(mapping=['country']),
-        phone=MappingField(mapping=['telephone'], value_transform = lambda x : x.replace('() -','<MISSING>') , is_required = False),
-        store_number=MappingField(mapping=['id']),
-        hours_of_operation=MappingField(mapping=['hours'], is_required = False),
-        location_type=MappingField(mapping=['brand'], is_required = False)
+    url = "https://locations.huddlehouse.com/"
+    field_defs = sp.SimpleScraperPipeline.field_definitions(
+        locator_domain=sp.ConstantField(url),
+        page_url=sp.MappingField(
+            mapping=["url"],
+            value_transform=lambda x: url + x,
+        ),
+        location_name=sp.MappingField(
+            mapping=["loc", "name"],
+        ),
+        latitude=sp.MappingField(
+            mapping=["loc", "latitude"],
+        ),
+        longitude=sp.MappingField(
+            mapping=["loc", "longitude"],
+        ),
+        street_address=sp.MultiMappingField(
+            mapping=[["loc", "address1"], ["loc", "address2"]],
+            multi_mapping_concat_with=", ",
+            value_transform=fix_comma,
+        ),
+        city=sp.MappingField(
+            mapping=["loc", "city"],
+        ),
+        state=sp.MappingField(
+            mapping=["loc", "state"],
+        ),
+        zipcode=sp.MappingField(
+            mapping=["loc", "postalCode"],
+        ),
+        country_code=sp.MappingField(
+            mapping=["loc", "country"],
+        ),
+        phone=sp.MappingField(
+            mapping=["loc", "phone"],
+        ),
+        store_number=sp.MappingField(
+            mapping=["loc", "id"],
+        ),
+        hours_of_operation=sp.MappingField(
+            mapping=["loc", "hours"], raw_value_transform=human_hours
+        ),
+        location_type=sp.MappingField(
+            mapping=["loc", "products"], raw_value_transform=lambda x: "; ".join(x)
+        ),  # handle coming soon
+        raw_address=sp.MissingField(),
     )
 
-    pipeline = SimpleScraperPipeline(scraper_name='huddlehouse.com',
-                                     data_fetcher=fetch_data,
-                                     field_definitions=field_defs,
-                                     log_stats_interval=15)
+    pipeline = sp.SimpleScraperPipeline(
+        scraper_name="pipeline",
+        data_fetcher=fetch_data,
+        field_definitions=field_defs,
+        log_stats_interval=5,
+    )
 
     pipeline.run()
+
 
 if __name__ == "__main__":
     scrape()

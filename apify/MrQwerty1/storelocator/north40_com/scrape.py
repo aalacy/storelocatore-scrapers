@@ -45,10 +45,11 @@ def fetch_data():
 
     coords = dict()
     text = "".join(
-        tree.xpath("//script[contains(text(), 'pointofsale.places=')]/text()")
+        tree.xpath("//script[contains(text(), 'pointofsale.places =')]/text()")
     )
-    text = text.split("pointofsale.places=")[1].split(";pointofsale.")[0]
+    text = text.split("pointofsale.places =")[1].split("];")[0] + "]"
     js = json.loads(text)
+
     for j in js:
         _id = j.get("id")
         lat = j.get("lat")

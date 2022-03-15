@@ -1,6 +1,9 @@
-import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 session = SgRequests()
 headers = {
@@ -8,33 +11,6 @@ headers = {
 }
 
 logger = SgLogSetup().get_logger("bayclubs_com")
-
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
 
 
 def fetch_data():
@@ -46,7 +22,6 @@ def fetch_data():
     country = "US"
     logger.info("Pulling Stores")
     for line in r.iter_lines():
-        line = str(line.decode("utf-8"))
         if '<button class="button" data-href="' in line:
             locs.append(
                 "https://www.bayclubs.com/locations"
@@ -68,7 +43,6 @@ def fetch_data():
         CS = False
         lines = r2.iter_lines()
         for line2 in lines:
-            line2 = str(line2.decode("utf-8"))
             if "OPENING SOON<" in line2:
                 CS = True
             if "COMING SOON<" in line2:
@@ -77,11 +51,16 @@ def fetch_data():
                 name = line2.split("<title>")[1].split("<")[0]
                 if "|" in name:
                     name = name.split("|")[0].strip()
-            if add == "" and "</strong></p>" in line2 and CS is False:
+            if (
+                add == ""
+                and "</strong></p>" in line2
+                and CS is False
+                and "locations/financialdistrict" not in loc
+                and "locations/santamonica" not in loc
+                and "locations/redondobeach" not in loc
+            ):
                 g = next(lines)
                 h = next(lines)
-                g = str(g.decode("utf-8"))
-                h = str(h.decode("utf-8"))
                 add = g.split(">")[1].split("<")[0]
                 addinfo = h.split("<")[0].strip().replace("\t", "")
                 city = addinfo.split(",")[0]
@@ -131,32 +110,53 @@ def fetch_data():
             city = "Daly City"
             state = "CA"
             zc = "94014"
+        if "locations/redondobeach" in loc:
+            add = "819 North Harbor Drive"
+            city = "Redondo Beach"
+            state = "CA"
+            zc = "90277"
+        if "locations/santamonica" in loc:
+            add = "2425 Olympic Boulevard"
+            city = "Santa Monica"
+            state = "CA"
+            zc = "90404"
         if "locations/broadwaytennis" in loc:
             add = "60 Edwards Court"
             city = "Burlingame"
             state = "CA"
             zc = "94010"
-        yield [
-            website,
-            loc,
-            name,
-            add,
-            city,
-            state,
-            zc,
-            country,
-            store,
-            phone,
-            typ,
-            lat,
-            lng,
-            hours,
-        ]
+        if "locations/financialdistrict" in loc:
+            add = "555 California Street"
+            city = "San Francisco"
+            state = "CA"
+            zc = "94104"
+        if hours == "":
+            hours = "<MISSING>"
+        if "Financial District" in name:
+            hours = hours + "; Sat: Closed; Sun: Closed"
+        yield SgRecord(
+            locator_domain=website,
+            page_url=loc,
+            location_name=name,
+            street_address=add,
+            city=city,
+            state=state,
+            zip_postal=zc,
+            country_code=country,
+            phone=phone,
+            location_type=typ,
+            store_number=store,
+            latitude=lat,
+            longitude=lng,
+            hours_of_operation=hours,
+        )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()

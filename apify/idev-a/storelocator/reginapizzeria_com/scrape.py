@@ -12,6 +12,7 @@ def _valid1(val):
         return (
             val.strip()
             .replace("–", "-")
+            .replace("\t", "")
             .encode("unicode-escape")
             .decode("utf8")
             .replace("\\xc3\\xa9", "e")
@@ -21,6 +22,10 @@ def _valid1(val):
         )
     else:
         return ""
+
+
+def _phone(val):
+    return val.replace("-", "").isdigit()
 
 
 def addy_ext(addy):
@@ -63,13 +68,25 @@ def fetch_data():
             street_address = addy[0]
             city, state, zip_code = addy_ext(addy[1])
 
-            hours = "<MISSING>"
+            hours_of_operation = ""
+            if soup1.select(
+                "div.mbr-section__container--last div.mbr-article--wysiwyg p"
+            ):
+                hours_of_operation = "; ".join(
+                    [
+                        _
+                        for _ in soup1.select(
+                            "div.mbr-section__container--last div.mbr-article--wysiwyg p"
+                        )[-1].stripped_strings
+                    ]
+                )
             phone = ""
             if "Open" in addy[2]:
-                hours = addy[2]
                 phone = addy[3].replace("Telephone number:", "").strip()
             elif len(addy) >= 5:
                 phone = addy[2]
+            if not _phone(phone):
+                phone = ""
             yield SgRecord(
                 page_url=page_url,
                 location_name=_valid1(location_name),
@@ -81,7 +98,7 @@ def fetch_data():
                 phone=phone,
                 locator_domain=locator_domain,
                 location_type=location_type,
-                hours_of_operation=_valid1(hours),
+                hours_of_operation=_valid1(hours_of_operation),
             )
 
 

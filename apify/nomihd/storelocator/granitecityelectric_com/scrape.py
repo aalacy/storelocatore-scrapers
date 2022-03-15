@@ -1,66 +1,24 @@
 # -*- coding: utf-8 -*-
-import csv
 from sgrequests import SgRequests
 from sglogging import sglog
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
 import lxml.html
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 import us
 
 website = "granitecityelectric.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
-session = SgRequests()
+session = SgRequests(dont_retry_status_codes=([404]))
 headers = {
     "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36",
     "Accept": "application/json",
 }
 
 
-def write_output(data):
-    with open("data.csv", mode="w", newline="", encoding="utf8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        temp_list = []  # ignoring duplicates
-        for row in data:
-            comp_list = [
-                row[2].strip(),
-                row[3].strip(),
-                row[4].strip(),
-                row[5].strip(),
-                row[6].strip(),
-                row[8].strip(),
-                row[10].strip(),
-            ]
-            if comp_list not in temp_list:
-                temp_list.append(comp_list)
-            writer.writerow(row)
-
-        log.info(f"No of records being processed: {len(temp_list)}")
-
-
 def fetch_data():
     # Your scraper here
-    loc_list = []
 
     search_url = "https://www.granitecityelectric.com/locations-showrooms"
     stores_req = session.get(search_url, headers=headers)
@@ -75,46 +33,53 @@ def fetch_data():
         locator_domain = website
 
         store_req = session.get(page_url, headers=headers)
+
+        if "location is permanently closed" in store_req.text:
+            continue
         store_sel = lxml.html.fromstring(store_req.text)
         location_name = "".join(store.xpath("text()")).strip()
-        if location_name == "":
-            location_name = "<MISSING>"
-
         address = store_sel.xpath('//div[@class="storeInfoLeft"]/p/text()')
         if len(address) <= 0:
             address = store_sel.xpath('//div[@class="storeInfoLeft"]/h3/text()')
+
         add_list = []
+        hours_of_operation = ""
+
         for add in address:
             if len("".join(add).strip()) > 0:
                 if "STORE" not in "".join(add).strip():
                     add_list.append("".join(add).strip())
+        if len(add_list) > 0:
+            street_address = add_list[0]
+            city = add_list[1].split(",")[0].strip()
+            state = add_list[1].split(",")[1].strip().split(" ")[0].strip()
+            zip = add_list[1].split(",")[1].strip().split(" ")[1].strip()
+        else:
+            temp_address = store_sel.xpath('//div[@class="main-content"]/text()')
+            add_list = []
+            for temp in temp_address:
+                if len("".join(temp).strip()) > 0:
+                    add_list.append("".join(temp).strip())
 
-        street_address = add_list[0]
-        city = add_list[1].split(",")[0].strip()
-        state = add_list[1].split(",")[1].strip().split(" ")[0].strip()
-        zip = add_list[1].split(",")[1].strip().split(" ")[1].strip()
+            if len(add_list) > 0:
+                street_address = add_list[0]
+                city = add_list[1].split(",")[0].strip()
+                state = add_list[1].split(",")[1].strip().split(" ")[0].strip()
+                zip = add_list[1].split(",")[1].strip().split(" ")[1].strip()
+                hours_of_operation = "; ".join(add_list[-2:])
+            else:
+                log.info("SKIP !!!!!")
+                continue
         country_code = "<MISSING>"
         if us.states.lookup(state):
             country_code = "US"
-
-        if street_address == "":
-            street_address = "<MISSING>"
-
-        if city == "":
-            city = "<MISSING>"
-
-        if state == "":
-            state = "<MISSING>"
-
-        if zip == "":
-            zip = "<MISSING>"
 
         store_number = "<MISSING>"
         raw_text = store_sel.xpath(
             '//div[@class="storeInfoLeft"]/div[@class="storeInfo"]/p'
         )
         phone = ""
-        hours_of_operation = ""
+        hours = []
         for temp_text in raw_text:
             if "Phone" in "".join(temp_text.xpath("text()")).strip():
                 if len(phone) <= 0:
@@ -130,8 +95,14 @@ def fetch_data():
 
             if "Monday" in "".join(temp_text.xpath("text()")).strip():
                 if len(hours_of_operation) <= 0:
+                    hours = temp_text.xpath("text()")
+                    hours_list = []
+                    for hour in hours:
+                        if len("".join(hour).strip()) > 0 and "Hours" not in hour:
+                            hours_list.append("".join(hour).strip())
+
                     hours_of_operation = (
-                        "".join(temp_text.xpath("text()"))
+                        "; ".join(hours_list)
                         .strip()
                         .encode("ascii", "replace")
                         .decode("utf-8")
@@ -140,6 +111,13 @@ def fetch_data():
                         .replace("Hours", "")
                         .strip()
                     )
+
+        if len(phone) <= 0:
+            phone = "".join(
+                store_sel.xpath(
+                    '//div[@class="main-content"]/a[contains(@href,"tel:")]/text()'
+                )
+            ).strip()
 
         location_type = "<MISSING>"
         map_link = "".join(
@@ -151,41 +129,36 @@ def fetch_data():
             latitude = map_link.split("!3d")[1].strip().split("!")[0].strip()
             longitude = map_link.split("!2d")[1].strip().split("!")[0].strip()
 
-        if latitude == "":
-            latitude = "<MISSING>"
-        if longitude == "":
-            longitude = "<MISSING>"
-
-        if hours_of_operation == "":
-            hours_of_operation = "<MISSING>"
-        if phone == "":
-            phone = "<MISSING>"
-
-        curr_list = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        loc_list.append(curr_list)
-
-    return loc_list
+        yield SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zip,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+        )
 
 
 def scrape():
     log.info("Started")
-    data = fetch_data()
-    write_output(data)
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    log.info(f"No of records being processed: {count}")
     log.info("Finished")
 
 

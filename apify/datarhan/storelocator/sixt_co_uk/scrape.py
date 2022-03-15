@@ -6,7 +6,7 @@ import yaml
 from lxml import etree
 from urllib.parse import urljoin
 
-from sgselenium import SgChrome
+from sgselenium import SgFirefox
 from sgscrape.sgpostal import parse_address_intl
 
 
@@ -48,7 +48,7 @@ def fetch_data():
     start_url = "https://www.sixt.co.uk/car-hire/united-kingdom/"
 
     all_locations = []
-    with SgChrome() as driver:
+    with SgFirefox() as driver:
         driver.get(start_url)
         dom = etree.HTML(driver.page_source)
 
@@ -64,7 +64,7 @@ def fetch_data():
 
     for url in all_locations:
         store_url = urljoin(start_url, url)
-        with SgChrome() as driver:
+        with SgFirefox() as driver:
             driver.get(store_url)
             loc_dom = etree.HTML(driver.page_source)
         poi = loc_dom.xpath('//script[contains(text(), "mainEntityOfPage")]/text()')
@@ -126,6 +126,7 @@ def fetch_data():
             hoo = loc_dom.xpath('//div[@class="openhours-scheduler"]//text()')
             hoo = [elem.strip() for elem in hoo if elem.strip()]
             hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
+        hours_of_operation = hours_of_operation.replace("24 HRS RETURN ", "")
 
         item = [
             DOMAIN,

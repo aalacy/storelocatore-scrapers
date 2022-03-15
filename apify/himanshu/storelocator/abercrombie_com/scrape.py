@@ -1,6 +1,7 @@
 import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+import lxml.html
 
 logger = SgLogSetup().get_logger("abercrombie_com")
 
@@ -45,13 +46,30 @@ def fetch_data():
 
     base_url = "https://www.abercrombie.com"
 
-    urls_list = [
-        "https://www.abercrombie.com/api/ecomm/a-wd/storelocator/search?country=US&radius=10000",
-        "https://www.abercrombie.com/api/ecomm/a-wd/storelocator/search?country=CA&radius=10000",
-        "https://www.abercrombie.com/api/ecomm/a-wd/storelocator/search?country=GB&radius=10000",
-    ]
+    all_stores = session.get(
+        "https://www.abercrombie.com/shop/ViewAllStoresDisplayView?storeId=11203&catalogId=10901&langId=-1",
+        headers=headers,
+    )
+    all_stores_sel = lxml.html.fromstring(all_stores.text)
+    links = all_stores_sel.xpath('//li[@class="view-all-stores__store"]/a/@href')
 
-    for url in urls_list:
+    countries = []
+    for link in links:
+        countries.append(
+            link.strip()
+            .split("/shop/us/clothing-stores/")[1]
+            .strip()
+            .split("/")[0]
+            .strip()
+        )
+
+    countries = list(set(countries))
+
+    for country in countries:
+        logger.info(f"fetching data for country: {country}")
+        url = "https://www.abercrombie.com/api/ecomm/a-wd/storelocator/search?country={}&radius=10000".format(
+            country
+        )
         r = session.get(url, timeout=(30, 30), headers=headers)
         json_data = r.json()
 
@@ -72,17 +90,44 @@ def fetch_data():
         page_url = ""
 
         for location in json_data["physicalStores"]:
-            location_type = (
-                location["physicalStoreAttribute"][7]["value"]
-                .replace("ACF", "abercrombie and fitch")
-                .replace("KID", "abercrombie and fitch Kids")
-            )
+            types = location["physicalStoreAttribute"]
+            location_type = ""
+            for typ in types:
+                if typ["name"] == "Brand":
+                    location_type = typ["value"]
+                    break
+
+            location_type = location_type.replace(
+                "ACF", "abercrombie and fitch"
+            ).replace("KID", "abercrombie and fitch Kids")
             store_number = location["storeNumber"]
             location_name = location_type
             city = location["city"]
             state = location["stateOrProvinceName"]
             zipp = location["postalCode"]
             country_code = location["country"]
+            if country_code == "GB":
+                state = "<MISSING>"
+
+                page_url = (
+                    "https://www.abercrombie.com/shop/wd/clothing-stores/"
+                    + country
+                    + "/"
+                    + "".join(city.split())
+                    + "/"
+                    + country
+                    + "/"
+                    + store_number
+                )
+            else:
+                page_url = (
+                    "https://www.abercrombie.com/shop/wd/clothing-stores/US/"
+                    + "".join(city.split())
+                    + "/"
+                    + state
+                    + "/"
+                    + store_number
+                )
             latitude = str(location["latitude"])
             longitude = str(location["longitude"])
             phone = location["telephone"]
@@ -106,14 +151,7 @@ def fetch_data():
                     days[index] + " " + time_period.replace("|", " - ") + " "
                 )
                 index += 1
-            page_url = (
-                "https://www.abercrombie.com/shop/wd/clothing-stores/US/"
-                + "".join(city.split())
-                + "/"
-                + state
-                + "/"
-                + store_number
-            )
+
             store = [
                 locator_domain,
                 location_name,

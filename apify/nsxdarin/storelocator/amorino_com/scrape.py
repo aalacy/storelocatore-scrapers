@@ -46,8 +46,12 @@ def fetch_data():
     logger.info("Pulling Stores")
     for line in r.iter_lines():
         line = str(line.decode("utf-8"))
-        if "{country:ao" in line:
-            items = line.split("{country:ao")
+        if ",stores:[{" in line:
+            ccode = (
+                line.split(',name:"Atlanta')[0].rsplit("country:", 1)[1].split(",")[0]
+            )
+            cstring = "country:" + ccode
+            items = line.split(cstring)
             for item in items:
                 if ">window.__AMORINO__=" not in item:
                     name = item.split('name:"')[1].split('"')[0]
@@ -111,6 +115,11 @@ def fetch_data():
                         phone = "972-943-8534"
                     if "414 Amsterdam Avenue" in add:
                         phone = "212-877-5700"
+                    if "721 Eight Avenue" in add:
+                        city = "New York"
+                        state = "NY"
+                        zc = "10036"
+                        phone = "212-445-0101"
                     yield [
                         website,
                         loc,

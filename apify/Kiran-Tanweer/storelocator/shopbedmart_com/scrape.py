@@ -1,131 +1,58 @@
-from bs4 import BeautifulSoup
-import csv
-import time
-import re
+import html
 import usaddress
+from sglogging import sglog
+from bs4 import BeautifulSoup
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger("shopbedmart_com")
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
+website = "shopbedmart_com"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
 
 headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.104 Safari/537.36",
+    "Host": "www.shopbedmart.com",
+    "Origin": "https://www.shopbedmart.com",
+    "Referer": "https://www.shopbedmart.com/locations/",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
 }
 
-
-def write_output(data):
-    with open("data.csv", mode="w", newline="", encoding="utf8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        temp_list = []
-        for row in data:
-            comp_list = [
-                row[2].strip(),
-                row[3].strip(),
-                row[4].strip(),
-                row[5].strip(),
-                row[6].strip(),
-                row[8].strip(),
-                row[10].strip(),
-            ]
-            if comp_list not in temp_list:
-                temp_list.append(comp_list)
-                writer.writerow(row)
-        logger.info(f"No of records being processed: {len(temp_list)}")
-
-
-locations = [
-    "https://www.shopbedmart.com/hi/locations/",
-    "https://www.shopbedmart.com/nw/locations/",
-]
+DOMAIN = "https://shopbedmart.com/"
+MISSING = "<MISSING>"
 
 
 def fetch_data():
-    data = []
-    pattern = re.compile(r"\s\s+")
-    cleanr = re.compile(r"<[^>]+>")
-    for link in locations:
-        url = link
-        r = session.get(url, headers=headers, verify=False)
-        soup = BeautifulSoup(r.text, "html.parser")
-        divloc = soup.find("div", {"class": "row location-list"})
-        locs = divloc.findAll("div", {"class": "location-card"})
-        for loc in locs:
-            title = loc.find("h4", {"class": "location-card-title"}).find("a")
-            link = title["href"].strip()
-            title = title.text.strip()
-            info = loc.find("p", {"class": "location-card-content"}).text
-            info = re.sub(pattern, " ", info)
-            info = re.sub(cleanr, " ", info)
-            info = info.split("\n")
-            if len(info) == 5:
-                address = info[0]
-                phone = info[1]
-                hours = info[2]
-            if len(info) == 4:
-                address = info[0]
-                phone = info[1]
-                hours = info[2] + " " + info[3]
-            if len(info) == 7:
-                address = info[0]
-                phone = info[1]
-                hours = info[2] + " " + info[3] + " " + info[4]
-            if len(info) == 6:
-                address = info[0]
-                phone = info[1]
-                hours = info[3]
-            if address == " 1825 Haleukana St Unit C, Lihue 808-600-3934":
-                address = " 1825 Haleukana St Unit C, Lihue"
-                phone = "808-600-3934"
-                hours = info[1]
-            if address == " 380 Dairy Rd Kahului, HI 808.376.2740":
-                address = " 380 Dairy Rd Kahului, HI"
-                phone = "808.376.2740"
-                hours = info[1] + " " + info[2] + " " + info[3]
-            if address == " 1039 NW Glisan St Portland, OR 97209":
-                hours = info[2] + " " + info[3]
-            if address == " 15387 bangy road lake oswego, or 503.639.9750":
-                address = " 15387 bangy road lake oswego, or"
-                phone = "503.639.9750"
-                hours = info[1] + " " + info[2] + " " + info[3]
-            address = address.strip()
-            phone = phone.strip()
-            hours = hours.strip()
-
-            title = title.rstrip(" – Pickup Only")
-            hours = hours.rstrip(" Directions")
-
+    if True:
+        url = "https://www.shopbedmart.com/wp-admin/admin-ajax.php"
+        payload = {"action": "grav_get_closest_locations", "zip": "NW"}
+        loclist = session.post(url, headers=headers, data=payload).json()
+        for loc in loclist:
+            location_name = loc["title"]
+            location_name = html.unescape(location_name)
+            store_number = loc["id"]
+            page_url = loc["url"]
+            log.info(page_url)
+            phone = loc["phone"]
+            hours_of_operation = loc["hours"]
+            hours_of_operation = BeautifulSoup(hours_of_operation, "html.parser")
+            hours_of_operation = (
+                hours_of_operation.find("p")
+                .get_text(separator="|", strip=True)
+                .replace("|", " ")
+                .replace("l", "")
+                .replace("Customer Wi Ca", "")
+            )
+            address = loc["address"]
+            address = address.replace(", USA", "")
             address = address.replace(",", " ")
             address = usaddress.parse(address)
-
             i = 0
-            street = ""
+            street_address = ""
             city = ""
             state = ""
-            pcode = ""
+            zip_postal = ""
             while i < len(address):
                 temp = address[i]
                 if (
@@ -137,75 +64,49 @@ def fetch_data():
                     or temp[1].find("USPSBoxType") != -1
                     or temp[1].find("USPSBoxID") != -1
                 ):
-                    street = street + " " + temp[0]
+                    street_address = street_address + " " + temp[0]
                 if temp[1].find("PlaceName") != -1:
                     city = city + " " + temp[0]
                 if temp[1].find("StateName") != -1:
                     state = state + " " + temp[0]
                 if temp[1].find("ZipCode") != -1:
-                    pcode = pcode + " " + temp[0]
+                    zip_postal = zip_postal + " " + temp[0]
                 i += 1
-            street = street.lstrip()
-            street = street.replace(",", "")
-            city = city.lstrip()
-            city = city.replace(",", "")
-            state = state.lstrip()
-            state = state.replace(",", "")
-            pcode = pcode.lstrip()
-            pcode = pcode.replace(",", "")
-
-            if pcode == "":
-                pcode = "<MISSING>"
-            if street == "1825 Haleukana St Unit C Lihue":
-                street = "1825 Haleukana St Unit C"
-                city = "Lihue"
-                state = "HI"
-                pcode = "<MISSING>"
-            if state == "or":
-                state = "OR"
-            if state == "hi":
-                state = "HI"
-            p = session.get(link, headers=headers, verify=False)
-            soup = BeautifulSoup(p.text, "html.parser")
-
-            scripts = soup.findAll("script")
-            script = str(scripts[29])
-            coords = script.split("center: {")[1].split("},")[0]
-            coords = coords.split(",")
-            lat = coords[0].strip()
-            lat = lat.split("lat: ")[1]
-            lng = coords[1].strip()
-            lng = lng.split("lng: ")[1]
-
-            if street == "15387 bangy road lake":
-                street = "15387 bangy road"
-                city = "lake oswego"
-            data.append(
-                [
-                    "https://www.shopbedmart.com/",
-                    link,
-                    title,
-                    street,
-                    city,
-                    state,
-                    pcode,
-                    "US",
-                    "<MISSING>",
-                    phone,
-                    "<MISSING>",
-                    lat,
-                    lng,
-                    hours,
-                ]
+            country_code = "US"
+            latitude = loc["latitude"]
+            longitude = loc["longitude"]
+            yield SgRecord(
+                locator_domain=DOMAIN,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address.strip(),
+                city=city.strip(),
+                state=state.strip(),
+                zip_postal=zip_postal.strip(),
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone.strip(),
+                location_type=MISSING,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation.strip(),
             )
-    return data
 
 
 def scrape():
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
-    data = fetch_data()
-    write_output(data)
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    log.info("Started")
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.StoreNumberId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()

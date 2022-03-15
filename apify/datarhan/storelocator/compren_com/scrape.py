@@ -134,6 +134,7 @@ def fetch_data():
         zip_code = poi_html.xpath("zipcode/text()")
         zip_code = zip_code[0] if zip_code else "<MISSING>"
         country_code = structured_result.country
+        country_code = country_code if country_code else "<MISSING>"
         store_number = loc_name_2
         phone = poi_html.xpath("phone/text()")
         phone = phone[0] if phone else "<MISSING>"

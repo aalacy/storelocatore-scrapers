@@ -92,7 +92,16 @@ def fetch_data():
             ).strip()
 
         if hours_of_operation == "Mon - Tue - Wed - Thu - Fri - Sat - Sun -":
-            hours_of_operation = "<MISSING>"
+            try:
+                hours_of_operation = (
+                    store["open_hours"].split("peration")[1].split("\n")[0].strip()
+                )
+                if "Mon" in hours_of_operation:
+                    hours_of_operation = hours_of_operation[
+                        hours_of_operation.find("Mon") - 1 :
+                    ].strip()
+            except:
+                hours_of_operation = "<MISSING>"
 
         latitude = store["lat"]
         longitude = store["lon"]

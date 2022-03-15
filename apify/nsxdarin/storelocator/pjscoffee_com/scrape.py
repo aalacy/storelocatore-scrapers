@@ -39,6 +39,7 @@ def write_output(data):
 
 def fetch_data():
     locs = []
+    states = []
     url = "https://www.pjscoffee.com/locations/"
     r = session.get(url, headers=headers)
     website = "pjscoffee.com"
@@ -47,10 +48,25 @@ def fetch_data():
     logger.info("Pulling Stores")
     for line in r.iter_lines():
         line = str(line.decode("utf-8"))
-        if 'class="text-purple small">VIEW STORE INFO</a>' in line:
-            locs.append(line.split('href="')[1].split('"')[0])
+        if 'data-ga="Maplist, Region' in line:
+            surl = line.split('href="')[1].split('"')[0]
+            if surl not in states:
+                states.append(surl)
+    for state in states:
+        logger.info(state)
+        r2 = session.get(state, headers=headers)
+        for line2 in r2.iter_lines():
+            line2 = str(line2.decode("utf-8"))
+            if 'title="Stores in ' in line2:
+                sturl = line2.split('href="')[1].split('"')[0]
+                r3 = session.get(sturl, headers=headers)
+                for line3 in r3.iter_lines():
+                    line3 = str(line3.decode("utf-8"))
+                    if '<a href="https://locations.pjscoffee.com/' in line3:
+                        locs.append(line3.split('href="')[1].split('"')[0])
     for loc in locs:
         logger.info(loc)
+        CS = False
         name = ""
         add = ""
         city = ""
@@ -65,8 +81,8 @@ def fetch_data():
         lines = r2.iter_lines()
         for line2 in lines:
             line2 = str(line2.decode("utf-8"))
-            if "<title>" in line2:
-                name = line2.split("<title>")[1].split(" :")[0]
+            if "</h2>" in line2:
+                name = line2.split("</h2>")[0].strip().replace("\t", "")
             if '"addressLocality": "' in line2:
                 city = line2.split('"addressLocality": "')[1].split('"')[0]
             if '"addressLocality": "' in line2:
@@ -83,23 +99,16 @@ def fetch_data():
                 lng = line2.split('"longitude": "')[1].split('"')[0]
             if '"telephone": "' in line2:
                 phone = line2.split('"telephone": "')[1].split('"')[0]
-            if '<td class="noborder"><strong>' in line2:
-                hrs = line2.split('<td class="noborder"><strong>')[1].split("<")[0]
-            if '<td class="noborder text-right">' in line2:
-                if "CLOSED</" not in line2:
-                    hrs = (
-                        hrs
-                        + ": "
-                        + line2.split('<td class="noborder text-right">')[1].split("<")[
-                            0
-                        ]
-                    )
-                else:
-                    hrs = hrs + ": CLOSED"
-                if hours == "":
-                    hours = hrs
-                else:
-                    hours = hours + "; " + hrs
+            if '<div class="hours-status red mb-10">Coming Soon</div>' in line2:
+                CS = True
+            if '"openingHours": "' in line2:
+                hours = line2.split('"openingHours": "')[1].split('"')[0].strip()
+        if phone == "":
+            phone = "<MISSING>"
+        if hours == "":
+            hours = "<MISSING>"
+        if CS:
+            name = name + " - Coming Soon"
         yield [
             website,
             loc,

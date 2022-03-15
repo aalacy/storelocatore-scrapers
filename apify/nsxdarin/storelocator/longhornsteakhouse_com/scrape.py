@@ -1,191 +1,179 @@
-import csv
 from sgrequests import SgRequests
-import time
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
-logger = SgLogSetup().get_logger("longhornsteakhouse_com")
+session = SgRequests()
 headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+    "user-agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0"
 }
 
+logger = SgLogSetup().get_logger("longhornsteakhouse_com")
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
+search = DynamicGeoSearch(
+    country_codes=[SearchableCountries.USA],
+    max_search_distance_miles=50,
+    max_search_results=10,
+)
 
 
 def fetch_data():
-    locs = []
-    url = "https://www.longhornsteakhouse.com/locations-sitemap.xml"
-    session = SgRequests()
-    r = session.get(url, headers=headers)
-    for line in r.iter_lines():
-        line = str(line.decode("utf-8"))
-        if "<loc>https://www.longhornsteakhouse.com/locations/" in line:
-            lurl = line.split("<loc>")[1].split("<")[0]
-            locs.append(lurl)
-    for loc in locs:
-        time.sleep(1)
-        logger.info("Pulling Location %s..." % loc)
-        website = "longhornsteakhouse.com"
-        typ = "Restaurant"
-        hours = ""
-        add = ""
-        city = ""
-        state = ""
-        zc = ""
-        phone = ""
-        lat = ""
-        lng = ""
-        hours = ""
-        country = ""
-        name = ""
-        session = SgRequests()
-        store = loc.rsplit("/", 1)[1]
-        r2 = session.get(loc, headers=headers)
-        for line2 in r2.iter_lines():
-            line2 = str(line2.decode("utf-8"))
-            if 'id="restLatLong" value="' in line2:
-                lat = line2.split('id="restLatLong" value="')[1].split(",")[0]
-                lng = (
-                    line2.split('id="restLatLong" value="')[1]
-                    .split(",")[1]
-                    .split('"')[0]
-                )
-            if '<span id="popRestHrs">' in line2:
-                hours = (
-                    line2.split('<span id="popRestHrs">')[1]
-                    .split("<br></span>")[0]
-                    .replace("</span>", "")
-                    .replace("<br>", "; ")
-                    .replace('<span class="times">', "")
-                    .strip()
-                )
-            if '"weekda' in line2:
-                day = line2.split('"weekda')[1].split('">')[1].split("<")[0]
-                if "(" in day:
-                    day = day.split("(")[1].split(")")[0]
-            if "&nbsp;-&nbsp;" in line2 and "EST 20" in line2:
-                hrs = (
-                    day
-                    + ": "
-                    + line2.replace('<span class="whitetxt">', "")
-                    .replace("</span>", "")
-                    .split(" ")[4]
-                    .rsplit(":00", 1)[0]
-                    + "-"
-                    + line2.split("&nbsp;-&nbsp;")[1].split(" ")[4].rsplit(":00", 1)[0]
-                )
-                if hours == "":
-                    hours = hrs
-                else:
-                    hours = hours + "; " + hrs
-            if "AM&nbsp;-&nbsp;" in line2:
-                hrs = (
-                    day
-                    + ": "
-                    + line2.replace("\r", "")
-                    .replace("\t", "")
-                    .replace("\n", "")
-                    .strip()
-                    .replace("&nbsp;-&nbsp;", "-")
-                    .replace('<span class="whitetxt">', "")
-                    .replace("</span>", "")
-                )
-                if hours == "":
-                    hours = hrs
-                else:
-                    hours = hours + "; " + hrs
-            if "<title>" in line2:
-                name = line2.split("<title>")[1].split(" |")[0]
-            if 'id="restAddress" value="' in line2:
-                add = line2.split('id="restAddress" value="')[1].split(",")[0]
-                city = line2.split('id="restAddress" value="')[1].split(",")[1]
-                state = line2.split('id="restAddress" value="')[1].split(",")[2]
-                zc = (
-                    line2.split('id="restAddress" value="')[1]
-                    .split(",")[3]
-                    .split('"')[0]
-                )
-                country = "US"
-            if '"streetAddress":"' in line2:
-                if add == "":
-                    add = line2.split('"streetAddress":"')[1].split('"')[0]
-                    country = line2.split('"addressCountry":"')[1].split('"')[0]
-                    city = line2.split('"addressLocality":"')[1].split('"')[0]
-                    state = line2.split('"addressRegion":"')[1].split('"')[0]
-                    zc = line2.split('"postalCode":"')[1].split('"')[0]
-                if lat == "":
-                    try:
-                        lat = line2.split('"latitude":"')[1].split('"')[0]
-                        lng = line2.split('"longitude":"')[1].split('"')[0]
-                    except:
-                        lat = "<MISSING>"
-                        lng = "<MISSING>"
-                try:
-                    hours = (
-                        line2.split('"openingHours":["')[1]
-                        .split('"]')[0]
-                        .replace('","', "; ")
-                    )
-                except:
-                    pass
-            if ',"telephone":"' in line2:
-                phone = line2.split(',"telephone":"')[1].split('"')[0]
-        if hours == "":
-            hours = "<MISSING>"
-        if phone == "":
-            phone = "<MISSING>"
-        if "Cincinnati - Eastgate" in name:
-            phone = "(513) 947-8882"
-        if "Orchard Park" in name:
-            phone = "(716) 825-1378"
-        if "Gainesville" in name:
-            phone = "(352) 372-5715"
-        if "Find A R" not in name:
-            yield [
-                website,
-                loc,
-                name,
-                add,
-                city,
-                state,
-                zc,
-                country,
-                store,
-                phone,
-                typ,
-                lat,
-                lng,
-                hours,
-            ]
+    for lat, lng in search:
+        llstr = str(lat) + "," + str(lng)
+        logger.info(str(lat) + "-" + str(lng))
+        url = "https://www.longhornsteakhouse.com/web-api/restaurants"
+        payload = {
+            "geoCode": llstr,
+            "resultsPerPage": 250,
+            "resultsOffset": 0,
+            "pdEnabled": "",
+            "reservationEnabled": "",
+            "isToGo": "",
+            "privateDiningEnabled": "",
+            "isNew": "",
+            "displayDistance": True,
+            "locale": "en_US",
+        }
+        r = session.post(url, headers=headers, data=payload)
+        for line in r.iter_lines():
+            if '{"country":"' in line:
+                items = line.split('{"country":"')
+                for item in items:
+                    if '"enableViewMenu":' in item:
+                        try:
+                            website = "longhornsteakhouse.com"
+                            typ = "<MISSING>"
+                            country = "US"
+                            add = (
+                                item.split('"AddressOne":"')[1].split('"')[0]
+                                + " "
+                                + item.split('"AddressTwo":"')[1].split('"')[0]
+                            )
+                            add = add.strip()
+                            state = item.split('"state":"')[1].split('"')[0]
+                            lat = item.split('"latitude":"')[1].split('"')[0]
+                            city = item.split('"city":"')[1].split('"')[0]
+                            lng = item.split('"longitude":"')[1].split('"')[0]
+                            phone = item.split('"phoneNumber":"')[1].split('"')[0]
+                            zc = item.split('"zip":"')[1].split('"')[0][0:5]
+                            store = item.split('"displayOrder":')[1].split(",")[0]
+                            hours = (
+                                "Sun: "
+                                + item.split('"hourTypeDesc":"Hours of Operations"')[1]
+                                .split('"startTime":"')[1]
+                                .split('"')[0]
+                                + "-"
+                                + item.split('"hourTypeDesc":"Hours of Operations"')[1]
+                                .split('"endTime":"')[1]
+                                .split('"')[0]
+                            )
+                            hours = (
+                                hours
+                                + "; Mon: "
+                                + item.split('"hourTypeDesc":"Hours of Operations"')[2]
+                                .split('"startTime":"')[1]
+                                .split('"')[0]
+                                + "-"
+                                + item.split('"hourTypeDesc":"Hours of Operations"')[2]
+                                .split('"endTime":"')[1]
+                                .split('"')[0]
+                            )
+                            hours = (
+                                hours
+                                + "; Tue: "
+                                + item.split('"hourTypeDesc":"Hours of Operations"')[3]
+                                .split('"startTime":"')[1]
+                                .split('"')[0]
+                                + "-"
+                                + item.split('"hourTypeDesc":"Hours of Operations"')[3]
+                                .split('"endTime":"')[1]
+                                .split('"')[0]
+                            )
+                            hours = (
+                                hours
+                                + "; Wed: "
+                                + item.split('"hourTypeDesc":"Hours of Operations"')[4]
+                                .split('"startTime":"')[1]
+                                .split('"')[0]
+                                + "-"
+                                + item.split('"hourTypeDesc":"Hours of Operations"')[4]
+                                .split('"endTime":"')[1]
+                                .split('"')[0]
+                            )
+                            hours = (
+                                hours
+                                + "; Thu: "
+                                + item.split('"hourTypeDesc":"Hours of Operations"')[5]
+                                .split('"startTime":"')[1]
+                                .split('"')[0]
+                                + "-"
+                                + item.split('"hourTypeDesc":"Hours of Operations"')[5]
+                                .split('"endTime":"')[1]
+                                .split('"')[0]
+                            )
+                            hours = (
+                                hours
+                                + "; Fri: "
+                                + item.split('"hourTypeDesc":"Hours of Operations"')[6]
+                                .split('"startTime":"')[1]
+                                .split('"')[0]
+                                + "-"
+                                + item.split('"hourTypeDesc":"Hours of Operations"')[6]
+                                .split('"endTime":"')[1]
+                                .split('"')[0]
+                            )
+                            hours = (
+                                hours
+                                + "; Sat: "
+                                + item.split('"hourTypeDesc":"Hours of Operations"')[7]
+                                .split('"startTime":"')[1]
+                                .split('"')[0]
+                                + "-"
+                                + item.split('"hourTypeDesc":"Hours of Operations"')[7]
+                                .split('"endTime":"')[1]
+                                .split('"')[0]
+                            )
+                            loc = (
+                                "https://www.longhornsteakhouse.com/locations/"
+                                + state.lower()
+                                + "/"
+                                + city.lower()
+                                + "/"
+                                + store
+                            )
+                            name = item.split('"restaurantName":"')[1].split('"')[0]
+                            yield SgRecord(
+                                locator_domain=website,
+                                page_url=loc,
+                                location_name=name,
+                                street_address=add,
+                                city=city,
+                                state=state,
+                                zip_postal=zc,
+                                country_code=country,
+                                phone=phone,
+                                location_type=typ,
+                                store_number=store,
+                                latitude=lat,
+                                longitude=lng,
+                                hours_of_operation=hours,
+                            )
+                        except:
+                            pass
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(
+        deduper=SgRecordDeduper(
+            RecommendedRecordIds.GeoSpatialId, duplicate_streak_failure_factor=-1
+        )
+    ) as writer:
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()

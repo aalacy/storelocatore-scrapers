@@ -96,12 +96,15 @@ def fetch_data():
 
         phone_number = soup.find("span", {"class": "PhoneNumber-phone"}).text
 
-        hours_spans = soup.find(
-            "div", {"class": "StoreInformation-dayAndHours"}
-        ).find_all("span")
-        hours = ""
-        for span in hours_spans:
-            hours += span.text + " "
+        try:
+            hours_spans = soup.find(
+                "div", {"class": "StoreInformation-dayAndHours"}
+            ).find_all("span")
+            hours = ""
+            for span in hours_spans:
+                hours += span.text + " "
+        except:
+            hours = "<MISSING>"
 
         country_code = "US"
         page_url = link

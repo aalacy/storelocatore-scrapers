@@ -1,163 +1,139 @@
-import csv
-import json
+import usaddress
+from lxml import html
+from sglogging import sglog
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
-import re
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-MISSING = "<MISSING>"
-session = SgRequests()
-
-# options = Options()
-# options.add_argument("--headless")
-# options.add_argument("--no-sandbox")
-# options.add_argument("--disable-dev-shm-usage")
-# # driver = webdriver.Chrome("C:\chromedriver.exe", options=options)
-# driver = webdriver.Chrome("chromedriver", options=options)
-
-
-def get_locations():
-    viewmodel = session.get(
-        "https://siteassets.parastorage.com/singlePage/viewerViewModeJson?&isHttps=true&isUrlMigrated=true&metaSiteId=4fb1a8a3-6d99-4330-b844-2d336bff969a&quickActionsMenuEnabled=false&siteId=023f2d1c-56de-438a-91d6-0b7a4fa6f584&v=3&pageId=5eaf97_92e55dbfa2e20f2249a6b7f6033465df_644&module=viewer-view-mode-json&moduleVersion=1.279.0&viewMode=desktop&dfVersion=1.1027.0"
-    ).json()
-
-    document_data = viewmodel.get("data").get("document_data")
-
-    for key, item in document_data.items():
-        locations_matcher = re.compile("locations", re.IGNORECASE)
-        label = item.get("label", None)
-
-        if label and locations_matcher.match(label):
-            location_menu_items = item.get("items")
-
-    if not location_menu_items:
-        raise Exception("cannot find locations")
-
-    menu_keys = [item.replace("#", "") for item in location_menu_items]
-    link_keys = [
-        document_data.get(item).get("link").replace("#", "") for item in menu_keys
-    ]
-    page_items = [
-        document_data.get(key).get("pageId").replace("#", "") for key in link_keys
-    ]
-
-    page_links = [document_data.get(key).get("pageUriSEO") for key in page_items]
-
-    return [f"https://www.mystricklands.com/{location}" for location in page_links]
+website = "mystricklands_com"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+}
+locator_domain = "https://www.mystricklands.com/"
+MISSING = SgRecord.MISSING
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def fetch_data(sgw: SgWriter):
 
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "location_type",
-                "store_number",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "latitude",
-                "longitude",
-                "phone",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            if row:
-                writer.writerow(row)
-
-
-def parse_geo(url):
-    lon = re.findall(r"destination=[-?\d\.]*\,([-?\d\.]*)", url)[0]
-    lat = re.findall(r"destination=(-?[\d\.]*)", url)[0]
-    return lat, lon
-
-
-def fetch_data():
-    locator_domain = "mystricklands.com"
-    page_urls = get_locations()
-
-    for page_url in page_urls:
-        response = session.get(page_url)
-        bs4 = BeautifulSoup(response.text, features="lxml")
-
-        matched = re.search("(\d+\s.+(?:,|\\n)?.*),\s(\w{2})\s(\d{5})", bs4.text)
-
-        if not matched:
-            yield None
+    api_url = "https://www.mystricklands.com/"
+    r = session.get(api_url, headers=headers)
+    tree = html.fromstring(r.text)
+    div = tree.xpath('//p[text()="LOCATIONS"]/following::ul[1]/li/a')
+    for d in div:
+        location_type = SgRecord.MISSING
+        page_url = "".join(d.xpath(".//@href"))
+        log.info(page_url)
+        location_name = "".join(d.xpath(".//text()"))
+        r = session.get(page_url, headers=headers)
+        if 'alt="Closed -  relocating.png"' in r.text:
             continue
-
-        location_name = bs4.select_one("h2 span").text
-        address = matched.group(1)
-        address_city = re.split("\(.*\)|\\n", address)
-        if len(address_city) == 2:
-            street_address, city = address_city
-        else:
-            city = re.search("Stricklands in (.*)", location_name, re.IGNORECASE).group(
-                1
+        soup = BeautifulSoup(r.text, "html.parser")
+        if "CLOSED FOR THE" in r.text:
+            address = (
+                soup.findAll("div", {"data-testid": "richTextElement"})[2]
+                .get_text(separator="|", strip=True)
+                .replace("|", " ")
+                .split("CLOSED FOR THE ")[0]
             )
-            street_address = re.sub(city, "", address_city[0], re.IGNORECASE)
-
-        state = matched.group(2).upper()
-        zipcode = matched.group(3)
+            location_type = "Temporarily Closed"
+        else:
+            temp = (
+                soup.findAll("div", {"data-testid": "richTextElement"})[1]
+                .get_text(separator="|", strip=True)
+                .replace("|", " ")
+            )
+            if "THE COUNTDOWN HAS BEGUN" in temp:
+                temp = (
+                    soup.findAll("div", {"data-testid": "richTextElement"})[3]
+                    .get_text(separator="|", strip=True)
+                    .replace("|", " ")
+                    .split("Opening for the")[0]
+                )
+            try:
+                address = temp.split("for employment.")[1].split("Phone")[0]
+            except:
+                try:
+                    address = temp.split("Liberty Court Plaza")[1].split("Phone")[0]
+                except:
+                    address = (
+                        soup.findAll("div", {"data-testid": "richTextElement"})[3]
+                        .get_text(separator="|", strip=True)
+                        .replace("|", " ")
+                        .split("Opening for the")[0]
+                    )
+            try:
+                phone = temp.split("Phone :")[1].split("Winter")[0]
+            except:
+                try:
+                    phone = temp.split("Phone :")[1]
+                except:
+                    phone = MISSING
+            if "OPEN DAILY:" in phone:
+                phone = phone.split("OPEN DAILY:")[0]
+        if "OPEN DAILY:" in r.text:
+            hours_of_operation = (
+                "OPEN DAILY:" + r.text.split("OPEN DAILY:")[1].split("</span>")[0]
+            )
+        elif "Open &nbsp;Daily" in r.text:
+            hours_of_operation = (
+                "OPEN DAILY:"
+                + temp.split("Open  Daily")[1].split("Liberty Court Plaza")[0]
+            )
+        else:
+            hours_of_operation = MISSING
+        address = address.replace(",", " ")
+        address = usaddress.parse(address)
+        i = 0
+        street_address = ""
+        city = ""
+        state = ""
+        zip_postal = ""
+        while i < len(address):
+            temp = address[i]
+            if (
+                temp[1].find("Address") != -1
+                or temp[1].find("Street") != -1
+                or temp[1].find("Recipient") != -1
+                or temp[1].find("Occupancy") != -1
+                or temp[1].find("BuildingName") != -1
+                or temp[1].find("USPSBoxType") != -1
+                or temp[1].find("USPSBoxID") != -1
+            ):
+                street_address = street_address + " " + temp[0]
+            if temp[1].find("PlaceName") != -1:
+                city = city + " " + temp[0]
+            if temp[1].find("StateName") != -1:
+                state = state + " " + temp[0]
+            if temp[1].find("ZipCode") != -1:
+                zip_postal = zip_postal + " " + temp[0]
+            i += 1
+        street_address = street_address.replace("(500 ft.", "")
         country_code = "US"
-
-        phone_match = re.search(
-            "Phone:\s*\((\d{3})\).*(\d{3})-(\d{4})", bs4.text, re.IGNORECASE
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zip_postal,
+            country_code=country_code,
+            store_number=SgRecord.MISSING,
+            phone=phone,
+            location_type=location_type,
+            latitude=SgRecord.MISSING,
+            longitude=SgRecord.MISSING,
+            hours_of_operation=hours_of_operation,
         )
-        phone = (
-            f"{phone_match.group(1)}{phone_match.group(2)}{phone_match.group(3)}"
-            if phone_match
-            else MISSING
-        )
 
-        hours_title = bs4.select_one("p:contains(Hours)") or bs4.select_one(
-            "p:contains(Open)"
-        )
-
-        weekday_tag, weekend_tag, *rest = hours_title.fetchNextSiblings()
-
-        weekday_hours = re.sub("\s\s*", " ", weekday_tag.text)
-        weekend_hours = re.sub("\s\s*", " ", weekend_tag.text)
-
-        hours_of_operation = f"{weekday_hours},{weekend_hours}"
-
-        location_type = MISSING
-        latitude = MISSING
-        longitude = MISSING
-        store_number = MISSING
-
-        yield [
-            locator_domain,
-            page_url,
-            location_name,
-            location_type,
-            store_number,
-            street_address.strip(),
-            city,
-            state,
-            zipcode,
-            country_code,
-            latitude,
-            longitude,
-            phone,
-            hours_of_operation,
-        ]
+        sgw.write_row(row)
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
-
+if __name__ == "__main__":
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))) as writer:
+        fetch_data(writer)

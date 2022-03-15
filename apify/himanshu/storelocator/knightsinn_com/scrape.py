@@ -1,121 +1,90 @@
-import csv
-import time
+import re
+from urllib.parse import urljoin
+
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 from sgrequests import SgRequests
-from bs4 import BeautifulSoup
-import re
-import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('knightsinn_com')
 
 
+def fetch_data(sgw: SgWriter):
 
+    start_url = "https://www.redlion.com/locations"
+    domain = re.findall("://(.+?)/", start_url)[0].replace("www.", "")
 
+    session = SgRequests()
+    data = session.get(
+        "https://www.redlion.com/page-data/locations/page-data.json"
+    ).json()
+    static_hashes = data["staticQueryHashes"]
 
+    for hash in static_hashes:
+        response = session.get(
+            f"https://www.redlion.com/page-data/sq/d/{hash}.json"
+        ).json()
+        data = response["data"]
+        all_hotels = data.get("allHotel")
+        if not all_hotels:
+            continue
 
-session = SgRequests()
+        all_locations = all_hotels["nodes"]
 
-def write_output(data):
-    with open('data.csv', mode='w', encoding="utf-8") as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation",
-                         "page_url"])
-        # Body
-        for row in data:
-            writer.writerow(row)
+    for poi in all_locations:
+        store_url = urljoin(start_url, poi["path"]["alias"])
+        poi = session.get(
+            f'https://www.redlion.com/page-data{poi["path"]["alias"]}/page-data.json'
+        ).json()
+        poi = poi["result"]["data"]["hotel"]
 
-
-def fetch_data():
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
-        'accept': 'application/json, text/javascript, */*; q=0.01'
-    }
-
-    base_url = "https://www.knightsinn.com"
-    addresses = []
-
-    r = session.get("https://www.redlion.com/api/properties/all.js", headers=headers)
-    soup_state = BeautifulSoup(r.text, "lxml")
-    json_str_ids = r.text.replace("var hotelsData = ", "").replace(";", "")
-    json_hotel_data = json.loads(json_str_ids)
-    # logger.info("var hotelsData =  === " + str(json_hotel_data))
-
-    str_id_arry = ""
-    # id[1]=6596&id[2]=6111&id[0]=186
-    list_str_id_data = []
-    index = 1
-    for num, name in enumerate(json_hotel_data, start=1):
-        str_id_arry += "&id[" + str(index) + "]=" + name.split(",")[2]
-        if num % 15 == 0:
-            list_str_id_data.append(str_id_arry)
-            str_id_arry = ""
-            index = 0
-        index += 1
-
-    for param in list_str_id_data:
-        location_url = "https://www.redlion.com/api/hotels?_format=json" + param
-        # logger.info("location_url === " + location_url)
-        r_locations = session.get(location_url, headers=headers)
-        json_locations = r_locations.json()
-
-        for location in json_locations:
-            # logger.info("json data === " + str(location))
-
-            locator_domain = base_url
-            location_name = ""
-            street_address = ""
-            city = ""
-            state = ""
-            zipp = ""
-            country_code = "US"
-            store_number = ""
-            phone = ""
-            location_type = ""
+        location_name = poi["name"]
+        if "TEST DO" in location_name.upper():
+            continue
+        location_name = location_name if location_name else "<MISSING>"
+        street_address = poi["address"]["address_line1"]
+        if poi["address"].get("address_line2"):
+            street_address += " " + poi["address"]["address_line2"]
+        street_address = street_address if street_address else "<MISSING>"
+        city = poi["address"]["locality"]
+        city = city if city else "<MISSING>"
+        state = poi["address"]["administrative_area"]
+        state = state if state else "<MISSING>"
+        zip_code = poi["address"]["postal_code"]
+        zip_code = zip_code if zip_code else "<MISSING>"
+        country_code = poi["address"]["country_code"]
+        country_code = country_code if country_code else "<MISSING>"
+        store_number = "<MISSING>"
+        phone = poi["phone"]
+        phone = phone if phone else "<MISSING>"
+        location_type = "<MISSING>"
+        try:
+            latitude = poi["lat_lon"]["lat"]
+            longitude = poi["lat_lon"]["lon"]
+        except:
             latitude = ""
             longitude = ""
-            raw_address = ""
-            hours_of_operation = ""
-            page_url = ""
+        hours_of_operation = "<MISSING>"
 
-            # do your logic here.
-            page_url = location["Path"]
-            store_number = location["Id"]
-            location_name = location["Name"]
-            longitude = location["LatLng"].split("(")[1].split(" ")[0]
-            latitude = location["LatLng"].split("(")[1].split(" ")[1].split(")")[0]
-            phone = location["Phone"]
-            street_address = location["AddressLine1"]
-            if location["AddressLine2"]:
-                street_address += " "+ location["AddressLine2"]
-            state = location["StateProvince"]
-            if location["Country"] == "Canada":
-                country_code = "CA"
-            elif location["Country"] == "United States":
-                country_code = "US"
-            else:
-                continue
-            city = location["City"]
-            zipp = location["PostalCode"]
-
-            store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
-                     store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
-
-            if str(store[2]) not in addresses:
-                addresses.append(str(store[2]))
-
-                store = [str(x).strip() if x else "<MISSING>" for x in store]
-
-                # logger.info("data = " + str(store))
-                # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-                yield store
+        sgw.write_row(
+            SgRecord(
+                locator_domain=domain,
+                page_url=store_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_code,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
+        )
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    fetch_data(writer)

@@ -96,11 +96,6 @@ def fetch_data():
         lat = soup.find("meta", {"itemprop": "latitude"})["content"]
         lng = soup.find("meta", {"itemprop": "longitude"})["content"]
 
-        if (
-            hoo
-            == "Mon Closed, Tue Closed, Wed Closed, Thu Closed, Fri Closed, Sat Closed, Sun Closed"
-        ):
-            hoo = "Closed"
         data.append(
             [
                 "https://www.ray-ban.com/",

@@ -100,6 +100,14 @@ def fetch_data():
                     zc = "<MISSING>"
                 name = name.replace("\\u2013", "-")
                 add = add.replace("\\u2013", "-")
+                if " - part" in name:
+                    name = name.split(" - part")[0]
+                if "abervalley-ymca" in loc:
+                    name = "Abervalley YMCA"
+                name = name.replace("\\/", "/")
+                add = add.replace("\\/", "/")
+                city = city.replace("\\/", "/")
+                zc = zc.replace("\\U00A0", " ").replace("\\u00a0", " ")
                 yield [
                     website,
                     loc,

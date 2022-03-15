@@ -79,6 +79,8 @@ def fetch_data():
         longitude = poi["geocodedCoordinate"]["longitude"]
         hoo = []
         for day, hours in poi["hours"].items():
+            if day in ["reopenDate", "holidayHours"]:
+                continue
             if hours.get("isClosed"):
                 hoo.append(f"{day} closed")
             else:

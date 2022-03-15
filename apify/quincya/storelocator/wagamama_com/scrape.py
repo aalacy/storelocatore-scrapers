@@ -1,45 +1,18 @@
-import csv
-
 from bs4 import BeautifulSoup
 
-from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 from sgrequests import SgRequests
+
+from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger("wagamama_com")
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
+def fetch_data(sgw: SgWriter):
 
     base_link = "https://www.wagamama.com/restaurants"
 
@@ -49,8 +22,6 @@ def fetch_data():
     session = SgRequests()
     req = session.get(base_link, headers=headers)
     base = BeautifulSoup(req.text, "lxml")
-
-    data = []
 
     locator_domain = "wagamama.com"
 
@@ -80,6 +51,9 @@ def fetch_data():
         req = session.get(link, headers=headers)
         base = BeautifulSoup(req.text, "lxml")
 
+        if "coming soon" in base.find(class_="Core").text:
+            continue
+
         location_name = "Wagamama " + base.h1.text.title()
         street_address = base.find(itemprop="streetAddress")["content"]
         city = base.find(class_="c-address-city").text.strip()
@@ -87,7 +61,10 @@ def fetch_data():
         zip_code = base.find(itemprop="postalCode").text.strip()
         country_code = "GB"
         store_number = "<MISSING>"
-        phone = base.find(itemprop="telephone").text.strip()
+        try:
+            phone = base.find(itemprop="telephone").text.strip()
+        except:
+            continue
         if not phone:
             phone = "<MISSING>"
         latitude = base.find(itemprop="latitude")["content"]
@@ -103,31 +80,33 @@ def fetch_data():
             list(base.find(class_="c-hours-details").tbody.stripped_strings)
         )
 
-        data.append(
-            [
-                locator_domain,
-                link,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip_code,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
+        try:
+            if "back soon" in base.find(class_="Core-eventTitle").text.lower():
+                hours_of_operation = "Temporarily Closed"
+            if "near" in base.find(class_="Core-eventTitle").text.lower():
+                continue
+        except:
+            pass
+
+        sgw.write_row(
+            SgRecord(
+                locator_domain=locator_domain,
+                page_url=link,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_code,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
         )
 
-    return data
 
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    fetch_data(writer)

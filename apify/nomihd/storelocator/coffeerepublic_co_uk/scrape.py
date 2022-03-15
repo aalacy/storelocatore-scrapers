@@ -97,6 +97,8 @@ def fetch_data():
                 location_name = child.text.replace("&amp;", "&").strip()
             if child.tag == "address":
                 raw_address = child.text
+                zip = raw_address.rsplit(",", 1)[-1].strip()
+                raw_address = ", ".join(raw_address.rsplit(",", 1)[:-1]).strip()
                 formatted_addr = parser.parse_address_intl(raw_address)
                 street_address = formatted_addr.street_address_1
                 if formatted_addr.street_address_2:
@@ -104,9 +106,13 @@ def fetch_data():
                         street_address + ", " + formatted_addr.street_address_2
                     )
 
-                city = formatted_addr.city
+                if "Newquay" in street_address:
+                    city = "Newquay"
+                    street_address = street_address.replace("Newquay", "").strip()
+                else:
+                    city = formatted_addr.city
+
                 state = formatted_addr.state
-                zip = formatted_addr.postcode
                 country_code = "GB"
 
             if child.tag == "operatingHours":
@@ -158,6 +164,8 @@ def fetch_data():
         if hours_of_operation == "":
             hours_of_operation = "<MISSING>"
 
+        if page_url == "" or page_url is None:
+            page_url = "https://coffeerepublic.co.uk/bar-locator/"
         curr_list = [
             locator_domain,
             page_url,

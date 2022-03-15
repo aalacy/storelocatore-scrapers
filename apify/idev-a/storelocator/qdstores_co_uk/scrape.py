@@ -61,12 +61,12 @@ def fetch_data():
                 addr = _["address"].split("<br />")
                 street_address = " ".join(addr[:-2])
                 city = addr[-2]
+                if city.replace(" ", "").isdigit():
+                    phone = city
+                    city = addr[-3]
                 zip_postal = addr[-1]
             except:
                 pass
-            if city.replace(" ", "").isdigit():
-                phone = city
-                city = "<MISSING>"
             record = SgRecord(
                 page_url="https://www.qdstores.co.uk/static/store-finder.html",
                 store_number=_["number"],

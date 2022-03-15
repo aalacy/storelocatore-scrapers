@@ -1,5 +1,5 @@
-import re
 import csv
+import json
 from lxml import etree
 
 from sgrequests import SgRequests
@@ -77,10 +77,11 @@ def fetch_data():
         if is_tc:
             if is_tc[0] == "Coming Soon":
                 location_type = "Coming Soon"
-        geo = re.findall(r"coords\((.+?)\),", loc_response.text)[0].split(",")
-        latitude = geo[0]
+        geo = loc_dom.xpath("//div/@data-dna")[0]
+        geo = json.loads(geo)
+        latitude = geo[0]["locations"][0]["lat"]
         latitude = latitude if latitude else "<MISSING>"
-        longitude = geo[1]
+        longitude = geo[0]["locations"][0]["lng"]
         longitude = longitude if longitude else "<MISSING>"
         hours_of_operation = loc_dom.xpath('//table[@class="hours-table"]//text()')
         hours_of_operation = (

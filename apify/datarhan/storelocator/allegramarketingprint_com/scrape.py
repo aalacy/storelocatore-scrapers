@@ -68,7 +68,7 @@ def fetch_data():
         country_code = country_code if country_code else "<MISSING>"
         store_number = poi["LocationNumber"]
         store_number = store_number if store_number else "<MISSING>"
-        phone = poi["Phone"]
+        phone = poi["PhoneWithCountryCode"]
         phone = phone if phone else "<MISSING>"
         location_type = ""
         location_type = location_type if location_type else "<MISSING>"
@@ -77,20 +77,14 @@ def fetch_data():
         longitude = poi["Longitude"]
         longitude = longitude if longitude else "<MISSING>"
 
-        try:
-            store_response = session.get(store_url)
-            store_dom = etree.HTML(store_response.text)
-            hours_of_operation = store_dom.xpath(
-                '//div[@class="oprationalHours"]//text()'
-            )
-            hours_of_operation = [
-                elem.strip() for elem in hours_of_operation if elem.strip()
-            ]
-            hours_of_operation = (
-                " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
-            )
-        except:
-            hours_of_operation = "<MISSING>"
+        store_response = session.get(store_url + "/contact-us")
+        store_dom = etree.HTML(store_response.text)
+        hoo = store_dom.xpath('//div[@class="oprationalHours"]//text()')
+        hoo = [elem.strip() for elem in hoo if elem.strip()]
+        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
+        hours_of_operation = hours_of_operation.replace(
+            "Hours of Operation Days Hours ", ""
+        )
 
         item = [
             DOMAIN,

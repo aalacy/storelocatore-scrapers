@@ -1,7 +1,7 @@
+import re
 import csv
 import json
 from lxml import etree
-from urllib.parse import urljoin
 
 from sgrequests import SgRequests
 
@@ -44,31 +44,20 @@ def fetch_data():
 
     DOMAIN = "accor.com"
     start_urls = [
-        "https://ibis.accor.com/gb/city/hotels-london-v2352.shtml",
-        "https://all.accor.com/ssr/app/ibis/hotels/united-states/index.en.shtml?dateIn=2021-01-15&nights=31&compositions=1&stayplus=false",
-        "https://all.accor.com/ssr/app/ibis/hotels/canada/index.en.shtml?dateIn=2021-01-15&nights=31&compositions=1&stayplus=false&destination=Canada",
+        "https://all.accor.com/ssr/app/ibis/hotels/united-kingdom/index.en.shtml",
+        "https://all.accor.com/ssr/app/ibis/hotels/united-states/index.en.shtml",
+        "https://all.accor.com/ssr/app/ibis/hotels/canada/index.en.shtml",
     ]
 
     all_locations = []
     for start_url in start_urls:
         response = session.get(start_url)
-        dom = etree.HTML(response.text)
-        all_locations += dom.xpath('//div[@class="hotelPic"]/a/@href')
-        all_locations += dom.xpath(
-            '//div[@class="hotel__content hotel__block--right"]//h2/a/@href'
-        )
-        next_page = dom.xpath('//a[@class="sign" and contains(text(), ">")]/@href')
-        while next_page:
-            response = session.get(urljoin(start_url, next_page[0]))
-            dom = etree.HTML(response.text)
-            all_locations += dom.xpath('//div[@class="hotelPic"]/a/@href')
-            all_locations += dom.xpath(
-                '//div[@class="hotel__content hotel__block--right"]//h2/a/@href'
-            )
-            next_page = dom.xpath('//a[@class="sign" and contains(text(), ">")]/@href')
+        all_ids = re.findall('id:"(.+?)",name', response.text)
+        for loc_id in all_ids:
+            url = f"https://all.accor.com/hotel/{loc_id}/index.en.shtml?dateIn=&nights=&compositions=&stayplus=false#origin=ibis"
+            all_locations.append(url)
 
-    for url in all_locations:
-        poi_url = urljoin(start_urls[0], url.split("?")[0])
+    for poi_url in list(set(all_locations)):
         loc_response = session.get(poi_url)
         loc_dom = etree.HTML(loc_response.text)
         poi = loc_dom.xpath(
@@ -93,8 +82,10 @@ def fetch_data():
         poi_number = "<MISSING>"
         phone = poi["telephone"]
         poi_type = poi["@type"]
-        latitude = loc_dom.xpath('//meta[@property="og:latitude"]/@content')[0]
-        longitude = loc_dom.xpath('//meta[@property="og:longitude"]/@content')[0]
+        latitude = loc_dom.xpath('//meta[@property="og:latitude"]/@content')
+        latitude = latitude[0] if latitude else "<MISSING>"
+        longitude = loc_dom.xpath('//meta[@property="og:longitude"]/@content')
+        longitude = longitude[0] if longitude else "<MISSING>"
         hoo = "<MISSING>"
 
         item = [

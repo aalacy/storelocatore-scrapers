@@ -81,10 +81,10 @@ def scrape():
         ),
         location_name=MappingField(mapping=["Name"]),
         latitude=MappingField(
-            mapping=["Address", "Longitude"],
+            mapping=["Address", "Latitude"],
         ),
         longitude=MappingField(
-            mapping=["Address", "Latitude"],
+            mapping=["Address", "Longitude"],
         ),
         street_address=MultiMappingField(
             mapping=[["Address", "Street"], ["Address", "AddressLine2"]],

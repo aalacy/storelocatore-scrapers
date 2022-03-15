@@ -1,117 +1,136 @@
-import csv
 import json
-from sgrequests import SgRequests
+from lxml import html
 from sglogging import sglog
-from sgselenium import SgChrome
 from bs4 import BeautifulSoup
+from sgrequests import SgRequests
+from sgselenium import SgChrome
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+import ssl
 
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
+
+
+session = SgRequests()
 website = "unfi_com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
 
-session = SgRequests()
-headers = {
-    "authority": "www.unfi.com",
-    "method": "GET",
-    "path": "/locations",
-    "scheme": "https",
-    "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-    "accept-encoding": "gzip, deflate, br",
-    "accept-language": "en-US,en;q=0.9",
-    "cache-control": "max-age=0",
-    "cookie": "visid_incap_536781=kRXhn/08RI+24aoBO2PrKBsnGmAAAAAAQUIPAAAAAAAXVT4TPM5TbvN9NZq2aSCS; modal_shown=yes; _ga=GA1.2.599170801.1612326712; incap_ses_957_536781=BpfXGvxvizaG0Pg6qPJHDbIwHWAAAAAATgllZ2VtSVDKQe4kayxm8w==; has_js=1; merger_modal=1; _gid=GA1.2.1653675809.1612525782; incap_ses_262_536781=Pvn1LKzC9iowSSrW8s+iA0U8HWAAAAAAhZ3rC0gzPzivvsej/FiLeA==; nlbi_536781=+es8PFQsUDzuCyb24PWBEQAAAADFBYmZkoYeFRoCV7qP80vG; _gat_UA-4370112-9=1",
-    "if-none-match": '"1612459826-0"',
-    "referer": "https://www.unfi.com/locations",
-    "sec-ch-ua": '"Chromium";v="88", "Google Chrome";v="88", ";Not A Brand";v="99"',
-    "sec-ch-ua-mobile": "?0",
-    "sec-fetch-dest": "document",
-    "sec-fetch-mode": "navigate",
-    "sec-fetch-site": "same-origin",
-    "sec-fetch-user": "?1",
-    "upgrade-insecure-requests": "1",
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.146 Safari/537.36",
-}
-
-
-def write_output(data):
-    with open("data.csv", mode="w", newline="", encoding="utf8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
-        log.info(f"No of records being processed: {len(data)}")
-
 
 def fetch_data():
-    # Your scraper here
-    data = []
-    with SgChrome() as driver:
-        driver.get("https://www.unfi.com/locations")
-        loclist = driver.page_source.split('"markers":')[1].split(',"styleBubble":', 1)[
-            0
-        ]
-    loclist = json.loads(loclist)
-    for loc in loclist:
-        temp = loc["text"]
-        soup = BeautifulSoup(temp, "html.parser")
-        title = soup.find("strong").text
-        lat = loc["latitude"]
-        longt = loc["longitude"]
-        street = soup.find("span", {"itemprop": "streetAddress"}).text
-        city = soup.find("span", {"itemprop": "addressLocality"}).text.replace(",", "")
-        state = soup.find("span", {"itemprop": "addressRegion"}).text
-        pcode = soup.find("span", {"class": "postal-code"}).text
-        try:
-            phone = soup.find("span", {"itemprop": "telephone"}).text
-        except:
-            phone = "<MISSING>"
-        data.append(
-            [
-                "https://www.unfi.com/",
-                "https://www.unfi.com/locations",
-                title,
-                street,
-                city,
-                state,
-                pcode,
-                "US",
-                "<MISSING>",
-                phone,
-                "<MISSING>",
-                lat,
-                longt,
-                "<MISSING>",
-            ]
-        )
-    return data
+    if True:
+        identities = set()
+        with SgChrome() as driver:
+            driver.get("https://www.unfi.com/locations")
+            data_runfi = html.fromstring(driver.page_source, "lxml")
+            data_raw = data_runfi.xpath(
+                '//script[@type="text/javascript" and contains(., "jQuery.extend(Drupal.settings")]/text()'
+            )
+            data_raw = "".join(data_raw)
+            data_raw = data_raw.split("jQuery.extend(Drupal.settings,")[-1]
+            data_raw = data_raw.split(");")[0]
+
+        loclist = json.loads(data_raw)["gmap"]
+        for loc in loclist:
+            linklist = loclist[loc]["markers"]
+            for link in linklist:
+                text = link["text"]
+                soup = BeautifulSoup(text, "html.parser")
+                latitude = link["latitude"]
+                longitude = link["longitude"]
+                street_address = soup.find("span", {"itemprop": "streetAddress"}).text
+                log.info(street_address)
+                city = soup.find("span", {"itemprop": "addressLocality"}).text.replace(
+                    ",", ""
+                )
+                state = soup.find("span", {"itemprop": "addressRegion"}).text
+                zip_postal = soup.find("span", {"class": "postal-code"}).text
+                location_name = link["markername"]
+                if location_name == "unfi":
+                    location_name = "UNFI Distribution Center"
+                elif location_name == "unfi_canada":
+                    location_name = "UNFI Canada Distribution Center"
+                elif location_name == "tonys":
+                    location_name = "Tony's Fine Foods Distribution Center"
+                elif location_name == "alberts":
+                    location_name = "Albert's Fresh Produce Distribution Center"
+                else:
+                    location_name = "SUPERVALU/UNFI Distribution Center"
+                if "2995 Oates Street" in street_address:
+                    location_name = "Nor-Cal Produce Distribution Center"
+
+                if (
+                    "Tony's Fine Foods Distribution Center" in location_name
+                    and "50 Charles Lindbergh Boulevard" in street_address
+                ):
+                    continue
+                if (
+                    "Tony's Fine Foods Distribution Center" in location_name
+                    and "12745 Earhart Ave" in street_address
+                ):
+                    continue
+                if (
+                    "Tony's Fine Foods Distribution Center" in location_name
+                    and "2722 Commerce Way" in street_address
+                ):
+                    continue
+
+                try:
+                    phone = soup.find("span", {"itemprop": "telephone"}).text
+                except:
+                    phone = "<MISSING>"
+                identity = (
+                    str(street_address)
+                    + ","
+                    + str(city)
+                    + ","
+                    + str(state)
+                    + ","
+                    + str(zip_postal)
+                    + ","
+                    + str(location_name)
+                )
+                if identity in identities:
+                    continue
+                log.info(location_name)
+                identities.add(identity)
+                yield SgRecord(
+                    locator_domain="https://www.unfi.com/",
+                    page_url="https://www.unfi.com/locations",
+                    location_name=location_name,
+                    street_address=street_address.strip(),
+                    city=city.strip(),
+                    state=state.strip(),
+                    zip_postal=zip_postal.strip(),
+                    country_code="US",
+                    store_number="<MISSING>",
+                    phone=phone.strip(),
+                    location_type="<MISSING>",
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation="<MISSING>",
+                )
 
 
 def scrape():
     log.info("Started")
-    data = fetch_data()
-    write_output(data)
+    count = 0
+    with SgWriter() as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    log.info(f"No of records being processed: {count}")
     log.info("Finished")
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()

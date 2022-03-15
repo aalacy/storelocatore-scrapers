@@ -50,7 +50,6 @@ def fetch_data():
         "div", {"class": "overlay-container container-location"}
     ).findAll("div", {"class": "content"})
     for repo in repo_list:
-        hours = repo.find("p", {"class": "uppercase"}).text
         longt, lat = (
             repo.find("iframe")["src"]
             .split("!2d", 1)[1]
@@ -64,6 +63,7 @@ def fetch_data():
         street, phone = ct.split("•")
         phone = phone.strip()
         title = "Outback Steakhouse " + title
+        hours = repo[2] + " " + repo[3]
         if hours.find("closed") > -1:
             hours = "Currently Closed"
         data.append(

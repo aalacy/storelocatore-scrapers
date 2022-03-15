@@ -1,85 +1,13 @@
+import re
 import csv
-from bs4 import BeautifulSoup
+from lxml import etree
+from urllib.parse import urljoin
+
 from sgrequests import SgRequests
 
-base_url = "http://adventhealth.com/"
-session = SgRequests()
 
-
-def fetch_data():
-    address = []
-    url = "https://www.adventhealth.com/find-a-location?facility=&name=&geolocation_geocoder_google_geocoding_api=&geolocation_geocoder_google_geocoding_api_state=1&latlng%5Bdistance%5D%5Bfrom%5D=-&latlng%5Bvalue%5D=&latlng%5Bcity%5D=&latlng%5Bstate%5D=&latlng%5Bprecision%5D=&service=&page="
-    for i in range(109):
-        page = session.get(url + str(i))
-        soup = BeautifulSoup(page.text, "lxml")
-        rows = soup.find_all("li", {"class": "facility-search-block__item"})
-        for r in rows:
-            try:
-                name = (
-                    r.find("span", {"class": "location-block__name-link-text"})
-                    .get_text()
-                    .strip()
-                )
-                link = r.find(
-                    "a",
-                    {"class": "location-block__name-link u-text--fw-300 notranslate"},
-                ).get("href")
-                page_url = base_url + link
-            except Exception:
-                name = r.find_all("h3")[0].get_text().strip()
-                page_url = "<MISSING>"
-
-            try:
-                phone = (
-                    r.find("a", {"class": "telephone"})
-                    .get_text()
-                    .strip()
-                    .split()[-1][2:]
-                )
-            except Exception:
-                phone = "<MISSING>"
-
-            street = r.find("span", {"property": "streetAddress"}).get_text().strip()
-            city = r.find("span", {"property": "addressLocality"}).get_text().strip()
-            state = r.find("span", {"property": "addressRegion"}).get_text().strip()
-            pin = r.find("span", {"property": "postalCode"}).get_text().strip()
-            if len(pin) == 5:
-                country_code = "US"
-            else:
-                country_code = "CA"
-            store_number = "<MISSING>"
-            location_type = "<MISSING>"
-            hours_of_operation = "<INACCESIBLE>"
-            lati = r.find("a", {"class": "address notranslate google-maps-link"}).get(
-                "data-lat"
-            )
-            longi = r.find("a", {"class": "address notranslate google-maps-link"}).get(
-                "data-lng"
-            )
-
-            locations = []
-            locations.append(base_url)
-            locations.append(name)
-            locations.append(street)
-            locations.append(city)
-            locations.append(state)
-            locations.append(pin)
-            locations.append(country_code)
-            locations.append(store_number)
-            locations.append(phone)
-            locations.append(location_type)
-            locations.append(lati)
-            locations.append(longi)
-            locations.append(hours_of_operation)
-            locations.append(page_url)
-            if locations[2] in address:
-                continue
-            address.append(locations[2])
-            yield locations
-
-
-def load_data(data):
-    with open("data.csv", mode="w", encoding="utf-8", newline="") as output_file:
+def write_output(data):
+    with open("data.csv", mode="w", encoding="utf-8") as output_file:
         writer = csv.writer(
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
@@ -88,6 +16,7 @@ def load_data(data):
         writer.writerow(
             [
                 "locator_domain",
+                "page_url",
                 "location_name",
                 "street_address",
                 "city",
@@ -100,7 +29,6 @@ def load_data(data):
                 "latitude",
                 "longitude",
                 "hours_of_operation",
-                "page_url",
             ]
         )
         # Body
@@ -108,9 +36,124 @@ def load_data(data):
             writer.writerow(row)
 
 
+def fetch_data():
+    # Your scraper here
+    session = SgRequests()
+
+    items = []
+
+    start_url = "https://www.adventhealth.com/find-a-location"
+    domain = re.findall("://(.+?)/", start_url)[0].replace("www.", "")
+
+    response = session.get(start_url)
+    dom = etree.HTML(response.text)
+
+    all_locations = dom.xpath('//li[@class="facility-search-block__item"]')
+    next_page = dom.xpath('//a[@rel="next"]/@href')
+    while next_page:
+        response = session.get(urljoin(start_url, next_page[0]))
+        dom = etree.HTML(response.text)
+        all_locations += dom.xpath('//li[@class="facility-search-block__item"]')
+        next_page = dom.xpath('//a[@rel="next"]/@href')
+
+    for poi_html in all_locations:
+        store_url = poi_html.xpath(".//h3/a/@href")
+        if not store_url:
+            store_url = poi_html.xpath('.//a[contains(text(), "View Website")]/@href')
+        store_url = urljoin(start_url, store_url[0]) if store_url else "<MISSING>"
+        if "adventhealth.com" in store_url:
+            loc_response = session.get(store_url)
+            loc_dom = etree.HTML(loc_response.text)
+
+            location_name = loc_dom.xpath(
+                '//span[@class="location-bar__name-text notranslate"]/text()'
+            )
+            if not location_name:
+                location_name = loc_dom.xpath(
+                    '//h1[@class="image-hero__title"]//text()'
+                )
+            location_name = [e.strip() for e in location_name if e.strip()]
+            location_name = " ".join(location_name) if location_name else "<MISSING>"
+            if location_name.endswith(","):
+                location_name = location_name[:-1]
+            street_address = loc_dom.xpath('//span[@property="streetAddress"]/text()')
+            street_address = (
+                street_address[0].strip() if street_address else "<MISSING>"
+            )
+            if street_address.endswith(","):
+                street_address = street_address[:-1]
+            city = loc_dom.xpath('//span[@property="addressLocality"]/text()')
+            city = city[0] if city else "<MISSING>"
+            state = loc_dom.xpath('//span[@property="addressRegion"]/text()')
+            state = state[0] if state else "<MISSING>"
+            zip_code = loc_dom.xpath('//span[@property="postalCode"]/text()')
+            zip_code = zip_code[0] if zip_code else "<MISSING>"
+            country_code = re.findall('country":"(.+?)",', loc_response.text)
+            country_code = country_code[0] if country_code else "<MISSING>"
+            store_number = "<MISSING>"
+            phone = loc_dom.xpath('//a[@class="telephone"]/text()')
+            phone = phone[0].strip() if phone and phone[0].strip() else "<MISSING>"
+            location_type = "<MISSING>"
+            latitude = loc_dom.xpath("//@data-lat")
+            latitude = latitude[0] if latitude else "<MISSING>"
+            longitude = loc_dom.xpath("//@data-lng")
+            longitude = longitude[0] if longitude else "<MISSING>"
+            hoo = loc_dom.xpath(
+                '//div[@class="location-block__office-hours-hours"]/text()'
+            )
+            hoo = [e.strip() for e in hoo if e.strip()]
+            hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
+        else:
+            location_name = poi_html.xpath(".//h3/a/text()")
+            if not location_name:
+                location_name = poi_html.xpath(".//h3/text()")
+            location_name = location_name[0].strip() if location_name else "<MISSING>"
+            street_address = poi_html.xpath('.//span[@property="streetAddress"]/text()')
+            street_address = (
+                street_address[0].strip() if street_address else "<MISSING>"
+            )
+            city = poi_html.xpath('.//span[@property="addressLocality"]/text()')
+            city = city[0] if city else "<MISSING>"
+            state = poi_html.xpath('.//span[@property="addressRegion"]/text()')
+            state = state[0] if state else "<MISSING>"
+            zip_code = poi_html.xpath('.//span[@property="postalCode"]/text()')
+            zip_code = zip_code[0] if zip_code else "<MISSING>"
+            country_code = re.findall('country":"(.+?)",', loc_response.text)
+            country_code = country_code[0] if country_code else "<MISSING>"
+            store_number = "<MISSING>"
+            phone = poi_html.xpath('.//a[@class="telephone"]/text()')
+            phone = phone[0].strip() if phone and phone[0].strip() else "<MISSING>"
+            location_type = "<MISSING>"
+            latitude = "<MISSING>"
+            longitude = "<MISSING>"
+            hours_of_operation = "<MISSING>"
+
+        item = [
+            domain,
+            store_url,
+            location_name,
+            street_address,
+            city,
+            state,
+            zip_code,
+            country_code,
+            store_number,
+            phone,
+            location_type,
+            latitude,
+            longitude,
+            hours_of_operation,
+        ]
+
+        items.append(item)
+
+    return items
+
+
 def scrape():
     data = fetch_data()
-    load_data(data)
+    write_output(data)
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()

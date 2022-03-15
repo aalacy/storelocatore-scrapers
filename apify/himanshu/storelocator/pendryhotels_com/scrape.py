@@ -1,112 +1,88 @@
-import csv
+from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
-from bs4 import BeautifulSoup
-import re
-import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('pendryhotels_com')
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgpostal.sgpostal import USA_Best_Parser, parse_address
 
 
+def fetch_data(sgw: SgWriter):
 
-
-
-
-session = SgRequests()
-
-def write_output(data):
-    with open('data.csv', mode='w', encoding="utf-8") as output_file:
-        writer = csv.writer(output_file, delimiter=',',
-                            quotechar='"', quoting=csv.QUOTE_ALL)
-
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    return_main_object = []
-    addresses = []
-
-
-
+    locator_domain = "https://www.pendry.com/"
+    api_url = "https://www.pendry.com/"
+    session = SgRequests()
     headers = {
-        'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.90 Safari/537.36',
-        "accept": "application/json, text/javascript, */*; q=0.01",
-        # "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
+    r = session.get(api_url, headers=headers)
+    tree = html.fromstring(r.text)
+    div = tree.xpath('//h2[text()="Hotels & Resorts"]/following-sibling::ul[1]/li/a')
+    for d in div:
 
-    # it will used in store data.
-   
-    locator_domain = "https://pendryhotels.com"
-    location_name = ""
-    street_address = "<MISSING>"
-    city = "<MISSING>"
-    state = "<MISSING>"
-    zipp = "<MISSING>"
-    country_code = "US"
-    store_number = "<MISSING>"
-    phone = "<MISSING>"
-    location_type = "<MISSING>"
-    latitude = "<MISSING>"
-    longitude = "<MISSING>"
-    raw_address = ""
-    hours_of_operation = "<MISSING>"
-    page_url = "<MISSING>"
-
-    r = session.get('https://www.pendry.com/',headers = headers)
-    soup = BeautifulSoup(r.text,'lxml')
-    info = soup.find('div',{'class':'menu-pendry'}).find('div',class_='col-md-4 order-md-5 menu-pendry__column-outer')
-    for a in info.find_all('a'):
-        # logger.info(a['href'])
-        r_loc = session.get(a['href'],headers = headers)
-        soup_loc =BeautifulSoup(r_loc.text,'lxml')
-        loc = soup_loc.find('span',class_= 'page-footer__address page-footer__address--small')
-        list_loc = list(loc.stripped_strings)
-        if list_loc != []:
-            page_url = a['href'].strip()
-            phone = list_loc[0].replace('Tel:','').strip()
-            address = list_loc[-1].split(',')
-            street_address = address[0].strip()
-            city = address[1].strip()
-            location_name =city
-            # logger.info(location_name)
-            if len(address) >3:
-
-                state = address[2].strip()
-                zipp= address[-1].strip()
+        page_url = "".join(d.xpath(".//@href"))
+        r = session.get(page_url, headers=headers)
+        tree = html.fromstring(r.text)
+        ad = (
+            " ".join(
+                tree.xpath(
+                    '//span[@class="page-footer__address page-footer__address--small"]/a[contains(@href, "maps")]/text()'
+                )
+            )
+            or "<MISSING>"
+        )
+        if ad == "<MISSING>":
+            continue
+        a = parse_address(USA_Best_Parser(), ad)
+        street_address = f"{a.street_address_1} {a.street_address_2}".replace(
+            "None", ""
+        ).strip()
+        state = a.state or "<MISSING>"
+        postal = a.postcode or "<MISSING>"
+        country_code = "US"
+        city = a.city or "<MISSING>"
+        location_name = "Pendry " + city
+        text = "".join(tree.xpath('//a[contains(@href, "maps")]/@href'))
+        try:
+            if text.find("ll=") != -1:
+                latitude = text.split("ll=")[1].split(",")[0]
+                longitude = text.split("ll=")[1].split(",")[1].split("&")[0]
             else:
+                latitude = text.split("@")[1].split(",")[0]
+                longitude = text.split("@")[1].split(",")[1]
+        except IndexError:
+            latitude, longitude = "<MISSING>", "<MISSING>"
+        phone = (
+            "".join(
+                tree.xpath(
+                    '//span[@class="page-footer__address page-footer__address--small"]/a[contains(@href, "tel")][1]/text()'
+                )
+            )
+            or "<MISSING>"
+        )
 
-                state = address[-1].split()[0].strip()
-                zipp = address[-1].split()[-1].strip()
-            # logger.info(city,zipp,state,street_address)
-            latitude = loc.find('a')['href'].split('@')[-1].split(',')[0].strip()
-            longitude = loc.find('a')['href'].split('@')[-1].split(',')[1].strip()
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=SgRecord.MISSING,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=SgRecord.MISSING,
+            raw_address=ad,
+        )
 
-            store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
-                     store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
-            store = ["<MISSING>" if x == "" or x == None  else x for x in store]
-
-            #logger.info("data = " + str(store))
-            #logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-
-            return_main_object.append(store)
-
-
-
-
-
-    return return_main_object
-
+        sgw.write_row(row)
 
 
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+if __name__ == "__main__":
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))) as writer:
+        fetch_data(writer)

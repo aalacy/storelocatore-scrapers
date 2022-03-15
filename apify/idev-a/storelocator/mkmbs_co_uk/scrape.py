@@ -1,130 +1,140 @@
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 from urllib.parse import urljoin
 import json
-import re
-import copy
+from sglogging import SgLogSetup
+from sgselenium import SgChrome
+import time
+import ssl
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.common.by import By
 
-_headers = {
-    "accept": "*/*",
-    "accept-encoding": "gzip, deflate, br",
-    "accept-language": "en-US,en;q=0.5",
-    "referer": "https://www.mkmbs.co.uk/",
-    "origin": "https://www.mkmbs.co.uk",
-    "Content-Type": "application/json",
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.182 Safari/537.36",
-}
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
-_payload = {
-    "latitude": "51.5073509",
-    "longitude": "-0.1277583",
-    "statuses": ["live"],
-    "services": ["collection", "delivery"],
-    "page_size": "150",
-}
-
-locations = []
-maps = []
-
-
-def branch_path(data, schema):
-    global locations
-    for element, val in data.items():
-        if isinstance(val, dict):
-            branch_path(val, schema)
-        elif isinstance(val, list):
-            for item in val:
-                if item.get("_meta") and item["_meta"]["schema"] == schema:
-                    locations.append(item)
-                else:
-                    branch_path(item, schema)
+logger = SgLogSetup().get_logger("mkmbs")
+locator_domain = "https://www.mkmbs.co.uk/"
+base_url = "https://www.mkmbs.co.uk/mobify/proxy/base/"
 
 
-def map_path(data, schema):
-    global maps
-    for element, val in data.items():
-        if isinstance(val, dict):
-            map_path(val, schema)
-        elif isinstance(val, list):
-            for item in val:
-                if item.get("_meta") and item["_meta"]["schema"] == schema:
-                    maps.append(item)
-                else:
-                    map_path(item, schema)
+def _d(page_url, link, addr, hours, phone):
+    return SgRecord(
+        page_url=page_url,
+        location_name=link["name"],
+        street_address=" ".join(addr[:-3]),
+        city=addr[-3],
+        state=addr[-2],
+        zip_postal=addr[-1],
+        country_code="uk",
+        latitude=link["latitude"],
+        longitude=link["longitude"],
+        phone=link["phone"] or phone,
+        locator_domain=locator_domain,
+        hours_of_operation="; ".join(hours),
+    )
 
 
-def _fix(original):
-    regex = re.compile(r'\\(?![/u"])')
-    return regex.sub(r"\\\\", original)
+def _h(temp):
+    hours = []
+    for hh in temp:
+        if "open" in hh.lower():
+            continue
+        hours.append(hh)
+    return hours
+
+
+def _ah(sp1, driver, idx=0):
+    addr = []
+    hours = []
+    phone = ""
+
+    if len(sp1.select("div#address-box")):
+        addr = [el.text for el in sp1.select("div#address-box")[idx].select("p")]
+        hours = [
+            hh.text.strip()
+            for hh in sp1.select("div.opening-hours-section")[idx].select("p")
+        ]
+    if not addr:
+        while True:
+            time.sleep(2)
+            logger.info("-- sleep --")
+            if len(driver.find_elements_by_xpath('//div[@id="address-box"]')):
+                addr = [
+                    el.text
+                    for el in driver.find_elements_by_xpath('//div[@id="address-box"]')[
+                        idx
+                    ].find_elements_by_xpath(".//p")
+                ]
+                hours = [
+                    hh.text.strip()
+                    for hh in driver.find_elements_by_xpath(
+                        '//div[@class="opening-hours-section"]'
+                    )[idx].find_elements_by_xpath(".//p")
+                ]
+            if addr:
+                break
+
+    if sp1.select_one("div#phone-box a"):
+        phone = sp1.select_one("div#phone-box a").text.strip()
+
+    return addr, _h(hours), phone
 
 
 def fetch_data():
-    global maps
-    global locations
-
-    with SgRequests() as session:
-        locator_domain = "https://www.mkmbs.co.uk/"
-        base_url = "https://www.mkmbs.co.uk/mobify/proxy/base/services/branchservices.asmx/searchbranches"
-        res = session.post(base_url, headers=_headers, json=_payload)
-        links = json.loads(res.text)["branch_list"]
+    with SgChrome() as driver:
+        driver.get(base_url)
+        links = json.loads(
+            bs(driver.page_source, "lxml")
+            .select_one("div#mobify_branchdata")
+            .text.replace("&quot;", '"')
+        )["branch_list"]
+        logger.info(f"{len(links)} found")
         for link in links:
+            if link["status"] == "pre-live":
+                continue
             location_name = link["name"]
             url = "-".join(location_name.split(" ")[1:]).lower()
             page_url = urljoin(
                 locator_domain,
                 f"branch/{url}",
             )
-            r1 = session.get(page_url)
-            soup = bs(r1.text, "lxml")
-
-            locations = []
-            maps = []
-            graphql = json.loads(
-                _fix(
-                    soup.find(
-                        "script", string=re.compile("window.__PRELOADED_STATE__=")
-                    ).string.replace("window.__PRELOADED_STATE__=", "")
+            logger.info(page_url)
+            driver.get(page_url)
+            WebDriverWait(driver, 10).until(
+                EC.presence_of_element_located(
+                    (
+                        By.XPATH,
+                        '//div[@id="address-box"]',
+                    )
                 )
             )
-            branch_schema = "https://www.mkmbs.co.uk/schema/branchinfo"
-            branch_path(graphql["data"]["amplienceReducer"], branch_schema)
-            map_schema = "https://www.mkmbs.co.uk/schema/map"
-            map_path(graphql["data"]["amplienceReducer"], map_schema)
-
-            _locations = copy.copy(locations)
-            _maps = copy.copy(maps)
-            for x in range(len(_locations)):
-                location = _locations[x]
-                coord = _maps[x]
-                street_address = (
-                    f"{location['addressLineOne']} {location.get('addressLineTwo', '')}"
-                )
-                city = location["townOrCity"]
-                zip = location["postcode"]
-                phone = location["phoneNumber"]
-                hours_of_operation = (
-                    location["openingHours"].replace("\\n\\n", "; ").replace("**", "")
-                )
-                yield SgRecord(
-                    page_url=page_url,
-                    store_number=link["id"],
-                    location_name=location_name,
-                    street_address=street_address,
-                    city=city,
-                    zip_postal=zip,
-                    country_code="uk",
-                    latitude=coord.get("latitude"),
-                    longitude=coord.get("longitude"),
-                    phone=phone,
-                    locator_domain=locator_domain,
-                    hours_of_operation=hours_of_operation,
-                )
+            sp1 = bs(driver.page_source, "lxml")
+            if sp1.select(".grid-container-desktop"):
+                containers = [
+                    co
+                    for co in sp1.select(".grid-container-desktop")
+                    if co.select("div#address-box")
+                ]
+                for idx, _ in enumerate(containers):
+                    addr, hours, phone = _ah(sp1, driver, idx)
+                    yield _d(page_url, link, addr, hours, phone)
+            else:
+                addr, hours, phone = _ah(sp1, driver)
+                yield _d(page_url, link, addr, hours, phone)
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

@@ -1,209 +1,191 @@
-import requests
-from bs4 import BeautifulSoup
+import re
 import csv
-import string
-import re, time
-import usaddress
-
+import json
+from bs4 import BeautifulSoup as bs
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('jinya-ramenbar_com')
+from sglogging import sglog
 
 
+DOMAIN = "jinya-ramenbar.com"
+BASE_URL = "https://jinya-ramenbar.com"
+LOCATION_URL = "http://jinya-ramenbar.com/locations/"
+HEADERS = {
+    "Accept": "application/json, text/plain, */*",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
+}
+log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
 
 session = SgRequests()
-headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
-           }
+
 
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
+    log.info("Write Output of " + DOMAIN)
+    with open("data.csv", mode="w") as output_file:
+        writer = csv.writer(
+            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+        )
         # Header
-        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(
+            [
+                "locator_domain",
+                "page_url",
+                "location_name",
+                "street_address",
+                "city",
+                "state",
+                "zip",
+                "country_code",
+                "store_number",
+                "phone",
+                "location_type",
+                "latitude",
+                "longitude",
+                "hours_of_operation",
+            ]
+        )
         # Body
         for row in data:
             writer.writerow(row)
 
 
-def fetch_data():
-    # Your scraper here
-    data = []
-    
-    url = 'http://jinya-ramenbar.com/locations/'
-    r = session.get(url, headers=headers, verify=False)
-  
-    soup =BeautifulSoup(r.text, "html.parser")
-   
-    repo_list = soup.findAll('script', {'type': 'text/javascript'})
-    
-    logger.info("link = ",len(repo_list))
-    p = 0
-    detail = str(repo_list[1].text)
-    start = 0
-    while True:
-        start = detail.find('"url"',start)
-        if start > -1:
-            start = detail.find(":",start) + 2
-            end = detail.find(",",start)-1
-            link = detail[start:end]
-            link =  link.replace('\\','')
-            link = "http://jinya-ramenbar.com"+link              
-            start = end
-            start = detail.find('"shopname"',start)
-            start = detail.find(":",start) + 2
-            end = detail.find(",",start)-1
-            title = detail[start:end]                         
-            start = end
-            #logger.info(title)
-            if title.lower().find('coming soon') == -1:
-                start = detail.find('"lat"',start)
-                start = detail.find(":",start) +1 
-                end = detail.find(",",start)
-                lat = str(detail[start:end])                
-                start = end
-                if lat == 'null':
-                    lat = "<MISSING>"
-                start = detail.find('"lng"',start)
-                start = detail.find(":",start) +1 
-                end = detail.find(",",start)
-                longt = str(detail[start:end])                
-                start = end
-                if longt == 'null':
-                    longt = "<MISSING>"
-                start = detail.find('"address"',start)
-                start = detail.find(":",start) + 2
-                end = detail.find("tel",start)-2
-                address= detail[start:end-1]
-                address = address.replace('\n','')
-                address = address.lstrip()
-                #logger.info(address)
-                street = ""
-                city = ""
-                state = ""
-                pcode = ""
-                ccode =''
-                if address.lower().find('canada') == -1:
-                    address = usaddress.parse(address)
-                    i = 0
-                    ccode = 'US'
-                    while i < len(address):
-                        temp = address[i]
-                        if temp[1].find("Address") != -1 or temp[1].find("Street") != -1 or temp[1].find("Recipient") != -1 or \
-                                temp[1].find("BuildingName") != -1 or temp[1].find("USPSBoxType") != -1 or temp[1].find(
-                            "USPSBoxID") != -1:
-                            street = street + " " + temp[0]
-                        if temp[1].find("PlaceName") != -1:
-                            city = city + " " + temp[0]
-                        if temp[1].find("StateName") != -1:
-                            state = state + " " + temp[0]
-                        if temp[1].find("ZipCode") != -1:
-                            pcode = pcode + " " + temp[0]
-                        i += 1
-                else:
-                    mstart = 0
-                    mend = address.find(',',mstart)
-                    street = address[mstart:mend]
-                    mstart = mend + 1
-                    if street.find('Vancouver') == -1:
-                        mend = address.find(',',mstart)
-                        city = address[mstart:mend]
-                        mstart = mend + 1
-                    else:
-                        street = street.replace('Vancouver','')
-                        city = 'Vancouver'
-                    address = address[mstart:address.find('Canada')].lstrip()
-                    if address.lower().find('british columbia') == -1:
-                        state = address[0:address.find(' ')]
-                        pcode = address[address.find(' ')+1:len(address)-1]
-                    else:
-                        state = 'BC'
-                        address = address.replace('British Columbia','')
-                        pcode = address.lstrip()
-                    ccode = 'CA'
-                    
-                    
-                city = city.lstrip()
-                city = city.replace(",",'')
-                street = street.replace(",",'')
-                street = street.lstrip()
-                state = state.lstrip()
-                pcode = pcode.lstrip()
-                if state == 'Washington':
-                    state = 'WA'
+def pull_content(url):
+    log.info("Pull content => " + url)
+    soup = bs(session.get(url, headers=HEADERS).content, "lxml")
+    return soup
 
-                if len(city) < 2:
-                    city = "<MISSING>"
-                if len(street) < 2:
-                    street = "<MISSING>"
-                if len(state) < 2:
-                    state = "<MISSING>"
-                if len(pcode) < 2:
-                    pcode = "<MISSING>"
-                start = end                
-                start = detail.find('"tel"',start)
-                start = detail.find(":",start) + 2
-                end = detail.find(",",start)-1
-                phone= detail[start:end]
-                if phone.find('\\') > -1:
-                    phone = phone[0:phone.find('\\')]
-                if len(phone) < 2:
-                    phone  = "<MISSING>"
-                start = end
-                start = detail.find('"hours"',start)
-                start = detail.find(":",start) + 2
-                end = detail.find(",",start)-1
-                hours= detail[start:end]
-                hours = hours.replace('\\r','')
-                hours = hours.replace('\\n',' ')
-                hours = hours.replace('<br \\/> ',' ')
-                hours = hours.replace('am',' am')
-                hours = hours.replace('pm',' pm')
-                hours = hours.replace('\\','')
-                if hours.find('2019') > -1:
-                    hours = hours[0:hours.find('2019')]
-                    hours = hours.rstrip()
-                start = end
-                if len(phone) < 2:
-                    phone= "<MISSING>"
-                if len(hours) < 2:
-                    hours = "<MISSING>"
-                state = state.replace(',','')
-                pcode = pcode.replace(',','')
-                city = city.replace(',','')
-                data.append([
-                            'http://jinya-ramenbar.com/',
-                            link,                   
-                            title,
-                            street,
-                            city,
-                            state,
-                            pcode,
-                            ccode,
-                            "<MISSING>",
-                            phone,
-                            "<MISSING>",
-                            lat,
-                            longt,
-                            hours])
-                #logger.info(p,data[p])
-                p += 1
-                
-                
-        else:
-            break
-        
-                
-            
-        
+
+def handle_missing(field):
+    if field is None or (isinstance(field, str) and len(field.strip()) == 0):
+        return "<MISSING>"
+    return field.strip()
+
+
+def parse_json(soup, js_variable):
+    pattern = re.compile(r"var\s+" + js_variable)
+    script = soup.find("script", text=pattern)
+    if script:
+        parse = re.search(
+            r".*data\.push\((.*)\).*//Markers", script.string, re.MULTILINE | re.DOTALL
+        ).group(1)
+    else:
+        return False
+    parse = (
+        parse.replace("//Latitude", "")
+        .replace("//URL", "")
+        .replace("//longitude", "")
+        .replace("lat", '"lat"')
+        .replace("lng", '"lng"')
+        .replace("url", '"url"')
+    )
+    parse = re.sub(r"\s+", "", parse).replace("'", '"')
+    parse = re.sub(r",$", "", parse)
+    data = json.loads("[" + parse + "]")
     return data
 
 
+def fetch_store_urls():
+    log.info("Fetching store URL")
+    store_urls = []
+    soup = pull_content(LOCATION_URL)
+    lat_long = parse_json(soup, "latlng")
+    stores = soup.find_all(
+        "a",
+        {
+            "class": "loc_btn btn",
+            "href": re.compile(r"https\:\/\/www\.jinyaramenbar\.com\/locations\/"),
+        },
+    )
+    for store in stores:
+        link = store["href"]
+        if "tustin-2/" not in link:
+            for val in lat_long:
+                if val["url"] == link:
+                    data = {"url": link, "lat": val["lat"], "lng": val["lng"]}
+                    store_urls.append(data)
+    log.info("Found {} URL ".format(len(store_urls)))
+    return store_urls
+
+
+def get_address(address, city):
+    street_address = handle_missing(
+        re.sub(
+            city + ".*",
+            "",
+            address,
+            flags=re.IGNORECASE,
+        )
+    )
+    return street_address
+
+
+def fetch_data():
+    log.info("Fetching store_locator data")
+    store_urls = fetch_store_urls()
+    locations = []
+    for store in store_urls:
+        page_url = store["url"]
+        soup = pull_content(page_url)
+        row = soup.find("div", {"id": "main_contents"})
+        locator_domain = DOMAIN
+        location_name = handle_missing(row.find("h1").text.strip())
+        address = (
+            row.find("div", {"class": "loc_details"})
+            .get_text(strip=True, separator=",")
+            .split(",")
+        )
+        location_type = "OPEN"
+        if "(Coming Soon)" in location_name:
+            location_name = location_name.replace("(Coming Soon)", "")
+            location_type = "COMING_SOON"
+        if "Downtown LA" in location_name:
+            street_address = get_address(address[0], "Los Angeles")
+            city = "Los Angeles"
+        else:
+            city = handle_missing(location_name.split("|")[0].strip())
+            street_address = get_address(address[0], city)
+        state = handle_missing(address[1].strip()[:2])
+        zip_code = handle_missing(address[1].strip().replace(state, ""))
+        country_code = "US" if len(zip_code) <= 5 else "CA"
+        store_number = "<MISSING>"
+        if len(address) > 2:
+            phone = handle_missing(address[2])
+            if len(address) >= 4:
+                hours_of_operation = ", ".join(address[3:])
+            else:
+                hours_of_operation = "<MISSING>"
+        else:
+            phone = "<MISSING>"
+            hours_of_operation = "<MISSING>"
+        latitude = handle_missing(store["lat"])
+        longitude = handle_missing(store["lng"])
+        log.info("Append {} => {}".format(location_name, street_address))
+        locations.append(
+            [
+                locator_domain,
+                page_url,
+                location_name,
+                street_address,
+                city,
+                state,
+                zip_code,
+                country_code,
+                store_number,
+                phone,
+                location_type,
+                latitude,
+                longitude,
+                hours_of_operation,
+            ]
+        )
+    return locations
+
+
 def scrape():
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    log.info("Start {} Scraper".format(DOMAIN))
     data = fetch_data()
+    log.info("Found {} locations".format(len(data)))
     write_output(data)
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    log.info("Finish processed " + str(len(data)))
+
 
 scrape()

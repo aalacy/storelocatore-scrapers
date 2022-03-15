@@ -1,93 +1,126 @@
-import csv
+from sglogging import sglog
 from sgrequests import SgRequests
-from bs4 import BeautifulSoup
-import re
-import json
-from sglogging import SgLogSetup
+from bs4 import BeautifulSoup as bs
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import SgRecordID
+from sgpostal.sgpostal import parse_address_intl
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-logger = SgLogSetup().get_logger('pksa_com')
 
+DOMAIN = "pksa.com"
+BASE_URL = "https://www.pksa.com"
+LOCATION_URL = "https://www.pksa.com/locations"
+HEADERS = {
+    "Accept": "application/json, text/plain, */*",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
+}
+MISSING = "<MISSING>"
+log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
 
 session = SgRequests()
-def write_output(data):
-    with open('data.csv', mode='w',encoding="utf-8", newline = "") as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
-        # Body
-        for row in data:
-            writer.writerow(row)
+
+def getAddress(raw_address):
+    try:
+        if raw_address is not None and raw_address != MISSING:
+            raw_address = raw_address.replace(", Website", "")
+            data = parse_address_intl(raw_address)
+            street_address = data.street_address_1
+            if data.street_address_2 is not None:
+                street_address = street_address + " " + data.street_address_2
+            city = data.city
+            state = data.state
+            zip_postal = data.postcode
+
+            if street_address is None or len(street_address) == 0:
+                street_address = MISSING
+            if city is None or len(city) == 0:
+                city = MISSING
+            if state is None or len(state) == 0:
+                state = MISSING
+            if zip_postal is None or len(zip_postal) == 0:
+                zip_postal = MISSING
+            return street_address, city, state, zip_postal
+    except Exception as e:
+        log.info(f"No valid address {e}")
+        pass
+    return MISSING, MISSING, MISSING, MISSING
+
+
+def pull_content(url):
+    log.info("Pull content => " + url)
+    soup = bs(session.get(url, headers=HEADERS).content, "lxml")
+    return soup
+
 
 def fetch_data():
-    addressess = []
-    headers = {
-    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
-    }
-    base_url = "https://pksa.com"
-    r = session.get("https://pksa.com/franchise/pksa-locations",headers=headers)
-    soup = BeautifulSoup(r.text,"lxml")
-    # https://pksa.com/grand-blanc
-    for location in soup.find_all("h4",{"class":'heading-primary'}):
-        try:
-            page_url = "https://pksa.com"+(location.find("a")['href'])
-        except:
-            continue
-        # logger.info(page_url)
-        r = session.get(page_url,headers=headers)
-        soup = BeautifulSoup(r.text,"lxml")
-        data = (soup.find("div",{"class":"left-footer"}))
-        addr = (list(data.stripped_strings)[-1]).replace("(Inside Immanuel Lutheran Church & School)",'Macomb, MI 48044')
-        city = addr.split(",")[0]
-        try:
-            state =addr.split(",")[1].strip().split(" ")[0]
-            zipp = addr.split(",")[1].strip().split(" ")[-1]
-        except:
-            state = "<MISSING>"
-            zipp = "<MISSING>"
-        location_name = (list(data.stripped_strings)[0])
-        if location_name == "PKSA Karate Bloomfield":
-            street_address = (list(data.stripped_strings)[2])
+    log.info("Fetching store_locator data")
+    soup = pull_content(LOCATION_URL)
+    store_info = soup.find_all("div", {"role": "gridcell"})
+    for row in store_info:
+        info = (
+            row.find("p", {"class": "font_2"})
+            .get_text(strip=True, separator="@")
+            .replace("\n\t\t", ",")
+            .strip()
+        ).split("@")
+        if "Website" in info[-1]:
+            del info[-1]
+        if "Phone" in info[-1]:
+            phone = info[-1].replace("Phone:", "")
+            raw_address = " ".join(info[:-1])
         else:
-            street_address = (list(data.stripped_strings)[1]).replace("(Located in Highland Acres Church of God Gym)\n            ","")
-        try:
-            phone = soup.find("div",{"class":"right-footer"}).find("span",{"title":"Call with Google Voice"}).text
-        except:
-            phone = soup.find("span",{"title":"Call with Google Voice"}).text
-        geo_data = str(soup).split("map = new google.maps.Map(mapnode, { zoom: 15, center: {")[1].split("} }); var marker")[0].split(",")
-        latitude = geo_data[0].replace("lat: ","")
-        longitude = geo_data[1].replace(" lng: ","")
-        hours_of_operation = "<MISSING>"
-        if "PKSA Karate Midland" in location_name:
-            state = "MI"
-            zipp = "48640"
-            city = city.replace(zipp,"").replace(state,"")
-        if "PKSA Karate Detroit" in location_name:
-            street_address = "3627C Cass Ave"
-        if "PKSA Karate Holland" in location_name:
-            street_address = "3006 West Shore Dr, Ste 30"
-        store = []
-        store.append(base_url)
-        store.append(location_name)
-        store.append(street_address.replace("3627CCass Ave","3627C Cass Ave"))
-        store.append(city)
-        store.append(state)
-        store.append(zipp)
-        store.append("US")
-        store.append("<MISSING>")
-        store.append(phone)
-        store.append("PKSA Karate")
-        store.append(latitude)
-        store.append(longitude.replace("lng:-83.335008","-83.335008"))
-        store.append(hours_of_operation)
-        store.append(page_url)
-        store = [str(x).strip() if x else "<MISSING>" for x in store]
-        if store[2] in addressess:
-            continue
-        addressess.append(store[2])
-        yield store
+            phone = MISSING
+            raw_address = " ".join(info)
+        if "Phone" in raw_address:
+            raw_address = raw_address.split("Phone")[0]
+        location_name = row.find("h4").text.replace("\n", " ")
+        street_address, city, state, zip_postal = getAddress(raw_address)
+        hours_of_operation = MISSING
+        store_number = MISSING
+        country_code = "US"
+        location_type = "US LOCATION"
+        if "India" in location_name:
+            country_code = "INDIA"
+            location_type = "INDIA LOCATION"
+        latitude = MISSING
+        longitude = MISSING
+        log.info("Append {} => {}".format(location_name, street_address))
+        yield SgRecord(
+            locator_domain=DOMAIN,
+            page_url=LOCATION_URL,
+            location_name=location_name,
+            street_address=street_address.strip(),
+            city=city.strip(),
+            state=state.strip(),
+            zip_postal=zip_postal.strip(),
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone.strip(),
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+            raw_address=raw_address,
+        )
+
+
 def scrape():
-    # fetch_data()
-    data = fetch_data()
-    write_output(data)
+    log.info("start {} Scraper".format(DOMAIN))
+    count = 0
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID({SgRecord.Headers.PAGE_URL, SgRecord.Headers.STREET_ADDRESS})
+        )
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
+
+
 scrape()

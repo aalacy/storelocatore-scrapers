@@ -39,6 +39,8 @@ def fetch_data():
             if location_name == "Santa Barbara":
                 city = location_name
                 state = "CA"
+            elif location_name == "Yakima":
+                location_name += "(Coming Soon)"
             try:
                 phone = store.select_one("a div.card-text > p").string
             except:

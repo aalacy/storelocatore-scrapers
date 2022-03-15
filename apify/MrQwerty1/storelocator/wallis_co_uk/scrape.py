@@ -49,7 +49,8 @@ def fetch_data():
             a = j.get("address")
             locator_domain = url
             street_address = (
-                f"{a.get('line1')} {a.get('line2') or ''}".strip() or "<MISSING>"
+                f"{a.get('line1')} {a.get('line2') or ''}".replace("c/o ", "").strip()
+                or "<MISSING>"
             )
             city = a.get("city") or "<MISSING>"
             location_name = f"{j.get('name')} {j.get('geomodifier')}"

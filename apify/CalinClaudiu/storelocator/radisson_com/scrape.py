@@ -1,63 +1,188 @@
-from sgscrape.simple_scraper_pipeline import SimpleScraperPipeline
-from sgscrape.simple_scraper_pipeline import ConstantField
-from sgscrape.simple_scraper_pipeline import MappingField
-from sgscrape.simple_scraper_pipeline import MissingField
-from sgscrape import simple_network_utils as net_utils
-from sgscrape import simple_utils as utils
-import json
+from sgscrape import simple_scraper_pipeline as sp
 from sglogging import sglog
-from sgrequests import SgRequests
+from bs4 import BeautifulSoup as b4
+from sgrequests.sgrequests import SgRequests
+import json
+import time
+from sgscrape.pause_resume import CrawlStateSingleton
+from tenacity import retry, wait_random, stop_after_attempt
 
-logzilla = sglog.SgLogSetup().get_logger(logger_name="Radisson fam")
+# Major code change
+
+EXPECTED_TOTAL = 0
+logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
 
 
-def para(tup):
+@retry(wait=wait_random(min=1, max=3), stop=(stop_after_attempt(5)))  # noqa
+def get_main(url, headers, session):
+    response = session.get(url, headers=headers)
+    return response.json()
+
+
+def no_json(soup):
+    soup = b4(soup, "lxml")
     k = {}
-    headers = {
-        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
-    }
+    k["mainEntity"] = {}
+    k["mainEntity"]["address"] = {}
     try:
-        if len(tup[1]) > 0:
-            k = json.loads(
+        address = soup.find(
+            "span",
+            {"class": lambda x: x and all(i in x for i in ["item-info", "t-address"])},
+        ).text.strip()
+    except Exception:
+        address = "<MISSING>"
+
+    try:
+        telephone = soup.find(
+            "span",
+            {"class": lambda x: x and all(i in x for i in ["item-info", "t-phone"])},
+        ).text.strip()
+    except Exception:
+        telephone = "<MISSING>"
+
+    try:
+        city = soup.find("span", {"class": "t-city"})
+    except Exception:
+        city = "<MISSING>"
+
+    try:
+        state = soup.find("span", {"class": "t-state"})
+    except Exception:
+        state = "<MISSING>"
+
+    try:
+        zipcode = soup.find("span", {"class": "t-zip"})
+    except Exception:
+        zipcode = "<MISSING>"
+
+    try:
+        country = soup.find("span", {"class": "t-country"})
+    except Exception:
+        country = "<MISSING>"
+
+    k["mainEntity"]["address"]["streetAddress"] = address
+    k["mainEntity"]["address"]["telephone"] = []
+    k["mainEntity"]["address"]["telephone"].append(telephone)
+    k["mainEntity"]["address"]["addressLocality"] = city
+    k["mainEntity"]["address"]["addressRegion"] = state
+    k["mainEntity"]["address"]["postalCode"] = zipcode
+    k["mainEntity"]["address"]["addressCountry"] = country
+    return k
+
+
+def fetch_data(index: int, url: str, headers, session) -> dict:
+    data = {}
+    if len(url) > 0:
+        try:
+            response = session.get(url, headers=headers)
+            soup = b4(response.text, "lxml")
+            logzilla.info(f"URL\n{url}\nLen:{len(response.text)}\n")
+            if len(response.text) < 400:
+                logzilla.info(f"Content\n{response.text}\n\n")
+        except Exception as e:
+            logzilla.error(f"err\n{str(e)}\nUrl:{url}\n\n")
+
+        try:
+            data = json.loads(
                 str(
-                    next(
-                        net_utils.fetch_xml(
-                            root_node_name="body",
-                            location_node_name="script",
-                            location_node_properties={
-                                "type": "application/ld+json",
-                                "id": "schema-webpage",
-                            },
-                            request_url=tup[1],
-                            headers=headers,
-                        )
-                    )["script type=application/ld+json id=schema-webpage"]
+                    soup.find(
+                        "script",
+                        {"type": "application/ld+json", "id": "schema-webpage"},
+                    ).text
                 )
                 .replace("\u0119", "e")
                 .replace("\u011f", "g")
                 .replace("\u0144", "n")
                 .replace("\u0131", "i"),
                 strict=False,
-            )  # ['script type=application/ld+json']).rsplit(';',1)[0])
-            k["STATUS"] = True
-        else:
-            k["requrl"] = "<MISSING>"
-            k["index"] = tup[0]
-            k["STATUS"] = True
-    except Exception as e:
-        if "Bad status code: 404" not in str(e):
-            raise Exception
-        else:
-            k = {}
-            k["STATUS"] = False
+            )
+        except Exception:
+            try:
+                data = no_json(response.text)
+            except Exception:
+                data = {}
+        data["index"] = index
+        data["requrl"] = url
+        data["STATUS"] = True
+    else:
+        data["index"] = index
+        data["requrl"] = "<MISSING>"
+        data["STATUS"] = False
+    return data
 
-    k["index"] = tup[0]
-    k["requrl"] = tup[1]
-    return k
+
+def get_brand2(brand_code, brand_name, url, url2, session):
+    headers = {}
+    headers["accept"] = "application/json, text/plain, */*"
+    headers["accept-encoding"] = "gzip, deflate, br"
+    headers["accept-language"] = "en-us"
+    headers["cache-control"] = "no-cache"
+    headers["pragma"] = "no-cache"
+    headers["referer"] = str(url) + "/en-us/destination"
+    headers[
+        "sec-ch-ua"
+    ] = '" Not A;Brand";v="99", "Chromium";v="99", "Google Chrome";v="99"'
+    headers["sec-ch-ua-mobile"] = "?0"
+    headers["sec-ch-ua-platform"] = '"Windows"'
+    headers["sec-fetch-dest"] = "empty"
+    headers["sec-fetch-mode"] = "cors"
+    headers["sec-fetch-site"] = "same-origin"
+    headers[
+        "user-agent"
+    ] = "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.51 Safari/537.36"
+    son = get_main(str(url + url2 + brand_code), headers, session)
+    results = []
+    total_records = len(son["hotels"])
+    global EXPECTED_TOTAL
+    EXPECTED_TOTAL += total_records
+    for index, record in enumerate(son["hotels"]):
+        z = fetch_data(index, record["overviewPath"], headers, session)
+        results.append(
+            {
+                "main": son["hotels"][z["index"]],
+                "sub": z,
+                "@type": brand_name,
+            }
+        )
+    return results
+
+
+def get_brand(brand_code, brand_name, url, url2, session):
+
+    headers = {}
+    headers["authority"] = str(url).replace("https://", "")
+    headers["method"] = "GET"
+    headers["path"] = "/zimba-api/destinations/hotels?brand=" + brand_code
+    headers["scheme"] = "https"
+    headers["accept"] = "application/json, text/plain, */*"
+    headers["accept-encoding"] = "gzip, deflate, br"
+    headers["accept-language"] = "en-us"
+    headers["referer"] = str("{}/en-us/destination").format(url)
+    headers["sec-fetch-dest"] = "empty"
+    headers["sec-fetch-mode"] = "cors"
+    headers["sec-fetch-site"] = "same-origin"
+    headers[
+        "user-agent"
+    ] = "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36"
+
+    son = get_main(str(url + url2 + brand_code), headers, session)
+    results = []
+    total_records = len(son["hotels"])
+    global EXPECTED_TOTAL
+    EXPECTED_TOTAL += total_records
+    for index, record in enumerate(son["hotels"]):
+        z = fetch_data(index, record["overviewPath"], headers, session)
+        results.append(
+            {
+                "main": son["hotels"][z["index"]],
+                "sub": z,
+                "@type": brand_name,
+            }
+        )
+    return results
 
 
 def clean_record(k):
-
     try:
         k["sub"] = k["sub"]
     except Exception:
@@ -170,175 +295,200 @@ def clean_record(k):
     return k
 
 
-def get_brand(brand, humanBrand):
-    logzilla.info(f"Selected brand: {brand}")
-    # Brand selector
-    url = "https://www.radissonhotels.com/zimba-api/destinations/hotels?brand=" + brand
-
-    headers = {}
-    headers["authority"] = "www.radissonhotels.com"
-    headers["method"] = "GET"
-    headers["path"] = "/zimba-api/destinations/hotels?brand=" + brand
-    headers["scheme"] = "https"
-    headers["accept"] = "application/json, text/plain, */*"
-    headers["accept-encoding"] = "gzip, deflate, br"
-    headers["accept-language"] = "en-us"
-    headers["referer"] = "https://www.radissonhotels.com/en-us/destination"
-    headers["sec-fetch-dest"] = "empty"
-    headers["sec-fetch-mode"] = "cors"
-    headers["sec-fetch-site"] = "same-origin"
-    headers[
-        "user-agent"
-    ] = "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36"
-
-    session = SgRequests()
-    resp = session.get(url, headers=headers).json()
-    son = []
-    son.append(resp)
+def start():
+    state = CrawlStateSingleton.get_instance()
+    urlA = "https://www.radissonhotelsamericas.com"
+    urlB = "https://www.radissonhotels.com"
+    url2 = "/zimba-api/destinations/hotels?brand="
+    brandsA = state.get_misc_value(
+        "brandsA",
+        default_factory=lambda: [
+            {"code": "pii", "name": "Park Inn by Radisson", "done": False},
+            {"code": "rdb", "name": "Radisson Blu", "done": False},
+            {"code": "rdr", "name": "Radisson RED", "done": False},
+            {"code": "art", "name": "art'otel", "done": False},
+            {"code": "rad", "name": "Radisson", "done": False},
+            {"code": "ri", "name": "Radisson Individuals", "done": False},
+            {"code": "ry", "name": "I have no clue", "done": False},
+            {"code": "prz", "name": "prizeotel", "done": False},
+            {"code": "pph", "name": "Park Plaza", "done": False},
+            {"code": "cis", "name": "Country Inn & Suites", "done": False},
+            {"code": "rco", "name": "Radisson Collection", "done": False},
+        ],
+    )
+    brandsB = state.get_misc_value(
+        "brandsB",
+        default_factory=lambda: [
+            {"code": "pii", "name": "Park Inn by Radisson", "done": False},
+            {"code": "rdb", "name": "Radisson Blu", "done": False},
+            {"code": "rdr", "name": "Radisson RED", "done": False},
+            {"code": "art", "name": "art'otel", "done": False},
+            {"code": "rad", "name": "Radisson", "done": False},
+            {"code": "ri", "name": "Radisson Individuals", "done": False},
+            {"code": "ry", "name": "I have no clue", "done": False},
+            {"code": "prz", "name": "prizeotel", "done": False},
+            {"code": "pph", "name": "Park Plaza", "done": False},
+            {"code": "cis", "name": "Country Inn & Suites", "done": False},
+            {"code": "rco", "name": "Radisson Collection", "done": False},
+        ],
+    )
     badrecords = []
-
-    for i in son:
-        k = i
-        if len(k["hotels"]) != 0:
-            if k["hotels"][0]["brand"] == brand:
-                par = utils.parallelize(
-                    search_space=[
-                        [counter, z["overviewPath"]]
-                        for counter, z in enumerate(k["hotels"])
-                    ],
-                    fetch_results_for_rec=para,
-                    max_threads=20,
-                    print_stats_interval=20,
-                )
-                for store in par:
-                    if store["STATUS"]:
-                        uscagb = 0
+    with SgRequests() as session:
+        for url in [urlA, urlB]:
+            if url == urlA:
+                for brand in brandsA:
+                    if not brand["done"]:
+                        start_time = time.monotonic()
+                        logzilla.info(f"Selected brand: {brand}")
                         try:
-                            if (
-                                "Canada"
-                                in store["mainEntity"]["address"]["addressCountry"]
-                                or "United S"
-                                in store["mainEntity"]["address"]["addressCountry"]
-                                or "United King"
-                                in store["mainEntity"]["address"]["addressCountry"]
-                            ):
-                                uscagb = 1
-                            else:
-                                logzilla.info(
-                                    f"Ignoring hotel due to country not US/CA/UK: {store['mainEntity']['address']['addressCountry']}\n (for url -> {store['requrl']})"
+                            try:
+                                data = get_brand(
+                                    brand["code"],
+                                    brand["name"],
+                                    url,
+                                    url2,
+                                    session,
+                                )
+                            except Exception:
+                                data = get_brand2(
+                                    brand["code"],
+                                    brand["name"],
+                                    url,
+                                    url2,
+                                    session,
                                 )
 
-                        except:
-                            logzilla.info(f"Issues finding Country for record: {store}")
-                            if len(list(store)) > 5:
-                                logzilla.info(f"====================")  # noqa
-                                logzilla.info(f"====================")  # noqa
-                                logzilla.info(f"{store}")
-                                logzilla.info(f"====================")  # noqa
-                                logzilla.info(f"====================")  # noqa
-                                raise Exception(
-                                    "Crawler would've dropped this location above"
-                                )
-                            else:
-                                badrecords.append(store)
-                        if uscagb == 1:
-                            try:
-                                store["mainEntity"]["address"]["addressRegion"] = store[
-                                    "mainEntity"
-                                ]["address"]["addressRegion"]
-                            except Exception:
-                                store["mainEntity"]["address"]["addressRegion"] = ""
-                            try:
-                                store["mainEntity"]["@type"] = (
-                                    humanBrand + " - " + store["mainEntity"]["@type"]
-                                )
-                            except Exception:
-                                store["mainEntity"]["@type"] = (
-                                    humanBrand if humanBrand else ""
-                                )
-                            yield clean_record(
-                                {"main": k["hotels"][store["index"]], "sub": store}
+                            for i in data:
+                                k = clean_record(i)
+                                if k["sub"]["STATUS"]:
+                                    yield k
+                                else:
+                                    badrecords.append(k)
+                                    yield k
+                            logzilla.info(
+                                f"Finished brand {brand['name']}, it took {round(time.monotonic()-start_time,5)}\n it has {len(data)} locations"
                             )
+                            brand["done"] = True
+                            state.set_misc_value("brandsA", brandsA)
+                        except Exception:
+                            continue
+            if url == urlB:
+                for brand in brandsB:
+                    if not brand["done"]:
+                        start_time = time.monotonic()
+                        logzilla.info(f"Selected brand: {brand}")
+                        try:
+                            try:
+                                data = get_brand(
+                                    brand["code"],
+                                    brand["name"],
+                                    url,
+                                    url2,
+                                    session,
+                                )
+                            except Exception:
+                                data = get_brand2(
+                                    brand["code"],
+                                    brand["name"],
+                                    url,
+                                    url2,
+                                    session,
+                                )
+
+                            for i in data:
+                                k = clean_record(i)
+                                if k["sub"]["STATUS"]:
+                                    yield k
+                                else:
+                                    badrecords.append(k)
+                                    yield k
+                            logzilla.info(
+                                f"Finished brand {brand['name']}, it took {round(time.monotonic()-start_time,5)}\n it has {len(data)} locations"
+                            )
+                            brand["done"] = True
+                            state.set_misc_value("brandsB", brandsB)
+                        except Exception:
+                            continue
+
+    logzilla.info(f"Badrecords :\n\n{badrecords}")
+    global EXPECTED_TOTAL
+    logzilla.info(f"Finished grabbing data!!\n expected total {EXPECTED_TOTAL}")  # noqa
 
 
-def fetch_data():
-    brands = [
-        "pii",  # 0-Park Inn ###DONE
-        "rdb",  # 1-Radisson Blu   ###DONE
-        "rdr",  # 2-Radisson RED   ###DONE
-        "art",  # 3-art'otel
-        "rad",  # 4-Radisson Hotel ###DONE
-        "ri",  # 5-Radisson Individuals
-        "prz",  # 6-??? Empty
-        "pph",  # 7-Park Plaza
-        "cis",  # 8-Country Inn & Suites by Radisson ###DONE
-        "rco",  # 9-Radisson Collection Paradise Resort
-    ]
-    brands = [
-        {"code": "pii", "name": "Park Inn by Radisson"},
-        {"code": "rdb", "name": "Radisson Blu"},
-        {"code": "rdr", "name": "Radisson RED"},
-        {"code": "art", "name": "art'otel"},
-        {"code": "rad", "name": "Radisson"},
-        {"code": "ri", "name": "Radisson Individuals"},
-        {"code": "prz", "name": "prizeotel"},
-        {"code": "pph", "name": "Park Plaza"},
-        {"code": "cis", "name": "Country Inn & Suites"},
-        {"code": "rco", "name": "Radisson Collection"},
-    ]
-    for brand in brands:
-        for record in get_brand(brand["code"], brand["name"]):
-            yield record
-
-    logzilla.info(f"Finished grabbing data!!")  # noqa
-
-
-def validatorsux(x):
-    if x == "Wisconsin":
-        x = "WI"
-    if x == "Washington":
-        x = "WA"
-    if x == "West Virginia":
-        x = "WV"
-    if x == "Wyoming":
-        x = "WY"
+def fix_phone(x):
+    if len(x) < 3:
+        return "<MISSING>"
     return x
 
 
 def scrape():
     url = "https://www.radissonhotels.com/en-us/destination"
-    field_defs = SimpleScraperPipeline.field_definitions(
-        locator_domain=ConstantField(url),
-        page_url=MappingField(mapping=["sub", "requrl"]),
-        location_name=MappingField(mapping=["main", "name"]),
-        latitude=MappingField(mapping=["main", "coordinates", "latitude"]),
-        longitude=MappingField(mapping=["main", "coordinates", "longitude"]),
-        street_address=MappingField(
-            mapping=["sub", "mainEntity", "address", "streetAddress"]
+    field_defs = sp.SimpleScraperPipeline.field_definitions(
+        locator_domain=sp.ConstantField(url),
+        page_url=sp.MappingField(
+            mapping=["sub", "requrl"],
+            is_required=False,
+            part_of_record_identity=True,
         ),
-        city=MappingField(mapping=["sub", "mainEntity", "address", "addressLocality"]),
-        state=MappingField(
-            mapping=["sub", "mainEntity", "address", "addressRegion"],
-            value_transform=validatorsux,
+        location_name=sp.MappingField(
+            mapping=["main", "name"],
+            is_required=False,
+            part_of_record_identity=True,
+        ),
+        latitude=sp.MappingField(
+            mapping=["main", "coordinates", "latitude"],
+            is_required=False,
+            part_of_record_identity=True,
+        ),
+        longitude=sp.MappingField(
+            mapping=["main", "coordinates", "longitude"],
             is_required=False,
         ),
-        zipcode=MappingField(
-            mapping=["sub", "mainEntity", "address", "postalCode"], is_required=False
+        street_address=sp.MappingField(
+            mapping=["sub", "mainEntity", "address", "streetAddress"],
+            is_required=False,
+            part_of_record_identity=True,
         ),
-        country_code=MappingField(
-            mapping=["sub", "mainEntity", "address", "addressCountry"]
+        city=sp.MappingField(
+            mapping=["sub", "mainEntity", "address", "addressLocality"],
+            is_required=False,
         ),
-        phone=MappingField(mapping=["sub", "mainEntity", "telephone", 0]),
-        store_number=MappingField(mapping=["main", "code"]),
-        hours_of_operation=MissingField(),
-        location_type=MappingField(mapping=["sub", "mainEntity", "@type"]),
+        state=sp.MappingField(
+            mapping=["sub", "mainEntity", "address", "addressRegion"],
+            is_required=False,
+            value_transform=lambda x: x.replace("None", "<MISSING>"),
+        ),
+        zipcode=sp.MappingField(
+            mapping=["sub", "mainEntity", "address", "postalCode"],
+            is_required=False,
+            value_transform=lambda x: x.replace("None", "<MISSING>"),
+        ),
+        country_code=sp.MappingField(
+            mapping=["sub", "mainEntity", "address", "addressCountry"],
+            is_required=False,
+        ),
+        phone=sp.MappingField(
+            mapping=["sub", "mainEntity", "telephone", 0],
+            is_required=False,
+            value_transform=fix_phone,
+        ),
+        store_number=sp.MappingField(
+            mapping=["main", "code"],
+            is_required=False,
+            part_of_record_identity=True,
+        ),
+        hours_of_operation=sp.MissingField(),
+        location_type=sp.MappingField(
+            mapping=["@type"],
+            is_required=False,
+        ),
     )
 
-    pipeline = SimpleScraperPipeline(
-        scraper_name="radissonblu.com",
-        data_fetcher=fetch_data,
+    pipeline = sp.SimpleScraperPipeline(
+        scraper_name="pipeline",
+        data_fetcher=start,
         field_definitions=field_defs,
-        log_stats_interval=15,
+        log_stats_interval=30,
     )
 
     pipeline.run()

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import csv
 from sgrequests import SgRequests
 from sglogging import sglog
@@ -80,6 +79,7 @@ def fetch_data():
     csrf_token = session.get(
         "https://savers.co.uk/ajaxCSRFToken", timeout=(30, 30), headers=headers
     ).text
+
     headers = {
         "Connection": "keep-alive",
         "Cache-Control": "max-age=0",
@@ -99,18 +99,21 @@ def fetch_data():
     coords = static_coordinate_list(radius=20, country_code=SearchableCountries.BRITAIN)
     for lat, lng in coords:
         log.info(f"Pulling stores for {lat,lng}")
-        data = {
-            "q": lat + "," + lng,
-            "country": "GB",
-            "services": "",
-        }
+
+        url = (
+            "https://savers.co.uk/getstorelocatoraddress.json?q="
+            + lat
+            + ","
+            + lng
+            + "&country=GB&services="
+        )
 
         stores_req = session.post(
-            "https://savers.co.uk/getstorelocatoraddress.json",
+            url,
             timeout=(30, 30),
-            data=data,
             headers=headers,
         )
+
         stores = json.loads(stores_req.text)["results"]
         for store in stores:
             page_url = "https://savers.co.uk" + store["url"]
@@ -208,7 +211,6 @@ def fetch_data():
                 hours_of_operation,
             ]
             loc_list.append(curr_list)
-        # break
 
     return loc_list
 

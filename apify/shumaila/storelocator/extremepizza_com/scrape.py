@@ -1,124 +1,125 @@
-from bs4 import BeautifulSoup
-import csv
-import json
+from bs4 import BeautifulSoup as bs
+import re
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sglogging import sglog
+import json
 
 session = SgRequests()
-headers = {
+DOMAIN = "extremepizza.com"
+BASE_URL = "https://www.extremepizza.com"
+LOCATION_URL = "https://www.extremepizza.com/store-locator/"
+HEADERS = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
 
+log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
+MISSING = "<MISSING>"
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
 
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+def pull_content(url):
+    log.info("Pull content => " + url)
+    req = session.get(url, headers=HEADERS)
+    if req.status_code == 404:
+        return False
+    soup = bs(req.content, "lxml")
+    return soup
 
 
 def fetch_data():
-    data = []
-    url = "https://www.extremepizza.com/store-locator/"
-    p = 0
-    r = session.get(url, headers=headers, verify=False)
-    r = r.text.split('<script type="application/ld+json">')[1].split("</script")[0]
-    loclist = json.loads(r)
-    loclist = loclist["subOrganization"]
-    for loc in loclist:
-        flag = 0
+    soup = pull_content(LOCATION_URL)
+    loclist = json.loads(soup.find("script", {"type": "application/ld+json"}).string)
+    for loc in loclist["subOrganization"][1:]:
         link = loc["url"]
-        title = loc["name"]
-        street = loc["address"]["streetAddress"]
-        city = loc["address"]["addressLocality"]
-        state = loc["address"]["addressRegion"]
-        pcode = loc["address"]["postalCode"]
-        ccode = "US"
-        phone = loc["telephone"]
-        r = session.get(link, headers=headers, verify=False)
-        soup = BeautifulSoup(r.text, "html.parser")
-        ct = soup.find("section", {"id": "intro"}).findAll("p")
-        hours = ""
-        for t in ct:
-            if (
-                (("AM " in t.text and "PM" in t.text) or ("Closed on" in t.text))
-                or ("Am" in t.text and (":" in t.text or "-" in t.text))
-                or "Everyday" in t.text
-                or ("pm" in t.text and (":" in t.text or "-" in t.text))
-            ):
-                hours = hours + t.text + " "
-            elif "Soon" in t.text or "Opening" in t.text:
-                flag = 1
-                break
-        if flag == 1:
+        log.info("Pull content => " + link)
+        r = session.get(link, headers=HEADERS)
+        content = bs(r.text, "lxml")
+        address = r.text.split('"location": ', 1)[1].split("}", 1)[0]
+        try:
+            address = (
+                content.find("section", {"id": "intro"}).findAll("a")[0].text.strip()
+            )
+        except:
+            continue
+        check_content = content.find("section", {"id": "intro"}).text.lower()
+        if (
+            "temporarily closed" not in check_content
+            and "coming" in check_content
+            or "soon!" in check_content
+        ):
             continue
         try:
-            lat = r.text.split('"latitude":', 1)[1].split(",", 1)[0]
-            longt = r.text.split('"longitude":', 1)[1].split("}", 1)[0]
+            phone = content.find("section", {"id": "intro"}).findAll("a")[1].text
         except:
-            lat = r.text.split('data-gmaps-lat="', 1)[1].split('"', 1)[0]
-            longt = r.text.split(' data-gmaps-lng="', 1)[1].split('"', 1)[0]
-        if len(hours) < 3:
-            hours = "<MISSING>"
-        try:
-            hours = hours.split("Delivery", 1)[0]
-        except:
-            pass
-        try:
-            if len(phone) < 3:
-                phone = "<MISSING>"
-        except:
-            phone = "<MISSING>"
-        hours = hours.replace("1", " 1").replace("1 1", "11").strip()
-        data.append(
-            [
-                "https://www.extremepizza.com/",
-                link,
-                title,
-                street,
-                city,
-                state,
-                pcode,
-                ccode,
-                "<MISSING>",
-                phone,
-                "<MISSING>",
-                lat,
-                longt.replace("\n", "").strip(),
-                hours.strip(),
-            ]
+            if (
+                "temporarily closed" not in check_content
+                and "coming" in check_content
+                or "soon!" in check_content
+            ):
+                continue
+            else:
+                phone = MISSING
+        address = address.split(", ")
+        state = address[-1]
+        city = address[-2]
+        street = " ".join(address[0:-2])
+        state, pcode = state.strip().split(" ", 1)
+        title = content.find("title").text.split(" |", 1)[0]
+        lat = r.text.split('data-gmaps-lat="', 1)[1].split('"', 1)[0]
+        longt = r.text.split('data-gmaps-lng="', 1)[1].split('"', 1)[0]
+        hoo = content.find("section", {"id": "intro"}).find(
+            "div", {"class": "col-md-6"}
         )
-
-        p += 1
-    return data
+        hoo.find("h2").decompose()
+        for remove_element in hoo.find_all("a"):
+            remove_element.decompose()
+        hoo = (
+            hoo.get_text(strip=True, separator=" ")
+            .replace("Dine in at 50% capacity due to current regulations", "")
+            .replace("NEW HOURS", "")
+        )
+        hours_of_operation = re.sub(
+            r"(Delivering to.*)|(PINTS ON.*)|(For orders.*)", "", hoo
+        ).strip()
+        location_type = MISSING
+        if "temporarily closed" in check_content:
+            location_type = "TEMP_CLOSED"
+        if "Order Online" in phone:
+            phone = MISSING
+        log.info("Append {} => {}".format(title, street))
+        yield SgRecord(
+            locator_domain=DOMAIN,
+            page_url=link,
+            location_name=title,
+            street_address=street.strip(),
+            city=city.strip(),
+            state=state.strip(),
+            zip_postal=pcode.strip(),
+            country_code="US",
+            store_number=MISSING,
+            phone=phone.strip(),
+            location_type=location_type,
+            latitude=lat,
+            longitude=longt.replace("\n", "").strip(),
+            hours_of_operation=hours_of_operation,
+        )
 
 
 def scrape():
-
-    data = fetch_data()
-    write_output(data)
+    log.info("start {} Scraper".format(DOMAIN))
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
 
 
 scrape()

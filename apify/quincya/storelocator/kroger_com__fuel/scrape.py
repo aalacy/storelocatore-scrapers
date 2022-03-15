@@ -1,13 +1,12 @@
 import csv
-import json
 
-from bs4 import BeautifulSoup
-
-from sglogging import SgLogSetup
+from sglogging import sglog
 
 from sgrequests import SgRequests
 
-log = SgLogSetup().get_logger("kroger.com")
+from sgzip.dynamic import DynamicZipSearch, Grain_1_KM, SearchableCountries
+
+log = sglog.SgLogSetup().get_logger(logger_name="kroger.com")
 
 
 def write_output(data):
@@ -15,10 +14,11 @@ def write_output(data):
         writer = csv.writer(
             output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
         )
+
+        # Header
         writer.writerow(
             [
                 "locator_domain",
-                "page_url",
                 "location_name",
                 "street_address",
                 "city",
@@ -31,126 +31,117 @@ def write_output(data):
                 "latitude",
                 "longitude",
                 "hours_of_operation",
+                "page_url",
             ]
         )
+        # Body
         for row in data:
             writer.writerow(row)
 
 
 def fetch_data():
 
-    base_link = "https://www.kroger.com/storelocator-sitemap.xml"
-
-    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
-    headers = {"User-Agent": user_agent}
-
     session = SgRequests()
 
-    req = session.get(base_link, headers=headers)
-    base = BeautifulSoup(req.text, "lxml")
-
-    items = base.find_all("loc")
-
-    data = []
+    headers = {
+        "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
+    }
     locator_domain = "kroger.com"
 
-    log.info("Processing " + str(len(items)) + " links ...")
-    for i, item in enumerate(items):
-        link = item.text
-        if "stores/details" in link:
+    max_results = 50
+    max_distance = 40
 
-            # New session every 20
-            if i % 20 == 0:
-                if i > 0:
-                    log.info("Getting next 20 ..")
-                    log.info(link)
-                    session = SgRequests()
+    dup_tracker = []
 
-            req = session.get(link, headers=headers)
-            base = BeautifulSoup(req.text, "lxml")
+    search = DynamicZipSearch(
+        country_codes=[SearchableCountries.USA],
+        granularity=Grain_1_KM(),
+        max_radius_miles=max_distance,
+        max_search_results=max_results,
+    )
 
-            try:
-                if (
-                    "gas"
-                    not in base.find(class_="StoreServices-wrapper table").text.lower()
-                ):
-                    continue
-            except:
+    log.info("Running sgzips..")
+
+    for postcode in search:
+        base_link = (
+            "https://www.kroger.com/atlas/v1/stores/v1/search?filter.query="
+            + str(postcode)
+        )
+
+        try:
+            locs = session.get(base_link, headers=headers).json()["data"][
+                "storeSearch"
+            ]["results"]
+        except:
+            continue
+
+        for loc in locs:
+
+            if "KROGER" not in loc["brand"].upper():
+                continue
+            if ("gas" not in str(loc).lower()) and ("diesel" not in str(loc).lower()):
                 continue
 
-            try:
-                script = (
-                    base.find("script", attrs={"type": "application/ld+json"})
-                    .text.replace("\n", "")
-                    .strip()
-                )
-            except:
-                log.info(link)
-                raise
-            store = json.loads(script)
-            location_name = store["name"]
-
-            try:
-                street_address = store["address"]["streetAddress"]
-                city = store["address"]["addressLocality"]
-                state = store["address"]["addressRegion"]
-                zip_code = store["address"]["postalCode"]
-            except:
-                raw_address = (
-                    base.find(class_="StoreAddress-storeAddressGuts")
-                    .get_text(" ")
-                    .replace(",", "")
-                    .replace("8  Rd", "8 Rd")
-                    .replace(" .", ".")
-                    .replace("..", ".")
-                    .split("  ")
-                )
-                street_address = raw_address[0].strip()
-                city = raw_address[1].strip()
-                state = raw_address[2].strip()
-                zip_code = raw_address[3].split("Get")[0].strip()
-
-            country_code = "US"
-            store_number = "/".join(link.split("/")[-2:])
-            location_type = "<MISSING>"
-            try:
-                phone = store["telephone"]
-                if not phone:
-                    phone = "<MISSING>"
-            except:
-                phone = "<MISSING>"
-
-            hours_of_operation = ""
-            raw_hours = store["openingHours"]
-            for hours in raw_hours:
-                hours_of_operation = (hours_of_operation + " " + hours).strip()
-            if not hours_of_operation:
-                hours_of_operation = "<MISSING>"
-
-            latitude = store["geo"]["latitude"]
-            longitude = store["geo"]["longitude"]
-
-            # Store data
-            data.append(
-                [
-                    locator_domain,
-                    link,
-                    location_name,
-                    street_address,
-                    city,
-                    state,
-                    zip_code,
-                    country_code,
-                    store_number,
-                    phone,
-                    location_type,
-                    latitude,
-                    longitude,
-                    hours_of_operation,
-                ]
+            page_url = (
+                "https://www.kroger.com/stores/details/"
+                + loc["loyaltyDivisionNumber"]
+                + "/"
+                + loc["storeNumber"]
             )
 
-    return data
+            location_name = loc["vanityName"] + " " + loc["facilityName"]
+
+            lat = loc["location"]["lat"]
+            lng = loc["location"]["lng"]
+            search.found_location_at(lat, lng)
+
+            store_number = loc["locationId"]
+            if store_number not in dup_tracker:
+                dup_tracker.append(store_number)
+            else:
+                continue
+
+            raw_address = loc["address"]["address"]
+            street_address = " ".join(raw_address["addressLines"]).strip()
+            city = raw_address["cityTown"]
+            state = raw_address["stateProvince"]
+            zip_code = raw_address["postalCode"]
+            country_code = raw_address["countryCode"]
+            try:
+                phone_number = loc["phoneNumber"]
+            except:
+                phone_number = "<MISSING>"
+            location_type = "<MISSING>"
+
+            hours = ""
+            raw_hours = loc["formattedHours"]
+            for raw_hour in raw_hours:
+                hours = (
+                    hours
+                    + " "
+                    + raw_hour["displayName"]
+                    + " "
+                    + raw_hour["displayHours"]
+                ).strip()
+            hours = hours.replace("  ", " ")
+
+            store_data = [
+                locator_domain,
+                location_name,
+                street_address,
+                city,
+                state,
+                zip_code,
+                country_code,
+                store_number,
+                phone_number,
+                location_type,
+                lat,
+                lng,
+                hours,
+                page_url,
+            ]
+            yield store_data
 
 
 def scrape():

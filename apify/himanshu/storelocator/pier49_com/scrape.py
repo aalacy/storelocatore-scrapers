@@ -1,121 +1,113 @@
-import csv
-from sgrequests import SgRequests
-from bs4 import BeautifulSoup
 import re
-import json
-from sglogging import SgLogSetup
+import csv
+from lxml import etree
 
-logger = SgLogSetup().get_logger('pier49_com')
+from sgrequests import SgRequests
 
-
-
-
-
-session = SgRequests()
 
 def write_output(data):
-    with open('data.csv', mode='w', encoding="utf-8") as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+    with open("data.csv", mode="w", encoding="utf-8") as output_file:
+        writer = csv.writer(
+            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+        )
+
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
+        writer.writerow(
+            [
+                "locator_domain",
+                "page_url",
+                "location_name",
+                "street_address",
+                "city",
+                "state",
+                "zip",
+                "country_code",
+                "store_number",
+                "phone",
+                "location_type",
+                "latitude",
+                "longitude",
+                "hours_of_operation",
+            ]
+        )
         # Body
         for row in data:
             writer.writerow(row)
 
 
 def fetch_data():
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
+    # Your scraper here
+    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
+
+    items = []
+
+    start_url = "https://pier49.com/locations/"
+    domain = re.findall("://(.+?)/", start_url)[0].replace("www.", "")
+    hdr = {
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
+    response = session.get(start_url, headers=hdr)
+    dom = etree.HTML(response.text)
 
+    all_locations = dom.xpath('//section[@class="section has-parallax"]')
+    for poi_html in all_locations:
+        store_url = start_url
+        location_name = poi_html.xpath(
+            './/div[contains(@class, "col-inner")]/h3/span/strong/text()'
+        )
+        location_name = location_name[0] if location_name else "<MISSING>"
+        if "Sugarhouse" in location_name:
+            continue
+        street_address = poi_html.xpath(
+            './/div[contains(@class, "col-inner")]/p[2]/text()'
+        )
+        street_address = street_address[0] if street_address else "<MISSING>"
+        city = poi_html.xpath('.//div[contains(@class, "col-inner")]/p[3]/text()')[
+            0
+        ].split(",")[0]
+        state = (
+            poi_html.xpath('.//div[contains(@class, "col-inner")]/p[3]/text()')[0]
+            .split(",")[-1]
+            .split()[0]
+        )
+        zip_code = (
+            poi_html.xpath('.//div[contains(@class, "col-inner")]/p[3]/text()')[0]
+            .split(",")[-1]
+            .split()[-1]
+        )
+        country_code = "<MISSING>"
+        store_number = "<MISSING>"
+        phone = poi_html.xpath('.//div[contains(@class, "col-inner")]/p[1]/text()')
+        phone = phone[0] if phone else "<MISSING>"
+        location_type = "<MISSING>"
+        latitude = "<MISSING>"
+        longitude = "<MISSING>"
+        hoo = poi_html.xpath(
+            './/h3[span[strong[contains(text(), "Hours")]]]/following-sibling::p/text()'
+        )[:2]
+        hoo = [e.strip() for e in hoo if e.strip()]
+        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 
+        item = [
+            domain,
+            store_url,
+            location_name,
+            street_address,
+            city,
+            state,
+            zip_code,
+            country_code,
+            store_number,
+            phone,
+            location_type,
+            latitude,
+            longitude,
+            hours_of_operation,
+        ]
 
-    base_url = "https://pier49.com"
-    r = session.get("https://pier49.com/locations/", headers=headers)
-    soup = BeautifulSoup(r.text, "lxml")
-    return_main_object = []
-    #   data = json.loads(soup.find("div",{"paging_container":re.compile('latlong.push')["paging_container"]}))
-    # for link in soup.find_all('ul',re.compile('content')):
-    #     logger.info(link)
+        items.append(item)
 
-    # it will used in store data.
-    locator_domain = base_url
-    location_name = ""
-    street_address = ""
-    city = ""
-    state = ""
-    zipp = ""
-    country_code = ""
-    store_number = "<MISSING>"
-    phone = ""
-    location_type = "<MISSING>"
-    latitude = ""
-    longitude = ""
-    hours_of_operation = ""
-    page_url=""
-
-    for script in soup.find_all('div', {'class': re.compile('row_inner col_align_middle gutter-none')}):
-        # coords = soup.find(lambda tag: (tag.name == "a" and "Google Maps" in tag.text))
-        # logger.info(coords)
-        list_store_data = list(script.stripped_strings)
-        # logger.info(str(len(list_store_data))+' == list_store_data === '+str(list_store_data))
-        if len(list_store_data) > 0 :
-            if 'ORDER ONLINE' in list_store_data:
-                list_store_data.remove('ORDER ONLINE')
-
-            if 'ORDER ONLINE' in list_store_data:
-                list_store_data.remove('ORDER ONLINE')
-
-            if '-Delivery Only-' in list_store_data:
-                list_store_data.remove('-Delivery Only-')
-
-            if 'Hours' in list_store_data:
-                list_store_data.remove('Hours')
-
-            if 'Facebook' in list_store_data:
-                list_store_data.remove('Facebook')
-
-            if 'Google Maps' in list_store_data:
-                list_store_data.remove('Google Maps')
-
-            # logger.info(str(len(list_store_data)) + " = script ------- " + str(list_store_data))
-
-            location_name = list_store_data[0]
-            phone = list_store_data[1]
-
-            try:
-                street_address = list_store_data[2]
-                city = list_store_data[3].split(',')[0]
-                zipp = list_store_data[3].split(',')[1].strip().split(' ')[-1]
-                state = list_store_data[3].split(',')[1].strip().split(' ')[-2]
-                hours_of_operation= ",".join(list_store_data[4:]).replace('ORDER ONLINE (NEW!)','').strip()
-                # logger.info(hours_of_operation)
-
-            except:
-                street_address = '<MISSING>'
-                city = '<MISSING>'
-                zipp = '<MISSING>'
-                state = '<MISSING>'
-                hours_of_operation = ",".join(list_store_data[2:])
-                # logger.info(hours_of_operation)
-
-            country_code = 'US'
-            store_number = '<MISSING>'
-            latitude = '<MISSING>'
-            longitude = '<MISSING>'
-
-            store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
-                     store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
-            store = ["<MISSING>" if x == None or x == '' else x for x in store]
-
-            # logger.info("data = " + str(store))
-            # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-
-            if street_address != '<MISSING>':
-                return_main_object.append(store)
-
-    return return_main_object
+    return items
 
 
 def scrape():
@@ -123,4 +115,5 @@ def scrape():
     write_output(data)
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()

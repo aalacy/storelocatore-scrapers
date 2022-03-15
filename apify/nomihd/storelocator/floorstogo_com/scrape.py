@@ -13,6 +13,7 @@ log = sglog.SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
 
 url_list = []
+addresses_list = []
 headers = {
     "Connection": "keep-alive",
     "Cache-Control": "max-age=0",
@@ -45,6 +46,7 @@ def fetch_records_for(zipcode):
 def process_record(raw_results_from_one_zipcode):
     for stores in raw_results_from_one_zipcode:
         for store in stores:
+            page_url = "<MISSING>"
             temp_text = store.xpath(
                 ".//div[@class='search-store__results-address col-xs-12 col-sm-4']/p"
             )
@@ -58,6 +60,10 @@ def process_record(raw_results_from_one_zipcode):
                 locator_domain = website
                 location_name = raw_text[-4]
                 street_address = raw_text[-3]
+                if street_address in addresses_list:
+                    continue
+
+                addresses_list.append(street_address)
                 city_state_zip = raw_text[-2]
                 city = city_state_zip.split(",")[0].strip()
                 state = city_state_zip.split(",")[1].strip().rsplit(" ", 1)[0].strip()
@@ -126,6 +132,22 @@ def process_record(raw_results_from_one_zipcode):
                 if phone == "":
                     phone = "<MISSING>"
 
+                hours_of_operation = (
+                    hours_of_operation.replace("PANYNJ certified", "")
+                    .strip()
+                    .replace(
+                        "Showroom available by appointment only  Please call to schedule appointments",
+                        "",
+                    )
+                    .strip()
+                )
+                if "Licensed" in hours_of_operation:
+                    hours_of_operation = hours_of_operation.split("Licensed")[0].strip()
+                if "C.L. #" in hours_of_operation:
+                    hours_of_operation = hours_of_operation.split("C.L. #")[0].strip()
+                if "Lic#" in hours_of_operation:
+                    hours_of_operation = hours_of_operation.split("Lic#")[0].strip()
+
                 yield SgRecord(
                     locator_domain=locator_domain,
                     page_url=page_url,
@@ -149,11 +171,11 @@ def scrape():
     with SgWriter() as writer:
         results = parallelize(
             search_space=static_zipcode_list(
-                radius=200, country_code=SearchableCountries.USA
+                radius=50, country_code=SearchableCountries.USA
             ),
             fetch_results_for_rec=fetch_records_for,
             processing_function=process_record,
-            max_threads=4,  # tweak to see what's fastest
+            max_threads=16,  # tweak to see what's fastest
         )
         for rec in results:
             writer.write_row(rec)

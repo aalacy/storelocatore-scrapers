@@ -1,70 +1,89 @@
-from sgrequests import SgRequests
-from bs4 import BeautifulSoup
-import csv
 import re
 
-def write_output(data):
-	with open('data.csv', mode='w', encoding="utf-8") as output_file:
-		writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+from bs4 import BeautifulSoup
 
-		# Header
-		writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-		# Body
-		for row in data:
-			writer.writerow(row)
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-def fetch_data():
-	
-	base_link = 'https://www.bplplasma.com/find-a-center?search='
+from sgrequests import SgRequests
 
-	user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36'
-	HEADERS = {'User-Agent' : user_agent}
 
-	session = SgRequests()
-	req = session.get(base_link, headers = HEADERS)
-	base = BeautifulSoup(req.text,"lxml")
+def fetch_data(sgw: SgWriter):
 
-	data = []
+    base_link = "https://www.bplplasma.com/find-a-center?search="
 
-	items = base.find(id="search-boxes-states").find_all(class_="field-content")
-	locator_domain = "bplplasma.com"
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
+    headers = {"User-Agent": user_agent}
 
-	for item in items:
+    session = SgRequests()
+    req = session.get(base_link, headers=headers)
+    base = BeautifulSoup(req.text, "lxml")
 
-		location_name = "BPL Plasma - " + item.h3.text.strip()
+    items = base.find(id="search-boxes-states").find_all(class_="field-content")
+    locator_domain = "bplplasma.com"
 
-		raw_address = item.find_all(class_="field__item")[1].text.strip().split(",")
-		street_address = " ".join(raw_address[:-2]).strip()
-		city = raw_address[-2].strip()
-		state = raw_address[-1].strip()[:-6].strip()
-		zip_code = raw_address[-1][-6:].strip()
+    for item in items:
 
-		if not street_address:
-			street_address = city
-			city = state.split()[0].strip()
-			state = state.split()[1].strip()
+        if "Coming Soon" in str(list(item.stripped_strings)):
+            continue
+        location_name = "BPL Plasma - " + item.h3.text.strip()
 
-		street_address = (re.sub(' +', ' ', street_address)).strip()
-		
-		country_code = "US"
-		store_number = item.h3["nodeid"]
-		location_type = "<MISSING>"
+        if "generated location" in location_name.lower():
+            continue
 
-		phone = item.find(class_="field field--name-field-yext-phone field--type-string field--label-hidden field__item").text.strip()
-		hours_of_operation = " ".join(list(item.find(class_="custom-hours-formatter").stripped_strings)[:-1])
+        raw_address = item.find_all(class_="field__item")[1].text.strip().split(",")
+        street_address = " ".join(raw_address[:-2]).strip()
+        city = raw_address[-2].strip()
+        state = raw_address[-1].strip()[:-6].strip()
+        zip_code = raw_address[-1][-6:].strip()
 
-		geo = re.findall(r'[0-9]{2}\.[0-9]+, -[0-9]{2,3}\.[0-9]+',str(item))[0].split(",")
-		latitude = geo[0].strip()
-		longitude = geo[1].strip()
+        if not street_address:
+            street_address = city
+            city = state.split()[0].strip()
+            state = state.split()[1].strip()
 
-		link = item.a["href"]
+        street_address = (re.sub(" +", " ", street_address)).strip()
 
-		data.append([locator_domain, link, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
+        country_code = "US"
+        store_number = item.h3["nodeid"]
+        location_type = "<MISSING>"
 
-	return data
+        phone = item.find(
+            class_="field field--name-field-yext-phone field--type-string field--label-hidden field__item"
+        ).text.strip()
+        hours_of_operation = " ".join(
+            list(item.find(class_="custom-hours-formatter").stripped_strings)[:-1]
+        )
 
-def scrape():
-	data = fetch_data()
-	write_output(data)
+        geo = re.findall(r"[0-9]{2}\.[0-9]+, -[0-9]{2,3}\.[0-9]+", str(item))[0].split(
+            ","
+        )
+        latitude = geo[0].strip()
+        longitude = geo[1].strip()
 
-scrape()
+        link = item.a["href"]
+
+        sgw.write_row(
+            SgRecord(
+                locator_domain=locator_domain,
+                page_url=link,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_code,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
+        )
+
+
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+    fetch_data(writer)

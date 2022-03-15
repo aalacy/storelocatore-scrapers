@@ -1,114 +1,75 @@
-import csv
-import json
-from urllib.parse import urljoin
+from w3lib.url import add_or_replace_parameter
 
 from sgrequests import SgRequests
-
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
-    # Your scraper here
     session = SgRequests()
+    domain = "myinvestorsbank.com"
+    start_url = "https://liveapi.yext.com/v2/accounts/me/answers/vertical/query?experienceKey=investors_bancorp_answers&api_key=9b0d7ec6abb65a54f2011f7422ed4d5d&v=20190101&version=PRODUCTION&locale=en&input=Find+My+Nearest+ATM&verticalKey=Locations&limit=20&offset=0&facetFilters=%7B%7D&sessionTrackingEnabled=true&sortBys=%5B%5D&referrerPageUrl=https%3A%2F%2Fwww.investorsbank.com%2F&source=STANDARD&jsLibVersion=v1.9.2"
 
-    items = []
+    data = session.get(start_url).json()
+    total = data["response"]["resultsCount"]
+    all_locations = data["response"]["results"]
+    for i in range(20, total + 20, 20):
+        data = session.get(add_or_replace_parameter(start_url, "offset", str(i))).json()
+        all_locations += data["response"]["results"]
 
-    DOMAIN = "myinvestorsbank.com"
-    start_url = "https://www.myinvestorsbank.com/OfficeSearch/OfficeSearch/GetBranches/"
+    for poi in all_locations:
+        poi = poi["data"]
+        hoo = []
+        for day, hours in poi["hours"].items():
+            if type(hours) in [str, list]:
+                continue
 
-    headers = {
-        "Accept": "application/json, text/plain, */*",
-        "Accept-Encoding": "gzip, deflate, br",
-        "Accept-Language": "ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7,pt;q=0.6",
-        "Content-Type": "application/json",
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.141 Safari/537.36",
-    }
-    formdata = '{"Radius":100,"StartLocation":"Short Hills, NJ","Type":"Office","NodeAliasPath":"/Branch-Locations","Latitude":40.7483499,"Longitude":-74.3232194}'
-    headers = {"Content-Type": "application/json"}
-    response = session.post(start_url, data=formdata, headers=headers)
-    data = json.loads(response.text)
+            if hours.get("isClosed"):
+                hoo.append(f"{day} closed")
+            else:
+                opens = hours["openIntervals"][0]["start"]
+                closes = hours["openIntervals"][0]["end"]
+                hoo.append(f"{day} {opens} - {closes}")
+        hoo = " ".join(hoo)
+        if poi.get("yextDisplayCoordinate"):
+            latitude = poi["yextDisplayCoordinate"]["latitude"]
+            longitude = poi["yextDisplayCoordinate"]["longitude"]
+        else:
+            latitude = poi["geocodedCoordinate"]["latitude"]
+            longitude = poi["geocodedCoordinate"]["longitude"]
 
-    for poi in data["offices"]:
-        store_url = poi["NodeAliasPath"]
-        store_url = urljoin(start_url, store_url) if store_url else "<MISSING>"
-        location_name = poi["Name"]
-        location_name = location_name if location_name else "<MISSING>"
-        street_address = poi["Address1"]
-        if poi["Address2"]:
-            street_address += ", " + poi["Address2"]
-        street_address = street_address if street_address else "<MISSING>"
-        city = poi["City"]
-        city = city if city else "<MISSING>"
-        state = poi["State"]
-        state = state if state else "<MISSING>"
-        zip_code = poi["ZIP"]
-        zip_code = zip_code if zip_code else "<MISSING>"
-        country_code = poi["Country"]
-        country_code = country_code if country_code else "<MISSING>"
-        store_number = poi["BranchId"]
-        store_number = store_number if store_number else "<MISSING>"
-        phone = poi["Phone"]
-        phone = phone if phone else "<MISSING>"
-        location_type = "<MISSING>"
-        latitude = poi["Latitude"]
-        latitude = latitude if latitude else "<MISSING>"
-        longitude = poi["Longitude"]
-        longitude = longitude if longitude else "<MISSING>"
-        hours_of_operation = "<MISSING>"
+        item = SgRecord(
+            locator_domain=domain,
+            page_url=poi["website"],
+            location_name=poi["name"],
+            street_address=poi["address"]["line1"],
+            city=poi["address"]["city"],
+            state=poi["address"]["region"],
+            zip_postal=poi["address"]["postalCode"],
+            country_code=poi["address"]["countryCode"],
+            store_number=poi["id"],
+            phone=poi["mainPhone"],
+            location_type=", ".join(poi["services"]),
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hoo,
+        )
 
-        item = [
-            DOMAIN,
-            store_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip_code,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-
-        items.append(item)
-
-    return items
+        yield item
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":

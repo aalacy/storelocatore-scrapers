@@ -1,10 +1,13 @@
 import csv
 from sgrequests import SgRequests
+from sglogging import SgLogSetup
 
 session = SgRequests()
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
+
+logger = SgLogSetup().get_logger("hamptoninn_com")
 
 
 def write_output(data):
@@ -116,8 +119,9 @@ def fetch_data():
             if "en/hotels/united-kingdom" in line:
                 locs.append(line.split("<loc>")[1].split("<")[0] + "|GB")
     for loc in locs:
+        logger.info(loc.split("|")[0])
         country = loc.split("|")[1]
-        r2 = session.get(loc.split("|")[0], headers=headers, verify=False)
+        r2 = session.get(loc.split("|")[0], headers=headers, verify=False, stream=True)
         if r2.encoding is None:
             r2.encoding = "utf-8"
         lines = r2.iter_lines(decode_unicode=True)
@@ -128,7 +132,7 @@ def fetch_data():
         name = ""
         add = ""
         city = ""
-        state = ""
+        state = "<MISSING>"
         zc = ""
         lat = ""
         lng = ""
@@ -147,13 +151,32 @@ def fetch_data():
                 ].split("-")[0]
             if '"addressLocality": "' in line2:
                 city = line2.split('"addressLocality": "')[1].split('"')[0]
-                state = "<MISSING>"
+            if '"addressRegion": "' in line2:
+                state = line2.split('"addressRegion": "')[1].split('"')[0]
             if '"latitude": "' in line2:
                 lat = line2.split('"latitude": "')[1].split('"')[0]
             if '"longitude": "' in line2:
                 lng = line2.split('"longitude": "')[1].split('"')[0]
             if '"postalCode": "' in line2:
                 zc = line2.split('"postalCode": "')[1].split('"')[0]
+            if '"telephone": \'' in line2:
+                phone = line2.split('"telephone": \'')[1].split("'")[0].strip()
+            if '"name": \'' in line2:
+                name = line2.split('"name": \'')[1].split("'")[0].strip()
+            if '"streetAddress": \'' in line2:
+                add = line2.split('"streetAddress": \'')[1].split("'")[0].strip()
+            if '"url": \'' in line2:
+                store = line2.split("/index.html")[0].rsplit("-", 1)[1]
+            if '"addressLocality": \'' in line2:
+                city = line2.split('"addressLocality": \'')[1].split("'")[0].strip()
+            if '"addressRegion": \'' in line2:
+                state = line2.split('"addressRegion": \'')[1].split("'")[0].strip()
+            if '"postalCode": \'' in line2:
+                zc = line2.split('"postalCode": \'')[1].split("'")[0].strip()
+            if '"latitude": \'' in line2:
+                lat = line2.split('"latitude": \'')[1].split("'")[0].strip()
+            if '"longitude": \'' in line2:
+                lng = line2.split('"longitude": \'')[1].split("'")[0].strip()
         yield [
             website,
             purl,

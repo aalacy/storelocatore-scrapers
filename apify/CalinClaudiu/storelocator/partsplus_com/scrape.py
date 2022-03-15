@@ -72,8 +72,14 @@ def paraThis(url):
                 if j.isdigit():
                     phone.append(j)
     rawa = " ".join(rawa)
+    rawa = rawa.replace(",", " ").replace(".", " ").replace("  ", " ")
     phone = "".join(phone)
     parsedAddress = parser.parse_address_usa(rawa)
+    if not parsedAddress.postcode:
+        backupParsed = parsedAddress
+        parsedAddress = parser.parse_address_intl(rawa)
+    if not parsedAddress.postcode:
+        parsedAddress = backupParsed
     k["parsed"]["address"] = parsedAddress.street_address_1
     if parsedAddress.street_address_2:
         k["parsed"]["address"] = (
@@ -95,7 +101,7 @@ def paraThis(url):
     hoursData = list(stuff.find("ul", {"class": "locator-timing"}).stripped_strings)
 
     k["data"]["hours"] = "Ingonyama nengw enamabala" + ": ".join(hoursData)
-    k["data"]["hours"] = k["data"]["hours"].replace("pm:", "pm;")
+    k["data"]["hours"] = k["data"]["hours"].replace("pm:", "pm;").replace("PM:", "PM;")
     k["data"]["serviceDealerType"] = "<MISSING>"
 
     if not k["parsed"]["address"]:
@@ -267,17 +273,19 @@ def fetch_data():
 
 def human_hours(x):
     if "Ingonyama nengw enamabala" in x:
-        return x.replace("Ingonyama nengw enamabala", "")
+        return x.replace("Ingonyama nengw enamabala", "").replace(
+            "Sunday: X", "Sunday: Closed"
+        )
     h = []
     if len(x) > 1:
         for i in x:
-            if i["isClosed"] == "False":
+            if not i["isClosed"]:
                 h.append(
                     str(i["dayOfWeek"] + ": " + i["openTime"] + "-" + i["closeTime"])
                 )
             else:
                 h.append(str(i["dayOfWeek"] + ": Closed"))
-        return "; ".join(h)
+        return "; ".join(h).replace("Sunday: X", "Sunday: Closed")
     else:
         return "<MISSING>"
 
