@@ -1,0 +1,1 @@
+3/12/2022 - Due to changes in the website API this crawl has been rewritten by Taylor Middlebrooks. The rewrite is under this directory due to the rewrite workflow for Curated Sources crawls
