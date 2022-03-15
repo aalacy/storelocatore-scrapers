@@ -105,7 +105,20 @@ def fetch_kw():
 
 if __name__ == "__main__":
     search_maker = DynamicSearchMaker(search_type="DynamicGeoSearch")
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.CITY,
+                    SgRecord.Headers.LOCATION_NAME,
+                    SgRecord.Headers.COUNTRY_CODE,
+                    SgRecord.Headers.LOCATION_TYPE,
+                }
+            ),
+            duplicate_streak_failure_factor=100,
+        )
+    ) as writer:
         search_iter = ExampleSearchIteration()
         par_search = ParallelDynamicSearch(
             search_maker=search_maker,
