@@ -35,7 +35,6 @@ def fetch_data(sgw: SgWriter):
         )
         street_address = " ".join(ad.split(",")[:-2]).strip()
         street_address = " ".join(street_address.split())
-        print(street_address)
         country_code = "Dominican Republic"
         city = ad.split(",")[-1].strip()
         map_link = "".join(d.xpath(".//iframe/@src"))
