@@ -78,7 +78,7 @@ def strip_accents(text):
 def fetch_data():
     if True:
         for temp_state in state_list:
-            with SgChrome(executable_path="C:/webdrivers/chromedriver.exe") as driver:
+            with SgChrome() as driver:
                 url = "https://mex.sunglasshut.com/Encuentra-tu-tienda"
                 driver.get(url)
                 try:
