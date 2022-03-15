@@ -73,7 +73,10 @@ def fetch_data():
                     city = (
                         address.split(street, 1)[1].split(state.upper(), 1)[0].strip()
                     )
-
+                try:
+                    city = city.split(state.upper(), 1)[0]
+                except:
+                    pass
                 hours = (
                     content.split("OPENING HOURS", 1)[1]
                     .split("\n", 1)[1]
