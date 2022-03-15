@@ -1,3 +1,5 @@
+import os
+
 from sglogging import SgLogSetup
 
 from sgscrape.sgwriter import SgWriter
@@ -17,6 +19,12 @@ def fetch_data(sgw: SgWriter):
     headers = {"User-Agent": user_agent}
 
     session = SgRequests()
+    proxy_password = os.environ["PROXY_PASSWORD"]
+    proxy_url = "http://groups-RESIDENTIAL,country-US:{}@proxy.apify.com:8000/".format(
+        proxy_password
+    )
+    proxies = {"http": proxy_url, "https": proxy_url}
+    session.proxies = proxies
 
     max_distance = 100
 
@@ -39,8 +47,10 @@ def fetch_data(sgw: SgWriter):
         try:
             stores = session.get(base_link, headers=headers).json()["pointsOfService"]
         except:
-            log.info("Error..No stores!")
-            continue
+            session = SgRequests()
+            session.proxies = proxies
+            stores = session.get(base_link, headers=headers).json()["pointsOfService"]
+
         for store in stores:
             location_name = store["displayName"]
             street_address = store["address"]["line1"].strip()

@@ -28,6 +28,8 @@ def fetch_data():
             page_url = location.select("a")[-1]["href"]
             logger.info(page_url)
             sp1 = bs(session.get(page_url, headers=headers).text, "lxml")
+            if "permanently closed" in sp1.h2.text.lower():
+                continue
             days = sp1.select("dl.hours dt")
             times = sp1.select("dl.hours dd")
             hours = []
