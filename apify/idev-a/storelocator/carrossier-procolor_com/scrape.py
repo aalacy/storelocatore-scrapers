@@ -108,9 +108,7 @@ class ExampleSearchIteration(SearchIteration):
                     hours = []
                     for hh in sp1.select("div.working-hours div.row"):
                         day = hh.select_one("div.day").text.strip()
-                        times = ", ".join(
-                            hh.select_one("div.hours").stripped_strings
-                        ).replace("0013", "00, 13")
+                        times = ", ".join(hh.select_one("div.hours").stripped_strings)
                         hours.append(f"{day}: {times}")
                     pp = sp1.find("a", href=re.compile(r"tel:"))
                     if not phone and pp:
@@ -129,7 +127,7 @@ class ExampleSearchIteration(SearchIteration):
                     country_code=_["country"],
                     phone=phone,
                     locator_domain=locator_domain,
-                    hours_of_operation="; ".join(hours),
+                    hours_of_operation="; ".join(hours).replace("0013", "00, 13"),
                 )
 
 
