@@ -55,8 +55,9 @@ def fetch_data():
     log.info("Fetching store_locator data")
     soup = pull_content(LOCATION_URL)
     contents = soup.select("div.stores-list__grid--all div.stores-list__store")
-    latlong_content = soup.find("script", string=re.compile(r"SDG\.Data\.stores"))
-    latlong = re.findall(r"store\['latLng'\] = '(.*)';", latlong_content.string)
+    script_content = soup.find("script", string=re.compile(r"SDG\.Data\.stores"))
+    latlong = re.findall(r"store\['latLng'\] = '(.*)';", script_content.string)
+    phones = re.findall(r"store\['phone'\] = '(.*)';", script_content.string)
     num = 0
     for row in contents:
         page_url = (
@@ -79,11 +80,9 @@ def fetch_data():
         )
         street_address, city, state, zip_postal = getAddress(raw_address)
         try:
-            phone = store.find(
-                "div", {"class": "store-detail__info-phone"}
-            ).text.strip()
+            phone = bs(phones[num], "lxml").text.strip()
             hours_of_operation = (
-                store.find("ul", {"class": "store-detail__info-hours"})
+                store.find("div", {"class": "stores-list__store-hours"})
                 .get_text(strip=True, separator=" ")
                 .strip()
             )
@@ -92,7 +91,7 @@ def fetch_data():
             hours_of_operation = MISSING
         location_type = MISSING
         country_code = "US"
-        if "OPENING" in phone:
+        if "Opening" in phone:
             phone = MISSING
             hours_of_operation = MISSING
             location_type = "COMING_SOON"
