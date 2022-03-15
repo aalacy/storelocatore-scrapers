@@ -14,7 +14,7 @@ headers = {
 def fetch_data():
 
     url = "https://www.bartons-lumber.com/"
-    r = session.get(url, headers=headers, verify=False)
+    r = session.get(url, headers=headers)
 
     soup = BeautifulSoup(r.text, "html.parser")
 
@@ -23,7 +23,7 @@ def fetch_data():
     for div in divlist:
         title = div.text
         link = "https://www.bartons-lumber.com" + div["href"]
-        r = session.get(link, headers=headers, verify=False)
+        r = session.get(link, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
         content = soup.find("div", {"class": "HTMLContent"})
         address = content.findAll("p")[0].text
@@ -41,7 +41,13 @@ def fetch_data():
             .split("!2m", 1)[0]
             .split("!3d", 1)
         )
-
+        hours = hours.replace("OPEN:", "").strip()
+        try:
+            street = street.split("(", 1)[0]
+        except:
+            pass
+        if "Paragould" in title:
+            pcode = "72450"
         yield SgRecord(
             locator_domain="https://www.bartons-lumber.com/",
             page_url=link,

@@ -95,7 +95,7 @@ def fetch_data():
                         location_type=MISSING,
                         latitude=lat,
                         longitude=lng,
-                        hours_of_operation=MISSING,
+                        hours_of_operation=hours.strip(),
                     )
 
 
