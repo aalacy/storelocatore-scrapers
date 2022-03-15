@@ -7,7 +7,6 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgzip.dynamic import SearchableCountries
 from sgzip.parallel import DynamicSearchMaker, ParallelDynamicSearch, SearchIteration
-from typing import Iterable, Tuple, Callable
 import math
 from concurrent.futures import ThreadPoolExecutor
 import re
@@ -74,12 +73,12 @@ def request_with_retries(url):
 class ExampleSearchIteration(SearchIteration):
     def do(
         self,
-        coord: Tuple[float, float],
-        zipcode: str,
-        current_country: str,
-        items_remaining: int,
-        found_location_at: Callable[[float, float], None],
-    ) -> Iterable[SgRecord]:
+        coord,
+        zipcode,
+        current_country,
+        items_remaining,
+        found_location_at,
+    ):
         lat = coord[0]
         lng = coord[1]
         with SgRequests(proxy_country="us") as session:
