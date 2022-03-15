@@ -1,4 +1,3 @@
-from logging import Logger
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from bs4 import BeautifulSoup as bs
@@ -85,7 +84,7 @@ def fetch_data():
     total = 0
     for state in states:
         total += int(state["data-count"][1:-1])
-    Logger.info(f"total {total} locations")
+    logger.info(f"total {total} locations")
     logger.info(f"{len(states)} found")
     for state_url, sp1 in fetchConcurrentList(states):
         cities = sp1.select("ul.Directory-listLinks a")

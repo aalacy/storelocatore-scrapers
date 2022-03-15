@@ -23,7 +23,7 @@ def get_urls():
         "searchMiles": "5",
         "offSetMiles": "50",
         "maxMiles": "3000",
-        "listSizeInNumbers": "10000",
+        "listSizeInNumbers": "1000",
         "search_term": "London",
         "searchType": "Branches",
         "pathValue": "/content/branchlocator/en/natwest/searchresults/jcr:content/par/searchresults/captcha",
