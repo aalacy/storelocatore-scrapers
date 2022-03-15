@@ -1,0 +1,4 @@
+--ignore CountryCodeFillRateChecker (Not US/CA)
+--ignore StreetAddressHasNumber (Confiermed scrape correctly)
+--ignore StreetAddressHasStateName (Confiermed scrape correctly)
+--ignore LatLngDuplicationValidator(Confiermed scrape correctly)

@@ -2,20 +2,20 @@ import usaddress
 from sglogging import sglog
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
-from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
 website = "collision-works_com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
-session = SgRequests()
 headers = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36",
-    "Accept": "application/json",
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
 }
 
 DOMAIN = "https://collision-works.com/"
-MISSING = "<MISSING>"
+MISSING = SgRecord.MISSING
 
 
 def fetch_data():
@@ -36,9 +36,15 @@ def fetch_data():
             phone = loc.select_one("a[href*=tel]").text
             temp = loc.findAll("p")
             hours_of_operation = (
-                temp[1].get_text(separator="|", strip=True).replace("|", " ")
+                temp[-1].get_text(separator="|", strip=True).replace("|", " ")
             )
-            address = temp[0].get_text(separator="|", strip=True).replace("|", " ")
+            if not hours_of_operation:
+                hours_of_operation = (
+                    temp[-2].get_text(separator="|", strip=True).replace("|", " ")
+                )
+                address = temp[-3].get_text(separator="|", strip=True).replace("|", " ")
+            else:
+                address = temp[-2].get_text(separator="|", strip=True).replace("|", " ")
             address = address.replace(",", " ")
             address = usaddress.parse(address)
             i = 0
@@ -87,7 +93,9 @@ def fetch_data():
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

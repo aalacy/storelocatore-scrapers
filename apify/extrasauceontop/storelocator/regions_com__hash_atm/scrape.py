@@ -2,7 +2,7 @@ import re
 import json
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
-from sgzip.static import static_zipcode_list, SearchableCountries
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries, Grain_1_KM
 from sgscrape import simple_scraper_pipeline as sp
 
 
@@ -40,7 +40,9 @@ def extract_json(html_string):
 def get_data():
     page_urls = []
     session = SgRequests()
-    search = static_zipcode_list(country_code=SearchableCountries.USA, radius=30)
+    search = DynamicZipSearch(
+        country_codes=[SearchableCountries.USA], granularity=Grain_1_KM()
+    )
 
     for search_code in search:
 
@@ -95,6 +97,7 @@ def get_data():
             location_type_check = location["type"]
 
             if page_url != "<MISSING>":
+                page_url = page_url.lower()
                 if page_url in page_urls:
                     continue
 

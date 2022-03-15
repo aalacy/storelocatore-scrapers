@@ -1,174 +1,170 @@
-import csv
-import usaddress
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
-from concurrent import futures
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgpostal.sgpostal import USA_Best_Parser, parse_address
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def fetch_data(sgw: SgWriter):
 
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def get_urls():
-    session = SgRequests()
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:86.0) Gecko/20100101 Firefox/86.0",
-    }
-    cookies = {
-        "0df70ee305b6cb200ce1c1e691debe0f": "f3c0a08d7b8484f3a53105083de4e2c8",
-        "_ga": "GA1.2.1540435124.1616279320",
-        "_gid": "GA1.2.1341765674.1616279320",
-        "_fbp": "fb.1.1616279320891.257561148",
-    }
-    r = session.get(
-        "https://clubchampiongolf.com/index.php?option=com_jmap&view=sitemap&format=xml",
-        headers=headers,
-        cookies=cookies,
-    )
-    tree = html.fromstring(r.content)
-    return tree.xpath("//*[contains(text(), 'location/')]/text()")
-
-
-def get_data(url):
     locator_domain = "https://clubchampiongolf.com"
-    page_url = "".join(url)
-    if page_url.find("mass") != -1:
-        return
-    session = SgRequests()
-    cookies = {
-        "0df70ee305b6cb200ce1c1e691debe0f": "f3c0a08d7b8484f3a53105083de4e2c8",
-        "_ga": "GA1.2.1540435124.1616279320",
-        "_gid": "GA1.2.1341765674.1616279320",
-        "_fbp": "fb.1.1616279320891.257561148",
-    }
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:86.0) Gecko/20100101 Firefox/86.0",
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+        "Accept-Language": "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3",
+        "Connection": "keep-alive",
+        "Upgrade-Insecure-Requests": "1",
+        "Sec-Fetch-Dest": "document",
+        "Sec-Fetch-Mode": "navigate",
+        "Sec-Fetch-Site": "none",
+        "Sec-Fetch-User": "?1",
+        "If-Modified-Since": "Wed, 13 Oct 2021 19:00:21 GMT",
+        "Cache-Control": "max-age=0",
     }
-    tag = {
-        "Recipient": "recipient",
-        "AddressNumber": "address1",
-        "AddressNumberPrefix": "address1",
-        "AddressNumberSuffix": "address1",
-        "StreetName": "address1",
-        "StreetNamePreDirectional": "address1",
-        "StreetNamePreModifier": "address1",
-        "StreetNamePreType": "address1",
-        "StreetNamePostDirectional": "address1",
-        "StreetNamePostModifier": "address1",
-        "StreetNamePostType": "address1",
-        "CornerOf": "address1",
-        "IntersectionSeparator": "address1",
-        "LandmarkName": "address1",
-        "USPSBoxGroupID": "address1",
-        "USPSBoxGroupType": "address1",
-        "USPSBoxID": "address1",
-        "USPSBoxType": "address1",
-        "BuildingName": "address2",
-        "OccupancyType": "address2",
-        "OccupancyIdentifier": "address2",
-        "SubaddressIdentifier": "address2",
-        "SubaddressType": "address2",
-        "PlaceName": "city",
-        "StateName": "state",
-        "ZipCode": "postal",
+    data = {
+        "searchname": "",
+        "filter_catid": "",
+        "searchzip": "Please enter your zip code (i.e. 60527)",
+        "task": "search",
+        "qradius": "9",
+        "radius": "-1",
+        "option": "com_mymaplocations",
+        "limit": "0",
+        "component": "com_mymaplocations",
+        "Itemid": "102",
+        "zoom": "10",
+        "format": "json",
+        "geo": "",
+        "latitude": "",
+        "longitude": "",
+        "limitstart": "0",
     }
-    r = session.get(page_url, headers=headers, cookies=cookies)
-    tree = html.fromstring(r.text)
 
-    ad = tree.xpath("//tr//span//text()")
-    ad = " ".join(ad[1:])
-    if ad.find("(") != -1:
-        ad = ad.split("(")[0].strip()
-    a = usaddress.tag(ad, tag_mapping=tag)[0]
-    street_address = f"{a.get('address1')} {a.get('address2')}".replace(
-        "None", ""
-    ).strip()
-    city = a.get("city")
-    state = a.get("state")
-    postal = a.get("postal")
-    country_code = "US"
-    store_number = "<MISSING>"
-    location_name = "".join(
-        tree.xpath(
-            '//div[@class="uk-panel cc-loc-h1 h1-mobile-dt uk-width-xlarge"]/h1/text()'
+    r = session.post(
+        "https://clubchampiongolf.com/locations", headers=headers, data=data
+    )
+    if r.status_code != 200:
+        return
+    js = r.json()["features"]
+    for j in js:
+
+        slug = (
+            "".join(j.get("properties").get("url"))
+            .replace(".", "")
+            .replace("fcom", "f.com")
+            .strip()
         )
-    )
-    phone = "".join(
-        tree.xpath('//tbody//td[2]//a[contains(@href, "tel")]/text()')
-    ).strip()
-    latitude = "<MISSING>"
-    longitude = "<MISSING>"
-    location_type = "<MISSING>"
-    hours_of_operation = " ".join(
-        tree.xpath("//div[./h3]/following-sibling::div[1]//text()")
-    )
-    if hours_of_operation.find("GET") != -1:
-        hours_of_operation = hours_of_operation.split("GET")[0].strip()
-    if hours_of_operation.find("Get") != -1:
-        hours_of_operation = hours_of_operation.split("Get")[0].strip()
 
-    row = [
-        locator_domain,
-        page_url,
-        location_name,
-        street_address,
-        city,
-        state,
-        postal,
-        country_code,
-        store_number,
-        phone,
-        location_type,
-        latitude,
-        longitude,
-        hours_of_operation,
-    ]
+        page_url = slug
+        if page_url.find("https") == -1:
+            page_url = f"https://clubchampiongolf.com{slug}"
+        sub_ad = ""
+        if slug.find("txgca") != -1:
+            page_url = "https://clubchampiongolf.com/locations"
+            info = j.get("properties").get("description")
+            n = html.fromstring(info)
+            sub_ad = (
+                " ".join(n.xpath('//a[contains(@title, "TXG")]/text()'))
+                .replace("\n", "")
+                .strip()
+            )
+            sub_ad = " ".join(sub_ad.split())
+        location_name = j.get("properties").get("name")
+        store_number = j.get("id")
+        latitude = j.get("geometry").get("coordinates")[1]
+        longitude = j.get("geometry").get("coordinates")[0]
 
-    return row
+        r = session.get(page_url, headers=headers)
+        tree = html.fromstring(r.text)
 
+        ad = (
+            " ".join(
+                tree.xpath(
+                    '//td[.//img[contains(@src, "find")]]/following-sibling::td//text()'
+                )
+            )
+            .replace("\n", "")
+            .strip()
+        )
+        ad = " ".join(ad.split())
+        if ad.find("(") != -1:
+            ad = ad.split("(")[0].strip()
+        if page_url == "https://clubchampiongolf.com/locations":
+            ad = sub_ad
+        ad = ad.replace("Our new location is:", "").strip()
+        a = parse_address(USA_Best_Parser(), ad)
+        street_address = f"{a.street_address_1} {a.street_address_2}".replace(
+            "None", ""
+        ).strip()
+        state = a.state or "<MISSING>"
+        postal = a.postcode or "<MISSING>"
+        country_code = "US"
+        if not postal.isdigit():
+            country_code = "CA"
+        city = a.city or "<MISSING>"
+        if ad.find(", ON") != -1:
+            state = ad.split(",")[-1].split()[0].strip()
+            postal = " ".join(ad.split(",")[-1].split()[1:]).strip()
+        phone = (
+            "".join(
+                tree.xpath('//tbody//td[2]//a[contains(@href, "tel")]/text()')
+            ).strip()
+            or "<MISSING>"
+        )
+        if phone == "<MISSING>":
+            phone = (
+                "".join(
+                    tree.xpath(
+                        '//td[.//img[contains(@src, "call")]]/following-sibling::td//p/text()'
+                    )
+                )
+                .replace("\n", "")
+                .strip()
+            )
+        hours_of_operation = (
+            " ".join(
+                tree.xpath(
+                    "//div[./h3]/following-sibling::div[1]//*[contains(text(), ':')]/text()"
+                )
+            )
+            .replace("\n", "")
+            .strip()
+        )
+        hours_of_operation = " ".join(hours_of_operation.split())
+        if hours_of_operation.find("GET") != -1:
+            hours_of_operation = hours_of_operation.split("GET")[0].strip()
+        if hours_of_operation.find("Get") != -1:
+            hours_of_operation = hours_of_operation.split("Get")[0].strip()
+        cms = "".join(tree.xpath('//span[text()="Coming Soon!"]/text()'))
+        if cms:
+            hours_of_operation = "Coming Soon"
 
-def fetch_data():
-    out = []
-    urls = get_urls()
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {executor.submit(get_data, url): url for url in urls}
-        for future in futures.as_completed(future_to_url):
-            row = future.result()
-            if row:
-                out.append(row)
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+            raw_address=ad,
+        )
 
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.RAW_ADDRESS}))
+    ) as writer:
+        fetch_data(writer)

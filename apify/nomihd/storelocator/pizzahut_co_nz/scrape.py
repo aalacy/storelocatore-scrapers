@@ -63,7 +63,7 @@ def process_record(raw_results_from_one_coordinate):
     for store in stores:
         if store["active"] != 1:
             continue
-        page_url = "<MISSING>"
+        page_url = "https://pizzahut.co.nz/find-a-hut/"
         locator_domain = website
         location_name = store["name"]
         raw_address = store["address"]
