@@ -20,15 +20,6 @@ MISSING = SgRecord.MISSING
 
 def fetch_data():
     if True:
-        day_list = {
-            "0": "SUN",
-            "1": "SAT",
-            "2": "MON",
-            "3": "TUE",
-            "4": "WED",
-            "5": "THU",
-            "6": "FRI",
-        }
         location_url = "https://www.kevajuicesw.com/locations"
         r = session.get(location_url, headers=headers)
         user_id = r.text.split("user_id: '")[1].split("'")[0]
