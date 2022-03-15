@@ -35,8 +35,14 @@ def fetch_data():
             hoo = loc_dom.xpath(
                 '//h2[contains(text(), "Negozio")]/following-sibling::dl//text()'
             )
+        if not hoo:
+            hoo = loc_dom.xpath(
+                '//h3[contains(text(), "Orari d")]/following-sibling::p/text()'
+            )
         hoo = " ".join([e.strip() for e in hoo if e.strip()]).split(": 25")[0]
         poi = loc_dom.xpath('//div[@data-pub-type="store"]/script/text()')
+        latitude = ""
+        longitude = ""
         if poi:
             poi = json.loads(poi[0])
             location_name = poi["name"]
@@ -53,7 +59,11 @@ def fetch_data():
             raw_adr = loc_dom.xpath(
                 '//*[contains(text(), "Indirizzo")]/following-sibling::p/text()'
             )
-            raw_adr = [e.strip() for e in raw_adr if e.strip()]
+            if not raw_adr:
+                raw_adr = loc_dom.xpath(
+                    '//h3[contains(text(), "Dove siamo")]/following-sibling::p[1]/text()'
+                )
+            raw_adr = [e.strip() for e in raw_adr if e.strip() and "Google" not in e]
             raw_adr = " ".join(" ".join(raw_adr).split())
             addr = parse_address_intl(raw_adr)
             street_address = addr.street_address_1
