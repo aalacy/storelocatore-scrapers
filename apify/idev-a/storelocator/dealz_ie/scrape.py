@@ -30,6 +30,12 @@ def fetch_records(http):
         street_address = addr["line"]
         if type(addr["line"]) == list:
             street_address = " ".join(addr["line"])
+        latitude = _["geolocation"]["latitude"]
+        longitude = _["geolocation"]["longitude"]
+        if latitude == "0.00000000":
+            latitude = ""
+        if longitude == "0.00000000":
+            longitude = ""
         yield SgRecord(
             page_url=page_url,
             location_name=_["name"],
@@ -39,8 +45,8 @@ def fetch_records(http):
             zip_postal=addr["postcode"],
             country_code=addr["country"],
             phone=_["tel"],
-            latitude=_["geolocation"]["latitude"],
-            longitude=_["geolocation"]["longitude"],
+            latitude=latitude,
+            longitude=longitude,
             locator_domain=locator_domain,
             hours_of_operation="; ".join(hours),
         )
