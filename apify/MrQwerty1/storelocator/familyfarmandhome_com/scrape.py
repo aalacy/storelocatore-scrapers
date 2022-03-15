@@ -28,8 +28,10 @@ def fetch_data(sgw: SgWriter):
     hours_of_operation = get_hours()
 
     for j in js:
-        street_address = j.get("street")
-        city = j.get("city")
+        street_address = j.get("street") or ""
+        city = j.get("city") or ""
+        if f", {city}" in street_address:
+            street_address = street_address.split(f", {city}")[0].strip()
         state = j.get("region")
         postal = j.get("postal_code")
         country_code = j.get("country_id")
