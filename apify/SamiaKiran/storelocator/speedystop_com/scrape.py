@@ -21,7 +21,14 @@ MISSING = SgRecord.MISSING
 
 def fetch_data():
     if True:
-        url = "https://www.closeby.co/embed/c9271c9124f5bdd13fc0258d3453ed6f/locations?bounding_box&cachable=true"
+        url = "https://speedystop.com/pages/locations"
+        r = session.get(url, headers=headers)
+        map_key = r.text.split("mapKey=")[1].split("\\u0026shop")[0]
+        url = (
+            "https://www.closeby.co/embed/"
+            + map_key
+            + "/locations?bounding_box&cachable=true"
+        )
         loclist = session.get(url, headers=headers).json()["locations"]
         for loc in loclist:
             if "Coming Soon" in str(loc):
@@ -69,7 +76,7 @@ def fetch_data():
             longitude = loc["longitude"]
             yield SgRecord(
                 locator_domain=DOMAIN,
-                page_url="https://www.rplumber.com/locations",
+                page_url="https://speedystop.com/pages/locations",
                 location_name=location_name,
                 street_address=street_address.strip(),
                 city=city.strip(),

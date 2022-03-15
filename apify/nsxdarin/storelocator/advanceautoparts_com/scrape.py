@@ -65,8 +65,11 @@ def fetch_data():
                                 + item.split('"')[0].replace("..", "")
                             )
     for city in cities:
-        logger.info("Pulling City %s..." % city)
-        r = session.get(city, headers=headers)
+        curl = city.replace("https://stores.advanceautoparts.com/https", "https")
+        if "carquest.com/stores/or/bend" in curl:
+            curl = "https://stores.advanceautoparts.com/or/bend"
+        logger.info("Pulling City %s..." % curl)
+        r = session.get(curl, headers=headers)
         for line in r.iter_lines():
             if 'visible-only-xs"><a class="Teaser-cta Button--AAP" href="..' in line:
                 items = line.split(
@@ -79,7 +82,11 @@ def fetch_data():
                             + item.split('"')[0].replace("..", "")
                         )
     for loc in locs:
-        loc = loc.replace("&#39;", "%27").replace(".com//", ".com/")
+        loc = (
+            loc.replace("&#39;", "%27")
+            .replace(".com//", ".com/")
+            .replace("https://stores.advanceautoparts.com/https", "https")
+        )
         logger.info("Pulling Location %s..." % loc)
         LFound = True
         tries = 0
