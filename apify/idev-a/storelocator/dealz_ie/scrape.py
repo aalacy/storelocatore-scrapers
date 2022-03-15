@@ -25,7 +25,7 @@ def fetch_records(http):
         for hh in _["opening_hours"]:
             hours.append(f"{hh['day']}: {hh['hours']}")
         page_url = (
-            f"https://www.dealz.ie/store-finder/store_page/view/id/{_['url_key']}/"
+            f"https://www.dealz.ie/store-finder/store_page/view/id/{_['store_id']}/"
         )
         street_address = addr["line"]
         if type(addr["line"]) == list:
