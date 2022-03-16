@@ -18,7 +18,7 @@ HEADERS = {
 MISSING = "<MISSING>"
 log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
 
-session = SgRequests()
+session = SgRequests(verify_ssl=False)
 
 
 def pull_content(url):
@@ -54,11 +54,11 @@ def fetch_data():
     for key, val in data.items():
         page_url = val["detailurl"]
         location_name = val["name"]
-        street_address = val["address"].strip()
+        street_address = val["address"].strip().rstrip(",")
         if "http" in street_address:
             street_address = MISSING
-        city = val["city"]
         state = val["state"]
+        city = re.sub(r"Suite\s.+,|\s" + state, "", val["city"]).strip().rstrip(",")
         zip_postal = val["zip"]
         country_code = "US"
         phone = (

@@ -45,6 +45,7 @@ CITIES = [
     "Gorontalo",
     "Jakarta",
     "Jakarta Barat",
+    "Cianjur",
     "Jakarta Pusat",
     "Jakarta Selatan",
     "Jakarta Timur",
@@ -54,6 +55,8 @@ CITIES = [
     "Bandung",
     "Bekasi",
     "Bogor",
+    "Pajajaran",
+    "Botani",
     "Cimahi",
     "Cirebon",
     "Depok",
@@ -161,16 +164,21 @@ def search_location(driver, city, num=0):
     input = driver.find_element_by_id("findAddress")
     input.clear()
     input.send_keys(city)
-    time.sleep(1)
     try:
-        driver.find_element_by_xpath("/html/body/div[6]/div[1]").click()
+        driver.find_element_by_xpath("/html/body/div[5]/div[1]").click()
+        driver.implicitly_wait(5)
     except:
-        if num <= 3:
-            log.info(f"Search failed for {city}. retry num {num}")
-            return search_location(driver, city, num)
-        else:
-            driver.refresh()
-            return search_location(driver, city)
+        try:
+            driver.find_element_by_xpath("/html/body/div[6]/div[1]").click()
+            driver.implicitly_wait(5)
+        except:
+            if num <= 3:
+                log.info(f"Search failed for {city}. retry num {num}")
+                return search_location(driver, city, num)
+            else:
+                driver.refresh()
+                driver.implicitly_wait(10)
+                return search_location(driver, city)
     time.sleep(2)
     return driver
 
@@ -197,6 +205,9 @@ def fetch_data():
             )
             street_address, _, state, zip_postal = getAddress(raw_address)
             street_address = " ".join(street_address.replace(city, "").split())
+            if "Pajajaran" in city:
+                city = "Bogor"
+                street_address = street_address.replace("bogor", "").strip()
             phone = MISSING
             country_code = "ID"
             hours_of_operation = (

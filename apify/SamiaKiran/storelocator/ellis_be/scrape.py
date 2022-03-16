@@ -1,4 +1,5 @@
 import json
+import html
 import unicodedata
 from sglogging import sglog
 from bs4 import BeautifulSoup
@@ -33,7 +34,7 @@ def fetch_data():
         loclist = r.text.split("let restaurants = ")[1].split("}];")[0]
         loclist = json.loads(loclist + "}]")
         for loc in loclist:
-            location_name = strip_accents(loc["name"])
+            location_name = html.unescape(strip_accents(loc["name"]))
             log.info(location_name)
             store_number = loc["id"]
             page_url = loc["url"]

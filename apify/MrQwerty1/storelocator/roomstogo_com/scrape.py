@@ -5,6 +5,11 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 
 
+def get_name(api):
+    r = session.get(api, headers=headers)
+    return r.json()["result"]["data"]["strapiStore"]["SEO"]["SEO"]["PageTitle"]
+
+
 def fetch_data(sgw: SgWriter):
     api = "https://www.roomstogo.com/page-data/stores/page-data.json"
     r = session.get(api, headers=headers)
@@ -12,13 +17,19 @@ def fetch_data(sgw: SgWriter):
 
     for j in js:
         slug = j.get("slug")
+        app = f"https://www.roomstogo.com/page-data{slug}/page-data.json"
+        location_name = get_name(app) or ""
+        if " - We" in location_name:
+            location_name = location_name.split("- We")[0]
         page_url = f"https://www.roomstogo.com{slug}"
-        street_address = f'{j.get("Address1")} {j.get("Address2") or ""}'.strip()
         city = j.get("City")
         state = j.get("State")
         postal = j.get("Zip")
-
-        location_name = j.get("StoreName") or f"{city}, {state}"
+        adr1 = j.get("Address1") or ""
+        if f", {city}," in adr1:
+            adr1 = adr1.split(f", {city}")[0].strip()
+        adr2 = j.get("Address2") or ""
+        street_address = f"{adr1} {adr2}".strip()
         phone = j.get("PhoneNumber")
         try:
             loc = j["Location"]["latLng"]

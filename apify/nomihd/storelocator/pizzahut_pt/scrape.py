@@ -71,18 +71,10 @@ def fetch_data():
         store_res = session.get(page_url, headers=headers)
         store_sel = lxml.html.fromstring(store_res.text)
 
-        store_info = list(
-            filter(
-                str,
-                [
-                    x.strip()
-                    for x in store_sel.xpath('//div[@class="store-values"]/p//text()')
-                ],
-            )
-        )
+        store_info = store_sel.xpath('//div[@class="store-values"]/p[1]//text()')
 
         raw_address = (
-            " ".join(store_info).strip().replace("Consulta a nossa EMENTA AQUI", " ")
+            ", ".join(store_info).strip().replace("Consulta a nossa EMENTA AQUI", " ")
         )
 
         formatted_addr = parser.parse_address_intl(raw_address)
@@ -97,7 +89,11 @@ def fetch_data():
 
         location_name = "".join(store.xpath(".//text()")).strip().replace("ver +", "")
 
-        phone = "222-444-222"
+        phone = "".join(
+            store_sel.xpath('//div[@class="store-values"]/p[2]//text()')
+        ).strip()
+        if not phone.isdigit():
+            phone = "222-444-222"
 
         store_number = "<MISSING>"
 

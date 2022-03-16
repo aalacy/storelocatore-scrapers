@@ -74,7 +74,7 @@ def check(url, class_name, driver):
 
 def Se(url, class_name):
     for c in range(10):
-        time.sleep(1)
+        time.sleep(5)
         driver = get_driver()
         if check(url, class_name, driver):
             return driver
@@ -90,8 +90,14 @@ def fetch_data():
     for store_url in stores:
         page_url = "https://www.rentokil.co.uk" + store_url
 
-        log.info(page_url)
-        driver.get(page_url)
+        is_timeout = True
+        while is_timeout is True:
+            try:
+                log.info(page_url)
+                driver.get(page_url)
+                is_timeout = False
+            except:
+                pass
         store_sel = lxml.html.fromstring(driver.page_source)
 
         locator_domain = website

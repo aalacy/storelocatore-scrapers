@@ -10,7 +10,7 @@ import json
 import re
 
 DOMAIN = "jonsmithsubs.com"
-BASE_URL = "https://www.jonsmithsubs.com"
+BASE_URL = "https://www.jonsmithsubs.com/"
 LOCATION_URL = "https://www.jonsmithsubs.com/locations"
 HEADERS = {
     "Accept": "application/json, text/plain, */*",
@@ -68,7 +68,10 @@ def fetch_data():
         if key.startswith("RestaurantLocation:"):
             if "Coming Soon!" in value["customLocationContent"]:
                 continue
-            page_url = BASE_URL + value["slug"]
+            if "Acworth" in value["name"]:
+                page_url = BASE_URL + value["slug"]
+            else:
+                page_url = BASE_URL + value["slug"] + "-" + value["state"].lower()
             location_name = value["name"]
             raw_address = value["fullAddress"].replace("\n", ", ")
             city = value["city"]
