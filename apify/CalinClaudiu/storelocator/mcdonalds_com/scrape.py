@@ -652,7 +652,7 @@ class CrawlMethod(CleanRecord):
         def getAllData(headers, country, locale, Point):
             if self._config.get("apiCountry"):
                 country = self._config.get("apiCountry")
-            api = "https://www.mcdonalds.com/googleappsv2/geolocation?latitude={}&longitude={}&radius=100000&maxResults=25000&country={}&language={}"
+            api = "https://www.mcdonalds.com/googleappsv2/geolocation?latitude={}&longitude={}&radius=1000&maxResults=25000&country={}&language={}"
             api = api.format(Point[0], Point[1], country, locale)
             return self._session.get(api, headers=headers).json()
 
@@ -674,7 +674,6 @@ class CrawlMethod(CleanRecord):
 
         record_cleaner = getattr(CleanRecord, self._config.get("cleanupMethod"))
         maxZ = self._search.items_remaining()
-        total = 0
         for Point in self._search:
             remaining = self._search.items_remaining()
             if remaining == 0:
@@ -686,6 +685,7 @@ class CrawlMethod(CleanRecord):
                 headers = {}
                 headers["referer"] = getReferer(self._config.get("Url"))
                 country, locale = getLocale(headers)
+                headers = {}
                 results = results = getAllData(headers, country, locale, Point)
             except Exception as e:
                 self.Oopsie(Point, str(e))
@@ -701,11 +701,6 @@ class CrawlMethod(CleanRecord):
             except Exception as e:
                 self.Oopsie(Point, str(e))
                 continue
-                progress = str(round(100 - (remaining / maxZ * 100), 2)) + "%"
-                total += found
-                logzilla.info(
-                    f"{[*Point]} | found: {found} | total: {total} | progress: {progress}"
-                )
 
     def QuickDedupe(self):
         record_cleaner = CleanRecord.DEDUPE
