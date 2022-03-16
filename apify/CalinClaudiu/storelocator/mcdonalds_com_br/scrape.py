@@ -151,7 +151,7 @@ def fetch_data():
         # Only runs tests, does not automatically crawl.
         # nvm it now automatically crawls.
         for country in countries:
-            if "ar" in country["page"]:
+            if True:
                 if "facebook" in country["page"]:
                     continue
                 with SgChrome() as driver:
