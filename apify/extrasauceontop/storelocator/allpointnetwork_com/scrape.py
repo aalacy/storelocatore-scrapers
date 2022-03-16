@@ -10,7 +10,11 @@ session = SgRequests()
 
 def get_data():
     search = DynamicGeoSearch(
-        country_codes=[SearchableCountries.CANADA],
+        country_codes=[
+            SearchableCountries.CANADA,
+            SearchableCountries.USA,
+            SearchableCountries.BRITAIN,
+        ],
         granularity=Grain_2(),
     )
 

@@ -21,6 +21,11 @@ def get_international(line):
     return street, city, state, postal
 
 
+def get_city(line):
+    adr = parse_address(International_Parser(), line)
+    return adr.city
+
+
 def get_urls():
     urls = []
     r = session.get("https://www.wework.com/search?slug=", headers=headers)
@@ -55,6 +60,22 @@ def get_data(param, sgw: SgWriter):
 
     raw_address = " ".join(" ".join(line).split())
     street_address, city, state, postal = get_international(raw_address)
+    if city == SgRecord.MISSING:
+        _tmp = ", ".join(raw_address.split(", ")[:-1])
+        city = get_city(_tmp)
+
+    cities = {
+        "Paris": "Paris",
+        "Barcelona": "Barcelona",
+        "Madrid": "Madrid",
+        "Brooklyn": "New York",
+    }
+    if not city:
+        for k, v in cities.items():
+            if k in raw_address:
+                city = v
+                break
+
     try:
         phone = tree.xpath(
             "//div[@class='lead-form-contact-footer__inner']//a[contains(@href, 'tel:')]/text()"
