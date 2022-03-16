@@ -15,8 +15,6 @@ import time
 
 logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
 
-from seleniumwire import webdriver
-
 
 def getTestCountries(session):
     url = "https://corporate.mcdonalds.com/corpmcd/our-company/where-we-operate.html"
