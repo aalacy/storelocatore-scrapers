@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import ssl
 from lxml import etree
 from time import sleep
 
@@ -7,16 +6,9 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
-from sgselenium.sgselenium import SgChrome
+from sgselenium.sgselenium import SgFirefox
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 from sgpostal.sgpostal import parse_address_intl
-
-try:
-    _create_unverified_https_context = ssl._create_unverified_context
-except AttributeError:
-    pass
-else:
-    ssl._create_default_https_context = _create_unverified_https_context
 
 
 def fetch_data():
@@ -26,28 +18,28 @@ def fetch_data():
     all_codes = DynamicZipSearch(
         country_codes=[SearchableCountries.BRITAIN], expected_search_radius_miles=100
     )
-    with SgChrome() as driver:
+    with SgFirefox() as driver:
         for code in all_codes:
             driver.get(start_url)
-            sleep(5)
+            sleep(3)
             try:
                 driver.switch_to.frame(
                     driver.find_element_by_xpath('//iframe[@id="iFrame1"]')
                 )
-                driver.find_element_by_xpath('//span[@id="decline-text"]').click()
+                driver.find_element_by_xpath('//button[@id="decline-text"]').click()
                 driver.switch_to.default_content()
             except Exception:
                 pass
-            sleep(5)
+            sleep(2)
             elem = driver.find_element_by_xpath('//input[@name="search_address"]')
             elem.send_keys(code)
-            sleep(10)
+            sleep(3)
             try:
                 elem = driver.find_element_by_xpath('//div[@class="pac-item"]')
             except Exception:
                 continue
             elem.click()
-            sleep(5)
+            sleep(3)
             dom = etree.HTML(driver.page_source)
 
             all_locations = dom.xpath('//div[@class="results-item"]')

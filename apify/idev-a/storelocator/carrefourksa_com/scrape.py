@@ -16,13 +16,49 @@ _headers = {
 
 locator_domain = "https://www.carrefourksa.com"
 base_url = "{}/en/store-finder?q=&page={}&storeFormat=&latitude={}&longitude={}"
+kw_url = "https://www.carrefourkuwait.com/mafkwt/en/store-finder?q=Al%20A%E1%B8%A9mad%C4%AB&page=0&storeFormat="
 
 country_map = {
-    "kw": "https://www.carrefourkuwait.com/mafkwt",
     "ae": "https://www.carrefourksa.com/mafsau",
     "jo": "https://www.carrefourjordan.com/mafjor",
     "pk": "https://www.carrefour.pk/mafpak",
 }
+
+
+def _d(_, current_country):
+    street_address = _["line1"]
+    if _["line2"]:
+        street_address += " " + _["line2"]
+    hours = []
+    for day, hh in _["openings"].items():
+        hours.append(f"{day}: {hh}")
+    city = _["town"]
+    if city in [
+        "CFC",
+        "CoolPoint",
+        "Emporium Mall",
+        "WTC Mall",
+        "Mushroom_Darkstore-GT",
+    ]:
+        city = ""
+    if _["displayName"]:
+        location_name = f"{_['displayName']} - {_['town']}"
+    else:
+        location_name = _["town"]
+    return SgRecord(
+        location_name=location_name,
+        street_address=street_address,
+        city=city,
+        state=_.get("state"),
+        zip_postal=_.get("postalCode"),
+        country_code=current_country,
+        phone=_["phone"],
+        latitude=_["latitude"],
+        longitude=_["longitude"],
+        location_type=_["storeFormat"],
+        locator_domain=locator_domain,
+        hours_of_operation="; ".join(hours),
+    )
 
 
 class ExampleSearchIteration(SearchIteration):
@@ -43,6 +79,8 @@ class ExampleSearchIteration(SearchIteration):
             page = 0
             while True:
                 url = base_url.format(country, page, lat, lng)
+                if country == "kw":
+                    url = ""
                 try:
                     locations = http.get(url, headers=_headers).json()["data"]
                 except:
@@ -55,38 +93,14 @@ class ExampleSearchIteration(SearchIteration):
                 if locations:
                     found_location_at(lat, lng)
                 for _ in locations:
-                    street_address = _["line1"]
-                    if _["line2"]:
-                        street_address += " " + _["line2"]
-                    hours = []
-                    for day, hh in _["openings"].items():
-                        hours.append(f"{day}: {hh}")
-                    city = _["town"]
-                    if city in [
-                        "CFC",
-                        "CoolPoint",
-                        "Emporium Mall",
-                        "WTC Mall",
-                        "Mushroom_Darkstore-GT",
-                    ]:
-                        city = ""
-                    if _["displayName"]:
-                        location_name = f"{_['displayName']} - {_['town']}"
-                    location_name = _["town"]
-                    yield SgRecord(
-                        location_name=location_name,
-                        street_address=street_address,
-                        city=city,
-                        state=_.get("state"),
-                        zip_postal=_.get("postalCode"),
-                        country_code=current_country,
-                        phone=_["phone"],
-                        latitude=_["latitude"],
-                        longitude=_["longitude"],
-                        location_type=_["storeFormat"],
-                        locator_domain=locator_domain,
-                        hours_of_operation="; ".join(hours),
-                    )
+                    yield _d(_, current_country)
+
+
+def fetch_kw():
+    with SgRequests() as http:
+        locations = http.get(kw_url, headers=_headers).json()["data"]
+        for _ in locations:
+            yield _d(_, "kw")
 
 
 if __name__ == "__main__":
@@ -99,6 +113,7 @@ if __name__ == "__main__":
                     SgRecord.Headers.CITY,
                     SgRecord.Headers.LOCATION_NAME,
                     SgRecord.Headers.COUNTRY_CODE,
+                    SgRecord.Headers.LOCATION_TYPE,
                 }
             ),
             duplicate_streak_failure_factor=100,
@@ -117,4 +132,8 @@ if __name__ == "__main__":
         )
 
         for rec in par_search.run():
+            writer.write_row(rec)
+
+        recs = fetch_kw()
+        for rec in recs:
             writer.write_row(rec)
