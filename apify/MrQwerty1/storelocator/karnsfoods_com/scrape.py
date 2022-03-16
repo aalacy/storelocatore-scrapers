@@ -35,6 +35,8 @@ def fetch_data(sgw: SgWriter):
 
     for d in divs:
         location_name = "".join(d.xpath("./div[1]/h3/text()")).strip()
+        if "office" in location_name.lower():
+            continue
         line = d.xpath(".//p[./a[@class='btn btn-sm btn-default']]/text()")
         line = list(filter(None, [l.strip() for l in line]))
 

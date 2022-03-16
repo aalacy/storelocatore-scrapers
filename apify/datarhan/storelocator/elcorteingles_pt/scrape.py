@@ -28,7 +28,7 @@ def fetch_data():
     dom = etree.HTML(response.text)
     with SgChrome() as driver:
         driver.get(start_url)
-        sleep(5)
+        sleep(15)
         all_locations = driver.find_elements_by_xpath('//div[@class="map-responsive"]')
         for elem in all_locations:
             driver.switch_to.frame(
@@ -58,7 +58,7 @@ def fetch_data():
                 street_address=raw_address[0],
                 city=city,
                 state="",
-                zip_postal=raw_address[1].split()[-1],
+                zip_postal=raw_address[1].split()[0],
                 country_code=raw_address[-1],
                 store_number="",
                 phone="",

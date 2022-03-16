@@ -5,7 +5,7 @@ from sgrequests import SgRequests
 from sglogging import sglog
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
-from sgzip.dynamic import DynamicGeoSearch, SearchableCountries, Grain_1_KM
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.pause_resume import CrawlStateSingleton
@@ -28,8 +28,10 @@ log = sglog.SgLogSetup().get_logger(logger_name=website)
 
 def request_with_retries(payload):
     lat, lng = payload
-    url = json_url.format(lat, lat + 3.0, lng, lng + 5.0)
+    url = json_url.format(lat, lat + 1.5, lng, lng + 1.5)
+    log.info(f"URL: {url}")
     response = session.get(url, headers=headers)
+    log.info(f"Response: {response}")
     stores = []
     try:
         data = json.loads(response.text)
@@ -45,7 +47,12 @@ def request_with_retries(payload):
         if store["AddressLine2"]:
             street_address += ", " + store["AddressLine2"]
 
-        location_type = store["EntityType"]
+        if "exxon" in store["BrandingImage"]:
+            location_type = "exxon"
+        elif "mobil" in store["BrandingImage"]:
+            location_type = "mobil"
+        else:
+            location_type = store["EntityType"]
 
         city = store["City"]
         state = store["StateProvince"]
@@ -55,6 +62,7 @@ def request_with_retries(payload):
         latitude = store["Latitude"]
         longitude = store["Longitude"]
         page_url = f'https://www.exxon.com/en/find-station/exxon-{city.replace(" ", "").lower()}-{state.lower()}-{location_name.lower().replace(" ", "")}-{store_number}'
+        page_url = page_url.replace("#", "")
 
         hoo = ""
         if store["WeeklyOperatingHours"]:
@@ -93,8 +101,7 @@ def request_with_retries(payload):
 def fetch_data():
     all_coords = DynamicGeoSearch(
         country_codes=[SearchableCountries.USA],
-        granularity=Grain_1_KM(),
-        use_state=False,
+        expected_search_radius_miles=1,
     )
     count = 0
 

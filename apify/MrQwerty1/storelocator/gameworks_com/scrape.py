@@ -1,3 +1,4 @@
+import json
 from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
@@ -25,6 +26,7 @@ def get_hours(page_url):
 
 def fetch_data(sgw: SgWriter):
     coords = []
+    phones = dict()
     api = "https://www.gameworks.com/home"
 
     r = session.get(api, headers=headers)
@@ -37,6 +39,12 @@ def fetch_data(sgw: SgWriter):
         lat = t.split("lat:")[1].split(",")[0].strip()
         lng = t.split("lng:")[1].split("}")[0].strip()
         coords.append((lat, lng))
+
+    js_text = "".join(tree.xpath("//script[contains(text(), 'LocalBusiness')]/text()"))
+    js = json.loads(js_text)
+    for j in js["address"]:
+        key = j.get("postalCode") or ""
+        phones[key] = j.get("telephone") or ""
 
     divs = tree.xpath("//ul[@class='location-map-listing']/li")
     for d in divs:
@@ -58,7 +66,7 @@ def fetch_data(sgw: SgWriter):
             "".join(d.xpath(".//div[contains(@class,'location-phone')]//text()"))
             .replace(" . ", " ")
             .strip()
-        )
+        ) or phones.get(postal)
         latitude, longitude = coords.pop(0)
         hours_of_operation = get_hours(page_url)
         if "SOON" in hours_of_operation:

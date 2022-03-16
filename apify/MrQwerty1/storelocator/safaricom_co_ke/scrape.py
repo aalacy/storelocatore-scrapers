@@ -23,17 +23,10 @@ def fetch_data(sgw: SgWriter):
     r = session.get(page_url)
     tree = html.fromstring(r.text)
 
-    divs = tree.xpath("//div[@class='col-12 col-sm-4 col-md-4 col-lg-4 promo-search']")
+    divs = tree.xpath("//div[@class='col-12 col-md-4 col-sm-6 promo-search']")
     for d in divs:
         location_name = "".join(d.xpath(".//h2/text()")).strip()
-        raw_address = "".join(
-            d.xpath(".//h4[not(contains(text(), 'Type:'))]/text()")
-        ).strip()
-        location_type = (
-            "".join(d.xpath(".//h4[contains(text(), 'Type:')]/text()"))
-            .replace("Type:", "")
-            .strip()
-        )
+        raw_address = "".join(d.xpath(".//p/text()")).strip()
         street_address, city, state, postal = get_international(raw_address)
 
         row = SgRecord(
@@ -44,7 +37,6 @@ def fetch_data(sgw: SgWriter):
             state=state,
             zip_postal=postal,
             country_code="KE",
-            location_type=location_type,
             locator_domain=locator_domain,
             raw_address=raw_address,
         )
@@ -54,7 +46,7 @@ def fetch_data(sgw: SgWriter):
 
 if __name__ == "__main__":
     locator_domain = "https://www.safaricom.co.ke/"
-    page_url = "https://www.safaricom.co.ke/personal/store"
+    page_url = "https://www.safaricom.co.ke/personal/index.php/safaricom-shop"
     session = SgRequests()
     with SgWriter(
         SgRecordDeduper(SgRecordID({SgRecord.Headers.RAW_ADDRESS}))

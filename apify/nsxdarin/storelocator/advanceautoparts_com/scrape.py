@@ -17,7 +17,10 @@ def fetch_data():
     urls = ["https://stores.advanceautoparts.com/"]
     states = []
     cities = []
-    locs = []
+    locs = [
+        "https://www.carquest.com/stores/dc/washington/14461",
+        "https://www.carquest.com/stores/dc/washington/6360",
+    ]
     website = "advanceautoparts.com"
     typ = "<MISSING>"
     country = "<MISSING>"
@@ -40,8 +43,9 @@ def fetch_data():
                                 + item.split('"')[0].replace("..", "")
                             )
     for state in states:
-        logger.info("Pulling State %s..." % state)
-        r = session.get(state, headers=headers)
+        surl = state.replace("https://stores.advanceautoparts.com/https", "https")
+        logger.info("Pulling State %s..." % surl)
+        r = session.get(surl, headers=headers)
         for line in r.iter_lines():
             if '<a class="Directory-listLink" href="' in line:
                 items = line.split('<a class="Directory-listLink" href="')
@@ -51,31 +55,45 @@ def fetch_data():
                             1
                         ].split(")")[0]
                         if count != "1":
-                            cities.append(
-                                "https://stores.advanceautoparts.com/"
-                                + item.split('"')[0].replace("..", "")
-                            )
+                            city_url = item.split('"')[0]
+                            if "http" not in city_url:
+                                city_url = (
+                                    "https://stores.advanceautoparts.com/" + city_url
+                                )
+                                cities.append(city_url)
+                            else:
+                                cities.append(city_url)
                         else:
                             locs.append(
                                 "https://stores.advanceautoparts.com/"
                                 + item.split('"')[0].replace("..", "")
                             )
     for city in cities:
-        logger.info("Pulling City %s..." % city)
-        r = session.get(city, headers=headers)
+        curl = city.replace("https://stores.advanceautoparts.com/https", "https")
+        if "carquest.com/stores/or/bend" in curl:
+            curl = "https://stores.advanceautoparts.com/or/bend"
+        logger.info("Pulling City %s..." % curl)
+        r = session.get(curl, headers=headers)
         for line in r.iter_lines():
-            if 'visible-only-xs"><a class="Teaser-cta Button--AAP" href="..' in line:
-                items = line.split(
-                    'visible-only-xs"><a class="Teaser-cta Button--AAP" href="..'
-                )
+            if 'data-ya-track="page" href="..' in line:
+                items = line.split('data-ya-track="page" href="..')
                 for item in items:
                     if "Store Details" in item:
-                        locs.append(
-                            "https://stores.advanceautoparts.com/"
-                            + item.split('"')[0].replace("..", "")
-                        )
+                        if "stores.advanceautoparts.com" in city:
+                            lurl = "https://stores.advanceautoparts.com/" + item.split(
+                                '"'
+                            )[0].replace("..", "")
+                        else:
+                            lurl = "https://www.carquest.com/stores" + item.split('"')[
+                                0
+                            ].replace("..", "")
+                        locs.append(lurl)
     for loc in locs:
-        loc = loc.replace("&#39;", "%27").replace(".com//", ".com/")
+        loc = (
+            loc.replace("&#39;", "%27")
+            .replace(".com//", ".com/")
+            .replace("https://stores.advanceautoparts.com/https", "https")
+        )
         logger.info("Pulling Location %s..." % loc)
         LFound = True
         tries = 0
@@ -101,7 +119,8 @@ def fetch_data():
                     if NFound is False and '"Nap-heading Heading Heading--h1">' in line:
                         NFound = True
                         name = (
-                            line.split('"Nap-heading Heading Heading--h1">')[1]
+                            line.split('"Nap-heading Heading Heading--h1"')[1]
+                            .split(">")[1]
                             .split("<")[0]
                             .strip()
                             .replace("<span>", "")

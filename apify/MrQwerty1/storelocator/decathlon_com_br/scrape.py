@@ -13,7 +13,7 @@ def get_international(line):
     ).strip()
     city = adr.city or ""
     state = adr.state
-    postal = adr.postcode
+    postal = adr.postcode or ""
 
     return street_address, city, state, postal
 
@@ -31,6 +31,8 @@ def fetch_data(sgw: SgWriter):
         street_address, city, state, postal = get_international(raw_address)
         if street_address == "3400":
             street_address = ",".join(raw_address.split(",")[:2])
+        if "CEP" in postal:
+            postal = postal.replace("CEP", "").strip()
 
         phone = j.get("phone")
         latitude = j.get("latitude") or ""

@@ -28,7 +28,8 @@ def fetch_data():
             stores_req = session.get(search_url, headers=headers)
             stores_sel = lxml.html.fromstring(stores_req.text)
             stores = stores_sel.xpath('//div[@class="maplist"]/ul')
-            for store in stores:
+            latlng_list = stores_req.text.split("latlng: new daum.maps.LatLng(")
+            for index in range(0, len(stores)):
                 page_url = search_url
                 locator_domain = website
 
@@ -36,10 +37,12 @@ def fetch_data():
 
                 location_type = "<MISSING>"
 
-                location_name = "".join(store.xpath('li[@class="t"]/text()')).strip()
+                location_name = "".join(
+                    stores[index].xpath('li[@class="t"]/text()')
+                ).strip()
 
                 raw_address = "".join(
-                    store.xpath('li[@class="data-link"]/text()')
+                    stores[index].xpath('li[@class="data-link"]/text()')
                 ).strip()
 
                 formatted_addr = parser.parse_address_intl(raw_address)
@@ -55,18 +58,21 @@ def fetch_data():
                 country_code = "KR"
 
                 phone = "".join(
-                    store.xpath(
+                    stores[index].xpath(
                         'div[@class="r"]/ul/li[./i[@class="fa fa-phone"]]/text()'
                     )
                 ).strip()
 
                 hours_of_operation = "".join(
-                    store.xpath(
+                    stores[index].xpath(
                         'div[@class="r"]/ul/li[./i[@class="fa fa-clock-o"]]/text()'
                     )
                 ).strip()
 
-                latitude, longitude = "<MISSING>", "<MISSING>"
+                latitude, longitude = (
+                    latlng_list[index + 1].split(",")[0].strip(),
+                    latlng_list[index + 1].split(",")[1].strip().split(")")[0].strip(),
+                )
 
                 yield SgRecord(
                     locator_domain=locator_domain,
