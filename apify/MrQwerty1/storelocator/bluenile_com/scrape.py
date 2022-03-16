@@ -1,3 +1,4 @@
+import ssl
 import time
 from lxml import html
 from sgscrape.sgrecord import SgRecord
@@ -10,6 +11,13 @@ from sglogging import SgLogSetup
 from selenium_stealth import stealth
 
 logger = SgLogSetup().get_logger("bluenile.com")
+
+try:
+    _create_unverified_https_context = ssl._create_unverified_context
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context
 
 
 def get_urls(driver):
