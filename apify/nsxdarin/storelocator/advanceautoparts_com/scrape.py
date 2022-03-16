@@ -87,7 +87,22 @@ def fetch_data():
                             lurl = "https://www.carquest.com/stores" + item.split('"')[
                                 0
                             ].replace("..", "")
-                        locs.append(lurl)
+                        if lurl not in locs:
+                            locs.append(lurl)
+            if '"Teaser-cta Button--AAP" href="..' in line:
+                items = line.split('"Teaser-cta Button--AAP" href="..')
+                for item in items:
+                    if "Store Details" in item:
+                        if "stores.advanceautoparts.com" in city:
+                            lurl = "https://stores.advanceautoparts.com/" + item.split(
+                                '"'
+                            )[0].replace("..", "")
+                        else:
+                            lurl = "https://www.carquest.com/stores" + item.split('"')[
+                                0
+                            ].replace("..", "")
+                        if lurl not in locs:
+                            locs.append(lurl)
     for loc in locs:
         loc = (
             loc.replace("&#39;", "%27")
