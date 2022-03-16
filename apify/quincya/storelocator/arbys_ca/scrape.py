@@ -11,7 +11,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 from sgrequests import SgRequests
 
-logger = SgLogSetup().get_logger("arbys.ca")
+logger = SgLogSetup().get_logger("arbys_ca")
 
 
 def fetch_data(sgw: SgWriter):
