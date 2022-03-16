@@ -215,7 +215,9 @@ def fetch_data():
                             -1
                         ]
                         _ = json.loads(
-                            sp2.select_one('script[type="application/ld+json"]').text
+                            sp2.select_one(
+                                'script[type="application/ld+json"]'
+                            ).text.replace("}	      	      {", "}	      	      ,{")
                         )
                         addr = _["address"]
                         city = addr["addressLocality"]
