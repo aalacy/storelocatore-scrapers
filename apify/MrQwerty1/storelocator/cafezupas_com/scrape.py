@@ -45,6 +45,7 @@ def fetch_data(sgw: SgWriter):
 
             row = SgRecord(
                 location_name=location_name,
+                page_url=page_url,
                 street_address=street_address,
                 city=city,
                 state=state,
@@ -63,6 +64,7 @@ def fetch_data(sgw: SgWriter):
 
 if __name__ == "__main__":
     locator_domain = "https://cafezupas.com/"
+    page_url = "https://cafezupas.com/locations"
     session = SgRequests()
 
     with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:

@@ -1,3 +1,4 @@
+import json
 from lxml import etree
 
 from sgrequests import SgRequests
@@ -27,11 +28,13 @@ def fetch_data():
             .strip()
         )
         latitude = poi["Endereco"]["Lat"]
-        if latitude == "0":
+        if latitude == 0:
             latitude = ""
         longitude = poi["Endereco"]["Lng"]
-        if longitude == "0":
+        if longitude == 0:
             longitude = ""
+        poi_data = loc_dom.xpath('//script[contains(text(), "address")]/text()')[0]
+        poi_data = json.loads(poi_data)
 
         item = SgRecord(
             locator_domain=domain,
@@ -40,7 +43,7 @@ def fetch_data():
             street_address=poi["Endereco"]["Logradouro"],
             city=poi["Endereco"]["Municipio"],
             state=poi["Endereco"]["Estado"],
-            zip_postal="",
+            zip_postal=poi_data["address"]["postalCode"],
             country_code="BR",
             store_number=poi["Numero"],
             phone=phone,

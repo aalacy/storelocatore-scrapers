@@ -40,7 +40,7 @@ def fetch_data():
         stores = json.loads(api_res.text)["features"]
 
         for store in stores:
-            if store["properties"]["COMING_SOON"] == "1":
+            if str(store["properties"]["COMING_SOON"]) == "1":
                 continue
             locator_domain = website
             location_name = store["properties"]["name"]
@@ -63,6 +63,9 @@ def fetch_data():
                     '//div[@itemprop="address"]/span[@itemprop="addressLocality"]/text()'
                 )
             ).strip()
+            if city == "NW, Washington, D.C":
+                city = "Washington"
+
             state = "".join(
                 store_sel.xpath(
                     '//div[@itemprop="address"]/span[@itemprop="addressRegion"]/text()'
@@ -87,7 +90,14 @@ def fetch_data():
 
             phone = "".join(store_sel.xpath('//p/a[contains(@href,"tel:")]/text()'))
 
-            hours_of_operation = "<MISSING>"
+            hours = store_sel.xpath('//table[@class="table"]//tr')
+            hours_list = []
+            for hour in hours:
+                day = "".join(hour.xpath("td[1]//text()")).strip()
+                time = "".join(hour.xpath("td[2]//text()")).strip()
+                hours_list.append(day + ":" + time)
+
+            hours_of_operation = "; ".join(hours_list).strip()
 
             latitude, longitude = (
                 store["geometry"]["coordinates"][1],

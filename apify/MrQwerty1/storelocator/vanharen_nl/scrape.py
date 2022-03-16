@@ -5,6 +5,22 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 
 
+def translate(text):
+    days = {
+        "ma": "Monday",
+        "di": "Tuesday",
+        "wo": "Wednesday",
+        "do": "Thursday",
+        "vr": "Friday",
+        "za": "Saturday",
+        "zo": "Sunday",
+    }
+    for k, v in days.items():
+        text = text.replace(k, v)
+
+    return text
+
+
 def fetch_data(sgw: SgWriter):
     api = "https://www.vanharen.nl/nl-nl/rest/v2/vanharen-nl/mosaic/stores?&fields=FULL&format=json&pageSize=500"
     r = session.get(api, headers=headers)
@@ -12,9 +28,14 @@ def fetch_data(sgw: SgWriter):
 
     for j in js:
         a = j.get("address") or {}
-        page_url = j.get("store_url")
         street_address = f'{a.get("line1")} {a.get("line2") or ""}'.strip()
-        city = a.get("town")
+        city = a.get("town") or ""
+        if "Amsterdam" in city:
+            city = "Amsterdam"
+        if "Rotterdam" in city:
+            city = "Rotterdam"
+        if "-" in city and "´s" not in city:
+            city = city.split("-")[0].strip()
         location_name = f"VANHAREN {city}"
         reg = a.get("region") or {}
         state = reg.get("state")
@@ -43,7 +64,7 @@ def fetch_data(sgw: SgWriter):
             end = h["closingTime"]["formattedHour"]
             _tmp.append(f"{day}: {start}-{end}")
 
-        hours_of_operation = ";".join(_tmp)
+        hours_of_operation = translate(";".join(_tmp))
 
         row = SgRecord(
             page_url=page_url,
@@ -66,6 +87,7 @@ def fetch_data(sgw: SgWriter):
 
 if __name__ == "__main__":
     locator_domain = "https://www.vanharen.nl/"
+    page_url = "https://www.vanharen.nl/nl-nl/storefinder"
 
     headers = {
         "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:95.0) Gecko/20100101 Firefox/95.0",

@@ -26,6 +26,8 @@ def fetch_data(sgw: SgWriter):
         street_address = f"{a.street_address_1} {a.street_address_2}".replace(
             "None", ""
         ).strip()
+        if street_address == "Tallinna":
+            street_address = ad.split(",")[0].strip()
         state = a.state or "<MISSING>"
         postal = a.postcode or "<MISSING>"
         country_code = "EE"

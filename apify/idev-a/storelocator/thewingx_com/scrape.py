@@ -31,6 +31,16 @@ def fetch_data():
                 street_address = _["Address1"]
                 if _["Address2"]:
                     street_address += " " + _["Address2"]
+                hours = []
+                for mo in _["OrderTypeViewModels"]:
+                    if mo["OrderType"] == 2:
+                        for hh in mo.get("HoursOfOperation", {}).get(
+                            "WeekdayHours", []
+                        ):
+                            hours.append(
+                                f"{hh['WeekDay']}: {hh['Start']} - {hh['Stop']}"
+                            )
+
                 yield SgRecord(
                     page_url="https://order.thewingx.com/#!/",
                     store_number=_["Id"],
@@ -44,6 +54,7 @@ def fetch_data():
                     country_code="US",
                     phone=_["Phone"],
                     locator_domain=locator_domain,
+                    hours_of_operation="; ".join(hours),
                 )
 
 

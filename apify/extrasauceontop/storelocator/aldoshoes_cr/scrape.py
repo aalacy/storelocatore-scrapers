@@ -1,77 +1,130 @@
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 from sgscrape import simple_scraper_pipeline as sp
+import re
+import pandas as pd
 
 
 def get_data():
-    session = SgRequests()
-    response = session.get(
-        "https://www.aldoshoes.com/cr/es_CR/store-finder/results?latitude=29.6718062&longitude=-95.5543924&badResults=&q=10101&CSRFToken=84406638-ed58-4d8a-992d-e7e9a42a6ce4"
-    ).text
+    df = pd.read_csv("country_list.csv")
+    country_url_list = df["Locator_url"].to_list()
+    url_end = "/results?latitude=1&longitude=1&q="
 
-    soup = bs(response, "html.parser")
-    grids = soup.find("table", attrs={"class": "store-finder-results-table"}).find_all(
-        "tr"
-    )[1:]
+    for country_url in country_url_list:
+        url = country_url + url_end
+        session = SgRequests()
+        response = session.get(url).text
 
-    lat_lon_parts = response.split("LatLng(")[1:]
+        soup = bs(response, "html.parser")
 
-    x = 0
-    for grid in grids:
-        locator_domain = "aldoshoes.cr"
-        page_url = (
-            "https://www.aldoshoes.com"
-            + grid.find("span", attrs={"class": "store-maplink"})
-            .find("a")["href"]
-            .split("?")[0]
-        )
-        location_name = "ALDO"
-        address_parts = (
-            str(grid.find_all("td")[2])
-            .replace("<td>", "")
-            .replace("</td>", "")
-            .replace("<br/>", "<br>")
-            .split("<br>")
-        )
-
-        address = address_parts[1]
-        city = address_parts[2].split(",")[0]
-        state = "<MISSING>"
         try:
-            zipp = address_parts[3]
-            if "br" in zipp:
-                zipp = "<MISSING>"
+            grids = soup.find(
+                "table", attrs={"class": "store-finder-results-table"}
+            ).find_all("tr")[1:]
         except Exception:
-            zipp = "<MISSING>"
-        country_code = "CR"
+            continue
 
-        phone = grid.find("span", attrs={"class": "phone"}).text.strip()
-        hours = "<MISSING>"
-        store_number = page_url.split("store/")[1].split("?")[0]
-        location_type = "<MISSING>"
+        lat_lon_parts = response.split("LatLng(")[1:]
 
-        lat_lon_part = lat_lon_parts[x]
+        x = 0
+        for grid in grids:
+            locator_domain = "aldoshoes.cr"
+            page_url = (
+                "https://www.aldoshoes.com"
+                + grid.find("span", attrs={"class": "store-maplink"})
+                .find("a")["href"]
+                .split("?")[0]
+            )
+            location_name = grid.find(
+                "span", attrs={"class": "store-location"}
+            ).text.strip()
+            address_parts = (
+                str(grid.find_all("td")[2])
+                .replace("<td>", "")
+                .replace("</td>", "")
+                .replace("<br/>", "<br>")
+                .replace("</br>", "<br>")
+                .replace("\n", "")
+                .split("<br>")
+            )
 
-        latitude = lat_lon_part.split(",")[0]
-        longitude = lat_lon_part.split(",")[1].split(")")[0]
+            address_parts = [x for x in address_parts if x]
 
-        x = x + 1
-        yield {
-            "locator_domain": locator_domain,
-            "page_url": page_url,
-            "location_name": location_name,
-            "latitude": latitude,
-            "longitude": longitude,
-            "city": city,
-            "store_number": store_number,
-            "street_address": address,
-            "state": state,
-            "zip": zipp,
-            "phone": phone,
-            "location_type": location_type,
-            "hours": hours,
-            "country_code": country_code,
-        }
+            if bool(re.search(r"\d", address_parts[-1])) is True:
+
+                address = "".join(part + " " for part in address_parts[:-2])
+                city = address_parts[-2]
+                zipp = address_parts[-1]
+                state = "<MISSING>"
+
+            else:
+
+                address = "".join(part + " " for part in address_parts[:-1])
+                city = address_parts[-1]
+                state = "<MISSING>"
+                zipp = "<MISSING>"
+
+            if len(address_parts) == 2:
+                if len(address_parts[0]) > len(address_parts[1]):
+                    address = address_parts[0]
+                    city = address_parts[1]
+                    state = "<MISSING>"
+                    zipp = "<MISSING>"
+
+                else:
+                    address = address_parts[1]
+                    city = address_parts[0]
+                    state = "<MISSING>"
+                    zipp = "<MISSING>"
+
+            country_code = page_url.split("/")[-4]
+            phone = (
+                grid.find("span", attrs={"class": "phone"})
+                .text.strip()
+                .split("ext")[0]
+                .strip()
+            )
+            store_number = page_url.split("store/")[1].split("?")[0]
+            location_type = "<MISSING>"
+
+            lat_lon_part = lat_lon_parts[x]
+
+            latitude = lat_lon_part.split(",")[0]
+            longitude = lat_lon_part.split(",")[1].split(")")[0]
+
+            x = x + 1
+
+            hours = (
+                grid.find("td", attrs={"class": "store-hours"})
+                .text.strip()
+                .replace("\n", "")
+                .replace("\t", "")
+                .replace("\r", "")
+            )
+            hours = re.sub("\s+", " ", hours)  # noqa
+
+            if "ACCESSORIES" in location_name:
+                continue
+
+            if "coming soon" in "".join(part + " " for part in address_parts).lower():
+                continue
+
+            yield {
+                "locator_domain": locator_domain.replace("\n", ""),
+                "page_url": page_url.replace("\n", ""),
+                "location_name": location_name.replace("\n", ""),
+                "latitude": latitude.replace("\n", "").replace(" ", ""),
+                "longitude": longitude.replace("\n", "").replace(" ", ""),
+                "city": city.replace("\n", ""),
+                "store_number": store_number.replace("\n", ""),
+                "street_address": address.replace("\n", ""),
+                "state": state.replace("\n", ""),
+                "zip": zipp.replace("\n", ""),
+                "phone": phone.replace("\n", ""),
+                "location_type": location_type.replace("\n", ""),
+                "hours": hours.replace("\n", ""),
+                "country_code": country_code.replace("\n", ""),
+            }
 
 
 def scrape():
@@ -84,7 +137,7 @@ def scrape():
         latitude=sp.MappingField(mapping=["latitude"], part_of_record_identity=True),
         longitude=sp.MappingField(mapping=["longitude"], part_of_record_identity=True),
         street_address=sp.MultiMappingField(
-            mapping=["street_address"], is_required=False
+            mapping=["street_address"], part_of_record_identity=True
         ),
         city=sp.MappingField(mapping=["city"], part_of_record_identity=True),
         state=sp.MappingField(mapping=["state"], is_required=False),
