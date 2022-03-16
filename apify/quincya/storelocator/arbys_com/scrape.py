@@ -12,7 +12,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 from sgrequests import SgRequests
 
-logger = SgLogSetup().get_logger("arbys.com")
+logger = SgLogSetup().get_logger("arbys_com")
 
 
 def fetch_data(sgw: SgWriter):
