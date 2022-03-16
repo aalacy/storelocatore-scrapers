@@ -18,7 +18,6 @@ def fetch_data(sgw: SgWriter):
         if "marker.bindPopup" not in t:
             continue
 
-        print(t)
         latitude = t.split("lat: '")[1].split("',")[0]
         longitude = t.split("lng: '")[1].split("'")[0]
         source = t.split('bindPopup("')[1].split('", {')[0]
