@@ -5,6 +5,7 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
+from urllib.parse import urljoin
 
 logger = SgLogSetup().get_logger("")
 
@@ -13,61 +14,99 @@ _headers = {
 }
 
 locator_domain = "https://www.rallys.com/"
+base_url = "https://locations.rallys.com/"
 start_url = "https://locations.rallys.com/index.html"
-base_url = "https://liveapi.yext.com/v2/accounts/me/answers/vertical/query?experienceKey=checkers_answers&api_key=3a0695216a74763b09659ee6021687a0&v=20190101&version=PRODUCTION&locale=en&input={}&verticalKey=restaurants&limit=50&offset={}&facetFilters=%7B%7D&session_id=0396ea7e-3878-4d7d-9e94-0a1b61f30d1f&sessionTrackingEnabled=true&sortBys=%5B%5D&referrerPageUrl=https%3A%2F%2Flocations.rallys.com%2F&source=STANDARD&jsLibVersion=v1.11.0"
 
-days = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
+
+def _d(_, page_url):
+    if not _:
+        return None
+    latitude, longitude = _.select_one('meta[name="geo.position"]')["content"].split(
+        ";"
+    )
+    street_address = _.select_one("span.Address-field.Address-line1").text.strip()
+    if _.select_one("span.Address-field.Address-line2"):
+        street_address += (
+            " " + _.select_one("span.Address-field.Address-line2").text.strip()
+        )
+    city = state = zip_postal = ""
+    if _.select_one("span.Address-field.Address-city"):
+        city = _.select_one("span.Address-field.Address-city").text.strip()
+    if _.select_one("abbr.Address-region"):
+        state = _.select_one("abbr.Address-region").text.strip()
+    if _.select_one("span.Address-postalCode"):
+        zip_postal = _.select_one("span.Address-postalCode").text.strip()
+    hours = []
+    for hh in _.select("table.c-hours-details tbody tr"):
+        td = hh.select("td")
+        hours.append(f"{td[0].text.strip()}: {' '.join(td[1].stripped_strings)}")
+
+    return SgRecord(
+        page_url=page_url,
+        location_name=_.h1.text.strip(),
+        street_address=street_address,
+        city=city,
+        state=state,
+        zip_postal=zip_postal,
+        latitude=latitude,
+        longitude=longitude,
+        country_code="US",
+        locator_domain=locator_domain,
+        hours_of_operation="; ".join(hours),
+        raw_address=" ".join(_.select_one("div.Address").stripped_strings),
+    )
+
+
+def _g(session, url):
+    res = session.get(url, headers=_headers)
+    if res.status_code != 200:
+        return None
+    return bs(res.text, "lxml")
 
 
 def fetch_data():
     with SgRequests() as session:
         states = bs(session.get(start_url, headers=_headers).text, "lxml").select(
-            "div.Main-content span.Directory-listLinkText"
+            "div.Main-content a"
         )
         for state in states:
-            offset = 0
-            while True:
-                st = state.text.strip()
-                locations = session.get(
-                    base_url.format(st, offset), headers=_headers
-                ).json()["response"]["results"]
-                cnt = len(locations)
-                logger.info(f"[{st}] [{offset}] {cnt} found")
-                offset += cnt
-                if not cnt:
-                    break
-
-                for loc in locations:
-                    _ = loc["data"]
-                    addr = _["address"]
-                    hours = []
-                    for day, hh in _.get("hours", {}).items():
-                        if day not in days:
-                            break
-                        times = []
-                        for hr in hh.get("openIntervals", []):
-                            times.append(f"{hr['start']} - {hr['end']}")
-                        hours.append(f"{day}: {' '.join(times)}")
-                    yield SgRecord(
-                        page_url=_["website"],
-                        store_number=_["id"],
-                        location_name=_["name"],
-                        street_address=addr["line1"],
-                        city=addr["city"],
-                        state=addr["region"],
-                        zip_postal=addr["postalCode"],
-                        latitude=_["yextDisplayCoordinate"]["latitude"],
-                        longitude=_["yextDisplayCoordinate"]["longitude"],
-                        country_code=addr["countryCode"],
-                        phone=_["mainPhone"],
-                        location_type=_["type"],
-                        locator_domain=locator_domain,
-                        hours_of_operation="; ".join(hours),
-                    )
+            state_url = base_url + state["href"]
+            logger.info(state_url)
+            sp1 = _g(session, state_url)
+            if not sp1:
+                continue
+            cities = sp1.select("li.Directory-listItem a")
+            if cities:
+                for city in cities:
+                    city_url = urljoin(base_url, city["href"])
+                    logger.info(f"[{state.text}] {city_url}")
+                    sp2 = _g(session, city_url)
+                    if not sp2:
+                        continue
+                    locations = sp2.select("li.Directory-listTeaser")
+                    if locations:
+                        for loc in locations:
+                            page_url = urljoin(base_url, loc.a["href"])
+                            logger.info(f"[{city.text.strip()}] {page_url}")
+                            sp3 = _g(session, page_url)
+                            yield _d(sp3, page_url)
+                    else:
+                        yield _d(sp2, city_url)
+            else:
+                locs = sp1.select("li.Directory-listTeaser")
+                if locs:
+                    for loc1 in locs:
+                        page_url1 = urljoin(base_url, loc1.a["href"])
+                        logger.info(f"[{city.text.strip()}] {page_url1}")
+                        sp2 = _g(session, page_url1)
+                        yield _d(sp2, page_url1)
+                else:
+                    yield _d(sp1, city_url)
 
 
 if __name__ == "__main__":
     with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         results = fetch_data()
         for rec in results:
-            writer.write_row(rec)
+            if rec:
+                writer.write_row(rec)

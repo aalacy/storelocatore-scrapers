@@ -25,6 +25,8 @@ def fetch_data():
     for url in all_locations:
         store_url = urljoin(start_url, url)
         r_loc = session.get(store_url, headers=headers)
+        if r_loc.status_code != 200:
+            continue
         loc_dom = html.fromstring(r_loc.text, "lxml")
         if loc_dom.xpath('//div[contains(text(), "Coming Soon")]'):
             continue
