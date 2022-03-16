@@ -180,10 +180,22 @@ class CleanRecord:
                 cleanRecord["street_address2"] = ""
         cleanRecord["street_address3"] = ""
         cleanRecord["street_address4"] = ""
-        cleanRecord["city"] = badRecord["properties"]["addressLine3"]
-        cleanRecord["state"] = badRecord["properties"]["subDivision"]
-        cleanRecord["zipcode"] = badRecord["properties"]["postcode"]
-        cleanRecord["country_code"] = badRecord["properties"]["addressLine4"]
+        try:
+            cleanRecord["city"] = badRecord["properties"]["addressLine3"]
+        except Exception:
+            cleanRecord["city"] = ""
+        try:
+            cleanRecord["state"] = badRecord["properties"]["subDivision"]
+        except Exception:
+            cleanRecord["state"] = ""
+        try:
+            cleanRecord["zipcode"] = badRecord["properties"]["postcode"]
+        except Exception:
+            cleanRecord["zipcode"] = ""
+        try:
+            cleanRecord["country_code"] = badRecord["properties"]["addressLine4"]
+        except Exception:
+            cleanRecord["country_code"] = ""
         try:
             cleanRecord["phone"] = badRecord["properties"]["telephone"]
         except Exception:
