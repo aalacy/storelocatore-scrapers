@@ -30,9 +30,6 @@ def fetch_data():
                 if len(poi) == 13:
                     del poi[2]
                 page_url = "https://lookup.optumcare.com" + poi[10]
-                if "location-details" not in page_url:
-                    print(poi)
-                    page_url = "https://lookup.optumcare.com" + poi[11]
 
                 item = SgRecord(
                     locator_domain=domain,
