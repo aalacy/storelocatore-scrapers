@@ -161,6 +161,10 @@ def fetch_data():
             else:
                 hours = MISSING
 
+            if lat == "0" and lng == "0":
+                lat = MISSING
+                lng = MISSING
+
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url=url,

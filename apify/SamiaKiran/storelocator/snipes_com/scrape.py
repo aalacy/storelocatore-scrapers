@@ -67,7 +67,7 @@ def fetch_data():
             elif "www.snipes.com" in link:
                 country_code = "Germany"
             r = session.get(link, headers=headers)
-            log.info(f"Fetching Stores from {link}")
+            log.info(f"Fetching Stores from {country_code}")
             try:
                 loclist = (
                     r.text.split('data-locations="')[1]

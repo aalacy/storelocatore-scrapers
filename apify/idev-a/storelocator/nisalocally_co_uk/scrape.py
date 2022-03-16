@@ -81,6 +81,10 @@ def _d(sp1, page_url):
 def fetch_data():
     soup = bs(session.get(base_url, headers=_headers).text, "lxml")
     states = soup.select("ul.Directory-listLinks a")
+    total = 0
+    for state in states:
+        total += int(state["data-count"][1:-1])
+    logger.info(f"total {total} locations")
     logger.info(f"{len(states)} found")
     for state_url, sp1 in fetchConcurrentList(states):
         cities = sp1.select("ul.Directory-listLinks a")

@@ -93,6 +93,7 @@ def fetch_data():
             .decode("utf-8")
             .replace("?", ",")
             .strip()
+            .replace(" ", ",")
         )
         city = city_state_zip.split(",")[0].strip()
         state = city_state_zip.split(",")[-2].strip()

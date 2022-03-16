@@ -74,7 +74,7 @@ def check(url, class_name, driver):
 
 def Se(url, class_name):
     for c in range(10):
-        time.sleep(1)
+        time.sleep(5)
         driver = get_driver()
         if check(url, class_name, driver):
             return driver
