@@ -42,13 +42,15 @@ def get_data(page_url, sgw: SgWriter):
     r = session.get(page_url)
     if r.status_code != 200:
         return
+    if "pharmachoice.com" not in str(r.url):
+        return
     tree = html.fromstring(r.text)
 
     location_name = "".join(tree.xpath("//title/text()")).split("|")[0].strip()
     raw_address = " ".join(
         " ".join(tree.xpath("//div[@class='wpsl-location-address1']/text()")).split()
     )
-    raw_address = raw_address.replace(";", "").replace("&#39", "'")
+    raw_address = raw_address.replace(";", "").replace("&#39", "'").replace("'", ",")
     street_address, city, state, postal = get_international(raw_address)
     phone = "".join(tree.xpath("//span[@class='phoneNumber']/text()")).strip()
 
@@ -93,7 +95,7 @@ def get_data(page_url, sgw: SgWriter):
 def fetch_data(sgw: SgWriter):
     urls = list(get_urls())
 
-    with futures.ThreadPoolExecutor(max_workers=2) as executor:
+    with futures.ThreadPoolExecutor(max_workers=10) as executor:
         future_to_url = {executor.submit(get_data, url, sgw): url for url in urls}
         for future in futures.as_completed(future_to_url):
             future.result()
