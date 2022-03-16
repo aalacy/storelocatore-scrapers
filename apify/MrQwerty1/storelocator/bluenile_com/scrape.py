@@ -33,7 +33,9 @@ def get_urls(driver):
 
 
 def fetch_data(sgw: SgWriter):
-    with SgChrome(user_agent=user_agent, seleniumwire_auto_config=False).driver() as driver:
+    with SgChrome(
+        user_agent=user_agent, seleniumwire_auto_config=False
+    ).driver() as driver:
         stealth(
             driver,
             languages=["en-US", "en"],
