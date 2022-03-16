@@ -9,7 +9,7 @@ from sgscrape.pause_resume import CrawlStateSingleton
 from sglogging import sglog
 
 logger = sglog.SgLogSetup().get_logger(logger_name="bp.com")
-max_workers = 12
+max_workers = 8
 
 
 def get_response(co_ord, retry=1):

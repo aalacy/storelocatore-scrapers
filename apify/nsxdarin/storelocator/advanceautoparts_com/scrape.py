@@ -55,10 +55,14 @@ def fetch_data():
                             1
                         ].split(")")[0]
                         if count != "1":
-                            cities.append(
-                                "https://stores.advanceautoparts.com/"
-                                + item.split('"')[0].replace("..", "")
-                            )
+                            city_url = item.split('"')[0]
+                            if "http" not in city_url:
+                                city_url = (
+                                    "https://stores.advanceautoparts.com/" + city_url
+                                )
+                                cities.append(city_url)
+                            else:
+                                cities.append(city_url)
                         else:
                             locs.append(
                                 "https://stores.advanceautoparts.com/"
@@ -71,16 +75,34 @@ def fetch_data():
         logger.info("Pulling City %s..." % curl)
         r = session.get(curl, headers=headers)
         for line in r.iter_lines():
-            if 'visible-only-xs"><a class="Teaser-cta Button--AAP" href="..' in line:
-                items = line.split(
-                    'visible-only-xs"><a class="Teaser-cta Button--AAP" href="..'
-                )
+            if 'data-ya-track="page" href="..' in line:
+                items = line.split('data-ya-track="page" href="..')
                 for item in items:
                     if "Store Details" in item:
-                        locs.append(
-                            "https://stores.advanceautoparts.com/"
-                            + item.split('"')[0].replace("..", "")
-                        )
+                        if "stores.advanceautoparts.com" in city:
+                            lurl = "https://stores.advanceautoparts.com/" + item.split(
+                                '"'
+                            )[0].replace("..", "")
+                        else:
+                            lurl = "https://www.carquest.com/stores" + item.split('"')[
+                                0
+                            ].replace("..", "")
+                        if lurl not in locs:
+                            locs.append(lurl)
+            if '"Teaser-cta Button--AAP" href="..' in line:
+                items = line.split('"Teaser-cta Button--AAP" href="..')
+                for item in items:
+                    if "Store Details" in item:
+                        if "stores.advanceautoparts.com" in city:
+                            lurl = "https://stores.advanceautoparts.com/" + item.split(
+                                '"'
+                            )[0].replace("..", "")
+                        else:
+                            lurl = "https://www.carquest.com/stores" + item.split('"')[
+                                0
+                            ].replace("..", "")
+                        if lurl not in locs:
+                            locs.append(lurl)
     for loc in locs:
         loc = (
             loc.replace("&#39;", "%27")
@@ -112,7 +134,8 @@ def fetch_data():
                     if NFound is False and '"Nap-heading Heading Heading--h1">' in line:
                         NFound = True
                         name = (
-                            line.split('"Nap-heading Heading Heading--h1">')[1]
+                            line.split('"Nap-heading Heading Heading--h1"')[1]
+                            .split(">")[1]
                             .split("<")[0]
                             .strip()
                             .replace("<span>", "")
