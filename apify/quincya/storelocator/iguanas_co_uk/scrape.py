@@ -1,122 +1,117 @@
-from sgrequests import SgRequests
 from bs4 import BeautifulSoup
-import csv
-import json
-import time
-from random import randint
-import re
-from sgselenium import SgSelenium
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import TimeoutException
+
 from sglogging import SgLogSetup
 
-logger = SgLogSetup().get_logger('iguanas_co_uk')
+from sgrequests import SgRequests
+
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+
+logger = SgLogSetup().get_logger("iguanas_co_uk")
 
 
+def fetch_data(sgw: SgWriter):
 
+    base_link = "https://cdn.contentful.com/spaces/t0ol6oidcclx/environments/master/entries?content_type=restaurant&include=10"
 
-def write_output(data):
-    with open('data.csv', mode='w', encoding="utf-8") as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
-        # Header
-        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-def fetch_data():
-
-    driver = SgSelenium().chrome()
-    time.sleep(2)
-
-    base_link = "https://api.casualdininggroup.uk/pagedata?brandKey=lasiguanas&path=/spaces/6qprbsfbbvrl/entries?access_token=30ad3e38f991a61b137301a74d5a4346f29fa442979b226cbca1a85acc37fc1c%26select=fields.title,fields.slug,fields.addressLocation,fields.storeId,fields.storeCodeFishBowl,fields.eeRestaurantId,fields.hours,fields.alternativeHours,fields.services,fields.amenities,fields.addressLine1,fields.addressLine2,fields.addressCity,fields.county,fields.postCode,fields.takeawayDeliveryServices,fields.takeawayCollectionService,fields.collectionMessage%26content_type=location%26include=10%26limit=1000"
-
-    user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36'
-    HEADERS = {'User-Agent' : user_agent}
+    headers = {
+        "authority": "cdn.contentful.com",
+        "method": "GET",
+        "path": "/spaces/t0ol6oidcclx/environments/master/entries?content_type=restaurant&include=10",
+        "scheme": "https",
+        "accept": "application/json, text/plain, */*",
+        "accept-encoding": "gzip, deflate, br",
+        "accept-language": "en-US,en;q=0.9",
+        "authorization": "Bearer 9e6d06a269fefbffb5dd45528d4fa993878c7f78babec15a8560717ff1217221",
+        "sec-fetch-dest": "empty",
+        "sec-fetch-mode": "cors",
+        "sec-fetch-site": "cross-site",
+        "sec-fetch-user": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.141 Safari/537.36",
+    }
 
     session = SgRequests()
-    req = session.get(base_link, headers = HEADERS)
-    base = BeautifulSoup(req.text,"lxml")
+    stores = session.get(base_link, headers=headers).json()["items"]
 
-    data = []
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
+    headers = {"User-Agent": user_agent}
 
     locator_domain = "iguanas.co.uk"
-
-    stores = json.loads(base.text)["items"]
 
     for store in stores:
         slug = store["fields"]["slug"]
         link = "https://www.iguanas.co.uk/restaurants/" + slug
         logger.info(link)
 
-        api_link = "https://api.casualdininggroup.uk/pagedata?brandKey=lasiguanas&path=/spaces/6qprbsfbbvrl/entries?access_token=30ad3e38f991a61b137301a74d5a4346f29fa442979b226cbca1a85acc37fc1c%26select=fields%26content_type=location%26fields.slug=" + slug + "%26include=10"
-        
-        req = session.get(api_link, headers = HEADERS)
-        base = BeautifulSoup(req.text,"lxml")
-
-        store = json.loads(base.text)["items"][0]['fields']
-
-        location_name = "Las Iguanas " + store['title']
+        location_name = store["fields"]["title"]
         if "coming soon" in location_name.lower():
-        	continue
+            continue
         try:
-            street_address = (store['addressLine1'] + " " + store['addressLine2']).strip()
+            street_address = (
+                store["fields"]["addressLine1"] + " " + store["fields"]["addressLine2"]
+            ).strip()
         except:
-            street_address = store['addressLine1'].strip()
-        city = store['addressCity']
-        state = store['county']
-        zip_code = store['postCode']
+            street_address = store["fields"]["addressLine1"].strip()
+        city = store["fields"]["addressCity"]
+        state = store["fields"]["county"]
+        zip_code = store["fields"]["postcode"]
         country_code = "GB"
-        store_number = store['storeId']
+        store_number = store["fields"]["storeId"]
         location_type = "<MISSING>"
-        phone = store['phoneNumber']
-        latitude = store['addressLocation']['lat']
-        longitude = store['addressLocation']['lon']
+        phone = store["fields"]["phoneNumber"]
+        latitude = store["fields"]["addressLocation"]["lat"]
+        longitude = store["fields"]["addressLocation"]["lon"]
 
-        try:
-            hours_of_operation = store['openingHours'].replace("\n", " ")
-            hours_of_operation = (re.sub(' +', ' ', hours_of_operation)).strip()
-        except:
-            driver.get(link)
-            time.sleep(randint(2,3))
-            element = WebDriverWait(driver, 50).until(EC.presence_of_element_located(
-              (By.CLASS_NAME, "location-tabbed__description")))
-            time.sleep(randint(2,4))
-
-            base = BeautifulSoup(driver.page_source,"lxml")
-            
-            script = base.find('script', attrs={'type': "application/ld+json"}).text.replace('\n', '').strip()
-            store = json.loads(script)
-
+        if (
+            "will open on" in store["fields"]["description"]
+            or "currently closed" in store["fields"]["description"]
+        ):
+            hours_of_operation = "Temporarily Closed"
+        else:
             try:
-              hours_of_operation = ""
-              raw_hours = store['openingHoursSpecification']
-              for hours in raw_hours:
-                day = hours['dayOfWeek']
-                if len(day[0]) != 1:
-                  day = ' '.join(hours['dayOfWeek'])
-                opens = hours['opens']
-                closes = hours['closes']
-                if opens != "" and closes != "":
-                  clean_hours = day + " " + opens + "-" + closes
-                  hours_of_operation = (hours_of_operation + " " + clean_hours).strip()
+                req = session.get(link, headers=headers)
+                base = BeautifulSoup(req.text, "lxml")
             except:
-              hours_of_operation = "<MISSING>"
-        if "Our" in hours_of_operation:
-        	hours_of_operation = hours_of_operation[:hours_of_operation.find("Our")].strip()
-        	
-        data.append([locator_domain, link, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
-    try:
-    	driver.close()
-    except:
-    	pass
-    return data
+                if "plymouth" in link:
+                    link = "https://www.iguanas.co.uk/restaurants/plymouth/plymouth/"
+                    req = session.get(link, headers=headers)
+                    base = BeautifulSoup(req.text, "lxml")
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
+            hours_of_operation = ""
+            try:
+                raw_hours = list(base.find(class_="opening-hours").stripped_strings)
+                for hours in raw_hours:
+                    if "festive hours" in hours.lower():
+                        break
+                    hours_of_operation = (
+                        hours_of_operation + " " + hours.split("/")[0]
+                    ).strip()
+                hours_of_operation = hours_of_operation.replace(
+                    "Opening Hours", ""
+                ).strip()
+            except:
+                hours_of_operation = ""
 
-scrape()
+        sgw.write_row(
+            SgRecord(
+                locator_domain=locator_domain,
+                page_url=link,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_code,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
+        )
+
+
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+    fetch_data(writer)

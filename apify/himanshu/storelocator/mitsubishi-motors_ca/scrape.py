@@ -1,43 +1,29 @@
-import csv
+import httpx
+
 from bs4 import BeautifulSoup
-from sgrequests import SgRequests
-import unicodedata
+
 from google_trans_new import google_translator
 
+from sglogging import sglog
+
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+
+from sgrequests import SgRequests
+
 translator = google_translator()
-session = SgRequests()
+
+log = sglog.SgLogSetup().get_logger("www.mitsubishi-motors.ca")
+
+timeout = httpx.Timeout(10.0, connect=10.0)
 
 
-def write_output(data):
-    with open("data.csv", mode="w", newline="", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-                "page_url",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
+def fetch_data(sgw: SgWriter):
+    session = SgRequests(timeout_config=timeout)
     base_url = "https://www.mitsubishi-motors.ca/"
-    addressess = []
+
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.130 Safari/537.36"
     }
@@ -50,27 +36,27 @@ def fetch_data():
         name = loc["CompanyName"].strip()
         city = loc["CompanyCity"].strip().capitalize()
         state = loc["ProvinceAbbreviation"].strip()
-        zipp = loc["CompanyPostalCode"]
+        zipp = loc["CompanyPostalCode"].replace("S4R R8R", "S4R 0X3")
         phone = loc["CompanyPhone"].strip()
         lat = loc["Latitude"]
         lng = loc["Longitude"]
         page_url = loc["PrimaryDomain"]
         storeno = loc["CompanyId"]
-        hours = "<MISSING>"
-        rm = [
-            "https://capital-mitsubishi.ca",
-            "https://girouxmitsubishi.com",
-            "https://rallye-mitsubishi.ca",
-            "https://grandeprairiemitsubishi.ca",
-        ]
-        if page_url in rm:
-            hours = "<MISSING>"
-        else:
+
+        hours = ""
+        log.info(page_url)
+        try:
+            r1 = session.get(page_url, headers=headers)
+            soup1 = BeautifulSoup(r1.text, "lxml")
+        except:
+            session = SgRequests(timeout_config=timeout)
             try:
                 r1 = session.get(page_url, headers=headers)
                 soup1 = BeautifulSoup(r1.text, "lxml")
             except:
-                pass
+                hours = "<INACCESSIBLE>"
+
+        if not hours:
             try:
                 hours = " ".join(
                     list(
@@ -81,167 +67,346 @@ def fetch_data():
                 )
             except:
                 pass
+            if not hours:
+                try:
+                    hours = " ".join(
+                        list(
+                            soup1.find(
+                                "ul", {"class": "opening-hours-ul"}
+                            ).stripped_strings
+                        )
+                    )
+                except:
+                    pass
+            if not hours:
+                try:
+                    hours = " ".join(
+                        list(
+                            soup1.find(
+                                "div", {"class": "footer-hours-col sales-hours"}
+                            ).li.stripped_strings
+                        )
+                    )
+                except:
+                    pass
+            if not hours:
+                try:
+                    hours = " ".join(
+                        list(soup1.find("table", {"class": "hours"}).stripped_strings)
+                    )
+                except:
+                    pass
+            if not hours:
+                try:
+                    hours = " ".join(
+                        list(
+                            soup1.find(
+                                "div", {"id": "tabs-template-hours1"}
+                            ).stripped_strings
+                        )
+                    )
+                except:
+                    pass
+            if not hours:
+                try:
+                    hours = " ".join(
+                        list(
+                            soup1.find(
+                                "div", {"id": "slshours_footer_home"}
+                            ).stripped_strings
+                        )
+                    )
+                except:
+                    pass
+            if not hours:
+                try:
+                    hours = " ".join(
+                        list(soup1.find("div", {"id": "HOPSales"}).stripped_strings)
+                    )
+                except:
+                    pass
+            if not hours:
+                try:
+                    hours = " ".join(
+                        list(
+                            soup1.find(
+                                "table", {"class": "hours_table"}
+                            ).stripped_strings
+                        )
+                    )
+                except:
+                    pass
+            if not hours:
+                try:
+                    hours = " ".join(
+                        list(
+                            soup1.find(
+                                "div", {"id": "Sales36412421385f59c2556d399"}
+                            ).stripped_strings
+                        )
+                    )
+                except:
+                    pass
+            if not hours:
+                try:
+                    hours = " ".join(
+                        list(
+                            soup1.find(
+                                "table", {"class": "grid-y department-hours"}
+                            ).stripped_strings
+                        )
+                    )
+                except:
+                    pass
+            if not hours:
+                try:
+                    hours = " ".join(
+                        list(
+                            soup1.find(
+                                "table", {"class": "map_open_hours"}
+                            ).stripped_strings
+                        )
+                    )
+                except:
+                    pass
+            if not hours:
+                try:
+                    hours = " ".join(
+                        list(
+                            soup1.find("div", {"class": "map_open_hours"})
+                            .find("li")
+                            .stripped_strings
+                        )
+                    )
+                except:
+                    pass
+            if not hours:
+                try:
+                    hours = " ".join(
+                        list(
+                            soup1.find(
+                                "table", {"class": "footer-hours-tabs__box-wrapper"}
+                            ).stripped_strings
+                        )
+                    )
+                except:
+                    pass
+            if not hours:
+                try:
+                    hours = " ".join(
+                        list(
+                            soup1.find(
+                                "div", {"id": "footer-hours-loc-0-sales"}
+                            ).stripped_strings
+                        )
+                    )
+                except:
+                    pass
+            if not hours:
+                try:
+                    hours = " ".join(
+                        list(
+                            soup1.find(
+                                "div", {"class": "dynamic-hours parts"}
+                            ).stripped_strings
+                        )
+                    )
+                except:
+                    pass
+            if not hours:
+                try:
+                    hours = " ".join(
+                        list(
+                            soup1.find(
+                                "ul", {"class": "list-unstyled line-height-condensed"}
+                            ).stripped_strings
+                        )
+                    )
+                except:
+                    pass
+            if not hours:
+                try:
+                    hours = " ".join(
+                        list(
+                            soup1.find(
+                                "div", {"class": "hours-default"}
+                            ).stripped_strings
+                        )
+                    )
+                except:
+                    pass
+            if not hours:
+                try:
+                    hours = " ".join(
+                        list(
+                            soup1.find(
+                                "div", {"class": "hours1-app-root"}
+                            ).stripped_strings
+                        )
+                    )
+                except:
+                    pass
+            if not hours:
+                try:
+                    hours = " ".join(
+                        list(
+                            soup1.find(
+                                "table", {"class": "beaucage_hours"}
+                            ).stripped_strings
+                        )
+                    )
+                except:
+                    pass
+            if not hours:
+                try:
+                    hours = " ".join(
+                        list(
+                            soup1.find(
+                                "div", {"class": "footer-column footer-column--hours"}
+                            ).stripped_strings
+                        )
+                    )
+                except:
+                    pass
+            if not hours:
+                try:
+                    hours = " ".join(
+                        list(
+                            soup1.find("div", {"class": "hours-list"}).stripped_strings
+                        )
+                    )
+                except:
+                    pass
+            if not hours:
+                try:
+                    hours = " ".join(
+                        list(
+                            soup1.find(
+                                "table", {"class": "schedule-table"}
+                            ).stripped_strings
+                        )
+                    )
+                except:
+                    pass
+            if not hours:
+                try:
+                    hours = " ".join(
+                        list(
+                            soup1.find(
+                                "div", {"id": "slshours_footer_home"}
+                            ).stripped_strings
+                        )
+                    )
+                except:
+                    pass
+            if not hours:
+                try:
+                    hours = " ".join(
+                        list(
+                            soup1.find(
+                                "div", {"class": "footer-hours"}
+                            ).stripped_strings
+                        )
+                    )
+                except:
+                    pass
+            if not hours:
+                try:
+                    hours = " ".join(
+                        list(
+                            soup1.find(
+                                "div", {"class": "hours-footer hours-footer-1"}
+                            ).stripped_strings
+                        )
+                    )
+                except:
+                    pass
+            if not hours:
+                try:
+                    hours = " ".join(
+                        list(
+                            soup1.find(
+                                "div", {"class": "footer_dealer_info_hours"}
+                            ).stripped_strings
+                        )
+                    )
+                except:
+                    pass
+            if not hours:
+                try:
+                    hours = " ".join(
+                        list(
+                            soup1.find_all("ul", {"class": "footer-column__list"})[
+                                1
+                            ].stripped_strings
+                        )
+                    )
+                except:
+                    pass
+            if not hours:
+                try:
+                    if (
+                        "Today"
+                        in soup1.find(class_="top-bar")
+                        .find_all(class_="header-contact__link")[1]
+                        .text
+                    ):
+                        hours = "<INACCESSIBLE>"
+                except:
+                    pass
 
-            try:
-                hours = " ".join(
-                    list(
-                        soup1.find("ul", {"class": "opening-hours-ul"}).stripped_strings
-                    )
-                )
-            except:
-                pass
-            try:
-                hours = " ".join(
-                    list(
-                        soup1.find(
-                            "div", {"id": "Sales36412421385f59c2556d399"}
-                        ).stripped_strings
-                    )
-                )
-            except:
-                pass
-
-            try:
-                hours = " ".join(
-                    list(
-                        soup1.find(
-                            "table", {"class": "grid-y department-hours"}
-                        ).stripped_strings
-                    )
-                )
-            except:
-                pass
-
-            try:
-                hours = " ".join(
-                    list(
-                        soup1.find(
-                            "table", {"class": "map_open_hours"}
-                        ).stripped_strings
-                    )
-                )
-            except:
-                pass
-
-            try:
-                hours = " ".join(
-                    list(
-                        soup1.find("div", {"class": "map_open_hours"}).stripped_strings
-                    )
-                )
-            except:
-                pass
-
-            try:
-                hours = " ".join(
-                    list(
-                        soup1.find(
-                            "table", {"class": "footer-hours-tabs__box-wrapper"}
-                        ).stripped_strings
-                    )
-                )
-            except:
-                pass
-
-            try:
-                hours = " ".join(
-                    list(
-                        soup1.find(
-                            "div", {"id": "footer-hours-loc-0-sales"}
-                        ).stripped_strings
-                    )
-                )
-            except:
-                pass
-            try:
-                hours = " ".join(
-                    list(
-                        soup1.find(
-                            "div", {"class": "dynamic-hours parts"}
-                        ).stripped_strings
-                    )
-                )
-            except:
-                pass
-            try:
-                hours = " ".join(
-                    list(
-                        soup1.find(
-                            "ul", {"class": "list-unstyled line-height-condensed"}
-                        ).stripped_strings
-                    )
-                )
-            except:
-                pass
-            try:
-                hours = " ".join(
-                    list(soup1.find("div", {"class": "hours-default"}).stripped_strings)
-                )
-            except:
-                pass
-            try:
-                hours = " ".join(
-                    list(
-                        soup1.find(
-                            "table", {"class": "beaucage_hours"}
-                        ).stripped_strings
-                    )
-                )
-            except:
-                pass
-            if "By Appointment" in hours:
-                hours = "<MISSING>"
+        hours = (
+            hours.replace("Heures d'ouverture", "")
+            .replace("Days Hours", "")
+            .replace("HOURS", "")
+            .replace("Hours", "")
+            .replace("Hours:", "")
+            .replace("Sales", "")
+            .replace("Horaires:", "")
+            .replace("Business hours", "")
+            .replace("of Operation", "")
+            .replace(":  Mon", "Mon")
+            .replace("Dealership hours of operation", "")
+            .split("Tell us")[0]
+            .split("Avisez-nous")[0]
+            .split("See All")[0]
+            .split("Service")[0]
+            .strip()
+        )
+        try:
             hours = (
                 translator.translate(hours, lang_tgt="en")
                 .split("Service")[0]
                 .replace("Opening hours", "")
-                .replace("Hours:", "")
-                .strip()
+                .replace("Business hours", "")
                 .split("Notify us of your visit!")[0]
+                .strip()
             )
+        except:
+            pass
         if city == "N.d.p, joliette":
             city = "Joliette"
             address = address + str(", N.D.P")
-        store = []
-        store.append(base_url)
-        store.append(name)
-        store.append(address)
-        store.append(city)
-        store.append(state)
-        store.append(zipp)
-        store.append("CA")
-        store.append(storeno)
-        store.append(phone)
-        store.append("<MISSING>")
-        store.append(lat)
-        store.append(lng)
-        store.append(hours.strip())
-        store.append(page_url)
-        if store[2] in addressess:
-            continue
-        addressess.append(store[2])
-        store = [x.replace("  to  ", " - ") if type(x) == str else x for x in store]
-        store = [x.replace("  a  ", " - ") if type(x) == str else x for x in store]
-        store = [x.replace(" a ", " - ") if type(x) == str else x for x in store]
-        store = [x.replace(" To ", " - ") if type(x) == str else x for x in store]
-        store = [x.replace(" à ", " - ") if type(x) == str else x for x in store]
-        store = [x.replace(" ", "") if type(x) == str else x for x in store]
-        for i in range(len(store)):
-            if type(store[i]) == str:
-                store[i] = "".join(
-                    (
-                        c
-                        for c in unicodedata.normalize("NFD", store[i])
-                        if unicodedata.category(c) != "Mn"
-                    )
-                )
-        store = [str(x).strip() if x else "<MISSING>" for x in store]
-        yield store
+
+        sgw.write_row(
+            SgRecord(
+                locator_domain=base_url,
+                page_url=page_url,
+                location_name=name,
+                street_address=address,
+                city=city,
+                state=state,
+                zip_postal=zipp,
+                country_code="CA",
+                store_number=storeno,
+                phone=phone,
+                location_type="<MISSING>",
+                latitude=lat,
+                longitude=lng,
+                hours_of_operation=hours.strip(),
+            )
+        )
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    fetch_data(writer)

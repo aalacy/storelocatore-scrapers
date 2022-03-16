@@ -1,65 +1,92 @@
-from sgrequests import SgRequests
-from bs4 import BeautifulSoup
-import csv
-import time
-from random import randint
 import re
 
-def write_output(data):
-	with open('data.csv', mode='w', encoding="utf-8") as output_file:
-		writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+from bs4 import BeautifulSoup
 
-		# Header
-		writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-		# Body
-		for row in data:
-			writer.writerow(row)
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-def fetch_data():
-	
-	base_link = "https://www.swamiscafe.com/"
+from sgrequests import SgRequests
 
-	user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36'
-	HEADERS = {'User-Agent' : user_agent}
 
-	session = SgRequests()
-	req = session.get(base_link, headers = HEADERS)
-	base = BeautifulSoup(req.text,"lxml")
+def fetch_data(sgw: SgWriter):
 
-	data = []
+    base_link = "https://www.swamiscafe.com/our-locations"
 
-	items = base.find(class_="pm-map-wrap pm-location-search-list").find_all("section")
-	locator_domain = "swamiscafe.com"
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36"
+    headers = {"User-Agent": user_agent}
 
-	for item in items:
+    session = SgRequests()
+    req = session.get(base_link, headers=headers)
+    base = BeautifulSoup(req.text, "lxml")
 
-		location_name = item.h4.text.strip()
-		raw_address = list(item.a.stripped_strings)
+    items = base.find(class_="pm-location-search-list").find_all("section")
+    locator_domain = "https://www.swamiscafe.com"
 
-		street_address = item.span.text.encode("ascii", "replace").decode().replace("?"," ").strip()
-		city_line = raw_address[-1].strip().split(",")
-		city = city_line[0].strip()
-		state = city_line[-1].strip().split()[0].strip()
-		zip_code = city_line[-1].strip().split()[1].strip()
-		country_code = "US"
-		store_number = "<MISSING>"
-		location_type = "<MISSING>"
+    script = base.find(id="popmenu-apollo-state")
 
-		try:
-			phone = re.findall("[(\d)]{5} [\d]{3}-[\d]{4}", str(item))[0]
-		except:
-			phone = "<MISSING>"
+    lats = re.findall(r'lat":[0-9]{2}\.[0-9]+', str(script))
+    lngs = re.findall(r'lng":-[0-9]{2,3}\.[0-9]+', str(script))
+    phones = re.findall(r'displayPhone":"\([0-9]{3}\) [0-9]{3}-[0-9]{4}', str(script))
 
-		hours_of_operation = item.find(class_="hours").text.replace("\xa0"," ").replace("pm","pm ").strip()
-		latitude = "<MISSING>"
-		longitude = "<MISSING>"
+    for item in items:
 
-		data.append([locator_domain, base_link, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
+        location_name = item.h4.text.strip()
+        raw_address = list(item.a.stripped_strings)
 
-	return data
+        street_address = item.span.text.strip()
+        city_line = raw_address[-1].strip().split(",")
+        city = city_line[0].strip()
+        state = city_line[-1].strip().split()[0].strip()
+        zip_code = city_line[-1].strip().split()[1].strip()
+        country_code = "US"
+        store_number = "<MISSING>"
+        location_type = "<MISSING>"
 
-def scrape():
-	data = fetch_data()
-	write_output(data)
+        try:
+            phone = re.findall(r"[(\d)]{5} [\d]{3}-[\d]{4}", str(item))[0]
+        except:
+            phone = "<MISSING>"
 
-scrape()
+        try:
+            hours_of_operation = (
+                item.find(class_="hours")
+                .text.replace("\xa0", " ")
+                .replace("pm", "pm ")
+                .strip()
+            )
+        except:
+            hours_of_operation = ""
+
+        link = locator_domain + item.find("a", string="View Menu")["href"]
+
+        latitude = ""
+        longitude = ""
+        for i, ph in enumerate(phones):
+            if ph.split(':"')[1] == phone:
+                latitude = lats[i].split(":")[1]
+                longitude = lngs[i].split(":")[1]
+
+        sgw.write_row(
+            SgRecord(
+                locator_domain=locator_domain,
+                page_url=link,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_code,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
+        )
+
+
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    fetch_data(writer)

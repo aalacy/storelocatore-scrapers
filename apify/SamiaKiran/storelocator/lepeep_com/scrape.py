@@ -58,6 +58,12 @@ def fetch_data():
             title = temp2.text
             if "Temporarily Closed" in title:
                 title = title.replace("Temporarily Closed", " Temporarily Closed")
+            if "Open for Indoor Dining" in title:
+                title = title.replace(
+                    "Open for Indoor Dining", " Open for Indoor Dining"
+                )
+            if "Now Open" in title:
+                title = title.replace("Now Open", " Now Open")
             link = temp2["href"]
             if len(temp) > 4:
                 if "(Catering)" not in temp[4].find("a").text:
@@ -69,13 +75,20 @@ def fetch_data():
             else:
                 address = temp[1].text + " " + temp[2].text
                 phone = temp[3].find("a").text
-            hourlist = loc.find("div", {"class": "wpsl-store-hours"}).findAll("tr")
-            hours = ""
-            for hour in hourlist:
-                hour = hour.findAll("td")
-                day = hour[0].text
-                time = hour[1].text
-                hours = hours + " " + day + " " + time
+            try:
+                hourlist = (
+                    loc.find("div", {"class": "wpsl-store-hours"})
+                    .find("table", {"class": "wpsl-opening-hours"})
+                    .findAll("tr")
+                )
+                hours = ""
+                for hour in hourlist:
+                    hour = hour.findAll("td")
+                    day = hour[0].text
+                    time = hour[1].text
+                    hours = hours + " " + day + " " + time
+            except:
+                hours = loc.find("div", {"class": "store-column temp-closed-note"}).text
             address = address.replace(",", " ")
             address = usaddress.parse(address)
             i = 0

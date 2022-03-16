@@ -6,10 +6,16 @@ from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
 
-session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
+session = SgRequests().requests_retry_session(
+    retries=2,
+    backoff_factor=0.3,
+    status_forcelist=[
+        404,
+    ],
+)
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36",
-    "IsoCode": "US",
+    "IsoCode": "",
     "CultureCode": "en-US",
     "Current-Page": "https://riamoneytransfer.com/us/en/ria-locator",
     "Accept": "application/json, text/plain, */*",
@@ -106,16 +112,18 @@ def fetch(lat, lng, country):
         "Latitude": lat,
         "Long": "",
         "Longitude": lng,
-        "RequestCountry": "US",
+        "RequestCountry": country,
         "RequiredPayoutAgents": False,
         "RequiredReceivingAgents": False,
         "RequiredReceivingAndPayoutAgents": False,
         "PayAgentId": None,
     }
+    new_headers = headers
+    new_headers["IsoCode"] = country
     result = session.put(
         "https://riamoneytransfer.com/api/location/agent-locations",
         json=body,
-        headers=headers,
+        headers=new_headers,
     ).json()
     return result
 
@@ -137,35 +145,38 @@ def fetch_data():
     searched = []
     all_coordinates = {}
     us_search = DynamicGeoSearch(
-        country_codes=[SearchableCountries.USA], max_radius_miles=50
+        country_codes=[SearchableCountries.USA], max_radius_miles=10
     )
     ca_search = DynamicGeoSearch(
-        country_codes=[SearchableCountries.CANADA], max_radius_miles=50
+        country_codes=[SearchableCountries.CANADA], max_radius_miles=100
     )
     uk_search = DynamicGeoSearch(
-        country_codes=[SearchableCountries.BRITAIN], max_radius_miles=50
+        country_codes=[SearchableCountries.BRITAIN], max_radius_miles=100
     )
-    all_coordinates = {"US": us_search, "CA": ca_search, "UK": uk_search}
-
-    set_jwt_token_header(session)
+    all_coordinates = {"CA": ca_search, "UK": uk_search, "US": us_search}
 
     for country, coordinates in all_coordinates.items():
+        set_jwt_token_header(session)
         coords = []
         for lat, lng in coordinates:
             try:
                 locations = fetch(lat, lng, country)
             except Exception as e:
-                logger.error(f"error fetching data for {lat} {lng}: {e}")
+                logger.error(f"error fetching data for {lat} {lng} {country}: {e}")
                 continue
+            if len(locations) == 1:
+                set_jwt_token_header(session)
             for location in locations:
                 if type(location) == str:
                     continue
-                store_number = get(location, "locationId")
-                if store_number in searched:
+                loc_id = get(location, "locationId")
+                str_ad = get(location, "address")
+                check = f"{str_ad} {loc_id}"
+                if check in searched:
                     continue
-                searched.append(store_number)
+                searched.append(check)
 
-                poi = extract(location, store_number, country)
+                poi = extract(location, loc_id, country)
                 if not poi:
                     continue
                 coords.append([poi.get("latitude"), poi.get("longitude")])

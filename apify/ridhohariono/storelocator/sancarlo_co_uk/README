@@ -1,0 +1,7 @@
+--ignore CountryCodeFillRateChecker (International)
+
+
+--ignore StreetAddressHasNumber (Confirmed scrape correctly)
+Found 1 concerning rows. Examples:
+                                       street_address              REASON  rowNumber
+25  Cicchetti Prince Abdulaziz Ibn Musaid Ibn Jala...  ADDR_HAS_NO_NUMBER         25

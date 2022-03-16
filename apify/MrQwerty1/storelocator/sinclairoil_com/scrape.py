@@ -33,7 +33,8 @@ def write_output(data):
 
 def fetch_data():
     out = []
-    url = "https://www.sinclairoil.com/"
+    location_name = "Sinclair"
+    locator_domain = "https://www.sinclairoil.com/"
     api_url = "https://www.sinclairoil.com/station-rest-export?_format=json"
 
     session = SgRequests()
@@ -41,8 +42,6 @@ def fetch_data():
     js = r.json()
 
     for j in js:
-        locator_domain = url
-        location_name = "Sinclair"
         street_address = (
             f"{j.get('field_address')} {j.get('field_address_line_2') or ''}".strip()
             or "<MISSING>"
@@ -53,7 +52,8 @@ def fetch_data():
         if len(postal) == 4:
             postal = f"0{postal}"
         country_code = "US"
-        store_number = j.get("title").split(">")[1].split("<")[0]
+
+        store_number = j.get("title")
         page_url = f'https://www.sinclairoil.com{j.get("view_node")}'
         phone = j.get("field_phone_number").replace("+", "-") or "<MISSING>"
         latitude = j.get("field_latitude") or "<MISSING>"

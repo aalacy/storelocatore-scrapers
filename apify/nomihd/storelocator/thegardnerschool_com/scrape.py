@@ -71,7 +71,7 @@ def fetch_data():
     for city_url in cities:
         stores_req = session.get(domain + city_url, headers=headers)
         stores_sel = lxml.html.fromstring(stores_req.text)
-        stores = stores_sel.xpath('//div[@id="schools"]/a/@href')
+        stores = stores_sel.xpath('//div[@id="schools"]/div[@class="row"]/a/@href')
         for store_url in stores:
             page_url = domain + store_url
             locator_domain = website

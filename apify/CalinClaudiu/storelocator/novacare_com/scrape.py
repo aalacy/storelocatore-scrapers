@@ -41,6 +41,12 @@ def determine_brand(x):
     for brand, link in brands.items():
         if link in x:
             return brand
+
+    try:
+        x = x.split("img='", 1)[1].split("'", 1)[0]
+        return x
+    except Exception:
+        pass
     return "<MISSING>"
 
 
@@ -173,26 +179,55 @@ def scrape():
     field_defs = SimpleScraperPipeline.field_definitions(
         locator_domain=ConstantField(url + "/"),
         page_url=MappingField(mapping=["dic", "Url"], value_transform=nice_url),
-        location_name=MappingField(mapping=["parsed", "name"]),
+        location_name=MappingField(
+            mapping=["parsed", "name"],
+            is_required=False,
+        ),
         latitude=MappingField(
             mapping=["dic", "Geospatial", "Latitude"],
             value_transform=lambda x: "<MISSING>" if x == "0" or x == "0.0" else x,
+            is_required=False,
         ),
         longitude=MappingField(
             mapping=["dic", "Geospatial", "Longitude"],
             value_transform=lambda x: "<MISSING>" if x == "0" or x == "0.0" else x,
+            is_required=False,
         ),
         street_address=MappingField(
-            mapping=["parsed", "address"], part_of_record_identity=True
+            mapping=["parsed", "address"],
+            part_of_record_identity=True,
+            is_required=False,
         ),
-        city=MappingField(mapping=["parsed", "city"]),
-        state=MappingField(mapping=["parsed", "state"]),
-        zipcode=MappingField(mapping=["parsed", "zip"]),
+        city=MappingField(
+            mapping=["parsed", "city"],
+            is_required=False,
+        ),
+        state=MappingField(
+            mapping=["parsed", "state"],
+            is_required=False,
+        ),
+        zipcode=MappingField(
+            mapping=["parsed", "zip"],
+            is_required=False,
+        ),
         country_code=MissingField(),
-        phone=MappingField(mapping=["parsed", "phone"]),
-        store_number=MappingField(mapping=["dic", "Id"]),
-        hours_of_operation=MappingField(mapping=["parsed", "hours"]),
-        location_type=MappingField(mapping=["parsed", "type"]),
+        phone=MappingField(
+            mapping=["parsed", "phone"],
+            is_required=False,
+        ),
+        store_number=MappingField(
+            mapping=["dic", "Id"],
+            part_of_record_identity=True,
+            is_required=False,
+        ),
+        hours_of_operation=MappingField(
+            mapping=["parsed", "hours"],
+            is_required=False,
+        ),
+        location_type=MappingField(
+            mapping=["parsed", "type"],
+            is_required=False,
+        ),
     )
 
     pipeline = SimpleScraperPipeline(

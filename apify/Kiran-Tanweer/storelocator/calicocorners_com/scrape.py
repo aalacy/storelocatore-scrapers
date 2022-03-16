@@ -58,83 +58,55 @@ def write_output(data):
 
 def fetch_data():
     data = []
-    store = []
-    store_id = []
-    title = []
-    adr = []
-    hours = []
-    Phone = []
-    i = 0
     url = "https://www.calicocorners.com/storelocator.aspx"
     r = session.get(url, headers=headers, verify=False)
     soup = BeautifulSoup(r.text, "html.parser")
-    locs = soup.find("div", {"id": "ctl00_PageContent_pnlStores"})
-    info = locs.findAll("div", {"class": "storehours pad-no"})
-    info2 = locs.findAll("div", {"class": "storehours storehr-popup"})
-    info3 = locs.findAll("div", {"class": "calicoalinkdiv"})
-    for i in range(len(info)):
-        if i % 2 == 0:
-            tit = info[i].text.strip()
-            title.append(tit)
-        else:
-            address = info[i].text
-            ph = address.split("Phone:")[1].split("Email:")[0].strip()
-            Phone.append(ph)
-
-    for i in info2:
-        hour = i.text
-        hour = hour.replace("  ", " ")
-        hour = hour.replace("Closed", "Closed ")
-        hour = hour.replace("PM", "PM ").strip()
-        hours.append(hour)
-
-    for i in range(len(info3)):
-        if i % 3 == 0:
-            locator = info3[i].find("a")["onclick"]  # address
-            locator = locator.split("trackgetdirections(")[1].split(")")[0]
-            locator = locator.replace("'", "").strip()
-            adr.append(locator)
-        else:
-            locator = info3[i].find("a")["onclick"].strip()  # storeid and city
-            store.append(locator)
-    for i in range(len(store)):  # separating store_id from city
-        if i % 2 == 0:
-            storeid = (
-                store[i]
-                .split("trackOutboundLink('storepage.aspx?storeid=")[1]
-                .split(" '")[0]
-                .strip()
-            )
-            store_id.append(storeid)
-
-    for i, j, k, l, m in zip(adr, hours, title, Phone, store_id):
-        title = k
-        storeid = m
-        address = i
+    script = soup.findAll("script")[13]
+    script = str(script)
+    script = script.split("var locations=[")[1]
+    locations = script.split("</div>'],")
+    for loc in locations:
+        coords = loc.split('<div class="storehours')[0]
+        coords = coords.split(",")
+        title = coords[0].strip()
+        title = title.replace("'", "")
+        title = title.lstrip("[")
+        lat = coords[1].strip()
+        lng = coords[2].strip()
+        address = (
+            loc.split('<div class="storehours pad-no" style="width:100%;"><br/>')[1]
+            .split("<br/>Phone:")[0]
+            .strip()
+        )
+        phone = loc.split("Phone: ")[1].split("<br/>Email:")[0].strip()
+        hours = loc.split(
+            '<div class="storehours storehr-popup" style="width:100%;padding-top:5px;">'
+        )[1].split('</div><br/><div class="calicoalinkdiv">')[0]
+        link = loc.split('"trackOutboundLink(&#39;')[1].split(" &#39")[0]
+        address = address.replace("<br/>", ",")
+        address = address.replace("     ", ",")
+        address = address.lstrip("Driscoll Place Shopping Center,")
+        address = address.lstrip("Rue De France,")
+        address = address.lstrip("Seneca Square,")
+        address = address.lstrip("Kingspointe Village Shopping Center,")
+        address = address.lstrip("dgewood Gateway Center,")
+        address = address.lstrip("Merchant&#39;s Walk Shopping Center,")
         address = address.split(",")
-        street = address[0].strip()
-        city = address[1].strip()
-        state = address[2].strip()
-        pcode = address[3].strip()
-        phone = l
-        HOO = j
-
-        if street == "Strawberry Village Shopping Center Suite 121":
-            street = "800 Redwood Highway Frontage Road, Strawberry Village Shopping Center Suite 121"
-
-        if street == "Suite 184":
-            street = "2355 Vanderbilt Beach Rd, Suite 184"
-
-        if street == "ParkTowne Village":
-            street = "1630 E. Woodlawn Road, ParkTowne Village"
-
-        if street == "Suite 126/128":
-            street = "1860 Laskin Road, Suite 126/128"
+        pcode = address[-1].strip()
+        state = address[-2].strip()
+        city = address[-3].strip()
+        if len(address) == 5:
+            street = address[0].strip() + " " + address[1].strip()
+        else:
+            street = address[0].strip()
+        hours = hours.replace("<br/>", ", ")
+        store_url = "https://www.calicocorners.com/" + link
+        storeid = link.split("=")[1].strip()
 
         data.append(
             [
                 "https://www.calicocorners.com/",
-                "https://www.calicocorners.com/storelocator.aspx",
+                store_url,
                 title,
                 street,
                 city,
@@ -143,10 +115,10 @@ def fetch_data():
                 "US",
                 storeid,
                 phone,
-                "Design Shops",
-                "<INACCESSIBLE>",
-                "<INACCESSIBLE>",
-                HOO,
+                "<MISSING>",
+                lat,
+                lng,
+                hours,
             ]
         )
     return data

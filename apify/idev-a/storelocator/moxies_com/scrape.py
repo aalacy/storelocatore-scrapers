@@ -1,118 +1,88 @@
-import csv
 from bs4 import BeautifulSoup as bs
 from sgrequests import SgRequests
 from urllib.parse import urljoin
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sglogging import SgLogSetup
+import json
+import math
+from concurrent.futures import ThreadPoolExecutor
 
-from util import Util  # noqa: I900
+logger = SgLogSetup().get_logger("moxies")
 
-myutil = Util()
+_headers = {
+    "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
+}
 
-
-session = SgRequests()
-
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+locator_domain = "https://moxies.com"
+base_url = "https://moxies.com/location-finder?usredirect=no"
+session = SgRequests().requests_retry_session()
+max_workers = 8
 
 
-def _parse_detail(locator_domain, links):
-    data = []
-    for link in links:
-        page_url = urljoin("https://moxies.com", link["href"])
-        r1 = session.get(page_url)
-        soup1 = bs(r1.text, "lxml")
-        location_name = soup1.select_one("h1.title span").text.strip()
-        contact_info = soup1.select("div.contact-info p a")
-        street_address = soup1.select_one('div.adr div[itemprop="streetAddress"]').text
-        city = soup1.select_one('div.adr span[itemprop="addressLocality"]').text
-        state = soup1.select_one('div.adr span[itemprop="addressRegion"]').text
-        zip = soup1.select_one('div.adr div[itemprop="postalCode"]').text
-        country_code = myutil.get_country_by_code(state)
-        phone = myutil._valid(contact_info[1].string)
-        store_number = "<MISSING>"
-        location_type = "<MISSING>"
-        direction = contact_info[0]["href"].split("/")[-1].strip().split(",")
-        latitude = direction[0].strip()
-        longitude = direction[1].strip()
-        hours_of_operation = soup1.select_one("h2.subtitle").text
-        if "closed" in hours_of_operation.lower():
-            hours_of_operation = "Closed"
-        else:
-            tags = soup1.select("table.hours tr")
-            hours = []
-            for tag in tags:
-                hours.append(
-                    f"{tag.select_one('td.day').text.strip()} {tag.select_one('td.opening').text.strip()}-{tag.select_one('td.closing').text}"
-                )
-            hours_of_operation = myutil._valid("; ".join(hours))
+def fetchConcurrentSingle(link):
+    page_url = urljoin(locator_domain, link["href"])
+    response = request_with_retries(page_url)
+    return page_url, bs(response.text, "lxml")
 
-        _item = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
 
-        data.append(_item)
+def fetchConcurrentList(list, occurrence=max_workers):
+    output = []
+    total = len(list)
+    reminder = math.floor(total / 50)
+    if reminder < occurrence:
+        reminder = occurrence
 
-    return data
+    count = 0
+    with ThreadPoolExecutor(
+        max_workers=occurrence, thread_name_prefix="fetcher"
+    ) as executor:
+        for result in executor.map(fetchConcurrentSingle, list):
+            if result:
+                count = count + 1
+                if count % reminder == 0:
+                    logger.debug(f"Concurrent Operation count = {count}")
+                output.append(result)
+    return output
+
+
+def request_with_retries(url):
+    return session.get(url, headers=_headers)
 
 
 def fetch_data():
-
-    data = []
-
-    base_url = "https://moxies.com/location-finder?usredirect=no"
-    r = session.get(base_url)
-    soup = bs(r.text, "lxml")
-    links = soup.select(
-        "ul.call-location-block__locations li.call-location-block__location > a"
-    )
-    data += _parse_detail("https://moxies.com/", links)
-
-    return data
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+    soup = bs(session.get(base_url, headers=_headers).text, "lxml")
+    links = soup.select("div#content-area div.call-location-block__city ul li > a")
+    logger.info(f"{len(links)} found")
+    for page_url, soup1 in fetchConcurrentList(links):
+        logger.info(page_url)
+        ss = json.loads(soup1.find("script", type="application/ld+json").string)
+        addr = ss["address"]
+        location_type = ""
+        src = soup1.select_one("div.intro-banner picture img")["srcset"]
+        if "TempClosure" in src:
+            location_type = "Temporarily Closed"
+        yield SgRecord(
+            page_url=page_url,
+            location_name=ss["name"].replace("’", "'"),
+            street_address=addr["streetAddress"],
+            city=addr["addressLocality"].replace("’", "'"),
+            state=addr["addressRegion"],
+            latitude=ss["geo"]["latitude"],
+            longitude=ss["geo"]["longitude"],
+            zip_postal=addr["postalCode"],
+            country_code=addr["addressCountry"],
+            phone=ss["telephone"],
+            locator_domain=locator_domain,
+            location_type=location_type,
+            hours_of_operation="; ".join(ss["openingHours"]).replace("–", "-"),
+        )
 
 
 if __name__ == "__main__":
-    scrape()
+    data = fetch_data()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        for row in data:
+            writer.write_row(row)

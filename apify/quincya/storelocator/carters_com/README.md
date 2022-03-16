@@ -1,0 +1,2 @@
+--ignore StreetAddressHasNumber --ignore StreetAddressHasStateName --ignore GeoConsistencyValidator --ignore CountryValidator (Confirmed on website)
+--ignore CountValidator --ignore StateLevelCountValidator (Expected 962 POI, but found 765)

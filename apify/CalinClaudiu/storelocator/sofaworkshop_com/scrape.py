@@ -1,287 +1,93 @@
-from sgscrape import simple_scraper_pipeline as sp
+from lxml import etree
+from urllib.parse import urljoin
+
+from bs4 import BeautifulSoup
+
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+
 from sgrequests import SgRequests
-from sglogging import sglog
-from bs4 import BeautifulSoup as b4
+
+from sgscrape.sgpostal import parse_address_intl
 
 
-def parse_store(k):
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36",
-    }
-
+def fetch_data(sgw: SgWriter):
+    # Your scraper here
     session = SgRequests()
 
-    page = session.get(
-        k["page_url"],
-        headers=headers,
+    start_url = "https://www.sofaworkshop.com/pages/stores"
+    domain = "sofaworkshop.com"
+    hdr = {
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
+    }
+    response = session.get(start_url, headers=hdr)
+    dom = etree.HTML(response.text)
+
+    all_locations = dom.xpath(
+        '//div[@class="col-span-4 md:col-span-6 lg:col-span-4 xl:col-span-3 mb-7.5 md:mb-10 xl:mb-15 flex flex-col"]/a/@href'
     )
+    for url in all_locations:
+        store_url = urljoin(start_url, url)
+        loc_response = session.get(store_url)
+        loc_dom = etree.HTML(loc_response.text)
 
-    soup = b4(page.text, "lxml")
-
-    try:
-        addr = list(soup.find("address").stripped_strings)
-        unwanted = [
-            "Tel:",
-            "Parking",
-            "Tube",
-            "minute",
-            "Car Park",
-            "nearest",
-            "closest",
-            "accessible",
-            "easily",
-        ]
-        poplist = []
-        for i, val in enumerate(addr):
-            if any(j in val for j in unwanted):
-                poplist.append(i)
-        topop = len(addr)
-        while topop >= 0:
-            if topop in poplist:
-                addr.pop(topop)
-            topop -= 1
-
-    except Exception:
-        addr = "<MISSING>"
-
-    try:
-        k["address"] = addr[0]
-        addr.pop(0)
-
-        while any(i.isdigit() for i in addr[0]) and len(addr[0]) > 8:
-            k["address"] = k["address"] + ", " + addr[0]
-            addr.pop(0)
-
-        if k["address"] == "Unit 54":
-            k["address"] = k["address"] + ", " + addr[0]
-            addr.pop(0)
-            k["address"] = k["address"] + ", " + addr[0]
-            addr.pop(0)
-            k["address"] = k["address"] + ", " + addr[0]
-            addr.pop(0)
-        if k["address"] == "8-9 The Great Hall":
-            k["address"] = k["address"] + ", " + addr[0]
-            addr.pop(0)
-        if k["address"] == "2nd Floor Bentall Centre":
-            k["address"] = k["address"] + ", " + addr[0]
-            addr.pop(0)
-
-    except Exception:
-        k["address"] = "<MISSING>"
-
-    try:
-        k["city"] = addr[0]
-        addr.pop(0)
-    except Exception:
-        k["city"] = "<MISSING>"
-
-    try:
-        k["region"] = addr[0]
-        addr.pop(0)
-    except Exception:
-        k["region"] = "<MISSING>"
-
-    try:
-        k["zip"] = addr[0]
-        addr.pop(0)
-    except Exception:
-        k["zip"] = "<MISSING>"
-
-    if k["zip"] == "<MISSING>" and k["region"] != "<MISSING>":
-        k["zip"] = k["region"]
-        k["region"] = "<MISSING>"
-
-    if (
-        k["zip"] == "<MISSING>"
-        and k["region"] == "<MISSING>"
-        and k["city"] != "<MISSING>"
-    ):
-        k["zip"] = k["city"]
-        k["city"] = "<MISSING>"
-
-    try:
-        k["phone"] = "<MISSING>"
-        j = soup.find_all("p")
-        for i in j:
-            if "hone" in i.text:
-                k["phone"] = i.text.strip()
-                break
-    except Exception:
-        k["phone"] = "<MISSING>"
-
-    try:
-        k["phone"] = k["phone"].split(":")[-1].strip()
-    except Exception:
-        k["phone"] = (
-            k["phone"]
-            .replace("Telephone", "")
-            .replace("Phone", "")
-            .replace(":", "")
-            .strip()
+        location_name = loc_dom.xpath("//h1/text()")
+        location_name = location_name[0] if location_name else "<MISSING>"
+        raw_address = loc_dom.xpath("//address/p/text()")[0]
+        addr = parse_address_intl(raw_address)
+        street_address = addr.street_address_1
+        if addr.street_address_2:
+            street_address += " " + addr.street_address_2
+        street_address = street_address if street_address else "<MISSING>"
+        city = addr.city
+        city = city.replace(".", "") if city else "<MISSING>"
+        state = addr.state
+        state = state if state else "<MISSING>"
+        zip_code = addr.postcode
+        zip_code = zip_code if zip_code else "<MISSING>"
+        if "Rm20 1Wn" in street_address:
+            zip_code = "Rm20 1Wn"
+            street_address = street_address.replace(zip_code, "").strip()
+        if "Avon" in street_address:
+            city = "Avon"
+            street_address = street_address.replace("Avon", "").strip()
+        if "Centre" in street_address:
+            street_address = street_address.split("Centre")[1].strip()
+        country_code = "GB"
+        store_number = "<MISSING>"
+        phone = loc_dom.xpath('//div[@class="contact mb-10 md:mb-0"]/p/text()')[-1]
+        location_type = "<MISSING>"
+        latitude = loc_dom.xpath("//@data-latitude")
+        latitude = latitude[0] if latitude else "<MISSING>"
+        longitude = loc_dom.xpath("//@data-longitude")
+        longitude = longitude[0] if longitude else "<MISSING>"
+        base = BeautifulSoup(loc_response.text, "lxml")
+        hours_of_operation = " ".join(
+            list(base.find(class_="opening-hours").dl.stripped_strings)
         )
-    k["id"] = "<MISSING>"
-    k["type"] = "<MISSING>"
-    try:
-        h = soup.find(
-            "div",
-            {"class": lambda x: x and all(i in x for i in ["grid__item", "mb-3"])},
-        ).find("ul")
-        h = h.find_all("li")
-        k["hours"] = []
-        for i in h:
-            k["hours"].append(i.text.strip())
 
-        k["hours"] = "; ".join(k["hours"])
-        if "opening soon" in k["hours"]:
-            k["hours"] = "<MISSING>"
-            k["type"] = "Coming Soon!"
-    except Exception:
-        k["hours"] = "<MISSING>"
-
-    try:
-        k["lat"] = soup.find("div", {"id": "store-map"})["data-latitude"]
-        k["lon"] = soup.find("div", {"id": "store-map"})["data-longitude"]
-    except Exception:
-        k["lat"] = "<MISSING>"
-        k["lon"] = "<MISSING>"
-
-    try:
-
-        k["name"] = soup.find("h2").text.strip()
-    except Exception:
-        k["name"] = "<MISSING>"
-
-    return k
+        sgw.write_row(
+            SgRecord(
+                locator_domain=domain,
+                page_url=store_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_code,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+                raw_address=raw_address,
+            )
+        )
 
 
-def fetch_data():
-
-    logzilla = sglog.SgLogSetup().get_logger(logger_name="CRAWLER")
-
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36",
-    }
-
-    session = SgRequests()
-    url = "https://www.sofaworkshop.com/pages/stores"
-    page = session.get(url, headers=headers)
-    soup = b4(page.text, "lxml")
-
-    results = []
-    locs = soup.find_all("div", {"class": "store-list__details"})
-    for i in locs:
-        k = {}
-        k["page_url"] = "https://www.sofaworkshop.com/" + i.find(
-            "a",
-            {
-                "class": lambda x: x
-                and all(i in x for i in ["btn", "btn--secondary", "btn--small"])
-            },
-        )["href"]
-        results.append(k)
-
-    for i in results:
-        yield parse_store(i)
-
-    logzilla.info(f"Finished grabbing data!!")  # noqa
-
-
-def fix_comma(x):
-    x = x.replace("None", "")
-    h = []
-    try:
-        x = x.split(",")
-        for i in x:
-            st = i.strip()
-            if len(st) >= 1:
-                h.append(st)
-        h = ", ".join(h)
-    except Exception:
-        h = x
-
-    return h
-
-
-def fix_colon(x):
-    x = x.replace("None", "")
-    h = []
-    try:
-        x = x.split(":")
-        for i in x:
-            st = i.strip()
-            if len(st) >= 1:
-                h.append(st)
-        h = ", ".join(h)
-    except Exception:
-        h = x
-
-    return h
-
-
-def scrape():
-    url = "https://www.sofaworkshop.com/"
-    field_defs = sp.SimpleScraperPipeline.field_definitions(
-        locator_domain=sp.ConstantField(url),
-        page_url=sp.MappingField(
-            mapping=["page_url"],
-            is_required=False,
-        ),
-        location_name=sp.MappingField(
-            mapping=["name"],
-            is_required=False,
-        ),
-        latitude=sp.MappingField(
-            mapping=["lat"],
-            is_required=False,
-        ),
-        longitude=sp.MappingField(
-            mapping=["lon"],
-            is_required=False,
-        ),
-        street_address=sp.MappingField(
-            mapping=["address"],
-            is_required=False,
-        ),
-        city=sp.MappingField(
-            mapping=["city"],
-            is_required=False,
-        ),
-        state=sp.MappingField(
-            mapping=["region"],
-            is_required=False,
-        ),
-        zipcode=sp.MappingField(
-            mapping=["zip"],
-            is_required=False,
-        ),
-        country_code=sp.MissingField(),
-        phone=sp.MappingField(
-            mapping=["phone"],
-            is_required=False,
-        ),
-        store_number=sp.MappingField(
-            mapping=["id"],
-        ),
-        hours_of_operation=sp.MappingField(
-            mapping=["hours"],
-            value_transform=lambda x: x.replace("/", ":"),
-            is_required=False,
-        ),
-        location_type=sp.MappingField(
-            mapping=["type"],
-            is_required=False,
-        ),
-    )
-
-    pipeline = sp.SimpleScraperPipeline(
-        scraper_name="Crawler",
-        data_fetcher=fetch_data,
-        field_definitions=field_defs,
-        log_stats_interval=15,
-    )
-
-    pipeline.run()
-
-
-if __name__ == "__main__":
-    scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    fetch_data(writer)

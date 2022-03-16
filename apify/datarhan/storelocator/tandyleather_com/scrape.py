@@ -43,7 +43,7 @@ def fetch_data():
     scraped_items = []
 
     DOMAIN = "tandyleather.com"
-    start_url = "https://cdn.shopify.com/s/files/1/0063/5997/3970/t/47/assets/sca.storelocatordata.json?v=1608582295&formattedAddress=&boundsNorthEast=&boundsSouthWest="
+    start_url = "https://cdn.shopify.com/s/files/1/0063/5997/3970/t/44/assets/sca.storelocatordata.json?v=1613368747&formattedAddress=&boundsNorthEast=&boundsSouthWest="
 
     response = session.get(start_url)
     data = json.loads(response.text)
@@ -68,7 +68,9 @@ def fetch_data():
         loc_dom = etree.HTML(loc_response.text)
         hours_of_operation = loc_dom.xpath('//div[@class="loc-hours"]/p/text()')
         hours_of_operation = [elem.strip() for elem in hours_of_operation]
-        hours_of_operation = " ".join(hours_of_operation)
+        hours_of_operation = (
+            " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
+        )
 
         item = [
             DOMAIN,

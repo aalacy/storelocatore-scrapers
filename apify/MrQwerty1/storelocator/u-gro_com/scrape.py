@@ -36,10 +36,10 @@ def write_output(data):
 
 def get_urls():
     session = SgRequests()
-    r = session.get("https://www.u-gro.com/locations/")
-    tree = html.fromstring(r.text)
+    r = session.get("https://www.u-gro.com/sitemaps/www-u-gro-com-schools.xml")
+    tree = html.fromstring(r.content)
 
-    return tree.xpath("//div[@class='address']/a/@href")
+    return tree.xpath("//loc/text()")
 
 
 def get_data(page_url):
@@ -49,8 +49,8 @@ def get_data(page_url):
     r = session.get(page_url)
     tree = html.fromstring(r.text)
 
-    location_name = "".join(tree.xpath("//h1[@itemprop='headline']/text()")).strip()
-    line = tree.xpath("//div[@class='address']")[0].xpath("./p/text()")
+    location_name = "".join(tree.xpath("//h1/text()")).strip()
+    line = tree.xpath("//span[@class='addr']")[0].xpath(".//text()")
     line = list(filter(None, [l.strip() for l in line]))
     street_address = ", ".join(line[:-1])
     line = line[-1]
@@ -61,18 +61,22 @@ def get_data(page_url):
     country_code = "US"
     store_number = "<MISSING>"
     phone = (
-        "".join(tree.xpath("//div[@class='address']/a/text()")).strip() or "<MISSING>"
+        tree.xpath("//span[@class='tel show-for-large']/text()")[-1].strip()
+        or "<MISSING>"
     )
 
-    text = "".join(tree.xpath("//span[@class='map']/a/@href"))
     try:
-        latitude = text.split("@")[1].split(",")[0]
-        longitude = text.split("@")[1].split(",")[1]
+        latitude = "".join(
+            tree.xpath("//span[@class='addr']")[0].xpath("./@data-latitude")
+        )
+        longitude = "".join(
+            tree.xpath("//span[@class='addr']")[0].xpath("./@data-longitude")
+        )
     except IndexError:
         latitude, longitude = "<MISSING>", "<MISSING>"
     location_type = "<MISSING>"
 
-    hours = tree.xpath("//div[@class='hours']")[0].xpath(".//text()")
+    hours = tree.xpath("//div[./svg[@class='openHours']]/text()")
     hours = list(filter(None, [h.strip() for h in hours]))
     hours_of_operation = " ".join(hours) or "<MISSING>"
 
@@ -100,7 +104,7 @@ def fetch_data():
     out = []
     urls = get_urls()
 
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
+    with futures.ThreadPoolExecutor(max_workers=15) as executor:
         future_to_url = {executor.submit(get_data, url): url for url in urls}
         for future in futures.as_completed(future_to_url):
             row = future.result()

@@ -1,143 +1,100 @@
-import csv
-import json
-
-from bs4 import BeautifulSoup
-
-from sglogging import sglog
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 from sgrequests import SgRequests
 
-from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 
-log = sglog.SgLogSetup().get_logger(logger_name="peets.com")
-
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
+def fetch_data(sgw: SgWriter):
 
     user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
     headers = {"User-Agent": user_agent}
 
     session = SgRequests()
-
-    max_results = 25
-    max_distance = 30
-
-    dup_tracker = []
-
-    data = []
     locator_domain = "peets.com"
 
-    search = DynamicGeoSearch(
-        country_codes=[SearchableCountries.USA],
-        max_radius_miles=max_distance,
-        max_search_results=max_results,
-    )
+    base_link = "https://api.momentfeed.com/v1/analytics/api/v2/llp/sitemap?auth_token=CVVDLCJRQEBHCLCL&country=US&multi_account=false"
 
-    log.info("Searching zip_codes ..")
+    stores = session.get(base_link, headers=headers).json()["locations"]
 
-    for lat, lng in search:
-        base_link = (
-            "https://stockist.co/api/v1/u5687/locations/search?callback=jQuery214012681410710237628_1612239285797&tag=u5687&latitude=%s&longitude=%s&distance=%s"
-            % (lat, lng, max_distance)
+    for store in stores:
+        street_address = store["store_info"]["address"].strip()
+        city = store["store_info"]["locality"]
+        state = store["store_info"]["region"]
+        zip_code = store["store_info"]["postcode"]
+        if len(zip_code) == 4:
+            zip_code = "0" + zip_code
+        country_code = store["store_info"]["country"]
+        location_type = store["open_or_closed"]
+
+        url = (
+            "https://api.momentfeed.com/v1/analytics/api/llp.json?auth_token=CVVDLCJRQEBHCLCL&address="
+            + street_address.replace(" ", "+")
+            + "&locality="
+            + city
+            + "&multi_account=false&pageSize=30&region="
+            + state
         )
 
-        req = session.get(base_link, headers=headers)
-        base = BeautifulSoup(req.text, "lxml")
-        js = base.text.split('locations":')[1].split(',"debug"')[0]
-        stores = json.loads(js)
+        link = "https://locations.peets.com" + store["llp_url"]
 
-        for store in stores:
+        base_js = session.get(url, headers=headers).json()[0]["store_info"]
+        location_name = base_js["name"] + " " + city
 
-            if "peet" not in store["custom_fields"][0]["value"].lower():
-                continue
+        if "permanently closed" in location_name.lower():
+            continue
 
-            store_number = store["id"]
-            if store_number in dup_tracker:
-                continue
-            dup_tracker.append(store_number)
-
-            latitude = store["latitude"]
-            longitude = store["longitude"]
-
-            search.found_location_at(latitude, longitude)
-
-            location_name = store["name"]
-            street_address = store["address_line_1"]
-            city = store["city"]
-            state = store["state"]
-            zip_code = store["postal_code"]
-            country_code = "US"
-            location_type = "<MISSING>"
-            phone = store["phone"]
-
-            raw_hours = store["custom_fields"]
-            hours_of_operation = ""
-            for raw_hour in raw_hours:
-                if "hour" in str(raw_hour).lower():
-                    hours_of_operation = (
-                        hours_of_operation
-                        + " "
-                        + raw_hour["name"].replace("Hours:", "").strip()
-                        + " "
-                        + raw_hour["value"]
-                    ).strip()
-            if not hours_of_operation:
-                hours_of_operation = "<MISSING>"
-            link = "<MISSING>"
-
-            # Store data
-            data.append(
-                [
-                    locator_domain,
-                    link,
-                    location_name,
-                    street_address,
-                    city,
-                    state,
-                    zip_code,
-                    country_code,
-                    store_number,
-                    phone,
-                    location_type,
-                    latitude,
-                    longitude,
-                    hours_of_operation,
-                ]
+        street_address = (street_address + " " + base_js["address_extended"]).strip()
+        store_number = base_js["corporate_id"]
+        latitude = base_js["latitude"]
+        longitude = base_js["longitude"]
+        phone = base_js["phone"]
+        raw_hours = base_js["store_hours"]
+        if "temp" in location_type.lower():
+            hours_of_operation = location_type.title()
+        else:
+            hours_of_operation = (
+                raw_hours.replace("1,", "Monday ")
+                .replace(";2,", " Tuesday ")
+                .replace(";3,", " Wednesday ")
+                .replace(";4,", " Thursday ")
+                .replace(";5,", " Friday ")
+                .replace(";6,", " Saturday ")
+                .replace(";7,", " Sunday ")
+                .replace("0;", "0")
+                .replace(",", "-")
             )
 
-    return data
+            if "Saturday" not in hours_of_operation:
+                hours_of_operation = hours_of_operation + " Saturday Closed"
+
+            if "Sunday" not in hours_of_operation:
+                hours_of_operation = hours_of_operation + " Sunday Closed"
+        if "0" in hours_of_operation:
+            location_type = "open"
+        else:
+            hours_of_operation = location_type.title()
+
+        sgw.write_row(
+            SgRecord(
+                locator_domain=locator_domain,
+                page_url=link,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_code,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
+        )
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    fetch_data(writer)

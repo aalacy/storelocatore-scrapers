@@ -40,6 +40,21 @@ def para(k):
     except Exception:
         k["hours"] = "<MISSING>"
 
+    if k["hours"] == "<MISSING>":
+        try:
+            hours = list(
+                soup.find(
+                    "div",
+                    {
+                        "class": lambda x: x
+                        and all(i in x for i in ["col-12", "hours-item"])
+                    },
+                ).stripped_strings
+            )
+            k["hours"] = " ".join(hours)
+        except Exception:
+            k["hours"] = "<MISSING>"
+
     return k
 
 

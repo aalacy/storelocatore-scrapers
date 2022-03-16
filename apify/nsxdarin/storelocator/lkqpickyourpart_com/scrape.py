@@ -38,8 +38,8 @@ def write_output(data):
 
 
 def fetch_data():
-    locs = []
-    url = "https://www.lkqpickyourpart.com/locations/"
+    locs = ["https://locations.lkqpickyourpart.com/ca/stanton/8188-1/2-katella-avenue"]
+    url = "https://locations.lkqpickyourpart.com/sitemap.xml"
     r = session.get(url, headers=headers)
     website = "lkqpickyourpart.com"
     typ = "<MISSING>"
@@ -47,16 +47,14 @@ def fetch_data():
     logger.info("Pulling Stores")
     for line in r.iter_lines():
         line = str(line.decode("utf-8"))
-        if '"pypfys_links"><a href="/' in line:
-            items = line.split('"pypfys_links"><a href="/')
-            for item in items:
-                if "Store Info<" in item:
-                    locs.append(
-                        "https://www.lkqpickyourpart.com"
-                        + item.split('href="')[1]
-                        .split('"')[0]
-                        .replace("part-interchange-search/", "")
-                    )
+        if (
+            "<loc>https://locations.lkqpickyourpart.com/" in line
+            and "ocations.lkqpickyourpart.com/es" not in line
+        ):
+            lurl = line.split("<loc>")[1].split("<")[0]
+            if lurl.count("/") == 5:
+                lurl = lurl.replace("&#39;", "'")
+                locs.append(lurl)
     for loc in locs:
         logger.info(loc)
         name = ""
@@ -64,7 +62,7 @@ def fetch_data():
         city = ""
         state = ""
         zc = ""
-        store = ""
+        store = "<MISSING>"
         phone = ""
         lat = ""
         lng = ""
@@ -72,51 +70,58 @@ def fetch_data():
         r2 = session.get(loc, headers=headers)
         for line2 in r2.iter_lines():
             line2 = str(line2.decode("utf-8"))
-            if '"name" : "' in line2:
-                name = line2.split('"name" : "')[1].split('"')[0]
-            if '"streetAddress" : "' in line2:
-                add = line2.split('"streetAddress" : "')[1].split('"')[0]
-            if '"addressLocality" : "' in line2:
-                city = line2.split('"addressLocality" : "')[1].split('"')[0]
-            if '"addressRegion" : "' in line2:
-                state = line2.split('"addressRegion" : "')[1].split('"')[0]
-            if '"addressCountry" : "' in line2:
-                country = line2.split('"addressCountry" : "')[1].split('"')[0]
-            if '"postalCode" : "' in line2:
-                zc = line2.split('"postalCode" : "')[1].split('"')[0]
-            if '"latitude": ' in line2:
-                lat = line2.split('"latitude": ')[1].split(",")[0]
-            if '"longitude": ' in line2:
-                lng = (
-                    line2.split('"longitude": ')[1]
+            if '<span class="LocationName-geo">' in line2:
+                name = (
+                    line2.split('<span class="LocationName-geo">')[1]
+                    .split("<")[0]
                     .strip()
-                    .replace("\t", "")
-                    .replace("\r", "")
-                    .replace("\n", "")
+                    .replace("  ", " ")
                 )
-            if '"telephone": "' in line2:
-                phone = line2.split('"telephone": "')[1].split('"')[0].replace("+1", "")
-            if 'id="pyploc_info" data-store="' in line2:
-                store = line2.split('id="pyploc_info" data-store="')[1].split('"')[0]
-            if '"pyploc_hours">' in line2:
-                hours = (
-                    line2.split('"pyploc_hours">')[1]
-                    .split("</div>")[0]
-                    .replace("</p><p>", "; ")
-                    .replace("<p>", "")
-                    .replace("</p>", "")
-                    .replace(
-                        '<p id="pyploc_admissionsNote">Must Be 16 Years Old To Enter Facility',
-                        "",
-                    )
-                    .strip()
+            if '"streetAddress" content="' in line2:
+                add = line2.split('"streetAddress" content="')[1].split('"')[0]
+            if 'itemprop="addressLocality" content="' in line2:
+                city = line2.split('itemprop="addressLocality" content="')[1].split(
+                    '"'
+                )[0]
+            if 'itemprop="addressRegion">' in line2:
+                state = line2.split('itemprop="addressRegion">')[1].split("<")[0]
+            if 'itemprop="postalCode">' in line2:
+                zc = line2.split('itemprop="postalCode">')[1].split("<")[0]
+            if '"addressCountry">' in line2:
+                country = line2.split('"addressCountry">')[1].split("<")[0]
+            if 'itemprop="telephone" id="phone-main">' in line2:
+                phone = line2.split('itemprop="telephone" id="phone-main">')[1].split(
+                    "<"
+                )[0]
+            if 'itemprop="latitude" content="' in line2:
+                lat = line2.split('itemprop="latitude" content="')[1].split('"')[0]
+            if 'itemprop="longitude" content="' in line2:
+                lng = line2.split('itemprop="longitude" content="')[1].split('"')[0]
+            if "data-days='[" in line2 and hours == "":
+                days = (
+                    line2.split("data-days='[")[1]
+                    .split("]' data-utc")[0]
+                    .split('"day":"')
                 )
-                if "<" in hours:
-                    hours = hours.split("<")[0].strip()
-        if "Quebec" in state:
-            country = "CA"
+                for day in days:
+                    if "intervals" in day:
+                        if '"isClosed":true' in day:
+                            hrs = day.split('"')[0] + ": Closed"
+                        else:
+                            hrs = (
+                                day.split('"')[0]
+                                + ": "
+                                + day.split('"start":')[1].split("}")[0]
+                                + "-"
+                                + day.split('"end":')[1].split(",")[0]
+                            )
+                        if hours == "":
+                            hours = hrs
+                        else:
+                            hours = hours + "; " + hrs
         if "(Parts)" in add:
             add = add.split("(Parts)")[0].strip()
+        add = add.replace("&#39;", "'")
         yield [
             website,
             loc,

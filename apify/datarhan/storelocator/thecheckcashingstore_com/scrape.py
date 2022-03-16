@@ -55,25 +55,17 @@ def fetch_data():
         location_name = location_name if location_name else "<MISSING>"
         street_address = poi.find("Address1").text
         if poi.find("Address2").text:
-            street_address += ", " + poi.find("Address2").text
+            street_address += " " + poi.find("Address2").text
         street_address = street_address if street_address else "<MISSING>"
         city = poi.find("City").text
-        city = city if city else "<MISSING>"
-        state = poi.find("Province").text
-        state = state if state else "<MISSING>"
+        state = poi.find("State").text
         zip_code = poi.find("PostalCode").text
-        zip_code = zip_code if zip_code else "<MISSING>"
         country_code = poi.find("Country").text
-        country_code = country_code if country_code else "<MISSING>"
         store_number = poi.find("StoreNum").text
-        store_number = store_number if store_number else "<MISSING>"
         phone = poi.find("Phone").text
-        phone = phone if phone else "<MISSING>"
         location_type = "<MISSING>"
         latitude = poi.find("Latitude").text
-        latitude = latitude if latitude else "<MISSING>"
         longitude = poi.find("Longitude").text
-        longitude = longitude if longitude else "<MISSING>"
         hours_of_operation = poi.find("StoreHours").text
         hours_of_operation = (
             hours_of_operation.replace(";", ",") if hours_of_operation else "<MISSING>"
@@ -104,8 +96,8 @@ def fetch_data():
             hours_of_operation,
         ]
 
-        if store_number not in scraped_items:
-            scraped_items.append(store_number)
+        if street_address not in scraped_items:
+            scraped_items.append(street_address)
             items.append(item)
 
     return items

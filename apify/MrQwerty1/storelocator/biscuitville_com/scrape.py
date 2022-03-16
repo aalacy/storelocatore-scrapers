@@ -1,5 +1,9 @@
 import csv
+import re
+
+from lxml import html
 from sgrequests import SgRequests
+from sgselenium import SgFirefox
 
 
 def write_output(data):
@@ -31,6 +35,17 @@ def write_output(data):
             writer.writerow(row)
 
 
+def get_nonce():
+    with SgFirefox() as driver:
+        driver.get("https://biscuitville.com/")
+        source = driver.page_source
+
+    tree = html.fromstring(source)
+    text = "".join(tree.xpath("//script[contains(text(), 'nonce')]/text()"))
+
+    return "".join(re.findall(r'"nonce":"(.+)"', text))
+
+
 def fetch_data():
     out = []
     locator_domain = "https://biscuitville.com/"
@@ -43,7 +58,7 @@ def fetch_data():
         "lat": "",
         "lng": "",
         "current_location": "Y",
-        "nonce": "bc44498f8b",
+        "nonce": get_nonce(),
     }
 
     headers = {

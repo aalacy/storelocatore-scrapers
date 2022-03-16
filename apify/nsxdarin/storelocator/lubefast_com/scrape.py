@@ -54,7 +54,7 @@ def fetch_data():
         logger.info("Pulling Stores")
         for line in r.iter_lines():
             line = str(line.decode("utf-8"))
-            if '<h5><a href="http://lubefast.com/' in line:
+            if '<h5><a href="https://lubefast.com/' in line:
                 locs.append(line.split('href="')[1].split('"')[0])
     for loc in locs:
         logger.info(loc)
@@ -113,7 +113,7 @@ def fetch_data():
                     hours = hrs
                 else:
                     hours = hours + "; " + hrs
-            if 'iframe src="https://www.google.com/maps/' in line2:
+            if 'src="https://www.google.com/maps/' in line2:
                 lat = line2.split("!3d")[1].split("!")[0]
                 lng = line2.split("!2d")[1].split("!")[0]
                 if phone == "":
@@ -124,6 +124,8 @@ def fetch_data():
                     phone = "8509412235"
                 hours = hours + "; Sunday: Closed"
                 name = "American Lube Fast"
+                if "2001 Carter Hill" in add:
+                    phone = "334-834-3015"
                 yield [
                     website,
                     loc,

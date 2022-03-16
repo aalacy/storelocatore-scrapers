@@ -1,7 +1,12 @@
-import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sglogging import sglog
 
+log = sglog.SgLogSetup().get_logger(logger_name="fultonbank.com")
 session = SgRequests()
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36",
@@ -11,38 +16,10 @@ headers = {
 logger = SgLogSetup().get_logger("fultonbank_com")
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
-
-
 def fetch_data():
     url = "https://www.fultonbank.com/api/Branches/Search"
     payload = {
         "QueryModel.SearchTerm": "10001",
-        "QueryModel.AmenityIds": "{825980DA-DD13-445E-B9EB-C9B521B918C2}",
         "QueryModel.Radius": "5000",
     }
     r = session.post(url, headers=headers, data=payload)
@@ -50,11 +27,10 @@ def fetch_data():
     typ = "<MISSING>"
     country = "US"
     addlist = []
-    loc = "<MISSING>"
+    loc = "https://www.fultonbank.com/Maps-and-Locations"
     store = "<MISSING>"
     logger.info("Pulling Stores")
     for line in r.iter_lines():
-        line = str(line.decode("utf-8"))
         if "location-name" in line:
             items = line.split("location-name")
             for item in items:
@@ -72,6 +48,7 @@ def fetch_data():
                         .replace("\\u0026#39;", "'")
                     )
                     addinfo = addinfo.replace("\\u0026amp;", "&")
+                    raw_address = addinfo
                     add = addinfo.split(",")[0]
                     city = addinfo.split(",")[1].strip()
                     state = addinfo.split(",")[2].strip().split(" ")[0]
@@ -103,27 +80,39 @@ def fetch_data():
                     if hours == "":
                         hours = "<MISSING>"
                     else:
-                        yield [
-                            website,
-                            loc,
-                            name,
-                            add,
-                            city,
-                            state,
-                            zc,
-                            country,
-                            store,
-                            phone,
-                            typ,
-                            lat,
-                            lng,
-                            hours,
-                        ]
+                        yield SgRecord(
+                            locator_domain=website,
+                            page_url=loc,
+                            location_name=name,
+                            street_address=add,
+                            city=city,
+                            state=state,
+                            zip_postal=zc,
+                            country_code=country,
+                            store_number=store,
+                            phone=phone,
+                            location_type=typ,
+                            latitude=lat,
+                            longitude=lng,
+                            hours_of_operation=hours,
+                            raw_address=raw_address,
+                        )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    log.info("Started")
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(SgRecordID({SgRecord.Headers.RAW_ADDRESS}))
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()

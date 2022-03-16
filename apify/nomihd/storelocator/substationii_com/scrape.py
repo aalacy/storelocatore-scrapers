@@ -60,12 +60,13 @@ def write_output(data):
 
 def fetch_data():
     # Your scraper here
-    loc_list = []
 
     search_url = "https://substationii.com/locations/"
     stores_req = session.get(search_url, headers=headers)
     stores_sel = lxml.html.fromstring(stores_req.text)
-    stores = stores_sel.xpath('//div[@class="col-sm-6 single"]/b/a/@href')
+    stores = stores_sel.xpath(
+        '//div[@class="col-md-4 text-center menucont mb15"]/a/@href'
+    )
 
     latlng_dict = {}
     latlng_list = stores_req.text.split("var myLatLng")
@@ -113,17 +114,16 @@ def fetch_data():
 
         locator_domain = website
         location_name = "".join(
-            store_sel.xpath('//div[@class="col-sm-5"]/h7/text()')
+            store_sel.xpath('//div[@class="col-md-12 mb20"]/h9/text()')
         ).strip()
         if location_name == "":
             location_name = "<MISSING>"
 
         street_address = "".join(
-            store_sel.xpath('//div[@class="col-sm-5"]/text()[2]')
+            store_sel.xpath('//div[@class="col-md-12 mt25"]/center/text()[1]')
         ).strip()
-
         city_state_zip = "".join(
-            store_sel.xpath('//div[@class="col-sm-5"]/text()[3]')
+            store_sel.xpath('//div[@class="col-md-12 mt25"]/center/text()[2]')
         ).strip()
         city = city_state_zip.split(",")[0].strip()
         state = city_state_zip.split(",")[1].strip().split(" ")[0].strip()
@@ -145,18 +145,12 @@ def fetch_data():
         if zip == "" or zip is None:
             zip = "<MISSING>"
 
-        store_number = page_url.split("?location=")[1].strip()
-        phone = (
-            "".join(
-                store_sel.xpath('//div[@class="col-sm-5"]/b[@class="element"]/text()')
+        store_number = page_url.split("?location=")[1].strip().split("#")[0].strip()
+        phone = "".join(
+            store_sel.xpath(
+                '//div[@class="col-md-12 mt25"]/center/b[@class="element"]/text()'
             )
-            .strip()
-            .replace("-", ".")
-            .strip()
-            .replace("(", "")
-            .replace(")", "")
-            .strip()
-        )
+        ).strip()
 
         location_type = "<MISSING>"
 
@@ -173,7 +167,17 @@ def fetch_data():
 
         hours_of_operation = "<MISSING>"
 
-        hours = "\n".join(store_sel.xpath('//div[@class="col-sm-5"]//text()')).strip()
+        hours = "\n".join(
+            list(
+                filter(
+                    str,
+                    [
+                        x.strip()
+                        for x in store_sel.xpath('//div[@class="col-md-8"]//text()')
+                    ],
+                )
+            )
+        )
         try:
             hours = hours.split("Hours:")[1].strip().split("Owner")[0].strip()
 
@@ -199,6 +203,8 @@ def fetch_data():
             .decode("utf-8")
             .replace("?", "")
             .strip()
+            .replace("; \n;", ";")
+            .strip()
         )
 
         if hours_of_operation == "":
@@ -223,9 +229,7 @@ def fetch_data():
             longitude,
             hours_of_operation,
         ]
-        loc_list.append(curr_list)
-
-    return loc_list
+        yield curr_list
 
 
 def scrape():

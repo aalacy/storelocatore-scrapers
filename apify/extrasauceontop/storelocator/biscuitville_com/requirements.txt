@@ -1,0 +1,4 @@
+pandas==1.1.5
+sgselenium==0.0.15
+sgrequests==0.1.8
+sgzip==0.3.1

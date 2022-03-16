@@ -60,7 +60,6 @@ def write_output(data):
 
 def fetch_data():
     # Your scraper here
-    loc_list = []
 
     search_url = "https://oasisstopngo.com/locations/"
     stores_req = session.get(search_url, headers=headers)
@@ -119,6 +118,7 @@ def fetch_data():
         city = ""
         state = ""
         zip = ""
+        phone = ""
         if len(add_list) > 1:
             street_address = add_list[1].strip()
             if "," in street_address:
@@ -178,7 +178,7 @@ def fetch_data():
         if country_code == "" or country_code is None:
             country_code = "<MISSING>"
 
-        if phone == "" or phone is None:
+        if phone == "" or phone is None or phone == "(208)":
             phone = "<MISSING>"
 
         if latitude == "" or latitude is None:
@@ -186,7 +186,7 @@ def fetch_data():
         if longitude == "" or longitude is None:
             longitude = "<MISSING>"
 
-        if hours_of_operation == "":
+        if hours_of_operation == "" or hours_of_operation == ".":
             hours_of_operation = "<MISSING>"
 
         if location_type == "":
@@ -209,9 +209,7 @@ def fetch_data():
                 longitude,
                 hours_of_operation,
             ]
-            loc_list.append(curr_list)
-        # break
-    return loc_list
+            yield curr_list
 
 
 def scrape():

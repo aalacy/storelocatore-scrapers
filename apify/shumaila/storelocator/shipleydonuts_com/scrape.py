@@ -1,6 +1,9 @@
-from bs4 import BeautifulSoup
-import csv
+import json
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
 headers = {
@@ -8,166 +11,64 @@ headers = {
 }
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
 def fetch_data():
-    p = 0
-    data = []
-    streetlist = []
-    states = [
-        "AL",
-        "AK",
-        "AZ",
-        "AR",
-        "CA",
-        "CO",
-        "CT",
-        "DC",
-        "DE",
-        "FL",
-        "GA",
-        "HI",
-        "ID",
-        "IL",
-        "IN",
-        "IA",
-        "KS",
-        "KY",
-        "LA",
-        "ME",
-        "MD",
-        "MA",
-        "MI",
-        "MN",
-        "MS",
-        "MO",
-        "MT",
-        "NE",
-        "NV",
-        "NH",
-        "NJ",
-        "NM",
-        "NY",
-        "NC",
-        "ND",
-        "OH",
-        "OK",
-        "OR",
-        "PA",
-        "RI",
-        "SC",
-        "SD",
-        "TN",
-        "TX",
-        "UT",
-        "VT",
-        "VA",
-        "WA",
-        "WV",
-        "WI",
-        "WY",
-    ]
-    for statenow in states:
-        gurl = (
-            "https://maps.googleapis.com/maps/api/geocode/json?address="
-            + statenow
-            + "&key=AIzaSyCT4uvUVAv4U6-Lgeg94CIuxUg-iM2aA4s&components=country%3AUS"
-        )
-        r = session.get(gurl, headers=headers, verify=False).json()
-        if r["status"] == "REQUEST_DENIED":
-            pass
-        else:
-            coord = r["results"][0]["geometry"]["location"]
-            latnow = coord["lat"]
-            lngnow = coord["lng"]
-        url = (
-            "https://shipleydonuts.com/wp-admin/admin-ajax.php?action=store_search&lat="
-            + str(latnow)
-            + "&lng="
-            + str(lngnow)
-            + "&max_results=100&search_radius=500"
-        )
-        loclist = session.get(url, headers=headers, verify=False).json()
-        if len(loclist) == 0:
-            continue
-        for loc in loclist:
-            title = loc["store"]
-            street = loc["address"] + " " + loc["address2"]
-            street = street.strip()
-            city = loc["city"]
-            state = loc["state"]
-            pcode = loc["zip"]
-            phone = loc["phone"]
-            lat = loc["lat"]
-            longt = loc["lng"]
-            link = loc["permalink"]
-            try:
-                hours = (
-                    BeautifulSoup(loc["hours"], "html.parser")
-                    .text.replace("day", "day ")
-                    .replace("PM", "PM ")
-                )
-            except:
-                hours = "<MISSING>"
-            store = str(loc["id"])
-            if store in streetlist:
-                continue
-            streetlist.append(store)
 
-            data.append(
-                [
-                    "https://shipleydonuts.com/",
-                    link,
-                    title,
-                    street,
-                    city,
-                    state,
-                    pcode,
-                    "US",
-                    store,
-                    phone,
-                    "<MISSING>",
-                    lat,
-                    longt,
-                    hours,
-                ]
-            )
-            p += 1
-    return data
+    daylist = ["mon", "tues", "wednes", "thurs", "fri", "satur", "sun"]
+    url = "https://shipleydonuts.com/locations/"
+    r = session.get(url, headers=headers)
+    loclist = r.text.split("locations_meta = ", 1)[1].split("];", 1)[0]
+    loclist = loclist + "]"
+    loclist = json.loads(loclist)
+    for loc in loclist:
+
+        store = loc["address"]["store_number"]
+        lat = loc["map_pin"]["lat"]
+        longt = loc["map_pin"]["lng"]
+        state = loc["map_pin"]["state_short"]
+        try:
+            city = loc["map_pin"]["city"]
+        except:
+            city = "<MISSING>"
+        pcode = loc["map_pin"]["post_code"]
+        store = loc["address"]["store_number"]
+        street = (
+            loc["address"]["address_line_1"]
+            + " "
+            + str(loc["address"]["address_line_2"])
+        )
+        phone = loc["branch_information"]["phone_number"]
+        link = loc["single_page"]
+        hourlist = loc["opening_hours"]
+        hours = ""
+        for day in daylist:
+            hours = hours + day + "day " + hourlist[day + "day_opening_hours"] + " "
+        yield SgRecord(
+            locator_domain="https://shipleydonuts.com",
+            page_url=link,
+            location_name="Shipley Do-Nuts",
+            street_address=street.strip(),
+            city=city.strip(),
+            state=state.strip(),
+            zip_postal=pcode.strip(),
+            country_code="US",
+            store_number=str(store),
+            phone=phone.strip(),
+            location_type=SgRecord.MISSING,
+            latitude=str(lat),
+            longitude=str(longt),
+            hours_of_operation=hours,
+        )
 
 
 def scrape():
 
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()

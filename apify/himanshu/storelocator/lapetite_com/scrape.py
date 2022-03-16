@@ -1,135 +1,158 @@
 import csv
+from bs4 import BeautifulSoup as bs
 from sgrequests import SgRequests
-from bs4 import BeautifulSoup
+from sglogging import sglog
 import re
-import json
-import sgzip
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('lapetite_com')
 
 
+DOMAIN = "lapetite.com"
+BASE_URL = "https://www.lapetite.com"
+LOCATION_URL = "https://www.lapetite.com/child-care-centers/find-a-school/"
+HEADERS = {
+    "Accept": "application/json, text/plain, */*",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
+}
+log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
 
 session = SgRequests()
 
-def write_output(data):
-    with open('data.csv', mode='w',encoding="utf-8") as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
+def write_output(data):
+    log.info("Write Output of " + DOMAIN)
+    with open("data.csv", mode="w") as output_file:
+        writer = csv.writer(
+            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+        )
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
+        writer.writerow(
+            [
+                "locator_domain",
+                "page_url",
+                "location_name",
+                "street_address",
+                "city",
+                "state",
+                "zip",
+                "country_code",
+                "store_number",
+                "phone",
+                "location_type",
+                "latitude",
+                "longitude",
+                "hours_of_operation",
+            ]
+        )
         # Body
         for row in data:
             writer.writerow(row)
 
-def fetch_data():
-    MAX_RESULTS = 100
-    MAX_DISTANCE = 100
-    search = sgzip.ClosestNSearch() # TODO: OLD VERSION [sgzip==0.0.55]. UPGRADE IF WORKING ON SCRAPER!
-    search.initialize(country_codes=['US'])
-    zip_code = search.next_zip()
-    adressess = []
 
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
-        "X-Requested-With": "XMLHttpRequest",
-        "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
-    }
-    base_url = "https://www.lapetite.com"
-    while zip_code:
-        result_coords =[]
-        # logger.info("zip_code === "+zip_code)
-        # logger.info("remaining zipcodes: " + str(len(search.zipcodes)))
-        try:
-            r = session.get("https://www.lapetite.com/child-care-centers/find-a-school/search-results/?location="+ str(zip_code) +"&range=50",headers=headers,timeout=10)
-            soup = BeautifulSoup(r.text,"lxml")
-        except:
-            pass
+def pull_content(url):
+    log.info("Pull content => " + url)
+    soup = bs(session.get(url, headers=HEADERS).content, "html.parser")
+    return soup
 
 
-        for location in soup.find_all("div",{'class':"locationCard"}):
-            name = location.find("a",{'class':"schoolNameLink"}).text
-            address = location.find("span",{'class':"street"}).text
-            address2 = location.find("span",{'class':"cityState"}).text
-            store_id = location["data-school-id"]
-           
-            # if location.find("span",{'class':"tel"}) != None:
-            #     temp_phone = location.find("span",{'class':"tel"}).text.replace('.','')
-            #     phone = "("+ temp_phone[:3] +")"+ temp_phone[3:6] + "-" + temp_phone[6:]
-            # elif location.find("p",{'class':"phone"}) != None:
-            #     temp_phone = list(location.find("p",{'class':"phone"}).stripped_strings)[-1].replace('.','')
-            #     phone = "("+ temp_phone[:3] +")"+ temp_phone[3:6] + "-" + temp_phone[6:]
-            # else:
-            #     phone = "<MISSING>"
-            hours = " ".join(list(location.find("p",{'class':"hours"}).stripped_strings))
+def handle_missing(field):
+    if field is None or (isinstance(field, str) and len(field.strip()) == 0):
+        return "<MISSING>"
+    return field
 
-            if name.split(" ")[0] == "Childtime":
-                page_url = location.find("a",{'class':"schoolNameLink"})['href']
-                location_type = "Childtime"
-            elif name.split(" ")[0] == "Tutor":
-                page_url = location.find("a",{'class':"schoolNameLink"})['href']
-                location_type = "Tutor Time"
-            elif name.split(" ")[0] == "Everbrook":
-                page_url = location.find("a",{'class':"schoolNameLink"})['href']
-                location_type = "Everbrook Academy"
-            elif name.split(" ")[-1] == "Montessori":
-                page_url = location.find("a",{'class':"schoolNameLink"})['href']
-                location_type = "Montessori"
-            elif name.split(" ")[1] == "Montessori":
-                page_url = location.find("a",{'class':"schoolNameLink"})['href']
-                location_type = "Montessori"
-            elif "The Children's Courtyard" in name:
-                page_url = location.find("a",{'class':"schoolNameLink"})['href']
-                location_type = "The Children's Courtyard"
-            else:
-                page_url = "https://www.lapetite.com" + location.find("a",{'class':"schoolNameLink"})['href']
-                location_type = "lapetite"
-                
-            if location_type == "lapetite":
-                phone = "(877)861-5078"
-            else:
-                page_r = session.get(page_url,headers=headers)
-                page_soup = BeautifulSoup(page_r.text,"lxml")
-                if page_soup.find("div",{"class":"school-info-row vcard"}) is not None:
-                    temp_phone = page_soup.find("div",{"class":"school-info-row vcard"}).find("span",{"class":"tel show-for-large"}).text.replace('.','')
-                    phone = "("+ temp_phone[:3] +")"+ temp_phone[3:6] + "-" + temp_phone[6:]
+
+def parse_hours(table):
+    data = table.find("tbody")
+    days = data.find_all("td", {"class": "c-location-hours-details-row-day"})
+    hours = data.find_all("td", {"class": "c-location-hours-details-row-intervals"})
+    hoo = []
+    for i in range(len(days)):
+        hours_formated = "{}: {}".format(days[i].text, hours[i].text)
+        hoo.append(hours_formated)
+    return ", ".join(hoo)
+
+
+def fetch_store_urls():
+    log.info("Fetching store URL")
+    store_urls = []
+    soup = pull_content(LOCATION_URL)
+    state_links = soup.find("map", {"name": "USMap"}).find_all("area")
+    for row in state_links:
+        data = pull_content(BASE_URL + row["href"])
+        content = data.find("section", {"class": "page-content fys_results"}).find_all(
+            "div", {"class": "locationCard", "data-school-id": True}
+        )
+        for row in content:
+            links = row.find_all("a", {"class": "schoolNameLink"})
+            for link in links:
+                if "https" in link["href"]:
+                    store_urls.append(link["href"])
                 else:
-                    pass
+                    store_urls.append(BASE_URL + link["href"])
+    log.info("Found {} URL ".format(len(store_urls)))
+    return store_urls
 
-            store = []
-            store.append(base_url)
-            store.append(name)
-            store.append(address)
-            store.append(address2.split(",")[0])
-            store.append(address2.split(",")[1].split(" ")[1])
-            store.append(address2.split(",")[1].split(" ")[-1])
-            store.append("US")
-            store.append(store_id)
-            store.append(phone if phone != "" else "<MISSING>")
-            store.append(location_type)
-            store.append(location.find("span",{"class":"addr"})["data-latitude"])
-            store.append(location.find("span",{"class":"addr"})["data-longitude"])
-            store.append(hours)
-            store.append(page_url)
-            if store[2] in adressess:
-                continue
-            adressess.append(store[2])
-            store = [str(x).strip() if x else "<MISSING>" for x in store]
-            yield store
-            
-        if len(location) < MAX_RESULTS:
-         
-            search.max_distance_update(MAX_DISTANCE)
-        elif len(location) == MAX_RESULTS:
-        
-            search.max_count_update(result_coords)
-        else:
-            raise Exception("expected at most " + str(MAX_RESULTS) + " results")
-        
-        zip_code = search.next_zip()
+
+def fetch_data():
+    log.info("Fetching store_locator data")
+    page_urls = fetch_store_urls()
+    locations = []
+    for page_url in page_urls:
+        if page_url == "https://www.childtime.com/1511":
+            continue
+        soup = pull_content(page_url)
+        locator_domain = DOMAIN
+        location_name = handle_missing(
+            soup.find("div", {"class": "local-school-header hero"})
+            .find("h1")
+            .text.strip()
+        )
+        address = soup.find("span", {"class": "addr"})
+        street_address = address.find("span", {"class": "street"}).text.strip()
+        cityState = address.find("span", {"class": "cityState"}).text.strip().split(",")
+        city = cityState[0].strip()
+        state = re.sub(r"\d+", "", cityState[1].strip()).strip()
+        zip_code = re.sub(r"\D+", "", cityState[1].strip()).strip()
+        country_code = "US"
+        store_number = soup.find(
+            "div", {"class": "school-info", "data-school-id": True}
+        )["data-school-id"]
+        phone = soup.find("span", {"class": "tel show-for-large"}).text.strip()
+        hours_of_operation = (
+            soup.find("svg", {"class": "openHours"})
+            .parent.text.strip()
+            .replace("Open:", "")
+            .strip()
+        )
+        location_type = "La Petite Academy"
+        latitude = address["data-latitude"]
+        longitude = address["data-longitude"]
+        log.info("Append {} => {}".format(location_name, street_address))
+        locations.append(
+            [
+                locator_domain,
+                page_url,
+                location_name,
+                street_address,
+                city,
+                state,
+                zip_code,
+                country_code,
+                store_number,
+                phone,
+                location_type,
+                latitude,
+                longitude,
+                hours_of_operation,
+            ]
+        )
+    return locations
+
 
 def scrape():
+    log.info("Start {} Scraper".format(DOMAIN))
     data = fetch_data()
+    log.info("Found {} locations".format(len(data)))
     write_output(data)
+    log.info("Finish processed " + str(len(data)))
+
 
 scrape()

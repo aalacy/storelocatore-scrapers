@@ -1,5 +1,5 @@
 import csv
-
+from lxml import html
 from concurrent import futures
 from sgrequests import SgRequests
 
@@ -39,7 +39,23 @@ def generate_links():
     js = r.json()["directoryHierarchy"]
 
     urls = list(get_urls(js))
-    return urls
+    urrls = []
+    for i in urls:
+        if "virtual" in i:
+            continue
+        urrls.append(i)
+    urrls.append("https://locations.earlofsandwichusa.com/us/ca/valley-center.json")
+    urrls.append("https://locations.earlofsandwichusa.com/us/fl/lake-worth.json")
+    urrls.append("https://locations.earlofsandwichusa.com/us/fl/miami.json")
+    urrls.append("https://locations.earlofsandwichusa.com/us/fl/okeechobee.json")
+    urrls.append("https://locations.earlofsandwichusa.com/us/fl/port-st--lucie.json")
+    urrls.append("https://locations.earlofsandwichusa.com/us/nj/newark.json")
+    urrls.append("https://locations.earlofsandwichusa.com/us/nc/cherokee.json")
+    urrls.append("https://locations.earlofsandwichusa.com/us/nc/murphy.json")
+    urrls.append("https://locations.earlofsandwichusa.com/us/pa/philadelphia.json")
+    urrls.append("https://locations.earlofsandwichusa.com/us/md/northeast.json")
+
+    return urrls
 
 
 def get_urls(states):
@@ -56,13 +72,37 @@ def get_data(url):
     r = session.get(url)
     j = r.json()
 
-    locator_domain = "https://earlofsandwichusa.com"
+    if "directoryHierarchy" in j:
+        j = r.json()["keys"][0]["loc"]
+    locator_domain = "https://earlofsandwichusa.com/"
     page_url = url.replace(".json", "")
-    location_name = j.get("name") or "<MISSING>"
+    if page_url.count("/") == 5:
+        session = SgRequests()
+        r = session.get(page_url)
+        tree = html.fromstring(r.text)
+        page_url = "".join(tree.xpath('//a[text()="Visit Location"]/@href'))
 
     street_address = (
         f"{j.get('address1')} {j.get('address2') or ''}".strip() or "<MISSING>"
     )
+    if street_address.find("Boca Town Center Mall") != -1:
+        street_address = street_address.replace("Boca Town Center Mall", "").strip()
+    if street_address.find("Boston Common") != -1:
+        street_address = street_address.replace("Boston Common", "").strip()
+    if street_address.find("International Mall Food Court") != -1:
+        street_address = street_address.replace(
+            "International Mall Food Court", ""
+        ).strip()
+    if street_address.find("Terminal D, Philadelphia International Airport") != -1:
+        street_address = street_address.replace(
+            "Terminal D, Philadelphia International Airport", ""
+        ).strip()
+    if street_address.find("Tom Bradley Terminal") != -1:
+        street_address = street_address.replace("Tom Bradley Terminal", "").strip()
+    if street_address.find("International Mall") != -1:
+        street_address = street_address.replace("International Mall", "").strip()
+    if street_address.find("Mile Post 97") != -1:
+        street_address = street_address.replace("Mile Post 97", "").strip()
     city = j.get("city") or "<MISSING>"
     state = j.get("state") or "<MISSING>"
     postal = j.get("postalCode") or "<MISSING>"
@@ -75,35 +115,48 @@ def get_data(url):
     latitude = j.get("latitude") or "<MISSING>"
     longitude = j.get("longitude") or "<MISSING>"
     location_type = "<MISSING>"
-    days = j.get("hours", {}).get("days") or []
 
-    _tmp = []
-    for d in days:
-        day = d.get("day")[:3].capitalize()
-        try:
-            interval = d.get("intervals")[0]
-            start = str(interval.get("start"))
-            end = str(interval.get("end"))
+    session = SgRequests()
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+        "Accept-Language": "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3",
+        "Connection": "keep-alive",
+        "Upgrade-Insecure-Requests": "1",
+        "Cache-Control": "max-age=0",
+        "TE": "Trailers",
+    }
+    r = session.get(page_url, headers=headers)
+    tree = html.fromstring(r.text)
+    location_name = (
+        "".join(tree.xpath('//h1//span[@class="LocationName-geo"]/text()'))
+        or "<MISSING>"
+    )
+    if location_name == "<MISSING>":
+        location_name = "".join(tree.xpath("//h1/text()")).replace("\n", "").strip()
 
-            # normalize 9:30 -> 09:30
-            if len(start) == 3:
-                start = f"0{start}"
-
-            if len(end) == 3:
-                end = f"0{end}"
-
-            line = f"{day}  {start[:2]}:{start[2:]} - {end[:2]}:{end[2:]}"
-        except IndexError:
-            line = f"{day}  Closed"
-
-        _tmp.append(line)
-
-    hours_of_operation = ";".join(_tmp) or "<MISSING>"
-    if (
-        hours_of_operation.count("Closed") == 7
-        or location_name.lower().find("closed") != -1
-    ):
+    hours_of_operation = (
+        " ".join(
+            tree.xpath(
+                '//h2[@class="c-location-hours-title"]/following-sibling::div[1]/table//tr//td//text()'
+            )
+        )
+        .replace("\n", "")
+        .replace("  ", " ")
+        .strip()
+        or "<MISSING>"
+    )
+    if hours_of_operation == "<MISSING>":
+        hours_of_operation = (
+            " ".join(tree.xpath('//div[@id="store_hours"]/p//text()'))
+            .replace("\n", "")
+            .strip()
+        )
+    if hours_of_operation.count("Closed") == 7:
         hours_of_operation = "Closed"
+    hours_of_operation = hours_of_operation.replace(
+        "Closed Closed Closed Closed", "Mon Closed Tue Closed Wed Closed Thu Closed"
+    ).replace("Closed Closed Closed", "Mon Closed Tue Closed Wed Closed")
 
     row = [
         locator_domain,

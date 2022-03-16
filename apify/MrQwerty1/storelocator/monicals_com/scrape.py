@@ -74,13 +74,14 @@ def get_data(page_url):
     latitude = "".join(tree.xpath("//input[@id='location-lat']/@value")) or "<MISSING>"
     longitude = "".join(tree.xpath("//input[@id='location-lng']/@value")) or "<MISSING>"
     location_type = "<MISSING>"
+
     hours = tree.xpath(
         "//div[./h4[contains(text(), 'Location Hours')]]/p[.//*[contains(text(), '–')] or contains(text(), '–')]"
     )
     if hours:
         hours = hours[-1]
     else:
-        hours = "<html></html>"
+        hours = html.fromstring("<html>Closed</html>")
     hours_of_operation = (
         "".join(hours.xpath(".//text()"))
         .replace("\n", ";")

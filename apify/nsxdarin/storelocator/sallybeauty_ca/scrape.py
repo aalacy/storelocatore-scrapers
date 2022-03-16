@@ -39,6 +39,7 @@ def write_output(data):
 
 def fetch_data():
     ids = []
+    alllocs = []
     canadaurls = [
         "https://www.sallybeauty.ca/on/demandware.store/Sites-SC-Site/en_CA/Stores-FindStores?showMap=true&radius=300&radius=300&lat=49.895136&long=-97.13837439999999&searchKey=Winnipeg%2C%20ON",
         "https://www.sallybeauty.ca/on/demandware.store/Sites-SC-Site/en_CA/Stores-FindStores?showMap=true&radius=300&radius=300&lat=49.2827291&long=-123.1207375&searchKey=Vancouver%2C%20BC",
@@ -51,6 +52,8 @@ def fetch_data():
         "https://www.sallybeauty.ca/on/demandware.store/Sites-SC-Site/en_CA/Stores-FindStores?showMap=true&radius=300&radius=300&lat=51.0419046&long=-104.8173439&searchKey=Regina%2C%20SK",
         "https://www.sallybeauty.ca/on/demandware.store/Sites-SC-Site/en_CA/Stores-FindStores?showMap=true&radius=300&radius=300&lat=48.4082055&long=-89.1815437&searchKey=Thunder%20Bay%2C%20ON",
         "https://www.sallybeauty.ca/on/demandware.store/Sites-SC-Site/en_CA/Stores-FindStores?showMap=true&radius=300&radius=300&lat=48.4256369&long=-71.075985&searchKey=Saguenay%2C%20QC",
+        "https://www.sallybeauty.ca/on/demandware.store/Sites-SC-Site/en_CA/Stores-FindStores?showMap=true&radius=300&radius=300&lat=46.4256369&long=-81.075985&searchKey=Saguenay%2C%20QC",
+        "https://www.sallybeauty.ca/on/demandware.store/Sites-SC-Site/en_CA/Stores-FindStores?showMap=true&radius=300&radius=300&lat=52.4256369&long=-81.075985&searchKey=Saguenay%2C%20QC",
     ]
     for curl in canadaurls:
         url = curl
@@ -134,22 +137,25 @@ def fetch_data():
                     logger.info(("Pulling Store ID #%s..." % store))
                     if hours == "":
                         hours = "<MISSING>"
-                    yield [
-                        website,
-                        loc,
-                        name,
-                        add,
-                        city,
-                        state,
-                        zc,
-                        country,
-                        store,
-                        phone,
-                        typ,
-                        lat,
-                        lng,
-                        hours,
-                    ]
+                    store = store.replace("store_", "")
+                    if loc not in alllocs:
+                        alllocs.append(loc)
+                        yield [
+                            website,
+                            loc,
+                            name,
+                            add,
+                            city,
+                            state,
+                            zc,
+                            country,
+                            store,
+                            phone,
+                            typ,
+                            lat,
+                            lng,
+                            hours,
+                        ]
 
 
 def scrape():

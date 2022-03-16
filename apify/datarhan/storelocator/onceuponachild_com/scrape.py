@@ -1,19 +1,37 @@
 import csv
 import json
-import usaddress
-from lxml import etree
+from time import sleep
+from w3lib.url import add_or_replace_parameter
 
 from sgrequests import SgRequests
-
-DOMAIN = 'onceuponachild.com'
+from sgselenium import SgFirefox
 
 
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+    with open("data.csv", mode="w") as output_file:
+        writer = csv.writer(
+            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+        )
 
         # Header
-        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(
+            [
+                "locator_domain",
+                "page_url",
+                "location_name",
+                "street_address",
+                "city",
+                "state",
+                "zip",
+                "country_code",
+                "store_number",
+                "phone",
+                "location_type",
+                "latitude",
+                "longitude",
+                "hours_of_operation",
+            ]
+        )
         # Body
         for row in data:
             writer.writerow(row)
@@ -24,73 +42,92 @@ def fetch_data():
     session = SgRequests()
 
     items = []
-    gathered_items = []
-    
-    state_response = session.get('https://wmrk-api.treefort.com/corp/ouac/locations/search/?maxDistance=500000')
-    state_data = json.loads(state_response.text)
-    
-    for store_data_countries in state_data[0]['countries']:
-        for store_data_regions in store_data_countries['regions']:
-            for store_data in store_data_regions['stores']:
-                if store_data['statusText'] == 'Coming Soon':
-                    continue
-                store_url = 'https://onceuponachild.com/locations?query={}'.format(store_data['region'])
-                location_name = store_data['storeName']
-                street_address = store_data['addressLine1']
-                if street_address:
-                    if store_data['addressLine2']:
-                        street_address += ' ' + store_data['addressLine2']
-                if not street_address:
-                    street_address = store_data['addressLine2']
-                street_address = street_address if street_address else '<MISSING>'
-                city = store_data['city']
-                city = city if city else '<MISSING>'
-                state = store_data['region']
-                state = state if state else '<MISSING>'
-                zip_code = store_data['postalCode']
-                zip_code = zip_code if zip_code else '<MISSING>'
-                if zip_code.startswith('CA'):
-                    zip_code = zip_code[2:]
-                country_code = store_data['countryCode']
-                country_code = country_code if country_code else '<MISSING>'
-                store_number = store_data['storeNumber']
-                phone = store_data['phoneNumber']
-                phone = phone if phone else '<MISSING>'
-                location_type = '<MISSING>'
-                latitude = store_data['latitude']
-                latitude = latitude if latitude else '<MISSING>'
-                longitude = store_data['longitude']
-                longitude = longitude if longitude else '<MISSING>'
-                hours_of_operation = store_data['storeHours']
-                if hours_of_operation:
-                    hours_of_operation_list = []
-                    for elem in hours_of_operation:
-                        hours_of_operation_list.append('{}: {}-{}'.format(elem['day'], elem['open'], elem['close']))
-                    hours_of_operation = ', '.join(hours_of_operation_list)
-                hours_of_operation = hours_of_operation if hours_of_operation else '<MISSING>'
-                
-                item = [
-                    DOMAIN,
-                    store_url,
-                    location_name,
-                    street_address,
-                    city,
-                    state,
-                    zip_code,
-                    country_code,
-                    store_number,
-                    phone,
-                    location_type,
-                    latitude,
-                    longitude,
-                    hours_of_operation
-                ]
+    scraped_items = []
 
-                check = location_name.strip().lower() + ' ' + street_address.strip().lower()
-                if check not in gathered_items:
-                    gathered_items.append(check)
-                    items.append(item)
-        
+    DOMAIN = "onceuponachild.com"
+    start_url = "https://www.onceuponachild.com/locations?country=US&state=AL"
+
+    with SgFirefox() as driver:
+        driver.get(start_url)
+        sleep(10)
+        cookies = driver.get_cookies()
+
+    for cookie in cookies:
+        if cookie["name"] == "ouac_.token":
+            token = cookie["value"]
+
+    headers = {
+        "Accept": "application/json, text/plain, */*",
+        "Authorization": f"Bearer {token}",
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.85 Safari/537.36",
+    }
+
+    url = "https://api.ordercloud.io/v1/suppliers?page=1&pageSize=100&Active=true&xp.isCoop=false"
+    data = session.get(url, headers=headers).json()
+    all_locations = data["Items"]
+    total_pages = data["Meta"]["TotalPages"] + 1
+    for page in range(2, total_pages):
+        data = session.get(
+            add_or_replace_parameter(url, "page", str(page)), headers=headers
+        ).json()
+        all_locations += data["Items"]
+
+    for poi in all_locations:
+        store_url = "https://www.onceuponachild.com/locations/" + poi["xp"]["slug"]
+        loc_response = session.get(
+            f'https://api.ordercloud.io/v1/suppliers/{poi["ID"]}/addresses/{poi["ID"]}',
+            headers=headers,
+        )
+        data = json.loads(loc_response.text)
+
+        location_name = poi["Name"]
+        location_name = location_name if location_name else "<MISSING>"
+        street_address = data["Street1"]
+        if data["Street2"]:
+            street_address += " " + data["Street2"]
+        street_address = street_address if street_address else "<MISSING>"
+        city = poi["xp"]["city"]
+        city = city if city else "<MISSING>"
+        state = poi["xp"]["state"]
+        state = state if state else "<MISSING>"
+        zip_code = poi["xp"]["zip"]
+        zip_code = zip_code if zip_code else "<MISSING>"
+        country_code = poi["xp"]["country"]
+        country_code = country_code if country_code else "<MISSING>"
+        store_number = poi["ID"]
+        phone = data["Phone"]
+        phone = phone if phone else "<MISSING>"
+        location_type = "<MISSING>"
+        latitude = poi["xp"]["latitude"]
+        longitude = poi["xp"]["longitude"]
+        hoo = []
+        for day, hours in data["xp"]["hours"].items():
+            hoo.append(f"{day} {hours}")
+        hoo = [e.strip() for e in hoo if e.strip()]
+        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
+
+        item = [
+            DOMAIN,
+            store_url,
+            location_name,
+            street_address,
+            city,
+            state,
+            zip_code,
+            country_code,
+            store_number,
+            phone,
+            location_type,
+            latitude,
+            longitude,
+            hours_of_operation,
+        ]
+
+        check = location_name.strip().lower() + " " + street_address.strip().lower()
+        if check not in scraped_items:
+            scraped_items.append(check)
+            items.append(item)
+
     return items
 
 

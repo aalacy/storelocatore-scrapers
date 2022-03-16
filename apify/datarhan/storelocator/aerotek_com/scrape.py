@@ -1,6 +1,7 @@
 import csv
 import json
 from lxml import etree
+from urllib.parse import urljoin
 
 from sgrequests import SgRequests
 
@@ -44,8 +45,9 @@ def fetch_data():
 
     DOMAIN = "aerotek.com"
     start_urls = [
-        "https://www.aerotek.com/en-ca/locations/canada",
+        "https://www.aerotek.com/en/locations/canada",
         "https://aerotek.com/en/locations/united-states",
+        "https://www.aerotek.com/en-gb/locations/emea/united-kingdom",
     ]
 
     for url in start_urls:
@@ -53,12 +55,11 @@ def fetch_data():
         dom = etree.HTML(response.text)
         country_urls = dom.xpath('//div[@id="location-title"]/a/@href')
         for poi_url in country_urls:
-            store_url = "https://aerotek.com" + poi_url
-            strore_response = session.get(store_url)
-            store_dom = etree.HTML(strore_response.text)
+            store_url = urljoin(url, poi_url)
+            store_response = session.get(store_url)
+            store_dom = etree.HTML(store_response.text)
 
             location_name = store_dom.xpath('//div[@id="location-title"]/a/text()')[0]
-            location_name = location_name if location_name else "<MISSING>"
             street_address = store_dom.xpath(
                 '//span[@class="acs-location-address"]/text()'
             )[0]
@@ -68,10 +69,16 @@ def fetch_data():
             if street_address_2:
                 street_address += ", " + street_address_2
             street_address = street_address if street_address else "<MISSING>"
-            city = store_dom.xpath('//span[@class="acs-city"]/text()')[0].split(",")[0]
+            city = (
+                store_dom.xpath('//span[@class="acs-city"]/text()')[0]
+                .split(",")[0]
+                .strip()
+            )
             city = city if city else "<MISSING>"
-            country_code = store_dom.xpath('//span[@class="acs-country"]/text()')[0]
-            country_code = country_code if country_code else "<MISSING>"
+            country_code = store_dom.xpath('//span[@class="acs-country"]/text()')
+            country_code = country_code[0] if country_code else "<MISSING>"
+            if country_code == "<MISSING>" and "united-kingdom" in url:
+                country_code = "United Kingdom"
             if country_code == "Canada":
                 state = (
                     store_dom.xpath('//span[@class="acs-city"]/text()')[0]
@@ -87,6 +94,13 @@ def fetch_data():
                     .split()[-2:]
                 )
                 zip_code = " ".join(zip_code) if zip_code else "<MISSING>"
+            elif country_code == "United Kingdom":
+                state = "<MISSING>"
+                zip_code = (
+                    store_dom.xpath('//span[@class="acs-city"]/text()')[0]
+                    .split(",")[-1]
+                    .strip()
+                )
             else:
                 state = (
                     store_dom.xpath('//span[@class="acs-city"]/text()')[0]
@@ -111,10 +125,9 @@ def fetch_data():
                 zip_code = " ".join(zip_code) if zip_code else "<MISSING>"
             store_number = ""
             store_number = store_number if store_number else "<MISSING>"
-            phone = store_dom.xpath('//span[@class="acs-location-phone"]/a/text()')[0]
-            phone = phone if phone else "<MISSING>"
-            location_type = ""
-            location_type = location_type if location_type else "<MISSING>"
+            phone = store_dom.xpath('//span[@class="acs-location-phone"]/a/text()')
+            phone = phone[0] if phone else "<MISSING>"
+            location_type = "<MISSING>"
 
             store_data = store_dom.xpath(
                 '//*[contains(@data-ux-args, "Lat")]/@data-ux-args'
@@ -130,8 +143,6 @@ def fetch_data():
                 longitude = store_dom.xpath(
                     '//div[@id="location-title"]/@data-mappoint'
                 )[0].split(",")[1]
-            latitude = latitude if latitude else "<MISSING>"
-            longitude = longitude if longitude else "<MISSING>"
             hours_of_operation = store_dom.xpath(
                 '//div[@class="score-content-spot aerotek-location-hours"]//text()'
             )
@@ -141,6 +152,13 @@ def fetch_data():
             hours_of_operation = (
                 ", ".join(hours_of_operation).replace("Office Hours:,", "").strip()
             )
+            if not hours_of_operation:
+                hours_of_operation = store_dom.xpath(
+                    '//p[contains(text(), "Office Hours:")]/following-sibling::p/text()'
+                )
+                hours_of_operation = (
+                    " ".join(hours_of_operation) if hours_of_operation else ""
+                )
             hours_of_operation = (
                 hours_of_operation if hours_of_operation else "<MISSING>"
             )

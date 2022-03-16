@@ -1,3 +1,7 @@
-sgrequests
-sglogging 
-bs4
+lxml==4.6.2
+sgrequests==0.1.8
+sgscrape==0.0.23
+sglogging==0.0.4
+sgvalidator==0.0.71
+sgselenium==0.1.1
+beautifulsoup4==4.9.3

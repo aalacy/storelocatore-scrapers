@@ -38,81 +38,93 @@ def write_output(data):
 
 
 def fetch_data():
-    url = "https://phyndapi.bswapi.com/V2/Places/GetLocations?&location=37.912491449640854,-99.5631319&distance=2500&LineOfBusiness=BSWH&pageNumber=1&perPage=2500&SortBy=Distance&DocIsPrimaryCare=true&DocUsesMyBSWHealth=true&DocSortBy=NextAvailableAppointment&overrideRules=true"
-    r = session.get(url, headers=headers, stream=True)
-    if r.encoding is None:
-        r.encoding = "utf-8"
-    website = "bswhealth.com"
-    for line in r.iter_lines(decode_unicode=True):
-        if '"locationType":"' in line:
-            items = line.split('"locationType":"')
-            for item in items:
-                if '"photoUrl":' in item:
-                    typ = item.split('"')[0]
-                    country = "US"
-                    try:
-                        loc = item.split('"locationUrl":"')[1].split('"')[0]
-                    except:
-                        loc = "<MISSING>"
-                    if loc == "":
-                        loc = "<MISSING>"
-                    lat = item.split('"lat":')[1].split(",")[0]
-                    lng = item.split('"lon":')[1].split("}")[0]
-                    store = item.split('"locationID":"')[1].split('"')[0]
-                    name = item.split('"locationName":"')[1].split('"')[0]
-                    phone = item.split('"locationPhone":"')[1].split('"')[0]
-                    state = item.split('"locationState":"')[1].split('"')[0]
-                    add = item.split('"locationStreet1":"')[1].split('"')[0]
-                    add = add + " " + item.split('"locationStreet2":"')[1].split('"')[0]
-                    city = item.split('"locationCity":"')[1].split('"')[0]
-                    zc = item.split('"locationZip":"')[1].split('"')[0]
-                    add = add.strip()
-                    hours = ""
-                    if '"dailyHours":[]' not in item:
-                        days = (
-                            item.split('"dailyHours":[')[1]
-                            .split("]")[0]
-                            .split('"weekDayName":"')
+    stores = []
+    urls = [
+        "https://phyndapi.bswapi.com/V2/Places/GetLocations?&location=40.912491449640854,-85.5631319&distance=2500&LineOfBusiness=BSWH&pageNumber=1&perPage=2500&SortBy=Distance&DocIsPrimaryCare=true&DocUsesMyBSWHealth=true&DocSortBy=NextAvailableAppointment&overrideRules=true",
+        "https://phyndapi.bswapi.com/V2/Places/GetLocations?&location=40.912491449640854,-100.5631319&distance=2500&LineOfBusiness=BSWH&pageNumber=1&perPage=2500&SortBy=Distance&DocIsPrimaryCare=true&DocUsesMyBSWHealth=true&DocSortBy=NextAvailableAppointment&overrideRules=true",
+        "https://phyndapi.bswapi.com/V2/Places/GetLocations?&location=40.912491449640854,-110.5631319&distance=2500&LineOfBusiness=BSWH&pageNumber=1&perPage=2500&SortBy=Distance&DocIsPrimaryCare=true&DocUsesMyBSWHealth=true&DocSortBy=NextAvailableAppointment&overrideRules=true",
+    ]
+    for url in urls:
+        r = session.get(url, headers=headers, verify=False)
+        if r.encoding is None:
+            r.encoding = "utf-8"
+        website = "bswhealth.com"
+        for line in r.iter_lines(decode_unicode=True):
+            if '"locationType":"' in line:
+                items = line.split('"locationType":"')
+                for item in items:
+                    if '"photoUrl":' in item:
+                        typ = item.split('"')[0]
+                        country = "US"
+                        try:
+                            loc = item.split('"locationUrl":"')[1].split('"')[0]
+                        except:
+                            loc = "<MISSING>"
+                        if loc == "":
+                            loc = "<MISSING>"
+                        lat = item.split('"lat":')[1].split(",")[0]
+                        lng = item.split('"lon":')[1].split("}")[0]
+                        store = item.split('"locationID":"')[1].split('"')[0]
+                        name = item.split('"locationName":"')[1].split('"')[0]
+                        phone = item.split('"locationPhone":"')[1].split('"')[0]
+                        state = item.split('"locationState":"')[1].split('"')[0]
+                        add = item.split('"locationStreet1":"')[1].split('"')[0]
+                        add = (
+                            add
+                            + " "
+                            + item.split('"locationStreet2":"')[1].split('"')[0]
                         )
-                        for day in days:
-                            if '"openingTime":"' in day:
-                                hrs = (
-                                    day.split('"')[0]
-                                    + ": "
-                                    + day.split('"openingTime":"')[1]
-                                    .split('"')[0]
-                                    .rsplit(":", 1)[0]
-                                    + "-"
-                                    + day.split('"closingTime":"')[1]
-                                    .split('"')[0]
-                                    .rsplit(":", 1)[0]
-                                )
-                                if hours == "":
-                                    hours = hrs
-                                else:
-                                    hours = hours + "; " + hrs
-                    if hours == "":
-                        hours = "<MISSING>"
-                    if phone == "":
-                        phone = "<MISSING>"
-                    if " - " in name:
-                        name = name.split(" - ")[0].strip()
-                    yield [
-                        website,
-                        loc,
-                        name,
-                        add,
-                        city,
-                        state,
-                        zc,
-                        country,
-                        store,
-                        phone,
-                        typ,
-                        lat,
-                        lng,
-                        hours,
-                    ]
+                        city = item.split('"locationCity":"')[1].split('"')[0]
+                        zc = item.split('"locationZip":"')[1].split('"')[0]
+                        add = add.strip()
+                        hours = ""
+                        if '"dailyHours":[]' not in item:
+                            days = (
+                                item.split('"dailyHours":[')[1]
+                                .split("]")[0]
+                                .split('"weekDayName":"')
+                            )
+                            for day in days:
+                                if '"openingTime":"' in day:
+                                    hrs = (
+                                        day.split('"')[0]
+                                        + ": "
+                                        + day.split('"openingTime":"')[1]
+                                        .split('"')[0]
+                                        .rsplit(":", 1)[0]
+                                        + "-"
+                                        + day.split('"closingTime":"')[1]
+                                        .split('"')[0]
+                                        .rsplit(":", 1)[0]
+                                    )
+                                    if hours == "":
+                                        hours = hrs
+                                    else:
+                                        hours = hours + "; " + hrs
+                        if hours == "":
+                            hours = "<MISSING>"
+                        if phone == "":
+                            phone = "<MISSING>"
+                        if " - " in name:
+                            name = name.split(" - ")[0].strip()
+                        if store not in stores:
+                            stores.append(store)
+                            yield [
+                                website,
+                                loc,
+                                name,
+                                add,
+                                city,
+                                state,
+                                zc,
+                                country,
+                                store,
+                                phone,
+                                typ,
+                                lat,
+                                lng,
+                                hours,
+                            ]
 
 
 def scrape():

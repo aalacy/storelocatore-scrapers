@@ -2,6 +2,7 @@
 from sgrequests import SgRequests
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 import pandas as pd
+import re
 
 
 def getdata():
@@ -67,11 +68,20 @@ def getdata():
             phone = location["phoneNumber"]
             if phone == "":
                 phone == "<MISSING>"
+            else:
+                phone = re.sub("[^0-9]", "", str(phone))
+                phone = phone[:10]
+
+            if phone == "1800" or phone == "800":
+                phone = "1800SATRUCK"
             current_lat = location["location"]["latitude"]
             current_lng = location["location"]["longitude"]
 
             # Create copies of location data for each service offered at a location
-            servenum = len(location["services"])
+            try:
+                servenum = len(location["services"])
+            except Exception:
+                servenum = 0
 
             if servenum > 0:
                 for service in location["services"]:

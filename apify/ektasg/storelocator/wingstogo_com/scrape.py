@@ -1,8 +1,10 @@
 from bs4 import BeautifulSoup
-import csv
 import re
-
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
 headers = {
@@ -10,49 +12,24 @@ headers = {
 }
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
 def fetch_data():
-    p = 0
-    data = []
+
     pattern = re.compile(r"\s\s+")
     cleanr = re.compile(r"<[^>]+>")
     url = "https://wingstogo.com/all-locations"
-    r = session.get(url, headers=headers, verify=False)
+    r = session.get(url, headers=headers)
     soup = BeautifulSoup(r.text, "html.parser")
     divlist = soup.findAll("div", {"class": "view-more"})
     for div in divlist:
         link = "https://wingstogo.com" + div.select_one("a[href*=location]")["href"]
-        r = session.get(link, headers=headers, verify=False)
+        r = session.get(link, headers=headers)
+
         soup = BeautifulSoup(r.text, "html.parser")
+        ltype = "<MISSING>"
+        if "Opening Soon!" in soup.text:
+            ltype = "Opening Soon"
+        elif "STORE CLOSED" in soup.text:
+            ltype = "STORE CLOSED"
         content = soup.find("div", {"class": "loc-details-full"})
         if "COMING SOON!" in content.text:
             continue
@@ -74,12 +51,15 @@ def fetch_data():
             .replace("\t", "")
             .strip()
         )
-        phone = (
-            content.find("span", {"class": "detail-phone"})
-            .text.replace("\n", " ")
-            .replace("\t", "")
-            .strip()
-        )
+        try:
+            phone = (
+                content.find("span", {"class": "detail-phone"})
+                .text.replace("\n", " ")
+                .replace("\t", "")
+                .strip()
+            )
+        except:
+            phone = "<MISSING>"
         hours = (
             re.sub(cleanr, "\n", str(content.find("div", {"class": "location-hours"})))
             .replace("\n", " ")
@@ -99,32 +79,37 @@ def fetch_data():
             lat = longt = "<MISSING>"
         city, state = city.strip().split(", ", 1)
         state, pcode = state.lstrip().split(" ", 1)
-        data.append(
-            [
-                "https://wingstogo.com/",
-                link,
-                re.sub(pattern, " ", title),
-                re.sub(pattern, " ", street),
-                re.sub(pattern, " ", city),
-                re.sub(pattern, " ", state),
-                re.sub(pattern, " ", pcode),
-                "US",
-                "<MISSING>",
-                re.sub(pattern, " ", phone),
-                "<MISSING>",
-                lat,
-                longt,
-                re.sub(pattern, " ", hours),
-            ]
+        street = street.replace("Under New Management!!", "").strip()
+        if "Permanently Closed " in street:
+            ltype = "Permanently Closed"
+            street = street.replace("Permanently Closed ", "")
+        yield SgRecord(
+            locator_domain="https://wingstogo.com/",
+            page_url=link,
+            location_name=re.sub(pattern, " ", title).strip(),
+            street_address=re.sub(pattern, " ", street).strip(),
+            city=re.sub(pattern, " ", city).strip(),
+            state=re.sub(pattern, " ", state).strip(),
+            zip_postal=re.sub(pattern, " ", pcode).strip(),
+            country_code="US",
+            store_number=SgRecord.MISSING,
+            phone=re.sub(pattern, " ", phone).strip(),
+            location_type=ltype,
+            latitude=str(lat),
+            longitude=str(longt),
+            hours_of_operation=re.sub(pattern, " ", hours).strip(),
         )
-
-        p += 1
-    return data
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()
