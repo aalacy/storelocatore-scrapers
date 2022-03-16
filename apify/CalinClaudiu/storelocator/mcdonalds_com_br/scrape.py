@@ -2,8 +2,6 @@ from sgscrape import simple_scraper_pipeline as sp
 from sglogging import sglog
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as b4
-import json
-from sgzip.dynamic import SearchableCountries
 from sgzip.dynamic import DynamicGeoSearch
 
 from sgselenium import SgChrome
@@ -162,19 +160,6 @@ def fetch_data():
                             yield rec
 
     logzilla.info(f"Finished grabbing data!!")  # noqa
-
-
-def fix_comma(x):
-    h = []
-    result = None
-    try:
-        for i in x.split(","):
-            if len(i.strip()) >= 1:
-                h.append(i)
-        result = ", ".join(h).replace("  ", " ")
-    except Exception:
-        result = x.replace("  ", " ")
-    return strip_parantheses(result)
 
 
 def scrape():
