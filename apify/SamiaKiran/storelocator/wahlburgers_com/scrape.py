@@ -51,6 +51,7 @@ def fetch_data():
                         .find("p")
                         .get_text(separator="|", strip=True)
                         .replace("|", " ")
+                        .replace("\n", " ")
                     )
                 except:
                     raw_address = (
@@ -58,6 +59,7 @@ def fetch_data():
                         .find("p")
                         .get_text(separator="|", strip=True)
                         .replace("|", " ")
+                        .replace("\n", " ")
                     )
                 if "We are currently closed" in r.text:
                     location_type = "Temporarily Closed"
@@ -89,6 +91,7 @@ def fetch_data():
                         .replace("         ", " ")
                         .replace('"', "")
                         .replace(" ,", "")
+                        .replace(" P.M.  -", "P.M.")
                     )
                 except:
                     hours_of_operation = MISSING
