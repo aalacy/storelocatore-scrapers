@@ -88,8 +88,6 @@ def get_data():
     for search_code in search:
         log.info(search_code)
         x = x + 1
-        if x == 1000:
-            return
         if len(str(search_code)) == 4:
             search_code = "0" + str(search_code)
 
