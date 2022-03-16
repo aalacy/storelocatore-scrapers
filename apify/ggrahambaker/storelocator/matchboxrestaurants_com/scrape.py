@@ -47,7 +47,14 @@ def fetch_data():
         hoo = loc_dom.xpath(
             '//p[strong[contains(text(), "HOURS")]]/following-sibling::p/text()'
         )
-        hoo = " ".join(hoo).split("dine")[0].replace("\xa0", "")
+        hoo = (
+            " ".join(" ".join(hoo).split())
+            .split("dine")[0]
+            .replace("\xa0", "")
+            .split("social hour")[0]
+            .split("From")[0]
+            .split("Follow")[0]
+        )
         latitude = ""
         longitude = ""
         geo = (

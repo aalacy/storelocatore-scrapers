@@ -75,6 +75,8 @@ def fetch_data(sgw: SgWriter):
             hours_of_operation = "<MISSING>"
             if hours != "<MISSING>":
                 hours_of_operation = get_hours(hours)
+            if latitude == "0" or latitude == "0.0":
+                latitude, longitude = "<MISSING>", "<MISSING>"
 
             row = SgRecord(
                 locator_domain=locator_domain,
