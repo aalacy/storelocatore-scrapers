@@ -127,6 +127,11 @@ def fetch_global():
                     country_code = c_n[-1]
                     if len(c_n) > 1:
                         city = c_n[0]
+                if not city:
+                    if country_name in ["Germany"]:
+                        city = location_name.split(",")[-1].strip()
+                    if country_name in ["Ireland"]:
+                        city = location_name.split("-")[0].strip()
                 yield SgRecord(
                     page_url=locator_url,
                     location_name=location_name,
