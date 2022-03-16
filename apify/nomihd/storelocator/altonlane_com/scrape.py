@@ -19,8 +19,6 @@ headers = {
 def fetch_data():
     # Your scraper here
 
-    locationtypes = ["1", "2"]
-
     api_url = "https://www.altonlane.com/b2c/services/StoreLocator.Service.ss?c=3556903&latitude=40.75368539999999&locationtype=1&longitude=-73.9991637&n=3&page=all&radius=100000&sort=distance"
     api_res = session.get(api_url, headers=headers)
     stores_list = json.loads(api_res.text)
