@@ -76,7 +76,7 @@ def fetch_data():
                     street_address = ", ".join(_ss)
 
                 phone = _["tel"]
-                if phone == "00000000000000":
+                if phone == "00000000000000" or phone == "0" or phone == "TBA":
                     phone = ""
                 yield SgRecord(
                     page_url=page_url,
