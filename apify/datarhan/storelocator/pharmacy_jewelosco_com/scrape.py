@@ -19,24 +19,21 @@ token = None
 
 def fetch_token(driver):
     global token
-    try:
-        result = driver.execute_async_script(
-            """
-            var done = arguments[0]
-            fetch("https://pharmacy.jewelosco.com/joweb/appload.htm", {
-                "headers": {
-                    "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-                },
-                "body": "formParams=null",
-                "method": "POST",
-            })
-            .then(res => res.json())
-            .then(done)
-            .catch(done)
+    result = driver.execute_async_script(
         """
-        )
-    except:
-        pass
+        var done = arguments[0]
+        fetch("https://pharmacy.jewelosco.com/joweb/appload.htm", {
+            "headers": {
+                "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+            },
+            "body": "formParams=null",
+            "method": "POST",
+        })
+        .then(res => res.json())
+        .then(done)
+        .catch(done)
+    """
+    )
 
     token = result["token"][0]
 
@@ -102,7 +99,7 @@ def fetch_data():
 
     all_coords = static_coordinate_list(10, SearchableCountries.USA)
 
-    with SgFirefox(is_headless=False) as driver:
+    with SgFirefox(is_headless=True) as driver:
         driver.set_script_timeout(30)
         driver.get(start_url)
         fetch_token(driver)
