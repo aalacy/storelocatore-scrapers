@@ -1,6 +1,6 @@
 from bs4 import BeautifulSoup
 
-from sgscrape import sgpostal as parser
+from sgpostal.sgpostal import parse_address_intl
 
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
@@ -38,7 +38,7 @@ def fetch_data(sgw: SgWriter):
         base = BeautifulSoup(req.text, "lxml")
 
         raw_address = base.find(class_="text-address__two-line").text.strip()
-        addr = parser.parse_address_intl(raw_address)
+        addr = parse_address_intl(raw_address)
         street_address = addr.street_address_1
         zip_code = addr.postcode
         country_code = "BR"
