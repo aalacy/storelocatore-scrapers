@@ -1,37 +1,10 @@
-import csv
 import usaddress
-
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
-
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
 
 
 def get_address(line):
@@ -64,93 +37,79 @@ def get_address(line):
     }
 
     a = usaddress.tag(line, tag_mapping=tag)[0]
-    street_address = f"{a.get('address1')} {a.get('address2') or ''}".strip()
-    if street_address == "None":
-        street_address = "<MISSING>"
-    city = a.get("city") or "<MISSING>"
-    state = a.get("state") or "<MISSING>"
-    postal = a.get("postal") or "<MISSING>"
+    adr1 = a.get("address1") or ""
+    adr2 = a.get("address2") or ""
+    street_address = f"{adr1} {adr2}".strip()
+    city = a.get("city")
+    state = a.get("state")
+    postal = a.get("postal")
 
     return street_address, city, state, postal
 
 
-def get_coords_from_google_url(url):
-    try:
-        if url.find("ll=") != -1:
-            latitude = url.split("ll=")[1].split(",")[0]
-            longitude = url.split("ll=")[1].split(",")[1].split("&")[0]
-        else:
-            latitude = url.split("@")[1].split(",")[0]
-            longitude = url.split("@")[1].split(",")[1]
-    except IndexError:
-        latitude, longitude = "<MISSING>", "<MISSING>"
-
-    return latitude, longitude
+def get_coords_from_google_url(text):
+    if "/@" in text:
+        return text.split("/@")[1].split(",")[:2]
+    else:
+        return SgRecord.MISSING, SgRecord.MISSING
 
 
-def fetch_data():
-    out = []
-    locator_domain = "https://thehummusfactory.com/"
-    page_url = "https://thehummusfactory.com/locations/"
-
-    session = SgRequests()
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0"
-    }
+def fetch_data(sgw: SgWriter):
     r = session.get(page_url, headers=headers)
     tree = html.fromstring(r.text)
-    divs = tree.xpath("//div[@class='csColumn' and ./h2]")
+    divs = tree.xpath("//div[@class='csRow' and .//h2]")
 
     for d in divs:
-        location_name = "".join(d.xpath("./h2/text()")).strip()
-        line = d.xpath("./p[1]/text()")[0].strip()
-        street_address, city, state, postal = get_address(line)
-        country_code = "US"
-        store_number = "<MISSING>"
-        try:
-            phone = (
-                "".join(d.xpath("./p[2][contains(text(), 't:')]/text()|./p[1]/text()"))
-                .replace("•", "")
-                .split("t:")[1]
-                .split("f:")[0]
-                .strip()
-            )
-        except IndexError:
-            phone = "<MISSING>"
-        text = "".join(d.xpath("./p/a/@href"))
+        location_name = "".join(d.xpath(".//h2/text()")).strip()
+        raw_address = d.xpath(".//h2/following-sibling::p[1]/text()")[0].strip()
+        street_address, city, state, postal = get_address(raw_address)
+        lines = d.xpath(
+            ".//p[contains(text(), 't:')]/text()|.//h2/following-sibling::p[1]/text()"
+        )
+        lines = list(
+            filter(None, [line.replace("\xa0", " ").strip() for line in lines])
+        )
+        phone = SgRecord.MISSING
+        for li in lines:
+            if "t:" in li:
+                phone = li.split("•")[0].replace("t:", "").strip()
+                break
+
+        text = "".join(d.xpath(".//a[contains(@href, 'google')]/@href"))
         latitude, longitude = get_coords_from_google_url(text)
-        location_type = "<MISSING>"
         hours = d.xpath(
-            "./p[./a[text()='Get Directions']]/preceding-sibling::p[1]/text()"
+            ".//p[./a[contains(@href, 'google')]]/preceding-sibling::p[1]/text()"
         )
         hours = list(filter(None, [h.strip() for h in hours]))
-        hours_of_operation = ";".join(hours) or "<MISSING>"
+        hours_of_operation = ";".join(hours)
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
+        row = SgRecord(
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code="US",
+            phone=phone,
+            latitude=latitude,
+            longitude=longitude,
+            locator_domain=locator_domain,
+            hours_of_operation=hours_of_operation,
+            raw_address=raw_address,
+        )
 
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://thehummusfactory.com/"
+    page_url = "https://thehummusfactory.com/locations/"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0"
+    }
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.LOCATION_NAME}))
+    ) as writer:
+        fetch_data(writer)
