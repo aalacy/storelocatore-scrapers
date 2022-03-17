@@ -53,6 +53,8 @@ def fetch_data():
                             hours = hrs
                         else:
                             hours = hours + "; " + hrs
+                    if len(phone) < 6:
+                        phone = "<MISSING>"
                     yield SgRecord(
                         locator_domain=website,
                         page_url=loc,
@@ -69,7 +71,8 @@ def fetch_data():
                         longitude=lng,
                         hours_of_operation=hours,
                     )
-            except:
+            except Exception as e:
+                logger.info(f"Failed for {str(x)} - {str(y)}: {e}")
                 pass
 
 
@@ -77,8 +80,7 @@ def scrape():
     results = fetch_data()
     with SgWriter(
         deduper=SgRecordDeduper(
-            RecommendedRecordIds.StoreNumberId,
-            duplicate_streak_failure_factor=-1,
+            RecommendedRecordIds.StoreNumberId, duplicate_streak_failure_factor=-1
         )
     ) as writer:
         for rec in results:

@@ -26,15 +26,19 @@ def fetch_data():
         search_sel = lxml.html.fromstring(search_res.text)
 
         stores = search_sel.xpath("//tbody/tr")
+        log.info(f"Expected Total Location: {len(stores)}")
         for no, store in enumerate(stores, 1):
 
             locator_domain = website
             store_number = "<MISSING>"
 
-            page_url = base + "".join(store.xpath(".//a[not(@class)]/@href"))
-            log.info(page_url)
+            page_url = base + "".join(
+                store.xpath(".//a[contains(text(),'More')]/@href")
+            )
+            log.info(f"Crawling {page_url}")
 
             store_res = session.get(page_url, headers=headers)
+            log.info(f"Page Response: {store_res.status_code}")
             store_sel = lxml.html.fromstring(store_res.text)
 
             location_name = "".join(store.xpath(".//a[not(@class)]/text()")).strip()
@@ -63,6 +67,9 @@ def fetch_data():
             if street_address is not None:
                 street_address = street_address.replace("Ste", "Suite")
 
+            if street_address and street_address.replace("-", "").isdigit():
+                street_address = raw_address.split(",")[0].strip()
+
             city = formatted_addr.city
 
             state = formatted_addr.state
@@ -82,11 +89,9 @@ def fetch_data():
 
             hours_of_operation = "; ".join(hours_list).strip()
 
-            map_info = store_res.text.split("maps.LatLng(")[1].split(")")[0]
-
             latitude, longitude = (
-                map_info.split(",")[0].strip(),
-                map_info.split(",")[1].strip(),
+                "<MISSING>",
+                "<MISSING>",
             )
 
             yield SgRecord(

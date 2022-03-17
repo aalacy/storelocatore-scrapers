@@ -65,6 +65,7 @@ def record_initial_requests(http, state):
     )
     for loc in locs:
         url = locator_domain + loc["href"]
+
         _i = list(loc.stripped_strings)
         raw_address = ", ".join(_i[1].split(",")[2:])
         if _i[0] not in raw_address:
@@ -95,10 +96,11 @@ def fetch_records(http, state):
         store = next_r.context.get("store")
         page_url = next_r.url
         try:
+            res = http.get(next_r.url)
+            if res.status_code != 200:
+                continue
             loc = json.loads(
-                bs(http.get(next_r.url).text, "lxml")
-                .find("script", type="application/ld+json")
-                .string
+                bs(res.text, "lxml").find("script", type="application/ld+json").string
             )
             data = {"location_group": loc["url"]}
             _ = http.post(loc_url, headers=_headers, data=data).json()["set_locations"][
@@ -115,15 +117,20 @@ def fetch_records(http, state):
                 _["hours"]
                 .replace("\n", "; ")
                 .replace("\r", "")
+                .replace("\t", " ")
                 .replace("–", "-")
                 .strip()
                 .replace(",", "; ")
                 .replace("Unknown", "")
+                .strip()
             )
 
         country_code = "US"
         if _["state"] in ca_provinces_codes:
             country_code = "CA"
+        if hours_of_operation.strip().endswith(";"):
+            hours_of_operation = hours_of_operation[:-1]
+
         yield SgRecord(
             page_url=page_url,
             location_name=_["name"],

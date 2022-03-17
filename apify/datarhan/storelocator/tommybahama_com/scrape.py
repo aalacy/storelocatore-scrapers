@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from lxml import etree
 from urllib.parse import urljoin
 
@@ -12,25 +13,25 @@ from sgscrape.sgwriter import SgWriter
 def fetch_data():
     session = SgRequests()
     domain = "tommybahama.com"
-    start_url = "https://www.tommybahama.com/en/store-finder?latitude=37.09024&longitude=-95.712891&q=&page=1&searchStores=true&searchRestaurants=false&searchOutlets=true&searchInternational=true"
+    start_url = "https://www.tommybahama.com/restaurants-and-marlin-bars/locations"
     response = session.get(start_url)
     dom = etree.HTML(response.text)
 
-    all_locations = dom.xpath('//a[contains(text(), "View store")]/@href')
-    next_page = dom.xpath('//a[contains(text(), "Next")]/@href')
-    while next_page:
-        page_url = "https://www.tommybahama.com" + next_page[0]
-        response = session.get(page_url)
-        dom = etree.HTML(response.text)
-        all_locations += dom.xpath('//a[contains(text(), "View store")]/@href')
-        next_page = dom.xpath('//a[contains(text(), "Next")]/@href')
-
+    all_locations = dom.xpath("//div[@restaurant-feature-item]/a/@href")
     for url in list(set(all_locations)):
-        store_url = urljoin(start_url, url.split("?")[0])
-        if "marlin-bars" in store_url:
-            continue
-        loc_response = session.get(store_url)
+        page_url = urljoin(start_url, url)
+        loc_response = session.get(page_url)
         loc_dom = etree.HTML(loc_response.text)
+        page_url = loc_dom.xpath('//a[contains(text(), "Store Information")]/@href')
+        if page_url:
+            page_url = page_url[0]
+            if "http" not in page_url:
+                page_url = urljoin(start_url, page_url)
+            loc_response = session.get(page_url)
+            loc_dom = etree.HTML(loc_response.text)
+        else:
+            continue
+
         raw_data = loc_dom.xpath(
             '//p[b[contains(text(), "Store")]]/following-sibling::p/text()'
         )
@@ -64,6 +65,8 @@ def fetch_data():
         location_name = loc_dom.xpath('//h3[@class="cmp-title__text"]/text()')
         if not location_name:
             location_name = loc_dom.xpath("//h1/text()")
+        if not location_name:
+            continue
         location_name = location_name[0]
         street_address = raw_address[0]
         city = addr.city
@@ -87,7 +90,7 @@ def fetch_data():
             phone = loc_dom.xpath(
                 '//p[contains(text(), "Store")]/following-sibling::p/text()'
             )
-        phone = phone[0].strip()
+        phone = phone[0].split(":")[-1].strip()
         hoo = loc_dom.xpath(
             '//p[contains(text(), "Open:")]/following-sibling::p[1]/text()'
         )
@@ -125,7 +128,7 @@ def fetch_data():
 
         item = SgRecord(
             locator_domain=domain,
-            page_url=store_url,
+            page_url=page_url,
             location_name=location_name,
             street_address=street_address,
             city=city,

@@ -36,6 +36,7 @@ def _p(val):
 def _d(_, page_url):
     block = _.select("div.storeinfo ul li")
     _addr = list(block[1].select_one("p.detail").stripped_strings)
+
     phone = ""
     if _p(_addr[-1]):
         phone = _addr[-1]
@@ -56,6 +57,12 @@ def _d(_, page_url):
     elif "서울" in addr[0]:
         city = "서울"
         street_address = " ".join(addr[1:])
+    elif "부산" in addr[0]:
+        city = "부산"
+        street_address = " ".join(addr[1:])
+    elif "경기" in addr[0]:
+        state = "경기"
+        street_address = " ".join(addr[1:])
     else:
         street_address = " ".join(addr[1:])
     return SgRecord(
@@ -67,6 +74,7 @@ def _d(_, page_url):
         country_code="KR",
         phone=phone,
         locator_domain=locator_domain,
+        hours_of_operation=block[0].select_one("p.detail").text.split("(")[0].strip(),
         raw_address=" ".join(addr),
     )
 
@@ -75,7 +83,6 @@ def fetch_data():
     with SgRequests() as session:
         soup = bs(session.get(base_url, headers=_headers).text, "lxml")
         locations = soup.select("div.store2dpth ul li a")
-        yield _d(soup, base_url)
         for loc in locations:
             page_url = locator_domain + loc["href"]
             logger.info(page_url)

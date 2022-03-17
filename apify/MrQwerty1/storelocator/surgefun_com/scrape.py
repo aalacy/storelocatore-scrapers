@@ -56,18 +56,17 @@ def fetch_data(sgw: SgWriter):
         ad = (
             " ".join(
                 tree.xpath(
-                    "//div[contains(@data-settings, 'background_background')]//text()"
+                    "//div[./div/h2[contains(text(), 'CONTACT')]]/following-sibling::div[1]//text()"
                 )
             )
             .replace("\n", "")
             .replace("\\xa0", "")
             .strip()
         )
-        if ad.find("Coming Soon") != -1:
+        if tree.xpath("//h2[contains(text(), 'COMING SOON')]"):
             continue
-        adr = ad.split("CONTACT US")[1].split("PHONE")[0].strip()
 
-        a = usaddress.tag(adr, tag_mapping=tag)[0]
+        a = usaddress.tag(ad, tag_mapping=tag)[0]
         street_address = f"{a.get('address1')} {a.get('address2')}".replace(
             "None", ""
         ).strip()
@@ -75,15 +74,23 @@ def fetch_data(sgw: SgWriter):
         state = a.get("state")
         postal = a.get("postal")
         country_code = "US"
-        phone = ad.split("PHONE")[1].split("EMAIL")[0].replace(" ", "").strip()
-        ids = (
-            "".join(tree.xpath('//script[contains(text(), "const loc=")]/text()'))
-            .split("const loc=")[1]
-            .split(";")[0]
-            .strip()
-        )
+        phone = "".join(
+            tree.xpath("//span[contains(text(), 'Phone')]/following-sibling::a/text()")
+        ).strip()
+        if not phone:
+            phone = "".join(
+                tree.xpath(
+                    "//div[./div/h2[contains(text(), 'PHONE')]]/following-sibling::div[1]//text()"
+                )
+            ).strip()
 
         try:
+            ids = (
+                "".join(tree.xpath('//script[contains(text(), "const loc=")]/text()'))
+                .split("const loc=")[1]
+                .split(";")[0]
+                .strip()
+            )
             r = session.get(f"https://plondex.com/wp/jsonquery/loadloc/9/{ids}")
             tree = html.fromstring(r.text)
             hours_of_operation = (
@@ -108,7 +115,7 @@ def fetch_data(sgw: SgWriter):
             country_code=country_code,
             phone=phone,
             hours_of_operation=hours_of_operation,
-            raw_address=adr,
+            raw_address=ad,
         )
 
         sgw.write_row(row)

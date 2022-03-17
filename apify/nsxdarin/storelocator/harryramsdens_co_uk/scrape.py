@@ -14,34 +14,33 @@ logger = SgLogSetup().get_logger("harryramsdens_co_uk")
 
 
 def fetch_data():
-    url = "https://www.harryramsdens.co.uk/views/ajax?service=1&_wrapper_format=drupal_ajax"
-    payload = {
-        "distance": 1000,
-        "service": "All",
-        "facilities": "All",
-        "view_name": "location_search",
-        "view_display_id": "main",
-        "_drupal_ajax": 1,
-    }
+    urls = [
+        "Pitstop|https://www.harryramsdens.co.uk/locations?service=3",
+        "Restaurant|https://www.harryramsdens.co.uk/locations?service=1",
+        "Takeaway|https://www.harryramsdens.co.uk/locations?service=2",
+    ]
     website = "harryramsdens.co.uk"
     country = "GB"
     locs = []
+    allurls = []
     typ = "<MISSING>"
-    r = session.post(url, headers=headers, data=payload)
-    for line in r.iter_lines():
-        if "a href=\\u0022https:\\/\\/www.harryramsdens.co.uk" in line:
-            items = line.split("a href=\\u0022https:\\/\\/www.harryramsdens.co.uk")
-            for item in items:
-                if "class=\\u0022far fa-store fa-w" in item:
-                    lurl = "https://www.harryramsdens.co.uk" + item.split("\\u")[0]
-                    locs.append(lurl.replace("\\", ""))
+    for url in urls:
+        r = session.get(url.split("|")[1], headers=headers)
+        for line in r.iter_lines():
+            if 'class="list-group-item-action">' in line:
+                curl = line.split('href="')[1].split('"')[0]
+                if curl not in allurls:
+                    allurls.append(curl)
+                    locs.append(url.split("|")[0] + "|" + curl)
     for loc in locs:
-        logger.info(loc)
+        lurl = loc.split("|")[1]
+        typ = loc.split("|")[0]
+        logger.info(lurl)
         phone = "<MISSING>"
         hours = ""
         state = "<MISSING>"
         store = "<MISSING>"
-        r = session.get(loc, headers=headers)
+        r = session.get(lurl, headers=headers)
         dc = 0
         for line in r.iter_lines():
             if "<title>" in line:
@@ -82,7 +81,7 @@ def fetch_data():
                 ]
         yield SgRecord(
             locator_domain=website,
-            page_url=loc,
+            page_url=lurl,
             location_name=name,
             street_address=add,
             city=city,

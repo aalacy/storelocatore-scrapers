@@ -1,179 +1,107 @@
-import csv
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries
-import time
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger("tropicalsmoothiecafe_com")
-
-
-session = SgRequests()
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from concurrent import futures
 
 
-def write_output(data):
-    with open("data.csv", mode="w", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def generate_links():
+    session = SgRequests()
+    r = session.get("https://locations.tropicalsmoothiecafe.com/index.json")
+    js = r.json()["directoryHierarchy"]
 
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-                "page_url",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+    urls = list(get_urls(js))
+    return urls
 
 
-def request_wrapper(url, method, headers, data=None):
-    request_counter = 0
-    if method == "get":
-        while True:
-            try:
-                r = session.get(url, headers=headers)
-                return r
-                break
-            except:
-                time.sleep(1)
-                request_counter = request_counter + 1
-                if request_counter > 10:
-                    return None
-                    break
-    elif method == "post":
-        while True:
-            try:
-                if data:
-                    r = session.post(url, headers=headers, data=data)
-                else:
-                    r = session.post(url, headers=headers)
-                return r
-                break
-            except:
-                time.sleep(1)
-                request_counter = request_counter + 1
-                if request_counter > 10:
-                    return None
-                    break
-    else:
-        return None
+def get_urls(states):
+    for state in states.values():
+        children = state["children"]
+        if children is None:
+            yield f"https://locations.tropicalsmoothiecafe.com/{state['url']}.json"
+        else:
+            yield from get_urls(children)
 
 
-def fetch_data():
-    address = []
-    base_url = "https://locations.tropicalsmoothiecafe.com"
-    search = DynamicZipSearch(
-        country_codes=[SearchableCountries.CANADA, SearchableCountries.USA],
-        max_radius_miles=49,
-        max_search_results=100,
+def get_data(url, sgw: SgWriter):
+    session = SgRequests()
+    r = session.get(url)
+    j = r.json()
+
+    locator_domain = "https://tropicalsmoothiecafe.com/"
+    page_url = url.replace(".json", "")
+    location_name = j.get("name") or "<MISSING>"
+
+    street_address = (
+        f"{j.get('address1')} {j.get('address2') or ''}".strip() or "<MISSING>"
     )
-    MAX_RESULTS = 25
+    city = j.get("city") or "<MISSING>"
+    state = j.get("state") or "<MISSING>"
+    postal = j.get("postalCode") or "<MISSING>"
+    country_code = j.get("country") or "<MISSING>"
 
-    headers = {
-        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.132 Safari/537.36",
-        "method": "GET",
-        "accept": "application/json",
-        "accept-encoding": "gzip, deflate, br",
-        "sec-fetch-site": "same-origin",
-        "sec-fetch-mode": "cors",
-        "sec-fetch-dest": "empty",
-    }
+    phone = j.get("phone") or "<MISSING>"
+    latitude = j.get("latitude") or "<MISSING>"
+    longitude = j.get("longitude") or "<MISSING>"
+    days = j.get("hours", {}).get("days") or []
 
-    for zipcode in search:
+    _tmp = []
+    for d in days:
+        day = d.get("day")[:3].capitalize()
+        try:
+            interval = d.get("intervals")[0]
+            start = str(interval.get("start"))
+            end = str(interval.get("end"))
 
-        result_coords = []
+            if len(start) == 3:
+                start = f"0{start}"
 
-        r = request_wrapper(
-            "https://locations.tropicalsmoothiecafe.com/search?q="
-            + str(zipcode)
-            + "&r="
-            + str(MAX_RESULTS),
-            "get",
-            headers=headers,
-        )
-        if r is None:
-            continue
+            if len(end) == 3:
+                end = f"0{end}"
 
-        json = r.json()
-        temp_locations = json["locations"]
+            line = f"{day}  {start[:2]}:{start[2:]} - {end[:2]}:{end[2:]}"
+        except IndexError:
+            line = f"{day}  Closed"
 
-        for locations in temp_locations:
+        _tmp.append(line)
 
-            locator_domain = base_url
-            loc = locations["loc"]
-            cafe = loc["customByName"]
-            location_name = cafe["Cafe Name for Reporting"]
-            street_address = loc["address1"] + loc["address2"]
-            city = loc["city"]
-            state = loc["state"]
-            zip = loc["postalCode"]
-            store_number = loc["corporateCode"]
-            country_code = loc["country"]
-            phone = loc["phone"]
-            location_type = " "
-            latitude = loc["routableLatitude"]
-            longitude = loc["routableLongitude"]
-            result_coords.append((latitude, longitude))
+    hours_of_operation = ";".join(_tmp) or "<MISSING>"
+    if (
+        hours_of_operation.count("Closed") == 7
+        or location_name.lower().find("closed") != -1
+    ):
+        hours_of_operation = "Closed"
 
-            urls = loc["urls"]
-            external = urls["external"]
-            page_url = external["url"]
+    row = SgRecord(
+        page_url=page_url,
+        location_name=location_name,
+        street_address=street_address,
+        city=city,
+        state=state,
+        zip_postal=postal,
+        country_code=country_code,
+        store_number=SgRecord.MISSING,
+        phone=phone,
+        location_type=SgRecord.MISSING,
+        latitude=latitude,
+        longitude=longitude,
+        locator_domain=locator_domain,
+        hours_of_operation=hours_of_operation,
+    )
 
-            hours = loc["hours"]
-            hour_days = hours["days"]
-
-            jk = []
-            hours_of_operation = ""
-            for days in hour_days:
-                day = days["day"]
-                day_intervals = days["intervals"]
-
-                for intervals in day_intervals:
-                    start = str(intervals["start"] // 100)
-                    end = str((intervals["end"] // 100) - 12)
-                jk.append(day + ":" + start + "AM" + "-" + end + "PM ")
-
-            hours_of_operation = " ".join(jk)
-
-            store = []
-            store.append(locator_domain if locator_domain else "<MISSING>")
-            store.append(location_name if location_name else "<MISSING>")
-            store.append(street_address if street_address else "<MISSING>")
-            store.append(city if city else "<MISSING>")
-            store.append(state if state else "<MISSING>")
-            store.append(zip if zip else "<MISSING>")
-            store.append(country_code if country_code else "<MISSING>")
-            store.append(store_number if store_number else "<MISSING>")
-            store.append(phone if phone else "<MISSING>")
-            store.append(location_type if location_type else "<MISSING>")
-            store.append(latitude if latitude else "<MISSING>")
-            store.append(longitude if longitude else "<MISSING>")
-            store.append(hours_of_operation if hours_of_operation else "<MISSING>")
-            store.append(page_url if page_url else "<MISSING>")
-            if store[2] in address:
-                continue
-            address.append(store[2])
-            yield store
+    sgw.write_row(row)
 
 
-def scrape():
+def fetch_data(sgw: SgWriter):
+    ids = generate_links()
+    with futures.ThreadPoolExecutor(max_workers=10) as executor:
+        future_to_url = {executor.submit(get_data, _id, sgw): _id for _id in ids}
+        for future in futures.as_completed(future_to_url):
+            future.result()
 
-    data = fetch_data()
-    write_output(data)
 
-
-scrape()
+if __name__ == "__main__":
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))) as writer:
+        fetch_data(writer)

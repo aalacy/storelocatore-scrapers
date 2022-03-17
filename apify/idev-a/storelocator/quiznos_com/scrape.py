@@ -17,6 +17,21 @@ base_url = (
     "https://restaurants.quiznos.com/api/stores-by-location?latitude={}&longitude={}"
 )
 days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+ca_provinces_codes = {
+    "AB",
+    "BC",
+    "MB",
+    "NB",
+    "NL",
+    "NS",
+    "NT",
+    "NU",
+    "ON",
+    "PE",
+    "QC",
+    "SK",
+    "YT",
+}
 
 
 def fetch_data(search):
@@ -41,6 +56,10 @@ def fetch_data(search):
                     close = _[f"hour_close_{day}"]
                     hours.append(f"{day}: {open} - {close}")
 
+                country_code = "USA"
+                if _["province"] in ca_provinces_codes:
+                    country_code = "CA"
+
                 yield SgRecord(
                     page_url=_["order_url"] or "https://restaurants.quiznos.com/",
                     store_number=_["number"],
@@ -53,7 +72,7 @@ def fetch_data(search):
                     zip_postal=_["postal_code"],
                     latitude=_["latitude"],
                     longitude=_["longitude"],
-                    country_code="USA",
+                    country_code=country_code,
                     phone=phone,
                     locator_domain=locator_domain,
                     hours_of_operation="; ".join(hours),

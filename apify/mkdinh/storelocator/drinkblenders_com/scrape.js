@@ -12,9 +12,10 @@ function parseInfo(text, name) {
   const city = hasCity ? components[0].replace(/\(|\)/g, '') : name;
   const street_address = hasCity ? components[1] : components[0];
   const phoneAndHours = hasCity ? components[3] : components[2];
-  const [phoneNumber, hours] = phoneAndHours.split(/\s\s+/);
+  const phoneNumber = phoneAndHours.slice(0, 14).trim();
+  const hours = phoneAndHours.slice(15).trim();
 
-  const phone = phoneNumber.replace(/\(|\)|\-|\s/g, '').trim();
+  const phone = phoneNumber.replace(/\(|\)|-|\s/g, '').trim();
   const hours_of_operation = hours.replace(/, /g, ',').trim();
   return { city, street_address, phone, hours_of_operation };
 }
@@ -32,13 +33,13 @@ Apify.main(async () => {
     handlePageFunction: async function ({ $, request }) {
       const data = $('h4')
         .map(function () {
-          locationNameElement = $(this);
+          const locationNameElement = $(this);
           // catch empty spot
           if (locationNameElement.is(':empty')) {
             return;
           }
 
-          location_name = parseLocationName(locationNameElement.text());
+          let location_name = parseLocationName(locationNameElement.text());
 
           // get address. Address is the next sibling to each name element
           const info = locationNameElement.next().text();
