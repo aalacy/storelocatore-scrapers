@@ -1,4 +1,5 @@
 import json
+import ssl
 import time
 
 from bs4 import BeautifulSoup
@@ -15,6 +16,8 @@ from sgselenium.sgselenium import SgChrome
 from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger("magnusonhotels_com")
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 
 def fetch_data(sgw: SgWriter):
