@@ -11,7 +11,7 @@ from sgscrape.sgwriter import SgWriter
 def fetch_data():
     session = SgRequests()
 
-    start_url = "https://www.dia.es/clubdia/ES/tiendas.v1572.json.gz"
+    start_url = "https://www.dia.es/clubdia/ES/tiendas.v1573.json.gz"
     domain = "tutienda.laplazadedia.es"
 
     response = session.get(start_url)
