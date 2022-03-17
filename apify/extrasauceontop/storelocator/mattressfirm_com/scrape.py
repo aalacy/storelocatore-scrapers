@@ -55,7 +55,7 @@ def get_data():
             search_code = "0" + zipcode
 
         else:
-            pass
+            search_code = zipcode
 
         search_url = (
             "https://maps.mattressfirm.com/api/getAsyncLocations?template=search&level=search&radius=100&search="
