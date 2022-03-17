@@ -4,8 +4,11 @@ from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
+from sgzip.dynamic import DynamicGeoSearch
 from sgscrape.sgrecord_id import SgRecordID
+from sgzip.dynamic import SearchableCountries
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+
 
 session = SgRequests()
 website = "kenzojeans_com_co"
@@ -28,44 +31,56 @@ def strip_accents(text):
 
 def fetch_data():
     if True:
-        url = "https://kenzojeans.com.co/wp-admin/admin-ajax.php?action=store_search&lat=4.570868&lng=-74.297333&max_results=100&search_radius=500"
-        loclist = session.get(url, headers=headers).json()
-        for loc in loclist:
-            location_name = loc["store"]
-            log.info(location_name)
-            store_number = loc["id"]
-            phone = loc["phone"]
-            street_address = loc["address"] + " " + loc["address2"]
-            street_address = strip_accents(street_address)
-            city = strip_accents(loc["city"])
-            state = loc["state"]
-            zip_postal = loc["zip"]
-            country_code = loc["country"]
-            latitude = loc["lat"]
-            longitude = loc["lng"]
-            hours_of_operation = strip_accents(
-                BeautifulSoup(loc["hours"], "html.parser")
-                .get_text(separator="|", strip=True)
-                .replace("|", " ")
+        search = DynamicGeoSearch(
+            country_codes=[SearchableCountries.COLOMBIA],
+            max_search_results=100,
+            expected_search_radius_miles=200,
+        )
+        for lat, long in search:
+            url = (
+                "https://kenzojeans.com.co/wp-admin/admin-ajax.php?action=store_search&lat="
+                + str(lat)
+                + "&lng="
+                + str(long)
+                + "&max_results=100&search_radius=500"
             )
-            raw_address = street_address + " " + city + " " + zip_postal
-            yield SgRecord(
-                locator_domain=DOMAIN,
-                page_url="https://kenzojeans.com.co/tiendas/",
-                location_name=location_name,
-                street_address=street_address.strip(),
-                city=city.strip(),
-                state=state.strip(),
-                zip_postal=zip_postal.strip(),
-                country_code=country_code,
-                store_number=store_number,
-                phone=phone.strip(),
-                location_type=MISSING,
-                latitude=latitude,
-                longitude=longitude,
-                hours_of_operation=hours_of_operation,
-                raw_address=raw_address,
-            )
+            loclist = session.get(url, headers=headers).json()
+            for loc in loclist:
+                location_name = loc["store"]
+                log.info(location_name)
+                store_number = loc["id"]
+                phone = loc["phone"]
+                street_address = loc["address"] + " " + loc["address2"]
+                street_address = strip_accents(street_address)
+                city = strip_accents(loc["city"])
+                state = loc["state"]
+                zip_postal = loc["zip"]
+                country_code = loc["country"]
+                latitude = loc["lat"]
+                longitude = loc["lng"]
+                hours_of_operation = strip_accents(
+                    BeautifulSoup(loc["hours"], "html.parser")
+                    .get_text(separator="|", strip=True)
+                    .replace("|", " ")
+                )
+                raw_address = street_address + " " + city + " " + zip_postal
+                yield SgRecord(
+                    locator_domain=DOMAIN,
+                    page_url="https://kenzojeans.com.co/tiendas/",
+                    location_name=location_name,
+                    street_address=street_address.strip(),
+                    city=city.strip(),
+                    state=state.strip(),
+                    zip_postal=zip_postal.strip(),
+                    country_code=country_code,
+                    store_number=store_number,
+                    phone=phone.strip(),
+                    location_type=MISSING,
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=hours_of_operation,
+                    raw_address=raw_address,
+                )
 
 
 def scrape():
