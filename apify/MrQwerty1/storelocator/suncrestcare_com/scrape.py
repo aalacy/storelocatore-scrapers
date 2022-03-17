@@ -24,6 +24,16 @@ def get_coords(page_url):
     return latitude, longitude, iscoming
 
 
+def get_uniq(page_url):
+    r = session.get(page_url)
+    tree = html.fromstring(r.text)
+    line = tree.xpath("//div[./div/i[contains(@class, 'map')]]//text()")
+    line = list(filter(None, [li.strip() for li in line]))
+    line[0] = f"{line[0]}, {line[1]}"
+    line.pop(1)
+    return line
+
+
 def fetch_data(sgw: SgWriter):
     api = "https://suncrestcare.com/location/"
     r = session.get(api)
@@ -50,11 +60,15 @@ def fetch_data(sgw: SgWriter):
             line[0] = f"{line[0].strip()}, {line[1]}"
             line.pop(1)
 
+        if "pittsburgh" in page_url:
+            line = get_uniq(page_url)
+
         street_address = line.pop(0)
         csz = line.pop(0).replace(",", "").split()
         postal = csz.pop()
         state = csz.pop()
         city = " ".join(csz)
+
         phone = "".join(d.xpath(".//a[contains(@href, 'tel:')]/text()")).strip()
         latitude, longitude, iscoming = get_coords(page_url)
         hours_of_operation = SgRecord.MISSING

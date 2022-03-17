@@ -1,7 +1,7 @@
 from sgrequests import SgRequests
 import json
 from sgscrape import simple_scraper_pipeline as sp
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries, Grain_2
 from bs4 import BeautifulSoup as bs
 
 
@@ -34,7 +34,9 @@ def get_data():
     session = SgRequests()
 
     search = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA], max_search_results=20
+        country_codes=[SearchableCountries.USA],
+        max_search_results=20,
+        granularity=Grain_2(),
     )
 
     page_urls = []
@@ -49,9 +51,15 @@ def get_data():
 
     session = SgRequests(retry_behavior=None)
     for zipcode in search:
+        if len(str(zipcode)) == 4:
+            search_code = "0" + zipcode
+
+        else:
+            search_code = zipcode
+
         search_url = (
             "https://maps.mattressfirm.com/api/getAsyncLocations?template=search&level=search&radius=100&search="
-            + zipcode
+            + search_code
         )
         response = session.get(search_url, headers=headers).json()
 
