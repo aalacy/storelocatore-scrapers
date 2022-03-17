@@ -19,7 +19,7 @@ def fetch_data(sgw: SgWriter):
     for j in js:
 
         page_url = j.get("permalink") or "<MISSING>"
-        location_name = str(j.get("store")).replace("&#8211;", "") or "<MISSING>"
+        location_name = str(j.get("store")).replace("&#8211;", "–") or "<MISSING>"
         location_type = j.get("terms") or "<MISSING>"
         street_address = j.get("address") or "<MISSING>"
         state = j.get("state") or "<MISSING>"

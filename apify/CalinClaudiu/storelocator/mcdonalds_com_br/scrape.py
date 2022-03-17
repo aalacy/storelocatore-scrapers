@@ -54,7 +54,7 @@ def getTestCountries(session):
 def test_possible(country, driver, session):
     try:
         driver.get(country["page"])
-        locator = WebDriverWait(driver, 4).until(  # noqa
+        locator = WebDriverWait(driver, 10).until(  # noqa
             EC.visibility_of_element_located(
                 (
                     By.XPATH,
@@ -63,7 +63,7 @@ def test_possible(country, driver, session):
             )
         )  # noqa
         locator.click()
-        searchbar = WebDriverWait(driver, 4).until(  # noqa
+        searchbar = WebDriverWait(driver, 10).until(  # noqa
             EC.visibility_of_element_located(
                 (
                     By.XPATH,
@@ -74,8 +74,9 @@ def test_possible(country, driver, session):
         time.sleep(3)
         searchbar.send_keys("Berlin", Keys.RETURN)
         time.sleep(5)
-        logzilla.info(f"Length of driver.requests: {len(driver.requests)}")
-        for r in driver.requests:
+        reqs = list(driver.requests)
+        logzilla.info(f"Length of driver.requests: {len(reqs)}")
+        for r in reqs:
             x = r.url
             logzilla.info(x)
             if "mcd-latam" in x and "near?country" in x:
@@ -84,7 +85,7 @@ def test_possible(country, driver, session):
     except Exception:
         try:
             driver.get(country["page"])
-            locator = WebDriverWait(driver, 4).until(  # noqa
+            locator = WebDriverWait(driver, 10).until(  # noqa
                 EC.visibility_of_element_located(
                     (
                         By.XPATH,
@@ -93,7 +94,7 @@ def test_possible(country, driver, session):
                 )
             )  # noqa
             locator.click()
-            searchbar = WebDriverWait(driver, 4).until(  # noqa
+            searchbar = WebDriverWait(driver, 10).until(  # noqa
                 EC.visibility_of_element_located(
                     (
                         By.XPATH,
@@ -103,9 +104,10 @@ def test_possible(country, driver, session):
             )  # noqa
             time.sleep(3)
             searchbar.send_keys("Berlin", Keys.RETURN)
-            logzilla.info(f"Length of driver.requests: {len(driver.requests)}")
-            time.sleep(5)
-            for r in driver.requests:
+            time.sleep(10)
+            reqs = list(driver.requests)
+            logzilla.info(f"Length of driver.requests: {len(reqs)}")
+            for r in reqs:
                 x = r.url
                 if "mcd-latam" in x and "near?country" in x:
                     logzilla.info(f" Found API for current country: {x}\n")
@@ -152,7 +154,7 @@ def fetch_for_real(data, session):
 
 
 def fetch_data():
-    with SgRequests() as session:
+    with SgRequests(verify_ssl=False) as session:
         countries = getTestCountries(session)
         # Gets every country from https://corporate.mcdonalds.com/corpmcd/our-company/where-we-operate.html and tests this crawl method against them.
         # Only runs tests, does not automatically crawl.

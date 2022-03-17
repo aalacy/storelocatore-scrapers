@@ -7,8 +7,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from urllib.parse import unquote
 from sglogging import SgLogSetup
-from sgselenium import SgChrome
-from selenium_stealth import stealth
+from sgselenium import SgFirefox
 
 logger = SgLogSetup().get_logger("bluenile.com")
 
@@ -33,16 +32,7 @@ def get_urls(driver):
 
 
 def fetch_data(sgw: SgWriter):
-    with SgChrome(user_agent=user_agent).driver() as driver:
-        stealth(
-            driver,
-            languages=["en-US", "en"],
-            vendor="Google Inc.",
-            platform="Win32",
-            webgl_vendor="Intel Inc.",
-            renderer="Intel Iris OpenGL Engine",
-            fix_hairline=True,
-        )
+    with SgFirefox(user_agent=user_agent).driver() as driver:
 
         urls = get_urls(driver)
         logger.info(urls)
