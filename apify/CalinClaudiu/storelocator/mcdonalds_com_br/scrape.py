@@ -154,7 +154,7 @@ def fetch_for_real(data, session):
 
 
 def fetch_data():
-    with SgRequests(verify_ssl=False) as session:
+    with SgRequests() as session:
         countries = getTestCountries(session)
         # Gets every country from https://corporate.mcdonalds.com/corpmcd/our-company/where-we-operate.html and tests this crawl method against them.
         # Only runs tests, does not automatically crawl.
