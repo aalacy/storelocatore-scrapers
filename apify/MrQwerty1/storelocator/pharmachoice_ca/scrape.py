@@ -42,7 +42,7 @@ def get_data(page_url, sgw: SgWriter):
     r = session.get(page_url)
     if r.status_code != 200:
         return
-    if "pharmachoice.com" not in r.url:
+    if "pharmachoice.com" not in str(r.url):
         return
     tree = html.fromstring(r.text)
 
@@ -53,6 +53,11 @@ def get_data(page_url, sgw: SgWriter):
     raw_address = raw_address.replace(";", "").replace("&#39", "'").replace("'", ",")
     street_address, city, state, postal = get_international(raw_address)
     phone = "".join(tree.xpath("//span[@class='phoneNumber']/text()")).strip()
+    if "/" in phone:
+        phone = phone.split("/")[0].strip()
+
+    if "TBD" in phone:
+        phone = SgRecord.MISSING
 
     text = "".join(tree.xpath("//a[contains(@href, 'daddr=')]/@href"))
     try:
@@ -72,6 +77,8 @@ def get_data(page_url, sgw: SgWriter):
         _tmp.append(f"{day} {inter}")
 
     hours_of_operation = ";".join(_tmp)
+    if "TBD" in hours_of_operation:
+        hours_of_operation = SgRecord.MISSING
 
     row = SgRecord(
         page_url=page_url,

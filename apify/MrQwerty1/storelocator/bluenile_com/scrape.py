@@ -1,15 +1,22 @@
+import ssl
 import time
 from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
-from sgselenium import SgChrome
 from urllib.parse import unquote
 from sglogging import SgLogSetup
-from selenium_stealth import stealth
+from sgselenium import SgFirefox
 
 logger = SgLogSetup().get_logger("bluenile.com")
+
+try:
+    _create_unverified_https_context = ssl._create_unverified_context
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context
 
 
 def get_urls(driver):
@@ -17,6 +24,7 @@ def get_urls(driver):
     driver.execute_script("open('https://www.bluenile.com/jewelry-stores')")
     time.sleep(120)
     driver.refresh()
+    time.sleep(30)
     source = driver.page_source
     logger.info(source)
     tree = html.fromstring(source)
@@ -24,21 +32,14 @@ def get_urls(driver):
 
 
 def fetch_data(sgw: SgWriter):
-    with SgChrome(user_agent=user_agent, is_headless=True) as driver:
-        stealth(
-            driver,
-            languages=["en-US", "en"],
-            vendor="Google Inc.",
-            platform="Win32",
-            webgl_vendor="Intel Inc.",
-            renderer="Intel Iris OpenGL Engine",
-            fix_hairline=True,
-        )
+    with SgFirefox(user_agent=user_agent).driver() as driver:
 
         urls = get_urls(driver)
+        logger.info(urls)
         for page_url in urls:
             driver.get(page_url)
-            time.sleep(60)
+            logger.info(urls)
+            time.sleep(10)
             source = driver.page_source
             tree = html.fromstring(source)
 
