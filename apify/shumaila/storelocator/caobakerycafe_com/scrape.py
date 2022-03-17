@@ -1,37 +1,25 @@
-import ssl
 import json
-from sglogging import sglog
 from bs4 import BeautifulSoup
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
-from sgselenium.sgselenium import SgChrome
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from webdriver_manager.chrome import ChromeDriverManager
-
+from sgselenium import SgSelenium
+import ssl
 
 ssl._create_default_https_context = ssl._create_unverified_context
-user_agent = (
-    "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0"
-)
-website = "caobakerycafe_com"
-log = sglog.SgLogSetup().get_logger(logger_name=website)
-
-DOMAIN = "https://www.caobakerycafe.com/"
-MISSING = SgRecord.MISSING
+driver = SgSelenium().chrome()
 
 
 def fetch_data():
-    driver = SgChrome(
-        executable_path=ChromeDriverManager().install(), user_agent=user_agent
-    ).driver()
+
     url = "https://www.caobakerycafe.com/locations"
     driver.get(url)
     soup = BeautifulSoup(driver.page_source, "html.parser")
     contentlist = soup.findAll("div", {"class": "pm-location"})
-    loclist = driver.page_source.split('<script id="popmenu-apollo-state">')[1].split(
-        "</script>"
-    )[0]
+    loclist = driver.page_source.split('<script id="popmenu-apollo-state">', 1)[
+        1
+    ].split("</script>", 1)[0]
     loclist = loclist.split("RestaurantLocation:")[1:]
     p = 0
     for loc in loclist:
@@ -48,14 +36,12 @@ def fetch_data():
         ccode = loc["country"]
         lat = loc["lat"]
         longt = loc["lng"]
-        if "Coming Soon" in contentlist[p].text:
-            continue
+
         title = contentlist[p].find("h4").text
         link = (
             "https://www.caobakerycafe.com"
             + contentlist[p].find("a", {"class": "details-button"})["href"]
         )
-        log.info(link)
         hours = (
             contentlist[p]
             .find("div", {"class": "hours"})
@@ -77,7 +63,7 @@ def fetch_data():
             country_code=ccode,
             store_number=str(store),
             phone=phone.strip(),
-            location_type=MISSING,
+            location_type=SgRecord.MISSING,
             latitude=str(lat),
             longitude=str(longt),
             hours_of_operation=hours,
