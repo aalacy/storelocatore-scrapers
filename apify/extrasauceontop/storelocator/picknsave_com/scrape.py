@@ -22,7 +22,6 @@ def get_data():
             my_code = "0" + str(search_code)
         else:
             my_code = search_code
-        print(my_code)
 
         url = (
             "https://www.picknsave.com/atlas/v1/stores/v1/search?filter.query="
