@@ -37,7 +37,9 @@ def fetch_data(sgw: SgWriter):
         slug = j.get("slug")
         page_url = f"https://leon.co/restaurants/{slug}"
         c = j.get("contactDetails") or {}
-        phone = c.get("phoneNumber")
+        phone = c.get("phoneNumber") or ""
+        if "on" in phone:
+            phone = phone.split("on")[-1].strip()
         location_type = j.get("type")
         g = j.get("geoLocation") or {}
         latitude = g.get("lat")
