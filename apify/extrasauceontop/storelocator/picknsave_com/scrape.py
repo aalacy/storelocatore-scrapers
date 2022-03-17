@@ -28,11 +28,14 @@ def get_data():
             + my_code
         )
 
-        try:
-            response = session.get(url, headers=headers, timeout=5).json()
-
-        except Exception:
-            response = session.get(url, headers=headers, timeout=10).json()
+        x = 0
+        while True:
+            x = x + 1
+            try:
+                response = session.get(url, headers=headers, timeout=5 + x).json()
+                break
+            except Exception:
+                continue
 
         for location in response["data"]["storeSearch"]["fuelResults"]:
             locator_domain = "picknsave.com"

@@ -51,9 +51,15 @@ def get_data():
 
     session = SgRequests(retry_behavior=None)
     for zipcode in search:
+        if len(str(zipcode)) == 4:
+            search_code = "0" + zipcode
+
+        else:
+            search_code = zipcode
+
         search_url = (
             "https://maps.mattressfirm.com/api/getAsyncLocations?template=search&level=search&radius=100&search="
-            + zipcode
+            + search_code
         )
         response = session.get(search_url, headers=headers).json()
 
