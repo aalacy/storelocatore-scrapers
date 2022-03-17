@@ -8,7 +8,9 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
+from sglogging import SgLogSetup
 
+logger = SgLogSetup().get_logger("wawa.com")
 
 local = threading.local()
 
@@ -97,7 +99,8 @@ def fetch_location(id, retry_count=0):
                 hours_of_operation=hours_of_operation,
                 phone=phone,
             )
-    except:
+    except Exception as e:
+        logger.error(e)
         if retry_count < 5:
             return fetch_location(id, retry_count + 1)
         else:
@@ -118,7 +121,6 @@ def write_data(data):
 
 def fetch_data():
     store_numbers = fetch_store_numbers()
-
     for num in store_numbers:
         location = fetch_location(num)
         if location:

@@ -1,7 +1,3 @@
-import json
-
-from bs4 import BeautifulSoup
-
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import RecommendedRecordIds
@@ -12,60 +8,75 @@ from sgrequests import SgRequests
 
 def fetch_data(sgw: SgWriter):
 
-    base_link = "https://www.axiombanking.com/about-us/locations/"
+    base_link = "https://www.axiombanking.com/_next/data/KMSdxDBMx2BvVFX6yHJuZ/en-US/locations.json"
 
     user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
     headers = {"User-Agent": user_agent}
 
     session = SgRequests()
-    req = session.get(base_link, headers=headers)
-    base = BeautifulSoup(req.text, "lxml")
+    stores = session.get(base_link, headers=headers).json()["pageProps"]["locations"]
 
     locator_domain = "axiombanking.com"
 
-    script = base.find(id="location_finder-js-extra").contents[0].strip()
+    for store in stores:
+        raw_hours = store["locationFields"]["lobbyHours"]["customHours"]
+        hours_of_operation = ""
+        if raw_hours:
+            for hours in raw_hours:
+                day = hours["day"]
+                if hours["isClosed"]:
+                    clean_hours = day + " Closed"
+                else:
+                    opens = hours["opens"]
+                    closes = hours["closes"]
+                    clean_hours = day + " " + opens + "-" + closes
+                    hours_of_operation = (
+                        hours_of_operation + " " + clean_hours
+                    ).strip()
+            standard_hours = hours_of_operation
 
-    js = (
-        script.split("location_Finder = {")[1]
-        .split('location_coordinates":')[1]
-        .split(',"location_titles')[0]
-        .strip()
-    )
-    coords = json.loads(js)
-
-    js = script.split('location_titles":')[1].split(',"location_desc')[0].strip()
-    titles = json.loads(js)
-
-    js = script.split('location_desc":')[1].split(',"location_types')[0].strip()
-    details = json.loads(js)
-
-    for i in range(len(coords)):
-        location_name = titles[i]["title"]
-        item = BeautifulSoup(details[i]["info"], "lxml")
-        if "," in item.p.text:
-            raw_address = item.p.text.split("\n")
-            phone = item.find_all("p")[1].text.replace("Phone:", "").strip()
-            hours_of_operation = item.find_all("p")[2].text.replace("\n", " ").strip()
-        else:
-            raw_address = item.find_all("p")[1].text.split("\n")
-            phone = item.find_all("p")[2].text.replace("Phone:", "").strip()
-            hours_of_operation = item.find_all("p")[3].text.replace("\n", " ").strip()
-
-        street_address = raw_address[0]
-        city = raw_address[1].split(",")[0]
-        state = raw_address[1].split(",")[1].split()[0]
-        zip_code = raw_address[1].split(",")[1].split()[1]
-        country_code = "US"
+    for store in stores:
+        location_name = store["title"]
+        raw_address = store["locationFields"]["address"]["streetAddress"].split(",")
+        street_address = " ".join(raw_address[:-3])
+        city = raw_address[-3].strip()
+        state_line = raw_address[-2].strip()
+        state = state_line.split()[0]
+        try:
+            zip_code = state_line.split()[1]
+        except:
+            zip_code = ""
+        country_code = raw_address[-1].strip()
         store_number = "<MISSING>"
-        location_type = "<MISSING>"
-
-        latitude = coords[i]["lat"]
-        longitude = coords[i]["lng"]
+        phone = store["locationFields"]["contactInformation"]["phoneNumber"]
+        latitude = store["locationFields"]["address"]["latitude"]
+        longitude = store["locationFields"]["address"]["longitude"]
+        raw_types = store["locationFields"]["locationType"]
+        location_type = raw_types[0]["name"]
+        if len(raw_types) > 1:
+            for row in raw_types[1:]:
+                location_type = (location_type + ", " + row["name"]).strip()
+        raw_hours = store["locationFields"]["lobbyHours"]["customHours"]
+        hours_of_operation = ""
+        if raw_hours:
+            for hours in raw_hours:
+                day = hours["day"]
+                if hours["isClosed"]:
+                    clean_hours = day + " Closed"
+                else:
+                    opens = hours["opens"]
+                    closes = hours["closes"]
+                    clean_hours = day + " " + opens + "-" + closes
+                    hours_of_operation = (
+                        hours_of_operation + " " + clean_hours
+                    ).strip()
+        else:
+            hours_of_operation = standard_hours
 
         sgw.write_row(
             SgRecord(
                 locator_domain=locator_domain,
-                page_url=base_link,
+                page_url="https://www.axiombanking.com/locations",
                 location_name=location_name,
                 street_address=street_address,
                 city=city,
