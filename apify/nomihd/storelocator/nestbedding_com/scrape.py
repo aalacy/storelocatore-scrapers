@@ -37,11 +37,23 @@ def fetch_data():
         ).strip()
 
         raw_address = store.xpath('.//div[@class="shop-info-address-line"]/text()')
-        street_address = raw_address[0].strip()
-        city_state_zip = raw_address[1].strip()
-        city = city_state_zip.split(",")[0].strip()
-        state = city_state_zip.split(",")[-1].strip().split(" ")[0].strip()
-        zip = city_state_zip.split(",")[-1].strip().split(" ")[-1].strip()
+
+        if "Location Closed" in "".join(raw_address).strip():
+            continue
+
+        if "Phoenix, AZ" == "".join(raw_address).strip():
+            street_address = "<MISSING>"
+            city_state = raw_address[0].strip()
+            city = city_state.split(",")[0].strip()
+            state = city_state.split(",")[-1].strip()
+            zip = "<MISSING>"
+
+        else:
+            street_address = raw_address[0].strip()
+            city_state_zip = raw_address[1].strip()
+            city = city_state_zip.split(",")[0].strip()
+            state = city_state_zip.split(",")[-1].strip().split(" ")[0].strip()
+            zip = city_state_zip.split(",")[-1].strip().split(" ")[-1].strip()
 
         country_code = "US"
 
@@ -61,6 +73,9 @@ def fetch_data():
             hours_list.append(f"{hour_info[0]}: {hour_info[1]}")
 
         hours_of_operation = "; ".join(hours_list)
+
+        if hours_of_operation.count("Permanently closed") == 7:
+            location_type = "Permanently closed"
 
         latitude = "".join(store.xpath('.//div[@class="map"]/@data-lat')).strip()
         longitude = "".join(store.xpath('.//div[@class="map"]/@data-long')).strip()
