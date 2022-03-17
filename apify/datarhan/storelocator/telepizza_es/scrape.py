@@ -41,6 +41,7 @@ def fetch_data():
 
                 location_name = poi_html.xpath(".//h2/text()")[0]
                 raw_address = poi_html.xpath('.//p[@class="prs"]/text()')
+                zip_code = loc_dom.xpath("//address/span[2]/text()")[0]
                 city = raw_address[-1]
                 if city.startswith("."):
                     city = city[1:]
@@ -59,7 +60,7 @@ def fetch_data():
                     street_address=raw_address[0],
                     city=city,
                     state="",
-                    zip_postal="",
+                    zip_postal=zip_code,
                     country_code="ES",
                     store_number="",
                     phone=phone,

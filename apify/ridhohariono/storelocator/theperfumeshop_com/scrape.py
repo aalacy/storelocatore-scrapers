@@ -66,10 +66,10 @@ def fetch_data():
         street_address = (
             info["address"]["streetAddress"].replace("The Perfume Shop", "")
         ).strip()
-        city = info["address"]["addressLocality"]
+        city = info["address"]["addressLocality"].replace("-", "").strip()
         state = MISSING
         zip_postal = info["address"]["postalCode"]
-        phone = info["telephone"]
+        phone = info["telephone"].replace("-", " ").strip()
         country_code = info["address"]["addressCountry"]
         location_type = info["@type"]
         hours_of_operation = (

@@ -1,78 +1,71 @@
-import csv
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
-from bs4 import BeautifulSoup
-import re
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from bs4 import BeautifulSoup as bs
 import json
 from sglogging import SgLogSetup
 
-logger = SgLogSetup().get_logger('tmphysiciannetwork_org')
+logger = SgLogSetup().get_logger("")
 
+_headers = {
+    "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
+}
 
+locator_domain = "https://www.torrancememorial.org"
+base_url = "https://www.torrancememorial.org/locations/"
 
-
-session = SgRequests()
-
-def write_output(data):
-    with open('data.csv', mode='w',newline="") as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
-        # Body
-        for row in data:
-            writer.writerow(row)
 
 def fetch_data():
-    base_url = "https://www.tmphysiciannetwork.org"
-    return_main_object=[]
-    r = session.get(base_url+'/locations')
-    soup=BeautifulSoup(r.text,'lxml')
-    output=[]
-    main=soup.find('ul',{"class":"results"}).find_all('li',{"class":'location'})
-    for dt in main:
-        name=dt['data-name'].strip()
-        lng=dt['data-longitude'].strip()
-        lat=dt['data-latitude'].strip()
-        city=dt['data-city'].strip()
-        state=dt['data-state'].upper()
-        zip=dt['data-zip'].strip()
-        address=dt['data-address'].strip()+" "+dt["data-address2"].strip()
-        storeno=dt['data-loc-id'].strip()
-        country="US"
-        phone = dt["data-phone"].strip()
-         # phone=''
-        # if dt.find('p',{"itemprop":"telephone"})!=None:
-        #     phone=dt.find('p',{"itemprop":"telephone"}).text
-        # link=dt.find('a')['href']
-        page_url = base_url+dt["data-domain"].strip()
-        r1 = session.get(page_url)
-        soup1=BeautifulSoup(r1.text,'lxml')
-        hour=''
-        if soup1.find('div',{"class":"hours-fax"})!=None:
-            hr=list(soup1.find('div',{"class":"hours-fax"}).stripped_strings)
-            del hr[0]
-            hour=' '.join(hr).strip()
-        store=[]
-        store.append(base_url)
-        store.append(name if name else "<MISSING>")
-        store.append(address if address else "<MISSING>")
-        store.append(city if city else "<MISSING>")
-        store.append(state if state else "<MISSING>")
-        store.append(zip if zip else "<MISSING>")
-        store.append(country if country else "<MISSING>")
-        store.append(storeno if storeno else "<MISSING>")
-        store.append(phone if phone else "<MISSING>")
-        store.append("<MISSING>")
-        store.append(lat if lat else "<MISSING>")
-        store.append(lng if lng else "<MISSING>")
-        store.append(hour if hour.strip() else "<MISSING>")
-        store.append(page_url if page_url else "<MISSING>")
-        # if zip not in output:
-        #     output.append(zip)
-        yield store
-        # logger.info(store)
-def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgRequests(proxy_country="us") as session:
+        options = bs(session.get(base_url, headers=_headers).text, "lxml").select(
+            "select#VsMasterPage_MainContent_LocationList_TopPaging_InternalDropDownList option"
+        )
+        for option in options:
+            url = locator_domain + option["value"].replace("~", "")
+            logger.info(url)
+            locations = bs(session.get(url, headers=_headers).text, "lxml").select(
+                "div.LocationsList li"
+            )
+            with SgRequests(proxy_country="us") as http:
+                for loc in locations:
+                    page_url = locator_domain + loc.a["href"]
+                    logger.info(page_url)
+                    sp1 = bs(http.get(page_url, headers=_headers).text, "lxml")
+                    _ = json.loads(
+                        sp1.select_one('script[type="application/ld+json"]').text
+                    )
+                    addr = _["address"]
+                    hours = [
+                        " ".join(hh.stripped_strings)
+                        for hh in sp1.select("div.Hours div.DaySchedule")
+                    ]
+                    yield SgRecord(
+                        page_url=page_url,
+                        location_name=_["name"],
+                        street_address=addr["streetAddress"],
+                        city=addr["addressLocality"],
+                        state=addr["addressRegion"],
+                        zip_postal=addr["postalCode"],
+                        latitude=_["geo"]["latitude"],
+                        longitude=_["geo"]["longitude"],
+                        country_code="US",
+                        phone=_.get("telephone"),
+                        locator_domain=locator_domain,
+                        hours_of_operation="; ".join(hours),
+                        raw_address=" ".join(
+                            loc.select_one("div.adr").stripped_strings
+                        ),
+                    )
 
-scrape()
+
+if __name__ == "__main__":
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID({SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.RAW_ADDRESS})
+        )
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)

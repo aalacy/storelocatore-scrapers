@@ -25,7 +25,7 @@ API_ENDPOINT_URLS = [
 ]
 MISSING = SgRecord.MISSING
 DOMAIN = "aegvision.com"
-MAX_WORKERS = 14
+MAX_WORKERS = 5
 
 headers = {
     "Accept": "application/json",
@@ -131,6 +131,8 @@ def scrape():
                     SgRecord.Headers.PAGE_URL,
                     SgRecord.Headers.STORE_NUMBER,
                     SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.LATITUDE,
+                    SgRecord.Headers.LONGITUDE,
                 }
             )
         )

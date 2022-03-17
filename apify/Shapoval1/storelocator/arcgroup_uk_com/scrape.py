@@ -10,12 +10,12 @@ from sgpostal.sgpostal import International_Parser, parse_address
 def fetch_data(sgw: SgWriter):
 
     locator_domain = "https://www.arcgroup.uk.com/"
-    page_url = "https://www.arcgroup.uk.com/#"
+    api_url = "https://www.arcgroup.uk.com/#"
     session = SgRequests()
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
-    r = session.get(page_url, headers=headers)
+    r = session.get(api_url, headers=headers)
     tree = html.fromstring(r.text)
     div = tree.xpath(
         '//div[@id="locations_content"]/div/div[contains(@class, "location ")]'
@@ -47,6 +47,18 @@ def fetch_data(sgw: SgWriter):
             .strip()
         )
         hours_of_operation = " ".join(hours_of_operation.split())
+        slug = (
+            "".join(d.xpath('.//a[contains(@href, "mailto")]/@href'))
+            .split("mailto:")[1]
+            .split("@")[0]
+            .strip()
+        )
+        latitude = r.text.split(f"var {slug}")[1].split("lat:")[1].split(",")[0]
+        longitude = r.text.split(f"var {slug}")[1].split("lng:")[1].split("}")[0]
+        slug_info = d.xpath(
+            f'.//preceding::li[@class="centres"]//ul[1]/li/a[contains(@href, "{slug}.")]/@href'
+        )
+        page_url = "".join(slug_info[0]).strip()
 
         row = SgRecord(
             locator_domain=locator_domain,
@@ -60,8 +72,8 @@ def fetch_data(sgw: SgWriter):
             store_number=SgRecord.MISSING,
             phone=phone,
             location_type=SgRecord.MISSING,
-            latitude=SgRecord.MISSING,
-            longitude=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
             hours_of_operation=hours_of_operation,
             raw_address=ad,
         )
