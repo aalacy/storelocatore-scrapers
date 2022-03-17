@@ -41,6 +41,13 @@ def fetch_data(sgw: SgWriter):
             hours_of_operation = hours_of_operation.replace("NA", "<MISSING>").strip()
         if hours_of_operation.count("<MISSING>") == 7:
             hours_of_operation = "<MISSING>"
+        if (
+            hours_of_operation.find(
+                "Monday  Tuesday  Wednesday  Thursday  Friday  Saturday  Sunday"
+            )
+            != -1
+        ):
+            hours_of_operation = "<MISSING>"
 
         row = SgRecord(
             locator_domain=locator_domain,
