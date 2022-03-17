@@ -54,6 +54,11 @@ def fetch_data():
                 street_address = street.split("(Walk", 1)[0]
             except:
                 pass
+            if "P.O. Box" in street_address:
+                street_address = street_address.split("P.O. Box")[0]
+            elif "(" in street_address:
+                street_address = street_address.split("(")[0]
+            street_address = street_address.replace(",", "")
             country_code = "US"
             yield SgRecord(
                 locator_domain=DOMAIN,

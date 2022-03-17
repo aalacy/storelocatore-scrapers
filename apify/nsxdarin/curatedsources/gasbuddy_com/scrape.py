@@ -1,6 +1,6 @@
 from sgrequests import SgRequests
 import json
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries, Grain_8
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries, Grain_2
 from sgscrape import simple_scraper_pipeline as sp
 from bs4 import BeautifulSoup as bs
 from sglogging import sglog
@@ -51,9 +51,7 @@ def set_session(search_code):
         "operationName": "LocationBySearchTerm",
     }
 
-    response = session.post(url, headers=headers, json=data, timeout=3).json()
-    with open("file.txt", "w", encoding="utf-8") as output:
-        json.dump(response, output, indent=4)
+    response = session.post(url, headers=headers, json=data, timeout=5).json()
 
     return [session, headers, response]
 
@@ -80,7 +78,7 @@ def get_data():
     url = "https://www.gasbuddy.com/graphql"
     search = DynamicZipSearch(
         country_codes=[SearchableCountries.USA],
-        granularity=Grain_8(),
+        granularity=Grain_2(),
     )
 
     x = 0
@@ -90,16 +88,6 @@ def get_data():
     for search_code in search:
         log.info(search_code)
         x = x + 1
-        if y == 500:
-            y = 0
-            response_stuff = set_session(search_code)
-            session = response_stuff[0]
-            headers = response_stuff[1]
-            response = response_stuff[2]
-
-        if x == 1000:
-            break
-
         if len(str(search_code)) == 4:
             search_code = "0" + str(search_code)
 
@@ -119,7 +107,7 @@ def get_data():
                 }
 
                 response = session.post(
-                    url, headers=headers, json=data, timeout=3
+                    url, headers=headers, json=data, timeout=5
                 ).json()
                 if (
                     response["data"]["locationBySearchTerm"]["stations"]["results"]
@@ -130,10 +118,21 @@ def get_data():
                     response = session_response[1]
 
             except Exception:
-                response_stuff = set_session(search_code)
-                session = response_stuff[0]
-                headers = response_stuff[1]
-                response = response_stuff[2]
+                breaker = 0
+                while True:
+                    breaker = breaker + 1
+                    if breaker == 10:
+                        log.info("We broke here")
+                        raise Exception
+                    try:
+                        response_stuff = set_session(search_code)
+                        session = response_stuff[0]
+                        headers = response_stuff[1]
+                        response = response_stuff[2]
+                        break
+
+                    except Exception:
+                        continue
 
         try:
             response["data"]["locationBySearchTerm"]["stations"]["results"]

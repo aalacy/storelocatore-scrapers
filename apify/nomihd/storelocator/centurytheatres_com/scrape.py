@@ -41,7 +41,8 @@ def fetch_data():
         json_list = store_sel.xpath('//script[@type="application/ld+json"]/text()')
 
         try:
-            for info in json_list:
+            for curr_json in json_list:
+                info = "".join(curr_json).strip()
                 if info[0] == "{":
                     data = json.loads(info)
                     for address in data["address"]:
@@ -52,6 +53,7 @@ def fetch_data():
                         country_code = address["addressCountry"]
                     phone = data["telephone"]
                     location_name = data["name"]
+                    log.info(location_name)
                     if "NOW CLOSED".lower() in location_name.lower():
                         continue
                     location_type = data["@type"]
