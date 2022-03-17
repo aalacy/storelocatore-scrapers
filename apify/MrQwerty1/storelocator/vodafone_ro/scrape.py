@@ -6,7 +6,7 @@ from sglogging import sglog
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 
 website = "https://www.vodafone.ro"
 page_url = "https://www.vodafone.ro/magazine-vodafone"
@@ -132,13 +132,13 @@ def fetch_data():
         city = get_JSON_object_variable(store, "localitate")
         state = get_JSON_object_variable(store, "judet")
         country_code = "RO"
-        latitude = str(get_JSON_object_variable(store, "lo"))
-        longitude = str(get_JSON_object_variable(store, "la"))
+        longitude = str(get_JSON_object_variable(store, "lo"))
+        latitude = str(get_JSON_object_variable(store, "la"))
 
         hoo = []
         for day in days:
-            hoo.append(f"day: {get_JSON_object_variable(store, day)}")
-        hours_of_operation = ", ".join(hoo)
+            hoo.append(f"{day}: {get_JSON_object_variable(store, day)}")
+        hours_of_operation = ";".join(hoo)
 
         yield SgRecord(
             locator_domain="vodafone.ro",
@@ -163,7 +163,11 @@ def fetch_data():
 def scrape():
     log.info(f"Start crawling {website} ...")
     start = time.time()
-    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(
+            SgRecordID({SgRecord.Headers.RAW_ADDRESS, SgRecord.Headers.LOCATION_NAME})
+        )
+    ) as writer:
         for rec in fetch_data():
             writer.write_row(rec)
     end = time.time()

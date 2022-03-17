@@ -132,7 +132,7 @@ def fetch_data():
                 )
             except:
                 hours = "<MISSING>"
-            if add != "":
+            if add != "" and "BR-3" in store:
                 yield SgRecord(
                     locator_domain=website,
                     page_url=loc,
@@ -154,7 +154,9 @@ def fetch_data():
 def scrape():
     results = fetch_data()
     with SgWriter(
-        deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
+        deduper=SgRecordDeduper(
+            RecommendedRecordIds.StoreNumberId, duplicate_streak_failure_factor=-1
+        )
     ) as writer:
         for rec in results:
             writer.write_row(rec)

@@ -29,6 +29,8 @@ def fetch_data():
             location_name = loc_dom.xpath(
                 '//div[@class="wpsl-locations-details"]/span/strong/text()'
             )[0]
+            if "Business Closed" in location_name:
+                continue
             street_address = raw_data[0]
             city = raw_data[1].split(", ")[0]
             if "Store Closed" in city:
@@ -37,7 +39,7 @@ def fetch_data():
                 city = city[:-1]
             state = raw_data[2]
             zip_code = raw_data[3]
-            phone = loc_dom.xpath('//div[@class="wpsl-contact-details"]/span/text()')
+            phone = loc_dom.xpath('//div[@class="wpsl-contact-details"]//a/text()')
             phone = phone[0] if phone else ""
             geo = (
                 loc_dom.xpath("//iframe/@src")[0]

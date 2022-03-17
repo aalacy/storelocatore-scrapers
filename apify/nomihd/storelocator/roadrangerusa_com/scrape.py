@@ -26,9 +26,14 @@ def fetch_data():
             page_url = search_url
 
             locator_domain = website
-            location_name = "".join(
-                store.xpath('.//h4[@class="store-location-teaser__address"]/text()')
-            ).strip()
+            location_name = (
+                "".join(
+                    store.xpath('.//h4[@class="store-location-teaser__address"]/text()')
+                )
+                .strip()
+                .replace("20 Frontage Rd.", "20 Frontage Rd,")
+                .strip()
+            )
 
             address = "".join(location_name).split("(")[0]
             if len(address.split(",")) == 3:
@@ -48,12 +53,23 @@ def fetch_data():
                     city = "Monahans"
 
             zip = "<MISSING>"
+            if len(state.split(" ")) > 1:
+                zip = state.split(" ")[-1].strip()
+                state = state.split(" ")[0].strip()
+
             country_code = "US"
 
             store_number = "<MISSING>"
             phone = "".join(store.xpath('.//a[contains(@href,"tel:")]/text()')).strip()
             location_type = "<MISSING>"
-            hours_of_operation = "<MISSING>"
+            hours_of_operation = (
+                "".join(store.xpath('.//div[@class="location_hours"]/text()'))
+                .strip()
+                .replace("STORE HOURS:", "")
+                .strip()
+                .replace("LIMITED HOURS:", "")
+                .strip()
+            )
             latitude = (
                 "".join(
                     store.xpath(
