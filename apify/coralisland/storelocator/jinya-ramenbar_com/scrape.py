@@ -79,6 +79,7 @@ def fetch_data():
             if len(zip_postal) < 5:
                 zip_postal = state.split()[1].strip() + " " + zip_postal.strip()
                 state = state.split()[0]
+                country_code = "CA"
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url=page_url,

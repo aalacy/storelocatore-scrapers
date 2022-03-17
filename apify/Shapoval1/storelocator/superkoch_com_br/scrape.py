@@ -22,6 +22,8 @@ def fetch_data(sgw: SgWriter):
 
         location_name = "".join(d.xpath("./p[1]//text()")).strip()
         ad = "".join(d.xpath("./p[2]//text()")).strip()
+        if location_name == "Tijucas / Hiper":
+            ad = "".join(d.xpath("./p[2]/text()[1]")).replace("\n", "").strip()
         a = parse_address(International_Parser(), ad)
         street_address = f"{a.street_address_1} {a.street_address_2}".replace(
             "None", ""
@@ -29,7 +31,8 @@ def fetch_data(sgw: SgWriter):
         state = a.state or "<MISSING>"
         postal = a.postcode or "<MISSING>"
         country_code = "BR"
-        city = a.city.replace("/", "").strip() or "<MISSING>"
+        city = a.city or "<MISSING>"
+        city = str(city).replace("/", "").strip()
         text = "".join(d.xpath(".//following-sibling::div[1]//a/@href"))
         try:
             if text.find("ll=") != -1:
@@ -52,6 +55,14 @@ def fetch_data(sgw: SgWriter):
                 or "<MISSING>"
             )
         hours_of_operation = "".join(d.xpath("./p[3]//text()")).strip()
+        if location_name == "Tijucas / Hiper":
+            hours_of_operation = (
+                "".join(d.xpath("./p[2]/text()[2]")).replace("\n", "").strip()
+            )
+            phone = (
+                "".join(d.xpath("./p[3]//text()")).replace("Telefone:", "").strip()
+                or "<MISSING>"
+            )
 
         row = SgRecord(
             locator_domain=locator_domain,
@@ -68,6 +79,7 @@ def fetch_data(sgw: SgWriter):
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hours_of_operation,
+            raw_address=ad,
         )
 
         sgw.write_row(row)

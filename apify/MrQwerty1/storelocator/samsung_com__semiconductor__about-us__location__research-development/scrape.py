@@ -13,7 +13,7 @@ def get_international(line):
         "None", ""
     ).strip()
     city = adr.city
-    state = adr.state
+    state = adr.state or SgRecord.MISSING
     postal = adr.postcode
 
     return street_address, city, state, postal
@@ -39,6 +39,9 @@ def fetch_data(sgw: SgWriter):
 
         raw_address = "".join(_tmp)
         street_address, city, state, postal = get_international(raw_address)
+        if state[0].isdigit():
+            postal = state
+            state = SgRecord.MISSING
 
         row = SgRecord(
             page_url=page_url,

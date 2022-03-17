@@ -98,6 +98,10 @@ def fetch_store(http, apiKey, store_number):
     else:
         street_address = route
 
+    if not street_address or street_address == MISSING:
+        if store["formatted_address"]:
+            street_address = store["formatted_address"].split(",")[0].strip()
+
     city = get_address_component(address, "locality")
     state = get_address_component(address, "administrative_area_level_1")
     zip_postal = get_address_component(address, "postal_code")
