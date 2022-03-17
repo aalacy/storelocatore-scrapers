@@ -103,6 +103,10 @@ def fetch_data():
             latitude, longitude = "".join(store.xpath("./@data-lat")), "".join(
                 store.xpath("./@data-lng")
             )
+            if latitude == "0":
+                latitude = "<MISSING>"
+            if longitude == "0":
+                longitude = "<MISSING>"
 
             yield SgRecord(
                 locator_domain=locator_domain,

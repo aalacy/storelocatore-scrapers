@@ -67,20 +67,24 @@ def fetch_data():
             elif "www.snipes.com" in link:
                 country_code = "Germany"
             r = session.get(link, headers=headers)
-            log.info(f"Fetching Stores from {link}")
+            log.info(f"Fetching Stores from {country_code}")
             try:
                 loclist = (
                     r.text.split('data-locations="')[1]
                     .split("data-icon=")[0]
                     .replace('}]"', "}]")
                 )
-            except:
+            except Exception as e:
+                log.info(f"loclist Error: {e}")
                 continue
+
             loclist = BeautifulSoup(loclist, "html.parser")
             try:
                 loclist = json.loads(str(loclist))
-            except:
+            except Exception as e:
+                log.info(f"loclist JSON Error: {e}")
                 continue
+
             for loc in loclist:
                 store_number = loc["id"]
                 page_url = "https://www.snipes.com/storedetails?sid=" + store_number
@@ -115,10 +119,13 @@ def fetch_data():
 
                 zip_postal = pa.postcode
                 zip_postal = zip_postal.strip() if zip_postal else MISSING
+
                 try:
                     phone = soup.select_one("a[href*=tel]")["href"].replace("tel:", "")
-                except:
+                except Exception as e:
+                    log.info(f"Phone Error: {e}")
                     phone = MISSING
+
                 hours_of_operation = (
                     soup.find(
                         "div",
@@ -131,6 +138,7 @@ def fetch_data():
                 )
                 if city is MISSING:
                     city = raw_address.split()[-1]
+
                 yield SgRecord(
                     locator_domain=DOMAIN,
                     page_url=page_url,
