@@ -103,6 +103,16 @@ def fetch_data():
                             ].replace("..", "")
                         if lurl not in locs:
                             locs.append(lurl)
+            if '"Teaser-cta Button--AAP" href="https://www.carquest.com/' in line:
+                items = line.split(
+                    '"Teaser-cta Button--AAP" href="https://www.carquest.com/'
+                )
+                for item in items:
+                    if "Store Details" in item:
+                        lurl = "https://www.carquest.com/" + item.split('"')[0]
+                        if lurl not in locs:
+                            locs.append(lurl)
+
     for loc in locs:
         loc = (
             loc.replace("&#39;", "%27")
@@ -191,6 +201,10 @@ def fetch_data():
                 if state == "PR":
                     country = "US"
                 name = "Advance Auto Parts #" + store
+                if "carquest" in loc:
+                    typ = "Carquest Auto Parts"
+                else:
+                    typ = "Advance Auto Parts"
                 yield SgRecord(
                     locator_domain=website,
                     page_url=loc,
