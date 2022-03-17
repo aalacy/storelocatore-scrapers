@@ -1,604 +1,274 @@
-import csv
 from sgrequests import SgRequests
-import time
 import json
-from sglogging import SgLogSetup
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries, Grain_2
+from sgscrape import simple_scraper_pipeline as sp
+from bs4 import BeautifulSoup as bs
+from sglogging import sglog
 
-logger = SgLogSetup().get_logger("gasbuddy_com")
-
-
-session = SgRequests()
-headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
-}
-
-states = [
-    "AK",
-    "AL",
-    "AR",
-    "AZ",
-    "CA",
-    "CO",
-    "CT",
-    "DC",
-    "DE",
-    "FL",
-    "GA",
-    "HI",
-    "IA",
-    "ID",
-    "IL",
-    "IN",
-    "KS",
-    "KY",
-    "LA",
-    "MA",
-    "MD",
-    "ME",
-    "MI",
-    "MN",
-    "MO",
-    "MS",
-    "MT",
-    "NC",
-    "ND",
-    "NE",
-    "NH",
-    "NJ",
-    "NM",
-    "NV",
-    "NY",
-    "OH",
-    "OK",
-    "OR",
-    "PA",
-    "RI",
-    "SC",
-    "SD",
-    "TN",
-    "UT",
-    "VA",
-    "VT",
-    "WA",
-    "WI",
-    "WV",
-    "WY",
-]
-
-provinces = ["AB", "BC", "MB", "NB", "NF", "NS", "NT", "QC", "PE", "QC", "SK"]
-
-txcounties = [
-    "2245:anderson",
-    "767:andrews",
-    "162:angelina",
-    "2027:aransas",
-    "2468:archer",
-    "1526:armstrong",
-    "207:atascosa",
-    "451:austin",
-    "867:bailey",
-    "2036:bandera",
-    "2282:bastrop",
-    "3164:baylor",
-    "1959:bee",
-    "2280:bell",
-    "2145:bexar",
-    "37:blanco",
-    "2706:bosque",
-    "1557:bowie",
-    "422:brazoria",
-    "1162:brazos",
-    "2046:brewster",
-    "2315:briscoe",
-    "1460:brooks",
-    "59:brown",
-    "1331:burleson",
-    "2844:burnet",
-    "1430:caldwell",
-    "1981:calhoun",
-    "79:callahan",
-    "2999:cameron",
-    "1945:camp",
-    "2887:carson",
-    "3194:cass",
-    "3184:castro",
-    "1107:chambers",
-    "2034:cherokee",
-    "2486:childress",
-    "1493:clay",
-    "2438:cochran",
-    "1:coke",
-    "1004:coleman",
-    "2265:collin",
-    "2243:collingsworth",
-    "1181:colorado",
-    "2417:comal",
-    "2558:comanche",
-    "2786:concho",
-    "2454:cooke",
-    "2453:coryell",
-    "2388:cottle",
-    "3149:crane",
-    "1687:crockett",
-    "496:crosby",
-    "795:culberson",
-    "2255:dallam",
-    "499:dallas",
-    "1294:dawson",
-    "188:deaf-smith",
-    "1613:delta",
-    "583:denton",
-    "3053:dewitt",
-    "2471:dickens",
-    "1486:dimmit",
-    "3193:donley",
-    "1982:duval",
-    "2801:eastland",
-    "2124:ector",
-    "2898:edwards",
-    "3136:ellis",
-    "406:el-paso",
-    "266:erath",
-    "1684:falls",
-    "151:fannin",
-    "3034:fayette",
-    "2606:fisher",
-    "1809:floyd",
-    "2404:foard",
-    "1454:fort-bend",
-    "1114:franklin",
-    "518:freestone",
-    "2148:frio",
-    "2561:gaines",
-    "2175:galveston",
-    "2547:garza",
-    "450:gillespie",
-    "2712:glasscock",
-    "2952:goliad",
-    "2926:gonzales",
-    "347:gray",
-    "1126:grayson",
-    "2719:gregg",
-    "2067:grimes",
-    "2862:guadalupe",
-    "1381:hale",
-    "2316:hall",
-    "2727:hamilton",
-    "2580:hansford",
-    "220:hardeman",
-    "1261:hardin",
-    "3094:harris",
-    "2480:harrison",
-    "2082:hartley",
-    "995:haskell",
-    "613:hays",
-    "1:hemphill",
-    "1077:henderson",
-    "2892:hidalgo",
-    "641:hill",
-    "2476:hockley",
-    "3119:hood",
-    "3219:hopkins",
-    "2785:houston",
-    "2666:howard",
-    "2731:hudspeth",
-    "3025:hunt",
-    "287:hutchinson",
-    "2788:irion",
-    "2528:jack",
-    "1191:jackson",
-    "3058:jasper",
-    "3124:jeff-davis",
-    "2510:jefferson",
-    "1306:jim-hogg",
-    "2974:jim-wells",
-    "283:johnson",
-    "2786:jones",
-    "560:karnes",
-    "304:kaufman",
-    "2978:kendall",
-    "2540:kent",
-    "2897:kerr",
-    "2830:kimble",
-    "2933:kinney",
-    "712:kleberg",
-    "2470:knox",
-    "2820:lamar",
-    "2292:lamb",
-    "72:lampasas",
-    "2126:la-salle",
-    "2634:lavaca",
-    "2311:lee",
-    "989:leon",
-    "225:liberty",
-    "1208:limestone",
-    "1992:lipscomb",
-    "1338:live-oak",
-    "2856:llano",
-    "57:lubbock",
-    "2075:lynn",
-    "2966:madison",
-    "2315:marion",
-    "1087:martin",
-    "2855:mason",
-    "1224:matagorda",
-    "137:maverick",
-    "1468:mcculloch",
-    "356:mclennan",
-    "2962:mcmullen",
-    "754:medina",
-    "2834:menard",
-    "2370:midland",
-    "2521:milam",
-    "1745:mills",
-    "2745:mitchell",
-    "2195:montague",
-    "2877:montgomery",
-    "2081:moore",
-    "1071:morris",
-    "2387:motley",
-    "2128:nacogdoches",
-    "2644:navarro",
-    "49:newton",
-    "742:nolan",
-    "1850:nueces",
-    "984:ochiltree",
-    "2159:oldham",
-    "2765:orange",
-    "395:palo-pinto",
-    "2704:panola",
-    "655:parker",
-    "2319:parmer",
-    "1693:pecos",
-    "1994:polk",
-    "1418:potter",
-    "1787:presidio",
-    "297:rains",
-    "1690:randall",
-    "1920:reagan",
-    "2913:real",
-    "2451:red-river",
-    "2908:reeves",
-    "1543:refugio",
-    "2078:roberts",
-    "2811:robertson",
-    "689:rockwall",
-    "487:runnels",
-    "58:rusk",
-    "2782:sabine",
-    "3065:san-augustine",
-    "545:san-jacinto",
-    "2064:san-patricio",
-    "2794:san-saba",
-    "2833:schleicher",
-    "1763:scurry",
-    "2611:shackelford",
-    "50:shelby",
-    "1991:sherman",
-    "1109:smith",
-    "941:somervell",
-    "1662:starr",
-    "3151:stephens",
-    "2713:sterling",
-    "2544:stonewall",
-    "1638:sutton",
-    "1482:swisher",
-    "2576:tarrant",
-    "2668:taylor",
-    "2873:terrell",
-    "2930:terry",
-    "2542:throckmorton",
-    "1399:titus",
-    "2769:tom-green",
-    "2879:travis",
-    "2093:trinity",
-    "2624:tyler",
-    "3203:upshur",
-    "154:upton",
-    "2039:uvalde",
-    "1326:val-verde",
-    "1005:van-zandt",
-    "113:victoria",
-    "2802:walker",
-    "955:waller",
-    "1226:ward",
-    "1580:washington",
-    "1728:webb",
-    "264:wharton",
-    "2163:wheeler",
-    "600:wichita",
-    "1553:wilbarger",
-    "1780:willacy",
-    "1537:williamson",
-    "938:wilson",
-    "2172:winkler",
-    "2972:wise",
-]
+log = sglog.SgLogSetup().get_logger(logger_name="gasbuddy")
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "open_status",
-                "status",
-                "branding_type",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
+def extract_json(html_string):
+    json_objects = []
+    count = 0
+
+    brace_count = 0
+    for element in html_string:
+
+        if element == "{":
+            brace_count = brace_count + 1
+            if brace_count == 1:
+                start = count
+
+        elif element == "}":
+            brace_count = brace_count - 1
+            if brace_count == 0:
+                end = count
+                try:
+                    if "latitude" in html_string[start : end + 1]:
+                        json_objects.append(json.loads(html_string[start : end + 1]))
+                except Exception:
+                    pass
+        count = count + 1
+
+    return json_objects
 
 
-def fetch_data():
-    locinfo = []
-    website = "gasbuddy.com"
-    for state in states:
-        count = 0
-        Found = True
-        while Found:
-            Found = False
-            time.sleep(1)
-            logger.info(state + ": " + str(count))
-            url = (
-                "https://www.gasbuddy.com/assets-v2/api/stations?regionCode="
-                + state.strip()
-                + "&fuel=1&maxAge=0&cursor="
-                + str(count)
-                + "&countryCode=US"
-            )
-            r = session.get(url, headers=headers)
-            count = count + 25
+def set_session(search_code):
+    session = SgRequests(retry_behavior=False)
+    url = "https://www.gasbuddy.com/graphql"
+    headers = {
+        "User-Agent": "PostmanRuntime/7.19.0",
+        "Upgrade-Insecure-Requests": "1",
+        "DNT": "1",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Accept-Language": "en-US,en;q=0.5",
+        "Accept-Encoding": "gzip, deflate",
+    }
+    data = {
+        "query": "query LocationBySearchTerm($brandId: Int, $cursor: String, $fuel: Int, $lat: Float, $lng: Float, $maxAge: Int, $search: String) {\n  locationBySearchTerm(lat: $lat, lng: $lng, search: $search) {\n    countryCode\n    displayName\n    latitude\n    longitude\n    regionCode\n    stations(brandId: $brandId, cursor: $cursor, fuel: $fuel, maxAge: $maxAge) {\n      count\n      cursor {\n        next\n        __typename\n      }\n      results {\n        address {\n          country\n          line_1\n          line_2\n          locality\n          postal_code\n          region\n          __typename\n        }\n        badges {\n          badgeId\n          callToAction\n          campaignId\n          clickTrackingUrl\n          description\n          detailsImageUrl\n          detailsImpressionTrackingUrls\n          imageUrl\n          impressionTrackingUrls\n          targetUrl\n          title\n          __typename\n        }\n        brandings {\n          brand_id\n          branding_type\n          __typename\n        }\n        brands {\n          brand_id\n          image_url\n          name\n          __typename\n        }\n        emergency_status {\n          has_diesel {\n            nick_name\n            report_status\n            update_date\n            __typename\n          }\n          has_gas {\n            nick_name\n            report_status\n            update_date\n            __typename\n          }\n          has_power {\n            nick_name\n            report_status\n            update_date\n            __typename\n          }\n          __typename\n        }\n        enterprise\n        fuels\n        id\n        name\n        offers {\n          discounts {\n            grades\n            pwgb_discount\n            __typename\n          }\n          types\n          __typename\n        }\n        pay_status {\n          is_pay_available\n          __typename\n        }\n        prices {\n          cash {\n            nickname\n            posted_time\n            price\n            __typename\n          }\n          credit {\n            nickname\n            posted_time\n            price\n            __typename\n          }\n          discount\n          fuel_product\n          __typename\n        }\n        ratings_count\n        star_rating\n        __typename\n      }\n      __typename\n    }\n    trends {\n      areaName\n      today\n      todayLow\n      trend\n      __typename\n    }\n    __typename\n  }\n}\n",
+        "variables": {"fuel": 1, "maxAge": 0, "search": search_code},
+        "operationName": "LocationBySearchTerm",
+    }
+
+    response = session.post(url, headers=headers, json=data, timeout=5).json()
+
+    return [session, headers, response]
+
+
+def set_get_session(page_url):
+    x = 0
+    while True:
+        x = x + 1
+        if x == 10:
+            raise Exception
+        try:
+            session = SgRequests(retry_behavior=False)
+            page_response = session.get(
+                page_url, headers={"User-Agent": "PostmanRuntime/7.19.0"}, timeout=5
+            ).text
+            break
+        except Exception:
+            continue
+
+    return [session, page_response]
+
+
+def get_data():
+    url = "https://www.gasbuddy.com/graphql"
+    search = DynamicZipSearch(
+        country_codes=[SearchableCountries.USA],
+        granularity=Grain_2(),
+    )
+
+    x = 0
+    y = 0
+    error_count = 0
+    page_urls = []
+    for search_code in search:
+        log.info(search_code)
+        x = x + 1
+        if len(str(search_code)) == 4:
+            search_code = "0" + str(search_code)
+
+        if y == 400:
+            y = 0
+            response_stuff = set_session(search_code)
+            session = response_stuff[0]
+            headers = response_stuff[1]
+            response = response_stuff[2]
+
+        else:
             try:
-                for item in json.loads(r.content)["stations"]:
-                    Found = True
-                    store = item["id"]
-                    country = item["address"]["country"]
-                    name = item["name"]
-                    typ = item["item_type"]
-                    typ = str(typ).replace("[", "").replace("]", "").replace("'", "")
-                    add = item["address"]["line_1"] + " " + item["address"]["line_2"]
-                    add = add.strip()
-                    city = item["address"]["locality"]
-                    state = item["address"]["region"]
-                    zc = item["address"]["postal_code"]
-                    phone = item["phone"]
-                    try:
-                        hours = item["opening_hours"]
-                    except:
-                        hours = "<MISSING>"
-                    lat = item["latitude"]
-                    lng = item["longitude"]
-                    loc = "<MISSING>"
-                    if phone == "" or phone is None:
-                        phone = "<MISSING>"
-                    if zc == "":
-                        zc = "<MISSING>"
-                    os = item["open_status"]
-                    stat = item["status"]
-                    if state == "":
-                        state = "<MISSING>"
-                    add = add.replace('"', "'")
-                    btype = ""
-                    try:
-                        for brand in item["brandings"]:
-                            if btype == "":
-                                btype = brand["branding_type"]
-                            else:
-                                btype = btype + ", " + brand["branding_type"]
-                    except:
-                        btype = "<MISSING>"
-                    addinfo = add + "|" + city + "|" + state + "|" + zc
-                    if addinfo not in locinfo:
-                        locinfo.append(addinfo)
-                        yield [
-                            website,
-                            loc,
-                            os,
-                            stat,
-                            btype,
-                            name,
-                            add,
-                            city,
-                            state,
-                            zc,
-                            country,
-                            store,
-                            phone,
-                            typ,
-                            lat,
-                            lng,
-                            hours,
-                        ]
-            except:
-                Found = False
+                data = {
+                    "query": "query LocationBySearchTerm($brandId: Int, $cursor: String, $fuel: Int, $lat: Float, $lng: Float, $maxAge: Int, $search: String) {\n  locationBySearchTerm(lat: $lat, lng: $lng, search: $search) {\n    countryCode\n    displayName\n    latitude\n    longitude\n    regionCode\n    stations(brandId: $brandId, cursor: $cursor, fuel: $fuel, maxAge: $maxAge) {\n      count\n      cursor {\n        next\n        __typename\n      }\n      results {\n        address {\n          country\n          line_1\n          line_2\n          locality\n          postal_code\n          region\n          __typename\n        }\n        badges {\n          badgeId\n          callToAction\n          campaignId\n          clickTrackingUrl\n          description\n          detailsImageUrl\n          detailsImpressionTrackingUrls\n          imageUrl\n          impressionTrackingUrls\n          targetUrl\n          title\n          __typename\n        }\n        brandings {\n          brand_id\n          branding_type\n          __typename\n        }\n        brands {\n          brand_id\n          image_url\n          name\n          __typename\n        }\n        emergency_status {\n          has_diesel {\n            nick_name\n            report_status\n            update_date\n            __typename\n          }\n          has_gas {\n            nick_name\n            report_status\n            update_date\n            __typename\n          }\n          has_power {\n            nick_name\n            report_status\n            update_date\n            __typename\n          }\n          __typename\n        }\n        enterprise\n        fuels\n        id\n        name\n        offers {\n          discounts {\n            grades\n            pwgb_discount\n            __typename\n          }\n          types\n          __typename\n        }\n        pay_status {\n          is_pay_available\n          __typename\n        }\n        prices {\n          cash {\n            nickname\n            posted_time\n            price\n            __typename\n          }\n          credit {\n            nickname\n            posted_time\n            price\n            __typename\n          }\n          discount\n          fuel_product\n          __typename\n        }\n        ratings_count\n        star_rating\n        __typename\n      }\n      __typename\n    }\n    trends {\n      areaName\n      today\n      todayLow\n      trend\n      __typename\n    }\n    __typename\n  }\n}\n",
+                    "variables": {"fuel": 1, "maxAge": 0, "search": search_code},
+                    "operationName": "LocationBySearchTerm",
+                }
 
-    website = "gasbuddy.com"
-    for county in txcounties:
-        count = 0
-        cname = county.split(":")[1]
-        cid = county.split(":")[0]
-        Found = True
-        while Found:
-            Found = False
-            time.sleep(1)
-            logger.info(county + ": " + str(count))
-            url = (
-                "https://www.gasbuddy.com/assets-v2/api/stations?area="
-                + cname.strip()
-                + "&countyId="
-                + cid.strip()
-                + "&cursor="
-                + str(count)
-                + "&regionCode=TX&countryCode=US"
-            )
-            r = session.get(url, headers=headers)
-            count = count + 25
-            try:
-                for item in json.loads(r.content)["stations"]:
-                    Found = True
-                    store = item["id"]
-                    country = item["address"]["country"]
-                    name = item["name"]
-                    typ = item["item_type"]
-                    typ = str(typ).replace("[", "").replace("]", "").replace("'", "")
-                    add = item["address"]["line_1"] + " " + item["address"]["line_2"]
-                    add = add.strip()
-                    city = item["address"]["locality"]
-                    state = item["address"]["region"]
-                    zc = item["address"]["postal_code"]
-                    phone = item["phone"]
-                    try:
-                        hours = item["opening_hours"]
-                    except:
-                        hours = "<MISSING>"
-                    lat = item["latitude"]
-                    lng = item["longitude"]
-                    loc = "<MISSING>"
-                    if phone == "" or phone is None:
-                        phone = "<MISSING>"
-                    if zc == "":
-                        zc = "<MISSING>"
-                    os = item["open_status"]
-                    stat = item["status"]
-                    if state == "":
-                        state = "<MISSING>"
-                    add = add.replace('"', "'")
-                    btype = ""
-                    try:
-                        for brand in item["brandings"]:
-                            if btype == "":
-                                btype = brand["branding_type"]
-                            else:
-                                btype = btype + ", " + brand["branding_type"]
-                    except:
-                        btype = "<MISSING>"
-                    addinfo = add + "|" + city + "|" + state + "|" + zc
-                    if addinfo not in locinfo:
-                        locinfo.append(addinfo)
-                        yield [
-                            website,
-                            loc,
-                            os,
-                            stat,
-                            btype,
-                            name,
-                            add,
-                            city,
-                            state,
-                            zc,
-                            country,
-                            store,
-                            phone,
-                            typ,
-                            lat,
-                            lng,
-                            hours,
-                        ]
-            except:
-                Found = False
+                response = session.post(
+                    url, headers=headers, json=data, timeout=5
+                ).json()
+                if (
+                    response["data"]["locationBySearchTerm"]["stations"]["results"]
+                    is None
+                ):
+                    session_response = set_session(search_code)
+                    session = session_response[0]
+                    response = session_response[1]
 
-    website = "gasbuddy.com"
-    for state in provinces:
-        count = 0
-        Found = True
-        while Found:
-            Found = False
-            time.sleep(1)
-            logger.info(state + ": " + str(count))
-            url = (
-                "https://www.gasbuddy.com/assets-v2/api/stations?regionCode="
-                + state.strip()
-                + "&fuel=1&maxAge=0&cursor="
-                + str(count)
-                + "&countryCode=CA"
-            )
-            r = session.get(url, headers=headers)
-            count = count + 25
+            except Exception:
+                breaker = 0
+                while True:
+                    breaker = breaker + 1
+                    if breaker == 10:
+                        log.info("We broke here")
+                        raise Exception
+                    try:
+                        response_stuff = set_session(search_code)
+                        session = response_stuff[0]
+                        headers = response_stuff[1]
+                        response = response_stuff[2]
+                        break
+
+                    except Exception:
+                        continue
+
+        try:
+            response["data"]["locationBySearchTerm"]["stations"]["results"]
+
+        except Exception:
+            continue
+
+        y = y + 1
+        log.info("here")
+        for location in response["data"]["locationBySearchTerm"]["stations"]["results"]:
+            locator_domain = "gasbuddy.com"
+            page_url = "https://www.gasbuddy.com/station/" + location["id"]
+            if page_url in page_urls:
+                continue
+
+            page_urls.append(page_url)
+            log.info(page_url)
+            location_name = location["name"]
+
+            city = location["address"]["locality"]
+            store_number = location["id"]
+            address = (
+                location["address"]["line_1"] + " " + location["address"]["line_2"]
+            ).strip()
+            state = location["address"]["region"]
+            zipp = location["address"]["postal_code"]
+            location_type = "fuel_station"
+            country_code = location["address"]["country"]
+
+            if y == 0:
+                page_stuff = set_get_session(page_url)
+                session = page_stuff[0]
             try:
-                for item in json.loads(r.content)["stations"]:
-                    Found = True
-                    store = item["id"]
-                    country = item["address"]["country"]
-                    name = item["name"]
-                    typ = item["item_type"]
-                    typ = str(typ).replace("[", "").replace("]", "").replace("'", "")
-                    add = item["address"]["line_1"] + " " + item["address"]["line_2"]
-                    add = add.strip()
-                    city = item["address"]["locality"]
-                    state = item["address"]["region"]
-                    zc = item["address"]["postal_code"]
-                    phone = item["phone"]
-                    try:
-                        hours = item["opening_hours"]
-                    except:
-                        hours = "<MISSING>"
-                    lat = item["latitude"]
-                    lng = item["longitude"]
-                    loc = "<MISSING>"
-                    if phone == "" or phone is None:
-                        phone = "<MISSING>"
-                    if zc == "":
-                        zc = "<MISSING>"
-                    os = item["open_status"]
-                    stat = item["status"]
-                    if state == "":
-                        state = "<MISSING>"
-                    add = add.replace('"', "'")
-                    btype = ""
-                    try:
-                        for brand in item["brandings"]:
-                            if btype == "":
-                                btype = brand["branding_type"]
-                            else:
-                                btype = btype + ", " + brand["branding_type"]
-                    except:
-                        btype = "<MISSING>"
-                    addinfo = add + "|" + city + "|" + state + "|" + zc
-                    if addinfo not in locinfo:
-                        locinfo.append(addinfo)
-                        yield [
-                            website,
-                            loc,
-                            os,
-                            stat,
-                            btype,
-                            name,
-                            add,
-                            city,
-                            state,
-                            zc,
-                            country,
-                            store,
-                            phone,
-                            typ,
-                            lat,
-                            lng,
-                            hours,
-                        ]
-            except:
-                Found = False
+                page_response = session.get(
+                    page_url, headers={"User-Agent": "PostmanRuntime/7.19.0"}, timeout=5
+                ).text
+                page_soup = bs(page_response, "html.parser")
+                if (
+                    '{"message":"Cannot return null for non-nullable field StationHours.status."}'
+                    in page_response
+                ):
+                    continue
+                page_soup.find("img")
+
+            except Exception:
+                page_stuff = set_get_session(page_url)
+                session = page_stuff[0]
+                page_response = page_stuff[1]
+                page_soup = bs(page_response, "html.parser")
+                page_soup.find("img")
+
+            try:
+                phone = page_soup.find(
+                    "a", attrs={"class": "StationInfoBox-module__phoneLink___2LtAk"}
+                ).text.strip()
+
+            except Exception:
+                phone = "<MISSING>"
+            json_objects = extract_json(page_response)
+
+            try:
+                latitude = json_objects[-1]["@graph"][-1]["geo"]["latitude"]
+                longitude = json_objects[-1]["@graph"][-1]["geo"]["longitude"]
+                search.found_location_at(latitude, longitude)
+            except Exception:
+                error_count = error_count + 1
+                with open("file.txt", "w", encoding="utf-8") as output:
+                    json.dump(json_objects, output, indent=4)
+                latitude = "<MISSING>"
+                longitude = "<MISSING>"
+
+            hours = ""
+            hours_parts = page_soup.find_all(
+                "span", attrs={"class": "StationHours-module__statusOpen___360-J"}
+            )
+            for part in hours_parts:
+                hours = hours + part.text.strip() + ", "
+
+            hours = hours[:-2]
+
+            if hours == "":
+                hours = "<MISSING>"
+
+            yield {
+                "locator_domain": locator_domain,
+                "page_url": page_url,
+                "location_name": location_name,
+                "latitude": latitude,
+                "longitude": longitude,
+                "city": city,
+                "store_number": store_number,
+                "street_address": address,
+                "state": state,
+                "zip": zipp,
+                "phone": phone,
+                "location_type": location_type,
+                "hours": hours,
+                "country_code": country_code,
+            }
+
+    log.info(error_count)
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    field_defs = sp.SimpleScraperPipeline.field_definitions(
+        locator_domain=sp.MappingField(mapping=["locator_domain"]),
+        page_url=sp.MappingField(mapping=["page_url"], part_of_record_identity=True),
+        location_name=sp.MappingField(
+            mapping=["location_name"], part_of_record_identity=True
+        ),
+        latitude=sp.MappingField(mapping=["latitude"], part_of_record_identity=True),
+        longitude=sp.MappingField(mapping=["longitude"], part_of_record_identity=True),
+        street_address=sp.MultiMappingField(
+            mapping=["street_address"], is_required=False
+        ),
+        city=sp.MappingField(
+            mapping=["city"],
+        ),
+        state=sp.MappingField(mapping=["state"], is_required=False),
+        zipcode=sp.MultiMappingField(mapping=["zip"], is_required=False),
+        country_code=sp.MappingField(mapping=["country_code"]),
+        phone=sp.MappingField(mapping=["phone"], is_required=False),
+        store_number=sp.MappingField(
+            mapping=["store_number"], part_of_record_identity=True
+        ),
+        hours_of_operation=sp.MappingField(mapping=["hours"], is_required=False),
+        location_type=sp.MappingField(mapping=["location_type"], is_required=False),
+    )
+
+    pipeline = sp.SimpleScraperPipeline(
+        scraper_name="Crawler",
+        data_fetcher=get_data,
+        field_definitions=field_defs,
+        log_stats_interval=15,
+    )
+    pipeline.run()
 
 
 scrape()

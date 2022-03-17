@@ -25,6 +25,8 @@ def fetch_data(sgw: SgWriter):
         hours = d.xpath(".//dd[contains(@class, 'hours')]//text()")
         hours = list(filter(None, [h.strip() for h in hours]))
         hours_of_operation = ";".join(hours)
+        if ";Drive" in hours_of_operation:
+            hours_of_operation = hours_of_operation.split(";Drive")[0].strip()
 
         row = SgRecord(
             page_url=page_url,
