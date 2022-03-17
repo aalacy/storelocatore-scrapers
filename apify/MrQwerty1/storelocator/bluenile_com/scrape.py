@@ -5,7 +5,6 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
-from sgselenium import SgChrome
 from urllib.parse import unquote
 from sglogging import SgLogSetup
 from sgselenium import SgChrome
@@ -26,6 +25,7 @@ def get_urls(driver):
     time.sleep(120)
     driver.execute_script("open('https://www.bluenile.com/jewelry-stores')")
     driver.refresh()
+    time.sleep(30)
     source = driver.page_source
     logger.info(source)
     tree = html.fromstring(source)
@@ -38,9 +38,11 @@ def fetch_data(sgw: SgWriter):
     ).driver() as driver:
 
         urls = get_urls(driver)
+        logger.info(urls)
         for page_url in urls:
             driver.get(page_url)
-            time.sleep(60)
+            logger.info(urls)
+            time.sleep(10)
             source = driver.page_source
             tree = html.fromstring(source)
 
