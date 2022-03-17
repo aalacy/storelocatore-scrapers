@@ -8,7 +8,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 def fetch_data(sgw: SgWriter):
 
     locator_domain = "http://pressecafe.com/fr/"
-    api_url = "http://pressecafe.com/fr/stores/?ajax=1&lat=45.5086699&lng=-73.5539925&dist=5000000"
+    api_url = "http://pressecafe.com/fr/stores/?ajax=1&lat=0.37540639340998183&lng=0&dist=19895123.67285176"
     session = SgRequests()
 
     r = session.get(api_url)
