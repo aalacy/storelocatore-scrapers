@@ -22,7 +22,7 @@ def fetch_data():
     soup = BeautifulSoup(page.text, "html.parser")
     maindiv = soup.find("div", {"id": "usa3"})
     divs = maindiv.findAll("div")
-    n = 2
+
     for div in divs:
         dets = div.findAll("div")
         for linka in dets:
@@ -69,8 +69,6 @@ def fetch_data():
             )
         except:
             lat = longt = "<MISSING>"
-        p = n + 1
-
         if flag == 1:
             start = td.find("|", 3)
             title = td[1:start]
