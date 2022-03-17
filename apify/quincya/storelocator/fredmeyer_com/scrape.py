@@ -1,4 +1,5 @@
 import json
+import time
 
 from bs4 import BeautifulSoup
 
@@ -33,20 +34,33 @@ def fetch_data(sgw: SgWriter):
     log.info("Processing " + str(len(items)) + " links ...")
     for i, item in enumerate(items):
         link = item.text
-        if "stores/details" in link:
-            req = session.get(link, headers=headers)
-            base = BeautifulSoup(req.text, "lxml")
-
-            script = base.find("script", attrs={"type": "application/ld+json"})
-            if not script:
-                log.info("Retrying .. " + link)
-                session = SgRequests()
+        if "stores/search" not in link:
+            log.info(link)
+            try:
                 req = session.get(link, headers=headers)
                 base = BeautifulSoup(req.text, "lxml")
-                script = base.find("script", attrs={"type": "application/ld+json"})
-            else:
-                pass
-            store = json.loads(script.contents[0])
+            except:
+                try:
+                    time.sleep(5)
+                    session = SgRequests()
+                    time.sleep(4)
+                    req = session.get(link, headers=headers)
+                    base = BeautifulSoup(req.text, "lxml")
+                except:
+                    time.sleep(10)
+                    session = SgRequests()
+                    time.sleep(10)
+                    req = session.get(link, headers=headers)
+                    base = BeautifulSoup(req.text, "lxml")
+
+            try:
+                script = base.find(
+                    "script", attrs={"type": "application/ld+json"}
+                ).contents[0]
+            except:
+                log.info(link)
+                raise
+            store = json.loads(script)
             location_name = store["name"]
 
             try:
