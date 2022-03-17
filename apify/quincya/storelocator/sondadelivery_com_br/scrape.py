@@ -1,6 +1,6 @@
 from bs4 import BeautifulSoup
 
-from sgscrape import sgpostal as parser
+from sgpostal.sgpostal import parse_address_intl
 
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
@@ -29,7 +29,7 @@ def fetch_data(sgw: SgWriter):
         location_name = item.h3.text.strip()
         raw_data = list(item.p.stripped_strings)
         raw_address = raw_data[0]
-        addr = parser.parse_address_intl(raw_address)
+        addr = parse_address_intl(raw_address)
         street_address = addr.street_address_1
         city = addr.city
         state = addr.state

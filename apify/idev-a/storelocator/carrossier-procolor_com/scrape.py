@@ -27,13 +27,14 @@ max_workers = 24
 def fetchConcurrentSingle(_):
     location_name = _["store"].replace("&#8217;", "'")
     slug = (
-        location_name.replace("'", "")
-        .replace("-", "")
+        location_name.lower()
+        .replace("'", "")
         .replace("–", "")
         .replace(".", "")
         .replace("é", "e")
+        .replace("è", "e")
         .replace("ô", "o")
-        .replace("/", "")
+        .replace("/", " ")
         .lower()
     )
     slug = "-".join([ss.strip() for ss in slug.split() if ss.strip()])
