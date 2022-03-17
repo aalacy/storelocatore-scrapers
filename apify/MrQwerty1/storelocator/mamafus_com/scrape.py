@@ -26,7 +26,7 @@ def fetch_data(sgw: SgWriter):
         csz = csz.split(", ")[1]
         state, postal = csz.split()
 
-        text = tree.xpath(f"//div/@data-block-json")[cnt]
+        text = tree.xpath("//div/@data-block-json")[cnt]
         cnt += 1
 
         j = json.loads(text)["location"]
