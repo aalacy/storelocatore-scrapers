@@ -88,11 +88,14 @@ def fetch_data():
             state = MISSING
         country_code = row["countryCode"]
         location_type = "BOUTIQUE" if row["is_boutique"] == 1 else "RETAILERS"
-        phone = (
-            store.find("a", {"class": "ow-store-view__tel"})
-            .text.replace("T.", "")
-            .strip()
-        )
+        try:
+            phone = (
+                store.find("a", {"class": "ow-store-view__tel"})
+                .text.replace("T.", "")
+                .strip()
+            )
+        except:
+            phone = MISSING
         if phone == MISSING:
             phone = row["contacts"]["phone"]
             if not phone:
