@@ -8,7 +8,7 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgselenium import SgChrome
 from urllib.parse import unquote
 from sglogging import SgLogSetup
-from selenium_stealth import stealth
+from sgselenium import SgChrome
 
 logger = SgLogSetup().get_logger("bluenile.com")
 
@@ -24,6 +24,7 @@ def get_urls(driver):
     driver.get("https://www.bluenile.com/jewelry-stores")
     driver.execute_script("open('https://www.bluenile.com/jewelry-stores')")
     time.sleep(120)
+    driver.execute_script("open('https://www.bluenile.com/jewelry-stores')")
     driver.refresh()
     source = driver.page_source
     logger.info(source)
@@ -32,16 +33,9 @@ def get_urls(driver):
 
 
 def fetch_data(sgw: SgWriter):
-    with SgChrome(user_agent=user_agent, is_headless=True) as driver:
-        stealth(
-            driver,
-            languages=["en-US", "en"],
-            vendor="Google Inc.",
-            platform="Win32",
-            webgl_vendor="Intel Inc.",
-            renderer="Intel Iris OpenGL Engine",
-            fix_hairline=True,
-        )
+    with SgChrome(
+        user_agent=user_agent, is_headless=False, seleniumwire_auto_config=False
+    ).driver() as driver:
 
         urls = get_urls(driver)
         for page_url in urls:
