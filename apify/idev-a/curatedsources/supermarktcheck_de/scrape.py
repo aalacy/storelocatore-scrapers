@@ -203,6 +203,7 @@ def fetch_data():
                         break
                     page += 1
                     for page_url, sp2 in fetchConcurrentList(locations):
+                        logger.info(page_url)
                         raw_address = " ".join(
                             list(sp2.select_one("div.card-body p").stripped_strings)
                         )
@@ -214,7 +215,9 @@ def fetch_data():
                             -1
                         ]
                         _ = json.loads(
-                            sp2.select_one('script[type="application/ld+json"]').text
+                            sp2.select_one(
+                                'script[type="application/ld+json"]'
+                            ).text.replace("}	      	      {", "}	      	      ,{")
                         )
                         addr = _["address"]
                         city = addr["addressLocality"]

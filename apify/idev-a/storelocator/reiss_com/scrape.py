@@ -95,6 +95,9 @@ def fetch_global():
                         _addr = block[: x - 1]
                     if "Monday" in bb:
                         _addr = block[: x - 1]
+                        hours = block[x:]
+                        if hours and hours[0] == "Monday:":
+                            hours = []
                 if not _addr:
                     _addr = block
 

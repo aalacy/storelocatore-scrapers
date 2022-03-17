@@ -37,6 +37,10 @@ def fetch_data(sgw: SgWriter):
             phone = "<MISSING>"
         if postal == "NA":
             postal = "<MISSING>"
+        if hours_of_operation.find("NA") != -1:
+            hours_of_operation = hours_of_operation.replace("NA", "<MISSING>").strip()
+        if hours_of_operation.count("<MISSING>") == 7:
+            hours_of_operation = "<MISSING>"
 
         row = SgRecord(
             locator_domain=locator_domain,
