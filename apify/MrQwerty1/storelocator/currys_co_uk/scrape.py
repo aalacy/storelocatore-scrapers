@@ -6,7 +6,7 @@ from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import ssl
-import json
+
 
 try:
     _create_unverified_https_context = (
