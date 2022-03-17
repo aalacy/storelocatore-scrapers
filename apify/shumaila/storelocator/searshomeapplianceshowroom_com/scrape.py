@@ -144,7 +144,7 @@ def fetch_data():
                         lat = div["storeDetails"]["latitude"]
                         break
             except:
-                store = lat = longt = link = "<MISSING>"
+                continue
             yield SgRecord(
                 locator_domain="https://www.searshomeapplianceshowroom.com/",
                 page_url=link,

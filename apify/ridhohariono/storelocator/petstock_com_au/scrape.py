@@ -63,6 +63,8 @@ def fetch_data():
         addr = row["address"]
         street_address = f"{addr['address_line1']} {addr['address_line2']}".strip()
         city = addr["suburb"]
+        if "2A" in city:
+            city = location_name.replace("PETstock", "").strip()
         state = addr["state"]
         zip_postal = addr["postcode"]
         country_code = "AU" if addr["country"] == "Australia" else addr["country"]

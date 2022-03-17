@@ -29,67 +29,63 @@ def fetch_data(sgw: SgWriter):
         for j in js:
             city_id = j.get("id")
             city = j.get("text")
+            cookies = {
+                "geo_city_id": f"{city_id}",
+            }
+
+            headers = {
+                "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0",
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+                "Accept-Language": "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3",
+                "Connection": "keep-alive",
+                "Referer": "https://magnitcosmetic.ru/shops/",
+                "Upgrade-Insecure-Requests": "1",
+                "Sec-Fetch-Dest": "document",
+                "Sec-Fetch-Mode": "navigate",
+                "Sec-Fetch-Site": "same-origin",
+                "Sec-Fetch-User": "?1",
+            }
+
             r = session.get(
-                f"https://magnitcosmetic.ru/shops/shop_list.php?city_id={city_id}",
-                headers=headers,
+                "https://magnitcosmetic.ru/shops/map/", headers=headers, cookies=cookies
             )
             tree = html.fromstring(r.text)
-            div = tree.xpath('//div[@class="shops__item"]')
-            for d in div:
+            jsblock = (
+                "".join(tree.xpath('//script[contains(text(), "shopDataList")]/text()'))
+                .split("var shopDataList = ")[1]
+                .strip()
+            )
+            js = json.loads(jsblock)
+            for j in js["shops"]:
+                store_number = j.get("id")
+                page_url = f"https://magnitcosmetic.ru/shops/{store_number}/"
+                street_address = j.get("name") or "<MISSING>"
+                country_code = "RU"
+                latitude = j.get("coords").get("lat") or "<MISSING>"
+                longitude = j.get("coords").get("lng") or "<MISSING>"
+                hours_of_operation = j.get("time") or "<MISSING>"
 
-                slug = "".join(d.xpath(".//@href"))
-                page_url = f"https://magnitcosmetic.ru{slug}"
-                r = session.get(page_url, headers=headers)
-                tree = html.fromstring(r.text)
-                js_block = (
-                    "".join(
-                        tree.xpath(
-                            '//script[contains(text(), "var oneShopData")]/text()'
-                        )
-                    )
-                    .split("var oneShopData =")[1]
-                    .strip()
+                row = SgRecord(
+                    locator_domain=locator_domain,
+                    page_url=page_url,
+                    location_name=SgRecord.MISSING,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=SgRecord.MISSING,
+                    country_code=country_code,
+                    store_number=store_number,
+                    phone=SgRecord.MISSING,
+                    location_type=SgRecord.MISSING,
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=hours_of_operation,
                 )
-                js = json.loads(js_block)
-                shops = js.get("shops")
-                for s in shops:
 
-                    ad = "".join(s.get("name"))
-                    try:
-                        street_address = (
-                            ad.split(f"{city}")[1].replace(",", " ").strip()
-                        )
-                    except:
-                        street_address = ad
-                    country_code = "RU"
-                    store_number = s.get("id") or "<MISSING>"
-                    latitude = s.get("coords").get("lat") or "<MISSING>"
-                    longitude = s.get("coords").get("lng") or "<MISSING>"
-                    hours_of_operation = s.get("time") or "<MISSING>"
-
-                    row = SgRecord(
-                        locator_domain=locator_domain,
-                        page_url=page_url,
-                        location_name=SgRecord.MISSING,
-                        street_address=street_address,
-                        city=city,
-                        state=state,
-                        zip_postal=SgRecord.MISSING,
-                        country_code=country_code,
-                        store_number=store_number,
-                        phone=SgRecord.MISSING,
-                        location_type=SgRecord.MISSING,
-                        latitude=latitude,
-                        longitude=longitude,
-                        hours_of_operation=hours_of_operation,
-                    )
-
-                    sgw.write_row(row)
+                sgw.write_row(row)
 
 
 if __name__ == "__main__":
     session = SgRequests()
-    with SgWriter(
-        SgRecordDeduper(SgRecordID({SgRecord.Headers.STORE_NUMBER}))
-    ) as writer:
+    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))) as writer:
         fetch_data(writer)

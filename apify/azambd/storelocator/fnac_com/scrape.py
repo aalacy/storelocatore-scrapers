@@ -111,6 +111,11 @@ def fetch_data():
         if raw_address[len(raw_address) - 1] == ",":
             raw_address = raw_address[:-1]
 
+        # temporarily closed checking
+        tcc = get_JSON_object_variable(store, "MessageOpening")
+        if "Fermé" in str(tcc):
+            location_type = "Temporarily closed"
+
         yield SgRecord(
             locator_domain="fnac.com",
             store_number=store_number,
@@ -134,7 +139,9 @@ def fetch_data():
 def scrape():
     log.info(f"Start Crawling {website} ...")
     start = time.time()
-    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
+    ) as writer:
         for rec in fetch_data():
             writer.write_row(rec)
     end = time.time()

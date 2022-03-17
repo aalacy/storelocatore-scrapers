@@ -34,6 +34,15 @@ def fetch_data():
         "https://www.maxsrestaurantna.com/guam",
         "https://www.maxsrestaurantna.com/santa-clarita",
     ]
+    days = [
+        {"label": "Su", "name": "Sunday:"},
+        {"label": "Mo", "name": "Monday:"},
+        {"label": "Tu", "name": "Tuesday:"},
+        {"label": "We", "name": "Wednesday:"},
+        {"label": "Th", "name": "Thursday:"},
+        {"label": "Fr", "name": "Friday:"},
+        {"label": "Sa", "name": "Saturday:"},
+    ]
     for link in links:
         soup = pull_content(link)
         data = json.loads(
@@ -66,10 +75,20 @@ def fetch_data():
                 store_number = value["id"]
                 latitude = value["lat"]
                 longitude = value["lng"]
-                try:
-                    hours_of_operation = ", ".join(value["schemaHours"])
-                except:
-                    MISSING
+                hoo = ""
+                for day in days:
+                    day_available = False
+                    for hday in value["schemaHours"]:
+                        if day["label"] in hday:
+                            day_available = True
+                            hoo += hday.replace(day["label"], day["name"]) + ","
+                    if not day_available:
+                        hoo += day["name"] + " Closed" + ","
+                    hoo = hoo.replace(
+                        day["name"] + " 16:30-19:00," + day["name"] + " 11:30-15:00",
+                        day["name"] + " 11:30-15:00," + day["name"] + " 16:30-19:00",
+                    )
+                hours_of_operation = hoo.strip().rstrip(",")
                 log.info("Append {} => {}".format(location_name, street_address))
                 yield SgRecord(
                     locator_domain=DOMAIN,

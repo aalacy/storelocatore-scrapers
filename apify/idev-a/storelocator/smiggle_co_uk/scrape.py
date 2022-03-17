@@ -6,7 +6,11 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from bs4 import BeautifulSoup as bs
 from webdriver_manager.chrome import ChromeDriverManager
+from sgpostal.sgpostal import parse_address_intl
 import ssl
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger("")
 
 try:
     _create_unverified_https_context = (
@@ -28,8 +32,14 @@ def get_driver():
 
 locator_domain = "https://www.smiggle.co.uk"
 base_url = "https://www.smiggle.co.uk/shop/en/smiggleuk/stores/gb/gball"
-_headers = {
-    "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
+
+country_map = {
+    "GB": "United Kingdom",
+    "AU": "Australia",
+    "SG": "Singapore",
+    "IE": "Ireland",
+    "MY": "Malaysia",
+    "NZ": "New Zealand",
 }
 
 
@@ -40,97 +50,97 @@ def fetch_data():
     store_list = json.loads(sp1.select_one("div#storeSelection").text)["storeLocator"]
 
     for store in store_list:
-        shop_address = store["shopAddress"].replace("&amp;", "&").replace("&#039;", "'")
-        shop_address = "" if shop_address == "." or shop_address == "" else shop_address
         street_address = (
             store["streetAddress"].replace("&amp;", "&").replace("&#039;", "'")
         )
         street_address = (
             "" if street_address == "." or street_address == "" else street_address
         )
-        if shop_address != "":
-            street_address = (
-                shop_address
-                if street_address == ""
-                else shop_address + ", " + street_address
-            )
+
+        if store["shopAddress"]:
+            street_address = store["shopAddress"] + " " + street_address
 
         zip_postal = store["zipcode"].replace(".", "")
         city = store["city"].replace("&amp;", "&").replace("&#039;", "'")
-        if city in [
-            "Centre, 17 Victoria St",
-            "Cwmbran Shopping Centre",
-            "300 Cornwall Street",
-            "12 Swan Walk",
-            "26 Bridge Street",
-            "2 Union Street",
-            "Bullring Shopping Centre",
-            "St Nicholas Way",
-            "Trafford Boulevard",
-            "1 Utama Shopping Centre",
-            "Lot No G-01/1-01/2-01",
-            "Ground,1St,2Nd,3Rd Floors",
-            "Lot No G-01/1-01/2-01",
-            "#03-01 Bugis Junction",
-        ]:
-            street_address += " " + city
-            city = ""
-        else:
-            cc = city.split()
-            if cc and cc[-1].isdigit():
-                if not zip_postal:
-                    zip_postal = cc[-1]
-                city = " ".join(cc[:-1])
-        city = (
-            city.split(",")[0]
-            .replace("G51 4Bn", "")
-            .replace("Sw3 4Nd", "")
-            .replace("90", "")
-            .replace("City Centre", "")
-            .replace("Bugis Junction", "")
-            .replace("#01 89/90 Nex", "")
-            .replace("United Square", "")
-            .strip()
-        )
-        if city.isdigit():
-            zip_postal = city
-            city = ""
-
-        if city == "40170 Shah Alam Selangor":
-            zip_postal = "40170"
-            city = "Shah Alam"
-            state = "Selangor"
-
-        if city == "#01 89/ Nex":
-            street_address += " " + city
-            city = ""
-
-        if street_address.endswith(","):
-            street_address = street_address[:-1]
 
         state = store["state"]
         if state == store["country"]:
             state = ""
+        zip_postal = store["zipcode"].replace(".", "")
+        if store["country"] == "MY" and zip_postal:
+            if not zip_postal.isdigit() or zip_postal == "0":
+                zip_postal = ""
+
+        country_code = country_map[store["country"]]
+
+        raw_address = f"{street_address}, {city}"
+        if state:
+            raw_address += ", " + state
+        if zip_postal:
+            raw_address += ", " + zip_postal
+
+        if country_code:
+            raw_address += ", " + country_code
+
+        addr = parse_address_intl(raw_address)
+        city = addr.city
+        state = addr.state
+        if store["country"] != "GB":
+            zip_postal = addr.postcode
+
+        if store["country"] == "IE":
+            zip_postal = city = state = ""
+            _addr = raw_address.split(",")
+            if "dublin" not in _addr[-2].lower():
+                zip_postal = _addr[-2].strip()
+            else:
+                state = _addr[-2].strip()
+            city = _addr[-3].strip()
+            street_address = " ".join(_addr[:-3])
+
+        latitude = store["latitude"]
+        longitude = store["longitude"]
+        if latitude == "-37.8" and longitude == "144.98":
+            latitude = ""
+            longitude = ""
+
+        if city:
+            if city == "Street":
+                street_address = raw_address.split(",")[0]
+                city = raw_address.split(",")[1]
+            if city == "Floors":
+                street_address += " Floors"
+
+        if store["country"] == "AU" and not city:
+            city = raw_address.split(",")[-4].strip()
+            if (
+                "Waters" in city
+                or "Mount" in city
+                or "Centre" in city
+                or "South" in city
+            ):
+                city = ""
+
+        street_address = street_address.strip()
+        if street_address.startswith("."):
+            street_address = street_address[1:]
+        if street_address.startswith(","):
+            street_address = street_address[1:]
         yield SgRecord(
             page_url=store["storeURL"],
             store_number=store["locId"],
             location_name=store["storeName"],
             street_address=street_address,
-            city=city.split(",")[0]
-            .replace("G51 4Bn", "")
-            .replace("Sw3 4Nd", "")
-            .replace("90", "")
-            .replace("City Centre", "")
-            .replace("Robina Town Centre", "")
-            .strip(),
+            city=city,
             state=state,
-            zip_postal=store["zipcode"].replace(".", ""),
-            latitude=store["latitude"],
-            longitude=store["longitude"],
-            country_code=store["country"],
+            zip_postal=zip_postal,
+            latitude=latitude,
+            longitude=longitude,
+            country_code=country_code,
             phone=store["phone"],
             locator_domain=locator_domain,
             hours_of_operation=store["storehours"],
+            raw_address=raw_address,
         )
     if driver:
         driver.close()

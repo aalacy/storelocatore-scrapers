@@ -55,15 +55,15 @@ def fetch_data():
             store_number = store["internalid"].strip()
             phone = store["phone"].strip()
 
+            location_type = "<MISSING>"
             if locationtype == "2":
-                location_type = "Temporarily closed"
+                location_type = "Fulfillment"
                 hours_of_operation = "<MISSING>"
             else:
 
                 hours_html = store["custrecord_ssd_hours_of_operation"].strip()
 
                 if "hours-time" in hours_html:
-                    location_type = "<MISSING>"
 
                     hours_sel = lxml.html.fromstring(
                         hours_html.replace("&lt;", "<")
@@ -94,7 +94,6 @@ def fetch_data():
 
                     hours_of_operation = "; ".join(hours_list)
                 else:
-                    location_type = "Temporarily closed"
                     hours_of_operation = "<MISSING>"
 
             latitude = store["location"]["latitude"]
