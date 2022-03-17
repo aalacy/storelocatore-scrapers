@@ -29,8 +29,8 @@ def fetch_stores(postal, retry=0):
     except:
         if retry < 3:
             return fetch_stores(postal, retry + 1)
-        else:
-            print(f"Unable to fetch {postal}")
+
+        return []
 
 
 def fetch_locations(postal, sgw):
