@@ -1,4 +1,3 @@
-from urllib.parse import urljoin
 from lxml import etree
 
 from sgrequests import SgRequests
