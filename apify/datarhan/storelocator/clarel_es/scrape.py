@@ -1,6 +1,3 @@
-import gzip
-import json
-
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
@@ -10,48 +7,38 @@ from sgscrape.sgwriter import SgWriter
 
 def fetch_data():
     session = SgRequests()
-
-    start_url = "https://clubdia.dia.es/ES/tiendas.v1505.json.gz"
     domain = "clarel.es"
 
-    response = session.get(start_url)
-    all_locations = json.loads(gzip.decompress(response.content))
+    hdr = {
+        "accept": "*/*",
+        "content-type": "application/json",
+        "Referer": "",
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.51 Safari/537.36",
+    }
+    frm = {
+        "operationName": "getStoresList",
+        "query": "query getStoresList($lat: Float!, $lng: Float!, $searchRadiusKm: Int, $limit: Int) {\n  storesList(lat: $lat, lng: $lng, searchRadiusKm: $searchRadiusKm, limit: $limit) {\n    ...StoreLocatorAttributes\n  }\n}\n\nfragment StoreLocatorAttributes on StoreLocator {\n  __typename\n  id\n  code\n  name\n  address1: address_1\n  address2: address_2\n  city\n  state\n  zip\n  countryId: country_id\n  country\n  phone\n  lat\n  lng\n  opening\n  enable\n  distance\n  pickupStore: pickup_store\n}\n",
+        "variables": {"lat": 40.4378698, "lng": -3.8196207},
+    }
+    data = session.post("https://www.clarel.es/graphql", json=frm, headers=hdr).json()
 
-    for poi in all_locations:
-        store_number = poi["idTienda"]
-        poi_url = f"https://tutienda.clarel.es/buscadorTiendas.html?action=buscarInformacionTienda&id={store_number}"
-        data = session.get(poi_url).json()
-        if "Clarel" not in data["clasePreviewFolleto"]:
-            continue
-        hoo = []
-        days_dict = {
-            "1": "Lunes",
-            "2": "Martes",
-            "3": "Miércoles",
-            "4": "Jueves",
-            "5": "Viernes",
-            "6": "Sábado",
-            "7": "Domingo",
-        }
-        for i, hours in data["horariosTienda"].items():
-            hoo.append(f"{days_dict[i]}: {hours}")
-        hoo = ", ".join(hoo)
+    for poi in data["data"]["storesList"]:
 
         item = SgRecord(
             locator_domain=domain,
-            page_url="https://tutienda.clarel.es/busca-tu-tienda",
-            location_name=data["direccionPostal"],
-            street_address=data["direccionPostal"],
-            city=data["localidad"],
+            page_url="https://www.clarel.es/es/encuentra-tu-tienda",
+            location_name=poi["name"],
+            street_address=poi["address1"],
+            city=poi["city"],
             state="",
-            zip_postal=data["codigoPostal"],
-            country_code="ES",
-            store_number=store_number,
-            phone=data["telefono"],
-            location_type="Clarel",
-            latitude=poi["posicionX"],
-            longitude=poi["posicionY"],
-            hours_of_operation=hoo,
+            zip_postal=poi["zip"],
+            country_code=poi["countryId"],
+            store_number=poi["id"],
+            phone=poi["phone"],
+            location_type="",
+            latitude=poi["lat"],
+            longitude=poi["lng"],
+            hours_of_operation="",
         )
 
         yield item

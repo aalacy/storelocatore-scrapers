@@ -28,6 +28,9 @@ def fetch_data(sgw: SgWriter):
         raw_address = list(item.stripped_strings)
         location_name = raw_address[0]
         street_address = raw_address[1]
+        if "," in street_address:
+            if "suite" not in street_address and "16th" not in street_address:
+                street_address = street_address.split(",")[0].strip()
         if street_address[-1:] == ",":
             street_address = street_address[:-1]
         city_line = raw_address[2].split(",")
@@ -45,6 +48,8 @@ def fetch_data(sgw: SgWriter):
             country_code = "CA"
 
         phone = raw_address[3]
+        if "-" not in phone:
+            phone = ""
         location_type = ""
         latitude = ""
         longitude = ""
@@ -62,9 +67,6 @@ def fetch_data(sgw: SgWriter):
                 .stripped_strings
             )[1:]
         )
-
-        if "coming soon" in hours_of_operation.lower():
-            continue
 
         sgw.write_row(
             SgRecord(
