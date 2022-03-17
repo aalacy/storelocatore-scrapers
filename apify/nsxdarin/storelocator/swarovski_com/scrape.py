@@ -60,6 +60,8 @@ def fetch_data():
                             hours = hours + "; " + hrs
                     if len(phone) < 6:
                         phone = "<MISSING>"
+                    if len(zc) < 2:
+                        zc = "<MISSING>"
                     yield SgRecord(
                         locator_domain=website,
                         page_url=loc,
