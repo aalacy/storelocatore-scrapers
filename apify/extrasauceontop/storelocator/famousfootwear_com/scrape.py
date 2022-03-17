@@ -4,7 +4,9 @@ from sgzip.dynamic import DynamicGeoSearch, SearchableCountries, Grain_2
 
 
 def get_data():
-    search = DynamicGeoSearch(country_codes=[SearchableCountries.USA], granularity=Grain_2())
+    search = DynamicGeoSearch(
+        country_codes=[SearchableCountries.USA], granularity=Grain_2()
+    )
     session = SgRequests()
     for search_lat, search_lon in search:
         url = (
@@ -81,6 +83,7 @@ def get_data():
                 "hours": hours,
                 "country_code": country_code,
             }
+
 
 def scrape():
     field_defs = sp.SimpleScraperPipeline.field_definitions(
