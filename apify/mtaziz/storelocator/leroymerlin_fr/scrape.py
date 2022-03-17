@@ -121,8 +121,15 @@ def fetch_records_fr(store_num, sgw: SgWriter):
 
             raw_address = raw_address.replace(", ,", ", ")
             raw_address = " ".join(raw_address.split())
+            raw_address = raw_address.strip().lstrip(",").strip()
+
             sta = " ".join(sta.split())
             sta = sta.rstrip(",")
+            store_number = ""
+            store_number = props["store_id"] or MISSING
+
+            if store_number == "6_concept":
+                store_number = MISSING
 
             row = SgRecord(
                 page_url=props["contact"]["website"] or MISSING,
@@ -132,7 +139,7 @@ def fetch_records_fr(store_num, sgw: SgWriter):
                 state=MISSING,
                 zip_postal=zip_postal,
                 country_code=country_code,
-                store_number=props["store_id"] or MISSING,
+                store_number=store_number,
                 phone=props["contact"]["phone"],
                 location_type=SgRecord.MISSING,
                 latitude=data["geometry"]["coordinates"][0] or MISSING,
@@ -237,9 +244,17 @@ def fetch_records_it(store_num, sgw: SgWriter):
             sta = " ".join(sta.split())
             sta = sta.rstrip(",")
 
+            # City Data update for the store name Bari S. Caterina
+            # Bar S. Caterina store_id 26
+            location_name = props["name"] or ""
+            if location_name == "Bari S. Caterina":
+                city = "Bari"
+                sta = "Strada Santa Caterina, 17/E"
+                zip_postal = "70124"
+
             row = SgRecord(
                 page_url=props["contact"]["website"] or MISSING,
-                location_name=props["name"],
+                location_name=location_name,
                 street_address=sta,
                 city=city,
                 state=MISSING,
@@ -259,7 +274,7 @@ def fetch_records_it(store_num, sgw: SgWriter):
     except Exception as e:
         logger.info(
             f"Please fix FetchRecordsError: << {e} >> encountered at {store_num}"
-        )  # noqa
+        )
 
 
 def fetch_data_fr(sgw: SgWriter):
@@ -271,6 +286,7 @@ def fetch_data_fr(sgw: SgWriter):
     # We will save those that have HTTP success code 200
     store_id_custom = ["6_concept"]
     MAX_STORE_NUM_FR = 310
+
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
         tasks = []
         task = [
@@ -297,13 +313,15 @@ def fetch_data_it(sgw: SgWriter):
     # If the HTTP request does not happen to be successful with 200,
     # it would return, 404 and we would ignore those stores as those stores don't exist.
     # We will save those that have HTTP success code 200
+
     MAX_STORE_NUM_IT = 80
+
     store_id_custom = ["6_concept"]
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
         tasks = []
         task = [
             executor.submit(fetch_records_it, store_num, sgw)
-            for store_num in range(0, MAX_STORE_NUM_IT)
+            for store_num in range(20, MAX_STORE_NUM_IT)
         ]
         tasks.extend(task)
         task_concept = [
