@@ -10,6 +10,17 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.keys import Keys
 import time
+import ssl
+
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
+
 
 logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
 
@@ -20,7 +31,7 @@ def getTestCountries(session):
     headers[
         "user-agent"
     ] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
-    soup = b4(session.get(url, headers=headers).text, "lxml")
+    soup = b4(session.get(url, headers=headers, verify=False).text, "lxml")
     soup = soup.find_all("div", {"class": ["columncontrol", "parbase"]})
     countries = []
     for div in soup:
@@ -123,7 +134,7 @@ def fetch_for_real(data, session):
         locations = None
         try:
             locations = SgRequests.raise_on_err(
-                session.get(url, headers=headers)
+                session.get(url, headers=headers, verify=False)
             ).json()
         except Exception as e:
             logzilla.error(f"{e}")
