@@ -48,9 +48,9 @@ def fetch_data():
                     hoo.append(f"{closes} closed")
                 else:
                     opens_time = datetime.fromisoformat(str(e["open"]))
-                    opens = opens_time.strftime("%A %d %b, %Y, %H:%M:%S")
+                    opens = opens_time.strftime("%A %H:%M")
                     closes_time = datetime.fromisoformat(str(e["close"]))
-                    closes = closes_time.strftime("%H:%M:%S")
+                    closes = closes_time.strftime("%H:%M")
                     hoo.append(f"{opens} - {closes}")
             hoo = " ".join(hoo)
 

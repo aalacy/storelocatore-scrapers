@@ -17,20 +17,24 @@ def get_urls():
 
     data = {
         "CSRFToken": token,
-        "lat": "51.5073509",
-        "lng": "-0.1277583",
+        "lat": "51.5072178",
+        "lng": "-0.1275862",
         "site": "Natwest",
-        "pageDepth": "4",
-        "search_term": "London",
-        "searchMiles": "100",
+        "searchMiles": "5",
         "offSetMiles": "50",
-        "maxMiles": "2000",
-        "listSizeInNumbers": "10000",
+        "maxMiles": "3000",
+        "listSizeInNumbers": "1000",
+        "search_term": "London",
+        "searchType": "Branches",
+        "pathValue": "/content/branchlocator/en/natwest/searchresults/jcr:content/par/searchresults/captcha",
+        ":cq:captchakey": "",
+        "img-src-includeinjs": "",
+        "search_term_encode": "London",
         "search-type": "1",
     }
 
     r = session.post(
-        "https://locator.natwest.com/content/branchlocator/en/natwest/_jcr_content/content/homepagesearch.search.html",
+        "https://www.natwest.com/content/branchlocator/en/natwest/_jcr_content/content/homepagesearch.search.html",
         data=data,
     )
     tree = html.fromstring(r.text)
@@ -49,25 +53,25 @@ def get_data(url, sgw: SgWriter):
     location_name = "".join(tree.xpath("//input[@id='branchName']/@value"))
     line = tree.xpath("//div[@class='print']//td[@class='first']/text()")
     line = list(filter(None, [l.strip() for l in line]))
-    line = ", ".join(line)
-    adr = parse_address(International_Parser(), line)
+    raw_address = ", ".join(line)
+    adr = parse_address(International_Parser(), raw_address)
 
-    street_address = (
-        f"{adr.street_address_1} {adr.street_address_2 or ''}".replace(
-            "None", ""
-        ).strip()
-        or SgRecord.MISSING
-    )
+    street_address = f"{adr.street_address_1} {adr.street_address_2 or ''}".replace(
+        "None", ""
+    ).strip()
 
     if len(street_address) < 5:
-        street_address = line.split(",")[0].strip()
+        street_address = raw_address.split(",")[0].strip()
 
     city = adr.city or SgRecord.MISSING
     state = adr.state or SgRecord.MISSING
     postal = adr.postcode or SgRecord.MISSING
     if "Juxon House" in street_address:
-        street_address = line.split(",")[1].strip()
-        postal = line.split(",")[-1].strip()
+        street_address = raw_address.split(",")[1].strip()
+        postal = raw_address.split(",")[-1].strip()
+    if postal == SgRecord.MISSING:
+        postal = raw_address.split(",")[-1].strip()
+
     country_code = "GB"
     store_number = page_url.split("/")[-1].split("-")[0]
 
@@ -82,13 +86,13 @@ def get_data(url, sgw: SgWriter):
     try:
         text = text.split("locationObject =")[1].split(";")[0].strip()
         js = json.loads(text)
-        latitude = js.get("LAT") or SgRecord.MISSING
-        longitude = js.get("LNG") or SgRecord.MISSING
-        location_type = js.get("TYPE") or SgRecord.MISSING
+        latitude = js.get("LAT")
+        longitude = js.get("LNG")
+        location_type = js.get("TYPE")
     except IndexError:
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
-        location_type = "<MISSING>"
+        latitude = SgRecord.MISSING
+        longitude = SgRecord.MISSING
+        location_type = SgRecord.MISSING
 
     _tmp = []
     tr = tree.xpath("//tr[@class='time']")
@@ -101,7 +105,7 @@ def get_data(url, sgw: SgWriter):
             time = "".join(t.xpath("./td/text()")[1:]).strip()
         _tmp.append(f"{day}: {time}")
 
-    hours_of_operation = ";".join(_tmp) or SgRecord.MISSING
+    hours_of_operation = ";".join(_tmp)
     if hours_of_operation.lower().count("closed") >= 7:
         hours_of_operation = "Closed"
 
@@ -120,6 +124,7 @@ def get_data(url, sgw: SgWriter):
         longitude=longitude,
         locator_domain=locator_domain,
         hours_of_operation=hours_of_operation,
+        raw_address=raw_address,
     )
 
     sgw.write_row(row)
