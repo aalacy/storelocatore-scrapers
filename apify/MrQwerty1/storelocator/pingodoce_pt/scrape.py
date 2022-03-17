@@ -11,7 +11,8 @@ def fetch_data(sgw: SgWriter):
     js = r.json()["data"]["stores"]
 
     for j in js:
-        location_name = j.get("name")
+        location_name = j.get("name") or ""
+        location_name = location_name.replace("&amp;", "&")
         latitude = j.get("lat")
         longitude = j.get("long")
         phone = j.get("contact")
@@ -29,7 +30,7 @@ def fetch_data(sgw: SgWriter):
 
         _tmp = []
         try:
-            hours = j["schedules"]["full"]
+            hours = j["schedules"]["full"] or dict()
         except KeyError:
             hours = dict()
 

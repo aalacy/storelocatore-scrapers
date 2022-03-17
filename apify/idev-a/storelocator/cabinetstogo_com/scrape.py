@@ -32,10 +32,14 @@ def fetch_data():
         for _ in locations:
             if "COMING SOON" in _["showroom"]:
                 continue
+            if "RELOCATED" in _["showroom"]:
+                continue
             hours = list(bs(_["hours"], "lxml").stripped_strings)
             if "Please contact store" in hours[0]:
                 del hours[0]
-            page_url = locator_domain + _["storelink"]
+            if "Due to" in hours[0]:
+                del hours[0]
+
             phone = _["phone"]
             if "not available" in phone:
                 phone = ""
@@ -46,7 +50,7 @@ def fetch_data():
             ):
                 hours_of_operation = ""
             yield SgRecord(
-                page_url=page_url,
+                page_url=locator_domain + _["storelink"],
                 location_name=_["showroom"],
                 street_address=_["street"],
                 city=_["city"],
