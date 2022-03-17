@@ -1,8 +1,22 @@
+import json
+from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
+
+
+def get_hours(page_url):
+    r = session.get(page_url, headers=headers)
+    tree = html.fromstring(r.text)
+    text = "".join(tree.xpath("//script[contains(text(), 'generalHoursText')]/text()"))
+    text = text.split('"data":')[1].split("},")[0] + "}"
+    j = json.loads(text)
+    day = j.get("generalHoursDaysText")
+    inter = j.get("generalHoursText")
+
+    return f"{day}: {inter}"
 
 
 def fetch_data(sgw: SgWriter):
@@ -27,6 +41,10 @@ def fetch_data(sgw: SgWriter):
         phone = j.get("Phone")
         latitude = j.get("Lat")
         longitude = j.get("Lon")
+        try:
+            hours_of_operation = get_hours(page_url)
+        except:
+            hours_of_operation = SgRecord.MISSING
 
         row = SgRecord(
             page_url=page_url,
@@ -41,6 +59,7 @@ def fetch_data(sgw: SgWriter):
             phone=phone,
             store_number=store_number,
             locator_domain=locator_domain,
+            hours_of_operation=hours_of_operation,
         )
 
         sgw.write_row(row)
