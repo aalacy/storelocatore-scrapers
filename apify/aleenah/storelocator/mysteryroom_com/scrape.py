@@ -49,7 +49,7 @@ def fetch_data():
             )
         except:
             address = location_name.replace("– TBD", "")
-        address = address.replace(",", " ")
+        address = address.replace(",", " ").replace("\n", " ")
         address = usaddress.parse(address)
         i = 0
         street_address = ""
