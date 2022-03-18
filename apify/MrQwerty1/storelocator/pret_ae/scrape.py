@@ -40,8 +40,9 @@ def fetch_data(sgw: SgWriter):
 
         if "AIRPORT" in location_name:
             for l in li[0].xpath("./text()"):
-                part = l.split("-")[0].strip()
-                location_name = f"{location_name} ({part})"
+                location_name = ""
+                raw_address = l.split("-")[0].strip()
+                location_name = f"{location_name} ({raw_address})"
                 row = SgRecord(
                     page_url=page_url,
                     location_name=location_name,
@@ -52,9 +53,11 @@ def fetch_data(sgw: SgWriter):
                     longitude=longitude.strip(),
                     locator_domain=locator_domain,
                     hours_of_operation=hours_of_operation,
+                    raw_address=raw_address,
                 )
                 sgw.write_row(row)
         else:
+            raw_address = d.xpath(".//h3/following-sibling::p/text()")[0].strip()
             row = SgRecord(
                 page_url=page_url,
                 location_name=location_name,
@@ -65,6 +68,7 @@ def fetch_data(sgw: SgWriter):
                 longitude=longitude.strip(),
                 locator_domain=locator_domain,
                 hours_of_operation=hours_of_operation,
+                raw_address=raw_address,
             )
             sgw.write_row(row)
 

@@ -75,6 +75,10 @@ def fetch_data():
         hours_of_operation = "".join(
             store_sel.xpath('//div[./strong[text()="Office Hours:"]]/text()')
         ).strip()
+        if len(hours_of_operation) <= 0:
+            hours_of_operation = "".join(
+                store_sel.xpath('//div[@class="office-hours"]/text()')
+            ).strip()
         latitude, longitude = "<MISSING>", "<MISSING>"
 
         raw_address = "<MISSING>"

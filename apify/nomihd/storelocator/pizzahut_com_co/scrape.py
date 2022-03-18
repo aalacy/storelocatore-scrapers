@@ -96,6 +96,10 @@ def fetch_data():
                     '//div[@class="shopInfo col"]//div[contains(./h4/text(),"A domicilio")]//tr'
                 )
 
+                if len(hours) <= 0:
+                    hours = store_sel.xpath(
+                        '//div[@class="shopInfo col"]//div[contains(./h4/text(),"A recoger")]//tr'
+                    )
                 hours_list = []
                 for hour in hours:
                     day = "".join(hour.xpath("td[1]/text()")).strip()

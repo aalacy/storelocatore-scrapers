@@ -1,40 +1,14 @@
-import csv
 import json
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgselenium.sgselenium import SgFirefox
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
+def fetch_data(sgw: SgWriter):
 
     locator_domain = "https://www.harryrosen.com"
     api_url = "https://www.harryrosen.com/en/stores"
@@ -50,18 +24,19 @@ def fetch_data():
     for j in js["props"]["pageProps"]["genericPageContent"]["items"][1]["tabs"]:
         a = j.get("content").get("items")
         for b in a:
+
             l = b.get("ctas")
             if l is None:
                 continue
-
             slug = l[0].get("link")
+            if str(slug).find("http") != -1:
+                continue
             ad = b.get("body")
             ad = html.fromstring(ad)
             ad = ad.xpath("//*//text()")
             adr = "".join(ad[1]).replace("\n", "").strip() or "<MISSING>"
             page_url = f"{locator_domain}{slug}"
             location_name = b.get("headline")
-            location_type = "<MISSING>"
             street_address = "".join(ad[0]).strip()
 
             if street_address.find("ADDRESS") != -1:
@@ -77,10 +52,6 @@ def fetch_data():
 
             country_code = "CA"
             city = " ".join(adr.split()[:-3])
-            store_number = "<MISSING>"
-            latitude = "<MISSING>"
-            longitude = "<MISSING>"
-
             phone = "".join(ad[2]).replace("\n", "").strip() or "<MISSING>"
             if phone == "<MISSING>":
                 phone = "".join(ad[3]).replace("\n", "").strip() or "<MISSING>"
@@ -89,43 +60,44 @@ def fetch_data():
             phone = phone.replace("Tel:", "").strip()
             if phone.find("This") != -1:
                 phone = phone.split("This")[0].strip()
+            with SgFirefox() as driver:
 
-            hours_of_operation = " ".join(ad).replace("\n", "").strip()
-            if hours_of_operation.find("STORE HOURS") != -1:
-                hours_of_operation = hours_of_operation.split("STORE HOURS")[1].strip()
-            if hours_of_operation.find("temporarily closed") != -1:
-                hours_of_operation = "temporarily closed"
-            if (
-                hours_of_operation.find("closed") != -1
-                and hours_of_operation.find("temporarily closed") == -1
-            ):
-                hours_of_operation = "closed"
+                driver.get(page_url)
+                a = driver.page_source
+                tree = html.fromstring(a)
+                hours_of_operation = (
+                    " ".join(
+                        tree.xpath(
+                            '//div[text()="Store Hours"]/following-sibling::div[1]//text()'
+                        )
+                    )
+                    .replace("\n", "")
+                    .strip()
+                    or "<MISSING>"
+                )
+                hours_of_operation = " ".join(hours_of_operation.split())
 
-            row = [
-                locator_domain,
-                page_url,
-                location_name,
-                street_address,
-                city,
-                state,
-                postal,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
-            out.append(row)
+                row = SgRecord(
+                    locator_domain=locator_domain,
+                    page_url=page_url,
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=postal,
+                    country_code=country_code,
+                    store_number=SgRecord.MISSING,
+                    phone=phone,
+                    location_type=SgRecord.MISSING,
+                    latitude=SgRecord.MISSING,
+                    longitude=SgRecord.MISSING,
+                    hours_of_operation=hours_of_operation,
+                )
 
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+                sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))) as writer:
+        fetch_data(writer)

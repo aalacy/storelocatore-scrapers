@@ -49,11 +49,16 @@ def get_store_data(store_sel, page_url):
     if len(add_2) > 0:
         street_address = street_address + ", " + add_2
 
-    city = "".join(
-        store_sel.xpath(
-            '//section[@class="nap-unit-inner"]//address//span[@class="c-address-city"]/text()'
+    city = (
+        "".join(
+            store_sel.xpath(
+                '//section[@class="nap-unit-inner"]//address//span[@class="c-address-city"]/text()'
+            )
         )
-    ).strip()
+        .strip()
+        .replace("(kids)", "")
+        .strip()
+    )
 
     state = "".join(
         store_sel.xpath(

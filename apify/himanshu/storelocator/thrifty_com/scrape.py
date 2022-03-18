@@ -3,7 +3,7 @@ from sgzip.dynamic import SearchableCountries
 from sgzip.static import static_zipcode_list
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
@@ -77,10 +77,11 @@ def fetch_data():
 def scrape():
 
     with SgWriter(
-        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.GeoSpatialId),
-        duplicate_streak_failure_factor=5,
+        deduper=SgRecordDeduper(
+            SgRecordID({SgRecord.Headers.STREET_ADDRESS}),
+            duplicate_streak_failure_factor=-1,
+        )
     ) as writer:
-
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

@@ -1,106 +1,96 @@
-import csv
-import json
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
 from bs4 import BeautifulSoup as bs
 from sgrequests import SgRequests
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sglogging import SgLogSetup
+import dirtyjson as json
 
-session = SgRequests()
+logger = SgLogSetup().get_logger("gooutdoors")
+
+_headers = {
+    "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
+}
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+locator_domain = "https://www.gooutdoors.co.uk"
+base_url = "https://www.gooutdoors.co.uk/google/store-locator"
+days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 
 
 def fetch_data():
-    base_url = "https://www.gooutdoors.co.uk"
-    payload = {
-        "postcode": "",
-        "submit": "Find stores",
-        "radius": "500",
-        "ac_store_limit": "300",
-        "current_view": "list",
-        "fascias[]": "GO",
-    }
-    r = session.post("https://www.gooutdoors.co.uk/google/store-locator", data=payload)
-    soup = bs(r.text, "lxml")
-    store_list = soup.select("ul.store-list li")
-    data = []
-    for store in store_list:
-        page_url = (
-            base_url
-            + store.select("div.store-details div.more_info p")
-            .pop()
-            .select_one("a")["href"]
-        )
-        location_name = store.select_one("div.store-details h3 a").string
-        res = session.get(page_url)
-        detail = json.loads(
-            res.text.split('type="application/ld+json">')[1].split("</script>")[0]
-        )
-        street_address = detail["address"]["streetAddress"]
-        country_code = detail["address"]["addressCountry"]
-        phone = store.select_one("div.store-details a.tel_link").string
-        city = detail["address"]["addressLocality"]
-        state = "<MISSING>"
-        zip = detail["address"]["postalCode"]
-        hours_of_operation = ", ".join(detail["openingHours"])
-        geo = res.text.split("maps.LatLng(")[1].split(");")[0]
-        latitude = geo.split(", ")[0]
-        longitude = geo.split(", ")[1]
-        store_number = "<MISSING>"
-        location_type = detail["@type"]
+    with SgRequests() as session:
+        payload = {
+            "postcode": "",
+            "submit": "Find stores",
+            "radius": "500",
+            "ac_store_limit": "300",
+            "current_view": "list",
+            "fascias[]": "GO",
+        }
+        store_list = bs(
+            session.post(
+                "https://www.gooutdoors.co.uk/google/store-locator",
+                headers=_headers,
+                data=payload,
+            ).text,
+            "lxml",
+        ).select("ul.store-list li")
+        logger.info(f"{len(store_list)} store_list")
+        for store in store_list:
+            page_url = (
+                locator_domain
+                + store.select("div.store-details div.more_info p")[-1].select_one("a")[
+                    "href"
+                ]
+            )
+            logger.info(page_url)
+            res = session.get(page_url, headers=_headers)
+            hours = []
+            street_address = city = zip_postal = latitude = longitude = ""
+            location_name = store.select_one("div.store-details h3").text.strip()
+            phone = store.select_one("a.tel_link").text.strip()
+            if phone == "-":
+                phone = ""
+            if res.status_code == 200:
+                sp1 = bs(res.text, "lxml")
+                _ = json.loads(sp1.find("script", type="application/ld+json").string)
+                addr = _["address"]
+                coord = _["hasmap"].split("/@")[1].split(",")
+                street_address = addr["streetAddress"]
+                city = addr["addressLocality"]
+                zip_postal = addr["postalCode"]
+                latitude = coord[0]
+                longitude = coord[1]
+                hours = _["openingHours"]
+            else:
+                page_url = base_url
+                addr = [aa.text.strip() for aa in store.select("p.storeAddress")]
+                street_address = addr[0]
+                zip_postal = addr[1]
+                hours = list(
+                    store.select("div.storefinder_opening table tr")[1].stripped_strings
+                )
 
-        data.append(
-            [
-                base_url,
-                page_url,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip,
-                country_code,
-                store_number,
-                '="' + phone + '"',
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
-        )
-
-    return data
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+            yield SgRecord(
+                page_url=page_url,
+                store_number=store["data-id"],
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                zip_postal=zip_postal,
+                country_code="UK",
+                phone=phone,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation="; ".join(hours),
+                locator_domain=locator_domain,
+            )
 
 
 if __name__ == "__main__":
-    scrape()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)

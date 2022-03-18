@@ -1,0 +1,6 @@
+--ignore StreetAddressHasNumber  (Confirmed Scrape correctly)
+
+Found 2 concerning rows. Examples:
+                 street_address              REASON  rowNumber
+17     25 North Highway 25 West  ADDR_HAS_NO_NUMBER         17
+18  120 Westview Shoppig Center  ADDR_HAS_NO_NUMBER         18

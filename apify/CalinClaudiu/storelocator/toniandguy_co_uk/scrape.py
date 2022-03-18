@@ -14,7 +14,12 @@ def para(url):
         "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
     }
     session = SgRequests()
-    soup = b4(session.get(url, headers=headers).text, "lxml")
+    try:
+        soup = b4(
+            SgRequests.raise_on_err(session.get(url, headers=headers)).text, "lxml"
+        )
+    except Exception:
+        return False
 
     k = {}
     k["url"] = url
@@ -59,7 +64,7 @@ def para(url):
         k["hours"] = "; ".join(
             list(
                 soup.find(
-                    "div", {"class": lambda x: x and "salon-hours" in x}
+                    "ol", {"class": lambda x: x and "opening-times" in x}
                 ).stripped_strings
             )
         )
@@ -91,7 +96,8 @@ def fetch_data():
         print_stats_interval=10,
     )
     for i in lize:
-        yield i
+        if i:
+            yield i
 
     logzilla.info(f"Finished grabbing data!!")  # noqa
 
@@ -100,7 +106,7 @@ def scrape():
     url = "https://toniandguy.com/"
     field_defs = sp.SimpleScraperPipeline.field_definitions(
         locator_domain=sp.ConstantField(url),
-        page_url=sp.MappingField(mapping=["url"]),
+        page_url=sp.MappingField(mapping=["url"], part_of_record_identity=True),
         location_name=sp.MappingField(mapping=["name"]),
         latitude=sp.MappingField(
             mapping=["lat"],
@@ -113,11 +119,149 @@ def scrape():
         state=sp.MappingField(mapping=["state"]),
         zipcode=sp.MappingField(mapping=["zip"]),
         country_code=sp.MappingField(mapping=["country"]),
-        phone=sp.MappingField(mapping=["phone"]),
+        phone=sp.MappingField(mapping=["phone"], part_of_record_identity=True),
         store_number=sp.MissingField(),
-        hours_of_operation=sp.MappingField(mapping=["hours"]),
+        hours_of_operation=sp.MappingField(
+            mapping=["hours"],
+            value_transform=lambda x: x.replace("\n", "")
+            .replace("\r", "")
+            .replace("\t", "")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " "),
+        ),
         location_type=sp.MissingField(),
-        raw_address=sp.MappingField(mapping=["rawa"]),
+        raw_address=sp.MappingField(
+            mapping=["rawa"],
+            value_transform=lambda x: x.replace("\n", "")
+            .replace("\r", "")
+            .replace("\t", "")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " ")
+            .replace("  ", " "),
+        ),
     )
 
     pipeline = sp.SimpleScraperPipeline(

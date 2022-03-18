@@ -10,60 +10,58 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 def fetch_data(sgw: SgWriter):
 
     locator_domain = "https://goforward.com/"
-    api_url = "https://goforward.com/"
+    api_url = "https://goforward.com/p/home"
     session = SgRequests()
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
     r = session.get(api_url, headers=headers)
     tree = html.fromstring(r.text)
-    jsblock1 = (
-        "".join(tree.xpath('//script[contains(text(), "window.Clinics={")]/text()'))
-        .split("window.Clinics=")[1]
-        .strip()
-    )
-    js = json.loads(jsblock1)
-    jsblock2 = (
-        "".join(tree.xpath('//script[contains(text(), "window.Pages=")]/text()'))
-        .split("window.Pages=")[1]
-        .strip()
-    )
-    js1 = json.loads(jsblock2)
-    for j in js["resources"]:
-        a = j.get("clinic")
-        page_url = "<MISSING>"
-        location_name = a.get("name")
-        if location_name == "SB1":
-            continue
+    div = "".join(tree.xpath('//script[contains(text(), "clinic")]/text()'))
+    js = json.loads(div)
+    sub_js = json.loads(div)["props"]["pageProps"]["initialState"]["contentful"][
+        "pages"
+    ].values()
+
+    for j in js["props"]["pageProps"]["initialState"]["clinics"]["clinics"].values():
+
+        location_name = j.get("name")
+        location_type = "<MISSING>"
+        a = j.get("address")
+        ad = " ".join(a.get("lines"))
         street_address = (
-            ";".join(a.get("address").get("lines"))
-            .replace("Westfield UTC,", "")
+            ad.replace("Westfield UTC,", "")
+            .replace("Bellevue Square Mall", "")
+            .replace("Brickell City Centre", "")
+            .replace("Cherry Creek North", "")
             .strip()
         )
-        if street_address.find(";") != -1 and street_address.find("1435") == -1:
-            street_address = street_address.split(";")[1].strip()
-        street_address = street_address.replace(";", " ").strip()
-        state = a.get("address").get("region")
-        postal = a.get("address").get("post_code")
-        country_code = a.get("address").get("country")
-        city = a.get("address").get("locality")
-        store_number = a.get("id")
-        latitude = a.get("address").get("latitude") or "<MISSING>"
-        longitude = a.get("address").get("longitude") or "<MISSING>"
-        try:
-            phone = a.get("phones")[0].get("number")
-        except:
-            phone = "<MISSING>"
-        for k in js1.values():
-            ids = k.get("id") or "<MISSING>"
-            if ids == location_name:
-                page_url = f"https://goforward.com{k.get('path')}"
-                location_name = k.get("title")
-        if page_url == "<MISSING>":
-            continue
-        if phone == "<MISSING>" and location_name == "Forward | Long Island":
-            phone = "(833) 334-6393"
+        street_address = (
+            street_address.replace("Buckhead Village District", "")
+            .replace("Prudential Center Retail", "")
+            .replace("Walt Whitman Shops", "")
+            .strip()
+        )
+        state = a.get("state") or "<MISSING>"
+        postal = a.get("postCode") or "<MISSING>"
+        country_code = "US"
+        city = a.get("city") or "<MISSING>"
+        if str(city).find(",") != -1:
+            city = str(city).split(",")[1].strip()
+        store_number = "<MISSING>"
+        latitude = a.get("latitude") or "<MISSING>"
+        longitude = a.get("longitude") or "<MISSING>"
+        phone = j.get("phone") or "<MISSING>"
         hours_of_operation = "<MISSING>"
+        page_url = "<MISSING>"
+        for c in sub_js:
+            ids = c.get("id")
+            if location_name == ids:
+                location_name = c.get("title")
+                slug = c.get("path")
+                page_url = f"https://goforward.com{slug}"
+                location_type = c.get("contentType")
+                store_number = c.get("clinicId")
 
         row = SgRecord(
             locator_domain=locator_domain,
@@ -76,10 +74,11 @@ def fetch_data(sgw: SgWriter):
             country_code=country_code,
             store_number=store_number,
             phone=phone,
-            location_type=SgRecord.MISSING,
+            location_type=location_type,
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hours_of_operation,
+            raw_address=f"{ad} {city}, {state} {postal}",
         )
 
         sgw.write_row(row)

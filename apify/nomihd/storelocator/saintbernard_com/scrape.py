@@ -4,6 +4,8 @@ from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import lxml.html
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
 website = "saintbernard.com"
@@ -60,12 +62,11 @@ def fetch_data():
         page_url = search_url
         locator_domain = website
 
-        location_name = (
-            "".join(store.xpath('.//span[contains(@style,"Aldrich")]//text()'))
-            .split("-")[0]
-            .strip()
-        )
-
+        location_name = "".join(
+            store.xpath(
+                ".//p/span[@style='letter-spacing: 1px; font-size: 18px; font-family: nimbus-sans, sans-serif;']/strong[1]//text()"
+            )
+        ).strip()
         store_info = list(
             filter(
                 str,
@@ -141,7 +142,9 @@ def fetch_data():
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PhoneNumberId)
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
