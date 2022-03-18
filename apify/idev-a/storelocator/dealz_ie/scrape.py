@@ -25,11 +25,20 @@ def fetch_records(http):
         for hh in _["opening_hours"]:
             hours.append(f"{hh['day']}: {hh['hours']}")
         page_url = (
-            f"https://www.dealz.ie/store-finder/store_page/view/id/{_['url_key']}/"
+            f"https://www.dealz.ie/store-finder/store_page/view/id/{_['store_id']}/"
         )
         street_address = addr["line"]
         if type(addr["line"]) == list:
             street_address = " ".join(addr["line"])
+        latitude = _["geolocation"]["latitude"]
+        longitude = _["geolocation"]["longitude"]
+        if latitude == "0.00000000":
+            latitude = ""
+        if longitude == "0.00000000":
+            longitude = ""
+        phone = _["tel"]
+        if phone:
+            phone = phone.split("/")[0].strip()
         yield SgRecord(
             page_url=page_url,
             location_name=_["name"],
@@ -38,9 +47,9 @@ def fetch_records(http):
             city=addr["city"],
             zip_postal=addr["postcode"],
             country_code=addr["country"],
-            phone=_["tel"],
-            latitude=_["geolocation"]["latitude"],
-            longitude=_["geolocation"]["longitude"],
+            phone=phone,
+            latitude=latitude,
+            longitude=longitude,
             locator_domain=locator_domain,
             hours_of_operation="; ".join(hours),
         )

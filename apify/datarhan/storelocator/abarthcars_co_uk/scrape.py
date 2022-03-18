@@ -1,24 +1,34 @@
 # -*- coding: utf-8 -*-
 from lxml import etree
 from time import sleep
-
+from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
-from sgselenium.sgselenium import SgFirefox
+from sgselenium.sgselenium import SgChrome
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 from sgpostal.sgpostal import parse_address_intl
+import os
+import ssl
+
+domain = "abarthcars.co.uk"
+logger = sglog.SgLogSetup().get_logger(logger_name=domain)
+
+os.environ[
+    "PROXY_URL"
+] = "http://groups-RESIDENTIAL,country-gb:{}@proxy.apify.com:8000/"
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 
 def fetch_data():
     start_url = "https://www.abarthcars.co.uk/retailers"
-    domain = "abarthcars.co.uk"
 
     all_codes = DynamicZipSearch(
         country_codes=[SearchableCountries.BRITAIN], expected_search_radius_miles=100
     )
-    with SgFirefox() as driver:
+    with SgChrome() as driver:
         for code in all_codes:
             driver.get(start_url)
             sleep(3)
@@ -39,10 +49,11 @@ def fetch_data():
             except Exception:
                 continue
             elem.click()
-            sleep(3)
+            sleep(10)
             dom = etree.HTML(driver.page_source)
 
             all_locations = dom.xpath('//div[@class="results-item"]')
+            logger.info(f"Zipcode: {code} => Total Locations: {len(all_locations)-1}")
             for poi_html in all_locations:
                 location_name = (
                     poi_html.xpath('.//div[@class="dl_name"]/text()')[0]

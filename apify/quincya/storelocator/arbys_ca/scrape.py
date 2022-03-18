@@ -11,7 +11,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 from sgrequests import SgRequests
 
-logger = SgLogSetup().get_logger("arbys.ca")
+logger = SgLogSetup().get_logger("arbys_ca")
 
 
 def fetch_data(sgw: SgWriter):
@@ -68,7 +68,7 @@ def fetch_data(sgw: SgWriter):
         zip_code = store["address"]["postalCode"]
         if not zip_code:
             zip_code = "<MISSING>"
-        country_code = "US"
+        country_code = "CA"
         try:
             location_type = ", ".join(
                 list(item.find(class_="location-features-wrap mb-0").stripped_strings)
