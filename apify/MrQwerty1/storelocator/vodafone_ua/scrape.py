@@ -74,7 +74,7 @@ def fetch_data(sgw: SgWriter):
 
 if __name__ == "__main__":
     locator_domain = "https://www.vodafone.ua/"
-    session = SgRequests()
+    session = SgRequests(proxy_country="ua")
 
     headers = {
         "Content-Type": "application/json; charset=UTF-8",
