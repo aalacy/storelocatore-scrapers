@@ -4,6 +4,7 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
+import time
 
 session = SgRequests()
 headers = {
@@ -14,9 +15,9 @@ logger = SgLogSetup().get_logger("unitedsupermarkets_com__page__pharmacy")
 
 
 def fetch_data():
-    url = "https://www.unitedsupermarkets.com/RS.Relationshop/StoreLocation/GetListClosestStores"
+    url = "https://www.unitedsupermarkets.com/RS.Relationshop/StoreLocation/GetAllStoresPosition"
     payload = {
-        "__RequestVerificationToken": "i0uRi5H_YVPKWOH-rOiBsz003fjy1y-l6DqfTxHP_WsWwsjgewRjUXVOhvxho4YhJhkELE9SL_SeL8NHeZmubA9_RGU1"
+        "__RequestVerificationToken": "kzPUZRZRzKHGNeUvO-lrYXAVizIpUN6QUjUV95D081APcVL3wyEWyg0roh9OMQY6l5FU1pIgaD9jfWzsg9LDv5OiLxI1"
     }
     r = session.post(url, headers=headers, data=payload)
     website = "unitedsupermarkets.com/page/pharmacy"
@@ -24,10 +25,10 @@ def fetch_data():
     country = "US"
     logger.info("Pulling Stores")
     for line in r.iter_lines():
-        if '{"Distance":' in line:
-            items = line.split('{"Distance":')
+        if '{"Active":' in line:
+            items = line.split('{"Active":')
             for item in items:
-                if '"Logo":"' in item:
+                if '"Address1":"' in item:
                     Pharm = False
                     name = item.split('"StoreName":"')[1].split('"')[0]
                     city = item.split('"City":"')[1].split('"')[0]
@@ -44,6 +45,7 @@ def fetch_data():
                     hours = ""
                     PFound = False
                     r2 = session.get(loc, headers=headers)
+                    time.sleep(5)
                     for line2 in r2.iter_lines():
                         if '<h2 class="sub-title">Pharmacy</h2>' in line2:
                             Pharm = True

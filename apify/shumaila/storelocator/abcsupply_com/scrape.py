@@ -4,7 +4,9 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 import json
 import re
+import ssl
 
+ssl._create_default_https_context = ssl._create_unverified_context
 from sgselenium import SgSelenium
 
 driver = SgSelenium().chrome()
@@ -13,7 +15,13 @@ driver = SgSelenium().chrome()
 def fetch_data():
 
     cleanr = re.compile(r"<[^>]+>")
-    url = "https://www.abcsupply.com/wp-admin/admin-ajax.php?action=fetch_all_locations&_ajax_nonce=1bd2076898"
+    url = "https://www.abcsupply.com/locations/"
+    driver.get(url)
+    code = driver.page_source.split('"nonce":"', 1)[1].split('"', 1)[0]
+    url = (
+        "https://www.abcsupply.com/wp-admin/admin-ajax.php?action=fetch_all_locations&_ajax_nonce="
+        + str(code)
+    )
     driver.get(url)
     divlist = json.loads(re.sub(cleanr, "", driver.page_source))
     for div in divlist:

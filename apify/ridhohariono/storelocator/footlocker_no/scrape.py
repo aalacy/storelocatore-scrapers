@@ -4,7 +4,7 @@ from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgpostal import parse_address_intl
 import re
 
@@ -31,7 +31,6 @@ def getAddress(raw_address):
             city = data.city
             state = data.state
             zip_postal = data.postcode
-
             if street_address is None or len(street_address) == 0:
                 street_address = MISSING
             if city is None or len(city) == 0:
@@ -51,13 +50,6 @@ def pull_content(url):
     log.info("Pull content => " + url)
     soup = bs(session.get(url, headers=HEADERS).content, "lxml")
     return soup
-
-
-def get_latlong(url):
-    longlat = re.search(r"!2d(-[\d]*\.[\d]*)\!3d(-?[\d]*\.[\d]*)", url)
-    if not longlat:
-        return "<MISSING>", "<MISSING>"
-    return longlat.group(2), longlat.group(1)
 
 
 def fetch_store_urls(url):
@@ -112,7 +104,7 @@ def fetch_data():
         city = address.find("span", {"class": "c-address-city"}).text.strip()
         get_state = address.find(re.compile("span|abbr"), {"class": "c-address-state"})
         if not get_state:
-            state = "<MISSING>"
+            state = MISSING
         else:
             state = get_state.text.strip()
         zip_postal = address.find(
@@ -123,7 +115,7 @@ def fetch_data():
             content.find("table", {"class": "c-location-hours-details"})
         )
         country_code = address["data-country"]
-        location_type = "<MISSING>"
+        location_type = MISSING
         store_number = MISSING
         latitude = content.find("meta", {"itemprop": "latitude"})["content"]
         longitude = content.find("meta", {"itemprop": "longitude"})["content"]
@@ -150,20 +142,11 @@ def fetch_data():
 def scrape():
     log.info("start {} Scraper".format(DOMAIN))
     count = 0
-    with SgWriter(
-        SgRecordDeduper(
-            SgRecordID(
-                {
-                    SgRecord.Headers.PAGE_URL,
-                }
-            )
-        )
-    ) as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
             count = count + 1
-
     log.info(f"No of records being processed: {count}")
     log.info("Finished")
 
