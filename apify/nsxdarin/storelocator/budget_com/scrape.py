@@ -49,7 +49,7 @@ def fetch_data():
                 if lurl.count("/") == 8 and "uber-only" not in lurl:
                     locs.append(lurl)
     for loc in locs:
-        time.sleep(3)
+        time.sleep(5)
         LocFound = True
         logger.info("Pulling Location %s..." % loc)
         website = "budget.com"
@@ -176,6 +176,8 @@ def fetch_data():
                 city = city.split(" 8")[0]
             if " Wien " in city:
                 city = "Wien"
+            if "@" in city or len(city) < 2:
+                city = "<MISSING>"
             state = state.replace(" Cdx 3", "")
             if LocFound:
                 yield SgRecord(
