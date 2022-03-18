@@ -24,11 +24,7 @@ def fetch_data():
     for zipcode in search:
         typ = "<MISSING>"
         country = "US"
-        url = (
-            "https://www.walmarthealth.com/schedule/clinicLocations/"
-            + zipcode
-            + "/medical"
-        )
+        url = "https://www.walmarthealth.com/api/clinicLocations?zip=" + zipcode
         logger.info(("Pulling Postal Code %s..." % zipcode))
         session = SgRequests()
         try:

@@ -28,6 +28,8 @@ def fetch_data():
         for loc in loclist[:-1]:
             temp = loc.find("a")
             location_name = temp.find("strong").text
+            if "virtual-appointments" in temp["href"]:
+                continue
             page_url = "https://www.charlesclinkard.co.uk" + temp["href"]
             log.info(page_url)
             temp = loc.find("div", {"class": "row store-locator__store__info"})

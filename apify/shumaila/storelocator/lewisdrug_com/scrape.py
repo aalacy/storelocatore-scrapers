@@ -33,27 +33,26 @@ def fetch_data():
             street = street + " " + address[1]
             city, state = address[2].split(", ", 1)
         state, pcode = state.split(" ", 1)
-
-        phone = div.select_one("a[href*=tel]").text
-        hours = div.find("div", {"class": "store-hours"}).text
-        hours = (
-            re.sub(pattern, " ", str(hours)).replace("\n", " ").split(":", 1)[1].strip()
-        )
-
-        try:
-            lat, longt = (
-                r.text.split("href='" + link, 1)[1]
-                .split("maps.LatLng(", 1)[1]
-                .split(")", 1)[0]
-                .split(",")
-            )
-        except:
-            r = session.get(link, headers=headers)
-            lat = r.text.split('"latitude": "', 1)[1].split('"', 1)[0]
-            longt = r.text.split('"longitude": "', 1)[1].split('"', 1)[0]
         state = state.replace(",", "")
         if state in pcode:
             pcode = pcode.replace(state, "")
+        phone = div.select_one("a[href*=tel]").text
+
+        r = session.get(link, headers=headers)
+
+        soup = BeautifulSoup(r.text, "html.parser")
+        lat = r.text.split('"latitude": "')[-1].split('"', 1)[0]
+        longt = r.text.split('"longitude": "')[-1].split('"', 1)[0]
+
+        hours = soup.find("div", {"class": "hours"}).text
+        hours = (
+            re.sub(pattern, " ", str(hours))
+            .replace("\n", " ")
+            .split("Mon", 1)[1]
+            .strip()
+        )
+        hours = "Mon " + hours.encode("ascii", "ignore").decode("ascii")
+
         yield SgRecord(
             locator_domain="https://www.lewisdrug.com/",
             page_url=link,

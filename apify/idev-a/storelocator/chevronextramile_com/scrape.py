@@ -17,11 +17,14 @@ headers = {
 }
 
 
-def get_data(coords, sgw: SgWriter, token, session):
+def get_data(coords, search, sgw: SgWriter, token, session):
     lat, long = coords
-    api_url = f"https://www.chevronwithtechron.com/api/app/techron2go/ws_getChevronExtraMileNearMe_v1.aspx?radius=3500&lat={str(lat)}&lng={str(long)}&token={token}&search5=1"
+    api_url = f"https://apis.chevron.com/api/StationFinder/nearby?radius=3500&lat={str(lat)}&lng={str(long)}&clientid={token}&search5=1"
 
     js = session.get(api_url, headers=headers).json()["stations"]
+
+    if js:
+        search.found_location_at(lat, long)
 
     logger.info(f"{lat, long} {len(js)}")
     for j in js:
@@ -60,11 +63,8 @@ def get_data(coords, sgw: SgWriter, token, session):
 def fetch_data(sgw: SgWriter):
     coords = DynamicGeoSearch(
         country_codes=[SearchableCountries.USA],
-        max_search_distance_miles=10,
-        expected_search_radius_miles=10,
-        max_search_results=None,
     )
-    with SgRequests(verify_ssl=False) as session:
+    with SgRequests(verify_ssl=False, proxy_country="us") as session:
         token = json.loads(
             session.get(locator_url, headers=headers)
             .text.split("var siteData =")[1]
@@ -74,7 +74,7 @@ def fetch_data(sgw: SgWriter):
 
         with futures.ThreadPoolExecutor(max_workers=10) as executor:
             future_to_url = {
-                executor.submit(get_data, url, sgw, token, session): url
+                executor.submit(get_data, url, coords, sgw, token, session): url
                 for url in coords
             }
             for future in futures.as_completed(future_to_url):
@@ -82,6 +82,5 @@ def fetch_data(sgw: SgWriter):
 
 
 if __name__ == "__main__":
-    session = SgRequests()
     with SgWriter(SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
         fetch_data(writer)
