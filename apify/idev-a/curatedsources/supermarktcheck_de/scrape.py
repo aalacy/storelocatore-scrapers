@@ -147,7 +147,7 @@ def fetchConcurrentSingle(link):
     response = request_with_retries(page_url)
     if response.status == 200:
         return page_url, bs(response.text, "lxml")
-    
+
     return None
 
 
