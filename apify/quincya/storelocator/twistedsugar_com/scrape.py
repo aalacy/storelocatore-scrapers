@@ -70,11 +70,10 @@ def fetch_data(sgw: SgWriter):
             store_number = ""
             phone = item.find(class_="displayHeadingText").text.strip()
             location_type = "Location"
-            if "Twisted Food Truck" in street_address:
-                street_address = street_address.replace(
-                    "Twisted Food Truck,", ""
-                ).strip()
+            if "Food Truck" in street_address:
                 location_type = "Food Truck"
+            if ")" in street_address:
+                street_address = street_address.split(")")[1].strip()
             latitude = ""
             longitude = ""
             hours_of_operation = " ".join(list(item.table.stripped_strings))
