@@ -4,7 +4,6 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgselenium import SgSelenium
 import ssl
 
 ssl._create_default_https_context = ssl._create_unverified_context
