@@ -1,5 +1,6 @@
 import json
 import re
+import ssl
 
 from bs4 import BeautifulSoup
 
@@ -11,6 +12,8 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgselenium.sgselenium import SgChrome
 
 URL = "https://www.games-workshop.com/"
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 
 def fetch_data(sgw: SgWriter):
