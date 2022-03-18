@@ -29,8 +29,6 @@ def fetch_data():
     for store in stores_list:
 
         page_url = "".join(store.xpath('.//h2[@class="name-line"]/a/@href')).strip()
-        if not page_url:
-            page_url = search_url
         locator_domain = website
         location_name = "".join(
             store.xpath('.//h2[@class="name-line"]/a/text()')
@@ -96,7 +94,7 @@ def fetch_data():
             latitude = lat_lng.split(",")[0].replace("lat:", "").strip()
             longitude = lat_lng.split(",")[1].replace("lng:", "").strip()
         else:
-            page_url = "<MISSING>"
+            page_url = search_url
             hours_of_operation = "<MISSING>"
             latitude = "<MISSING>"
             longitude = "<MISSING>"
