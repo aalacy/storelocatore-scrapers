@@ -8,7 +8,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
-from sgzip.dynamic import SearchableCountries, Grain_1_KM
+from sgzip.dynamic import Grain_1_KM
 from sgzip.parallel import DynamicSearchMaker, ParallelDynamicSearch, SearchIteration
 from tenacity import retry, stop_after_attempt
 
