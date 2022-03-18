@@ -24,7 +24,6 @@ def fetch_data(sgw: SgWriter):
         for d in div:
             slug = "".join(d.xpath(".//@value"))
             url = f"https://www.triumph-motorcycles.ca/api/v2/places/alldealers?LanguageCode={slug}&SiteLanguageCode=en-CA&Skip=0&Take=50000&CurrentUrl=www.triumph-motorcycles.ca"
-            print(url)
             r = session.get(url, headers=headers)
             js = r.json()["DealerCardData"]["DealerCards"]
             for j in js:
