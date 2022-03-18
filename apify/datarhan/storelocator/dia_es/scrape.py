@@ -11,7 +11,7 @@ from sgscrape.sgwriter import SgWriter
 def fetch_data():
     session = SgRequests()
 
-    start_url = "https://www.dia.es/clubdia/ES/tiendas.v1572.json.gz"
+    start_url = "https://www.dia.es/clubdia/ES/tiendas.v1574.json.gz"
     domain = "dia.es"
 
     response = session.get(start_url)
@@ -59,7 +59,11 @@ def scrape():
     with SgWriter(
         SgRecordDeduper(
             SgRecordID(
-                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+                {
+                    SgRecord.Headers.LOCATION_NAME,
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.STORE_NUMBER,
+                }
             )
         )
     ) as writer:
