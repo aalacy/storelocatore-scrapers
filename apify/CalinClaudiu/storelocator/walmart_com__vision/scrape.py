@@ -211,13 +211,14 @@ def gen_hours(rec):
                         pass
         except Exception:
             pass
-        for recz in newrec["horas"]:
-            copyrec = newrec
-            copyrec["horas"] = recz
-            yield copyrec
-
-    except Exception:
-        pass
+        if len(newrec["horas"]) > 0:
+            newrec["horas"] = "\n".join(newrec["horas"])
+        else:
+            raise
+        return newrec
+    except Exception as mf:
+        newrec["horas"] = str(mf)
+        return newrec
 
 
 def transform_types(rec):
@@ -283,8 +284,9 @@ def fetch_data():
                                     store["geoPoint"]["latitude"],
                                     store["geoPoint"]["longitude"],
                                 )
-                    for recc in gen_hours(transform_types(store)):
-                        yield recc
+                    reczz = gen_hours(transform_types(store))
+                    please_write(reczz)
+                    yield reczz
         progress = str(round(100 - (search.items_remaining() / maxZ * 100), 2)) + "%"
         total += found
         logger.info(f"{code} | found: {found} | total: {total} | progress: {progress}")
