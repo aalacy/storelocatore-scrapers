@@ -72,7 +72,6 @@ def fetch_data():
             phone = store.select_one("p[style='white-space:pre-wrap;']").text.strip()
         except:
             phone = MISSING
-        print(phone)
         hours_of_operation = MISSING
         location_type = MISSING
         store_number = MISSING
