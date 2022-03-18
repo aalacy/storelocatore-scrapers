@@ -128,7 +128,7 @@ def get_data():
                                             + part["closes"]
                                             + ", "
                                         )
-
+                            hours = hours[:-2]
                         except Exception:
                             hours = "<MISSING>"
                             pass
