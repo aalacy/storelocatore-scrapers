@@ -31,7 +31,7 @@ def getTestCountries(session):
     headers[
         "user-agent"
     ] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
-    soup = b4(session.get(url, headers=headers, verify=False).text, "lxml")
+    soup = b4(session.get(url, headers=headers).text, "lxml")
     soup = soup.find_all("div", {"class": ["columncontrol", "parbase"]})
     countries = []
     for div in soup:
@@ -134,7 +134,7 @@ def fetch_for_real(data, session):
         locations = None
         try:
             locations = SgRequests.raise_on_err(
-                session.get(url, headers=headers, verify=False)
+                session.get(url, headers=headers)
             ).json()
         except Exception as e:
             logzilla.error(f"{e}")
