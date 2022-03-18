@@ -25,7 +25,7 @@ class ScrapableSite:
         if not self.session or refresh:
             if refresh:
                 self.session.close()
-            self.session = SgChrome(is_headless=False).driver()
+            self.session = SgChrome(is_headless=True).driver()
             self.session.set_page_load_timeout(600)
 
         return self.session
