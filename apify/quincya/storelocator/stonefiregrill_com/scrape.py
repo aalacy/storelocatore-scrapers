@@ -7,10 +7,6 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger("stonefiregrill_com")
-
 
 def fetch_data(sgw: SgWriter):
 
@@ -29,7 +25,6 @@ def fetch_data(sgw: SgWriter):
     for item in items:
 
         link = item.find("a")["href"]
-        logger.info(link)
 
         req = session.get(link, headers=headers)
         base = BeautifulSoup(req.text, "lxml")
