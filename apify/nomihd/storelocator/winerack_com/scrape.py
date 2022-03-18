@@ -8,7 +8,6 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import SgRecordID
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgrequests import SgRequests
 from sgselenium.sgselenium import SgChrome
 from webdriver_manager.chrome import ChromeDriverManager
