@@ -131,11 +131,17 @@ def fetch_data():
     driver.implicitly_wait(10)
     search = DynamicGeoSearch(
         country_codes=[SearchableCountries.FRANCE],
-        expected_search_radius_miles=25,
+        expected_search_radius_miles=30,
         max_search_results=5,
     )
-    for lat, long in search:
+    coords = [x for x in search]
+    coords.append((18.097019874365, -63.042554855347))
+    for lat, long in coords:
         driver, data = get_stores(driver, lat, long)
+        try:
+            data["data"]["storeList"]
+        except:
+            continue
         for row in data["data"]["storeList"]:
             search.found_location_at(lat, long)
             page_url = BASE_URL + "magasin/" + str(row["id"])

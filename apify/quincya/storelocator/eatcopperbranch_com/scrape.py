@@ -20,7 +20,7 @@ def fetch_data(sgw: SgWriter):
     locator_domain = "https://eatcopperbranch.com"
 
     req = session.get(base_link, headers=headers)
-    base = BeautifulSoup(req.text, "lxml")
+    base = BeautifulSoup(req.text, "html.parser")
 
     items = base.find_all("li", class_="fusion-layout-column")
 
@@ -28,6 +28,9 @@ def fetch_data(sgw: SgWriter):
         raw_address = list(item.stripped_strings)
         location_name = raw_address[0]
         street_address = raw_address[1]
+        if "," in street_address:
+            if "suite" not in street_address and "16th" not in street_address:
+                street_address = street_address.split(",")[0].strip()
         if street_address[-1:] == ",":
             street_address = street_address[:-1]
         city_line = raw_address[2].split(",")
@@ -45,13 +48,15 @@ def fetch_data(sgw: SgWriter):
             country_code = "CA"
 
         phone = raw_address[3]
+        if "-" not in phone:
+            phone = ""
         location_type = ""
         latitude = ""
         longitude = ""
 
         link = item.a["href"]
         req = session.get(link, headers=headers)
-        base = BeautifulSoup(req.text, "lxml")
+        base = BeautifulSoup(req.text, "html.parser")
 
         store_number = base.main.section.div["id"].split("-")[-1]
         hours_of_operation = " ".join(
@@ -62,9 +67,12 @@ def fetch_data(sgw: SgWriter):
                 .stripped_strings
             )[1:]
         )
-
-        if "coming soon" in hours_of_operation.lower():
-            continue
+        if hours_of_operation.find("Temporarily Closed") != -1:
+            hours_of_operation = "Temporarily Closed"
+        if hours_of_operation.find("COMING SOON") != -1:
+            hours_of_operation = "COMING SOON"
+        if hours_of_operation.find("Coming soon") != -1:
+            hours_of_operation = "Coming soon"
 
         sgw.write_row(
             SgRecord(
