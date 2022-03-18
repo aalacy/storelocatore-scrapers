@@ -183,7 +183,7 @@ def gen_hours(rec):
                 str("General" + " - " + str(human_hours(rec["operationalHours"])))
             )
         except Exception:
-            raise
+            pass
         for i in rec["primaryServices"]:
             try:
                 newrec["horas"].append(
@@ -235,7 +235,8 @@ def transform_types(rec):
             )
         except Exception:
             newrec = rec
-            newrec["rawadd"] = "<ERROR>"
+            if newrec:
+              newrec["rawadd"] = "<ERROR>"
     return newrec
 
 

@@ -129,12 +129,6 @@ def fetch_other(session, state):
         yield grab_json(b4(res.text, "lxml"))
 
 
-def vision(x):
-    if any(i in x for i in ["ISION", "ision"]):
-        return "VISION"
-    return ""
-
-
 def test_other(session):
     res = SgRequests.raise_on_err(
         session.get("https://www.walmart.com/store/2784-beatrice-ne", headers=headers)
@@ -185,7 +179,7 @@ def gen_hours(rec):
                 str("General" + " - " + str(human_hours(rec["operationalHours"])))
             )
         except Exception:
-            raise
+            pass
         for i in rec["primaryServices"]:
             try:
                 newrec["horas"].append(
@@ -294,6 +288,12 @@ def fetch_data():
 
 def add_walmart(x):
     return x if "Walmart" in x else "Walmart " + x
+
+
+def vision(x):
+    if any(i in x for i in ["ISION", "ision"]):
+        return "VISION"
+    return ""
 
 
 def scrape():
