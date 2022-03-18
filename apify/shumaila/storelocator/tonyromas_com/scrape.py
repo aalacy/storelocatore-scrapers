@@ -16,7 +16,7 @@ MISSING = SgRecord.MISSING
 
 
 def fetch_data():
-    pattern = re.compile(r"\s\s+")
+
     url = "https://tonyromas.com/sitemap.html"
     r = session.get(url, headers=headers)
     soup = BeautifulSoup(r.text, "html.parser")
