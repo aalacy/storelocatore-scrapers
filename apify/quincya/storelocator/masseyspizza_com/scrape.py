@@ -29,6 +29,8 @@ def fetch_data(sgw: SgWriter):
         except:
             continue
         raw_address = list(item.stripped_strings)[1:]
+        if "COMING SOON" in raw_address[0].upper():
+            continue
         if "NOW OPEN" in raw_address[0] or "VILLE/WORTH" in raw_address[0]:
             raw_address.pop(0)
         for i, y in enumerate(raw_address):
