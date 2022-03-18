@@ -37,15 +37,6 @@ def fetch_data(sgw: SgWriter):
         locator_domain = "stonefiregrill.com"
         content = base.find("div", attrs={"class": "row"})
         location_name = content.find("h1").text.strip()
-
-        raw_data = (
-            str(base.find("span", attrs={"itemprop": "address"}))
-            .replace("<p>", "")
-            .replace("</p>", "")
-            .replace("\n", "")
-            .replace(",", "")
-            .split("<br/>")
-        )
         street_address = content.find("span", attrs={"class": "address"}).text.strip()
         raw_line = base.find("span", attrs={"class": "city"}).text.strip()
         city = raw_line[: raw_line.rfind(",")].strip()
