@@ -5,9 +5,9 @@ import random
 from sglogging import sglog
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import SgRecordID
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgrequests import SgRequests
 from sgselenium.sgselenium import SgChrome
 from webdriver_manager.chrome import ChromeDriverManager
@@ -198,7 +198,20 @@ def scrape():
         executable_path=ChromeDriverManager().install(), is_headless=True
     ) as driver:
         with SgWriter(
-            deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
+            SgRecordDeduper(
+                SgRecordID(
+                    {
+                        SgRecord.Headers.PAGE_URL,
+                        SgRecord.Headers.LOCATION_NAME,
+                        SgRecord.Headers.RAW_ADDRESS,
+                        SgRecord.Headers.STORE_NUMBER,
+                        SgRecord.Headers.PHONE,
+                        SgRecord.Headers.LATITUDE,
+                        SgRecord.Headers.LONGITUDE,
+                        SgRecord.Headers.LOCATION_NAME,
+                    }
+                )
+            )
         ) as writer:
             with SgRequests() as http:
                 for rec in fetch_data(driver, http, search):
