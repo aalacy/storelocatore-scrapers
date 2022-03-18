@@ -82,6 +82,8 @@ def fetch_data(sgw: SgWriter):
                 postal = "<MISSING>"
             if postal[0] == postal[1] == postal[2] == "0":
                 postal = "<MISSING>"
+            if phone[0] == phone[1] == phone[2] == "0":
+                phone = "<MISSING>"
 
             row = SgRecord(
                 locator_domain=locator_domain,
