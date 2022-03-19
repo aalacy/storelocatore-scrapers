@@ -35,7 +35,7 @@ def extract_json(html_string):
 
 
 def set_session(search_code):
-    session = SgRequests(retry_behavior=False)
+    session = SgRequests(retries_with_fresh_proxy_ip=5)
     url = "https://www.gasbuddy.com/graphql"
     headers = {
         "User-Agent": "PostmanRuntime/7.19.0",
@@ -51,7 +51,7 @@ def set_session(search_code):
         "operationName": "LocationBySearchTerm",
     }
 
-    response = session.post(url, headers=headers, json=data, timeout=5).json()
+    response = session.post(url, headers=headers, json=data).json()
 
     return [session, headers, response]
 
@@ -63,9 +63,9 @@ def set_get_session(page_url):
         if x == 10:
             raise Exception
         try:
-            session = SgRequests(retry_behavior=False)
+            session = SgRequests(retries_with_fresh_proxy_ip=5)
             page_response = session.get(
-                page_url, headers={"User-Agent": "PostmanRuntime/7.19.0"}, timeout=5
+                page_url, headers={"User-Agent": "PostmanRuntime/7.19.0"}
             ).text
             break
         except Exception:
@@ -91,7 +91,13 @@ def get_data():
         if len(str(search_code)) == 4:
             search_code = "0" + str(search_code)
 
-        if y == 400:
+        if x == 1:
+            response_stuff = set_session(search_code)
+            session = response_stuff[0]
+            headers = response_stuff[1]
+            response = response_stuff[2]
+
+        elif y == 400:
             y = 0
             response_stuff = set_session(search_code)
             session = response_stuff[0]
@@ -106,9 +112,7 @@ def get_data():
                     "operationName": "LocationBySearchTerm",
                 }
 
-                response = session.post(
-                    url, headers=headers, json=data, timeout=5
-                ).json()
+                response = session.post(url, headers=headers, json=data).json()
                 if (
                     response["data"]["locationBySearchTerm"]["stations"]["results"]
                     is None
@@ -166,16 +170,22 @@ def get_data():
                 page_stuff = set_get_session(page_url)
                 session = page_stuff[0]
             try:
-                page_response = session.get(
-                    page_url, headers={"User-Agent": "PostmanRuntime/7.19.0"}, timeout=5
-                ).text
-                page_soup = bs(page_response, "html.parser")
-                if (
-                    '{"message":"Cannot return null for non-nullable field StationHours.status."}'
-                    in page_response
-                ):
-                    continue
-                page_soup.find("img")
+                page_status = session.get(
+                    page_url, headers={"User-Agent": "PostmanRuntime/7.19.0"}
+                )
+
+                if page_status.status_code != 404:
+                    page_response = page_status.text
+                    page_soup = bs(page_response, "html.parser")
+                    if (
+                        '{"message":"Cannot return null for non-nullable field StationHours.status."}'
+                        in page_response
+                    ):
+                        continue
+                    page_soup.find("img")
+
+                else:
+                    page_response = "broken"
 
             except Exception:
                 page_stuff = set_get_session(page_url)
@@ -184,36 +194,41 @@ def get_data():
                 page_soup = bs(page_response, "html.parser")
                 page_soup.find("img")
 
-            try:
-                phone = page_soup.find(
-                    "a", attrs={"class": "StationInfoBox-module__phoneLink___2LtAk"}
-                ).text.strip()
+            if page_response != "broken":
+                try:
+                    phone = page_soup.find(
+                        "a", attrs={"class": "StationInfoBox-module__phoneLink___2LtAk"}
+                    ).text.strip()
 
-            except Exception:
+                except Exception:
+                    phone = "<MISSING>"
+                json_objects = extract_json(page_response)
+
+                try:
+                    latitude = json_objects[-1]["@graph"][-1]["geo"]["latitude"]
+                    longitude = json_objects[-1]["@graph"][-1]["geo"]["longitude"]
+                    search.found_location_at(latitude, longitude)
+                except Exception:
+                    error_count = error_count + 1
+                    latitude = "<MISSING>"
+                    longitude = "<MISSING>"
+
+                hours = ""
+                hours_parts = page_soup.find_all(
+                    "span", attrs={"class": "StationHours-module__statusOpen___360-J"}
+                )
+                for part in hours_parts:
+                    hours = hours + part.text.strip() + ", "
+
+                hours = hours[:-2]
+
+                if hours == "":
+                    hours = "<MISSING>"
+
+            else:
                 phone = "<MISSING>"
-            json_objects = extract_json(page_response)
-
-            try:
-                latitude = json_objects[-1]["@graph"][-1]["geo"]["latitude"]
-                longitude = json_objects[-1]["@graph"][-1]["geo"]["longitude"]
-                search.found_location_at(latitude, longitude)
-            except Exception:
-                error_count = error_count + 1
-                with open("file.txt", "w", encoding="utf-8") as output:
-                    json.dump(json_objects, output, indent=4)
                 latitude = "<MISSING>"
                 longitude = "<MISSING>"
-
-            hours = ""
-            hours_parts = page_soup.find_all(
-                "span", attrs={"class": "StationHours-module__statusOpen___360-J"}
-            )
-            for part in hours_parts:
-                hours = hours + part.text.strip() + ", "
-
-            hours = hours[:-2]
-
-            if hours == "":
                 hours = "<MISSING>"
 
             yield {
