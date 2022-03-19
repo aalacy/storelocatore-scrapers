@@ -135,7 +135,7 @@ def fetch_data_for_non_api_based_child_brands():
                     rrns_int = rrns_int + 2
                     max_page_num = rrns_int
                     logger.info(
-                        "Search list records found to be more than 40, pagination required!!!"
+                        "Search list records found to be more than 40 => {max_page_num}, pagination required!"
                     )
 
                     for i in range(page_number_second, max_page_num):
