@@ -9,14 +9,14 @@ from concurrent import futures
 
 
 def get_token():
-    r = session.get("https://www.vodafone.ua/en/support/search-shop")
+    r = session.get("https://www.vodafone.ua/support/search-shop")
     tree = html.fromstring(r.text)
 
     return "".join(tree.xpath("//meta[@name='csrf-token']/@content"))
 
 
 def get_session():
-    r = session.get("https://www.vodafone.ua/en/")
+    r = session.get("https://www.vodafone.ua/")
 
     return r.cookies.get("www_vodafone_ua_session")
 
