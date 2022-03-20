@@ -13,12 +13,6 @@ headers = {
 }
 
 
-from sglogging import SgLogSetup
-
-
-logger = SgLogSetup().get_logger("bluefcu_com")
-
-
 def fetch_data():
 
     pattern = re.compile(r"\s\s+")
