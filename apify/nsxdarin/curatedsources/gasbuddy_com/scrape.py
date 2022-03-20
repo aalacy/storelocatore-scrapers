@@ -60,7 +60,7 @@ def set_get_session(page_url):
     x = 0
     while True:
         x = x + 1
-        if x == 10:
+        if x == 100:
             raise Exception
         try:
             session = SgRequests(retries_with_fresh_proxy_ip=5)
