@@ -1,16 +1,13 @@
 from sgrequests import SgRequests
-from sgscrape.pause_resume import CrawlStateSingleton
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
-from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 from typing import Iterable, Tuple, Callable
 from sgscrape.pause_resume import CrawlStateSingleton
 from sgzip.parallel import DynamicSearchMaker, ParallelDynamicSearch, SearchIteration
 from sglogging import SgLogSetup
 from lxml import html
-import time
 import json
 import ssl
 
