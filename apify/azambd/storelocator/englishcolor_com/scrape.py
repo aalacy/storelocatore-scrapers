@@ -232,7 +232,7 @@ def fetchStores():
                 "HOUSTON" in location["location_name"].upper()
                 and "MONTGOMERY" in store["title"].upper()
             ):
-                print(location["latitude"])
+                log.info(location["latitude"])
                 stores[storeIndex]["location_name"] = location["location_name"]
                 stores[storeIndex]["latitude"] = location["latitude"]
                 stores[storeIndex]["longitude"] = location["longitude"]
@@ -244,7 +244,7 @@ def fetchStores():
                     "HOUSTON" in location["location_name"].upper()
                     and "MONTGOMERY" in store["title"].upper()
                 ):
-                    print(location["latitude"])
+                    log.info(location["latitude"])
                     stores[storeIndex]["location_name"] = location["location_name"]
                     stores[storeIndex]["latitude"] = location["latitude"]
                     stores[storeIndex]["longitude"] = location["longitude"]
