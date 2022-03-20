@@ -1,86 +1,107 @@
-import csv
-import requests
-from bs4 import BeautifulSoup
-import re
-import json
-from sgselenium import SgSelenium
-from selenium.webdriver.firefox.options import Options
-import urllib
-import html
+from bs4 import BeautifulSoup as bs
+from sgrequests import SgRequests
+from sglogging import sglog
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
-        # Body
-        for row in data:
-            writer.writerow(row)
+DOMAIN = "citgo.com"
+API_URL = "https://www.citgo.com/api/locations/search?location={}"
+LOCATION_URL = "https://www.citgo.com/station-locator"
+HEADERS = {
+    "Accept": "application/json, text/plain, */*",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
+}
+MISSING = "<MISSING>"
+log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
+
+session = SgRequests()
+
+
+def pull_content(url):
+    log.info("Pull content => " + url)
+    soup = bs(session.get(url, headers=HEADERS).content, "lxml")
+    return soup
+
+
+def build_hours(row):
+    hours = ""
+    if "hrsmonstart" in row and row["hrsmonstart"]:
+        hours = hours + " mon " + row["hrsmonstart"] + " - " + row["hrsmonend"]
+    if "hrstuesstart" in row and row["hrstuesstart"]:
+        hours = hours + " tues " + row["hrstuesstart"] + " - " + row["hrstuesend"]
+    if "hrswedstart" in row and row["hrswedstart"]:
+        hours = hours + " wed " + row["hrswedstart"] + " - " + row["hrswedend"]
+    if "hrsthursstart" in row and row["hrsthursstart"]:
+        hours = hours + " thurs " + row["hrsthursstart"] + " - " + row["hrsthursend"]
+    if "hrsfristart" in row and row["hrsfristart"]:
+        hours = hours + " fri " + row["hrsfristart"] + " - " + row["hrsfriend"]
+    if "hrssatstart" in row and row["hrssatstart"]:
+        hours = hours + " sat " + row["hrssatstart"] + " - " + row["hrssatend"]
+    if "hrssunstart" in row and row["hrssunstart"]:
+        hours = hours + " sun " + row["hrssunstart"] + " - " + row["hrssunend"]
+    return hours.strip()
+
 
 def fetch_data():
-    driver = SgSelenium().firefox()
-    driver.get("https://www.citgo.com/locator/store-locators/store-locator")
-    cookies = driver.get_cookies()
-    s = requests.Session()
-    for cookie in cookies:
-        s.cookies.set(cookie['name'], cookie['value'])
-    return_main_object = []
-    soup = BeautifulSoup(driver.page_source,"lxml")
-    __VIEWSTATE = urllib.parse.quote(soup.find("input",{"name":"__VIEWSTATE"})["value"])
-    __CMSCsrfToken = urllib.parse.quote(soup.find("input",{"name":"__CMSCsrfToken"})["value"])
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
-        "Referer": "https://www.citgo.com/locator/store-locators/store-locator",
-        "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
-    }
-    data = '__CMSCsrfToken=' + __CMSCsrfToken + '&lng=en-US&store-distance=10&__VIEWSTATE=' + __VIEWSTATE + '&__CALLBACKID=p%24lt%24WebPartZone3%24PageContent%24pageplaceholder%24p%24lt%24WebPartZone3%24Widgets%24StoreLocator&__CALLBACKPARAM=11756%20Spring%20Club%20Drive%2C%20San%20Antonio%2C%20TX%2C%20USA%7C200000'
-    r = s.post("https://www.citgo.com/locator/store-locators/store-locator",headers=headers,data=data)
-    if r.text[0] == "s":
-        location_list = json.loads(r.text[1:])
-    else:
-        location_list = r.json()
-    for store_data in location_list["Locations"]:
-        if store_data["country"] not in ("US","CA"):
+    log.info("Fetching store_locator data")
+    search = DynamicZipSearch(
+        country_codes=[SearchableCountries.USA],
+        max_search_distance_miles=10,
+        max_search_results=5,
+    )
+    for zipcode in search:
+        url = API_URL.format(zipcode)
+        log.info("Pull content => " + url)
+        try:
+            stores = session.get(url, headers=HEADERS).json()
+        except:
             continue
-        store = []
-        store.append("https://www.citgo.com")
-        store.append(store_data["name"])
-        store.append(store_data["address"])
-        store.append(store_data["city"])
-        store.append(store_data["state"])
-        store.append(store_data["zip"])
-        store.append(store_data["country"])
-        store.append(store_data["number"])
-        store.append(store_data["phone"] if store_data["phone"] else "<MISSING>")
-        store.append("<MISSING>")
-        store.append(store_data["latitude"])
-        store.append(store_data["longitude"])
-        hours = ""
-        if "hrsmonstart" in store_data and store_data["hrsmonstart"]:
-            hours = hours + " mon " + store_data["hrsmonstart"] + " - " + store_data["hrsmonend"]
-        if "hrstuesstart" in store_data and store_data["hrstuesstart"]:
-            hours = hours + " tues " + store_data["hrstuesstart"] + " - " + store_data["hrstuesend"]
-        if "hrswedstart" in store_data and store_data["hrswedstart"]:
-            hours = hours + " wed " + store_data["hrswedstart"] + " - " + store_data["hrswedend"]
-        if "hrsthursstart" in store_data and store_data["hrsthursstart"]:
-            hours = hours + " thurs " + store_data["hrsthursstart"] + " - " + store_data["hrsthursend"]
-        if "hrsfristart" in store_data and store_data["hrsfristart"]:
-            hours = hours + " fri " + store_data["hrsfristart"] + " - " + store_data["hrsfriend"]
-        if "hrssatstart" in store_data and store_data["hrssatstart"]:
-            hours = hours + " sat " + store_data["hrssatstart"] + " - " + store_data["hrssatend"]
-        if "hrssunstart" in store_data and store_data["hrssunstart"]:
-            hours = hours + " sun " + store_data["hrssunstart"] + " - " + store_data["hrssunend"]
-        store.append(hours if hours else "<MISSING>")
-        if hours.count("CLOSE") == 14:
-            continue
-        store.append("<MISSING>")
-        for i in range(len(store)):
-            store[i] = html.unescape(store[i])
-        yield store
+        for row in stores["locations"]:
+            location_name = row["name"]
+            street_address = row["address"]
+            city = row["city"]
+            state = row["state"]
+            zip_postal = row["zip"]
+            country_code = row["country"]
+            phone = row["phone"]
+            hours_of_operation = build_hours(row)
+            location_type = MISSING
+            store_number = row["number"]
+            latitude = row["latitude"]
+            longitude = row["longitude"]
+            log.info("Append {} => {}".format(location_name, street_address))
+            yield SgRecord(
+                locator_domain=DOMAIN,
+                page_url=LOCATION_URL,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_postal,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
+
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    log.info("start {} Scraper".format(DOMAIN))
+    count = 0
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
+
 
 scrape()

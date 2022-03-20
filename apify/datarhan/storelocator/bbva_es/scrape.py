@@ -55,9 +55,12 @@ def fetch_data():
                 with SgFirefox() as driver:
                     driver.get(page_url)
                     sleep(3)
-                    driver.find_element_by_xpath(
-                        '//button[contains(text(), "Accept")]'
-                    ).click()
+                    try:
+                        driver.find_element_by_xpath(
+                            '//button[contains(text(), "Accept")]'
+                        ).click()
+                    except Exception:
+                        pass
                     sleep(2)
                     loc_dom = etree.HTML(driver.page_source)
                 poi = loc_dom.xpath(
@@ -67,10 +70,13 @@ def fetch_data():
                     with SgFirefox() as driver:
                         driver.get(page_url)
                         sleep(3)
-                        driver.find_element_by_xpath(
-                            '//button[contains(text(), "Accept")]'
-                        ).click()
-                        sleep(2)
+                        try:
+                            driver.find_element_by_xpath(
+                                '//button[contains(text(), "Accept")]'
+                            ).click()
+                            sleep(2)
+                        except Exception:
+                            continue
                         loc_dom = etree.HTML(driver.page_source)
                         poi = loc_dom.xpath(
                             '//script[contains(text(), "PostalAddress")]/text()'

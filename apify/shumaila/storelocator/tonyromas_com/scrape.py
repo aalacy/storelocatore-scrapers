@@ -24,7 +24,6 @@ def fetch_data():
 
     for div in divlist:
         div = div["href"]
-
         r = session.get(div, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
         linklist = soup.select("a[href*=location]")
@@ -33,6 +32,7 @@ def fetch_data():
             r = session.get(link, headers=headers)
             soup = BeautifulSoup(r.text, "html.parser")
             title = soup.find("div", {"class": "page-title"}).text
+
             address = soup.find("div", {"class": "ad1"}).text.replace("\n", " ").strip()
             phone = (
                 soup.find("div", {"class": "phone"}).text.replace("Phone:", "").strip()
@@ -63,10 +63,24 @@ def fetch_data():
                 )
             except:
                 lat = longt = "<MISSING>"
-            if len(address) < 5:
-                address = (
-                    r.text.split('"Tony Roma')[3].split(", ", 1)[1].split('"', 1)[0]
-                )
+            try:
+
+                if len(address) < 5:
+
+                    address = (
+                        r.text.split('"Tony Roma')[3].split(", ", 1)[1].split('"', 1)[0]
+                    )
+                    if "family-friendly steakhouse" in address:
+                        address = (
+                            r.text.split('"Tony Roma')[3]
+                            .split("[", 1)[1]
+                            .split("]", 1)[0]
+                        )
+                        address = (
+                            " ".join(address[0:]).replace(",", "").replace('"', "")
+                        )
+            except:
+                continue
             raw_address = address
             pa = parse_address_intl(raw_address)
 
@@ -100,6 +114,7 @@ def fetch_data():
                 latitude=str(lat),
                 longitude=str(longt),
                 hours_of_operation=hours,
+                raw_address=raw_address,
             )
 
 

@@ -6,10 +6,22 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgpostal import parse_address_intl
+from sgselenium import SgSelenium
+import ssl
 import re
 
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
+
 DOMAIN = "ulsterbank.co.uk"
-LOCATION_URL = "https://locator.ulsterbank.co.uk"
+BASE_URL = "https://www.ulsterbank.co.uk"
+LOCATION_URL = "https://www.ulsterbank.co.uk/locator"
 HEADERS = {
     "Accept": "application/json, text/plain, */*",
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
@@ -53,29 +65,47 @@ def pull_content(url):
 
 def fetch_data():
     log.info("Fetching store_locator data")
-    req = session.get(LOCATION_URL)
-    soup = bs(req.content, "lxml")
-    csrf = soup.find("input", id="csrf-token")["value"]
-    payload = {
-        "CSRFToken": csrf,
-        "lat": 51.5072178,
-        "lng": -0.1275862,
-        "site": "ulsterbank_ni",
-        "pageDepth": 4,
-        "search_term": "london",
-        "searchMiles": 5,
-        "offSetMiles": 50,
-        "maxMiles": 50000,
-        "listSizeInNumbers": 10000,
-        "search-type": 1,
-    }
-    req = session.post(
-        "https://locator.ulsterbank.co.uk/content/branchlocator/en/ulsterbank_ni/searchresults/_jcr_content/par/searchresults.search.html",
-        data=payload,
+    driver = SgSelenium().chrome()
+    driver.get(LOCATION_URL)
+    driver.implicitly_wait(10)
+    try:
+        driver.find_element_by_id("onetrust-accept-btn-handler").click()
+    except:
+        pass
+    captcha = driver.find_element_by_css_selector("div.captcha__wrapper")
+    # Delete captcha element to bypass capctha
+    driver.execute_script(
+        """
+        var element = arguments[0];
+        element.parentNode.removeChild(element);
+        """,
+        captcha,
     )
-    contents = bs(req.content, "lxml").select("div.results-marker-link")
+    # change default miles and max result in form
+    search_miles = driver.find_element_by_id("searchMiles")
+    driver.execute_script(
+        "arguments[0].setAttribute('value',arguments[1])", search_miles, 500
+    )
+    offset = driver.find_element_by_id("offSetMiles")
+    driver.execute_script(
+        "arguments[0].setAttribute('value',arguments[1])", offset, 1000
+    )
+    max_miles = driver.find_element_by_id("maxMiles")
+    driver.execute_script(
+        "arguments[0].setAttribute('value',arguments[1])", max_miles, 15000
+    )
+    max_results = driver.find_element_by_id("listSizeInNumbers")
+    driver.execute_script(
+        "arguments[0].setAttribute('value',arguments[1])", max_results, 10000
+    )
+    driver.find_element_by_id("search-input").send_keys("london")
+    driver.find_element_by_id("search-button").click()
+    driver.implicitly_wait(10)
+    soup = bs(driver.page_source, "lxml")
+    driver.quit()
+    contents = soup.select("div.results-marker-link")
     for row in contents:
-        page_url = LOCATION_URL + row.find("a")["href"]
+        page_url = BASE_URL + row.find("a")["href"]
         store = pull_content(page_url)
         location_name = (
             store.find("div", id="single-result-header")

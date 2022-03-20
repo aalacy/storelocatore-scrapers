@@ -15,10 +15,11 @@ _headers = {
 
 days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 
+locator_domain = "https://baartprograms.com/"
+base_url = "https://baartprograms.com/locations/"
+
 
 def fetch_data():
-    locator_domain = "https://baartprograms.com/"
-    base_url = "https://baartprograms.com/locations/"
     with SgRequests(proxy_country="us") as session:
         locations = json.loads(
             session.get(base_url, headers=_headers)
@@ -37,6 +38,7 @@ def fetch_data():
                 logger.info(page_url)
                 res = session.get(page_url, headers=_headers)
                 if res.url.__str__() != "https://medmark.com/":
+                    page_url = res.url.__str__()
                     sp1 = bs(res.text, "lxml")
                     try:
                         ss = json.loads(
@@ -58,6 +60,12 @@ def fetch_data():
                                 if "Holiday" in hh.text:
                                     break
                                 hours.append(" ".join(hh.stripped_strings))
+                        elif sp1.select_one("div.sidebar-info-time p"):
+                            hours = list(
+                                sp1.select_one(
+                                    "div.sidebar-info-time p"
+                                ).stripped_strings
+                            )[1:]
                         else:
                             temp = list(
                                 sp1.select("div.uabb-infobox-text.uabb-text-editor")[
