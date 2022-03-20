@@ -60,7 +60,12 @@ def fetch_data():
                     location_name = store_json["name"]
                     address = store_json["geoCoordinates"]["address"]["lines"]
 
-                    street_address = ", ".join(address[:-2]).strip()
+                    street_address = (
+                        ", ".join(address[:-2]).strip().replace(", ,", ",").strip()
+                    )
+                    if len(street_address) > 0 and street_address[-1] == ",":
+                        street_address = "".join(street_address[:-1]).strip()
+
                     city = address[-2]
                     state = address[-1]
                     zip = store_json["geoCoordinates"]["postalCode"]

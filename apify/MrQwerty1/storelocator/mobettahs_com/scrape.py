@@ -63,9 +63,15 @@ def fetch_data(sgw: SgWriter):
         phone = "".join(d.xpath(".//div[@class='telephone']/text()")).strip()
 
         _tmp = []
-        hours = d.xpath(".//dl[@class='business-hours']/div")
+        hours = d.xpath(".//div[@class='opening_hours']/p")
         for h in hours:
-            _tmp.append(" ".join("".join(h.xpath(".//text()")).split()))
+            check = "".join(h.xpath("./strong/text()"))
+            if "Drive" in check:
+                continue
+
+            day = "".join(h.xpath("./em/text()")).strip()
+            inter = "".join(h.xpath("./text()")).strip()
+            _tmp.append(f"{day} {inter}")
 
         hours_of_operation = ";".join(_tmp)
 

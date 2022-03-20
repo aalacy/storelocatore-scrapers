@@ -57,25 +57,32 @@ def fetch_data():
                     if "NOW CLOSED".lower() in location_name.lower():
                         continue
                     location_type = data["@type"]
-                    latitude = (
-                        "".join(
-                            store_sel.xpath(
-                                '//div[@class="theatreMap"]/a/img/@data-src'
+                    try:
+                        latitude = (
+                            "".join(
+                                store_sel.xpath(
+                                    '//div[@class="theatreMap"]/a/img/@data-src'
+                                )
                             )
+                            .split("pp=")[1]
+                            .split(",")[0]
                         )
-                        .split("pp=")[1]
-                        .split(",")[0]
-                    )
-                    longitude = (
-                        "".join(
-                            store_sel.xpath(
-                                '//div[@class="theatreMap"]/a/img/@data-src'
+                    except:
+                        latitude = "<MISSING>"
+
+                    try:
+                        longitude = (
+                            "".join(
+                                store_sel.xpath(
+                                    '//div[@class="theatreMap"]/a/img/@data-src'
+                                )
                             )
+                            .split("pp=")[1]
+                            .split(",")[1]
+                            .split("&")[0]
                         )
-                        .split("pp=")[1]
-                        .split(",")[1]
-                        .split("&")[0]
-                    )
+                    except:
+                        longitude = "<MISSING>"
 
                     yield SgRecord(
                         locator_domain=website,
