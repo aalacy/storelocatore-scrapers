@@ -17,14 +17,12 @@ def fetch_data():
     r = session.get(url, headers=headers)
     soup = BeautifulSoup(r.text, "html.parser")
     divlist = soup.findAll("div", {"class": "wpv-addon-maps-marker"})
-    print(len(divlist))
+
     for div in divlist:
 
         lat = div["data-markerlon"]
         longt = div["data-markerlat"]
         title = div.find("h3").text
-        address = div.findAll("p")[0].text.replace(", USA", "").replace(", Canada", "")
-
         phone = div.findAll("p")[1].text
         link = (
             "https://www.drinkbambu.com" + div.find("a", {"class": "view-loc"})["href"]
@@ -34,7 +32,9 @@ def fetch_data():
         soup = BeautifulSoup(r.text, "html.parser")
         street = soup.find("span", {"itemprop": "address"}).text
         city = soup.find("span", {"itemprop": "addressLocality"}).text
-        state = soup.find("span", {"itemprop": "addressRegion"}).text
+        state = soup.find("span", {"itemprop": "addressRegion"}).text.replace(
+            ", Canada", ""
+        )
         pcode = soup.find("span", {"itemprop": "postalCode"}).text
         ltype = "<MISSING>"
         try:
