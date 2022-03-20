@@ -4,6 +4,7 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries, Grain_1_KM
 from sgscrape import simple_scraper_pipeline as sp
+from sglogging import sglog
 
 
 def extract_json(html_string):
@@ -38,6 +39,7 @@ def extract_json(html_string):
 
 
 def get_data():
+    log = sglog.SgLogSetup().get_logger(logger_name="regions")
     page_urls = []
     session = SgRequests()
     search = DynamicZipSearch(
@@ -128,7 +130,7 @@ def get_data():
                                             + part["closes"]
                                             + ", "
                                         )
-
+                            hours = hours[:-2]
                         except Exception:
                             hours = "<MISSING>"
                             pass
@@ -138,6 +140,12 @@ def get_data():
             else:
                 phone = "<MISSING>"
                 hours = "<MISSING>"
+
+            if "locator/branch/bank-branch-oxmoor-valley-birmingham" in page_url:
+                log.info(search_code)
+                log.info(page_url)
+                log.info(address)
+                log.info("")
 
             x = x + 1
             yield {

@@ -49,7 +49,10 @@ def fetch_data():
         store_number = "<MISSING>"
         page_url = search_url
         locator_domain = website
-        location_name = "PIZZA HUT " + store["title"]
+        if "pizza hut" not in store["title"].lower():
+            location_name = "PIZZA HUT " + store["title"]
+        else:
+            location_name = store["title"]
 
         street_address = add_list[index]
         city = "Nassau Bahamas"

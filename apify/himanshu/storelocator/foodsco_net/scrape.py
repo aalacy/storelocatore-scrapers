@@ -1,39 +1,17 @@
-import csv
 import json
+import time
 
 from bs4 import BeautifulSoup
+
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 from sgrequests import SgRequests
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
+def fetch_data(sgw: SgWriter):
 
     base_link = "https://www.foodsco.net/storelocator-sitemap.xml"
 
@@ -47,21 +25,22 @@ def fetch_data():
 
     items = base.find_all("loc")
 
-    data = []
     locator_domain = "foodsco.net"
 
     for item in items:
         link = item.text
-        if "stores/details" in link:
-            req = session.get(link, headers=headers)
-            base = BeautifulSoup(req.text, "lxml")
-
-            script = (
-                base.find("script", attrs={"type": "application/ld+json"})
-                .contents[0]
-                .replace("\n", "")
-                .strip()
-            )
+        if "stores/search" not in link:
+            for i in range(6):
+                try:
+                    req = session.get(link, headers=headers)
+                    base = BeautifulSoup(req.text, "lxml")
+                    script = base.find(
+                        "script", attrs={"type": "application/ld+json"}
+                    ).contents[0]
+                    break
+                except:
+                    time.sleep(10)
+                    session = SgRequests()
             store = json.loads(script)
 
             location_name = store["name"]
@@ -102,32 +81,25 @@ def fetch_data():
             latitude = store["geo"]["latitude"]
             longitude = store["geo"]["longitude"]
 
-            # Store data
-            data.append(
-                [
-                    locator_domain,
-                    link,
-                    location_name,
-                    street_address,
-                    city,
-                    state,
-                    zip_code,
-                    country_code,
-                    store_number,
-                    phone,
-                    location_type,
-                    latitude,
-                    longitude,
-                    hours_of_operation,
-                ]
+            sgw.write_row(
+                SgRecord(
+                    locator_domain=locator_domain,
+                    page_url=link,
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=zip_code,
+                    country_code=country_code,
+                    store_number=store_number,
+                    phone=phone,
+                    location_type=location_type,
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=hours_of_operation,
+                )
             )
 
-    return data
 
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    fetch_data(writer)
