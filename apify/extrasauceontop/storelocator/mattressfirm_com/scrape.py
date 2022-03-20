@@ -1,7 +1,7 @@
 from sgrequests import SgRequests
 import json
 from sgscrape import simple_scraper_pipeline as sp
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries, Grain_1_KM
 from bs4 import BeautifulSoup as bs
 
 
@@ -34,7 +34,8 @@ def get_data():
     session = SgRequests()
 
     search = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA], max_search_results=20
+        country_codes=[SearchableCountries.USA],
+        granularity=Grain_1_KM(),
     )
 
     page_urls = []
@@ -49,9 +50,15 @@ def get_data():
 
     session = SgRequests(retry_behavior=None)
     for zipcode in search:
+        if len(str(zipcode)) == 4:
+            search_code = "0" + zipcode
+
+        else:
+            search_code = zipcode
+
         search_url = (
             "https://maps.mattressfirm.com/api/getAsyncLocations?template=search&level=search&radius=100&search="
-            + zipcode
+            + search_code
         )
         response = session.get(search_url, headers=headers).json()
 
@@ -75,7 +82,6 @@ def get_data():
 
             latitude = json_objects["lat"]
             longitude = json_objects["lng"]
-            search.found_location_at(latitude, longitude)
             store_number = json_objects["store_number"]
 
             if page_url in page_urls:
@@ -87,7 +93,12 @@ def get_data():
                 if counter == 10:
                     raise Exception
 
-                hours_response = session.get(page_url, headers=headers).text
+                try:
+                    hours_response = session.get(page_url, headers=headers).text
+
+                except Exception:
+                    continue
+
                 if "location-title" in hours_response:
                     break
 
@@ -105,7 +116,11 @@ def get_data():
                 hour = part.find("span", attrs={"class": "time"}).text.strip()
                 hours = hours + day + " " + hour + ", "
 
-            hours = hours[:-2]
+            hours = hours[:-2].replace("\n", "").replace("\t", "").replace("\r", "")
+            while "  " in hours:
+                hours = hours.replace("  ", " ")
+
+            hours = hours.strip()
             if len(hours_parts) == 0:
                 raise Exception
 
@@ -136,8 +151,8 @@ def scrape():
         location_name=sp.MappingField(
             mapping=["location_name"], part_of_record_identity=True
         ),
-        latitude=sp.MappingField(mapping=["latitude"], part_of_record_identity=True),
-        longitude=sp.MappingField(mapping=["longitude"], part_of_record_identity=True),
+        latitude=sp.MappingField(mapping=["latitude"], is_required=False),
+        longitude=sp.MappingField(mapping=["longitude"], is_required=False),
         street_address=sp.MultiMappingField(
             mapping=["street_address"], is_required=False
         ),

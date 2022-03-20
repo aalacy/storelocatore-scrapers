@@ -15,10 +15,14 @@ logger = SgLogSetup().get_logger("unitedsupermarkets_com__page__pharmacy")
 
 
 def fetch_data():
+    url = "https://www.unitedsupermarkets.com/rs/store-locator"
+    r = session.get(url, headers=headers)
+    token = ""
+    for line in r.iter_lines():
+        if "var antiForgeryToken = '" in line:
+            token = line.split("var antiForgeryToken = '")[1].split("'")[0]
     url = "https://www.unitedsupermarkets.com/RS.Relationshop/StoreLocation/GetAllStoresPosition"
-    payload = {
-        "__RequestVerificationToken": "kzPUZRZRzKHGNeUvO-lrYXAVizIpUN6QUjUV95D081APcVL3wyEWyg0roh9OMQY6l5FU1pIgaD9jfWzsg9LDv5OiLxI1"
-    }
+    payload = {"__RequestVerificationToken": token}
     r = session.post(url, headers=headers, data=payload)
     website = "unitedsupermarkets.com/page/pharmacy"
     typ = "<MISSING>"
