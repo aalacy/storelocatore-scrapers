@@ -310,6 +310,9 @@ def fetchData():
             city = "Cartersville"
             state = "GA"
             zip_postal = "30120"
+            raw_address = f"{street_address}, {city}, {state} {zip_postal}".replace(
+                MISSING, ""
+            )
 
         country_code = "US"
         phone = store["phone"]
