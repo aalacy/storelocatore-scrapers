@@ -34,7 +34,7 @@ def fetch_data():
                 page_url="https://www.sunglasshut.com/es/sunglasses/store-locations",
                 location_name=poi["displayAddress"],
                 street_address=poi["shippingDetails"]["street"],
-                city=poi["shippingDetails"]["city"],
+                city=poi["shippingDetails"]["city"].split(",")[0],
                 state="",
                 zip_postal=poi["shippingDetails"]["zipCode"],
                 country_code=poi["shippingDetails"]["country"],
