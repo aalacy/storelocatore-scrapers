@@ -82,6 +82,8 @@ def fetch_data():
             except:
                 continue
             raw_address = address
+            raw_address = raw_address.replace("\n", " ").strip()
+
             pa = parse_address_intl(raw_address)
 
             street_address = pa.street_address_1
