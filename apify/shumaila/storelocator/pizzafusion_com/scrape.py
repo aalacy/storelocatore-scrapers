@@ -6,7 +6,12 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+import ssl
 
+ssl._create_default_https_context = ssl._create_unverified_context
+from sgselenium import SgSelenium
+
+driver = SgSelenium().chrome()
 session = SgRequests()
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
@@ -18,8 +23,8 @@ def fetch_data():
     links = []
     cleanr = re.compile("<.*?>")
     url = "http://pizzafusion.com/locations/"
-    page = session.get(url, headers=headers)
-    soup = BeautifulSoup(page.text, "html.parser")
+    driver.get(url)
+    soup = BeautifulSoup(driver.page_source, "html.parser")
     maindiv = soup.find("div", {"id": "usa3"})
     divs = maindiv.findAll("div")
 
@@ -38,10 +43,10 @@ def fetch_data():
         link = links[n]
         try:
             try:
-                page = session.get(link, headers=headers)
+                driver.get(link)
             except:
                 pass
-            soup = BeautifulSoup(page.text, "html.parser")
+            soup = BeautifulSoup(driver.page_source, "html.parser")
             td = soup.find("td")
             td = str(td)
             td = re.sub(cleanr, " ", td)
@@ -51,10 +56,10 @@ def fetch_data():
             td = td.replace("||", "|")
         except:
             try:
-                page = session.get(link, headers=headers)
+                driver.get(link)
             except:
                 continue
-            soup = BeautifulSoup(page.text, "html.parser")
+            soup = BeautifulSoup(driver.page_source, "html.parser")
             maindiv = soup.find("div", {"id": "117"})
             divs = maindiv.find("div")
             td = divs.find("p")

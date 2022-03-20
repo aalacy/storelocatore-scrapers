@@ -71,13 +71,15 @@ def get_urls():
 def get_data(page_url, sgw: SgWriter):
     tree = get_tree(page_url)
 
-    location_name = "".join(tree.xpath("//h1/text()")).strip()
+    location_name = "".join(tree.xpath("//h1/text()")).replace("â", "").strip()
     raw_address = "".join(
         tree.xpath(
             "//div[@class='page__content rte']//p[contains(text(), 'United States')]/text()"
         )
     ).strip()
     street_address, city, state, postal = get_address(raw_address)
+    if "Between" in street_address:
+        street_address = street_address.split("Between")[0].strip()
     phone = "".join(
         tree.xpath(
             "//section[@class='section section--page page']//a[contains(@href, 'tel:')]/text()"
@@ -86,7 +88,9 @@ def get_data(page_url, sgw: SgWriter):
 
     text = "".join(tree.xpath("//iframe/@src"))
     latitude, longitude = get_coords_from_embed(text)
-    hours_of_operation = ";".join(tree.xpath("//div[@class='hours']/li/text()"))
+    hours_of_operation = ";".join(
+        tree.xpath("//div[@class='hours']/li/text()")
+    ).replace("Â ", "")
 
     row = SgRecord(
         page_url=page_url,
@@ -108,7 +112,7 @@ def get_data(page_url, sgw: SgWriter):
 
 
 def fetch_data(sgw: SgWriter):
-    urls = get_urls()
+    urls = set(get_urls())
 
     with futures.ThreadPoolExecutor(max_workers=3) as executor:
         future_to_url = {executor.submit(get_data, url, sgw): url for url in urls}
