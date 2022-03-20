@@ -77,7 +77,7 @@ def fetch_data():
             city=city1,
             state=state,
             zip_postal=zip_postal,
-            country_code=poi["countryCode"],
+            country_code=country_code,
             store_number=poi["ID"],
             phone=phone_number,
             location_type=poi["shopType"],
