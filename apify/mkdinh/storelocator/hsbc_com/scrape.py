@@ -20,7 +20,6 @@ headers = {
 
 
 def fetch_data():
-    # Your scraper here
     search_urls = [
         "https://www.hsbc.com.ar/mapa/, https://www.hsbc.com.ar/branch-list/,Argentina",
         "https://www.hsbc.bm/branch-finder/, https://www.hsbc.bm/branch-list/, Bermuda",

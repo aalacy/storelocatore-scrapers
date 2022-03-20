@@ -1,56 +1,33 @@
-from bs4 import BeautifulSoup
-import csv
 import usaddress
+from bs4 import BeautifulSoup
 import re
-
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+import ssl
 
+ssl._create_default_https_context = ssl._create_unverified_context
+from sgselenium import SgSelenium
+
+driver = SgSelenium().chrome()
 session = SgRequests()
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
 def fetch_data():
-    data = []
+
     links = []
     cleanr = re.compile("<.*?>")
     url = "http://pizzafusion.com/locations/"
-    page = session.get(url, headers=headers)
-    soup = BeautifulSoup(page.text, "html.parser")
+    driver.get(url)
+    soup = BeautifulSoup(driver.page_source, "html.parser")
     maindiv = soup.find("div", {"id": "usa3"})
     divs = maindiv.findAll("div")
-    n = 2
+
     for div in divs:
         dets = div.findAll("div")
         for linka in dets:
@@ -65,8 +42,11 @@ def fetch_data():
     for n in range(0, len(links)):
         link = links[n]
         try:
-            page = session.get(link, headers=headers)
-            soup = BeautifulSoup(page.text, "html.parser")
+            try:
+                driver.get(link)
+            except:
+                pass
+            soup = BeautifulSoup(driver.page_source, "html.parser")
             td = soup.find("td")
             td = str(td)
             td = re.sub(cleanr, " ", td)
@@ -75,8 +55,11 @@ def fetch_data():
             td = td.replace("\r", "|")
             td = td.replace("||", "|")
         except:
-            page = session.get(link, headers=headers)
-            soup = BeautifulSoup(page.text, "html.parser")
+            try:
+                driver.get(link)
+            except:
+                continue
+            soup = BeautifulSoup(driver.page_source, "html.parser")
             maindiv = soup.find("div", {"id": "117"})
             divs = maindiv.find("div")
             td = divs.find("p")
@@ -91,7 +74,6 @@ def fetch_data():
             )
         except:
             lat = longt = "<MISSING>"
-
         if flag == 1:
             start = td.find("|", 3)
             title = td[1:start]
@@ -175,30 +157,33 @@ def fetch_data():
         if "1013 N. Federal Hwy." in street:
             street = street.replace(" Fort", "")
             city = "Fort " + city
-        data.append(
-            [
-                url,
-                link,
-                title,
-                street,
-                city,
-                state,
-                pcode,
-                "US",
-                store,
-                phone,
-                "<MISSING>",
-                lat,
-                longt,
-                hours,
-            ]
+        yield SgRecord(
+            locator_domain="http://pizzafusion.com/",
+            page_url=link,
+            location_name=title,
+            street_address=street.strip(),
+            city=city.strip(),
+            state=state.strip(),
+            zip_postal=pcode.strip(),
+            country_code="US",
+            store_number=str(store),
+            phone=phone.strip(),
+            location_type=SgRecord.MISSING,
+            latitude=str(lat),
+            longitude=str(longt),
+            hours_of_operation=hours,
         )
-    return data
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()
