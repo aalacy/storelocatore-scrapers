@@ -43,6 +43,7 @@ def fetch_data():
                 address = div.find("p")
                 address = re.sub(cleanr, "\n", str(address))
                 address = re.sub(pattern, "\n", str(address)).strip()
+                address1 = address.splitlines()
                 address = address.replace("\n", " ").strip()
                 coordlist = div.find("iframe")["src"]
                 r = session.get(coordlist, headers=headers)
@@ -50,17 +51,6 @@ def fetch_data():
                 lat, longt = (
                     r.text.split('",null,[null,null,', 1)[1].split("]", 1)[0].split(",")
                 )
-
-                content = re.sub(cleanr, "\n", str(div))
-                content = re.sub(pattern, "\n", str(content)).strip()
-                phone = content.split("PHONE", 1)[1].split("\n", 1)[1].split("\n", 1)[0]
-                hours = (
-                    content.split("OPENING HOURS", 1)[1]
-                    .split("\n", 1)[1]
-                    .replace("\n", " ")
-                    .strip()
-                )
-                hours = hours.replace("AM ", "AM - ")
 
                 pa = parse_address_intl(address)
 
@@ -75,21 +65,24 @@ def fetch_data():
 
                 zip_postal = pa.postcode
                 pcode = zip_postal.strip() if zip_postal else MISSING
+                street = street.replace("&amp;", "").strip()
+                content = re.sub(cleanr, "\n", str(div))
+                content = re.sub(pattern, "\n", str(content)).strip()
+                phone = content.split("PHONE", 1)[1].split("\n", 1)[1].split("\n", 1)[0]
 
-                if "<MISSING>" in city:
-                    try:
-                        city = (
-                            address.split(street, 1)[1]
-                            .split(state.upper(), 1)[0]
-                            .strip()
-                        )
-                    except:
-                        pass
+                city = address1[-1].lower().split(state.lower(), 1)[0].upper()
                 try:
                     city = city.split(state.upper(), 1)[0]
                 except:
                     pass
-                street = street.replace("&amp;", "").strip()
+                hours = (
+                    content.split("OPENING HOURS", 1)[1]
+                    .split("\n", 1)[1]
+                    .replace("\n", " ")
+                    .strip()
+                )
+                hours = hours.replace("AM ", "AM - ")
+
                 yield SgRecord(
                     locator_domain="https://www.hobbyco.com.au/",
                     page_url="<MISSING>",
