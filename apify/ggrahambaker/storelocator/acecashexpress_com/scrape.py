@@ -59,6 +59,9 @@ def fetch_data(sgw: SgWriter):
             hours_of_operation = "Closed"
         if phone == "0":
             phone = "<MISSING>"
+        status = j.get("status")
+        if status == "C":
+            continue
 
         row = SgRecord(
             locator_domain=locator_domain,

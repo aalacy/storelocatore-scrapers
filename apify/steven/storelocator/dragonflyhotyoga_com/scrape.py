@@ -1,162 +1,81 @@
-import pandas as pd
-from bs4 import BeautifulSoup as bs
-import requests as r
-import os
-import re
-import itertools
-
-# Location URL
-location_url = 'https://www.dragonflyhotyoga.com/'
-
-# output path of CSV
-output_path = os.path.dirname(os.path.realpath(__file__))
-
-# file name of CSV output
-file_name = 'data.csv'
+from lxml import html
+from sgscrape.sgrecord import SgRecord
+from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-# Function pull webpage content
+def fetch_data(sgw: SgWriter):
 
-def pull_content(url):
+    locator_domain = "https://www.dragonflyhotyoga.com/"
+    api_url = "https://www.dragonflyhotyoga.com/"
+    session = SgRequests()
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
+    }
+    r = session.get(api_url, headers=headers)
+    tree = html.fromstring(r.text)
+    div = tree.xpath('//div[@id="fpstudio"]//a')
+    for d in div:
 
-    soup = bs(r.get(url).content,'html.parser')
-
-    return soup
-
-def pull_info(content):
-
-    # list of store hrefs
-    store_hrefs = [x.a['href'] for x in content.find_all('ul', {'class':'sub-menu sub-menu-1'})[0] if x != '\n']
-
-    store_data = []
-
-    for href in store_hrefs:
-
-        href_data = pull_content(href)
-
-        store_name = re.search('locations/(.*)/$',href).group(0).split('/')[1].replace('-wi','').replace('-',' ').title()
-
-        store_type = '<MISSING>'
-
-        location_raw = str(href_data.find_all('div',{'class':'contact-info'})[0]).replace('<div class="contact-info">','')
-
-        street_add = re.sub('<[a-z]{1}>','',str(location_raw).split('<br>')[0])
-
-        location_raw = re.sub('<[a-z]{1}>','',str(location_raw).split('\n')[1]).replace('\n','')
-
-        city = re.search('(.*) [A-Z]{2}',location_raw).group(0)[:-3].replace(',','')
-
-        state = re.search('([A-Z]{2})',location_raw).group(0)
-
-        zip = re.search('\d{5,6}',location_raw).group(0)
-
-        # Always comes line after state/zip
+        page_url = "".join(d.xpath(".//@href"))
+        r = session.get(page_url, headers=headers)
+        tree = html.fromstring(r.text)
+        location_name = (
+            "".join(tree.xpath('//div[@class="expanded-content"]/h1//text()'))
+            or "<MISSING>"
+        )
+        street_address = (
+            "".join(tree.xpath('//div[@class="contact-info"]/text()[1]'))
+            .replace("\n", "")
+            .strip()
+        )
+        ad = (
+            "".join(tree.xpath('//div[@class="contact-info"]/text()[2]'))
+            .replace("\n", "")
+            .replace("Madison ", "Madison,")
+            .strip()
+        )
+        state = ad.split(",")[1].split()[0].strip()
+        postal = ad.split(",")[1].split()[1].strip()
+        country_code = "US"
+        city = ad.split(",")[0].strip()
+        map_link = "".join(tree.xpath("//iframe/@src"))
         try:
-            phone = re.search('\d{3} \d{3} \d{4}',str(href_data.find_all('meta')[5]).replace('(','').replace(')','').replace('-',' ')).group(0)
+            latitude = map_link.split("!3d")[1].strip().split("!")[0].strip()
+            longitude = map_link.split("!2d")[1].strip().split("!")[0].strip()
         except:
-            phone = re.search('\d{3} \d{3} \d{4}',str(href_data.find_all('div',{'class':'phone-number'})[0]).replace('(','').replace(')','').replace('-',' ')).group(0)
-        phone = ''.join([x for x in phone if x.isnumeric()])
+            latitude, longitude = "<MISSING>", "<MISSING>"
+        phone = (
+            "".join(tree.xpath('//div[@class="phone-number"]/text()[1]'))
+            .replace("\n", "")
+            .strip()
+            or "<MISSING>"
+        )
 
-        # hours
-        hours_raw = [[[x.text],[y.text.strip() for y in x.find_next_siblings()]] for x in
-                     href_data.find_all('td', {'class': 'day'})]
-        hours = ' '.join([', '.join(list(itertools.chain(*x))).strip().replace(', ,','').replace('pm,','pm').replace('y,','y:').replace('am,','am') for x in hours_raw])
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=SgRecord.MISSING,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=SgRecord.MISSING,
+            raw_address=f"{street_address} {ad}",
+        )
 
-        # lat long url to parse
-        try:
-            raw_lat_long = href_data.find_all('div', {'class':'section map'})[0].iframe['src']
-            long = re.search('!2d(.*)!3d', raw_lat_long).group(0).replace('!2d', '').replace('!3d', '')
-            lat = re.search('!3d(.*)!3m2!', raw_lat_long).group(0).replace('!3d', '')[:7]
-        except:
-            lat = '<MISSING>'
-            long = '<MISSING>'
-
-
-
-        temp_data = [
-
-            href,
-
-            store_name,
-
-            street_add,
-
-            city,
-
-            state,
-
-            zip,
-
-            'US',
-
-            '<MISSING>',
-
-            phone,
-
-            store_type,
-
-            lat,
-
-            long,
-
-            hours
-
-        ]
+        sgw.write_row(row)
 
 
-
-        store_data = store_data + [temp_data]
-
-
-
-    final_columns = [
-
-        'locator_domain',
-
-        'location_name',
-
-        'street_address',
-
-        'city',
-
-        'state',
-
-        'zip',
-
-        'country_code',
-
-        'store_number',
-
-        'phone',
-
-        'location_type',
-
-        'latitude',
-
-        'longitude',
-
-        'hours_of_operation']
-
-
-
-    final_df = pd.DataFrame(store_data,columns=final_columns)
-
-
-
-    return final_df
-
-
-
-# Pull URL Content
-
-content = pull_content(location_url)
-
-# Pull all stores and info
-
-final_df = pull_info(content)
-
-
-
-# write to csv
-
-final_df.to_csv(output_path + '/' + file_name,index=False)
+if __name__ == "__main__":
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))) as writer:
+        fetch_data(writer)

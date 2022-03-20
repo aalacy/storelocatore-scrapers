@@ -130,7 +130,6 @@ def new_map_page(driver):
         for location in response["meta"]:
             locator_domain = "https://headquartersoffice.com/"
             page_url = driver.current_url
-            location_name = location["title"]
             latitude = location["lat"]
             longitude = location["lng"]
 
@@ -182,7 +181,7 @@ def new_map_page(driver):
                 page_url = page_url[:-1]
             location_type = page_url.split("/")[-1]
             hours = "<MISSING>"
-
+            location_name = location_type.replace("-", " ")
             locations.append(
                 {
                     "locator_domain": locator_domain,
@@ -235,7 +234,6 @@ def old_map_page(driver):
     for location in response["markers"]:
         locator_domain = "https://headquartersoffice.com/"
         page_url = driver.current_url
-        location_name = location["title"]
         latitude = location["lat"]
         longitude = location["lng"]
         store_number = location["id"]
@@ -294,6 +292,7 @@ def old_map_page(driver):
             zipp = "<MISSING>"
             country_code = "<MISSING>"
 
+        location_name = location_type.replace("-", " ")
         locations.append(
             {
                 "locator_domain": locator_domain,
