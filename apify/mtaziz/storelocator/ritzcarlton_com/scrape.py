@@ -206,7 +206,9 @@ def fetch_data_for_non_api_based_child_brands():
                                 logger.info(
                                     f"[{idx}] Latitude: {latitude} | Longitude: {longitude}"
                                 )
-                                hours_of_operation = MISSING
+                                hours_of_operation = (
+                                    data_property["propMarkerBedLabel"] or ""
+                                )
                                 raw_address = location.xpath(
                                     './/div[contains(@class, "m-hotel-address")]/text()'
                                 )[0]
@@ -304,7 +306,9 @@ def fetch_data_for_non_api_based_child_brands():
                                 logger.info(
                                     f"Latitude: {latitude} | Longitude: {longitude}"
                                 )
-                                hours_of_operation = MISSING
+                                hours_of_operation = (
+                                    data_property["propMarkerBedLabel"] or ""
+                                )
                                 raw_address = location.xpath(
                                     './/div[contains(@class, "m-hotel-address")]/text()'
                                 )[0]
@@ -400,7 +404,7 @@ def fetch_data_for_non_api_based_child_brands():
                             f"[{idx}] Latitude: {latitude} | Longitude: {longitude}"
                         )
 
-                        hours_of_operation = MISSING
+                        hours_of_operation = data_property["propMarkerBedLabel"] or ""
                         raw_address = location.xpath(
                             './/div[contains(@class, "m-hotel-address")]/text()'
                         )[0]

@@ -1,11 +1,11 @@
 from sgrequests import SgRequests
 from sgscrape import simple_scraper_pipeline as sp
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries, Grain_8
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries, Grain_2
 
 
 def get_data():
     search = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA], granularity=Grain_8()
+        country_codes=[SearchableCountries.USA], granularity=Grain_2()
     )
     session = SgRequests(retry_behavior=False)
     headers = {
@@ -52,6 +52,8 @@ def get_data():
                 + location["storeNumber"]
             )
             location_name = location["vanityName"]
+            if location_name[0:3] == "PNS":
+                location_name = "Pick n Save" + location_name[3:]
             latitude = location["location"]["lat"]
             longitude = location["location"]["lng"]
             search.found_location_at(latitude, longitude)
@@ -72,7 +74,7 @@ def get_data():
             except Exception:
                 phone = "<MISSING>"
 
-            location_type = "fuel"
+            location_type = location["brand"]
 
             if location["open24Hours"] is True:
                 hours = "24/7"
@@ -123,6 +125,8 @@ def get_data():
                 + location["storeNumber"]
             )
             location_name = location["vanityName"]
+            if location_name[0:3] == "PNS":
+                location_name = "Pick n Save" + location_name[3:]
             latitude = location["location"]["lat"]
             longitude = location["location"]["lng"]
             search.found_location_at(latitude, longitude)
@@ -143,7 +147,7 @@ def get_data():
             except Exception:
                 phone = "<MISSING>"
 
-            location_type = "grocery"
+            location_type = location["brand"]
 
             if location["open24Hours"] is True:
                 hours = "24/7"
