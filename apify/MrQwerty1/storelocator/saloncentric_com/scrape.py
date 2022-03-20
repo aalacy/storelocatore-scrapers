@@ -41,7 +41,6 @@ def fetch_data(sgw):
         try:
             js = r.json()["response"]["collection"]
         except:
-            print(_zip)
             js = []
 
         for j in js:
