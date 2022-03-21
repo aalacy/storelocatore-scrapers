@@ -52,7 +52,7 @@ def fetch_data(sgw: SgWriter):
         "path": "/on/demandware.store/Sites-guess_fr-Site/en/Stores-SearchStores",
         "scheme": "https",
         "accept": "application/json, text/javascript, */*; q=0.01",
-        "accept-encoding": "gzip, deflate, br",
+        "accept-encoding": "gzip, deflate",
         "accept-language": "en-US,en;q=0.9",
         "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
         "cookie": cookie,
