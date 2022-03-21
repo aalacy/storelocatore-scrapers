@@ -1,4 +1,5 @@
-sgselenium==0.1.4
-webdriver_manager==3.4.1
-selenium==3.141.0
+--extra-index-url https://dl.cloudsmith.io/KVaWma76J5VNwrOm/crawl/crawl/python/simple/
 beautifulsoup4==4.9.3
+sgzip==0.10.4
+sgselenium==0.1.5
+sgscrape==0.2.4
