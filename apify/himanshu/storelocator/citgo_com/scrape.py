@@ -50,9 +50,8 @@ def fetch_data():
     log.info("Fetching store_locator data")
     search = DynamicZipSearch(
         country_codes=[SearchableCountries.USA],
-        max_search_distance_miles=50,
-        expected_search_radius_miles=25,
-        max_search_results=None,
+        max_search_distance_miles=10,
+        max_search_results=5,
     )
     for zipcode in search:
         url = API_URL.format(zipcode)

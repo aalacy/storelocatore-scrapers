@@ -235,7 +235,8 @@ def transform_types(rec):
             )
         except Exception:
             newrec = rec
-            newrec["rawadd"] = "<ERROR>"
+            if newrec:
+                newrec["rawadd"] = "<ERROR>"
     return newrec
 
 

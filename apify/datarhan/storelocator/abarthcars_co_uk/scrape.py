@@ -79,15 +79,21 @@ def fetch_data():
                     './/p[contains(text(), "Opening hours")]/following-sibling::p/strong/text()'
                 )
                 hoo = " ".join(hoo) if hoo else ""
+                zip_code = addr.postcode
+                if not zip_code:
+                    zip_code = " ".join(raw_data.split()[:2])
+                city = addr.city
+                if not city:
+                    city = " ".join(raw_data.split()[2:]).split(",")[0].split("(")[0]
 
                 item = SgRecord(
                     locator_domain=domain,
                     page_url=start_url,
                     location_name=location_name,
                     street_address=street_address,
-                    city=addr.city,
+                    city=city,
                     state=addr.state,
-                    zip_postal=addr.postcode,
+                    zip_postal=zip_code,
                     country_code="",
                     store_number="",
                     phone=phone,
