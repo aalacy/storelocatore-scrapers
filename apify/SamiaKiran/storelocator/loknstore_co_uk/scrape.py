@@ -31,6 +31,8 @@ def fetch_data():
             page_url = loc["value"]
             log.info(page_url)
             r = session.get(page_url, headers=headers)
+            if "Open-Soon.png" in r.text:
+                continue
             soup = BeautifulSoup(r.text, "html.parser")
             try:
                 temp = json.loads(
