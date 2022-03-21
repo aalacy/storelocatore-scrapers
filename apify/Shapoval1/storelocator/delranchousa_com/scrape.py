@@ -1,5 +1,4 @@
 import usaddress
-from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
@@ -14,18 +13,6 @@ def fetch_data(sgw: SgWriter):
 
     session = SgRequests()
     r = session.get(api_url)
-    headers = {
-        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0",
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-        "Accept-Language": "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3",
-        "Alt-Used": "delranchousa.com",
-        "Connection": "keep-alive",
-        "Upgrade-Insecure-Requests": "1",
-        "Sec-Fetch-Dest": "document",
-        "Sec-Fetch-Mode": "navigate",
-        "Sec-Fetch-Site": "none",
-        "Sec-Fetch-User": "?1",
-    }
     tag = {
         "Recipient": "recipient",
         "AddressNumber": "address1",
@@ -83,15 +70,6 @@ def fetch_data(sgw: SgWriter):
         latitude = j.get("lat") or "<MISSING>"
         longitude = j.get("lng") or "<MISSING>"
         page_url = "https://www.delranchousa.com/locations/"
-        slug = " ".join(street_address.split()[:2])
-        r = session.get(page_url, headers=headers)
-        tree = html.fromstring(r.text)
-
-        page_url = "".join(
-            tree.xpath(
-                f'//p[contains(text(), "{slug}")]/a[contains(text(), "Read More")]/@href'
-            )
-        )
 
         row = SgRecord(
             locator_domain=locator_domain,
@@ -115,5 +93,7 @@ def fetch_data(sgw: SgWriter):
 
 if __name__ == "__main__":
     session = SgRequests()
-    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))) as writer:
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
+    ) as writer:
         fetch_data(writer)
