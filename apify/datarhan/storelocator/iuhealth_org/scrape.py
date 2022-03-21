@@ -23,26 +23,17 @@ def fetch_data():
     for poi in data["results"][0]["hits"]:
         store_url = "https://iuhealth.org/find-locations/" + poi["slug"]
         location_name = poi["name"]
-        location_name = location_name.strip() if location_name else "<MISSING>"
         street_address = poi["address"]["address1"]
         if poi["address"]["address2"]:
             street_address += " " + poi["address"]["address2"]
-        street_address = street_address if street_address else "<MISSING>"
         city = poi["address"]["city"]
-        city = city.strip() if city else "<MISSING>"
         state = poi["address"]["state"]
-        state = state if state else "<MISSING>"
         zip_code = poi["address"]["zip"]
-        zip_code = zip_code if zip_code else "<MISSING>"
-        country_code = "<MISSING>"
         store_number = poi["entryID"]
         phone = poi["phone"]
-        phone = phone if phone else "<MISSING>"
         location_type = poi["facilityType"]
         latitude = poi["_geoloc"]["lat"]
-        latitude = latitude if latitude else "<MISSING>"
         longitude = poi["_geoloc"]["lng"]
-        longitude = longitude if longitude else "<MISSING>"
 
         h_response = session.get(
             f"https://iuhealth.org/find-locations/hours?id={store_number}"
@@ -61,7 +52,7 @@ def fetch_data():
             city=city,
             state=state,
             zip_postal=zip_code,
-            country_code=country_code,
+            country_code="",
             store_number=store_number,
             phone=phone,
             location_type=location_type,
