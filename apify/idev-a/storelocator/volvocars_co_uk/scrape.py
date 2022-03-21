@@ -93,34 +93,36 @@ def fetch_data():
                     street_address + " " + city + " " + state + " " + zip_postal
                 )
 
-                phone = _["phoneNumbers"]["retailer"]
-                if phone:
-                    phone = phone.split("R")[0].strip()
-                try:
-                    location_type = []
-                    for lt in _["capabilities"]:
-                        if type(lt) == bool:
-                            continue
-                        location_type.append(lt)
-                    yield SgRecord(
-                        page_url=_["url"] if _["url"] else base_url,
-                        location_name=_["name"],
-                        street_address=street_address,
-                        city=city,
-                        state=state,
-                        zip_postal=zip_postal,
-                        latitude=_["latitude"],
-                        longitude=_["longitude"],
-                        country_code=country,
-                        phone=phone,
-                        locator_domain=locator_domain,
-                        location_type=", ".join(location_type),
-                        raw_address=raw_address.replace("\n", ""),
-                    )
-                except:
-                    import pdb
-
-                    pdb.set_trace()
+                phone = ""
+                if (
+                    _["phoneNumbers"]["retailer"]
+                    and _["phoneNumbers"]["retailer"] != "0"
+                ):
+                    phone = _["phoneNumbers"]["retailer"].split("R")[0].strip()
+                elif (
+                    _["phoneNumbers"]["service"] and _["phoneNumbers"]["service"] != "0"
+                ):
+                    phone = _["phoneNumbers"]["service"]
+                location_type = []
+                for lt in _["capabilities"]:
+                    if type(lt) == bool:
+                        continue
+                    location_type.append(lt)
+                yield SgRecord(
+                    page_url=_["url"] if _["url"] else base_url,
+                    location_name=_["name"].split("(")[0],
+                    street_address=street_address,
+                    city=city.split("(")[0],
+                    state=state,
+                    zip_postal=zip_postal,
+                    latitude=_["latitude"],
+                    longitude=_["longitude"],
+                    country_code=country,
+                    phone=phone,
+                    locator_domain=locator_domain,
+                    location_type=", ".join(location_type),
+                    raw_address=raw_address.replace("\n", ""),
+                )
 
 
 if __name__ == "__main__":

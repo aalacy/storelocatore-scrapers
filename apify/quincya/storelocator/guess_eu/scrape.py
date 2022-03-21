@@ -52,7 +52,7 @@ def fetch_data(sgw: SgWriter):
         "path": "/on/demandware.store/Sites-guess_fr-Site/en/Stores-SearchStores",
         "scheme": "https",
         "accept": "application/json, text/javascript, */*; q=0.01",
-        "accept-encoding": "gzip, deflate, br",
+        "accept-encoding": "gzip, deflate",
         "accept-language": "en-US,en;q=0.9",
         "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
         "cookie": cookie,
@@ -69,11 +69,13 @@ def fetch_data(sgw: SgWriter):
     }
 
     locator_domain = "https://www.guess.eu"
+    found = []
 
     loc_types = []
     types = base.find(id="storeLocatorType").find_all("option")[1:]
     for i in types:
         loc_types.append(i["id"])
+    loc_types.append("")
 
     countries = base.find(id="country").find_all("option")[1:]
     for i in countries:
@@ -127,6 +129,13 @@ def fetch_data(sgw: SgWriter):
                 if latitude == 0:
                     latitude = ""
                     longitude = ""
+
+                try:
+                    if street_address + loc_type in found:
+                        continue
+                    found.append(street_address + loc_type)
+                except:
+                    pass
 
                 sgw.write_row(
                     SgRecord(
