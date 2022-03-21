@@ -180,7 +180,9 @@ class ExampleSearchIteration(SearchIteration):
                     state = ""
                     if "addressRegion" in _:
                         state = _["address"]["addressRegion"] or ""
-                    city = _["address"]["areaServed"] or ""
+                    city = ""
+                    if "areaServed" in _["address"]:
+                        city = _["address"]["areaServed"] or ""
                     cc = _["address"]["addressCountry"] or ""
                     lat = _["geo"]["latitude"] or ""
                     lng = _["geo"]["longitude"] or ""
@@ -213,7 +215,7 @@ if __name__ == "__main__":
     CrawlStateSingleton.get_instance().save(override=True)
     search_maker = DynamicSearchMaker(
         search_type="DynamicGeoSearch",
-        expected_search_radius_miles=300,
+        expected_search_radius_miles=200,
     )
     dedupe_dict = {
         SgRecord.Headers.RAW_ADDRESS,
@@ -229,6 +231,12 @@ if __name__ == "__main__":
     ) as writer:
         all_countries = get_country_list()
         logger.info(f"Countries to be crawled: {all_countries}")
+        # Listed countries include GB, CA and US
+        countries_gb_ca_us = ["GB", "CA", "US"]
+
+        # There will have other tickets, Sweden will have a separte ticket.
+        # # These countries (CN, KR, SG,TW ) will be assigned to another ticket.
+        #
         # Strange:  DynamicZipSearch returns lat_lng instead of
         # postal code. therefore, DynamicGeoSearch has been used.
         # China-based countries - CN, HK, MO, and TW
@@ -237,7 +245,7 @@ if __name__ == "__main__":
         par_search = ParallelDynamicSearch(
             search_maker=search_maker,
             search_iteration=search_iter,
-            country_codes=all_countries,
+            country_codes=countries_gb_ca_us,
         )
 
         for rec in par_search.run():
