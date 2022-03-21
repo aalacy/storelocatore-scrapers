@@ -98,7 +98,7 @@ def fetch_data(sgw: SgWriter):
                     tree.xpath(f'//script[contains(text(), "{location_name}")]/text()')
                 )
                 .split(f"{location_name}")[0]
-                .split(f"LatLng(")[-1]
+                .split("LatLng(")[-1]
                 .split(",")[0]
                 .strip()
             )
@@ -106,7 +106,7 @@ def fetch_data(sgw: SgWriter):
                 "".join(
                     tree.xpath(f'//script[contains(text(), "{location_name}")]/text()')
                 )
-                .split(f"{location_name}")[0]
+                .split("{location_name}")[0]
                 .split(f"LatLng(")[-1]
                 .split(",")[1]
                 .split(")")[0]
