@@ -1,73 +1,44 @@
-import csv
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
-    url = "https://www.urbanoutfitters.com/stores/"
-    api_url = "https://www.urbanoutfitters.com/api/misl/v1/stores/search?&urbn_key=937e0cfc7d4749d6bb1ad0ac64fce4d5&brandId=51|01"
-
-    session = SgRequests()
-    r = session.get(api_url)
+def fetch_data(sgw: SgWriter):
+    api = "https://www.urbanoutfitters.com/api/misl/v1/stores/search?&urbn_key=937e0cfc7d4749d6bb1ad0ac64fce4d5&brandId=51|01"
+    r = session.get(api, headers=headers)
     js = r.json()["results"]
 
     for j in js:
-        locator_domain = url
         try:
-            location_name = j["addresses"]["marketing"]["name"]
+            location_name = j["addresses"]["marketing"]["name"] or ""
         except KeyError:
-            location_name = j.get("storeName")
-        if (
-            location_name.lower().find("closed") != -1
-            or location_name.lower().find("soon") != -1
-        ):
-            continue
-        street_address = (
-            j.get("addresses", {}).get("marketing", {}).get("addressLineOne")
-            or "<MISSING>"
-        )
-        city = j.get("city") or "<MISSING>"
-        state = j.get("state") or "<MISSING>"
-        postal = j.get("zip") or "<MISSING>"
-        store_number = j.get("storeNumber") or "<MISSING>"
-        page_url = f'https://www.urbanoutfitters.com/stores/{j.get("slug")}'
-        phone = (
-            j.get("addresses", {}).get("marketing", {}).get("phoneNumber")
-            or "<MISSING>"
-        )
-        country_code = j["country"]
-        latitude = j.get("loc")[1] if j.get("loc") else "<MISSING>"
-        longitude = j.get("loc")[0] if j.get("loc") else "<MISSING>"
-        location_type = "<MISSING>"
+            location_name = j.get("storeName") or ""
+
+        try:
+            m = j["addresses"]["marketing"] or {}
+            street_address = m.get("addressLineOne")
+            phone = m.get("phoneNumber")
+            country_code = j["addresses"]["iso2"]["country"] or j.get("country")
+        except:
+            street_address = j.get("addressLineOne")
+            phone = j.get("storePhoneNumber") or ""
+            if "?" in phone:
+                phone = SgRecord.MISSING
+            country_code = j.get("country")
+
+        city = j.get("city")
+        state = j.get("state")
+        postal = j.get("zip")
+        store_number = j.get("storeNumber")
+        slug = j.get("slug")
+        page_url = SgRecord.MISSING
+        if slug:
+            page_url = f"https://www.urbanoutfitters.com/stores/{slug}"
+        loc = j.get("loc") or [SgRecord.MISSING, SgRecord.MISSING]
+        latitude = loc[1]
+        longitude = loc[0]
 
         _tmp = []
         days = [
@@ -89,35 +60,31 @@ def fetch_data():
                 _tmp.append(f"{d} {start} - {close}")
 
         hours_of_operation = ";".join(_tmp)
-        if hours_of_operation.count("CLOSED") == 7:
-            hours_of_operation = "Closed"
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
+        row = SgRecord(
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            latitude=latitude,
+            longitude=longitude,
+            phone=phone,
+            store_number=store_number,
+            locator_domain=locator_domain,
+            hours_of_operation=hours_of_operation,
+        )
 
-        out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://www.urbanoutfitters.com/"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:97.0) Gecko/20100101 Firefox/97.0",
+    }
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
+        fetch_data(writer)

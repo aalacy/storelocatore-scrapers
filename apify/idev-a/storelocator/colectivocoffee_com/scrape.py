@@ -3,7 +3,9 @@ from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
-from sgscrape.sgpostal import parse_address_intl
+from sgpostal.sgpostal import parse_address_intl
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 logger = SgLogSetup().get_logger("colectivocoffee")
 
@@ -29,13 +31,23 @@ def fetch_data():
             hours = []
             temp = []
             for hh in sp1.select_one("div.cafe-hours").stripped_strings:
-                if "Offering" in hh:
+                if (
+                    "Offering" in hh
+                    or "Indoor" in hh
+                    or "Ordering" in hh
+                    or "Christmas" in hh
+                ):
                     break
                 temp.append(hh.replace("Â\xa0", " ").replace("â\x80\x93", "-"))
-            temp = [hh for hh in temp if hh != "â\x80\x8d"]
-            if len(temp) > 1:
-                for x in range(0, len(temp), 2):
-                    hours.append(f"{temp[x]}: {temp[x+1]}")
+            temp = [hh for hh in temp if hh != "â\x80\x8d" and hh != "\u200d"]
+            if temp:
+                try:
+                    for x in range(0, len(temp), 2):
+                        hours.append(f"{temp[x]}: {temp[x+1]}")
+                except:
+                    import pdb
+
+                    pdb.set_trace()
             else:
                 hours = temp
             yield SgRecord(
@@ -49,11 +61,12 @@ def fetch_data():
                 phone=sp1.select("div.cafe-details-list-item")[1].text.strip(),
                 locator_domain=locator_domain,
                 hours_of_operation="; ".join(hours).replace("–", "-"),
+                raw_address=_addr,
             )
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

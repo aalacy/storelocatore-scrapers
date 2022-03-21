@@ -1,77 +1,101 @@
-import csv
-import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('whbm_com')
-
-
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+import json
 
 session = SgRequests()
-headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
-           }
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+}
 
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-        for row in data:
-            writer.writerow(row)
 
 def fetch_data():
-    locs = []
-    url = 'https://stores.whitehouseblackmarket.com/sitemap.xml'
+    typ = "<MISSING>"
+    website = "whbm.com"
+    url = "https://www.whitehouseblackmarket.com/locations/modules/multilocation/?near_location=55441&services__in=&language_code=en-us&published=1&within_business=true&limit=500"
     r = session.get(url, headers=headers)
-    if r.encoding is None: r.encoding = 'utf-8'
-    for line in r.iter_lines(decode_unicode=True):
-        if '<loc>https://stores.whitehouseblackmarket.com/s/' in line:
-            lurl = line.split('>')[1].split('<')[0]
-            locs.append(lurl)
-    for loc in locs:
-        stub = loc.rsplit('/',1)[1]
-        jsonurl = 'https://whitehouse.brickworksoftware.com/en_US/api/v3/stores/' + stub
-        logger.info(('Pulling Location %s...' % loc))
-        website = 'whbm.com'
-        typ = '<MISSING>'
-        hours = ''
-        r2 = session.get(jsonurl, headers=headers)
-        if r2.encoding is None: r2.encoding = 'utf-8'
-        for line2 in r2.iter_lines(decode_unicode=True):
-            name = line2.split('"name":"')[1].split('"')[0]
-            store = line2.split('"number":"')[1].split('"')[0]
-            add = line2.split('"address_1":"')[1].split('"')[0]
-            try:
-                add = add + ' ' + line2.split('"address_2":"')[1].split('"')[0]
-            except:
-                pass
-            city = line2.split('"city":"')[1].split('"')[0]
-            state = line2.split('"state":"')[1].split('"')[0]
-            zc = line2.split('"postal_code":"')[1].split('"')[0]
-            country = line2.split('"country_code":"')[1].split('"')[0]
-            try:
-                phone = line2.split('"phone_number":"')[1].split('"')[0]
-            except:
-                phone = '<MISSING>'
-            lat = line2.split(',"latitude":')[1].split(',')[0]
-            lng = line2.split(',"longitude":')[1].split(',')[0]
-            days = line2.split('{"start_time":"')
-            for day in days:
-                if 'display_start_time' in day:
-                    if '"closed":false' in day:
-                        hrs = day.split('"display_day":"')[1].split('"')[0] + ': ' + day.split('"display_start_time":"')[1].split('"')[0] + '-' + day.split('"display_end_time":"')[1].split('"')[0].strip()
-                    else:
-                        hrs = day.split('"display_day":"')[1].split('"')[0] + ': Closed'
-                    if hours == '':
-                        hours = hrs
-                    else:
-                        hours = hours + '; ' + hrs
-        if hours == '':
-            hours = '<MISSING>'
-        if country == 'US' or country == 'CA':
-            yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+    for item in json.loads(r.content)["objects"]:
+        zc = item["postal_code"]
+        phone = item["phonemap_e164"]["phone"]
+        store = item["id"]
+        loc = item["location_url"]
+        city = item["city"]
+        name = item["location_name"]
+        lat = item["lat"]
+        lng = item["lon"]
+        state = item["state"]
+        country = item["country"]
+        add = item["street"]
+        hours = item["hours_by_type"]["primary"]["hours"]
+        hrs = "Mon: " + str(hours[0]).replace("[", "").replace("]", "").replace(
+            "', '", "-"
+        )
+        hrs = (
+            hrs
+            + "; Tue: "
+            + str(hours[1]).replace("[", "").replace("]", "").replace("', '", "-")
+        )
+        hrs = (
+            hrs
+            + "; Wed: "
+            + str(hours[2]).replace("[", "").replace("]", "").replace("', '", "-")
+        )
+        hrs = (
+            hrs
+            + "; Thu: "
+            + str(hours[3]).replace("[", "").replace("]", "").replace("', '", "-")
+        )
+        hrs = (
+            hrs
+            + "; Fri: "
+            + str(hours[4]).replace("[", "").replace("]", "").replace("', '", "-")
+        )
+        hrs = (
+            hrs
+            + "; Sat: "
+            + str(hours[5]).replace("[", "").replace("]", "").replace("', '", "-")
+        )
+        hrs = (
+            hrs
+            + "; Sun: "
+            + str(hours[6]).replace("[", "").replace("]", "").replace("', '", "-")
+        )
+        hrs = (
+            hrs.replace(":00;", ";")
+            .replace(":00'", "")
+            .replace(":00-", "-")
+            .replace("'", "")
+        )
+        hrs = hrs.replace(": ;", ": Closed")
+        hours = hrs
+        if ":" not in hours.split("Sun:")[1]:
+            hours = hours + " Closed"
+        if country == "CA" or country == "US":
+            yield SgRecord(
+                locator_domain=website,
+                page_url=loc,
+                location_name=name,
+                street_address=add,
+                city=city,
+                state=state,
+                zip_postal=zc,
+                country_code=country,
+                phone=phone,
+                location_type=typ,
+                store_number=store,
+                latitude=lat,
+                longitude=lng,
+                hours_of_operation=hours,
+            )
+
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        for rec in results:
+            writer.write_row(rec)
+
 
 scrape()

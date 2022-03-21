@@ -1,44 +1,11 @@
-import csv
-
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
-    locator_domain = "https://www.llflooring.com/"
-
-    session = SgRequests()
-    headers = {"Accept": "application/json"}
-
+def fetch_data(sgw: SgWriter):
     for i in range(0, 100000, 10):
         r = session.get(
             f"https://www.llflooring.com/stores/search?q=&offset={i}", headers=headers
@@ -48,24 +15,19 @@ def fetch_data():
             j = jj.get("profile")
             a = j.get("address")
             page_url = (
-                j.get("websiteUrl")
-                if j.get("websiteUrl")
-                else j.get("c_pagesURL") or "<MISSING>"
+                j.get("websiteUrl") if j.get("websiteUrl") else j.get("c_pagesURL")
             )
             store_number = page_url.split("=")[-1]
             page_url = page_url.split("?")[0]
-            street_address = (
-                f"{a.get('line1')} {a.get('line2') or ''}".strip() or "<MISSING>"
-            )
-            city = a.get("city") or "<MISSING>"
+            street_address = f"{a.get('line1')} {a.get('line2') or ''}".strip()
+            city = a.get("city")
             location_name = f"{j.get('name')} #{store_number}"
-            state = a.get("region") or "<MISSING>"
-            postal = a.get("postalCode") or "<MISSING>"
-            country_code = a.get("countryCode") or "<MISSING>"
-            phone = j.get("mainPhone", {}).get("display") or "<MISSING>"
-            latitude = j.get("yextDisplayCoordinate", {}).get("lat") or "<MISSING>"
-            longitude = j.get("yextDisplayCoordinate", {}).get("long") or "<MISSING>"
-            location_type = "<MISSING>"
+            state = a.get("region")
+            postal = a.get("postalCode")
+            country_code = a.get("countryCode")
+            phone = j.get("mainPhone", {}).get("display")
+            latitude = j.get("yextDisplayCoordinate", {}).get("lat")
+            longitude = j.get("yextDisplayCoordinate", {}).get("long")
 
             hours = j.get("hours", {}).get("normalHours", [])
             _tmp = []
@@ -88,33 +50,35 @@ def fetch_data():
             if "Coming Soon" in location_name or j.get("c_comingSoon"):
                 hours_of_operation = "Coming Soon"
 
-            row = [
-                locator_domain,
-                page_url,
-                location_name,
-                street_address,
-                city,
-                state,
-                postal,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
-            out.append(row)
+            row = SgRecord(
+                page_url=page_url,
+                location_name=location_name.strip(),
+                street_address=street_address.replace("\n", ", "),
+                city=city,
+                state=state,
+                zip_postal=postal,
+                country_code=country_code,
+                phone=phone,
+                store_number=store_number,
+                latitude=latitude,
+                longitude=longitude,
+                locator_domain=locator_domain,
+                hours_of_operation=hours_of_operation,
+            )
+
+            sgw.write_row(row)
+
         if len(js) < 10:
             break
 
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://www.llflooring.com/"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:94.0) Gecko/20100101 Firefox/94.0",
+        "Accept": "application/json, text/javascript, */*; q=0.01",
+    }
+
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        fetch_data(writer)

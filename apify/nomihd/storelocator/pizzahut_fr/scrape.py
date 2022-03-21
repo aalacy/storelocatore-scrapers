@@ -55,6 +55,9 @@ def fetch_data():
 
         street_address = store_json["address"]["streetAddress"]
         city = store_json["address"]["addressLocality"]
+        if "Arrondissement" in city:
+            city = city.split(" ")[0].strip()
+
         state = store_json["address"]["addressRegion"]
         zip = store_json["address"]["postalCode"]
 
@@ -65,7 +68,31 @@ def fetch_data():
         location_type = "<MISSING>"
 
         hours_of_operation = "<MISSING>"
+        hours_list = []
+        try:
+            temp_dict = {}
+            hours = store_json["openingHours"]
+            for hour in hours:
+                day = hour.split(" ", 1)[0].strip()
+                time = ""
+                if day in temp_dict:
+                    time = (
+                        temp_dict[day].split("-")[0].strip()
+                        + " - "
+                        + hour.split("-")[-1].strip()
+                    )
+                    temp_dict[day] = time
+                else:
+                    temp_dict[day] = hour.split(" ", 1)[-1].strip()
+                    time = hour.split(" ", 1)[-1].strip()
 
+            for dy in temp_dict.keys():
+                hours_list.append(dy + ": " + temp_dict[dy])
+
+        except:
+            pass
+
+        hours_of_operation = "; ".join(hours_list).strip()
         latitude = store_json["geo"]["latitude"]
         longitude = store_json["geo"]["longitude"]
 

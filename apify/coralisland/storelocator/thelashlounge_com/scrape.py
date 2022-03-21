@@ -1,73 +1,108 @@
-import csv
-import re
-import pdb
-import requests
-from lxml import etree
 import json
+from sglogging import sglog
+from bs4 import BeautifulSoup
+from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-base_url = 'https://www.thelashlounge.com'
 
-def validate(item):    
-    if type(item) == list:
-        item = ' '.join(item)
-    return item.strip()
+session = SgRequests()
+website = "thelashlounge_com"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
+session = SgRequests()
 
-def get_value(item):
-    if item == None :
-        item = '<MISSING>'
-    item = validate(item)
-    if item == '':
-        item = '<MISSING>'    
-    return item
+user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
+headers = {"User-Agent": user_agent}
 
-def eliminate_space(items):
-    rets = []
-    for item in items:
-        item = validate(item)
-        if item != '':
-            rets.append(item)
-    return rets
+DOMAIN = "https://www.thelashlounge.com/"
+MISSING = SgRecord.MISSING
 
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-        for row in data:
-            writer.writerow(row)
 
 def fetch_data():
-    output_list = []
-    url = "https://www.thelashlounge.com/salons/"
-    session = requests.Session()
-    request = session.get(url)
-    response = etree.HTML(request.text)
-    store_list = response.xpath('.//a[@class="location-bottom-link"]')
-    for store in store_list:
-        output = []
-        output.append(base_url) # url
-        output.append(validate(store.xpath('.//h2//text()'))) #location name
-        output.append(get_value(store.xpath('.//span[@itemprop="streetAddress"]//text()'))) #address
-        output.append(get_value(store.xpath('.//span[@itemprop="addressLocality"]//text()'))) #city
-        output.append(get_value(store.xpath('.//span[@itemprop="addressRegion"]//text()'))) #state
-        output.append(get_value(store.xpath('.//span[@itemprop="postalCode"]//text()'))) #zipcode
-        output.append('US') #country code
-        output.append("<MISSING>") #store_number
-        output.append(get_value(store.xpath('.//span[@itemprop="telephone"]//text()'))) #phone
-        output.append("The Lash Lounge Salons") #location type
-        output.append("<MISSING>") #latitude
-        output.append("<MISSING>") #longitude
-        store = etree.HTML(session.get(validate(store.xpath('./@href'))).text)
-        store_hours = get_value(', '.join(eliminate_space(store.xpath('.//div[@class="home-contact-content"]//li//text()'))))        
-        if store_hours == '<MISSING>':
-            temp = store.xpath('.//div[@class="pre-footer-details"]')
-            if len(temp) > 0:
-                store_hours = get_value(' '.join(eliminate_space(temp[0].xpath('.//ul//li//text()'))))
-        output.append(store_hours) #opening hours
-        output_list.append(output)
-    return output_list
+    if True:
+        url = "https://www.thelashlounge.com/salons/"
+        r = session.get(url, headers=headers)
+        soup = BeautifulSoup(r.text, "html.parser")
+        loclist = soup.findAll("a", {"class": "location-bottom-link"})
+        for loc in loclist:
+            page_url = loc["href"]
+            log.info(page_url)
+            r = session.get(page_url, headers=headers)
+            base = BeautifulSoup(r.text, "html.parser")
+            temp = r.text.split("<script type='application/ld+json'> ")[1].split(
+                "</script>"
+            )[0]
+            temp = json.loads(temp)
+            location_name = temp["name"]
+            try:
+                phone = temp["telephone"]
+            except:
+                phone = base.find(class_="pre-footer-details").a.text.strip()
+            address = temp["address"]
+            city = address["addressLocality"]
+            state = address["addressRegion"]
+            zip_postal = address["postalCode"]
+            street_address = (
+                address["streetAddress"]
+                .replace("<br/>", "")
+                .replace(" </br>", "")
+                .replace(city, "")
+                .replace(state, "")
+                .replace(zip_postal, "")
+                .replace("Shoppes at", "")
+                .strip()
+            )
+            country_code = address["addressCountry"]
+            latitude = str(temp["geo"]["latitude"])
+            longitude = str(temp["geo"]["longitude"])
+            if (
+                "COMING SOON"
+                in base.find_all(class_="home-contact-content")[-1].text.upper()
+            ):
+                continue
+            try:
+                if "COMING SOON" in base.find(class_="banner-title").text.upper():
+                    continue
+            except:
+                pass
+            hours_of_operation = " ".join(
+                list(base.find(class_="hours").stripped_strings)
+            )
+
+            yield SgRecord(
+                locator_domain=DOMAIN,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_postal,
+                country_code=country_code,
+                store_number=MISSING,
+                phone=phone,
+                location_type=MISSING,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
+
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    log.info("Started")
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
 
-scrape()
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
+
+
+if __name__ == "__main__":
+    scrape()

@@ -1,43 +1,13 @@
-import csv
-from sgrequests import SgRequests
 from bs4 import BeautifulSoup
-import re
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger("eggharborcafe_com")
-
+import re
+from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
-
-
-def write_output(data):
-    with open("data.csv", mode="w", newline="", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-                "page_url",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
 
 
 def fetch_data():
@@ -98,35 +68,46 @@ def fetch_data():
                     temp_loc = location_name.split(" ")[0].strip()
                 else:
                     temp_loc = location_name
-
                 if "Egg Harbor Cafe - " + temp_loc.capitalize() in mp["title"]:
                     latitude = mp["lat"]
                     longitude = mp["lng"]
                     break
-
         page_url = link["href"]
 
-        store = []
-        store.append("https://www.eggharborcafe.com")
-        store.append(location_name)
-        store.append(street_address)
-        store.append(city)
-        store.append(state)
-        store.append(zipp)
-        store.append("US")
-        store.append("<MISSING>")
-        store.append(phone)
-        store.append("<MISSING>")
-        store.append(latitude)
-        store.append(longitude)
-        store.append(hours_of_operation)
-        store.append(page_url)
-        yield store
+        if len(street_address) < 3:
+            street_address = city.split(location_name, 1)[0]
+            city = location_name
+        if len(phone) < 3:
+            phone = "<MISSING>"
+        if "<MISSING>" in latitude:
+            location_name = location_name + " Coming Soon"
+        yield SgRecord(
+            locator_domain="https://www.eggharborcafe.com",
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address.strip(),
+            city=city.strip(),
+            state=state.strip(),
+            zip_postal=zipp,
+            country_code="US",
+            store_number=SgRecord.MISSING,
+            phone=phone.strip(),
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+        )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()

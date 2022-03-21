@@ -20,8 +20,11 @@ def fetch_data(sgw: SgWriter):
         location_name = j.get("title") or ""
         if "test " in location_name.lower():
             continue
+
+        slug = j.get("slug") or ""
+        page_url = f"https://www.drybarshops.com/service/locator/detail/{slug}"
         location_type = j.get("type")
-        store_number = j.get("bookerLocationId")
+        store_number = str(j.get("bookerLocationId"))
 
         c = j.get("contact") or {}
         s = j.get("settings") or {}
@@ -46,12 +49,17 @@ def fetch_data(sgw: SgWriter):
         _tmp = []
         hours = s.get("operatingHours") or []
         for h in hours:
+            try:
+                if h[0][0].isdigit():
+                    continue
+            except:
+                continue
             _tmp.append(": ".join(h))
 
         hours_of_operation = ";".join(_tmp) or "<MISSING>"
         status = s.get("operatingStatus") or ""
         if "coming" in status.lower():
-            hours_of_operation = "Coming Soon"
+            continue
 
         row = SgRecord(
             page_url=page_url,
@@ -64,8 +72,8 @@ def fetch_data(sgw: SgWriter):
             store_number=store_number,
             phone=phone,
             location_type=location_type,
-            latitude=latitude,
-            longitude=longitude,
+            latitude=str(latitude),
+            longitude=str(longitude),
             locator_domain=locator_domain,
             hours_of_operation=hours_of_operation,
         )
@@ -76,6 +84,5 @@ def fetch_data(sgw: SgWriter):
 if __name__ == "__main__":
     session = SgRequests()
     locator_domain = "thedrybar.com"
-    page_url = "https://www.drybarshops.com/service/locator"
     with SgWriter(SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
         fetch_data(writer)

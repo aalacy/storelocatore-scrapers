@@ -1,41 +1,14 @@
-import csv
-
-from concurrent import futures
+import ssl
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
-
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgselenium import SgChrome
 
 
 def get_urls():
-    session = SgRequests()
     r = session.get("https://www.mattisonsalonsuites.com/locations/")
     tree = html.fromstring(r.text)
 
@@ -44,12 +17,38 @@ def get_urls():
     )
 
 
-def get_data(page_url):
-    locator_domain = "https://www.mattisonsalonsuites.com/"
+def get_coords(_id):
+    api = "https://www.mattisonsalonsuites.com/wp-admin/admin-ajax.php"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:98.0) Gecko/20100101 Firefox/98.0",
+        "Accept": "*/*",
+        "Accept-Language": "ru,en-US;q=0.7,en;q=0.3",
+        "Accept-Encoding": "gzip, deflate, br",
+        "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+        "X-Requested-With": "XMLHttpRequest",
+        "Origin": "https://www.mattisonsalonsuites.com",
+        "Connection": "keep-alive",
+        "Sec-Fetch-Dest": "empty",
+        "Sec-Fetch-Mode": "cors",
+        "Sec-Fetch-Site": "same-origin",
+    }
+    data = {"action": "uxi_locations_single_map_data", "id_number": _id, "post_id": ""}
+    r = session.post(api, data=data, headers=headers)
+    try:
+        j = r.json()["locations"][0]["lat_lng"]
+    except:
+        j = dict()
+    lat = j.get("lat")
+    lng = j.get("lng")
 
-    session = SgRequests()
-    r = session.get(page_url)
-    tree = html.fromstring(r.text)
+    return lat, lng
+
+
+def get_data(page_url, sgw: SgWriter):
+    with SgChrome() as fox:
+        fox.get(page_url)
+        source = fox.page_source
+    tree = html.fromstring(source)
 
     location_name = "".join(
         tree.xpath("//h1[@class='page-header-title inherit']/text()")
@@ -59,8 +58,8 @@ def get_data(page_url):
         .replace("\n", ", ")
         .strip()
     )
-    if "We" in street_address:
-        street_address = street_address.split("We")[0].strip()
+    if "We " in street_address:
+        street_address = street_address.split("We ")[0].strip()
     if "Summerfield Crossing North" in street_address:
         street_address = street_address.replace(
             "Summerfield Crossing North", ""
@@ -74,67 +73,65 @@ def get_data(page_url):
     postal = "".join(
         tree.xpath("//*[@class='company-info-address']/span/span[4]/text()")
     ).strip()
-    country_code = "US"
-    store_number = "<MISSING>"
-    phone = (
-        "".join(tree.xpath("//*[@class='company-info-phone']/span/a/text()")).strip()
-        or "<MISSING>"
-    )
-    latitude = "<MISSING>"
-    longitude = "<MISSING>"
-    location_type = "<MISSING>"
+    phone = "".join(
+        tree.xpath("//*[@class='company-info-phone']/span/a/text()")
+    ).strip()
+    if not phone:
+        phone = "".join(
+            tree.xpath(
+                "//a[@id='button-id-1']//span[@class='button-sub-text body-font']/text()"
+            )
+        ).strip()
 
     _tmp = []
-    days = tree.xpath(
-        "//div[@class='locations-single-address']//span[@class='company-info-hours-day']/text()"
+    days = set(
+        tree.xpath(
+            "//div[@class='locations-single-address']//span[@class='company-info-hours-day']/text()"
+        )
     )
-    times = tree.xpath(
-        "//div[@class='locations-single-address']//li[@class='company-info-hours-openclose']/text()"
+    times = set(
+        tree.xpath(
+            "//div[@class='locations-single-address']//li[@class='company-info-hours-openclose']/text()"
+        )
     )
 
     for d, t in zip(days, times):
         _tmp.append(f"{d.strip()}: {t.strip()}")
 
-    hours_of_operation = ";".join(_tmp) or "<MISSING>"
+    hours_of_operation = ";".join(_tmp)
 
-    row = [
-        locator_domain,
-        page_url,
-        location_name,
-        street_address,
-        city,
-        state,
-        postal,
-        country_code,
-        store_number,
-        phone,
-        location_type,
-        latitude,
-        longitude,
-        hours_of_operation,
-    ]
+    store_number = "".join(tree.xpath("//div[@data-id-number]/@data-id-number"))
+    latitude, longitude = get_coords(store_number)
 
-    return row
+    row = SgRecord(
+        page_url=page_url,
+        location_name=location_name,
+        street_address=street_address,
+        city=city,
+        state=state,
+        zip_postal=postal,
+        country_code="US",
+        store_number=store_number,
+        latitude=latitude,
+        longitude=longitude,
+        phone=phone,
+        locator_domain=locator_domain,
+        hours_of_operation=hours_of_operation,
+    )
+
+    sgw.write_row(row)
 
 
-def fetch_data():
-    out = []
+def fetch_data(sgw: SgWriter):
     urls = get_urls()
 
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {executor.submit(get_data, url): url for url in urls}
-        for future in futures.as_completed(future_to_url):
-            row = future.result()
-            if row:
-                out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+    for url in urls:
+        get_data(url, sgw)
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://www.mattisonsalonsuites.com/"
+    ssl._create_default_https_context = ssl._create_unverified_context
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        fetch_data(writer)

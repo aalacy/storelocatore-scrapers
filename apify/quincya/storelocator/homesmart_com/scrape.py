@@ -2,7 +2,7 @@ from bs4 import BeautifulSoup
 
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
-from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 from sgrequests import SgRequests
@@ -44,7 +44,10 @@ def fetch_data(sgw: SgWriter):
         hours_of_operation = "<MISSING>"
         latitude = "<MISSING>"
         longitude = "<MISSING>"
-        link = item.a["href"]
+        link = (
+            "https://homesmart.com/officesagents/?"
+            + item.find(id="agents")["href"].split("?")[-1].strip()
+        ).replace(" ", "%20")
 
         sgw.write_row(
             SgRecord(
@@ -66,5 +69,5 @@ def fetch_data(sgw: SgWriter):
         )
 
 
-with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.LOCATION_NAME}))) as writer:
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
     fetch_data(writer)

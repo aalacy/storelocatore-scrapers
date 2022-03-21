@@ -4,6 +4,10 @@ from sgrequests import SgRequests
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from bs4 import BeautifulSoup as bs
+import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger("")
 
 _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
@@ -29,6 +33,23 @@ def fetch_data():
                         locator_domain + sp1.select_one("div.links a.btn")["href"]
                     )
 
+            try:
+                if "Opening Soon" in json.dumps(store["OpeningHours"]):
+                    continue
+            except:
+                pass
+
+            if page_url:
+                logger.info(page_url)
+                sp2 = bs(session.get(page_url, headers=_headers).text, "lxml")
+                if (
+                    sp2.select_one("div.location-wysiwyg h3")
+                    and "coming soon"
+                    in sp2.select_one("div.location-wysiwyg h3").text.lower()
+                ):
+                    continue
+            else:
+                page_url = "https://myfavoritemuffin.com/locations/"
             yield SgRecord(
                 page_url=page_url,
                 store_number=store["ID"],

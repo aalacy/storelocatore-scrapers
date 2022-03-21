@@ -4,13 +4,14 @@ from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
+API_ENDPOINT_URL = "https://www.snipits.com/wp-json/facetwp/v1/refresh"
 session = SgRequests()
 website = "snipits_com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
-session = SgRequests()
 
-session = SgRequests()
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
@@ -21,14 +22,35 @@ MISSING = "<MISSING>"
 
 def fetch_data():
     if True:
-        url = "https://www.snipits.com/locations/"
-        r = session.get(url, headers=headers, verify=False)
-        soup = BeautifulSoup(r.text, "html.parser")
-        linklist = soup.find("div", {"class": "locationResults"}).findAll(
-            "div", {"class": "loc-result"}
-        )
-        for link in linklist:
-            temp = link.find("h4").find("a")
+        lat = "33.7489954"
+        lng = "-84.3879824"
+        location_latlng_list = [lat, lng, "100000"]
+        payload = {
+            "action": "facetwp_refresh",
+            "data": {
+                "facets": {"location": location_latlng_list},
+                "frozen_facets": {"location": "hard"},
+                "http_params": {
+                    "get": {"fwp_location": f"{lat}%2C{lng}%2C100000"},
+                    "uri": "locations",
+                    "url_vars": [],
+                },
+                "template": "locations",
+                "extras": {"sort": "default"},
+                "soft_refresh": 0,
+                "is_bfcache": 1,
+                "first_load": 0,
+                "paged": 1,
+            },
+        }
+        json_data = session.post(
+            API_ENDPOINT_URL, data=json.dumps(payload), headers=headers, timeout=500
+        ).json()
+        data_template = json_data["template"]
+        soup = BeautifulSoup(data_template, "html.parser")
+        loclist = soup.findAll("div", {"class": "loc-result"})
+        for loc in loclist:
+            temp = loc.find("h4").find("a")
             location_name = temp.text
             page_url = temp["href"]
             log.info(page_url)
@@ -77,7 +99,9 @@ def fetch_data():
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

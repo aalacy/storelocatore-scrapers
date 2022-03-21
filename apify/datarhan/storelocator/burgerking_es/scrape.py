@@ -35,6 +35,11 @@ def fetch_data():
         longitude = poi["longitude"]
         if longitude == "0.000000":
             longitude = SgRecord.MISSING
+        zip_code = poi["postalcode"]
+        if zip_code.isnumeric() and len(zip_code) < 5:
+            zip_code = "0" + zip_code
+        if zip_code.endswith("."):
+            zip_code = zip_code[:-1]
 
         item = SgRecord(
             locator_domain=domain,
@@ -43,7 +48,7 @@ def fetch_data():
             street_address=poi["address"],
             city=poi["city"],
             state=SgRecord.MISSING,
-            zip_postal=poi["postalcode"],
+            zip_postal=zip_code,
             country_code="ES",
             store_number=poi["bkcode"],
             phone=SgRecord.MISSING,

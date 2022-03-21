@@ -1,115 +1,77 @@
-import csv
-import json
-
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def fetch_data(sgw: SgWriter):
+    api = "https://stores.conns.com/"
 
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def get_key():
-    s = SgRequests()
-    r = s.get("https://www.conns.com/store-locator")
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0"
+    }
+    r = session.get(api, headers=headers)
     tree = html.fromstring(r.text)
-    cookies = r.cookies.get_dict()
+    divs = tree.xpath("//div[@id='storeList']/div")
 
-    return cookies, tree.xpath("//input[@name='form_key']/@value")[0]
+    for d in divs:
+        location_name = "".join(d.xpath("./div[@class='listing-title']/text()")).strip()
+        page_url = "".join(d.xpath("./div[@class='storemapdata']/@data-url"))
 
-
-def fetch_data():
-    out = []
-    locator_domain = "https://www.conns.com/"
-    cookies, key = get_key()
-    api_url = f"https://www.conns.com/store-locator/search?form_key={key}&search_type=simple&current_page=1&page_size=10&page=1&search=75022&distance=5000"
-
-    session = SgRequests()
-    r = session.get(api_url, cookies=cookies)
-    tree = html.fromstring(r.text)
-    li = tree.xpath("//li[@data-role='map-item']")
-
-    for l in li:
-        location_name = "".join(l.xpath(".//h3/a/text()")).strip() or "<MISSING>"
-        page_url = "".join(l.xpath(".//h3/a/@href")) or "<MISSING>"
-
-        line = l.xpath(".//div[@class='address']/span/text()")
+        line = d.xpath("./div[@class='listing-address']/text()")
         line = list(filter(None, [l.strip() for l in line]))
-
-        street_address = line[0]
+        street_address = ", ".join(line[:-1])
+        if street_address.endswith(","):
+            street_address = street_address[:-1]
         line = line[-1]
         city = line.split(",")[0].strip()
-        line = line.split(",")[-1].strip()
-        state = line.split()[0].strip()
-        postal = line.split()[1].strip()
+        line = line.split(",")[1].strip()
+        state = line.split()[0]
+        postal = line.split()[1]
         country_code = "US"
-        store_number = "<MISSING>"
-        phone = (
-            "".join(l.xpath(".//div[@class='address']/span/a/text()")) or "<MISSING>"
+        store_number = "".join(d.xpath("./div[@class='storemapdata']/@data-storeid"))
+        phone = "".join(d.xpath("./div[@class='listing-phone']/a/text()")).strip()
+
+        try:
+            latitude, longitude = "".join(
+                d.xpath("./div[@class='storemapdata']/@data-location")
+            ).split(",")
+        except IndexError:
+            latitude, longitude = SgRecord.MISSING, SgRecord.MISSING
+
+        _tmp = []
+        li = d.xpath(".//li[./span]")
+        for l in li:
+            day = "".join(l.xpath("./text()")).strip()
+            time = "".join(l.xpath("./span/text()")).strip()
+            _tmp.append(f"{day} {time}")
+
+        hours_of_operation = ";".join(_tmp) or "Closed"
+
+        row = SgRecord(
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            locator_domain=locator_domain,
+            hours_of_operation=hours_of_operation,
         )
-        text = "".join(l.xpath("./@data-item-map"))
-        j = json.loads(text)["item"]
-        latitude = j.get("latitude") or "<MISSING>"
-        longitude = j.get("longitude") or "<MISSING>"
-        location_type = "<MISSING>"
-        hours_of_operation = (
-            ";".join(l.xpath(".//div[@class='store-hours-title']//meta/@content"))
-            or "Closed"
-        )
 
-        if l.xpath(".//font[contains(text(), 'Coming Soon')]"):
-            hours_of_operation = "Coming Soon"
-
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    locator_domain = "https://conns.com"
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        fetch_data(writer)

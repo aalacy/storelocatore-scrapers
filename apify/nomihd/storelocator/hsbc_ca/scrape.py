@@ -5,6 +5,8 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import json
 import lxml.html
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "hsbc.ca"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -24,7 +26,6 @@ def fetch_data():
         home_sel.xpath('//div[@class="branchLocator"]/@data-dpws-tool-datafiles')
     ).strip()
     urls_list = []
-    unique_list = []
     if "branches" in data_files:
         urls_list.append(json.loads(data_files)["branches"])
     if "atms" in data_files:
@@ -32,13 +33,13 @@ def fetch_data():
 
     for url in urls_list:
         stores = []
-        if "/data/branches" in url:
+        if "data-type-branches" in url:
             stores_req = session.get(
                 "https://www.hsbc.ca" + url.replace(".cdata", ".udata"),
                 headers=headers,
             )
             stores = json.loads(stores_req.text)["branches"]
-        elif "/data/atms" in url:
+        elif "data-type-atms" in url:
             stores_req = session.get(
                 "https://www.hsbc.ca" + url.replace(".cdata", ".udata"),
                 headers=headers,
@@ -70,13 +71,25 @@ def fetch_data():
 
             store_number = "<MISSING>"
             location_type = store["Type"]
-
-            if street_address != "":
-                unique_id = f"{street_address}+{location_type}"
-                if unique_id in unique_list:
-                    continue
-
-                unique_list.append(unique_id)
+            if location_type == "Branch":
+                page_url = (
+                    (
+                        "https://www.hsbc.ca/branch-list/"
+                        + location_name.split("(")[0]
+                        .strip()
+                        .replace(" ", "-")
+                        .strip()
+                        .replace("&", "")
+                        .strip()
+                        .replace("'", "")
+                        .strip()
+                        + "-transit-"
+                        + location_name.split("#")[1].strip().split(")")[0].strip()
+                    )
+                    .lower()
+                    .replace("--", "-")
+                    .strip()
+                )
 
             hours_list = []
             if "openingTimes" in store:
@@ -112,7 +125,19 @@ def fetch_data():
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.LOCATION_NAME,
+                    SgRecord.Headers.LOCATION_TYPE,
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.CITY,
+                    SgRecord.Headers.ZIP,
+                }
+            )
+        )
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
