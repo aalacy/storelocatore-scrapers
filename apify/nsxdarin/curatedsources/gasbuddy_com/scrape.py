@@ -1,6 +1,6 @@
 from sgrequests import SgRequests
 import json
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries, Grain_2
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries, Grain_1_KM
 from sgscrape import simple_scraper_pipeline as sp
 from bs4 import BeautifulSoup as bs
 from sglogging import sglog
@@ -78,7 +78,7 @@ def get_data():
     url = "https://www.gasbuddy.com/graphql"
     search = DynamicZipSearch(
         country_codes=[SearchableCountries.USA],
-        granularity=Grain_2(),
+        granularity=Grain_1_KM(),
     )
 
     x = 0
