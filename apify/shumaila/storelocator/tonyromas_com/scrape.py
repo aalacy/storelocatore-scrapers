@@ -5,6 +5,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgpostal.sgpostal import parse_address_intl
+import re
 
 session = SgRequests()
 headers = {
@@ -16,7 +17,7 @@ MISSING = SgRecord.MISSING
 
 
 def fetch_data():
-
+    pattern = re.compile(r"\s\s+")
     url = "https://tonyromas.com/sitemap.html"
     r = session.get(url, headers=headers)
     soup = BeautifulSoup(r.text, "html.parser")
@@ -82,6 +83,9 @@ def fetch_data():
             except:
                 continue
             raw_address = address
+            raw_address = raw_address.replace("\n", " ").strip()
+            raw_address = re.sub(pattern, " ", raw_address).strip()
+
             pa = parse_address_intl(raw_address)
 
             street_address = pa.street_address_1
