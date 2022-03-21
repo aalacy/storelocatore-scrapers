@@ -54,7 +54,7 @@ def fetch_data(sgw: SgWriter):
     for j in js:
         location_name = j.get("name")
         a = j.get("address") or {}
-        line = list(a.get("line"))
+        line = a.get("line") or []
         if not line[-1]:
             line.pop()
         if line[-1][0] == "(":
