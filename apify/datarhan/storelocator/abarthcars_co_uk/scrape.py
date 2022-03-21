@@ -84,7 +84,7 @@ def fetch_data():
                     zip_code = " ".join(raw_data.split()[:2])
                 city = addr.city
                 if not city:
-                    city = " ".join(raw_data.split()[2:])
+                    city = " ".join(raw_data.split()[2:]).split(",")[0].split("(")[0]
 
                 item = SgRecord(
                     locator_domain=domain,
