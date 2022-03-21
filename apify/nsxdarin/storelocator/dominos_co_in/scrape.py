@@ -5,7 +5,6 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 import json
-import time
 
 session = SgRequests()
 headers = {
@@ -19,6 +18,7 @@ def fetch_data():
     url = "https://www.dominos.co.in/store-locations/"
     states = []
     cities = []
+    allids = []
     places = []
     website = "dominos.co.in"
     typ = "<MISSING>"
@@ -26,7 +26,6 @@ def fetch_data():
     r = session.get(url, headers=headers)
     logger.info("Pulling Stores")
     for line in r.iter_lines():
-        line = str(line.decode("utf-8"))
         if '{"id":' in line and 'name="advance-search"' in line:
             items = line.split('"id":')
             for item in items:
@@ -37,7 +36,6 @@ def fetch_data():
                         + item.split('"title":"')[1].split('"')[0]
                     )
     for sid in states:
-        time.sleep(3)
         sname = sid.split("|")[1]
         sidnum = sid.split("|")[0]
         surl = "https://www.dominos.co.in/store-locations/api/get-cities/" + sidnum
@@ -49,7 +47,6 @@ def fetch_data():
         except:
             pass
     for cid in cities:
-        time.sleep(3)
         sname = cid.split("|")[1]
         curl = (
             "https://www.dominos.co.in/store-locations/api/get-localities/"
@@ -59,81 +56,84 @@ def fetch_data():
             r2 = session.get(curl, headers=headers)
             logger.info(str(cid))
             for item in json.loads(r2.content)["data"]:
-                places.append(
-                    "https://www.dominos.co.in/store-locations/pizza-delivery-food-restaurants-in-"
-                    + item["link"]
-                    + "|"
-                    + sname
-                )
+                plid = item["link"].rsplit("-", 1)[1]
+                if plid not in allids:
+                    allids.append(plid)
+                    places.append(
+                        "https://www.dominos.co.in/store-locations/pizza-delivery-food-restaurants-in-"
+                        + item["link"]
+                        + "|"
+                        + sname
+                    )
         except:
             pass
     for curl in places:
-        time.sleep(3)
         logger.info(curl)
-        r2 = session.get(curl.split("|")[0], headers=headers)
-        loc = ""
-        hours = "<MISSING>"
-        zc = "<MISSING>"
-        store = "<MISSING>"
-        state = curl.split("|")[1]
-        name = ""
-        city = ""
-        phone = ""
-        add = ""
-        lat = ""
-        lng = ""
-        lines = r2.iter_lines()
-        for line2 in lines:
-            line2 = str(line2.decode("utf-8"))
-            if (
-                '<a class="nav-link" href="https://www.dominos.co.in/store-location/'
-                in line2
-                and loc == ""
-            ):
-                loc = line2.split('href="')[1].split('"')[0]
-                city = loc.split("location/")[1].split("/")[0].upper()
-                g = next(lines)
-                add = ""
-                phone = ""
-                lat = ""
-                lng = ""
-                g = str(g.decode("utf-8"))
-                name = g.strip().replace("\r", "").replace("\t", "").replace("\n", "")
-            if 'fa fa-map-marker">' in line2 and add == "":
-                next(lines)
-                g = next(lines)
-                g = str(g.decode("utf-8"))
-                add = (
-                    g.split('">')[1]
-                    .strip()
-                    .replace("\t", "")
-                    .replace("\r", "")
-                    .replace("\n", "")
-                )
-            if '<i class="fa fa-phone"></i></span>' in line2 and phone == "":
-                g = next(lines)
-                g = str(g.decode("utf-8"))
-                phone = g.split(">")[1].split("<")[0].strip()
-            if 'data-lat="' in line2:
-                lat = line2.split('data-lat="')[1].split('"')[0]
-                lng = line2.split('data-lng="')[1].split('"')[0]
-            if '<div class="st-section-bottom">' in line2 and name != "":
-                yield SgRecord(
-                    locator_domain=website,
-                    page_url=loc,
-                    location_name=name,
-                    street_address=add,
-                    city=city,
-                    state=state,
-                    zip_postal=zc,
-                    country_code=country,
-                    phone=phone,
-                    location_type=typ,
-                    store_number=store,
-                    latitude=lat,
-                    longitude=lng,
-                    hours_of_operation=hours,
-                )
+        try:
+            r2 = session.get(curl.split("|")[0], headers=headers)
+            loc = ""
+            hours = "<MISSING>"
+            zc = "<MISSING>"
+            store = "<MISSING>"
+            state = curl.split("|")[1]
+            name = ""
+            city = ""
+            phone = ""
+            add = ""
+            lat = ""
+            lng = ""
+            lines = r2.iter_lines()
+            for line2 in lines:
+                if (
+                    '<a class="nav-link" href="https://www.dominos.co.in/store-locations/'
+                    in line2
+                    and loc == ""
+                ):
+                    loc = line2.split('href="')[1].split('"')[0]
+                    city = loc.split("locations/")[1].split("/")[0].upper()
+                    g = next(lines)
+                    add = ""
+                    phone = ""
+                    lat = ""
+                    lng = ""
+                    name = (
+                        g.strip().replace("\r", "").replace("\t", "").replace("\n", "")
+                    )
+                if 'fa fa-map-marker">' in line2 and add == "":
+                    next(lines)
+                    g = next(lines)
+                    add = (
+                        g.split('">')[1]
+                        .strip()
+                        .replace("\t", "")
+                        .replace("\r", "")
+                        .replace("\n", "")
+                    )
+                if '<i class="fa fa-phone"></i></span>' in line2 and phone == "":
+                    g = next(lines)
+                    phone = g.split(">")[1].split("<")[0].strip()
+                if 'data-lat="' in line2:
+                    lat = line2.split('data-lat="')[1].split('"')[0]
+                    lng = line2.split('data-lng="')[1].split('"')[0]
+                if '<div class="st-section-bottom">' in line2 and name != "":
+                    yield SgRecord(
+                        locator_domain=website,
+                        page_url=loc,
+                        location_name=name,
+                        street_address=add,
+                        city=city,
+                        state=state,
+                        zip_postal=zc,
+                        country_code=country,
+                        phone=phone,
+                        location_type=typ,
+                        store_number=store,
+                        latitude=lat,
+                        longitude=lng,
+                        hours_of_operation=hours,
+                    )
+        except:
+            pass
 
 
 def scrape():

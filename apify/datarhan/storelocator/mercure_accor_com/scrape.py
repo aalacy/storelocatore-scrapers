@@ -1,108 +1,19 @@
+import re
 import json
+from bs4 import BeautifulSoup
 from lxml import etree
-from urllib.parse import urlencode
 
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
+from concurrent.futures import as_completed, ThreadPoolExecutor
 
 headers = {
     "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:91.0) Gecko/20100101 Firefox/91.0",
     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
 }
-
-
-def parse_ids(dom, session):
-    ent_list = []
-    ids = dom.xpath('//script[@id="paginator-ids-core"]/text()')
-    urls = []
-    if ids:
-        ids = json.loads(ids[0])
-        for e in ids:
-            ent_list.append({"meta.id": {"$eq": e}})
-
-        params = {
-            "api_key": "f60a800cdb7af0904b988d834ffeb221",
-            "v": "20160822",
-            "filter": {"$or": ent_list},
-            "languages": "en_GB",
-            "limit": "50",
-        }
-        params = urlencode(params)
-        url = "https://liveapi.yext.com/v2/accounts/1624327134898036854/entities?"
-
-        urls = []
-        data = session.get(url + params).json()
-        for e in data["response"]["entities"]:
-            urls.append(e["c_pageDestinationURL"])
-
-    return urls
-
-
-def fetch_all_locations(session):
-    locations = []
-    start_url = "https://all.accor.com/gb/world/hotels-accor-monde.shtml"
-    traverse_directory(start_url, session, locations)
-
-    return locations
-
-
-def traverse_directory(url, session, locations):
-    page = etree.HTML(session.get(url, headers=headers, timeout=180).text)
-    sublocations = page.xpath('//*[@class="Teaser-link"]/@href')
-    bookings = [url for url in sublocations if "index.en.shtml" in url]
-    if len(bookings):
-        for booking in bookings:
-            if booking not in locations:
-                locations.append(booking)
-    else:
-        for location in sublocations:
-            traverse_directory(location, session, locations)
-
-
-def fetch_data():
-    domain = "accor.com"
-    session = SgRequests(proxy_rotation_failure_threshold=3, retry_behavior=None)
-
-    all_locations = fetch_all_locations(session)
-    for store_url in all_locations:
-        loc_response = session.get(store_url, headers=headers)
-        loc_dom = etree.HTML(loc_response.text)
-        poi = loc_dom.xpath(
-            '//script[@type="application/ld+json" and contains(text(), "addressCountry")]/text()'
-        )
-        if not poi:
-            continue
-        poi = json.loads(poi[0])
-
-        street_address = loc_dom.xpath(
-            '//meta[@property="og:street-address"]/@content'
-        )[0]
-        latitude = loc_dom.xpath('//meta[@property="og:latitude"]/@content')
-        latitude = latitude[0] if latitude else SgRecord.MISSING
-        longitude = loc_dom.xpath('//meta[@property="og:longitude"]/@content')
-        longitude = longitude[0] if longitude else SgRecord.MISSING
-
-        item = SgRecord(
-            locator_domain=domain,
-            page_url=store_url,
-            location_name=poi["name"],
-            street_address=street_address,
-            city=poi["address"].get("addressLocality"),
-            state=SgRecord.MISSING,
-            zip_postal=poi["address"].get("postalCode"),
-            country_code=poi["address"]["addressCountry"],
-            store_number=SgRecord.MISSING,
-            phone=poi.get("telephone"),
-            location_type=poi["@type"],
-            latitude=latitude,
-            longitude=longitude,
-            hours_of_operation=SgRecord.MISSING,
-        )
-
-        yield item
 
 
 def write_output(data):
@@ -115,6 +26,109 @@ def write_output(data):
     ) as writer:
         for row in data:
             writer.write_row(row)
+
+
+def get_countries():
+    with SgRequests() as session:
+        url = "https://all.accor.com/gb/world/hotels-accor-monde.shtml"
+        bookings, sublocations = get_bookings_and_sublocations(url, session)
+        return sublocations
+
+
+def get_bookings_and_sublocations(url, session):
+    response = session.get(url, headers=headers)
+    try:
+        soup = BeautifulSoup(response.text)
+    except:
+        return [], []
+
+    links = []
+    paginator = soup.find("div", class_="Paginator-list")
+
+    if not paginator:
+        return [], []
+
+    links.extend(paginator.find_all("a", class_="Teaser-link"))
+    links.extend(a for a in paginator.find_all("a") if "data-id" in a.attrs)
+
+    urls = [link["href"] for link in links]
+    bookings = [url for url in urls if "index.en.shtml" in url]
+    sublocations = [
+        re.sub(r"\.\./\.\./", "https://all.accor.com/", url)
+        for url in urls
+        if "index.en.shtml" not in url
+    ]
+
+    return bookings, sublocations
+
+
+def traverse(url, session, locations):
+    bookings, sublocations = get_bookings_and_sublocations(url, session)
+
+    locations.extend(bookings)
+    for sublocation in sublocations:
+        traverse(sublocation, session, locations)
+
+
+def fetch_location(page_url, session):
+    response = session.get(page_url, headers=headers)
+    if response.status_code != 200:
+        return
+
+    loc_dom = etree.HTML(response.text)
+    poi = loc_dom.xpath(
+        '//script[@type="application/ld+json" and contains(text(), "addressCountry")]/text()'
+    )
+    if not poi:
+        return
+
+    poi = json.loads(poi[0])
+    if poi["logo"].split("/")[-1] != "logo_mer.png":
+        return
+
+    street_address = loc_dom.xpath('//meta[@property="og:street-address"]/@content')[0]
+    latitude = loc_dom.xpath('//meta[@property="og:latitude"]/@content')
+    latitude = latitude[0] if latitude else SgRecord.MISSING
+    longitude = loc_dom.xpath('//meta[@property="og:longitude"]/@content')
+    longitude = longitude[0] if longitude else SgRecord.MISSING
+
+    item = SgRecord(
+        locator_domain="accor.com",
+        page_url=page_url,
+        location_name=poi["name"],
+        street_address=street_address,
+        city=poi["address"].get("addressLocality"),
+        state=SgRecord.MISSING,
+        zip_postal=poi["address"].get("postalCode"),
+        country_code=poi["address"]["addressCountry"],
+        store_number=SgRecord.MISSING,
+        phone=poi.get("telephone"),
+        location_type=poi["@type"],
+        latitude=latitude,
+        longitude=longitude,
+        hours_of_operation=SgRecord.MISSING,
+    )
+
+    return item
+
+
+def fetch_data():
+    locations = []
+    with ThreadPoolExecutor() as executor, SgRequests() as session:
+        futures = [
+            executor.submit(traverse, url, SgRequests(), locations)
+            for url in get_countries()
+        ]
+        for future in as_completed(futures):
+            pass
+
+        futures = [
+            executor.submit(fetch_location, location, session) for location in locations
+        ]
+        for future in as_completed(futures):
+            poi = future.result()
+            if poi:
+                yield poi
 
 
 def scrape():

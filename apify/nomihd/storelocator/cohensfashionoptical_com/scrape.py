@@ -1,133 +1,147 @@
 # -*- coding: utf-8 -*-
 from sgrequests import SgRequests
 from sglogging import sglog
-import us
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import lxml.html
+import json
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+import us
 
-website = "cohensfashionoptical.com"
+website = "www.cohensfashionoptical.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 headers = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36",
-    "Accept": "application/json",
+    "authority": "www.cohensfashionoptical.com",
+    "sec-ch-ua": '"Google Chrome";v="95", "Chromium";v="95", ";Not A Brand";v="99"',
+    "accept": "application/json, text/javascript, */*; q=0.01",
+    "x-requested-with": "XMLHttpRequest",
+    "sec-ch-ua-mobile": "?0",
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36",
+    "sec-ch-ua-platform": '"Windows"',
+    "sec-fetch-site": "same-origin",
+    "sec-fetch-mode": "cors",
+    "sec-fetch-dest": "empty",
+    "referer": "https://www.cohensfashionoptical.com/store-finder/",
+    "accept-language": "en-US,en;q=0.9,ar;q=0.8",
 }
 
 
 def fetch_data():
     # Your scraper here
 
-    search_url = "https://www.cohensfashionoptical.com/all-locations/"
+    api_url = "https://www.cohensfashionoptical.com/findermap/views/all_stores.php?criteria={%22ajaxurl%22:%22%22,%22lat%22:%22%22,%22lng%22:%22%22,%22current_lat%22:%22%22,%22current_lng%22:%22%22,%22category_id%22:%22%22,%22max_distance%22:%22%22,%22page_number%22:PAGENO,%22nb_display%22:10,%22map_all_stores%22:%220%22,%22marker_icon%22:%22%22,%22marker_icon_current%22:%22https://www.cohensfashionoptical.com/findermap/marker-current.png%22,%22autodetect_location%22:%221%22,%22streetview_display%22:1,%22search_str%22:%22STATE%22,%22display_type%22:%22%22,%22current_latitude%22:%22%22,%22current_longitude%22:%22%22}"
+
     with SgRequests() as session:
-        stores_req = session.get(search_url, headers=headers)
-        stores_sel = lxml.html.fromstring(stores_req.text)
-        stores = stores_sel.xpath('//div[@class="fs-all-block"]')
-        for store in stores:
-            page_url = "".join(
-                store.xpath('.//div[@class="fs-loc"]/h5/a/@href')
-            ).strip()
-            locator_domain = website
-            location_name = (
-                "".join(store.xpath('.//div[@class="fs-loc"]/h5/a/text()'))
-                .strip()
-                .encode("ascii", "replace")
-                .decode("utf-8")
-                .replace("?", "-")
-                .strip()
-            )
+        us_states = us.states.STATES
+        states_list = []
+        for st in us_states:
+            states_list.append(st.abbr)
 
-            street_address = "".join(
-                store.xpath('.//div[@class="address"]/span[@class="street"]/text()')
-            ).strip()
+        states_list.append("PR")
+        states_list.append("New York")
 
-            city_state_zip = "".join(
-                store.xpath('.//div[@class="address"]/span[@class="city_zip"]/text()')
-            ).strip()
+        for st in states_list:
+            log.info(f"fetching data for state: {st}")
+            for pn in range(1, 100):
 
-            city = city_state_zip.split(",")[0].strip()
-            zip = city_state_zip.split(",")[1].strip().rsplit(" ", 1)[-1].strip()
-            state = city_state_zip.split(",")[1].strip().replace(zip, "").strip()
-
-            if len(street_address) <= 0:
-                store_req = session.get(page_url, headers=headers)
-                store_sel = lxml.html.fromstring(store_req.text)
-                raw_address = (
-                    "".join(store_sel.xpath('//div[@class="loc_address"]//text()'))
-                    .strip()
-                    .split("\n")
+                final_url = api_url.replace("PAGENO", str(pn)).replace("STATE", st)
+                api_res = session.get(
+                    final_url,
+                    headers=headers,
                 )
-                street_address = raw_address[0].strip()
-                city = raw_address[-1].strip().split(",")[0].strip()
-                state = (
-                    raw_address[-1].strip().split(",")[-1].strip().split(" ")[0].strip()
-                )
-                zip = (
-                    raw_address[-1]
-                    .strip()
-                    .split(",")[-1]
-                    .strip()
-                    .split(" ")[-1]
-                    .strip()
-                )
-            country_code = "<MISSING>"
-            if us.states.lookup(state):
-                country_code = "US"
+                json_res = json.loads(api_res.text)
 
-            store_number = "<MISSING>"
-            phone = (
-                "".join(store.xpath('.//div[@class="phone desktop"]/text()'))
-                .strip()
-                .replace("Call", "")
-                .strip()
-            )
+                stores = json_res["locations"]
+                if not stores:
+                    break
 
-            location_type = "OPEN"
-            if (
-                "Closed"
-                in "".join(
-                    store.xpath('.//div[@class="loc-link"]/a/button/text()')
-                ).strip()
-            ):
-                location_type = "CLOSED"
+                for store in stores:
 
-            hours = store.xpath(
-                './/div[contains(@class,"fs-store-hour")]/div[@class="day-hours-wrapper clearfix"]'
-            )
-            hours_list = []
-            for hour in hours:
-                day = "".join(hour.xpath('div[@class="display-days"]/text()')).strip()
-                time = "".join(hour.xpath('div[@class="display-hours"]/text()')).strip()
-                hours_list.append(day + ": " + time)
+                    locator_domain = website
 
-            hours_of_operation = "; ".join(hours_list).strip()
+                    location_name = store["title"].strip()
+                    page_url = store["store_link"].strip()
 
-            latitude = "<MISSING>"
-            longitude = "<MISSING>"
-            yield SgRecord(
-                locator_domain=locator_domain,
-                page_url=page_url,
-                location_name=location_name,
-                street_address=street_address,
-                city=city,
-                state=state,
-                zip_postal=zip,
-                country_code=country_code,
-                store_number=store_number,
-                phone=phone,
-                location_type=location_type,
-                latitude=latitude,
-                longitude=longitude,
-                hours_of_operation=hours_of_operation,
-            )
+                    location_type = "<MISSING>"
+                    log.info(page_url)
+                    store_res = session.get(page_url, headers=headers)
+                    store_sel = lxml.html.fromstring(store_res.text)
+                    location_type = "".join(
+                        store_sel.xpath('//span[@class="locationClosed"]/text()')
+                    ).strip()
+                    if location_type:
+                        location_type = "Temporarily " + location_type
+
+                    phone = store["address_phone"]
+
+                    hours = list(
+                        filter(
+                            str,
+                            [
+                                x.strip()
+                                for x in store_sel.xpath(
+                                    '//div[@id="storeHours"]//text()'
+                                )
+                            ],
+                        )
+                    )
+                    if hours:
+                        hours_of_operation = (
+                            "; ".join(hours[1:])
+                            .replace("Wed;", "Wed:")
+                            .replace("Thurs;", "Thurs:")
+                            .replace("Fri;", "Fri:")
+                            .replace("Sat;", "Sat:")
+                            .replace("Sun;", "Sun:")
+                            .replace("Tue;", "Tue:")
+                            .replace("Mon;", "Mon:")
+                        )
+                    else:
+                        hours_of_operation = "<MISSING>"
+
+                    raw_address = "<MISSING>"
+
+                    street_address = store["store_address"]
+                    if not street_address or len(street_address) <= 0:
+                        street_address = "".join(
+                            store_sel.xpath("//address/span[1]/text()")
+                        ).strip()
+
+                    city = store["address_city"]
+                    state = store["address_state"]
+                    zip = store["address_zipcode"]
+
+                    country_code = "US"
+
+                    store_number = store["id"]
+
+                    latitude, longitude = store["latitude"], store["longitude"]
+
+                    yield SgRecord(
+                        locator_domain=locator_domain,
+                        page_url=page_url,
+                        location_name=location_name,
+                        street_address=street_address,
+                        city=city,
+                        state=state,
+                        zip_postal=zip,
+                        country_code=country_code,
+                        store_number=store_number,
+                        phone=phone,
+                        location_type=location_type,
+                        latitude=latitude,
+                        longitude=longitude,
+                        hours_of_operation=hours_of_operation,
+                        raw_address=raw_address,
+                    )
 
 
 def scrape():
     log.info("Started")
     count = 0
     with SgWriter(
-        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.StoreNumberId)
     ) as writer:
         results = fetch_data()
         for rec in results:

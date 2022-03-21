@@ -30,6 +30,21 @@ def grab_page(session, pageno):
     return SgRequests.raise_on_err(session.get(url, headers=headers)).json()
 
 
+def test_zipcode(item):
+    if (
+        not item["properties"]["address"]["zipcode"]
+        or "one" in item["properties"]["address"]["zipcode"]
+        or "ull" in item["properties"]["address"]["zipcode"]
+    ):
+        try:
+            item["properties"]["address"]["zipcode"] = item["properties"][
+                "user_properties"
+            ]["displayPostCode"]
+        except Exception:
+            pass
+    return item
+
+
 def fetch_data():
     logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
 
@@ -44,7 +59,7 @@ def fetch_data():
         while page <= maxpage:
             data = grab_page(session, page)
             for item in data["features"]:
-                yield item
+                yield test_zipcode(item)
             page += 1
     logzilla.info(f"Finished grabbing data!!")  # noqa
 
@@ -79,11 +94,11 @@ def scrape():
             part_of_record_identity=True,
         ),
         latitude=sp.MappingField(
-            mapping=["geometry", "coordinates", 0],
+            mapping=["geometry", "coordinates", 1],
             part_of_record_identity=True,
         ),
         longitude=sp.MappingField(
-            mapping=["geometry", "coordinates", 1],
+            mapping=["geometry", "coordinates", 0],
         ),
         street_address=sp.MappingField(
             mapping=["properties", "address", "lines"],
@@ -97,6 +112,7 @@ def scrape():
         zipcode=sp.MappingField(
             mapping=["properties", "address", "zipcode"],
             is_required=False,
+            value_transform=lambda x: x.replace("None", "<MISSING>"),
         ),
         country_code=sp.MappingField(
             mapping=["properties", "address", "country_code"],
@@ -106,6 +122,7 @@ def scrape():
             mapping=["properties", "contact", "phone"],
             part_of_record_identity=True,
             is_required=False,
+            value_transform=lambda x: x.replace("None", "<MISSING>"),
         ),
         store_number=sp.MappingField(
             mapping=["properties", "store_id"],

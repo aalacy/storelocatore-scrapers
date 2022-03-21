@@ -12,7 +12,7 @@ DOMAIN = "slaters.co.uk"
 BASE_URL = "https://slaters.co.uk"
 LOCATION_URL = "https://slaters.co.uk/store-locator"
 HEADERS = {
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+    "Accept": "*/*",
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.63 Safari/537.36",
 }
 MISSING = "<MISSING>"
@@ -82,6 +82,8 @@ def fetch_data():
         location_name = info.find("h1", {"class": "store-name"}).text
         raw_address = info.find("p", {"class": "address"}).text.strip()
         street_address, city, state, zip_postal = getAddress(raw_address)
+        if zip_postal == MISSING and len(raw_address.split(",")) == 3:
+            zip_postal = raw_address.split(",")[-1]
         store_number = MISSING
         phone = info.find("a", {"class": "phone"}).text.strip()
         country_code = "UK"

@@ -70,6 +70,8 @@ def fetch_data():
                     zip_postal = zip_postal + " " + temp[0]
                 i += 1
             country_code = "US"
+            if not city:
+                city = location_name.lower()
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url=page_url,

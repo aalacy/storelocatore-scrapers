@@ -1,5 +1,3 @@
-from lxml import etree
-
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
@@ -8,33 +6,34 @@ from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
-    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
-
-    start_url = "https://www.popeyes.es/wp-admin/admin-ajax.php?action=store_search&lat=40.4167754&lng=-3.7037902&max_results=25&search_radius=20000)"
+    session = SgRequests(proxy_country="es")
+    start_url = "https://api.airtouchpop.com/api/v1/restaurants?language=null&key=3RtSwmF8KAelm98PaNJJYrRpP7iGONJJuOIlXef9w29Psb3Ue6Lzquu9TrKY39i6"
     domain = "popeyes.es"
     hdr = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
 
     all_locations = session.get(start_url, headers=hdr).json()
-    for poi in all_locations:
-        hoo = etree.HTML(poi["hours"]).xpath("//text()")
+    for poi in all_locations["data"]:
+        hoo = []
+        for day, hours in poi["schedule"].items():
+            hoo.append(f"{day} {hours}")
         hoo = " ".join(hoo)
 
         item = SgRecord(
             locator_domain=domain,
-            page_url="https://popeyes.es/localizador-de-restaurantes/",
-            location_name=poi["store"],
+            page_url="https://www.popeyes.es/restaurantes",
+            location_name=poi["name"],
             street_address=poi["address"],
             city=poi["city"],
-            state=poi["state"],
-            zip_postal=poi["zip"],
-            country_code=poi["country"],
+            state="",
+            zip_postal=poi["postalCode"],
+            country_code="ES",
             store_number=poi["id"],
-            phone=poi["phone"],
+            phone="",
             location_type="",
-            latitude=poi["lat"],
-            longitude=poi["lng"],
+            latitude=poi["latitude"],
+            longitude=poi["longitude"],
             hours_of_operation=hoo,
         )
 

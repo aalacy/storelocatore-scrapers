@@ -1,38 +1,11 @@
-import csv
 import re
-
-from concurrent import futures
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
-
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from concurrent import futures
 
 
 def clean_phone(text):
@@ -48,35 +21,29 @@ def clean_phone(text):
 
 
 def get_urls():
-    session = SgRequests()
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:85.0) Gecko/20100101 Firefox/85.0"
-    }
     r = session.get("https://oilstopinc.com/locations/", headers=headers)
     tree = html.fromstring(r.text)
 
-    return tree.xpath("//a[@class='locations-table']/@href")
+    return tree.xpath(
+        "//td[@class='locations-indent']/a[contains(@href, 'oil-') and ./text()]/@href"
+    )
 
 
-def get_data(page_url):
-    locator_domain = "https://oilstopinc.com/"
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:85.0) Gecko/20100101 Firefox/85.0"
-    }
-    if page_url.find("oil") == -1:
-        return
+def get_data(page_url, sgw: SgWriter):
     if page_url.startswith("/"):
         page_url = f"https://oilstopinc.com{page_url}"
 
-    session = SgRequests()
     r = session.get(page_url, headers=headers)
-    tree = html.fromstring(r.text)
-
+    try:
+        tree = html.fromstring(r.text)
+    except:
+        return
     location_name = "".join(tree.xpath("//h1/text()")).replace("\n", "").strip()
     line = tree.xpath("//*[@class='tlocations']//text()")
     line = list(filter(None, [l.strip() for l in line]))
-    street_address = "<MISSING>"
-    phone = "<MISSING>"
+
+    street_address = SgRecord.MISSING
+    phone = SgRecord.MISSING
     part = ""
     hours = ""
     for l in line:
@@ -100,50 +67,40 @@ def get_data(page_url):
     state = part.split()[0]
     postal = part.split()[1]
     country_code = "US"
-    store_number = "<MISSING>"
-    latitude = "<MISSING>"
-    longitude = "<MISSING>"
-    location_type = "<MISSING>"
-    hours_of_operation = hours or "<MISSING>"
+    hours_of_operation = hours
+    if ")" in hours_of_operation:
+        hours_of_operation = SgRecord.MISSING
 
-    row = [
-        locator_domain,
-        page_url,
-        location_name,
-        street_address,
-        city,
-        state,
-        postal,
-        country_code,
-        store_number,
-        phone,
-        location_type,
-        latitude,
-        longitude,
-        hours_of_operation,
-    ]
+    row = SgRecord(
+        page_url=page_url,
+        location_name=location_name,
+        street_address=street_address,
+        city=city,
+        state=state,
+        zip_postal=postal,
+        phone=phone,
+        country_code=country_code,
+        locator_domain=locator_domain,
+        hours_of_operation=hours_of_operation,
+    )
 
-    return row
+    sgw.write_row(row)
 
 
-def fetch_data():
-    out = []
+def fetch_data(sgw: SgWriter):
     urls = get_urls()
 
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {executor.submit(get_data, url): url for url in urls}
+    with futures.ThreadPoolExecutor(max_workers=3) as executor:
+        future_to_url = {executor.submit(get_data, url, sgw): url for url in urls}
         for future in futures.as_completed(future_to_url):
-            row = future.result()
-            if row:
-                out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+            future.result()
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://oilstopinc.com/"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:85.0) Gecko/20100101 Firefox/85.0"
+    }
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        fetch_data(writer)
