@@ -19,6 +19,7 @@ _headers = {
 locator_domain = "https://www.circalighting.com"
 base_url = "https://www.circalighting.com/showrooms/"
 
+
 def get_driver():
     return SgChrome(
         executable_path=ChromeDriverManager().install(),
@@ -87,7 +88,9 @@ def fetch_data():
                 coord = {"lat": _coord[0], "lng": _coord[1]}
             except:
                 coord = {"lat": "", "lng": ""}
-                import pdb; pdb.set_trace()
+                import pdb
+
+                pdb.set_trace()
 
         yield SgRecord(
             page_url=page_url,
@@ -103,7 +106,7 @@ def fetch_data():
             locator_domain=locator_domain,
             hours_of_operation="; ".join(hours),
         )
-    
+
     if driver:
         driver.close()
 
