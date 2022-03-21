@@ -1,4 +1,3 @@
-# --extra-index-url https://dl.cloudsmith.io/KVaWma76J5VNwrOm/crawl/crawl/python/simple/
 from w3lib.url import add_or_replace_parameter
 
 from sgrequests import SgRequests
@@ -10,7 +9,7 @@ from sgpostal.sgpostal import parse_address_intl
 
 
 def fetch_data():
-    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
+    session = SgRequests()
 
     start_url = "https://burgerking.ru/middleware/restaurants/search?latitude=55.751326&longitude=37.616425&limit=10&offset=0"
     domain = "burgerking.ru"
@@ -53,10 +52,10 @@ def fetch_data():
             street_address=street_address,
             city=addr.city,
             state=addr.state,
-            zip_postal=addr.postcode,
+            zip_postal="",
             country_code=SgRecord.MISSING,
             store_number=poi["id"],
-            phone=SgRecord.MISSING,
+            phone=poi["phone"],
             location_type=SgRecord.MISSING,
             latitude=poi["latitude"],
             longitude=poi["longitude"],

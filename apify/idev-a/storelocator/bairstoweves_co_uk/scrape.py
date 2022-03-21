@@ -4,7 +4,6 @@ from sgrequests import SgRequests
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sglogging import SgLogSetup
-from bs4 import BeautifulSoup as bs
 import dirtyjson as json
 
 logger = SgLogSetup().get_logger("bairstoweves")
@@ -14,44 +13,62 @@ _headers = {
 }
 
 locator_domain = "https://www.bairstoweves.co.uk"
-base_url = "https://www.bairstoweves.co.uk/api/branch/?brands=11&brands=12&page={}&pageSize=100&pageUrl=%2Fbranch%2F&placeId=0&searchUrl=%2Fbranches%2F"
+base_url = "https://www.bairstoweves.co.uk/branches"
+days = [
+    "Sunday",
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+    "Sunday",
+]
 
 
 def fetch_data():
     with SgRequests() as session:
-        page = 1
-        while True:
-            locations = session.get(base_url.format(page), headers=_headers).json()[
-                "cards"
-            ]
-            if not locations:
-                break
-            page += 1
-            logger.info(f"page {page} {len(locations)}")
-            for _ in locations:
-                page_url = _["detailsUrl"]
-                logger.info(page_url)
-                sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
-                hours = [
-                    ": ".join(hh.stripped_strings)
-                    for hh in sp1.select("table.table--opening-times tr")
-                ]
-                coord = json.loads(sp1.select_one("div.details-panel")["data-location"])
-                yield SgRecord(
-                    page_url=page_url,
-                    store_number=_["id"],
-                    location_name=_["name"],
-                    street_address=_["streetAddress"],
-                    city=_["locality"].split(",")[-1],
-                    state=_["region"],
-                    zip_postal=_["postcode"],
-                    latitude=coord["lat"],
-                    longitude=coord["lng"],
-                    country_code="UK",
-                    phone=_["telephoneNumber"],
-                    locator_domain=locator_domain,
-                    hours_of_operation="; ".join(hours),
-                )
+        locations = json.loads(
+            session.get(base_url, headers=_headers)
+            .text.split("var branchData =")[1]
+            .split("Homeflow.set")[0]
+            .strip()[:-1]
+        )["branches"]
+        logger.info(f"{len(locations)}")
+        for _ in locations:
+            page_url = locator_domain + _["branchURL"]
+            logger.info(page_url)
+            ss = json.loads(
+                session.get(page_url, headers=_headers)
+                .text.split("Homeflow.set('branch_data',")[1]
+                .split("Homeflow.set")[0]
+                .strip()[:-2]
+            )
+            hours = []
+            if ss["departments"]:
+                for hh in ss["departments"][0]["openingTimes"]:
+                    times = "closed"
+                    if hh["open_time"] != "Closed":
+                        times = f"{hh['open_time']} - {hh['close_time']}"
+                    hours.append(f"{days[hh['day_of_week']]}: {times}")
+            raw_address = _["address"].replace("\n", ", ")
+            addr = raw_address.split(",")
+            yield SgRecord(
+                page_url=page_url,
+                store_number=_["branchID"],
+                location_name=_["name"],
+                street_address=", ".join(addr[:-3]),
+                city=addr[-3],
+                state=addr[-2],
+                zip_postal=addr[-1],
+                latitude=_["lat"],
+                longitude=_["lng"],
+                country_code="UK",
+                phone=_["contactNumber"],
+                locator_domain=locator_domain,
+                hours_of_operation="; ".join(hours),
+                raw_address=raw_address,
+            )
 
 
 if __name__ == "__main__":

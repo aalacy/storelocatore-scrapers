@@ -7,9 +7,19 @@ import lxml.html
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgselenium import SgChrome
+import ssl
 
 website = "joevsmartshop.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
+
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
 
 def get_latlng(map_link):
@@ -43,7 +53,7 @@ def fetch_data():
         stores_sel = lxml.html.fromstring(driver.page_source)
         stores = json.loads(
             "".join(stores_sel.xpath('//script[@id="__NEXT_DATA__"]/text()')).strip()
-        )["props"]["pageProps"]["sections"][1]["data"]["articles"]
+        )["props"]["pageProps"]["pageSections"][1]["data"]["articles"]
         for store in stores:
             page_url = search_url
             location_type = "<MISSING>"

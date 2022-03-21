@@ -53,9 +53,6 @@ def fetch_data():
         location_name = store_data["name"]
         location_type = "<MISSING>"
         street_address = store_data["address1"]
-        if store_data["address2"] is not None and len(store_data["address2"]) > 0:
-            street_address = street_address + ", " + store_data["address2"]
-
         city = store_data["city"]
         if city is not None:
             city = city.strip()
@@ -152,7 +149,9 @@ def fetch_data():
             page_url = search_url
             locator_domain = website
             location_name = "".join(store.xpath("td[2]/text()")).strip()
-            raw_address = "".join(store.xpath("td[3]/text()")).strip()
+            raw_address = (
+                "".join(store.xpath("td[3]/text()")).strip().replace("\n", ", ").strip()
+            )
             formatted_addr = parser.parse_address_intl(raw_address)
             street_address = formatted_addr.street_address_1
             if street_address:
@@ -169,12 +168,38 @@ def fetch_data():
             zip = formatted_addr.postcode
 
             country_code = "".join(countries[index].xpath(".//th/text()")).strip()
+
+            if not zip and country_code == "India":
+                try:
+                    zip = raw_address.split(",")[-1].strip().split("-")[-1].strip()
+                    if not zip.isdigit() and len(zip) != 6:
+                        zip = "<MISSING>"
+                except:
+                    pass
+
+            if not city and country_code == "India":
+                try:
+                    city = raw_address.split(",")[-1].strip().split("-")[0].strip()
+                except:
+                    pass
+
+            if not city:
+                if "Str. " in street_address:
+                    city = street_address.split("Str. ")[1].strip()
+                    if "&" in city or "road" in city.lower():
+                        city = "<MISSING>"
+                    else:
+                        street_address = street_address.split("Str. ")[0].strip()
+
             location_type = "<MISSING>"
             store_number = "<MISSING>"
             hours_of_operation = "<MISSING>"
             latitude = "<MISSING>"
             longitude = "<MISSING>"
             phone = "<MISSING>"
+            if street_address:
+                street_address = street_address.replace(", First Floor The", "").strip()
+
             yield SgRecord(
                 locator_domain=locator_domain,
                 page_url=page_url,

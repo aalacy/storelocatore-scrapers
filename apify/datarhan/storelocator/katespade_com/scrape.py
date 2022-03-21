@@ -56,10 +56,14 @@ def fetch_data():
         else:
             page_url = url
         page_url = page_url.replace("/../", "/")
+        if "1000-premium-outlets-drive-1871" in page_url:
+            continue
         loc_response = session.get(page_url, headers=hdr)
         loc_dom = etree.HTML(loc_response.text)
 
         location_name = "".join(loc_dom.xpath('//h1[@itemprop="name"]//text()'))
+        if "STORE CLOSED" in location_name:
+            continue
         street_address = loc_dom.xpath('//meta[@itemprop="streetAddress"]/@content')
         street_address = street_address[0]
         city = loc_dom.xpath('//meta[@itemprop="addressLocality"]/@content')[0]

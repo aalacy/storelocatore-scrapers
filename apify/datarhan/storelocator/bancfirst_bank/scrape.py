@@ -50,7 +50,7 @@ def fetch_data():
     }
     url = "https://locationapi.wave2.io/api/client/getlocations"
     all_codes = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA], expected_search_radius_miles=200
+        country_codes=[SearchableCountries.USA], expected_search_radius_miles=30
     )
     for code in all_codes:
         frm = {
@@ -59,7 +59,7 @@ def fetch_data():
             "Address": code,
             "City": "",
             "Country": "",
-            "Filters": "FCS,FIATM,ATMSF,ATMDP,",
+            "Filters": "FCS,",
             "Latitude": "",
             "Longitude": "",
             "State": "",

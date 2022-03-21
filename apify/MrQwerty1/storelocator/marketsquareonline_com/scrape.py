@@ -13,9 +13,7 @@ def fetch_data(sgw: SgWriter):
     js = r.json()["GetClientStores"]
 
     for j in js:
-        street_address = (
-            f"{j.get('AddressLine1')} {j.get('AddressLine2') or ''}".strip()
-        )
+        street_address = j.get("AddressLine1")
         city = j.get("City")
         state = j.get("StateName")
         postal = j.get("ZipCode")
