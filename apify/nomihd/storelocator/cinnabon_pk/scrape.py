@@ -4,7 +4,6 @@ from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import json
-import lxml.html
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
@@ -20,7 +19,7 @@ headers = {
 def fetch_data():
     # Your scraper here
 
-    search_url = "https://www.cinnabon.pk/wp-admin/admin-ajax.php?action=store_search&lat=0&lng=0&max_results=25&search_radius=50&autoload=1"
+    search_url = "https://www.cinnabon.pk/wp-admin/admin-ajax.php?action=asl_load_stores&nonce=96e2763272&load_all=1&layout=0"
 
     stores_req = session.get(search_url, headers=headers)
     stores = json.loads(stores_req.text)
@@ -28,34 +27,30 @@ def fetch_data():
     for store in stores:
         page_url = "https://www.cinnabon.pk/stores/"
         locator_domain = website
-        location_name = store["store"]
-        street_address = store["address"]
-        if store["address2"] is not None and len(store["address2"]) > 0:
-            street_address = street_address + ", " + store["address2"]
-
-        if ",," in street_address:
-            street_address = street_address.replace(",,", ",").strip()
-        else:
-            street_address = street_address.replace(",", "").strip()
-
+        location_name = store["title"]
+        street_address = store["street"]
         city = store["city"].replace(",", "").strip()
         state = store["state"]
-        zip = store["zip"]
+        zip = store["postal_code"]
 
-        country_code = store["country"]
+        country_code = "PK"
 
-        store_number = str(store["id"])
+        store_number = store["id"]
         phone = store["phone"]
 
         location_type = "<MISSING>"
+        hours = store["open_hours"]
         hours_list = []
-        if store["hours"] is not None and len(store["hours"]) > 0:
-            hours = lxml.html.fromstring(store["hours"]).xpath("//tr")
-            hours_list = []
-            hours_of_operation = ""
-            for hour in hours:
-                day = "".join(hour.xpath("td[1]/text()")).strip()
-                time = "".join(hour.xpath("td[2]//text()")).strip()
+        if hours:
+            hours = json.loads(hours)
+            for day in hours.keys():
+                time = ""
+                if isinstance(hours[day], list):
+                    time = hours[day][0]
+                else:
+                    if hours[day] == "0":
+                        time = "Closed"
+
                 hours_list.append(day + ":" + time)
 
         hours_of_operation = "; ".join(hours_list).strip()

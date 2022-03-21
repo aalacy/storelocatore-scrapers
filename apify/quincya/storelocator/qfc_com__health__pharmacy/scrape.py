@@ -36,36 +36,20 @@ def fetch_data(sgw: SgWriter):
 
     for item in items:
         link = item.text
-        if "stores/details" in link:
+        if "stores/search" not in link:
             log.info(link)
-            try:
-                req = session.get(link, headers=headers)
-                base = BeautifulSoup(req.text, "lxml")
-                script = base.find(
-                    "script", attrs={"type": "application/ld+json"}
-                ).contents[0]
-            except:
+            for i in range(6):
                 try:
-                    time.sleep(5)
-                    log.info("Retrying ..")
-                    session = SgRequests()
-                    time.sleep(4)
                     req = session.get(link, headers=headers)
                     base = BeautifulSoup(req.text, "lxml")
                     script = base.find(
                         "script", attrs={"type": "application/ld+json"}
                     ).contents[0]
+                    break
                 except:
+                    time.sleep(10)
                     log.info("Retrying ..")
-                    time.sleep(10)
                     session = SgRequests()
-                    time.sleep(10)
-                    req = session.get(link, headers=headers)
-                    base = BeautifulSoup(req.text, "lxml")
-                    script = base.find(
-                        "script", attrs={"type": "application/ld+json"}
-                    ).contents[0]
-
             store = json.loads(script)
 
             location_name = base.find(
