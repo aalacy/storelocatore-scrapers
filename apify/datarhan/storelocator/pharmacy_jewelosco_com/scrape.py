@@ -22,14 +22,13 @@ def fetch_token(driver):
     result = driver.execute_async_script(
         """
         var done = arguments[0]
-
-        fetch("https://pharmacy.jewelosco.com/joweb/appload.htm", {{
-            "headers": {{
+        fetch("https://pharmacy.jewelosco.com/joweb/appload.htm", {
+            "headers": {
                 "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-            }},
+            },
             "body": "formParams=null",
             "method": "POST",
-        }})
+        })
         .then(res => res.json())
         .then(done)
         .catch(done)
@@ -45,7 +44,6 @@ def fetch_locations(coord, driver):
         result = driver.execute_async_script(
             f"""
             var done = arguments[0]
-
             fetch("https://pharmacy.jewelosco.com/joweb/getStoreList.htm", {{
                 "headers": {{
                     "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
@@ -75,7 +73,6 @@ def fetch_location(store_number, driver):
         result = driver.execute_async_script(
             f"""
             var done = arguments[0]
-
             fetch("https://pharmacy.jewelosco.com/joweb/getStoreDetails.htm", {{
                 "headers": {{
                     "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
@@ -86,6 +83,7 @@ def fetch_location(store_number, driver):
             }})
             .then(res => res.json())
             .then(done)
+            .catch(done)
         """
         )
 
