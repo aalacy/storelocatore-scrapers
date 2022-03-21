@@ -75,7 +75,6 @@ def fetch_data():
             stores = json.loads(stores_req.text)[key]
 
             for store in stores:
-                page_url = url_country.split(",")[1].strip()
                 locator_domain = website
                 location_name = store["name"]
 
@@ -126,6 +125,15 @@ def fetch_data():
                 hours_of_operation = "; ".join(hours_list).strip()
                 latitude = store["coordinates"]["lat"]
                 longitude = store["coordinates"]["lng"]
+
+                url_formatted_name = re.sub(
+                    r"\s+", "-", re.sub(r"[^a-zA-Z0-9\s]", "", location_name.strip())
+                ).lower()
+                page_url = (
+                    f"{url_country.split(',')[1].strip()}{url_formatted_name}"
+                    if location_type == "Branch"
+                    else None
+                )
 
                 yield SgRecord(
                     locator_domain=locator_domain,
