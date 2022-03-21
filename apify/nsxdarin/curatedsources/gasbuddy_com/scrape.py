@@ -77,13 +77,13 @@ def set_get_session(page_url):
 def get_data():
     url = "https://www.gasbuddy.com/graphql"
     search = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA],
+        country_codes=[SearchableCountries.USA, SearchableCountries.CANADA],
         granularity=Grain_1_KM(),
     )
 
     x = 0
     y = 0
-    
+
     error_count = 0
     page_urls = []
     for search_code in search:
