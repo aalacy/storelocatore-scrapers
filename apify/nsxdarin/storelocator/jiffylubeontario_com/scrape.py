@@ -182,84 +182,87 @@ def fetch_data():
         except:
             pass
     for loc in locs:
-        logger.info("Pulling Location %s..." % loc)
-        lurl = loc.split("|")[0]
-        zc = loc.split("|")[1]
-        city = loc.split("|")[2]
-        website = "jiffylubeontario.com"
-        country = "CA"
-        state = "ON"
-        typ = "<MISSING>"
-        hours = ""
-        add = ""
-        lat = loc.split("|")[3]
-        lng = loc.split("|")[4]
-        phone = ""
-        store = "<MISSING>"
-        name = ""
-        r2 = session.get(lurl, headers=headers2)
-        lines = r2.iter_lines()
-        hrurl = lurl + "/wp-admin/admin-ajax.php?action=load_hours"
-        r3 = session.get(hrurl, headers=headers2)
-        lines2 = r3.iter_lines()
-        for line3 in lines2:
-            if '<span class="textday">' in line3:
-                g = next(lines2)
-                day = g.split("<")[0].strip().replace("\t", "")
-            if "<strong>CLOSED</strong>" in line3:
-                day = day + ": CLOSED"
-                if hours == "":
-                    hours = day
-                else:
-                    hours = hours + "; " + day
-            if '<span class="hours-start">' in line3:
-                day = (
-                    day
-                    + ": "
-                    + line3.split('<span class="hours-start">')[1].split("<")[0]
-                    + "-"
-                    + line3.split('"hours-end">')[1].split("<")[0]
-                )
-                if hours == "":
-                    hours = day
-                else:
-                    hours = hours + "; " + day
-        for line2 in lines:
-            if 'itemprop="name address">' in line2:
-                g = next(lines)
-                add = g.split(">")[1].split("<")[0]
-            if "class=location-phone>" in line2:
-                phone = line2.split("tel:")[1].split("class")[0].strip()
-            if "<title>" in line2:
-                name = line2.split("<title>")[1].split("|")[0].strip()
-        if phone == "":
-            phone = "<MISSING>"
-        name = name.replace("</title>", "").strip()
-        name = name.replace("&#8211;", "-").strip()
-        if zc == "":
-            zc = "<MISSING>"
-        if lat == "":
-            lat = "<MISSING>"
-        if lng == "":
-            lng = "<MISSING>"
-        if "-514-brock-st-n" in loc:
-            add = "514 Brock St N"
-        yield SgRecord(
-            locator_domain=website,
-            page_url=lurl,
-            location_name=name,
-            street_address=add,
-            city=city,
-            state=state,
-            zip_postal=zc,
-            country_code=country,
-            phone=phone,
-            location_type=typ,
-            store_number=store,
-            latitude=lat,
-            longitude=lng,
-            hours_of_operation=hours,
-        )
+        try:
+            logger.info("Pulling Location %s..." % loc)
+            lurl = loc.split("|")[0]
+            zc = loc.split("|")[1]
+            city = loc.split("|")[2]
+            website = "jiffylubeontario.com"
+            country = "CA"
+            state = "ON"
+            typ = "<MISSING>"
+            hours = ""
+            add = ""
+            lat = loc.split("|")[3]
+            lng = loc.split("|")[4]
+            phone = ""
+            store = "<MISSING>"
+            name = ""
+            r2 = session.get(lurl, headers=headers2)
+            lines = r2.iter_lines()
+            hrurl = lurl + "/wp-admin/admin-ajax.php?action=load_hours"
+            r3 = session.get(hrurl, headers=headers2)
+            lines2 = r3.iter_lines()
+            for line3 in lines2:
+                if '<span class="textday">' in line3:
+                    g = next(lines2)
+                    day = g.split("<")[0].strip().replace("\t", "")
+                if "<strong>CLOSED</strong>" in line3:
+                    day = day + ": CLOSED"
+                    if hours == "":
+                        hours = day
+                    else:
+                        hours = hours + "; " + day
+                if '<span class="hours-start">' in line3:
+                    day = (
+                        day
+                        + ": "
+                        + line3.split('<span class="hours-start">')[1].split("<")[0]
+                        + "-"
+                        + line3.split('"hours-end">')[1].split("<")[0]
+                    )
+                    if hours == "":
+                        hours = day
+                    else:
+                        hours = hours + "; " + day
+            for line2 in lines:
+                if 'itemprop="name address">' in line2:
+                    g = next(lines)
+                    add = g.split(">")[1].split("<")[0]
+                if "class=location-phone>" in line2:
+                    phone = line2.split("tel:")[1].split("class")[0].strip()
+                if "<title>" in line2:
+                    name = line2.split("<title>")[1].split("|")[0].strip()
+            if phone == "":
+                phone = "<MISSING>"
+            name = name.replace("</title>", "").strip()
+            name = name.replace("&#8211;", "-").strip()
+            if zc == "":
+                zc = "<MISSING>"
+            if lat == "":
+                lat = "<MISSING>"
+            if lng == "":
+                lng = "<MISSING>"
+            if "-514-brock-st-n" in loc:
+                add = "514 Brock St N"
+            yield SgRecord(
+                locator_domain=website,
+                page_url=lurl,
+                location_name=name,
+                street_address=add,
+                city=city,
+                state=state,
+                zip_postal=zc,
+                country_code=country,
+                phone=phone,
+                location_type=typ,
+                store_number=store,
+                latitude=lat,
+                longitude=lng,
+                hours_of_operation=hours,
+            )
+        except:
+            pass
 
 
 def scrape():

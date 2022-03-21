@@ -79,7 +79,7 @@ def fetch_data():
         hours = store.find("span", {"class": "franchise_hours"}).text.strip()
         hours = hours.replace("\n", " ")
         hours = hours.rstrip(" NOW OPEN")
-        hours = hours.replace("\n", " ")
+        hours = hours.replace("\r", "")
         phone = store.find("span", {"class": "franchise_phone"}).text.strip()
         phone = phone.lstrip("Phone: ").strip()
         latitude = lat[j].strip()

@@ -116,7 +116,11 @@ def get_data():
                 hour = part.find("span", attrs={"class": "time"}).text.strip()
                 hours = hours + day + " " + hour + ", "
 
-            hours = hours[:-2]
+            hours = hours[:-2].replace("\n", "").replace("\t", "").replace("\r", "")
+            while "  " in hours:
+                hours = hours.replace("  ", " ")
+
+            hours = hours.strip()
             if len(hours_parts) == 0:
                 raise Exception
 
