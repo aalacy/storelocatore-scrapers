@@ -45,6 +45,7 @@ CITIES = [
     "Gorontalo",
     "Jakarta",
     "Jakarta Barat",
+    "Cianjur",
     "Jakarta Pusat",
     "Jakarta Selatan",
     "Jakarta Timur",

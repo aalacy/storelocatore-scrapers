@@ -159,6 +159,10 @@ def fetch_records(latlng, sgw):
                 ):
                     hours_of_operation = MISSING
 
+                # Clean street_address
+                if street_address is not None or street_address:
+                    street_address = " ".join(street_address.split())
+
                 raw_address = MISSING
                 item = SgRecord(
                     locator_domain=locator_domain,
@@ -192,7 +196,7 @@ def fetch_data(sgw: SgWriter):
     logger.info("Started")
     search = DynamicGeoSearch(
         country_codes=[SearchableCountries.BRITAIN],
-        expected_search_radius_miles=10,
+        expected_search_radius_miles=5,
         granularity=Grain_8(),
         use_state=False,
     )
