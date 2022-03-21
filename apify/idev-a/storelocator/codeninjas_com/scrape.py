@@ -2,156 +2,98 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
+from sglogging import SgLogSetup
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 import re
+
+logger = SgLogSetup().get_logger("codeninjas")
+
+_headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.125 Safari/537.36"
+}
+locator_domain = "https://www.codeninjas.com/"
+base_url = "https://services.codeninjas.com/api/locations/queryarea?latitude=37.09024&longitude=-95.712891&includeUnOpened=false&miles=5117.825778587137"
 
 
 def fetch_data():
-    addresses = []
     with SgRequests() as session:
-        locator_domain = "https://www.codeninjas.com/"
-        base_url = "https://services.codeninjas.com/api/locations/queryarea?latitude=37.09024&longitude=-95.712891&includeUnOpened=false&miles=5117.825778587137"
         json_data = session.get(
             base_url,
-            headers={
-                "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.125 Safari/537.36"
-            },
+            headers=_headers,
         ).json()
         for data in json_data:
             if data["status"] != "OPEN":
                 continue
-            street_address = data["address1"]
+            street_address = data["address1"] or ""
 
             if data["address2"]:
                 street_address += " " + data["address2"]
 
-            location_name = data["name"]
-            city = data["city"]
-            zipp = data["postalCode"]
-            state = data["state"]["code"]
-            longitude = data["longitude"]
-            latitude = data["latitude"]
-            page_url = "https://www.codeninjas.com/" + data["cnSlug"]
-
-            countryCode = data["countryCode"]
+            page_url = locator_domain + data["cnSlug"]
+            logger.info(page_url)
 
             soup1 = bs(
                 session.get(
                     page_url,
-                    headers={
-                        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.125 Safari/537.36"
-                    },
+                    headers=_headers,
                 ).text,
                 "lxml",
             )
 
-            phone = data["phone"]
-            hours = ""
+            phone = data["phone"] or ""
+            if not phone and soup1.find("a", href=re.compile(r"tel:")):
+                phone = soup1.find("a", href=re.compile(r"tel:")).text.strip()
 
-            try:
-                for index, data in enumerate(
-                    soup1.find("div", {"id": "centerHours"}).find_all(
-                        "ul", {"class": "list mb-0"}
-                    )
+            hours = []
+            if soup1.select_one("div#centerHours ul li"):
+                for hh in soup1.select_one("div#centerHours ul li").stripped_strings:
+                    if "Birthday" in hh:
+                        break
+                    hours.append(hh)
+                if hours and (
+                    hours[0].lower() == "by appointment only"
+                    or hours[0].lower() == "by appointment"
+                    or "Program hours may vary" in hours[0]
                 ):
-                    if index == 0:
-                        hours = (
-                            "Center Hours "
-                            + " ".join(list(data.find("li").stripped_strings))
-                            .split(" (Summer Hours May Vary)")[0]
-                            .split("; Birthday")[0]
-                            .split("or by appointment")[0]
-                        )
-                    else:
-                        hours = (
-                            hours
-                            + " Student Hours "
-                            + " ".join(list(data.find("li").stripped_strings))
-                            .split(" (Summer Hours May Vary)")[0]
-                            .split("; Birthday")[0]
-                            .split("or by appointment")[0]
-                        )
-            except:
-                hours = ""
+                    hours = []
 
-            hours = re.sub(r"\s+", " ", hours)
-            if (
-                "https://www.codeninjas.com/ca-folsom" in page_url
-                or "https://www.codeninjas.com/ca-rocklin" in page_url
-            ):
-                hours = "<MISSING>"
-            if (
-                "Center Hours Open By Appointment Only Student Hours Open By Appointment Only"
-                in hours
-                or "Center Hours Temporarily Shuttered due to COVID-19 Student Hours Temporarily Shuttered due to COVID-19"
-                in hours
-                or "Center Hours Stay safe! Currently offering Virtual sessions Student Hours Please check our Summer Camps schedule"
-                in hours
-                or "Center Hours Virtual Camps available. Tentative re-open in August Student Hours Virtual Camps available. Tentative re-open in August"
-                in hours
-                or "Center Hours By Appt Student Hours By Appt" in hours
-                or "Center Hours Coming Real Soon ! Student Hours Coming Real Soon !"
-                in hours
-                or "Center Hours  (due to COVID-19) Student Hours  (due to COVID-19)"
-                in hours
-                or "Center Hours Temporarily Closed - Email for online options Student Hours Temporarily Closed - Email for online options"
-                in hours
-                or "Center Hours  (due to COVID-19) Student Hours  (due to COVID-19)"
-                in hours
-                or "Center Hours  due to COVID-19 Student Hours  due to COVID-19"
-                in hours
-            ):
-                hours = "<MISSING>"
-            hours_of_operation = (
-                hours.replace("By Appointment Only", "")
-                .replace("Center Hours By appointment only Student", "Student")
-                .replace("Center Hours Monday-Friday (by appointment)", "")
-                .replace("Center Hours By appointments only.", "")
-                .replace("/", " ")
-                .replace(": Mon", "Mon")
-                .replace("To Schedule Tours https://calendly.com/mncodeninjas", "")
-                .replace("Center Hours By Appointment Student", "Student")
-                .replace("s only. Student", "Student")
-                .replace("by Appointment Student", "Student")
-                .replace("*See Camp Schedule for Camp hours ", "Student")
-                .replace("|", " ")
-                .replace("Student Hours CREATE Appointments:", "Student Hours")
-                .replace("Appointments Only Student", "Student")
-                .replace("(Note: Last check-in one hour before close)", "")
-                .replace("By-Appointment only for Drop-Ins (Due to Covid-19)", "")
-                .replace("Center Hours  Student Hours", "Student Hours")
-                .replace("Center Hours By appointment Student", "Student")
-                .replace(")", "")
-                .replace("(", "")
-                .replace("Student Hours By Appointment", "")
-                .replace("Virtual", "")
-                .replace("Center Hours By Appointment only Student", "Student")
-                .replace(" To Schedule Tours https:  calendly.com mncodeninjas", "")
-                .replace("*See Camp Schedule for Camp hours", "")
-                .replace("Appointments Only", "")
-                .strip()
-            )
-            if street_address in addresses:
-                continue
-            addresses.append(street_address)
+            country_code = data["countryCode"]
+            if data["postalCode"].replace("-", "").strip().isdigit():
+                country_code = "US"
 
             yield SgRecord(
                 page_url=page_url,
-                location_name=location_name,
+                location_name=data["name"],
                 street_address=street_address,
-                city=city,
-                state=state,
-                zip_postal=zipp,
-                country_code=countryCode,
-                latitude=latitude,
-                longitude=longitude,
-                phone=phone,
+                city=data["city"],
+                state=data["state"]["code"],
+                zip_postal=data["postalCode"]
+                .replace("UK", "")
+                .replace(",", "")
+                .strip(),
+                country_code=country_code,
+                longitude=data["longitude"],
+                latitude=data["latitude"],
+                phone=phone.split("/")[0].split(",")[0],
                 locator_domain=locator_domain,
-                hours_of_operation=hours_of_operation,
+                hours_of_operation="; ".join(hours)
+                .split("or")[0]
+                .split("To")[0]
+                .split("#")[0]
+                .split("*")[0]
+                .split("(Note")[0]
+                .replace("|", ";")
+                .replace("//", ";")
+                .replace("Imp", "")
+                .replace("call f", "")
+                .replace("By Appt", "")
+                .strip(),
             )
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

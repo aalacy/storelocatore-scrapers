@@ -50,11 +50,16 @@ def fetch_data():
                         locations = session.get(url, headers=_headers).json()["items"]
                         logger.info(f"{len(locations)} locations found")
                         for _ in locations:
+                            street_address = (
+                                f"{_['address_1']} {_.get('address_2', '')}".split(
+                                    "PO Box"
+                                )[0].strip()
+                            )
                             yield SgRecord(
                                 store_number=_["store_number"],
                                 page_url=_["url"],
                                 location_name=_["name"],
-                                street_address=f"{_['address_1']} {_.get('address_2', '')}",
+                                street_address=street_address,
                                 city=_["city"],
                                 state=_["state"],
                                 zip_postal=_["postal_code"],

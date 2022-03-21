@@ -1,6 +1,10 @@
-import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+import json
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 session = SgRequests()
 headers = {
@@ -10,104 +14,66 @@ headers = {
 logger = SgLogSetup().get_logger("altardstate_com")
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
-
-
 def fetch_data():
     url = "https://www.altardstate.com/on/demandware.store/Sites-altardstate-Site/default/Stores-FindStores?showMap=true&radius=5000&postalCode=55441&radius=300"
     r = session.get(url, headers=headers)
     website = "altardstate.com"
     typ = "<MISSING>"
     loc = "<MISSING>"
-    country = "US"
-    Found = False
-    name = ""
     logger.info("Pulling Stores")
-    for line in r.iter_lines():
-        line = str(line.decode("utf-8"))
-        if '"locale": "' in line or '"inventoryListId":' in line:
-            Found = True
-        if Found and '"ID": "' in line:
-            store = line.split('"ID": "')[1].split('"')[0]
-            Found = False
-        if '"name": "' in line:
-            name = line.split('"name": "')[1].split('"')[0]
-        if '"address1": "' in line:
-            add = line.split('"address1": "')[1].split('"')[0]
-        if '"city": "' in line:
-            city = line.split('"city": "')[1].split('"')[0]
-        if '"postalCode": "' in line:
-            zc = line.split('"postalCode": "')[1].split('"')[0]
-        if '"latitude": ' in line:
-            lat = line.split('"latitude": ')[1].split(",")[0]
-        if '"longitude": ' in line:
-            lng = line.split('"longitude": ')[1].split(",")[0]
-        if '"stateCode": "' in line:
-            state = line.split('"stateCode": "')[1].split('"')[0]
-        if '"countryCode": "' in line:
-            country = line.split('"countryCode": "')[1].split('"')[0]
-        if '"phone": "' in line:
-            phone = line.split('"phone": "')[1].split('"')[0]
-        if '"storeHours": "' in line:
-            hours = line.split('"storeHours": "')[1].split('"')[0]
+    for item in json.loads(r.content)["stores"]:
+        store = item["ID"]
+        name = item["name"]
+        add = item["address1"]
+        city = item["city"]
+        state = item["stateCode"]
+        country = item["countryCode"]
+        lat = item["latitude"]
+        lng = item["longitude"]
+        zc = item["postalCode"]
+        phone = item["phone"]
+        hours = str(item["storeHours"])
+        try:
             hours = (
-                hours.replace("<br />", "; ").replace("\\n", "").replace("&nbsp;", " ")
+                hours.split("<td>", 1)[1]
+                .replace("\n", "")
+                .replace("\r", "")
+                .replace("\t", "")
             )
-            hours = hours.replace("<p>", "").replace("</p>", "")
-            if "details. " in hours:
-                hours = hours.split("details. ")[1]
-        if "BRIDGE STREET" in name:
-            hours = "Sun: Noon-6PM; Mon-Sat: 11AM-7PM"
-        if "WEST TOWN MALL" in name:
-            hours = "Sun-Thu: 11AM-7PM; Fri-Sat: 11AM-8PM"
-        if "THE PINNACLE AT TURKEY CREEK" in name:
-            hours = "Sun: Noon-6PM; Mon-Sat: 11AM-7PM"
-        if '"storebrands": ' in line:
-            yield [
-                website,
-                loc,
-                name,
-                add,
-                city,
-                state,
-                zc,
-                country,
-                store,
-                phone,
-                typ,
-                lat,
-                lng,
-                hours,
-            ]
+            hours = hours.replace("</td>    </tr>    <tr>        <td>", "; ")
+            hours = (
+                hours.replace("</td><td>", ": ")
+                .replace("</td></tr><tr><td>", "; ")
+                .replace("</td>    </tr></table>", "")
+                .replace("</td></tr></tbody></table>", "")
+            )
+        except:
+            hours = "<MISSING>"
+        yield SgRecord(
+            locator_domain=website,
+            page_url=loc,
+            location_name=name,
+            street_address=add,
+            city=city,
+            state=state,
+            zip_postal=zc,
+            country_code=country,
+            phone=phone,
+            location_type=typ,
+            store_number=store,
+            latitude=lat,
+            longitude=lng,
+            hours_of_operation=hours,
+        )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(
+        deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
+    ) as writer:
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()

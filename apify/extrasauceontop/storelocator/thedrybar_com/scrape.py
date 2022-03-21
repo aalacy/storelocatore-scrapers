@@ -29,6 +29,12 @@ longitudes = []
 hours_of_operations = []
 
 for location in response["data"]["storeCollection"]["items"]:
+    try:
+        status = location["settings"]["operatingStatus"]
+        if "coming" in status.lower():
+            continue
+    except KeyError:
+        pass
     locator_domain = "thedrybar.com"
     page_url = "https://www.drybarshops.com/service/locator"
     location_name = location["title"]

@@ -1,95 +1,52 @@
-import csv
 from lxml import etree
 from urllib.parse import urljoin
 
 from sgrequests import SgRequests
-
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
-    # Your scraper here
-    items = []
-
     session = SgRequests()
-
-    DOMAIN = "tommybahama.com"
-    start_url = "https://www.tommybahama.com/en/store-finder?q=&searchStores=false&searchRestaurants=true&searchOutlets=false&searchInternational=true&CSRFToken=b6ba6d9c-9bc3-48f3-952d-2f59a53a4656"
+    domain = "tommybahama.com"
+    start_url = "https://www.tommybahama.com/restaurants/restaurants.html"
 
     response = session.get(start_url)
     dom = etree.HTML(response.text)
-    all_locations = dom.xpath('//div[@id="store-search-results-state"]')
-    next_page = dom.xpath('//a[contains(text(), "Next")]/@href')
-    while next_page:
-        page_url = "https://www.tommybahama.com" + next_page[0]
-        page_response = session.get(page_url)
-        page_dom = etree.HTML(page_response.text)
-        all_locations += dom.xpath('//div[@id="store-search-results-state"]')
-        next_page = page_dom.xpath('//a[contains(text(), "Next")]/@href')
+    all_locations = dom.xpath('//a[@class="imagetext-location"]/@href')
 
-    for poi_html in all_locations:
-        url = poi_html.xpath('.//span[@class="store-restaurant-header"]/a/@href')[0]
+    for url in all_locations:
         store_url = urljoin(start_url, url)
         loc_response = session.get(store_url)
         loc_dom = etree.HTML(loc_response.text)
 
-        location_name = poi_html.xpath(
-            './/span[@class="store-restaurant-header"]/a/text()'
-        )
+        location_name = loc_dom.xpath('//h3[@class="cmp-title__text"]/text()')
         location_name = (
-            location_name[0].strip() if location_name[0].strip() else "<MISSING>"
+            location_name[-1].strip() if location_name[-1].strip() else "<MISSING>"
         )
         street_address = loc_dom.xpath(
             '//p[*[*[a[contains(@href, "/maps/")]]]]/preceding-sibling::p[3]/text()'
         )
-        street_address = street_address[0] if street_address else "<MISSING>"
-        city = loc_dom.xpath(
+        if not street_address:
+            street_address = loc_dom.xpath(
+                '//p[contains(text(), "Restaurant & Bar")]/following-sibling::p/text()'
+            )
+            street_address = [[e.strip() for e in street_address if e.strip()][-2]]
+        street_address = street_address[0]
+        raw_data = loc_dom.xpath(
             '//p[*[*[a[contains(@href, "/maps/")]]]]/preceding-sibling::p[2]/text()'
-        )[0].split(", ")[0]
-        state = (
-            loc_dom.xpath(
-                '//p[*[*[a[contains(@href, "/maps/")]]]]/preceding-sibling::p[2]/text()'
-            )[0]
-            .split(",")[-1]
-            .split()[0]
         )
-        zip_code = (
-            loc_dom.xpath(
-                '//p[*[*[a[contains(@href, "/maps/")]]]]/preceding-sibling::p[2]/text()'
-            )[0]
-            .split(",")[-1]
-            .split()[-1]
-        )
-        country_code = "<MISSING>"
-        store_number = "<MISSING>"
+        if not raw_data:
+            raw_data = loc_dom.xpath(
+                '//p[contains(text(), "Restaurant & Bar")]/following-sibling::p/text()'
+            )
+            raw_data = [[e.strip() for e in raw_data if e.strip()][-1]]
+        raw_data = raw_data[0]
+        city = raw_data.split(", ")[0]
+        state = raw_data.split(", ")[-1].split()[0]
+        zip_code = raw_data.split(", ")[-1].split()[-1]
         phone = loc_dom.xpath('//p[contains(text(), "Phone")]/text()')
         if phone:
             phone = phone[0].replace("Phone: ", "")
@@ -102,15 +59,7 @@ def fetch_data():
             phone = loc_dom.xpath(
                 '//p[contains(text(), "Restaurant & Bar")]/following-sibling::p[1]/text()'
             )
-            phone = phone[0] if phone else "<MISSING>"
-        location_type = "<MISSING>"
-        geo = (
-            poi_html.xpath('.//a[contains(text(), "View Map")]/@href')[0]
-            .split("lat=")[-1]
-            .split("&long=")
-        )
-        latitude = geo[0]
-        longitude = geo[1]
+            phone = phone[0] if phone and phone[0] != "Open:" else ""
         hours_of_operation = (
             loc_dom.xpath('//p[contains(text(), "Open:")]/text()')[-1]
             .replace("Open:", "")
@@ -123,42 +72,57 @@ def fetch_data():
                 .replace("|", ",")
             )
         if not hours_of_operation:
-            hoo = poi_html.xpath(
-                './/div[span[@class="store-restaurant-header"]]/text()'
-            )
-            hoo = [e.strip() for e in hoo if e.strip()]
-            hours_of_operation = " ".join(hoo[1:3]) if hoo else "<MISSING>"
+            hours_of_operation = loc_dom.xpath(
+                '//p[contains(text(), "Open:")]/following-sibling::p[1]/text()'
+            )[0]
         hours_of_operation = hours_of_operation if hours_of_operation else "<MISSING>"
         hours_of_operation = hours_of_operation.split("Happy")[0].strip()
-
+        if hours_of_operation == "Mon-Fri: 11:30AM-8PM":
+            hours_of_operation = " ".join(
+                loc_dom.xpath(
+                    '//p[contains(text(), "Open:")]/following-sibling::p[1]/text()'
+                )[:3]
+            )
+        hours_of_operation = hours_of_operation.replace("|", "")
+        location_type = ""
+        if (
+            "The restaurant is temporarily closed"
+            in loc_dom.xpath('//h3[@class="cmp-title__text"]/text()')[0]
+        ):
+            location_type = "temporarily closed"
         if "COCONUT" in location_name:
             phone = "239.947.2203"
 
-        item = [
-            DOMAIN,
-            store_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip_code,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
+        item = SgRecord(
+            locator_domain=domain,
+            page_url=store_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zip_code,
+            country_code="",
+            store_number="",
+            phone=phone,
+            location_type=location_type,
+            latitude="",
+            longitude="",
+            hours_of_operation=hours_of_operation,
+        )
 
-        items.append(item)
-
-    return items
+        yield item
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":

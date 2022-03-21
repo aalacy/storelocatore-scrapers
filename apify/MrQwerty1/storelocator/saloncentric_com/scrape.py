@@ -1,88 +1,110 @@
-import csv
 import json
-
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 
 
-def write_output(data):
-    with open('data.csv', mode='w', encoding='utf8', newline='') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+def fetch_data(sgw):
+    search = DynamicZipSearch(
+        country_codes=[SearchableCountries.USA], expected_search_radius_miles=500
+    )
+    for _zip in search:
+        data = {
+            "request": {
+                "appkey": "C8F922C2-35CF-11E3-8171-DA43842CA48B",
+                "formdata": {
+                    "dataview": "store_default",
+                    "limit": 1000,
+                    "geolocs": {
+                        "geoloc": [
+                            {
+                                "addressline": _zip,
+                                "country": "",
+                                "latitude": "",
+                                "longitude": "",
+                            }
+                        ]
+                    },
+                    "searchradius": "1000",
+                },
+            }
+        }
 
-        writer.writerow(
-            ["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code",
-             "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        r = session.post(
+            "https://hosted.where2getit.com/saloncentric/rest/locatorsearch",
+            data=json.dumps(data),
+        )
 
-        for row in data:
-            writer.writerow(row)
+        try:
+            js = r.json()["response"]["collection"]
+        except:
+            js = []
 
-
-def fetch_data():
-    out = []
-    url = 'https://www.saloncentric.com/storefinder'
-
-    session = SgRequests()
-    data = {"request": {
-        "appkey": "C8F922C2-35CF-11E3-8171-DA43842CA48B",
-        "formdata": {
-            "dataview": "store_default",
-            "limit": 5000,
-            "geolocs": {"geoloc": [{"addressline": "67203", "country": "", "latitude": "", "longitude": ""}]},
-            "searchradius": "5000"}}}
-
-    r = session.post('https://hosted.where2getit.com/saloncentric/rest/locatorsearch', data=json.dumps(data))
-
-    js = r.json()['response']['collection']
-
-    for j in js:
-        locator_domain = url
-        location_name = f"SalonCentric - {j.get('name')} Professional Beauty Supply Store"
-        street_address = j.get('address1') or '<MISSING>'
-        city = j.get('city') or '<MISSING>'
-        state = j.get('state') or '<MISSING>'
-        postal = j.get('postalcode') or '<MISSING>'
-        country_code = j.get('country') or '<MISSING>'
-        store_number = j.get('clientkey')
-
-        # to avoid incorrect ids
-        if len(store_number) > 4:
-            continue
-        phone = j.get('phone') or '<MISSING>'
-        latitude = j.get('latitude') or '<MISSING>'
-        longitude = j.get('longitude') or '<MISSING>'
-        page_url = f"https://stores.saloncentric.com/{state.lower()}/{city.lower()}/{store_number}/"
-        location_type = '<MISSING>'
-
-        days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
-        _tmp = []
-        for day in days:
-            start = j.get(f'{day}_hours_open')
-            close = j.get(f'{day}_hours_closed')
-            if not start or not close:
+        for j in js:
+            location_name = (
+                f"SalonCentric - {j.get('name')} Professional Beauty Supply Store"
+            )
+            street_address = j.get("address1")
+            city = j.get("city")
+            state = j.get("state")
+            postal = j.get("postalcode")
+            country_code = j.get("country")
+            store_number = j.get("clientkey")
+            if len(store_number) > 4:
                 continue
-            if start.find('CLOSED') == -1 and close.find('CLOSED') == -1:
-                _tmp.append(f'{start} - {close}')
-            else:
-                _tmp.append(f'{day[:3].upper()}: CLOSED')
-        if _tmp:
-            hours_of_operation = ';'.join(_tmp)
 
-            if hours_of_operation.count('CLOSED') == 7:
-                hours_of_operation = 'CLOSED'
-        else:
-            hours_of_operation = '<MISSING>'
+            phone = j.get("phone")
+            latitude = j.get("latitude")
+            longitude = j.get("longitude")
+            page_url = f"https://stores.saloncentric.com/{state.lower()}/{city.replace(' ', '-').lower()}/{store_number}/"
 
-        row = [locator_domain, page_url, location_name, street_address, city, state, postal,
-               country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation]
+            days = [
+                "monday",
+                "tuesday",
+                "wednesday",
+                "thursday",
+                "friday",
+                "saturday",
+                "sunday",
+            ]
+            _tmp = []
+            for day in days:
+                start = j.get(f"{day}_hours_open") or ""
+                close = j.get(f"{day}_hours_closed") or ""
+                if not start or not close:
+                    continue
+                if "CLOSED" not in start and "CLOSED" not in close:
+                    _tmp.append(f"{day[:3].upper()}: {start} - {close}")
+                else:
+                    _tmp.append(f"{day[:3].upper()}: CLOSED")
 
-        out.append(row)
+            hours_of_operation = ";".join(_tmp)
 
-    return out
+            row = SgRecord(
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=postal,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=SgRecord.MISSING,
+                latitude=latitude,
+                longitude=longitude,
+                locator_domain=locator_domain,
+                hours_of_operation=hours_of_operation,
+            )
 
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+            sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    locator_domain = "https://www.saloncentric.com/"
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+        fetch_data(writer)

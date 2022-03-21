@@ -1,0 +1,5 @@
+sgzip==0.5.3
+sgrequests==0.1.12
+sglogging==0.0.4
+bs4==0.0.1
+lxml==4.6.2

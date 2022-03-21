@@ -38,6 +38,7 @@ def write_output(data):
 
 def fetch_data():
     locs = []
+    alllocs = []
     url = "https://www.redroof.com/hotel-sitemap"
     session = SgRequests()
     r = session.get(url, headers=headers)
@@ -75,12 +76,11 @@ def fetch_data():
         r2 = session.get(loc, headers=headers)
         for line2 in r2.iter_lines():
             line2 = str(line2.decode("utf-8"))
-            if '"rating_image_url' in line2:
+            if '<span class="name" itemProp="name">' in line2:
                 name = (
-                    line2.split('"rating_image_url')[1]
-                    .split('"name\\":\\"')[1]
-                    .split('\\"')[0]
-                    .replace("\\u0026", "&")
+                    line2.split('<span class="name" itemProp="name">')[1]
+                    .split("<")[0]
+                    .strip()
                 )
             if 'Street1\\":\\"' in line2:
                 add = line2.split('Street1\\":\\"')[1].split("\\")[0]
@@ -117,22 +117,27 @@ def fetch_data():
                 name = "<MISSING>"
             if add == "":
                 add = "<MISSING>"
-            yield [
-                website,
-                loc,
-                name,
-                add,
-                city,
-                state,
-                zc,
-                country,
-                store,
-                phone,
-                typ,
-                lat,
-                lng,
-                hours,
-            ]
+            if "RRI867" in loc:
+                city = "Biloxi"
+            if state != "<MISSING>":
+                if loc not in alllocs:
+                    alllocs.append(loc)
+                    yield [
+                        website,
+                        loc,
+                        name,
+                        add,
+                        city,
+                        state,
+                        zc,
+                        country,
+                        store,
+                        phone,
+                        typ,
+                        lat,
+                        lng,
+                        hours,
+                    ]
 
 
 def scrape():

@@ -45,12 +45,10 @@ def fetch_data():
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36",
     }
 
-    base_url = "https://www.worldgym.com/findagym"
+    base_url = "https://www.worldgym.com/findagym?search=ca"
     r = session.get(base_url, headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
-    json_data = json.loads(
-        str(soup).split("franhiseeLocations=")[1].split(';$(".header')[0]
-    )
+    json_data = json.loads(str(soup).split("franhiseeLocations =")[1].split(";")[0])
 
     for data in json_data:
         country_code = data["Country"].replace("USA", "US").replace("Canada", "CA")

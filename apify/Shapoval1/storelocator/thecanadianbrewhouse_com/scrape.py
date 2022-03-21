@@ -35,7 +35,7 @@ def write_output(data):
 def fetch_data():
     out = []
     locator_domain = "https://thecanadianbrewhouse.com"
-    page_url = "https://thecanadianbrewhouse.com/locations/"
+    api_url = "https://thecanadianbrewhouse.com/locations/"
 
     session = SgRequests()
     headers = {
@@ -49,12 +49,12 @@ def fetch_data():
         "Cache-Control": "no-cache",
     }
 
-    r = session.get(page_url, headers=headers)
+    r = session.get(api_url, headers=headers)
 
     tree = html.fromstring(r.text)
     li = tree.xpath('//div[@class="col-lg-4 col-md-6 col-sm-12"]')
     for l in li:
-
+        page_url = "".join(l.xpath(".//h3/a/@href"))
         street_address = "".join(l.xpath('.//div[@class="wrap"]/p[1]/text()'))
         ad = "".join(l.xpath('.//div[@class="wrap"]/p[2]/text()'))
         city = ad.split(",")[0]
@@ -62,16 +62,16 @@ def fetch_data():
         state = " ".join(ad.split(",")[1].split()[:-2])
         country_code = "CA"
         store_number = "<MISSING>"
-        location_name = "".join(l.xpath(".//h3/text()"))
+        location_name = "".join(l.xpath(".//h3//text()"))
         phone = "".join(l.xpath('.//a[@class="locations-list-phone"]/text()')).strip()
         latitude = "".join(
             l.xpath(
-                f'.//preceding::div[./h4[contains(text(), "{location_name}")]]/@data-lat'
+                f'.//preceding::div[./h4/a[contains(text(), "{location_name}")]]/@data-lat'
             )
         )
         longitude = "".join(
             l.xpath(
-                f'.//preceding::div[./h4[contains(text(), "{location_name}")]]/@data-lng'
+                f'.//preceding::div[./h4/a[contains(text(), "{location_name}")]]/@data-lng'
             )
         )
         location_type = "<MISSING>"

@@ -38,7 +38,7 @@ def get_coords_hours():
     hours = []
 
     session = SgRequests()
-    url = "https://siteassets.parastorage.com/pages/pages/thunderbolt?beckyExperiments=specs.thunderbolt.addressInputAtlasProvider%3Atrue%2Cspecs.thunderbolt.videobox_united%3Atrue%2Cspecs.thunderbolt.seoFriendlyDropDownMenu%3Atrue%2Cspecs.thunderbolt.stylableInteractions%3Atrue%2Cspecs.thunderbolt.image_placeholder%3Atrue%2Cspecs.thunderbolt.tb_omitInlineContent%3Atrue%2Cspecs.thunderbolt.safari_sticky_fix%3Atrue%2Ctb_UploadButtonFixValidationNotRequired%3Atrue%2Cspecs.thunderbolt.dontMergeAdvancedSeoDataForML%3Atrue%2Cspecs.thunderbolt.editor_elements_site_assets%3Atrue%2Cspecs.thunderbolt.tb_media_layout_by_effect%3Atrue%2Cspecs.thunderbolt.shouldRenderPinnedLayerAfterMeshContainer%3Atrue&contentType=application%2Fjson&deviceType=Desktop&dfCk=6&dfVersion=1.1235.0&experiments=bv_migrateResponsiveLayoutToSingleLayoutData%2Cbv_migrateResponsiveToVariantsModels%2Cbv_remove_add_chat_viewer_fixer%2Cdm_removeMissingResponsiveRefs%2Csv_unquoteUsedFontsInDataFixer%2Csv_usedFontsDataFixer&externalBaseUrl=https%3A%2F%2Fwww.chochosan.com&fileId=62bf79f4.bundle.min&isHttps=true&isInSeo=false&isMultilingualEnabled=false&isPremiumDomain=true&isUrlMigrated=true&isWixCodeOnPage=false&isWixCodeOnSite=false&language=en&languageResolutionMethod=QueryParam&metaSiteId=680ef2d7-b12f-412f-945a-0ad3164683b5&module=thunderbolt-features&originalLanguage=en&osType=Windows&pageId=329900_0ac8a3c01be23c1c23da45a9ee8d3128_290.json&quickActionsMenuEnabled=false&registryLibrariesTopology=%5B%7B%22artifactId%22%3A%22editor-elements%22%2C%22url%22%3A%22https%3A%2F%2Fstatic.parastorage.com%2Fservices%2Feditor-elements%2F1.4972.0%22%2C%22manifestName%22%3A%22library-manifest%22%7D%2C%7B%22artifactId%22%3A%22editor-elements-design-systems%22%2C%22url%22%3A%22https%3A%2F%2Fstatic.parastorage.com%2Fservices%2Feditor-elements%2F1.4972.0%22%2C%22manifestName%22%3A%22design-systems-manifest%22%7D%5D&remoteWidgetStructureBuilderVersion=1.226.0&siteId=ce06b00c-2b28-4b9c-9bea-b223d6fa1297&siteRevision=305&staticHTMLComponentUrl=https%3A%2F%2Fwww-chochosan-com.filesusr.com%2F&tbElementsSiteAssets=siteAssets.6f27bc6d.bundle.min.js&useSandboxInHTMLComp=false&viewMode=desktop"
+    url = "https://siteassets.parastorage.com/pages/pages/thunderbolt?beckyExperiments=specs.thunderbolt.addressInputAtlasProvider%3Atrue%2Cspecs.thunderbolt.seoFriendlyDropDownMenu%3Atrue%2Cspecs.thunderbolt.FileUploaderPopper%3Atrue%2Ctb_UploadButtonFixValidationNotRequired%3Atrue%2Cspecs.thunderbolt.breakingBekyCache%3Atrue%2Cspecs.thunderbolt.tb_media_layout_by_effect%3Atrue&contentType=application%2Fjson&deviceType=Desktop&dfCk=6&dfVersion=1.1273.0&experiments=bv_cartPageResponsiveLayoutFixer%2Cbv_migrateResponsiveLayoutToSingleLayoutData%2Cbv_migrateResponsiveToVariantsModels%2Cbv_removeMenuDataFromPageJson%2Cbv_remove_add_chat_viewer_fixer%2Cdm_fixMobileHoverBoxDesign&externalBaseUrl=https%3A%2F%2Fwww.chochosan.com&fileId=4071f3e8.bundle.min&hasTPAWorkerOnSite=false&isHttps=true&isInSeo=false&isMultilingualEnabled=false&isPremiumDomain=true&isUrlMigrated=true&isWixCodeOnPage=false&isWixCodeOnSite=false&language=en&languageResolutionMethod=QueryParam&metaSiteId=680ef2d7-b12f-412f-945a-0ad3164683b5&module=thunderbolt-features&originalLanguage=en&pageId=329900_0ac8a3c01be23c1c23da45a9ee8d3128_290.json&quickActionsMenuEnabled=false&registryLibrariesTopology=%5B%7B%22artifactId%22%3A%22editor-elements%22%2C%22namespace%22%3A%22wixui%22%2C%22url%22%3A%22https%3A%2F%2Fstatic.parastorage.com%2Fservices%2Feditor-elements%2F1.6036.0%22%7D%2C%7B%22artifactId%22%3A%22editor-elements-design-systems%22%2C%22namespace%22%3A%22dsgnsys%22%2C%22url%22%3A%22https%3A%2F%2Fstatic.parastorage.com%2Fservices%2Feditor-elements%2F1.6036.0%22%7D%5D&remoteWidgetStructureBuilderVersion=1.226.0&siteId=ce06b00c-2b28-4b9c-9bea-b223d6fa1297&siteRevision=308&staticHTMLComponentUrl=https%3A%2F%2Fwww-chochosan-com.filesusr.com%2F&tbElementsSiteAssets=siteAssets.8d1e3854.bundle.min.js&useSandboxInHTMLComp=false&viewMode=desktop"
     r = session.get(url)
     js = r.json()
     for j in js["props"]["render"]["compProps"].values():
@@ -55,7 +55,7 @@ def get_coords_hours():
                 tree = html.fromstring(source)
                 text = tree.xpath(".//text()")
                 for t in text:
-                    if not t.strip() or "Teppan" in t:
+                    if not t.strip() or "Teppan" in t or t[0].isdigit():
                         continue
                     if ":" in t:
                         if "(" in t:
@@ -64,6 +64,8 @@ def get_coords_hours():
 
                 hours.append(";".join(_tmp))
 
+    coords[1], coords[2] = coords[2], coords[1]
+    hours[1], hours[2] = hours[2], hours[1]
     return coords, hours
 
 

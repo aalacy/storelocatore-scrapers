@@ -1,5 +1,8 @@
-import csv
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 session = SgRequests()
 headers = {
@@ -7,40 +10,14 @@ headers = {
 }
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
-
-
 def fetch_data():
     locs = []
     url = "https://plazaazteca.com/locations/"
-    r = session.get(url, headers=headers)
+    r = session.get(url, headers=headers, verify=False)
     website = "plazaazteca.com"
     country = "US"
-    for line in r.iter_lines():
+    linesone = r.iter_lines()
+    for line in linesone:
         line = str(line.decode("utf-8"))
         if (
             '<h2 class="elementor-heading-title elementor-size-default"><a href="'
@@ -49,21 +26,63 @@ def fetch_data():
             lurl = line.split(
                 '<h2 class="elementor-heading-title elementor-size-default"><a href="'
             )[1].split('"')[0]
-            if lurl not in locs:
-                locs.append(lurl)
+            if "COMING SOON" in line:
+                lurl = "CS"
+        if '<div class="elementor-text-editor elementor-clearfix">' in line:
+            g = next(linesone)
+            g = str(g.decode("utf-8"))
+            try:
+                a5 = g.split('">(')[1].split("<")[0]
+            except:
+                pass
+            try:
+                a5 = g.split(';">(')[1].split("<")[0]
+            except:
+                pass
+            if (
+                '</p><p><span style="font-size: 15px;">' not in g
+                and '</p><p class="p1"><span style="font-size: 15px;">' not in g
+            ):
+                a1 = g.split(">")[1].split("<")[0].replace(",", "")
+                a2 = g.split("</p><p>")[1].split(",")[0]
+                a3 = g.split("</p><p>")[1].split("<")[0].split(",")[1].strip()
+                a4 = g.split("</p><p>")[1].split("<")[0].strip().rsplit(" ", 1)[1]
+                try:
+                    a5 = g.split("</p><p>")[2].split("<")[0].strip()
+                except:
+                    a5 = "<MISSING>"
+            else:
+                a1 = g.split(">")[1].split("<")[0].replace(",", "")
+                try:
+                    a2 = g.split('</p><p><span style="font-size: 15px;">')[1].split(
+                        ","
+                    )[0]
+                except:
+                    a2 = g.split('</p><p class="p1"><span style="font-size: 15px;">')[
+                        1
+                    ].split(",")[0]
+                a3 = g.split('</span><span style="font-size: 15px;">')[1].split(",")[0]
+                a4 = (
+                    g.split('</span><span style="font-size: 15px;">')[2]
+                    .split("<")[0]
+                    .strip()
+                )
+            if lurl != "CS":
+                locs.append(lurl + "|" + a1 + "|" + a2 + "|" + a3 + "|" + a4 + "|" + a5)
     for loc in locs:
         store = "<MISSING>"
         name = ""
-        add = ""
-        city = ""
-        state = ""
-        zc = ""
-        phone = ""
+        add = loc.split("|")[1]
+        city = loc.split("|")[2]
+        state = loc.split("|")[3]
+        zc = loc.split("|")[4]
+        purl = loc.split("|")[0]
+        phone = loc.split("|")[5]
         lat = "<MISSING>"
         lng = "<MISSING>"
         hours = ""
         typ = "<MISSING>"
-        r2 = session.get(loc, headers=headers)
+        r2 = session.get(purl, headers=headers, verify=False)
         lines = r2.iter_lines()
         for line2 in lines:
             line2 = str(line2.decode("utf-8"))
@@ -71,126 +90,24 @@ def fetch_data():
                 name = line2.split("<title>")[1].split("&")[0].strip()
                 if "|" in name:
                     name = name.split("|")[0].strip()
-            if (
-                '<div class="elementor-text-editor elementor-clearfix lazyload"><p'
-                in line2
-                and "At Plaza" not in line2
-                and "We invite" not in line2
-                and "Welcome to the" not in line2
-            ):
-                if "2835 Lehigh St" in line2:
-                    add = "2835 Lehigh St"
-                    city = "Allentown"
-                    state = "Pennsylvania"
-                    zc = "18103"
-                    phone = "(484) 656 7277"
-                elif "153 S Gulph Rd" in line2:
-                    add = "153 S Gulph Rd"
-                    city = "King of Prussia"
-                    state = "Pennsylvania"
-                    zc = "19406"
-                    phone = "(610) 265-1170"
-                elif "821 W Lancaster Ave" in line2:
-                    add = "821 W Lancaster Ave"
-                    city = "Wayne"
-                    state = "Pennsylvania"
-                    zc = "19087"
-                    phone = "484-580-6369"
-                elif "6623 W Broad St" in line2:
-                    add = "6623 W Broad St"
-                    city = "Richmond"
-                    state = "Virginia"
-                    zc = "23230"
-                    phone = "804-888-9984"
-                elif "/suffolk" in loc:
-                    add = "1467 N Main St"
-                    city = "Suffolk"
-                    state = "Virginia"
-                    zc = "23434"
-                    phone = "(757) 925-1222"
-                elif "/warwick" in loc:
-                    add = "12428 Warwick Blvd"
-                    city = "Newport News"
-                    state = "Virginia"
-                    zc = "23606"
-                    phone = "(757) 599-6727"
-                elif "/greenville" in loc:
-                    add = "400 Greenville Blvd SW"
-                    city = "Greenville"
-                    state = "North Carolina"
-                    zc = "27834"
-                    phone = "(252) 321-8008"
-                elif "/newington" in loc:
-                    add = "3260 Berlin Tpke"
-                    city = "Newington"
-                    state = "Connecticut"
-                    zc = "06111"
-                    phone = "(860) 436-9708"
-                elif "/york" in loc and "/yorktown" not in loc:
-                    add = "2180 York Crossing Dr"
-                    city = "York"
-                    state = "Pennsylvania"
-                    zc = "17408"
-                    phone = "(717) 650-6200"
-                else:
-                    add = line2.split(
-                        '<div class="elementor-text-editor elementor-clearfix lazyload"><p'
-                    )[1].split(",")[0]
-                    city = line2.split("</p><p")[1].split(">")[1].split(",")[0]
-                    state = line2.split("</p><p")[1].split(">")[1].split(",")[1].strip()
-                    zc = line2.split("</p><p")[1].split(">")[1].split(",")[2].strip()
-                    phone = line2.split("</p><p")[2].split(">")[1].split("<")[0]
-            if (
-                '<div class="elementor-text-editor elementor-clearfix lazyload"><p class="p1">'
-                in line2
-            ):
-                add = line2.split(
-                    '<div class="elementor-text-editor elementor-clearfix lazyload"><p class="p1">'
-                )[1].split("<")[0]
-                city = line2.split('Sans-serif;">')[1].split(",")[0]
-                state = line2.split('Sans-serif;">')[2].split(",")[0]
-                zc = line2.split('Sans-serif;">')[3].split("<")[0]
-            if "<span >" in line2 and "<span ><" not in line2 and "</span>" in line2:
+            if "DAY" in line2 and "</span>" in line2:
+                day = line2.split("</span>")[0].strip().replace("\t", "")
+                next(lines)
+                next(lines)
                 g = next(lines)
                 g = str(g.decode("utf-8"))
-                if "<p" not in g:
-                    g = next(lines)
-                    g = str(g.decode("utf-8"))
-                if 'font-weight: 500;">' in g:
-                    hinfo = g.split('font-weight: 500;">')[1].split("<")[0]
-                else:
-                    hinfo = g.split('">')[1].split("<")[0]
-                hrs = line2.split("<span >")[1].split("<")[0] + ": " + hinfo
+                hrs = day + ": " + g.split("</p>")[0].strip().replace("\t", "")
+                hrs = hrs.replace(
+                    '<span style="font-size: 27px; font-style: normal; font-weight: 500;">',
+                    "",
+                ).replace("</span>", "")
+                hrs = hrs.replace(
+                    '<span style=""font-size: 27px; font-style: normal;"">', ""
+                )
                 if hours == "":
                     hours = hrs
                 else:
                     hours = hours + "; " + hrs
-            if '<p class="p1">(' in line2:
-                phone = line2.split('<p class="p1">(')[1].split("<")[0]
-            if "</p" in add:
-                add = add.split("<")[0]
-            if "1467 N Main St" in add:
-                city = "Suffolk"
-                state = "Virginia"
-                zc = "23434"
-                phone = "(757) 925-1222"
-            if "12428 Warwick Blvd" in add:
-                city = "Newport News"
-                state = "Virginia"
-                zc = "23606"
-                phone = "(757) 599-6727"
-            if "greenville" in loc:
-                add = "400 Greenville Blvd SW"
-                city = "Greenville"
-                state = "North Carolina"
-                zc = "27834"
-                phone = "(252) 321-8008"
-            if "newington" in loc:
-                add = "3260 Berlin Tpke"
-                city = "Newington"
-                state = "Connecticut"
-                zc = "06111"
-                phone = "860-436-9708"
             if "www.toroazteca.com" in loc:
                 add = "194 Buckland Hills Drive Suite 1052"
                 city = "Manchester"
@@ -201,29 +118,37 @@ def fetch_data():
             if "<" in name:
                 name = name.split("<")[0]
         if "Coming Soon" not in name:
-            if ">" in add:
-                add = add.split(">")[1].strip()
-            yield [
-                website,
-                loc,
-                name,
-                add,
-                city,
-                state,
-                zc,
-                country,
-                store,
-                phone,
-                typ,
-                lat,
-                lng,
-                hours,
-            ]
+            if hours == "":
+                hours = "<MISSING>"
+            if "allentown" in purl:
+                phone = "(484) 656 7277"
+            if "granby" in purl:
+                hours = "MONDAY - FRIDAY: 11AM - 2:30PM, 4:30PM - 10PM; SATURDAY: 12PM - 2:30PM, 4:30PM - 10PM; SUNDAY: 12PM - 2:30PM, 4:30PM - 9PM"
+            if "state-college" in purl:
+                hours = "MONDAY - SATURDAY: 11AM - 10PM; SUNDAY: 11AM - 9PM"
+            yield SgRecord(
+                locator_domain=website,
+                page_url=purl,
+                location_name=name,
+                street_address=add,
+                city=city,
+                state=state,
+                zip_postal=zc,
+                country_code=country,
+                phone=phone,
+                location_type=typ,
+                store_number=store,
+                latitude=lat,
+                longitude=lng,
+                hours_of_operation=hours,
+            )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()

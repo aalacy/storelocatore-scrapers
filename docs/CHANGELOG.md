@@ -11,6 +11,10 @@ _* Changelog start date is Feb 24, 2021. It is not retroactive._
 
 ## Log
 
+> [29/04/2021] __Including Crawly-Web Source__
+>
+> 1. Added [an experimental live templating engine](./cookbook/crawly_web.md), to help with crawl-writing.
+
 > [04/03/2021] __sgrequests==0.1.7__
 >
 > 1. Added retry behavior for `ChunkedError`s.

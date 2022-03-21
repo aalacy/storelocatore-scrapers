@@ -1,84 +1,138 @@
-import csv
-import os
-from sgselenium import SgSelenium
-import time
-from sglogging import SgLogSetup
+from bs4 import BeautifulSoup as bs
+from sgrequests import SgRequests
+from sglogging import sglog
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgpostal import parse_address_usa
+import re
 
-logger = SgLogSetup().get_logger('urbancookhouse_com')
+
+DOMAIN = "urbancookhouse.com"
+BASE_URL = "https://www.urbancookhouse.com"
+LOCATION_URL = "https://www.urbancookhouse.com/location/"
+HEADERS = {
+    "Accept": "application/json, text/plain, */*",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
+}
+MISSING = "<MISSING>"
+log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
+
+session = SgRequests()
 
 
+def getAddress(raw_address):
+    try:
+        if raw_address is not None and raw_address != MISSING:
+            data = parse_address_usa(raw_address)
+            street_address = data.street_address_1
+            if data.street_address_2 is not None:
+                street_address = street_address + " " + data.street_address_2
+            city = data.city
+            state = data.state
+            zip_postal = data.postcode
+            if street_address is None or len(street_address) == 0:
+                street_address = MISSING
+            if city is None or len(city) == 0:
+                city = MISSING
+            if state is None or len(state) == 0:
+                state = MISSING
+            if zip_postal is None or len(zip_postal) == 0:
+                zip_postal = MISSING
+            return street_address, city, state, zip_postal
+    except Exception as e:
+        log.info(f"No valid address {e}")
+        pass
+    return MISSING, MISSING, MISSING, MISSING
 
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
-        # Header
-        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-        # Body
-        for row in data:
-            writer.writerow(row)
+def pull_content(url):
+    log.info("Pull content => " + url)
+    soup = bs(session.get(url, headers=HEADERS).content, "lxml")
+    return soup
 
-def addy_ext(addy):
-    address = addy.split(',')
-    city = address[0]
-    state_zip = address[1].strip().split(' ')
-    state = state_zip[0]
-    zip_code = state_zip[1]
-    return city, state, zip_code
+
+def get_latlong(url):
+    latlong = re.search(r"@(-?[\d]*\.[\d]*),(-?[\d]*\.[\d]*)", url)
+    if not latlong:
+        return MISSING, MISSING
+    return latlong.group(1), latlong.group(2)
+
 
 def fetch_data():
-    locator_domain = 'http://www.urbancookhouse.com/'
-    ext = 'location/'
-
-    driver = SgSelenium().chrome()
-    driver.get(locator_domain + ext)
-    time.sleep(3)
-    driver.implicitly_wait(30)
-    
-    locs = driver.find_elements_by_css_selector('div.location-info')
-
-    all_store_data = []
-    for loc in locs:
-        location_name = loc.find_element_by_css_selector('span.location-title').text
-        
-        '''if 'MONTGOMERY' in location_name:
-             address = loc.find_elements_by_css_selector('a')[1]
+    soup = pull_content(LOCATION_URL)
+    divlist = soup.findAll("div", {"class": "location-info"})
+    for div in divlist:
+        location_name = div.find("span", {"class": "location-title"}).text.strip()
+        addr = div.find("span", {"class": "address"}).find(
+            "a", {"href": re.compile(r"maps.*")}
+        )
+        if not addr:
+            raw_address = ", ".join(
+                div.find("span", {"class": "address"})
+                .get_text(strip=True, separator="@@")
+                .split("@@")[:2]
+            )
+            if "UCColumbia@urbancookhouse.com" in raw_address:
+                continue
         else:
-            address = loc.find_element_by_css_selector('span.address').find_element_by_css_selector('a')'''
-        address = loc.find_element_by_css_selector('span.address').find_element_by_css_selector('a')
-        #logger.info(address.text)
-        street_address = address.text.split('\n')[0]
-        city, state, zip_code = addy_ext(address.text.split('\n')[1])
+            raw_address = addr.get_text(strip=True, separator=",")
+        street_address, city, state, zip_postal = getAddress(raw_address)
+        country_code = "US"
+        phone = div.find("span", {"class": "location-phone"}).find("a").text.strip()
+        store_number = MISSING
+        location_type = MISSING
+        try:
+            hours_of_operation = re.sub(
+                r"Hours\s?,?|,?\(.*\)|Available for private.*",
+                "",
+                div.find("span", {"class": "hours"}).get_text(
+                    strip=True, separator=","
+                ),
+            )
+        except:
+            hours_of_operation = MISSING
+        try:
+            map_link = div.find("span", {"class": "address"}).find("a")["href"]
+            latitude, longitude = get_latlong(map_link)
+        except:
+            latitude = MISSING
+            longitude = MISSING
+        log.info("Append {} => {}".format(location_name, street_address))
+        yield SgRecord(
+            locator_domain=DOMAIN,
+            page_url=LOCATION_URL,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zip_postal,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+            raw_address=raw_address,
+        )
 
-        href = address.get_attribute('href')
-        start_idx = href.find('/@')
-        end_idx = href.find('z/data')
-        coords = href[start_idx + 2:end_idx].split(',')
-
-        lat = coords[0]
-        longit = coords[1]
-
-        phone_number = loc.find_element_by_css_selector('span.location-phone').find_element_by_css_selector('a').text
-        if 'TUSCALOOSA' in location_name:
-            hours = '<MISSING>'
-        else:
-            hours = loc.find_element_by_css_selector('span.hours').text.replace('\n', ' ')
-
-        country_code = 'US'
-        store_number = '<MISSING>'
-        location_type = '<MISSING>'
-
-        page_url = 'http://www.urbancookhouse.com/location/'
-        store_data = [locator_domain,page_url, location_name, street_address, city, state, zip_code, country_code,
-                      store_number, phone_number, location_type, lat, longit, hours]
-        #logger.info(store_data)
-        all_store_data.append(store_data)
-
-    driver.quit()
-    return all_store_data
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    log.info("start {} Scraper".format(DOMAIN))
+    count = 0
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID({SgRecord.Headers.STREET_ADDRESS, SgRecord.Headers.PAGE_URL})
+        )
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
+
 
 scrape()

@@ -50,16 +50,7 @@ def fetch_data():
             store.xpath('div/p/strong/a[contains(@href,"tel:")]/text()')
         ).strip()
 
-        hours = store_sel.xpath(
-            '//div[@class="section__content"]/div[@class="section__entry"]/ul/li'
-        )
-        raw_text = "".join(
-            store_sel.xpath(
-                '//div[@class="section__content"]/div[@class="section__entry"]//text()'
-            )
-        ).strip()
-        if "COMING SOON" in raw_text:
-            location_type = "COMING SOON"
+        hours = store_sel.xpath('//div[@class="studio__hours"]//ul/li')
         hours_list = []
 
         for hour in hours:
@@ -75,6 +66,10 @@ def fetch_data():
             .replace("?", "-")
             .strip()
         )
+        if "COMING SOON" in hours_of_operation.upper():
+            location_type = "COMING SOON"
+            hours_of_operation = "<MISSING>"
+
         store_number = "<MISSING>"
 
         latitude = "".join(store.xpath("@data-lat")).strip()

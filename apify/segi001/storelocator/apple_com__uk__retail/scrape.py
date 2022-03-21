@@ -2,6 +2,7 @@ import csv
 import sgrequests
 import json
 import bs4
+import re
 
 
 def write_output(data):
@@ -49,10 +50,10 @@ def fetch_data():
 
     result = []
 
-    tA = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+    tA = ["Sat", "Sun", "Mon", "Tue", "Wed", "Thu", "Fri"]
 
     def checkTime(t):
-        return tA[t.index("Today")]
+        return re.findall("[A-Z][^A-Z]*", tA[t.index("Today")])[0]
 
     for el in stores["stores"]:
         name = el["address"]["name"]
@@ -76,25 +77,37 @@ def fetch_data():
         timeArr = []
         loc_type = missingString
         dayTimes = []
-        for e in s.findAll("tr"):
-            if not e.find("td", {"class": "store-open-hours-day"}):
+        for e in s.find("div", {"class": "store-hours"}):
+            if not e.find("span", {"class": "visuallyhidden"}):
                 pass
             else:
-                dayTimes.append(e.find("td", {"class": "store-open-hours-day"}).text)
-                timeArr.append(
-                    "{} : {}".format(
-                        e.find("td", {"class": "store-open-hours-day"}).text,
-                        e.find("td", {"class": "store-open-hours-span"})
-                        .text.strip()
-                        .replace("*", "")
-                        .replace("–", "-")
-                        .replace(u"\xa0", u""),
+                for tr in e.find("tbody"):
+                    dayTimes.append(tr.find("span", {"aria-hidden": "true"}).text)
+                    timeArr.append(
+                        "{} : {}".format(
+                            tr.find("td", {"class": "store-hours-table-day"}).text,
+                            tr.find("td", {"class": "store-hours-table-hours"})
+                            .text.strip()
+                            .replace("*", "")
+                            .replace("–", "-")
+                            .replace(u"\xa0", u""),
+                        )
                     )
-                )
         hours = ", ".join(timeArr)
         if hours == "":
             hours = missingString
-        hours = hours.replace("Today", checkTime(dayTimes))
+        hours = (
+            hours.replace("Today", "TODAY", 1)
+            .replace("TODAY", checkTime(dayTimes))
+            .replace("Monday", "")
+            .replace("Tuesday", "")
+            .replace("Wednesday", "")
+            .replace("Thursday", "")
+            .replace("Friday", "")
+            .replace("Saturday", "")
+            .replace("Sunday", "")
+            .replace("Today", "")
+        )
         result.append(
             [
                 locator_domain,

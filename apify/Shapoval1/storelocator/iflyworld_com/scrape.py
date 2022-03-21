@@ -87,14 +87,21 @@ def fetch_data():
         )
         if hours_of_operation.find("coming soon") != -1:
             hours_of_operation = "Coming Soon"
-        if hours_of_operation.find("will be") != -1:
-            hours_of_operation = "Temporarily Closed"
+        if hours_of_operation.find("will be closed") != -1:
+            hours_of_operation = hours_of_operation.split(".")[1].strip()
+        if hours_of_operation.find("will be closing") != -1:
+            hours_of_operation = hours_of_operation.split(".")[1].strip()
+        if hours_of_operation.find("April 1, 2021.") != -1:
+            hours_of_operation = hours_of_operation.split("April 1, 2021.")[1].strip()
+        if hours_of_operation.find("will be opening") != -1:
+            hours_of_operation = "temporarily closed"
         if hours_of_operation.find("Currently taking limited") != -1:
             hours_of_operation = "<MISSING>"
         if hours_of_operation.find("President's Day:") != -1:
             hours_of_operation = hours_of_operation.split("President's Day:")[0].strip()
         if hours_of_operation.find("Spring Break") != -1:
             hours_of_operation = hours_of_operation.split(")")[1].strip()
+
         ll = "".join(tree.xpath('//a[contains(@title, "Open in Google Maps")]/@href'))
         req = session.get(ll, headers=headers)
         maps = BeautifulSoup(req.text, "lxml")

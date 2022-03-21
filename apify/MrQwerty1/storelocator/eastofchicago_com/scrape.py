@@ -1,144 +1,85 @@
-import csv
-
-from concurrent import futures
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
-from sgzip.static import static_zipcode_list, SearchableCountries
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def fetch_data(sgw: SgWriter):
+    search = DynamicZipSearch(
+        country_codes=[SearchableCountries.USA], expected_search_radius_miles=100
+    )
+    for _zip in search:
+        api = f"https://www.bullseyelocations.com/pages/Location-nomap?CountryId=1&radius=100&Zip={_zip}"
+        r = session.get(api, headers=headers)
+        tree = html.fromstring(r.text)
 
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
+        li = tree.xpath("//ul[@id='resultsCarouselWide']/li")
+        for l in li:
+            location_name = "".join(l.xpath(".//h3[@itemprop='name']/text()")).strip()
+            page_url = "".join(l.xpath(".//a[@id='website']/@href"))
+            if page_url.startswith("//"):
+                page_url = f"https:{page_url}"
 
-        for row in data:
-            writer.writerow(row)
+            street_address = "".join(
+                l.xpath(".//span[@itemprop='streetAddress']/text()")
+            ).strip()
+            city = "".join(
+                l.xpath(".//span[@itemprop='addressLocality']/text()")
+            ).strip()
+            state = "".join(
+                l.xpath(".//span[@itemprop='addressRegion']/text()")
+            ).strip()
+            postal = "".join(l.xpath(".//span[@itemprop='postalCode']/text()")).strip()
+            store_number = "".join(l.xpath(".//input[@id='ThirdPartyId']/@value"))
 
+            try:
+                phone = l.xpath(".//span[@itemprop='telephone']/@data-content")[0]
+            except IndexError:
+                phone = SgRecord.MISSING
 
-def get_data(z):
-    out = []
-    url = "https://www.eastofchicago.com/"
-    session = SgRequests()
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:83.0) Gecko/20100101 Firefox/83.0"
-    }
+            latitude = "".join(l.xpath(".//meta[@itemprop='latitude']/@content"))
+            longitude = "".join(l.xpath(".//meta[@itemprop='longitude']/@content"))
 
-    api_url = f"https://www.bullseyelocations.com/pages/Location-nomap?CountryId=1&radius=100&Zip={z}"
-    r = session.get(api_url, headers=headers)
+            if latitude == "0" or longitude == "0":
+                latitude = SgRecord.MISSING
+                longitude = SgRecord.MISSING
 
-    tree = html.fromstring(r.text)
-    li = tree.xpath("//ul[@id='resultsCarouselWide']/li")
-    for l in li:
-        locator_domain = url
-        location_name = "".join(l.xpath(".//h3[@itemprop='name']/text()")).strip()
-        page_url = "".join(l.xpath(".//a[@id='website']/@href")) or "<MISSING>"
-        if page_url.startswith("//"):
-            page_url = f"https:{page_url}"
-        street_address = "".join(
-            l.xpath(".//span[@itemprop='streetAddress']/text()")
-        ).strip()
-        city = (
-            "".join(l.xpath(".//span[@itemprop='addressLocality']/text()")).strip()[:-1]
-            or "<MISSING>"
-        )
-        state = (
-            "".join(l.xpath(".//span[@itemprop='addressRegion']/text()")).strip()
-            or "<MISSING>"
-        )
-        postal = (
-            "".join(l.xpath(".//span[@itemprop='postalCode']/text()")).strip()
-            or "<MISSING>"
-        )
-        country_code = "US"
-        store_number = (
-            "".join(l.xpath(".//input[@id='ThirdPartyId']/@value")) or "<MISSING>"
-        )
-        try:
-            phone = l.xpath(".//span[@itemprop='telephone']/text()")[0].strip()
-        except IndexError:
-            phone = "<MISSING>"
-        latitude = (
-            "".join(l.xpath(".//meta[@itemprop='latitude']/@content")) or "<MISSING>"
-        )
-        longitude = (
-            "".join(l.xpath(".//meta[@itemprop='longitude']/@content")) or "<MISSING>"
-        )
-        if latitude == "0" or longitude == "0":
-            latitude = "<MISSING>"
-            longitude = "<MISSING>"
-        location_type = "<MISSING>"
-        hours_of_operation = (
-            "".join(l.xpath(".//div[@class='popDetailsHours']/meta/@content")).replace(
-                "|", ";"
-            )[:-1]
-            or "<MISSING>"
-        )
+            hours_of_operation = "".join(
+                l.xpath(".//div[@class='popDetailsHours']/meta/@content")
+            ).replace("|", ";")[:-1]
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
+            row = SgRecord(
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=postal,
+                country_code="US",
+                store_number=store_number,
+                phone=phone,
+                latitude=latitude,
+                longitude=longitude,
+                locator_domain=locator_domain,
+                hours_of_operation=hours_of_operation,
+            )
 
-        out.append(row)
-
-    return out
-
-
-def fetch_data():
-    out = []
-    s = set()
-    zips = static_zipcode_list(radius=100, country_code=SearchableCountries.USA)
-
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {executor.submit(get_data, z): z for z in zips}
-        for future in futures.as_completed(future_to_url):
-            rows = future.result()
-            for row in rows:
-                if row:
-                    check = tuple(row[2:6])
-                    if check not in s:
-                        s.add(check)
-                        out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+            sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://www.eastofchicago.com/"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:83.0) Gecko/20100101 Firefox/83.0"
+    }
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID({SgRecord.Headers.STREET_ADDRESS}),
+            duplicate_streak_failure_factor=-1,
+        )
+    ) as writer:
+        fetch_data(writer)

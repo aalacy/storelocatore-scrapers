@@ -68,48 +68,54 @@ def fetch_data():
     session = SgRequests()
     r = session.get(page_url)
     tree = html.fromstring(r.content)
-    li = tree.xpath('//div[@class="fl-rich-text"]')
+    li = tree.xpath("//div[./div/div/div/p]")
     for j in li:
 
-        title = "".join(
-            j.xpath(".//p//span//strong//text() | .//p//strong//span//text()")
+        title = "".join(j.xpath(".//div[.//strong]//strong/text()"))
+        location_name = "".join(
+            j.xpath('.//div[2]//div[@class="fl-rich-text"]/p/text()[1]')
         )
-        line = "".join(j.xpath(".//p/text()")).strip().split("\n")
-        location_name = "".join(line[0])
-        if len(line) > 2:
-            phone = "".join(line[-1].split(":")[-1].strip()).replace(" – ", "-").strip()
-        else:
-            phone = "<MISSING>"
+        line = (
+            " ".join(j.xpath('.//div[2]//div[@class="fl-rich-text"]/p/text()[2]'))
+            .replace("\n", "")
+            .replace("SWSuite", "SW Suite")
+            .strip()
+        )
+        if line.find("160") != -1 or line.find("2125") != -1:
+            line = (
+                line
+                + " "
+                + "".join(j.xpath('.//div[2]//div[@class="fl-rich-text"]/p/text()[3]'))
+                .replace("\n", "")
+                .strip()
+            )
+        phone = (
+            "".join(j.xpath('.//div[3]//div[@class="fl-rich-text"]/p/text()[1]'))
+            .replace("Showtimes:", "")
+            .replace("Phone:", "")
+            .replace("Showtimes", "")
+            .strip()
+        )
 
-        if location_name.find("NCG ALTON") != -1:
-            line = line[1:]
-            phone = "<MISSING>"
-        else:
-            line = line[1:-1]
-
-        if line[0].find(",") == -1:
-            line = " ".join(line)
-        else:
-            line = line[0]
-        line = line.replace("Address:", "").replace("\xa0", " ").strip()
         a = usaddress.tag(line, tag_mapping=tag)[0]
 
-        street_address = f"{a.get('address1')} {a.get('address2') or ''}".strip()
-        if street_address == "None":
-            street_address = "<MISSING>"
+        street_address = f"{a.get('address1')} {a.get('address2')}".replace(
+            "None", ""
+        ).strip()
         city = a.get("city") or "<MISSING>"
+        if line.find("2500") != -1:
+            street_address = " ".join(line.split("MI")[0].split()[:-1])
+            city = line.split("MI")[0].split()[-1].replace(",", "").strip()
         state = a.get("state") or "<MISSING>"
         postal = a.get("postal") or "<MISSING>"
         country_code = "US"
         store_number = "<MISSING>"
-
         latitude = "<MISSING>"
         longitude = "<MISSING>"
         location_type = "<MISSING>"
-
         hours_of_operation = "<MISSING>"
         if title.find("COMING SOON") != -1:
-            hours_of_operation = title.split("-")[1].strip().capitalize()
+            hours_of_operation = "COMING SOON"
         row = [
             locator_domain,
             page_url,

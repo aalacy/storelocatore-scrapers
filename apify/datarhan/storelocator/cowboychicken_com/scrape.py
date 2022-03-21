@@ -72,7 +72,9 @@ def fetch_data():
         phone = phone[0] if phone else "<MISSING>"
         location_type = "<MISSING>"
         latitude = poi_html.xpath(".//preceding-sibling::input[3]/@value")[0]
+        latitude = latitude if latitude else "<MISSING>"
         longitude = poi_html.xpath(".//preceding-sibling::input[2]/@value")[0]
+        longitude = longitude if longitude else "<MISSING>"
         hoo = poi_html.xpath('.//ul[@class="inner"]//text()')
         hoo = [elem.strip() for elem in hoo if elem.strip()]
         hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"

@@ -1,105 +1,88 @@
-import csv
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+def fetch_data(sgw: SgWriter):
+    for i in range(0, 100000, 10):
+        r = session.get(
+            f"https://purple.com/stores/index.html?q=&offset={i}", headers=headers
         )
+        js = r.json()["response"]["entities"]
 
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
+        for jj in js:
+            j = jj.get("profile")
+            a = j.get("address")
+            page_url = j.get("c_pagesURL")
+            store_number = page_url.split("-")[-1]
+            street_address = a.get("line1") or ""
+            city = a.get("city")
+            location_name = j.get("c_pagesTitle") or ""
+            state = a.get("region")
+            postal = a.get("postalCode")
+            country_code = a.get("countryCode")
+            phone = j.get("mainPhone", {}).get("display")
+            latitude = j.get("yextDisplayCoordinate", {}).get("lat")
+            longitude = j.get("yextDisplayCoordinate", {}).get("long")
 
-        for row in data:
-            writer.writerow(row)
+            try:
+                hours = j["hours"]["normalHours"]
+            except KeyError:
+                hours = []
 
+            _tmp = []
+            for h in hours:
+                day = h.get("day")
+                if not h.get("isClosed"):
+                    interval = h.get("intervals")
+                    start = str(interval[0].get("start"))
+                    if len(start) == 3:
+                        start = f"0{start}"
+                    if len(start) == 1:
+                        start = "1200"
+                    end = str(interval[0].get("end"))
+                    line = f"{day[:3].capitalize()}: {start[:2]}:{start[2:]} - {end[:2]}:{end[2:]}"
+                else:
+                    line = f"{day[:3].capitalize()}: Closed"
+                _tmp.append(line)
 
-def fetch_data():
-    out = []
-    s = set()
-    locator_domain = "https://purple.com/"
-    api_url = "https://storerocket.global.ssl.fastly.net/api/user/7OdJER58WE/locations"
+            hours_of_operation = ";".join(_tmp)
+            if hours_of_operation.count("Closed") == 7:
+                hours_of_operation = "Closed"
+            if "Coming Soon" in location_name or j.get("c_comingSoon"):
+                hours_of_operation = "Coming Soon"
 
-    session = SgRequests()
-    r = session.get(api_url)
-    js = r.json()["results"]["locations"]
+            row = SgRecord(
+                page_url=page_url,
+                location_name=location_name.strip(),
+                street_address=street_address.replace("\n", ", "),
+                city=city,
+                state=state,
+                zip_postal=postal,
+                country_code=country_code,
+                phone=phone,
+                store_number=store_number,
+                latitude=latitude,
+                longitude=longitude,
+                locator_domain=locator_domain,
+                hours_of_operation=hours_of_operation,
+            )
 
-    for j in js:
-        street_address = (
-            f"{j.get('address_line_1')} {j.get('address_line_2') or ''}".strip()
-            or "<MISSING>"
-        )
-        city = j.get("city") or "<MISSING>"
-        state = j.get("state") or "<MISSING>"
-        postal = j.get("postcode") or "<MISSING>"
-        country_code = j.get("country") or "<MISSING>"
-        if country_code == "USA":
-            country_code = "US"
-        store_number = "<MISSING>"
-        page_url = f'https://purple.com/stores?location={j.get("slug")}'
-        location_name = j.get("name")
-        phone = j.get("phone") or "<MISSING>"
-        latitude = j.get("lat") or "<MISSING>"
-        longitude = j.get("lng") or "<MISSING>"
-        location_type = "<MISSING>"
+            sgw.write_row(row)
 
-        _tmp = []
-        hours = j.get("hours")
-        for k, v in hours.items():
-            if not v:
-                continue
-            _tmp.append(f"{k.capitalize()}: {v}")
-
-        hours_of_operation = ";".join(_tmp) or "<MISSING>"
-
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-
-        check = tuple(row[2:6])
-        if check in s:
-            continue
-
-        s.add(check)
-        out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        if len(js) < 10:
+            break
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://purple.com/"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:94.0) Gecko/20100101 Firefox/94.0",
+        "Accept": "application/json, text/javascript, */*; q=0.01",
+    }
+
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        fetch_data(writer)

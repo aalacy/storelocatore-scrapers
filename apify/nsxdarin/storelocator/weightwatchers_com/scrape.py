@@ -1,50 +1,50 @@
-import csv
 from sgrequests import SgRequests
+from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 session = SgRequests()
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
 
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
+logger = SgLogSetup().get_logger("weightwatchers_com")
 
 
 def fetch_data():
+    urls = [
+        "https://www.weightwatchers.com/us/sitemap-location.xml",
+        "https://www.weightwatchers.com/ca/en/sitemap-location.xml",
+        "https://www.weightwatchers.com/uk/sitemap-location.xml",
+        "https://www.weightwatchers.com/de/sitemap-location.xml",
+        "https://www.weightwatchers.com/au/sitemap-location.xml",
+        "https://www.weightwatchers.com/nz/sitemap-location.xml",
+        "https://www.weightwatchers.com/br/sitemap-location.xml",
+        "https://www.weightwatchers.com/fr/sitemap-location.xml",
+        "https://www.weightwatchers.com/nl/sitemap-location.xml",
+        "https://www.weightwatchers.com/se/sitemap-location.xml",
+        "https://www.weightwatchers.com/be/fr/sitemap-location.xml",
+        "https://www.weightwatchers.com/ch/fr/sitemap-location.xml",
+    ]
     locs = []
-    url = "https://www.weightwatchers.com/us/sitemap-location.xml"
-    r = session.get(url, headers=headers, stream=True)
-    for line in r.iter_lines():
-        line = str(line.decode("utf-8"))
-        if "<loc>https://www.weightwatchers.com/us/find-a-workshop/" in line:
-            locs.append(line.split("<loc>")[1].split("<")[0])
+    locinfo = []
+    for url in urls:
+        r = session.get(url, headers=headers, stream=True)
+        for line in r.iter_lines():
+            line = str(line.decode("utf-8"))
+            if (
+                "<loc>https://www.weightwatchers.com" in line
+                and "/locations" not in line
+            ):
+                lurl = line.split("<loc>")[1].split("<")[0]
+                if lurl not in locs:
+                    locs.append(lurl)
     website = "weightwatchers.com"
-    country = "US"
     for loc in locs:
+        country = loc.split(".com/")[1].split("/")[0].upper()
+        logger.info(loc)
         name = ""
         typ = "<MISSING>"
         add = ""
@@ -97,27 +97,36 @@ def fetch_data():
                             hours = hours + "; " + hrs
         if hours == "":
             hours = "<MISSING>"
-        yield [
-            website,
-            loc,
-            name,
-            add,
-            city,
-            state,
-            zc,
-            country,
-            store,
-            phone,
-            typ,
-            lat,
-            lng,
-            hours,
-        ]
+        info = add + "|" + city
+        if info not in locinfo and city != "" and "@ Virtual" not in name:
+            locinfo.append(info)
+            if "Zoom.com" in add:
+                add = "<MISSING>"
+            if "1162350/ww-studio--virtual-palmyra" in loc:
+                add = "<MISSING>"
+            yield SgRecord(
+                locator_domain=website,
+                page_url=loc,
+                location_name=name,
+                street_address=add,
+                city=city,
+                state=state,
+                zip_postal=zc,
+                country_code=country,
+                phone=phone,
+                location_type=typ,
+                store_number=store,
+                latitude=lat,
+                longitude=lng,
+                hours_of_operation=hours,
+            )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()

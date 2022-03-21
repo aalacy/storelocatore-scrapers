@@ -1,39 +1,13 @@
-import csv
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
-
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from concurrent import futures
 
 
 def get_types():
-    session = SgRequests()
     r = session.get("https://locations.bloomingdales.com/")
     tree = html.fromstring(r.text)
 
@@ -57,89 +31,90 @@ def get_types():
     return out
 
 
-def fetch_data():
-    rows = []
-    session = SgRequests()
-    locator_domain = "https://www.bloomingdales.com"
+def get_data(item, sgw: SgWriter):
+    slug, location_type = item
+    url = f"https://locations.bloomingdales.com/{slug}.json"
+    page_url = url.replace(".json", "")
+    r = session.get(url)
+    j = r.json()
 
-    r = session.get("https://locations.bloomingdales.com/index.json")
-    js = r.json()["keys"]
-    _types = get_types()
+    street_address = (
+        f"{j.get('address1')} {j.get('address2') or ''}".strip() or SgRecord.MISSING
+    )
+    city = j.get("city") or SgRecord.MISSING
+    state = j.get("state") or SgRecord.MISSING
+    postal = j.get("postalCode") or SgRecord.MISSING
+    country_code = j.get("country") or SgRecord.MISSING
+    location_name = f"{j.get('name')} {city}".strip()
+    store_number = j.get("corporateCode") or SgRecord.MISSING
+    phone = j.get("phone") or SgRecord.MISSING
+    latitude = j.get("latitude") or SgRecord.MISSING
+    longitude = j.get("longitude") or SgRecord.MISSING
+    days = j.get("hours", {}).get("days") or []
 
-    for j in js:
-        slug = j.get("url")
-        j = j.get("loc")
+    _tmp = []
+    for d in days:
+        day = d.get("day")[:3].capitalize()
+        try:
+            interval = d.get("intervals")[0]
+            start = str(interval.get("start"))
+            end = str(interval.get("end"))
 
-        location_name = j.get("name")
-        page_url = j.get("website").get("url") or "<MISSING>"
-        if page_url == "<MISSING>":
-            page_url = f"https://locations.bloomingdales.com/{slug}"
+            if len(start) == 3:
+                start = f"0{start}"
 
-        street_address = (
-            f"{j.get('address1')} {j.get('address2') or ''}".strip() or "<MISSING>"
-        )
-        city = j.get("city") or "<MISSING>"
-        state = j.get("state") or "<MISSING>"
-        postal = j.get("postalCode") or "<MISSING>"
-        country_code = j.get("country") or "<MISSING>"
-        store_number = j.get("corporateCode") or "<MISSING>"
-        phone = j.get("phone") or "<MISSING>"
-        latitude = j.get("latitude") or "<MISSING>"
-        longitude = j.get("longitude") or "<MISSING>"
-        location_type = _types.get(slug)
-        days = j.get("hours", {}).get("days") or []
+            if len(end) == 3:
+                end = f"0{end}"
 
-        _tmp = []
-        for d in days:
-            day = d.get("day")[:3].capitalize()
-            try:
-                interval = d.get("intervals")[0]
-                start = str(interval.get("start"))
-                end = str(interval.get("end"))
+            line = f"{day}  {start[:2]}:{start[2:]} - {end[:2]}:{end[2:]}"
+        except IndexError:
+            line = f"{day}  Closed"
 
-                if len(start) == 3:
-                    start = f"0{start}"
+        _tmp.append(line)
 
-                if len(end) == 3:
-                    end = f"0{end}"
+    hours_of_operation = ";".join(_tmp) or SgRecord.MISSING
+    if (
+        hours_of_operation.count("Closed") == 7
+        or location_name.lower().find("closed") != -1
+    ):
+        hours_of_operation = "Closed"
 
-                line = f"{day}  {start[:2]}:{start[2:]} - {end[:2]}:{end[2:]}"
-            except IndexError:
-                line = f"{day}  Closed"
+    if location_name.lower().find(":") != -1:
+        location_name = location_name.split(":")[0].strip()
 
-            _tmp.append(line)
+    row = SgRecord(
+        page_url=page_url,
+        location_name=location_name,
+        street_address=street_address,
+        city=city,
+        state=state,
+        zip_postal=postal,
+        country_code=country_code,
+        store_number=store_number,
+        phone=phone,
+        location_type=SgRecord.MISSING,
+        latitude=latitude,
+        longitude=longitude,
+        locator_domain=locator_domain,
+        hours_of_operation=hours_of_operation,
+    )
 
-        hours_of_operation = ";".join(_tmp) or "<MISSING>"
-        isclosed = j.get("closed")
-        if isclosed:
-            hours_of_operation = "Closed"
-
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-
-        rows.append(row)
-
-    return rows
+    sgw.write_row(row)
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
+def fetch_data(sgw: SgWriter):
+    urls = get_types()
+
+    with futures.ThreadPoolExecutor(max_workers=10) as executor:
+        future_to_url = {
+            executor.submit(get_data, item, sgw): item for item in urls.items()
+        }
+        for future in futures.as_completed(future_to_url):
+            future.result()
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://bloomingdales.com/"
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        fetch_data(writer)

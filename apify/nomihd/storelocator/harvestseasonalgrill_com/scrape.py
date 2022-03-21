@@ -21,20 +21,14 @@ def fetch_data():
     stores_req = session.get(search_url, headers=headers)
     stores_sel = lxml.html.fromstring(stores_req.text)
     stores = stores_sel.xpath(
-        '//div[contains(@class,"fusion-layout-column fusion_builder_column fusion_builder_column_1_3")]'
+        '//div[contains(@class,"fusion_builder_column_1_3 1_3 fusion-one-third")]'
     )
 
     for store in stores:
-        page_url = "".join(
-            store.xpath(
-                'div/div[@class="fusion-button-wrapper fusion-aligncenter"]/a/@href'
-            )
-        ).strip()
+        page_url = "".join(store.xpath(".//h4/a/@href")).strip()
         locator_domain = website
 
-        location_name = "".join(
-            store.xpath('.//div[@class="fusion-text"]/h4//text()')
-        ).strip()
+        location_name = "".join(store.xpath(".//h4//text()")).strip()
 
         phone = "".join(
             store.xpath(
@@ -117,7 +111,7 @@ def fetch_data():
         latitude = "<MISSING>"
         longitude = "<MISSING>"
         map_link = "".join(
-            store.xpath('//iframe[contains(@src,"/maps/embed?")]/@src')
+            store_sel.xpath('//iframe[contains(@src,"/maps/embed?")]/@src')
         ).strip()
         if len(map_link) > 0:
             latitude = map_link.split("!3d")[1].strip().split("!")[0].strip()

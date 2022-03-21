@@ -1,72 +1,129 @@
 import csv
-from sgrequests import SgRequests
+import re
 from bs4 import BeautifulSoup
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('thaibbqla_com')
-
+from sgrequests import SgRequests
+import usaddress
 
 
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+    with open("data.csv", mode="w") as output_file:
+        writer = csv.writer(
+            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+        )
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation",
-                         "page_url"])
+        writer.writerow(
+            [
+                "locator_domain",
+                "location_name",
+                "street_address",
+                "city",
+                "state",
+                "zip",
+                "country_code",
+                "store_number",
+                "phone",
+                "location_type",
+                "latitude",
+                "longitude",
+                "hours_of_operation",
+                "page_url",
+            ]
+        )
         # Body
         for row in data:
             writer.writerow(row)
 
 
-session = SgRequests()
-all=[]
 def fetch_data():
     # Your scraper here
 
-    res=session.get("https://thaibbqla.com/")
-    soup = BeautifulSoup(res.text, 'html.parser')
-    divs = soup.find_all('div', {'data-ux': 'Content'})
+    all = []
+    session = SgRequests()
+    res = session.get("http://thaibbqla.com/location.html")
+    soup = BeautifulSoup(res.text, "html.parser")
+    try:
+        locs = soup.find_all("table")[-2].find_all("p")
+    except:
+        res = session.get("http://thaibbqla.com/location.html")
+        soup = BeautifulSoup(res.text, "html.parser")
+        locs = soup.find_all("table")[-2].find_all("p")
 
-    for div in divs:
-        loc = div.find('h4').text
-        addr=div.find('p', {'data-ux': 'ContentText'}).text.strip().split(',')
-        del addr[-1]
-        sz=addr[-1].strip().split(' ')
-        zip=sz[-1]
-        del sz[-1]
-        state= ' '.join(sz)
-        del addr[-1]
-        city=addr[-1]
-        del addr[-1]
-        street=' '.join(addr)
-        phone = div.find_all('a', {'data-aid': 'CONTACT_INFO_PHONE_REND'})
-        if phone==[]:
-            phone="<MISSING>"
-        else:
+    tims = (
+        locs[-1]
+        .text.replace("HOURS OF OPERATION:", "")
+        .replace(" ", " ")
+        .strip()
+        .split("\n")
+    )
+    tim = ""
+    for t in tims:
+        tim += t.strip() + " "
 
-            phone = phone[0].text
-        tim= div.find('div', {'data-aid': 'CONTACT_HOURS_CUST_MSG_REND'}).text.replace('pm','pm ').strip().replace(u'\xa0',u'')
+    for loc in locs:
+        if "THAI" not in loc.text:
+            continue
+        datas = (
+            loc.text.replace("(IN THE HEART OF THAI TOWN)", "")
+            .replace(" ", " ")
+            .strip()
+            .split("THAI")
+        )
+        for data in datas:
+            if data.strip() == "":
+                continue
+            data = "THAI" + data
+            data = data.split("\n")
 
-        all.append([
-            "https://thaibbqla.com/",
-            loc,
-            street,
-            city,
-            state.strip(),
-            zip,
-            "US",
-            "<MISSING>",  # store #
-            phone,  # phone
-            "<MISSING>",  # type
-            "<MISSING>",  # lat
-            "<MISSING>",  # long
-            tim,  # timing
-            "https://thaibbqla.com/"])
+            name = data[0]
+            del data[0]
+            addr = data[0].strip()
+            del data[0]
+            if "TEL" not in data[0]:
+                addr += " " + data[0].strip()
+                del data[0]
 
-    logger.info(all)
+            addr = usaddress.tag(addr)[0]
+            street = (
+                addr["AddressNumber"]
+                + " "
+                + addr["StreetName"]
+                + " "
+                + addr["StreetNamePostType"]
+            )
+            city = addr["PlaceName"]
+            state = addr["StateName"]
+            zip = addr["ZipCode"]
+
+            phone = ""
+            for d in data:
+                if "T1" in d or "TEL" in d:
+                    phone = d.replace("T1:", "").replace("TEL:", "")
+                    phone = re.findall(r"[\d\-\(\) ]+", phone)[0].strip()
+            if phone == "":
+                phone = "<MISSING>"
+
+            all.append(
+                [
+                    "http://thaibbqla.com/",
+                    name,
+                    street,
+                    city,
+                    state,
+                    zip,
+                    "US",
+                    "<MISSING>",  # store #
+                    phone,  # phone
+                    "<MISSING>",  # type
+                    "<MISSING>",  # lat
+                    "<MISSING>",  # long
+                    tim,  # timing
+                    "http://thaibbqla.com/location.html",
+                ]
+            )
+
     return all
+
 
 def scrape():
     data = fetch_data()

@@ -33,37 +33,45 @@ def write_output(data):
             writer.writerow(row)
 
 
+def get_coords():
+    coords = []
+    session = SgRequests()
+    r = session.get(
+        "https://www.google.com/maps/d/u/0/kml?mid=1mg6lD4Gk5vqnFFFH0aTIdbBc9cvbKTvX&forcekml=1"
+    )
+    tree = html.fromstring(r.content)
+    markers = tree.xpath("//coordinates/text()")
+    for m in markers:
+        m = m.replace(",0", "")
+        lng, lat = m.split(",")
+        coords.append((lat.strip(), lng.strip()))
+
+    return coords
+
+
 def fetch_data():
     out = []
+    coords = get_coords()
     locator_domain = "http://rallystores.com/"
     page_url = "http://rallystores.com/locations/"
 
     session = SgRequests()
     r = session.get(page_url)
     tree = html.fromstring(r.text)
-    divs = tree.xpath("//div[@class='fl-callout-content']")
+    divs = tree.xpath("//div[@class='page-content']/h3")
 
     for d in divs:
-        location_name = "".join(
-            d.xpath(".//h3[@class='fl-callout-title']/span/text()")
-        ).strip()
-        line = d.xpath(".//a[contains(@href, 'map')]//text()")
-        line = list(filter(None, [l.strip() for l in line]))
-
-        street_address = ", ".join(line[:-1])
-        line = line[-1]
+        location_name = "".join(d.xpath("./text()")).strip()
+        street_address = "".join(d.xpath("./following-sibling::p[1]//text()")).strip()
+        line = "".join(d.xpath("./following-sibling::p[2]//text()")).strip()
         city = line.split(",")[0].strip()
         line = line.split(",")[1].strip()
         state = line.split()[0]
         postal = line.split()[1]
         country_code = "US"
         store_number = location_name.split("#")[1].split()[0]
-        phone = (
-            "".join(d.xpath(".//a[contains(@href, 'tel')]//text()")).strip()
-            or "<MISSING>"
-        )
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
+        phone = "".join(d.xpath("./following-sibling::p[3]//text()")).strip()
+        latitude, longitude = coords.pop(0)
         location_type = "<MISSING>"
         hours_of_operation = "<MISSING>"
 

@@ -1,42 +1,16 @@
-import csv
 import re
 
 from bs4 import BeautifulSoup
 
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+
 from sgrequests import SgRequests
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
+def fetch_data(sgw: SgWriter):
 
     base_link = "https://www.doncuco.com/order-online-1"
 
@@ -47,7 +21,6 @@ def fetch_data():
     req = session.get(base_link, headers=headers)
     base = BeautifulSoup(req.text, "lxml")
 
-    data = []
     locator_domain = "doncuco.com"
 
     items = base.find_all(class_="font_2")
@@ -57,20 +30,26 @@ def fetch_data():
         req = session.get(link, headers=headers)
         base = BeautifulSoup(req.text, "lxml")
 
-        location_name = " ".join(
-            list(base.find_all(class_="_1Z_nJ")[1].stripped_strings)
-        )
+        location_name = "DON CUCO MEXICAN RESTAURANT: " + base.find_all("h2")[1].text
 
         raw_address = (
-            base.find_all(class_="_1Z_nJ")[2]
-            .text.split("\u200b")[1]
-            .replace("ADDRESS", "")
+            base.find(id="SITE_PAGES")
+            .find("a", attrs={"target": "_blank"})
+            .text.replace("ADDRESS", "")
             .replace("Ave.", "Ave.\n")
             .strip()
             .split("\n")
         )
         street_address = raw_address[0]
-        city_line = raw_address[1].strip().split(",")
+        try:
+            city_line = raw_address[1].strip().split(",")
+        except:
+            city_line = (
+                base.find(id="SITE_PAGES")
+                .find_all("a", attrs={"target": "_blank"})[1]
+                .text.strip()
+                .split(",")
+            )
         city = city_line[0].strip()
         state = city_line[-1].strip().split()[0].strip()
         zip_code = city_line[-1].strip().split()[1].strip()
@@ -78,17 +57,11 @@ def fetch_data():
         store_number = "<MISSING>"
         location_type = "<MISSING>"
 
-        phone = (
-            base.find_all(class_="_1Z_nJ")[2]
-            .text.split("\u200b")[2]
-            .replace("\n", " ")
-            .split(":")[1]
-            .split()[0]
-            .strip()
-        )
+        phone = base.find("a", {"href": re.compile(r"tel:")}).text
         try:
             hours_of_operation = (
-                base.find_all(class_="_1Z_nJ")[2]
+                base.find(id="SITE_PAGES")
+                .find_all("div", attrs={"data-testid": "richTextElement"})[1]
                 .text.split("\u200b")[0]
                 .replace("HOURS", "")
                 .replace("\n", " ")
@@ -97,36 +70,32 @@ def fetch_data():
         except:
             hours_of_operation = "<MISSING>"
 
-        map_str = base.find_all(class_="_1Z_nJ")[2].a["href"]
+        map_str = base.find(id="SITE_PAGES").find("a", attrs={"target": "_blank"})[
+            "href"
+        ]
         geo = re.findall(r"[0-9]{2}\.[0-9]+,-[0-9]{2,3}\.[0-9]+", map_str)[0].split(",")
         latitude = geo[0]
         longitude = geo[1]
 
-        data.append(
-            [
-                locator_domain,
-                link,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip_code,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
+        sgw.write_row(
+            SgRecord(
+                locator_domain=locator_domain,
+                page_url=link,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_code,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
         )
 
-    return data
 
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    fetch_data(writer)

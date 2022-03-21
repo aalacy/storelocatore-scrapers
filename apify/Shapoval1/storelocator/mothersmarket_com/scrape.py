@@ -62,15 +62,29 @@ def get_data(url):
             '//h2[contains(text(), "Address")]/following-sibling::div[1]/text()[1]'
         )
     )
-    city = ad.split(",")[0]
-    state = ad.split(",")[1].split()[0]
-    postal = ad.split(",")[1].split()[1]
+    if street_address.find("16400") != -1:
+        ad = (
+            ad
+            + ","
+            + "".join(
+                tree.xpath(
+                    '//h2[contains(text(), "Address")]/following-sibling::div[1]/text()[3]'
+                )
+            )
+            .replace("\n", "")
+            .strip()
+        )
+    city = ad.split(",")[0].strip()
+    state = ad.split(",")[1].split()[0].strip()
+    postal = ad.split(",")[1].split()[1].strip()
     country_code = "US"
     store_number = "<MISSING>"
     location_name = "".join(tree.xpath("//h1/text()"))
     phone = "".join(
         tree.xpath('//h2[contains(text(), "Phone")]/following-sibling::div[1]/a/text()')
     )
+    if phone.find("TBA") != -1:
+        phone = "<MISSING>"
     latitude = (
         "".join(tree.xpath('//script[contains(text(), "myLatLng")]/text()'))
         .split("{lat:")[1]

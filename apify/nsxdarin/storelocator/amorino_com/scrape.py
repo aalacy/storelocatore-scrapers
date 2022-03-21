@@ -47,7 +47,11 @@ def fetch_data():
     for line in r.iter_lines():
         line = str(line.decode("utf-8"))
         if ",stores:[{" in line:
-            items = line.split("{country:aA")
+            ccode = (
+                line.split(',name:"Atlanta')[0].rsplit("country:", 1)[1].split(",")[0]
+            )
+            cstring = "country:" + ccode
+            items = line.split(cstring)
             for item in items:
                 if ">window.__AMORINO__=" not in item:
                     name = item.split('name:"')[1].split('"')[0]
@@ -115,6 +119,7 @@ def fetch_data():
                         city = "New York"
                         state = "NY"
                         zc = "10036"
+                        phone = "212-445-0101"
                     yield [
                         website,
                         loc,

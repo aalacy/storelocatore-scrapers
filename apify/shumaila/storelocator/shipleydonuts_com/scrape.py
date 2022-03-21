@@ -1,7 +1,9 @@
-from bs4 import BeautifulSoup
-import csv
 import json
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
 headers = {
@@ -9,96 +11,64 @@ headers = {
 }
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
 def fetch_data():
-    p = 0
-    data = []
-    url = "https://shipleydonuts.com/stores-html-sitemap/"
-    r = session.get(url, headers=headers, verify=False)
-    soup = BeautifulSoup(r.text, "html.parser")
-    linklist = soup.select("a[href*=stores]")
-    for link in linklist:
-        link = link["href"]
-        if "sitemap" not in link:
-            r = session.get(link, headers=headers, verify=False)
-            soup = BeautifulSoup(r.text, "html.parser")
-            content = r.text.split('"locations":', 1)[1].split("};", 1)[0]
-            content = json.loads(content)
-            content = content[0]
-            title = content["store"]
-            phone = soup.select_one("a[href*=tel]").text
-            street = content["address"] + " " + content["address2"]
-            city = content["city"]
-            state = content["state"]
-            pcode = content["zip"]
-            ccode = "US"
-            lat = content["lat"]
-            longt = content["lng"]
-            try:
-                hours = (
-                    soup.find("table", {"class": "wpsl-opening-hours"})
-                    .text.replace("day", "day ")
-                    .replace("PM", "PM ")
-                )
-            except:
-                hours = "<MISSING>"
-            store = content["id"]
-            data.append(
-                [
-                    "https://shipleydonuts.com/",
-                    link,
-                    title.replace(" &#8211;", " - ").strip(),
-                    street,
-                    city,
-                    state,
-                    pcode,
-                    ccode,
-                    store,
-                    phone,
-                    "<MISSING>",
-                    lat,
-                    longt,
-                    hours.replace(":00", ":00 ").strip(),
-                ]
-            )
 
-            p += 1
-    return data
+    daylist = ["mon", "tues", "wednes", "thurs", "fri", "satur", "sun"]
+    url = "https://shipleydonuts.com/locations/"
+    r = session.get(url, headers=headers)
+    loclist = r.text.split("locations_meta = ", 1)[1].split("];", 1)[0]
+    loclist = loclist + "]"
+    loclist = json.loads(loclist)
+    for loc in loclist:
+
+        store = loc["address"]["store_number"]
+        lat = loc["map_pin"]["lat"]
+        longt = loc["map_pin"]["lng"]
+        state = loc["map_pin"]["state_short"]
+        try:
+            city = loc["map_pin"]["city"]
+        except:
+            city = "<MISSING>"
+        pcode = loc["map_pin"]["post_code"]
+        store = loc["address"]["store_number"]
+        street = (
+            loc["address"]["address_line_1"]
+            + " "
+            + str(loc["address"]["address_line_2"])
+        )
+        phone = loc["branch_information"]["phone_number"]
+        link = loc["single_page"]
+        hourlist = loc["opening_hours"]
+        hours = ""
+        for day in daylist:
+            hours = hours + day + "day " + hourlist[day + "day_opening_hours"] + " "
+        yield SgRecord(
+            locator_domain="https://shipleydonuts.com",
+            page_url=link,
+            location_name="Shipley Do-Nuts",
+            street_address=street.strip(),
+            city=city.strip(),
+            state=state.strip(),
+            zip_postal=pcode.strip(),
+            country_code="US",
+            store_number=str(store),
+            phone=phone.strip(),
+            location_type=SgRecord.MISSING,
+            latitude=str(lat),
+            longitude=str(longt),
+            hours_of_operation=hours,
+        )
 
 
 def scrape():
 
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()

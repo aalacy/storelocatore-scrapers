@@ -1,4 +1,3 @@
-import re
 import csv
 import json
 from bs4 import BeautifulSoup
@@ -54,11 +53,7 @@ def fetch_locations(base_url, session):
     soup = BeautifulSoup(res.text, "lxml")
     links = soup.find_all("li", {"class": "view-all-stores__store"})
 
-    return [link.a["href"] for link in links if is_location(link.a["href"])]
-
-
-def is_location(link):
-    return re.search(r"\/clothing-stores\/(CA|US|GB)\/", link, re.I)
+    return [link.a["href"] for link in links]
 
 
 @retry(stop=stop_after_attempt(3))
@@ -95,6 +90,7 @@ def fetch_data():
 
     for link in links:
         page_url = f"{base_url}{link}"
+        logger.info(page_url)
         data = fetch_location(page_url, requests)
         if not data:
             continue

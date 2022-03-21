@@ -34,13 +34,21 @@ def write_output(data):
             writer.writerow(row)
 
 
+def get_coords(text):
+    text = text.replace("://", "")
+    if "//" in text:
+        return text.split("//")[-1].split(",")
+    else:
+        return text.split("@")[1].split(",")[:2]
+
+
 def get_urls():
     session = SgRequests()
     r = session.get("https://www.wownewengland.com/")
     tree = html.fromstring(r.text)
 
-    return tree.xpath(
-        "//ul[contains(@class,'sub-menu dropdown-menu')]/li[@data-depth='2']/a/@href"
+    return set(
+        tree.xpath("//a[text()='CLUB LOCATIONS']/following-sibling::ul//a/@href")
     )
 
 
@@ -56,43 +64,29 @@ def get_data(page_url):
     tree = html.fromstring(r.text)
 
     location_name = "".join(tree.xpath("//title/text()")).split("-")[0].strip()
-    line = []
-    lines = tree.xpath("//h2//span[@style='color: #ffffff;']/text()")
-    for l in lines:
-        if "Get" in l or "This" in l:
-            break
-        if l.strip():
-            line.append(l.strip())
+    line = tree.xpath("//div[@class='elementor-widget-container']/p[1]//text()")
+    line = list(filter(None, [l.strip() for l in line]))[:3]
 
-    street_address = ", ".join(line[:-1]).strip() or "<MISSING>"
-    line = line[-1]
+    phone = line[2]
+    street_address = line[0]
+    line = line[1]
     postal = line.split()[-1]
     state = line.split()[-2]
     city = line.replace(postal, "").replace(state, "").replace(",", "").strip()
     country_code = "US"
     store_number = "<MISSING>"
-    try:
-        phone = tree.xpath("//h2/span[not(contains(@style, 'color: #ffffff'))]/text()")[
-            0
-        ].strip()
-        if not phone[0].isdigit() and phone[0] != "(":
-            phone = "<MISSING>"
-    except IndexError:
-        phone = "<MISSING>"
 
+    text = "".join(tree.xpath("//a[contains(@href, 'google')]/@href"))
     latitude = "<MISSING>"
     longitude = "<MISSING>"
+    if text:
+        latitude, longitude = get_coords(text)
+
     location_type = "<MISSING>"
+    hours = tree.xpath("//p[contains(text(), 'CLUB HOURS')]/text()")
+    hours = list(filter(None, [h.strip() for h in hours]))[1:]
 
-    _tmp = []
-    hours = tree.xpath("//h4/span[contains(@style, 'color: #ffffff')]/text()")
-    hours = list(filter(None, [h.strip() for h in hours]))
-    for h in hours:
-        if "hours" in h.lower() or h.startswith("("):
-            continue
-        _tmp.append(h.replace("|", ";").replace("\xa0", ""))
-
-    hours_of_operation = ";".join(_tmp) or "Temporarily Closed"
+    hours_of_operation = ";".join(hours) or "Temporarily Closed"
 
     row = [
         locator_domain,
@@ -117,6 +111,7 @@ def get_data(page_url):
 def fetch_data():
     out = []
     urls = get_urls()
+    urls.remove("#")
 
     with futures.ThreadPoolExecutor(max_workers=1) as executor:
         future_to_url = {executor.submit(get_data, url): url for url in urls}

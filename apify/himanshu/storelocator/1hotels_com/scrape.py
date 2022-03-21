@@ -1,77 +1,167 @@
-import csv
-from sgrequests import SgRequests
-from bs4 import BeautifulSoup as BS
 import re
 import json
-import ast
-
+from lxml import etree
+from sglogging import sglog
+from bs4 import BeautifulSoup
+from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgpostal.sgpostal import parse_address_intl
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
 session = SgRequests()
+website = "1hotels_com"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+}
 
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
-        # Body
-        for row in data:
-            writer.writerow(row)
+DOMAIN = "https://1hotels.com/"
+MISSING = SgRecord.MISSING
 
 
 def fetch_data():
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36'
-    }
+    start_url = "https://www.1hotels.com/about-us/contact-us"
+    domain = re.findall(r"://(.+?)/", start_url)[0].replace("www.", "")
+    response = session.get(start_url, headers=headers)
+    dom = etree.HTML(response.text)
+    all_locations = dom.xpath("//header/a/@href")
+    for url in all_locations:
+        if domain not in url:
+            continue
+        page_url = url.replace("/contact-us", "")
+        loc_response = session.get(page_url)
+        log.info(page_url)
+        loc_dom = etree.HTML(loc_response.text)
+        poi = loc_dom.xpath('//script[contains(text(), "PostalAddress")]/text()')
+        if poi:
+            poi = json.loads(poi[0])
+            poi = poi["@graph"][0]
 
-    base_url = "https://www.1hotels.com"
-    soup = BS(session.get(base_url, headers=headers).text, "lxml")
+            location_name = poi["name"]
+            try:
+                street_address = poi["contactPoint"]["areaServed"]["address"][
+                    "streetAddress"
+                ]
+                city = poi["contactPoint"]["areaServed"]["address"]["addressLocality"]
+                state = poi["contactPoint"]["areaServed"]["address"]["addressRegion"]
+                zip_postal = poi["contactPoint"]["areaServed"]["address"]["postalCode"]
+                country_code = poi["contactPoint"]["areaServed"]["address"][
+                    "addressCountry"
+                ]
 
-    for link in soup.find_all("div",{"class":"col-12 col-md-4 col-dt-4 card p-0 pl-0 pr-md-3 card--card"}):
-        page_url = link.a['href']
+            except:
+                address = poi["address"]
+                street_address = address["streetAddress"]
+                city = address["addressLocality"]
+                state = address["addressRegion"]
+                zip_postal = address["postalCode"]
+                country_code = address["addressCountry"]
+            try:
+                phone = poi["contactPoint"]["telephone"]
+            except:
+                phone = MISSING
+            store_number = MISSING
 
-        store_soup = BS(session.get(page_url).text, "lxml")
+            location_type = poi["@type"]
+            raw_address = (
+                street_address
+                + " "
+                + city
+                + " "
+                + state
+                + " "
+                + zip_postal
+                + " "
+                + country_code
+            )
+        else:
+            loc_dom = BeautifulSoup(loc_response.text, "html.parser")
+            location_name = loc_dom.find("h1").text
+            raw_address = (
+                loc_dom.find(
+                    "div",
+                    {"class": "caption col-md-10 ml-auto mr-auto text-lg-center card"},
+                )
+                .find("p")
+                .text
+            )
+            phone = loc_response.text.split('<a href="tel:')[1].split('"')[0]
+            if "Planning an upcoming trip" in raw_address:
+                raw_address = (
+                    loc_dom.find("p", {"class": "directions__address"})
+                    .get_text(separator="|", strip=True)
+                    .split("|")
+                )
+                location_name = raw_address[0]
+                raw_address = " ".join(raw_address[1:])
+            pa = parse_address_intl(raw_address)
 
-        json_data = json.loads(store_soup.find(lambda tag:(tag.name == "script") and '"streetAddress"' in tag.text).text)['@graph'][0]
-        
-        location_name = json_data['name']
-        
-        street_address = json_data['contactPoint']['areaServed']['address']['streetAddress']
-        city = json_data['contactPoint']['areaServed']['address']['addressLocality']
-        state = json_data['contactPoint']['areaServed']['address']['addressRegion']
-        zipp = json_data['contactPoint']['areaServed']['address']['postalCode']
-        country_code = json_data['contactPoint']['areaServed']['address']['addressCountry']
-        phone = json_data['telephone']
-        location_type = json_data['@type']
+            street_address = pa.street_address_1
+            street_address = street_address if street_address else MISSING
 
-        coord_request = BS(session.get(base_url + store_soup.find("a",text=re.compile("Contact Us"))["href"],headers=headers).text, "lxml")
-        
-        coord_json = json.loads(coord_request.find(lambda tag: (tag.name == "script") and '"currentPath"' in tag.text).text)
-        store_number = coord_json['path']['currentPath'].replace("node/",'')
-        lat = coord_json['verb_directions']['location']['lat']
-        lng = coord_json['verb_directions']['location']['lng']
+            city = pa.city
+            city = city.strip() if city else MISSING
 
-        store = []
-        store.append(base_url)
-        store.append(location_name)
-        store.append(street_address)
-        store.append(city)
-        store.append(state)
-        store.append(zipp)
-        store.append(country_code)
-        store.append(store_number)
-        store.append(phone)
-        store.append(location_type)
-        store.append(lat)
-        store.append(lng)
-        store.append("<MISSING>")
-        store.append(page_url)
-        yield store
+            state = pa.state
+            state = state.strip() if state else MISSING
+
+            zip_postal = pa.postcode
+            zip_postal = zip_postal.strip() if zip_postal else MISSING
+
+            country_code = pa.country
+            country_code = country_code.strip() if country_code else MISSING
+
+            store_number = MISSING
+
+            location_type = MISSING
+        try:
+            longitude, latitude = (
+                loc_response.text.split('"coordinates":"[')[1].split("]")[0].split(",")
+            )
+        except:
+            geo = re.findall('location":{(.+),"lat_sin', loc_response.text)[0]
+            geo = json.loads("{" + geo + "}")
+            latitude = geo["lat"]
+            longitude = geo["lng"]
+        hours_of_operation = MISSING
+        location_name = location_name.replace("- Sprouting Fall 2022", "")
+        phone = phone.replace("=", "")
+        yield SgRecord(
+            locator_domain=DOMAIN,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address.strip(),
+            city=city.strip(),
+            state=state.strip(),
+            zip_postal=zip_postal.strip(),
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone.strip(),
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation.strip(),
+            raw_address=raw_address,
+        )
+
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    log.info("Started")
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.GeoSpatialId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
 
-scrape()
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
+
+
+if __name__ == "__main__":
+    scrape()

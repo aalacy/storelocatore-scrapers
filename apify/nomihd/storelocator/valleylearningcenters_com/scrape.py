@@ -21,6 +21,17 @@ def fetch_data():
     stores_req = session.get(search_url, headers=headers)
     stores = json.loads(stores_req.text)
 
+    loc_req = session.get(
+        "https://valleylearningcenters.com/locations/", headers=headers
+    )
+    loc_sel = lxml.html.fromstring(loc_req.text)
+    loc_list = loc_sel.xpath('//div[@class="wp-block-column"]')
+    loc_dict = {}
+    for loc in loc_list:
+        link = "".join(loc.xpath(".//h2//a/@href")).strip()
+        temp_address = loc.xpath(".//p//text()")
+        loc_dict[link] = temp_address
+
     for store in stores:
         if store["link"] is not None and len(store["link"]) > 0:
             page_url = store["link"]
@@ -31,7 +42,7 @@ def fetch_data():
             locator_domain = website
             location_name = store["title"]
 
-            raw_info = store_sel.xpath('//div[@class=" n2-ow n2-ow-all"]/p/text()')
+            raw_info = loc_dict[page_url]
             raw_list = []
             for raw in raw_info:
                 if len("".join(raw).strip()) > 0:
@@ -46,27 +57,23 @@ def fetch_data():
             country_code = "US"
 
             store_number = "<MISSING>"
-            phone = "".join(
-                store_sel.xpath(
-                    '//div[@class=" n2-ow n2-ow-all"]/p/a[contains(@href,"tel:")]/text()'
-                )
-            ).strip()
+            desc_sel = lxml.html.fromstring(store["description"])
+            phone = "".join(desc_sel.xpath("//p//text()")).strip()
+            if "!" in phone:
+                phone = phone.split("!")[1].strip()
 
             location_type = "<MISSING>"
 
-            hours_of_operation = (
-                ":".join(
+            hours = list(
+                filter(
+                    str,
                     store_sel.xpath(
-                        '//div[@class="wp-block-media-text__content"]/p//text()'
-                    )
+                        '//*[contains(text(),"Take a tour of our ")]/..//p//text()'
+                    ),
                 )
-                .strip()
-                .encode("ascii", "replace")
-                .decode("utf-8")
-                .replace("?", "-")
-                .strip()
             )
-
+            hours = [x.strip() for x in hours]
+            hours_of_operation = "; ".join(hours).strip().replace("; ;", "").strip()
             latitude = store["lat"]
             longitude = store["lng"]
 

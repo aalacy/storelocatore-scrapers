@@ -9,15 +9,10 @@ _headers = {
 
 
 def _addr(addr):
-    try:
-        street_address = " ".join(addr[:-1]).strip()
-        zip_postal = addr[-1].split(",")[1].strip().split(" ")[-1].strip()
-        city = addr[-1].split(",")[0].strip()
-        state = addr[-1].split(",")[1].strip().split(" ")[0].strip()
-    except:
-        import pdb
-
-        pdb.set_trace()
+    street_address = " ".join(addr[:-1]).strip()
+    zip_postal = addr[-1].split(",")[1].strip().split(" ")[-1].strip()
+    city = addr[-1].split(",")[0].strip()
+    state = addr[-1].split(",")[1].strip().split(" ")[0].strip()
 
     return street_address, city, state, zip_postal
 
@@ -26,6 +21,8 @@ def _phone(soup, street, state):
     phone = ""
     for _ in soup.select("div.site-footer-widgets aside"):
         data = list(_.select_one("div.textwidget").stripped_strings)
+        if "@" in data[-1]:
+            del data[-1]
         _street_address, _city, _state, _zip_postal = _addr(data[:-1])
         if state == _state and street.split(" ")[0] in _street_address:
             phone = data[-1]

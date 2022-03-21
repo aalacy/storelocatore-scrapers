@@ -111,18 +111,19 @@ def fetch_data():
         else:
             output.append("US")  # country code
         output.append("<MISSING>")  # store_number
+        link = (
+            "https://www.tangeroutlet.com/"
+            + store.xpath('.//div[@class="centerLocation"]/a/@title')[0]
+            + "/location"
+        )
+        page_data = etree.HTML(session.get(link).text)
         output.append(
-            validate(store.xpath('.//span[@class="phone"]//text()')).split("/")[0]
+            validate(page_data.xpath('.//div[@class="centerLocation"]/span/text()')[2])
         )  # phone
         output.append("<MISSING>")  # location type
         output.append(store.xpath("@data-latitude")[0])  # latitude
         output.append(store.xpath("@data-longitude")[0])  # longitude
-        hours_link = (
-            base_url + store.xpath('.//a[@class="text-uppercase d-md-none"]/@href')[0]
-        )
-        hour_list = etree.HTML(session.get(hours_link).text).xpath(
-            '//div[@class="hours-box"]//div[@class="capsule"]'
-        )
+        hour_list = page_data.xpath('//div[@class="hours-box"]//div[@class="capsule"]')
         store_hours = []
         for hour in hour_list:
             store_hours.append(
@@ -131,7 +132,7 @@ def fetch_data():
                 + validate(hour.xpath('.//div[@class="hours "]//text()'))
             )
         output.append(get_value(", ".join(store_hours)))  # opening hours
-        output.append(hours_link)
+        output.append(link)
         output_list.append(output)
     return output_list
 

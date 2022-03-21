@@ -1,36 +1,51 @@
-import csv
-
+import usaddress
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def get_address(line):
+    tag = {
+        "Recipient": "recipient",
+        "AddressNumber": "address1",
+        "AddressNumberPrefix": "address1",
+        "AddressNumberSuffix": "address1",
+        "StreetName": "address1",
+        "StreetNamePreDirectional": "address1",
+        "StreetNamePreModifier": "address1",
+        "StreetNamePreType": "address1",
+        "StreetNamePostDirectional": "address1",
+        "StreetNamePostModifier": "address1",
+        "StreetNamePostType": "address1",
+        "CornerOf": "address1",
+        "IntersectionSeparator": "address1",
+        "LandmarkName": "address1",
+        "USPSBoxGroupID": "address1",
+        "USPSBoxGroupType": "address1",
+        "USPSBoxID": "address1",
+        "USPSBoxType": "address1",
+        "BuildingName": "address2",
+        "OccupancyType": "address2",
+        "OccupancyIdentifier": "address2",
+        "SubaddressIdentifier": "address2",
+        "SubaddressType": "address2",
+        "PlaceName": "city",
+        "StateName": "state",
+        "ZipCode": "postal",
+    }
 
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
+    a = usaddress.tag(line, tag_mapping=tag)[0]
+    street_address = f"{a.get('address1')} {a.get('address2') or ''}".strip()
+    if street_address == "None":
+        street_address = SgRecord.MISSING
+    city = a.get("city")
+    state = a.get("state")
+    postal = a.get("postal")
 
-        for row in data:
-            writer.writerow(row)
+    return street_address, city, state, postal
 
 
 def get_coords_from_google_url(url):
@@ -42,75 +57,67 @@ def get_coords_from_google_url(url):
             latitude = url.split("@")[1].split(",")[0]
             longitude = url.split("@")[1].split(",")[1]
     except IndexError:
-        latitude, longitude = "<MISSING>", "<MISSING>"
+        latitude, longitude = SgRecord.MISSING, SgRecord.MISSING
 
     return latitude, longitude
 
 
-def fetch_data():
-    out = []
-    locator_domain = "https://www.tylerstx.com/"
-    page_url = "https://www.tylerstx.com/storelocations"
-
-    session = SgRequests()
-    r = session.get(page_url)
+def fetch_data(sgw: SgWriter):
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0"
+    }
+    r = session.get(page_url, headers=headers)
     tree = html.fromstring(r.text)
     divs = tree.xpath(
-        "//div[@class='shg-c-lg-3 shg-c-md-3 shg-c-sm-3 shg-c-xs-6']|//div[@class='shg-c-lg-4 shg-c-md-4 shg-c-sm-4 shg-c-xs-4']"
+        "//div[@class='shg-c-lg-3 shg-c-md-3 shg-c-sm-3 shg-c-xs-6' and .//img]"
     )
 
     for d in divs:
-        location_name = "".join(d.xpath(".//div[last()]/div/p[1]/span/text()"))
-        line = d.xpath(".//p/a[contains(@href, 'google')]/span/text()")
-        line = list(filter(None, [l.strip() for l in line]))
+        lines = d.xpath(".//p//text()")
+        if "soon" in lines[-1]:
+            continue
+        if "@" in lines[-1]:
+            lines.pop()
 
-        street_address = line[0]
-        line = line[-1]
-        city = line.split(",")[0].strip()
-        line = line.split(",")[1].strip()
-        state = line.split()[0]
-        postal = line.split()[-1]
+        location_name = lines.pop(0)
+        raw_address = lines.pop(0)
+        if lines[0][0].isdigit():
+            phone = lines.pop(0)
+        else:
+            raw_address += f", {lines.pop(0)}"
+            phone = lines.pop(0)
+
+        street_address, city, state, postal = get_address(raw_address)
         country_code = "US"
-        store_number = "<MISSING>"
-        phone = "".join(d.xpath(".//p[last()]//text()")).strip() or "<MISSING>"
-        text = "".join(d.xpath(".//p/a[contains(@href, 'google')]/@href"))
+
+        hours_of_operation = " ".join(lines)
+        text = "".join(d.xpath(".//a[contains(@href, 'google')]/@href"))
         latitude, longitude = get_coords_from_google_url(text)
-        location_type = "<MISSING>"
 
-        _tmp = []
-        days = d.xpath(".//span[./span[@style='font-weight: bold;']]/span/text()")
-        times = d.xpath(".//span[./span[@style='font-weight: bold;']]/text()")
+        row = SgRecord(
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=SgRecord.MISSING,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            locator_domain=locator_domain,
+            hours_of_operation=hours_of_operation,
+            raw_address=raw_address,
+        )
 
-        for date, t in zip(days, times):
-            _tmp.append(f"{date.strip()} {t.strip()}")
-
-        hours_of_operation = " ".join(_tmp) or "<MISSING>"
-
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    locator_domain = "https://www.tylerstx.com/"
+    page_url = "https://www.tylerstx.com/store-contacts"
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PhoneNumberId)) as writer:
+        fetch_data(writer)

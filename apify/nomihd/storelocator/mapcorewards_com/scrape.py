@@ -61,8 +61,6 @@ def write_output(data):
 
 def fetch_data():
     # Your scraper here
-    loc_list = []
-
     url = (
         "https://mapco.modyo.cloud/api"
         "/content/spaces/stores/types/store/entries?per_page=100&page={}"
@@ -81,8 +79,11 @@ def fetch_data():
                 page_url = "https://www.mapcorewards.com/store/" + store["meta"]["slug"]
 
                 raw_address = store["fields"]["address"][0]["location_street"]
-
+                log.info(page_url)
                 store_req = session.get(page_url, headers=headers)
+                if store_req.ok is False:
+                    continue
+
                 store_sel = lxml.html.fromstring(store_req.text)
                 store_json = json.loads(
                     "".join(
@@ -166,14 +167,12 @@ def fetch_data():
                     hours_of_operation,
                 ]
 
-                loc_list.append(curr_list)
+                yield curr_list
                 # break
         else:
             break
 
         current_page = current_page + 1
-
-    return loc_list
 
 
 def scrape():

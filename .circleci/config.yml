@@ -39,7 +39,7 @@ jobs:
       tag: <<parameters.python-version>>
     parameters:
       cache-prefix:
-        default: 'v2'
+        default: 'v8'
         description: Cache prefix (increment to clear)
         type: string
       python-version:
@@ -118,6 +118,18 @@ jobs:
             source ./venv/bin/activate
             source ./.circleci/lib.sh
             check_internal_library_versions
+      - run:
+          name: Check script is using a sanctioned library to write to file
+          command: |
+            source ./venv/bin/activate
+            source ./.circleci/lib.sh
+            check_how_records_are_written_to_file
+      - run:
+          name: Check Dockerfile inherits from latest image
+          command: |
+            source ./venv/bin/activate
+            source ./.circleci/lib.sh
+            check_dockerfile_base_image_is_latest
 
   node-lint-updates:
     executor: node/default

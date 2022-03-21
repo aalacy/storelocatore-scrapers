@@ -1,16 +1,30 @@
 import csv
 import sys
+from functools import partial
+from typing import List
 
-if __name__=="__main__":
+
+def id_from_rec(id_fields: List[str], record: dict) -> str:
+    return " ".join([f"{id_f}: {record.get(id_f)}" for id_f in id_fields])
+
+
+if __name__ == "__main__":
     if len(sys.argv) < 4:
         print("CsvDiffer")
-        print("Usage: python csv-differ.py new-data-file.csv old-data-file.csv <csv-identity-field> [--verbose]")
+        print(
+            "Usage: python csv-differ.py new-data-file.csv old-data-file.csv <csv-identity-field[:<field2>:<field3>]> [--verbose]"
+        )
         exit(1)
 
     file_new_path = sys.argv[1]
     file_old_path = sys.argv[2]
-    csv_id_field = sys.argv[3]
-    verbose = True if len(sys.argv) == 5 and sys.argv[4] == '--verbose' else False
+    csv_id_field_str = sys.argv[3]
+    csv_id_fields = (
+        csv_id_field_str.split(":") if ":" in csv_id_field_str else [csv_id_field_str]
+    )
+    id_func = partial(id_from_rec, csv_id_fields)
+
+    verbose = True if len(sys.argv) == 5 and sys.argv[4] == "--verbose" else False
 
     with open(file_new_path) as file_new:
         with open(file_old_path) as file_old:
@@ -20,13 +34,13 @@ if __name__=="__main__":
             new_ids = set()
             for row in reader_new:
                 new_lines += 1
-                new_ids.add(row[csv_id_field])
+                new_ids.add(id_func(row))
 
             reader_old = csv.DictReader(file_old)
             old_ids = set()
             for row in reader_old:
                 old_lines += 1
-                old_ids.add(row[csv_id_field])
+                old_ids.add(id_func(row))
 
             common = old_ids.intersection(new_ids)
             not_in_new = old_ids.difference(new_ids)
@@ -34,16 +48,13 @@ if __name__=="__main__":
 
             divider = "-----------------------------------------------------------------------------------------------------"
 
-            print(divider)
+            # print(divider)
             print("Summary:")
-            print(f"Common: {len(common)} | Missing in new: {len(not_in_new)} | Missing in old: {len(not_in_old)} | {file_new_path} records: {new_lines} | {file_old_path} records: {old_lines}")
+            print(
+                f"Common: {len(common)} | Missing in new: {len(not_in_new)} | Missing in old: {len(not_in_old)} | {file_new_path} records: {new_lines} | {file_old_path} records: {old_lines}"
+            )
 
             if verbose:
-
-                print(divider)
-                for z in common:
-                    print(f"Common >> {z}")
-
                 print(divider)
                 for z in not_in_new:
                     print(f"Missing in new >> {z}")

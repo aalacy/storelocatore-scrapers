@@ -1,10 +1,12 @@
 import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+import json
 
 session = SgRequests()
 headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36",
+    "cookie": "sb-sf-at-prod-s=at=9AQlj%2FOkUGeF9XjLQn9yvSwm%2B5XSxNv1hCHLydL%2Fsad%2FtOjShidKzIVb3VaUkzyfk%2Fudau7q12v9QsxViMp9vI8RCI9XBnUswxWloT%2BEgU44FnFyaXyAB%2FZxxlLPk%2FbodnTygFdkArtGqgmnxViJFDEAb5oFFTW9rRynIQ8qAv9VuuemTwC9A6rZ2m1KPYjfh9%2BhY6f6MAYF9jCmIrQFfBCOzsjOwd1PTkIlS8v83qbG%2F6ykt6JuoQwf%2BZPw8P2d43E%2FEvDdTa1joFiT9VLYmJ5APyec6Q6okJkRJGEmZKgAC%2B3MMxLZlHf%2B24BtWsR%2FIcRpE5HSYXVqWdt0Mf4abA%3D%3D&dt=2021-06-08T19%3A36%3A45.6385734Z; sb-sf-at-prod=at=9AQlj%2FOkUGeF9XjLQn9yvSwm%2B5XSxNv1hCHLydL%2Fsad%2FtOjShidKzIVb3VaUkzyfk%2Fudau7q12v9QsxViMp9vI8RCI9XBnUswxWloT%2BEgU44FnFyaXyAB%2FZxxlLPk%2FbodnTygFdkArtGqgmnxViJFDEAb5oFFTW9rRynIQ8qAv9VuuemTwC9A6rZ2m1KPYjfh9%2BhY6f6MAYF9jCmIrQFfBCOzsjOwd1PTkIlS8v83qbG%2F6ykt6JuoQwf%2BZPw8P2d43E%2FEvDdTa1joFiT9VLYmJ5APyec6Q6okJkRJGEmZKgAC%2B3MMxLZlHf%2B24BtWsR%2FIcRpE5HSYXVqWdt0Mf4abA%3D%3D; _mzvr=JHXXrtHSmkqBMHY97UgPSg; _mzvs=nn; _ga=GA1.2.2106834004.1623181007; _gid=GA1.2.1651838716.1623181007; mt.sc=%7B%22i%22%3A1623181006791%2C%22d%22%3A%5B%5D%7D; mt.v=2.203603775.1623181006793; mozucartcount=%7B%22fd6bab79a1804249b328a3922563d725%22%3A0%7D",
 }
 
 logger = SgLogSetup().get_logger("bimart_com")
@@ -38,73 +40,28 @@ def write_output(data):
 
 
 def fetch_data():
-    locs = []
-    url = "https://www.bimart.com/retail-locations-archive/markers"
+    url = "https://www.bimart.com/api/commerce/storefront/locationUsageTypes/SP/locations/?filter=tenant~siteId%20eq%2049677%20and%20locationType.Code+eq+MS%20and%20geo+near(45.6401259685065,-122.6413462660265,16000934)"
     r = session.get(url, headers=headers)
     website = "bimart.com"
     typ = "<MISSING>"
     country = "US"
     logger.info("Pulling Stores")
-    lines = r.iter_lines()
-    for line in lines:
-        line = str(line.decode("utf-8"))
-        if '"coordinates":' in line:
-            g = next(lines)
-            g = str(g.decode("utf-8"))
-            llng = g.split(",")[0].strip().replace("\t", "")[:10]
-            g = next(lines)
-            g = str(g.decode("utf-8"))
-            llat = g.strip().replace("\r", "").replace("\n", "").replace("\t", "")[:10]
-        if '"link": "' in line:
-            lurl = "https://www.bimart.com" + line.split('"link": "')[1].split('"')[
-                0
-            ].replace("\\", "")
-            locs.append(lurl + "|" + llat + "|" + llng)
-    for loc in locs:
-        logger.info(loc.split("|")[0])
-        lurl = loc.split("|")[0]
-        name = ""
-        add = ""
-        city = ""
-        state = ""
-        zc = ""
-        store = "<MISSING>"
-        phone = ""
-        lat = loc.split("|")[1]
-        lng = loc.split("|")[2]
-        hours = ""
-        HFound = False
-        r2 = session.get(lurl, headers=headers)
-        for line2 in r2.iter_lines():
-            line2 = str(line2.decode("utf-8"))
-            if '<h1 class="entry-title">' in line2:
-                name = line2.split('<h1 class="entry-title">')[1].split("<")[0].strip()
-            if '<p id="street">' in line2:
-                addinfo = (
-                    line2.split('<p id="street">')[1]
-                    .split("<")[0]
-                    .replace(", United States", "")
-                )
-                zc = "<MISSING>"
-                add = addinfo.split(",")[0]
-                city = addinfo.split(",")[1].strip()
-                state = addinfo.split(",")[2].strip()
-            if '<a class="phone-link" href="tel:' in line2 and phone == "":
-                phone = line2.split('<a class="phone-link" href="tel:')[1].split('"')[0]
-            if ">Store</strong>" in line2:
-                HFound = True
-            if HFound and '<p id="' in line2 and ">Store</strong>" not in line2:
-                HFound = False
-            if HFound and "day" in line2 and "href" not in line2:
-                hrs = line2.split("<p>")[1].split("<")[0].strip()
-            if HFound and "pm" in line2:
-                hrs = hrs + ": " + line2.split("<p>")[1].split("<")[0].strip()
-                if hours == "":
-                    hours = hrs
-                else:
-                    hours = hours + "; " + hrs
-        if "Rathdrum" in lurl:
-            phone = phone[:12]
+    for item in json.loads(r.content)["items"]:
+        store = item["code"]
+        lurl = "<MISSING>"
+        name = item["name"]
+        state = item["address"]["stateOrProvince"]
+        zc = item["address"]["postalOrZipCode"]
+        add = item["address"]["address1"]
+        city = item["address"]["cityOrTown"]
+        lat = item["geo"]["lat"]
+        lng = item["geo"]["lng"]
+        phone = item["phone"]
+        hours = "Monday-Friday 9AM-8PM; Saturday 9AM-6PM; Sunday 9AM-6PM"
+        if "Pharmacy" in phone:
+            phone = phone.split("Pharmacy")[0]
+        phone = phone.replace("Store", "")
+        phone = phone.strip()
         yield [
             website,
             lurl,

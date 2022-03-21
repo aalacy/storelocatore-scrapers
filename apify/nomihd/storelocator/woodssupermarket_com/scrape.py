@@ -16,7 +16,7 @@ headers = {
 
 def fetch_data():
     # Your scraper here
-    search_url = "https://api.freshop.com/1/stores?app_key=woods"
+    search_url = "https://api.freshop.com/1/stores?app_key=woods&has_address=true"
     stores_req = session.get(search_url, headers=headers)
     stores = json.loads(stores_req.text)["items"]
 

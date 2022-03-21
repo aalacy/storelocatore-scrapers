@@ -4,7 +4,9 @@ from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import lxml.html
-from sgscrape import sgpostal as parser
+from sgpostal import sgpostal as parser
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "10fitness.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -21,9 +23,14 @@ def fetch_data():
     search_url = "https://10fitness.com/"
     stores_req = session.get(search_url, headers=headers)
     stores_sel = lxml.html.fromstring(stores_req.text)
-    stores = stores_sel.xpath(
-        '//li[contains(@id,"menu")]/a[contains(@href,"/locations/")]/@href'
+    stores = list(
+        set(
+            stores_sel.xpath(
+                '//li[contains(@class,"menu")]/a[contains(@href,"/locations/")]/@href'
+            )
+        )
     )
+
     for store_url in stores:
         if store_url == "https://10fitness.com/locations/":
             continue
@@ -148,7 +155,9 @@ def fetch_data():
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

@@ -14,19 +14,13 @@ def fetch_data():
     base_url = "http://www.tote-a-poke.com/locations/"
     with SgRequests() as session:
         soup = bs(session.get(base_url, headers=_headers).text, "lxml")
-        locations = soup.select("ul.et_pb_tabs_controls li")
-        for link in locations:
-            _ = soup.select_one(f"div.et_pb_all_tabs .{link['class'][0]} a")
-            address = _.img["alt"]
-            if not address or address == "Tote-A-Poke":
-                address = _["href"].split("place/")[1].split("/@")[0].replace("+", " ")
-            if address == "Tote-A-Poke":
-                address = link.text
-            addr = parse_address_intl(address)
-            coord = _["href"].split("/@")[1].split(",17z/data")[0].split(",")
+        locations = soup.select("div.et_pb_section.et_pb_section_1 > div")[1:]
+        for _ in locations:
+            addr = parse_address_intl(_.p.text.strip())
+            coord = _.a["href"].split("/@")[1].split("z/data")[0].split(",")
             yield SgRecord(
                 page_url=base_url,
-                location_name=link.text,
+                location_name=_.h4.text.strip(),
                 street_address=addr.street_address_1,
                 city=addr.city,
                 state=addr.state,

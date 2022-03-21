@@ -1,140 +1,93 @@
-import csv
-import re
-
-from concurrent import futures
-from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+def fetch_data(sgw: SgWriter):
+    api = "https://local.kingsfoodmarkets.com/locator"
+
+    r = session.get(api, headers=headers, params=params)
+    js = r.json()["response"]["entities"]
+    for j in js:
+        j = j.get("profile") or {}
+        a = j.get("address") or {}
+
+        location_name = f'{j.get("name")} {j.get("geomodifier") or ""}'.strip()
+        page_url = j.get("websiteUrl")
+        street_address = f'{a.get("line1")} {a.get("line2") or ""}'.strip()
+        city = a.get("city")
+        state = a.get("region")
+        postal = a.get("postalCode")
+        country_code = a.get("countryCode")
+        try:
+            phone = j["mainPhone"]["display"]
+        except KeyError:
+            phone = SgRecord.MISSING
+
+        latitude = j["yextDisplayCoordinate"]["lat"]
+        longitude = j["yextDisplayCoordinate"]["long"]
+
+        _tmp = []
+        try:
+            hours = j["hours"]["normalHours"]
+        except KeyError:
+            hours = []
+
+        for h in hours:
+            day = h.get("day")
+            if h.get("isClosed"):
+                _tmp.append(f"{day}: Closed")
+            else:
+                start = str(h["intervals"][0]["start"])
+                end = str(h["intervals"][0]["end"])
+                if len(start) == 3:
+                    start = f"0{start}"
+                _tmp.append(f"{day}: {start[:2]}:{start[2:]} - {end[:2]}:{end[2:]}")
+
+        hours_of_operation = ";".join(_tmp)
+
+        row = SgRecord(
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=SgRecord.MISSING,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            locator_domain=locator_domain,
+            hours_of_operation=hours_of_operation,
         )
 
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def get_urls():
-    session = SgRequests()
-    r = session.get("https://kingsfoodmarkets.com/locations")
-    tree = html.fromstring(r.text)
-
-    return tree.xpath("//a[text()='View Store Details']/@href")
-
-
-def get_data(url):
-    locator_domain = "https://kingsfoodmarkets.com/"
-    page_url = f"https://kingsfoodmarkets.com{url}"
-
-    session = SgRequests()
-    r = session.get(page_url)
-    tree = html.fromstring(r.text)
-
-    location_name = "".join(
-        tree.xpath(
-            "//span[@class='field field--name-title field--type-string field--label-hidden']/text()"
-        )
-    ).strip()
-    street_address = (
-        "".join(tree.xpath("//span[@class='address-line1']/text()")).strip()
-        or "<MISSING>"
-    )
-    city = (
-        "".join(tree.xpath("//span[@class='locality']/text()")).strip() or "<MISSING>"
-    )
-    state = (
-        "".join(tree.xpath("//span[@class='administrative-area']/text()")).strip()
-        or "<MISSING>"
-    )
-    postal = (
-        "".join(tree.xpath("//span[@class='postal-code']/text()")).strip()
-        or "<MISSING>"
-    )
-    country_code = "US"
-    store_number = "<MISSING>"
-    phone = (
-        "".join(
-            tree.xpath(
-                "//div[@class='field field--name-field-phone field--type-string field--label-inline clearfix']/div/text()"
-            )
-        ).strip()
-        or "<MISSING>"
-    )
-    latitude = "".join(re.findall(r'"lat":(\d+.\d+)', r.text)) or "<MISSING>"
-    longitude = "".join(re.findall(r'"lon":(-?\d+.\d+)', r.text)) or "<MISSING>"
-    location_type = "<MISSING>"
-
-    _tmp = []
-    days = tree.xpath(
-        "//div[@class='section']//div[@class='field field--name-field-days field--type-string field--label-hidden field__item']/text()"
-    )
-    times = tree.xpath(
-        "//div[@class='section']//div[@class='field field--name-field-times field--type-string field--label-hidden field__item']/text()"
-    )
-    for d, t in zip(days, times):
-        _tmp.append(f"{d.strip()}: {t.strip()}")
-
-    hours_of_operation = ";".join(_tmp) or "<MISSING>"
-
-    row = [
-        locator_domain,
-        page_url,
-        location_name,
-        street_address,
-        city,
-        state,
-        postal,
-        country_code,
-        store_number,
-        phone,
-        location_type,
-        latitude,
-        longitude,
-        hours_of_operation,
-    ]
-
-    return row
-
-
-def fetch_data():
-    out = []
-    urls = get_urls()
-
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {executor.submit(get_data, url): url for url in urls}
-        for future in futures.as_completed(future_to_url):
-            row = future.result()
-            if row:
-                out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:92.0) Gecko/20100101 Firefox/92.0",
+        "Accept": "application/json",
+        "Accept-Language": "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3",
+        "Connection": "keep-alive",
+        "Sec-Fetch-Dest": "empty",
+        "Sec-Fetch-Mode": "no-cors",
+        "Sec-Fetch-Site": "same-origin",
+        "TE": "trailers",
+        "Pragma": "no-cache",
+        "Cache-Control": "no-cache",
+    }
+
+    params = (
+        ("country", "US"),
+        ("storetype", "5655"),
+        ("l", "en"),
+    )
+    locator_domain = "https://kingsfoodmarkets.com/"
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        fetch_data(writer)

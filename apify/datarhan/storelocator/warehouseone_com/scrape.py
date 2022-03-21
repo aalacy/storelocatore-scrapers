@@ -72,8 +72,10 @@ def fetch_data():
         location_type = "<MISSING>"
         latitude = poi["latitude"]
         longitude = poi["longitude"]
-        hoo = etree.HTML(poi["storeHours"]).xpath("//text()")
-        hoo = [e.strip() for e in hoo if e.strip()]
+        hoo = []
+        if poi.get("storeHours"):
+            hoo = etree.HTML(poi["storeHours"]).xpath("//text()")
+            hoo = [e.strip() for e in hoo if e.strip()]
         hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 
         item = [

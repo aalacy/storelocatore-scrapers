@@ -1,109 +1,162 @@
-# https://zoeskitchen.com/locations/search?location=WI
-# https://www.llbean.com/llb/shop/1000001703?nav=gn-hp
-
-
-import requests
 from bs4 import BeautifulSoup
-import csv
-import string
-import re, time
-from sglogging import SgLogSetup
+import re
+from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-logger = SgLogSetup().get_logger('llbean_com')
-
-
-
-
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
-        # Header
-        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-        # Body
-        for row in data:
-            writer.writerow(row)
+session = SgRequests()
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+}
 
 
 def fetch_data():
-    # Your scraper here
 
-    data = []
-    p = 1
-    pattern = re.compile(r'\s\s+')
-    url = 'https://www.llbean.com/llb/shop/1000001703?nav=gn-hp'
-    page = requests.get(url)
-    soup = BeautifulSoup(page.text, "html.parser")
-    maindiv = soup.find('div', {'id':'storeLocatorZone'})
-    link_list = maindiv.findAll('a')
-    logger.info(len(link_list))
+    pattern = re.compile(r"\s\s+")
+    url = "https://www.llbean.com/llb/shop/1000001703?nav=gn-"
+    r = session.get(url, headers=headers)
+    soup = BeautifulSoup(r.text, "html.parser")
+    link_list = soup.find("div", {"class": "wcm-grid-container"}).findAll("a")
+
+    url = "https://global.llbean.com/Retail.html"
+    r = session.get(url, headers=headers)
+    soup = BeautifulSoup(r.text, "html.parser")
+    link_list1 = soup.findAll("div", {"class": "row_intl"})[1].findAll("a")
+    for link in link_list1:
+        link_list.append(link)
     for alink in link_list:
-        if alink.text.find(":") == -1 or alink.find("Freeport") == -1:
-            link = "https://www.llbean.com" + alink['href']
-            logger.info(link)
-            page1 = requests.get(link)
-            soup1 = BeautifulSoup(page1.text, "html.parser")
-            title = soup1.find('h1').text
-            phone = soup1.find('li',{'class','phone'}).text
-            phone = re.sub(pattern,"",phone)
-            street = soup1.find('span',{'class':'street-address'}).text
-            city = soup1.find('em', {'class': 'locality'}).text
-            state = soup1.find('abbr', {'class': 'region'}).text
-            pcode = soup1.find('em', {'class': 'postal-code'}).text
-            start = link.find("shop")
-            start = link.find("/", start) + 1
-            store = link[start:len(link)]
-            hours = soup1.find('div',{'class': 'row item-holder'}).text
-            hours = re.sub(pattern," ",hours)
-            soup1 = str(soup1)
-            start = soup1.find("var latitude")
-            start = soup1.find("=", start) + 3
-            end = soup1.find(';', start)
-            lat = soup1[start:end]
-            start = soup1.find("var longitude")
-            start = soup1.find("=", start) + 3
-            end = soup1.find(';', start)
-            longt = soup1[start:end]
-            hours = hours.replace("\n", "")
+
+        if "global" in alink["href"] or (
+            alink.text.find(":") == -1 or alink.find("Freeport") == -1
+        ):
+
+            if "https" in alink["href"]:
+                link = alink["href"]
+                pass
+            else:
+                link = "https://www.llbean.com" + alink["href"]
+            title = alink.text
+            r = session.get(link, headers=headers)
+
+            soup = BeautifulSoup(r.text, "html.parser")
+            if "Temporarily Closed" in soup.text or "opening" in soup.text.lower():
+                continue
+            try:
+                phone = soup.find("address").find("strong", {"class", "tel"}).text
+            except:
+                try:
+                    phone = (
+                        soup.find("div", {"class", "address"})
+                        .select_one("a[href*=tel]")
+                        .text.strip()
+                    )
+                except:
+                    phone = soup.select_one("a[href*=tel]").text
+            try:
+                street = soup.find("div", {"itemprop": "streetAddress"}).text
+                city = (
+                    soup.find("span", {"itemprop": "addressLocality"})
+                    .text.replace(",", "")
+                    .strip()
+                )
+                state = soup.find("span", {"itemprop": "addressRegion"}).text
+                pcode = soup.find("span", {"itemprop": "postalCode"}).text
+            except:
+                try:
+                    phone = soup.find("a", {"class": "font-size-16px"}).text.strip()
+                    address = soup.find("div", {"class": "font-size-16px"}).text
+                    address = re.sub(pattern, "\n", str(address)).strip().splitlines()
+                    street = address[0]
+                    city, state = address[1].split(", ", 1)
+                    state, pcode = state.split(" ", 1)
+                    title = soup.findAll("div", {"class": "font-montserrat"})[
+                        0
+                    ].text.strip()
+                    lat, longt = (
+                        soup.select_one("a[href*=map]")["href"]
+                        .split("@", 1)[1]
+                        .split("data", 1)[0]
+                        .split(",", 1)
+                    )
+                    longt = longt.split(",", 1)[0]
+                except:
+                    continue
+            try:
+                store = link.split("shop/", 1)[1].split("?", 1)[0]
+                if store.isdigit():
+                    pass
+                else:
+                    store = "<MISSING>"
+            except:
+                store = "<MISSING>"
+            try:
+                hours = (
+                    soup.find("div", {"class": "StorePage_store-hours"})
+                    .text.replace("\n", "")
+                    .strip()
+                )
+                hours = re.sub(pattern, " ", hours).strip()
+            except:
+
+                if "Temporarily Closed" in soup.text or "OPENING" in soup.text:
+                    continue
+                hours = soup.text.split("store hours", 1)[1].split("In this store", 1)[
+                    0
+                ]
+                hours = re.sub(pattern, " ", hours).replace("\n", " ").strip()
             if len(hours) < 3:
                 hours = "<MISSING>"
+            if "Temporarily Closed" in hours or "OPENING" in hours:
+                continue
+            ccode = "US"
+            if "global" in link:
+                ccode = "CA"
+            try:
+                lat = (
+                    r.text.split("var latitude", 1)[1].split("=", 1)[1].split(";", 1)[0]
+                )
 
-            #logger.info(title)
-            #logger.info(store)
-            #logger.info(street)
-            #logger.info(city)
-            #logger.info(state)
-            #logger.info(pcode)
-            #logger.info(phone)
-            #logger.info(lat)
-            #logger.info(longt)
-            #logger.info(hours)
-            logger.info(p)
-            p += 1
-            data.append([
-                'https://www.llbean.com',
-                link,
-                title,
-                street,
-                city,
-                state,
-                pcode,
-                'US',
-                store,
-                phone,
-                "flagship, Bike, Boat & Ski, hunting and fishing",
-                lat,
-                longt,
-                hours
-            ])
-
-    return data
-
+                longt = (
+                    r.text.split("var longitude", 1)[1]
+                    .split("=", 1)[1]
+                    .split(";", 1)[0]
+                )
+            except:
+                if ccode == "CA":
+                    pass
+                else:
+                    lat = longt = "<MISSING>"
+            yield SgRecord(
+                locator_domain="https://www.llbean.com",
+                page_url=link,
+                location_name=title,
+                street_address=street.strip(),
+                city=city.strip(),
+                state=state.strip(),
+                zip_postal=pcode.strip(),
+                country_code=ccode,
+                store_number=str(store),
+                phone=phone.strip(),
+                location_type=SgRecord.MISSING,
+                latitude=str(lat),
+                longitude=str(longt),
+                hours_of_operation=hours.replace("p.m.", "p.m. ")
+                .replace("Store Hours:", "")
+                .replace("NOW OPEN ", "")
+                .strip(),
+            )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+
 
 scrape()
-

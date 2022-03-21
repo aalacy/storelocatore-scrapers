@@ -40,37 +40,66 @@ def write_output(data):
             writer.writerow(row)
 
 
-def get_data(base_link):
+def fetch_data():
+
+    data = []
+    found = []
+    base_link = "https://www.porsche.com/all/dealer2/GetLocationsWebService.asmx/GetGlobalDealers?market=canada&siteId=canada&language=en&searchKey=52.088165%7C-106.6498956"
+
     req = session.get(base_link, headers=headers)
     base = BeautifulSoup(req.text, "lxml")
 
     items = base.find("listoflocations").find_all("location")
 
-    stores = []
     locator_domain = "porsche.com"
     for item in items:
         location_name = item.find("name").text.strip()
-        street_address = item.find("street").text.replace("Côte", "Cote")
+        try:
+            street_address = item.find("street").text.replace("Côte", "Cote")
+        except:
+            continue
         city = item.find("city").text.strip()
-        state = item.find("statecode").text.upper()
-        zip_code = item.find("postcode").text
-        if len(zip_code) == 4:
-            zip_code = "0" + zip_code
+
+        if street_address + city in found:
+            continue
+        found.append(street_address + city)
+
+        try:
+            state = item.find("statecode").text.upper()
+        except:
+            state = "<MISSING>"
+        try:
+            zip_code = item.find("postcode").text
+            if len(zip_code) == 4:
+                zip_code = "0" + zip_code
+        except:
+            zip_code = "<MISSING>"
         store_number = item.find("id").text
+        if store_number in found:
+            continue
+        found.append(store_number)
+
         location_type = "<MISSING>"
         latitude = item.find("coordinates").find("lat").text
         longitude = item.find("coordinates").find("lng").text.replace("E+07", "")
-        phone = item.find("phone").text
+        try:
+            phone = item.find("phone").text
+        except:
+            phone = "<MISSING>"
         hours_of_operation = "<MISSING>"
 
-        if "canada" in base_link:
-            country_code = "CA"
-        else:
-            country_code = "US"
-
-        link = item.find("url1").text
-        phone = item.find("phone").text
-        stores.append(
+        try:
+            country_code = item.find("countrycode").text.upper()
+        except:
+            country_code = item.find("market").text.upper()
+        if "LATIN" in country_code or "MIDDLE" in country_code:
+            country_code = state
+            state = "<MISSING>"
+        try:
+            link = item.find("url1").text
+        except:
+            link = "<MISSING>"
+        data.append(
             [
                 locator_domain,
                 link,
@@ -88,84 +117,6 @@ def get_data(base_link):
                 hours_of_operation,
             ]
         )
-    return stores
-
-
-def fetch_data():
-
-    data = []
-
-    states = [
-        "AL",
-        "AK",
-        "AZ",
-        "AR",
-        "CA",
-        "CO",
-        "CT",
-        "DC",
-        "DE",
-        "FL",
-        "GA",
-        "HI",
-        "ID",
-        "IL",
-        "IN",
-        "IA",
-        "KS",
-        "KY",
-        "LA",
-        "ME",
-        "MD",
-        "MA",
-        "MI",
-        "MN",
-        "MS",
-        "MO",
-        "MT",
-        "NE",
-        "NV",
-        "NH",
-        "NJ",
-        "NM",
-        "NY",
-        "NC",
-        "ND",
-        "OH",
-        "OK",
-        "OR",
-        "PA",
-        "RI",
-        "SC",
-        "SD",
-        "TN",
-        "TX",
-        "UT",
-        "VT",
-        "VA",
-        "WA",
-        "WV",
-        "WI",
-        "WY",
-    ]
-
-    for state in states:
-        base_link = (
-            "https://www.porsche.com/all/dealer2/GetLocationsWebService.asmx/GetLocationsInStateSpecialJS?market=usa&siteId=usa&language=none&state=&_locationType=Search.LocationTypes.Dealer&searchMode=state&searchKey=%s&address=&maxproximity=1000&maxnumtries=&maxresults=10000&postalcode="
-            % (state)
-        )
-
-        res = get_data(base_link)
-        if res:
-            for r in res:
-                data.append(r)
-
-    ca_link = "https://www.porsche.com/all/dealer2/GetLocationsWebService.asmx/GetLocationsInStateSpecialJS?market=canada&siteId=canada&language=en&state=&_locationType=Search.LocationTypes.Dealer&searchMode=proximity&searchKey=52.088165%7C-106.6498956&address=S7J%205L6,%20ca&maxproximity=10000&maxnumtries=&maxresults=1000"
-    res = get_data(ca_link)
-    if res:
-        for r in res:
-            data.append(r)
-
     return data
 
 

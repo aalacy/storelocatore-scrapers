@@ -74,7 +74,9 @@ def fetch_data():
         for store in stores:
             page_url = store["landingPageUrl"]
             locator_domain = website
-            location_name = store["c_storeName"]
+            location_name = (
+                store["c_storeName"] if "c_storeName" in store else store["name"]
+            )
             if location_name == "":
                 location_name = "<MISSING>"
 

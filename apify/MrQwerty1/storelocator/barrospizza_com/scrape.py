@@ -54,7 +54,7 @@ def fetch_data():
         state = a.get("state") or "<MISSING>"
         postal = a.get("zip") or "<MISSING>"
         country_code = "US"
-        phone = j.get("phone") or "<MISSING>"
+        phone = j.get("phone").strip() or "<MISSING>"
         latitude = j.get("latitude") or "<MISSING>"
         longitude = j.get("longitude") or "<MISSING>"
         location_type = "<MISSING>"
@@ -68,6 +68,10 @@ def fetch_data():
             _tmp.append(f"Fri - Sat: {fri_sat}")
 
         hours_of_operation = ";".join(_tmp) or "<MISSING>"
+
+        issoon = j.get("cross_streets") or ""
+        if "soon" in issoon.lower():
+            hours_of_operation = "Coming Soon"
 
         row = [
             locator_domain,

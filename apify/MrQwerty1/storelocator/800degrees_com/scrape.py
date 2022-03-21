@@ -54,7 +54,6 @@ def get_address(line):
         "USPSBoxGroupType": "address1",
         "USPSBoxID": "address1",
         "USPSBoxType": "address1",
-        "BuildingName": "address2",
         "OccupancyType": "address2",
         "OccupancyIdentifier": "address2",
         "SubaddressIdentifier": "address2",
@@ -104,7 +103,7 @@ def fetch_data():
 
     for d in divs:
         location_name = "".join(d.xpath(".//h3/text()"))
-        if "(" in location_name:
+        if "(" in location_name or "Singapore" in location_name:
             continue
         phone = (
             "".join(d.xpath(".//a[contains(@href, 'tel')]//text()")).strip()
@@ -136,7 +135,7 @@ def fetch_data():
         hours = d.xpath(
             ".//h4[contains(text(), 'Hours')]/following-sibling::div//text()|.//h4[contains(text(), 'Hours')]/following-sibling::h4//text()"
         )
-        hours = list(filter(None, [h.strip() for h in hours]))
+        hours = list(filter(None, [h.strip() for h in hours])) or ["View"]
         if "View" in hours[-1]:
             hours.pop()
 
@@ -148,8 +147,14 @@ def fetch_data():
             hours_of_operation = "Temporarily Closed"
         else:
             hours_of_operation = (
-                " ".join(hours).replace("PM", "PM;").replace("12:00 PM;", "12:00 PM")
+                " ".join(hours)
+                .replace("PM", "PM;")
+                .replace("12:00 PM;", "12:00 PM")
+                .replace("; to", " to")
             )
+
+        if hours_of_operation.endswith(";"):
+            hours_of_operation = hours_of_operation[:-1]
 
         row = [
             locator_domain,

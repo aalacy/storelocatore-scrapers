@@ -195,12 +195,13 @@ def determine_verification_link(rec, typ, fullId, last4, typIter):
         },
         # https://stores.shoppersdrugmart.ca/en/store/2002/
         "Real Canadian Liquorstore™": {
-            "url": "https://stores.shoppersdrugmart.ca/en/store/{last4}".format(
-                last4=last4
+            "url": "https://www.realcanadianliquorstore.ca/find-location/?location={fullId}".format(
+                fullId=fullId
             ),
             "headers": defaultHeaders,
             "api": None,
         },
+        # https://www.realcanadianliquorstore.ca/find-location/?location=LCL0001645
         "Fortinos": {
             "url": "https://www.fortinos.ca/store-locator/details/{last4}".format(
                 last4=last4
@@ -334,14 +335,14 @@ def determine_verification_link(rec, typ, fullId, last4, typIter):
         # Addressed this :)
         # Has to start with 0 for a few..
         "No Frills": {
-            "url": "https://www.yourindependentgrocer.ca/store-locator/details/{last4}".format(
+            "url": "https://www.nofrills.ca/store-locator/details/{last4}".format(
                 last4=last4
             ),
             "headers": {
                 "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36",
                 "Site-Banner": "nofrills",
             },
-            "api": "https://www.yourindependentgrocer.ca/api/pickup-locations/{last4}".format(
+            "api": "https://www.nofrills.ca/api/pickup-locations/{last4}".format(
                 last4=last4
             ),
         },
@@ -372,15 +373,15 @@ def determine_verification_link(rec, typ, fullId, last4, typIter):
                 try:
                     if result["api"]:
                         test_url = result["api"]
-                        test = session.get(test_url, headers=result["headers"])
+                        test = session.get(test_url, headers=result["headers"]).json()
                     elif result["url"]:
                         test_url = result["url"]
-                        test = session.get(test_url, headers=result["headers"])
+                        test = session.get(test_url, headers=result["headers"]).json()
                     else:
                         test = None
                     if test:
                         if test.status_code != 404:
-                            return True
+                            return test
                     return False
                 except Exception as e:  # noqa
                     return False
@@ -390,6 +391,18 @@ def determine_verification_link(rec, typ, fullId, last4, typIter):
             result.update({"type": typ[typIter].strip()})
             result.update(determinationStation[result["type"]])
             result.update({"passed": passed()})
+            if result["passed"]:
+                if not result["PhoneNumber"] or "one" in result["PhoneNumber"]:
+                    if result["passed"]["contactNumber"]:
+                        result["PhoneNumber"] = result["passed"]["contactNumber"]
+                    else:
+                        if result["passed"]["storeDetails"]["phoneNumber"]:
+                            result["PhoneNumber"] = result["passed"]["storeDetails"][
+                                "phoneNumber"
+                            ]
+                    result["passed"] = True
+                    # cleaning this up.
+
             return result
         except Exception as e:  # noqa
             return None
@@ -436,9 +449,9 @@ def do_everything(k):
 
 def url_fix(url):
     url = url.split("StartIndex")[0] + "StartIndex" + "=0"
-    url = "Radius=200".join(url.split("Radius="))
-    url = "MaxResults=100".join(url.split("MaxResults="))
-    url = "PageSize=100".join(url.split("PageSize="))
+    url = "Radius=200".join(url.split("Radius="))  # (means 20020)
+    url = "MaxResults=100".join(url.split("MaxResults="))  # (means 10010)
+    url = "PageSize=100".join(url.split("PageSize="))  # (means 10010)
     return url
 
 
@@ -528,6 +541,12 @@ def defuzz(record):
     # use the testing area in fetch_data()
 
 
+def fix_phone(record):
+    for attribute in record["Attributes"]:
+        if "Phone" in attribute["AttributeName"]:
+            return attribute["AttributeValue"]
+
+
 def fetch_data():
     logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
     # https://ws2.bullseyelocations.com/RestSearch.svc/ # noqa
@@ -556,12 +575,23 @@ def fetch_data():
     # ======== # noqa
 
     url = "https://www.joefresh.com/ca/store-locator"
-
+    # url entrypoint to get all loblaws data
     logzilla.info(f"Figuring out bullseye url and headers with selenium")  # noqa
-    url, headers = get_api_call(url)
+
+    def retry_starting():
+        try:
+            return get_api_call(url)
+        except Exception as e:
+            logzilla.info(f"Handling this:\n{e}")
+            retry_starting()
+            # shouldn't be to worried,
+            # worst case if their API changes crawl will timeout
+            # rather than just pull from the other (worse) data source
+
+    url, headers = retry_starting()
     logzilla.info(f"Found out this bullseye url:\n{url}\n\n& headers:\n{headers}")
 
-    logzilla.info(f"Fixing up URL")  # noqa
+    logzilla.info(f"Fixing up URL,")  # noqa
     url = url_fix(url)
     logzilla.info(f"New URL:\n{url}\n\n")
 
@@ -575,7 +605,7 @@ def fetch_data():
         max_threads=10,
         print_stats_interval=10,
     )
-    megafails = []
+    megafails = []  # noqa
     # for i in bullsEyeData["ResultList"]: # noqa
     #    print('\n\n\nNew record:\n') # noqa
     #    res = do_everything(i) # noqa
@@ -583,13 +613,19 @@ def fetch_data():
     #        print('definitely megafailed') # noqa
     #        megafails.append(res) # noqa
     for i in lize:
+        if (
+            not i["PhoneNumber"]
+            or i["PhoneNumber"] == "null"
+            or i["PhoneNumber"] == "none"
+        ):
+            i["PhoneNumber"] = fix_phone(i)
         if i["megaFailed"]:
-            megafails.append(i)
+            megafails.append(i)  # noqa
             yield defuzz(i)
         else:
             yield i
 
-    # for debugging megafails: # noqa
+    # ########for debugging megafails: # noqa
     # print(len(megafails)) # noqa
     # with open('megafails.txt', mode='w', encoding = 'utf-8') as file: # noqa
     #    file.write(json.dumps(megafails)) # noqa
@@ -611,9 +647,24 @@ def fix_comma(x):
 
 def fix_domain(x):
     try:
-        return ("/".join(x.split("/")[:3]),)
+        return (
+            "/".join(x.split("/")[:3])
+            .replace("('None',)", "<MISSING>")
+            .replace("'", "")
+            .replace("(", "")
+            .replace(")", "")
+            .replace(",", "")
+            .replace("None", "<MISSING>")
+        )
     except Exception:
-        return x.replace("('None',)", "<MISSING>")
+        return (
+            x.replace("('None',)", "<MISSING>")
+            .replace("'", "")
+            .replace("(", "")
+            .replace(")", "")
+            .replace(",", "")
+            .replace("None", "<MISSING>")
+        )
 
 
 def scrape():
@@ -625,7 +676,9 @@ def scrape():
         ),
         page_url=sp.MappingField(
             mapping=["url"],
-            value_transform=lambda x: x.replace("('None',)", "<MISSING>"),
+            value_transform=lambda x: x.replace("('None',)", "<MISSING>").replace(
+                "None", "<MISSING>"
+            ),
             is_required=False,
         ),
         location_name=sp.MappingField(

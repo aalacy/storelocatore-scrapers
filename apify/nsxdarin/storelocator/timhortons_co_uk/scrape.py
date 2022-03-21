@@ -38,7 +38,7 @@ def write_output(data):
 
 
 def fetch_data():
-    url = "https://timhortons.co.uk/find-a-tims.php"
+    url = "https://timhortons.co.uk/find-a-tims"
     r = session.get(url, headers=headers)
     website = "timhortons.co.uk"
     typ = "<MISSING>"
@@ -50,6 +50,29 @@ def fetch_data():
     lines = r.iter_lines()
     for line in lines:
         line = str(line.decode("utf-8"))
+        if "Hours: " in line:
+            hours = (
+                line.split("Hours: ", 1)[1]
+                .strip()
+                .replace("\r", "")
+                .replace("\n", "")
+                .replace("\t", "")
+            )
+            HFound = True
+            while HFound:
+                HFound = False
+                g = next(lines)
+                g = str(g.decode("utf-8"))
+                if "pm" in g:
+                    hours = (
+                        hours
+                        + "; "
+                        + g.strip()
+                        .replace("\r", "")
+                        .replace("\n", "")
+                        .replace("\t", "")
+                    )
+                    HFound = True
         if '<span class="location-city">' in line:
             name = line.split('<span class="location-city">')[1].split("<")[0]
         if 'data-module-lat="' in line:
@@ -58,46 +81,58 @@ def fetch_data():
         if '<p class="location-address">' in line:
             g = next(lines)
             g = str(g.decode("utf-8"))
-            if "CLOSED" in g:
-                hours = "TEMPORARILY CLOSED"
-            else:
-                try:
-                    hours = g.split("Hours: ")[1].split("<")[0]
-                except:
-                    hours = "<MISSING>"
-            if "<br>Hours:" in g:
-                addinfo = g.split("<br>Hours:")[0].strip().replace("\t", "")
-            else:
-                addinfo = g.rsplit("<br>", 1)[0].strip().replace("\t", "")
-            if addinfo.count("<br>") == 2:
-                add = addinfo.split("<br>")[0] + " " + addinfo.split("<br>")[1]
-                city = addinfo.split("<br>")[2].split(",")[0]
+            add = ""
+            addinfo = (
+                g.strip()
+                .replace("\t", "")
+                .replace("\n", "")
+                .replace("\r", "")
+                .replace("<br/><br/>", "")
+            )
+            if "<br/>" not in addinfo:
+                add = addinfo.split(",")[0]
+                city = "<MISSING>"
                 zc = addinfo.rsplit(",", 1)[1].strip()
-            else:
-                add = addinfo.split("<br>")[0]
-                city = addinfo.split("<br>")[1].split(",")[0]
-                zc = addinfo.rsplit(",", 1)[1].strip()
-        if "COMING SOON" in line:
+            if add == "":
+                if addinfo.count("<br/>") == 2:
+                    add = addinfo.split("<br/>")[0] + " " + addinfo.split("<br/>")[1]
+                    city = addinfo.split("<br/>")[2].split(",")[0]
+                    zc = addinfo.rsplit(",", 1)[1].strip()
+                else:
+                    add = addinfo.split("<br/>")[0]
+                    city = addinfo.split("<br/>")[1].split(",")[0]
+                    zc = addinfo.rsplit(",", 1)[1].strip()
+        if "COMING SOON" in line and "<!--p" not in line:
             name = name + " - COMING SOON"
         if '<div class="location-delivery-partners">' in line:
             phone = "<MISSING>"
             hours = hours.replace("&nbsp;", " ")
-            yield [
-                website,
-                loc,
-                name,
-                add,
-                city,
-                state,
-                zc,
-                country,
-                store,
-                phone,
-                typ,
-                lat,
-                lng,
-                hours,
-            ]
+            if "<br/>" in hours:
+                hours = hours.split("<br/>")[0]
+            if "44 Winchester" in add:
+                hours = "MON-SUN: 6am-12am"
+            if "Unit 2 Queensgate Centre" in add:
+                hours = "MON-SUN: 6am-midnight"
+            hours = hours.replace("; <!--", "").replace("-->;", "").strip()
+            if hours == "":
+                hours = "<MISSING>"
+            if "COMING SOON" not in name:
+                yield [
+                    website,
+                    loc,
+                    name,
+                    add,
+                    city,
+                    state,
+                    zc,
+                    country,
+                    store,
+                    phone,
+                    typ,
+                    lat,
+                    lng,
+                    hours,
+                ]
 
 
 def scrape():

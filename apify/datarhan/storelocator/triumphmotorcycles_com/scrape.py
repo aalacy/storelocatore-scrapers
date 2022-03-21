@@ -1,113 +1,80 @@
-import re
-import csv
-import json
-import urllib.parse
 from lxml import etree
 
 from sgrequests import SgRequests
-
-
-def write_output(data):
-    with open('data.csv', mode='w', encoding='utf-8') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
-        # Header
-        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-        # Body
-        for row in data:
-            writer.writerow(row)
+from sgpostal.sgpostal import parse_address_intl
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
-    # Your scraper here
     session = SgRequests()
+    domain = "triumphmotorcycles.com"
 
-    items = []
-    scraped_items = []
+    start_url = "https://www.triumphmotorcycles.com/api/v2/places/alldealers?LanguageCode={}&SiteLanguageCode=en-US&Skip=0&Take=500&CurrentUrl=www.triumphmotorcycles.com"
+    hdr = {
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
+    }
+    all_countries = session.get(
+        "https://www.triumphmotorcycles.com/api/v2/places/countries", headers=hdr
+    ).json()
+    for c in all_countries:
+        data = session.get(start_url.format(c["LanguageCode"]), headers=hdr).json()
+        all_locations = data["DealerCardData"]["DealerCards"]
+        for poi in all_locations:
+            page_url = poi["DealerWebsiteUrl"]
+            location_name = poi["Title"]
 
-    DOMAIN = 'triumphmotorcycles.com'
+            raw_address = f"{poi['AddressLine1']} {poi['AddressLine2']} {poi['AddressLine3']} {poi['AddressLine4']}"
+            addr = parse_address_intl(raw_address.replace("<br/>", " "))
+            street_address = addr.street_address_1
+            if addr.street_address_2:
+                street_address += " " + addr.street_address_2
+            city = addr.city
+            state = addr.state
+            zip_code = addr.postcode
+            if not zip_code:
+                zip_code = poi["PostCode"]
+            phone = poi["Phone"]
+            latitude = poi["Latitude"]
+            longitude = poi["Longitude"]
+            hoo = []
+            if poi["OpeningTimes"]:
+                hoo = etree.HTML(poi["OpeningTimes"]).xpath("//text()")
+            hoo = [e.strip() for e in hoo if e.strip()]
+            hours_of_operation = ", ".join(hoo) if hoo else ""
 
-    start_url = 'https://www.triumphmotorcycles.com/dealers/find-a-dealer?market=39&viewall=true#'
+            item = SgRecord(
+                locator_domain=domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_code,
+                country_code=c["CountryName"],
+                store_number="",
+                phone=phone,
+                location_type="",
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
 
-    response = session.get(start_url)
-    dom = etree.HTML(response.text)
-
-    all_poi_html = dom.xpath('//div[@class="dealerListItem"]')
-    for poi_html in all_poi_html:
-        store_url = poi_html.xpath('.//div[@class="websiteAddress"]//a/text()')
-        store_url = store_url[0] if store_url else '<MISSING>'
-        location_name = poi_html.xpath('.//span[@class="dealerName"]/text()')
-        location_name = location_name[0] if location_name else '<MISSING>'
-
-        location_response = session.get(store_url)
-        location_dom = etree.HTML(location_response.text)
-        address_raw = location_dom.xpath('//div[@class="span4 dealerAddress"]/p/text()')
-        address_raw = [elem.strip() for elem in address_raw if elem.strip()]
-        address_raw = [elem for elem in address_raw if elem != ',']
-        if len(address_raw) == 2:
-            elem_1 = address_raw[0].split('\r\n')[0]
-            elem_3 = address_raw[0].split()[-1]
-            elem_2 = address_raw[0].replace(elem_1, '').replace(elem_3, '').replace('\r\n', ' ').strip()
-            address_raw = [elem_1, elem_2, elem_3]
-        if len(address_raw) == 4:
-            address_raw = [' '.join(address_raw[:2])] + address_raw[2:]
-        if len(address_raw) == 5:
-            address_raw = [address_raw[0]] + address_raw[-2:]
-        street_address = address_raw[0].replace(',', '')
-        street_address = street_address if street_address else '<MISSING>'
-        city = ' '.join(address_raw[1].split()[:-1]).strip()
-        city = city if city else '<MISSING>'
-        state = address_raw[1].split()[-1].strip()
-        state = state if state else '<MISSING>'
-        if '\r\n' in street_address:
-            city = street_address.split('\r\n')[-1]
-            street_address = street_address.split('\r\n')[0]
-            state = address_raw[1].split()[0].strip()
-        zip_code = address_raw[-1]
-        zip_code = zip_code if zip_code else '<MISSING>'
-        country_code = ''
-        country_code = country_code if country_code else '<MISSING>'
-        store_number = ''
-        store_number = store_number if store_number else '<MISSING>'
-        phone = poi_html.xpath('.//div[@class="dealerContact"]/span/text()')[1]
-        phone = phone if phone else '<MISSING>'
-        location_type = ''
-        location_type = location_type if location_type else '<MISSING>'
-        
-        geo_data = location_dom.xpath('//script[contains(text(), "LatLng")]/text()')[0]
-        geo_data = re.findall('LatLng\((.+?)\);', geo_data)[0]
-        latitude = geo_data.split(',')[0]
-        latitude = latitude if latitude else '<MISSING>'
-        longitude = geo_data.split(',')[-1]
-        longitude = longitude if longitude else '<MISSING>'
-        hours_of_operation = location_dom.xpath('//div[@class="span4 dealerOpeningTimes"]/p[1]/text()')
-        hours_of_operation = ', '.join(hours_of_operation) if hours_of_operation else '<MISSING>'
-        
-        item = [
-            DOMAIN,
-            store_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip_code,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation
-        ]
-
-        items.append(item)
-        
-    return items
+            yield item
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":

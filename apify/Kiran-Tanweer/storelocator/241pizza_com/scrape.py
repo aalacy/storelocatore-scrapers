@@ -1,160 +1,106 @@
-from bs4 import BeautifulSoup
-import csv
-import re
-import time
+from sglogging import sglog
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
 
-
-logger = SgLogSetup().get_logger("241pizza_com")
 
 session = SgRequests()
-
+website = "123pizza_com"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
+session = SgRequests()
 headers = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.141 Safari/537.36",
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
 }
 
-
-def write_output(data):
-    with open("data.csv", mode="w", newline="", encoding="utf8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        temp_list = []
-        for row in data:
-            comp_list = [
-                row[2].strip(),
-                row[3].strip(),
-                row[4].strip(),
-                row[5].strip(),
-                row[6].strip(),
-                row[8].strip(),
-                row[10].strip(),
-            ]
-            if comp_list not in temp_list:
-                temp_list.append(comp_list)
-                writer.writerow(row)
-        logger.info(f"No of records being processed: {len(temp_list)}")
+DOMAIN = "https://www.241pizza.com/"
+MISSING = SgRecord.MISSING
 
 
 def fetch_data():
-    data = []
-    pattern = re.compile(r"\s\s+")
-    cleanr = re.compile(r"<[^>]+>")
-    url = "https://www.241pizza.com/locations.aspx"
-    req = session.get(url, headers=headers)
-    soup = BeautifulSoup(req.text, "html.parser")
-    cities = soup.find("select", {"id": "city"}).findAll("option")
-    for city in cities:
-        if city["value"] != "":
-            city = city["value"]
-            form_data = {
-                "city": city,
-                "address": "",
-            }
-            r = session.post(url, headers=headers, data=form_data)
-            soup = BeautifulSoup(r.text, "html.parser")
-            loc_box = soup.findAll("div", {"class": "addr-box"})
-            for loc in loc_box:
-                link = loc.find("a", {"class": "locationname"})["href"]
-                storeid = link.split("-")[-1]
-                street = loc.find("p", {"class": "fontXXL"}).text.strip()
-                locality = (
-                    loc.find("p", {"class": "fontpro under-line Locationswidth qq"})
-                    .find("span")
-                    .text.strip()
-                )
-                locality = locality.split(",")
-                city = locality[0]
-                state = locality[1]
-                pcode = locality[-1]
-                phone = loc.find("a", {"class": "pull-right"}).text.strip()
-                coords = loc.find("div", {"class": "storeDetails"}).find("a")["href"]
-                coords = (
-                    coords.split("EndAddress=")[1].split("&Storenumber")[0].split(",")
-                )
-                lat = coords[0]
-                lng = coords[1]
-                link = "https://www.241pizza.com/" + link
-                p = session.get(link, headers=headers)
-                soup = BeautifulSoup(p.text, "html.parser")
-                title = soup.find("article", {"class": "col-lg-5 col-md-6"})
-                if title is None:
-                    title = "<MISSING>"
-                else:
-                    title = title.find("h1").text
-                section = soup.find("main", {"id": "main"})
-                if section is None:
-                    hours = "<MISSING>"
-                else:
-                    section = section.find(
-                        "aside", {"class": "col-lg-4 col-md-3"}
-                    ).find("div")
-                    if section is None:
-                        hours = "<MISSING>"
-                    else:
-                        section = section.text
-                        hours = section.replace("\n", " ").strip()
-                        hours = re.sub(pattern, " ", hours)
-                        hours = re.sub(cleanr, " ", hours)
-                link = link.strip()
-                title = title.strip()
-                street = street.strip()
-                city = city.strip()
-                state = state.strip()
-                pcode = pcode.strip()
-                storeid = storeid.strip()
-                phone = phone.strip()
-                lat = lat.strip()
-                lng = lng.strip()
-                hours = hours.strip()
+    if True:
+        search_list = [
+            "https://api.momentfeed.com/v1/analytics/api/llp.json?auth_token=NMDTFZFIIJHWAFSC&center=53.9090049394,-106.133621976598&coordinates=49.630077061451715,-96.43269424222304,57.790455343073035,-115.83454971097284&multi_account=false&page=1&pageSize=60",
+            "https://api.momentfeed.com/v1/analytics/api/llp.json?auth_token=NMDTFZFIIJHWAFSC&center=49.4515636581,-84.2539813003493&coordinates=44.74424338570398,-74.55305356597442,53.746637758435554,-93.95490903472435&multi_account=false&page=1&pageSize=60",
+            "https://api.momentfeed.com/v1/analytics/api/llp.json?auth_token=NMDTFZFIIJHWAFSC&center=53.4604863996,-98.4703457399514&coordinates=49.137053662131905,-88.76941800557674,57.38451207065549,-108.17127347432641&multi_account=false&page=1&pageSize=60",
+            "https://api.momentfeed.com/v1/analytics/api/llp.json?auth_token=NMDTFZFIIJHWAFSC&center=52.7458531839,-60.0393930155171&coordinates=48.352142677956664,-50.33846528114168,56.73728524335223,-69.74032074989145&multi_account=false&page=1&pageSize=60",
+        ]
+        for search_url in search_list:
+            stores_req = session.get(search_url, headers=headers).json()
+            for store in stores_req:
+                info = store["store_info"]
+                title = info["name"]
+                storeid = info["corporate_id"]
+                street = info["address"]
+                city = info["locality"]
+                state = info["region"]
+                pcode = info["postcode"]
+                country = info["country"]
+                phone = info["phone"]
+                hours = info["store_hours"]
+                lat = info["latitude"]
+                lng = info["longitude"]
+                link = "https://www.241pizza.com/" + store["llp_url"]
+                hours = hours.split(";")
+                hoo = ""
+                for hr in hours:
+                    hour = hr.split(",")
+                    if len(hour) > 1:
+                        day = hour[0]
+                        start = hour[1]
+                        end = hour[2]
+                        if day == "1":
+                            day = "Monday"
+                        if day == "2":
+                            day = "Tuesday"
+                        if day == "3":
+                            day = "Wednesday"
+                        if day == "4":
+                            day = "Thursday"
+                        if day == "5":
+                            day = "Friday"
+                        if day == "6":
+                            day = "Satday"
+                        if day == "7":
+                            day = "Sunday"
+                        hoo = hoo + ", " + day + " " + start + " - " + end
+                hoo = hoo.lstrip(", ").strip()
 
-                data.append(
-                    [
-                        "https://www.241pizza.com/",
-                        link,
-                        title,
-                        street,
-                        city,
-                        state,
-                        pcode,
-                        "CA",
-                        storeid,
-                        phone,
-                        "<MISSING>",
-                        lat,
-                        lng,
-                        hours,
-                    ]
+                yield SgRecord(
+                    locator_domain=DOMAIN,
+                    page_url=link,
+                    location_name=title,
+                    street_address=street.strip(),
+                    city=city.strip(),
+                    state=state.strip(),
+                    zip_postal=pcode,
+                    country_code=country,
+                    store_number=storeid,
+                    phone=phone,
+                    location_type=MISSING,
+                    latitude=lat,
+                    longitude=lng,
+                    hours_of_operation=hoo.strip(),
                 )
-    return data
 
 
 def scrape():
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
-    data = fetch_data()
-    write_output(data)
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    log.info("Started")
+    count = 0
+    deduper = SgRecordDeduper(
+        SgRecordID(
+            {SgRecord.Headers.STREET_ADDRESS, SgRecord.Headers.HOURS_OF_OPERATION}
+        )
+    )
+    with SgWriter(deduper) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()

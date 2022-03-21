@@ -1,13 +1,13 @@
+from sglogging import sglog
 from bs4 import BeautifulSoup
-import csv
-import time
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-
-logger = SgLogSetup().get_logger("pizzaville_ca")
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
 
 session = SgRequests()
+website = "shopbedmart_com"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
+
 
 headers = {
     "authority": "www.pizzaville.ca",
@@ -27,123 +27,75 @@ headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.182 Safari/537.36",
 }
 
-
-def write_output(data):
-    with open("data.csv", mode="w", newline="", encoding="utf8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        temp_list = []
-        for row in data:
-            comp_list = [
-                row[2].strip(),
-                row[3].strip(),
-                row[4].strip(),
-                row[5].strip(),
-                row[6].strip(),
-                row[8].strip(),
-                row[10].strip(),
-            ]
-            if comp_list not in temp_list:
-                temp_list.append(comp_list)
-                writer.writerow(row)
-        logger.info(f"No of records being processed: {len(temp_list)}")
+DOMAIN = "https://shopbedmart.com/"
+MISSING = "<MISSING>"
 
 
 def fetch_data():
-    data = []
     url = "https://www.pizzaville.ca/stores"
-    stores_req = session.get(url, headers=headers)
-    soup = BeautifulSoup(stores_req.text, "html.parser")
-    soup = str(soup)
-    locations = soup.split("var locations = [")[1].split("];")[0]
+    r = session.get(url, headers=headers)
+    locations = r.text.split("var locations = [")[1].split("];")[0]
     location = locations.split("],")
     location.pop(-1)
     for loc in location:
         loc = loc.strip()
         coords = loc.split("<br/>',")[1].split(",'<a")[0].strip()
         coords = coords.split(",")
-        lat = coords[0]
-        lng = coords[1]
-        link = loc.split('<a href="')[1].split('" class')[0].strip()
-        link = "https://www.pizzaville.ca" + link
+        latitude = coords[0]
+        longitude = coords[1]
+        page_url = loc.split('<a href="')[1].split('" class')[0].strip()
+        page_url = "https://www.pizzaville.ca" + page_url
+        log.info(page_url)
         address = loc.split('"small-title">')[1].split("Tel:")[0]
         address = address.split("</span>")[1]
         address = address.rstrip("<br />")
-        street = address.replace("<br />", ", ")
-        street = street.replace(" , ", ", ")
-        state = "<MISSING>"
-        pcode = "<MISSING>"
-        r = session.get(link, headers=headers)
+        street_address = address.replace("<br />", ", ")
+        street_address = street_address.split(",")[0]
+        state = MISSING
+        zip_postal = MISSING
+        r = session.get(page_url, headers=headers)
         bs = BeautifulSoup(r.text, "html.parser")
         div_right = bs.find("div", {"class": "column right"})
         info = div_right.findAll("span")
-        title = info[-3].text
+        location_name = info[-3].text
         city = info[-2].text
+        country_code = "US"
         phone = info[-1].text
         div_left = bs.find("div", {"class": "column left"})
-        hours = div_left.text.strip()
-        hours = hours.replace("\n", " ")
-
-        if hours == "":
-            hours = "Store Closed"
-        link = link.strip()
-        title = title.strip()
-        street = street.strip()
-        city = city.strip()
-        state = state.strip()
-        pcode = pcode.strip()
-        phone = phone.strip()
-        lat = lat.strip()
-        lng = lng.strip()
-        hours = hours.strip()
-
-        data.append(
-            [
-                "https://www.pizzaville.ca/",
-                link,
-                title,
-                street,
-                city,
-                state,
-                pcode,
-                "CAN",
-                "<MISSING>",
-                phone,
-                "<MISSING>",
-                lat,
-                lng,
-                hours,
-            ]
+        hours_of_operation = div_left.text.strip()
+        hours_of_operation = hours_of_operation.replace("\n", " ")
+        if hours_of_operation == "":
+            hours_of_operation = MISSING
+        yield SgRecord(
+            locator_domain=DOMAIN,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address.strip(),
+            city=city.strip(),
+            state=state.strip(),
+            zip_postal=zip_postal.strip(),
+            country_code=country_code,
+            store_number=MISSING,
+            phone=phone.strip(),
+            location_type=MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation.strip(),
         )
-    return data
 
 
 def scrape():
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
-    data = fetch_data()
-    write_output(data)
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    log.info("Started")
+    count = 0
+    with SgWriter() as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()

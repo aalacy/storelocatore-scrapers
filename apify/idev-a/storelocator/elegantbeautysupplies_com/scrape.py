@@ -34,42 +34,63 @@ def fetch_data():
             "div.fusion-builder-row.fusion-row .fusion-layout-column"
         )
         for _ in locations:
-            if len(_.select("p")) > 1 and re.search(
-                r"coming soon", _.select("p")[1].text, re.IGNORECASE
+            if len(_.select("p")) > 1 and (
+                re.search(r"coming soon", _.select("p")[1].text, re.IGNORECASE)
+                or re.search(r"opening soon", _.select("p")[1].text, re.IGNORECASE)
             ):
                 continue
-            block = list(_.select("p")[0].stripped_strings)
+            block = []
+            for p in _.find("h3").find_next_siblings():
+                block += list(p.stripped_strings)
             addr = []
+            location_type = ""
+            if _.p.strong and not _phone(_.p.strong.text).isdigit():
+                location_type = _.p.strong.text.strip()
+                del block[-1]
             phone = ""
             hours = []
             for x, bb in enumerate(block):
+                bb = bb.replace("\u200b", "")
                 if _phone(bb).isdigit():
-                    phone = bb.split("T.")[-1].strip()
+                    phone = bb.split("T.")[-1].strip().replace("\u200b", "")
                     if x + 2 <= len(block):
                         hours = block[x + 2 :]
                     addr = block[:x]
                     if len(addr) > 2:
                         del addr[0]
                     break
-
-            coord = ["", ""]
+            if not addr:
+                addr = block
             try:
                 coord = _.a["href"].split("/@")[1].split(",17z/data")[0].split(",")
             except:
-                pass
+                coord = ["", ""]
             yield SgRecord(
                 page_url=base_url,
                 location_name=_.h3.text,
-                street_address=addr[0],
-                city=addr[-1].split(",")[0].strip(),
-                state=addr[-1].split(",")[1].strip().split(" ")[0].strip(),
-                zip_postal=addr[-1].split(",")[1].strip().split(" ")[-1].strip(),
+                street_address=addr[0].replace("\u200b", ""),
+                city=addr[-1].split(",")[0].strip().replace("\u200b", ""),
+                state=addr[-1]
+                .split(",")[1]
+                .strip()
+                .split(" ")[0]
+                .strip()
+                .replace("\u200b", ""),
+                zip_postal=addr[-1]
+                .split(",")[1]
+                .strip()
+                .split(" ")[-1]
+                .replace("\u200b", "")
+                .strip(),
                 phone=phone,
+                location_type=location_type,
                 latitude=coord[0],
                 longitude=coord[1],
                 country_code="US",
                 locator_domain=locator_domain,
-                hours_of_operation=_valid("; ".join(hours)),
+                hours_of_operation="; ".join(hours)
+                .replace("–", "-")
+                .replace("\u200b", ""),
             )
 
 

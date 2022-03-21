@@ -1,147 +1,215 @@
-import re
-import csv
+# -*- coding: utf-8 -*-
 from lxml import etree
 from urllib.parse import urljoin
 
 from sgrequests import SgRequests
-
-DOMAIN = "thelittlegym.com"
-
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+from sgpostal.sgpostal import parse_address_intl
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
-    # Your scraper here
-    items = []
-    scraped_items = []
-
     session = SgRequests()
-
-    DOMAIN = "tommybahama.com"
-    start_url = "https://www.tommybahama.com/en/store-finder?q=&searchStores=true&searchRestaurants=false&searchOutlets=true&searchInternational=true&CSRFToken=b6ba6d9c-9bc3-48f3-952d-2f59a53a4656"
+    domain = "tommybahama.com"
+    start_url = "https://www.tommybahama.com/restaurants-and-marlin-bars/locations"
     response = session.get(start_url)
     dom = etree.HTML(response.text)
-    all_locations = dom.xpath('//div[@id="store-search-results-state"]//a/@href')
-    next_page = dom.xpath('//a[contains(text(), "Next")]/@href')
-    while next_page:
-        page_url = "https://www.tommybahama.com" + next_page[0]
-        page_response = session.get(page_url)
-        page_dom = etree.HTML(page_response.text)
-        all_locations += page_dom.xpath(
-            '//div[@id="store-search-results-state"]//a/@href'
-        )
-        next_page = page_dom.xpath('//a[contains(text(), "Next")]/@href')
 
+    all_locations = dom.xpath("//div[@restaurant-feature-item]/a/@href")
     for url in list(set(all_locations)):
-        if "restaurants" in url:
-            continue
-        if "#" in url:
-            continue
-        store_url = urljoin(start_url, url.split("?")[0])
-        store_response = session.get(store_url)
-        store_dom = etree.HTML(store_response.text)
-        if not store_dom.xpath('//script[contains(text(), "storeaddressline")]/text()'):
+        page_url = urljoin(start_url, url)
+        loc_response = session.get(page_url)
+        loc_dom = etree.HTML(loc_response.text)
+        page_url = loc_dom.xpath('//a[contains(text(), "Store Information")]/@href')
+        if page_url:
+            page_url = page_url[0]
+            if "http" not in page_url:
+                page_url = urljoin(start_url, page_url)
+            loc_response = session.get(page_url)
+            loc_dom = etree.HTML(loc_response.text)
+        else:
             continue
 
-        raw_data = (
-            store_dom.xpath('//script[contains(text(), "storeaddressline1")]/text()')[0]
-            .replace("\n", "")
-            .replace("\t", "")
+        raw_data = loc_dom.xpath(
+            '//p[b[contains(text(), "Store")]]/following-sibling::p/text()'
         )
-        location_name = store_dom.xpath('//div[@class="store-locator-header"]/text()')
-        location_name = (
-            location_name[0].strip() if location_name[0].strip() else "<MISSING>"
-        )
-        street_address = re.findall("storeaddressline1 = '(.+?)';", raw_data)
-        street_address = street_address[0] if street_address else "<MISSING>"
-        if ";var" in street_address:
-            street_address = re.findall("storeaddressline2 = '(.+?)';", raw_data)[0]
-        city = re.findall("storeaddresstown = '(.+?)';", raw_data)
-        city = city[0] if city else "<MISSING>"
-        state = store_dom.xpath(
-            '//div[contains(text(), "Address")]/following-sibling::div/text()'
-        )
-        state = (
-            state[-1].strip().split(",")[-1].strip().split()[0]
-            if state
-            else "<MISSING>"
-        )
-        zip_code = re.findall("storeaddresspostalCode = '(.+?)';", raw_data)
-        zip_code = zip_code[0] if zip_code else "<MISSING>"
-        country_code = re.findall("storeaddresscountryname = '(.+?)';", raw_data)
-        country_code = country_code[0] if country_code else "<MISSING>"
-        store_number = "<MISSING>"
-        phone = store_dom.xpath(
-            '//div[contains(text(), "Phone #")]/following-sibling::div/text()'
-        )
-        phone = phone[0] if phone else "<MISSING>"
-        location_type = "<MISSING>"
-        latitude = re.findall("storelatitude = '(.+?)';", raw_data)
-        latitude = latitude[0] if latitude else "<MISSING>"
-        longitude = re.findall("storelongitude = '(.+?)';", raw_data)
-        longitude = longitude[0] if longitude else "<MISSING>"
-        hoo = store_dom.xpath(
-            '//div[contains(text(), "Store Hours")]/following-sibling::div/text()'
-        )
-        hours_of_operation = " ".join(hoo[1:3]) if hoo else "<MISSING>"
-        if not hours_of_operation:
-            hours_of_operation = "<MISSING>"
-
-        item = [
-            DOMAIN,
-            store_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip_code,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
+        if not raw_data:
+            raw_data = loc_dom.xpath(
+                '//div[@class="store-details-container mt-30"]/div[1]/text()'
+            )[:-1]
+        if not raw_data:
+            raw_data = loc_dom.xpath(
+                '//p[contains(text(), "Store")]/following-sibling::p/text()'
+            )
+        raw_data = [
+            e.replace("\xa0", " ").strip()
+            for e in raw_data
+            if e.strip() and e != "\xa0"
         ]
-        check = f"{location_name} {street_address}"
-        if check not in scraped_items:
-            scraped_items.append(check)
-            items.append(item)
+        raw_address = [
+            e
+            for e in raw_data
+            if "Open" not in e
+            and "Phone" not in e
+            and "AM -" not in e
+            and not e.endswith("PM")
+        ]
+        if (
+            len(raw_address[0].split(".")) == 3
+            and raw_address[0].split(".")[1].strip().isdigit()
+        ):
+            raw_address = raw_address[1:]
+        addr = parse_address_intl(" ".join(raw_address))
+        location_name = loc_dom.xpath('//h3[@class="cmp-title__text"]/text()')
+        if not location_name:
+            location_name = loc_dom.xpath("//h1/text()")
+        if not location_name:
+            continue
+        location_name = location_name[0]
+        street_address = raw_address[0]
+        city = addr.city
+        state = addr.state
+        zip_code = addr.postcode
+        country_code = ""
+        if zip_code and len(zip_code) == 5:
+            country_code = "United States"
+        phone = loc_dom.xpath(
+            '//p[b[contains(text(), "Store")]]/following-sibling::p/b/text()'
+        )
+        if not phone:
+            phone = loc_dom.xpath('//a[contains(@href, "tel")]/text()')
+        if not phone:
+            phone = [e.replace("Phone:", "") for e in raw_data if "Phone:" in e]
+        if not phone:
+            phone = loc_dom.xpath(
+                '//p[b[contains(text(), "Store")]]/following-sibling::p/text()'
+            )
+        if not phone:
+            phone = loc_dom.xpath(
+                '//p[contains(text(), "Store")]/following-sibling::p/text()'
+            )
+        phone = phone[0].split(":")[-1].strip()
+        hoo = loc_dom.xpath(
+            '//p[contains(text(), "Open:")]/following-sibling::p[1]/text()'
+        )
+        hoo_2 = loc_dom.xpath(
+            '//p[contains(text(), "Open:")]/following-sibling::p[2]/text()'
+        )
+        if hoo_2 and "Fri-" in hoo_2[0]:
+            hoo.append(hoo_2[0])
+        if hoo and "Open to a limited number" in hoo[0]:
+            hoo = ""
+        if not hoo:
+            hoo = loc_dom.xpath(
+                '//p[descendant::b[contains(text(), "Store")]]/following-sibling::p[contains(text(), "Open:")]/text()'
+            )
+        if not hoo:
+            hoo = loc_dom.xpath(
+                '//div[contains(text(), "Store Hours")]/following-sibling::div/text()'
+            )
+        if not hoo:
+            hoo = [e.replace("Open:", "") for e in raw_data if "Open:" in e]
+        hoo = [
+            e.replace("Hours:", "").replace("Hours", "").strip()
+            for e in hoo
+            if e.strip() and "Order online" not in e
+        ]
+        hoo = (
+            " ".join(hoo)
+            .split("This")[0]
+            .split("Open to a limited")[0]
+            .replace(">br>", "")
+            .split("Reservations Encouraged. ")[-1]
+            .replace("ours:", "")
+            .strip()
+        )
 
-    return items
+        item = SgRecord(
+            locator_domain=domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zip_code,
+            country_code=country_code,
+            store_number="",
+            phone=phone,
+            location_type="",
+            latitude="",
+            longitude="",
+            hours_of_operation=hoo,
+            raw_address=" ".join(raw_address),
+        )
+
+        yield item
+
+    response = session.get(
+        "https://www.tommybahama.com/stores-restaurants/international-locations"
+    )
+    dom = etree.HTML(response.text)
+    int_locations = dom.xpath('//p[a[u[contains(text(), "VIEW MAP")]]]')
+    for poi_html in int_locations:
+        raw_data = poi_html.xpath("text()")
+        raw_data = [e.strip() for e in raw_data if e.strip()]
+        for i, e in enumerate(raw_data):
+            if len(e.split(".")) > 2 and "(" not in e:
+                index = i
+                break
+        raw_address = ", ".join(raw_data[1:index])
+        addr = parse_address_intl(raw_address)
+        hoo = " ".join(raw_data).split("Open")[-1].strip()
+        if "am-" not in hoo.lower():
+            hoo = ""
+        phone = [e for e in raw_data if len(e.split(".")) > 2 and "," not in e]
+        phone = phone[0] if phone else ""
+        if "Dubai" in phone:
+            phone = ""
+        if "Brisbane" in phone:
+            phone = ""
+        country_code = addr.country
+        zip_code = addr.postcode
+        if zip_code and len(zip_code.split()) == 2 and not country_code:
+            country_code = "Canada"
+        if (zip_code and len(zip_code) == 5) and not country_code:
+            country_code = "United States"
+        if (zip_code and len(zip_code) < 5) and not country_code:
+            country_code = "AU"
+        location_name = raw_data[0]
+        if not country_code and "Tommy Bahama" in location_name:
+            country_code = "UNITED ARAB EMIRATES"
+        latitude = ""
+        longitude = ""
+
+        item = SgRecord(
+            locator_domain=domain,
+            page_url="https://www.tommybahama.com/stores-restaurants/international-locations",
+            location_name=location_name,
+            street_address=raw_data[1],
+            city=addr.city,
+            state=addr.state,
+            zip_postal=zip_code,
+            country_code=country_code,
+            store_number="",
+            phone=phone,
+            location_type="",
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hoo,
+            raw_address=raw_address,
+        )
+
+        yield item
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":
