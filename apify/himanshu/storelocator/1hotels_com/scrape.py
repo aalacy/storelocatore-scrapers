@@ -11,7 +11,6 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-
 session = SgRequests()
 website = "1hotels_com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -67,15 +66,36 @@ def fetch_data():
             store_number = MISSING
 
             location_type = poi["@type"]
-            raw_address = street_address+" "+city+" "+state+" "+zip_postal+" "+country_code
+            raw_address = (
+                street_address
+                + " "
+                + city
+                + " "
+                + state
+                + " "
+                + zip_postal
+                + " "
+                + country_code
+            )
         else:
             loc_dom = BeautifulSoup(loc_response.text, "html.parser")
             location_name = loc_dom.find("h1").text
-            raw_address = loc_dom.find("div", {"class": "caption col-md-10 ml-auto mr-auto text-lg-center card"}).find("p").text
-            phone =loc_response.text.split('<a href="tel:')[1].split('"')[0]
+            raw_address = (
+                loc_dom.find(
+                    "div",
+                    {"class": "caption col-md-10 ml-auto mr-auto text-lg-center card"},
+                )
+                .find("p")
+                .text
+            )
+            phone = loc_response.text.split('<a href="tel:')[1].split('"')[0]
             if "Planning an upcoming trip" in raw_address:
-                raw_address=  loc_dom.find("p", {"class": "directions__address"}).get_text(separator='|', strip=True).split('|')
-                location_name =raw_address[0]
+                raw_address = (
+                    loc_dom.find("p", {"class": "directions__address"})
+                    .get_text(separator="|", strip=True)
+                    .split("|")
+                )
+                location_name = raw_address[0]
                 raw_address = " ".join(raw_address[1:])
             pa = parse_address_intl(raw_address)
 
@@ -95,17 +115,19 @@ def fetch_data():
             country_code = country_code.strip() if country_code else MISSING
 
             store_number = MISSING
-            
+
             location_type = MISSING
         try:
-            longitude,latitude = loc_response.text.split('"coordinates":"[')[1].split(']')[0].split(",")
+            longitude, latitude = (
+                loc_response.text.split('"coordinates":"[')[1].split("]")[0].split(",")
+            )
         except:
             geo = re.findall('location":{(.+),"lat_sin', loc_response.text)[0]
             geo = json.loads("{" + geo + "}")
             latitude = geo["lat"]
             longitude = geo["lng"]
         hours_of_operation = MISSING
-        location_name = location_name.replace('- Sprouting Fall 2022','')
+        location_name = location_name.replace("- Sprouting Fall 2022", "")
         phone = phone.replace("=", "")
         yield SgRecord(
             locator_domain=DOMAIN,
@@ -122,7 +144,7 @@ def fetch_data():
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hours_of_operation.strip(),
-            raw_address =raw_address
+            raw_address=raw_address,
         )
 
 
