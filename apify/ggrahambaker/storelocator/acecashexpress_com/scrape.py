@@ -16,18 +16,20 @@ def fetch_data(sgw: SgWriter):
     r = session.get(api_url, headers=headers)
     js = r.json()
     for j in js:
-        slug = j.get("permalink")
+        slug = j.get("permalink") or "<MISSING>"
         page_url = f"https://www.acecashexpress.com{slug}"
         location_name = "ACE Cash Express"
-        street_address = j.get("address")
-        state = j.get("state_code")
-        postal = j.get("zip_code")
+        street_address = j.get("address") or "<MISSING>"
+        state = j.get("state_code") or "<MISSING>"
+        postal = j.get("zip_code") or "<MISSING>"
         country_code = "US"
-        city = j.get("city")
-        store_number = j.get("store_number")
-        latitude = j.get("lat")
-        longitude = j.get("lng")
-        phone = j.get("phone")
+        city = j.get("city") or "<MISSING>"
+        store_number = j.get("store_number") or "<MISSING>"
+        latitude = j.get("lat") or "<MISSING>"
+        longitude = j.get("lng") or "<MISSING>"
+        if latitude == "0.000000000000":
+            latitude, longitude = "<MISSING>", "<MISSING>"
+        phone = j.get("phone") or "<MISSING>"
         days = [
             "monday",
             "tuesday",
@@ -53,6 +55,13 @@ def fetch_data(sgw: SgWriter):
             .replace("2:000", "20:00")
             or "<MISSING>"
         )
+        if hours_of_operation.count("Closed") == 7:
+            hours_of_operation = "Closed"
+        if phone == "0":
+            phone = "<MISSING>"
+        status = j.get("status")
+        if status == "C":
+            continue
 
         row = SgRecord(
             locator_domain=locator_domain,
@@ -76,7 +85,5 @@ def fetch_data(sgw: SgWriter):
 
 if __name__ == "__main__":
     session = SgRequests()
-    with SgWriter(
-        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
-    ) as writer:
+    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))) as writer:
         fetch_data(writer)

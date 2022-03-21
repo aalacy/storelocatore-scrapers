@@ -129,6 +129,12 @@ def fetch_other(session, state):
         yield grab_json(b4(res.text, "lxml"))
 
 
+def vision(x):
+    if any(i in x for i in ["ISION", "ision"]):
+        return "VISION"
+    return ""
+
+
 def test_other(session):
     res = SgRequests.raise_on_err(
         session.get("https://www.walmart.com/store/2784-beatrice-ne", headers=headers)
@@ -179,7 +185,7 @@ def gen_hours(rec):
                 str("General" + " - " + str(human_hours(rec["operationalHours"])))
             )
         except Exception:
-            pass
+            raise
         for i in rec["primaryServices"]:
             try:
                 newrec["horas"].append(
@@ -205,14 +211,13 @@ def gen_hours(rec):
                         pass
         except Exception:
             pass
-        if len(newrec["horas"]) > 0:
-            newrec["horas"] = "\n".join(newrec["horas"])
-        else:
-            raise
-        return newrec
-    except Exception as mf:
-        newrec["horas"] = str(mf)
-        return newrec
+        for recz in newrec["horas"]:
+            copyrec = newrec
+            copyrec["horas"] = recz
+            yield copyrec
+
+    except Exception:
+        pass
 
 
 def transform_types(rec):
@@ -278,9 +283,8 @@ def fetch_data():
                                     store["geoPoint"]["latitude"],
                                     store["geoPoint"]["longitude"],
                                 )
-                    reczz = gen_hours(transform_types(store))
-                    please_write(reczz)
-                    yield reczz
+                    for recc in gen_hours(transform_types(store)):
+                        yield recc
         progress = str(round(100 - (search.items_remaining() / maxZ * 100), 2)) + "%"
         total += found
         logger.info(f"{code} | found: {found} | total: {total} | progress: {progress}")
@@ -288,12 +292,6 @@ def fetch_data():
 
 def add_walmart(x):
     return x if "Walmart" in x else "Walmart " + x
-
-
-def vision(x):
-    if any(i in x for i in ["ISION", "ision"]):
-        return "VISION"
-    return ""
 
 
 def scrape():

@@ -74,21 +74,12 @@ def fetch_data():
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter(
-        deduper=SgRecordDeduper(
-            SgRecordID(
-                {SgRecord.Headers.LATITUDE, SgRecord.Headers.LONGITUDE},
-                fail_on_empty_id=True,
-            )
-            .with_truncate(SgRecord.Headers.LATITUDE, 3)
-            .with_truncate(SgRecord.Headers.LONGITUDE, 3)
-        )
-    ) as writer:
+    deduper = SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))
+    with SgWriter(deduper) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
             count = count + 1
-
     log.info(f"No of records being processed: {count}")
     log.info("Finished")
 
