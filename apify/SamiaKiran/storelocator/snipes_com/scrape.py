@@ -160,6 +160,11 @@ def fetch_data():
                     .get_text(separator="|", strip=True)
                     .replace("|", " ")
                 )
+                if (
+                    hours_of_operation
+                    == "Montag: - Dienstag: - Mittwoch: - Donnerstag: - Freitag: - Samstag: - Sonntag: -"
+                ):
+                    hours_of_operation = MISSING
                 if city is MISSING:
                     city = raw_address.split()[-1]
 
