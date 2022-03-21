@@ -57,8 +57,10 @@ def parse_json(soup2, page_url):
     data["country_code"] = "CA"
     data["zip_postal"] = zip_postal
     data["phone"] = re.findall(r"\(\d+\) \d+-\d+", str(soup2))[0]
-    data["latitude"] = re.findall("(\d+\.\d+,-?\d+\.\d+)", str(soup2))[0].split(",")[0]
-    data["longitude"] = re.findall("(\d+\.\d+,-?\d+\.\d+)", str(soup2))[0].split(",")[1]
+    data["latitude"] = re.findall(r"(\d+\.\d+,-?\d+\.\d+)", str(soup2))[0].split(",")[0]
+    data["longitude"] = re.findall(r"(\d+\.\d+,-?\d+\.\d+)", str(soup2))[0].split(",")[
+        1
+    ]
     data["raw_address"] = f"{street_address}, {city}, {state} {zip_postal}".replace(
         MISSING, ""
     )
