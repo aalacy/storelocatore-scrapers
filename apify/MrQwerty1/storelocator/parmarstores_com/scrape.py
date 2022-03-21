@@ -1,4 +1,4 @@
-import tabula as tb
+import tabula as tb  #noqa
 from io import BytesIO
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
