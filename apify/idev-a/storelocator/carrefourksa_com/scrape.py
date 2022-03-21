@@ -29,6 +29,14 @@ def _d(_, current_country):
     street_address = _["line1"]
     if _["line2"]:
         street_address += " " + _["line2"]
+
+    state = _.get("state")
+    zip_postal = _.get("postalCode")
+    raw_address = f"{street_address} {_['town']}"
+    if state:
+        raw_address += f" {state}"
+    if zip_postal:
+        raw_address += f" {zip_postal}"
     hours = []
     for day, hh in _["openings"].items():
         hours.append(f"{day}: {hh}")
@@ -58,6 +66,7 @@ def _d(_, current_country):
         location_type=_["storeFormat"],
         locator_domain=locator_domain,
         hours_of_operation="; ".join(hours),
+        raw_address=raw_address,
     )
 
 
@@ -109,11 +118,10 @@ if __name__ == "__main__":
         deduper=SgRecordDeduper(
             SgRecordID(
                 {
-                    SgRecord.Headers.STREET_ADDRESS,
-                    SgRecord.Headers.CITY,
                     SgRecord.Headers.LOCATION_NAME,
                     SgRecord.Headers.COUNTRY_CODE,
                     SgRecord.Headers.LOCATION_TYPE,
+                    SgRecord.Headers.RAW_ADDRESS,
                 }
             ),
             duplicate_streak_failure_factor=100,

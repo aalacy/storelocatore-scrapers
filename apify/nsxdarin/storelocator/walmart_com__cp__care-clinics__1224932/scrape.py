@@ -234,10 +234,9 @@ def transform_types(rec):
                 str(rec["primaryServices"]) + " " + str(rec["secondaryServices"])
             )
         except Exception:
-            if rec:
-                newrec = rec
-            else:
-                newrec = None
+            newrec = rec
+            if newrec:
+                newrec["rawadd"] = "<ERROR>"
     return newrec
 
 
