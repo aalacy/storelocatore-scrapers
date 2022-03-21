@@ -29,7 +29,6 @@ def fetch_data(sgw: SgWriter):
         for item in items:
 
             locator_domain = "https://www.tradewindsmarkets.com"
-            content = base.find("div", attrs={"class": "row"})
             location_name = item.h2.text
             raw_address = (
                 item.find(class_="location-address")
