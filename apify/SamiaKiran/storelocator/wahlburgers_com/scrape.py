@@ -37,7 +37,6 @@ def fetch_data():
                 country_code = "Australia"
             else:
                 country_code = "USA"
-            print(page_url)
             r = session.get(page_url)
             soup = BeautifulSoup(r.text, "html.parser")
             loclist = soup.findAll("li", {"class": "single-location"})
@@ -45,7 +44,7 @@ def fetch_data():
                 if "COMING SOON" in loc.text:
                     continue
                 page_url = loc.find("a")["href"]
-                # log.info(page_url)
+                log.info(page_url)
                 r = session.get(page_url, headers=headers)
                 if "Coming soon" in r.text:
                     continue
