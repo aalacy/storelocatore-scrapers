@@ -34,7 +34,7 @@ def fetch_data():
         loclist = session.get(url, headers=headers).json()["data"]
         for loc in loclist:
             location_name = loc["display_name"]
-            if "Keva Juice Southwest, LLC # 10" in location_name:
+            if "Keva Juice Southwest, LLC  # 10" in location_name:
                 continue
             store_number = loc["id"]
             temp = loc["address"]["data"]
