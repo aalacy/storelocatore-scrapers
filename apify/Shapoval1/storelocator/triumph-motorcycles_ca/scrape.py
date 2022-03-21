@@ -51,7 +51,7 @@ def fetch_data(sgw: SgWriter):
                 if street_address.isdigit() or street_address == "<MISSING>":
                     street_address = ad.replace("None", "").strip()
                 state = a.state or "<MISSING>"
-
+                country_code = a.country or "<MISSING>"
                 city = a.city or "<MISSING>"
                 postal = j.get("PostCode") or "<MISSING>"
                 if postal == "0":
@@ -101,7 +101,7 @@ def fetch_data(sgw: SgWriter):
                     city=city,
                     state=state,
                     zip_postal=postal,
-                    country_code=SgRecord.MISSING,
+                    country_code=country_code,
                     store_number=SgRecord.MISSING,
                     phone=phone,
                     location_type=SgRecord.MISSING,
