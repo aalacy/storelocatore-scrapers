@@ -153,10 +153,12 @@ def fetch_data(driver):
             continue
         street_address, city, state, zip_postal = get_address(raw_address)
         phone = get_phone(stringify_nodes(body, '//a[contains(@href, "tel")]'))
-        hours_of_operation = stringify_nodes(
+        hoo = stringify_nodes(
             body,
             '//div[contains(@class, "hours")]/div[contains(@class, "columns")][2]/table',
         )
+        hours_of_operation = hoo.split("festivo")[0]
+
         latitude = get_txt(response, "lat")
         longitude = get_txt(response, "lng")
 
