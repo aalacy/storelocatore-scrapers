@@ -129,6 +129,13 @@ def fetch_data():
             latitude = map_link.split("!3d")[1].strip().split("!")[0].strip()
             longitude = map_link.split("!2d")[1].strip().split("!")[0].strip()
 
+        if hours_of_operation:
+            hours_of_operation = (
+                hours_of_operation.split("; GCE")[0]
+                .strip()
+                .split("; 24/7 EZ Pick UP")[0]
+                .strip()
+            )
         yield SgRecord(
             locator_domain=locator_domain,
             page_url=page_url,

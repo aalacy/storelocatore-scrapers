@@ -145,7 +145,10 @@ max_workers = 1
 def fetchConcurrentSingle(link):
     page_url = locator_domain + link.a["href"]
     response = request_with_retries(page_url)
-    return page_url, bs(response.text, "lxml")
+    if response.status == 200:
+        return page_url, bs(response.text, "lxml")
+
+    return None
 
 
 def fetchConcurrentList(list, occurrence=max_workers):

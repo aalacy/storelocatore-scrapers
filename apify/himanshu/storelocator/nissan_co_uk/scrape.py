@@ -1,103 +1,72 @@
-import csv
-from bs4 import BeautifulSoup
-import re
-import json
-import time
-import html5lib
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-logger = SgLogSetup().get_logger('nissan_co_uk')
-session = SgRequests() 
-def write_output(data):
-    with open('data.csv', mode='w', encoding="utf-8", newline="") as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", 'page_url'])
-        # Body
-        for row in data:
-            writer.writerow(row)
-def request_wrapper(url,method,headers,data=None):
-   request_counter = 0
-   if method == "get":
-       while True:
-           try:
-               r = session.get(url,headers=headers)
-               return r
-               break
-           except:
-               time.sleep(2)
-               request_counter = request_counter + 1
-               if request_counter > 10:
-                   return None
-                   break
-   elif method == "post":
-       while True:
-           try:
-               if data:
-                   r = session.post(url,headers=headers,data=data)
-               else:
-                   r = session.post(url,headers=headers)
-               return r
-               break
-           except:
-               time.sleep(2)
-               request_counter = request_counter + 1
-               if request_counter > 10:
-                   return None
-                   break
-   else:
-       return None
-def fetch_data():
-    address = []
-    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',}
-    base_url = "https://www.nissan.co.uk"
-    data = ["https://www.nissan.co.uk/dealer-list.html","https://www.nissan.co.uk/dealer-list/k-z.html"]
-    for g in data :
-        r = request_wrapper(g,"get",headers=headers)
-        soup = BeautifulSoup(r.text,"html5lib")
-        data = (soup.find_all("div",{"class":"c_153"}))
-        for i in data:
-            link = (i.find_all("td")[2].find("a")['href'])
-            r = request_wrapper(link,"get",headers=headers)
-            soup = BeautifulSoup(r.text,"html5lib")
-            try:
-                data1 = (soup.find("script",{"type":"application/ld+json"}).text)
-            except:
-                continue
-            json_data = json.loads(data1)
-            location_name = json_data['name']
-            street_address = json_data['address']['streetAddress']
-            city = json_data['address']['addressLocality']
-            state = json_data['address']['addressCountry']
-            zipp = json_data['address']['postalCode']
-            phone = json_data['telePhone']
-            latitude = json_data['geo']['latitude']
-            longitude = json_data['geo']['longitude']
-            store_number = json_data['@id'].replace('gb_nissan_','')
-            hours_of_operation = str(json_data['openingHours']).replace("[","").replace("]","").replace("'","").replace(":","").replace("Sa","Saturday :").replace("Mo-Fr","Monday-Friday :").replace("Su","Sunday :").replace("Mo","Monday :").replace("Tues","Tuesday :").replace("We","Wednesday :").replace("Th","Thursday :").replace("Fr","Friday :")
-            page_url = link
-            store = []
-            store.append(base_url if base_url else "<MISSING>")
-            store.append(location_name if location_name else "<MISSING>") 
-            store.append(street_address.strip().replace("         ","") if street_address else "<MISSING>")
-            store.append(city if city else "<MISSING>")
-            store.append(state if state else "<MISSING>")
-            store.append(zipp if zipp else "<MISSING>")
-            store.append("UK")
-            store.append(store_number if store_number else"<MISSING>") 
-            store.append(phone if phone else "<MISSING>")
-            store.append("Nissan - Dealer | Nissan UK")
-            store.append(latitude if latitude else "<MISSING>")
-            store.append(longitude if longitude else "<MISSING>")
-            store.append("<MISSING>")
-            store.append(page_url if page_url else "<MISSING>")
-            if store[7] in address :
-                continue
-            address.append(store[7])
-            yield store 
-def scrape():
-    data = fetch_data()
-    write_output(data)
-scrape()
+
+def fetch_data(sgw: SgWriter):
+
+    locator_domain = "https://www.nissan.co.uk/"
+    api_url = "https://www.nissan.co.uk/content/nissan_prod/en_GB/index/dealer-finder/jcr:content/freeEditorial/contentzone_e70c/columns/columns12_5fe8/col1-par/find_a_dealer_14d.extended_dealers_by_location.json/_charset_/utf-8/page/1/size/600/data.json"
+    session = SgRequests()
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
+    }
+    r = session.get(api_url, headers=headers)
+    js = r.json()["dealers"]
+    for j in js:
+        a = j.get("address")
+        slug = j.get("contact").get("website")
+        page_url = f"https://www.nissan.co.uk{slug}"
+        location_name = j.get("tradingName") or "<MISSING>"
+        location_type = "<MISSING>"
+        street_address = a.get("addressLine1") or "<MISSING>"
+        state = "<MISSING>"
+        postal = a.get("postalCode") or "<MISSING>"
+        country_code = "GB"
+        city = a.get("city") or "<MISSING>"
+        store_number = j.get("urlId") or "<MISSING>"
+        latitude = j.get("geolocation").get("latitude") or "<MISSING>"
+        longitude = j.get("geolocation").get("longitude") or "<MISSING>"
+        phone = j.get("contact").get("phone")
+        hours_of_operation = (
+            "".join(j.get("openingHours").get("openingHoursText"))
+            .replace("<br>", " ")
+            .replace("Sales:", "")
+            .strip()
+        )
+        if hours_of_operation.find("Services & Parts:") != -1:
+            hours_of_operation = hours_of_operation.split("Services & Parts:")[
+                0
+            ].strip()
+        if hours_of_operation.count("Closed") == 7:
+            hours_of_operation = "Closed"
+
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+            raw_address=f"{street_address} {city}, {state} {postal}".replace(
+                "<MISSING>", ""
+            ).strip(),
+        )
+
+        sgw.write_row(row)
+
+
+if __name__ == "__main__":
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))) as writer:
+        fetch_data(writer)

@@ -4,11 +4,14 @@ from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 
 
 def fetch_data(sgw):
-    postals = ["98837", "68822", "10001"]
-    for p in postals:
+    search = DynamicZipSearch(
+        country_codes=[SearchableCountries.USA], expected_search_radius_miles=500
+    )
+    for _zip in search:
         data = {
             "request": {
                 "appkey": "C8F922C2-35CF-11E3-8171-DA43842CA48B",
@@ -18,14 +21,14 @@ def fetch_data(sgw):
                     "geolocs": {
                         "geoloc": [
                             {
-                                "addressline": p,
+                                "addressline": _zip,
                                 "country": "",
                                 "latitude": "",
                                 "longitude": "",
                             }
                         ]
                     },
-                    "searchradius": "5000",
+                    "searchradius": "1000",
                 },
             }
         }
@@ -35,24 +38,27 @@ def fetch_data(sgw):
             data=json.dumps(data),
         )
 
-        js = r.json()["response"]["collection"]
+        try:
+            js = r.json()["response"]["collection"]
+        except:
+            js = []
 
         for j in js:
             location_name = (
                 f"SalonCentric - {j.get('name')} Professional Beauty Supply Store"
             )
-            street_address = j.get("address1") or "<MISSING>"
-            city = j.get("city") or "<MISSING>"
-            state = j.get("state") or "<MISSING>"
-            postal = j.get("postalcode") or "<MISSING>"
-            country_code = j.get("country") or "<MISSING>"
+            street_address = j.get("address1")
+            city = j.get("city")
+            state = j.get("state")
+            postal = j.get("postalcode")
+            country_code = j.get("country")
             store_number = j.get("clientkey")
             if len(store_number) > 4:
                 continue
 
-            phone = j.get("phone") or "<MISSING>"
-            latitude = j.get("latitude") or "<MISSING>"
-            longitude = j.get("longitude") or "<MISSING>"
+            phone = j.get("phone")
+            latitude = j.get("latitude")
+            longitude = j.get("longitude")
             page_url = f"https://stores.saloncentric.com/{state.lower()}/{city.replace(' ', '-').lower()}/{store_number}/"
 
             days = [
@@ -66,19 +72,16 @@ def fetch_data(sgw):
             ]
             _tmp = []
             for day in days:
-                start = j.get(f"{day}_hours_open")
-                close = j.get(f"{day}_hours_closed")
+                start = j.get(f"{day}_hours_open") or ""
+                close = j.get(f"{day}_hours_closed") or ""
                 if not start or not close:
                     continue
-                if start.find("CLOSED") == -1 and close.find("CLOSED") == -1:
+                if "CLOSED" not in start and "CLOSED" not in close:
                     _tmp.append(f"{day[:3].upper()}: {start} - {close}")
                 else:
                     _tmp.append(f"{day[:3].upper()}: CLOSED")
 
-            hours_of_operation = ";".join(_tmp) or SgRecord.MISSING
-
-            if hours_of_operation.count("CLOSED") == 7:
-                hours_of_operation = "CLOSED"
+            hours_of_operation = ";".join(_tmp)
 
             row = SgRecord(
                 page_url=page_url,
