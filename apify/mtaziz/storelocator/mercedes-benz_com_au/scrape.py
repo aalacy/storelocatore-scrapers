@@ -393,7 +393,7 @@ def fetch_data(sgw: SgWriter):
         tasks = []
         task_ha = [
             executor.submit(fetch_records, idx, api_url, headers_with_apikey, sgw)
-            for idx, api_url in enumerate(api_endpoint_urls[0:10])
+            for idx, api_url in enumerate(api_endpoint_urls[0:])
         ]
         tasks.extend(task_ha)
         for future in as_completed(tasks):
