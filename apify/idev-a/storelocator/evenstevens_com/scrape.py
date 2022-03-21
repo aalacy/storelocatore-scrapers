@@ -55,6 +55,8 @@ def fetch_data():
                 zip_postal=addr[-1].split(",")[1].strip().split()[-1].strip(),
                 country_code="US",
                 phone=phone,
+                latitude=loc["lat"],
+                longitude=loc["lng"],
                 locator_domain=locator_domain,
                 hours_of_operation="; ".join(hours).replace("–", "-"),
                 raw_address=" ".join(addr),

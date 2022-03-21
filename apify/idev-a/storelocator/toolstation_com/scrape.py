@@ -61,7 +61,7 @@ def request_with_retries(url):
 
 def fetch_data():
     with SgRequests() as session:
-        locations = bs(session.get(base_url, headers=_headers).text).select(
+        locations = bs(session.get(base_url, headers=_headers).text, "lxml").select(
             "ul.branches-ul > li a"
         )
         for page_url, res, sp1 in fetchConcurrentList(locations):

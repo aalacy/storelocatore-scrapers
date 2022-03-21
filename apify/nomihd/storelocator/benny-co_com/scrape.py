@@ -78,8 +78,11 @@ def fetch_data():
             .replace("?", "-")
             .strip()
         )
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
+        map_link = "".join(
+            store.xpath('.//a[contains(@href,"maps/dir/")]/@href')
+        ).strip()
+        latitude = map_link.split("/")[-1].strip().split(",")[0].strip()
+        longitude = map_link.split("/")[-1].strip().split(",")[-1].strip()
 
         yield SgRecord(
             locator_domain=locator_domain,

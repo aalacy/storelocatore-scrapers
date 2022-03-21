@@ -4,3 +4,4 @@ sglogging==0.0.4
 sgscrape==0.2.1
 sgrequests==0.2.9
 sgvalidator==0.0.71
+tenacity==7.0.0

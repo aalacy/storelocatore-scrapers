@@ -10,8 +10,8 @@ _headers = {
 }
 
 locator_domain = "https://www.bizou.com/"
-page_url = "https://www.bizou.com/en-ca/storelocator/"
-base_url = "https://cdn.shopify.com/s/files/1/0482/6015/3510/t/5/assets/sca.storelocatordata.json?v=1646331102&_=1646385328393"
+page_url = "https://bizou.com/pages/store-locator"
+base_url = "https://cdn.shopify.com/s/files/1/0482/6015/3510/t/5/assets/sca.storelocatordata.json?v=1646331102&origLat=37.09024&origLng=-95.712891&origAddress=5000%20Estate%20Enighed%2C%20Independence%2C%20KS%2067301%2C%20USA&formattedAddress=&boundsNorthEast=&boundsSouthWest=&_=1646643410412"
 
 
 def fetch_data():
