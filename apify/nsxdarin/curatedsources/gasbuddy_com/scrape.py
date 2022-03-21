@@ -83,6 +83,7 @@ def get_data():
 
     x = 0
     y = 0
+    
     error_count = 0
     page_urls = []
     for search_code in search:
