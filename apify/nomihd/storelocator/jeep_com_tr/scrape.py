@@ -33,7 +33,7 @@ def fetch_data():
         stores = json.loads(search_res.text)
 
         for store in stores:
-            page_url = "<MISSING>"
+            page_url = "https://www.jeep.com.tr/yetkili-saticilar"
             locator_domain = website
             location_name = store["dealerName"]
 

@@ -29,9 +29,9 @@ def fetch_data():
         "size": 2500,
         "language": "en",
     }
+    canada = ["BC", "AB", "ON", "QC", "PE", "PEI", "NB", "NL", "NS", "MB", "SK"]
     r = session.post(url, headers=headers, data=json.dumps(payload))
     for line in r.iter_lines():
-        line = str(line.decode("utf-8"))
         if '{"name":"' in line:
             items = line.split('{"name":"')
             for item in items:
@@ -162,7 +162,12 @@ def fetch_data():
                         loc = "<MISSING>"
                     if "please note" in add:
                         add = add.split("please note")[0].replace("*", "").strip()
-                    if "MEX" not in state and "MEX" not in zc and len(state) == 2:
+                    if (
+                        "MEX" not in state
+                        and "MEX" not in zc
+                        and len(state) == 2
+                        and state not in canada
+                    ):
                         yield SgRecord(
                             locator_domain=website,
                             page_url=loc,

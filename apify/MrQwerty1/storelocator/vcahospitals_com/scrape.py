@@ -1,134 +1,103 @@
-import csv
-import html
-import json
-import re
-
-from concurrent.futures import ThreadPoolExecutor, as_completed
-from lxml import html as lxml_html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
 
 
-def write_output(data):
-    with open('data.csv', mode='w', encoding='utf8', newline='') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+def fetch_data(sgw: SgWriter):
+    api = "https://vcahospitals.com/fah-api/search-hospital"
+    json_data = {
+        "CurrentLat": 33.0218117,
+        "CurrentLng": -97.12516989999999,
+        "MinLatitude": -90,
+        "MaxLatitude": 90,
+        "MinLongitude": -180,
+        "MaxLongitude": 180,
+        "Radius": "5000",
+        "SearchText": "75022",
+        "HospitalType": "All Hospitals",
+        "Country": "{70009942-4B02-4B03-96D0-FEC086AFB342}",
+        "DataItemId": "{E591FBD6-4ECA-48DB-8A6B-69AF7D50CEFB}",
+    }
 
-        writer.writerow(
-            ["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code",
-             "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+    r = session.post(api, headers=headers, json=json_data)
+    js = r.json()["result"]
 
-        for row in data:
-            writer.writerow(row)
+    for j in js:
+        location_name = j.get("Name")
+        slug = j.get("Url") or ""
+        page_url = f"https://vcahospitals.com{slug}"
+        street_address = (
+            f'{j.get("AddressLine1")} {j.get("AddressLine2") or ""}'.strip()
+        )
+        city = j.get("City")
+        state = j.get("State")
+        postal = j.get("Zipcode")
 
+        phone = j.get("PhoneNumber") or ""
+        if ":" in phone:
+            phone = phone.split(":")[-1].strip()
+        latitude = j.get("Latitude")
+        longitude = j.get("Longitude")
 
-def get_phone(text):
-    regex = r'(\d{3}-\d{3}-\d{4}|\(\d{3}\) \d{3}-\d{4})'
-    phone = re.findall(regex, text)
-    return phone[0].strip()
+        _types = []
+        types = j.get("HospitalTypes") or []
+        for t in types:
+            _types.append(t.get("DisplayName"))
+        location_type = ", ".join(_types)
+        store_number = j.get("branch_id")
 
+        _tmp = []
+        hours = j.get("Hours") or {}
+        for day, inter in hours.items():
+            _tmp.append(f"{day}: {inter}")
+        hours_of_operation = ";".join(_tmp)
 
-def get_urls():
-    session = SgRequests()
-    r = session.get('https://vcahospitals.com/find-a-hospital/location-directory')
-    tree = lxml_html.fromstring(r.text)
-    return tree.xpath("//div[@class='hospital']//h3/a/@href")
+        row = SgRecord(
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code="US",
+            location_type=location_type,
+            store_number=store_number,
+            phone=phone,
+            latitude=latitude,
+            longitude=longitude,
+            locator_domain=locator_domain,
+            hours_of_operation=hours_of_operation,
+        )
 
-
-def get_exception(tree, page_url):
-    locator_domain = 'https://vcahospitals.com/'
-    location_name = html.unescape(''.join(tree.xpath("//div[@class='sh-contact-map__hospital']/text()")).strip())
-    street_address = tree.xpath("//div[@class='sh-contact-map__txt-indent' and .//a]/p/text()")[0].strip()
-    line = ''.join(tree.xpath("//div[@class='sh-contact-map__txt-indent' and .//a]/p[2]/text()")).strip()
-    city = line.split(',')[0].strip()
-    line = line.replace(f'{city},', '').strip()
-    state = line.split()[0]
-    postal = line.split()[1]
-    country_code = 'US'
-    _tmp = ''.join(tree.xpath("//script[contains(text(), 'VCA.HospitalId')]/text()")).strip()
-    store_number = _tmp.split('\n')[-1].split('"')[-2]
-    text = ''.join(tree.xpath("//div[@class='sh-contact-map__txt-indent']//a[contains(@href,'tel:')]/text()")).strip()
-    phone = get_phone(text)
-    location_type = '<MISSING>'
-    latitude = '<MISSING>'
-    longitude = '<MISSING>'
-    hours = ''.join(tree.xpath("//div[@class='sh-contact-map__txt-indent']/ul//text()")).strip()
-    hours_of_operation = ';'.join([h.strip() for h in hours.split('\r\n')])
-
-    row = [locator_domain, page_url, location_name, street_address, city, state, postal,
-           country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation]
-    return row
-
-
-def get_data(url):
-    session = SgRequests()
-    locator_domain = 'http://vcahospitals.com/'
-    page_url = f'http://vcahospitals.com{url}'
-    r = session.get(page_url)
-    tree = lxml_html.fromstring(r.text)
-
-    # if the page doesn't contain JSON var, the page has another structure
-    # e.g. https://vcahospitals.com/advanced-veterinary-care-center-ca
-    try:
-        j = json.loads(''.join(tree.xpath("//script[@type='application/ld+json']/text()")))
-    except:
-        # to avoid error because of bad / non-exists page
-        # e.g. https://vcahospitals.com/california-veterinary-specialists-murrieta-sh-new
-        try:
-            row = get_exception(tree, page_url)
-        except:
-            row = None
-        return row
-
-    a = j.get('address', {})
-    street_address = a.get('streetAddress') or '<MISSING>'
-    city = a.get('addressLocality') or '<MISSING>'
-    location_name = html.unescape(j.get('name')) or '<MISSING>'
-    state = a.get('addressRegion') or '<MISSING>'
-    postal = a.get('postalCode') or '<MISSING>'
-    country_code = 'US'
-    _tmp = ''.join(tree.xpath("//script[contains(text(), 'VCA.HospitalId')]/text()")).strip()
-    store_number = _tmp.split('\n')[-1].split('"')[-2]
-    phone = get_phone(j.get('telephone', '')) or '<MISSING>'
-    g = j.get('geo', {})
-    latitude = g.get('latitude') or '<MISSING>'
-    longitude = g.get('longitude') or '<MISSING>'
-    location_type = '<MISSING>'
-
-    hours = tree.xpath("//div[@class='content']/div[contains(@class,'hours')]/ul/li[not(@class)]")
-    _tmp = []
-    for h in hours:
-        day = ''.join(h.xpath("./p[@class='days']/text()")).strip()
-        time = ''.join(h.xpath("./p[not(@class)]/text()")).strip()
-        line = f'{day} {time}'
-        _tmp.append(line)
-
-    hours_of_operation = ';'.join(_tmp) or '<MISSING>'
-
-    row = [locator_domain, page_url, location_name, street_address, city, state, postal,
-           country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation]
-    return row
-
-
-def fetch_data():
-    out = []
-    threads = []
-    urls = get_urls()
-
-    with ThreadPoolExecutor(max_workers=20) as executor:
-        for url in urls:
-            threads.append(executor.submit(get_data, url))
-
-    for task in as_completed(threads):
-        row = task.result()
-        if row:
-            out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://vcahospitals.com/"
+
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:97.0) Gecko/20100101 Firefox/97.0",
+        "Accept": "application/json, text/plain, */*",
+        "Accept-Language": "ru,en-US;q=0.7,en;q=0.3",
+        "Accept-Encoding": "gzip, deflate, br",
+        "Referer": "https://vcahospitals.com/find-a-hospital/",
+        "Origin": "https://vcahospitals.com",
+        "Connection": "keep-alive",
+        "Sec-Fetch-Dest": "empty",
+        "Sec-Fetch-Mode": "no-cors",
+        "Sec-Fetch-Site": "same-origin",
+        "TE": "trailers",
+        "Pragma": "no-cache",
+        "Cache-Control": "no-cache",
+    }
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.STREET_ADDRESS, SgRecord.Headers.LOCATION_TYPE}
+            )
+        )
+    ) as writer:
+        fetch_data(writer)

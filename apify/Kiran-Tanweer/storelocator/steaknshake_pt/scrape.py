@@ -23,20 +23,24 @@ def fetch_data():
     search_url = "https://steaknshake.pt/?lang=en"
     stores_req = session.get(search_url, headers=headers)
     soup = BeautifulSoup(stores_req.text, "html.parser")
-    loc_block = soup.find("div", {"class": "row location"}).findAll(
-        "div", {"class": "content"}
-    )
-    for loc in loc_block:
+    loc = soup.find("div", {"class": "row location"})
+    loc_block = loc.findAll("div", {"class": "content"})
+    coords_block = soup.findAll("div", {"class": "marker"})
+
+    phones = loc.findAll("ul")
+
+    for loc, coords, ph in zip(loc_block, coords_block, phones):
         title = loc.find("h3").text
         address = loc.findAll("p")[1].text
         details = address.split("\n")
         if len(details) == 3:
             street = details[0] + " " + details[1]
-            phone = details[-1]
+            locality = details[-1].strip()
         else:
             street = details[0]
-            phone = details[-1]
+            locality = details[-1].strip()
         street = street.rstrip(",").strip()
+        pcode, city = locality.split(" ")
         hours = loc.findAll("tr")
         hoo = ""
         for hr in hours:
@@ -44,21 +48,29 @@ def fetch_data():
         hoo = hoo.strip()
         hoo = hoo.replace("  ", " ")
         hoo = hoo.replace("Every day", "Mon-Sun")
+        lat = coords["data-lat"]
+        lng = coords["data-lng"]
+        phone = ph.text.strip()
+        if phone == "":
+            phone = "<MISSING>"
+        else:
+            phone = phone.split(":")[1].strip()
+        hoo = hoo.replace("â€“", "-").strip()
 
         yield SgRecord(
             locator_domain=DOMAIN,
             page_url=DOMAIN,
             location_name=title,
             street_address=street.strip(),
-            city=MISSING,
+            city=city.strip(),
             state=MISSING,
-            zip_postal=MISSING,
+            zip_postal=pcode.strip(),
             country_code="PT",
             store_number=MISSING,
             phone=phone,
             location_type=MISSING,
-            latitude=MISSING,
-            longitude=MISSING,
+            latitude=lat,
+            longitude=lng,
             hours_of_operation=hoo.strip(),
         )
 

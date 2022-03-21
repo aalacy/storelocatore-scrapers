@@ -1,63 +1,43 @@
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgrequests import SgRequests
-from bs4 import BeautifulSoup as bs
-from sglogging import SgLogSetup
-from sgscrape.sgpostal import parse_address_intl
-
-logger = SgLogSetup().get_logger("namasteplaza")
+import json
 
 _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
 }
+locator_domain = "https://www.namasteplaza.com/"
+base_url = "https://www.namasteplaza.com/index.php/storepickup/index/index"
 
 
 def fetch_data():
-    locator_domain = "https://www.namasteplaza.com/"
-    base_url = "https://www.namasteplaza.com/index.php/"
     with SgRequests() as session:
-        soup = bs(session.get(base_url, headers=_headers).text, "lxml")
-        options = soup.select("select#select-language option")
-        logger.info(f"{len(options)} found")
-        for option in options:
-            page_url = option["value"]
-            logger.info(page_url)
-            sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
-            addr = parse_address_intl(
-                sp1.select_one("div.footer-cms div.footer-contacts")
-                .find_next_sibling()
-                .find_next_sibling()
-                .text.strip()
+        locations = json.loads(
+            session.get(base_url, headers=_headers)
+            .text.split("var listStoreJson =")[1]
+            .split(";</script>")[0]
+        )
+        for _ in locations:
+            yield SgRecord(
+                page_url=_["store_view_url"],
+                store_number=_["store_id"],
+                location_name=_["store_name"],
+                street_address=_["address"],
+                city=_["city"],
+                state=_["state"],
+                zip_postal=_["zipcode"],
+                country_code=_["country"],
+                phone=_["store_phone"],
+                latitude=_["store_latitude"],
+                longitude=_["store_longitude"],
+                locator_domain=locator_domain,
             )
-            street_address = addr.street_address_1
-            if addr.street_address_2:
-                street_address += " " + addr.street_address_2
-            try:
-                yield SgRecord(
-                    page_url=page_url,
-                    location_name=sp1.select_one(
-                        "div.footer-cms div.footer-contacts"
-                    ).text.strip(),
-                    street_address=street_address,
-                    city=addr.city,
-                    state=addr.state,
-                    zip_postal=addr.postcode,
-                    country_code="US",
-                    phone=sp1.select_one("div.footer-cms div.footer-contacts")
-                    .find_next_sibling()
-                    .find_next_sibling()
-                    .find_next_sibling()
-                    .text.strip(),
-                    locator_domain=locator_domain,
-                )
-            except:
-                import pdb
-
-                pdb.set_trace()
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

@@ -4,6 +4,7 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries, Grain_1_KM
 from sgscrape import simple_scraper_pipeline as sp
+from sglogging import sglog
 
 
 def extract_json(html_string):
@@ -38,13 +39,13 @@ def extract_json(html_string):
 
 
 def get_data():
+    log = sglog.SgLogSetup().get_logger(logger_name="regions")
     page_urls = []
     session = SgRequests()
     search = DynamicZipSearch(
         country_codes=[SearchableCountries.USA], granularity=Grain_1_KM()
     )
 
-    x = 0
     for search_code in search:
         url = (
             "https://www.regions.com/Locator?regions-get-directions-starting-coords=&daddr=&autocompleteAddLat=&autocompleteAddLng=&r=&geoLocation="
@@ -97,6 +98,7 @@ def get_data():
             location_type = location["type"]
 
             if page_url != "<MISSING>":
+                page_url = page_url.lower()
                 if page_url in page_urls or "-atm-" in page_url:
                     continue
 
@@ -128,7 +130,7 @@ def get_data():
                                             + part["closes"]
                                             + ", "
                                         )
-
+                            hours = hours[:-2]
                         except Exception:
                             hours = "<MISSING>"
                             pass
@@ -138,6 +140,12 @@ def get_data():
             else:
                 phone = "<MISSING>"
                 hours = "<MISSING>"
+
+            if "locator/branch/bank-branch-oxmoor-valley-birmingham" in page_url:
+                log.info(search_code)
+                log.info(page_url)
+                log.info(address)
+                log.info("")
 
             x = x + 1
             yield {
@@ -156,8 +164,6 @@ def get_data():
                 "hours": hours,
                 "country_code": country_code,
             }
-
-        x = x + 1
 
 
 def scrape():

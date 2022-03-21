@@ -42,7 +42,7 @@ def fetch_data(sgw: SgWriter):
 
         location_name = item.text
         final_link = item.a["href"]
-        if "ocpn.com" in final_link:
+        if "ocpn" in location_name.lower():
             continue
         if location_name == "Springfield - Cypress PT":
             final_link = "https://cypress-pt.com/location/springfield-ma/"

@@ -37,7 +37,7 @@ def fetch_data():
                 if country.lower() in addr[-1].lower():
                     del addr[-1]
                 c_idx = -2
-                if addr[-1].isdigit():
+                if addr[-1].replace("/", "").isdigit():
                     zip_postal = addr[-1]
                 else:
                     c_idx += 1

@@ -46,6 +46,7 @@ def fetch_data():
                 name = line2.split('<h1 class="title" id="page-title">')[1].split("<")[
                     0
                 ]
+                name = name.replace("&#039;", "'")
             if '"streetAddress":"' in line2:
                 add = line2.split('"streetAddress":"')[1].split('"')[0]
                 city = line2.split('"addressLocality":"')[1].split('"')[0]
@@ -78,7 +79,7 @@ def fetch_data():
             lat = "<MISSING>"
         if lng == "":
             lng = "<MISSING>"
-        store = name.split("#")[1]
+        store = name.rsplit("#", 1)[1]
         if len(phone) < 3:
             phone = "<MISSING>"
         if "5555 Con" in add:

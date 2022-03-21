@@ -1,46 +1,27 @@
-import csv
 import json
+import time
 
 from bs4 import BeautifulSoup
 
+from sglogging import sglog
+
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+
 from sgrequests import SgRequests
 
-session = SgRequests()
+log = sglog.SgLogSetup().get_logger("kingsoopers.com")
 
 
-def write_output(data):
-    with open("data.csv", mode="w", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-                "page_url",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
+def fetch_data(sgw: SgWriter):
 
+    session = SgRequests()
 
-def fetch_data():
     base_url = "https://www.kingsoopers.com/"
     headers = {
-        "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-        "cache-control": "max-age=0",
-        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.105 Safari/537.36",
+        "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36",
     }
     soup = BeautifulSoup(
         session.get(
@@ -50,14 +31,23 @@ def fetch_data():
     )
     for url in soup.find_all("loc")[:-1]:
         page_url = url.text
-        location_soup = BeautifulSoup(
-            session.get(page_url, headers=headers).text, "lxml"
-        )
-        data = json.loads(
-            str(location_soup.find("script", {"type": "application/ld+json"}))
-            .split(">")[1]
-            .split("<")[0]
-        )
+        log.info(page_url)
+        for i in range(6):
+            try:
+                location_soup = BeautifulSoup(
+                    session.get(page_url, headers=headers).text, "lxml"
+                )
+                data = json.loads(
+                    str(location_soup.find("script", {"type": "application/ld+json"}))
+                    .split(">")[1]
+                    .split("<")[0]
+                )
+                break
+            except:
+                time.sleep(10)
+                log.info("Retrying ..")
+                session = SgRequests()
+
         location_name = location_soup.find(
             "h1", {"data-qa": "storeDetailsHeader"}
         ).text.strip()
@@ -88,34 +78,33 @@ def fetch_data():
         lat = data["geo"]["latitude"]
         lng = data["geo"]["longitude"]
         hours = " ".join(data["openingHours"])
-        store = []
-        store.append(base_url)
-        store.append(location_name)
-        store.append(street_address)
-        store.append(city)
-        store.append(state)
-        store.append(zipp)
-        store.append(country_code)
-        store.append(store_number)
-        store.append(phone)
-        store.append(location_type)
-        store.append(lat)
-        store.append(lng)
-        store.append(
+        hours = (
             hours.replace("Su-Sa", "Sun - Sat :")
             .replace("-00:00", " - Midnight")
             .replace("Su ", "Sun")
             .replace("Mo-Fr", "Mon - Fri")
             .replace("Sa ", "Sat")
         )
-        store.append(page_url)
-        store = [str(x).strip() if x else "<MISSING>" for x in store]
-        yield store
+
+        sgw.write_row(
+            SgRecord(
+                locator_domain=base_url,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zipp,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=lat,
+                longitude=lng,
+                hours_of_operation=hours,
+            )
+        )
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    fetch_data(writer)
