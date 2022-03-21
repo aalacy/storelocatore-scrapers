@@ -32,7 +32,10 @@ def fetch_data(sgw: SgWriter):
         state = j.get("state")
         postal = j.get("zip")
         store_number = j.get("storeNumber")
-        page_url = f'https://www.urbanoutfitters.com/stores/{j.get("slug")}'
+        slug = j.get("slug")
+        page_url = SgRecord.MISSING
+        if slug:
+            page_url = f"https://www.urbanoutfitters.com/stores/{slug}"
         loc = j.get("loc") or [SgRecord.MISSING, SgRecord.MISSING]
         latitude = loc[1]
         longitude = loc[0]
@@ -83,5 +86,5 @@ if __name__ == "__main__":
         "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:97.0) Gecko/20100101 Firefox/97.0",
     }
     session = SgRequests()
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
         fetch_data(writer)
