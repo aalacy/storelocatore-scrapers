@@ -16,7 +16,7 @@ _headers = {
 
 
 def fetch_data():
-    with SgRequests() as http:
+    with SgRequests(verify_ssl=False) as http:
         locations = http.get(base_url, headers=_headers).json()
         logger.info(f"{len(locations)} found")
         for _ in locations:
