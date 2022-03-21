@@ -1,5 +1,4 @@
 import re
-import time
 from bs4 import BeautifulSoup
 from sglogging import SgLogSetup
 from sgscrape.sgwriter import SgWriter
@@ -179,7 +178,6 @@ def fetch_data(sgw: SgWriter):
         except:
             try:
                 logger.info("Retry => " + page_url)
-                time.sleep(10)
                 home = session.get(page_url, headers=HEADERS)
             except:
                 logger.info("Error loading page %s..skipping" % (page_url))
