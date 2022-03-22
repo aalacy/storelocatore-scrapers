@@ -3,6 +3,7 @@ from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgpostal.sgpostal import International_Parser, parse_address
 
 
 def fetch_data(sgw: SgWriter):
@@ -34,7 +35,12 @@ def fetch_data(sgw: SgWriter):
 
         page_url = "https://www.jumbo.cl/locales"
         location_name = j.get("name") or "<MISSING>"
-        street_address = j.get("address") or "<MISSING>"
+        ad = j.get("address") or "<MISSING>"
+        a = parse_address(International_Parser(), ad)
+        street_address = (
+            f"{a.street_address_1} {a.street_address_2}".replace("None", "").strip()
+            or "<MISSING>"
+        )
         state = j.get("regions") or "<MISSING>"
         country_code = "CL"
         city = j.get("cities") or "<MISSING>"
