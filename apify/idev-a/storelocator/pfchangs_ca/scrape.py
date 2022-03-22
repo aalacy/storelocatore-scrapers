@@ -3,43 +3,60 @@ from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-import json
+import dirtyjson as json
 from bs4 import BeautifulSoup as bs
 
 _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
 }
 
-locator_domain = "https://www.mcdonalds.rs"
-base_url = "https://www.mcdonalds.rs/restorani/"
+locator_domain = "https://pfchangs.ca"
+base_url = "https://pfchangs.ca/locations/"
+
+
+def _p(val):
+    if (
+        val
+        and val.replace("(", "")
+        .replace(")", "")
+        .replace("+", "")
+        .replace("-", "")
+        .replace(".", " ")
+        .replace("to", "")
+        .replace(" ", "")
+        .strip()
+        .isdigit()
+    ):
+        return val
+    else:
+        return ""
 
 
 def fetch_data():
     with SgRequests() as session:
         locations = json.loads(
             session.get(base_url, headers=_headers)
-            .text.split("var restaurantMarkers =")[1]
-            .split("</script>")[0]
-            .strip()[:-1]
-        )
+            .text.split('$("#map1").maps(')[1]
+            .split(").data(")[0]
+        )["places"]
         for _ in locations:
-            hours_of_operation = "; ".join(
-                bs(_["restaurant_worktime"], "lxml").stripped_strings
-            )
-            if "USKORO" in hours_of_operation:
+            addr = _["location"]
+            info = bs(_["content"], "lxml")
+            if "Coming Soon" in info.text:
                 continue
             yield SgRecord(
                 page_url=base_url,
                 store_number=_["id"],
-                location_name=_["name"],
+                location_name=_["title"],
                 street_address=_["address"],
-                city=_["city"],
-                latitude=_["latitude"],
-                longitude=_["longitude"],
-                country_code="Serbia",
-                phone=_["phone"],
+                city=addr["city"],
+                state=addr["state"],
+                zip_postal=addr["postal_code"],
+                latitude=addr["lat"],
+                longitude=addr["lng"],
+                country_code=addr["country"],
+                phone=_p(info.a.text.strip()),
                 locator_domain=locator_domain,
-                hours_of_operation=hours_of_operation,
             )
 
 
