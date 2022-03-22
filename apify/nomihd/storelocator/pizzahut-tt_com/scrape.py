@@ -35,12 +35,23 @@ def fetch_data():
     for store in stores:
 
         page_url = "https://www.pizzahut-tt.com/find-a-hut/"
+        hours_req = session.get(page_url, headers=headers)
+        hours_sel = lxml.html.fromstring(hours_req.text)
         locator_domain = website
         location_name = store["store"]
         street_address = store["address"]
-        city = store["city"].split(".")[0].strip().split(",")[-1].strip()
+        raw_address = street_address
+        city = store["city"]
+        if city:
+            raw_address = raw_address + ", " + city
+            city = city.split(".")[0].strip().split(",")[-1].strip()
+
         state = store["state"]
+        if state:
+            raw_address = raw_address + ", " + state
         zip = store["zip"]
+        if zip:
+            raw_address = raw_address + ", " + zip
 
         street_address = street_address.replace(location_name + ",", "").strip()
         country_code = store["country"]
@@ -49,15 +60,11 @@ def fetch_data():
         store_number = store["id"]
         location_type = "<MISSING>"
         hours_list = []
-        if store["hours"] is not None and len(store["hours"]) > 0:
-            hours = lxml.html.fromstring(store["hours"]).xpath("//tr")
-            hours_list = []
-            hours_of_operation = ""
-            for hour in hours:
-                day = "".join(hour.xpath("td[1]/text()")).strip()
-                time = "".join(hour.xpath("td[2]//text()")).strip()
-                hours_list.append(day + ": " + time)
-
+        hours = hours_sel.xpath('//ul[@class="find-time"]/li')
+        for hour in hours:
+            hours_list.append(
+                "".join(hour.xpath("text()")).strip().split("except")[0].strip()
+            )
         hours_of_operation = "; ".join(hours_list).strip()
 
         latitude, longitude = store["lat"], store["lng"]
@@ -77,6 +84,7 @@ def fetch_data():
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hours_of_operation,
+            raw_address=raw_address,
         )
 
 
