@@ -65,8 +65,6 @@ def fetch_data():
                     city = i["Address"]["City"]
                     state = i["Address"]["State"]
                     zipp = i["Address"]["PostalCode"]
-                    time = ""
-                    time1 = ""
                     hours_list = []
                     if "Day" in i["SalesHours"]:
                         for j in i["SalesHours"]["Day"]:
@@ -120,8 +118,6 @@ def fetch_data():
                 city = k["Response"]["Dealer"]["Address"]["City"]
                 state = k["Response"]["Dealer"]["Address"]["State"]
                 zipp = k["Response"]["Dealer"]["Address"]["PostalCode"]
-                time = ""
-                time1 = ""
                 hours_list = []
                 if "Day" in k["Response"]["Dealer"]["SalesHours"]:
                     for j in k["Response"]["Dealer"]["SalesHours"]["Day"]:
