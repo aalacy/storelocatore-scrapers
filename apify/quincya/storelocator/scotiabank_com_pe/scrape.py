@@ -1,5 +1,3 @@
-from bs4 import BeautifulSoup
-
 from sgpostal.sgpostal import parse_address_intl
 
 from sgscrape.sgwriter import SgWriter
