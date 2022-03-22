@@ -8,6 +8,10 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from concurrent import futures
 from sgscrape.sgpostal import parse_address, International_Parser
+from sglogging import sglog
+
+locator_domain = "natwest.com"
+log = sglog.SgLogSetup().get_logger(logger_name=locator_domain)
 
 
 def get_urls():
@@ -37,6 +41,7 @@ def get_urls():
         "https://www.natwest.com/content/branchlocator/en/natwest/_jcr_content/content/homepagesearch.search.html",
         data=data,
     )
+    log.info(f"Post Status: {r}")
     tree = html.fromstring(r.text)
 
     return tree.xpath(
@@ -48,6 +53,7 @@ def get_data(url, sgw: SgWriter):
     page_url = f"https://www.natwest.com{url}"
 
     r = session.get(page_url)
+    log.info(f"Crawling {page_url} and response status: {r}")
     tree = html.fromstring(r.text)
 
     location_name = "".join(tree.xpath("//input[@id='branchName']/@value"))
@@ -124,14 +130,14 @@ def get_data(url, sgw: SgWriter):
 def fetch_data(sgw: SgWriter):
     urls = get_urls()
 
-    with futures.ThreadPoolExecutor(max_workers=3) as executor:
+    with futures.ThreadPoolExecutor(max_workers=8) as executor:
         future_to_url = {executor.submit(get_data, url, sgw): url for url in urls}
         for future in futures.as_completed(future_to_url):
             future.result()
 
 
 if __name__ == "__main__":
-    locator_domain = "https://natwest.com"
+
     session = SgRequests(proxy_country="gb")
     with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
         fetch_data(writer)
