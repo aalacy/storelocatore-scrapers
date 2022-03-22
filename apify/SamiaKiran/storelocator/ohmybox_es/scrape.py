@@ -9,16 +9,16 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
-website = "safestore_com_be"
+website = "ohmybox_es"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 
-DOMAIN = "https://www.safestore.com/be"
+DOMAIN = "https://www.ohmybox.es"
 MISSING = SgRecord.MISSING
 
 
-api_url = "https://www.safestore.com/be/search.ashx?action=search-in-area"
+api_url = "https://www.ohmybox.es/search.ashx?action=search-in-area"
 
-payload = "northeast%5Blatitude%5D=54.62144551458296&northeast%5Blongitude%5D=7.9528027343749885&southwest%5Blatitude%5D=46.42088772522721&southwest%5Blongitude%5D=1.2071972656249885&latitude=50.7&longitude=4.58&iscitypage=true&culture=fr-BE"
+payload = "northeast%5Blatitude%5D=41.53850266285628&northeast%5Blongitude%5D=2.27611408544921&southwest%5Blatitude%5D=41.23507132436518&southwest%5Blongitude%5D=2.0653139145507726&latitude=41.386964&longitude=2.170714&iscitypage=true&culture=es-ES"
 headers = {
     "Connection": "keep-alive",
     "sec-ch-ua": '" Not A;Brand";v="99", "Chromium";v="99", "Google Chrome";v="99"',
@@ -28,11 +28,11 @@ headers = {
     "sec-ch-ua-mobile": "?0",
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.82 Safari/537.36",
     "sec-ch-ua-platform": '"Windows"',
-    "Origin": "https://www.safestore.com",
+    "Origin": "https://www.ohmybox.es",
     "Sec-Fetch-Site": "same-origin",
     "Sec-Fetch-Mode": "cors",
     "Sec-Fetch-Dest": "empty",
-    "Referer": "https://www.safestore.com/be/fr/trouver-un-centre/",
+    "Referer": "https://www.ohmybox.es/es/alquiler-trasteros/barcelona/",
     "Accept-Language": "en-US,en;q=0.9",
 }
 
@@ -49,11 +49,11 @@ def fetch_data():
         loclist = session.post(api_url, headers=headers, data=payload).json()["stores"]
         for loc in loclist:
             store_number = loc["Id"]
-            location_name = loc["StoreDocumentName"]
+            location_name = strip_accents(loc["StoreDocumentName"])
             latitude = loc["Latitude"]
             longitude = loc["Longitude"]
             phone = loc["Phone"]
-            page_url = "https://www.safestore.com" + loc["DetailsUrl"]
+            page_url = "https://www.ohmybox.es" + loc["DetailsUrl"]
             log.info(page_url)
             r = session.get(page_url)
             address = r.text.split('"address":')[1].split("},", 1)[0] + "}"
@@ -62,7 +62,7 @@ def fetch_data():
             city = strip_accents(address["addressLocality"])
             state = MISSING
             zip_postal = address["postalCode"]
-            country_code = "BE"
+            country_code = "ES"
             soup = BeautifulSoup(r.text, "html.parser")
             hour_list = soup.find(
                 "div", {"class": "store-info__time opening-time"}
