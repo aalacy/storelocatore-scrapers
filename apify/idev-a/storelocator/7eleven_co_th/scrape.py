@@ -125,6 +125,7 @@ def fetch_data():
                 store["phone"] = (
                     store["tel"].split()[0] if store.get("tel") else SgRecord.MISSING
                 )
+                search.found_location_at(store["lat"], store["lng"])
                 yield SgRecord(
                     page_url="https://www.7eleven.co.th/find-store",
                     store_number=store["id"],
