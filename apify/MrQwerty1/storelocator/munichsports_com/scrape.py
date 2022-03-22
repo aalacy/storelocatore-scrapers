@@ -37,7 +37,6 @@ def get_tree(url):
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0"
     }
-    print(url)
     r = session.get(url, headers=headers)
     return html.fromstring(r.text)
 
