@@ -1,4 +1,3 @@
-from bs4 import BeautifulSoup
 import json
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
