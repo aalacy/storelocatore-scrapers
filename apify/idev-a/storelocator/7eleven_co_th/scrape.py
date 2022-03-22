@@ -88,7 +88,7 @@ search = DynamicGeoSearch(
 
 def fetch_data():
     # Need to add dedupe. Added it in pipeline.
-    with SgRequests(proxy_country="us", retries_with_fresh_proxy_ip=10) as session:
+    with SgRequests(proxy_country="th", retries_with_fresh_proxy_ip=10) as session:
         maxZ = search.items_remaining()
         total = 0
         for lat, lng in search:
