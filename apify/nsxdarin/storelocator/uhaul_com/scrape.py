@@ -12,7 +12,6 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 logger = SgLogSetup().get_logger("uhaul_com")
-latlng = []
 thread_local = threading.local()
 
 headers = {
