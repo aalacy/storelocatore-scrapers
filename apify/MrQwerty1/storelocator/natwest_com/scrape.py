@@ -132,6 +132,6 @@ def fetch_data(sgw: SgWriter):
 
 if __name__ == "__main__":
     locator_domain = "https://natwest.com"
-    session = SgRequests()
+    session = SgRequests(proxy_country="gb")
     with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
         fetch_data(writer)
