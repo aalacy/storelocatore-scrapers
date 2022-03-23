@@ -59,7 +59,7 @@ def fetch_data():
             phone = loc_dom.xpath('//li[@class="phone"]/a/text()')
             if not phone:
                 phone = poi_html.xpath(
-                    './/div[@class="spl-store-locator__store__tel"]/a/text()'
+                    './/div[@class="spl-store-locator__store__tel"]/text()'
                 )
             phone = phone[0].replace(".", "") if phone else "<MISSING>"
             location_type = "Store"
