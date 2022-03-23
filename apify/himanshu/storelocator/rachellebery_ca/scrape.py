@@ -74,6 +74,7 @@ def fetch_data():
                 .replace(",", " ")
                 .replace('":"', " ")
                 .replace('"', "")
+                .replace("\\u2013", "")
             )
             latitude = loc["data-lat"]
             longitude = loc["data-lng"]
