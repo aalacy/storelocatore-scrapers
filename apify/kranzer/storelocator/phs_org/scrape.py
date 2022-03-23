@@ -1,77 +1,86 @@
-import re
-
-import base  # noqa
-from urllib.parse import urljoin
-
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger("phs_org")
+from lxml import html
+from sgscrape.sgrecord import SgRecord
+from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-class Scrape(base.Spider):
-    def crawl(self):
-        base_url = "https://www.phs.org/locations/Pages/hospitals.aspx"
-        mini_url = "https://www.phs.org"
-        sel = base.selector(
-            base_url,
-            headers={
-                "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.87 Safari/537.36"
-            },
+def fetch_data(sgw: SgWriter):
+
+    locator_domain = "https://www.phs.org/"
+    api_url = "https://www.phs.org/locations/Pages/hospitals.aspx"
+    session = SgRequests()
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
+    }
+    r = session.get(api_url, headers=headers)
+    tree = html.fromstring(r.text)
+    div = tree.xpath('//div[@class="clearfix locRegion"]/ul/li/strong/a')
+    for d in div:
+
+        slug = "".join(d.xpath(".//@href")).split("/")[1].strip()
+        location_name = "".join(d.xpath(".//text()"))
+        page_url = f"https://{slug}.phs.org/Pages/default.aspx"
+        r = session.get(page_url, headers=headers)
+        tree = html.fromstring(r.text)
+        street_address = (
+            "".join(tree.xpath('//div[@class="pageIntro__address"]/span/text()[1]'))
+            .replace("\n", "")
+            .strip()
+            or "<MISSING>"
         )
-        for href in sel["tree"].xpath(
-            '//div[contains(@class, "locRegion")]//li[strong/a/@href]'
-        ):
-            hs = base.selector(
-                urljoin(mini_url, href.xpath("./strong/a/@href")[0]),
-                headers={
-                    "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.87 Safari/537.36"
-                },
-            )
-            i = base.Item(hs["tree"])
-            i.add_value("location_name", href.xpath("./strong/a/text()")[0])
-            i.add_value("locator_domain", mini_url)
-            i.add_value("page_url", hs["url"])
-            i.add_xpath(
-                "phone",
-                './/div[@class="pageIntro__phone"]//a/text()',
-                lambda x: [s for s in x if s],
-                lambda x: base.get_first(x),
-            )
-            i.add_xpath(
-                "street_address",
-                './/div[@class="pageIntro__address"]/a/span[1]/text()',
-                base.get_first,
-            )
-            i.add_xpath(
-                "city",
-                '//div[@class="pageIntro__address"]/a/span[2]//text()',
-                lambda x: "".join(x),
-                lambda x: x.replace("\r", "").replace("\n", "").strip()[: x.find(",")]
-                if "," in x
-                else x,
-            )
-            i.add_xpath(
-                "state",
-                '//div[@class="pageIntro__address"]/a/span[2]//text()',
-                lambda x: "".join(x),
-                lambda x: x.replace("\r", "")
-                .replace("\n", "")
-                .strip()[x.find(",") + 1 :]
-                .strip()
-                if "," in x
-                else x,
-            )
-            i.add_value(
-                "zip",
-                href.xpath("./p/text()[2]"),
-                base.get_first,
-                lambda x: re.findall(r"\d{5}", x),
-                lambda x: base.get_first(x),
-            )
-            i.add_value("country_code", base.get_country_by_code(i.as_dict()["state"]))
-            yield i
+        ad = (
+            "".join(tree.xpath('//div[@class="pageIntro__address"]/span/text()[2]'))
+            .replace("\n", "")
+            .strip()
+            or "<MISSING>"
+        )
+        state = ad.split(",")[1].split()[0].strip()
+        postal = ad.split(",")[1].split()[1].strip()
+        country_code = "US"
+        city = ad.split(",")[0].strip()
+        latitude = (
+            "".join(tree.xpath('//script[contains(text(), "const dCenter")]/text()'))
+            .split("lat:")[1]
+            .split(",")[0]
+            .strip()
+        )
+        longitude = (
+            "".join(tree.xpath('//script[contains(text(), "const dCenter")]/text()'))
+            .split("lng:")[1]
+            .split("}")[0]
+            .replace("\n", "")
+            .strip()
+        )
+        phone = (
+            "".join(tree.xpath('//div[@class="pageIntro__phone"]//a/text()'))
+            .replace("\n", "")
+            .strip()
+        )
+
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=SgRecord.MISSING,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=SgRecord.MISSING,
+            raw_address=f"{street_address} {ad}",
+        )
+
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    s = Scrape()
-    s.run()
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))) as writer:
+        fetch_data(writer)

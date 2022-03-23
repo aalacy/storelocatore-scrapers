@@ -68,7 +68,7 @@ def get_data(page_url, sgw: SgWriter):
     country_code = "US"
     store_number = page_url.split("/")[-1]
     phone = "".join(
-        tree.xpath("//div[@class='address-block text-white']//a/text()")
+        tree.xpath("//span[@class='address-details-link tel']/text()")
     ).strip()
 
     _tmp = []
