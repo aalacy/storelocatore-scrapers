@@ -15,12 +15,15 @@ headers = {
 
 
 def fetch_data():
-    coords = ["35,-110", "45,-95", "35,-85", "45,-75", "21,-155", "60,-150"]
+    coords = ["21,-155", "60,-150"]
+    for xlat in range(25, 55, 2):
+        for ylng in range(-125, -60, 2):
+            coords.append(str(xlat) + "," + str(ylng))
     for coord in coords:
         latc = coord.split(",")[0]
         lngc = coord.split(",")[1]
         url = (
-            "https://api.baskinrobbins.com/mobilem8-web-service/rest/storeinfo/distance?radius=1500&attributes=&disposition=IN_STORE&latitude="
+            "https://api.baskinrobbins.com/mobilem8-web-service/rest/storeinfo/distance?radius=500&attributes=&disposition=IN_STORE&latitude="
             + latc
             + "&longitude="
             + lngc
@@ -33,7 +36,7 @@ def fetch_data():
         for item in items:
             name = "Baskin Robbins"
             typ = "Store"
-            store = item["storeId"]
+            store = item["storeName"]
             city = item["city"]
             add = item["street"]
             state = item["state"]
@@ -44,7 +47,9 @@ def fetch_data():
             loc = "https://order.baskinrobbins.com/store-selection"
             website = "baskinrobbins.com"
             status = item["status"]
-            if "INACTIVE" in status:
+            if "INACTIVE" in status and "TEMP" not in status:
+                name = name + " - Closed"
+            if "INACTIVE" in status and "TEMP" in status:
                 name = name + " - Temporarily Closed"
             try:
                 phone = item["phoneNumber"]
@@ -129,7 +134,7 @@ def fetch_data():
                 )
             except:
                 hours = "<MISSING>"
-            if add != "":
+            if add != "" and "BR-3" in store and " - Closed" not in name:
                 yield SgRecord(
                     locator_domain=website,
                     page_url=loc,
@@ -151,7 +156,9 @@ def fetch_data():
 def scrape():
     results = fetch_data()
     with SgWriter(
-        deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
+        deduper=SgRecordDeduper(
+            RecommendedRecordIds.StoreNumberId, duplicate_streak_failure_factor=-1
+        )
     ) as writer:
         for rec in results:
             writer.write_row(rec)

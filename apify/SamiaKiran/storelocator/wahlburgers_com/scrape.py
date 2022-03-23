@@ -19,8 +19,8 @@ MISSING = SgRecord.MISSING
 
 
 def fetch_data():
+    pattern = re.compile(r"\s\s+")
     if True:
-        pattern = re.compile(r"\s\s+")
         url = "https://wahlburgers.com/all-locations"
         r = session.get(url, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
@@ -33,6 +33,8 @@ def fetch_data():
                 country_code = "Canada"
             elif "germany" in page_url:
                 country_code = "Germany"
+            elif "australia" in page_url:
+                country_code = "Australia"
             else:
                 country_code = "USA"
             r = session.get(page_url)
@@ -41,21 +43,28 @@ def fetch_data():
             for loc in loclist:
                 if "COMING SOON" in loc.text:
                     continue
-
                 page_url = loc.find("a")["href"]
                 log.info(page_url)
                 r = session.get(page_url, headers=headers)
                 if "Coming soon" in r.text:
                     continue
                 soup = BeautifulSoup(r.text, "html.parser")
-                raw_address = (
-                    soup.find("div", {"class": "container grid location"})
-                    .find("p")
-                    .text
-                )
-                raw_address = (
-                    re.sub(pattern, "\n", raw_address).replace("\n", " ").strip()
-                )
+                try:
+                    raw_address = (
+                        soup.find("div", {"class": "container grid location"})
+                        .find("p")
+                        .get_text(separator="|", strip=True)
+                        .replace("|", " ")
+                        .replace("\n", " ")
+                    )
+                except:
+                    raw_address = (
+                        soup.find("li", {"class": "single-location"})
+                        .find("p")
+                        .get_text(separator="|", strip=True)
+                        .replace("|", " ")
+                        .replace("\n", " ")
+                    )
                 if "We are currently closed" in r.text:
                     location_type = "Temporarily Closed"
                 else:
@@ -68,26 +77,43 @@ def fetch_data():
                     phone = schema.split('"telephone": "')[1].split('"')[0]
                 except:
                     phone = MISSING
-                street_address = schema.split('"streetAddress": "')[1].split('"')[0]
-                city = schema.split('"addressLocality": "')[1].split('"')[0]
-                zip_postal = schema.split('"postalCode": "')[1].split('"')[0]
-                latitude = schema.split('"latitude":')[1].split(",")[0]
-                longitude = (
-                    schema.split('"longitude":')[1].split("}")[0].replace("\n", "")
-                )
+                try:
+                    latitude = schema.split('"latitude":')[1].split(",")[0]
+                    longitude = (
+                        schema.split('"longitude":')[1].split("}")[0].replace("\n", "")
+                    )
+                except:
+                    latitude = MISSING
+                    longitude = MISSING
+                try:
 
-                hours_of_operation = (
-                    schema.split('"openingHours":')[1]
-                    .split("],")[0]
-                    .replace("[", "")
-                    .replace("\n", " ")
-                    .replace("         ", " ")
-                    .replace('"', "")
-                    .replace(" ,", "")
-                )
+                    hours_of_operation = (
+                        schema.split('"openingHours":')[1]
+                        .split("],")[0]
+                        .replace("[", "")
+                        .replace("\n", " ")
+                        .replace("         ", "")
+                        .replace('"', "")
+                        .replace(" ,", "")
+                        .replace(" P.M.  -", "P.M.")
+                    )
+                except:
+                    hours_of_operation = MISSING
+                raw_address = re.sub(pattern, "\n", raw_address)
+                raw_address = raw_address.replace("\n", " ")
                 pa = parse_address_intl(raw_address)
+
+                street_address = pa.street_address_1
+                street_address = street_address if street_address else MISSING
+
+                city = pa.city
+                city = city.strip() if city else MISSING
+
                 state = pa.state
                 state = state.strip() if state else MISSING
+
+                zip_postal = pa.postcode
+                zip_postal = zip_postal.strip() if zip_postal else MISSING
                 yield SgRecord(
                     locator_domain=DOMAIN,
                     page_url=page_url,

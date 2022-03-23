@@ -1,4 +1,5 @@
 import json
+import re
 from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
@@ -25,16 +26,28 @@ def get_data(page_url, sgw: SgWriter):
     source = r.text
     if not source:
         return
-    tree = html.fromstring(r.text)
+    tree = html.fromstring(source)
     text = "".join(tree.xpath("//script[contains(text(), 'AutoRental')]/text()"))
     if not text:
         return
     j = json.loads(text, strict=False)
 
     location_name = j.get("name")
-    hours = j.get("openingHours") or []
-    hours = [" ".join(h.split()) for h in hours]
-    hours_of_operation = ";".join(hours) or "Closed"
+
+    try:
+        _tmp = []
+        line = "".join(tree.xpath("//script[contains(text(), 'carSearchData')]/text()"))
+        line = line.split('"OpeningTimes":')[1].split("}],")[0] + "}]"
+        js = json.loads(line)
+        for s in js:
+            day = s.get("DayOfWeek")
+            inter = s.get("FirstText")
+            _tmp.append(f"{day}: {inter}")
+        hours_of_operation = ";".join(_tmp)
+    except:
+        hours = j.get("openingHours") or []
+        hours = [" ".join(h.split()) for h in hours]
+        hours_of_operation = ";".join(hours) or "Closed"
 
     a = j.get("address") or {}
     street_address = a.get("streetAddress")
@@ -42,6 +55,7 @@ def get_data(page_url, sgw: SgWriter):
     state = a.get("addressRegion")
     postal = a.get("postalCode")
     phone = j.get("telephone")
+    store_number = re.findall(regex, source).pop()
 
     g = a["addressCountry"].get("geo") or {}
     latitude = g.get("latitude") or ""
@@ -59,6 +73,7 @@ def get_data(page_url, sgw: SgWriter):
         country_code="GB",
         latitude=latitude,
         longitude=longitude,
+        store_number=store_number,
         phone=phone,
         locator_domain=locator_domain,
         hours_of_operation=hours_of_operation,
@@ -78,6 +93,7 @@ def fetch_data(sgw: SgWriter):
 
 if __name__ == "__main__":
     locator_domain = "https://www.avis.co.uk/"
+    regex = r'"StationCode":"(.+?)"'
     session = SgRequests()
     with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         fetch_data(writer)

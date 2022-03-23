@@ -31,6 +31,11 @@ def fetch_data():
                 continue
             hoo.append(f"{day} {hours}")
         hoo = " ".join(hoo)
+        latitude = ""
+        longitude = ""
+        if poi["coordinates"]:
+            latitude = poi["coordinates"]["latitude"]
+            longitude = poi["coordinates"]["longitude"]
 
         item = SgRecord(
             locator_domain=domain,
@@ -44,8 +49,8 @@ def fetch_data():
             store_number="",
             phone=poi["address"]["tel"],
             location_type="",
-            latitude=poi["coordinates"]["latitude"],
-            longitude=poi["coordinates"]["longitude"],
+            latitude=latitude,
+            longitude=longitude,
             hours_of_operation=hoo,
             raw_address=raw_adr,
         )

@@ -35,7 +35,9 @@ def fetch_data():
                 )
             ).strip()
 
-            location_type = "<MISSING>"
+            location_type = "".join(
+                store.xpath('.//div[@class="stores-closed-covid"]//text()')
+            ).strip()
             page_url = base + "".join(
                 store.xpath(
                     './/div[@class="storeAddress"]//a[contains(@href,"/store/")]/@href'
@@ -69,7 +71,8 @@ def fetch_data():
                     './/div[@class="storeAddress"]//span[@itemprop="addressLocality"]//text()'
                 )
             ).strip()
-
+            if len(street_address) <= 0 and len(city) <= 0:
+                continue
             state = "".join(
                 store.xpath(
                     './/div[@class="storeAddress"]//span[@itemprop="addressRegion"]//text()'
@@ -118,6 +121,10 @@ def fetch_data():
             latitude, longitude = "".join(store.xpath("./@data-latitude")), "".join(
                 store.xpath("./@data-longitude")
             )
+            if latitude == "0":
+                latitude = "<MISSING>"
+            if longitude == "0":
+                longitude = "<MISSING>"
 
             yield SgRecord(
                 locator_domain=locator_domain,

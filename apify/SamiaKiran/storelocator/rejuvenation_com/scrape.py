@@ -15,7 +15,7 @@ headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
 }
 
-DOMAIN = "https://www.rejuvenation.com/"
+DOMAIN = "https://www.rejuvenation.com"
 MISSING = SgRecord.MISSING
 
 
@@ -25,19 +25,35 @@ def fetch_data():
         r = session.get(url, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
         loclist = soup.findAll(
-            "div", {"class": "cms-equal_width_column_control-col cms-image-block-col"}
+            "div",
+            {
+                "class": "cms-equal_width_column_control-col cms-image-block-col mobile-only"
+            },
         )
         for loc in loclist[:-1]:
+            if "PERMANENTLY CLOSED" in loc.text:
+                continue
             temp = loc.findAll("p")
+            try:
+                page_url = (
+                    loc.findAll("button")[1]["onclick"]
+                    .replace("window.location.href = '", "")
+                    .replace("';", "")
+                )
+            except:
+                continue
+            if DOMAIN not in page_url:
+                page_url = DOMAIN + page_url
+            r = session.get(page_url, headers=headers)
+            latitude = r.text.split('"latitude": "')[1].split('"')[0]
+            longitude = r.text.split('"longitude": "')[1].split('"')[0]
+            soup = BeautifulSoup(r.text, "html.parser")
+            log.info(page_url)
             location_name = temp[1].text
-            phone = temp[3].text
+            phone = loc.select_one("a[href*=tel]").text
             hours_of_operation = (
                 temp[5].get_text(separator="|", strip=True).replace("|", " ")
             )
-            page_url = "https://www.rejuvenation.com" + str(
-                loc.findAll("button")[1]["onclick"]
-            ).replace("window.location.href = '", "").replace("';", "")
-            log.info(page_url)
             raw_address = temp[2].get_text(separator="|", strip=True).replace("|", " ")
             address = raw_address.replace(",", " ")
             address = usaddress.parse(address)
@@ -78,8 +94,8 @@ def fetch_data():
                 store_number=MISSING,
                 phone=phone.strip(),
                 location_type=MISSING,
-                latitude=MISSING,
-                longitude=MISSING,
+                latitude=latitude,
+                longitude=longitude,
                 hours_of_operation=hours_of_operation.strip(),
                 raw_address=raw_address,
             )

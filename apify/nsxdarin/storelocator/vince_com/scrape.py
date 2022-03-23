@@ -4,6 +4,7 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
+import re
 
 session = SgRequests()
 headers = {
@@ -41,22 +42,16 @@ def fetch_data():
                     city = item.split('"city":"')[1].split('"')[0]
                     state = item.split('"stateCode":"')[1].split('"')[0]
                     phone = item.split('"phone":"')[1].split('"')[0]
+                    raw_address = add + " " + city + ", " + state + " " + zc
+                    raw_address = raw_address.strip()
                     lat = item.split('"latitude":"')[1].split('"')[0]
                     lng = item.split('"longitude":"')[1].split('"')[0]
                     try:
                         hrs = item.split(',"storeHours":"')[1].split(
                             '","storeEvents":'
                         )[0]
-                        days = hrs.split(
-                            'max-width: none; min-width: 0px; line-height: 12px;\\">'
-                        )
-                        for day in days:
-                            if "pm<" in day:
-                                dayhrs = day.split("<")[0]
-                                if hours == "":
-                                    hours = dayhrs
-                                else:
-                                    hours = hours + "; " + dayhrs
+                        cleanr = re.compile("<.*?>")
+                        hours = re.sub(cleanr, "", hrs)
                     except:
                         hours = "<MISSING>"
                     hours = hours.replace("&:amp;", "&")
@@ -69,6 +64,9 @@ def fetch_data():
                         zc = "<MISSING>"
                     if "0" not in hours:
                         hours = "<MISSING>"
+                    hours = hours.replace("pm", "pm;").replace(";;", ";").strip()
+                    if "Same day" in hours:
+                        hours = hours.split("Same day")[0].strip()
                     add = add.replace("International Market Place", "").strip()
                     if "El Paseo Village" in add:
                         add = add.split("Paseo Village")[1].strip()
@@ -76,6 +74,20 @@ def fetch_data():
                         hours = "Sun: 12:00pm-6:00pm; Mon-Sat: 11:00am-7:00pm"
                     if "; Friday 12/24" in hours:
                         hours = hours.split("; Friday 12/24")[0]
+                    add = add.replace("RUSSIA", "").strip()
+                    if "(" in add:
+                        add = add.rsplit("(", 1)[0].strip()
+                    if "(" in city:
+                        city = city.split("(")[0].strip()
+                    if "," in city:
+                        city = city.split(",")[1].strip()
+                    if country == "IT" and " " in city:
+                        if len(city.rsplit(" ", 1)[1]) == 2:
+                            city = city.rsplit(" ", 1)[0].strip()
+                    if "Stockholm" in city:
+                        city = "Stockholm"
+                    if "103" in city:
+                        city = city.split("103")[0].strip()
                     if "Draycott Avenue" not in add:
                         if CS is False:
                             yield SgRecord(
@@ -92,6 +104,7 @@ def fetch_data():
                                 store_number=store,
                                 latitude=lat,
                                 longitude=lng,
+                                raw_address=raw_address,
                                 hours_of_operation=hours,
                             )
 
