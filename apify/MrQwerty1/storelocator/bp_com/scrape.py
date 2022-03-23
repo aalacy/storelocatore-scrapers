@@ -8,9 +8,11 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
-from sgzip.dynamic import SearchableCountries, Grain_1_KM
+from sgzip.dynamic import Grain_1_KM
 from sgzip.parallel import DynamicSearchMaker, ParallelDynamicSearch, SearchIteration
 from tenacity import retry, stop_after_attempt
+
+# This verson and approach is 100% perfect for USA locations, using global it missing data in production
 
 
 @retry(stop=stop_after_attempt(10), wait=tenacity.wait_fixed(5))
@@ -24,10 +26,6 @@ def get_response(api_url):
 
 
 class ExampleSearchIteration(SearchIteration):
-    def __init__(self, http: SgRequests):
-        self.__http = http
-        self.__state = CrawlStateSingleton.get_instance()
-
     def do(
         self,
         coord: Tuple[float, float],
@@ -97,7 +95,7 @@ if __name__ == "__main__":
     search_maker = DynamicSearchMaker(
         search_type="DynamicGeoSearch",
         granularity=Grain_1_KM(),
-        expected_search_radius_miles=0.5,
+        expected_search_radius_miles=0.9,
         max_search_distance_miles=1,
     )
 
@@ -109,15 +107,28 @@ if __name__ == "__main__":
             duplicate_streak_failure_factor=-1,
         )
     ) as writer:
-        with SgRequests() as https:
-            search_iter = ExampleSearchIteration(http=https)
-            par_search = ParallelDynamicSearch(
-                search_maker=search_maker,
-                search_iteration=search_iter,
-                country_codes=SearchableCountries.ALL,
-            )
+        search_iter = ExampleSearchIteration()
+        par_search = ParallelDynamicSearch(
+            search_maker=search_maker,
+            search_iteration=search_iter,
+            country_codes=[
+                "AT",
+                "AU",
+                "CH",
+                "DE",
+                "ES",
+                "FR",
+                "GR",
+                "LU",
+                "NL",
+                "PL",
+                "RU",
+                "SA",
+                "TR",
+                "US",
+                "ZA",
+            ],
+        )
 
-            for rec in par_search.run():
-                writer.write_row(rec)
-
-    state = CrawlStateSingleton.get_instance()
+        for rec in par_search.run():
+            writer.write_row(rec)

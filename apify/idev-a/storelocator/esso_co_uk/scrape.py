@@ -4,6 +4,7 @@ from sgrequests import SgRequests
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from bs4 import BeautifulSoup as bs
+import re
 
 _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
@@ -26,10 +27,26 @@ urls = [
     "https://www.fuels.esso.co.th/en-TH/api/locator/Locations?Latitude1=13.665169713849096&Latitude2=13.831912603975242&Longitude1=100.38607142742919&Longitude2=100.68965457257079&DataSource=RetailGasStations&Country=TH&Customsort=True",
 ]
 
+locators = [
+    "https://www.esso.co.uk/en-gb/find-station/",
+    "https://www.esso.co.uk/en-gb/find-station/",
+    "https://www.esso.be/nl-be/find-station/",
+    "https://www.esso.com.cy/en-cy/find-station/",
+    "https://carburant.esso.fr/fr-fr/find-station/",
+    "https://www.esso.de/de-de/find-station/",
+    "https://carburanti.esso.it/it-it/find-station/",
+    "https://www.esso.lu/fr-lu/find-station/",
+    "https://www.esso.nl/nl-nl/find-station/",
+    "https://www.esso.no/nb-no/find-station/",
+    "https://www.esso.com.hk/en-hk/find-station/",
+    "https://www.esso.com.sg/en-sg/find-station/",
+    "https://www.fuels.esso.co.th/en-th/find-station/",
+]
+
 
 def fetch_data():
     with SgRequests() as session:
-        for base_url in urls:
+        for x, base_url in enumerate(urls):
             country = base_url.split("Country=")[1].split("&")[0]
             locations = session.get(base_url, headers=_headers).json()
             for _ in locations:
@@ -48,7 +65,9 @@ def fetch_data():
                         city = cc[0]
                         state = cc[1]
 
+                page_url = f"{locators[x]}esso-{city.lower()}-{re.sub(r'[^a-zA-Z]', '', _['DisplayName'].lower())}-{_['LocationID']}"
                 yield SgRecord(
+                    page_url=page_url,
                     store_number=_["LocationID"],
                     location_name=_["LocationName"],
                     street_address=street_address,
