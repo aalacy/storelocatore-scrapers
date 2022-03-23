@@ -1,4 +1,4 @@
-import tabula
+import tabula  # noqa
 from sgscrape import simple_scraper_pipeline as sp
 from sgrequests import SgRequests
 import PyPDF2  # noqa
