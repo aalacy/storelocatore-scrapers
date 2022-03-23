@@ -1,4 +1,4 @@
-from typing import Iterable, Tuple, Callable
+from typing import Iterable, Tuple, Callable, List
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord import SgRecord
@@ -13,7 +13,7 @@ from bs4 import BeautifulSoup as bs
 
 
 log = sglog.SgLogSetup().get_logger(logger_name="gasbuddy")
-page_urls: list[str] = []
+page_urls: List[str] = []
 proxy_url = "http://groups-RESIDENTIAL,country-us:{}@proxy.apify.com:8000/"
 
 
