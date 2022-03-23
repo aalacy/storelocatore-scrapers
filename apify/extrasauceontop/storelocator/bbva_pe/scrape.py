@@ -65,19 +65,19 @@ def get_data():
                 if row[4] != "0":
                     index_4 = False
 
-            if index_0 == True:
+            if index_0 is True:
                 bad_index = 0
 
-            if index_1 == True:
+            if index_1 is True:
                 bad_index = 1
 
-            if index_2 == True:
+            if index_2 is True:
                 bad_index = 2
 
-            if index_3 == True:
+            if index_3 is True:
                 bad_index = 3
 
-            if index_4 == True:
+            if index_4 is True:
                 bad_index = 4
 
             list_to_iter = []
