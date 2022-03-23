@@ -66,20 +66,28 @@ def fetch_data(sgw: SgWriter):
                     city = str(city).split("(")[0].strip()
                 phone = a.get("phone") or "<MISSING>"
                 phone = str(phone).replace("Tel:", "").strip()
-                hours = j.get('deliverySlots')
+                hours = j.get("deliverySlots")
                 hours_of_operation = "<MISSING>"
-                days = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY']
+                days = [
+                    "MONDAY",
+                    "TUESDAY",
+                    "WEDNESDAY",
+                    "THURSDAY",
+                    "FRIDAY",
+                    "SATURDAY",
+                    "SUNDAY",
+                ]
                 tmp = []
                 if hours:
                     for i in days:
                         day = i.capitalize()
                         try:
-                            times = hours.get(f'{i}')[0].get('slot')
+                            times = hours.get(f"{i}")[0].get("slot")
                         except:
                             continue
                         line = f"{day} - {times}"
                         tmp.append(line)
-                    hours_of_operation = ' ;'.join(tmp)
+                    hours_of_operation = " ;".join(tmp)
 
                 row = SgRecord(
                     locator_domain=locator_domain,
