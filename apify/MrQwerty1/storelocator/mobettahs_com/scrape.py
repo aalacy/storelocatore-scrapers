@@ -62,6 +62,9 @@ def fetch_data(sgw: SgWriter):
         street_address, city, state, postal = get_address(raw_address)
         phone = "".join(d.xpath(".//div[@class='telephone']/text()")).strip()
 
+        text = "".join(d.xpath(".//a[contains(@href, 'restaurantId')]/@href"))
+        store_number = text.split("restaurantId=")[-1]
+
         _tmp = []
         hours = d.xpath(".//div[@class='opening_hours']/p")
         for h in hours:
@@ -83,6 +86,7 @@ def fetch_data(sgw: SgWriter):
             state=state,
             zip_postal=postal,
             country_code="US",
+            store_number=store_number,
             phone=phone,
             locator_domain=locator_domain,
             hours_of_operation=hours_of_operation,

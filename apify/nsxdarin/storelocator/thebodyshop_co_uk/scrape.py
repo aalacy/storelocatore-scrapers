@@ -83,6 +83,9 @@ def fetch_data():
                 and "GALWAY" not in city
                 and "COUNTY DUB" not in city
             ):
+                add = add.replace("Quay,", "Quay")
+                add = add.replace("Glasgow Road,", "Glasgow Road")
+                add = add.replace("Quays,", "Quays")
                 yield SgRecord(
                     locator_domain=website,
                     page_url=loc,

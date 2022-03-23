@@ -150,7 +150,7 @@ def fetch_data():
                     log.info(f"Phone Error: {e}")
                     phone = MISSING
 
-                hours_of_operation = (
+                hours_of_operation = strip_accents(
                     soup.find(
                         "div",
                         {
@@ -160,6 +160,23 @@ def fetch_data():
                     .get_text(separator="|", strip=True)
                     .replace("|", " ")
                 )
+                if (
+                    hours_of_operation
+                    == "Montag: - Dienstag: - Mittwoch: - Donnerstag: - Freitag: - Samstag: - Sonntag: -"
+                ):
+                    hours_of_operation = MISSING
+                elif (
+                    hours_of_operation
+                    == "maandag: - dinsdag: - woensdag: - donderdag: - vrijdag: - zaterdag: - zondag: -"
+                ):
+                    hours_of_operation = MISSING
+                elif (
+                    hours_of_operation
+                    == "Lundi: - Mardi: - Mercredi: - Jeudi: - Vendredi: - Samedi: - Dimanche: -"
+                ):
+                    hours_of_operation = MISSING
+                elif "Jueves: - Viernes: -" in hours_of_operation:
+                    hours_of_operation = MISSING
                 if city is MISSING:
                     city = raw_address.split()[-1]
 
