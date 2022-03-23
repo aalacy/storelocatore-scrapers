@@ -1,4 +1,3 @@
-from dataclasses import dataclass
 import tabula
 from sgscrape import simple_scraper_pipeline as sp
 from sgrequests import SgRequests
