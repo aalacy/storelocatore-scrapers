@@ -4,16 +4,12 @@ import time
 
 from bs4 import BeautifulSoup
 
-from sgpostal.sgpostal import parse_address_intl
-
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 from sgselenium.sgselenium import SgChrome
-
-from sgrequests import SgRequests
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
@@ -23,8 +19,6 @@ def fetch_data(sgw: SgWriter):
     base_link = "http://www.bahamas.com.br/ListaLojas.aspx"
 
     user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.80 Safari/537.36"
-
-    headers = {"User-Agent": user_agent}
 
     locator_domain = "https://www.bahamas.com.br"
 
