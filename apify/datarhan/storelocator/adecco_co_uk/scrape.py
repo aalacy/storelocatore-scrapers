@@ -1,3 +1,5 @@
+import json
+from lxml import etree
 from urllib.parse import urljoin
 
 from sgrequests import SgRequests
@@ -11,50 +13,53 @@ def fetch_data():
     session = SgRequests()
 
     domain = "adecco.co.uk"
-    start_url = "https://www.adecco.co.uk/globalweb/branch/branchsearch"
+    start_url = "https://www.adecco.co.uk/find-a-branch/"
+    response = session.post(start_url)
+    dom = etree.HTML(response.text)
 
-    frm = {
-        "dto": {
-            "Industry": "ALL",
-            "Latitude": "54.9951837",
-            "Longitude": "-1.5666991",
-            "MaxResults": "100",
-            "Radius": "50000",
-            "RadiusUnits": "MILES",
-        }
-    }
-    response = session.post(start_url, json=frm).json()
+    all_locations = dom.xpath('//div[@id="nav-tabContent"]//li/a/@href')
+    all_locations.append(
+        "https://www.adecco.co.uk/find-a-branch/branches/grey-street-newcastle-upon-tyne-uk?location=grey%20street+%20newcastle%20upon%20tyne+%20uk&distance=50&latitude=54.9724619&longitude=-1.6123224"
+    )
+    for url in list(set(all_locations)):
+        url = urljoin(start_url, url)
+        response = session.get(url)
+        dom = etree.HTML(response.text)
 
-    for poi in response["Items"]:
-        page_url = urljoin(start_url, poi["SeoCityUrl"])
-        street_address = poi["Address"]
-        if poi["AddressExtension"]:
-            street_address += " " + poi["AddressExtension"]
-        hoo = []
-        for e in poi["ScheduleList"]:
-            opens = e["StartTime"].split("T")[-1][:-3]
-            closes = e["EndTime"].split("T")[-1][:-3]
-            hoo.append(f'{e["WeekdayId"]} {opens} - {closes}')
-        hoo = " ".join(hoo)
+        data = dom.xpath('//script[contains(text(), "branch_details")]/text()')
+        if not data:
+            continue
+        data = data[0].split("details =")[-1].split(";\r\n    var brand")[0]
+        data = json.loads(data)
+        for poi in data:
+            page_url = urljoin(start_url, poi["ItemUrl"])
+            street_address = f'{poi["Address"]} {poi["AddressExtension"]}'
+            hoo = []
+            for e in poi["ScheduleList"]:
+                day = e["WeekdayId"]
+                opens = e["StartTime"].split("T")[-1].replace("0:00", "0")
+                closes = e["EndTime"].split("T")[-1].replace("0:00", "0")
+                hoo.append(f"{day}: {opens} - {closes}")
+            hoo = " ".join(hoo)
 
-        item = SgRecord(
-            locator_domain=domain,
-            page_url=page_url,
-            location_name=poi["BranchName"],
-            street_address=street_address,
-            city=poi["City"],
-            state=SgRecord.MISSING,
-            zip_postal=poi["ZipCode"],
-            country_code=poi["CountryCode"],
-            store_number=poi["BranchCode"],
-            phone=poi["PhoneNumber"],
-            location_type=SgRecord.MISSING,
-            latitude=poi["Latitude"],
-            longitude=poi["Longitude"],
-            hours_of_operation=hoo,
-        )
+            item = SgRecord(
+                locator_domain=domain,
+                page_url=page_url,
+                location_name=poi["BranchName"],
+                street_address=street_address,
+                city=poi["City"],
+                state=poi["State"],
+                zip_postal=poi["ZipCode"],
+                country_code=poi["CountryCode"],
+                store_number=poi["BranchCode"],
+                phone=poi["PhoneNumber"],
+                location_type="",
+                latitude=poi["Latitude"],
+                longitude=poi["Longitude"],
+                hours_of_operation=hoo,
+            )
 
-        yield item
+            yield item
 
 
 def scrape():

@@ -1,0 +1,20 @@
+--ignore CountryCodeFillRateChecker (International)
+
+--ignore GeoConsistencyValidator  (Not us state)
+Found 5 concerning rows. Examples:
+     zip state                REASON  rowNumber
+22  6003    WA  ZIPCODE_NOT_IN_STATE         22
+23  6155    WA  ZIPCODE_NOT_IN_STATE         23
+24  6101    WA  ZIPCODE_NOT_IN_STATE         24
+25  6107    WA  ZIPCODE_NOT_IN_STATE         25
+26  6164    WA  ZIPCODE_NOT_IN_STATE         26
+
+
+--ignore CountryValidator (not us zip)
+Found 6 concerning rows. Examples:
+   state           phone   zip                  REASON  rowNumber
+2     NT  (08) 8945 2448  0810  INVALID_CA_POSTAL_CODE          2
+22    WA  (08) 9227 6935  6003          INVALID_US_ZIP         22
+23    WA  (08) 6381 0138  6155          INVALID_US_ZIP         23
+24    WA  (08) 6161 5589  6101          INVALID_US_ZIP         24
+25    WA  (08) 6114 5348  6107          INVALID_US_ZIP         25

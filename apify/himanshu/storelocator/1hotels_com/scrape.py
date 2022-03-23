@@ -2,9 +2,11 @@ import re
 import json
 from lxml import etree
 from sglogging import sglog
+from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
+from sgpostal.sgpostal import parse_address_intl
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
@@ -25,14 +27,13 @@ def fetch_data():
     domain = re.findall(r"://(.+?)/", start_url)[0].replace("www.", "")
     response = session.get(start_url, headers=headers)
     dom = etree.HTML(response.text)
-    all_locations = dom.xpath("//a[img]/@href")[1:]
+    all_locations = dom.xpath("//header/a/@href")
     for url in all_locations:
         if domain not in url:
             continue
         page_url = url.replace("/contact-us", "")
         loc_response = session.get(page_url)
         log.info(page_url)
-
         loc_dom = etree.HTML(loc_response.text)
         poi = loc_dom.xpath('//script[contains(text(), "PostalAddress")]/text()')
         if poi:
@@ -40,6 +41,8 @@ def fetch_data():
             poi = poi["@graph"][0]
 
             location_name = poi["name"]
+            if "Sprouting Fall 2022" in location_name:
+                continue
             try:
                 street_address = poi["contactPoint"]["areaServed"]["address"][
                     "streetAddress"
@@ -65,26 +68,62 @@ def fetch_data():
             store_number = MISSING
 
             location_type = poi["@type"]
-            geo = re.findall('location":{(.+),"lat_sin', loc_response.text)[0]
-            geo = json.loads("{" + geo + "}")
-            latitude = geo["lat"]
-            longitude = geo["lng"]
+            raw_address = (
+                street_address
+                + " "
+                + city
+                + " "
+                + state
+                + " "
+                + zip_postal
+                + " "
+                + country_code
+            )
         else:
-            location_name = loc_dom.xpath(
-                '//p[@class="directions__address"]/a//text()'
-            )[0].strip()
-            raw_address = loc_dom.xpath('//p[@class="directions__address"]/text()')
-            raw_address = [e.strip() for e in raw_address if e.strip()]
-            street_address = raw_address[0]
-            city = raw_address[1].split(", ")[0]
-            state = MISSING
-            zip_postal = raw_address[1].split(", ")[-1].split()[-1]
-            country_code = MISSING
+            loc_dom = BeautifulSoup(loc_response.text, "html.parser")
+            location_name = loc_dom.find("h1").text
+            raw_address = (
+                loc_dom.find(
+                    "div",
+                    {"class": "caption col-md-10 ml-auto mr-auto text-lg-center card"},
+                )
+                .find("p")
+                .text
+            )
+            phone = loc_response.text.split('<a href="tel:')[1].split('"')[0]
+            if "Planning an upcoming trip" in raw_address:
+                raw_address = (
+                    loc_dom.find("p", {"class": "directions__address"})
+                    .get_text(separator="|", strip=True)
+                    .split("|")
+                )
+                location_name = raw_address[0]
+                raw_address = " ".join(raw_address[1:])
+            pa = parse_address_intl(raw_address)
+
+            street_address = pa.street_address_1
+            street_address = street_address if street_address else MISSING
+
+            city = pa.city
+            city = city.strip() if city else MISSING
+
+            state = pa.state
+            state = state.strip() if state else MISSING
+
+            zip_postal = pa.postcode
+            zip_postal = zip_postal.strip() if zip_postal else MISSING
+
+            country_code = pa.country
+            country_code = country_code.strip() if country_code else MISSING
+
             store_number = MISSING
-            phone = loc_dom.xpath(
-                '//a[strong[contains(text(), "Reservations")]]/text()'
-            )[0].strip()
+
             location_type = MISSING
+        try:
+            longitude, latitude = (
+                loc_response.text.split('"coordinates":"[')[1].split("]")[0].split(",")
+            )
+        except:
             geo = re.findall('location":{(.+),"lat_sin', loc_response.text)[0]
             geo = json.loads("{" + geo + "}")
             latitude = geo["lat"]
@@ -106,6 +145,7 @@ def fetch_data():
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hours_of_operation.strip(),
+            raw_address=raw_address,
         )
 
 

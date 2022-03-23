@@ -1,0 +1,24 @@
+--ignore StreetAddressHasNumber (Confirmed scrape correctly)
+
+
+
+--ignore StreetAddressHasStateName (Confirmed scrape correctly)
+Found 9 concerning rows. Examples:
+                                   street_address                    REASON  rowNumber
+31                    Pza. de la Hispanidad, nº 1  ADDR_CONTAINS_STATE_NAME         31
+39                            C/ Don Sancho, Nº 5  ADDR_CONTAINS_STATE_NAME         39
+40                      Pº San Gregorio, Nº 42-44  ADDR_CONTAINS_STATE_NAME         40
+48  P.C. Puerto Venecia C/ Teatro Malibrán, nº 27  ADDR_CONTAINS_STATE_NAME         48
+57                           Av. Al Vedat, nº 111  ADDR_CONTAINS_STATE_NAME         57
+
+
+
+
+--ignore CountryValidator (NOT US PHONE)
+Found 89 concerning rows. Examples:
+       state         phone    zip            REASON  rowNumber
+0  <MISSING>  914 59 12 14  28039  INVALID_US_PHONE          0
+1  <MISSING>  917 09 33 65  28224  INVALID_US_PHONE          1
+2  <MISSING>  915 56 44 15  28020  INVALID_US_PHONE          2
+3  <MISSING>  915 71 80 20  28020  INVALID_US_PHONE          3
+4  <MISSING>  915 32 89 76  28013  INVALID_US_PHONE          4

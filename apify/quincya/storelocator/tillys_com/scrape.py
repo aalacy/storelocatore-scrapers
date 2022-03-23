@@ -1,15 +1,22 @@
-import csv
 import ssl
 import time
 
 from bs4 import BeautifulSoup
 
 from selenium.webdriver.common.by import By
-from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.support import expected_conditions as ec
-from selenium.webdriver.support.ui import WebDriverWait
+
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 from sgselenium import SgChrome
+from webdriver_manager.chrome import ChromeDriverManager
+import os
+
+os.environ[
+    "PROXY_URL"
+] = "http://groups-RESIDENTIAL,country-us:{}@proxy.apify.com:8000/"
 
 try:
     _create_unverified_https_context = (
@@ -21,57 +28,24 @@ else:
     ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def fetch_data(sgw: SgWriter):
 
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+    user_agent = (
+        "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0"
+    )
 
+    base_link = "http://www.tillys.com/store-list/?"
 
-def fetch_data():
-
-    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
-
-    base_link = "https://www.tillys.com/store-list/"
-
-    driver = SgChrome(user_agent=user_agent).driver()
+    driver = SgChrome(
+        executable_path=ChromeDriverManager().install(), user_agent=user_agent
+    ).driver()
     time.sleep(2)
-
     driver.get(base_link)
-    try:
-        WebDriverWait(driver, 30).until(
-            ec.presence_of_element_located((By.ID, "primary"))
-        )
-    except:
-        driver.find_element_by_tag_name("body").send_keys(Keys.ESCAPE)
-    time.sleep(2)
+    driver.find_element(By.CSS_SELECTOR, "body")
+    time.sleep(40)
 
     base = BeautifulSoup(driver.page_source, "lxml")
 
-    data = []
     locator_domain = "tillys.com"
 
     stores = base.find_all(class_="col-6 col-sm-3 sl__stores-list_item")
@@ -118,7 +92,10 @@ def fetch_data():
         if "temporarily closed" in str(store).lower():
             hours_of_operation = "Temporarily Closed"
         else:
-            days = list(store.time.stripped_strings)[:7]
+            try:
+                days = list(store.time.stripped_strings)[:7]
+            except:
+                continue
             hours = list(store.time.stripped_strings)[7:]
             hours_of_operation = ""
             for i in range(len(days)):
@@ -134,31 +111,27 @@ def fetch_data():
         latitude = geo[0]
         longitude = geo[1]
 
-        data.append(
-            [
-                locator_domain,
-                link,
-                location_name,
-                street_address,
-                city,
-                state.replace("RH", "RI"),
-                zip_code,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
+        sgw.write_row(
+            SgRecord(
+                locator_domain=locator_domain,
+                page_url=link,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state.replace("RH", "RI"),
+                zip_postal=zip_code,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
         )
+
     driver.close()
-    return data
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    fetch_data(writer)

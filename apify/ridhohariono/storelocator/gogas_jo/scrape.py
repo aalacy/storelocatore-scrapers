@@ -75,10 +75,37 @@ def click_and_wait_modal(driver, btn, number=0):
         WebDriverWait(driver, 5).until(
             EC.presence_of_element_located((By.ID, "POPUPS_ROOT"))
         )
+        WebDriverWait(driver, 5).until(
+            EC.presence_of_element_located(
+                (By.CSS_SELECTOR, "wix-iframe[title='Google Maps'] iframe")
+            )
+        )
+        WebDriverWait(driver, 10).until(
+            lambda driver: driver.execute_script("return document.readyState")
+            == "complete"
+        )
     except:
         btn.click()
         log.info(f"Try to Refresh for ({number}) times")
         return click_and_wait_modal(driver, btn, number)
+
+
+def wait_gmap_iframe(driver, number=0):
+    number += 1
+    log.info("Wait for google maps iframe...")
+    try:
+        WebDriverWait(driver, 5).until(
+            EC.presence_of_element_located(
+                (By.XPATH, '//*[@id="map_canvas"]/div/div/div[14]/div')
+            )
+        )
+        WebDriverWait(driver, 10).until(
+            lambda driver: driver.execute_script("return document.readyState")
+            == "complete"
+        )
+    except:
+        log.info(f"Try to Refresh for ({number}) times")
+        return wait_gmap_iframe(driver, number)
 
 
 def close_modal(driver):
@@ -108,6 +135,15 @@ def fetch_data():
     for btn in contents:
         actions.move_to_element(btn).perform()
         click_and_wait_modal(driver, btn)
+        iframe = iframe = driver.find_element_by_css_selector(
+            "wix-iframe[title='Google Maps'] iframe"
+        )
+        driver.switch_to.frame(iframe)
+        wait_gmap_iframe(driver)
+        map_link = driver.find_element_by_xpath(
+            '//*[@id="map_canvas"]/div/div/div[14]/div/a'
+        ).get_attribute("href")
+        driver.switch_to.default_content()
         info = (
             cleaner(
                 bs(
@@ -129,8 +165,9 @@ def fetch_data():
         if "Irbid" in raw_address:
             city = "Irbid"
         phone = info[-1]
-        latitude = MISSING
-        longitude = MISSING
+        latlong = map_link.split("ll=")[1].split("&z=")[0].split(",")
+        latitude = latlong[0]
+        longitude = latlong[1]
         country_code = "JO"
         store_number = MISSING
         hours_of_operation = MISSING

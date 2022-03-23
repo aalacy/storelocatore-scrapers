@@ -1,97 +1,142 @@
-from sglogging import sglog
 from bs4 import BeautifulSoup
+from sglogging import SgLogSetup
 from sgrequests import SgRequests
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
-from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from tenacity import retry, stop_after_attempt
+import tenacity
+import ssl
+from lxml import html
 
-session = SgRequests()
-website = "donatos_com"
-log = sglog.SgLogSetup().get_logger(logger_name=website)
-session = SgRequests()
+
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
+
+DOMAIN = "donatos.com"
+MISSING = SgRecord.MISSING
+logger = SgLogSetup().get_logger("donatos_com")
+MAX_WORKERS = 5
+
 headers = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36",
-    "Accept": "application/json",
+    "Accept": "*/*",
+    "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36",
 }
 
-DOMAIN = "https://donatos.com/"
-MISSING = SgRecord.MISSING
+
+@retry(stop=stop_after_attempt(5), wait=tenacity.wait_fixed(15))
+def get_response(url):
+    with SgRequests(timeout_config=600) as http:
+        response = http.get(url, headers=headers)
+        if response.status_code == 200:
+            logger.info(f"{url} >> HTTP STATUS: {response.status_code}")  # noqa
+            return response
+        raise Exception(
+            f"{url} Please fix GetResponseError or HttpCodeError: {response.status_code}"
+        )
 
 
-def fetch_data():
-    if True:
-        url = "https://www.donatos.com/locations/all"
-        r = session.get(url, headers=headers)
+def fetch_records(num, link, sgw: SgWriter):
+    try:
+        logger.info(f"[{num}] Pulling data from {link}")  # noqa
+        r = get_response(link)
         soup = BeautifulSoup(r.text, "html.parser")
-        loclist = soup.find("div", {"id": "locationresults"}).findAll("li")
-        for loc in loclist:
-            latitude = loc["data-lat"]
-            longitude = loc["data-lng"]
-            page_url = loc.findAll("a")[-1]["href"]
-            log.info(page_url)
-            r = session.get(page_url, headers=headers)
-            soup = BeautifulSoup(r.text, "html.parser")
-            if "TBD , TBD, TB TBD" in loc.text:
+        div = soup.find("main", {"id": "location-details"})
+        try:
+            title = div.find("h2").text
+        except:
+            return
+        street = div.find("span", {"itemprop": "streetAddress"}).text
+        city = div.find("span", {"itemprop": "addressLocality"}).text
+        state = div.find("span", {"itemprop": "addressRegion"}).text
+        pcode = div.find("span", {"itemprop": "postalCode"}).text
+        phone = div.find("dd", {"itemprop": "phone"}).text
+        lat = r.text.split('data-lat="', 1)[1].split('"', 1)[0]
+        longt = r.text.split('data-lng="', 1)[1].split('"', 1)[0]
+        store = div.find("a", {"class": "btn"})["href"].split("=", 1)[1]
+        hours = (
+            div.text.split("Hours", 1)[1]
+            .split("Order ", 1)[0]
+            .replace("\n", " ")
+            .strip()
+        )
+
+        rec = SgRecord(
+            locator_domain="donatos.com",
+            page_url=link,
+            location_name=title,
+            street_address=street.strip(),
+            city=city.strip(),
+            state=state.strip(),
+            zip_postal=pcode.strip(),
+            country_code="US",
+            store_number=str(store),
+            phone=phone.strip(),
+            location_type=SgRecord.MISSING,
+            latitude=str(lat),
+            longitude=str(longt),
+            hours_of_operation=hours,
+        )
+        sgw.write_row(rec)
+    except Exception as e:
+        logger.info(f"Fix FetchRecordsError: << {e} >> << {num} | {link} >>")
+
+
+def get_store_urls():
+    all_store_url = "https://www.donatos.com/locations/find?address=300&mode=&redirect="
+    rall = get_response(all_store_url)
+    sel = html.fromstring(rall.text, "lxml")
+    locurls = sel.xpath(
+        '//*[contains(@href, "https://www.donatos.com/locations")]/@href'
+    )
+    locurls_dedup = list(set(locurls))
+    locurls_dedup = sorted(locurls_dedup)
+    return locurls_dedup
+
+
+def fetch_data(sgw: SgWriter):
+    store_urls = get_store_urls()
+    logger.info(f"Total Store Urls: {len(store_urls)}")  # noqa
+    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
+        tasks = []
+        task = [
+            executor.submit(fetch_records, num, link, sgw)
+            for num, link in enumerate(store_urls[0:])
+        ]
+        tasks.extend(task)
+        for future in as_completed(tasks):
+            if future.result() is not None:
+                future.result()
+            else:
                 continue
-            try:
-                location_name = soup.find("h1").text
-                temp = soup.find("div", {"class": "box-content"})
-                street_address = temp.find("span", {"itemprop": "streetAddress"}).text
-                city = temp.find("span", {"itemprop": "addressLocality"}).text
-                state = temp.find("span", {"itemprop": "addressRegion"}).text
-                zip_postal = temp.find("span", {"itemprop": "postalCode"}).text
-                phone = temp.find("dd", {"itemprop": "phone"}).text
-                hours_of_operation = (
-                    temp.findAll("dd")[-1]
-                    .get_text(separator="|", strip=True)
-                    .replace("|", " ")
-                )
-            except:
-                location_name = loc.find("h2").text
-                temp = loc.findAll("p")
-                address = temp[0].text.replace(", ,", ",").split(",")
-                street_address = address[0]
-                city = address[1]
-                address = address[2].split()
-                state = address[0]
-                zip_postal = address[1]
-                phone = temp[1].find("a").text
-                hours_of_operation = MISSING
-            if "Warning :  Invalid argument" in hours_of_operation:
-                hours_of_operation = MISSING
-            country_code = "US"
-            yield SgRecord(
-                locator_domain=DOMAIN,
-                page_url=page_url,
-                location_name=location_name,
-                street_address=street_address.strip(),
-                city=city.strip(),
-                state=state.strip(),
-                zip_postal=zip_postal.strip(),
-                country_code=country_code,
-                store_number=MISSING,
-                phone=phone.strip(),
-                location_type=MISSING,
-                latitude=latitude,
-                longitude=longitude,
-                hours_of_operation=hours_of_operation.strip(),
-            )
 
 
 def scrape():
-    log.info("Started")
-    count = 0
+    logger.info("Started")  # noqa
     with SgWriter(
-        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+        SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.PAGE_URL,
+                    SgRecord.Headers.LOCATION_NAME,
+                    SgRecord.Headers.STORE_NUMBER,
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.LONGITUDE,
+                    SgRecord.Headers.LATITUDE,
+                }
+            )
+        )
     ) as writer:
-        results = fetch_data()
-        for rec in results:
-            writer.write_row(rec)
-            count = count + 1
-
-    log.info(f"No of records being processed: {count}")
-    log.info("Finished")
+        fetch_data(writer)
+    logger.info("Finished")  # noqa
 
 
 if __name__ == "__main__":

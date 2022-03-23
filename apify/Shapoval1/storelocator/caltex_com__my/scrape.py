@@ -31,6 +31,7 @@ def fetch_data(sgw: SgWriter):
         longitude = j.get("longitude") or "<MISSING>"
         phone = j.get("phoneNumber") or "<MISSING>"
         hours_of_operation = j.get("operatingHours") or "<MISSING>"
+        store_number = j.get("id")
 
         row = SgRecord(
             locator_domain=locator_domain,
@@ -41,7 +42,7 @@ def fetch_data(sgw: SgWriter):
             state=state,
             zip_postal=postal,
             country_code=country_code,
-            store_number=SgRecord.MISSING,
+            store_number=store_number,
             phone=phone,
             location_type=location_type,
             latitude=latitude,
@@ -57,7 +58,11 @@ if __name__ == "__main__":
     with SgWriter(
         SgRecordDeduper(
             SgRecordID(
-                {SgRecord.Headers.STREET_ADDRESS, SgRecord.Headers.LOCATION_NAME}
+                {
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.STORE_NUMBER,
+                    SgRecord.Headers.LOCATION_NAME,
+                }
             )
         )
     ) as writer:
