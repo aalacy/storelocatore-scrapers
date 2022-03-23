@@ -2,6 +2,7 @@ import ssl
 from lxml import etree
 from time import sleep
 
+from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
@@ -27,6 +28,7 @@ else:
 
 
 def fetch_data():
+    session = SgRequests()
     start_url = "https://themobilegeneration.com/locations/"
     domain = "themobilegeneration.com"
 
@@ -35,7 +37,7 @@ def fetch_data():
         sleep(5)
         driver.execute_script("window.scrollBy(0, 250)")
         dom = etree.HTML(driver.page_source)
-        all_locations = dom.xpath('//tr[contains(@class, "wpgmaps_mlist_row")]')
+        all_locations = dom.xpath("//tr[@mid]")
         all_states = driver.find_elements_by_xpath("//select[@data-map-id]/option")[1:]
         for i in range(0, len(all_states)):
             all_states = driver.find_elements_by_xpath("//select[@data-map-id]/option")[
@@ -58,9 +60,11 @@ def fetch_data():
             driver.find_element_by_xpath('//a[contains(text(), "Next")]').click()
             sleep(5)
             dom = etree.HTML(driver.page_source)
-            all_locations += dom.xpath('//tr[contains(@class, "wpgmaps_mlist_row")]')
+            all_locations += dom.xpath("//tr[@mid]")
 
         for poi_html in all_locations:
+            page_url = poi_html.xpath('.//a[contains(text(), "More details")]/@href')[0]
+            page_url = "https://themobilegeneration.com" + page_url
             raw_data = poi_html.xpath(".//td/text()")
             raw_address = raw_data[1].split(",")
             phone = poi_html.xpath('./td/p[strong[contains(text(), "Phone")]]/text()')
@@ -71,9 +75,23 @@ def fetch_data():
             if len(raw_address[2].split()) == 2:
                 zip_code = raw_address[2].split()[1]
 
+            if not hoo:
+                loc_response = session.get(page_url)
+                loc_dom = etree.HTML(loc_response.text)
+                hoo = loc_dom.xpath('//p[contains(text(), "Hours:")]/text()')
+                if hoo:
+                    hoo = hoo[0].split("Hours:")[-1].split("[")[0]
+                else:
+                    hoo = loc_dom.xpath('//p[contains(text(), "Hours")]/text()')
+                    if hoo:
+                        hoo = hoo[0].split("Hours")[-1].split("[")[0]
+                    else:
+                        hoo = loc_dom.xpath('//p[@class="gbcols_p"]/text()')
+                        hoo = " ".join([e.strip() for e in hoo if "AM -" in e])
+
             item = SgRecord(
                 locator_domain=domain,
-                page_url=start_url,
+                page_url=page_url,
                 location_name=raw_data[0],
                 street_address=raw_address[0],
                 city=raw_address[1],
