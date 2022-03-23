@@ -10,6 +10,7 @@ import re
 
 DOMAIN = "ulsterbank.co.uk"
 LOCATION_URL = "https://locator.ulsterbank.co.uk"
+API_URL = "https://www.ulsterbank.co.uk/content/branchlocator/en/ulsterbank_ni/searchresults/_jcr_content/par/searchresults.search.html"
 HEADERS = {
     "Accept": "application/json, text/plain, */*",
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
@@ -63,16 +64,13 @@ def fetch_data():
         "site": "ulsterbank_ni",
         "pageDepth": 4,
         "search_term": "london",
-        "searchMiles": 5,
-        "offSetMiles": 50,
-        "maxMiles": 50000,
+        "searchMiles": 500,
+        "offSetMiles": 1000,
+        "maxMiles": 15000,
         "listSizeInNumbers": 10000,
         "search-type": 1,
     }
-    req = session.post(
-        "https://locator.ulsterbank.co.uk/content/branchlocator/en/ulsterbank_ni/searchresults/_jcr_content/par/searchresults.search.html",
-        data=payload,
-    )
+    req = session.post(API_URL, data=payload)
     contents = bs(req.content, "lxml").select("div.results-marker-link")
     for row in contents:
         page_url = LOCATION_URL + row.find("a")["href"]
@@ -92,7 +90,7 @@ def fetch_data():
         raw_address = ",".join(info[:3]).strip()
         street_address, city, state, zip_postal = getAddress(raw_address)
         phone = info[3].replace("Personal: ", "").strip()
-        country_code = "GB"
+        country_code = "UK"
         hoo = ""
         for hday in table.find_all("tr", {"class": "time"}):
             hoo += hday.get_text(strip=True, separator=" ").strip() + ","

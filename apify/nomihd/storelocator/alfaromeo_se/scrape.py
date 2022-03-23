@@ -196,7 +196,7 @@ def scrape():
             RecommendedRecordIds.StoreNumberId, duplicate_streak_failure_factor=-1
         )
     ) as writer:
-        with SgRequests(dont_retry_status_codes=([404]), proxy_country="us") as http:
+        with SgRequests(dont_retry_status_codes=([404])) as http:
             search_iter = _SearchIteration(http=http)
             par_search = ParallelDynamicSearch(
                 search_maker=search_maker,
