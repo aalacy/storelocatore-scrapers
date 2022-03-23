@@ -180,7 +180,6 @@ class ExampleSearchIteration(SearchIteration):
                     latitude = json_objects[-1]["@graph"][-1]["geo"]["latitude"]
                     longitude = json_objects[-1]["@graph"][-1]["geo"]["longitude"]
                 except Exception:
-                    error_count = error_count + 1
                     latitude = "<MISSING>"
                     longitude = "<MISSING>"
 
