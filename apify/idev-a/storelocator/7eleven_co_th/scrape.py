@@ -88,7 +88,7 @@ search = DynamicGeoSearch(
 
 def fetch_data():
     # Need to add dedupe. Added it in pipeline.
-    with SgRequests(proxy_country="us", retries_with_fresh_proxy_ip=10) as session:
+    with SgRequests(proxy_country="th", retries_with_fresh_proxy_ip=10) as session:
         maxZ = search.items_remaining()
         total = 0
         for lat, lng in search:
@@ -125,6 +125,7 @@ def fetch_data():
                 store["phone"] = (
                     store["tel"].split()[0] if store.get("tel") else SgRecord.MISSING
                 )
+                search.found_location_at(store["lat"], store["lng"])
                 yield SgRecord(
                     page_url="https://www.7eleven.co.th/find-store",
                     store_number=store["id"],

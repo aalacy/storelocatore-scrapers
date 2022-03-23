@@ -6,6 +6,7 @@ from sglogging import SgLogSetup
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 import json
+import re
 
 logger = SgLogSetup().get_logger("baartprograms")
 
@@ -29,14 +30,17 @@ def fetch_data():
         )["locations"]
         for _ in locations:
             hours = []
-            page_url = (
-                _["location_extrafields"].get("url")
-                if _["location_extrafields"]
-                else ""
-            )
+            info = bs(_["location_messages"], "lxml")
+            page_url = info.a["href"].strip().split()[0]
             if page_url:
                 logger.info(page_url)
                 res = session.get(page_url, headers=_headers)
+                try:
+                    res.url
+                except:
+                    import pdb
+
+                    pdb.set_trace()
                 if res.url.__str__() != "https://medmark.com/":
                     page_url = res.url.__str__()
                     sp1 = bs(res.text, "lxml")
@@ -66,7 +70,16 @@ def fetch_data():
                                     "div.sidebar-info-time p"
                                 ).stripped_strings
                             )[1:]
-                        else:
+                        elif sp1.find("span", string=re.compile(r"OPERATING HOURS")):
+                            for hh in (
+                                sp1.find("span", string=re.compile(r"OPERATING HOURS"))
+                                .find_parent("p")
+                                .find_next_siblings("p")
+                            ):
+                                if not hh.text.strip():
+                                    continue
+                                hours.append(hh.text.strip())
+                        elif sp1.select("div.uabb-infobox-text.uabb-text-editor"):
                             temp = list(
                                 sp1.select("div.uabb-infobox-text.uabb-text-editor")[
                                     1
@@ -78,16 +91,14 @@ def fetch_data():
                                 if hr[0].isdigit():
                                     hours.append(hh)
                                     hh = []
+                        else:
+                            pass
 
             yield SgRecord(
                 page_url=page_url,
                 store_number=_["location_id"],
                 location_name=_["location_title"],
-                street_address=list(
-                    bs(_["location_messages"], "lxml").stripped_strings
-                )[0]
-                .split("\n")[0]
-                .strip(),
+                street_address=list(info.stripped_strings)[0].split("\n")[0].strip(),
                 city=_["location_address"].split(",")[-3],
                 state=_["location_state"],
                 zip_postal=_["location_postal_code"],
