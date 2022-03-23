@@ -72,7 +72,42 @@ def fetch_data(sgw: SgWriter):
                     else:
                         break
         except:
-            hours_of_operation = ""
+            pass
+
+        req = session.get(link, headers=headers)
+
+        try:
+            page = BeautifulSoup(req.text, "lxml")
+            got_page = True
+        except:
+            got_page = False
+
+        if got_page:
+            if not latitude:
+                try:
+                    latitude = page.find(class_="gmaps")["data-gmaps-lat"]
+                    longitude = page.find(class_="gmaps")["data-gmaps-lng"]
+                except:
+                    pass
+            if not hours_of_operation:
+                try:
+                    raw_hour = page.find(string="Hours").find_next("p")
+                except:
+                    try:
+                        raw_hour = page.find(string="Lunch & Dinner").find_next("p")
+                    except:
+                        raw_hour = ""
+                if "temporarily closed" in raw_hour.text.lower():
+                    hours_of_operation = "Closed Temporarily"
+                else:
+                    for i in range(5):
+                        if "pm" in raw_hour.text.lower():
+                            hours_of_operation = (
+                                hours_of_operation + " " + raw_hour.text.lower()
+                            ).strip()
+                            raw_hour = raw_hour.find_next("p")
+                        else:
+                            break
 
         hours_of_operation = hours_of_operation.split("weekend")[0].strip()
 
