@@ -79,7 +79,7 @@ def fetch_data():
         soup = bs(driver.page_source, "html.parser")
         restaurants = soup.find_all("a", text=re.compile("/restaurants/"))
         logger.info(f"Total Restaurants: {len(restaurants)}")
-        for restaurant in restaurants[0:2]:
+        for restaurant in restaurants:
             page_url = restaurant.text
             driver.get(page_url)
             soup2 = bs(driver.page_source, "html.parser")
