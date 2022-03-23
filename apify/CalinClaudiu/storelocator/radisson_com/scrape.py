@@ -12,8 +12,19 @@ from tenacity import retry, wait_random, stop_after_attempt
 EXPECTED_TOTAL = 0
 logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
 
+import ssl
 
-@retry(wait=wait_random(min=1, max=3), stop=(stop_after_attempt(5)))  # noqa
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
+
+
+@retry(wait=wait_random(min=1, max=3), stop=(stop_after_attempt(3)))  # noqa
 def get_main(url, headers, session):
     response = session.get(url, headers=headers)
     return response.json()
@@ -297,8 +308,8 @@ def clean_record(k):
 
 def start():
     state = CrawlStateSingleton.get_instance()
-    urlA = "https://www.radissonhotelsamericas.com"
-    urlB = "https://www.radissonhotels.com"
+    urlB = "https://www.radissonhotelsamericas.com"
+    urlA = "https://www.radissonhotels.com"
     url2 = "/zimba-api/destinations/hotels?brand="
     brandsA = state.get_misc_value(
         "brandsA",

@@ -57,6 +57,9 @@ def fetch_data(sgw: SgWriter):
         d = j.get("data") or {}
         raw_address = d.get("address") or ""
         country = "US"
+        if "Sample" in raw_address:
+            continue
+
         if "Canada" in raw_address:
             country = "CA"
             street_address = raw_address.split(", ")[0]

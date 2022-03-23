@@ -7,7 +7,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from urllib.parse import unquote
 from sglogging import SgLogSetup
-from sgselenium import SgFirefox
+from sgselenium import SgChrome
 
 logger = SgLogSetup().get_logger("bluenile.com")
 
@@ -23,6 +23,7 @@ def get_urls(driver):
     driver.get("https://www.bluenile.com/jewelry-stores")
     driver.execute_script("open('https://www.bluenile.com/jewelry-stores')")
     time.sleep(120)
+    driver.execute_script("open('https://www.bluenile.com/jewelry-stores')")
     driver.refresh()
     time.sleep(30)
     source = driver.page_source
@@ -32,7 +33,9 @@ def get_urls(driver):
 
 
 def fetch_data(sgw: SgWriter):
-    with SgFirefox(user_agent=user_agent).driver() as driver:
+    with SgChrome(
+        user_agent=user_agent, is_headless=False, seleniumwire_auto_config=False
+    ).driver() as driver:
 
         urls = get_urls(driver)
         logger.info(urls)
