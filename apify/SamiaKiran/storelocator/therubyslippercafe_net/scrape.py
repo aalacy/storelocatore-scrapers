@@ -65,7 +65,7 @@ def fetch_data():
                 zip_postal=zip_postal.strip(),
                 country_code=country_code,
                 store_number=store_number,
-                phone=phone.strip(),
+                phone=phone,
                 location_type=location_type,
                 latitude=latitude,
                 longitude=longitude,

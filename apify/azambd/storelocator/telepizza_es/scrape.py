@@ -152,11 +152,18 @@ def fetch_data(driver):
             log.error("Can't scrape")
             continue
         street_address, city, state, zip_postal = get_address(raw_address)
-        phone = get_phone(stringify_nodes(body, '//a[contains(@href, "tel")]'))
-        hours_of_operation = stringify_nodes(
+        phone = get_phone(
+            stringify_nodes(
+                body,
+                '//span[contains(@itemprop, "telephone")]/a[contains(@href, "tel")]',
+            )
+        )
+        hoo = stringify_nodes(
             body,
             '//div[contains(@class, "hours")]/div[contains(@class, "columns")][2]/table',
         )
+        hours_of_operation = hoo.split("festivo")[0]
+
         latitude = get_txt(response, "lat")
         longitude = get_txt(response, "lng")
 

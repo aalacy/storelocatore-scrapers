@@ -15,8 +15,8 @@ logger = SgLogSetup().get_logger("swarovski_com")
 
 
 def fetch_data():
-    for x in range(31, 32):
-        for y in range(9, 10):
+    for x in range(-170, 170):
+        for y in range(-70, 70):
             logger.info(str(x) + "-" + str(y))
             url = (
                 "https://www.swarovski.com/en-AA/store-finder/list/?allBaseStores=true&geoPoint.latitude="
