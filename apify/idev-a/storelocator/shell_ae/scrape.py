@@ -13,7 +13,7 @@ _headers = {
 }
 
 locator_domain = "https://www.shell.ae/"
-json_url = "https://shellgsllocator.geoapp.me/api/v1/locations/within_bounds?sw%5B%5D={}&sw%5B%5D={}&ne%5B%5D={}&ne%5B%5D={}&format=json"
+json_url = "https://shelllubricantslocator.geoapp.me/api/v1/global_lubes/locations/within_bounds?sw%5B%5D={}&sw%5B%5D={}&ne%5B%5D={}&ne%5B%5D={}&format=json"
 base_url = "https://shellgsllocator.geoapp.me/api/v1/locations/within_bounds?sw%5B%5D=-80&sw%5B%5D=-179&ne%5B%5D=80&ne%5B%5D=179&format=json"
 
 
@@ -37,10 +37,8 @@ def fetch_boundings(boundings, writer):
                 logger.info(f"{len(locations)} locations")
                 for _ in locations:
                     street_address = ""
-                    if _.get("address"):
-                        street_address = _["address"]
                     if _.get("address1"):
-                        street_address += " " + _["address1"]
+                        street_address = _["address1"]
                     if _.get("address2"):
                         street_address += " " + _["address2"]
                     zip_postal = _.get("postcode")
@@ -69,8 +67,6 @@ def fetch_boundings(boundings, writer):
                             location_type=", ".join(_.get("channel_types", [])),
                         )
                     )
-        else:
-            break
 
 
 def fetch_data(writer):
