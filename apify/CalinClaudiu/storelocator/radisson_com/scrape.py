@@ -24,7 +24,7 @@ else:
 
 @retry(wait=wait_random(min=1, max=3), stop=(stop_after_attempt(3)))  # noqa
 def get_main(url, headers, session):
-    response = session.get(url, headers=headers)
+    response = SgRequests.raise_on_err(session.get(url, headers=headers))
     return response.json()
 
 
@@ -83,13 +83,18 @@ def fetch_data(index: int, url: str, headers, session) -> dict:
     data = {}
     if len(url) > 0:
         try:
-            response = session.get(url, headers=headers)
+            response = SgRequests.raise_on_err(session.get(url, headers=headers))
             soup = b4(response.text, "lxml")
             logzilla.info(f"URL\n{url}\nLen:{len(response.text)}\n")
             if len(response.text) < 400:
                 logzilla.info(f"Content\n{response.text}\n\n")
         except Exception as e:
             logzilla.error(f"err\n{str(e)}\nUrl:{url}\n\n")
+            try:
+                logzilla.error(f"{response}")
+                logzilla.error(f"{response.text}")
+            except Exception:
+                pass
 
         try:
             data = json.loads(
@@ -306,7 +311,7 @@ def clean_record(k):
 
 def start():
     state = CrawlStateSingleton.get_instance()
-    urlB = "https://www.radissonhotelsamericas.com"
+    urlB = "https://www.radissonhotels.com"  # "https://www.radissonhotelsamericas.com" #noqa
     urlA = "https://www.radissonhotels.com"
     url2 = "/zimba-api/destinations/hotels?brand="
     brandsA = state.get_misc_value(
