@@ -26,6 +26,8 @@ def fetch_data():
             page_url = poi["DealerUrl"]
             if "http" not in page_url:
                 page_url = "https:" + page_url
+            if "usa/" in page_url:
+                page_url = "https://www.triumphmotorcycles.com" + poi["DealerUrl"]
             if page_url == "https:":
                 page_url = ""
             location_name = poi["Title"]
