@@ -13,9 +13,7 @@ from sgpostal.sgpostal import parse_address_intl
 def fetch_data():
     start_url = "https://www.cimaco.com.mx/sucursales"
     domain = "cimaco.com.mx"
-    hdr = {
-        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
-    }
+
     with SgFirefox() as driver:
         driver.get(start_url)
         sleep(5)
