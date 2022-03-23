@@ -41,6 +41,8 @@ def fetch_data():
             poi = poi["@graph"][0]
 
             location_name = poi["name"]
+            if "Sprouting Fall 2022" in location_name:
+                continue
             try:
                 street_address = poi["contactPoint"]["areaServed"]["address"][
                     "streetAddress"
@@ -127,7 +129,6 @@ def fetch_data():
             latitude = geo["lat"]
             longitude = geo["lng"]
         hours_of_operation = MISSING
-        location_name = location_name.replace("- Sprouting Fall 2022", "")
         phone = phone.replace("=", "")
         yield SgRecord(
             locator_domain=DOMAIN,
