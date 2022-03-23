@@ -1,47 +1,53 @@
-import csv
-
+import usaddress
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
-    locator_domain = "https://mobettahs.com/"
-    page_url = "https://mobettahs.com/locations/"
-
-    session = SgRequests()
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0"
+def get_address(line):
+    tag = {
+        "Recipient": "recipient",
+        "AddressNumber": "address1",
+        "AddressNumberPrefix": "address1",
+        "AddressNumberSuffix": "address1",
+        "StreetName": "address1",
+        "StreetNamePreDirectional": "address1",
+        "StreetNamePreModifier": "address1",
+        "StreetNamePreType": "address1",
+        "StreetNamePostDirectional": "address1",
+        "StreetNamePostModifier": "address1",
+        "StreetNamePostType": "address1",
+        "CornerOf": "address1",
+        "IntersectionSeparator": "address1",
+        "USPSBoxGroupID": "address1",
+        "USPSBoxGroupType": "address1",
+        "USPSBoxID": "address1",
+        "USPSBoxType": "address1",
+        "OccupancyType": "address2",
+        "OccupancyIdentifier": "address2",
+        "SubaddressIdentifier": "address2",
+        "SubaddressType": "address2",
+        "PlaceName": "city",
+        "StateName": "state",
+        "ZipCode": "postal",
     }
+
+    a = usaddress.tag(line, tag_mapping=tag)[0]
+    adr1 = a.get("address1") or ""
+    adr2 = a.get("address2") or ""
+    street_address = f"{adr1} {adr2}".strip()
+    city = a.get("city")
+    state = a.get("state")
+    postal = a.get("postal")
+
+    return street_address, city, state, postal
+
+
+def fetch_data(sgw: SgWriter):
+    page_url = "https://mobettahs.com/locations/"
     r = session.get(page_url, headers=headers)
     tree = html.fromstring(r.text)
     divs = tree.xpath(
@@ -52,54 +58,49 @@ def fetch_data():
         location_name = "".join(d.xpath(".//h4[@itemprop='name']/text()")).strip()
         line = d.xpath(".//div[@class='address']//text()")
         line = list(filter(None, [l.strip() for l in line]))
+        raw_address = ", ".join(line)
+        street_address, city, state, postal = get_address(raw_address)
+        phone = "".join(d.xpath(".//div[@class='telephone']/text()")).strip()
 
-        street_address = ", ".join(line[:-1])
-        line = line[-1]
-        city = line.split(",")[0].strip()
-        line = line.split(",")[1].strip()
-        state = line.split()[0]
-        postal = line.split()[1]
-        country_code = "US"
-        store_number = "<MISSING>"
-        phone = (
-            "".join(d.xpath(".//div[@class='telephone']/text()")).strip() or "<MISSING>"
-        )
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
-        location_type = "<MISSING>"
+        text = "".join(d.xpath(".//a[contains(@href, 'restaurantId')]/@href"))
+        store_number = text.split("restaurantId=")[-1]
 
         _tmp = []
-        hours = d.xpath(".//dl[@class='business-hours']/div")
+        hours = d.xpath(".//div[@class='opening_hours']/p")
         for h in hours:
-            _tmp.append(" ".join("".join(h.xpath(".//text()")).split()))
+            check = "".join(h.xpath("./strong/text()"))
+            if "Drive" in check:
+                continue
 
-        hours_of_operation = ";".join(_tmp) or "<MISSING>"
+            day = "".join(h.xpath("./em/text()")).strip()
+            inter = "".join(h.xpath("./text()")).strip()
+            _tmp.append(f"{day} {inter}")
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
+        hours_of_operation = ";".join(_tmp)
 
-    return out
+        row = SgRecord(
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code="US",
+            store_number=store_number,
+            phone=phone,
+            locator_domain=locator_domain,
+            hours_of_operation=hours_of_operation,
+            raw_address=raw_address,
+        )
 
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://mobettahs.com/"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0"
+    }
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PhoneNumberId)) as writer:
+        fetch_data(writer)

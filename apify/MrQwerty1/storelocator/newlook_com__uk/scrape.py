@@ -18,7 +18,7 @@ def get_urls():
         r = session.get(st)
         tree = html.fromstring(r.text)
         urls += tree.xpath(
-            "//h3[text()='Stores']/following-sibling::ul//a[not(contains(text(), 'CLOSED'))]/@href"
+            "//h3[text()='Stores']/following-sibling::ul[1]//a[not(contains(text(), 'CLOSED'))]/@href"
         )
 
     return urls
@@ -78,6 +78,8 @@ def get_data(page_url, sgw: SgWriter):
     hours_of_operation = ";".join(_tmp)
     message = "".join(tree.xpath("//p[@class='store-results__message']/text()")).strip()
     if message.lower().find("closed") != -1:
+        if "permanently" in message.lower():
+            return
         location_type = message
 
     if tree.xpath("//p[text()='Coming Soon']"):

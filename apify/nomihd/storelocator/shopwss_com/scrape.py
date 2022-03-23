@@ -33,6 +33,8 @@ def fetch_data():
         city = store["city"]
         state = store["state"]
         zip = store["postal"]
+        if zip and zip.isalpha():
+            zip = "<MISSING>"
         country_code = store["country"]
 
         phone = store["phone"]
@@ -40,8 +42,10 @@ def fetch_data():
         location_type = "<MISSING>"
         latitude = store["lat"]
         longitude = store["lng"]
+        hours_of_operation = "<MISSING>"
+        if "schedule" in store:
+            hours_of_operation = "; ".join(store["schedule"].split("\r<br>")).strip()
 
-        hours_of_operation = "; ".join(store["schedule"].split("\r<br>")).strip()
         yield SgRecord(
             locator_domain=locator_domain,
             page_url=page_url,
