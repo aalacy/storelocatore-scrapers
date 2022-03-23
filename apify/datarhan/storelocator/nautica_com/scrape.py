@@ -35,13 +35,16 @@ def fetch_data():
             zip_code = poi["address"]["postalCode"]
             zip_code = zip_code if zip_code != "null" else ""
             phone = poi["telephone"]
-            phone = phone if phone != "null" else ""
+            phone = phone.split("&")[0] if phone != "null" else ""
+            street_address = poi["address"]["streetAddress"]
+            if street_address and street_address.endswith(","):
+                street_address = street_address[:-1]
 
             item = SgRecord(
                 locator_domain=domain,
                 page_url=page_url,
                 location_name=poi["name"],
-                street_address=poi["address"]["streetAddress"],
+                street_address=street_address,
                 city=poi["address"]["addressLocality"],
                 state=state,
                 zip_postal=zip_code,
