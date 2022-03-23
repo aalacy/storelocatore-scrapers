@@ -1,81 +1,79 @@
-import re
-from sgrequests import SgRequests
-from bs4 import BeautifulSoup
+# -*- coding: utf-8 -*-
+from lxml import etree
 
+from sgrequests import SgRequests
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
 from sgpostal.sgpostal import parse_address_intl
 
-from sgscrape.sgwriter import SgWriter
-from sgscrape.sgrecord import SgRecord
-from sgscrape.sgrecord_id import RecommendedRecordIds
-from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-session = SgRequests()
+def fetch_data():
+    session = SgRequests()
 
-
-def fetch_data(sgw: SgWriter):
-    base_url = "http://timesoil.com"
-    headers = {
-        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+    start_url = "http://timesoil.com/locations/"
+    domain = "timesoil.com"
+    hdr = {
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
-    r = session.get(base_url + "/locations/", headers=headers)
-    soup = BeautifulSoup(r.text, "lxml")
-    main = soup.find("div", {"class": "elementor-section-wrap"}).find_all(
-        "section", {"class": "elementor-element"}
-    )
-    del main[0]
-    for sec in main:
-        main1 = list(
-            sec.find("div", {"class": "elementor-icon-box-content"}).stripped_strings
+    response = session.get(start_url, headers=hdr)
+    dom = etree.HTML(response.text)
+
+    all_locations = dom.xpath('//div[@class="content-left"]/h3')
+    for poi_html in all_locations:
+        location_name = poi_html.xpath("text()")[0].strip()
+        raw_data = poi_html.xpath(".//following-sibling::p[1]/text()")
+        raw_data = [
+            e.strip()
+            for e in raw_data
+            if e.strip() and not e.split("-")[-1].isnumeric()
+        ]
+        if len(raw_data) == 4:
+            raw_data = raw_data[:-1]
+        raw_address = " ".join(raw_data)
+        addr = parse_address_intl(raw_address)
+        street_address = addr.street_address_1
+        if addr.street_address_2:
+            street_address += ", " + addr.street_address_2
+        phone = poi_html.xpath(".//following-sibling::p[2]/text()")[0]
+        if not phone[0].strip():
+            phone = poi_html.xpath(".//following-sibling::p[1]/text()")[-1]
+        if not phone.strip():
+            phone = poi_html.xpath(".//following-sibling::p[1]/b/text()")[0]
+
+        item = SgRecord(
+            locator_domain=domain,
+            page_url=start_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=addr.city,
+            state=addr.state,
+            zip_postal=addr.postcode,
+            country_code="",
+            store_number="",
+            phone=phone,
+            location_type="",
+            latitude="",
+            longitude="",
+            hours_of_operation="",
+            raw_address=raw_address,
         )
-        name = main1[0].strip()
-        country = "US"
-        lat = ""
-        lng = ""
-        hour = ""
-        city = ""
-        storeno = name.split("-")[0].replace("#", "").strip()
-        madd = main1[1].strip().split(",")
-        addr = parse_address_intl(re.sub(r"\s+", " ", str(madd[0])))
-        address = addr.street_address_1
-        city = addr.city
 
-        try:
-            state = madd[1].strip().split(" ")[0].strip()
-        except:
-            madd = main1[2].strip().split(",")
-            city = madd[0]
-            state = madd[1].strip().split(" ")[0].strip()
+        yield item
 
-        zip = madd[1].split()[1].strip()
 
-        if not city:
-            city = address.split()[-1]
-            address = address.replace(city, "").strip()
-
-        phone = re.findall(
-            r"[\d]{3}-[\d]{3}-[\d]{4}",
-            str(sec),
-        )[0]
-
-        sgw.write_row(
-            SgRecord(
-                locator_domain=base_url,
-                page_url=base_url + "/locations/",
-                location_name=name,
-                street_address=address,
-                city=city,
-                state=state,
-                zip_postal=zip,
-                country_code=country,
-                store_number=storeno,
-                phone=phone,
-                location_type="<MISSING>",
-                latitude=lat,
-                longitude=lng,
-                hours_of_operation=hour,
+def scrape():
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
             )
         )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
-with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
-    fetch_data(writer)
+if __name__ == "__main__":
+    scrape()
