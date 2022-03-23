@@ -5,10 +5,8 @@ from sgscrape import simple_scraper_pipeline as sp
 from sglogging import sglog
 import ssl
 import json
-from lxml import html
 import re
 
-session = SgRequests()
 ssl._create_default_https_context = ssl._create_unverified_context
 MISSING = "<MISSING>"
 DOMAIN = "nandos.ie"
