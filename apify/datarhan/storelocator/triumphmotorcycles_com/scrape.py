@@ -24,6 +24,8 @@ def fetch_data():
         all_locations = data["DealerCardData"]["DealerCards"]
         for poi in all_locations:
             page_url = poi["DealerWebsiteUrl"]
+            if "http" not in page_url:
+                page_url = "https://" + page_url
             location_name = poi["Title"]
 
             raw_address = f"{poi['AddressLine1']} {poi['AddressLine2']} {poi['AddressLine3']} {poi['AddressLine4']}"
@@ -31,14 +33,26 @@ def fetch_data():
             street_address = addr.street_address_1
             if addr.street_address_2:
                 street_address += " " + addr.street_address_2
+            if street_address:
+                street_address = street_address.replace("None", "")
             city = addr.city
             state = addr.state
             zip_code = addr.postcode
+            if zip_code == "00000":
+                zip_code = ""
             if not zip_code:
                 zip_code = poi["PostCode"]
             phone = poi["Phone"]
+            if phone and phone.strip() == ".":
+                phone = ""
+            if phone:
+                phone = phone.split(" (+")[0]
             latitude = poi["Latitude"]
+            if latitude == "0" or latitude == "0.000000":
+                latitude = ""
             longitude = poi["Longitude"]
+            if longitude == "0" or longitude == "0.000000":
+                longitude = ""
             hoo = []
             if poi["OpeningTimes"]:
                 hoo = etree.HTML(poi["OpeningTimes"]).xpath("//text()")
