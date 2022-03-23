@@ -82,7 +82,6 @@ def fetch_data():
             hours_of_operation = ", ".join(info[3:-1]).strip()
         country_code = "US"
         phone = info[-1].strip()
-        print(hours_of_operation)
         location_type = MISSING
         store_number = MISSING
         latitude = MISSING
