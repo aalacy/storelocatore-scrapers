@@ -101,7 +101,12 @@ def fetch_data():
 
                     for key in store_hours_dict.keys():
                         if name in key:
-                            hours_of_operation = " ".join(store_hours_dict[key]).strip()
+                            hours_of_operation = (
+                                " ".join(store_hours_dict[key])
+                                .strip()
+                                .replace("Open ", "")
+                                .strip()
+                            )
                             break
                     break
 
