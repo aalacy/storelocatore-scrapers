@@ -52,16 +52,42 @@ def fetch_data(sgw: SgWriter):
                 headers=headers,
                 cookies=cookies,
             )
-            js = r.json()["listOfCncPos"]
+            try:
+                js = r.json()["listOfCncPos"]
+            except:
+                continue
             for j in js:
+
                 page_url = f"https://www.luluhypermarket.com{slug_url}"
                 a = j.get("address")
-                street_address = a.get("line1") or "<MISSING>"
+                street_address = a.get("line1") or a.get("line1") or "<MISSING>"
                 city = a.get("luluCity").get("name") or "<MISSING>"
                 if str(city).find("(") != -1:
                     city = str(city).split("(")[0].strip()
                 phone = a.get("phone") or "<MISSING>"
                 phone = str(phone).replace("Tel:", "").strip()
+                hours = j.get("deliverySlots")
+                hours_of_operation = "<MISSING>"
+                days = [
+                    "MONDAY",
+                    "TUESDAY",
+                    "WEDNESDAY",
+                    "THURSDAY",
+                    "FRIDAY",
+                    "SATURDAY",
+                    "SUNDAY",
+                ]
+                tmp = []
+                if hours:
+                    for i in days:
+                        day = i.capitalize()
+                        try:
+                            times = hours.get(f"{i}")[0].get("slot")
+                        except:
+                            continue
+                        line = f"{day} - {times}"
+                        tmp.append(line)
+                    hours_of_operation = " ;".join(tmp)
 
                 row = SgRecord(
                     locator_domain=locator_domain,
@@ -77,7 +103,7 @@ def fetch_data(sgw: SgWriter):
                     location_type=SgRecord.MISSING,
                     latitude=SgRecord.MISSING,
                     longitude=SgRecord.MISSING,
-                    hours_of_operation=SgRecord.MISSING,
+                    hours_of_operation=hours_of_operation,
                 )
 
                 sgw.write_row(row)
