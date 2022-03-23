@@ -23,11 +23,14 @@ def fetch_data():
         data = session.get(start_url.format(c["LanguageCode"]), headers=hdr).json()
         all_locations = data["DealerCardData"]["DealerCards"]
         for poi in all_locations:
-            page_url = poi["DealerWebsiteUrl"]
+            page_url = poi["DealerUrl"]
             if "http" not in page_url:
-                page_url = "https://" + page_url
+                page_url = "https:" + page_url
+            if "usa/" in page_url:
+                page_url = "https://www.triumphmotorcycles.com" + poi["DealerUrl"]
+            if page_url == "https:":
+                page_url = ""
             location_name = poi["Title"]
-
             raw_address = f"{poi['AddressLine1']} {poi['AddressLine2']} {poi['AddressLine3']} {poi['AddressLine4']}"
             addr = parse_address_intl(raw_address.replace("<br/>", " "))
             street_address = addr.street_address_1
