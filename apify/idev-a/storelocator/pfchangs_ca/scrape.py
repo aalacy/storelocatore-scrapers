@@ -50,7 +50,7 @@ def fetch_data():
                 street_address = street_address.split(addr["city"])[0].strip()
             if street_address.endswith(","):
                 street_address = street_address[:-1]
-                
+
             yield SgRecord(
                 page_url=base_url,
                 store_number=_["id"],
