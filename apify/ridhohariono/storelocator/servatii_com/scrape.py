@@ -5,26 +5,27 @@ from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.sgrecord_id import RecommendedRecordIds
-from sgscrape.sgpostal import parse_address_intl
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgpostal import parse_address_usa
 
-
-DOMAIN = "thevillagehive.ca"
-BASE_URL = "https://www.thevillagehive.ca"
+DOMAIN = "servatii.com"
+BASE_URL = "https://www.servatii.com/"
+LOCATION_URL = "https://www.servatii.com/locations"
 HEADERS = {
     "Accept": "application/json, text/plain, */*",
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
 }
-MISSING = "<MISSING>"
 log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
 
 session = SgRequests()
+
+MISSING = "<MISSING>"
 
 
 def getAddress(raw_address):
     try:
         if raw_address is not None and raw_address != MISSING:
-            data = parse_address_intl(raw_address)
+            data = parse_address_usa(raw_address)
             street_address = data.street_address_1
             if data.street_address_2 is not None:
                 street_address = street_address + " " + data.street_address_2
@@ -52,47 +53,43 @@ def pull_content(url):
     return soup
 
 
+def get_latlong(url):
+    latlong = re.search(r"@(-?[\d]*\.[\d]*),(-?[\d]*\.[\d]*)", url)
+    if not latlong:
+        return MISSING, MISSING
+    return latlong.group(1), latlong.group(2)
+
+
 def fetch_data():
     log.info("Fetching store_locator data")
-    soup = pull_content(BASE_URL)
-    contents = soup.find("h4", text="LOCATIONS").find_next("div").find_all("a")
+    soup = pull_content(LOCATION_URL)
+    contents = soup.find_all("span", class_="wQYUw")
     for row in contents:
-        page_url = row["href"]
-        store = pull_content(page_url)
-        location_name = row.text.strip()
-        parent_content = store.find(
-            "h5", text=re.compile(r"Get in touch!|Contact")
-        ).parent.parent.parent
-        addr = re.sub(
-            r"Get in touch!@?@?|Contact@@|@@Community Manager.*|@@\D+@\D+\.ca",
+        info = re.sub(
+            r"@@Get in Touch",
             "",
-            parent_content.get_text(strip=True, separator="@@"),
+            row.find_previous(
+                "div", {"data-testid": "mesh-container-content"}
+            ).get_text(strip=True, separator="@@"),
         ).split("@@")
-        raw_address = addr[0].strip()
+        location_name = info[0].replace("HOURS OF OPERATION", "").strip()
+        raw_address = info[1].replace("\xa0", " ").strip()
         street_address, city, state, zip_postal = getAddress(raw_address)
-        map_link = parent_content.find("a")["href"]
-        if zip_postal == MISSING and "maps" in map_link:
-            zip_postal = " ".join(map_link.split("+")[-2:]).strip()
-        country_code = "CA"
-        phone = addr[-1].strip()
-        hours_of_operation = MISSING
+        hours_of_operation = ", ".join(info[2:-1]).strip()
+        if city == MISSING and state == MISSING and zip_postal == MISSING:
+            raw_address = (info[1] + ", " + info[2]).strip()
+            street_address, city, state, zip_postal = getAddress(raw_address)
+            hours_of_operation = ", ".join(info[3:-1]).strip()
+        country_code = "US"
+        phone = info[-1].strip()
         location_type = MISSING
         store_number = MISSING
-        try:
-            laltlong = (
-                parent_content.find("a")["href"]
-                .split("ll=")[1]
-                .split("&z=")[0]
-                .split(",")
-            )
-            latitude, longitude = laltlong
-        except:
-            latitude = MISSING
-            longitude = MISSING
+        latitude = MISSING
+        longitude = MISSING
         log.info("Append {} => {}".format(location_name, street_address))
         yield SgRecord(
             locator_domain=DOMAIN,
-            page_url=page_url,
+            page_url=LOCATION_URL,
             location_name=location_name,
             street_address=street_address,
             city=city,
@@ -112,7 +109,9 @@ def fetch_data():
 def scrape():
     log.info("start {} Scraper".format(DOMAIN))
     count = 0
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.RAW_ADDRESS}))
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
