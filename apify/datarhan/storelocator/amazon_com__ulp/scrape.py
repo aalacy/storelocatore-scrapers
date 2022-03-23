@@ -41,7 +41,7 @@ def fetch_data():
             SearchableCountries.MEXICO,
             SearchableCountries.UNITED_ARAB_EMIRATES,
         ],
-        expected_search_radius_miles=50,
+        expected_search_radius_miles=10,
     )
     for lat, lng in all_coords:
         c_iso = all_coords.current_country()
@@ -58,15 +58,18 @@ def fetch_data():
             for e in poi["standardHours"]:
                 hoo.append(f'{e["dateString"]}: {e["hoursString"]}')
             hoo = " ".join(hoo)
+            zip_code = poi["postalCode"]
+            if zip_code == "00000":
+                zip_code = ""
 
             item = SgRecord(
                 locator_domain=domain,
                 page_url=f"https://www.amazon.{domains[c_iso]}/ulp",
-                location_name=poi["name"].split("-")[0],
+                location_name=poi["name"].split("-")[0].split("(")[0],
                 street_address=street_address,
                 city=poi["city"],
                 state=poi["stateOrRegion"],
-                zip_postal=poi["postalCode"],
+                zip_postal=zip_code,
                 country_code=poi["countryCode"],
                 store_number=poi["storeId"],
                 phone="",
