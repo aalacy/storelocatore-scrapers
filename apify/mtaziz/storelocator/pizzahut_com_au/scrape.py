@@ -62,7 +62,7 @@ def get_google_map_url(code_id):
                             r_tiny = s_tiny.get(google_map_tiny_url)
                             google_map_detailed_url = str(r_tiny.url)
                     else:
-                        log.info(f"Google URL is not Available")
+                        log.info("Google URL is not Available")
                         google_map_detailed_url = ""
     return google_map_detailed_url
 
