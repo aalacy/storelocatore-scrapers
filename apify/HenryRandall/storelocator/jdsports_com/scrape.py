@@ -140,13 +140,9 @@ def fetch_locations(postal, retry=0):
 
 
 def fetch_data():
-    count = 0
     codes = static_zipcode_list(radius=30, country_code=SearchableCountries.USA)
-
     for postal in codes:
         yield from fetch_locations(postal)
-        count += 1
-        print(f"{count}/{len(codes)}")
 
 
 def scrape():
