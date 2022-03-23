@@ -16,7 +16,7 @@ options.set_preference(
     "geo.provider.network.url",
     'data:application/json,{"location": {"lat": 51.47, "lng": 0.0}, "accuracy": 100.0}',
 )
-
+options.add_argument("--headless")
 
 try:
     _create_unverified_https_context = ssl._create_unverified_context
