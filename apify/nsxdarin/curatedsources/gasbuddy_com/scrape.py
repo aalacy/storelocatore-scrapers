@@ -13,7 +13,7 @@ from bs4 import BeautifulSoup as bs
 
 
 log = sglog.SgLogSetup().get_logger(logger_name="gasbuddy")
-page_urls = []
+page_urls: list[str] = []
 proxy_url = "http://groups-RESIDENTIAL,country-us:{}@proxy.apify.com:8000/"
 
 
