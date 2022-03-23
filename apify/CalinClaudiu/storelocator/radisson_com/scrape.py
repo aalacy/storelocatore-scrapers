@@ -308,8 +308,8 @@ def clean_record(k):
 
 def start():
     state = CrawlStateSingleton.get_instance()
-    urlA = "https://www.radissonhotelsamericas.com"
-    urlB = "https://www.radissonhotels.com"
+    urlB = "https://www.radissonhotelsamericas.com"
+    urlA = "https://www.radissonhotels.com"
     url2 = "/zimba-api/destinations/hotels?brand="
     brandsA = state.get_misc_value(
         "brandsA",
