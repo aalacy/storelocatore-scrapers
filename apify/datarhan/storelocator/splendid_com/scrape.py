@@ -53,7 +53,10 @@ def fetch_data():
             state = raw_address[1].split(", ")[-1].split()[0]
             zip_code = raw_address[1].split(", ")[-1].split()[-1]
             country_code = "<MISSING>"
-            if "United States" in loc_dom.xpath("//address/text()")[-1]:
+            if (
+                loc_dom.xpath("//address/text()")
+                and "United States" in loc_dom.xpath("//address/text()")[-1]
+            ):
                 country_code = "US"
             store_number = "<MISSING>"
             phone = loc_dom.xpath('//li[@class="phone"]/a/text()')
