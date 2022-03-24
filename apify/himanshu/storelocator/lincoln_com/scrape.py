@@ -30,16 +30,10 @@ def fetch_data():
 
     base_url = "https://www.lincoln.com"
     zipcodes = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA], expected_search_radius_miles=100
+        country_codes=[SearchableCountries.USA], expected_search_radius_miles=20
     )
     for zip_code in zipcodes:
         str_zip = str(zip_code)
-        if len(str_zip) == 4:
-            str_zip = "0" + str_zip
-            logger.info(f"appended zero:{zip_code} => {str_zip}")
-        if len(str_zip) == 3:
-            str_zip = "00" + str_zip
-            logger.info(f"appended zeros:{zip_code} => {str_zip}")
         logger.info(f"fetching records for zipcode:{str_zip}")
         street_address = ""
         city = ""
@@ -71,27 +65,17 @@ def fetch_data():
                     city = i["Address"]["City"]
                     state = i["Address"]["State"]
                     zipp = i["Address"]["PostalCode"]
-                    time = ""
-                    time1 = ""
-                    h1 = ""
+                    hours_list = []
                     if "Day" in i["SalesHours"]:
                         for j in i["SalesHours"]["Day"]:
                             if "closed" in j and j == "true":
-                                h1 = j["name"] + " " + "closed"
+                                hours_list.append(j["name"] + ":" + "closed")
                             elif "open" in j:
-                                time = (
-                                    time
-                                    + " "
-                                    + j["name"]
-                                    + " "
-                                    + j["open"]
-                                    + " "
-                                    + j["close"]
-                                    + " "
-                                    + h1
+                                hours_list.append(
+                                    j["name"] + ":" + j["open"] + " - " + j["close"]
                                 )
 
-                    hours_of_operation = time.strip()
+                    hours_of_operation = "; ".join(hours_list).strip()
                     latitude = i["Latitude"]
                     longitude = i["Longitude"]
                     zipcodes.found_location_at(latitude, longitude)
@@ -134,44 +118,27 @@ def fetch_data():
                 city = k["Response"]["Dealer"]["Address"]["City"]
                 state = k["Response"]["Dealer"]["Address"]["State"]
                 zipp = k["Response"]["Dealer"]["Address"]["PostalCode"]
-                time = ""
-                time1 = ""
-                h1 = ""
+                hours_list = []
                 if "Day" in k["Response"]["Dealer"]["SalesHours"]:
                     for j in k["Response"]["Dealer"]["SalesHours"]["Day"]:
                         if "closed" in j and j == "true":
-                            h1 = j["name"] + " " + "closed"
+                            hours_list.append(j["name"] + ":" + "closed")
                         elif "open" in j:
-                            time = (
-                                time
-                                + " "
-                                + j["name"]
-                                + " "
-                                + j["open"]
-                                + " "
-                                + j["close"]
-                                + " "
-                                + h1
+                            hours_list.append(
+                                j["name"] + ":" + j["open"] + " - " + j["close"]
                             )
 
-                if "Day" in k["Response"]["Dealer"]["ServiceHours"]:
-                    for j in k["Response"]["Dealer"]["ServiceHours"]["Day"]:
-                        if "closed" in j and j == "true":
-                            h1 = j["name"] + " " + "closed"
-                        elif "open" in j:
-                            time1 = (
-                                time1
-                                + " "
-                                + j["name"]
-                                + " "
-                                + j["open"]
-                                + " "
-                                + j["close"]
-                                + " "
-                                + h1
-                            )
+                if len(hours_list) <= 0:
+                    if "Day" in k["Response"]["Dealer"]["ServiceHours"]:
+                        for j in k["Response"]["Dealer"]["ServiceHours"]["Day"]:
+                            if "closed" in j and j == "true":
+                                hours_list.append(j["name"] + ":" + "closed")
+                            elif "open" in j:
+                                hours_list.append(
+                                    j["name"] + ":" + j["open"] + " - " + j["close"]
+                                )
 
-                hours_of_operation = " SalesHours " + time + " ServiceHours " + time1
+                hours_of_operation = "; ".join(hours_list).strip()
                 latitude = k["Response"]["Dealer"]["Latitude"]
                 longitude = k["Response"]["Dealer"]["Longitude"]
                 zipcodes.found_location_at(latitude, longitude)
@@ -206,7 +173,9 @@ def scrape():
     logger.info("Started")
     count = 0
     with SgWriter(
-        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+        deduper=SgRecordDeduper(
+            record_id=RecommendedRecordIds.PageUrlId, duplicate_streak_failure_factor=-1
+        )
     ) as writer:
         results = fetch_data()
         for rec in results:
