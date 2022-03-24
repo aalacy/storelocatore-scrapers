@@ -5,7 +5,7 @@ from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
 import re
 import json
-from sgscrape.sgpostal import parse_address_intl
+from sgpostal.sgpostal import parse_address_intl
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 import ssl
@@ -25,17 +25,18 @@ _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
 }
 
+locator_domain = "https://bricktops.com"
+base_url = "https://bricktops.com/locations"
+
 
 def fetch_data():
-    locator_domain = "https://bricktops.com"
-    base_url = "https://bricktops.com/locations"
     with SgChrome() as driver:
         driver.get(base_url)
         soup = bs(driver.page_source, "lxml")
         links = soup.select("div.sqs-gallery a")
         for link in links:
             page_url = link["href"] + "/contact"
-            if not link["href"].startswith("https"):
+            if not link["href"].startswith("http"):
                 page_url = locator_domain + link["href"]
             logger.info(page_url)
             driver.get(page_url)
