@@ -1,45 +1,13 @@
-import csv
-
-from concurrent import futures
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
-
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from concurrent import futures
 
 
 def get_hours(slug):
-    session = SgRequests()
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-    }
     url = f"https://www.usstoragecenters.com{slug}"
     r = session.get(url, headers=headers)
     tree = html.fromstring(r.text)
@@ -51,28 +19,19 @@ def get_hours(slug):
         time = "".join(l.xpath("./span[2]//text()")).strip()
         _tmp.append(f"{day}: {time}")
 
-    return ";".join(_tmp) or "<MISSING>"
+    return ";".join(_tmp)
 
 
-def fetch_data():
-    out = []
-    urls = []
-    hours = {}
-    locator_domain = "https://www.usstoragecenters.com/"
-    api_url = "https://www.usstoragecenters.com/storage-units/?spa=true"
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-    }
-
-    session = SgRequests()
-    r = session.get(api_url, headers=headers)
+def fetch_data(sgw: SgWriter):
+    urls, hours = list(), dict()
+    api = "https://www.usstoragecenters.com/storage-units/?spa=true"
+    r = session.get(api, headers=headers)
     js = r.json()["data"]["content"][0]["context"]["items"]
 
     for j in js:
         urls.append(j.get("url"))
 
-    with futures.ThreadPoolExecutor(max_workers=5) as executor:
+    with futures.ThreadPoolExecutor(max_workers=3) as executor:
         future_to_url = {executor.submit(get_hours, url): url for url in urls}
         for future in futures.as_completed(future_to_url):
             val = future.result()
@@ -81,21 +40,22 @@ def fetch_data():
 
     for j in js:
         a = j.get("address")
-        street_address = a.get("address") or "<MISSING>"
-        city = a.get("city") or "<MISSING>"
-        state = a.get("state") or "<MISSING>"
-        postal = a.get("zip") or "<MISSING>"
+        street_address = a.get("address")
+        city = a.get("city")
+        state = a.get("state")
+        postal = a.get("zip")
         country_code = "US"
-        store_number = j.get("locationCode") or "<MISSING>"
+        store_number = j.get("locationCode")
         slug = j.get("url")
         page_url = f"https://www.usstoragecenters.com{slug}"
         location_name = j.get("sanitizedHeader") or "US Storage Centers"
+        location_name = location_name.replace("&amp;", "&")
         try:
             phone = j["phone"]["label"]["value"]
         except TypeError:
-            phone = "<MISSING>"
-        latitude = a.get("latitude") or "<MISSING>"
-        longitude = a.get("longitude") or "<MISSING>"
+            phone = SgRecord.MISSING
+        latitude = a.get("latitude")
+        longitude = a.get("longitude")
         if "°" in latitude or "°" in longitude:
             latitude = (
                 latitude.replace(".", "")
@@ -107,34 +67,33 @@ def fetch_data():
             longitude = "-" + longitude.replace(".", "").replace("'", "").replace(
                 '"', ""
             ).replace("W", "").replace("°", ".")
-        location_type = "<MISSING>"
-        hours_of_operation = hours.get(slug) or "<MISSING>"
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
+        hours_of_operation = hours.get(slug)
 
-    return out
+        row = SgRecord(
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            latitude=latitude,
+            longitude=longitude,
+            phone=phone,
+            store_number=store_number,
+            locator_domain=locator_domain,
+            hours_of_operation=hours_of_operation,
+        )
 
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://www.usstoragecenters.com/"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:97.0) Gecko/20100101 Firefox/97.0",
+    }
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        fetch_data(writer)

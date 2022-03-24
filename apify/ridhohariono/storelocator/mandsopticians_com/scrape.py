@@ -1,3 +1,4 @@
+import json
 from bs4 import BeautifulSoup as bs
 from sgrequests import SgRequests
 from sglogging import sglog
@@ -57,12 +58,10 @@ def fetch_data():
     log.info("Fetching store_locator data")
     soup = pull_content(LOCATION_URL)
     contents = soup.select("div.amlocator-store-desc")
-    latlong_content = soup.find(
-        "script", string=re.compile(r"const\s+locations.*")
-    ).string
-    latlong = re.findall(
-        r'"lat":"(-?[\d]*\.[\d]*)","lng":"(-?[\d]*\.[\d]*)"', latlong_content
-    )
+    script_content = soup.find(
+        "script", string=re.compile(r'\{"items":.*')
+    ).string.strip()
+    json_info = json.loads(re.search(r'\{"items":(\[.*\])', script_content).group(1))
     num = 0
     for row in contents:
         page_url = (
@@ -75,7 +74,8 @@ def fetch_data():
         raw_address = (
             row.find("div", {"class": "address"}).text.replace("\n", "").strip()
         )
-        street_address, city, state, zip_postal = getAddress(raw_address)
+        street_address, city, state, _ = getAddress(raw_address)
+        zip_postal = json_info[num]["zip"]
         if "Da9 9Sd" in street_address:
             city = "Greenhithe"
             zip_postal = "DA9 9SD"
@@ -94,14 +94,9 @@ def fetch_data():
             .strip()
         )
         location_type = "EYE_TEST"
-        store_number = (
-            row.find("div", {"class": "store-button"})
-            .find("a")["href"]
-            .split("store_id=")[1]
-            .split("&type")[0]
-        )
-        latitude = latlong[num][0]
-        longitude = latlong[num][1]
+        store_number = json_info[num]["id"]
+        latitude = json_info[num]["lat"]
+        longitude = json_info[num]["lng"]
         log.info("Append {} => {}".format(location_name, street_address))
         yield SgRecord(
             locator_domain=DOMAIN,
@@ -125,6 +120,7 @@ def fetch_data():
 
 def scrape():
     log.info("start {} Scraper".format(DOMAIN))
+    results = fetch_data()
     count = 0
     with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumAndPageUrlId)) as writer:
         results = fetch_data()

@@ -68,6 +68,11 @@ def fetch_data():
                 if longitude == "0.0":
                     longitude = "<MISSING>"
 
+                if latitude == 0.0 or latitude == 0:
+                    latitude = "<MISSING>"
+                if longitude == 0.0 or longitude == 0:
+                    longitude = "<MISSING>"
+
                 location_name = store_json.get("address", "<MISSING>")
 
                 locator_domain = website
