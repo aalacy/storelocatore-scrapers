@@ -21,26 +21,26 @@ headers = {
 
 def fetch_data():
     search_urls = [
-        "https://www.hsbc.com.ar/mapa/, https://www.hsbc.com.ar/branch-list/,Argentina",
-        "https://www.hsbc.bm/branch-finder/, https://www.hsbc.bm/branch-list/, Bermuda",
-        "https://www.hsbc.ca/branch-locator/, https://www.hsbc.ca/branch-list/, Canada",
-        "https://www.hsbc.com.mx/contacto/sucursales/, https://www.hsbc.com.mx/contacto/directorio-de-sucursales/, Mexico",
-        "https://www.us.hsbc.com/branch-locator/, https://www.us.hsbc.com/branch-list/, United States",
-        "https://www.hsbc.com.au/branch-finder/, https://www.hsbc.com.au/branch-list/, Australia",
-        "https://www.hsbc.com.cn/en-cn/branch-finder/, https://www.hsbc.com.cn/en-cn/help/contact/branch-finder/lists/, China",
-        "https://www.hsbc.com.hk/branch-finder/, https://www.hsbc.com.hk/branch-finder/,  Hong Kong",
-        "https://www.hsbc.co.in/branch-finder/, https://www.hsbc.co.in/branch-list/,  India",
-        "https://www.hsbc.com.mo/branch-finder/, https://www.hsbc.com.mo/branch-list/, Macau",
-        "https://www.hsbc.com.my/branch-finder/, https://www.hsbc.com.my/branch-list/, Malaysia",
-        "https://www.hsbc.co.mu/branch-finder/, https://www.hsbc.co.mu/branch-list/,  Mauritius",
-        "https://www.hsbc.com.ph/branch-finder/, https://www.hsbc.com.ph/branch-list/, Philippines",
-        "https://www.hsbc.com.sg/branch-finder/, https://www.hsbc.com.sg/branch-list/, Singapore",
-        "https://www.hsbc.lk/branch-finder/, https://www.hsbc.lk/branch-list/, Sri Lanka",
-        "https://www.hsbc.com.tw/en-tw/branch-finder/, https://www.hsbc.com.tw/en-tw/branch-list/,   Taiwan",
-        "https://www.hsbc.am/en-am/branch-finder/,https://www.hsbc.am/en-am/branch-list/, Armenia",
-        "https://www.hsbc.gr/en-gr/branch-finder/,https://www.hsbc.gr/en-gr/branch-list/,Greece",
-        "https://www.hsbc.com.mt/branch-finder/, https://www.hsbc.com.mt/branch-list/, Malta",
-        "https://www.hsbc.co.uk/branch-finder/, https://www.hsbc.co.uk/branch-list/, UK",
+        # "https://www.hsbc.com.ar/mapa/, https://www.hsbc.com.ar/branch-list/,Argentina",
+        # "https://www.hsbc.bm/branch-finder/, https://www.hsbc.bm/branch-list/, Bermuda",
+        # "https://www.hsbc.ca/branch-locator/, https://www.hsbc.ca/branch-list/, Canada",
+        # "https://www.hsbc.com.mx/contacto/sucursales/, https://www.hsbc.com.mx/contacto/directorio-de-sucursales/, Mexico",
+        # "https://www.us.hsbc.com/branch-locator/, https://www.us.hsbc.com/branch-list/, United States",
+        # "https://www.hsbc.com.au/branch-finder/, https://www.hsbc.com.au/branch-list/, Australia",
+        # "https://www.hsbc.com.cn/en-cn/branch-finder/, https://www.hsbc.com.cn/en-cn/help/contact/branch-finder/lists/, China",
+        # "https://www.hsbc.com.hk/branch-finder/, https://www.hsbc.com.hk/branch-finder/,  Hong Kong",
+        # "https://www.hsbc.co.in/branch-finder/, https://www.hsbc.co.in/branch-list/,  India",
+        # "https://www.hsbc.com.mo/branch-finder/, https://www.hsbc.com.mo/branch-list/, Macau",
+        # "https://www.hsbc.com.my/branch-finder/, https://www.hsbc.com.my/branch-list/, Malaysia",
+        # "https://www.hsbc.co.mu/branch-finder/, https://www.hsbc.co.mu/branch-list/,  Mauritius",
+        # "https://www.hsbc.com.ph/branch-finder/, https://www.hsbc.com.ph/branch-list/, Philippines",
+        # "https://www.hsbc.com.sg/branch-finder/, https://www.hsbc.com.sg/branch-list/, Singapore",
+        #     "https://www.hsbc.lk/branch-finder/, https://www.hsbc.lk/branch-list/, Sri Lanka",
+        #     "https://www.hsbc.com.tw/en-tw/branch-finder/, https://www.hsbc.com.tw/en-tw/branch-list/,   Taiwan",
+        #     "https://www.hsbc.am/en-am/branch-finder/,https://www.hsbc.am/en-am/branch-list/, Armenia",
+        #     "https://www.hsbc.gr/en-gr/branch-finder/,https://www.hsbc.gr/en-gr/branch-list/,Greece",
+        #     "https://www.hsbc.com.mt/branch-finder/, https://www.hsbc.com.mt/branch-list/, Malta",
+        #     "https://www.hsbc.co.uk/branch-finder/, https://www.hsbc.co.uk/branch-list/, UK",
         "https://www.hsbc.com.bh/branch-finder/, https://www.hsbc.com.bh/branch-finder/, Bahrain",
         "https://www.hsbc.com.eg/branch-finder/, https://www.hsbc.com.eg/branch-finder/, Egypt",
         "https://www.hsbc.co.om/branch-finder/, https://www.hsbc.co.om/branch-finder/,  Oman",
@@ -82,6 +82,10 @@ def fetch_data():
                 state = store["address"].get("stateRegionCounty", "<MISSING>")
                 zip = store["address"].get("postcode", "<MISSING>")
                 country_code = url_country.split(",")[2].strip()
+
+                cleaned_zip = re.sub(rf"{country_code}\s", zip, re.IGNORECASE)
+                cleaned_zip = re.sub(r"\s*:\s*", cleaned_zip)[1]
+
                 phone = ""
                 if "phoneNumber" in store:
                     phones = store["phoneNumber"]
@@ -148,7 +152,7 @@ def fetch_data():
                     street_address=street_address,
                     city=city,
                     state=state,
-                    zip_postal=zip,
+                    zip_postal=re.split(" ", zip)[-1],
                     country_code=country_code,
                     store_number=store_number,
                     phone=phone,
