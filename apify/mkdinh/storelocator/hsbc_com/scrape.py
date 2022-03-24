@@ -120,9 +120,13 @@ def fetch_data():
                     hours = store["openingTimes"]
                     for day in hours.keys():
                         if "open" in hours[day] and "close" in hours[day]:
-                            time = hours[day]["open"] + "-" + hours[day]["close"]
-                            if "N/A" not in time:
-                                hours_list.append(day + ":" + time)
+                            try:
+                                time = hours[day]["open"] + "-" + hours[day]["close"]
+                                if "N/A" not in time:
+                                    hours_list.append(day + ":" + time)
+                            except Exception as e:
+                                log.error(e)
+                                raise e
 
                 hours_of_operation = "; ".join(hours_list).strip()
                 latitude = store["coordinates"]["lat"]
