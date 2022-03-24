@@ -1,12 +1,12 @@
 from sgrequests import SgRequests
-from sgzip.dynamic import DynamicGeoSearch, SearchableCountries, Grain_8
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries, Grain_4
 from sglogging import SgLogSetup
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import random
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-
+from tenacity import retry, wait_random, stop_after_attempt
 
 logger = SgLogSetup().get_logger("7eleven")
 
@@ -82,8 +82,21 @@ locator_domain = "https://www.7eleven.co.th"
 base_url = "https://7eleven-api-prod.jenosize.tech/v1/Store/GetStoreByCurrentLocation"
 
 search = DynamicGeoSearch(
-    country_codes=[SearchableCountries.THAILAND], granularity=Grain_8()
+    country_codes=[SearchableCountries.THAILAND], granularity=Grain_4()
 )
+
+
+@retry(stop=stop_after_attempt(7), wait=wait_random(min=100, max=160))
+def get_locs(data):
+    locations = []
+    with SgRequests(proxy_country="th", retries_with_fresh_proxy_ip=10) as session:
+        locations = session.post(
+            base_url,
+            headers={"user-agent": random.choices(_headers)[0]},
+            json=data,
+        ).json()["data"]
+
+    return locations
 
 
 def fetch_data():
@@ -96,17 +109,7 @@ def fetch_data():
                 maxZ = search.items_remaining()
             logger.info(("Pulling Geo Code %s..." % lat, lng))
             data = {"latitude": str(lat), "longitude": str(lng)}
-            locations = []
-            while True:
-                try:
-                    locations = session.post(
-                        base_url,
-                        headers={"user-agent": random.choices(_headers)[0]},
-                        json=data,
-                    ).json()["data"]
-                    break
-                except:
-                    pass
+            locations = get_locs(data)
 
             total += len(locations)
             progress = (
