@@ -147,8 +147,6 @@ def fetch_data():
                     else None
                 )
 
-                print(location_name, zip, cleaned_zip)
-
                 yield SgRecord(
                     locator_domain=locator_domain,
                     page_url=page_url,
