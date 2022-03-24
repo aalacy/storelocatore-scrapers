@@ -17,13 +17,12 @@ def fetch_data():
 
     with SgFirefox() as driver:
         driver.get(start_url)
-        sleep(10)
+        sleep(15)
         elem = driver.find_element_by_name("city")
         elem.send_keys("Rio")
-        sleep(5)
+        sleep(10)
         driver.find_element_by_xpath('//*[contains(text(), "Rio Acima")]').click()
         sleep(10)
-        driver.save_screenshot("screenie.png")
         driver.find_element_by_xpath('//button[@data-cy="confirm-button"]').send_keys(
             Keys.RETURN
         )
