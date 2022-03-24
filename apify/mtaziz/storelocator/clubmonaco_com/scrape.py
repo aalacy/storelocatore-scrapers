@@ -3,14 +3,12 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
-from typing import Iterable, Tuple, Callable
-from sgscrape.pause_resume import CrawlStateSingleton
-from sgzip.parallel import DynamicSearchMaker, ParallelDynamicSearch, SearchIteration
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries, Grain_8
 from sglogging import SgLogSetup
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from lxml import html
 import json
 import ssl
-
 
 try:
     _create_unverified_https_context = (
@@ -25,6 +23,7 @@ else:
 LOCATOR_URL = "https://www.clubmonaco.com/en/StoreLocator"
 MISSING = SgRecord.MISSING
 logger = SgLogSetup().get_logger("clubmonaco_com")
+MAX_WORKERS = 10
 
 
 api_endpoint_url = "https://www.clubmonaco.com/on/demandware.store/Sites-ClubMonaco_US-Site/en_US/Stores-ViewResults"
@@ -128,57 +127,50 @@ countries_to_be_crawled = {
 logger.info(f"Detailed Countries to be crawled: {countries_to_be_crawled}")  # noqa
 
 
-class ExampleSearchIteration(SearchIteration):
-    def do(
-        self,
-        coord: Tuple[float, float],
-        zipcode: str,
-        current_country: str,
-        items_remaining: int,
-        found_location_at: Callable[[float, float], None],
-    ) -> Iterable[SgRecord]:
+def fetch_records(coord, search, current_country, sgw: SgWriter):
+    lat_search, lng_search = coord
+    api_endpoint_url = "https://www.clubmonaco.com/on/demandware.store/Sites-ClubMonaco_US-Site/en_US/Stores-ViewResults"
+    latlng_s = str(lat_search) + "," + str(lng_search)
+    data_params = {
+        "country": current_country,
+        "postal": latlng_s,
+        "radius": "300",
+    }
+    logger.info(f"data_params: {data_params}")
+    with SgRequests() as http:
+        try:
+            rpost_sg = http.post(
+                api_endpoint_url, data=data_params, headers=hdr_noncookies
+            )
+            logger.info(f"HTTP Status Code: {rpost_sg.status_code}")
+        except:
+            return
 
-        lat_search, lng_search = coord
-        api_endpoint_url = "https://www.clubmonaco.com/on/demandware.store/Sites-ClubMonaco_US-Site/en_US/Stores-ViewResults"
-        latlng_s = str(lat_search) + "," + str(lng_search)
-        data_params = {
-            "country": current_country,
-            "postal": latlng_s,
-            "radius": "300",
-        }
-        logger.info(f"data_params: {data_params}")
-        with SgRequests() as http:
-            try:
-                rpost_sg = http.post(
-                    api_endpoint_url, data=data_params, headers=hdr_noncookies
-                )
-                logger.info(f"HTTP Status Code: {rpost_sg.status_code}")
-            except:
-                return
-
-            text = rpost_sg.text
-            logger.info(f"length: {len(text)}")
-            if not text:
+        text = rpost_sg.text
+        logger.info(f"length: {len(text)}")
+        if not text:
+            return
+        else:
+            sel = html.fromstring(rpost_sg.text, "lxml")
+            js = sel.xpath(
+                '//script[contains(@type, "application/ld+json") and contains(text(), "store")]/text()'
+            )
+            js = "".join(js)
+            js = json.loads(js)
+            json_data = js["store"]
+            found = len(json_data)
+            logger.info(f"Total Store Found: {found}")
+            if not json_data:
                 return
             else:
-                sel = html.fromstring(rpost_sg.text, "lxml")
-                js = sel.xpath(
-                    '//script[contains(@type, "application/ld+json") and contains(text(), "store")]/text()'
-                )
-                js = "".join(js)
-                js = json.loads(js)
-                json_data = js["store"]
-                found = len(json_data)
-                logger.info(f"Total Store Found: {found}")
                 for _ in json_data:
-
                     ln = _["name"] or ""
                     tel = _["telephone"] or ""
                     tel = good_phone(tel)
                     staraw = _["address"]["streetAddress"] or ""
                     sta, zc = get_sta_zc(_)
                     state = ""
-                    if "addressRegion" in _:
+                    if "addressRegion" in _["address"]:
                         state = _["address"]["addressRegion"] or ""
                     city = ""
                     if "areaServed" in _["address"]:
@@ -190,7 +182,7 @@ class ExampleSearchIteration(SearchIteration):
                     hoo = fix_hours(_["openingHours"])
                     raw_address = staraw
                     DOMAIN = "clubmonaco_com"
-                    found_location_at(float(lat), float(lng))
+                    search.found_location_at(float(lat), float(lng))
                     item = SgRecord(
                         locator_domain=DOMAIN,
                         page_url="",
@@ -208,45 +200,75 @@ class ExampleSearchIteration(SearchIteration):
                         hours_of_operation=hoo,
                         raw_address=raw_address,
                     )
-                    yield item
+                    sgw.write_row(item)
+
+
+def fetch_data(sgw: SgWriter):
+    logger.info("Started")
+
+    search_us = DynamicGeoSearch(
+        country_codes=[SearchableCountries.USA],
+        expected_search_radius_miles=300,
+        granularity=Grain_8(),
+        use_state=False,
+    )
+    country_us = search_us.current_country().upper()
+
+    search_gb = DynamicGeoSearch(
+        country_codes=[SearchableCountries.BRITAIN],
+        expected_search_radius_miles=300,
+        granularity=Grain_8(),
+        use_state=False,
+    )
+    country_gb = search_gb.current_country().upper()
+
+    search_ca = DynamicGeoSearch(
+        country_codes=[SearchableCountries.CANADA],
+        expected_search_radius_miles=300,
+        granularity=Grain_8(),
+        use_state=False,
+    )
+    country_ca = search_ca.current_country().upper()
+    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
+        tasks = []
+        task_us = [
+            executor.submit(fetch_records, latlng, search_us, country_us, sgw)
+            for latlng in search_us
+        ]
+        tasks.extend(task_us)
+
+        task_gb = [
+            executor.submit(fetch_records, latlng, search_gb, country_gb, sgw)
+            for latlng in search_gb
+        ]
+        tasks.extend(task_gb)
+
+        task_ca = [
+            executor.submit(fetch_records, latlng, search_ca, country_ca, sgw)
+            for latlng in search_ca
+        ]
+        tasks.extend(task_ca)
+
+        for future in as_completed(tasks):
+            if future.result() is not None:
+                future.result()
+
+
+def scrape():
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.RAW_ADDRESS,
+                    SgRecord.Headers.LATITUDE,
+                    SgRecord.Headers.LONGITUDE,
+                }
+            )
+        )
+    ) as writer:
+        fetch_data(writer)
+    logger.info("Finished")
 
 
 if __name__ == "__main__":
-    CrawlStateSingleton.get_instance().save(override=True)
-    search_maker = DynamicSearchMaker(
-        search_type="DynamicGeoSearch",
-        expected_search_radius_miles=200,
-    )
-    dedupe_dict = {
-        SgRecord.Headers.RAW_ADDRESS,
-        SgRecord.Headers.LATITUDE,
-        SgRecord.Headers.LONGITUDE,
-    }
-
-    with SgWriter(
-        SgRecordDeduper(
-            SgRecordID(dedupe_dict),
-            duplicate_streak_failure_factor=-1,
-        )
-    ) as writer:
-        all_countries = get_country_list()
-        logger.info(f"Countries to be crawled: {all_countries}")
-        # Listed countries include GB, CA and US
-        countries_gb_ca_us = ["GB", "CA", "US"]
-
-        # There will have other tickets, Sweden will have a separte ticket.
-        # # These countries (CN, KR, SG,TW ) will be assigned to another ticket.
-        #
-        # Strange:  DynamicZipSearch returns lat_lng instead of
-        # postal code. therefore, DynamicGeoSearch has been used.
-        # China-based countries - CN, HK, MO, and TW
-        # The rest of the world includes CA, KR, SE, SG, GB, US
-        search_iter = ExampleSearchIteration()
-        par_search = ParallelDynamicSearch(
-            search_maker=search_maker,
-            search_iteration=search_iter,
-            country_codes=countries_gb_ca_us,
-        )
-
-        for rec in par_search.run():
-            writer.write_row(rec)
+    scrape()
