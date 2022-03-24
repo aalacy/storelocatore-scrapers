@@ -32,9 +32,12 @@ def fetch_data(sgw: SgWriter):
             location_type = "Loan Production Office"
 
         raw_data = BeautifulSoup(store["description"], "lxml")
-        raw_address = list(raw_data.stripped_strings)[:2]
-        if "LOCATION" in raw_address[0]:
-            raw_address = list(raw_data.stripped_strings)[1:3]
+        try:
+            raw_address = list(raw_data.stripped_strings)[:2]
+            if "LOCATION" in raw_address[0]:
+                raw_address = list(raw_data.stripped_strings)[1:3]
+        except:
+            raw_address = store["address"]
 
         street_address = raw_address[0].strip()
         city = raw_address[1].split(",")[0]
@@ -65,7 +68,12 @@ def fetch_data(sgw: SgWriter):
         for i, row in enumerate(rows):
             if "hours" in row.lower():
                 hours_of_operation = (
-                    " ".join(rows[i:]).replace("ATM", "").strip().split("Drive")[0]
+                    " ".join(rows[i:])
+                    .replace("ATM", "")
+                    .strip()
+                    .split("Drive")[0]
+                    .split("Please")[0]
+                    .strip()
                 )
                 break
 
@@ -74,9 +82,7 @@ def fetch_data(sgw: SgWriter):
 
         link = "https://www.southcentralbank.com/locations-and-team-members/"
         if store["link"]:
-            link = ("https://www.southcentralbank.com" + store["link"]).replace(
-                "locations", "locations-and-team-members"
-            )
+            link = "https://www.southcentralbank.com" + store["link"]
 
         sgw.write_row(
             SgRecord(
