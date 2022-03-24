@@ -41,10 +41,10 @@ def fetch_data():
         #     "https://www.hsbc.gr/en-gr/branch-finder/,https://www.hsbc.gr/en-gr/branch-list/,Greece",
         #     "https://www.hsbc.com.mt/branch-finder/, https://www.hsbc.com.mt/branch-list/, Malta",
         #     "https://www.hsbc.co.uk/branch-finder/, https://www.hsbc.co.uk/branch-list/, UK",
-        "https://www.hsbc.com.bh/branch-finder/, https://www.hsbc.com.bh/branch-finder/, Bahrain",
-        "https://www.hsbc.com.eg/branch-finder/, https://www.hsbc.com.eg/branch-finder/, Egypt",
-        "https://www.hsbc.co.om/branch-finder/, https://www.hsbc.co.om/branch-finder/,  Oman",
-        "https://www.hsbc.com.qa/branch-finder/, https://www.hsbc.com.qa/branch-finder/, Qatar",
+        # "https://www.hsbc.com.bh/branch-finder/, https://www.hsbc.com.bh/branch-finder/, Bahrain",
+        # "https://www.hsbc.com.eg/branch-finder/, https://www.hsbc.com.eg/branch-finder/, Egypt",
+        # "https://www.hsbc.co.om/branch-finder/, https://www.hsbc.co.om/branch-finder/,  Oman",
+        # "https://www.hsbc.com.qa/branch-finder/, https://www.hsbc.com.qa/branch-finder/, Qatar",
         "https://www.hsbc.ae/branch-finder/, https://www.hsbc.ae/branch-finder/, UAE",
     ]
 
@@ -83,8 +83,11 @@ def fetch_data():
                 zip = store["address"].get("postcode", "<MISSING>")
                 country_code = url_country.split(",")[2].strip()
 
-                cleaned_zip = re.sub(rf"{country_code}\s", zip, re.IGNORECASE)
-                cleaned_zip = re.sub(r"\s*:\s*", cleaned_zip)[1]
+                cleaned_zip = re.sub(
+                    rf"\s*({country_code}|SWIFT:)\s*", "", zip, re.IGNORECASE
+                )
+                if re.search("po box", cleaned_zip, re.IGNORECASE):
+                    cleaned_zip = SgRecord.MISSING
 
                 phone = ""
                 if "phoneNumber" in store:
@@ -135,7 +138,6 @@ def fetch_data():
                 hours_of_operation = "; ".join(hours_list).strip()
                 latitude = store["coordinates"]["lat"]
                 longitude = store["coordinates"]["lng"]
-
                 url_formatted_name = re.sub(
                     r"\s+", "-", re.sub(r"[^a-zA-Z0-9\s]", "", location_name.strip())
                 ).lower()
@@ -145,6 +147,8 @@ def fetch_data():
                     else None
                 )
 
+                print(location_name, zip, cleaned_zip)
+
                 yield SgRecord(
                     locator_domain=locator_domain,
                     page_url=page_url,
@@ -152,7 +156,7 @@ def fetch_data():
                     street_address=street_address,
                     city=city,
                     state=state,
-                    zip_postal=re.split(" ", zip)[-1],
+                    zip_postal=cleaned_zip,
                     country_code=country_code,
                     store_number=store_number,
                     phone=phone,
