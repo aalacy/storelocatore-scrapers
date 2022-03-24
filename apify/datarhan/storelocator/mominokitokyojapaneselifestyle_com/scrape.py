@@ -16,7 +16,7 @@ def fetch_data():
 
     with SgFirefox() as driver:
         driver.get(start_url)
-        sleep(15)
+        sleep(25)
         frame = driver.find_element_by_xpath('//iframe[@title="powr map"]')
         driver.switch_to.frame(frame)
         dom = etree.HTML(driver.page_source)

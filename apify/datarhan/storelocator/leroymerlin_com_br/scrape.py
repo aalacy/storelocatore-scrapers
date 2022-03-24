@@ -63,7 +63,7 @@ def fetch_data():
                     .replace(",,", ",")
                     .split(",")
                 )
-                if "Lojas" in city:
+                if city and "Lojas" in city:
                     city = location_name
 
                 item = SgRecord(
