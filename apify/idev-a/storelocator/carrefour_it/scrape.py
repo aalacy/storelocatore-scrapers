@@ -5,6 +5,8 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sglogging import SgLogSetup
 from bs4 import BeautifulSoup as bs
+import math
+from concurrent.futures import ThreadPoolExecutor
 
 logger = SgLogSetup().get_logger("carrefour")
 
@@ -14,6 +16,43 @@ _headers = {
 
 locator_domain = "https://www.carrefour.it"
 base_url = "https://www.carrefour.it/on/demandware.store/Sites-carrefour-IT-Site/it_IT/StoreLocator-GetAll"
+
+
+max_workers = 32
+
+
+def fetchConcurrentSingle(link):
+    page_url = locator_domain + link["Url"]
+    logger.info(page_url)
+    response = request_with_retries(page_url)
+    if response.status_code == 200:
+        return page_url, link, bs(response.text, "lxml")
+    return None
+
+
+def fetchConcurrentList(list, occurrence=max_workers):
+    output = []
+    total = len(list)
+    reminder = math.floor(total / 50)
+    if reminder < occurrence:
+        reminder = occurrence
+
+    count = 0
+    with ThreadPoolExecutor(
+        max_workers=occurrence, thread_name_prefix="fetcher"
+    ) as executor:
+        for result in executor.map(fetchConcurrentSingle, list):
+            if result:
+                count = count + 1
+                if count % reminder == 0:
+                    logger.debug(f"Concurrent Operation count = {count}")
+                output.append(result)
+    return output
+
+
+def request_with_retries(url):
+    with SgRequests() as session:
+        return session.get(url, headers=_headers)
 
 
 def _p(val):
@@ -37,13 +76,10 @@ def _p(val):
 def fetch_data():
     with SgRequests() as session:
         locations = session.get(base_url, headers=_headers).json()["stores"]
-        for _ in locations:
-            page_url = locator_domain + _["Url"]
+        for page_url, _, sp1 in fetchConcurrentList(locations):
             hours = []
             for day, hh in _["Orari"].items():
                 hours.append(f"{day}: {hh}")
-            logger.info(page_url)
-            sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
             yield SgRecord(
                 page_url=page_url,
                 store_number=_["Id"],

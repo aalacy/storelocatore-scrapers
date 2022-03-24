@@ -63,9 +63,15 @@ def fetch_data(driver):
         location_name = node.find("span").text
         page_link = node.find("a")["href"]
         page_url = f"{website}{page_link}"
-        raw_address = node.find("div", class_="info").find("p").text
         phone = node.find("div", class_="info").find_all("p")[1].text
+        raw_address = str(node.find("div", class_="info").find("p")).replace(
+            "<br/>", " "
+        )
         street_address, city, state, zip_postal = get_address(raw_address)
+        street_address = street_address.replace("</A></P>", "").replace(">", "").strip()
+        raw_address = f"{street_address}, {city}, {state} {zip_postal}".replace(
+            MISSING, ""
+        )
         hours_of_operation = (
             f"{week_first_day} - {weekend1} 9 AM - 6 PM; {weekend2} Closed"
         )

@@ -1,108 +1,69 @@
-import csv
-import json
-
+from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-base_url = "https://www.myowens.com"
+def fetch_data(sgw: SgWriter):
 
-
-def validate(items):
-    rets = []
-    for item in items:
-        if type(item) is str:
-            item = item.strip()
-
-        rets.append(item)
-    return rets
-
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
-    return
-
-
-def fetch_data():
-
+    locator_domain = "https://www.myowens.com/"
+    api_url = "https://www.myowens.com/wp-admin/admin-ajax.php?action=store_search&lat=40.58654&lng=-122.39168&max_results=25&search_radius=50&autoload=1"
     session = SgRequests()
-
-    output_list = []
-    url = "https://www.myowens.com/wp-admin/admin-ajax.php?action=store_search&lat=40.58654&lng=-122.39168&max_results=25&search_radius=50&autoload=1"
     headers = {
-        "accept": "*/*",
-        "accept-encoding": "gzip, deflate, br",
-        "accept-language": "en-US,en;q=0.9",
-        "cookie": "PHPSESSID=24caa11297ea991306e097308a29c3d0; __utma=143926953.1836670899.1565178648.1565178648.1565178648.1; __utmc=143926953; __utmz=143926953.1565178648.1.1.utmcsr=(direct)|utmccn=(direct)|utmcmd=(none); __utmt=1; mailmunch_second_pageview=true; _mailmunch_visitor_id=21249aea-6e92-4f5d-a154-466d4f635830; _mailmunch_seen_month=true; __utmb=143926953.2.10.1565178648",
-        "referer": "https://www.myowens.com/locations/",
-        "sec-fetch-mode": "cors",
-        "sec-fetch-site": "same-origin",
-        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.87 Safari/537.36",
-        "x-requested-with": "XMLHttpRequest",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
-    request = session.get(url, headers=headers)
-    store_list = json.loads(request.text)
-    for store in store_list:
-        output = []
-        hours = store.get("hours")
-        store_hours = ""
-        hour_infos = hours.split("<tr>")[1:]
-        for info in hour_infos:
-            hour = info.split("<td>")[1:]
-            if "</time>" in hour[1]:
-                store_hours += (
-                    hour[0].split("</td>")[0]
-                    + " "
-                    + hour[1].split("<time>").pop().split("</time>")[0]
-                    + ","
-                )
-            else:
-                store_hours += (
-                    hour[0].split("</td>")[0] + " " + hour[1].split("</td>")[0] + ","
-                )
-        output.append(base_url)
-        output.append("https://www.myowens.com/locations/")
-        output.append(store.get("store").replace("#038;", ""))
-        output.append(store.get("address") + " " + store.get("address2"))
-        output.append(store.get("city"))
-        output.append(store.get("state").upper())
-        output.append(store.get("zip"))
-        output.append("US")
-        output.append(store.get("id"))
-        output.append(store.get("phone"))
-        output.append("<MISSING>")
-        output.append(store.get("lat"))
-        output.append(store.get("lng"))
-        output.append(store_hours[:-1])
-        output_list.append(validate(output))
-    return output_list
+    r = session.get(api_url, headers=headers)
+    js = r.json()
+    for j in js:
+
+        page_url = "https://www.myowens.com/locations/"
+        location_name = (
+            str(j.get("store")).replace("&#038;", "&").strip() or "<MISSING>"
+        )
+        street_address = f"{j.get('address')} {j.get('address2')}".strip()
+        state = j.get("state") or "<MISSING>"
+        postal = j.get("zip") or "<MISSING>"
+        country_code = "US"
+        city = j.get("city") or "<MISSING>"
+        store_number = j.get("id")
+        latitude = j.get("lat") or "<MISSING>"
+        longitude = j.get("lng") or "<MISSING>"
+        phone = j.get("phone") or "<MISSING>"
+        hours_of_operation = "<MISSING>"
+        hours = j.get("hours")
+        if hours:
+            a = html.fromstring(hours)
+            hours_of_operation = (
+                " ".join(a.xpath("//*//text()")).replace("\n", "").strip()
+            )
+            hours_of_operation = " ".join(hours_of_operation.split())
+
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+            raw_address=f"{street_address} {city}, {state} {postal}",
+        )
+
+        sgw.write_row(row)
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+if __name__ == "__main__":
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.STORE_NUMBER}))
+    ) as writer:
+        fetch_data(writer)

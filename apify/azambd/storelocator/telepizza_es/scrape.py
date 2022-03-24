@@ -15,6 +15,11 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
+import os
+
+os.environ[
+    "PROXY_URL"
+] = "http://groups-RESIDENTIAL,country-es:{}@proxy.apify.com:8000/"
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
@@ -26,7 +31,7 @@ headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
 
-session = SgRequests()
+session = SgRequests(proxy_country="es")
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 
 
@@ -137,7 +142,7 @@ def fetch_data(driver):
     count = 0
     for page_url in page_urls:
         count = count + 1
-        log.debug(f"{count}. scrapping {page_url}...")
+        log.info(f"{count}. scrapping {page_url}...")
         store_number = page_url.split("-")
         store_number = store_number[len(store_number) - 1]
         body, response = fetch_store(driver, page_url)
@@ -152,11 +157,18 @@ def fetch_data(driver):
             log.error("Can't scrape")
             continue
         street_address, city, state, zip_postal = get_address(raw_address)
-        phone = get_phone(stringify_nodes(body, '//a[contains(@href, "tel")]'))
-        hours_of_operation = stringify_nodes(
+        phone = get_phone(
+            stringify_nodes(
+                body,
+                '//span[contains(@itemprop, "telephone")]/a[contains(@href, "tel")]',
+            )
+        )
+        hoo = stringify_nodes(
             body,
             '//div[contains(@class, "hours")]/div[contains(@class, "columns")][2]/table',
         )
+        hours_of_operation = hoo.split("festivo")[0]
+
         latitude = get_txt(response, "lat")
         longitude = get_txt(response, "lng")
 
