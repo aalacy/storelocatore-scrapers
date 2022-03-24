@@ -101,48 +101,43 @@ def get_locs(data):
 
 def fetch_data():
     # Need to add dedupe. Added it in pipeline.
-    with SgRequests(proxy_country="th", retries_with_fresh_proxy_ip=10) as session:
-        maxZ = search.items_remaining()
-        total = 0
-        for lat, lng in search:
-            if search.items_remaining() > maxZ:
-                maxZ = search.items_remaining()
-            logger.info(("Pulling Geo Code %s..." % lat, lng))
-            data = {"latitude": str(lat), "longitude": str(lng)}
-            locations = get_locs(data)
+    maxZ = search.items_remaining()
+    total = 0
+    for lat, lng in search:
+        if search.items_remaining() > maxZ:
+            maxZ = search.items_remaining()
+        logger.info(("Pulling Geo Code %s..." % lat, lng))
+        data = {"latitude": str(lat), "longitude": str(lng)}
+        locations = get_locs(data)
 
-            total += len(locations)
-            progress = (
-                str(round(100 - (search.items_remaining() / maxZ * 100), 2)) + "%"
-            )
-            logger.info(
-                f"found: {len(locations)} | total: {total} | progress: {progress}"
-            )
+        total += len(locations)
+        progress = str(round(100 - (search.items_remaining() / maxZ * 100), 2)) + "%"
+        logger.info(f"found: {len(locations)} | total: {total} | progress: {progress}")
 
-            for store in locations:
-                store["street"] = store["address"]
-                if store.get("province"):
-                    store["street"] = (
-                        store["address"].replace(store["province"], "").strip()
-                    )
-                store["phone"] = (
-                    store["tel"].split()[0] if store.get("tel") else SgRecord.MISSING
+        for store in locations:
+            store["street"] = store["address"]
+            if store.get("province"):
+                store["street"] = (
+                    store["address"].replace(store["province"], "").strip()
                 )
-                search.found_location_at(store["lat"], store["lng"])
-                yield SgRecord(
-                    page_url="https://www.7eleven.co.th/find-store",
-                    store_number=store["id"],
-                    location_name=store["name"],
-                    street_address=store["street"],
-                    state=store["province"],
-                    zip_postal=store["postcode"],
-                    country_code="Thailand",
-                    latitude=store["lat"],
-                    longitude=store["lng"],
-                    phone=store["phone"],
-                    locator_domain=locator_domain,
-                    raw_address=store["address"],
-                )
+            store["phone"] = (
+                store["tel"].split()[0] if store.get("tel") else SgRecord.MISSING
+            )
+            search.found_location_at(store["lat"], store["lng"])
+            yield SgRecord(
+                page_url="https://www.7eleven.co.th/find-store",
+                store_number=store["id"],
+                location_name=store["name"],
+                street_address=store["street"],
+                state=store["province"],
+                zip_postal=store["postcode"],
+                country_code="Thailand",
+                latitude=store["lat"],
+                longitude=store["lng"],
+                phone=store["phone"],
+                locator_domain=locator_domain,
+                raw_address=store["address"],
+            )
 
 
 if __name__ == "__main__":
