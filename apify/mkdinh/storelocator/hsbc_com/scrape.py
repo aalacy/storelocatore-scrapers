@@ -1,5 +1,7 @@
 import json
+import re
 import lxml.html
+from time import sleep
 from sgrequests import SgRequests
 from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
@@ -18,7 +20,6 @@ headers = {
 
 
 def fetch_data():
-    # Your scraper here
     search_urls = [
         "https://www.hsbc.com.ar/mapa/, https://www.hsbc.com.ar/branch-list/,Argentina",
         "https://www.hsbc.bm/branch-finder/, https://www.hsbc.bm/branch-list/, Bermuda",
@@ -66,6 +67,7 @@ def fetch_data():
         )
         for key in data_files.keys():
             url = data_files[key]
+            sleep(10)
             stores_req = session.get(
                 domain + url.replace(".cdata", ".udata"),
                 headers=headers,
@@ -73,7 +75,6 @@ def fetch_data():
             stores = json.loads(stores_req.text)[key]
 
             for store in stores:
-                page_url = url_country.split(",")[1].strip()
                 locator_domain = website
                 location_name = store["name"]
 
@@ -84,9 +85,11 @@ def fetch_data():
                 phone = ""
                 if "phoneNumber" in store:
                     phones = store["phoneNumber"]
-                    phone = phones.get("existingCustomers") or phones.get(
+                    phone_nums = phones.get("existingCustomers") or phones.get(
                         "newCustomers"
                     )
+
+                    phone = re.split(r"\s*\/\s*", str(phone_nums))[0]
 
                 street_address = ""
                 if "street" in store["address"]:
@@ -101,7 +104,13 @@ def fetch_data():
                     )
 
                     parsed = parse_address(International_Parser(), address)
-                    street_address = parsed.street_address_1
+                    if (
+                        parsed.street_address_1 is not None
+                        and len(parsed.street_address_1) > 5
+                    ):
+                        street_address = address
+                    else:
+                        street_address = re.sub(fr",\s*{city}", "", address)
 
                 store_number = "<MISSING>"
                 location_type = store["Type"]
@@ -119,6 +128,15 @@ def fetch_data():
                 latitude = store["coordinates"]["lat"]
                 longitude = store["coordinates"]["lng"]
 
+                url_formatted_name = re.sub(
+                    r"\s+", "-", re.sub(r"[^a-zA-Z0-9\s]", "", location_name.strip())
+                ).lower()
+                page_url = (
+                    f"{url_country.split(',')[1].strip()}{url_formatted_name}"
+                    if location_type == "Branch"
+                    else None
+                )
+
                 yield SgRecord(
                     locator_domain=locator_domain,
                     page_url=page_url,
@@ -134,6 +152,7 @@ def fetch_data():
                     latitude=latitude,
                     longitude=longitude,
                     hours_of_operation=hours_of_operation,
+                    raw_address=f"{address}, {city}, {zip}",
                 )
 
 

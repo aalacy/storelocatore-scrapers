@@ -3,10 +3,11 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests.sgrequests import SgRequests
-from sgzip.dynamic import SearchableCountries, Grain_8
+from sgzip.dynamic import SearchableCountries, Grain_1_KM
 from sgzip.dynamic import DynamicGeoSearch
 from sglogging import sglog
 
+# This is a code change
 
 logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
 
@@ -57,6 +58,10 @@ class ExampleSearchIteration:
         elif search.current_country() == "us":
             numbers = nUS
         elif search.current_country() == "au":
+            numbers = nAU
+        elif search.current_country() == "nf":
+            numbers = nAU
+        elif search.current_country() == "cx":
             numbers = nAU
 
         url = str(
@@ -170,13 +175,15 @@ if __name__ == "__main__":
     tocrawl = []
     tocrawl.append(SearchableCountries.CANADA)
     tocrawl.append(SearchableCountries.USA)
+    tocrawl.append(SearchableCountries.NORFOLK_ISLAND)
+    tocrawl.append(SearchableCountries.CHRISTMAS_ISLAND)
     tocrawl.append(SearchableCountries.AUSTRALIA)
     tocrawl = tocrawl + SearchableCountries.ByGeography["CONTINENTAL_EUROPE"]
+    tocrawl = tocrawl + SearchableCountries.SovereigntyGroups["UK"]
     search = DynamicGeoSearch(
         country_codes=tocrawl,
-        granularity=Grain_8(),
-        expected_search_radius_miles=4,
-        max_search_results=25,
+        granularity=Grain_1_KM(),
+        expected_search_radius_miles=1.242742,
     )
     with SgWriter(
         deduper=SgRecordDeduper(

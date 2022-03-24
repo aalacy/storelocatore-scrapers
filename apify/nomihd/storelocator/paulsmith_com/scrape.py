@@ -121,6 +121,9 @@ def fetch_data():
                 hours_list.append(day + time)
 
             hours_of_operation = "; ".join(hours_list).strip()
+            if hours_of_operation:
+                if hours_of_operation.count("Closed") == 7:
+                    location_type = "Closed"
 
             store_number = "<MISSING>"
             map_link = "".join(

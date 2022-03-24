@@ -45,7 +45,7 @@ def fetch_data():
             country_code = "US"
             yield SgRecord(
                 locator_domain=DOMAIN,
-                page_url=DOMAIN,
+                page_url=url,
                 location_name=MISSING,
                 street_address=street_address.strip(),
                 city=city.strip(),

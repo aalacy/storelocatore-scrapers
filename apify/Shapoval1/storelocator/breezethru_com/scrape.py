@@ -18,7 +18,6 @@ def fetch_data(sgw: SgWriter):
     div = tree.xpath('//div[./h3[contains(text(), "Store")]]')
     for d in div:
 
-        page_url = "https://www.breezethru.com/locations"
         location_name = (
             "".join(d.xpath(".//h3/text()")).replace("★", "").replace("✭", "").strip()
         )
@@ -30,20 +29,13 @@ def fetch_data(sgw: SgWriter):
         postal = ad.split(",")[1].split()[1].strip()
         country_code = "USA"
         city = ad.split(",")[0].strip()
-        store_number = location_name.split("#")[1].strip()
-        latitude = (
-            "".join(d.xpath(".//preceding::div/@data-block-json"))
-            .split(f"{store_number}")[1]
-            .split(",")[-3]
-            .strip()
-        )
-        longitude = (
-            "".join(d.xpath(".//preceding::div/@data-block-json"))
-            .split(f"{store_number}")[1]
-            .split(",")[-2]
-            .strip()
-        )
         phone = "".join(d.xpath(".//p[2]/a/text()"))
+        store_number = location_name.split("#")[1].strip()
+        page_url = f"https://www.breezethru.com/locations-1/{store_number}"
+        r = session.get(page_url, headers=headers)
+        tree = html.fromstring(r.text)
+        latitude = "".join(tree.xpath('//meta[@property="og:latitude"]/@content'))
+        longitude = "".join(tree.xpath('//meta[@property="og:longitude"]/@content'))
 
         row = SgRecord(
             locator_domain=locator_domain,
@@ -68,7 +60,5 @@ def fetch_data(sgw: SgWriter):
 if __name__ == "__main__":
     session = SgRequests()
     locator_domain = "https://www.breezethru.com"
-    with SgWriter(
-        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
-    ) as writer:
+    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))) as writer:
         fetch_data(writer)

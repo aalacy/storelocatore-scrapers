@@ -29,7 +29,7 @@ headers = {
 
 def fetch_store_urls(stores_sel, session):
     stores = stores_sel.xpath(
-        '//div[@class="menu-tab-item city four-column"][./div[@class="count"]]'
+        '//div[@class="menu-tab-item city city four-column"][./div[@class="count"]]'
     )
     store_urls_list = []
     for store in stores:

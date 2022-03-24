@@ -62,15 +62,26 @@ def fetch_data(sgw: SgWriter):
         req = session.get(link, headers=headers)
         base = BeautifulSoup(req.text, "lxml")
 
+        latitude = ""
+        longitude = ""
         try:
-            geo = re.findall(r"-[0-9]{2,3}\.[0-9]+,[0-9]{2,3}\.[0-9]+", str(base))[
-                0
-            ].split(",")
-            latitude = geo[1]
-            longitude = geo[0]
+            raw_data = base.find(id="popmenu-apollo-state").contents[0]
+            js = raw_data.split("STATE =")[1].strip()[:-1]
+            store_data = json.loads(js)
+
+            for loc in store_data:
+                if "RestaurantLocation:" in loc:
+                    store = store_data[loc]
+                    try:
+                        if street_address in store["streetAddress"]:
+                            latitude = store["lat"]
+                            longitude = store["lng"]
+                            store_number = store["id"]
+                            break
+                    except:
+                        pass
         except:
-            latitude = ""
-            longitude = ""
+            pass
 
         if "sbe.com" in link:
             location_name = base.title.text.split("|")[0].strip()

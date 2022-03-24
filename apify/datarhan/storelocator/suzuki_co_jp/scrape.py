@@ -57,7 +57,7 @@ def fetch_data():
                     continue
                 raw_address = poi["pincode"]
                 addr = parse_address_intl(raw_address)
-                hoo = " ".join(poi["sales_hours"].split())
+                hoo = " ".join(poi["sales_hours"].split()).split("(")[0]
 
                 item = SgRecord(
                     locator_domain=domain,

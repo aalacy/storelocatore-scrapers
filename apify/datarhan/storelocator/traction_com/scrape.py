@@ -16,7 +16,6 @@ def fetch_data():
     start_url = "https://www.traction.com/en/store-finder?q={}&page=0"
 
     session.get(start_url)
-    all_locations = []
     all_codes = DynamicZipSearch(
         country_codes=[SearchableCountries.CANADA], expected_search_radius_miles=200
     )
@@ -27,7 +26,7 @@ def fetch_data():
             data = json.loads(response.text)
         except Exception:
             continue
-        all_locations += data["data"]
+        all_locations = data["data"]
         if data["total"] > 10:
             total_pages = data["total"] // 10 + 1
             for page in range(1, total_pages):
@@ -39,48 +38,48 @@ def fetch_data():
                 except Exception:
                     continue
 
-    for poi in all_locations:
-        store_url = (
-            urljoin(start_url, poi["url"])
-            .split("?")[0]
-            .replace(" ", "-")
-            .replace("(", "")
-            .replace(")", "")
-            .replace(".", "")
-        )
-        location_name = poi["name"]
-        street_address = poi["line1"]
-        city = poi["town"]
-        state = poi["region"]
-        zip_code = poi["postalCode"]
-        country_code = "CA"
-        store_number = poi["storeId"]
-        phone = poi["phone"]
-        latitude = poi["latitude"]
-        longitude = poi["longitude"]
-        hoo = []
-        for day, hours in poi["openings"].items():
-            hoo.append(f"{day} {hours}")
-        hours_of_operation = " ".join(hoo) if hoo else ""
+        for poi in all_locations:
+            store_url = urljoin(
+                "https://www.traction.com",
+                poi["url"]
+                .replace(" ", "-")
+                .replace("(", "")
+                .replace(")", "")
+                .replace(".", ""),
+            ).split("?")[0]
+            location_name = poi["name"].replace("&#039;", "'")
+            street_address = poi["line1"]
+            city = poi["town"]
+            state = poi["region"]
+            zip_code = poi["postalCode"]
+            country_code = "CA"
+            store_number = poi["storeId"]
+            phone = poi["phone"]
+            latitude = poi["latitude"]
+            longitude = poi["longitude"]
+            hoo = []
+            for day, hours in poi["openings"].items():
+                hoo.append(f"{day} {hours}")
+            hours_of_operation = " ".join(hoo) if hoo else ""
 
-        item = SgRecord(
-            locator_domain=domain,
-            page_url=store_url,
-            location_name=location_name,
-            street_address=street_address,
-            city=city,
-            state=state,
-            zip_postal=zip_code,
-            country_code=country_code,
-            store_number=store_number,
-            phone=phone,
-            location_type="",
-            latitude=latitude,
-            longitude=longitude,
-            hours_of_operation=hours_of_operation,
-        )
+            item = SgRecord(
+                locator_domain=domain,
+                page_url=store_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_code,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type="",
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
 
-        yield item
+            yield item
 
 
 def scrape():

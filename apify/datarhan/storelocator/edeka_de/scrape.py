@@ -8,20 +8,18 @@ from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 
 
 def fetch_data():
-    session = SgRequests()
-
+    session = SgRequests(proxy_country="de")
     start_url = "https://www.edeka.de/api/marketsearch/markets?searchstring={}"
     domain = "edeka.de"
     hdr = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
     all_codes = DynamicZipSearch(
-        country_codes=[SearchableCountries.GERMANY], expected_search_radius_miles=100
+        country_codes=[SearchableCountries.GERMANY], expected_search_radius_miles=1
     )
     for code in all_codes:
         data = session.get(start_url.format(code), headers=hdr).json()
-        all_locations = data["markets"]
-        for poi in all_locations:
+        for poi in data["markets"]:
             hoo = []
             for day, hours in poi["businessHours"].items():
                 if day == "additionalInfo":
@@ -36,7 +34,7 @@ def fetch_data():
 
             item = SgRecord(
                 locator_domain=domain,
-                page_url="https://www.edeka.de/marktsuche.jsp",
+                page_url=poi.get("url"),
                 location_name=poi["name"],
                 street_address=poi["contact"]["address"]["street"],
                 city=poi["contact"]["address"]["city"]["name"],
@@ -57,9 +55,8 @@ def fetch_data():
 def scrape():
     with SgWriter(
         SgRecordDeduper(
-            SgRecordID(
-                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
-            )
+            SgRecordID({SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STORE_NUMBER}),
+            duplicate_streak_failure_factor=-1,
         )
     ) as writer:
         for item in fetch_data():

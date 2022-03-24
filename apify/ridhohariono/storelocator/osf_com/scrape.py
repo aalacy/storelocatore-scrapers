@@ -65,7 +65,9 @@ def fetch_data():
             hours_of_operation = MISSING
         location_type = MISSING
         if "TEMPORARILY" in hours_of_operation:
-            hours_of_operation = MISSING
+            hours_of_operation = re.sub(
+                r"This location.+-flow-1", "", hours_of_operation
+            ).strip()
             location_type = "TEMP_CLOSED"
         store_number = MISSING
         log.info("Append {} => {}".format(location_name, street_address))

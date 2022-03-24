@@ -38,7 +38,7 @@ def get_latlng(map_link):
 
 def fetch_data():
     # Your scraper here
-    search_url = "https://jeeppr.com/contactenos.html"
+    search_url = "https://jeeppr.com/contacto.html"
 
     with SgRequests() as session:
         search_res = session.get(search_url, headers=headers)

@@ -2,7 +2,6 @@ import re
 import json
 import time
 import random
-import simplejson
 import threading
 import http.client
 from datetime import datetime
@@ -21,7 +20,7 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 logger = SgLogSetup().get_logger("cvs_com")
 http.client._MAXHEADERS = 1000  # type: ignore
 
-MAX_WORKERS = 10
+MAX_WORKERS = None
 
 
 start_time = datetime.now()
@@ -79,6 +78,7 @@ def enqueue_links(url, selectors):
     session = get_session()
     r = session.get(url, headers=headers)
     if r.status_code != 200:
+        logger.error(r)
         raise Exception()
 
     soup = BeautifulSoup(r.text, "html.parser")
@@ -150,44 +150,27 @@ def extract_value(key, html):
 def get_basic_info(id, page_schema, location, session):
     address = None
     try:
-        data = {"storeId": id}
-        result = session.post(
-            "https://www.cvs.com/rest/bean/cvs/store/CvsStoreLocatorServices/getStoreIdDetails",
-            data=data,
-        ).json()
-
-        info = result["atgResponse"]["sm"]
+        node = location.find("cvs-store-details")
+        props = json.loads(node["sd-props"])
+        store = props["cvsMyStoreDetailsProps"]["store"]
         address = {
-            "street_address": info["ad"].strip(),
-            "city": info["ci"].strip(),
-            "state": info["st"].strip(),
-            "postal": info["zp"].strip(),
-            "phone": info["ph"].strip(),
+            "street_address": store["addressLine"].strip(),
+            "city": store["addressCityDescriptionText"].strip(),
+            "state": store["addressState"].strip(),
+            "postal": store["addressZipCode"].strip(),
+            "phone": store["phoneNumber"].strip(),
             "country_code": "US",
         }
-    except simplejson.decoder.JSONDecodeError:
-        try:
-            node = location.find("cvs-store-details")
-            props = json.loads(node["sd-props"])
-            store = props["cvsMyStoreDetailsProps"]["store"]
-            address = {
-                "street_address": store["addressLine"].strip(),
-                "city": store["addressCityDescriptionText"].strip(),
-                "state": store["addressState"].strip(),
-                "postal": store["addressZipCode"].strip(),
-                "phone": store["phoneNumber"].strip(),
-                "country_code": "US",
-            }
-        except:
-            addr = page_schema["address"]
-            address = {
-                "street_address": addr["streetAddress"].strip(),
-                "city": addr["addressLocality"].strip(),
-                "state": addr["addressRegion"].strip(),
-                "postal": addr["postalCode"].strip(),
-                "phone": addr["telephone"].strip(),
-                "country_code": addr["addressCountry"].strip(),
-            }
+    except:
+        addr = page_schema["address"]
+        address = {
+            "street_address": addr["streetAddress"].strip(),
+            "city": addr["addressLocality"].strip(),
+            "state": addr["addressRegion"].strip(),
+            "postal": addr["postalCode"].strip(),
+            "phone": addr["telephone"].strip(),
+            "country_code": addr["addressCountry"].strip(),
+        }
     # parsing directional data from street address
     if "," in address["street_address"]:
         street_address, *others = re.split(",", address["street_address"])
@@ -317,8 +300,9 @@ def get_location(page_url):
     )
     location_type = get(page_schema, "@type")
     street_address = re.sub(
-        r"\s*at\s+){1,2}", " ", get(basic_info, "street_address"), flags=re.IGNORECASE
+        r"(\s*at\s+){1,2}", " ", get(basic_info, "street_address"), flags=re.IGNORECASE
     )
+
     city = get(basic_info, "city")
     state = get(basic_info, "state")
     postal = get(basic_info, "postal")
