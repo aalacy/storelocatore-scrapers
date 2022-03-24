@@ -68,10 +68,16 @@ def fetch_data(sgw: SgWriter):
 
             if not city and not state:
                 street_address = (
-                    item.find_all(class_="pillar")[3].text.strip().split("\r\n")[0].strip()
+                    item.find_all(class_="pillar")[3]
+                    .text.strip()
+                    .split("\r\n")[0]
+                    .strip()
                 )
                 city = (
-                    item.find_all(class_="pillar")[3].text.strip().split("\r\n")[1].strip()
+                    item.find_all(class_="pillar")[3]
+                    .text.strip()
+                    .split("\r\n")[1]
+                    .strip()
                 )
             country_code = "Peru"
             store_number = ""
