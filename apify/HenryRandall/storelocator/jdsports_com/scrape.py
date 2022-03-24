@@ -1,5 +1,5 @@
 import json
-from concurrent.futures import ThreadPoolExecutor, as_completed
+import threading
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 from sgzip.static import static_zipcode_list
@@ -13,29 +13,35 @@ headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
 }
 
-session = SgRequests()
+local = threading.local()
 
 
-def refresh_session():
-    global session
-    session = SgRequests()
+def get_session(refresh):
+    if not hasattr(local, "session") or refresh:
+        local.session = SgRequests()
+
+    return local.session
 
 
 def fetch_stores(postal, retry=0):
     try:
+
         base = "https://stores.jdsports.com/search.html?q="
         url = base + postal
-        return bs(session.get(url, headers=headers).text, "lxml")
+        return bs(get_session(retry > 0).get(url, headers=headers).text, "lxml")
     except:
         if retry < 3:
             return fetch_stores(postal, retry + 1)
 
-        return []
 
-
-def fetch_locations(postal, sgw):
+def fetch_locations(postal, retry=0):
+    locations = []
     locator_domain = "https://stores.jdsports.com/"
     soup = fetch_stores(postal)
+
+    if not soup:
+        return []
+
     info = soup.find("div", {"class": "search-results-wrapper"})
     info = info.find("ol", {"class": "location-list-results"})
 
@@ -100,7 +106,9 @@ def fetch_locations(postal, sgw):
             hoo = hoo[:-2]
 
             if loc_url != SgRecord.MISSING:
-                soup = bs(session.get(loc_url, headers=headers).text, "lxml")
+                soup = bs(
+                    get_session(retry > 1).get(loc_url, headers=headers).text, "lxml"
+                )
                 coords = soup.find("div", {"class": "location-map-wrapper"})
                 coords = coords.find("link")["href"]
                 coords = coords.split("center=")[1].split("&")[0]
@@ -109,7 +117,7 @@ def fetch_locations(postal, sgw):
                 lat = SgRecord.MISSING
                 long = SgRecord.MISSING
 
-            sgw.write_row(
+            locations.append(
                 SgRecord(
                     locator_domain=locator_domain,
                     page_url=loc_url,
@@ -128,26 +136,32 @@ def fetch_locations(postal, sgw):
                 )
             )
 
+    return locations
 
-def fetch_data(sgw: SgWriter):
-    codes = static_zipcode_list(radius=5, country_code=SearchableCountries.USA)
 
-    with ThreadPoolExecutor() as executor:
-        futures = [executor.submit(fetch_locations, postal, sgw) for postal in codes]
-        for future in as_completed(futures):
-            pass
+def fetch_data():
+    codes = static_zipcode_list(radius=30, country_code=SearchableCountries.USA)
+    for postal in codes:
+        yield from fetch_locations(postal)
 
 
 def scrape():
+    data = fetch_data()
+
     with SgWriter(
         SgRecordDeduper(
             SgRecordID(
-                {SgRecord.Headers.PHONE, SgRecord.Headers.STREET_ADDRESS},
-                fail_on_empty_id=True,
-            )
+                {
+                    SgRecord.Headers.PHONE,
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.LOCATION_NAME,
+                },
+            ),
+            duplicate_streak_failure_factor=-1,
         )
     ) as writer:
-        fetch_data(writer)
+        for record in data:
+            writer.write_row(record)
 
 
 scrape()
