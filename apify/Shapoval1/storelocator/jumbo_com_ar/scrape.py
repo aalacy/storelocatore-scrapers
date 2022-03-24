@@ -36,6 +36,12 @@ def fetch_data(sgw: SgWriter):
             if phone.find("/") != -1:
                 phone = phone.split("/")[0].strip()
             hours_of_operation = k.get("schedule")[0]
+            slug = "".join(k.get("id")).replace("EX", "")
+            if slug.find("-") != -1:
+                slug = slug.split("-")[0].strip()
+            store_number = "<MISSING>"
+            if slug.isdigit():
+                store_number = slug
 
             row = SgRecord(
                 locator_domain=locator_domain,
@@ -46,7 +52,7 @@ def fetch_data(sgw: SgWriter):
                 state=state,
                 zip_postal=postal,
                 country_code=country_code,
-                store_number=SgRecord.MISSING,
+                store_number=store_number,
                 phone=phone,
                 location_type=SgRecord.MISSING,
                 latitude=latitude,
