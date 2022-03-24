@@ -142,7 +142,7 @@ def fetch_data(driver):
     count = 0
     for page_url in page_urls:
         count = count + 1
-        log.debug(f"{count}. scrapping {page_url}...")
+        log.info(f"{count}. scrapping {page_url}...")
         store_number = page_url.split("-")
         store_number = store_number[len(store_number) - 1]
         body, response = fetch_store(driver, page_url)
