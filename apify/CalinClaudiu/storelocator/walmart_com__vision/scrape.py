@@ -250,15 +250,15 @@ def fetch_data():
     state = CrawlStateSingleton.get_instance()
     session = SgRequests(dont_retry_status_codes=set([404, 520]))
     # print(vision(transform_types(test_other(session))["rawadd"])) # noqa
-    test = gen_hours(transform_types(test_other(session)))
-    please_write(test)
     state.get_misc_value("init", default_factory=lambda: other_source(session, state))
     for item in fetch_other(session, state):
-        yield gen_hours(transform_types(item))
+        for reccz in gen_hours(transform_types(item)):
+            yield reccz
     maxZ = search.items_remaining()
     total = 0
     for item in fetch_other(session, state):
-        yield gen_hours(transform_types(item))
+        for recc in gen_hours(transform_types(item)):
+            yield recc
     for code in search:
         if search.items_remaining() > maxZ:
             maxZ = search.items_remaining()
@@ -304,6 +304,7 @@ def scrape():
         ),
         location_name=sp.MappingField(
             mapping=["storeType", "name"],
+            part_of_record_identity=True,
         ),
         latitude=sp.MappingField(
             mapping=["geoPoint", "latitude"],
@@ -332,7 +333,11 @@ def scrape():
         store_number=sp.MappingField(
             mapping=["id"],
         ),
-        hours_of_operation=sp.MappingField(mapping=["horas"], is_required=False),
+        hours_of_operation=sp.MappingField(
+            mapping=["horas"],
+            is_required=False,
+            part_of_record_identity=True,
+        ),
         location_type=sp.MappingField(mapping=["rawadd"], value_transform=vision),
         raw_address=sp.MissingField(),
     )

@@ -12,16 +12,18 @@ def get_international(line):
     adr1 = adr.street_address_1 or ""
     adr2 = adr.street_address_2 or ""
     street = f"{adr1} {adr2}".strip()
-    city = adr.city or SgRecord.MISSING
     postal = adr.postcode or SgRecord.MISSING
 
-    return street, city, postal
+    return street, postal
 
 
 def parse_block(g, country, sgw):
     location_name = "".join(g.xpath(".//h2/text()")).strip()
     raw_address = "".join(g.xpath(".//h3/text()")).strip()
-    street_address, city, postal = get_international(raw_address)
+    city = SgRecord.MISSING
+    if "-" in raw_address:
+        city = raw_address.split("-")[0]
+    street_address, postal = get_international(raw_address)
     hours_of_operation = "".join(g.xpath(".//p/text()")).strip()
 
     row = SgRecord(
