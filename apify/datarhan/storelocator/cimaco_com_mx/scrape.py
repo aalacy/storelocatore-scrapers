@@ -16,7 +16,7 @@ def fetch_data():
 
     with SgFirefox() as driver:
         driver.get(start_url)
-        sleep(5)
+        sleep(15)
         dom = etree.HTML(driver.page_source)
 
     all_locations = dom.xpath('//div[@class="suc-post"]')
