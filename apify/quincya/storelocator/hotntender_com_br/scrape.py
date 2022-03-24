@@ -29,15 +29,24 @@ def fetch_data(sgw: SgWriter):
         street_address = addr.street_address_1
         city = addr.city
         state = addr.state
+        try:
+            if "Rio De Janeiro" in state:
+                state = "RJ"
+        except:
+            pass
         zip_code = addr.postcode
         country_code = "BR"
         store_number = store["idx"].split("_")[1]
         location_type = ""
         phone = store["number"].split("/")[0]
-        hours_of_operation = BeautifulSoup(store["description"], "lxml").text.split(
-            ";"
-        )[0]
-
+        hours_of_operation = (
+            BeautifulSoup(store["description"], "lxml")
+            .text.split(";")[0]
+            .replace("Horário de funcionamento:", "")
+            .strip()
+        )
+        if "Delivery" in hours_of_operation:
+            hours_of_operation = ""
         latitude = store["lat"]
         longitude = store["lng"]
         link = store["website"]
