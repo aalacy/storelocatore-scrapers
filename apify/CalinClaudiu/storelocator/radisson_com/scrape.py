@@ -26,8 +26,14 @@ else:
 
 @retry(wait=wait_random(min=1, max=3), stop=(stop_after_attempt(3)))  # noqa
 def get_main(url, headers, session):
-    response = SgRequests.raise_on_err(session.get(url, headers=headers))
-    return response.json()
+    try:
+        response = SgRequests.raise_on_err(session.get(url, headers=headers)).json()
+        if len(response.json()) < 100:
+            raise
+        return response.json()
+    except Exception:
+        response = try_again(session, url)
+        return response.json()
 
 
 def no_json(soup):
@@ -81,6 +87,29 @@ def no_json(soup):
     return k
 
 
+def try_again(session, url):
+    headers = {}
+    headers["accept"] = "application/json, text/plain, */*"
+    headers["accept-encoding"] = "gzip, deflate, br"
+    headers["accept-language"] = "en-us"
+    headers["cache-control"] = "no-cache"
+    headers["pragma"] = "no-cache"
+    headers["referer"] = "https://www.radissonhotels.com/en-us/destination"
+    headers[
+        "sec-ch-ua"
+    ] = '" Not A;Brand";v="99", "Chromium";v="99", "Google Chrome";v="99"'
+    headers["sec-ch-ua-mobile"] = "?0"
+    headers["sec-ch-ua-platform"] = '"Windows"'
+    headers["sec-fetch-dest"] = "empty"
+    headers["sec-fetch-mode"] = "cors"
+    headers["sec-fetch-site"] = "same-origin"
+    headers[
+        "user-agent"
+    ] = "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.82 Safari/537.36"
+    response = SgRequests.raise_on_err(session.get(url, headers=headers))
+    return response
+
+
 def fetch_data(index: int, url: str, headers, session) -> dict:
     data = {}
     if len(url) > 0:
@@ -97,6 +126,15 @@ def fetch_data(index: int, url: str, headers, session) -> dict:
                 logzilla.error(f"{response.text}")
             except Exception:
                 pass
+        if len(response.text) < 400:
+            try:
+                response = try_again(session, url)
+                if len(response.text) < 400:
+                    logzilla.info(f"Content\n{response.text}\n\n")
+                soup = b4(response.text, "lxml")
+            except Exception as e:
+                logzilla.error(f"{str(e)}")
+                raise
 
         try:
             data = json.loads(
@@ -313,7 +351,8 @@ def clean_record(k):
 
 def start():
     state = CrawlStateSingleton.get_instance()
-    urlB = "https://www.radissonhotels.com"  # "https://www.radissonhotelsamericas.com" #noqa
+    urlC = "https://www.radissonhotelsamericas.com"  # noqa
+    urlB = "https://www.radissonhotels.com"
     urlA = "https://www.radissonhotels.com"
     url2 = "/zimba-api/destinations/hotels?brand="
     brandsA = state.get_misc_value(

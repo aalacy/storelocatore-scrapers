@@ -143,7 +143,7 @@ def fetchData():
             x = x + 1
             store_number = MISSING
             location_type = MISSING
-            page_url = MISSING
+            page_url = "https://www.pinkberry.pe/estatico/zonasreparto"
 
             location_name = store["location_name"]
             log.info(f"Pulling info:Location#{x}. {location_name}")
