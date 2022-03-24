@@ -12,11 +12,16 @@ def fetch_data():
     start_url = "https://www.sephora.gr/on/demandware.store/Sites-Sephora_RO-Site/el_GR/Stores-FindNearestStores?latitude={}&longitude={}&storeservices="
     domain = "sephora.gr"
 
+    hdr = {
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.83 Safari/537.36",
+        "x-dtpc": "11$516278662_404h35vRADKROPLASUEALIPEUQQWRMAECAJBKOG-0e0",
+        "x-requested-with": "XMLHttpRequest",
+    }
     all_coords = DynamicGeoSearch(
         country_codes=[SearchableCountries.GREECE], expected_search_radius_miles=20
     )
     for lat, lng in all_coords:
-        data = session.get(start_url.format(lat, lng)).json()
+        data = session.get(start_url.format(lat, lng), headers=hdr).json()
         for poi in data["locations"]:
             street_address = poi["address1"]
             if poi["address2"]:
