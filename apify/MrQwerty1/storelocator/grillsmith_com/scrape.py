@@ -1,49 +1,34 @@
-import json
-from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
-from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-
-
-def get_additional(page_url):
-    r = session.get(page_url)
-    tree = html.fromstring(r.text)
-
-    hours = tree.xpath(
-        "//h2[contains(text(), 'Hours')]/following-sibling::p[not(./a)]//text()"
-    )
-    hours = ";".join(list(filter(None, [h.strip() for h in hours])))
-    if "temporarily" in hours.lower():
-        hours = "Temporarily Closed"
-
-    lat = "".join(tree.xpath("//div[@data-gmaps-lat]/@data-gmaps-lat"))
-    lng = "".join(tree.xpath("//div[@data-gmaps-lng]/@data-gmaps-lng"))
-
-    return lat, lng, hours
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 
 def fetch_data(sgw: SgWriter):
-    api_url = "https://www.grillsmith.com/location/carrollwood/"
-
-    r = session.get(api_url)
-    tree = html.fromstring(r.text)
-    text = "".join(tree.xpath("//script[contains(text(), 'Organization')]/text()"))
-    js = json.loads(text)["subOrganization"]
+    api = "https://www.grillsmith.com/graphql"
+    r = session.post(api, headers=headers, json=json_data)
+    js = r.json()["data"]["restaurant"]["locations"]
 
     for j in js:
-        a = j.get("address")
-        street_address = a.get("streetAddress")
-        city = a.get("addressLocality")
-        state = a.get("addressRegion")
-        postal = a.get("postalCode")
+        street_address = j.get("streetAddress") or ""
+        if street_address.endswith(","):
+            street_address = street_address[:-1]
+        city = j.get("city")
+        state = j.get("state")
+        postal = j.get("postalCode")
         country_code = "US"
-        page_url = j.get("url")
+        store_number = j.get("id")
         location_name = j.get("name")
-        phone = j.get("telephone")
-        latitude, longitude, hours_of_operation = get_additional(page_url)
-        location_type = j.get("@type")
+        slug = j.get("slug") or ""
+        slug = slug.replace("grillsmith-", "")
+        page_url = f"https://www.grillsmith.com/{slug}"
+        phone = j.get("displayPhone")
+        latitude = j.get("lat")
+        longitude = j.get("lng")
+
+        hours = j.get("schemaHours") or ["Closed"]
+        hours_of_operation = ";".join(hours)
 
         row = SgRecord(
             page_url=page_url,
@@ -53,10 +38,10 @@ def fetch_data(sgw: SgWriter):
             state=state,
             zip_postal=postal,
             country_code=country_code,
-            phone=phone,
-            location_type=location_type,
             latitude=latitude,
             longitude=longitude,
+            phone=phone,
+            store_number=store_number,
             locator_domain=locator_domain,
             hours_of_operation=hours_of_operation,
         )
@@ -65,7 +50,17 @@ def fetch_data(sgw: SgWriter):
 
 
 if __name__ == "__main__":
-    session = SgRequests()
     locator_domain = "https://www.grillsmith.com/"
+    headers = {"Referer": "https://www.grillsmith.com/"}
+    json_data = {
+        "operationName": "restaurantWithLocations",
+        "variables": {
+            "restaurantId": 12002,
+        },
+        "extensions": {
+            "operationId": "PopmenuClient/94a9b149c729821816fee7d97a05ecac",
+        },
+    }
+    session = SgRequests()
     with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         fetch_data(writer)
