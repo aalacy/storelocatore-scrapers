@@ -19,7 +19,6 @@ def fetch_data():
     locs = []
     r = session.get(url, headers=headers)
     for line in r.iter_lines():
-        line = str(line.decode("utf-8"))
         if "Sitemap:" in line and "/index.xml" not in line:
             sms.append(
                 line.split("Sitemap:")[1].strip().replace("\r", "").replace("\n", "")
@@ -31,11 +30,29 @@ def fetch_data():
         logger.info(sm)
         r2 = session.get(sm, headers=headers)
         for line2 in r2.iter_lines():
-            line2 = str(line2.decode("utf-8"))
             if "/Home</loc>" in line2:
                 lurl = line2.split("<loc>")[1].split("<")[0]
                 if lurl not in locs:
                     locs.append(lurl)
+            if ".xml</loc>" in line2:
+                smurl = line2.split("<loc>")[1].split("<")[0]
+                logger.info(smurl)
+                r3 = session.get(smurl, headers=headers)
+                for line3 in r3.iter_lines():
+                    if "/Home</loc>" in line3:
+                        lurl2 = line3.split("<loc>")[1].split("<")[0]
+                        if lurl2 not in locs:
+                            locs.append(lurl2)
+                    if ".xml</loc>" in line3:
+                        sm2url = line3.split("<loc>")[1].split("<")[0]
+                        logger.info(sm2url)
+                        r4 = session.get(sm2url, headers=headers)
+                        for line4 in r4.iter_lines():
+                            if "/Home</loc>" in line4:
+                                lurl3 = line4.split("<loc>")[1].split("<")[0]
+                                if lurl3 not in locs:
+                                    logger.info(lurl3)
+                                    locs.append(lurl3)
     for loc in locs:
         logger.info(loc)
         name = ""
@@ -44,13 +61,12 @@ def fetch_data():
         add = ""
         state = ""
         zc = ""
-        phone = ""
+        phone = "<MISSING>"
         lat = ""
         lng = ""
         hours = ""
         r2 = session.get(loc, headers=headers)
         for line2 in r2.iter_lines():
-            line2 = str(line2.decode("utf-8"))
             if "<title>" in line2:
                 name = (
                     line2.split("<title>")[1]
@@ -58,6 +74,8 @@ def fetch_data():
                     .strip()
                     .replace("&#039;", "'")
                 )
+            if '<a href="tel:' in line2:
+                phone = line2.split('<a href="tel:')[1].split('"')[0]
             if '"streetAddress":"' in line2:
                 add = line2.split('"streetAddress":"')[1].split('"')[0]
                 city = line2.split('"addressLocality":"')[1].split('"')[0]

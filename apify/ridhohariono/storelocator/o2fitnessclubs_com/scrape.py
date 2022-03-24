@@ -7,20 +7,6 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgpostal import parse_address_intl
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from sgselenium import SgSelenium
-import ssl
-
-try:
-    _create_unverified_https_context = (
-        ssl._create_unverified_context
-    )  # Legacy Python that doesn't verify HTTPS certificates by default
-except AttributeError:
-    pass
-else:
-    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
 DOMAIN = "o2fitnessclubs.com"
 BASE_URL = "https://www.o2fitnessclubs.com"
@@ -69,15 +55,9 @@ def pull_content(url):
     return soup
 
 
-def handle_missing(field):
-    if field is None or (isinstance(field, str) and len(field.strip()) == 0):
-        return "<MISSING>"
-    return field
-
-
 def parse_hours(element):
     if not element:
-        return "<MISSING>"
+        return MISSING
     days = [val.text for val in element.find_all("p", text=re.compile(r"day.*"))]
     hours = [
         val.text for val in element.find_all("h5", text=re.compile(r"\d{1,2}\s+am|pm"))
@@ -98,7 +78,10 @@ def fetch_store_urls():
     for row in content:
         stores = row.find("ul").find_all("a")
         for link in stores:
-            store_urls.append(BASE_URL + link["href"])
+            if DOMAIN in link["href"]:
+                store_urls.append(link["href"])
+            else:
+                store_urls.append(BASE_URL + link["href"])
     log.info("Found {} URL ".format(len(store_urls)))
     return store_urls
 
@@ -106,35 +89,21 @@ def fetch_store_urls():
 def get_latlong(soup):
     content = soup.find("script", string=re.compile(r"center\:\s+\[(.*)\]"))
     if not content:
-        return "<MISSING>", "<MISSING>"
+        return MISSING, MISSING
     latlong = re.search(r"center\:\s+\[(.*)\]", content.string).group(1).split(",")
-    return latlong[0].strip(), latlong[1].strip()
-
-
-def wait_load(driver, number=0):
-    number += 1
-    try:
-        WebDriverWait(driver, 5).until(
-            EC.presence_of_element_located((By.CLASS_NAME, "location-description"))
-        )
-    except:
-        driver.refresh()
-        if number < 3:
-            log.info(f"Try to Refresh for ({number}) times")
-            return wait_load(driver, number)
+    return latlong[1].strip(), latlong[0].strip()
 
 
 def fetch_data():
     log.info("Fetching store_locator data")
     store_urls = fetch_store_urls()
-    driver = SgSelenium().chrome()
     for page_url in store_urls:
         page_url = page_url.replace("?hsLang=en", "")
-        driver.get(page_url)
-        wait_load(driver)
-        soup = bs(driver.page_source, "lxml")
-        comming_soon = soup.find("div", {"class": "location-description"}).find("h6")
-        if comming_soon and "COMING SOON" in comming_soon:
+        if "wilmington-mayfaire-town-center" in page_url:
+            continue
+        soup = pull_content(page_url)
+        comming_soon = soup.find("div", {"class": "location-description"})
+        if comming_soon and "coming soon" in comming_soon.text.strip().lower():
             continue
         location_name = soup.find("title").text.strip()
         raw_address = (
@@ -143,8 +112,8 @@ def fetch_data():
             .split(",")
         )
         phone = raw_address[-1]
-        del raw_address[-1]
-        street_address, city, state, zip_postal = getAddress(", ".join(raw_address))
+        raw_address = ", ".join(raw_address[:-1]).strip()
+        street_address, city, state, zip_postal = getAddress(raw_address)
         country_code = "US"
         store_number = re.search(
             r"\?store_id=(\d+)",
@@ -152,7 +121,7 @@ def fetch_data():
         ).group(1)
         hours_of_operation = parse_hours(soup.find("div", {"class": "location-hours"}))
         latitude, longitude = get_latlong(soup)
-        location_type = "<MISSING>"
+        location_type = MISSING
         log.info("Append {} => {}".format(location_name, street_address))
         yield SgRecord(
             locator_domain=DOMAIN,
@@ -181,7 +150,6 @@ def scrape():
         for rec in results:
             writer.write_row(rec)
             count = count + 1
-
     log.info(f"No of records being processed: {count}")
     log.info("Finished")
 

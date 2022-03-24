@@ -27,11 +27,18 @@ def fetch_data():
     jso = res.json()["stores"]
 
     for id, js in jso.items():
+        name = js["name"]
+        if "OUTLET" in name:
+            name = "Talbots Outlet"
+        elif "CLEARANCE" in name:
+            name = "Talbots Clearance Store"
+        else:
+            name = "Talbots"
 
         yield SgRecord(
             locator_domain="https://www.talbots.com",
             page_url="https://www.talbots.com/on/demandware.store/Sites-talbotsus-Site/default/Stores-GetNearestStores?latitude=37.090240&longitude=-95.712891&maxdistance=5000",
-            location_name=js["name"].replace("OUTLET", "").strip(),
+            location_name=name,
             street_address=js["address2"],
             city=js["city"],
             state=js["stateCode"],

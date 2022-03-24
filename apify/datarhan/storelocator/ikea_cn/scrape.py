@@ -26,6 +26,8 @@ def fetch_data():
             loc_response = session.get(page_url)
             if loc_response.url == "https://www.ikea.cn/cn/en/stores/":
                 continue
+            if loc_response.status_code != 200:
+                continue
             loc_dom = etree.HTML(loc_response.text)
             if not loc_dom:
                 continue

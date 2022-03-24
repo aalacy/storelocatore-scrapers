@@ -4,9 +4,9 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
-
 from sgrequests import SgRequests
 from sglogging import sglog
+import tenacity
 
 session = SgRequests()
 
@@ -56,12 +56,13 @@ def reqFirstAPI(url):
     return session.get(url, headers=headersAPI).json()
 
 
+@tenacity.retry(wait=tenacity.wait_fixed(5))
 def reqDetailPageAPI(url):
     return session.get(url, headers=headersPFX).json()
 
 
 def fetchData():
-    apiUrl = "https://www.planetfitness.com/gyms/pfx/api/clubs/locations"
+    apiUrl = "https://cde-assets-planetfitness.s3.amazonaws.com/locations.json"
     dpid = reqFirstAPI(apiUrl)
     d = dpid["clubs"]
     log.info(f"Total Locations: {len(d)}")

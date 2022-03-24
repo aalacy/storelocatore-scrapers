@@ -1,39 +1,12 @@
-import csv
 import datetime
 import json
-
-from concurrent import futures
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
-
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from concurrent import futures
 
 
 def get_map_from_google_url(url):
@@ -45,55 +18,47 @@ def get_map_from_google_url(url):
             latitude = url.split("@")[1].split(",")[0]
             longitude = url.split("@")[1].split(",")[1]
     except IndexError:
-        latitude, longitude = "<MISSING>", "<MISSING>"
+        latitude, longitude = SgRecord.MISSING, SgRecord.MISSING
 
     return latitude, longitude
 
 
 def get_hoo(slug):
     _tmp = []
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:88.0) Gecko/20100101 Firefox/88.0"
-    }
-    session = SgRequests()
-    for x in range(7):
-        date = datetime.date.today() + datetime.timedelta(days=x)
-        day = date.strftime("%Y-%m-%d")
-        url = f"https://www.greatwolf.com/5b27c1ed2bb0ac3618d7cc55/www.greatwolf.com/v~4b.15f/content/gw-www/php-root/{slug}/en/jcr:content/root/responsivegrid_327483370/waterpark_hours.json?date={day}&wph=true"
-        weekday = date.strftime("%A")
-        r = session.get(url, headers=headers)
-        try:
-            js = r.json()["eventList"][0]
-            start = js.get("startTime")
-            close = js.get("endTime")
-            if not start:
-                continue
-            _tmp.append(f"{weekday}: {start} - {close}")
-        except:
-            pass
+    start_date = datetime.date.today().strftime("%Y-%m-%d")
+    end_date = (datetime.date.today() + datetime.timedelta(days=6)).strftime("%Y-%m-%d")
+    url = f"{slug}?startDate={start_date}&endDate={end_date}"
 
-    return ";".join(_tmp).replace(":00 ", " ") or "<MISSING>"
+    r = session.get(url, headers=headers)
+    js = r.json()["availableDays"]
+    for j in js:
+        try:
+            date = j.get("date")
+            if not date:
+                raise IndexError
+
+            date = date.split("T")[0]
+            day = datetime.datetime.strptime(date, "%Y-%m-%d").strftime("%A")
+            j = j["hours"][0]
+            start = j.get("open")
+            end = j.get("close")
+            _tmp.append(f"{day}: {start}-{end}")
+        except IndexError:
+            continue
+
+    return ";".join(_tmp).replace(":00:00", ":00").replace(":30:00", ":30")
 
 
 def get_urls():
-    session = SgRequests()
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:88.0) Gecko/20100101 Firefox/88.0"
-    }
     r = session.get("https://www.greatwolf.com/", headers=headers)
     tree = html.fromstring(r.text)
 
     return tree.xpath("//li[contains(@class, 'open')]/a/@href")
 
 
-def get_data(url):
-    locator_domain = "https://www.greatwolf.com/"
+def get_data(url, sgw: SgWriter):
     page_url = f"https://www.greatwolf.com{url}"
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:88.0) Gecko/20100101 Firefox/88.0"
-    }
 
-    session = SgRequests()
     r = session.get(page_url, headers=headers)
     tree = html.fromstring(r.text)
     text = "".join(
@@ -110,51 +75,45 @@ def get_data(url):
     country_code = "US"
     if len(postal) > 5:
         country_code = "CA"
-    store_number = "<MISSING>"
     phone = j.get("telephone") or "<MISSING>"
     _map = j.get("hasMap") or ""
     latitude, longitude = get_map_from_google_url(_map)
-    location_type = "<MISSING>"
-    hours_of_operation = get_hoo(url.replace("/", ""))
 
-    row = [
-        locator_domain,
-        page_url,
-        location_name,
-        street_address,
-        city,
-        state,
-        postal,
-        country_code,
-        store_number,
-        phone,
-        location_type,
-        latitude,
-        longitude,
-        hours_of_operation,
-    ]
+    slug = "".join(tree.xpath("//div[@data-api-url]/@data-api-url"))
+    hours_of_operation = get_hoo(slug)
 
-    return row
+    row = SgRecord(
+        page_url=page_url,
+        location_name=location_name,
+        street_address=street_address,
+        city=city,
+        state=state,
+        zip_postal=postal,
+        country_code=country_code,
+        phone=phone,
+        latitude=latitude,
+        longitude=longitude,
+        locator_domain=locator_domain,
+        hours_of_operation=hours_of_operation,
+    )
+
+    sgw.write_row(row)
 
 
-def fetch_data():
-    out = []
+def fetch_data(sgw: SgWriter):
     urls = get_urls()
 
     with futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {executor.submit(get_data, url): url for url in urls}
+        future_to_url = {executor.submit(get_data, url, sgw): url for url in urls}
         for future in futures.as_completed(future_to_url):
-            row = future.result()
-            if row:
-                out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+            future.result()
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://www.greatwolf.com/"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:88.0) Gecko/20100101 Firefox/88.0"
+    }
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        fetch_data(writer)

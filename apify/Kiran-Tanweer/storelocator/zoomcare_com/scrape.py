@@ -4,6 +4,7 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
+import json
 
 session = SgRequests()
 website = "zoomcare_com"
@@ -21,7 +22,8 @@ def fetch_data():
     if True:
         url = "https://api-prod.zoomcare.com/v1/schedule/clinics"
         url = "https://api-prod.zoomcare.com/v1/schedule/clinics"
-        stores_req = session.get(url, headers=headers).json()
+        stores_req = session.get(url, headers=headers)
+        stores_req = json.loads(stores_req.text)
         for loc in stores_req:
             street = loc["address"]["line1"]
             street2 = loc["address"]["line2"]
@@ -38,6 +40,29 @@ def fetch_data():
             lng = loc["address"]["longitude"]
             hours = loc["clinicHoursText"]
             hours = hours.replace("| ", ",")
+            if hours.strip() == "":
+                hoo = loc["clinicHours"]
+                for hr in hoo:
+                    day = hr["dayOfWeek"]
+                    if day == 1:
+                        day = "Monday"
+                    elif day == 2:
+                        day = "Tuesday"
+                    elif day == 3:
+                        day = "Wednesday"
+                    elif day == 4:
+                        day = "Thursday"
+                    elif day == 5:
+                        day = "Friday"
+                    elif day == 6:
+                        day = "Saturday"
+                    else:
+                        day = "Sunday"
+                    start_time = str(hr["openHour"]) + ":" + str(hr["openMinute"]) + "0"
+                    end_time = str(hr["closeHour"]) + ":" + str(hr["closeMinute"]) + "0"
+                    hours = hours + " " + day + " " + start_time + " " + end_time
+            if pcode is None:
+                pcode = "<MISSING>"
 
             yield SgRecord(
                 locator_domain=DOMAIN,
@@ -74,6 +99,7 @@ def scrape():
         for rec in results:
             writer.write_row(rec)
             count = count + 1
+
     log.info(f"No of records being processed: {count}")
     log.info("Finished")
 
