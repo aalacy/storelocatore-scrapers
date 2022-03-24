@@ -85,9 +85,11 @@ def fetch_data():
                 phone = ""
                 if "phoneNumber" in store:
                     phones = store["phoneNumber"]
-                    phone = phones.get("existingCustomers") or phones.get(
+                    phone_nums = phones.get("existingCustomers") or phones.get(
                         "newCustomers"
                     )
+
+                    phone = re.split(r"\s*\/\s*", str(phone_nums))[0]
 
                 street_address = ""
                 if "street" in store["address"]:
