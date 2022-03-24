@@ -3,6 +3,14 @@ from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgpostal import parse_address, International_Parser
+
+
+def get_city(line):
+    adr = parse_address(International_Parser(), line)
+    city = adr.city or SgRecord.MISSING
+
+    return city
 
 
 def fetch_data(sgw: SgWriter):
@@ -18,6 +26,8 @@ def fetch_data(sgw: SgWriter):
             street_address = raw_address.split("Col.")[0].strip()
         else:
             city = raw_address.split(",")[1].strip()
+
+        city = get_city(city)
         state = j.get("state")
         country_code = "MX"
         location_name = j.get("store")
