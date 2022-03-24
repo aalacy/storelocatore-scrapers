@@ -24,16 +24,12 @@ def get_urls():
         "lat": "51.5072178",
         "lng": "-0.1275862",
         "site": "Natwest",
+        "pageDepth": "4",
+        "search_term": "London",
         "searchMiles": "5",
         "offSetMiles": "50",
         "maxMiles": "3000",
         "listSizeInNumbers": "999",
-        "search_term": "London",
-        "searchType": "Branches",
-        "pathValue": "/content/branchlocator/en/natwest/searchresults/jcr:content/par/searchresults/captcha",
-        ":cq:captchakey": "",
-        "img-src-includeinjs": "",
-        "search_term_encode": "London",
         "search-type": "1",
     }
 
@@ -79,6 +75,8 @@ def get_data(url, sgw: SgWriter):
     country_code = "GB"
     store_number = page_url.split("/")[-1].split("-")[0]
     phone = "".join(tree.xpath("//div[@class='print']//td[./span]/text()")).strip()
+    if "Int'l:" in phone:
+        phone = phone.split("Int'l:")[1].replace("(", "").replace(")", "").strip()
 
     text = "".join(tree.xpath("//script[contains(text(), 'locationObject')]/text()"))
     try:
