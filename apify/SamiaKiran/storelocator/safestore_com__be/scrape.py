@@ -62,14 +62,17 @@ def fetch_data():
             city = strip_accents(address["addressLocality"])
             state = MISSING
             zip_postal = address["postalCode"]
-            country_code = "NL"
+            country_code = "BE"
             soup = BeautifulSoup(r.text, "html.parser")
-            hours_of_operation = (
-                soup.find("div", {"class": "store-info__time opening-time"})
-                .get_text(separator="|", strip=True)
-                .replace("|", " ")
-                .replace("Gesloten", "Zo: Gesloten")
-            )
+            hour_list = soup.find(
+                "div", {"class": "store-info__time opening-time"}
+            ).findAll("div", {"class": "grid__item grid__item_span_3"})
+            day_list = hour_list[0].findAll("p")
+            time_list = hour_list[1].findAll("p")
+            hours_of_operation = ""
+            for day, time in zip(day_list, time_list):
+                hours_of_operation = hours_of_operation + " " + day.text + time.text
+            hours_of_operation = hours_of_operation.replace("\n", " ")
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url=page_url,

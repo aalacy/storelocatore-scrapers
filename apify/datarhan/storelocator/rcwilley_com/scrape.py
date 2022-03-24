@@ -1,3 +1,4 @@
+import json
 from lxml import etree
 from urllib.parse import urljoin
 
@@ -22,31 +23,25 @@ def fetch_data():
         loc_response = session.get(page_url)
         loc_dom = etree.HTML(loc_response.text)
 
-        location_name = loc_dom.xpath("//h1/text()")[0].strip()
-        street_address = loc_dom.xpath('//span[@itemprop="streetAddress"]/text()')[0]
-        city = loc_dom.xpath('//span[@itemprop="addressLocality"]/text()')[0]
-        state = loc_dom.xpath('//span[@itemprop="addressRegion"]/text()')[0]
-        zip_code = loc_dom.xpath('//span[@itemprop="postalCode"]/text()')[0]
-        phone = loc_dom.xpath('//a[contains(@href, "tel")]/@href')[0].split(":")[-1]
-        hoo = loc_dom.xpath('//time[@itemprop="openingHours"]//text()')
+        poi = loc_dom.xpath('//script[contains(text(), "address")]/text()')[0]
+        poi = json.loads(poi)
+        hoo = loc_dom.xpath("//time//text()")
         hoo = " ".join([e.strip() for e in hoo if e.strip()])
-        latitude = loc_dom.xpath('//meta[@itemprop="latitude"]/@content')[0]
-        longitude = loc_dom.xpath('//meta[@itemprop="longitude"]/@content')[0]
 
         item = SgRecord(
             locator_domain=domain,
             page_url=page_url,
-            location_name=location_name,
-            street_address=street_address,
-            city=city,
-            state=state,
-            zip_postal=zip_code,
-            country_code="",
+            location_name=poi["name"],
+            street_address=poi["address"]["streetAddress"],
+            city=poi["address"]["addressLocality"],
+            state=poi["address"]["addressRegion"],
+            zip_postal=poi["address"]["postalCode"],
+            country_code=poi["address"]["addressCountry"],
             store_number="",
-            phone=phone,
-            location_type="",
-            latitude=latitude,
-            longitude=longitude,
+            phone=poi["telephone"],
+            location_type=poi["@type"],
+            latitude=poi["geo"]["latitude"],
+            longitude=poi["geo"]["longitude"],
             hours_of_operation=hoo,
         )
 
