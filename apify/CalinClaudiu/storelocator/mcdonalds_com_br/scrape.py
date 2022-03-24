@@ -182,6 +182,7 @@ def scrape():
         location_name=sp.MappingField(
             mapping=["name"],
             is_required=False,
+            part_of_record_identity=True,
         ),
         latitude=sp.MappingField(
             mapping=["latitude"],
@@ -195,6 +196,7 @@ def scrape():
         ),
         street_address=sp.MappingField(
             mapping=["address"],
+            part_of_record_identity=True,
         ),
         city=sp.MappingField(mapping=["city"], is_required=False),
         state=sp.MappingField(mapping=["neighborhood"], is_required=False),
