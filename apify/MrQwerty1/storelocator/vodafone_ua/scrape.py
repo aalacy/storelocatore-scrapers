@@ -26,6 +26,7 @@ def get_data(_id, sgw: SgWriter):
     r = session.post(
         "https://www.vodafone.ua/shops", data=data, headers=headers, cookies=cookies
     )
+
     if r.status_code == 500:
         return
 
@@ -33,7 +34,6 @@ def get_data(_id, sgw: SgWriter):
     js = jso["data"]
     c = jso["city"]
     city = c.get("label")
-    page_url = c.get("url")
 
     for j in js:
         location_name = j.get("name")
@@ -66,7 +66,7 @@ def get_data(_id, sgw: SgWriter):
 def fetch_data(sgw: SgWriter):
     ids = [str(i) for i in range(1, 400)]
 
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
+    with futures.ThreadPoolExecutor(max_workers=3) as executor:
         future_to_url = {executor.submit(get_data, _id, sgw): _id for _id in ids}
         for future in futures.as_completed(future_to_url):
             future.result()
@@ -74,6 +74,7 @@ def fetch_data(sgw: SgWriter):
 
 if __name__ == "__main__":
     locator_domain = "https://www.vodafone.ua/"
+    page_url = "https://www.vodafone.ua/en/support/search-shop"
     session = SgRequests(proxy_country="ua")
 
     headers = {

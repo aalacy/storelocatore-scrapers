@@ -15,8 +15,8 @@ logger = SgLogSetup().get_logger("swarovski_com")
 
 
 def fetch_data():
-    for x in range(-70, 70):
-        for y in range(-170, 170):
+    for x in range(-170, 170):
+        for y in range(-70, 70):
             logger.info(str(x) + "-" + str(y))
             url = (
                 "https://www.swarovski.com/en-AA/store-finder/list/?allBaseStores=true&geoPoint.latitude="
@@ -34,7 +34,12 @@ def fetch_data():
                     loc = "https://www.swarovski.com" + item["url"]
                     lat = item["geoPoint"]["latitude"]
                     lng = item["geoPoint"]["longitude"]
-                    add = item["address"]["line1"]
+                    add = ""
+                    if item["address"]["line1"] is not None:
+                        add = item["address"]["line1"]
+                    if item["address"]["line2"] is not None:
+                        add = add + " " + item["address"]["line2"]
+                    add = add.strip()
                     city = item["address"]["town"]
                     state = "<MISSING>"
                     zc = item["address"]["postalCode"]
@@ -55,6 +60,8 @@ def fetch_data():
                             hours = hours + "; " + hrs
                     if len(phone) < 6:
                         phone = "<MISSING>"
+                    if len(zc) < 2:
+                        zc = "<MISSING>"
                     yield SgRecord(
                         locator_domain=website,
                         page_url=loc,

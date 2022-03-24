@@ -149,7 +149,10 @@ def fetch_data():
             f"branch/{url}",
         )
         logger.info(page_url)
-        get_url1(driver, page_url)
+        try:
+            get_url1(driver, page_url)
+        except:
+            continue
 
         sp1 = bs(driver.page_source, "lxml")
         if sp1.select(".grid-container-desktop"):

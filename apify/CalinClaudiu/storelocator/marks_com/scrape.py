@@ -12,11 +12,12 @@ def fetch_data():
 
     search = DynamicGeoSearch(
         country_codes=[SearchableCountries.CANADA, SearchableCountries.USA],
-        expected_search_radius_miles=1,
+        expected_search_radius_miles=15,
+        max_search_results=0,
     )
     with SgRequests(dont_retry_status_codes=set([424])) as session:
         for zipcode in search:
-            url = f"https://api.marks.com/hy/v1/marks/storelocators/near?code=&productIds=&count=60&location={zipcode[0]},{zipcode[1]}"
+            url = f"https://api.marks.com/hy/v1/marks/storelocators/near?code=&productIds=&count=60&location={zipcode[0]},{zipcode[1]}"  # noqa
             try:
                 son = SgRequests.raise_on_err(session.get(url, headers=headers)).json()
             except Exception as e:

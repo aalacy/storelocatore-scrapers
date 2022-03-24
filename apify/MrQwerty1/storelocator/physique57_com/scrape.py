@@ -86,7 +86,8 @@ def get_data(slug, sgw: SgWriter):
 
     location_name = j.get("name")
     a = j.get("address")
-    street_address = a.get("streetAddress")
+    street_address = a.get("streetAddress") or ""
+    street_address = street_address.replace("- Dubai", "").strip()
     city = a.get("addressLocality")
     state = a.get("addressRegion")
     postal = a.get("postalCode")

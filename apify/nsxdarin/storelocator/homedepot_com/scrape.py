@@ -44,7 +44,7 @@ def fetch_data():
     for loc in locs:
         Found = True
         rcount = 0
-        while Found and rcount <= 10:
+        while Found and rcount <= 3:
             try:
                 rcount = rcount + 1
                 time.sleep(3)
