@@ -60,7 +60,7 @@ def fetch_data():
             address = r.text.split('"address":')[1].split("},", 1)[0] + "}"
             address = json.loads(address)
             street_address = strip_accents(address["streetAddress"])
-            city = strip_accents(address["addressLocality"])
+            city = strip_accents(address["addressLocality"]).replace("'s-", "")
             state = MISSING
             zip_postal = address["postalCode"]
             country_code = "NL"
