@@ -53,6 +53,10 @@ def fetch_data():
         zip_postal = (
             MISSING if "postal_code" not in addr else addr["postal_code"].strip()
         )
+        if "PR-693" in street_address:
+            zip_postal = "00646"
+        if "The Outlets at Montehiedra" in location_name:
+            zip_postal = "00926"
         country_code = addr["country_short"]
         phone = row["telephone"]
         hours_of_operation = MISSING
