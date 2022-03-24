@@ -22,6 +22,8 @@ def fetch_data(sgw: SgWriter):
         store_number = j.get("id")
         location_name = j.get("title") or ""
         location_name = location_name.replace("&#8217;", "'")
+        if "Test" in location_name:
+            continue
         page_url = j["url"]["path"]
         phone = j.get("phone")
 
