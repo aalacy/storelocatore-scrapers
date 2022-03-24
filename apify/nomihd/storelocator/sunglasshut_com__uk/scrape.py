@@ -44,7 +44,9 @@ def fetch_data():
             stores = json.loads(stores_req.text)["locationDetails"]
             for store in stores:
                 if store["countryCode"] == "GB":
-                    page_url = "<MISSING>"
+                    page_url = (
+                        "https://www.sunglasshut.com/uk/sunglasses/store-locations"
+                    )
                     locator_domain = website
                     location_name = store["displayAddress"]
                     street_address = store["address"]
