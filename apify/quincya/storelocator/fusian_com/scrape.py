@@ -67,11 +67,13 @@ def fetch_data(sgw: SgWriter):
             state = store_data["addressLine2"].split(",")[1].strip()
             zip_code = store_data["addressLine2"].split(",")[2].strip()
 
-            phone = "<MISSING>"
-            if "Phone" in base.find_all(class_="sqs-block-content")[3].text:
-                phone = list(
-                    base.find_all(class_="sqs-block-content")[3].stripped_strings
-                )[-1]
+            phone = ""
+            for num in range(5):
+                if "Phone" in base.find_all(class_="sqs-block-content")[num].text:
+                    phone = list(
+                        base.find_all(class_="sqs-block-content")[num].stripped_strings
+                    )[-1]
+                    break
 
             latitude = store_data["mapLat"]
             longitude = store_data["mapLng"]

@@ -30,7 +30,7 @@ params = (("wpml_lang", ""),)
 
 def fetch_data():
     # Your scraper here
-    search_url = "https://www.sushihub.com.au/find-a-hub.html"
+    search_url = "https://www.sushihub.com.au/find-a-hub/"
     api_url = "https://www.sushihub.com.au/wp-content/plugins/superstorefinder-wp/ssf-wp-xml.php"
 
     with SgRequests() as session:
@@ -50,7 +50,14 @@ def fetch_data():
 
             page_url = search_url
 
-            location_name = "".join(store.xpath("./location//text()")).strip()
+            location_name = (
+                "".join(store.xpath("./location//text()"))
+                .strip()
+                .replace("&#44;", ",")
+                .strip()
+                .replace("&#39;", "'")
+                .strip()
+            )
             location_type = "<MISSING>"
 
             store_info = list(
@@ -59,7 +66,16 @@ def fetch_data():
                     [x.strip() for x in store.xpath("./address//text()")],
                 )
             )
-            raw_address = ", ".join(store_info).strip().replace("&#44;", ",").strip()
+            raw_address = (
+                ", ".join(store_info)
+                .strip()
+                .replace("&#44;", ",")
+                .strip()
+                .replace("&#39;", "'")
+                .strip()
+                .replace("&amp;", "&")
+                .strip()
+            )
 
             formatted_addr = parser.parse_address_intl(raw_address)
             street_address = formatted_addr.street_address_1
@@ -69,6 +85,12 @@ def fetch_data():
             if street_address is not None:
                 street_address = street_address.replace("Ste", "Suite")
 
+            if street_address:
+                if (
+                    street_address.split(",")[-1].strip().split(" ")[0].strip().lower()
+                    == "shop"
+                ):
+                    street_address = ", ".join(street_address.split(",")[:-1]).strip()
             city = formatted_addr.city
 
             state = formatted_addr.state
