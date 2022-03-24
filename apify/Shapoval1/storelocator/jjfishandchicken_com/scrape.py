@@ -47,7 +47,9 @@ def fetch_data(sgw: SgWriter):
     }
     r = session.get(api_url, headers=headers)
     tree = html.fromstring(r.text)
-    div = tree.xpath('//a[contains(text(), "More Info")]')
+    div = tree.xpath(
+        '//ul[@id="top-menu"]//a[text()="Locations"]/following-sibling::ul/li/a'
+    )
     for d in div:
         page_url = "".join(d.xpath(".//@href"))
         if page_url.find("http") == -1:
@@ -92,25 +94,18 @@ def fetch_data(sgw: SgWriter):
                 '//div[@class="et_pb_team_member_description"]//a[contains(@href, "tel")]/text()'
             )
         )
-        hours_of_operation = "<MISSING>"
-        if page_url == "https://www.jjfishandchicken.com/antioch-ca-restaurant/":
-            hours_of_operation = "".join(
+        hours_of_operation = (
+            " ".join(
                 tree.xpath(
-                    '//div[@class="et_pb_team_member_description"]/h4/following-sibling::div[1]/p/span[1]/span/text()'
+                    '//span[contains(text(), "Mon")]/text() | //p[.//a]/following-sibling::h5//text()'
                 )
             )
-        if page_url == "https://www.jjfishandchicken.com/stockton-2/":
-            hours_of_operation = (
-                " ".join(
-                    tree.xpath(
-                        '//div[@class="et_pb_team_member_description"]//h5/text()'
-                    )
-                )
-                .replace("\n", "")
-                .replace("Open", "")
-                .replace("(7 days)", "")
-                .strip()
-            )
+            .replace("(7 days)", "")
+            .replace("Open", "")
+            .replace("\n", "")
+            .strip()
+        )
+        hours_of_operation = " ".join(hours_of_operation.split())
 
         row = SgRecord(
             locator_domain=locator_domain,

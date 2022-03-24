@@ -6,22 +6,35 @@ import us
 
 
 def get_data():
+    country_list = [
+        "USA",
+        "kuwait",
+        "korea",
+        "singapore",
+        "malaysia",
+        "indonesia",
+        "georgia",
+        "japan",
+        "brunei",
+        "philippines",
+    ]
     session = SgRequests()
 
     base_url = "https://www.coffeebean.com/store-locator"
 
     # Country search
     locs = []
-    for x in range(101):
-        params = {"field_country_value": "USA", "page": x}
-        r = session.get(base_url, params=params).text
-        soup = bs(r, "html.parser")
-        view_store = soup.find_all("a", attrs={"class": "view-store"})
-        for item in view_store:
-            locs.append(item["href"])
+    for search_country in country_list:
+        for x in range(101):
+            params = {"field_country_value": search_country, "page": x}
+            r = session.get(base_url, params=params).text
+            soup = bs(r, "html.parser")
+            view_store = soup.find_all("a", attrs={"class": "view-store"})
+            for item in view_store:
+                locs.append(item["href"])
 
     # Lat Lng Boundary search
-    base_url = "https://www.coffeebean.com/store-locator?field_geo_location_boundary%5Blat_north_east%5D=47.56&field_geo_location_boundary%5Blng_north_east%5D=69.44&field_geo_location_boundary%5Blat_south_west%5D=16.11&field_geo_location_boundary%5Blng_south_west%5D=-178.85"
+    base_url = "https://www.coffeebean.com/store-locator?field_geo_location_boundary%5Blat_north_east%5D=89.99&field_geo_location_boundary%5Blng_north_east%5D=179.99&field_geo_location_boundary%5Blat_south_west%5D=-89.99&field_geo_location_boundary%5Blng_south_west%5D=-179.99"
     for x in range(101):
         params = {"page": x}
 
@@ -60,11 +73,13 @@ def get_data():
                     "span", attrs={"itemprop": "addressRegion"}
                 ).text.strip()
             except Exception:
-                continue
+                state = "<MISSING>"
         if us.states.lookup(state):
             country_code = "USA"
         else:
-            continue
+            country_code = page_url.replace(
+                "https://www.coffeebean.com/store/", ""
+            ).split("/")[0]
 
         try:
             location_name = soup.find("h1", attrs={"class": "Hero-title"}).text.strip()
@@ -79,19 +94,32 @@ def get_data():
         try:
             latitude = soup.find("meta", attrs={"itemprop": "latitude"})["content"]
         except Exception:
-            latitude = soup.find("meta", attrs={"property": "latitude"})["content"]
+            try:
+                latitude = soup.find("meta", attrs={"property": "latitude"})["content"]
+            except Exception:
+                latitude = "<MISSING>"
 
         try:
             longitude = soup.find("meta", attrs={"itemprop": "longitude"})["content"]
         except Exception:
-            longitude = soup.find("meta", attrs={"property": "longitude"})["content"]
+            try:
+                longitude = soup.find("meta", attrs={"property": "longitude"})[
+                    "content"
+                ]
+            except Exception:
+                longitude = "<MISSING>"
 
         try:
             city = soup.find(
                 "span", attrs={"class": "Address-field Address-city"}
             ).text.strip()
         except Exception:
-            city = soup.find("span", attrs={"property": "addressLocality"}).text.strip()
+            try:
+                city = soup.find(
+                    "span", attrs={"property": "addressLocality"}
+                ).text.strip()
+            except Exception:
+                city = "<MISSING>"
         store_number = "<MISSING>"
         try:
             address = soup.find(
@@ -108,7 +136,12 @@ def get_data():
         try:
             state = soup.find("span", attrs={"property": "addressRegion"}).text.strip()
         except Exception:
-            state = soup.find("span", attrs={"itemprop": "addressRegion"}).text.strip()
+            try:
+                state = soup.find(
+                    "span", attrs={"itemprop": "addressRegion"}
+                ).text.strip()
+            except Exception:
+                state = "<MISSING>"
 
         try:
             zipp = soup.find("span", attrs={"property": "postalCode"}).text.strip()
@@ -123,7 +156,7 @@ def get_data():
             if phone == "NULL":
                 phone = "<MISSING>"
         except Exception:
-            phone = "MISSING>"
+            phone = "<MISSING>"
 
         location_type = "<MISSING>"
 
@@ -140,6 +173,26 @@ def get_data():
 
             hours = hours + day + " " + hour + ", "
         hours = hours[:-2]
+
+        if "temporarily closed" in r.lower():
+            location_type = "Temporarily Closed"
+
+        elif "coming soon" in r.lower():
+            location_type = "Coming Soon"
+
+        if "https" in country_code:
+            country_code = soup.find(
+                "span", attrs={"property": "addressCountry"}
+            ).text.strip()
+
+        address = address.encode("ascii", errors="ignore").decode().replace("    ", " ")
+
+        if (
+            city == "<MISSING>"
+            and address != "<MISSING>"
+            and len(address.split(", ")) > 2
+        ):
+            city = address.split(", ")[-2]
 
         yield {
             "locator_domain": locator_domain,

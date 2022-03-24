@@ -8,7 +8,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-from sgrequests import SgRequests
+from sgrequests import SgRequests, SgRequestError
 from sgpostal.sgpostal import parse_address_intl
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from tenacity import Retrying, stop_after_attempt
@@ -57,36 +57,38 @@ def fetch_page(page, session):
         "region": "global",
         "page": page,
     }
-    response = session.get(url, headers=headers, params=params)
+    logger.info(f"{url} page={page}")
     try:
+        response = SgRequests.raise_on_err(
+            session.get(url, headers=headers, params=params)
+        )
         data = response.json()["stores"]
         stores = data.items() if isinstance(data, dict) else data
         return stores
-    except Exception as e:
-        logger.error(f"failure to fetch {response.url} >>> {e}")
+    except SgRequestError as e:
+        logger.error(f"failure to fetch data >>> {e.status_code}")
         return []
 
 
 def fetch_locations(tracker, session, locations=[], page=0):
     stores = fetch_page(page, session)
     for id, store in stores:
-        if id in tracker or store["country"].upper() not in ["US", "CA", "CANADA"]:
-            continue
-        if store["address"] + store["city"] in tracker:
+        if id in tracker:
             continue
         tracker.append(id)
-        tracker.append(store["address"] + store["city"])
         locations.append(store)
-    try:
-        return fetch_locations(tracker, session, locations, page + 1)
-    except:
+    if len(stores) == 0:
+        logger.info(f"last page was {page}")
         return locations
+    else:
+        return fetch_locations(tracker, session, locations, page + 1)
 
 
 retryer = Retrying(stop=stop_after_attempt(3), reraise=True)
 
 
-def fetch_details(store, retry=False):
+def fetch_details(tup, retry=False):
+    store, session = tup
     locator_domain = "https://www.circlek.com"
     location_name = ""
     street_address = ""
@@ -94,153 +96,166 @@ def fetch_details(store, retry=False):
     state = ""
     zipp = ""
     country_code = ""
-    store_number = ""
+    store_number = store["cost_center"]
     phone = ""
     location_type = ""
     latitude = ""
     longitude = ""
     hours_of_operation = ""
     page_url = "https://www.circlek.com" + store["url"]
-
-    with get_session(retry) as session:
-        store_req = session.get(
-            page_url,
-            headers=headers,
-        )
-
-    if store_req.status_code not in (500, 404, 200):
-        return retryer(fetch_details, store, True)
-
-    store_sel = lxml.html.fromstring(store_req.text)
-    json_list = store_sel.xpath('//script[@type="application/ld+json"]/text()')
-    for js in json_list:
-        if "LocalBusiness" in js:
-            try:
-                store_json = json.loads(js)
-            except:
-                return retryer(fetch_details, store, True)
-            location_name = (
-                store_json.get("description").split(",")[0]
-                or store.get("display_brand")
-                or store.get("store_brand")
-                or store.get("name")
-                or "<MISSING>"
-            )
-            location_name = (
-                location_name.replace("&#039;", "'").replace("amp;", "").strip()
+    if (
+        store["country"].upper() in ["US", "CA", "CANADA"]
+        and store["op_status"] != "Planned"
+    ):
+        logger.info(page_url)
+        try:
+            store_req = SgRequests.raise_on_err(
+                session.get(
+                    page_url,
+                    headers=headers,
+                )
             )
 
-            if location_name == "Circle K at":
-                location_name = "Circle K"
+            if store_req.status_code not in (500, 404, 200):
+                logger.info(f"Respone invalid {store_req.status_code} - of {page_url}")
+                return retryer(fetch_details, (store, get_session(1)), True)
 
-            try:
-                location_type = ""
-                raw_types = store_json["hasOfferCatalog"]["itemListElement"]
-                for raw_type in raw_types:
-                    if location_type:
-                        location_type = (
-                            location_type + ", " + raw_type["itemOffered"]["name"]
-                        )
-                    else:
-                        location_type = raw_type["itemOffered"]["name"]
+            if '"streetAddress":' not in store_req.text:
+                logger.info(f"Respone invalid {store_req.status_code} - of {page_url}")
+                return retryer(fetch_details, (store, get_session(1)), True)
 
-                if not location_type:
-                    location_type = "<MISSING>"
-            except:
-                location_type = "<MISSING>"
+            store_sel = lxml.html.fromstring(store_req.text)
+            json_list = store_sel.xpath('//script[@type="application/ld+json"]/text()')
+            for js in json_list:
+                if "address" in js:
+                    try:
+                        store_json = json.loads(js)
+                    except:
+                        continue
 
-            phone = store_json["telephone"]
-            street_address = (
-                store_json["address"]["streetAddress"]
-                .replace("  ", " ")
-                .replace("&#039;", "'")
-                .replace("&amp;", "&")
-                .strip()
-            )
-            if street_address[-1:] == ",":
-                street_address = street_address[:-1]
-            city = (
-                store_json["address"]["addressLocality"].replace("&#039;", "'").strip()
-            )
+                    location_name = (
+                        store_json.get("description").split(",")[0]
+                        or store.get("display_brand")
+                        or store.get("store_brand")
+                        or store.get("name")
+                        or "<MISSING>"
+                    )
+                    location_name = (
+                        location_name.replace("&#039;", "'").replace("amp;", "").strip()
+                    )
 
-            state = ""
-            zipp = store_json["address"]["postalCode"].strip()
+                    if location_name == "Circle K at":
+                        location_name = "Circle K"
+
+                    try:
+                        location_type = ""
+                        raw_types = store_json["hasOfferCatalog"]["itemListElement"]
+                        for raw_type in raw_types:
+                            if location_type:
+                                location_type = (
+                                    location_type
+                                    + ", "
+                                    + raw_type["itemOffered"]["name"]
+                                )
+                            else:
+                                location_type = raw_type["itemOffered"]["name"]
+
+                        if not location_type:
+                            location_type = "<MISSING>"
+                    except:
+                        location_type = "<MISSING>"
+
+                    phone = store_json["telephone"]
+                    street_address = (
+                        store_json["address"]["streetAddress"]
+                        .replace("  ", " ")
+                        .replace("&#039;", "'")
+                        .replace("&amp;", "&")
+                        .strip()
+                    )
+                    if street_address[-1:] == ",":
+                        street_address = street_address[:-1]
+                    city = (
+                        store_json["address"]["addressLocality"]
+                        .replace("&#039;", "'")
+                        .strip()
+                    )
+
+                    state = ""
+                    zipp = store_json["address"]["postalCode"].strip()
+                    country_code = store["country"]
+                    latitude = store_json["geo"]["latitude"].replace(",", ".")
+                    longitude = store_json["geo"]["longitude"].replace(",", ".")
+                    store_number = store["cost_center"]
+                    raw_address = (
+                        "".join(store_sel.xpath('//h1[@class="heading-big"]//text()'))
+                        .strip()
+                        .replace("Circle K,", "")
+                        .strip()
+                        + ","
+                        + "".join(
+                            store_sel.xpath('//h2[@class="heading-small"]//text()')
+                        ).strip()
+                    )
+                    formatted_addr = parse_address_intl(raw_address)
+                    state = formatted_addr.state
+                    if state:
+                        state = state.replace("Mills", "").replace("Est", "").strip()
+                    if country_code.lower()[:2] == "ca" and state == "CA":
+                        state = ""
+                    if state == "ON":
+                        country_code = "Canada"
+
+                    hours = store_sel.xpath(
+                        '//div[@class="columns large-12 middle hours-wrapper"]/div[contains(@class,"hours-item")]'
+                    )
+                    hours_list = []
+                    for hour in hours:
+                        day = "".join(hour.xpath("span[1]/text()")).strip()
+                        time = "".join(hour.xpath("span[2]/text()")).strip()
+                        hours_list.append(day + ":" + time)
+
+                    hours_of_operation = "; ".join(hours_list).strip()
+                    break
+
+        except SgRequestError as e:
+            logger.error(f"failure >>> {e.status_code}")
+
+        if len(location_name) <= 0:
+            street_address = store["address"]
+            location_name = "Circle K at " + street_address
+            city = store["city"]
             country_code = store["country"]
-            latitude = store_json["geo"]["latitude"].replace(",", ".")
-            longitude = store_json["geo"]["longitude"].replace(",", ".")
-            store_number = store["cost_center"]
-            raw_address = store_json["name"]
-            formatted_addr = parse_address_intl(raw_address)
-            state = formatted_addr.state
-            if state:
-                state = state.replace("Mills", "").replace("Est", "").strip()
-            if country_code.lower()[:2] == "ca" and state == "CA":
-                state = ""
-            if state == "ON":
-                country_code = "Canada"
-            hours = store_sel.xpath(
-                '//div[@class="columns large-12 middle hours-wrapper"]/div[contains(@class,"hours-item")]'
-            )
-            hours_list = []
-            for hour in hours:
-                day = "".join(hour.xpath("span[1]/text()")).strip()
-                time = "".join(hour.xpath("span[2]/text()")).strip()
-                hours_list.append(day + ":" + time)
 
-            hours_of_operation = "; ".join(hours_list).strip()
-            if street_address == "" or street_address is None:
-                street_address = "<MISSING>"
+            latitude = store["latitude"]
+            longitude = store["longitude"]
 
-            if city == "" or city is None:
-                city = "<MISSING>"
-
-            if state == "" or state is None:
-                state = "<MISSING>"
-
-            if zipp == "" or zipp is None:
-                zipp = "<MISSING>"
-
-            if latitude == "" or latitude is None:
-                latitude = "<MISSING>"
-            if longitude == "" or longitude is None:
-                longitude = "<MISSING>"
-
-            if hours_of_operation == "":
-                hours_of_operation = "<MISSING>"
-
-            if phone == "" or phone is None:
-                phone = "<MISSING>"
-
-            if (
-                street_address == "<MISSING>"
-                and city == "<MISSING>"
-                and state == "<MISSING>"
-            ):
-                return retryer(fetch_details, store, True)
-
-            return [
-                locator_domain,
-                location_name,
-                street_address,
-                city,
-                state,
-                zipp,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-                page_url,
-            ]
+        return [
+            locator_domain,
+            location_name.replace("Visit your local", "").strip(),
+            street_address,
+            city,
+            state,
+            zipp,
+            country_code,
+            store_number,
+            phone,
+            location_type,
+            latitude,
+            longitude,
+            hours_of_operation,
+            page_url,
+        ]
 
 
 def fetch_data(sgw: SgWriter):
     with ThreadPoolExecutor() as executor, SgRequests() as session:
         tracker: List[str] = []
         locations = fetch_locations(tracker, session)
-        futures = [executor.submit(fetch_details, location) for location in locations]
+        futures = [
+            executor.submit(fetch_details, (location, session))
+            for location in locations
+        ]
         for future in as_completed(futures):
             poi = future.result()
 

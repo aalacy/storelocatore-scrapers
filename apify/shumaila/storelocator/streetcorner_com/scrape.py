@@ -1,8 +1,10 @@
 from bs4 import BeautifulSoup
-import csv
 import re
 from sgrequests import SgRequests
-
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
 headers = {
@@ -10,59 +12,30 @@ headers = {
 }
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
 def fetch_data():
 
-    data = []
-    p = 0
     url = "https://www.streetcorner.com/consumer/"
     page = session.get(url, headers=headers)
     cleanr = re.compile("<.*?>")
-    loclist = page.text.split('<a href="https://www.streetcorner.com/store/')
+    loclist = page.text.split('<a href="https://www.streetcorner.com/store/')[1:]
+    latlnglist = page.text.split("var myLatLng = {")[1:]
+    for i in range(0, len(loclist)):
+        loc = loclist[i]
+        link = "https://www.streetcorner.com/store/" + loc.split('"', 1)[0]
 
-    for loc in loclist:
-        if loc.find("!DOCTYPE html>") == -1:
-            link = "https://www.streetcorner.com/store/" + loc.split('"', 1)[0]
-
-            try:
-                page = session.get(link, headers=headers)
-            except:
-                continue
-            try:
-                coord = str(page.text).split("center: {lat:")[2]
-            except:
-                continue
+        try:
+            page = session.get(link, headers=headers)
+        except:
+            continue
+        try:
+            coord = str(page.text).split("center: {lat:")[2]
             lat, longt = coord.split("}", 1)[0].split(", lng: ")
-            soup1 = BeautifulSoup(page.text, "html.parser")
+        except:
+
+            lat = latlnglist[i].split("lat: ", 1)[1].split(",", 1)[0]
+            longt = latlnglist[i].split("lng: ", 1)[1].split("}", 1)[0]
+        soup1 = BeautifulSoup(page.text, "html.parser")
+        try:
             title = soup1.find("span", {"itemprop": "name"}).text
             try:
                 street = soup1.find("span", {"itemprop": "streetAddress"}).text
@@ -92,49 +65,55 @@ def fetch_data():
             except:
 
                 hours = "<MISSING>"
-            if len(phone) < 3:
-                phone = "<MISSING>"
-            if len(street) < 2:
-                street = "<MISSING>"
-            if len(pcode) < 2:
-                pcode = "<MISSING>"
-            else:
-                if len(pcode) == 4:
-                    pcode = "0" + pcode
-            ltype = "Store"
-            hours = hours.encode("ascii", "ignore").decode("ascii")
-            if "mall" in title.lower() or "plaza" in title.lower():
-                ltype = "Mall"
-            elif "gas" in title.lower() or "fuel" in title.lower():
-                ltype = "Gas Station"
-            if title.find("Coming Soon") == -1:
-                data.append(
-                    [
-                        "https://www.streetcorner.com/",
-                        link,
-                        title,
-                        street,
-                        city,
-                        state,
-                        pcode,
-                        "US",
-                        "<MISSING>",
-                        phone,
-                        ltype,
-                        lat.strip(),
-                        longt,
-                        hours.replace("am", "am-"),
-                    ]
-                )
+        except:
+            content = latlnglist[i].split("content: '", 1)[1].split("'", 1)[0]
+            content = BeautifulSoup(content, "html.parser")
+            content = re.sub(cleanr, "\n", str(content)).strip().splitlines()
+            street = content[2]
+            title = content[0]
+            city, state = content[3].split(", ", 1)
+            state, pcode = state.split(" ", 1)
+            hours = "<MISSING>"
+            phone = "<MISSING>"
+        if len(phone) < 3:
+            phone = "<MISSING>"
+        if len(street) < 2:
+            street = "<MISSING>"
+        if len(pcode) < 2:
+            pcode = "<MISSING>"
+        else:
+            if len(pcode) == 4:
+                pcode = "0" + pcode
+        hours = hours.encode("ascii", "ignore").decode("ascii")
+        if title.find("Coming Soon") == -1:
 
-                p += 1
-    return data
+            yield SgRecord(
+                locator_domain="https://www.streetcorner.com/",
+                page_url=link,
+                location_name=title,
+                street_address=street.strip(),
+                city=city.strip(),
+                state=state.strip(),
+                zip_postal=pcode.strip(),
+                country_code="US",
+                store_number=SgRecord.MISSING,
+                phone=phone.strip(),
+                location_type=SgRecord.MISSING,
+                latitude=str(lat),
+                longitude=str(longt),
+                hours_of_operation=hours.replace("am", "am-"),
+            )
 
 
 def scrape():
-    data = fetch_data()
 
-    write_output(data)
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()

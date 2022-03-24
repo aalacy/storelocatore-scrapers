@@ -5,7 +5,7 @@ from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 DOMAIN = "nicoletbank.com"
 BASE_URL = "https://nicoletbank.com"
@@ -17,18 +17,13 @@ HEADERS = {
 log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
 
 session = SgRequests()
+MISSING = "<MISSING>"
 
 
 def pull_content(url):
     log.info("Pull content => " + url)
     soup = bs(session.get(url, headers=HEADERS).content, "lxml")
     return soup
-
-
-def handle_missing(field):
-    if field is None or (isinstance(field, str) and len(field.strip()) == 0):
-        return "<MISSING>"
-    return field
 
 
 def is_multiple(location_name, locations):
@@ -57,27 +52,23 @@ def fetch_data():
         soup.find("div", {"class": "locator-branches"})
         .find("div", {"class": "branches"})
         .find("div", {"class": "branch-scroll"})
-        .find_all("div", {"class": "branch clearfix"})
+        .find_all("div", {"class": "branch"})
     )
     for row in content:
         page_url = BASE_URL + row.find("a", {"class": "branch-ico"})["href"]
         location_name = row["data-asodata1"].strip()
-        street_address = handle_missing(row["data-asodata2"]).strip()
+        street_address = row["data-asodata2"].strip()
         city_state = row["data-asodata3"].split(",")
-        city = handle_missing(city_state[0])
-        state = (
-            handle_missing(re.sub(r"\d+", "", city_state[1])).replace("-", "").strip()
-        )
-        zip_postal = handle_missing(
-            re.sub(r"\D+", "", city_state[1].split("-")[0])
-        ).strip()
+        city = city_state[0]
+        state = re.sub(r"\d+", "", city_state[1]).replace("-", "").strip()
+        zip_postal = re.sub(r"\D+", "", city_state[1].split("-")[0]).strip()
         country_code = "US"
-        store_number = "<MISSING>"
+        store_number = MISSING
         phone = row["data-info-address"].split("<br />")[1].strip()
         hours_of_operation = get_hoo(page_url)
         location_type = "BRANCH_ATM"
-        latitude = handle_missing(row["data-latitude"])
-        longitude = handle_missing(row["data-longitude"])
+        latitude = row["data-latitude"]
+        longitude = row["data-longitude"]
         log.info("Append {} => {}".format(location_name, street_address))
         yield SgRecord(
             locator_domain=DOMAIN,
@@ -100,15 +91,7 @@ def fetch_data():
 def scrape():
     log.info("start {} Scraper".format(DOMAIN))
     count = 0
-    with SgWriter(
-        SgRecordDeduper(
-            SgRecordID(
-                {
-                    SgRecord.Headers.PAGE_URL,
-                }
-            )
-        )
-    ) as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

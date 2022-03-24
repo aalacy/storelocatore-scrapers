@@ -6,7 +6,7 @@ from sglogging import SgLogSetup
 import re
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.sgpostal import parse_address_intl
+from sgpostal.sgpostal import parse_address_intl
 
 logger = SgLogSetup().get_logger("cleanslatecenters")
 
@@ -58,10 +58,12 @@ def fetch_data():
                     hours = list(_hr.find_next_sibling("p").stripped_strings)
                 elif _hr.find_next_sibling("div") and _hr.find_next_sibling("div").p:
                     hours = list(_hr.find_next_sibling("div").p.stripped_strings)
-            if not hours:
-                import pdb
 
-                pdb.set_trace()
+            else:
+                _hr = sp1.find("strong", string=re.compile(r"HOURS OF OPERATION"))
+                if _hr:
+                    hours = list(_hr.find_parent().find_next_sibling().stripped_strings)
+
             try:
                 coord = (
                     sp1.iframe["data-src"]
@@ -84,7 +86,7 @@ def fetch_data():
                 locator_domain=locator_domain,
                 latitude=coord[1],
                 longitude=coord[0],
-                hours_of_operation="; ".join(_h(hours)),
+                hours_of_operation="; ".join(_h(hours)).replace("\xa0", ""),
                 raw_address=" ".join(raw_address),
             )
 

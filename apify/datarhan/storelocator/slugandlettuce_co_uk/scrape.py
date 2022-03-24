@@ -1,49 +1,19 @@
 import re
-import csv
+import demjson
 from lxml import etree
 from urllib.parse import urljoin
 
 from sgrequests import SgRequests
-from sgscrape.sgpostal import parse_address_intl
-
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+from sgpostal.sgpostal import parse_address_intl
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
-    # Your scraper here
     session = SgRequests()
-
-    items = []
-
-    DOMAIN = "slugandlettuce.co.uk"
+    domain = "slugandlettuce.co.uk"
     start_url = "https://www.slugandlettuce.co.uk/find-a-bar"
 
     response = session.get(start_url)
@@ -65,52 +35,56 @@ def fetch_data():
         addr = parse_address_intl(" ".join(address_raw))
         street_address = address_raw[0]
         city = addr.city
-        city = city if city else "<MISSING>"
         state = addr.state
-        state = state if state else "<MISSING>"
         zip_code = addr.postcode
-        zip_code = zip_code if zip_code else "<MISSING>"
         country_code = addr.country
-        country_code = country_code if country_code else "<MISSING>"
-        store_number = "<MISSING>"
         phone = loc_dom.xpath('//a[contains(@href, "tel")]/text()')
-        phone = phone[0] if phone else "<MISSING>"
-        location_type = "<MISSING>"
+        phone = phone[0] if phone else ""
         latitude = re.findall(r"lat: (.+?),", loc_response.text)
-        latitude = latitude[0] if latitude else "<MISSING>"
+        latitude = latitude[0] if latitude else ""
         longitude = re.findall(r"lng: (.+?) }", loc_response.text)
-        longitude = longitude[-1].strip() if longitude else "<MISSING>"
+        longitude = longitude[-1].strip() if longitude else ""
         hoo = loc_dom.xpath(
             '//h2[contains(text(), "Opening Times")]/following-sibling::div//text()'
         )
         hoo = [elem.strip() for elem in hoo if elem.strip()]
-        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
+        hours_of_operation = " ".join(hoo) if hoo else ""
 
-        item = [
-            DOMAIN,
-            store_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip_code,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
+        loc_response = session.get(store_url + "/contact")
+        geo = re.findall(r"(\{ lng: .+? \})", loc_response.text)[0]
+        geo = demjson.decode(geo)
 
-        items.append(item)
+        item = SgRecord(
+            locator_domain=domain,
+            page_url=store_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zip_code,
+            country_code=country_code,
+            store_number="",
+            phone=phone,
+            location_type="",
+            latitude=geo["lat"],
+            longitude=geo["lng"],
+            hours_of_operation=hours_of_operation,
+            raw_address=" ".join(address_raw),
+        )
 
-    return items
+        yield item
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":

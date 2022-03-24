@@ -6,16 +6,29 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sglogging import SgLogSetup
 import json
 import html
+from tenacity import retry, stop_after_attempt
+import tenacity
+
 
 logger = SgLogSetup().get_logger("tsb_co_uk")
-
 URL_BRANCH_LOCATOR = "http://www.tsb.co.uk/branch-locator/"
-DOMAIN = "https://www.tsb.co.uk"
-session = SgRequests()
+DOMAIN = "tsb.co.uk"
+MISSING = SgRecord.MISSING
 headers_tsb = {
     "accept": "application/json, text/plain, */*",
     "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.114 Safari/537.36",
 }
+
+
+@retry(stop=stop_after_attempt(10), wait=tenacity.wait_fixed(10))
+def get_response(url):
+    with SgRequests() as http:
+        logger.info(f"Pulling the data from: {url}")
+        r = http.post(url, headers=headers_tsb)
+        if r.status_code == 200:
+            logger.info(f"HTTP Status Code: {r.status_code}")
+            return r
+        raise Exception(f"{url} >> Temporary Error: {r.status_code}")
 
 
 def get_hours(data_hours):
@@ -73,7 +86,7 @@ def get_hours(data_hours):
 def fetch_data():
     s = set()
     url = "https://www.tsb.co.uk/sites/Satellite?c=Page&pagename=public%2FseBranchLocator&longitude=-4.3878&latitude=56.5685&filter=null&numBranches=1&rows=1000&isAppend=false"
-    r = session.post(url, headers=headers_tsb)
+    r = get_response(url)
     text = html.unescape(r.content.decode("unicode-escape"))
     sp1 = text.split("jsonBranches = ")[-1]
     sp2 = sp1.split(";")[0]
@@ -87,7 +100,7 @@ def fetch_data():
         if slug:
             page_url = f"{URL_BRANCH_LOCATOR}{slug}"
         else:
-            page_url = SgRecord.MISSING
+            page_url = MISSING
 
         location_name = data["branchLocation"]
         location_name = " ".join(location_name.split())
@@ -95,40 +108,40 @@ def fetch_data():
         location_name = (
             location_name.encode("unicode-escape").decode("utf8").replace("\\\\", "")
         )
-        location_name = location_name if location_name else SgRecord.MISSING
+        location_name = location_name if location_name else MISSING
 
         street_address = data["branchAddrLine1"]
         street_address = (
             street_address.encode("unicode-escape").decode("utf8").replace("\\\\", "")
         )
-        street_address = street_address if street_address else SgRecord.MISSING
+        street_address = street_address if street_address else MISSING
 
         city = data["branchTown"]
         city = city.encode("unicode-escape").decode("utf8").replace("\\\\", "")
-        city = city if city else SgRecord.MISSING
+        city = city if city else MISSING
 
         state = data["branchAddrLine4"]
-        state = state if state else SgRecord.MISSING
+        state = state if state else MISSING
 
         zip_postal = data["branchPostCode"]
-        zip_postal = zip_postal if zip_postal else SgRecord.MISSING
+        zip_postal = zip_postal if zip_postal else MISSING
 
         country_code = "GB"
         store_number = data["sortCode"]
         if store_number in s:
             continue
         s.add(store_number)
-        store_number = store_number if store_number else SgRecord.MISSING
+        store_number = store_number if store_number else MISSING
 
         phone = data["telNumFull"]
-        phone = phone if phone else SgRecord.MISSING
+        phone = phone if phone else MISSING
 
-        location_type = SgRecord.MISSING
+        location_type = MISSING
         latitude = data["postcodeLatitude"]
-        latitude = latitude if latitude else SgRecord.MISSING
+        latitude = latitude if latitude else MISSING
 
         longitude = data["postcodeLongitude"]
-        longitude = longitude if longitude else SgRecord.MISSING
+        longitude = longitude if longitude else MISSING
 
         hours_of_operation = get_hours(data)
         raw_address = data["fullBranchDirection"]
@@ -136,7 +149,7 @@ def fetch_data():
         raw_address = (
             raw_address.encode("unicode-escape").decode("utf8").replace("\\\\", "")
         )
-        raw_address = raw_address if raw_address else SgRecord.MISSING
+        raw_address = raw_address if raw_address else MISSING
         yield SgRecord(
             locator_domain=locator_domain,
             page_url=page_url,

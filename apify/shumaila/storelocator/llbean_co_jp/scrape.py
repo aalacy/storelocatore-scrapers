@@ -44,7 +44,9 @@ def fetch_data():
                 .get_text(separator="|", strip=True)
                 .replace("|", " ")
             )
+            raw_address1 = raw_address
             raw_address = strip_accents(raw_address)
+
             temp = (
                 loc.find("p", {"class": "shop_tel"})
                 .get_text(separator="|", strip=True)
@@ -78,7 +80,7 @@ def fetch_data():
                 latitude=MISSING,
                 longitude=MISSING,
                 hours_of_operation=hours_of_operation,
-                raw_address=raw_address,
+                raw_address=raw_address1,
             )
 
 
