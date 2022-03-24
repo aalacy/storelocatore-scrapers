@@ -60,7 +60,23 @@ def fetch_data():
             if poi["OpeningTimes"]:
                 hoo = etree.HTML(poi["OpeningTimes"]).xpath("//text()")
             hoo = [e.strip() for e in hoo if e.strip()]
-            hours_of_operation = ", ".join(hoo) if hoo else ""
+            hours_of_operation = (
+                " ".join(" ".join(hoo).split())
+                .split("Showroom:")[-1]
+                .split("Service")[0]
+                .split("In den")[0]
+                .split("GmbH")[-1]
+                .split("Schlaak")[-1]
+                .split("gszeiten:")[-1]
+                .split("Winter")[0]
+                .split("(Schautag")[0]
+                .split("Borchardt")[-1]
+                .split("Zweiradtechnik")[-1]
+                .split("Uhr von")[0]
+                .split("Uhr 24")[0]
+                if hoo
+                else ""
+            )
 
             item = SgRecord(
                 locator_domain=domain,
