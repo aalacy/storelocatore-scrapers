@@ -82,6 +82,13 @@ def fetch_data():
                 state = store["address"].get("stateRegionCounty", "<MISSING>")
                 zip = store["address"].get("postcode", "<MISSING>")
                 country_code = url_country.split(",")[2].strip()
+
+                cleaned_zip = re.sub(
+                    rf"\s*({country_code}|SWIFT:)\s*", "", zip, re.IGNORECASE
+                )
+                if re.search("po box", cleaned_zip, re.IGNORECASE):
+                    cleaned_zip = SgRecord.MISSING
+
                 phone = ""
                 if "phoneNumber" in store:
                     phones = store["phoneNumber"]
@@ -131,7 +138,6 @@ def fetch_data():
                 hours_of_operation = "; ".join(hours_list).strip()
                 latitude = store["coordinates"]["lat"]
                 longitude = store["coordinates"]["lng"]
-
                 url_formatted_name = re.sub(
                     r"\s+", "-", re.sub(r"[^a-zA-Z0-9\s]", "", location_name.strip())
                 ).lower()
@@ -148,7 +154,7 @@ def fetch_data():
                     street_address=street_address,
                     city=city,
                     state=state,
-                    zip_postal=zip,
+                    zip_postal=cleaned_zip,
                     country_code=country_code,
                     store_number=store_number,
                     phone=phone,
