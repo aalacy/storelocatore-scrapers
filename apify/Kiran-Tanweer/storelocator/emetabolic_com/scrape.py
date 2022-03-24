@@ -40,14 +40,37 @@ def fetch_data():
                     link_url = loc["link_url"]
                     if link_url.find("emetabolic.com") == -1:
                         link_url = "https://www.emetabolic.com/" + link_url
-                    p = session.get(link_url, headers=headers)
-                    soup = BeautifulSoup(p.text, "html.parser")
-                    div = soup.findAll("div", {"class": "location-contact-data"})
-                    if len(div) > 0:
-                        add = div[0].text
-                        add = re.sub(pattern, ",", add)
-                        add = add.rstrip(" Get Directions,")
+                    try:
+                        res = session.get(link_url, headers=headers)
+                        soup = BeautifulSoup(res.text, "html.parser")
+                        div = soup.findAll("div", {"class": "location-contact-data"})
+                        if len(div) > 0:
+                            add = div[0].text
+                            add = re.sub(pattern, ",", add)
+                            add = add.rstrip(" Get Directions,")
+                            add = add.replace(",", "")
+                        div = soup.findAll("div", {"class": "location-contact-data"})
+                        if (len(div)) == 0:
+                            phone = "<MISSING>"
+                        else:
+                            phone = div[1].text
+                            phone = phone.strip()
+
+                        time = soup.findAll("div", {"class": "location-hours-info"})
+                        HOO = ""
+                        for day in time:
+                            hours = day.text
+                            HOO = HOO + hours
+                        if HOO == "":
+                            HOO = "<MISSING>"
+                        HOO = HOO.strip()
+
+                    except AttributeError:
+                        add = loc["address"]
                         add = add.replace(",", "")
+                        phone = "<MISSING>"
+                        HOO = "<MISSING>"
+
                     parsed = parser.parse_address_usa(add)
                     street1 = (
                         parsed.street_address_1
@@ -63,24 +86,13 @@ def fetch_data():
                     state = parsed.state if parsed.state else "<MISSING>"
                     pcode = parsed.postcode if parsed.postcode else "<MISSING>"
 
-                    div = soup.findAll("div", {"class": "location-contact-data"})
-                    if (len(div)) == 0:
-                        phone = "<MISSING>"
-                    else:
-                        phone = div[1].text
-                        phone = phone.strip()
-                    time = soup.findAll("div", {"class": "location-hours-info"})
-                    HOO = ""
-                    for day in time:
-                        hours = day.text
-                        HOO = HOO + hours
-                    if HOO == "":
-                        HOO = "<MISSING>"
-                    HOO = HOO.strip()
-
                     if street == "15060 Sequoia Pkwy # 6Tigard":
                         street = "15060 Sequoia Pkwy # 6"
                         city = "Tigard"
+
+                    if state.find("Usa") != -1:
+                        state = state.split()[0]
+
                     yield SgRecord(
                         locator_domain=DOMAIN,
                         page_url=link_url,
@@ -116,6 +128,7 @@ def scrape():
         for rec in results:
             writer.write_row(rec)
             count = count + 1
+
     log.info(f"No of records being processed: {count}")
     log.info("Finished")
 

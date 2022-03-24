@@ -1,102 +1,69 @@
-import csv
-import json
-
 from sgrequests import SgRequests
-
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
-    # Your scraper here
     session = SgRequests()
+    domain = "abraauto.com"
+    start_url = "https://dbripcstage2.interplay.iterate.ai/api/v1/abra/allstores"
 
-    items = []
+    frm = {"lat": 35.562, "lng": -77.4045}
+    hdr = {
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:96.0) Gecko/20100101 Firefox/96.0",
+        "Accept": "application/json, text/plain, */*",
+        "Content-Type": "application/json",
+        "apiKey": "1234AKIAVAOWLJICABYD4CDQhjhjhfjdkm",
+    }
+    data = session.post(start_url, json=frm, headers=hdr).json()
+    for poi in data["store"]:
+        hoo = []
+        for day, hours in poi["hours"].items():
+            if hours["is_open"] == 1:
+                opens = hours["open"]
+                closes = hours["close"]
+                hoo.append(f"{day}: {opens} - {closes}")
+            else:
+                hoo.append(f"{day}: closed")
+        hoo = " ".join(hoo)
+        state = poi["store_state"]
+        city = poi["store_city"]
+        zip_code = poi["store_postcode"]
+        store_number = poi["store_id"]
+        page_url = f"https://www.abraauto.com/location/{state.lower()}/{city.lower()}/{store_number}/"
 
-    DOMAIN = "abraauto.com"
-    start_url = "https://www.abraauto.com/api/get_store_locators?lat=45.086882&long=-93.398222&radio=-1&state=&page=1"
-
-    response = session.get(start_url)
-    data = json.loads(response.text)
-
-    for poi in data["data"]:
-        store_url = "<MISSING>"
-        store_url = store_url if store_url else "<MISSING>"
-        location_name = poi["post_title"]
-        location_name = location_name if location_name else "<MISSING>"
-        street_address = " ".join(
-            sorted(set(poi["street"].split()), key=poi["street"].split().index)
+        item = SgRecord(
+            locator_domain=domain,
+            page_url=page_url,
+            location_name=poi["store_name"],
+            street_address=poi["store_address"],
+            city=city,
+            state=state,
+            zip_postal=zip_code,
+            country_code="",
+            store_number=store_number,
+            phone=poi["store_phone"],
+            location_type="",
+            latitude=poi["store_lat"],
+            longitude=poi["store_long"],
+            hours_of_operation=hoo,
         )
-        street_address = street_address if street_address else "<MISSING>"
-        city = poi["city"]
-        city = city if city else "<MISSING>"
-        state = poi["state"]
-        state = state if state else "<MISSING>"
-        zip_code = poi["zipcode"]
-        zip_code = zip_code if zip_code else "<MISSING>"
-        country_code = "US"
-        store_number = poi["id"]
-        phone = poi["phone"]
-        phone = phone if phone else "<MISSING>"
-        location_type = "<MISSING>"
-        latitude = poi["lat"]
-        latitude = latitude if latitude else "<MISSING>"
-        longitude = poi["lng"]
-        longitude = longitude if longitude else "<MISSING>"
-        hours_of_operation = "{} {}".format(poi["weekday"], poi["weekend"])
 
-        item = [
-            DOMAIN,
-            store_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip_code,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-
-        items.append(item)
-
-    return items
+        yield item
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":

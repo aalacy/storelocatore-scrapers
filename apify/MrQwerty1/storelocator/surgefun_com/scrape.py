@@ -51,25 +51,22 @@ def fetch_data(sgw: SgWriter):
         location_name = "".join(d.xpath(".//preceding::h2[2]/text()"))
 
         r = session.get(page_url, headers=headers)
-        if r.status_code == 301:
-            continue
         tree = html.fromstring(r.text)
 
         ad = (
             " ".join(
                 tree.xpath(
-                    "//div[contains(@data-settings, 'background_background')]//text()"
+                    "//div[./div/h2[contains(text(), 'CONTACT')]]/following-sibling::div[1]//text()"
                 )
             )
             .replace("\n", "")
             .replace("\\xa0", "")
             .strip()
         )
-        if ad.find("Coming Soon") != -1:
+        if tree.xpath("//h2[contains(text(), 'COMING SOON')]"):
             continue
-        adr = ad.split("CONTACT US")[1].split("PHONE")[0].strip()
 
-        a = usaddress.tag(adr, tag_mapping=tag)[0]
+        a = usaddress.tag(ad, tag_mapping=tag)[0]
         street_address = f"{a.get('address1')} {a.get('address2')}".replace(
             "None", ""
         ).strip()
@@ -77,24 +74,35 @@ def fetch_data(sgw: SgWriter):
         state = a.get("state")
         postal = a.get("postal")
         country_code = "US"
-        phone = ad.split("PHONE")[1].split("EMAIL")[0].replace(" ", "").strip()
-        ids = (
-            "".join(tree.xpath('//script[contains(text(), "const loc=")]/text()'))
-            .split("const loc=")[1]
-            .split(";")[0]
-            .strip()
-        )
+        phone = "".join(
+            tree.xpath("//span[contains(text(), 'Phone')]/following-sibling::a/text()")
+        ).strip()
+        if not phone:
+            phone = "".join(
+                tree.xpath(
+                    "//div[./div/h2[contains(text(), 'PHONE')]]/following-sibling::div[1]//text()"
+                )
+            ).strip()
 
-        r = session.get(f"https://plondex.com/wp/jsonquery/loadloc/9/{ids}")
-        tree = html.fromstring(r.text)
-        hours_of_operation = (
-            " ".join(
-                tree.xpath('//div[./*[contains(text(), "Business Hours")]]//text()')
+        try:
+            ids = (
+                "".join(tree.xpath('//script[contains(text(), "const loc=")]/text()'))
+                .split("const loc=")[1]
+                .split(";")[0]
+                .strip()
             )
-            .replace("Business Hours", "")
-            .replace("\n", "")
-            .strip()
-        )
+            r = session.get(f"https://plondex.com/wp/jsonquery/loadloc/9/{ids}")
+            tree = html.fromstring(r.text)
+            hours_of_operation = (
+                " ".join(
+                    tree.xpath('//div[./*[contains(text(), "Business Hours")]]//text()')
+                )
+                .replace("Business Hours", "")
+                .replace("\n", "")
+                .strip()
+            )
+        except:
+            hours_of_operation = SgRecord.MISSING
 
         row = SgRecord(
             locator_domain=locator_domain,
@@ -105,13 +113,9 @@ def fetch_data(sgw: SgWriter):
             state=state,
             zip_postal=postal,
             country_code=country_code,
-            store_number=SgRecord.MISSING,
             phone=phone,
-            location_type=SgRecord.MISSING,
-            latitude=SgRecord.MISSING,
-            longitude=SgRecord.MISSING,
             hours_of_operation=hours_of_operation,
-            raw_address=adr,
+            raw_address=ad,
         )
 
         sgw.write_row(row)

@@ -1,62 +1,34 @@
-import csv
-
+import json
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
-
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 
 def get_hours(page_url):
     _tmp = []
-    session = SgRequests()
     r = session.get(page_url)
+    if r.status_code == 404:
+        return ""
     tree = html.fromstring(r.text)
     tr = tree.xpath("//div[@id='hours']//tr")
     for t in tr:
         day = "".join(t.xpath("./td[1]//text()")).strip()
         time = "".join(t.xpath("./td[2]//text()")).strip()
+        if "Hours" in time:
+            continue
         _tmp.append(f"{day}: {time}")
 
-    return ";".join(_tmp) or "<MISSING>"
+    return ";".join(_tmp)
 
 
-def fetch_data():
-    out = []
+def fetch_data(sgw: SgWriter):
     coords = []
-    locator_domain = "https://www.gameworks.com/"
+    phones = dict()
     api = "https://www.gameworks.com/home"
 
-    session = SgRequests()
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0"
-    }
     r = session.get(api, headers=headers)
     tree = html.fromstring(r.text)
 
@@ -67,6 +39,12 @@ def fetch_data():
         lat = t.split("lat:")[1].split(",")[0].strip()
         lng = t.split("lng:")[1].split("}")[0].strip()
         coords.append((lat, lng))
+
+    js_text = "".join(tree.xpath("//script[contains(text(), 'LocalBusiness')]/text()"))
+    js = json.loads(js_text)
+    for j in js["address"]:
+        key = j.get("postalCode") or ""
+        phones[key] = j.get("telephone") or ""
 
     divs = tree.xpath("//ul[@class='location-map-listing']/li")
     for d in divs:
@@ -84,45 +62,39 @@ def fetch_data():
         line = line.split(",")[1].strip()
         state = line.split()[0]
         postal = line.split()[1]
-        country_code = "US"
-        store_number = "<MISSING>"
         phone = (
             "".join(d.xpath(".//div[contains(@class,'location-phone')]//text()"))
             .replace(" . ", " ")
             .strip()
-            or "<MISSING>"
-        )
+        ) or phones.get(postal)
         latitude, longitude = coords.pop(0)
-        location_type = "<MISSING>"
         hours_of_operation = get_hours(page_url)
         if "SOON" in hours_of_operation:
             hours_of_operation = "Coming Soon"
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
+        row = SgRecord(
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code="US",
+            phone=phone,
+            latitude=latitude,
+            longitude=longitude,
+            locator_domain=locator_domain,
+            hours_of_operation=hours_of_operation,
+        )
 
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://www.gameworks.com/"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0"
+    }
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        fetch_data(writer)

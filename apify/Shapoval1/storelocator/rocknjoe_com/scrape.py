@@ -51,7 +51,7 @@ def fetch_data(sgw: SgWriter):
 
         location_type = "Rock 'n' Joe Coffee"
         adr = d.xpath(
-            './/preceding-sibling::div[./p[@style="line-height:1.7em;font-size:17px"]][1]//text()'
+            './/preceding-sibling::div[./p[@style="line-height:1.7em; font-size:17px;"]][1]//text()'
         )
         adress = " ".join(adr[:-1]).replace("\n", "").strip()
         if "404" in adress:
@@ -78,12 +78,22 @@ def fetch_data(sgw: SgWriter):
         if street_address.find("404 Wood Street") != -1:
             location_name = "".join(
                 d.xpath(
-                    './/preceding-sibling::div[./h6[@style="font-size:22px"]][1]//text()'
+                    './/preceding-sibling::div[./h6[@style="font-size:22px;"]][1]//text()'
                 )
             )
-        days = d.xpath(".//following-sibling::div[1]/p/span/text()")
+        days = d.xpath(
+            ".//following-sibling::div[./p[@style='line-height:1.7em; font-size:17px;']][1]//text()"
+        )
+        days = list(filter(None, [a.strip() for a in days]))
 
-        times = d.xpath(".//following-sibling::div[2]/p/span/text()") or "<MISSING>"
+        times = (
+            d.xpath(
+                ".//following-sibling::div[./p[@style='line-height:1.7em; font-size:17px;']][2]//text()"
+            )
+            or "<MISSING>"
+        )
+        if times != "<MISSING>":
+            times = list(filter(None, [a.strip() for a in times]))
         if times == "<MISSING>":
             times = d.xpath(".//following::div[2]/p/span/text()")
         _tmp = []
@@ -97,7 +107,7 @@ def fetch_data(sgw: SgWriter):
             )
         )
         if cms and street_address.find("404") != -1:
-            phone = "<MISISNG>"
+            phone = "<MISSING>"
             hours_of_operation = "Coming Soon"
 
         row = SgRecord(

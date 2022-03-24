@@ -1,119 +1,114 @@
-import csv
+from sglogging import sglog
 from bs4 import BeautifulSoup
-from bs4 import BeautifulSoup as bs
-import time
-from sgselenium import SgSelenium
 from sgrequests import SgRequests
-import logging
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('kwiktrip_com')
-
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
+DOMAIN = "bargainbasementhomecenter.com"
+LOCATION_URL = "https://www.kwiktrip.com/Maps-Downloads/Store-List"
+log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+}
 
-# supress error logging from selenium-wire
-sgselenium_logger = logging.getLogger('seleniumwire')
-sgselenium_logger.addHandler(logging.NullHandler())
-
-
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
-        # Body
-        for row in data:
-            writer.writerow(row)
+MISSING = SgRecord.MISSING
 
 
 def fetch_data():
-    addresses = []
-    driver = SgSelenium().chrome()
-    driver.get("https://kwiktrip.com/Maps-Downloads/Store-List")
-    
-    locator_domain = "https://kwiktrip.com"
-    hours_of_operation ="<MISSING>"
-    while True:
-        soup = BeautifulSoup(driver.page_source,"lxml")
-        for data in soup.find_all("tbody",{"class":"row-hover"}):
-            for tr in data.find_all("tr"):
-                store_number = list(tr.stripped_strings)[0]
-                page_url="https://www.kwiktrip.com/locator/store?id="+str(store_number)
-                payload = {}
-                headers = {
-                'Referer': 'https://www.kwiktrip.com/Maps-Downloads/Store-List',
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.105 Safari/537.36',
-                }
-                try:
-                    response = session.get(page_url,headers=headers,data = payload)
-                    # if response.status_code==200:
-                    if response != None:
-                        soup1 = BeautifulSoup(response.text,'lxml')
-                        h = soup1.find("div",{"class":"Store__dailyHours"})
-                        if h != None:
-                            hours_of_operation =  " ".join(list(h.stripped_strings))
-                    
-                        h = soup1.find("div",{"class":"Store__open24Hours"})
-                        if h != None:                   
-                            hours_of_operation = " ".join(list(h.stripped_strings))
-                except:
-                    hours_of_operation="<MISSING>"
-                page_url = "https://www.kwiktrip.com/locator/store?id="+str(store_number)
-                location_name = list(tr.stripped_strings)[1]
-                street_address = list(tr.stripped_strings)[2]
-                city = list(tr.stripped_strings)[3]
-                state = list(tr.stripped_strings)[4]
-                zipp = list(tr.stripped_strings)[5]
-                phone = list(tr.stripped_strings)[6]
-                latitude = list(tr.stripped_strings)[7].replace("-93.22204",'<MISSING>').replace("Yes",'<MISSING>')
-                longitude = list(tr.stripped_strings)[8]
-                if "Yes" in latitude or "Yes" in longitude:
-                    latitude="<MISSING>"
-                    longitude="<MISSING>"
-                location_type = "<MISSING>"
-                country_code = "US"
-                store =[]
-                hours_of_operation1=''
-                if hours_of_operation.strip():
-                    hours_of_operation1= hours_of_operation
-                else:
-                    hours_of_operation1 = "<MISSING>"
-                
-                if "1208 W 13TH ST" in street_address:
-                    phone="(319) 472-3591"
-                    latitude="42.15902"
-                    longitude = "-92.03876"
-                if "https://www.kwiktrip.com/locator/store?id=589" in page_url:
-                    phone="<MISSING>"
-                    latitude="42.03466"
-                    longitude = "-91.54563"
-                store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
-                             store_number, phone, location_type, latitude, longitude, hours_of_operation1, page_url]
-                if store[2] in addresses:
-                    continue
-                addresses.append(store[2])
-                #logger.info("~~~~~~~~~~~~~~~~~~~~~~  ",store)
-                yield store
-        soup1 = BeautifulSoup(driver.page_source,"lxml")
-        if soup1.find("a",{"id":"tablepress-4_next"}):
-            driver.find_element_by_xpath("//a[@id='tablepress-4_next']").click()
+    r = session.get(LOCATION_URL, headers=headers)
+    soup = BeautifulSoup(r.text, "lxml")
+    hours_of_operation = MISSING
+    loclist = soup.find("tbody", {"class": "row-hover"}).find_all("tr")
+    for loc in loclist:
+        store_number = list(loc.stripped_strings)[0]
+        url = "https://www.kwiktrip.com/ktapi/location/store/information/" + str(
+            store_number
+        )
+        log.info(url)
+        temp = session.get(url, headers=headers).json()
+        location_name = temp["name"]
+        phone = temp["phone"] or MISSING
+        if temp["open24Hours"] is True:
+            hours_of_operation = "Open 24 hours a day"
         else:
-            break
-        if soup1.find("a",{"class":"paginate_button current"}).text=="15":
-            driver.quit()
-            break
-   
+            hour_list = temp["hours"]
+            hoo = ""
+            try:
+                for hour in hour_list:
+                    day = hour["dayOfWeek"]
+                    time = hour["openTime"] + "-" + hour["closeTime"]
+                    hoo += day + " " + time + ","
+            except:
+                hoo = MISSING
+            hoo.strip().rstrip(",")
+            hours_of_operation = hoo.strip().rstrip(",")
+        address = temp["address"]
+        try:
+            street_address = address["address1"] + " " + address["address2"]
+        except:
+            street_address = address["address1"]
+        city = address["city"]
+        state = address["state"]
+        zip_postal = address["zip"]
+        country_code = "US"
+        soup = BeautifulSoup(r.text, "lxml")
+        latitude = (
+            list(loc.stripped_strings)[7]
+            .replace("-93.22204", "MISSING")
+            .replace("Yes", "MISSING")
+        )
+        longitude = list(loc.stripped_strings)[8]
+        if (
+            "Yes" in latitude
+            or "Yes" in longitude
+            or "No" in latitude
+            or "No" in longitude
+        ):
+            latitude = MISSING
+            longitude = MISSING
+        country_code = "US"
+        if "1208 W 13TH ST" in street_address:
+            latitude = "42.15902"
+            longitude = "-92.03876"
+        if "https://www.kwiktrip.com/locator/store?id=589" in url:
+            latitude = "42.03466"
+            longitude = "-91.54563"
+        log.info("Append {} => {}".format(location_name, street_address))
+        yield SgRecord(
+            locator_domain=DOMAIN,
+            page_url=LOCATION_URL,
+            location_name=location_name,
+            street_address=street_address.strip(),
+            city=city.strip(),
+            state=state.strip(),
+            zip_postal=zip_postal.strip(),
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone.strip(),
+            location_type=MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+        )
 
-   
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    log.info("Started")
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.StoreNumberId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
 
 
-scrape()
-
-
+if __name__ == "__main__":
+    scrape()

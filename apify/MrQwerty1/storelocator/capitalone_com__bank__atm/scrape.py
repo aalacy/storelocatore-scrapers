@@ -1,61 +1,18 @@
-import csv
 import json
-
-from concurrent import futures
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
-from sgzip.static import static_coordinate_list, SearchableCountries
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgzip.dynamic import SearchableCountries, DynamicGeoSearch
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def get_data(coord):
-    rows = []
-    lat, lng = coord
-    locator_domain = "https://www.capitalone.com/bank/atm/"
-
-    session = SgRequests()
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0",
-        "Accept": "application/json;v=1",
-        "Accept-Language": "uk-UA,uk;q=0.8,en-US;q=0.5,en;q=0.3",
-        "Content-Type": "application/json",
-        "Origin": "https://locations.capitalone.com",
-        "Connection": "keep-alive",
-        "Referer": "https://locations.capitalone.com/",
-    }
-
+def fetch_data(la, ln, sgw: SgWriter):
     data = {
         "variables": {
             "input": {
-                "lat": float(lat),
-                "long": float(lng),
+                "lat": float(la),
+                "long": float(ln),
                 "radius": 25,
                 "locTypes": ["atm"],
                 "servicesFilter": [],
@@ -73,64 +30,55 @@ def get_data(coord):
         a = j.get("address")
         street_address = (
             f"{a.get('addressLine1')} {a.get('addressLine2') or ''}".strip()
-            or "<MISSING>"
         )
-        city = a.get("city") or "<MISSING>"
-        state = a.get("stateCode") or "<MISSING>"
-        postal = a.get("postalCode") or "<MISSING>"
+        city = a.get("city")
+        state = a.get("stateCode")
+        postal = a.get("postalCode")
         country_code = "US"
-        store_number = j.get("locationId") or "<MISSING>"
+        store_number = j.get("locationId")
         page_url = f'https://locations.capitalone.com/-/-/{j.get("slug")}'
         location_name = j.get("locationName")
-        phone = "<MISSING>"
-        latitude = j.get("latitude") or "<MISSING>"
-        longitude = j.get("longitude") or "<MISSING>"
-        location_type = j.get("locType") or "<MISSING>"
-        hours_of_operation = "<MISSING>"
+        latitude = j.get("latitude")
+        longitude = j.get("longitude")
+        location_type = j.get("locType")
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        rows.append(row)
+        row = SgRecord(
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=store_number,
+            location_type=location_type,
+            latitude=str(latitude),
+            longitude=str(longitude),
+            locator_domain=locator_domain,
+        )
 
-    return rows
-
-
-def fetch_data():
-    out = []
-    s = set()
-    coords = static_coordinate_list(radius=25, country_code=SearchableCountries.USA)
-
-    with futures.ThreadPoolExecutor(max_workers=5) as executor:
-        future_to_url = {executor.submit(get_data, coord): coord for coord in coords}
-        for future in futures.as_completed(future_to_url):
-            rows = future.result()
-            for row in rows:
-                _id = row[8]
-                if _id not in s:
-                    s.add(_id)
-                    out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0",
+        "Accept": "application/json;v=1",
+        "Accept-Language": "uk-UA,uk;q=0.8,en-US;q=0.5,en;q=0.3",
+        "Content-Type": "application/json",
+        "Origin": "https://locations.capitalone.com",
+        "Connection": "keep-alive",
+        "Referer": "https://locations.capitalone.com/",
+    }
+    locator_domain = "https://www.capitalone.com/bank/atm/"
+    search = DynamicGeoSearch(
+        country_codes=[SearchableCountries.USA], expected_search_radius_miles=25
+    )
+    with SgWriter(
+        SgRecordDeduper(
+            RecommendedRecordIds.PageUrlId, duplicate_streak_failure_factor=-1
+        )
+    ) as writer:
+        for lat, lng in search:
+            fetch_data(lat, lng, writer)

@@ -41,12 +41,10 @@ def get_data(slug, sgw: SgWriter):
     city = "".join(b.xpath(".//p[@itemprop='addressLocality']/text()")).strip() or " "
     if city[-1].isdigit():
         street_address = city
-        city = " "
 
-    if city == " ":
-        city = location_name.replace("TK Maxx ", "")
-        if "(" in city:
-            city = city.split("(")[0].strip()
+    city = location_name.replace("TK Maxx ", "")
+    if "(" in city:
+        city = city.split("(")[0].strip()
     postal = "".join(b.xpath(".//p[@itemprop='zipCode']/text()")).strip()
     phone = "".join(b.xpath(".//p[@itemprop='telephone']/text()")).strip()
     try:
