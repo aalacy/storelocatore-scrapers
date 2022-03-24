@@ -65,6 +65,7 @@ def get_locations(url, locations):
 
 def get_location(item, page_url, is_details):
     location_name = f'{item.find("span", class_="location-name-brand").text.strip()} {item.find("span", class_="location-name-geo").text.strip()}'
+    location_name = re.sub(r"\s\s+", " ", location_name)
 
     street_address = item.find("span", class_="c-address-street-1").text
     city = re.sub(",", "", item.find("span", class_="c-address-city").text)
@@ -77,12 +78,12 @@ def get_location(item, page_url, is_details):
         hours = item.find(
             "div", class_="nap-hours col-lg-3 col-md-4 col-sm-6 hidden-xs"
         ).find_all("tr", class_="c-location-hours-details-row")
-        hours_of_operation = ",".join(hour.attrs["content"] for hour in hours)
     else:
         hours = item.find(
             "div", class_="c-location-grid-item-hours-today hidden-xs"
         ).find_all("div", class_="c-location-hours-today-details-row")
-        hours_of_operation = ",".join(hour.attrs["content"] for hour in hours)
+
+    hours_of_operation = ", ".join(hour.attrs["content"] for hour in hours)
 
     return SgRecord(
         locator_domain="jdsports.com",
