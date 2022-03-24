@@ -107,7 +107,7 @@ def try_again(session, url):
         "user-agent"
     ] = "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.82 Safari/537.36"
     response = SgRequests.raise_on_err(session.get(url, headers=headers))
-    return response.json()
+    return response
 
 
 def fetch_data(index: int, url: str, headers, session) -> dict:
@@ -351,7 +351,8 @@ def clean_record(k):
 
 def start():
     state = CrawlStateSingleton.get_instance()
-    urlB = "https://www.radissonhotelsamericas.com"
+    urlC = "https://www.radissonhotelsamericas.com"  # noqa
+    urlB = "https://www.radissonhotels.com"
     urlA = "https://www.radissonhotels.com"
     url2 = "/zimba-api/destinations/hotels?brand="
     brandsA = state.get_misc_value(
