@@ -30,7 +30,7 @@ params = (("wpml_lang", ""),)
 
 def fetch_data():
     # Your scraper here
-    search_url = "https://www.sushihub.com.au/find-a-hub.html"
+    search_url = "https://www.sushihub.com.au/find-a-hub/"
     api_url = "https://www.sushihub.com.au/wp-content/plugins/superstorefinder-wp/ssf-wp-xml.php"
 
     with SgRequests() as session:
