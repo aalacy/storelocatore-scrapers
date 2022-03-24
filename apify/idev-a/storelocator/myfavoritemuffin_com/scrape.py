@@ -32,7 +32,7 @@ def fetch_data():
                         locator_domain + sp1.select_one("div.links a.btn")["href"]
                     )
 
-            if not store["Locality"] and not store["Phone"] and not street_address:
+            if not store["Phone"] and not street_address:
                 continue
 
             if page_url:

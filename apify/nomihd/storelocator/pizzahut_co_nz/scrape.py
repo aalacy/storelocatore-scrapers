@@ -68,7 +68,6 @@ class _SearchIteration(SearchIteration):
         try:
             stores = json.loads(stores_req.text)["data"]["items"]
             for store in stores:
-                page_url = "https://pizzahut.co.nz/find-a-hut/"
                 locator_domain = website
                 location_name = store["name"]
                 log.info(location_name)
@@ -86,6 +85,8 @@ class _SearchIteration(SearchIteration):
 
                 country_code = "NZ"
                 store_number = store["code"]
+                page_url = f"https://pizzahut.co.nz/huts/{store_number}-{location_name}"
+
                 phone = store.get("phone", "<MISSING>")
 
                 location_type = "<MISSING>"

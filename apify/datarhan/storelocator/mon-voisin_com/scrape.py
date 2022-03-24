@@ -44,6 +44,13 @@ def fetch_data():
                 continue
             hoo.append(f"{day}: {hours}")
         hoo = " ".join(hoo)
+        if not hoo:
+            loc_response = session.get(page_url, headers=headers)
+            loc_dom = etree.HTML(loc_response.text)
+            hoo = loc_dom.xpath(
+                '//h3[contains(text(), "Store Hours")]/following-sibling::h4/text()'
+            )
+            hoo = " ".join(hoo)
 
         item = SgRecord(
             locator_domain=domain,
