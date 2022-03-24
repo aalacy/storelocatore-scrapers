@@ -3,7 +3,10 @@ from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-import dirtyjson as json
+import json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger("")
 
 locator_domain = "http://www.kaboom.com/"
 base_url = "https://www.kaboom.com/locations"
@@ -83,19 +86,49 @@ def fetch_data():
             except:
                 pass
 
-            location_name = _["title"]["content"]["quill"]["ops"][0]["insert"].strip()
+            page_url = _url(locs, _["image"]["link"]["link"]["page"]["pageID"])
+            logger.info(page_url)
+            info = json.loads(
+                session.get(page_url, headers=_headers)
+                .text.split("window.__BOOTSTRAP_STATE__ =")[1]
+                .split("</script>")[0]
+                .strip()[:-1]
+            )["siteData"]["page"]["properties"]["contentAreas"]["userContent"][
+                "content"
+            ][
+                "cells"
+            ][
+                -1
+            ][
+                "content"
+            ][
+                "properties"
+            ]
+            loc_info = info["mapConfig"]["location"]
+            hours = []
+            for hh in info["hoursConfig"]["content"]["quill"]["ops"]:
+                if not hh["insert"].strip():
+                    continue
+                hours.append(hh["insert"].strip())
             yield SgRecord(
-                page_url=_url(locs, _["image"]["link"]["link"]["page"]["pageID"]),
-                location_name=location_name,
-                street_address=" ".join(addr[:-1]),
-                city=addr[-1].split(",")[0].strip(),
-                state=addr[-1].split(",")[1].strip().split()[0].strip(),
-                zip_postal=" ".join(addr[-1].split(",")[1].strip().split()[1:]),
-                country_code="CA",
+                page_url=page_url,
+                location_name=_["title"]["content"]["quill"]["ops"][0][
+                    "insert"
+                ].strip(),
+                street_address=loc_info["street"],
+                city=loc_info["city"],
+                state=loc_info["region_code"]
+                if loc_info.get("region_code")
+                else loc_info["region"],
+                zip_postal=loc_info["postal_code"],
+                country_code=loc_info["country_code"],
+                latitude=loc_info["lat"],
+                longitude=loc_info["long"] if loc_info.get("long") else loc_info["lng"],
                 location_type=location_type,
-                phone=_p("".join(phone)),
+                phone=loc_info.get("phone") or _p("".join(phone)),
                 locator_domain=locator_domain,
-                raw_address=" ".join(addr),
+                hours_of_operation="; ".join(hours).replace("\n", "; "),
+                raw_address=loc_info["formatted_address"],
             )
 
 

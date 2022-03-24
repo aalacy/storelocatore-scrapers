@@ -259,7 +259,7 @@ def get_location(loc, retry_count=0):
         )
 
     except Exception as e:
-        if retry_count < 3:
+        if retry_count < 5:
             return get_location(loc, retry_count + 1)
 
         logger.error(e)

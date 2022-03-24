@@ -68,6 +68,8 @@ def fetch_data():
                     country_code = store_json.get("countryCode", MISSING)
                     latitude = store_json.get("latitude", MISSING)
                     longitude = store_json.get("longitude", MISSING)
+                    if latitude == "0" or latitude == 0:
+                        latitude, longitude = "<MISSING>", "<MISSING>"
                     phone = store_json.get("phone", MISSING)
                     hours = store_json["schedule"]
                     hours_list = []
@@ -122,6 +124,8 @@ def fetch_data():
                         country_code = store_json.get("countryCode", MISSING)
                         latitude = store_json.get("latitude", MISSING)
                         longitude = store_json.get("longitude", MISSING)
+                        if latitude == "0" or latitude == 0:
+                            latitude, longitude = "<MISSING>", "<MISSING>"
                         phone = store_json.get("phone", MISSING)
                         hours = store_json["schedule"]
                         hours_list = []
@@ -168,6 +172,8 @@ def fetch_data():
                 zip_postal = j.get("postalCode") or "<MISSING>"
                 latitude = j.get("latitude") or "<MISSING>"
                 longitude = j.get("longitude") or "<MISSING>"
+                if latitude == "0" or latitude == 0:
+                    latitude, longitude = "<MISSING>", "<MISSING>"
                 phone = j.get("phone") or "<MISSING>"
                 state = "<MISSING>"
                 hours_of_operation = "<MISSING>"
