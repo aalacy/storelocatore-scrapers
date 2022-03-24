@@ -145,7 +145,7 @@ def fetch_for_real(data, session):
     country, url = fix_data(data[0])
     search = DynamicGeoSearch(
         country_codes=[country.lower()],
-        expected_search_radius_miles=15,
+        expected_search_radius_miles=8,
     )
     for coord in search:
         for item in fetch_point(url.format(*coord), data[1], session):
