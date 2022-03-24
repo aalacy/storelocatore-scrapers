@@ -5,7 +5,6 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 import json
-import time
 
 session = SgRequests()
 headers = {
