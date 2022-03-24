@@ -1,104 +1,59 @@
-import csv
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
-    locator_domain = "https://www.benchmarkseniorliving.com/"
-    api_url = "https://www.benchmarkseniorliving.com/graphql"
-
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0",
-        "Accept": "*/*",
-        "Accept-Language": "uk-UA,uk;q=0.8,en-US;q=0.5,en;q=0.3",
-        "Referer": "https://www.benchmarkseniorliving.com/our-communities",
-        "content-type": "application/json",
-        "Origin": "https://www.benchmarkseniorliving.com",
-        "Connection": "keep-alive",
-        "TE": "Trailers",
-    }
-
-    data = '{"operationName":null,"variables":{},"query":"{\\n nodes: nodeQuery(\\n limit: 1000\\n filter: {conditions: [{field: \\"type\\", value: \\"community\\"}, {field: \\"status\\", value: \\"1\\"}]}\\n ) {\\n entities {\\n title: entityLabel\\n id: entityId\\n url: entityUrl {\\n path\\n __typename\\n }\\n ... on NodeCommunity {\\n externalLink: fieldExternalLink {\\n url {\\n path\\n __typename\\n }\\n __typename\\n }\\n address: fieldAddress {\\n addressLine1\\n addressLine2\\n locality\\n administrativeArea\\n postalCode\\n __typename\\n }\\n description: fieldTeaserDescription {\\n processed\\n __typename\\n }\\n fieldAverageRating\\n fieldGallery {\\n entity {\\n ... on MediaImage {\\n fieldMediaImage {\\n derivative(style: SMALL) {\\n url\\n __typename\\n }\\n __typename\\n }\\n __typename\\n }\\n __typename\\n }\\n __typename\\n }\\n fieldCareTypes {\\n entity {\\n entityLabel\\n __typename\\n }\\n __typename\\n }\\n position: fieldGeoLocation {\\n lat\\n lng: lon\\n __typename\\n }\\n phone: fieldPhoneNumber\\n __typename\\n }\\n __typename\\n }\\n __typename\\n }\\n}\\n"}'
-
-    session = SgRequests()
-    r = session.post(api_url, headers=headers, data=data)
-    js = r.json()["data"]["nodes"]["entities"]
+def fetch_data(sgw: SgWriter):
+    api = "https://www.benchmarkseniorliving.com/wp-json/communities/v1/json"
+    r = session.get(api, headers=headers)
+    js = r.json()["entities"]
 
     for j in js:
-        a = j.get("address")
-        street_address = (
-            f"{a.get('addressLine1')} {a.get('addressLine2') or ''}".strip()
-            or "<MISSING>"
-        )
-        city = a.get("locality") or "<MISSING>"
-        state = a.get("administrativeArea") or "<MISSING>"
-        postal = a.get("postalCode") or "<MISSING>"
+        a = j.get("address") or {}
+        adr1 = a.get("addressLine1") or ""
+        adr2 = a.get("addressLine2") or ""
+        street_address = f"{adr1} {adr2}".strip()
+        city = a.get("locality")
+        state = a.get("administrativeArea")
+        postal = a.get("postalCode")
         country_code = "US"
-        store_number = j.get("id") or "<MISSING>"
-        slug = j["url"]["path"]
-        page_url = f"https://www.benchmarkseniorliving.com{slug}"
-        location_name = j.get("title")
-        phone = j.get("phone") or "<MISSING>"
-        loc = j.get("position") or {}
-        latitude = loc.get("lat") or "<MISSING>"
-        longitude = loc.get("lng") or "<MISSING>"
-        location_type = "<MISSING>"
-        hours_of_operation = "<MISSING>"
+        store_number = j.get("id")
+        location_name = j.get("title") or ""
+        location_name = location_name.replace("&#8217;", "'")
+        if "Test" in location_name:
+            continue
+        page_url = j["url"]["path"]
+        phone = j.get("phone")
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
+        p = j.get("position") or {}
+        latitude = p.get("lat")
+        longitude = p.get("lng")
 
-    return out
+        row = SgRecord(
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            latitude=latitude,
+            longitude=longitude,
+            phone=phone,
+            store_number=store_number,
+            locator_domain=locator_domain,
+        )
 
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://www.benchmarkseniorliving.com/"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:97.0) Gecko/20100101 Firefox/97.0",
+    }
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        fetch_data(writer)

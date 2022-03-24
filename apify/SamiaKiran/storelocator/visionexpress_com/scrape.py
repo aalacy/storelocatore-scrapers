@@ -49,11 +49,18 @@ def record_initial_requests(http: SgRequests, state: CrawlState) -> bool:
 def fetch_records(http: SgRequests, state: CrawlState) -> Iterable[SgRecord]:
     for next_r in state.request_stack_iter():
         r = http.get(next_r.url, headers=headers)
+        soup = BeautifulSoup(r.text, "html.parser")
         logger.info(f"Pulling the data from: {next_r.url}")
         page_url = next_r.url
-        schema = r.text.split('<script type="application/ld+json">')[2].split(
-            "</script>", 1
-        )[0]
+        try:
+            schema = r.text.split('<script type="application/ld+json">')[2].split(
+                "</script>", 1
+            )[0]
+        except:
+            r = http.get(next_r.url, headers=headers)
+            schema = r.text.split('<script type="application/ld+json">')[2].split(
+                "</script>", 1
+            )[0]
         schema = schema.replace("\n", "")
         loc = json.loads(schema)
         location_name = loc["name"]
@@ -67,13 +74,18 @@ def fetch_records(http: SgRequests, state: CrawlState) -> Iterable[SgRecord]:
         coords = r.text.split('"lat":')[1].split(',"emailAddress":')[0].split(',"lon":')
         latitude = coords[0]
         longitude = coords[1]
-        hours_of_operation = (
-            str(loc["openingHours"])
-            .replace("[", "")
-            .replace("]", "")
-            .replace("', '", ", ")
-            .replace("'", "")
-        )
+        try:
+            hours_of_operation = (
+                soup.findAll("dl", {"class": "location-opening-hours__list"})[-1]
+                .get_text(separator="|", strip=True)
+                .replace("|", " ")
+            )
+        except:
+            hours_of_operation = (
+                soup.find("dl", {"class": "location-opening-hours__list"})
+                .get_text(separator="|", strip=True)
+                .replace("|", " ")
+            )
         store_number = MISSING
         location_type = MISSING
         raw_address = MISSING

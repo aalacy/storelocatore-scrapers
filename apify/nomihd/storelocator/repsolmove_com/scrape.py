@@ -49,9 +49,16 @@ def fetch_data():
             location_type = "<MISSING>"
 
             street_address = store["address"]
+            raw_address = street_address
             city = store["town"]
+            if city:
+                raw_address = raw_address + ", " + city
             state = store["province"]
+            if state:
+                raw_address = raw_address + ", " + state
             zip = store["postalCode"]
+            if zip:
+                raw_address = raw_address + ", " + zip
             country_code = "PT"
 
             phone = store["phone"]
@@ -93,6 +100,7 @@ def fetch_data():
                 latitude=latitude,
                 longitude=longitude,
                 hours_of_operation=hours_of_operation,
+                raw_address=raw_address,
             )
 
 

@@ -8,10 +8,14 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from concurrent import futures
 from sgscrape.sgpostal import parse_address, International_Parser
+from sglogging import sglog
+
+locator_domain = "natwest.com"
+log = sglog.SgLogSetup().get_logger(logger_name=locator_domain)
 
 
 def get_urls():
-    r = session.get("https://locator.natwest.com/?")
+    r = session.get("https://www.natwest.com/locator?")
     tree = html.fromstring(r.text)
     token = "".join(tree.xpath("//input[@id='csrf-token']/@value"))
 
@@ -20,16 +24,12 @@ def get_urls():
         "lat": "51.5072178",
         "lng": "-0.1275862",
         "site": "Natwest",
+        "pageDepth": "4",
+        "search_term": "London",
         "searchMiles": "5",
         "offSetMiles": "50",
         "maxMiles": "3000",
-        "listSizeInNumbers": "1000",
-        "search_term": "London",
-        "searchType": "Branches",
-        "pathValue": "/content/branchlocator/en/natwest/searchresults/jcr:content/par/searchresults/captcha",
-        ":cq:captchakey": "",
-        "img-src-includeinjs": "",
-        "search_term_encode": "London",
+        "listSizeInNumbers": "999",
         "search-type": "1",
     }
 
@@ -37,6 +37,7 @@ def get_urls():
         "https://www.natwest.com/content/branchlocator/en/natwest/_jcr_content/content/homepagesearch.search.html",
         data=data,
     )
+    log.info(f"Post Status: {r}")
     tree = html.fromstring(r.text)
 
     return tree.xpath(
@@ -45,42 +46,37 @@ def get_urls():
 
 
 def get_data(url, sgw: SgWriter):
-    page_url = f"https://locator.natwest.com{url}"
+    page_url = f"https://www.natwest.com{url}"
 
     r = session.get(page_url)
+    log.info(f"Crawling {page_url} and response status: {r}")
     tree = html.fromstring(r.text)
 
     location_name = "".join(tree.xpath("//input[@id='branchName']/@value"))
     line = tree.xpath("//div[@class='print']//td[@class='first']/text()")
     line = list(filter(None, [l.strip() for l in line]))
-    raw_address = ", ".join(line)
-    adr = parse_address(International_Parser(), raw_address)
 
-    street_address = f"{adr.street_address_1} {adr.street_address_2 or ''}".replace(
-        "None", ""
-    ).strip()
+    raw_address = ", ".join(line)
+    postcode = line.pop()
+    ad = ", ".join(line)
+    adr = parse_address(International_Parser(), ad)
+
+    adr1 = adr.street_address_1 or ""
+    adr2 = adr.street_address_2 or ""
+    street_address = f"{adr1} {adr2}".strip()
 
     if len(street_address) < 5:
         street_address = raw_address.split(",")[0].strip()
 
     city = adr.city or SgRecord.MISSING
-    state = adr.state or SgRecord.MISSING
-    postal = adr.postcode or SgRecord.MISSING
     if "Juxon House" in street_address:
         street_address = raw_address.split(",")[1].strip()
-        postal = raw_address.split(",")[-1].strip()
-    if postal == SgRecord.MISSING:
-        postal = raw_address.split(",")[-1].strip()
 
     country_code = "GB"
     store_number = page_url.split("/")[-1].split("-")[0]
-
-    phone = (
-        "".join(tree.xpath("//div[@class='print']//td[./span]/text()")).strip()
-        or SgRecord.MISSING
-    )
-    if phone.find("(") != -1:
-        phone = phone.split("(")[0].strip()
+    phone = "".join(tree.xpath("//div[@class='print']//td[./span]/text()")).strip()
+    if "Int'l:" in phone:
+        phone = phone.split("Int'l:")[1].replace("(", "").replace(")", "").strip()
 
     text = "".join(tree.xpath("//script[contains(text(), 'locationObject')]/text()"))
     try:
@@ -114,8 +110,7 @@ def get_data(url, sgw: SgWriter):
         location_name=location_name,
         street_address=street_address,
         city=city,
-        state=state,
-        zip_postal=postal,
+        zip_postal=postcode,
         country_code=country_code,
         store_number=store_number,
         phone=phone,
@@ -133,14 +128,14 @@ def get_data(url, sgw: SgWriter):
 def fetch_data(sgw: SgWriter):
     urls = get_urls()
 
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
+    with futures.ThreadPoolExecutor(max_workers=8) as executor:
         future_to_url = {executor.submit(get_data, url, sgw): url for url in urls}
         for future in futures.as_completed(future_to_url):
             future.result()
 
 
 if __name__ == "__main__":
-    locator_domain = "https://natwest.com"
-    session = SgRequests()
+
+    session = SgRequests(proxy_country="gb")
     with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
         fetch_data(writer)
