@@ -70,6 +70,9 @@ def fetch_data():
         ).split("@@")
         raw_address = addr[0].strip()
         street_address, city, state, zip_postal = getAddress(raw_address)
+        map_link = parent_content.find("a")["href"]
+        if zip_postal == MISSING and "maps" in map_link:
+            zip_postal = " ".join(map_link.split("+")[-2:]).strip()
         country_code = "CA"
         phone = addr[-1].strip()
         hours_of_operation = MISSING

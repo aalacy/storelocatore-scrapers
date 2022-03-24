@@ -43,9 +43,10 @@ def fetch_data():
             .split("dir/")[-1]
             .split(",")[:2]
         )
-        hoo = loc_dom.xpath('//div[h5[span[contains(text(), "Ωράριο")]]]//text()')
-        hoo = [e.strip() for e in hoo if e.strip()][1:]
-        hoo = " ".join(hoo)
+        hoo = loc_dom.xpath(
+            '//h3[contains(text(), "Ωράριο Καταστήματος")]/following::text()'
+        )
+        hoo = " ".join([e.strip() for e in hoo if e.strip()]).split("Τμήμα")[0]
 
         item = SgRecord(
             locator_domain=domain,

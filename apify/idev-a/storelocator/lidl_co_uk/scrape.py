@@ -37,9 +37,6 @@ def fetch_records(http, search, country_sessions):
         except:
             continue
         logger.info(f"[{search.current_country()}] [{lat, lng}] {len(locations)}")
-        if locations:
-            search.found_location_at(lat, lng)
-
         for _ in locations:
             hours = []
             if _["OpeningTimes"]:
@@ -58,7 +55,9 @@ def fetch_records(http, search, country_sessions):
                     city = _["PostalCode"]
                     zip_postal = _["Locality"]
 
+            search.found_location_at(_["Latitude"], _["Longitude"])
             yield SgRecord(
+                store_number=_["EntityID"],
                 location_name=_["ShownStoreName"],
                 street_address=_["AddressLine"],
                 city=city,
