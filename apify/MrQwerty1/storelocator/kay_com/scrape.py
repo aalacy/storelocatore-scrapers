@@ -9,12 +9,27 @@ from concurrent import futures
 
 
 def get_states():
-    req = session.get("https://www.kay.com/store-finder/view-all-states")
-    root = html.fromstring(req.text)
+    urls = []
+    start = [
+        "https://www.kay.com/store-finder/view-all-states",
+        "https://www.kayoutlet.com/store-finder/view-all-states",
+    ]
 
-    return root.xpath(
-        "//h1[contains(text(), 'All Stores')]/following-sibling::div//a/@href"
-    )
+    for s in start:
+        req = session.get("https://www.kay.com/store-finder/view-all-states")
+        root = html.fromstring(req.text)
+        links = root.xpath(
+            "//h1[contains(text(), 'All Stores')]/following-sibling::div//a/@href"
+        )
+
+        for link in links:
+            if "outlet" in s:
+                url = f"https://www.kayoutlet.com/store-finder/{link}"
+            else:
+                url = f"https://www.kay.com/store-finder/{link}"
+            urls.append(url)
+
+    return urls
 
 
 def get_additional(page_url):
@@ -45,16 +60,23 @@ def get_additional(page_url):
     return lat, lng, ";".join(_tmp)
 
 
-def get_data(state, sgw: SgWriter):
-    req = session.get(f"https://www.kay.com/store-finder/{state}")
+def get_data(url, sgw: SgWriter):
+    req = session.get(url)
     if req.status_code == 404:
         return
     root = html.fromstring(req.text)
 
+    location_type = "Kay Store"
+    if "outlet" in url:
+        location_type = "Kay Outlet"
+
     divs = root.xpath("//div[@class='col-md-3 col-lg-3 col-sm-4 col-xs-12' and ./span]")
     for d in divs:
         slug = "".join(d.xpath(".//div[@class='viewstoreslist']/a/@href"))
-        page_url = f"https://www.kay.com{slug}"
+        if location_type == "Kay Store":
+            page_url = f"https://www.kay.com{slug}"
+        else:
+            page_url = f"https://www.kayoutlet.com{slug}"
         if page_url.endswith("/null"):
             page_url = SgRecord.MISSING
 
@@ -88,6 +110,7 @@ def get_data(state, sgw: SgWriter):
             zip_postal=postal,
             country_code="US",
             store_number=store_number,
+            location_type=location_type,
             latitude=latitude,
             longitude=longitude,
             phone=phone,
