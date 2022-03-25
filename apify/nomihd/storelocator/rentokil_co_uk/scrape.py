@@ -14,6 +14,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from seleniumwire import webdriver  # noqa
 import ssl
 from undetected_chromedriver import ChromeOptions
+from sgpostal import sgpostal as parser
 
 try:
     _create_unverified_https_context = (
@@ -104,12 +105,26 @@ def fetch_data():
         location_name = "".join(
             store_sel.xpath('//p[@class="section-title_header alpha"]/text()')
         ).strip()
-        street_address = ", ".join(
-            store_sel.xpath('//span[@itemprop="streetAddress"]/text()')
+        raw_address = ", ".join(
+            list(filter(str, [x.strip() for x in store_sel.xpath("//address//text()")]))
         ).strip()
+
         city = location_name
         state = "<MISSING>"
         zip = "".join(store_sel.xpath('//span[@itemprop="postalCode"]/text()')).strip()
+
+        formatted_addr = parser.parse_address_intl(raw_address)
+        street_address = formatted_addr.street_address_1
+        if street_address:
+            if formatted_addr.street_address_2:
+                street_address = street_address + ", " + formatted_addr.street_address_2
+        else:
+            if formatted_addr.street_address_2:
+                street_address = formatted_addr.street_address_2
+
+        state = "<MISSING>"
+        if not zip:
+            zip = formatted_addr.postcode
 
         country_code = "GB"
 
@@ -139,6 +154,7 @@ def fetch_data():
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hours_of_operation,
+            raw_address=raw_address,
         )
 
 

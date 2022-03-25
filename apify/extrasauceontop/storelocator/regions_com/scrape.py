@@ -5,6 +5,7 @@ from bs4 import BeautifulSoup as bs
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries, Grain_1_KM
 from sgscrape import simple_scraper_pipeline as sp
 from sglogging import sglog
+import html
 
 
 def extract_json(html_string):
@@ -74,14 +75,14 @@ def get_data():
             except Exception:
                 page_url = "<MISSING>"
 
-            location_name = location["title"]
+            location_name = html.unescape(location["title"])
             latitude = location["lat"]
             longitude = location["lng"]
 
             address = location["address"].split("<br />")[0]
             if bool(re.search("[a-zA-Z]", address)) is False:
                 address = "<MISSING>"
-            city = location["address"].split("<br />")[1].split(",")[0]
+            city = html.unescape(location["address"].split("<br />")[1].split(",")[0])
 
             state_parts = (
                 location["address"].split("<br />")[1].split(",")[1].split(" ")

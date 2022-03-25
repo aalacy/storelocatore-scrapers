@@ -48,10 +48,10 @@ def fetch_data(sgw: SgWriter):
 
         for j in js:
             raw_address = j.get("address")
-            city_key = str(j.get("province"))
-            city = params[city_key]["t"]
-            state_key = str(j.get("region"))
+            state_key = str(j.get("province"))
             state = params[state_key]["t"]
+            city_key = str(j.get("region"))
+            city = params[city_key]["t"]
             street_address = get_international(raw_address)
             postal = j.get("zipcode")
             country_code = "CN"

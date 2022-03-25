@@ -8,13 +8,17 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 
 def fetch_data(sgw: SgWriter):
     page_url = "https://www.serenaandlily.com/stores.html"
-    r = session.get(page_url)
+    r = session.get(page_url, headers=headers)
     tree = html.fromstring(r.text)
 
-    divs = tree.xpath("//div[@class='headline' and .//a[contains(@href, 'tel:')]]")
+    divs = tree.xpath(
+        "//div[contains(@class, '-region col-sm-6') and .//*[text()='BOOK US']]"
+    )
     for d in divs:
         line = d.xpath(".//text()")
         line = list(filter(None, [l.strip() for l in line]))
+        line.pop(0)
+
         cnt = 0
         for li in line:
             if "@" in li:
@@ -60,6 +64,20 @@ def fetch_data(sgw: SgWriter):
 
 if __name__ == "__main__":
     locator_domain = "https://www.serenaandlily.com/"
+
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:98.0) Gecko/20100101 Firefox/98.0",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+        "Accept-Language": "ru,en-US;q=0.7,en;q=0.3",
+        "Accept-Encoding": "gzip, deflate, br",
+        "Referer": "https://www.serenaandlily.com/",
+        "Connection": "keep-alive",
+        "Upgrade-Insecure-Requests": "1",
+        "Sec-Fetch-Dest": "document",
+        "Sec-Fetch-Mode": "navigate",
+        "Sec-Fetch-Site": "same-origin",
+        "Cache-Control": "max-age=0",
+    }
     session = SgRequests()
     with SgWriter(SgRecordDeduper(RecommendedRecordIds.PhoneNumberId)) as writer:
         fetch_data(writer)
