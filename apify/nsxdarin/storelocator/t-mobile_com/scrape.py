@@ -1,12 +1,18 @@
-import csv
-from sgzip import DynamicGeoSearch, SearchableCountries
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 logger = SgLogSetup().get_logger("t-mobile_com")
 
-search = DynamicGeoSearch(country_codes=[SearchableCountries.USA], max_radius_miles=50)
-search.initialize()
+search = DynamicGeoSearch(
+    country_codes=[SearchableCountries.USA],
+    max_search_distance_miles=50,
+    max_search_results=None,
+)
 
 session = SgRequests()
 headers = {
@@ -17,33 +23,6 @@ headers = {
     "loginin": "mytest016@outlook.com",
     "locale": "en_US",
 }
-
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
 
 
 def parse_hours(store):
@@ -64,7 +43,7 @@ def compute_location_type(store):
     hasTmobileStack = store["hasTmobileStack"]
     tags = store["storeTag"]
     if (
-        statusDefinition == None
+        statusDefinition is None
         and hasSprintStack is False
         and hasTmobileStack is False
     ):
@@ -87,7 +66,7 @@ def compute_location_type(store):
     ):
         return "T-Mobile Store (Sprint Repair Center)"
     else:
-        raise Exception("unable to determine location_type")
+        return "T-Mobile Store"
 
 
 def handle_missing(x):
@@ -97,69 +76,69 @@ def handle_missing(x):
 
 
 def fetch_data():
-    keys = set()
-    coord = search.next()
-    while coord:
-        llat, llng = coord
+    for llat, llng in search:
         url = (
             "https://onmyj41p3c.execute-api.us-west-2.amazonaws.com/prod/v2.1/getStoresByCoordinates?latitude="
             + str(llat)
             + "&longitude="
             + str(llng)
-            + "&count=50&radius=100&ignoreLoadin{%22id%22:%22gBar=false"
+            + "&count=50&radius=100&ignoreLoadingBar=false"
         )
-        stores = session.get(url, headers=headers).json()
-        result_coords = []
-        website = "t-mobile.com"
-        if "code" not in stores:
-            for store in stores:
-                if "name" in store:
-                    name = store["name"]
-                else:
-                    name = "<MISSING>"
-                store_id = store["id"]
-                location_type = compute_location_type(store)
-                if "url" in store:
-                    loc = store["url"]
-                else:
-                    loc = "<MISSING>"
-                phone = handle_missing(store["telephone"])
-                location = store["location"]
-                address = location["address"]
-                add = handle_missing(address["streetAddress"])
-                city = handle_missing(address["addressLocality"])
-                state = handle_missing(address["addressRegion"])
-                zc = handle_missing(address["postalCode"])
-                country = "US"
-                lat = location["latitude"]
-                lng = location["longitude"]
-                result_coords.append((lat, lng))
-                hours = parse_hours(store)
-                if store_id not in keys:
-                    keys.add(store_id)
-                    yield [
-                        website,
-                        loc,
-                        location_type,
-                        add,
-                        city,
-                        state,
-                        zc,
-                        country,
-                        store_id,
-                        phone,
-                        location_type,
-                        lat,
-                        lng,
-                        hours,
-                    ]
-        search.update_with(result_coords)
-        coord = search.next()
+        try:
+            stores = session.get(url, headers=headers).json()
+            website = "t-mobile.com"
+            if "code" not in stores:
+                for store in stores:
+                    if "name" in store:
+                        name = store["name"]
+                    else:
+                        name = "<MISSING>"
+                    store = store["id"]
+                    typ = compute_location_type(store)
+                    if "url" in store:
+                        loc = store["url"]
+                    else:
+                        loc = "<MISSING>"
+                    phone = handle_missing(store["telephone"])
+                    location = store["location"]
+                    address = location["address"]
+                    add = handle_missing(address["streetAddress"])
+                    city = handle_missing(address["addressLocality"])
+                    state = handle_missing(address["addressRegion"])
+                    zc = handle_missing(address["postalCode"])
+                    country = "US"
+                    lat = location["latitude"]
+                    lng = location["longitude"]
+                    hours = parse_hours(store)
+                    yield SgRecord(
+                        locator_domain=website,
+                        page_url=loc,
+                        location_name=name,
+                        street_address=add,
+                        city=city,
+                        state=state,
+                        zip_postal=zc,
+                        country_code=country,
+                        phone=phone,
+                        location_type=typ,
+                        store_number=store,
+                        latitude=lat,
+                        longitude=lng,
+                        hours_of_operation=hours,
+                    )
+        except:
+            pass
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(
+        deduper=SgRecordDeduper(
+            RecommendedRecordIds.StoreNumberId, duplicate_streak_failure_factor=-1
+        )
+    ) as writer:
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()

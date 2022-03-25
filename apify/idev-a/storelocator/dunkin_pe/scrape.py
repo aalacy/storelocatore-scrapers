@@ -5,7 +5,6 @@ from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from pyjsparser import parse
 import re
 from sgpostal.sgpostal import parse_address_intl
 
@@ -20,41 +19,36 @@ base_url = "https://dunkin.pe/locales"
 
 
 def _coord(links, raw_address):
-    is_found = False
-    selected_node = None
-    latitude = longitude = ""
-    try:
-        for link in links:
-            for prop in link["properties"]:
-                if prop["value"].get("value") == raw_address:
-                    is_found = True
-                    break
+    lat = lng = ""
+    for link in links:
+        _link = link.split("tag:")[0]
+        if raw_address in _link:
+            lat = (
+                _link.split("latitude")[1]
+                .split(",")[0]
+                .replace('"', "")
+                .replace(":", "")
+            )
+            lng = (
+                _link.split("longtitude")[1]
+                .split(",")[0]
+                .replace('"', "")
+                .replace(":", "")
+            )
+            if lat == "cb":
+                lat = ""
+                lng = ""
+            break
 
-            if is_found:
-                selected_node = link["properties"]
-                break
-        for node in selected_node:
-            if node["key"]["name"] == "latitude":
-                latitude = node["value"]["value"]
-
-            if node["key"]["name"] == "longtitude":
-                longitude = node["value"]["value"]
-    except:
-        pass
-
-    return latitude, longitude
+    return lat, lng
 
 
 def fetch_data():
     with SgRequests() as session:
         soup = bs(session.get(base_url, headers=_headers).text, "lxml")
-        res = (
-            soup.find("script", string=re.compile(r"window\.__NUXT__"))
-            .string.split("stores:")[1]
-            .split("stores_positions")[0]
-            .strip()[:-1]
-        )
-        links = parse(res)["body"][0]["expression"]["elements"]
+        links = soup.find(
+            "script", string=re.compile(r"window\.__NUXT__")
+        ).string.split("{storelocator_id:")[1:]
         logger.info(f"{len(links)} found")
         locations = soup.select("div.location-card")
         for _ in locations:
@@ -79,11 +73,11 @@ def fetch_data():
                 phone = _.select_one("a.call-order span").text.strip()
                 if phone == "-":
                     phone = ""
-            coord = _coord(links, raw_address)
+            lat, lng = _coord(links, raw_address)
             yield SgRecord(
                 page_url=base_url,
                 store_number=_["for"],
-                location_name=_.b.text.strip(),
+                location_name=_.select_one("div.location-header").text.strip(),
                 street_address=street_address,
                 city=addr.city,
                 state=addr.state,
@@ -91,8 +85,8 @@ def fetch_data():
                 country_code="Peru",
                 phone=phone,
                 locator_domain=locator_domain,
-                latitude=coord[0],
-                longitude=coord[1],
+                latitude=lat,
+                longitude=lng,
                 hours_of_operation=hours_of_operation,
                 raw_address=raw_address,
             )

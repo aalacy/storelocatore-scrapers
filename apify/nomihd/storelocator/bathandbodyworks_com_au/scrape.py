@@ -53,13 +53,18 @@ def fetch_data():
             street_address = street_address.replace("Ste", "Suite")
         city = formatted_addr.city
         if not city:
-            city = (
-                store["streetaddress"]
-                .split("Australia,")[1]
-                .strip()
-                .split(",")[0]
-                .strip()
-            )
+            if "Australia," in store["streetaddress"]:
+                city = (
+                    store["streetaddress"]
+                    .split("Australia,")[1]
+                    .strip()
+                    .split(",")[0]
+                    .strip()
+                )
+
+        if not city:
+            city = raw_address.split(",")[-2].strip()
+
         state = formatted_addr.state
         zip = formatted_addr.postcode
 

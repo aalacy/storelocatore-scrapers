@@ -1,16 +1,12 @@
 # -*- coding: utf-8 -*-
-
 from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-
 import time
 from lxml import html
 from sgselenium.sgselenium import SgChrome
-
 import ssl
 
 ssl._create_default_https_context = ssl._create_unverified_context
@@ -31,11 +27,12 @@ def fetch_data():
         "https://www.bathandbodyworks.com/middle-east-and-africa/global-locations-egypt.html",
     ]
 
-    with SgChrome(user_agent=user_agent) as driver:
+    for search_url in search_urls:
+        with SgChrome(user_agent=user_agent) as driver:
 
-        for search_url in search_urls:
+            log.info(search_url)
             driver.get(search_url)
-            time.sleep(5)
+            time.sleep(10)
             htmlpage = driver.page_source
             search_sel = html.fromstring(htmlpage, "lxml")
             stores = search_sel.xpath(
@@ -108,6 +105,7 @@ def scrape():
                     SgRecord.Headers.LOCATION_NAME,
                     SgRecord.Headers.CITY,
                     SgRecord.Headers.PHONE,
+                    SgRecord.Headers.COUNTRY_CODE,
                 }
             )
         )

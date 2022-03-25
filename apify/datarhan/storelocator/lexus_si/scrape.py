@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from lxml import etree
 
 from sgrequests import SgRequests
@@ -10,51 +11,53 @@ from sgscrape.sgwriter import SgWriter
 def fetch_data():
     session = SgRequests()
 
-    start_url = "https://www.lexus.si/contact/dealers/list"
+    start_urls = [
+        "https://kong-proxy-aws.toyota-europe.com/dxp/dealers/api/lexus/si/sl/drive/14.554764/46.094821?count=10&extraCountries=Sl&limitSearchDistance=0&isCurrentLocation=false&services=",
+        "https://kong-proxy-aws.toyota-europe.com/dxp/dealers/api/lexus/fi/fi/drive/22.898266/62.773976?count=10&extraCountries=&isCurrentLocation=false",
+    ]
     domain = "lexus.si"
-    hdr = {
-        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
-    }
-    response = session.get(start_url, headers=hdr)
-    dom = etree.HTML(response.text)
+    for start_url in start_urls:
+        data = session.get(start_url).json()
+        for poi in data["dealers"]:
+            loc_response = session.get(poi["url"])
+            hoo = ""
+            if loc_response.status_code == 200:
+                loc_dom = etree.HTML(loc_response.text)
+                hoo = loc_dom.xpath(
+                    '//p[strong[contains(text(), "SALON LEXUS")]]/text()'
+                )
+                if not hoo:
+                    hoo = loc_dom.xpath(
+                        '//h3[label[contains(text(), "Uudet autot")]]/following-sibling::ul//text()'
+                    )
+                hoo = [e.strip() for e in hoo if ": od" in e]
+                hoo = " ".join(hoo) if hoo else ""
+                if not hoo:
+                    hoo = loc_dom.xpath(
+                        '//h3[label[contains(text(), "Uudet autot")]]/following-sibling::ul//text()'
+                    )
+                    hoo = " ".join([e.strip() for e in hoo if e.strip()])
 
-    all_locations = dom.xpath('//a[@data-gt-action="view-dealer"]/@href')
-    for page_url in all_locations:
-        loc_response = session.get(page_url)
-        loc_dom = etree.HTML(loc_response.text)
+            item = SgRecord(
+                locator_domain=domain,
+                page_url=poi["url"],
+                location_name=poi["name"],
+                street_address=poi["address"]["address1"].replace(
+                    " (lokacija BTC)", ""
+                ),
+                city=poi["address"]["city"],
+                state=poi["address"]["region"],
+                zip_postal=poi["address"]["zip"],
+                country_code=poi["country"],
+                store_number=poi["localDealerID"],
+                phone=poi["phone"],
+                location_type="",
+                latitude=poi["address"]["geo"]["lat"],
+                longitude=poi["address"]["geo"]["lon"],
+                hours_of_operation=hoo,
+            )
 
-        location_name = loc_dom.xpath("//p/b/text()")[0]
-        raw_address = loc_dom.xpath('//div[@class="cmp-text "]/p/text()')[1:3]
-        raw_address = [e.strip() for e in raw_address]
-        phone = (
-            loc_dom.xpath('//p[b[contains(text(), "VAŠ PRODAJNI SVETOVALEC")]]/text()')[
-                1
-            ]
-            .split("T:")[-1]
-            .strip()
-        )
-        hoo = loc_dom.xpath('//div[@class="cmp-text "]/p/text()')[4:6]
-        hoo = " ".join([e.strip() for e in hoo])
-
-        item = SgRecord(
-            locator_domain=domain,
-            page_url=page_url,
-            location_name=location_name,
-            street_address=raw_address[0],
-            city=raw_address[-1].split()[1],
-            state="",
-            zip_postal=raw_address[-1].split()[0],
-            country_code="SI",
-            store_number="",
-            phone=phone,
-            location_type="",
-            latitude="",
-            longitude="",
-            hours_of_operation=hoo,
-            raw_address=", ".join(raw_address),
-        )
-
-        yield item
+            yield item
 
 
 def scrape():

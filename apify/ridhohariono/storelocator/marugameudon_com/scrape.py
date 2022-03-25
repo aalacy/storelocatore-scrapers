@@ -5,7 +5,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
-from sgscrape.sgpostal import parse_address_intl
+from sgscrape.sgpostal import parse_address_usa
 import re
 
 DOMAIN = "marugameudon.com"
@@ -24,14 +24,13 @@ session = SgRequests()
 def getAddress(raw_address):
     try:
         if raw_address is not None and raw_address != MISSING:
-            data = parse_address_intl(raw_address)
+            data = parse_address_usa(raw_address)
             street_address = data.street_address_1
             if data.street_address_2 is not None:
                 street_address = street_address + " " + data.street_address_2
             city = data.city
             state = data.state
             zip_postal = data.postcode
-
             if street_address is None or len(street_address) == 0:
                 street_address = MISSING
             if city is None or len(city) == 0:
@@ -54,19 +53,18 @@ def pull_content(url):
 
 
 def get_latlong(url):
-    longlat = re.search(r"!2d(-[\d]*\.[\d]*)\!3d(-?[\d]*\.[\d]*)", url)
-    if not longlat:
-        return "<MISSING>", "<MISSING>"
-    return longlat.group(2), longlat.group(1)
+    latlong = re.search(r"@(-?[\d]*\.[\d]*),(-?[\d]*\.[\d]*)", url)
+    if not latlong:
+        return MISSING, MISSING
+    return latlong.group(1), latlong.group(2)
 
 
 def fetch_data():
     log.info("Fetching store_locator data")
     soup = pull_content(LOCATION_URL)
-    contents = soup.find("section", {"class": "locations-wrapper clear"}).find_all(
-        "ul", {"class": "location clear"}
-    )
+    contents = soup.select("div.list-map")
     for row in contents:
+        page_url = row.find("h3").find("a")["href"]
         is_closed = row.find("p", {"class": "location-closed"})
         if is_closed and "Coming Soon" in is_closed.text:
             continue
@@ -77,7 +75,7 @@ def fetch_data():
         else:
             phone = row.find("a", {"class": "location-phone"}).text.strip()
             hours_of_operation = re.sub(
-                r"Labor.*",
+                r"Labor.*|Xmas.*",
                 "",
                 row.find("div", {"class": "location-schedule"})
                 .get_text(strip=True, separator=",")
@@ -93,12 +91,14 @@ def fetch_data():
         street_address, city, state, zip_postal = getAddress(raw_address)
         country_code = "US"
         store_number = MISSING
-        map_link = row.find("iframe")["src"]
+        map_link = row.find("p", {"class": "navigate-link full-button"}).find("a")[
+            "href"
+        ]
         latitude, longitude = get_latlong(map_link)
         log.info("Append {} => {}".format(location_name, street_address))
         yield SgRecord(
             locator_domain=DOMAIN,
-            page_url=LOCATION_URL,
+            page_url=page_url,
             location_name=location_name,
             street_address=street_address,
             city=city,
@@ -131,7 +131,6 @@ def scrape():
         for rec in results:
             writer.write_row(rec)
             count = count + 1
-
     log.info(f"No of records being processed: {count}")
     log.info("Finished")
 

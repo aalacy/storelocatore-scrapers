@@ -86,11 +86,20 @@ def fetch_data():
                     .strip(" ,")
                     .strip()
                 )
+                if len(street_address) <= 0:
+                    street_address = ", ".join(
+                        store_sel.xpath('//div[@class="street-block"]//text()')
+                    ).strip()
+
                 city = "".join(
                     store_sel.xpath(
                         '//div[@class="Box"]//div[@class="locality"]/text()'
                     )
                 )
+                if len(city) <= 0:
+                    city = "".join(
+                        store_sel.xpath('//div[@class="locality"]/text()')
+                    ).strip()
 
                 state = "<MISSING>"
                 zip = "".join(
@@ -98,14 +107,20 @@ def fetch_data():
                         '//div[@class="Box"]//div[@class="postal-code"]/text()'
                     )
                 )
+                if len(zip) <= 0:
+                    zip = "".join(
+                        store_sel.xpath('//div[@class="postal-code"]/text()')
+                    ).strip()
 
                 country_code = "GB"
 
-                phone = "".join(
-                    store_sel.xpath(
-                        '//div[@class="LocationInfo-telephone"]/div[@class="LocationInfo-value"]/text()'
-                    )
+                phone = store_sel.xpath(
+                    '//div[@class="LocationInfo-telephone"]/div[@class="LocationInfo-value"]/text()'
                 )
+                if len(phone) > 0:
+                    phone = phone[0]
+                else:
+                    phone = "<MISSING>"
 
                 hours = list(
                     filter(
@@ -118,6 +133,18 @@ def fetch_data():
                         ],
                     )
                 )
+                if len(hours) <= 0:
+                    hours = list(
+                        filter(
+                            str,
+                            [
+                                x.strip()
+                                for x in store_sel.xpath(
+                                    '//div[@class="LocationInfo LocationInfo--foodHours"]//span//text()'
+                                )
+                            ],
+                        )
+                    )
                 hours_of_operation = (
                     "; ".join(hours).replace("day; ", "day: ").replace(":;", ":")
                 )
@@ -125,6 +152,12 @@ def fetch_data():
                 map_link = "".join(store_sel.xpath('//a[contains(@href,"maps")]/@href'))
 
                 latitude, longitude = get_latlng(map_link)
+
+                if (
+                    "https://www.metropolitanpubcompany.com/best-pubs-for-rugby"
+                    in page_url
+                ):
+                    continue
 
                 yield SgRecord(
                     locator_domain=locator_domain,

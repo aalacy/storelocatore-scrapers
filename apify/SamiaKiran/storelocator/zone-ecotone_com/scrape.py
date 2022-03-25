@@ -33,7 +33,7 @@ def fetch_data():
         soup = BeautifulSoup(r.text, "html.parser")
         loclist = soup.findAll("marker")
         for loc in loclist:
-            location_name = strip_accents(loc["name"])
+            location_name = strip_accents(loc["name"]).replace("&#39;", "'")
             raw_address = loc["adresse_ang"] + " " + loc["adresse2"]
             raw_address = strip_accents(raw_address)
             phone = loc["telephone"]

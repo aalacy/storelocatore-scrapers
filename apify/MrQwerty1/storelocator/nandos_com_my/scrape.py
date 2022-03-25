@@ -36,6 +36,10 @@ def get_data(page_url, sgw: SgWriter):
     ).strip()
     raw_address = "".join(tree.xpath("//div[@class='copy']/h5/text()"))
     street_address, city, state, postal = get_international(raw_address)
+    if not city:
+        city = " ".join(raw_address.split(", ")[-1].split()[:-1])
+    if "1" in city:
+        city = SgRecord.MISSING
     phone = "".join(tree.xpath("//div[@class='copy']/h4/text()")).strip()
     text = "".join(tree.xpath("//script[contains(text(), 'var restaurant =')]/text()"))
     try:

@@ -3,78 +3,95 @@ from sgrequests import SgRequests
 from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
+from sgpostal import sgpostal as parser
+import json
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-import json
 
-website = "bdubs.in"
+website = "buffalowildwings.in"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
-session = SgRequests()
 headers = {
-    "Connection": "keep-alive",
-    "Cache-Control": "max-age=0",
-    "Upgrade-Insecure-Requests": "1",
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.159 Safari/537.36",
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-    "Accept-Language": "en-US,en-GB;q=0.9,en;q=0.8",
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36",
 }
 
 
 def fetch_data():
     # Your scraper here
-    search_url = "http://www.bdubs.in/en/locations.html?zip_code="
-    search_res = session.get(
-        "http://www.bdubs.in/assets/locations.json", headers=headers
-    )
 
-    store_list = json.loads(search_res.text)["Markers"]
+    search_url = "https://buffalowildwings.in/locations"
 
-    for store in store_list:
-        store_json = store["Store_Data"]
-        page_url = search_url
+    with SgRequests() as session:
+        search_res = session.get(search_url, headers=headers)
 
-        locator_domain = website
+        json_str = search_res.text.split("var allLocations = ")[1].split("];")[0] + "]"
 
-        full_address = store_json["Address"].split(",")
+        stores = json.loads(json_str)
 
-        street_address = ", ".join(full_address[:-2]).strip()
-        city = full_address[-2].strip()
-        state = full_address[-1].strip().split(" ")[0].strip()
-        zip = full_address[-1].strip().split(" ")[-1].strip()
-        country_code = "IN"
+        for no, store in enumerate(stores, 1):
 
-        location_name = store_json["Name"]
+            locator_domain = website
 
-        store_number = store["id"]
+            page_url = search_url
 
-        location_type = "<MISSING>"
-        phone = store_json["PhoneNumber"]
-        if phone and "," in phone:
-            phone = phone.split(",")[0].strip()
+            location_name = store["clientName"].strip()
 
-        hours = store_json["StoreHours"]
-        hours_of_operation = "<MISSING>"
-        if hours:
-            hours_of_operation = "; ".join(hours).strip()
+            location_type = "<MISSING>"
 
-        latitude, longitude = store_json["Latitude"], store_json["Longitude"]
+            raw_address = store["restaurantAddress"]
 
-        yield SgRecord(
-            locator_domain=locator_domain,
-            page_url=page_url,
-            location_name=location_name,
-            street_address=street_address,
-            city=city,
-            state=state,
-            zip_postal=zip,
-            country_code=country_code,
-            store_number=store_number,
-            phone=phone,
-            location_type=location_type,
-            latitude=latitude,
-            longitude=longitude,
-            hours_of_operation=hours_of_operation,
-        )
+            formatted_addr = parser.parse_address_intl(raw_address)
+            street_address = formatted_addr.street_address_1
+            if formatted_addr.street_address_2:
+                street_address = street_address + ", " + formatted_addr.street_address_2
+
+            if street_address is not None:
+                street_address = street_address.replace("Ste", "Suite")
+
+            city = formatted_addr.city
+
+            state = formatted_addr.state
+
+            zip = formatted_addr.postcode
+            if not zip:
+                zip = raw_address.split(" ")[-1].strip()
+
+            country_code = "IN"
+
+            phone = store["clientNumber"].split(",")[0].strip()
+
+            hour_info = store["clientSchedulingDetail"]
+
+            hours = []
+            for day in ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]:
+                start = hour_info[f"{day}RestStartTime"]
+                end = hour_info[f"{day}RestEndTime"]
+                hours.append(f"{day.upper()}: {start} - {end}")
+
+            hours_of_operation = "; ".join(hours)
+
+            store_number = store["recordId"]
+
+            latitude, longitude = store["addressLatitude"], store["addressLongitude"]
+            if latitude == longitude:
+                latitude = longitude = "<MISSING>"
+
+            yield SgRecord(
+                locator_domain=locator_domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+                raw_address=raw_address,
+            )
 
 
 def scrape():

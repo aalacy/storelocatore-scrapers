@@ -1,186 +1,135 @@
 # -*- coding: utf-8 -*-
-import csv
-from sgrequests import SgRequests
+from sgrequests import SgRequests, SgRequestError
 from sglogging import sglog
-import lxml.html
-from sgzip.dynamic import SearchableCountries
-from sgzip.static import static_coordinate_list
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 import json
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 
 website = "sourceforsports.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
 headers = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36",
-    "Accept": "*/*",
-    "X-Requested-With": "XMLHttpRequest",
+    "authority": "www.sourceforsports.com",
+    "sec-ch-ua": '" Not A;Brand";v="99", "Chromium";v="98", "Google Chrome";v="98"',
+    "accept": "application/json, text/plain, */*",
+    "sec-ch-ua-mobile": "?0",
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.102 Safari/537.36",
+    "sec-ch-ua-platform": '"Windows"',
+    "sec-fetch-site": "same-origin",
+    "sec-fetch-mode": "cors",
+    "sec-fetch-dest": "empty",
+    "referer": "https://www.sourceforsports.com/",
+    "accept-language": "en-US,en-GB;q=0.9,en;q=0.8",
 }
-
-
-def write_output(data):
-    with open("data.csv", mode="w", newline="", encoding="utf8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        temp_list = []  # ignoring duplicates
-        for row in data:
-            comp_list = [
-                row[2].strip(),
-                row[3].strip(),
-                row[4].strip(),
-                row[5].strip(),
-                row[6].strip(),
-                row[8].strip(),
-                row[10].strip(),
-            ]
-            if comp_list not in temp_list:
-                temp_list.append(comp_list)
-            writer.writerow(row)
-
-        log.info(f"No of records being processed: {len(temp_list)}")
 
 
 def fetch_data():
     # Your scraper here
-    loc_list = []
+    search_url = "https://www.sourceforsports.com/apps/api/stores"
 
-    search_url = "https://www.sourceforsports.com/api/stores/GetStoresLocatorResult?lat={}&lng={}&range=800&rand=8"
-    coords = static_coordinate_list(radius=200, country_code=SearchableCountries.USA)
-    ID_list = []
-    for lat, lng in coords:
-        stores_req = session.get(search_url.format(lat, lng), headers=headers)
-        stores_json = json.loads(
-            stores_req.text.replace('\\"', '"')
-            .replace("\\r\\n", "")
-            .strip()
-            .replace('"{', "{")
-            .replace('}"', "}")
+    search = DynamicGeoSearch(
+        country_codes=[SearchableCountries.USA],
+        expected_search_radius_miles=200,
+    )
+
+    for lat, lng in search:
+        log.info(f"fetching records for coordinates: {lat},{lng}")
+        params = (
+            ("coords", f"{lat},{lng}"),
+            ("radius", "-1"),
         )
-        if "store" in stores_json:
-            stores = stores_json["store"]
-            for store in stores:
-                store_number = store["StoreId"]
-                if store_number not in ID_list:
-                    ID_list.append(store_number)
-                    log.info(f"Pulling data for store ID: {store_number}")
-                    store_req = session.get(
-                        "https://www.sourceforsports.com/api/stores/GetStoreDetail?storeid="
-                        + store_number,
-                        headers=headers,
-                    )
-                    store = store_req.json()
+        stores_req = session.get(search_url, headers=headers, params=params)
+        if isinstance(stores_req, SgRequestError):
+            continue
+        stores = json.loads(stores_req.text)
+        for store in stores:
+            store_number = store["store_number"]
+            page_url = (
+                "https://www.sourceforsports.com/pages/" + store["landing_page_url"]
+            )
+            locator_domain = website
+            location_name = store["store_name"]
 
-                    page_url = (
-                        "https://www.sourceforsports.com/en-US/Stores/" + store["Url"]
-                    )
-                    locator_domain = website
-                    location_name = store["StoreName"]
+            street_address = store["address"]
 
-                    if location_name == "":
-                        location_name = "<MISSING>"
+            city = store["city"]
+            state = store["province"]
+            if state:
+                state = state.replace("CA-", "").strip()
+            zip = store["postal_code"]
 
-                    street_address = store["Address"]
+            country_code = store["country"]
 
-                    city = store["City"]
-                    state = store["Province"]
-                    zip = store["PostalCode"]
+            phone = store["phone"]
 
-                    country_code = store["Country"]
+            location_type = "<MISSING>"
+            hours = store["opening_hours"]
+            hours_list = []
+            for index in range(0, len(hours)):
+                if index == 0:
+                    day = "Sunday:"
+                if index == 1:
+                    day = "Monday:"
+                if index == 2:
+                    day = "Tuesday:"
+                if index == 3:
+                    day = "Wednesday:"
+                if index == 4:
+                    day = "Thursday:"
+                if index == 5:
+                    day = "Friday:"
+                if index == 6:
+                    day = "Saturday:"
 
-                    if country_code == "":
-                        country_code = "<MISSING>"
+                if hours[index]["start"] is None and hours[index]["end"] is None:
+                    time = "Closed"
+                else:
+                    time = hours[index]["start"] + " - " + hours[index]["end"]
 
-                    if street_address == "":
-                        street_address = "<MISSING>"
+                hours_list.append(day + time)
 
-                    if city == "":
-                        city = "<MISSING>"
+            hours_of_operation = "; ".join(hours_list).strip()
 
-                    if state == "":
-                        state = "<MISSING>"
+            latitude = store["latitude"]
+            longitude = store["longitude"]
+            search.found_location_at(lat, lng)
 
-                    if zip == "":
-                        zip = "<MISSING>"
-
-                    phone = store["LocalPhone"]
-
-                    location_type = "<MISSING>"
-                    if store["StoreHours"] is not None and len(store["StoreHours"]) > 0:
-                        hours_sel = lxml.html.fromstring(store["StoreHours"])
-                        hours = hours_sel.xpath(".//text()")
-                        hours_list = []
-                        for hour in hours:
-                            if len("".join(hour).strip()) > 0:
-                                hours_list.append("".join(hour).strip())
-
-                    hours_of_operation = (
-                        "; ".join(hours_list)
-                        .strip()
-                        .encode("ascii", "replace")
-                        .decode("utf-8")
-                        .replace("?", "-")
-                        .strip()
-                    )
-
-                    latitude = store["Latitude"]
-                    longitude = store["Longitude"]
-                    if latitude == "":
-                        latitude = "<MISSING>"
-                    if longitude == "":
-                        longitude = "<MISSING>"
-
-                    if hours_of_operation == "":
-                        hours_of_operation = "<MISSING>"
-                    if phone == "":
-                        phone = "<MISSING>"
-
-                    curr_list = [
-                        locator_domain,
-                        page_url,
-                        location_name,
-                        street_address,
-                        city,
-                        state,
-                        zip,
-                        country_code,
-                        store_number,
-                        phone,
-                        location_type,
-                        latitude,
-                        longitude,
-                        hours_of_operation,
-                    ]
-                    loc_list.append(curr_list)
-            # break
-
-    return loc_list
+            yield SgRecord(
+                locator_domain=locator_domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
 
 
 def scrape():
     log.info("Started")
-    data = fetch_data()
-    write_output(data)
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(
+            record_id=RecommendedRecordIds.StoreNumberId,
+            duplicate_streak_failure_factor=-1,
+        )
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    log.info(f"No of records being processed: {count}")
     log.info("Finished")
 
 

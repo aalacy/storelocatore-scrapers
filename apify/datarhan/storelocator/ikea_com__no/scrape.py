@@ -79,13 +79,10 @@ def fetch_data():
                 )
                 phone = phone[0] if phone else ""
                 if not phone:
-                    phone = (
-                        loc_dom.xpath(
-                            '//p[a[@href="https://freetrailer.com/no/"]]/text()'
-                        )[-1]
-                        .split("telefon")[-1]
-                        .strip()[:-1]
+                    phone = loc_dom.xpath(
+                        '//p[a[@href="https://freetrailer.com/no/"]]/text()'
                     )
+                    phone = phone[-1].split("telefon")[-1].strip()[:-1] if phone else ""
 
         geo = loc_dom.xpath('//a[contains(@href, "maps")]/@href')[0]
         if "/@" in geo:
@@ -115,6 +112,10 @@ def fetch_data():
         if not hoo:
             hoo = dom.xpath(
                 '//h2[contains(text(), "Åpningstider")]/following-sibling::p/text()'
+            )
+        if not hoo:
+            hoo = dom.xpath(
+                '//p[strong[contains(text(), "Varehuset")]]/following-sibling::p[1]//text()'
             )
         hoo = " ".join(hoo).split("Rest")[0].strip()
 

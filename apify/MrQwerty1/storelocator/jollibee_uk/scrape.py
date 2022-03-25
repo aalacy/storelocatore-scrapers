@@ -24,7 +24,11 @@ def get_data(slug, sgw: SgWriter):
     line = tree.xpath(
         "//div[@class='row sqs-row' and ./div[@class='col sqs-col-3 span-3']]/div[1]//p//text()"
     )
-    phone = line.pop()
+
+    check = line[-1]
+    phone = SgRecord.MISSING
+    if check[0].isdigit() and check[-1].isdigit():
+        phone = line.pop()
     postal = line.pop()
     city = line.pop()
     state = SgRecord.MISSING

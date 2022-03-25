@@ -5,8 +5,9 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
-from sgscrape.sgpostal import parse_address_usa
+from sgpostal.sgpostal import parse_address_usa
 import json
+from lxml import html
 
 DOMAIN = "paintedtree.com"
 LOCATION_URL = "https://paintedtree.com/all-locations/"
@@ -49,13 +50,16 @@ def getAddress(raw_address):
 def pull_content(url):
     log.info("Pull content => " + url)
     HEADERS["Referer"] = url
-    soup = bs(session.get(url, headers=HEADERS).content, "lxml")
-    return soup
+    r = session.get(url, headers=HEADERS)
+    return r
 
 
 def fetch_data():
     log.info("Fetching store_locator data")
-    soup = pull_content(LOCATION_URL)
+    r = pull_content(LOCATION_URL)
+    soup = bs(r.content, "lxml")
+    sel = html.fromstring(r.text, "lxml")
+
     contents = soup.select(
         "section div.elementor-section-wrap div.elementor-container.elementor-column-gap-default"
     )
@@ -68,7 +72,9 @@ def fetch_data():
         page_url = row.find("div", {"data-pafe-section-link": True})[
             "data-pafe-section-link"
         ]
-        store = pull_content(page_url).select(
+        r1 = pull_content(page_url)
+        soup1 = bs(r1.content, "lxml")
+        store = soup1.select(
             "div.elementor-column.elementor-col-50.elementor-top-column.elementor-element"
         )[1]
         location_name = row.find("h2", {"class": "elementor-cta__title"}).text.strip()
@@ -81,9 +87,12 @@ def fetch_data():
         ).text.strip()
         country_code = "US"
         store_number = MISSING
-        hours_of_operation = store.find(
-            "p", {"class": "elementor-heading-title"}
-        ).get_text(strip=True, separator=",")
+        hours_of_operation = ""
+        hoo = sel.xpath(
+            '//p[contains(@class, "elementor-heading-title") and contains(text(), "Open Daily")]/text()'
+        )
+        hoo = "".join(hoo)
+        hours_of_operation = hoo or ""
         latitude = coords[num]["latLang"]["lat"]
         longitude = coords[num]["latLang"]["lng"]
         location_type = MISSING
@@ -119,4 +128,5 @@ def scrape():
     log.info("Finished")
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()

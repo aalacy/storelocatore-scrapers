@@ -48,7 +48,14 @@ def fetch_data():
         try:
             phone = r.text.split('<span itemprop="telephone">', 1)[1].split("<", 1)[0]
         except:
-            phone = "<MISSING>"
+            try:
+                phone = (
+                    r.text.split('<span id="unclickable">', 1)[1]
+                    .split("<", 1)[0]
+                    .strip()
+                )
+            except:
+                phone = "<MISSING>"
         yield SgRecord(
             locator_domain="https://hotelspreference.com/",
             page_url=link,

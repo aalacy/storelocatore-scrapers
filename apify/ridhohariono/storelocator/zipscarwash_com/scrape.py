@@ -12,7 +12,7 @@ import re
 
 DOMAIN = "zipscarwash.com"
 BASE_URL = "https://www.zipscarwash.com/"
-LOCATION_URL = "https://www.zipscarwash.com/drive-through-car-wash-locations?code={code}&latitude={latitude}&longitude={longitude}&distance=50"
+LOCATION_URL = "https://www.zipscarwash.com/drive-through-car-wash-locations?code={code}&latitude={latitude}&longitude={longitude}&distance={distance}"
 HEADERS = {
     "Accept": "application/json, text/plain, */*",
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
@@ -66,8 +66,8 @@ def pull_content(url, num=0):
 
 def fetch_data():
     log.info("Fetching store_locator data")
-    max_results = 10
-    max_distance = 50
+    max_distance = 750
+    max_results = 200
     search = DynamicZipAndGeoSearch(
         country_codes=[SearchableCountries.USA],
         max_search_distance_miles=max_distance,
@@ -79,7 +79,9 @@ def fetch_data():
             "Searching: %s, %s | Items remaining: %s"
             % (lat, long, search.items_remaining())
         )
-        page_url = LOCATION_URL.format(code=zipcode, latitude=lat, longitude=long)
+        page_url = LOCATION_URL.format(
+            code=zipcode, latitude=lat, longitude=long, distance=max_distance
+        )
         soup = pull_content(page_url)
         if not soup:
             log.info(f"Skipping invalid url => {page_url}")
@@ -90,6 +92,14 @@ def fetch_data():
                 "class": "locations__results-unit flex align-items-center justify-between"
             },
         )
+        latlong_content = soup.find(
+            "script", string=re.compile(r"initializeMap.*")
+        ).string
+        latlong = re.findall(
+            r"new_pin\.lat\s+=\s+'(-?[\d]*\.[\d]*)';\n\t+new_pin\.long\s+=\s+'(-?[\d]*\.[\d]*)';",
+            latlong_content,
+        )
+        num = 0
         for row in store_content:
             location_name = row.find(
                 "div", {"class": "locations__results-name"}
@@ -103,17 +113,8 @@ def fetch_data():
             phone = MISSING
             store_number = MISSING
             location_type = MISSING
-            try:
-                latlong = (
-                    row.find("a", {"href": re.compile(r"\/maps\/place.*")})["href"]
-                    .replace("https://www.google.com/maps/place/", "")
-                    .split(",")
-                )
-                latitude = latlong[0]
-                longitude = latlong[1]
-            except:
-                latitude = MISSING
-                longitude = MISSING
+            latitude = latlong[num][0]
+            longitude = latlong[num][1]
             hours_of_operation = row.find(
                 "div", {"class": "locations__results-hours"}
             ).get_text(strip=True, separator=",")
@@ -135,6 +136,7 @@ def fetch_data():
                 hours_of_operation=hours_of_operation,
                 raw_address=raw_address,
             )
+            num += 1
 
 
 def scrape():
@@ -147,7 +149,7 @@ def scrape():
                     SgRecord.Headers.RAW_ADDRESS,
                 }
             ),
-            duplicate_streak_failure_factor=250000,
+            duplicate_streak_failure_factor=-1,
         )
     ) as writer:
         results = fetch_data()

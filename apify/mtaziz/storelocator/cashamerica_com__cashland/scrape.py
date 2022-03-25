@@ -7,7 +7,6 @@ from sgrequests import SgRequests
 from sglogging import SgLogSetup
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-import pgeocode
 import ssl
 
 
@@ -144,15 +143,16 @@ def fetch_records(key, idx, url_data, sgw: SgWriter):
 
                 # Zip Code
                 zipcode = store_data["address"]["zipCode"]
-                nomi = pgeocode.Nominatim("us")
-                if nomi.query_postal_code(str(zipcode))["country_code"] != "US":
-                    continue
                 if "00000" in store_data["address"]["zipCode"]:
                     zipcode = MISSING
                 zipcode = zipcode if zipcode else MISSING
 
                 # Country Code
-                country_code = "US"
+                country_code = None
+                if "#" in location_name:
+                    country_code = "<INACCESSIBLE>"
+                else:
+                    country_code = "US"
 
                 # Store Number
                 store_number = (
@@ -290,7 +290,6 @@ def fetch_data(sgw: SgWriter):
 
 
 def scrape():
-
     with SgWriter(
         SgRecordDeduper(
             SgRecordID(

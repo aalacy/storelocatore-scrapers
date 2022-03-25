@@ -57,7 +57,10 @@ def fetch_data(sgw: SgWriter):
             street_address = (loc["Address1"] + " " + loc["Address2"]).strip()
         except:
             street_address = loc["Address1"]
-        city = loc["City"].replace("Cronulla", "")
+        try:
+            city = loc["City"].replace("Cronulla", "")
+        except:
+            city = loc["City"]
         state = loc["State"]
         zip_code = loc["Postcode"]
         country_code = loc["Country"]
