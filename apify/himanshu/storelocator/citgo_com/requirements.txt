@@ -5,4 +5,4 @@ beautifulsoup4==4.7.1
 lxml==4.6.2
 sgscrape==0.2.6
 sgpostal==0.1.0
-sgzip==0.10.9
+sgzip==0.10.10

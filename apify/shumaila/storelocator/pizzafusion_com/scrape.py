@@ -43,10 +43,10 @@ def fetch_data():
         link = links[n]
         try:
             try:
-                page = session.get(link, headers=headers)
+                driver.get(link)
             except:
                 pass
-            soup = BeautifulSoup(page.text, "html.parser")
+            soup = BeautifulSoup(driver.page_source, "html.parser")
             td = soup.find("td")
             td = str(td)
             td = re.sub(cleanr, " ", td)
@@ -56,10 +56,10 @@ def fetch_data():
             td = td.replace("||", "|")
         except:
             try:
-                page = session.get(link, headers=headers)
+                driver.get(link)
             except:
                 continue
-            soup = BeautifulSoup(page.text, "html.parser")
+            soup = BeautifulSoup(driver.page_source, "html.parser")
             maindiv = soup.find("div", {"id": "117"})
             divs = maindiv.find("div")
             td = divs.find("p")

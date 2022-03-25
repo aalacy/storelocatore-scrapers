@@ -8,7 +8,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 def fetch_data(sgw: SgWriter):
 
     locator_domain = "http://pressecafe.com/fr/"
-    api_url = "http://pressecafe.com/fr/stores/?ajax=1&lat=45.5086699&lng=-73.5539925&dist=5000000"
+    api_url = "http://pressecafe.com/fr/stores/?ajax=1&lat=0.37540639340998183&lng=0&dist=19895123.67285176"
     session = SgRequests()
 
     r = session.get(api_url)
@@ -40,6 +40,13 @@ def fetch_data(sgw: SgWriter):
         if hours_of_operation.find("NA") != -1:
             hours_of_operation = hours_of_operation.replace("NA", "<MISSING>").strip()
         if hours_of_operation.count("<MISSING>") == 7:
+            hours_of_operation = "<MISSING>"
+        if (
+            hours_of_operation.find(
+                "Monday  Tuesday  Wednesday  Thursday  Friday  Saturday  Sunday"
+            )
+            != -1
+        ):
             hours_of_operation = "<MISSING>"
 
         row = SgRecord(

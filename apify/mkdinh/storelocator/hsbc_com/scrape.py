@@ -20,7 +20,6 @@ headers = {
 
 
 def fetch_data():
-    # Your scraper here
     search_urls = [
         "https://www.hsbc.com.ar/mapa/, https://www.hsbc.com.ar/branch-list/,Argentina",
         "https://www.hsbc.bm/branch-finder/, https://www.hsbc.bm/branch-list/, Bermuda",
@@ -76,7 +75,6 @@ def fetch_data():
             stores = json.loads(stores_req.text)[key]
 
             for store in stores:
-                page_url = url_country.split(",")[1].strip()
                 locator_domain = website
                 location_name = store["name"]
 
@@ -84,12 +82,21 @@ def fetch_data():
                 state = store["address"].get("stateRegionCounty", "<MISSING>")
                 zip = store["address"].get("postcode", "<MISSING>")
                 country_code = url_country.split(",")[2].strip()
+
+                cleaned_zip = re.sub(
+                    rf"\s*({country_code}|SWIFT:)\s*", "", zip, re.IGNORECASE
+                )
+                if re.search("po box", cleaned_zip, re.IGNORECASE):
+                    cleaned_zip = SgRecord.MISSING
+
                 phone = ""
                 if "phoneNumber" in store:
                     phones = store["phoneNumber"]
-                    phone = phones.get("existingCustomers") or phones.get(
+                    phone_nums = phones.get("existingCustomers") or phones.get(
                         "newCustomers"
                     )
+
+                    phone = re.split(r"\s*\/\s*", str(phone_nums))[0]
 
                 street_address = ""
                 if "street" in store["address"]:
@@ -120,13 +127,25 @@ def fetch_data():
                     hours = store["openingTimes"]
                     for day in hours.keys():
                         if "open" in hours[day] and "close" in hours[day]:
-                            time = hours[day]["open"] + "-" + hours[day]["close"]
-                            if "N/A" not in time:
-                                hours_list.append(day + ":" + time)
+                            try:
+                                time = hours[day]["open"] + "-" + hours[day]["close"]
+                                if "N/A" not in time:
+                                    hours_list.append(day + ":" + time)
+                            except Exception as e:
+                                log.error(e)
+                                raise e
 
                 hours_of_operation = "; ".join(hours_list).strip()
                 latitude = store["coordinates"]["lat"]
                 longitude = store["coordinates"]["lng"]
+                url_formatted_name = re.sub(
+                    r"\s+", "-", re.sub(r"[^a-zA-Z0-9\s]", "", location_name.strip())
+                ).lower()
+                page_url = (
+                    f"{url_country.split(',')[1].strip()}{url_formatted_name}"
+                    if location_type == "Branch"
+                    else None
+                )
 
                 yield SgRecord(
                     locator_domain=locator_domain,
@@ -135,7 +154,7 @@ def fetch_data():
                     street_address=street_address,
                     city=city,
                     state=state,
-                    zip_postal=zip,
+                    zip_postal=cleaned_zip,
                     country_code=country_code,
                     store_number=store_number,
                     phone=phone,

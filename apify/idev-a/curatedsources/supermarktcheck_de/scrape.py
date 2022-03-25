@@ -144,8 +144,12 @@ max_workers = 1
 
 def fetchConcurrentSingle(link):
     page_url = locator_domain + link.a["href"]
+    logger.info(page_url)
     response = request_with_retries(page_url)
-    return page_url, bs(response.text, "lxml")
+    if response.status_code == 200:
+        return page_url, bs(response.text, "lxml")
+
+    return None
 
 
 def fetchConcurrentList(list, occurrence=max_workers):
@@ -203,7 +207,6 @@ def fetch_data():
                         break
                     page += 1
                     for page_url, sp2 in fetchConcurrentList(locations):
-                        logger.info(page_url)
                         raw_address = " ".join(
                             list(sp2.select_one("div.card-body p").stripped_strings)
                         )
