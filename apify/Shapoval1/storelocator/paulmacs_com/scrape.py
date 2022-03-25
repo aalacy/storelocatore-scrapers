@@ -9,7 +9,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 def fetch_data(sgw: SgWriter):
 
     locator_domain = "https://paulmacs.com/"
-    api_url = "https://store.petvalu.ca/modules/multilocation/?near_location=K6V%203G9&threshold=4000&geocoder_components=country:CA&distance_unit=km&limit=20&services__in=&language_code=en-us&published=1&within_business=true"
+    api_url = "https://store.petvalu.ca/modules/multilocation/?near_location=K6V%203G9&threshold=4000&geocoder_components=country:CA&distance_unit=km&limit=20000&services__in=&language_code=en-us&published=1&within_business=true"
     session = SgRequests()
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
@@ -18,7 +18,7 @@ def fetch_data(sgw: SgWriter):
     js = r.json()["objects"]
     for j in js:
 
-        page_url = j.get("location_url") or "<MISSING>"
+        page_url = j.get("location_url") or "https://store.petvalu.ca/"
         location_name = j.get("location_name") or "<MISSING>"
         street_address = j.get("street") or "<MISSING>"
         state = j.get("state") or "<MISSING>"
@@ -29,15 +29,21 @@ def fetch_data(sgw: SgWriter):
         latitude = j.get("lat") or "<MISSING>"
         longitude = j.get("lon") or "<MISSING>"
         phone = j.get("phonemap").get("phone") or "<MISSING>"
-        r = session.get(page_url, headers=headers)
-        tree = html.fromstring(r.text)
-        hours_of_operation = (
-            " ".join(tree.xpath('//div[@class="hours-box"]/div//text()'))
-            .replace("\n", "")
-            .strip()
-        )
-        hours_of_operation = " ".join(hours_of_operation.split()) or "<MISSING>"
-        raw_address = j.get("formatted_address")
+        try:
+            r = session.get(page_url, headers=headers)
+            tree = html.fromstring(r.text)
+            hours_of_operation = (
+                " ".join(tree.xpath('//div[@class="hours-box"]/div//text()'))
+                .replace("\n", "")
+                .strip()
+            )
+            hours_of_operation = " ".join(hours_of_operation.split()) or "<MISSING>"
+            raw_address = j.get("formatted_address")
+        except:
+            hours_of_operation = "<MISSING>"
+            raw_address = f"{street_address} {city}, {state} {postal}".replace(
+                "<MISSING>", ""
+            ).strip()
 
         row = SgRecord(
             locator_domain=locator_domain,
@@ -62,5 +68,9 @@ def fetch_data(sgw: SgWriter):
 
 if __name__ == "__main__":
     session = SgRequests()
-    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))) as writer:
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID({SgRecord.Headers.STORE_NUMBER, SgRecord.Headers.PAGE_URL})
+        )
+    ) as writer:
         fetch_data(writer)

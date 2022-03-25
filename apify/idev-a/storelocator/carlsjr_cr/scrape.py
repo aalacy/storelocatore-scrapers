@@ -97,11 +97,13 @@ def fetch_data():
             street_address = addr.street_address_1
             if addr.street_address_2:
                 street_address += ", " + addr.street_address_2
+            city = addr.city
+            if "San Jose" in raw_address:
+                city = "San Jose"
             yield SgRecord(
                 location_name=location_name,
                 street_address=street_address,
-                city=addr.city,
-                state=addr.state,
+                city=city,
                 zip_postal=addr.postcode,
                 country_code="Costa Rica",
                 latitude=latitude,
