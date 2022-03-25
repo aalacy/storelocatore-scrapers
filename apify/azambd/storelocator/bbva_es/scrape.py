@@ -38,7 +38,7 @@ def get_stores(sitemap_url):
     for location in locations:
         page_url = location.text
         store_id = page_url.split("/")[-1]
-        if store_id.isnumeric() == False:
+        if store_id.isnumeric() is False:
             continue
 
         stores.append(
