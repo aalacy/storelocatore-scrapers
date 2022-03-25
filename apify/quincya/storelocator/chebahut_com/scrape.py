@@ -34,7 +34,7 @@ def fetch_data(sgw: SgWriter):
         latitude = store["lat"]
         longitude = store["lon"]
 
-        rows = raw_hours = store["formatted_hours"]["primary"]["grouped_days"]
+        rows = store["formatted_hours"]["primary"]["grouped_days"]
         hours_of_operation = ""
 
         for row in rows:
