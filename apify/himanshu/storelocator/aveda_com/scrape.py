@@ -58,7 +58,6 @@ def get_data(coords, sgw: SgWriter):
             f"https://www.aveda.com/locator/get_the_facts.tmpl?DOOR_ID={store_number}"
         )
         location_name = j.get("ACTUAL_DOORNAME") or "<MISSING>"
-        print(location_name)
         street_address = j.get("ACTUAL_ADDRESS") or "<MISSING>"
         city = j.get("ACTUAL_CITY") or "<MISSING>"
         state = j.get("STATE") or "<MISSING>"
