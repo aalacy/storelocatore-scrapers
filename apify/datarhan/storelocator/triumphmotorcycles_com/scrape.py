@@ -77,6 +77,14 @@ def fetch_data():
                 if hoo
                 else ""
             )
+            if not hours_of_operation:
+                loc_response = session.get(page_url, headers=hdr)
+                if loc_response.status_code == 200:
+                    loc_dom = etree.HTML(loc_response.text)
+                    hoo = loc_dom.xpath(
+                        '//ul[@class="dealer-location__opening-times"]//text()'
+                    )
+                    hours_of_operation = " ".join([e.strip() for e in hoo if e.strip()])
 
             item = SgRecord(
                 locator_domain=domain,
