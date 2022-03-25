@@ -72,6 +72,7 @@ def fetch_data():
             hours_of_operation = ""
             for day, time in zip(day_list, time_list):
                 hours_of_operation = hours_of_operation + " " + day.text + time.text
+            hours_of_operation = hours_of_operation.replace("\n", " ")
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url=page_url,
