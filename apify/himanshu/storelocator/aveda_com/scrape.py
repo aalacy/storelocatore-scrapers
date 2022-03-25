@@ -73,13 +73,6 @@ def get_data(coords, sgw: SgWriter):
         latitude = j.get("LATITUDE") or "<MISSING>"
         longitude = j.get("LONGITUDE") or "<MISSING>"
         hours_of_operation = "<INACCESSIBLE>"
-        if (
-            country_code != "USA"
-            and country_code != "Canada"
-            and country_code != "United Kingdom"
-            and country_code != "Republic of Ireland"
-        ):
-            continue
 
         row = SgRecord(
             locator_domain=locator_domain,
@@ -102,21 +95,18 @@ def get_data(coords, sgw: SgWriter):
 
 
 def fetch_data(sgw: SgWriter):
-    coords = DynamicGeoSearch(
-        country_codes=[
-            SearchableCountries.USA,
-            SearchableCountries.CANADA,
-            SearchableCountries.BRITAIN,
-        ],
-        max_search_distance_miles=100,
-        expected_search_radius_miles=100,
-        max_search_results=None,
-    )
+    for country_code in SearchableCountries.ALL:
+        coords = DynamicGeoSearch(
+            country_codes=[f"{country_code}"],
+            max_search_distance_miles=100,
+            expected_search_radius_miles=100,
+            max_search_results=None,
+        )
 
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {executor.submit(get_data, url, sgw): url for url in coords}
-        for future in futures.as_completed(future_to_url):
-            future.result()
+        with futures.ThreadPoolExecutor(max_workers=10) as executor:
+            future_to_url = {executor.submit(get_data, url, sgw): url for url in coords}
+            for future in futures.as_completed(future_to_url):
+                future.result()
 
 
 if __name__ == "__main__":
