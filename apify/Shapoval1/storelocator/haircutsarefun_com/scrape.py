@@ -9,7 +9,7 @@ from sgpostal.sgpostal import International_Parser, parse_address
 def fetch_data(sgw: SgWriter):
 
     locator_domain = "https://www.haircutsarefun.com"
-    api_url = "https://api.storepoint.co/v1/161a6e9c8e0c90/locations?lat=40.7500&long=-73.9900&radius=50000"
+    api_url = "https://api.storepoint.co/v1/161a6e9c8e0c90/locations?lat=40.7500&long=-73.9900&radius=3000000"
     session = SgRequests()
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
@@ -18,7 +18,7 @@ def fetch_data(sgw: SgWriter):
     js = r.json()["results"]["locations"]
     for j in js:
 
-        page_url = j.get("website")
+        page_url = j.get("website") or "https://www.haircutsarefun.com/store-locator"
         ad = "".join(j.get("streetaddress"))
         location_name = j.get("name")
         a = parse_address(International_Parser(), ad)
@@ -26,6 +26,8 @@ def fetch_data(sgw: SgWriter):
             f"{a.street_address_1} {a.street_address_2}".replace("None", "").strip()
             or "<MISSING>"
         )
+        if street_address == "<MISSING>":
+            continue
         state = a.state or "<MISSING>"
         postal = a.postcode or "<MISSING>"
         country_code = ad.split(",")[-1].strip()
@@ -75,5 +77,11 @@ def fetch_data(sgw: SgWriter):
 
 if __name__ == "__main__":
     session = SgRequests()
-    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))) as writer:
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.STREET_ADDRESS, SgRecord.Headers.LOCATION_NAME}
+            )
+        )
+    ) as writer:
         fetch_data(writer)
