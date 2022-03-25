@@ -120,9 +120,7 @@ def fetch_data():
                 store["street"] = (
                     store["address"].replace(store["province"], "").strip()
                 )
-            store["phone"] = (
-                store["tel"].split()[0] if store.get("tel") else SgRecord.MISSING
-            )
+            phone = store["tel"].split()[0].split(",")[0] if store.get("tel") else ""
             search.found_location_at(store["lat"], store["lng"])
             yield SgRecord(
                 page_url="https://www.7eleven.co.th/find-store",
@@ -134,7 +132,7 @@ def fetch_data():
                 country_code="Thailand",
                 latitude=store["lat"],
                 longitude=store["lng"],
-                phone=store["phone"],
+                phone=phone,
                 locator_domain=locator_domain,
                 raw_address=store["address"],
             )
