@@ -73,7 +73,7 @@ def parse_json(location, page_url):
 
 
 def fetch_data():
-    with SgChrome(is_headless=False) as driver:
+    with SgChrome() as driver:
 
         driver.get(sitemap)
         soup = bs(driver.page_source, "html.parser")

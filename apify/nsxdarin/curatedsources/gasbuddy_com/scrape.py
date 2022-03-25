@@ -1,11 +1,20 @@
-from sgrequests import SgRequests
+from typing import Iterable, Tuple, Callable, List
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sgscrape.pause_resume import CrawlStateSingleton
+from sgrequests.sgrequests import SgRequests
+from sgzip.dynamic import SearchableCountries, Grain_1_KM
+from sgzip.parallel import DynamicSearchMaker, ParallelDynamicSearch, SearchIteration
 import json
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries, Grain_1_KM
-from sgscrape import simple_scraper_pipeline as sp
-from bs4 import BeautifulSoup as bs
 from sglogging import sglog
+from bs4 import BeautifulSoup as bs
+
 
 log = sglog.SgLogSetup().get_logger(logger_name="gasbuddy")
+page_urls: List[str] = []
+proxy_url = "http://groups-RESIDENTIAL,country-us:{}@proxy.apify.com:8000/"
 
 
 def extract_json(html_string):
@@ -34,125 +43,59 @@ def extract_json(html_string):
     return json_objects
 
 
-def set_session(search_code):
-    session = SgRequests(retries_with_fresh_proxy_ip=5)
-    url = "https://www.gasbuddy.com/graphql"
-    headers = {
-        "User-Agent": "PostmanRuntime/7.19.0",
-        "Upgrade-Insecure-Requests": "1",
-        "DNT": "1",
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-        "Accept-Language": "en-US,en;q=0.5",
-        "Accept-Encoding": "gzip, deflate",
-    }
-    data = {
-        "query": "query LocationBySearchTerm($brandId: Int, $cursor: String, $fuel: Int, $lat: Float, $lng: Float, $maxAge: Int, $search: String) {\n  locationBySearchTerm(lat: $lat, lng: $lng, search: $search) {\n    countryCode\n    displayName\n    latitude\n    longitude\n    regionCode\n    stations(brandId: $brandId, cursor: $cursor, fuel: $fuel, maxAge: $maxAge) {\n      count\n      cursor {\n        next\n        __typename\n      }\n      results {\n        address {\n          country\n          line_1\n          line_2\n          locality\n          postal_code\n          region\n          __typename\n        }\n        badges {\n          badgeId\n          callToAction\n          campaignId\n          clickTrackingUrl\n          description\n          detailsImageUrl\n          detailsImpressionTrackingUrls\n          imageUrl\n          impressionTrackingUrls\n          targetUrl\n          title\n          __typename\n        }\n        brandings {\n          brand_id\n          branding_type\n          __typename\n        }\n        brands {\n          brand_id\n          image_url\n          name\n          __typename\n        }\n        emergency_status {\n          has_diesel {\n            nick_name\n            report_status\n            update_date\n            __typename\n          }\n          has_gas {\n            nick_name\n            report_status\n            update_date\n            __typename\n          }\n          has_power {\n            nick_name\n            report_status\n            update_date\n            __typename\n          }\n          __typename\n        }\n        enterprise\n        fuels\n        id\n        name\n        offers {\n          discounts {\n            grades\n            pwgb_discount\n            __typename\n          }\n          types\n          __typename\n        }\n        pay_status {\n          is_pay_available\n          __typename\n        }\n        prices {\n          cash {\n            nickname\n            posted_time\n            price\n            __typename\n          }\n          credit {\n            nickname\n            posted_time\n            price\n            __typename\n          }\n          discount\n          fuel_product\n          __typename\n        }\n        ratings_count\n        star_rating\n        __typename\n      }\n      __typename\n    }\n    trends {\n      areaName\n      today\n      todayLow\n      trend\n      __typename\n    }\n    __typename\n  }\n}\n",
-        "variables": {"fuel": 1, "maxAge": 0, "search": search_code},
-        "operationName": "LocationBySearchTerm",
-    }
+class ExampleSearchIteration(SearchIteration):
+    def __init__(self, http: SgRequests):
+        self.__http = http  # noqa
+        self.__state = CrawlStateSingleton.get_instance()  # noqa
 
-    response = session.post(url, headers=headers, json=data).json()
+    def do(
+        self,
+        coord: Tuple[float, float],  # noqa
+        zipcode: str,
+        current_country: str,  # noqa
+        items_remaining: int,  # noqa
+        found_location_at: Callable[[float, float], None],  # noqa
+    ) -> Iterable[SgRecord]:  # noqa
 
-    return [session, headers, response]
-
-
-def set_get_session(page_url):
-    x = 0
-    while True:
-        x = x + 1
-        if x == 100:
-            raise Exception
-        try:
-            session = SgRequests(retries_with_fresh_proxy_ip=5)
-            page_response = session.get(
-                page_url, headers={"User-Agent": "PostmanRuntime/7.19.0"}
-            ).text
-            break
-        except Exception:
-            continue
-
-    return [session, page_response]
-
-
-def get_data():
-    url = "https://www.gasbuddy.com/graphql"
-    search = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA, SearchableCountries.CANADA],
-        granularity=Grain_1_KM(),
-    )
-
-    x = 0
-    y = 0
-
-    error_count = 0
-    page_urls = []
-    for search_code in search:
-        log.info(search_code)
-        x = x + 1
-        if len(str(search_code)) == 4:
-            search_code = "0" + str(search_code)
-
-        if x == 1:
-            response_stuff = set_session(search_code)
-            session = response_stuff[0]
-            headers = response_stuff[1]
-            response = response_stuff[2]
-
-        elif y == 400:
-            y = 0
-            response_stuff = set_session(search_code)
-            session = response_stuff[0]
-            headers = response_stuff[1]
-            response = response_stuff[2]
-
-        else:
+        log.info(zipcode)
+        breaker = 0
+        while True:
+            breaker = breaker + 1
+            if breaker == 10:
+                raise Exception
             try:
+                url = "https://www.gasbuddy.com/graphql"
+                headers = {
+                    "User-Agent": "PostmanRuntime/7.19.0",
+                    "Upgrade-Insecure-Requests": "1",
+                    "DNT": "1",
+                    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+                    "Accept-Language": "en-US,en;q=0.5",
+                    "Accept-Encoding": "gzip, deflate",
+                }
                 data = {
                     "query": "query LocationBySearchTerm($brandId: Int, $cursor: String, $fuel: Int, $lat: Float, $lng: Float, $maxAge: Int, $search: String) {\n  locationBySearchTerm(lat: $lat, lng: $lng, search: $search) {\n    countryCode\n    displayName\n    latitude\n    longitude\n    regionCode\n    stations(brandId: $brandId, cursor: $cursor, fuel: $fuel, maxAge: $maxAge) {\n      count\n      cursor {\n        next\n        __typename\n      }\n      results {\n        address {\n          country\n          line_1\n          line_2\n          locality\n          postal_code\n          region\n          __typename\n        }\n        badges {\n          badgeId\n          callToAction\n          campaignId\n          clickTrackingUrl\n          description\n          detailsImageUrl\n          detailsImpressionTrackingUrls\n          imageUrl\n          impressionTrackingUrls\n          targetUrl\n          title\n          __typename\n        }\n        brandings {\n          brand_id\n          branding_type\n          __typename\n        }\n        brands {\n          brand_id\n          image_url\n          name\n          __typename\n        }\n        emergency_status {\n          has_diesel {\n            nick_name\n            report_status\n            update_date\n            __typename\n          }\n          has_gas {\n            nick_name\n            report_status\n            update_date\n            __typename\n          }\n          has_power {\n            nick_name\n            report_status\n            update_date\n            __typename\n          }\n          __typename\n        }\n        enterprise\n        fuels\n        id\n        name\n        offers {\n          discounts {\n            grades\n            pwgb_discount\n            __typename\n          }\n          types\n          __typename\n        }\n        pay_status {\n          is_pay_available\n          __typename\n        }\n        prices {\n          cash {\n            nickname\n            posted_time\n            price\n            __typename\n          }\n          credit {\n            nickname\n            posted_time\n            price\n            __typename\n          }\n          discount\n          fuel_product\n          __typename\n        }\n        ratings_count\n        star_rating\n        __typename\n      }\n      __typename\n    }\n    trends {\n      areaName\n      today\n      todayLow\n      trend\n      __typename\n    }\n    __typename\n  }\n}\n",
-                    "variables": {"fuel": 1, "maxAge": 0, "search": search_code},
+                    "variables": {"fuel": 1, "maxAge": 0, "search": zipcode},
                     "operationName": "LocationBySearchTerm",
                 }
 
-                response = session.post(url, headers=headers, json=data).json()
-                if (
-                    response["data"]["locationBySearchTerm"]["stations"]["results"]
-                    is None
-                ):
-                    session_response = set_session(search_code)
-                    session = session_response[0]
-                    response = session_response[1]
-
+                response = http.post(url, headers=headers, json=data).json()
+                break
             except Exception:
-                breaker = 0
-                while True:
-                    breaker = breaker + 1
-                    if breaker == 10:
-                        log.info("We broke here")
-                        raise Exception
-                    try:
-                        response_stuff = set_session(search_code)
-                        session = response_stuff[0]
-                        headers = response_stuff[1]
-                        response = response_stuff[2]
-                        break
-
-                    except Exception:
-                        continue
+                http.set_proxy_url(proxy_url)
+                continue
 
         try:
             response["data"]["locationBySearchTerm"]["stations"]["results"]
 
         except Exception:
-            continue
+            return
 
-        y = y + 1
-        log.info("here")
         for location in response["data"]["locationBySearchTerm"]["stations"]["results"]:
             locator_domain = "gasbuddy.com"
             page_url = "https://www.gasbuddy.com/station/" + location["id"]
             if page_url in page_urls:
                 continue
-
             page_urls.append(page_url)
             log.info(page_url)
             location_name = location["name"]
@@ -167,35 +110,63 @@ def get_data():
             location_type = "fuel_station"
             country_code = location["address"]["country"]
 
-            if y == 0:
-                page_stuff = set_get_session(page_url)
-                session = page_stuff[0]
-            try:
-                page_status = session.get(
-                    page_url, headers={"User-Agent": "PostmanRuntime/7.19.0"}
-                )
+            hmm = 0
+            while True:
+                hmm = hmm + 1
+                if hmm == 100:
+                    raise Exception
+                try:
+                    page_stuff = http.get(
+                        page_url, headers={"User-Agent": "PostmanRuntime/7.19.0"}
+                    )
 
-                if page_status.status_code != 404:
-                    page_response = page_status.text
-                    page_soup = bs(page_response, "html.parser")
-                    if (
-                        '{"message":"Cannot return null for non-nullable field StationHours.status."}'
-                        in page_response
-                    ):
-                        continue
-                    page_soup.find("img")
+                    if page_stuff.status_code != 404:
+                        page_response = page_stuff.text
+                        break
 
-                else:
-                    page_response = "broken"
+                    else:
+                        break
+                except Exception:
+                    http.set_proxy_url(proxy_url)
+                    continue
 
-            except Exception:
-                page_stuff = set_get_session(page_url)
-                session = page_stuff[0]
-                page_response = page_stuff[1]
+            if page_stuff.status_code == 404:
+                phone = "<MISSING>"
+                latitude = "<MISSING>"
+                longitude = "<MISSING>"
+                hours = "<MISSING>"
+
+            else:
                 page_soup = bs(page_response, "html.parser")
                 page_soup.find("img")
+                if (
+                    '{"message":"Cannot return null for non-nullable field StationHours.status."}'
+                    in page_response
+                ):
+                    phone = "<MISSING>"
+                    latitude = "<MISSING>"
+                    longitude = "<MISSING>"
+                    hours = "<MISSING>"
+                    yield SgRecord(
+                        raw={
+                            "locator_domain": locator_domain,
+                            "page_url": page_url,
+                            "location_name": location_name,
+                            "latitude": latitude,
+                            "longitude": longitude,
+                            "city": city,
+                            "store_number": store_number,
+                            "street_address": address,
+                            "state": state,
+                            "zip": zipp,
+                            "phone": phone,
+                            "location_type": location_type,
+                            "hours": hours,
+                            "country_code": country_code,
+                        }
+                    )
+                    continue
 
-            if page_response != "broken":
                 try:
                     phone = page_soup.find(
                         "a", attrs={"class": "StationInfoBox-module__phoneLink___2LtAk"}
@@ -208,9 +179,7 @@ def get_data():
                 try:
                     latitude = json_objects[-1]["@graph"][-1]["geo"]["latitude"]
                     longitude = json_objects[-1]["@graph"][-1]["geo"]["longitude"]
-                    search.found_location_at(latitude, longitude)
                 except Exception:
-                    error_count = error_count + 1
                     latitude = "<MISSING>"
                     longitude = "<MISSING>"
 
@@ -226,65 +195,48 @@ def get_data():
                 if hours == "":
                     hours = "<MISSING>"
 
-            else:
-                phone = "<MISSING>"
-                latitude = "<MISSING>"
-                longitude = "<MISSING>"
-                hours = "<MISSING>"
-
-            yield {
-                "locator_domain": locator_domain,
-                "page_url": page_url,
-                "location_name": location_name,
-                "latitude": latitude,
-                "longitude": longitude,
-                "city": city,
-                "store_number": store_number,
-                "street_address": address,
-                "state": state,
-                "zip": zipp,
-                "phone": phone,
-                "location_type": location_type,
-                "hours": hours,
-                "country_code": country_code,
-            }
-
-    log.info(error_count)
+            yield SgRecord(
+                raw={
+                    "locator_domain": locator_domain,
+                    "PAGE_URL": page_url,
+                    "location_name": location_name,
+                    "latitude": latitude,
+                    "longitude": longitude,
+                    "city": city,
+                    "store_number": store_number,
+                    "street_address": address,
+                    "state": state,
+                    "zip": zipp,
+                    "phone": phone,
+                    "location_type": location_type,
+                    "hours": hours,
+                    "country_code": country_code,
+                }
+            )
 
 
-def scrape():
-    field_defs = sp.SimpleScraperPipeline.field_definitions(
-        locator_domain=sp.MappingField(mapping=["locator_domain"]),
-        page_url=sp.MappingField(mapping=["page_url"], part_of_record_identity=True),
-        location_name=sp.MappingField(
-            mapping=["location_name"], part_of_record_identity=True
-        ),
-        latitude=sp.MappingField(mapping=["latitude"], part_of_record_identity=True),
-        longitude=sp.MappingField(mapping=["longitude"], part_of_record_identity=True),
-        street_address=sp.MultiMappingField(
-            mapping=["street_address"], is_required=False
-        ),
-        city=sp.MappingField(
-            mapping=["city"],
-        ),
-        state=sp.MappingField(mapping=["state"], is_required=False),
-        zipcode=sp.MultiMappingField(mapping=["zip"], is_required=False),
-        country_code=sp.MappingField(mapping=["country_code"]),
-        phone=sp.MappingField(mapping=["phone"], is_required=False),
-        store_number=sp.MappingField(
-            mapping=["store_number"], part_of_record_identity=True
-        ),
-        hours_of_operation=sp.MappingField(mapping=["hours"], is_required=False),
-        location_type=sp.MappingField(mapping=["location_type"], is_required=False),
+if __name__ == "__main__":
+    search_maker = DynamicSearchMaker(
+        search_type="DynamicGeoSearch", granularity=Grain_1_KM()
     )
 
-    pipeline = sp.SimpleScraperPipeline(
-        scraper_name="Crawler",
-        data_fetcher=get_data,
-        field_definitions=field_defs,
-        log_stats_interval=15,
-    )
-    pipeline.run()
+    with SgWriter(
+        deduper=SgRecordDeduper(
+            RecommendedRecordIds.StoreNumberId, duplicate_streak_failure_factor=100
+        )
+    ) as writer:
+        with SgRequests(dont_retry_status_codes=[403, 429, 500, 502, 404]) as http:
+            search_iter = ExampleSearchIteration(http=http)
+            par_search = ParallelDynamicSearch(
+                search_maker=search_maker,
+                search_iteration=search_iter,
+                country_codes=[
+                    SearchableCountries.USA,
+                    SearchableCountries.CANADA,
+                ],
+            )
 
+            for rec in par_search.run():
+                writer.write_row(rec)
 
-scrape()
+    state = CrawlStateSingleton.get_instance()

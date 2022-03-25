@@ -34,6 +34,8 @@ headers = {
 session = SgRequests(proxy_country="es")
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 
+class_name = "heading-xl"
+
 
 def request_with_retries(url):
     return session.get(url, headers=headers)
@@ -71,6 +73,31 @@ def fetch_store(driver, page_url):
         log.error(f"Error msg={e}")
         pass
     return None, None
+
+
+def get_driver(url, class_name, driver=None):
+    if driver is not None:
+        driver.quit()
+
+    x = 0
+    while True:
+        x = x + 1
+        try:
+            driver = SgChrome().driver()
+            driver.get(url)
+
+            WebDriverWait(driver, 20).until(
+                EC.presence_of_element_located((By.CLASS_NAME, class_name))
+            )
+            break
+        except Exception:
+            driver.quit()
+            if x == 10:
+                raise Exception(
+                    "Make sure this ran with a Proxy, will fail without one"
+                )
+            continue
+    return html.fromstring(driver.page_source, "lxml"), driver.page_source
 
 
 def stringify_nodes(body, xpath):
@@ -142,10 +169,10 @@ def fetch_data(driver):
     count = 0
     for page_url in page_urls:
         count = count + 1
-        log.debug(f"{count}. scrapping {page_url}...")
+        log.info(f"{count}. scrapping {page_url}...")
         store_number = page_url.split("-")
         store_number = store_number[len(store_number) - 1]
-        body, response = fetch_store(driver, page_url)
+        body, response = get_driver(page_url, class_name, driver)
         if body is None or response is None:
             log.error("Can't scrape")
             continue
