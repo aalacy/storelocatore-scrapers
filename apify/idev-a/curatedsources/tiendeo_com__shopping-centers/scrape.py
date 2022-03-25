@@ -92,205 +92,201 @@ def _p(val):
 
 def _d(loc, domain, country):
     with SgRequests() as session:
-        try:
-            page_url = domain + loc["url"]["url"]
-            logger.info(page_url)
-            info = json.loads(
-                bs(session.get(page_url, headers=_headers).text, "lxml")
-                .select_one("script#__NEXT_DATA__")
-                .text
-            )["props"]["pageProps"]["queryResult"]
-            if not info.get("MallInfo"):
-                return None
-            _ = info["MallInfo"]
-            raw_address = f"{_['address']}, {_['city']}"
-            if _["zipCode"]:
-                raw_address += f", {_['zipCode']}"
-            raw_address += f", {country}"
-            addr = parse_address_intl(raw_address)
-            city = addr.city
-            if city and city.lower() == "city":
-                city = ""
-            state = addr.state
-            hours = []
-            phone = ""
-            if _["time"]:
-                hr = bs(_["time"], "lxml")
-                if hr.table:
-                    for hh in hr.table.select("tr"):
-                        _pp = hh.text.strip()
-                        if not _pp and hours:
-                            break
-                        if not _pp:
-                            continue
-                        if not hours and (
-                            "Hours" in _pp or "Day" in _pp or "Woolworths" in _pp
+        page_url = domain + loc["url"]["url"]
+        logger.info(page_url)
+        info = json.loads(
+            bs(session.get(page_url, headers=_headers).text, "lxml")
+            .select_one("script#__NEXT_DATA__")
+            .text
+        )["props"]["pageProps"]["queryResult"]
+        if not info.get("MallInfo"):
+            return None
+        _ = info["MallInfo"]
+        raw_address = f"{_['address']}, {_['city']}"
+        if _["zipCode"]:
+            raw_address += f", {_['zipCode']}"
+        raw_address += f", {country}"
+        addr = parse_address_intl(raw_address)
+        city = addr.city
+        if city and city.lower() == "city":
+            city = ""
+        state = addr.state
+        hours = []
+        phone = ""
+        if _["time"]:
+            hr = bs(_["time"], "lxml")
+            if hr.table:
+                for hh in hr.table.select("tr"):
+                    _pp = hh.text.strip()
+                    if not _pp and hours:
+                        break
+                    if not _pp:
+                        continue
+                    if not hours and (
+                        "Hours" in _pp or "Day" in _pp or "Woolworths" in _pp
+                    ):
+                        continue
+                    if hours and "Hours" in _pp:
+                        break
+                    td = hh.select("td")
+                    if len(td) < 2:
+                        break
+                    hours.append(f"{td[0].text.strip()} {td[1].text.strip()}")
+            elif hr.select("OpeningDay"):
+                temp = [pp.text.strip() for pp in hr.select("p")]
+                for x in range(0, len(temp), 2):
+                    hours.append(f"{temp[x]}: {temp[x+1]}")
+            elif hr.select("dl.schedule"):
+                hours = [pp.text.strip() for pp in hr.select("dl.schedule")]
+            elif hr.select("ul li"):
+                for hh in hr.select("ul li"):
+                    hours.append(hh.text.strip())
+            elif len(hr.select("p")) > 1:
+                for pp in hr.select("p"):
+                    _pp = pp.text.strip()
+                    if not _pp and hours:
+                        break
+                    if hours:
+                        if (
+                            "LOJAS:" in _pp
+                            or "Orari" in _pp
+                            or "Ipermercato" in _pp
+                            or "Coop" in _pp
+                            or "food" in _pp
+                            or "horario" in _pp.lower()
                         ):
+                            break
+                    if (
+                        "Merk" in _pp
+                        or "Apotheke" in _pp
+                        or "ATRIO" in _pp
+                        or "Interspar" in _pp
+                        or "Kino" in _pp
+                        or "ストラン" in _pp
+                        or "Restaurants" in _pp
+                        or "飲食店" in _pp
+                        or "Gastronomie" in _pp
+                        or "maximarkt" in _pp.lower()
+                        or "Café" in _pp
+                        or "INTERSPAR" in _pp
+                        or "Modeabteilung" in _pp
+                        or "Lebensmittel" in _pp
+                        or "INTERSPAR" in _pp
+                        or "Fitness" in _pp
+                        or "Individual" in _pp
+                        or "Restaurant" in _pp
+                        or "NICKELODEON" in _pp
+                        or "Nordstrom" in _pp
+                    ):
+                        break
+                    if not hours:
+                        if "Opening" in _pp:
+                            break
+                        if _pp.lower().endswith("hours"):
                             continue
-                        if hours and "Hours" in _pp:
-                            break
-                        td = hh.select("td")
-                        if len(td) < 2:
-                            break
-                        hours.append(f"{td[0].text.strip()} {td[1].text.strip()}")
-                elif hr.select("OpeningDay"):
-                    temp = [pp.text.strip() for pp in hr.select("p")]
-                    for x in range(0, len(temp), 2):
-                        hours.append(f"{temp[x]}: {temp[x+1]}")
-                elif hr.select("dl.schedule"):
-                    hours = [pp.text.strip() for pp in hr.select("dl.schedule")]
-                elif hr.select("ul li"):
-                    for hh in hr.select("ul li"):
-                        hours.append(hh.text.strip())
-                elif len(hr.select("p")) > 1:
-                    for pp in hr.select("p"):
-                        _pp = pp.text.strip()
-                        if not _pp and hours:
-                            break
+                    if not _pp:
+                        continue
+                    if "TRAISENPARK" in _pp or "Q19" in _pp:
+                        continue
+                    if _pp == "Lojas" or _pp == "Galleria" or _pp == "COOP":
+                        continue
+
+                    temp = []
+                    for tt in list(pp.stripped_strings):
                         if hours:
                             if (
-                                "LOJAS:" in _pp
-                                or "Orari" in _pp
-                                or "Ipermercato" in _pp
-                                or "Coop" in _pp
-                                or "food" in _pp
-                                or "horario" in _pp.lower()
+                                "NEGOZI" in tt
+                                or "restauración" in tt.lower()
+                                or "cafeterías" in tt.lower()
+                                or "Hipermercado" in tt
+                                or "hours" in tt.lower()
+                                or "opening" in tt.lower()
+                                or tt.lower().endswith("hours")
+                                or "Monday" in tt.lower()
                             ):
+                                break
+                            if _p(tt):
+                                phone = tt
                                 break
                         if (
-                            "Merk" in _pp
-                            or "Apotheke" in _pp
-                            or "ATRIO" in _pp
-                            or "Interspar" in _pp
-                            or "Kino" in _pp
-                            or "ストラン" in _pp
-                            or "Restaurants" in _pp
-                            or "飲食店" in _pp
-                            or "Gastronomie" in _pp
-                            or "maximarkt" in _pp.lower()
-                            or "Café" in _pp
-                            or "INTERSPAR" in _pp
-                            or "Modeabteilung" in _pp
-                            or "Lebensmittel" in _pp
-                            or "INTERSPAR" in _pp
-                            or "Fitness" in _pp
-                            or "Individual" in _pp
-                            or "Restaurant" in _pp
-                            or "NICKELODEON" in _pp
-                            or "Nordstrom" in _pp
+                            "Öffnungszeiten" in tt
+                            or "galerii" in tt
+                            or "shop" in tt.lower()
+                            or "Część" in tt
+                            or "Galerii" in tt
+                            or "handlowe" in tt
+                            or "Godziny otwarcia" in tt
+                            or "Galeria" in tt
+                            or "Centre" in tt
+                            or "centro" in tt.lower()
+                            or "NEGOZI" in tt
+                            or "please" in tt.lower()
+                            or "Choc Deli" in tt
+                        ):
+                            continue
+                        if (
+                            "Auchan" in tt.lower()
+                            or "rozrywkowa" in tt.lower()
+                            or "Carrefour" in tt
+                            or "Sklep" in tt
+                            or "supermarketu" in tt.lower()
+                            or "Apteki" in tt
+                            or "hipermarketu" in tt.lower()
+                            or "Showcase" in tt
+                            or "store" in tt.lower()
+                            or "Academia" in tt
+                            or "Alimentação" in tt
+                            or "LIVELLO" in tt
+                            or "Supermercato" in tt
+                            or "Ristoranti" in tt
+                            or "Ristorazione" in tt
                         ):
                             break
-                        if not hours:
-                            if "Opening" in _pp:
-                                break
-                            if _pp.lower().endswith("hours"):
-                                continue
-                        if not _pp:
-                            continue
-                        if "TRAISENPARK" in _pp or "Q19" in _pp:
-                            continue
-                        if _pp == "Lojas" or _pp == "Galleria" or _pp == "COOP":
-                            continue
 
-                        temp = []
-                        for tt in list(pp.stripped_strings):
-                            if hours:
-                                if (
-                                    "NEGOZI" in tt
-                                    or "restauración" in tt.lower()
-                                    or "cafeterías" in tt.lower()
-                                    or "Hipermercado" in tt
-                                    or "hours" in tt.lower()
-                                    or "opening" in tt.lower()
-                                    or tt.lower().endswith("hours")
-                                    or "Monday" in tt.lower()
-                                ):
-                                    break
-                                if _p(tt):
-                                    phone = tt
-                                    break
-                            if (
-                                "Öffnungszeiten" in tt
-                                or "galerii" in tt
-                                or "shop" in tt.lower()
-                                or "Część" in tt
-                                or "Galerii" in tt
-                                or "handlowe" in tt
-                                or "Godziny otwarcia" in tt
-                                or "Galeria" in tt
-                                or "Centre" in tt
-                                or "centro" in tt.lower()
-                                or "NEGOZI" in tt
-                                or "please" in tt.lower()
-                                or "Choc Deli" in tt
-                            ):
-                                continue
-                            if (
-                                "Auchan" in tt.lower()
-                                or "rozrywkowa" in tt.lower()
-                                or "Carrefour" in tt
-                                or "Sklep" in tt
-                                or "supermarketu" in tt.lower()
-                                or "Apteki" in tt
-                                or "hipermarketu" in tt.lower()
-                                or "Showcase" in tt
-                                or "store" in tt.lower()
-                                or "Academia" in tt
-                                or "Alimentação" in tt
-                                or "LIVELLO" in tt
-                                or "Supermercato" in tt
-                                or "Ristoranti" in tt
-                                or "Ristorazione" in tt
-                            ):
-                                break
+                        temp.append(tt.split("soboty")[-1].split("*")[0].strip())
+                    hours.append(" ".join(temp))
+            elif hr.select("div.field__item"):
+                hours = [
+                    " ".join(pp.stripped_strings) for pp in hr.select("div.field__item")
+                ]
+        hours_of_operation = (
+            "; ".join(hours)
+            .replace("ョップ：", "")
+            .replace("ョップ：", "")
+            .replace("Lojas", "")
+            .replace(".", "")
+            .replace("La galleria", "")
+            .replace("Galleria Commerciale e Ristorazione:", "")
+            .replace("GALLERIA COMMERCIALE", "")
+            .replace("Shops / Food Gallery", "")
+            .replace("Horario Simply Market", "")
+            .strip()
+        )
+        if hours_of_operation.startswith(":"):
+            hours_of_operation = hours_of_operation[1:]
+        if hours_of_operation.startswith(","):
+            hours_of_operation = hours_of_operation[1:]
+        if hours_of_operation.endswith(";"):
+            hours_of_operation = hours_of_operation[:-1]
 
-                            temp.append(tt.split("soboty")[-1].split("*")[0].strip())
-                        hours.append(" ".join(temp))
-                elif hr.select("div.field__item"):
-                    hours = [
-                        " ".join(pp.stripped_strings)
-                        for pp in hr.select("div.field__item")
-                    ]
-            hours_of_operation = (
-                "; ".join(hours)
-                .replace("ョップ：", "")
-                .replace("ョップ：", "")
-                .replace("Lojas", "")
-                .replace(".", "")
-                .replace("La galleria", "")
-                .replace("Galleria Commerciale e Ristorazione:", "")
-                .replace("GALLERIA COMMERCIALE", "")
-                .replace("Shops / Food Gallery", "")
-                .replace("Horario Simply Market", "")
-                .strip()
-            )
-            if hours_of_operation.startswith(":"):
-                hours_of_operation = hours_of_operation[1:]
-            if hours_of_operation.startswith(","):
-                hours_of_operation = hours_of_operation[1:]
-            if hours_of_operation.endswith(";"):
-                hours_of_operation = hours_of_operation[:-1]
-
-            hours_of_operation = " ".join(
-                [h_s.strip() for h_s in hours_of_operation.split(" ") if h_s.strip()]
-            )
-            return SgRecord(
-                page_url=page_url,
-                location_name=_["name"],
-                street_address=_["address"],
-                city=city,
-                state=state,
-                zip_postal=_.get("zipCode"),
-                country_code=country,
-                phone=_.get("phone") or phone,
-                latitude=_.get("lat"),
-                longitude=_.get("lon"),
-                locator_domain=locator_domain,
-                hours_of_operation=hours_of_operation.replace(";;", ";"),
-                raw_address=raw_address,
-            )
-        except Exception as e:
-            pass
+        hours_of_operation = " ".join(
+            [h_s.strip() for h_s in hours_of_operation.split(" ") if h_s.strip()]
+        )
+        return SgRecord(
+            page_url=page_url,
+            location_name=_["name"],
+            street_address=_["address"],
+            city=city,
+            state=state,
+            zip_postal=_.get("zipCode"),
+            country_code=country,
+            phone=_.get("phone") or phone,
+            latitude=_.get("lat"),
+            longitude=_.get("lon"),
+            locator_domain=locator_domain,
+            hours_of_operation=hours_of_operation.replace(";;", ";"),
+            raw_address=raw_address,
+        )
 
 
 def fetch_data():
