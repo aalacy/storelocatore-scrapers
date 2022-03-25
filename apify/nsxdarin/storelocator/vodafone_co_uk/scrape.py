@@ -19,10 +19,10 @@ def fetch_data():
     website = "vodafone.co.uk"
     typ = "<MISSING>"
     country = "GB"
-    loc = "<MISSING>"
+    loc = "https://www.vodafone.co.uk/help-and-information/store-locator"
     logger.info("Pulling Stores")
     for line in r.iter_lines():
-        if '"CMSStoreLocator":{"jsonData"' in line:
+        if 'CMSStoreLocator_":{"jsonData":"' in line:
             items = line.split("storecode")
             for item in items:
                 if "eshoptown" in item:
