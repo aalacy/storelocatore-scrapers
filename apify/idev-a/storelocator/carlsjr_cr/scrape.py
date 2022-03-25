@@ -103,7 +103,7 @@ def fetch_data():
             yield SgRecord(
                 location_name=location_name,
                 street_address=street_address,
-                city=addr.city,
+                city=city,
                 zip_postal=addr.postcode,
                 country_code="Costa Rica",
                 latitude=latitude,
