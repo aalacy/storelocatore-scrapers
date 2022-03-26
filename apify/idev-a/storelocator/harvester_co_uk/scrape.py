@@ -29,7 +29,10 @@ def fetch_data():
             url = f"https://www.harvester.co.uk/cborms/pub/brands/9/outlets/{_['bunCode']}"
             logger.info(url)
             _d = http.get(url, headers=_headers).json()
-            page_url = locator_domain + _d.get("outletStructure", {}).get("uri")
+            if _d.get("outletStructure", {}):
+                page_url = locator_domain + _d.get("outletStructure", {}).get("uri")
+            else:
+                page_url = "https://www.harvester.co.uk/restaurants#/"
             for hh in _d.get("foodServiceTimes", {}).get("periods", []):
                 times = []
                 for hr in hh["times"]:
@@ -58,7 +61,7 @@ if __name__ == "__main__":
         SgRecordDeduper(
             SgRecordID(
                 {
-                    SgRecord.Headers.PAGE_URL,
+                    SgRecord.Headers.STORE_NUMBER,
                 }
             )
         )

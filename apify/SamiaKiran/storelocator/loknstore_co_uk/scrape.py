@@ -36,7 +36,7 @@ def fetch_data():
                 continue
             soup = BeautifulSoup(r.text, "html.parser")
             location_name = (
-                "LoknStore" + soup.find("span", {"class": "store__name"}).text
+                "LoknStore " + soup.find("span", {"class": "store__name"}).text
             )
 
             try:

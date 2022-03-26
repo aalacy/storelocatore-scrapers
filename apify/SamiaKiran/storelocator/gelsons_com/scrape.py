@@ -30,7 +30,7 @@ MISSING = SgRecord.MISSING
 
 def fetch_data():
     if True:
-        with SgChrome(executable_path="C:/webdrivers/chromedriver.exe") as driver:
+        with SgChrome() as driver:
             url = "https://www.gelsons.com/stores"
             driver.get(url)
             soup = BeautifulSoup(driver.page_source, "html.parser")

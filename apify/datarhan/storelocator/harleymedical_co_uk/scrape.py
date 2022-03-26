@@ -50,7 +50,7 @@ def fetch_data():
         state = addr.state
         zip_code = addr.postcode
         country_code = addr.country
-        phone = loc_dom.xpath('//a[contains(@href, "tel")]/text()')
+        phone = loc_dom.xpath('//div[@class="clinic-details align-center"]//a/text()')
         phone = phone[0] if phone else ""
         latitude = loc_dom.xpath("//@data-lat")
         latitude = latitude[0] if latitude else ""
