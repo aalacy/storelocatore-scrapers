@@ -23,6 +23,7 @@ def fetch_data():
         links = soup.select("div.question-list a.link-btn")
         for link in links:
             page_url = urljoin(locator_domain, link["href"])
+            logger.info(page_url)
             res = session.get(page_url, headers=_headers)
             sp1 = bs(res.text, "lxml")
             raw_address = sp1.h1.find_next_sibling().p.text.strip()
