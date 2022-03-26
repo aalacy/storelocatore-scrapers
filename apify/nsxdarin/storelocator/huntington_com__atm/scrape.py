@@ -8,7 +8,7 @@ logger = SgLogSetup().get_logger("huntington_com__atm")
 
 search = DynamicGeoSearch(
     country_codes=[SearchableCountries.USA],
-    max_radius_miles=None,
+    max_search_distance_miles=None,
     max_search_results=10,
 )
 
