@@ -46,7 +46,7 @@ def fetch_data():
     start_url = "https://louisianafriedchickenhq.com/wp-admin/admin-ajax.php?action=store_search&lat={}&lng={}&max_results=100&search_radius=500&autoload=1"
 
     all_coords = DynamicGeoSearch(
-        country_codes=[SearchableCountries.USA], max_radius_miles=500
+        country_codes=[SearchableCountries.USA], max_search_distance_miles=500
     )
     for lat, lng in all_coords:
         response = session.get(start_url.format(lat, lng))

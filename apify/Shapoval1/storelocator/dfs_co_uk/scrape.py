@@ -1,3 +1,5 @@
+import json
+from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
@@ -56,6 +58,30 @@ def fetch_data(sgw: SgWriter):
                 line = f"{day} {opens} - {closes}"
                 tmp.append(line)
             hours_of_operation = "; ".join(tmp)
+        if latitude == "<MISSING>":
+            r = session.get(page_url, headers=headers)
+            tree = html.fromstring(r.text)
+
+            js_block = "".join(tree.xpath('//script[@type="application/json"]/text()'))
+            js = json.loads(js_block)
+            latitude = (
+                js.get("props")
+                .get("initialProps")
+                .get("pageProps")
+                .get("data")
+                .get("nearestStores")[0]
+                .get("yextRoutableCoordinate")
+                .get("latitude")
+            )
+            longitude = (
+                js.get("props")
+                .get("initialProps")
+                .get("pageProps")
+                .get("data")
+                .get("nearestStores")[0]
+                .get("yextRoutableCoordinate")
+                .get("longitude")
+            )
 
         row = SgRecord(
             locator_domain=locator_domain,

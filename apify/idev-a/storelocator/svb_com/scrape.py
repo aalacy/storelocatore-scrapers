@@ -47,6 +47,9 @@ def _d(_, country):
     _hr = _.find("li", string=re.compile(r"Branch hours are"))
     if _hr:
         hours = _hr.text.split("Branch hours are")[-1].split("(")[0].strip()
+    location_type = "branch"
+    if _.caption and "atm" in _.caption.text.lower():
+        location_type = "atm"
     return SgRecord(
         page_url=base_url,
         store_number=_title["data-id"],
@@ -56,6 +59,7 @@ def _d(_, country):
         state=state,
         zip_postal=addr.postcode,
         country_code=country,
+        location_type=location_type,
         phone=phone,
         latitude=coord["latitude"],
         longitude=coord["longitude"],
