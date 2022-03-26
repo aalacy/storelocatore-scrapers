@@ -47,7 +47,7 @@ def fetch_data():
 
     all_locations = []
     all_coords = DynamicGeoSearch(
-        country_codes=[SearchableCountries.USA], max_radius_miles=250
+        country_codes=[SearchableCountries.USA], max_search_distance_miles=250
     )
     for lat, lng in all_coords:
         response = session.get(start_url.format(lat, lng))
