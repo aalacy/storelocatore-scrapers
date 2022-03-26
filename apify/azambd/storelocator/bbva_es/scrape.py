@@ -78,7 +78,7 @@ def parse_json(location, page_url):
     data["location_type"] = location["address"]["type"]["name"]
     data["street_address"] = location["address"]["name"].strip()
     data["city"] = location["address"]["city"]
-    data["province"] = location["address"]["geographicGroup"][-2]["name"].strip()
+    data["state"] = location["address"]["geographicGroup"][-2]["name"].strip()
     data["country_code"] = location["address"]["geographicGroup"][0]["code"].strip()
     data["zip_postal"] = location["address"]["zipCode"]
     data["phone"] = location["contactsInformation"][0]["name"]
@@ -108,7 +108,7 @@ def parse_json(location, page_url):
         [
             data["street_address"],
             data["city"],
-            data["province"],
+            data["state"],
             data["country_code"],
             data["zip_postal"],
         ]
