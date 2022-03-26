@@ -52,9 +52,9 @@ def fetch_data(sgw: SgWriter):
         longitude = j.get("longitude")
 
         hours = j.get("opening_hours") or ""
-        hours_of_operation = hours.replace("<br />\r\n", ";")
+        hours_of_operation = hours.replace("<br />\r\n", ";").strip()
         if hours_of_operation.endswith(";"):
-            hours_of_operation = rem(hours_of_operation)
+            hours_of_operation = hours_of_operation[:-1]
 
         row = SgRecord(
             page_url=page_url,
