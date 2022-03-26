@@ -139,7 +139,7 @@ def _p(val):
         return ""
 
 
-max_workers = 1
+max_workers = 32
 
 
 def fetchConcurrentSingle(link):
