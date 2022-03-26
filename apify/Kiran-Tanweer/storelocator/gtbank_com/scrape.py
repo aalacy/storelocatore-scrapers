@@ -125,9 +125,8 @@ def fetch_data(driver):
 
         latlng = body.xpath('//div[contains(@id, "locator-entry")]/@data-dna')[0]
         coords = json.loads(latlng)
-
-        latitude = coords[0]["locations"][0]["lat"] or MISSING
-        longitude = coords[0]["locations"][0]["lng"] or MISSING
+        latitude = coords[1]["locations"][0]["lat"] or MISSING
+        longitude = coords[1]["locations"][0]["lng"] or MISSING
 
         location_name = stringify_children(
             body, '//div[contains(@class, "branch-info-title")]/span'

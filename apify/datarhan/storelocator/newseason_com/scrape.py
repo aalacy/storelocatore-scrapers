@@ -1,3 +1,5 @@
+import re
+import demjson
 from lxml import etree
 from urllib.parse import urljoin
 
@@ -29,6 +31,8 @@ def fetch_data():
             page_url = urljoin(start_url, url)
             loc_response = session.get(page_url)
             loc_dom = etree.HTML(loc_response.text)
+            if loc_dom.xpath('//strong[contains(text(), "Coming Soon")]'):
+                continue
 
             location_name = loc_dom.xpath(
                 '//div[@class="headerContent"]//div[@class="caption"]/text()'
@@ -45,7 +49,9 @@ def fetch_data():
             hoo = loc_dom.xpath(
                 '//h6[contains(text(), "Business Hours")]/following-sibling::div[1]//text()'
             )
-            hoo = " ".join([e.strip() for e in hoo if e.strip()])
+            hoo = " ".join([e.strip() for e in hoo if e.strip()]).split("Holidays")[0]
+            geo = re.findall("mapCenter = (.+?);", loc_response.text)[0]
+            geo = demjson.decode(geo)
 
             item = SgRecord(
                 locator_domain=domain,
@@ -59,8 +65,8 @@ def fetch_data():
                 store_number="",
                 phone=phone,
                 location_type="",
-                latitude="",
-                longitude="",
+                latitude=geo["lat"],
+                longitude=geo["lng"],
                 hours_of_operation=hoo,
                 raw_address=raw_address,
             )
