@@ -52,7 +52,7 @@ def fetch_data():
                 except:
                     hours = hours + day + " " + " Close "
                     continue
-                close = int(loc[day + "Close"].split(":", 1)[0])
+                close = int(closestr.split(":", 1)[0])
                 if close > 12:
                     close = close - 12
                 hours = (
@@ -63,7 +63,7 @@ def fetch_data():
                     + " AM - "
                     + str(close)
                     + ":"
-                    + loc[day + "Close"].split(":", 1)[1]
+                    + closestr.split(":", 1)[1]
                     + " PM "
                 )
             link = "https://www.gcrtires.com/stores" + loc["externalPath"]
