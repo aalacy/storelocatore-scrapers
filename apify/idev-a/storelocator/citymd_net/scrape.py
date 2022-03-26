@@ -1,100 +1,65 @@
-import csv
-from bs4 import BeautifulSoup as bs
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
+from bs4 import BeautifulSoup as bs
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sglogging import SgLogSetup
 from urllib.parse import urljoin
 
-from util import Util  # noqa: I900
+logger = SgLogSetup().get_logger("")
 
-myutil = Util()
+_headers = {
+    "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
+}
 
-
-session = SgRequests()
-
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+locator_domain = "https://www.citymd.com"
+base_url = "https://www.citymd.com/all-locations"
 
 
 def fetch_data():
-    base_url = "https://www.citymd.com/all-locations"
-    r = session.get(base_url)
-    soup = bs(r.text, "lxml")
-    links = soup.select("div.question-list a.link-btn")
-    data = []
-    for link in links:
-        page_url = urljoin("https://www.citymd.com", link["href"])
-        r1 = session.get(page_url)
-        soup1 = bs(r1.text, "lxml")
-        location_name = soup1.h1.string
-        address = [sibling.string for sibling in soup1.h1.next_siblings][1]
-        street_address, city, state, zip, country_code = myutil.parse_address_simple(
-            address
-        )
-        phone = soup1.select_one("a.location-phone-number").string
-        store_number = link["href"].split("/")[-1]
-        location_type = soup1.select_one("h6.text-upper").text
-        direction = (
-            soup1.select_one("a.directions-link")["href"].split("/")[-2].split(",")
-        )
-        latitude = direction[0]
-        longitude = direction[1]
-        tags = soup1.select_one("h4.margin-bottom-0").find_all_next("p")
-        hours_of_operation = "; ".join(
-            [tag.text for tag in tags if tag.select_one("span.dow")]
-        )
-
-        data.append(
-            [
-                base_url,
-                page_url,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
-        )
-
-    return data
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgRequests() as session:
+        soup = bs(session.get(base_url, headers=_headers).text, "lxml")
+        links = soup.select("div.question-list a.link-btn")
+        for link in links:
+            page_url = urljoin(locator_domain, link["href"])
+            res = session.get(page_url, headers=_headers)
+            sp1 = bs(res.text, "lxml")
+            raw_address = sp1.h1.find_next_sibling().p.text.strip()
+            addr = raw_address.split(",")
+            phone = ""
+            if sp1.select_one("a.location-phone-number"):
+                phone = sp1.select_one("a.location-phone-number").text.strip()
+            latlng = (
+                sp1.select_one("a.directions-link")["href"].split("/@")[1].split(",")
+            )
+            hours = []
+            if sp1.select_one("div.hours-message-container"):
+                for hh in sp1.select_one(
+                    "div.hours-message-container"
+                ).find_next_siblings("p"):
+                    if "Read" in hh.text:
+                        break
+                    hours.append(": ".join(hh.stripped_strings))
+            yield SgRecord(
+                page_url=res.url.__str__(),
+                location_name=sp1.h1.text.strip(),
+                street_address=" ".join(addr[:-2]),
+                city=addr[-2].strip(),
+                state=addr[-1].strip().split()[0].strip(),
+                zip_postal=addr[-1].strip().split()[-1].strip(),
+                country_code="USA",
+                phone=phone,
+                latitude=latlng[0],
+                longitude=latlng[1].split("@")[-1],
+                locator_domain=locator_domain,
+                hours_of_operation="; ".join(hours),
+                raw_address=raw_address,
+            )
 
 
 if __name__ == "__main__":
-    scrape()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
