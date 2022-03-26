@@ -5,6 +5,8 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sglogging import SgLogSetup
 from datetime import datetime, timedelta
+import math
+from concurrent.futures import ThreadPoolExecutor
 
 logger = SgLogSetup().get_logger("quizclothing")
 _headers = {
@@ -15,29 +17,60 @@ _headers = {
 }
 
 locator_domain = "https://mrbeastburger.com"
-base_url = "https://api.dineengine.io/mrbeastburger/custom/dineengine/vendor/olo/restaurants?includePrivate=false&calendarstart=20211213&calendarend=20211220"
+base_url = "https://api.dineengine.io/mrbeastburger/custom/dineengine/vendor/olo/restaurants?includePrivate=false"
 calendar_url = "https://api.dineengine.io/mrbeastburger/custom/dineengine/vendor/olo/restaurants/{}/calendars?from={}&to={}"
 today = datetime.today()
 mon = (today + timedelta(days=-today.weekday())).strftime("%Y%m%d")
 next_mon = (today + timedelta(days=-today.weekday(), weeks=1)).strftime("%Y%m%d")
 
+max_workers = 32
+
+
+def fetchConcurrentSingle(link):
+    page_url = locator_domain + "/locations" + link["url"].split("/menu")[-1]
+    logger.info(page_url)
+    ca = request_with_retries(calendar_url.format(link["id"], mon, next_mon)).json()[
+        "calendar"
+    ]
+    return link, page_url, ca
+
+
+def fetchConcurrentList(list, occurrence=max_workers):
+    output = []
+    total = len(list)
+    reminder = math.floor(total / 50)
+    if reminder < occurrence:
+        reminder = occurrence
+
+    count = 0
+    with ThreadPoolExecutor(
+        max_workers=occurrence, thread_name_prefix="fetcher"
+    ) as executor:
+        for result in executor.map(fetchConcurrentSingle, list):
+            if result:
+                count = count + 1
+                if count % reminder == 0:
+                    logger.debug(f"Concurrent Operation count = {count}")
+                output.append(result)
+    return output
+
+
+def request_with_retries(url):
+    with SgRequests() as session:
+        return session.get(url, headers=_headers)
+
 
 def fetch_data():
     with SgRequests() as session:
         locations = session.get(base_url, headers=_headers).json()["restaurants"]
-        for _ in locations:
-            page_url = locator_domain + "/locations" + _["url"].split("/menu")[-1]
-            logger.info(page_url)
-            ca = session.get(
-                calendar_url.format(_["id"], mon, next_mon), headers=_headers
-            ).json()["calendar"]
+        for _, page_url, ca in fetchConcurrentList(locations):
             hours = []
             for hr in ca:
                 if not hr["label"]:
                     for hh in hr["ranges"]:
-                        hours.append(
-                            f"{hh['weekday']}: {hh['start'].split()[-1]} - {hh['end'].split()[-1]}"
-                        )
+                        temp = f"{hh['weekday']}: {hh['start'].split()[-1]} - {hh['end'].split()[-1]}"
+                        if temp not in hours:
+                            hours.append(temp)
                     break
             yield SgRecord(
                 page_url=page_url,

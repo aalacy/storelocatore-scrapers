@@ -49,6 +49,7 @@ def fetch_data(sgw: SgWriter):
         slug = j.get("url")
         page_url = f"https://www.usstoragecenters.com{slug}"
         location_name = j.get("sanitizedHeader") or "US Storage Centers"
+        location_name = location_name.replace("&amp;", "&")
         try:
             phone = j["phone"]["label"]["value"]
         except TypeError:
