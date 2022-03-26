@@ -2,6 +2,6 @@
 sgscrape==0.2.6
 sgrequests==0.2.10
 beautifulsoup4==4.9.3
-sgselenium==0.1.4
+sgselenium==0.1.5
 sglogging==0.0.4
 lxml==4.6.2

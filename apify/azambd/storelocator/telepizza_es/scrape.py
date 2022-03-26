@@ -15,11 +15,7 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
-import os
 
-os.environ[
-    "PROXY_URL"
-] = "http://groups-RESIDENTIAL,country-es:{}@proxy.apify.com:8000/"
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
@@ -31,8 +27,10 @@ headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
 
-session = SgRequests(proxy_country="es")
+session = SgRequests()
 log = sglog.SgLogSetup().get_logger(logger_name=website)
+
+class_name = "heading-xl"
 
 
 def request_with_retries(url):
@@ -71,6 +69,31 @@ def fetch_store(driver, page_url):
         log.error(f"Error msg={e}")
         pass
     return None, None
+
+
+def get_driver(url, class_name, driver=None):
+    if driver is not None:
+        driver.quit()
+
+    x = 0
+    while True:
+        x = x + 1
+        try:
+            driver = SgChrome().driver()
+            driver.get(url)
+
+            WebDriverWait(driver, 20).until(
+                EC.presence_of_element_located((By.CLASS_NAME, class_name))
+            )
+            break
+        except Exception:
+            driver.quit()
+            if x == 10:
+                raise Exception(
+                    "Make sure this ran with a Proxy, will fail without one"
+                )
+            continue
+    return html.fromstring(driver.page_source, "lxml"), driver.page_source
 
 
 def stringify_nodes(body, xpath):
@@ -147,8 +170,8 @@ def fetch_data(driver):
         store_number = store_number[len(store_number) - 1]
         body, response = fetch_store(driver, page_url)
         if body is None or response is None:
-            log.error("Can't scrape")
-            continue
+            body, response = get_driver(page_url, class_name, driver)
+
         location_name = stringify_nodes(body, '//h1[contains(@class, "heading-xl")]')
         raw_address = stringify_nodes(
             body, '//div[contains(@class, "mod_generic_promotion shopTitle")]/address'
