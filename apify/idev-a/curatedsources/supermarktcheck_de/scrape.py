@@ -139,14 +139,14 @@ def _p(val):
         return ""
 
 
-max_workers = 1
+max_workers = 32
 
 
 def fetchConcurrentSingle(link):
     page_url = locator_domain + link.a["href"]
     logger.info(page_url)
     response = request_with_retries(page_url)
-    if response.status == 200:
+    if response.status_code == 200:
         return page_url, bs(response.text, "lxml")
 
     return None

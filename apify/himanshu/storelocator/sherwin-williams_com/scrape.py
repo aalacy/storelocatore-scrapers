@@ -83,7 +83,7 @@ def fetch_data():
 
         search = DynamicGeoSearch(
             country_codes=[SearchableCountries.USA, SearchableCountries.CANADA],
-            max_radius_miles=max_distance,
+            max_search_distance_miles=max_distance,
             max_search_results=max_results,
         )
         logger.info("Sgzips for loc_type: %s" % loc_type)

@@ -1,102 +1,89 @@
 import re
-import csv
+import demjson
 from lxml import etree
+from urllib.parse import urljoin
 
 from sgrequests import SgRequests
-
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
+from sgpostal.sgpostal import parse_address_intl
 
 
 def fetch_data():
-    # Your scraper here
-    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
+    session = SgRequests()
+    start_url = "https://www.newseason.com/treatment-center-locations/"
+    domain = "newseason.com"
 
-    items = []
-    scraped_items = []
+    response = session.get(start_url)
+    dom = etree.HTML(response.text)
+    all_states = dom.xpath('//select[@id="DDLState"]/option/@value')
+    for url in all_states:
+        if url == "0":
+            continue
+        url = urljoin(start_url, url)
+        response = session.get(url)
+        dom = etree.HTML(response.text)
 
-    start_url = "https://www.newseason.com/wp-admin/admin-ajax.php?action=store_search&lat=40.75368539999999&lng=-73.9991637&max_results=250&radius=50000"
-    domain = re.findall(r"://(.+?)/", start_url)[0].replace("www.", "")
-    hdr = {
-        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
-    }
-    all_locations = session.get(start_url, headers=hdr).json()
+        all_locations = dom.xpath('//li/a[contains(text(), "Learn More")]/@href')
+        for url in all_locations:
+            page_url = urljoin(start_url, url)
+            loc_response = session.get(page_url)
+            loc_dom = etree.HTML(loc_response.text)
+            if loc_dom.xpath('//strong[contains(text(), "Coming Soon")]'):
+                continue
 
-    for poi in all_locations:
-        store_url = poi["permalink"]
-        location_name = poi["store"]
-        street_address = poi["address"]
-        if poi["address2"]:
-            street_address += " " + poi["address2"]
-        city = poi["city"]
-        state = poi["state"]
-        zip_code = poi["zip"]
-        country_code = poi["country"]
-        country_code = country_code if country_code else "<MISSING>"
-        store_number = poi["id"]
-        phone = poi["phone"]
-        phone = phone if phone else "<MISSING>"
-        location_type = "<MISSING>"
-        latitude = poi["lat"]
-        longitude = poi["lng"]
-        hoo = etree.HTML(poi["hours"]).xpath("//text()")
-        hoo = [e.strip() for e in hoo if e.strip()]
-        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
+            location_name = loc_dom.xpath(
+                '//div[@class="headerContent"]//div[@class="caption"]/text()'
+            )[0]
+            raw_address = loc_dom.xpath('//div[@class="locContact"]/div/text()')[:3]
+            raw_address = ", ".join([e.strip() for e in raw_address if e.strip()])
+            addr = parse_address_intl(raw_address)
+            street_address = addr.street_address_1
+            if addr.street_address_2:
+                street_address += ", " + addr.street_address_2
+            phone = loc_dom.xpath(
+                '//div[@class="locInfo"]//a[contains(@href, "tel")]/text()'
+            )[0]
+            hoo = loc_dom.xpath(
+                '//h6[contains(text(), "Business Hours")]/following-sibling::div[1]//text()'
+            )
+            hoo = " ".join([e.strip() for e in hoo if e.strip()]).split("Holidays")[0]
+            geo = re.findall("mapCenter = (.+?);", loc_response.text)[0]
+            geo = demjson.decode(geo)
 
-        item = [
-            domain,
-            store_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip_code,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        check = f"{location_name} {street_address}"
-        if check not in scraped_items:
-            scraped_items.append(check)
-            items.append(item)
+            item = SgRecord(
+                locator_domain=domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=addr.city,
+                state=addr.state,
+                zip_postal=addr.postcode,
+                country_code="",
+                store_number="",
+                phone=phone,
+                location_type="",
+                latitude=geo["lat"],
+                longitude=geo["lng"],
+                hours_of_operation=hoo,
+                raw_address=raw_address,
+            )
 
-    return items
+            yield item
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":

@@ -26,18 +26,18 @@ def fetch_data():
                 street_address += " " + addr["line1"]
 
             hours = []
-            if _["status"] != "OPEN":
-                hours.append(_["status"])
-            else:
-                url = f"https://www.harvester.co.uk/cborms/pub/brands/9/outlets/{_['bunCode']}"
-                logger.info(url)
-                _d = http.get(url, headers=_headers).json()
+            url = f"https://www.harvester.co.uk/cborms/pub/brands/9/outlets/{_['bunCode']}"
+            logger.info(url)
+            _d = http.get(url, headers=_headers).json()
+            if _d.get("outletStructure", {}):
                 page_url = locator_domain + _d.get("outletStructure", {}).get("uri")
-                for hh in _d.get("foodServiceTimes", {}).get("periods", []):
-                    times = []
-                    for hr in hh["times"]:
-                        times.append(hr["text"])
-                    hours.append(f"{hh['days']['text']}: {', '.join(times)}")
+            else:
+                page_url = "https://www.harvester.co.uk/restaurants#/"
+            for hh in _d.get("foodServiceTimes", {}).get("periods", []):
+                times = []
+                for hr in hh["times"]:
+                    times.append(hr["text"])
+                hours.append(f"{hh['days']['text']}: {', '.join(times)}")
             yield SgRecord(
                 page_url=page_url,
                 store_number=_["bunCode"],
@@ -49,6 +49,7 @@ def fetch_data():
                 country_code="UK",
                 phone=_["telephoneNumber"],
                 locator_domain=locator_domain,
+                location_type=_["status"],
                 latitude=_["gpsCoordinates"]["latitude"],
                 longitude=_["gpsCoordinates"]["longitude"],
                 hours_of_operation="; ".join(hours),
@@ -60,7 +61,7 @@ if __name__ == "__main__":
         SgRecordDeduper(
             SgRecordID(
                 {
-                    SgRecord.Headers.PAGE_URL,
+                    SgRecord.Headers.STORE_NUMBER,
                 }
             )
         )

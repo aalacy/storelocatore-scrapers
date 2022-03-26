@@ -54,6 +54,8 @@ def fetch_data():
             if len(raw_address) <= 0:
                 raw_address = ", ".join(temp_address[0].xpath("a/text()")).strip()
 
+            if len(raw_address) <= 0:
+                raw_address = ", ".join(temp_address[0].xpath("span/a/text()")).strip()
         raw_address = raw_address.replace("local store6055", "local store, 6055")
         formatted_addr = parser.parse_address_usa(raw_address)
         street_address = formatted_addr.street_address_1
@@ -78,7 +80,7 @@ def fetch_data():
         country_code = "US"
 
         phone = store_sel.xpath(
-            '//section[@id="section_2"]//li[@class="icon-phone"][1]/text()'
+            '//section[@id="section_2"]//li[@class="icon-phone"][1]//text()'
         )
         if len(phone) > 0:
             phone = phone[0].strip()
@@ -93,16 +95,26 @@ def fetch_data():
             if is_found is False:
                 if "icon-hours" == "".join(hours[index].xpath("@class")).strip():
                     is_found = True
-                    hours_list.append("".join(hours[index].xpath(".//text()")).strip())
+                    hours_list.append(
+                        "".join(hours[index].xpath(".//text()"))
+                        .strip()
+                        .replace("\n", "; ")
+                        .strip()
+                    )
             else:
                 if len("".join(hours[index].xpath("@class")).strip()) <= 0:
-                    hours_list.append("".join(hours[index].xpath(".//text()")).strip())
+                    hours_list.append(
+                        "".join(hours[index].xpath(".//text()"))
+                        .strip()
+                        .replace("\n", "; ")
+                        .strip()
+                    )
 
         hour2 = "".join(
             store_sel.xpath(
                 '//section[@id="section_2"]//ul[./li[@class="icon-hours"]]/text()'
             )
-        )
+        ).strip()
         if hour2:
             hours_list.append(hour2)
 
