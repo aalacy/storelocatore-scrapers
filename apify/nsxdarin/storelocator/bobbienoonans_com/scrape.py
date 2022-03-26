@@ -63,6 +63,9 @@ def fetch_data():
                 m = m + 1
             m = m + 3
             hours = content[m]
+
+            if "Directors:" in hours:
+                hours = content[m - 1]
             if "a.m." not in hours:
                 hours = "<MISSING>"
             phone = div.text.split("P: ", 1)[1].split("\n", 1)[0]
