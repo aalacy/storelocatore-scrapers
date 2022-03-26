@@ -1,129 +1,170 @@
-import re
-import csv
-from lxml import etree
-
+from bs4 import BeautifulSoup as bs
 from sgrequests import SgRequests
+from sglogging import sglog
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from sgselenium import SgSelenium
+import ssl
+from selenium.common.exceptions import TimeoutException
+
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
+
+DOMAIN = "surgefun.com"
+BASE_URL = "https://surgefun.com"
+LOCATION_URL = "https://surgefun.com/locations/"
+HEADERS = {
+    "Accept": "application/json, text/plain, */*",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
+}
+MISSING = "<MISSING>"
+log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
+
+session = SgRequests()
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+def pull_content(url):
+    log.info("Pull content => " + url)
+    soup = bs(session.get(url, headers=HEADERS).content, "lxml")
+    return soup
+
+
+def scroll_until_loaded(driver):
+    check_height = driver.execute_script("return document.body.scrollHeight;")
+    while True:
+        driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+        try:
+            WebDriverWait(driver, 2).until(
+                lambda driver: driver.execute_script(
+                    "return document.body.scrollHeight;"
+                )
+                > check_height
+            )
+            check_height = driver.execute_script("return document.body.scrollHeight;")
+        except TimeoutException:
+            break
+
+
+def load_data(driver, page_url, count, load=False):
+    if load:
+        driver.get(page_url)
+    driver.find_element_by_xpath("/html/body/div[2]/div/div/section[2]").click()
+    scroll_until_loaded(driver)
+    try:
+        WebDriverWait(driver, 30).until(
+            EC.presence_of_element_located(
+                (By.CSS_SELECTOR, "div#locInfo > div.container")
+            )
         )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+    except TimeoutException:
+        if count < 15:
+            count += 1
+            load_data(driver, page_url, count, True)
+            log.info("Website load not complete, Try to reload")
+        else:
+            pass
+    return driver
 
 
 def fetch_data():
-    # Your scraper here
-    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
-
-    items = []
-
-    start_url = "https://surgefun.com/locations/"
-    domain = re.findall(r"://(.+?)/", start_url)[0].replace("www.", "")
-
-    hdr = {
-        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
-    }
-
-    response = session.get(start_url)
-    dom = etree.HTML(response.text)
-    all_locations = dom.xpath(
-        '//div[@data-widget_type="heading.default"]/div[1]/h2[@class="elementor-heading-title elementor-size-default"]/text()'
-    )
-    all_locations = list(set(all_locations))
-    all_locations = [e.lower() for e in all_locations if len(e.split(", ")) == 2]
-
-    for store_number in range(1, 100):
-        url = f"https://plondex.com/wp/jsonquery/loadloc/9/{store_number}"
-        loc_response = session.get(url, headers=hdr)
-        if loc_response.status_code != 200 or not loc_response.text:
-            continue
-        loc_dom = etree.HTML(loc_response.text)
-
-        raw_address = loc_dom.xpath('//div[@class="col-md-12 text-center"]/p/text()')
-        city = raw_address[-1].split(", ")[0]
-        store_url = "https://surgefun.com/locations/"
-        state = raw_address[-1].split(", ")[-1].split()[0]
-        location_name = f"{city.upper()}, {state.upper()}"
-        if location_name == "WINSTON SALEM, NC":
-            location_name = "WINSTON-SALEM, NC"
-        if location_name == "MONROE, LA":
-            continue
-        if location_name == "HOPE MILLS, NC":
-            location_name = "Fayetteville, NC".upper()
-        if location_name == "MARY ESTHER, FL":
-            location_name = "Ft. Walton, FL".upper()
-        if location_name == "EDMOND, OK":
-            location_name = "Oklahoma City, OK".upper()
-        street_address = raw_address[0]
-        if street_address.endswith(","):
-            street_address = street_address[:-1]
-        if street_address == "2723 W. Pinhook Rd":
-            continue
-        zip_code = raw_address[-1].split(", ")[-1].split()[-1]
-        country_code = "<MISSING>"
-        phone = "<MISSING>"
-        location_type = "<MISSING>"
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
-        hoo = loc_dom.xpath(
-            '//h4[contains(text(), "Business Hours")]/following::text()'
+    log.info("Fetching store_locator data")
+    soup = pull_content(LOCATION_URL)
+    store_urls = (
+        soup.find("main", {"class": "site-main"})
+        .find("div", {"class": "elementor-column-wrap elementor-element-populated"})
+        .find_all(
+            "a", {"class": "elementor-button-link elementor-button elementor-size-sm"}
         )
-        hoo = [e.strip() for e in hoo if e.strip()]
-        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
-
-        item = [
-            domain,
-            store_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip_code,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-
-        if location_name.lower() not in all_locations:
+    )
+    driver = SgSelenium(is_headless=True).chrome()
+    for row in store_urls:
+        page_url = row["href"]
+        driver.get(page_url)
+        WebDriverWait(driver, 30).until(
+            EC.presence_of_element_located((By.ID, "locInfo"))
+        )
+        try:
+            driver.find_element_by_xpath("//h2[text()='COMING SOON!']")
             continue
-
-        items.append(item)
-
-    return items
+        except:
+            pass
+        driver = load_data(driver, page_url, 0, False)
+        content = driver.find_element_by_id("locInfo")
+        location_name = content.find_element_by_css_selector(
+            "div.col-md-4.text-left > h4"
+        ).text.strip()
+        address = (
+            content.find_element_by_css_selector("div.col-md-4.text-left > p")
+            .text.replace("\n", ",")
+            .split(",")
+        )
+        if len(address) > 4:
+            street_address = (address[0] + "," + address[1]).strip()
+            city = address[2].strip()
+            state_zip = address[3].strip().split()
+            state = state_zip[0].strip()
+            zip_code = state_zip[1].strip()
+            phone = address[4].strip()
+        else:
+            street_address = address[0].strip()
+            city = address[1].strip()
+            state_zip = address[2].strip().split()
+            state = state_zip[0].strip()
+            zip_code = state_zip[1].strip()
+            phone = address[3].strip()
+        hours_of_operation = ", ".join(
+            content.find_element_by_css_selector("div.col-md-3.text-left")
+            .text.replace("Business Hours\n", "")
+            .split("\n")
+        )
+        store_number = MISSING
+        country_code = "US"
+        location_type = "surgefun"
+        latitude = MISSING
+        longitude = MISSING
+        log.info("Append {} => {}".format(location_name, street_address))
+        yield SgRecord(
+            locator_domain=DOMAIN,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address.strip(),
+            city=city.strip(),
+            state=state.strip(),
+            zip_postal=zip_code.strip(),
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone.strip(),
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+            raw_address=f"{street_address}, {city}, {state} {zip_code} ",
+        )
+    driver.quit()
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    log.info("start {} Scraper".format(DOMAIN))
+    count = 0
+    with SgWriter(SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
 
 
-if __name__ == "__main__":
-    scrape()
+scrape()

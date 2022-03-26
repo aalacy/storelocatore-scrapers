@@ -2,10 +2,12 @@ from sglogging import SgLogSetup
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-from sgscrape.sgpostal import parse_address_intl
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgpostal.sgpostal import parse_address_intl
 from sgselenium import SgFirefox
-from webdriver_manager.firefox import GeckoDriverManager
 from selenium.webdriver.common.action_chains import ActionChains
+
 from lxml import html
 import json
 import time
@@ -25,13 +27,11 @@ logger = SgLogSetup().get_logger("lululemon_com")
 DOMAIN_US = "lululemon.com"
 DOMAIN_GLOBAL = "lululemon.co.uk"
 URL_LOCATION_US_CA = "https://shop.lululemon.com/stores"
-MISSING = "<MISSING>"
+MISSING = SgRecord.MISSING
 
 
 def get_special_headers():
-    with SgFirefox(
-        executable_path=GeckoDriverManager().install(), is_headless=True
-    ) as driver:
+    with SgFirefox(is_headless=True) as driver:
         requestName = "/cne/graphql"
         driver.get(URL_LOCATION_US_CA)
         driver.implicitly_wait(20)
@@ -43,18 +43,18 @@ def get_special_headers():
         logger.info(f"Just to make sure all-lululemon-stores exists: {element1}")
 
         # Find out the lululemon all stores link so that we can load that page
-        all_stores_find_element_by_class = driver.find_element_by_class_name(
-            "ctaBlock-GVjCz"
+        all_stores_find_element_by_xpath = driver.find_element_by_xpath(
+            see_all_store_listings
         )
 
         # Hover your mouse to make the link workable
         hover = ActionChains(driver).move_to_element_with_offset(
-            all_stores_find_element_by_class, 0, 0
+            all_stores_find_element_by_xpath, 0, 0
         )
         hover.perform()
 
         # Click on it
-        all_stores_find_element_by_class.click()
+        all_stores_find_element_by_xpath.click()
         driver.implicitly_wait(20)
         time.sleep(10)
         logger.info("The page is loaded")
@@ -66,7 +66,7 @@ def get_special_headers():
 
 
 def clean_raw_address(raw_address_):
-    t5 = raw_address_.replace("None", "").replace("<MISSING>", "")
+    t5 = raw_address_.replace("None", "").replace(SgRecord.MISSING, "")
     t6 = t5.split(",")
     t7 = [i.strip().replace(".", "") for i in t6 if i]
     t8 = [i for i in t7 if i]
@@ -77,7 +77,6 @@ def clean_raw_address(raw_address_):
 def fetch_us_ca_data():
     # This part scrape the data for the US and CA
     session_us_ca = SgRequests()
-    s = set()
     headers_us_ca = {
         "accept": "application/json, text/plain, */*",
         "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.114 Safari/537.36",
@@ -115,8 +114,18 @@ def fetch_us_ca_data():
             # Address Data
             addinfo = item["fullAddress"]
             pa = parse_address_intl(addinfo)
-            street_address = pa.street_address_1
-            street_address = street_address if street_address else MISSING
+            street_address = ""
+            street_address_1 = pa.street_address_1
+            street_address_2 = pa.street_address_2
+
+            if street_address_2 is not None:
+                street_address = street_address_1 + ", " + street_address_2
+            else:
+                if street_address_1 is not None:
+                    street_address = street_address_1
+                else:
+                    street_address = MISSING
+
             city = item["city"]
             state = item["state"]
 
@@ -130,9 +139,6 @@ def fetch_us_ca_data():
 
             store_number = item["storeNumber"]
             logger.info(f"Store Number: {store_number}")
-            if store_number in s:
-                continue
-            s.add(store_number)
 
             latitude = item["latitude"] or MISSING
             longitude = item["longitude"] or MISSING
@@ -171,6 +177,10 @@ def fetch_us_ca_data():
 
             if store_number == "11927" and street_address == "114":
                 street_address = street_address.replace("114", "114 West County Center")
+
+            if "300 Bob Wallace Ave" in street_address and store_number == "10752":
+                street_address = "920 Bob Wallace Ave, Building 300, Unit 313"
+
             yield SgRecord(
                 locator_domain=locator_domain,
                 page_url=page_url,
@@ -195,7 +205,6 @@ def fetch_us_ca_data():
 def fetch_global_data():
     # This is used to get the data from countries those are outside of US and CA
     session_global = SgRequests()
-    s = set()
     headers_global = {
         "accept": "application/json, text/javascript, */*; q=0.01",
         "accept-encoding": "gzip, deflate, br",
@@ -223,8 +232,17 @@ def fetch_global_data():
         locator_domain = DOMAIN_GLOBAL
         location_name = item["name"]
         logger.info(f"Location Name: {location_name}")
+        street_address = ""
         street_address_raw_1 = item["address1"]
-        street_address = street_address_raw_1 if street_address_raw_1 else MISSING
+        street_address_raw_2 = item["address2"]
+
+        if item["address2"] is not None:
+            street_address = item["address1"] + ", " + item["address2"]
+        else:
+            if item["address1"] is not None:
+                street_address = item["address1"]
+            else:
+                street_address = MISSING
         if street_address == "," or street_address == ".":
             street_address = MISSING
 
@@ -258,9 +276,6 @@ def fetch_global_data():
 
         store_number = item["ID"]
         logger.info(f"Store Number: {store_number}")
-        if store_number in s:
-            continue
-        s.add(store_number)
 
         latitude = item["latitude"] or MISSING
         longitude = item["longitude"] or MISSING
@@ -320,7 +335,9 @@ def fetch_global_data():
 def scrape():
     logger.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
+    ) as writer:
         results_us_ca_data = list(fetch_us_ca_data())
         results_global_data = list(fetch_global_data())
         results_us_ca_data.extend(results_global_data)

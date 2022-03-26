@@ -1,40 +1,16 @@
-import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
 import time
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
 
 logger = SgLogSetup().get_logger("containerstore_com")
-
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
 
 
 def fetch_data():
@@ -82,7 +58,7 @@ def fetch_data():
             if '"latitude": ' in line2:
                 lat = line2.split('"latitude": ')[1].split(",")[0]
             if '"longitude": ' in line2:
-                lng = (
+                lng = "-" + (
                     line2.split('"longitude": ')[1]
                     .strip()
                     .replace("\t", "")
@@ -103,28 +79,40 @@ def fetch_data():
                     hours = hours + "; " + day
         if phone == "":
             phone = "<MISSING>"
-        yield [
-            website,
-            loc,
-            name,
-            add,
-            city,
-            state,
-            zc,
-            country,
-            store,
-            phone,
-            typ,
-            lat,
-            lng,
-            hours,
-        ]
+        if "store=NOR" in loc:
+            name = "Northbrook"
+            add = "101 Skokie Blvd."
+            city = "Northbrook"
+            state = "IL"
+            zc = "60062"
+            phone = "(847) 559-8222"
+            hours = "Mon-Sat: 10:00 AM - 8:00 PM; Sun: 11:00 AM - 7:00 PM"
+            lat = "42.152"
+            lng = "87.8007"
+        yield SgRecord(
+            locator_domain=website,
+            page_url=loc,
+            location_name=name,
+            street_address=add,
+            city=city,
+            state=state,
+            zip_postal=zc,
+            country_code=country,
+            phone=phone,
+            location_type=typ,
+            store_number=store,
+            latitude=lat,
+            longitude=lng,
+            hours_of_operation=hours,
+        )
         time.sleep(15)
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()

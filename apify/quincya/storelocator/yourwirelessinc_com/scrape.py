@@ -1,84 +1,75 @@
-from sgrequests import SgRequests
-from bs4 import BeautifulSoup
-import csv
-import time
-from random import randint
 import re
-from sglogging import SgLogSetup
 
-logger = SgLogSetup().get_logger('yourwirelessinc_com')
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+
+from sgrequests import SgRequests
 
 
+def fetch_data(sgw: SgWriter):
 
-def write_output(data):
-	with open('data.csv', mode='w', encoding="utf-8") as output_file:
-		writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+    base_link = "https://www.yourwirelessinc.com/wp-json/wpgmza/v1/features/base64eJyrVkrLzClJLVKyUqqOUcpNLIjPTIlRsopRMoxR0gEJFGeUFni6FAPFomOBAsmlxSX5uW6ZqTkpELFapVoABU0Wug"
 
-		# Header
-		writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-		# Body
-		for row in data:
-			writer.writerow(row)
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36"
+    headers = {"User-Agent": user_agent}
 
-def fetch_data():
-	
-	base_link = "https://yourwirelessinc.com/"
+    session = SgRequests()
+    store_data = session.get(base_link, headers=headers).json()["markers"]
 
-	user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36'
-	HEADERS = {'User-Agent' : user_agent}
+    locator_domain = "yourwirelessinc.com"
 
-	session = SgRequests()
-	req = session.get(base_link, headers = HEADERS)
-	time.sleep(randint(1,2))
-	try:
-		base = BeautifulSoup(req.text,"lxml")
-		logger.info("Got today page")
-	except (BaseException):
-		logger.info('[!] Error Occured. ')
-		logger.info('[?] Check whether system is Online.')
+    for store in store_data:
+        location_name = store["title"]
+        raw_address = store["address"]
+        street_address = raw_address[: raw_address.rfind(location_name)].strip()
+        city = location_name
+        state = raw_address.split(",")[-1].split()[0]
+        zip_code = raw_address.split(",")[-1].split()[1]
+        country_code = "US"
+        store_number = store["id"]
 
-	data = []
-	found_poi = []
+        try:
+            phone = re.findall(r"[(\d)]{3}-[\d]{3}-[\d]{4}", store["description"])[0]
+        except:
+            try:
+                phone = re.findall(r"[(\d)]{5} [\d]{3}-[\d]{4}", store["description"])[
+                    0
+                ]
+            except:
+                phone = "<MISSING>"
+        location_type = "<MISSING>"
+        hours_of_operation = "<MISSING>"
 
-	items = base.find(id="all").find_all(class_="item-details pull-left")
-	locator_domain = "yourwirelessinc.com"
+        latitude = store["lat"]
+        longitude = store["lng"]
 
-	for item in items:
+        link = "https://www.yourwirelessinc.com/locations/"
+        if store["link"]:
+            link = ("https://www.yourwirelessinc.com" + store["link"]).replace(
+                "locations", "locations-and-team-members"
+            )
 
-		location_name = item.h5.text.strip()
+        sgw.write_row(
+            SgRecord(
+                locator_domain=locator_domain,
+                page_url=link,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_code,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
+        )
 
-		raw_data = item.text.strip().replace("\t","").replace("\n\n","\n").split("\n")
-		
-		street_address = raw_data[1].replace("Unit", " Unit").replace("Suite", " Suite").strip()
-		street_address = (re.sub(' +', ' ', street_address)).strip()
-		if street_address in found_poi:
-			continue
 
-		found_poi.append(street_address)
-		city_line = raw_data[2].strip().split(",")
-		city = city_line[0].strip()
-		state = city_line[-1].strip().split()[0].strip()
-		zip_code = city_line[-1].strip().split()[1].strip()
-		if zip_code == "36054":
-			zip_code = "23093"
-		if zip_code == "100002":
-			zip_code = "10002"
-		if len(zip_code) < 5:
-			zip_code = "0" + zip_code
-		country_code = "US"
-		store_number = "<MISSING>"
-		location_type = "<MISSING>"
-		phone = raw_data[-1].replace("Tel :","").strip()
-		hours_of_operation = "<MISSING>"
-		latitude = "<MISSING>"
-		longitude = "<MISSING>"
-
-		data.append([locator_domain, base_link, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
-
-	return data
-
-def scrape():
-	data = fetch_data()
-	write_output(data)
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+    fetch_data(writer)

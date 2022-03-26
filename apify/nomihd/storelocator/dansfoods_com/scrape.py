@@ -4,25 +4,11 @@ from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import lxml.html
-from sgpostal import sgpostal as parser
-from sgselenium import SgChrome
-import time
-import ssl
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-try:
-    _create_unverified_https_context = (
-        ssl._create_unverified_context
-    )  # Legacy Python that doesn't verify HTTPS certificates by default
-except AttributeError:
-    pass
-else:
-    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
-
 website = "dansfoods.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
-session = SgRequests()
 headers = {
     "authority": "dansfoods.com",
     "sec-ch-ua": '" Not A;Brand";v="99", "Chromium";v="90", "Google Chrome";v="90"',
@@ -63,14 +49,13 @@ def fetch_data():
     # Your scraper here
     base = "https://dansfoods.com"
     search_url = "https://dansfoods.com/?loc=all"
-    search_res = session.get(search_url, headers=headers)
+    with SgRequests() as session:
+        search_res = session.get(search_url, headers=headers)
 
-    search_sel = lxml.html.fromstring(search_res.text)
+        search_sel = lxml.html.fromstring(search_res.text)
 
-    store_list = search_sel.xpath(
-        '//div[contains(@class,"footerSection ") and contains(.//a/text(),"Grocery Locations")]/p'
-    )
-    with SgChrome() as driver:
+        store_list = search_sel.xpath('//div[./h2[contains(text(),"Locations")]]/div/a')
+
         for store in store_list:
 
             page_url = base + "".join(store.xpath(".//@href"))
@@ -78,68 +63,62 @@ def fetch_data():
             locator_domain = website
 
             log.info(page_url)
-            driver.get(page_url)
-            time.sleep(30)
-            store_sel = lxml.html.fromstring(driver.page_source)
+            store_req = session.get(page_url, headers=headers)
+            store_sel = lxml.html.fromstring(store_req.text)
 
-            store_number = (
-                driver.page_source.split("theStoreID =")[1].split(";")[0].strip()
+            store_number = "<MISSING>"
+            location_name = (
+                "".join(store_sel.xpath(".//title/text()"))
+                .strip()
+                .split("-")[0]
+                .strip()
             )
 
-            store_info = list(
-                filter(
-                    str,
-                    [
-                        x.strip()
-                        for x in store_sel.xpath(
-                            f'.//div[@id="store{store_number}"]//text()'
-                        )
-                    ],
-                )
+            raw_address = store_sel.xpath(
+                '//div/h3[contains(text(),"Address")]/following-sibling::p/text()'
             )
 
-            store_info = " ".join(store_info).replace("\n", "")
-
-            raw_address = store_info.split("Address:")[1].strip()
-
-            formatted_addr = parser.parse_address_usa(raw_address)
-            street_address = formatted_addr.street_address_1
-            if formatted_addr.street_address_2:
-                street_address = street_address + ", " + formatted_addr.street_address_2
-
-            city = formatted_addr.city
-            state = formatted_addr.state
-            zip = formatted_addr.postcode
+            street_address = "".join(raw_address[0]).strip()
+            city = "".join(raw_address[-1]).strip().split(",")[0].strip()
+            state = (
+                "".join(raw_address[-1])
+                .strip()
+                .split(",")[-1]
+                .strip()
+                .split(" ")[0]
+                .strip()
+            )
+            zip = (
+                "".join(raw_address[-1])
+                .strip()
+                .split(",")[-1]
+                .strip()
+                .split(" ")[-1]
+                .strip()
+            )
 
             country_code = "US"
 
-            location_name = "".join(store_sel.xpath(".//title/text()")).strip()
-
-            phone = store_info.split("Phone Number:")[1].split("Fax")[0].strip()
+            phone = "".join(
+                store_sel.xpath(
+                    '//div/h3[text()="Phone Number"]/following-sibling::a[1]/text()'
+                )
+            ).strip()
             location_type = "<MISSING>"
 
-            hours = list(
-                filter(
-                    str,
-                    [
-                        x.strip()
-                        for x in store_sel.xpath(
-                            f'//div[@id="storeHours{store_number}"]//text()'
-                        )
-                    ],
-                )
-            )
-            hours_of_operation = "; ".join(hours[1:])
-            hours_of_operation = (
-                hours_of_operation.split("; Pharmacy")[0]
-                .strip()
-                .replace(":;", ":")
-                .strip()
+            hours = store_sel.xpath(
+                '//div/h3[contains(text(),"Store Hours")]/following-sibling::div[1]/p'
             )
 
-            map_link = (
-                driver.page_source.split('<small><a href="')[1].split('"')[0].strip()
-            )
+            hours_list = []
+            for hour in hours:
+                hours_list.append("".join(hour.xpath(".//text()")).strip())
+
+            hours_of_operation = "; ".join(hours_list).strip()
+            map_link = "".join(
+                store_sel.xpath('//iframe[contains(@src,"maps/embed?")]/@src')
+            ).strip()
+
             latitude, longitude = get_latlng(map_link)
 
             yield SgRecord(
@@ -157,7 +136,6 @@ def fetch_data():
                 latitude=latitude,
                 longitude=longitude,
                 hours_of_operation=hours_of_operation,
-                raw_address=raw_address,
             )
 
 
@@ -165,7 +143,7 @@ def scrape():
     log.info("Started")
     count = 0
     with SgWriter(
-        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.StoreNumberId)
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
     ) as writer:
         results = fetch_data()
         for rec in results:

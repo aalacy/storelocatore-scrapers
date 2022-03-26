@@ -1,64 +1,90 @@
+from lxml import etree
+from urllib.parse import urljoin
+
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
-from sgzip.dynamic import SearchableCountries, DynamicZipSearch
 
 
 def fetch_data():
-    # Your scraper here
     session = SgRequests()
     domain = "schlotzskys.com"
 
-    all_codes = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA], expected_search_radius_miles=50
-    )
-
-    start_url = "https://www.schlotzskys.com/sitecore/api/v0.1/storelocator/locations?locationname={}"
-    headers = {
-        "authority": "www.schlotzskys.com",
-        "accept": "*/*",
-        "accept-encoding": "gzip, deflate, br",
+    start_url = "https://locations.schlotzskys.com/"
+    hdr = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.67 Safari/537.36",
     }
-
-    for code in all_codes:
-        data = session.get(start_url.format(code), headers=headers).json()
-        if not data.get("Locations"):
+    response = session.get(start_url, headers=hdr)
+    dom = etree.HTML(response.text)
+    all_locations = []
+    all_states = dom.xpath('//a[@class="Directory-listLink"]')
+    for state in all_states:
+        url = urljoin(start_url, state.xpath("@href")[0])
+        count = state.xpath("@data-count")[0]
+        if count[1:-1] == "1":
+            all_locations.append(url)
             continue
-        for poi in data["Locations"]:
-            store_url = "https://www.schlotzskys.com" + poi["Url"]
-            hours_of_operation = []
-            for elem in poi["Hours"]:
-                if elem["FormattedDayOfWeek"] == "today":
-                    continue
-                day = elem["FormattedDayOfWeek"]
-                opens = elem["Open"]
-                close = elem["Close"]
-                hours_of_operation.append("{} {} - {}".format(day, opens, close))
-            hours_of_operation = (
-                ", ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
-            )
+        response = session.get(url, headers=hdr)
+        dom = etree.HTML(response.text)
+        all_cities = dom.xpath('//a[@class="Directory-listLink"]')
+        all_locations += dom.xpath('//a[@data-ya-track="visitpage"]/@href')
+        for city in all_cities:
+            url = urljoin(start_url, city.xpath("@href")[0])
+            count = city.xpath("@data-count")[0]
+            if count[1:-1] == "1":
+                all_locations.append(url)
+                continue
+            response = session.get(url, headers=hdr)
+            dom = etree.HTML(response.text)
+            all_locations += dom.xpath('//a[@data-ya-track="visitpage"]/@href')
 
-            item = SgRecord(
-                locator_domain=domain,
-                page_url=store_url,
-                location_name=poi["LocationName"],
-                street_address=poi["StreetAddress"],
-                city=poi["City"],
-                state=poi["Region"],
-                zip_postal=poi["PostalCode"],
-                country_code=poi["CountryName"],
-                store_number=poi["StoreNumber"],
-                phone=poi["Phone"],
-                location_type=SgRecord.MISSING,
-                latitude=poi["Latitude"],
-                longitude=poi["Longitude"],
-                hours_of_operation=hours_of_operation,
-            )
+    for url in list(set(all_locations)):
+        page_url = urljoin(start_url, url)
+        loc_response = session.get(page_url)
+        loc_dom = etree.HTML(loc_response.text)
+        com_soon = loc_dom.xpath('//span[contains(text(), "Coming Soon")]')
+        if com_soon:
+            continue
+        location_name = loc_dom.xpath('//h2[@class="Core-title"]/text()')
+        if not location_name:
+            location_name = loc_dom.xpath('//span[@class="Hero-geo"]/a/text()')
+        location_name = location_name[0]
+        street_address = loc_dom.xpath('//meta[@itemprop="streetAddress"]/@content')[0]
+        city = loc_dom.xpath('//meta[@itemprop="addressLocality"]/@content')[0]
+        state = loc_dom.xpath('//abbr[@itemprop="addressRegion"]/text()')[0]
+        zip_code = loc_dom.xpath('//span[@itemprop="postalCode"]/text()')[0]
+        country_code = loc_dom.xpath("//@data-country")[0]
+        phone = loc_dom.xpath('//div[@itemprop="telephone"]/text()')
+        phone = phone[0] if phone else ""
+        location_type = loc_dom.xpath("//main/@itemtype")[0].split("/")[-1]
+        latitude = loc_dom.xpath('//meta[@itemprop="latitude"]/@content')[0]
+        longitude = loc_dom.xpath('//meta[@itemprop="longitude"]/@content')[0]
+        hoo = loc_dom.xpath('//table[@class="c-hours-details"]//text()')[2:]
+        hoo = [e.strip() for e in hoo if e.strip()]
+        hoo = " ".join(hoo)
+        store_number = loc_dom.xpath('//a[contains(@href, "store_code")]/@href')
+        store_number = store_number[0].split("=")[-1] if store_number else ""
 
-            yield item
+        item = SgRecord(
+            locator_domain=domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zip_code,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hoo,
+        )
+
+        yield item
 
 
 def scrape():

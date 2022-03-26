@@ -1,91 +1,50 @@
 import re
-import csv
 from lxml import etree
+from urllib.parse import urljoin
 
 from sgrequests import SgRequests
-from sgzip.dynamic import SearchableCountries, DynamicZipSearch
-
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
-    # Your scraper here
     session = SgRequests()
 
-    items = []
+    domain = "hss.com"
+    start_url = "https://www.hss.com/hire/find-a-branch/all-branches"
 
-    DOMAIN = "hss.com"
-    start_url = (
-        "https://www.hss.com/hire/find-a-branch?latitude=&longitude=&brands=hire&q={}"
+    response = session.get(start_url)
+    dom = etree.HTML(response.text)
+
+    all_locations = dom.xpath(
+        '//select[@class="chosen-select customSelect"]/option/@value'
     )
-
-    all_locations = []
-    all_coords = DynamicZipSearch(
-        country_codes=[SearchableCountries.BRITAIN],
-        max_radius_miles=50,
-        max_search_results=None,
-    )
-    for code in all_coords:
-        response = session.get(start_url.format(code))
-        dom = etree.HTML(response.text)
-        all_locations += dom.xpath('//form[@name="pos_details_form"]/@action')
-
     for url in list(set(all_locations)):
-        poi_url = "https://www.hss.com" + url
+        poi_url = urljoin(start_url, url)
         loc_response = session.get(poi_url)
         loc_dom = etree.HTML(loc_response.text)
 
-        poi_name = re.findall('storename = "(.+)";', loc_response.text)
+        raw_address = loc_dom.xpath('//div[@itemprop="address"]/text()')
+        raw_address = [e.strip() for e in raw_address if e.strip()]
+        if len(raw_address) == 5:
+            raw_address = [", ".join(raw_address[:2])] + raw_address[2:]
+        poi_name = re.findall('storename="(.+?)";', loc_response.text)
         if not poi_name:
             continue
         poi_name = poi_name[0]
-        street = re.findall('storeaddressline1 = "(.+?)";', loc_response.text)[0]
-        street_2 = re.findall('storeaddressline2 = "(.+?)";', loc_response.text)
-        if street_2:
-            street += " " + street_2[0]
-        city = re.findall('storeaddresstown = "(.+?)";', loc_response.text)
-        city = city[0] if city else "<MISSING>"
-        state = "<MISSING>"
-        zip_code = re.findall('storeaddresspostalCode = "(.+?)";', loc_response.text)
+        street = raw_address[0]
+        street = street.split('";var')[0].strip()
+        city = raw_address[1]
+        zip_code = re.findall('storeaddresspostalCode="(.+?)";', loc_response.text)
         zip_code = zip_code[0] if zip_code else "<MISSING>"
-        country_code = re.findall(
-            'storeaddresscountryname = "(.+?)";', loc_response.text
-        )
+        country_code = re.findall('storeaddresscountryname="(.+?)";', loc_response.text)
         country_code = country_code[0] if country_code else "<MISSING>"
-        poi_number = "<MISSING>"
-        phone = re.findall('storeaddressphone = "(.+?)";', loc_response.text)
+        phone = re.findall('storeaddressphone="(.+?)";', loc_response.text)
         phone = phone[0] if phone else "<MISSING>"
-        poi_type = "<MISSING>"
-        latitude = re.findall("latitude = (.+?);", loc_response.text)[0]
-        longitude = re.findall("longitude = (.+?);", loc_response.text)[0]
+        latitude = re.findall("latitude=(.+?);", loc_response.text)[0]
+        longitude = re.findall("longitude=(.+?);", loc_response.text)[0]
         hoo = loc_dom.xpath('//div[@class="store-openings weekday_openings"]//text()')
         hoo = [
             elem.strip().replace("\t", "").replace("\n", " ")
@@ -94,31 +53,36 @@ def fetch_data():
         ]
         hoo = " ".join(hoo) if hoo else "<MISSING>"
 
-        item = [
-            DOMAIN,
-            poi_url,
-            poi_name,
-            street,
-            city,
-            state,
-            zip_code,
-            country_code,
-            poi_number,
-            phone,
-            poi_type,
-            latitude,
-            longitude,
-            hoo,
-        ]
+        item = SgRecord(
+            locator_domain=domain,
+            page_url=poi_url,
+            location_name=poi_name,
+            street_address=street,
+            city=city,
+            state=SgRecord.MISSING,
+            zip_postal=zip_code,
+            country_code=country_code,
+            store_number=SgRecord.MISSING,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hoo,
+        )
 
-        items.append(item)
-
-    return items
+        yield item
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":

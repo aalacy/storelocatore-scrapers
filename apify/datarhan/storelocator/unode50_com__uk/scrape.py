@@ -1,39 +1,12 @@
-import csv
 import json
 from lxml import etree
 
 from sgrequests import SgRequests
-from sgscrape.sgpostal import parse_address_intl
-
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
+from sgpostal.sgpostal import parse_address_intl
 
 
 def fetch_data():
@@ -58,12 +31,12 @@ def fetch_data():
     # Your scraper here
     session = SgRequests()
 
-    items = []
-    scraped_items = []
-
-    DOMAIN = "unode50.com"
+    domain = "unode50.com"
     start_url = "https://www.unode50.com/uk/stores#51.494114,-0.255486"
-    response = session.get(start_url)
+    hdr = {
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.164 Safari/537.36"
+    }
+    response = session.get(start_url, headers=hdr)
     dom = etree.HTML(response.text)
     data = dom.xpath('//script[contains(text(), "calendar")]/text()')[0]
     data = json.loads(data)
@@ -77,10 +50,7 @@ def fetch_data():
         if not uk_borders(coordinates):
             continue
 
-        store_url = poi["url"]
-        loc_response = session.get(store_url)
-        loc_dom = etree.HTML(loc_response.text)
-
+        store_url = f"https://www.unode50.com/en/int/stores#{latitude},{longitude}"
         location_name = poi["name"]
         if location_name == "g":
             continue
@@ -112,56 +82,38 @@ def fetch_data():
         phone = poi["contact_phone"]
         phone = phone if phone else "<MISSING>"
         location_type = "<MISSING>"
-        data = loc_dom.xpath(
-            '//script[@ type="text/x-magento-init" and contains(text(), "openingHours")]/text()'
+        hours_of_operation = ""
+
+        item = SgRecord(
+            locator_domain=domain,
+            page_url=store_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zip_code,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
         )
-        hoo = []
-        if data:
-            data = json.loads(data[0])
-            hours = data["*"]["Magento_Ui/js/core/app"]["components"][
-                "smile-storelocator-store"
-            ]["schedule"]["openingHours"]
-            hours = [e[0] if e else "closed" for e in hours]
-            days = [
-                "Monday",
-                "Tuesday",
-                "Wednsday",
-                "Thursday",
-                "Friday",
-                "Saturday",
-                "Sunday",
-            ]
-            hoo = list(map(lambda d, h: d + " " + h, days, hours))
-        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 
-        item = [
-            DOMAIN,
-            store_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip_code,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-
-        check = f"{street_address} {location_name}"
-        if check not in scraped_items:
-            scraped_items.append(check)
-            items.append(item)
-
-    return items
+        yield item
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":

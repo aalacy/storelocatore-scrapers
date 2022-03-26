@@ -1,4 +1,3 @@
-import csv
 import re
 
 from bs4 import BeautifulSoup
@@ -7,41 +6,15 @@ from sglogging import SgLogSetup
 
 from sgrequests import SgRequests
 
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+
 logger = SgLogSetup().get_logger("gap_com")
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-
+def fetch_data(sgw: SgWriter):
     base_link = "https://www.gap.com/stores"
 
     user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
@@ -80,7 +53,6 @@ def fetch_data():
         items = base.find_all(class_="map-list-item")
 
         for item in items:
-            location_name = item.find(class_="location-name mb-5").text.strip()
             street_address = item.find(class_="address").div.text.strip()
             city_line = item.find(class_="address").find_all("div")[1].text.split(",")
             city = city_line[0].strip()
@@ -88,6 +60,10 @@ def fetch_data():
             zip_code = city_line[-1].strip().split()[1].strip()
             country_code = "US"
             location_type = item.find(class_="store-type").text.strip()
+            if "," in location_type:
+                location_name = "Gap"
+            else:
+                location_name = location_type
             phone = item.find(class_="phone ga-link").text.strip()
 
             map_str = item.find(class_="directions ga-link")["href"]
@@ -113,27 +89,25 @@ def fetch_data():
             if not hours_of_operation:
                 hours_of_operation = "<MISSING>"
 
-            yield [
-                locator_domain,
-                link,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip_code,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
+            sgw.write_row(
+                SgRecord(
+                    locator_domain=locator_domain,
+                    page_url=link,
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=zip_code,
+                    country_code=country_code,
+                    store_number=store_number,
+                    phone=phone,
+                    location_type=location_type,
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=hours_of_operation,
+                )
+            )
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+    fetch_data(writer)

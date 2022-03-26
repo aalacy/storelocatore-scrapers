@@ -1,58 +1,30 @@
-import csv
+import json
 from lxml import etree
+from urllib.parse import urljoin
 
 from sgrequests import SgRequests
-
-DOMAIN = "orkin.com"
-
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
-    # Your scraper here
-    items = []
-
     scraped_urls = []
-    scraped_locations = []
-
+    domain = "orkin.com"
     headers = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.193 Safari/537.36"
     }
 
     session = SgRequests()
-    response = session.get("https://www.orkin.com/locations", headers=headers)
+    start_url = "https://www.orkin.com/locations"
+    response = session.get(start_url, headers=headers)
     dom = etree.HTML(response.text)
-    allstates_urls = dom.xpath('//section[@class="layer static-map"]//a')
+    allstates_urls = dom.xpath(
+        '//a[contains(@class, "chakra-link cta cta--ghost-dark")]/@href'
+    )
     for state_url in allstates_urls:
-        full_state_url = "https://www.orkin.com" + state_url.get("xlink:href")
+        full_state_url = urljoin(start_url, state_url)
         if full_state_url in scraped_urls:
             continue
 
@@ -61,77 +33,71 @@ def fetch_data():
         state_dom = etree.HTML(state_response.text)
 
         allcities_urls = state_dom.xpath(
-            '//h4[contains(text(), "Select a City to View Branch Locations")]/following-sibling::div[1]//a/@href'
+            '//a[contains(@class, "chakra-link cta cta--ghost-dark")]/@href'
         )
         for city_url in allcities_urls:
-            full_city_url = "https://www.orkin.com" + city_url
+            full_city_url = urljoin(start_url, city_url)
             if full_city_url in scraped_urls:
                 continue
             city_response = session.get(full_city_url.replace(" ", ""), headers=headers)
             scraped_urls.append(full_city_url)
             city_dom = etree.HTML(city_response.text)
-            all_stores_data = city_dom.xpath('//section[@class="branch-data"]')
-            for store_data in all_stores_data:
-                store_url = full_city_url
-                location_name = store_data.find("h2").text
-                location_name = location_name if location_name else "<MISSING>"
-                street_address = store_data.xpath(
-                    './/span[@itemprop="streetAddress"]/text()'
-                )
-                street_address = street_address[0] if street_address else "<MISSING>"
-                city = store_data.xpath('.//span[@itemprop="addressLocality"]/text()')
-                city = city[0] if city else "<MISSING>"
-                state = store_data.xpath('.//span[@itemprop="addressRegion"]/text()')
-                state = state[0] if state else "<MISSING>"
-                zip_code = "<MISSING>"
-                zip_code = zip_code if zip_code else "<MISSING>"
-                country_code = "<MISSING>"
-                country_code = country_code if country_code else "<MISSING>"
-                store_number = location_name.split("#")[-1]
-                phone = store_data.xpath('.//span[@itemprop="telephone"]/text()')
-                if not phone:
-                    phone = store_data.xpath("//@data-branch-phone")
-                phone = phone[0] if phone else "<MISSING>"
-                location_type = store_data.get("data-service-type")
-                location_type = location_type if location_type else "<MISSING>"
-                latitude = "<MISSING>"
-                latitude = latitude if latitude else "<MISSING>"
-                longitude = "<MISSING>"
-                longitude = longitude if longitude else "<MISSING>"
-                hours_of_operation = store_data.xpath(
-                    './/span[@itemprop="dayOfWeek"]/span/p/text()'
-                )
-                hours_of_operation = (
-                    hours_of_operation[0] if hours_of_operation else "<MISSING>"
-                )
-
-                item = [
-                    DOMAIN,
-                    store_url,
-                    location_name,
-                    street_address,
-                    city,
-                    state,
-                    zip_code,
-                    country_code,
-                    store_number,
-                    phone,
-                    location_type,
-                    latitude,
-                    longitude,
-                    hours_of_operation,
+            all_locations = city_dom.xpath('//a[contains(@href, "branch")]/@href')
+            for page_url in all_locations:
+                page_url = urljoin(start_url, page_url)
+                if page_url in scraped_urls:
+                    continue
+                scraped_urls.append(page_url)
+                loc_response = session.get(page_url, headers=headers)
+                code = loc_response.status_code
+                while code != 200:
+                    session = SgRequests()
+                    loc_response = session.get(page_url, headers=headers)
+                    code = loc_response.status_code
+                loc_dom = etree.HTML(loc_response.text)
+                poi = loc_dom.xpath('//script[contains(text(), "postalCode")]/text()')[
+                    0
                 ]
+                poi = json.loads(poi)
 
-                if location_name not in scraped_locations:
-                    scraped_locations.append(location_name)
-                    items.append(item)
+                location_name = loc_dom.xpath("//h1/text()")[0]
+                hoo = []
+                for day in poi["openingHoursSpecification"]["dayOfWeek"]:
+                    hoo.append(
+                        f"{day} {poi['openingHoursSpecification']['opens']} {poi['openingHoursSpecification']['closes']}"
+                    )
+                hoo = " ".join(hoo)
 
-    return items
+                item = SgRecord(
+                    locator_domain=domain,
+                    page_url=page_url,
+                    location_name=location_name,
+                    street_address=poi["address"]["streetAddress"],
+                    city=poi["address"]["addressLocality"],
+                    state=poi["address"]["addressRegion"],
+                    zip_postal=poi["address"]["postalCode"],
+                    country_code=poi["address"]["addressCountry"],
+                    store_number="",
+                    phone=poi["telephone"],
+                    location_type=poi["@type"],
+                    latitude=poi["geo"]["latitude"],
+                    longitude=poi["geo"]["longitude"],
+                    hours_of_operation=hoo,
+                )
+
+                yield item
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":

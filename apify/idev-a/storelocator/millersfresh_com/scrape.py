@@ -3,6 +3,9 @@ from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+import re
 
 logger = SgLogSetup().get_logger("millersfresh")
 
@@ -18,47 +21,45 @@ _headers = {
 
 def fetch_data():
     locator_domain = "https://www.millersfresh.com/"
-    base_url = "https://www.millersfresh.com/store-locations/"
+    base_url = "https://www.millersfresh.com/StoreLocator/State/?State=ND"
     with SgRequests() as session:
         soup = bs(session.get(base_url, headers=_headers).text, "lxml")
-        links = soup.select("div.entry-content-wrapper .flex_column a.avia-button")
-        logger.info(f"{len(links)} found")
-        for link in links:
-            page_url = link["href"]
+        locations = soup.select("div#StoreLocator table tr")[1:]
+        logger.info(f"{len(locations)} found")
+        for _ in locations:
+            td = _.select("td")
+            page_url = _.select_one("a.StoreViewLink")["href"]
             logger.info(page_url)
-            sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
-            addr = list(sp1.select_one(".avia_textblock").stripped_strings)
-            hours = [
-                ": ".join(hh.stripped_strings)
-                for hh in sp1.select(
-                    "div#av-layout-grid-2 div.avia-builder-el-last ul li"
-                )
-            ]
-            script = sp1.select_one("script.av-php-sent-to-frontend").string.strip()
-            longitude = (
-                script.split("['long'] =")[1].split("av_google_map")[0].strip()[:-1]
-            )
-            latitude = (
-                script.split("['lat'] =")[1].split("av_google_map")[0].strip()[:-1]
-            )
+            res = session.get(page_url, headers=_headers).text
+            sp1 = bs(res, "lxml")
+            addr = list(sp1.select_one("p.Address").stripped_strings)[1:]
+            addr = [aa.replace("\xa0", " ") for aa in addr]
+            coord = res.split("initializeMap(")[1].split(");")[0].split(",")
+            hours = []
+            _hr = sp1.find("dt", string=re.compile(r"Hours of Operation"))
+            if _hr:
+                hours = _hr.find_next_sibling().stripped_strings
             yield SgRecord(
                 page_url=page_url,
-                location_name=sp1.select_one('h2[itemprop="headline"]').text.strip(),
-                street_address=addr[0],
-                city=addr[1].split(",")[0].strip(),
+                location_name=td[0].strong.text.strip(),
+                street_address=td[1].text.strip(),
+                city=td[0].strong.text.strip(),
                 state=addr[1].split(",")[1].strip().split(" ")[0].strip(),
                 zip_postal=addr[1].split(",")[1].strip().split(" ")[-1].strip(),
+                latitude=coord[0][1:-1],
+                longitude=coord[1][1:-1],
                 country_code="US",
-                phone=sp1.select(".avia_textblock")[1].text.strip(),
+                phone=td[2].text.strip(),
                 locator_domain=locator_domain,
-                latitude=latitude,
-                longitude=longitude,
-                hours_of_operation="; ".join(hours).replace("–", "-"),
+                hours_of_operation="; ".join(hours)
+                .replace(",", ";")
+                .replace("–", "-")
+                .replace("•", ";"),
             )
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

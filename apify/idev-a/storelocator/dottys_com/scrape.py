@@ -4,6 +4,8 @@ from sgrequests import SgRequests
 import json
 from sgscrape.sgpostal import parse_address_intl
 from bs4 import BeautifulSoup as bs
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 locator_domain = "https://dottys.com/"
 base_url = "https://dottys.com/"
@@ -23,29 +25,20 @@ def fetch_data():
         )
         for url in urls:
             res = session.get(url["href"], headers=_headers())
-            cleaned = (
-                res.text.replace("\\t", " ")
-                .replace("\t", " ")
-                .replace("\\n]", "]")
-                .replace("\n]", "]")
-                .replace("\\n,", ",")
-                .replace("\\n", "#")
-                .replace('\\"', '"')
-                .replace("\\u003d", "=")
-                .replace("\\u0026", "&")
-                .replace("\\u0027", "'")
-                .replace("\\", "")
-                .replace("\xa0", " ")
-            )
             locations = json.loads(
-                cleaned.split('var _pageData = "')[1].split('";</script>')[0][:-1]
+                res.text.split('var _pageData = "')[1]
+                .split('";</script>')[0]
+                .replace("null", '"null"')
+                .replace("\xa0", "")
+                .replace('\\"', '"')
+                .strip()
             )[1][6][0][12][0][13][0]
             for _ in locations:
-                location_name = _[5][0][1][0].replace("#", " ").strip()
+                location_name = _[5][0][1][0].replace("\\u0026", "&").strip()
                 if not location_name.startswith("Dotty"):
                     continue
                 addr = parse_address_intl(
-                    _[5][1][1][0].split("##")[0].replace("#", " ")
+                    _[5][1][1][0].replace("\\u0026", "&").replace("\\n", "").strip()
                 )
                 street_address = addr.street_address_1
                 if addr.street_address_2:
@@ -67,7 +60,7 @@ def fetch_data():
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

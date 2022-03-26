@@ -5,6 +5,8 @@ import lxml.html
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import json
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "fremontbank.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -79,6 +81,26 @@ def fetch_data():
             state = add_list[-1].strip().split(",")[1].strip().split(" ")[0].strip()
             zipp = add_list[-1].strip().split(",")[1].strip().split(" ")[-1].strip()
 
+            if len(street_address) <= 0:
+                street_address = "".join(add_list).strip().split(",")[0].strip()
+                city = "".join(add_list).strip().split(",")[1].strip()
+                state = (
+                    "".join(add_list)
+                    .strip()
+                    .split(",")[-1]
+                    .strip()
+                    .split(" ")[0]
+                    .strip()
+                )
+                zipp = (
+                    "".join(add_list)
+                    .strip()
+                    .split(",")[-1]
+                    .strip()
+                    .split(" ")[-1]
+                    .strip()
+                )
+
         country_code = "US"
         phone = "".join(store.xpath('.//div[@class="open-closed"]/text()')).strip()
 
@@ -108,7 +130,9 @@ def fetch_data():
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.GeoSpatialId)
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

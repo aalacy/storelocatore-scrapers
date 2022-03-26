@@ -1,135 +1,201 @@
-import csv
-import re
 import time
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support import expected_conditions as EC
+import usaddress
+from sglogging import sglog
 from bs4 import BeautifulSoup
-from sgselenium import SgSelenium
-from sglogging import SgLogSetup
+from sgselenium import SgChrome
+from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-logger = SgLogSetup().get_logger('rockyrococo_com')
+import ssl
+
+try:
+    _create_unverified_https_context = ssl._create_unverified_context
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context
+
+session = SgRequests()
+website = "rockyrococo_com"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
+session = SgRequests()
 
 
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36",
+}
 
-driver = SgSelenium().chrome()
 
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
-        # Body
-        for row in data:
-            writer.writerow(row)
+DOMAIN = "https://rockyrococo.com"
+MISSING = SgRecord.MISSING
 
 
 def fetch_data():
-    # Your scraper here
-    US_states = ["Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado", "Connecticut", "Delaware",
-                 "Florida", "Georgia", "Hawaii", "Idaho", "Illinois", "Indiana", "Iowa", "Kansas", "Kentucky",
-                 "Louisiana", "Maine", "Maryland", "Massachusetts", "Michigan", "Minnesota", "Mississippi", "Missouri",
-                 "Montana", "Nebraska", "Nevada", "New Hampshire", "New Jersey", "New Mexico", "New York",
-                 "North Carolina", "North Dakota", "Ohio", "Oklahoma", "Oregon", "Pennsylvania", "Rhode Island",
-                 "South Carolina", "South Dakota", "Tennessee", "Texas", "Utah", "Vermont", "Virginia", "Washington",
-                 "West Virginia", "Wisconsin", "Wyoming"]
+    states = [
+        "Alabama",
+        "Alaska",
+        "Arizona",
+        "Arkansas",
+        "California",
+        "Colorado",
+        "Connecticut",
+        "Delaware",
+        "Florida",
+        "Georgia",
+        "Hawaii",
+        "Idaho",
+        "Illinois",
+        "Indiana",
+        "Iowa",
+        "Kansas",
+        "Kentucky",
+        "Louisiana",
+        "Maine",
+        "Maryland",
+        "Massachusetts",
+        "Michigan",
+        "Minnesota",
+        "Mississippi",
+        "Missouri",
+        "Montana",
+        "Nebraska",
+        "Nevada",
+        "New Hampshire",
+        "New Jersey",
+        "New Mexico",
+        "New York",
+        "North Carolina",
+        "North Dakota",
+        "Ohio",
+        "Oklahoma",
+        "Oregon",
+        "Pennsylvania",
+        "Rhode Island",
+        "South Carolina",
+        "South Dakota",
+        "Tennessee",
+        "Texas",
+        "Utah",
+        "Vermont",
+        "Virginia",
+        "Washington",
+        "West Virginia",
+        "Wisconsin",
+        "Wyoming",
+    ]
+    with SgChrome() as driver:
+        driver.get("https://rockyrococo.com/locations")
+        time.sleep(10)
+        driver.switch_to.frame(driver.find_element_by_id("bullseye_iframe"))
+        for us in states:
+            log.info(f"Fetching locations from {us}...")
+            driver.find_element_by_id("txtCityStateZip").clear()
+            driver.find_element_by_id("txtCityStateZip").send_keys(us)
+            driver.find_element_by_id("ContentPlaceHolder1_searchButton").click()
+            time.sleep(5)
+            soup = BeautifulSoup(driver.page_source, "html.parser")
+            loclist = soup.findAll("div", {"class": "itemWrap"})
+            for loc in loclist:
+                temp = loc.find("a", {"id": "website"})["href"]
+                if "rockysmadison" in temp:
+                    continue
+                if "http" in temp:
+                    page_url = temp
+                elif "https:" not in temp:
+                    page_url = "http:" + temp
+                page_url = page_url.replace("/http:/", "http:/")
+                log.info(page_url)
+                r = session.get(page_url, headers=headers)
+                soup = BeautifulSoup(r.text, "html.parser")
+                location_name = soup.find("h1", {"class": "title"}).text
+                address = (
+                    soup.find("div", {"class": "htmltext1_wp_outer"}).find("a").text
+                )
+                address = address.replace(",", " ")
+                address = usaddress.parse(address)
+                i = 0
+                street_address = ""
+                city = ""
+                state = ""
+                zip_postal = ""
+                while i < len(address):
+                    temp = address[i]
+                    if (
+                        temp[1].find("Address") != -1
+                        or temp[1].find("Street") != -1
+                        or temp[1].find("Recipient") != -1
+                        or temp[1].find("Occupancy") != -1
+                        or temp[1].find("BuildingName") != -1
+                        or temp[1].find("USPSBoxType") != -1
+                        or temp[1].find("USPSBoxID") != -1
+                    ):
+                        street_address = street_address + " " + temp[0]
+                    if temp[1].find("PlaceName") != -1:
+                        city = city + " " + temp[0]
+                    if temp[1].find("StateName") != -1:
+                        state = state + " " + temp[0]
+                    if temp[1].find("ZipCode") != -1:
+                        zip_postal = zip_postal + " " + temp[0]
+                    i += 1
+                longitude, latitude = (
+                    soup.select_one("iframe[src*=maps]")["src"]
+                    .split("!2d", 1)[1]
+                    .split("!2m", 1)[0]
+                    .split("!3d")
+                )
+                phone = soup.select_one("a[href*=tel]").text
+                hours_of_operation = r.text.split("Hours:")[1]
+                if "View" in hours_of_operation:
+                    hours_of_operation = hours_of_operation.split("View")[0]
+                elif "Apply" in hours_of_operation:
+                    hours_of_operation = hours_of_operation.split("Apply")[0]
+                elif "Click" in hours_of_operation:
+                    hours_of_operation = hours_of_operation.split("Click")[0]
 
-    locs = []
-    street = []
-    states=[]
-    cities = []
-    types=[]
-    phones = []
-    zips = []
-    long = []
-    lat = []
-    timing = []
-    ids=[]
-    page_url=[]
-    driver.get("https://rockyrococo.com/locations")
-
-    time.sleep(15)
-    driver.switch_to.frame(driver.find_element_by_id("bullseye_iframe"))
-
-    #logger.info("here")
-    for us in US_states:
-        logger.info(us)
-        driver.find_element_by_id('txtCityStateZip').clear()
-        driver.find_element_by_id('txtCityStateZip').send_keys(us)
-        driver.find_element_by_id("ContentPlaceHolder1_searchButton").click()
-        time.sleep(3)
-        soup = BeautifulSoup(driver.page_source, 'html.parser')
-        divs = soup.find_all('address')
-        for div in divs:
-            add=div.text.strip().split("\n")
-            street.append(add[0])
-            addr=add[2].split(",")
-            cities.append(addr[0])
-            addr=addr[1].strip().split(" ")
-            states.append(addr[0])
-            zips.append(addr[1])
-            phones.append(add[4].strip())
-        h3s= soup.find_all('h3',{'itemprop':'name'})
-        for h3 in h3s:
-            locs.append(h3.text)
-        uls=soup.find_all('div',{'class':'resultsDetails'})
-        for ul in uls:
-            metas=ul.find_all("meta")
-            lat.append(metas[0].get("content"))
-            long.append(metas[1].get("content"))
-            page_url.append(ul.find('ul',{'class':'resultsDetailLinks'}).find('a').get('href'))
-
-    #logger.info(len(page_url))
-    #logger.info(page_url)
-    #logger.info("here")
-
-    for url in page_url:  #for timing
-        if url.startswith('//'):
-            url = 'http:' + url
-        # logger.info(url)
-        driver.get(url)
-        try:
-            element = WebDriverWait(driver, 30).until(EC.presence_of_element_located((By.XPATH, '/html/body/div[6]/div[2]/div[2]/div[2]/div[1]/div[2]/div[2]/div[1]/div[2]/div[2]/div[2]')))
-        except:
-            timing.append("<MISSING>")
-            #logger.info("passed")
-            continue
-        #tex=driver.find_element_by_xpath('/html/body/div[6]/div[2]/div[2]/div[2]/div[1]/div[2]/div[2]/div[1]/div[2]/div[2]/div[2]').text
-        time.sleep(1)
-        tex=element.text
-
-
-        tim = re.findall(r'Hours:(.*pm)',tex,re.DOTALL)[0].strip().replace("\n"," ")
-        timing.append(tim)
-
-
-    all = []
-    for i in range(0, len(locs)):
-        row = []
-        row.append("https://rockyrococo.com")
-        row.append(locs[i])
-        row.append(street[i])
-        row.append(cities[i])
-        row.append(states[i])
-        row.append(zips[i])
-        row.append("US")
-        row.append("<MISSING>")  # store #
-        row.append(phones[i])  # phone
-        row.append("<MISSING>")  # type
-        row.append(lat[i])  # lat
-        row.append(long[i])  # long
-        row.append(timing[i])  # timing
-        row.append("https://rockyrococo.com/locations")  # page url
-
-        all.append(row)
-    return all
+                hours_of_operation = BeautifulSoup(hours_of_operation, "html.parser")
+                hours_of_operation = (
+                    hours_of_operation.get_text(separator="|", strip=True)
+                    .replace("|", " ")
+                    .replace("Menu", "")
+                    .replace("Apply Now", "")
+                    .replace("Click here for local information!", "")
+                )
+                country_code = "US"
+                yield SgRecord(
+                    locator_domain=DOMAIN,
+                    page_url=page_url,
+                    location_name=location_name,
+                    street_address=street_address.strip(),
+                    city=city.strip(),
+                    state=state.strip(),
+                    zip_postal=zip_postal.strip(),
+                    country_code=country_code,
+                    store_number=MISSING,
+                    phone=phone.strip(),
+                    location_type=MISSING,
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=hours_of_operation,
+                )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    log.info("Started")
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()

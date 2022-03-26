@@ -1,76 +1,77 @@
-import csv
-from sgrequests import SgRequests
+from sglogging import sglog
 from bs4 import BeautifulSoup
-import re
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('abchome_com')
-
-
-
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation",
-                         "page_url"])
-        # Body
-        for row in data:
-            writer.writerow(row)
-
+from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
-all=[]
+website = "abchome_com"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+}
+
+DOMAIN = "https://abchome.com/"
+MISSING = SgRecord.MISSING
+
+
 def fetch_data():
-    # Your scraper here
+    res = session.get(DOMAIN)
+    soup = BeautifulSoup(res.text, "html.parser")
+    loclist = soup.find_all("div", {"class": "container-2 w-container"})[:-1]
+    for loc in loclist:
+        location_name = loc.find("h2").text
+        log.info(location_name)
+        phone = loc.select_one("a[href*=tel]").text
+        temp = loc.findAll("p", {"class": "hero-subheading"})
+        address = temp[0].get_text(separator="|", strip=True).split("|")
+        street_address = address[0]
+        address = address[1].split(",")
+        city = address[0]
+        address = address[1].split()
+        state = address[0]
+        zip_postal = address[1]
+        hours_of_operation = (
+            temp[1]
+            .get_text(separator="|", strip=True)
+            .replace("|", " ")
+            .replace("Hours", "")
+        )
+        country_code = "US"
+        yield SgRecord(
+            locator_domain=DOMAIN,
+            page_url=DOMAIN,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zip_postal,
+            country_code=country_code,
+            store_number=MISSING,
+            phone=phone,
+            location_type=MISSING,
+            latitude=MISSING,
+            longitude=MISSING,
+            hours_of_operation=hours_of_operation,
+        )
 
-    res=session.get("https://www.abchome.com/content/locations")
-    soup = BeautifulSoup(res.text, 'html.parser')
-    divs = soup.find_all('div', {'class': 'locations'})
-    for div in divs:
-        if "flagship" in div.find('a').get('href'):
-            type = "Flagship"
-        else:
-            type = "<MISSING>"
-        loc =div.find('div', {'class': 'locations__title'}).text.strip()
-        data = div.find_all('div', {'class': 'contact-wrapper__details'})
-        addr=data[0].find_all('p')
-        #logger.info(addr)
-        street=addr[0].text
-        cs=addr[1].text.strip().split(',')
-        city = cs[0].strip()
-        state = cs[1]
-        zip=addr[2].text
-        phone=data[1].text.strip()
-        tim=""
-        ps =data[2].find_all('p')
-        for p in ps:
-            tim+= p.text.strip()+" "
-        tim=tim.strip().replace('\n',' ')
-
-        all.append([
-            "https://www.abchome.com",
-            loc,
-            street,
-            city,
-            state.strip(),
-            zip,
-            "US",
-            "<MISSING>",  # store #
-            phone,  # phone
-            type,  # type
-            "<MISSING>",  # lat
-            "<MISSING>",  # long
-            tim,  # timing
-            "https://www.abchome.com/content/locations"])
-    return all
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    log.info("Started")
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PhoneNumberId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
 
 
-scrape()
-
+if __name__ == "__main__":
+    scrape()

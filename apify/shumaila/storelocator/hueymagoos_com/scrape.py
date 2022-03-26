@@ -1,48 +1,23 @@
-import csv
-from sgrequests import SgRequests
-from bs4 import BeautifulSoup
-from sglogging import SgLogSetup
 import re
+from bs4 import BeautifulSoup
+from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-logger = SgLogSetup().get_logger("hueymagoos_com")
 
 session = SgRequests()
-
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+}
 
 
 def fetch_data():
     headers = {
         "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36"
     }
-    data = []
+
     base_url = "https://www.hueymagoos.com"
     p_url = "https://hueymagoos.com/locations/"
     r = session.get(p_url, headers=headers)
@@ -55,13 +30,6 @@ def fetch_data():
             title = loc.find("h3").text
         except:
             continue
-        if loc.find(
-            "img",
-            {
-                "src": "https://hueymagoos.com/wp-content/uploads/coming-soon.png?b603d3&b603d3"
-            },
-        ):
-            continue
         details = loc.find("p")
         phone = ""
         address = ""
@@ -69,6 +37,7 @@ def fetch_data():
         details = BeautifulSoup(details, "html.parser")
 
         if len(details.findAll("a")) > 1:
+
             if details.findAll("a")[0].get("href").find("tel") != -1:
                 phone = details.findAll("a")[0].text
             else:
@@ -85,6 +54,7 @@ def fetch_data():
                 details.findAll("a")[1].next_sibling.lstrip().replace("–", "-")
             )
         elif len(details.findAll("a")) == 1:
+
             if details.findAll("a")[0].get("href").find("tel") != -1:
                 phone = details.findAll("a")[0].text
             else:
@@ -109,40 +79,51 @@ def fetch_data():
             else:
                 hours_of_operation = "<MISSING>"
         else:
+
             if details.text:
                 address = details.text
                 street = address.split("\n")[0]
                 city = address.split("\n")[1].split(", ")[0].strip()
                 state = address.split("\n")[1].split(", ")[1].split(" ")[0].strip()
                 zip = address.split("\n")[1].split(", ")[1].split(" ")[1]
+                phone = SgRecord.MISSING
+                hours_of_operation = SgRecord.MISSING
             else:
-                address = "<MISSING>"
+
+                details = loc.findAll("p")[-1].text.split("\n")
+                city, state = details[-1].split(", ", 1)
+                state, zip = state.split(" ", 1)
+                street = " ".join(details[0 : len(details) - 1]).strip()
+
+                phone = SgRecord.MISSING
+                hours_of_operation = "Opening Soon"
+        if len(phone) < 2:
             phone = "<MISSING>"
-            hours_of_operation = "<MISSING>"
-        data.append(
-            [
-                base_url,
-                p_url,
-                title,
-                street.replace(",", "").replace("#", "No."),
-                city,
-                state,
-                zip,
-                "US",
-                "<MISSING>",
-                phone,
-                "<MISSING>",
-                "<MISSING>",
-                "<MISSING>",
-                hours_of_operation.replace("\n", " "),
-            ]
+        yield SgRecord(
+            locator_domain=base_url,
+            page_url=p_url,
+            location_name=title,
+            street_address=street.replace(",", "").replace("#", "No."),
+            city=city.strip(),
+            state=state.strip(),
+            zip_postal=zip,
+            country_code="US",
+            store_number=SgRecord.MISSING,
+            phone=phone.strip(),
+            location_type=SgRecord.MISSING,
+            latitude=SgRecord.MISSING,
+            longitude=SgRecord.MISSING,
+            hours_of_operation=hours_of_operation.replace("\n", " "),
         )
-    return data
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        deduper=SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()

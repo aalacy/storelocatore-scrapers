@@ -6,48 +6,31 @@ from sgrequests import SgRequests
 from sglogging import sglog
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
-
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.pause_resume import CrawlStateSingleton
-from webdriver_manager.chrome import ChromeDriverManager
+
 from sgselenium import SgChrome
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 
 import ssl
 
-try:
-    _create_unverified_https_context = (
-        ssl._create_unverified_context
-    )  # Legacy Python that doesn't verify HTTPS certificates by default
-except AttributeError:
-    pass
-else:
-    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
+ssl._create_default_https_context = ssl._create_unverified_context
 
 
 website = "https://www.chanel.com"
-MISSING = "<MISSING>"
+MISSING = SgRecord.MISSING
 jsonUrl = "https://services.chanel.com/en_US/storelocator/getStoreList"
 
-
+session = SgRequests()
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 
 
-def fetchHeaders():
-    user_agent = (
-        "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0"
-    )
-    driver = SgChrome(
-        is_headless=True,
-        user_agent=user_agent,
-        executable_path=ChromeDriverManager().install(),
-    ).driver()
-
-    session = SgRequests().requests_retry_session()
+def fetchHeaders(driver):
     driver.get(f"{website}/us/storelocator")
     session.post(jsonUrl)
     x = 0
+
     while True:
         x = x + 1
         log.debug(f"Trying to find headers = {x}")
@@ -63,7 +46,6 @@ def fetchHeaders():
                 response_text = response.text
 
                 if len(response_text) > 0 and '"stores"' in response_text:
-                    driver.quit()
                     log.debug("found headers")
                     return request.headers
                 else:
@@ -96,10 +78,12 @@ def getJSONObjectVariable(Object, varNames, noVal=MISSING):
     return value
 
 
-def getHOO(list):
+def getHOO(list=[]):
     hoo = []
     for data in list:
-        if data["day"] and data["opening"]:
+        if data is None:
+            continue
+        if "day" in data and "opening" in data and data["day"] and data["opening"]:
             hoo.append(f"{data['day']} {data['opening']}")
     if len(hoo) > 0:
         return "; ".join(hoo)
@@ -151,66 +135,57 @@ def getStoreDetails(store, countryCode):
     )
 
 
-def fetchRequest(http, lat, lng, headers=None, failed=0):
-    if failed == 5:
-        raise Exception("Can't able to get headers")
-
-    if headers is None:
-        headers = fetchHeaders()
-    try:
-        data = f"geocodeResults=%5B%7B%22address_components%22%3A%5B%7B%22long_name%22%3A%22United+States%22%2C%22short_name%22%3A%22US%22%2C%22types%22%3A%5B%22country%22%2C%22political%22%5D%7D%5D%2C%22geometry%22%3A%7B%22location%22%3A%7B%22lat%22%3A{lat}%2C%22lng%22%3A{lng}%7D%2C%22location_type%22%3A%22APPROXIMATE%22%7D%2C%22types%22%3A%5B%22postal_code%22%5D%7D%5D&iframe=true&radius=70.00"
-        response = http.post(jsonUrl, headers=headers, data=data)
-        response_text = response.text
-        if len(response_text) > 0 and '"stores"' in response_text:
-            return headers, json.loads(response_text)["stores"]
-        else:
-            log.info("Failed trying to get header again")
-            return headers, fetchRequest(http, lat, lng, None, failed + 1)
-    except Exception as e:
-        log.info(f"Failed trying to get header again {e}")
-        return headers, fetchRequest(http, lat, lng, None, failed + 1)
+def fetchRequest(headers, http, lat, lng):
+    data = f"geocodeResults=%5B%7B%22address_components%22%3A%5B%7B%22long_name%22%3A%22United+States%22%2C%22short_name%22%3A%22US%22%2C%22types%22%3A%5B%22country%22%2C%22political%22%5D%7D%5D%2C%22geometry%22%3A%7B%22location%22%3A%7B%22lat%22%3A{lat}%2C%22lng%22%3A{lng}%7D%2C%22location_type%22%3A%22APPROXIMATE%22%7D%2C%22types%22%3A%5B%22postal_code%22%5D%7D%5D&iframe=true&radius=70.00"
+    response = http.post(jsonUrl, headers=headers, data=data)
+    response_text = response.text
+    return json.loads(response_text)["stores"]
 
 
-def fetch_records(http: SgRequests, search: DynamicGeoSearch) -> Iterable[SgRecord]:
+def fetch_records(
+    headers, http: SgRequests, search: DynamicGeoSearch
+) -> Iterable[SgRecord]:
     count = 0
-    stores = []
-    store_numbers = []
 
     state = CrawlStateSingleton.get_instance()
-    headers = None
     for lat, lng in search:
         count = count + 1
         countryCode = search.current_country()
-        rec_count = state.get_misc_value(
-            search.current_country(), default_factory=lambda: 0
-        )
+        rec_count = state.get_misc_value(countryCode, default_factory=lambda: 0)
         state.set_misc_value(countryCode, rec_count + 1)
+        try:
+            newStores = fetchRequest(headers, http, lat, lng)
+            for store in newStores:
+                yield getStoreDetails(store, countryCode)
 
-        headers, newStores = fetchRequest(http, lat, lng, headers)
-        for store in newStores:
-            store_number = getJSONObjectVariable(store, "id")
-            if store_number in store_numbers:
-                continue
-            storeDetails = getStoreDetails(store, countryCode)
-            store_numbers.append(store_number)
-            stores.append(storeDetails)
-            yield storeDetails
-        log.debug(
-            f"{count}. from {countryCode}: {lat, lng} stores= {len(newStores)}; total = {len(stores)}"
-        )
+            if len(newStores) == 0:
+                log.debug(
+                    f"{count}. from {countryCode}: {lat, lng} stores= {len(newStores)}"
+                )
+            else:
+                log.info(
+                    f"{count}. from {countryCode}: {lat, lng} stores= {len(newStores)}"
+                )
+        except Exception as e:
+            log.error(f"Can't load data from {countryCode}: {lat, lng}, Error:{e}")
 
 
 def scrape():
     log.info(f"Start scrapping {website} ...")
     start = time.time()
-    search = DynamicGeoSearch(country_codes=SearchableCountries.ALL)
+    country_codes = SearchableCountries.ALL
+    search = DynamicGeoSearch(
+        country_codes=country_codes, expected_search_radius_miles=50
+    )
 
     with SgWriter(
         deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
     ) as writer:
-        with SgRequests() as http:
-            for rec in fetch_records(http, search):
-                writer.write_row(rec)
+        with SgChrome() as driver:
+            headers = fetchHeaders(driver)
+            with SgRequests() as http:
+                for rec in fetch_records(headers, http, search):
+                    writer.write_row(rec)
 
     state = CrawlStateSingleton.get_instance()
     log.debug("Printing number of records by country-code:")
@@ -220,6 +195,7 @@ def scrape():
             ": ",
             state.get_misc_value(country_code, default_factory=lambda: 0),
         )
+
     end = time.time()
     log.info(f"Scrape took {end-start} seconds.")
 

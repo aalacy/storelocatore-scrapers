@@ -5,6 +5,8 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import lxml.html
 import us
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "kontanelogistics.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -72,79 +74,91 @@ def get_latlng(map_link):
 
 def fetch_data():
     # Your scraper here
-    search_url = "http://www.kontanelogistics.com/facilities/"
+    search_url = "https://kontanelogistics.com/3pl-partner-southeast/"
     search_res = session.get(search_url, headers=headers)
 
     search_sel = lxml.html.fromstring(search_res.text)
 
     store_list = search_sel.xpath(
-        '//div[contains(@class,"solidDiv")]//p[not(contains(.//text(),"Our") or contains(.//text(),"located") ) ]'
+        '//li[contains(@id,"menu-item-")][./a[contains(text(),"Locations")]]//ul/li/a/@href'
     )
 
-    for store in store_list:
+    phone_dict = {}
+    store_sections = search_sel.xpath('//div[contains(@class,"three-col tcol-")]')
+    for store in store_sections:
+        name = "".join(store.xpath("h3/text()")).strip()
+        phone = "".join(
+            store.xpath('p/strong[./em[contains(text(),"phone:")]]/a/text()')
+        ).strip()
+        phone_dict[name] = phone
 
-        page_url = search_url
+    for stores_url in store_list:
+
+        page_url = stores_url
+        stores_req = session.get(page_url, headers=headers)
+        stores_sel = lxml.html.fromstring(stores_req.text)
 
         locator_domain = website
 
-        store_info = list(
-            filter(
-                str,
-                [x.strip() for x in store.xpath(".//text()")],
-            )
-        )
-
-        store_info = " ".join(store_info)
-        if "phone" in store_info:
-            phone = store_info.split("phone:")[1].split("|")[0].strip()
-        else:
-            phone = "<MISSING>"
-
-        address_raw = store_info.split("phone")[0].strip()
-
-        full_address = []
-        full_address.append(",".join(address_raw.split(",")[:-2]))
-        full_address.append(",".join(address_raw.split(",")[-2:]))
-
-        street_address, city, state, zip, country_code = split_fulladdress(full_address)
-
-        location_name = f"{city.upper()}, {state}"
+        location_name = "".join(
+            stores_sel.xpath('//div[@class="hero-content"]/text()')
+        ).strip()
 
         store_number = "<MISSING>"
 
         location_type = "<MISSING>"
 
-        hours_of_operation = "<MISSING>"
-
-        map_link = "".join(store.xpath('//a[contains(@href,"maps")]/@href'))
-
-        latitude, longitude = get_latlng(map_link)
-
-        raw_address = "<MISSING>"
-
-        yield SgRecord(
-            locator_domain=locator_domain,
-            page_url=page_url,
-            location_name=location_name,
-            street_address=street_address,
-            city=city,
-            state=state,
-            zip_postal=zip,
-            country_code=country_code,
-            store_number=store_number,
-            phone=phone,
-            location_type=location_type,
-            latitude=latitude,
-            longitude=longitude,
-            hours_of_operation=hours_of_operation,
-            raw_address=raw_address,
+        hours_of_operation = (
+            "; ".join(
+                stores_sel.xpath('//div[./h4[contains(text(),"LOCATIONS")]]/p/text()')
+            )
+            .strip()
+            .replace("\n", "")
+            .strip()
+            .replace("Mailing Address:; PO Box 1702, Hickory, NC 28603;", "")
+            .strip()
         )
+
+        phone = phone_dict[location_name.upper()]
+        addresses = stores_sel.xpath('//div[./h4[contains(text(),"LOCATIONS")]]/p/a')
+
+        for add in addresses:
+
+            full_address = list(filter(str, add.xpath("text()")))
+            if len(full_address) == 1:
+                full_address = full_address[0].split(",", 1)
+            street_address, city, state, zip, country_code = split_fulladdress(
+                full_address
+            )
+
+            map_link = "".join(add.xpath("@href"))
+
+            latitude, longitude = get_latlng(map_link)
+
+            yield SgRecord(
+                locator_domain=locator_domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
 
 
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

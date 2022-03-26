@@ -4,6 +4,9 @@ from sgrequests import SgRequests
 import json
 from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+
 
 logger = SgLogSetup().get_logger("sbe")
 
@@ -33,7 +36,7 @@ def _d(page_url, session):
         country_code=ss["address"]["addressCountry"],
         latitude=coord["lat"],
         longitude=coord["lng"],
-        phone=ss["telephone"],
+        phone=ss.get("telephone"),
         locator_domain=locator_domain,
     )
 
@@ -60,7 +63,7 @@ def fetch_data():
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

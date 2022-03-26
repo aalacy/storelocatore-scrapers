@@ -1,40 +1,16 @@
-import csv
 import usaddress
-
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgrequests import SgRequests
+from sglogging import sglog
 
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
+website = "fivestarfoodmart.com"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
 
 
 def fetch_data():
-    out = []
     locator_domain = "https://www.fivestarfoodmart.com/"
     page_url = "https://www.fivestarfoodmart.com/locations/"
     api_url = "https://www.fivestarfoodmart.com/wp-json/wpgmza/v1/marker-listing/base64eJyrVirIKHDOSSwuVrJSCg9w941yjInxTSzKTi3yySwuycxLj4lxL8pMUdJRKi5JLCpRsjLQUcpJzUsvyVCy0jXUUcpNLIgHSlspGSrVAgD+yBkc"
@@ -94,6 +70,12 @@ def fetch_data():
         if "," in state:
             state = state.split(",")[0].strip()
 
+        if street_address == "3689 Kentucky 54, Owensboro, KY":
+            street_address = "3689 Kentucky 54"
+            city = "Owensboro"
+            state = "KY"
+            postal = "<MISSING>"
+
         country_code = "US"
         location_name = j.get("title")
         store_number = location_name.split("#")[-1]
@@ -102,31 +84,37 @@ def fetch_data():
         longitude = j.get("lng") or "<MISSING>"
         location_type = "<MISSING>"
         hours_of_operation = "<MISSING>"
-
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
-
-    return out
+        yield SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+        )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    log.info("Started")
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.StoreNumberId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
 
 
 if __name__ == "__main__":

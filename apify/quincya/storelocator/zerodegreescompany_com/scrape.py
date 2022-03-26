@@ -1,126 +1,77 @@
-import csv
-import json
-import time
-
 from bs4 import BeautifulSoup
 
-from sgselenium import SgChrome
+from sgrequests import SgRequests
+
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def fetch_data(sgw: SgWriter):
 
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+    base_link = "https://www.powr.io/wix/map/public.json?pageId=rda7c&compId=comp-k8s2ixwy&viewerCompId=comp-k8s2ixwy&siteRevision=1129&viewMode=site&deviceType=desktop&locale=en&tz=America%2FLos_Angeles&regionalLanguage=en&width=980&height=635&instance=02trTfJUnY80ZlVq9FmMn9I8a2QKvGYNBGclEoc8Vc0.eyJpbnN0YW5jZUlkIjoiZGE2MmZiOTMtZTNhYS00OTE5LWFmYTgtMTNiYzA0MjIyOTRlIiwiYXBwRGVmSWQiOiIxMzQwYzVlZC1hYWM1LTIzZWYtNjkzYy1lZDIyMTY1Y2ZkODQiLCJzaWduRGF0ZSI6IjIwMjEtMDktMzBUMDg6NDM6NDkuNDcwWiIsInZlbmRvclByb2R1Y3RJZCI6ImJ1c2luZXNzIiwiZGVtb01vZGUiOmZhbHNlLCJhaWQiOiJhMTQyMGU4OC1iMzU2LTQ1YWYtOThhOS0zYzY5MjUwYmNlOTgiLCJzaXRlT3duZXJJZCI6IjUxNzMzNWRhLTY4NTQtNDUzYS1iMjg2LTFmNWUxYjk5YjdkMyJ9&currency=USD&currentCurrency=USD&commonConfig=%7B%22brand%22%3A%22wix%22%2C%22bsi%22%3A%22715a0f8a-c878-4835-9e3a-6e40d0d9d08d%7C1%22%2C%22BSI%22%3A%22715a0f8a-c878-4835-9e3a-6e40d0d9d08d%7C1%22%7D&vsi=d3c88002-78ad-4643-ad46-6d92dd0acf3d&url=https://www.zerodegreescompany.com/locations"
 
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
+    headers = {"User-Agent": user_agent}
 
-def fetch_data():
-    base_link = "https://www.zerodegreescompany.com/locations"
-    api_link = "https://www.powr.io/wix/map/public.json?pageId=rda7c&compId=comp-k8s2ixwy&viewerCompId=comp-k8s2ixwy&siteRevision=970&viewMode=site&deviceType=desktop&locale=en&tz=America%2FLos_Angeles&width=980&height=635&instance=AKbTEpSJ0KaP-oXrw7mpmQ07bp2Z4-gHl1LDreGuypE.eyJpbnN0YW5jZUlkIjoiZGE2MmZiOTMtZTNhYS00OTE5LWFmYTgtMTNiYzA0MjIyOTRlIiwiYXBwRGVmSWQiOiIxMzQwYzVlZC1hYWM1LTIzZWYtNjkzYy1lZDIyMTY1Y2ZkODQiLCJzaWduRGF0ZSI6IjIwMjEtMDEtMTRUMDc6MTk6NDAuNjkwWiIsInZlbmRvclByb2R1Y3RJZCI6ImJ1c2luZXNzIiwiZGVtb01vZGUiOmZhbHNlLCJhaWQiOiI1NDkzMzJjZC1jYzk0LTRjZjktYTgzNi04NGRiZjZlNTgzMDMiLCJzaXRlT3duZXJJZCI6IjUxNzMzNWRhLTY4NTQtNDUzYS1iMjg2LTFmNWUxYjk5YjdkMyJ9&currency=USD&currentCurrency=USD&vsi=ab83b947-b1b8-488b-bae5-f7a44332761e&commonConfig=%7B%22brand%22%3A%22wix%22%2C%22bsi%22%3A%22ea0ca66b-200b-4429-a25d-8465467649ad%7C1%22%2C%22BSI%22%3A%22ea0ca66b-200b-4429-a25d-8465467649ad%7C1%22%7D&url=https://www.zerodegreescompany.com/locations"
-    driver = SgChrome().chrome()
+    session = SgRequests()
 
-    driver.get(base_link)
-    time.sleep(8)
-    driver.get(api_link)
-    time.sleep(2)
-    base = BeautifulSoup(driver.page_source, "lxml")
-
-    items = json.loads(base.text)["content"]["locations"]
     locator_domain = "zerodegreescompany.com"
 
-    data = []
-    found_poi = []
-
-    for item in items:
-        location_name = BeautifulSoup(item["name"], "lxml").text
-        desc = BeautifulSoup(item["description"], "lxml").text
-        if "coming" in desc.lower():
+    stores = session.get(base_link, headers=headers).json()["content"]["locations"]
+    for store in stores:
+        if "coming soon" in str(store).lower():
             continue
-
-        raw_address = json.loads(BeautifulSoup(item["components"], "lxml").text)
-        for i in raw_address:
-            add_type = i["types"][0]
-            if add_type == "street_number":
-                street_number = i["long_name"]
-            elif add_type == "route":
-                route = i["short_name"]
-            elif add_type == "locality":
-                city = i["long_name"]
-            elif add_type == "administrative_area_level_1":
-                state = i["short_name"]
-            if add_type == "postal_code":
-                zip_code = i["long_name"]
-        street_address = street_number + " " + route
-        if street_address in found_poi:
-            continue
-        found_poi.append(street_address)
-        country_code = "US"
-        location_name = "Zero Degrees - " + location_name
-        store_number = "<MISSING>"
-        location_type = desc[14:].replace("|", ",").strip().replace(" , ", ", ")
-        phone = desc[:14].strip()
-
-        if "(" not in phone:
-            phone = item["number"]
-            location_type = (
-                desc.replace("|", ",")
-                .strip()
-                .replace(" , ", ", ")
-                .replace("ORDER ONLINE", "")
-            )
-        latitude = item["lat"]
-        longitude = item["lng"]
-
-        hours_of_operation = "<MISSING>"
-
-        data.append(
-            [
-                locator_domain,
-                "<MISSING>",
-                location_name,
-                street_address,
-                city,
-                state,
-                zip_code,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
+        location_name = BeautifulSoup(store["name"], "lxml").text
+        raw_address = (
+            store["address"]
+            .replace("Vegas ", "Vegas,")
+            .replace("United States ", "")
+            .replace("Plano TX,", "Plano, TX")
+            .replace("Irving TX,", "Irving, TX")
+            .split(",")
         )
-    driver.close()
-    return data
+        if "USA" in raw_address[-1] or "United" in raw_address[-1]:
+            raw_address.pop(-1)
+        street_address = " ".join(raw_address[:-1])
+        if "  " in street_address:
+            city = street_address.split("  ")[-1].strip()
+        else:
+            city = street_address.split()[-1].strip()
+        street_address = street_address.replace(city, "").replace("  ", " ").strip()
+        state = raw_address[-1].split()[0].strip()
+        zip_code = raw_address[-1].split()[1].strip()
+        country_code = "US"
+        store_number = "<MISSING>"
+        location_type = "<MISSING>"
+        phone = store["number"].strip()
+        if not phone:
+            phone = BeautifulSoup(store["description"], "lxml").p.text
+        hours_of_operation = ""
+        latitude = store["lat"]
+        longitude = store["lng"]
+        link = "https://www.zerodegreescompany.com/locations"
+
+        sgw.write_row(
+            SgRecord(
+                locator_domain=locator_domain,
+                page_url=link,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_code,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
+        )
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))) as writer:
+    fetch_data(writer)

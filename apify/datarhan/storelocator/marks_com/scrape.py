@@ -1,54 +1,43 @@
-import csv
 import urllib.parse
-from sglogging import sglog
-from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
+
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 from sgrequests import SgRequests
-from requests.packages.urllib3.util.retry import Retry
 
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
 
 
 def make_request(session, Point):
     headers = {
-        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.114 Safari/537.36",
-        "x-xsrf-token": "efe961be-c68a-44d6-a844-d18021f76f66",
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:93.0) Gecko/20100101 Firefox/93.0",
+        "Accept": "application/json, text/javascript, */*; q=0.01",
+        "Accept-Language": "en",
+        "Accept-Encoding": "gzip, deflate, br",
+        "x-web-host": "www.marks.com",
+        "service-client": "mk/web",
     }
-    url = "https://api.marks.com/hy/v1/marks/storelocators/near?code=&productIds=&count=20&location={}%2C{}".format(
-        *Point
+    url = "https://api.marks.com/hy/v1/marks/storelocators/near?code=&productIds=&count=20&location={}".format(
+        Point[:3] + " " + Point[3:]
     )
-    return session.get(url, headers=headers).json()
+    hdr_opt = {
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:93.0) Gecko/20100101 Firefox/93.0",
+        "Accept": "*/*",
+        "Accept-Language": "en-US,ru-RU;q=0.8,ru;q=0.5,en;q=0.3",
+        "Accept-Encoding": "gzip, deflate, br",
+        "Access-Control-Request-Method": "GET",
+        "Access-Control-Request-Headers": "service-client,x-web-host",
+    }
+    response = session.request(url, method="OPTIONS", headers=hdr_opt)
+    response = session.get(url, headers=headers)
+    if response.status_code != 200:
+        return {}
+    return response.json()
 
 
 def clean_record(poi):
-
+    domain = "marks.com"
     store_url = [
         elem["value"] for elem in poi["urlLocalized"] if elem["locale"] == "en"
     ]
@@ -62,7 +51,6 @@ def clean_record(poi):
     street_address = poi["address"]["line1"]
     if poi["address"]["line2"]:
         street_address += ", " + poi["address"]["line2"]
-    street_address = street_address if street_address else "<MISSING>"
     city = poi["address"]["town"]
     city = city if city else "<MISSING>"
     state = poi["address"]["province"]
@@ -82,78 +70,60 @@ def clean_record(poi):
     longitude = poi["geoPoint"]["longitude"]
     longitude = longitude if longitude else "<MISSING>"
     hoo = poi.get("workingHours")
-    hoo = [e.strip() for e in hoo.split()]
+    if hoo:
+        hoo = [e.strip() for e in hoo.split()]
     hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
 
-    cleanRecord = [
-        "marks.com",  # 0
-        store_url,  # 1
-        location_name,  # 2
-        street_address,  # 3
-        city,  # 4
-        state,  # 5
-        zip_code,  # 6
-        country_code,  # 7
-        store_number,  # 8
-        phone,  # 9
-        location_type,  # 10
-        latitude,  # 11
-        longitude,  # 12
-        hours_of_operation,  # 13
-    ]
-    return cleanRecord
+    item = SgRecord(
+        locator_domain=domain,
+        page_url=store_url,
+        location_name=location_name,
+        street_address=street_address,
+        city=city,
+        state=state,
+        zip_postal=zip_code,
+        country_code=country_code,
+        store_number=store_number,
+        phone=phone,
+        location_type=location_type,
+        latitude=latitude,
+        longitude=longitude,
+        hours_of_operation=hours_of_operation,
+    )
+
+    return item
 
 
 def fetch_data():
-    items = []
-    logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
-    with SgRequests(
-        retry_behavior=Retry(total=3, connect=3, read=3, backoff_factor=0.1),
-        proxy_rotation_failure_threshold=0,
-    ) as session:
-        search = DynamicGeoSearch(
+    with SgRequests(verify_ssl=False) as session:
+        search = DynamicZipSearch(
             country_codes=[SearchableCountries.CANADA],
-            max_radius_miles=None,
-            max_search_results=20,
+            expected_search_radius_miles=40,
         )
 
-        identities = set()
         maxZ = search.items_remaining()
-        total = 0
         for Point in search:
             if search.items_remaining() > maxZ:
                 maxZ = search.items_remaining()
-            found = 0
             data = make_request(session, Point)
-            recordsCount = 0
             if "error.storelocator.find.nostores.error" not in str(data):
-                recordsCount = len(data["storeLocatorPageData"]["results"])
+                if not data.get("storeLocatorPageData"):
+                    continue
                 for fullRecord in data["storeLocatorPageData"]["results"]:
                     record = clean_record(fullRecord)
-                    search.found_location_at(record[11], record[12])
-                    identity = str(
-                        str(record[1])
-                        + str(record[8])
-                        + str(record[9])
-                        + str(record[11])
-                    )
-                    if identity not in identities:
-                        identities.add(identity)
-                        found += 1
-                        items.append(record)
-            progress = (
-                str(round(100 - (search.items_remaining() / maxZ * 100), 2)) + "%"
-            )
-            total += found
-            logzilla.info(
-                f"{Point} | found uniques: {found}/{recordsCount} | total: {total} | progress: {progress}"
-            )
-    return items
+                    yield record
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":

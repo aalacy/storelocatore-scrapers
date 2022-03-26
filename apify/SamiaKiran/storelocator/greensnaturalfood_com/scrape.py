@@ -1,8 +1,11 @@
+import usaddress
 from sglogging import sglog
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
-from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
 website = "greensnaturalfood_com"
@@ -14,30 +17,84 @@ headers = {
 }
 
 DOMAIN = "https://greensnaturalfood.com/"
-MISSING = "<MISSING>"
+MISSING = SgRecord.MISSING
 
 
 def fetch_data():
     if True:
-        page_url = "https://www.greensnaturalfoods.com/locations/"
-        r = session.get(page_url, headers=headers)
+        url = "https://www.greensnaturalfoods.com/grocery-store-near-me/"
+        r = session.get(url, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
-        loclist = soup.findAll("div", {"class": "et_pb_text_inner"})
+        loclist = soup.findAll("ul")[-3].findAll("li")[:-1]
         for loc in loclist:
-            coords = loc.find("a")["href"].split("@")[1].split(",17z")[0].split(",")
-            latitude = coords[0]
-            longitude = coords[1]
-            loc = loc.get_text(separator="|", strip=True).split("|")
-            location_name = loc[0]
-            log.info(location_name)
-            phone = loc[3]
-            hours_of_operation = loc[-1]
-            street_address = loc[1]
-            address = loc[2].split(",")
-            city = address[0]
-            address = address[1].split()
-            state = address[0]
-            zip_postal = address[1]
+            page_url = loc.find("a")["href"].replace("https:/www", "https://www")
+            log.info(page_url)
+            r = session.get(page_url, headers=headers)
+            soup = BeautifulSoup(r.text, "html.parser")
+            location_name = soup.findAll("h3")[1].text
+            temp = soup.findAll("span", {"class": "elementor-icon-list-text"})
+            hours_of_operation = (
+                soup.findAll(
+                    "div", {"class": "elementor-text-editor elementor-clearfix"}
+                )[-3]
+                .find("p")
+                .get_text(separator="|", strip=True)
+                .replace("|", " ")
+            )
+            address = temp[0].text
+            phone = temp[1].text
+            try:
+                coords = (
+                    soup.select_one("a[href*=maps]")["href"]
+                    .split("@")[1]
+                    .split(",17z")[0]
+                    .split(",")
+                )
+                latitude = coords[0]
+                longitude = coords[1]
+            except:
+                latitude = MISSING
+                longitude = MISSING
+            address = address.replace(",", " ")
+            address = usaddress.parse(address)
+            i = 0
+            street_address = ""
+            city = ""
+            state = ""
+            zip_postal = ""
+            while i < len(address):
+                temp = address[i]
+                if (
+                    temp[1].find("Address") != -1
+                    or temp[1].find("Street") != -1
+                    or temp[1].find("Recipient") != -1
+                    or temp[1].find("Occupancy") != -1
+                    or temp[1].find("BuildingName") != -1
+                    or temp[1].find("USPSBoxType") != -1
+                    or temp[1].find("USPSBoxID") != -1
+                ):
+                    street_address = street_address + " " + temp[0]
+                if temp[1].find("PlaceName") != -1:
+                    city = city + " " + temp[0]
+                if temp[1].find("StateName") != -1:
+                    state = state + " " + temp[0]
+                if temp[1].find("ZipCode") != -1:
+                    zip_postal = zip_postal + " " + temp[0]
+                i += 1
+            if not state:
+                address = soup.find("meta", {"name": "twitter:description"})["content"]
+                address = (
+                    address.split(street_address.split()[0])[1]
+                    .split('"/>')[0]
+                    .split(",")
+                )
+                if len(address) == 2:
+                    city = address[0].split(".")[1]
+                else:
+                    city = address[1]
+                address = address[-1].strip().split()
+                state = address[0]
+                zip_postal = address[1]
             country_code = "US"
             yield SgRecord(
                 locator_domain=DOMAIN,
@@ -60,7 +117,9 @@ def fetch_data():
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

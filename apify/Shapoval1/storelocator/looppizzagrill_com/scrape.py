@@ -153,7 +153,14 @@ def fetch_data(sgw: SgWriter):
                 )
             ).strip()
 
-            hours_of_operation = SgRecord.MISSING
+            hours_of_operation = (
+                "".join(
+                    tree.xpath('//span[contains(text(), "Hours of Operation:")]/text()')
+                )
+                .replace("Hours of Operation:", "")
+                .strip()
+                or "<MISSING>"
+            )
 
         row = SgRecord(
             locator_domain=locator_domain,
@@ -178,5 +185,5 @@ def fetch_data(sgw: SgWriter):
 if __name__ == "__main__":
     session = SgRequests()
     locator_domain = "https://www.thelooprestaurant.com"
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
         fetch_data(writer)

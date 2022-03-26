@@ -1,80 +1,71 @@
 from bs4 import BeautifulSoup
-import csv
-import time
-import re
+
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('altabank_com')
 
 
+def fetch_data(sgw: SgWriter):
+
+    base_link = "https://www.altabank.com/_/api/branches/40.3771253/-111.7978905/500"
+
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36"
+    headers = {"User-Agent": user_agent}
+
+    session = SgRequests()
+    store_data = session.get(base_link, headers=headers).json()["branches"]
+
+    locator_domain = "https://www.altabank.com"
+
+    for store in store_data:
+        location_name = store["name"]
+        street_address = store["address"]
+        city = store["city"]
+        state = store["state"]
+        if city == "Preston":
+            state = "ID"
+        zip_code = store["zip"]
+        country_code = "US"
+        store_number = ""
+        phone = store["phone"]
+        location_type = ""
+        latitude = store["lat"]
+        longitude = store["long"]
+
+        raw_data = BeautifulSoup(store["description"], "lxml")
+        rows = list(raw_data.stripped_strings)
+        hours_of_operation = ""
+
+        for row in rows:
+            if "lobby" in row.lower():
+                hours_of_operation = (
+                    hours_of_operation + " " + row.split("(")[0]
+                ).strip()
+
+        link = raw_data.find_all("a")[-1]["href"]
+
+        sgw.write_row(
+            SgRecord(
+                locator_domain=locator_domain,
+                page_url=link,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_code,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
+        )
 
 
-def write_output(data):
-	with open('data.csv', mode='w') as output_file:
-		writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
-		# Header
-		writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-		# Body
-		for row in data:
-			writer.writerow(row)
-
-def fetch_data():
-	
-	session = SgRequests()
-
-	url = "https://altabank.com/locations/"
-
-	HEADERS = { "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36" }
-
-	req = session.get(url, headers = HEADERS)
-
-	try:
-		base = BeautifulSoup(req.text,"lxml")
-	except (BaseException):
-		logger.info('[!] Error Occured. ')
-		logger.info('[?] Check whether system is Online.')
-
-	locations = base.findAll(class_='location-card')
-	locator_domain = "altabank.com"
-
-	data = []
-	for location in locations:
-
-		location_name = location.find(class_="branch-name").h5.text
-
-		raw_address = location.find(class_="branch-address").find_all('p')
-		street_address = raw_address[0].text
-		city_line = raw_address[1].text
-		city = city_line[:city_line.find(',')].strip()
-		state = city_line[city_line.find(',')+1:city_line.rfind(' ')].strip()
-		zip_code = city_line[city_line.rfind(' ')+1:].strip()
-		country_code = "US"
-		store_number = "<MISSING>"
-		phone = location.find(class_="branch-numbers").p.text.replace('Phone: ','')
-		location_type = "<MISSING>"
-		hours_of_operation = location.find(class_='branch-hours').get_text(separator=u' ').replace("\n"," ").replace("\xa0","").replace("Hours of Operation:","").strip()
-		hours_of_operation = re.sub(' +', ' ', hours_of_operation)
-
-		raw_gps = location.find('a')['href']
-		start_point = raw_gps.find("@")
-		latitude = raw_gps[start_point+1:raw_gps.find(',',start_point)]
-		long_start = raw_gps.find(',',start_point)+1
-		longitude = raw_gps[long_start:raw_gps.find(',',long_start)]
-		
-		try:
-			int(latitude[4:8])
-		except:
-			latitude = "<MISSING>"
-			longitude = "<MISSING>"
-
-		data.append([locator_domain, url, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
-	return data
-
-def scrape():
-	data = fetch_data()
-	write_output(data)
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    fetch_data(writer)

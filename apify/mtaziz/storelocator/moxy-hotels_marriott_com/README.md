@@ -1,7 +1,8 @@
-# Validation Issues 
-The follows checks are ignored:
+# Validation checks ignored listed below
 
-- --ignore CountryCodeFillRateChecker
+- --ignore CentroidValidator 
 - --ignore StreetAddressHasNumber
 - --ignore StreetAddressHasStateName
-- --ignore CountValidator
+- --ignore GeoConsistencyValidator 
+- --ignore CountryValidator 
+- --ignore LatLngDuplicationValidator

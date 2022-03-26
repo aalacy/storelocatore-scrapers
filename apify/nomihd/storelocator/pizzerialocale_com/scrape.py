@@ -4,7 +4,9 @@ from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import lxml.html
-import json
+from sgpostal import sgpostal as parser
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
 website = "pizzerialocale.com"
@@ -23,6 +25,27 @@ headers = {
     "sec-fetch-dest": "document",
     "accept-language": "en-US,en;q=0.9,ar;q=0.8",
 }
+
+
+def get_latlng(map_link):
+    if "z/data" in map_link:
+        lat_lng = map_link.split("@")[1].split("z/data")[0]
+        latitude = lat_lng.split(",")[0].strip()
+        longitude = lat_lng.split(",")[1].strip()
+    elif "ll=" in map_link:
+        lat_lng = map_link.split("ll=")[1].split("&")[0]
+        latitude = lat_lng.split(",")[0]
+        longitude = lat_lng.split(",")[1]
+    elif "!2d" in map_link and "!3d" in map_link:
+        latitude = map_link.split("!3d")[1].strip().split("!")[0].strip()
+        longitude = map_link.split("!2d")[1].strip().split("!")[0].strip()
+    elif "/@" in map_link:
+        latitude = map_link.split("/@")[1].split(",")[0].strip()
+        longitude = map_link.split("/@")[1].split(",")[1].strip()
+    else:
+        latitude = "<MISSING>"
+        longitude = "<MISSING>"
+    return latitude, longitude
 
 
 def fetch_data():
@@ -45,37 +68,50 @@ def fetch_data():
         page_res = session.get(store, headers=headers)
         page_sel = lxml.html.fromstring(page_res.text)
 
-        json_res = json.loads(
-            "".join(page_sel.xpath('//script[@type="application/ld+json"]/text()'))
-        )
-
-        json_obj = json_res["@graph"][2]
-
         page_url = store
         locator_domain = website
 
-        location_name = json_obj["name"].strip()
+        raw_info = page_sel.xpath('//div[.//p[.//a[contains(@title,"Map")]]]')[0]
+        location_name = (
+            "".join(raw_info.xpath(".//h4/span/text()"))
+            .strip()
+            .replace("NOW OPEN:", "")
+            .strip()
+        )
 
-        street_address = json_obj["address"]["streetAddress"].strip()
+        temp_address = raw_info.xpath(".//p/span/text()")
+        raw_list = []
+        for raw in temp_address:
+            if len("".join(raw).strip()) > 0:
+                raw_list.append("".join(raw).strip())
+                if (
+                    "Everyday" in "".join(raw).strip()
+                    or "Everday" in "".join(raw).strip()
+                ):
+                    break
 
-        city = json_obj["address"]["addressLocality"].strip()
-        state = json_obj["address"]["addressRegion"].strip()
-        zip = json_obj["address"]["postalCode"].strip()
+        raw_address = ", ".join(raw_list[:-1]).strip()
+        formatted_addr = parser.parse_address_usa(raw_address)
+        street_address = formatted_addr.street_address_1
+        if formatted_addr.street_address_2:
+            street_address = street_address + ", " + formatted_addr.street_address_2
 
-        country_code = json_obj["address"]["addressCountry"].strip()
+        city = formatted_addr.city
+        state = formatted_addr.state
+        zip = formatted_addr.postcode
+
+        country_code = "US"
         store_number = "<MISSING>"
-        phone = json_obj["telephone"].strip()
+        phone = "".join(raw_info.xpath('.//a[contains(@href,"tel")]//text()')).strip()
 
         location_type = "<MISSING>"
 
-        hours_of_operation = (
-            json_obj["description"].upper().split("WE'RE OPEN ")[1].strip()
-        )
+        hours_of_operation = raw_list[-1].strip()
 
-        latitude = json_obj["geo"]["latitude"].strip()
-        longitude = json_obj["geo"]["longitude"].strip()
-
-        raw_address = "<MISSING>"
+        map_link = "".join(
+            page_sel.xpath('//iframe[contains(@data-src,"maps/embed?")]/@data-src')
+        ).strip()
+        latitude, longitude = get_latlng(map_link)
 
         yield SgRecord(
             locator_domain=locator_domain,
@@ -99,7 +135,9 @@ def fetch_data():
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

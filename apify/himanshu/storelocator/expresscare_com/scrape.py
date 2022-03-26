@@ -1,75 +1,76 @@
-import csv
-from sgrequests import SgRequests
 import json
-from bs4 import BeautifulSoup
-import re
-from sglogging import SgLogSetup
+from lxml import etree
 
-logger = SgLogSetup().get_logger('expresscare_com')
+from sgrequests import SgRequests
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
 
-
-
-
-
-session = SgRequests()
-
-def write_output(data):
-	with open('data.csv',newline="", mode='w',encoding="utf-8") as output_file:
-		writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
-		# Header
-		writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
-		# Body
-		for row in data:
-			writer.writerow(row)
 
 def fetch_data():
-	locator_domain = "https://www.expresscare.com/"
-	addresses=[]
-	headers = {
-		'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
-		'accept': '*/*',
-		'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
-	}
-	r= session.get("http://locations.expresscare.com/",headers=headers)
-	soup = BeautifulSoup(r.text,"lxml")
-	for state_url in soup.find_all("div",class_="itemlist"):
-		# logger.info(state_url.find("a").text)
-		r1 = session.get(state_url.find("a")["href"],headers=headers)
-		soup1 = BeautifulSoup(r1.text,"lxml")
-		for city_url in soup1.find_all("div",class_="itemlist"):
-			r2 = session.get(city_url.find("a")["href"],headers=headers)
-			soup2 = BeautifulSoup(r2.text,"lxml")
-			page_url = soup2.find("div",class_="itemlist_fullwidth").find("a")["href"]
-			store_number = page_url.split("/")[-2]
-			state = page_url.split("/")[3].upper().strip()
-			r3 = session.get(page_url,headers=headers)
-			soup3 = BeautifulSoup(r3.text,"lxml")
-			location_name = soup3.find("meta",{"property":"og:title"})["content"].capitalize()
-			street_address = soup3.find("meta",{"property":"business:contact_data:street_address"})["content"]
-			city = soup3.find("meta",{"property":"business:contact_data:locality"})["content"]
-			# state = soup3.find("meta",{"property":"business:contact_data:region"})["content"]
-			zipp = soup3.find("meta",{"property":"business:contact_data:postal_code"})["content"]
-			country_code = soup3.find("meta",{"property":"business:contact_data:country_name"})["content"]
-			phone = soup3.find("meta",{"property":"business:contact_data:phone_number"})["content"]
-			location_type = "Valvoline express care"
-			latitude = soup3.find("meta",{"property":"place:location:latitude"})["content"]
-			longitude = soup3.find("meta",{"property":"place:location:longitude"})["content"]
-			hour_list = list(soup3.find("div",class_="hours").stripped_strings)
-			if "verifyHours" in hour_list[-2]:
-				del hour_list[-2]
-			hours_of_operation =" ".join(hour_list).replace("Hours","").strip()
-			store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
-					store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
-			store = [str(x).strip() if x else "<MISSING>" for x in store]
-			if store[-1] in addresses:
-				continue
-			addresses.append(store[-1])
-			# logger.info("data = " + str(store))
-			# logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-			yield store
+    session = SgRequests(verify_ssl=False)
+
+    start_url = "https://locations.expresscare.com/"
+    domain = "expresscare.com"
+    hdr = {
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
+    }
+    response = session.get(start_url, headers=hdr)
+    dom = etree.HTML(response.text)
+    all_sates = dom.xpath('//a[@data-gaact="Click_to_State"]/@href')
+    for url in all_sates:
+        response = session.get(url)
+        dom = etree.HTML(response.text)
+        all_cities = dom.xpath('//a[@data-gaact="Click_to_City_Page"]/@href')
+        for url in all_cities:
+            response = session.get(url)
+            dom = etree.HTML(response.text)
+            all_locations = dom.xpath('//a[@data-gaact="Click_to_Store_Page"]/@href')
+            for page_url in all_locations:
+                loc_response = session.get(page_url)
+                loc_dom = etree.HTML(loc_response.text)
+                poi = loc_dom.xpath(
+                    '//script[contains(text(), "addressRegion")]/text()'
+                )[0]
+                poi = json.loads(poi)
+                hoo = []
+                for e in poi["openingHoursSpecification"]:
+                    day = e["dayOfWeek"][0]
+                    hoo.append(f'{day} {e["opens"]} - {e["closes"]}')
+                hoo = " ".join(hoo)
+
+                item = SgRecord(
+                    locator_domain=domain,
+                    page_url=page_url,
+                    location_name=poi["name"],
+                    street_address=poi["address"]["streetAddress"],
+                    city=poi["address"]["addressLocality"],
+                    state=poi["address"]["addressRegion"],
+                    zip_postal=poi["address"]["postalCode"],
+                    country_code=poi["address"]["addressCountry"],
+                    store_number=poi["@id"],
+                    phone=poi["telephone"],
+                    location_type=poi["@type"],
+                    latitude=poi["geo"]["latitude"],
+                    longitude=poi["geo"]["longitude"],
+                    hours_of_operation=hoo,
+                )
+
+                yield item
+
 
 def scrape():
-	data = fetch_data()
-	write_output(data)
-scrape()
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
+
+
+if __name__ == "__main__":
+    scrape()

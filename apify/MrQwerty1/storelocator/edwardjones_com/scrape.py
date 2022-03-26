@@ -1,172 +1,84 @@
-import csv
-import time
-import usaddress
+from typing import Iterable
 
-from concurrent import futures
 from sgrequests import SgRequests
+from sgscrape.simple_scraper_pipeline import (
+    ConstantField,
+    MappingField,
+    MissingField,
+    SimpleScraperPipeline,
+)
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def fetch_data() -> Iterable[dict]:
+    with SgRequests() as http:
+        for i in range(1, 5000):
+            res = http.request(
+                url=f"https://www.edwardjones.com/api/financial-advisor/results?q=75022&distance=5000&page={i}",
+                headers={
+                    "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0",
+                    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+                    "Accept-Language": "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3",
+                    "Connection": "keep-alive",
+                    "Upgrade-Insecure-Requests": "1",
+                },
+            ).json()["results"]
 
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
+            for x in res:
+                yield x
 
-        for row in data:
-            writer.writerow(row)
+            if len(res) < 15:
+                break
 
 
-def get_address(line):
-    tag = {
-        "Recipient": "recipient",
-        "AddressNumber": "address1",
-        "AddressNumberPrefix": "address1",
-        "AddressNumberSuffix": "address1",
-        "StreetName": "address1",
-        "StreetNamePreDirectional": "address1",
-        "StreetNamePreModifier": "address1",
-        "StreetNamePreType": "address1",
-        "StreetNamePostDirectional": "address1",
-        "StreetNamePostModifier": "address1",
-        "StreetNamePostType": "address1",
-        "CornerOf": "address1",
-        "IntersectionSeparator": "address1",
-        "LandmarkName": "address1",
-        "USPSBoxGroupID": "address1",
-        "USPSBoxGroupType": "address1",
-        "USPSBoxID": "address1",
-        "USPSBoxType": "address1",
-        "OccupancyType": "address2",
-        "OccupancyIdentifier": "address2",
-        "SubaddressIdentifier": "address2",
-        "SubaddressType": "address2",
-        "PlaceName": "city",
-        "StateName": "state",
-        "ZipCode": "postal",
-    }
-
-    a = usaddress.tag(line, tag_mapping=tag)[0]
-    street_address = f"{a.get('address1')} {a.get('address2') or ''}".strip()
-    if street_address == "None":
-        street_address = "<MISSING>"
-    city = a.get("city") or "<MISSING>"
-    state = a.get("state") or "<MISSING>"
-    postal = a.get("postal") or "<MISSING>"
-
-    return street_address, city, state, postal
+def get_page_url(url):
+    return f"https://www.edwardjones.com{url}"
 
 
-def get_urls():
-    urls = []
-    session = SgRequests()
-    r = session.get(
-        "https://www.edwardjones.com/api/financial-advisor/results?q=75022&distance=5000"
-    )
-    count = r.json()["resultCount"]
-
-    for i in range(1, int(count / 15) + 2):
-        urls.append(
-            f"https://www.edwardjones.com/api/financial-advisor/results?q=75022&distance=5000&page={i}"
-        )
-
-    return urls
+def get_street(adr):
+    return ",".join(adr.split(",")[:-2])
 
 
-def get_data(url):
-    rows = []
-    locator_domain = "https://www.edwardjones.com"
-
-    session = SgRequests()
-    r = session.get(url)
-    try:
-        js = r.json()["results"]
-    except:
-        time.sleep(5)
-        get_data(url)
-
-    for j in js:
-        location_name = j.get("faName")
-        line = j.get("address") or "<MISSING>"
-        try:
-            street_address, city, state, postal = get_address(line)
-        except usaddress.RepeatedLabelError:
-            postal = line.split()[-1]
-            state = line.split()[-2]
-            line = line.replace(postal, "").replace(state, "").strip()
-            if line.endswith(","):
-                line = line[:-1]
-            city = line.split(",")[-1]
-            street_address = line.replace(city, "").strip()
-            if street_address.endswith(","):
-                street_address = street_address[:-1]
-        country_code = "US"
-        slug = j.get("faUrl")
-        page_url = f"{locator_domain}{slug}"
-        store_number = j.get("faEntityId") or "<MISSING>"
-        phone = j.get("phone") or "<MISSING>"
-        latitude = j.get("lat") or "<MISSING>"
-        longitude = j.get("lon") or "<MISSING>"
-        location_type = "<MISSING>"
-        hours_of_operation = "<INACCESSIBLE>"
-
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        rows.append(row)
-
-    return rows
+def get_postal(adr):
+    return adr.split()[-1]
 
 
-def fetch_data():
-    out = []
-    urls = get_urls()
-
-    with futures.ThreadPoolExecutor(max_workers=1) as executor:
-        future_to_url = {executor.submit(get_data, url): url for url in urls}
-        for future in futures.as_completed(future_to_url):
-            rows = future.result()
-            for row in rows:
-                out.append(row)
-
-    return out
+def get_state(adr):
+    return adr.split()[-2]
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
+def get_city(adr):
+    return adr.split(",")[-2].strip()
 
 
 if __name__ == "__main__":
-    scrape()
+    crawler_domain = "edwardjones.com"
+    field_defs = SimpleScraperPipeline.field_definitions(
+        locator_domain=ConstantField("https://www.edwardjones.com/"),
+        page_url=MappingField(mapping=["faUrl"], value_transform=get_page_url),
+        location_name=MappingField(mapping=["faName"], is_required=False),
+        street_address=MappingField(mapping=["address"], value_transform=get_street),
+        city=MappingField(mapping=["address"], value_transform=get_city),
+        state=MappingField(mapping=["address"], value_transform=get_state),
+        zipcode=MappingField(mapping=["address"], value_transform=get_postal),
+        country_code=ConstantField("US"),
+        store_number=MappingField(mapping=["faEntityId"], part_of_record_identity=True),
+        phone=MappingField(mapping=["phone"], is_required=False),
+        location_type=MissingField(),
+        latitude=MappingField(
+            mapping=["lat"],
+            is_required=False,
+        ),
+        longitude=MappingField(
+            mapping=["lon"],
+            is_required=False,
+        ),
+        hours_of_operation=MissingField(),
+        raw_address=MappingField(mapping=["address"]),
+    )
+
+    SimpleScraperPipeline(
+        scraper_name=crawler_domain,
+        data_fetcher=fetch_data,
+        field_definitions=field_defs,
+        fail_on_outlier=False,
+    ).run()

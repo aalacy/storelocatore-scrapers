@@ -1,64 +1,43 @@
-import csv
 import json
 
-from concurrent import futures
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from concurrent import futures
+from sgscrape.sgpostal import parse_address, International_Parser
+from sglogging import sglog
 
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
+locator_domain = "natwest.com"
+log = sglog.SgLogSetup().get_logger(logger_name=locator_domain)
 
 
 def get_urls():
-    session = SgRequests()
-    r = session.get("https://locator.natwest.com/?")
+    r = session.get("https://www.natwest.com/locator?")
     tree = html.fromstring(r.text)
     token = "".join(tree.xpath("//input[@id='csrf-token']/@value"))
 
     data = {
         "CSRFToken": token,
-        "lat": "51.5073509",
-        "lng": "-0.1277583",
+        "lat": "51.5072178",
+        "lng": "-0.1275862",
         "site": "Natwest",
         "pageDepth": "4",
         "search_term": "London",
-        "searchMiles": "100",
+        "searchMiles": "5",
         "offSetMiles": "50",
-        "maxMiles": "2000",
-        "listSizeInNumbers": "10000",
+        "maxMiles": "3000",
+        "listSizeInNumbers": "999",
         "search-type": "1",
     }
 
     r = session.post(
-        "https://locator.natwest.com/content/branchlocator/en/natwest/_jcr_content/content/homepagesearch.search.html",
+        "https://www.natwest.com/content/branchlocator/en/natwest/_jcr_content/content/homepagesearch.search.html",
         data=data,
     )
+    log.info(f"Post Status: {r}")
     tree = html.fromstring(r.text)
 
     return tree.xpath(
@@ -66,40 +45,50 @@ def get_urls():
     )
 
 
-def get_data(url):
-    locator_domain = "https://natwest.com"
-    page_url = f"https://locator.natwest.com{url}"
-    if "Mobile" in page_url:
-        return
+def get_data(url, sgw: SgWriter):
+    page_url = f"https://www.natwest.com{url}"
 
-    session = SgRequests()
     r = session.get(page_url)
+    log.info(f"Crawling {page_url} and response status: {r}")
     tree = html.fromstring(r.text)
 
     location_name = "".join(tree.xpath("//input[@id='branchName']/@value"))
     line = tree.xpath("//div[@class='print']//td[@class='first']/text()")
     line = list(filter(None, [l.strip() for l in line]))
 
-    street_address = line[0]
-    city = line[-3]
-    state = line[-2]
-    postal = line[-1]
+    raw_address = ", ".join(line)
+    postcode = line.pop()
+    ad = ", ".join(line)
+    adr = parse_address(International_Parser(), ad)
+
+    adr1 = adr.street_address_1 or ""
+    adr2 = adr.street_address_2 or ""
+    street_address = f"{adr1} {adr2}".strip()
+
+    if len(street_address) < 5:
+        street_address = raw_address.split(",")[0].strip()
+
+    city = adr.city or SgRecord.MISSING
+    if "Juxon House" in street_address:
+        street_address = raw_address.split(",")[1].strip()
+
     country_code = "GB"
     store_number = page_url.split("/")[-1].split("-")[0]
-
-    phone = (
-        "".join(tree.xpath("//div[@class='print']//td[./span]/text()")).strip()
-        or "<MISSING>"
-    )
-    if phone.find("(") != -1:
-        phone = phone.split("(")[0].strip()
+    phone = "".join(tree.xpath("//div[@class='print']//td[./span]/text()")).strip()
+    if "Int'l:" in phone:
+        phone = phone.split("Int'l:")[1].replace("(", "").replace(")", "").strip()
 
     text = "".join(tree.xpath("//script[contains(text(), 'locationObject')]/text()"))
-    text = text.split("locationObject =")[1].split(";")[0].strip()
-    js = json.loads(text)
-    latitude = js.get("LAT") or "<MISSING>"
-    longitude = js.get("LNG") or "<MISSING>"
-    location_type = js.get("TYPE") or "<MISSING>"
+    try:
+        text = text.split("locationObject =")[1].split(";")[0].strip()
+        js = json.loads(text)
+        latitude = js.get("LAT")
+        longitude = js.get("LNG")
+        location_type = js.get("TYPE")
+    except IndexError:
+        latitude = SgRecord.MISSING
+        longitude = SgRecord.MISSING
+        location_type = SgRecord.MISSING
 
     _tmp = []
     tr = tree.xpath("//tr[@class='time']")
@@ -112,48 +101,41 @@ def get_data(url):
             time = "".join(t.xpath("./td/text()")[1:]).strip()
         _tmp.append(f"{day}: {time}")
 
-    hours_of_operation = ";".join(_tmp) or "<MISSING>"
+    hours_of_operation = ";".join(_tmp)
     if hours_of_operation.lower().count("closed") >= 7:
         hours_of_operation = "Closed"
 
-    row = [
-        locator_domain,
-        page_url,
-        location_name,
-        street_address,
-        city,
-        state,
-        postal,
-        country_code,
-        store_number,
-        phone,
-        location_type,
-        latitude,
-        longitude,
-        hours_of_operation,
-    ]
+    row = SgRecord(
+        page_url=page_url,
+        location_name=location_name,
+        street_address=street_address,
+        city=city,
+        zip_postal=postcode,
+        country_code=country_code,
+        store_number=store_number,
+        phone=phone,
+        location_type=location_type,
+        latitude=latitude,
+        longitude=longitude,
+        locator_domain=locator_domain,
+        hours_of_operation=hours_of_operation,
+        raw_address=raw_address,
+    )
 
-    return row
+    sgw.write_row(row)
 
 
-def fetch_data():
-    out = []
+def fetch_data(sgw: SgWriter):
     urls = get_urls()
 
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {executor.submit(get_data, url): url for url in urls}
+    with futures.ThreadPoolExecutor(max_workers=8) as executor:
+        future_to_url = {executor.submit(get_data, url, sgw): url for url in urls}
         for future in futures.as_completed(future_to_url):
-            row = future.result()
-            if row:
-                out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+            future.result()
 
 
 if __name__ == "__main__":
-    scrape()
+
+    session = SgRequests(proxy_country="gb")
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+        fetch_data(writer)

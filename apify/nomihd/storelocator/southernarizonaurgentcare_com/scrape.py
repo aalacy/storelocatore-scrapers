@@ -4,7 +4,9 @@ from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import lxml.html
-from sgscrape import sgpostal as parser
+from sgpostal import sgpostal as parser
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "southernarizonaurgentcare.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -42,7 +44,14 @@ def fetch_data():
         raw_address = []
         for add in address:
             if len("".join(add).strip()) > 0:
-                raw_address.append("".join(add).strip().replace("\r\n", ",").strip())
+                raw_address.append(
+                    "".join(add)
+                    .strip()
+                    .replace("\r\n", ",")
+                    .strip()
+                    .replace("\n", ",")
+                    .strip()
+                )
 
         formatted_addr = parser.parse_address_usa(", ".join(raw_address))
         street_address = formatted_addr.street_address_1
@@ -124,7 +133,9 @@ def fetch_data():
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

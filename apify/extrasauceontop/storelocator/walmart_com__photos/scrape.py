@@ -1,10 +1,12 @@
 from sgrequests import SgRequests
-from sgzip.static import static_zipcode_list, SearchableCountries
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries, Grain_4
 from sgscrape import simple_scraper_pipeline as sp
 
 
 def get_data():
-    search = static_zipcode_list(country_code=SearchableCountries.USA, radius=20)
+    search = DynamicZipSearch(
+        country_codes=[SearchableCountries.USA], granularity=Grain_4()
+    )
     session = SgRequests()
     for search_code in search:
         url = (
@@ -13,7 +15,11 @@ def get_data():
             + "&limit=20"
         )
 
-        response = session.get(url).json()
+        try:
+            response = session.get(url).json()
+
+        except Exception:
+            continue
 
         for location in response["locations"]:
             locator_domain = "photos3.walmart.com"
@@ -29,12 +35,12 @@ def get_data():
             try:
                 phone = location["servicesMap"]["PHOTO_CENTER"]["phone"]
             except Exception:
-                phone = location["phone"]
+                phone = "<MISSING>"
 
             location_type = location["storeType"]
             latitude = location["coordinates"]["latitude"]
             longitude = location["coordinates"]["longitude"]
-
+            search.found_location_at(latitude, longitude)
             hours = ""
             for day in location["servicesMap"]["PHOTO_CENTER"][
                 "operationalHours"
@@ -60,6 +66,10 @@ def get_data():
                     hours = hours + day.replace("Hrs", "") + " " + "closed" + ", "
 
             hours = hours[:-2]
+
+            hours = hours.replace("monToFri", "mon to fri")
+            if store_number == str("5803"):
+                hours = "Open 24/7"
 
             yield {
                 "locator_domain": locator_domain,
@@ -113,7 +123,7 @@ def scrape():
         scraper_name="Crawler",
         data_fetcher=get_data,
         field_definitions=field_defs,
-        log_stats_interval=15,
+        log_stats_interval=10000,
     )
     pipeline.run()
 

@@ -2,11 +2,13 @@ import time
 from bs4 import BeautifulSoup as bs
 import re
 
-from sgscrape.sgpostal import parse_address_intl
+from sgpostal.sgpostal import parse_address_intl
 from sgrequests import SgRequests
 from sglogging import sglog
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 from sgselenium.sgselenium import SgChrome
 from webdriver_manager.chrome import ChromeDriverManager
@@ -16,14 +18,7 @@ from selenium.webdriver.common.by import By
 
 import ssl
 
-try:
-    _create_unverified_https_context = (
-        ssl._create_unverified_context
-    )  # Legacy Python that doesn't verify HTTPS certificates by default
-except AttributeError:
-    pass
-else:
-    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
+ssl._create_default_https_context = ssl._create_unverified_context
 
 
 DOMAIN = "pizzadepot.ca"
@@ -68,13 +63,14 @@ def get_driver(url, xpath_name, driver=None):
             address = mapembedaddress.find("div", {"class": "address"}).text
             driver.switch_to.default_content()
             break
-        except Exception:
+        except Exception as e:
             driver.quit()
-            if x == 10:
-                raise Exception(
-                    "Make sure this ran with a Proxy, will fail without one"
-                )
+            if x == 3:
+                log.info(f"Page is not valid {url} : {e}")
+                break
+            return driver, MISSING
             continue
+
     return driver, address
 
 
@@ -122,6 +118,8 @@ def fetchData():
         page_url = website + grid.get("href")
         log.info(f"Now Crawling: {page_url}")
         driver, raw_address = get_driver(page_url, xpath_name)
+        if raw_address == MISSING:
+            continue
         time.sleep(15)
         street_address, city, state, zip_postal = getAddress(raw_address)
         html = driver.page_source
@@ -135,6 +133,10 @@ def fetchData():
             location_name = soup2.find_all(
                 "h2", class_="elementor-heading-title elementor-size-default"
             )[1].text
+            if "Hours" in str(location_name):
+                location_name = soup2.find_all(
+                    "h2", class_="elementor-heading-title elementor-size-default"
+                )[0].text
             log.info(f"Location Name: {location_name}")
 
         location_type = MISSING
@@ -150,11 +152,11 @@ def fetchData():
         latitude, longitude = parseCentrod(latlonUrl)
         log.info(f"LatLon: {latitude}, {longitude}")
         phone = soup2.find_all("span", class_="elementor-icon-list-text")[2].text
+        if phone == "Chicken Menu":
+            phone = soup2.find_all("span", class_="elementor-icon-list-text")[1].text
         _tmp = []
         try:
-            hoosearch = soup2.find_all(
-                "h3", class_="elementor-heading-title elementor-size-default"
-            )[2].findNext("p")
+            hoosearch = soup2.findAll(text="Hours")[0].findNext("p")
             if "Sunday" in str(hoosearch):
                 hoo = str(hoosearch).split("<br/>")
                 for h in hoo[0:4]:
@@ -198,7 +200,7 @@ def scrape():
     start = time.time()
     result = fetchData()
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         for rec in result:
             writer.write_row(rec)
             count = count + 1

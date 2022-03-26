@@ -1,129 +1,122 @@
-import csv
-
-from concurrent import futures
+import usaddress
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
-
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from concurrent import futures
 
 
 def get_urls():
-    session = SgRequests()
-    r = session.get("https://eyemart.com/locations/")
+    r = session.get("https://eyemart.com/landing-page/")
     tree = html.fromstring(r.text)
 
-    return tree.xpath("//a[./img[@class='alignleft size-full wp-image-160']]/@href")
+    return tree.xpath("//a[contains(@href, '/stores/')]/@href")
 
 
-def get_data(page_url):
-    locator_domain = "https://eyemart.com/"
+def get_address(line):
+    tag = {
+        "Recipient": "recipient",
+        "AddressNumber": "address1",
+        "AddressNumberPrefix": "address1",
+        "AddressNumberSuffix": "address1",
+        "StreetName": "address1",
+        "StreetNamePreDirectional": "address1",
+        "StreetNamePreModifier": "address1",
+        "StreetNamePreType": "address1",
+        "StreetNamePostDirectional": "address1",
+        "StreetNamePostModifier": "address1",
+        "StreetNamePostType": "address1",
+        "CornerOf": "address1",
+        "IntersectionSeparator": "address1",
+        "USPSBoxGroupID": "address1",
+        "USPSBoxGroupType": "address1",
+        "USPSBoxID": "address1",
+        "USPSBoxType": "address1",
+        "OccupancyType": "address2",
+        "OccupancyIdentifier": "address2",
+        "SubaddressIdentifier": "address2",
+        "SubaddressType": "address2",
+        "PlaceName": "city",
+        "StateName": "state",
+        "ZipCode": "postal",
+    }
 
-    session = SgRequests()
-    r = session.get(page_url)
+    a = usaddress.tag(line, tag_mapping=tag)[0]
+    adr1 = a.get("address1") or ""
+    adr2 = a.get("address2") or ""
+    street_address = f"{adr1} {adr2}".strip()
+    city = a.get("city")
+    state = a.get("state")
+    postal = a.get("postal")
+
+    return street_address, city, state, postal
+
+
+def get_data(page_url, sgw: SgWriter):
+    r = session.get(page_url, headers=headers)
     tree = html.fromstring(r.text)
 
-    location_name = "".join(tree.xpath("//div[@class='storeInfo']/h2/text()")).strip()
-    line = tree.xpath("//div[@class='storeInfo']/p/text()")
-    line = list(filter(None, [l.strip() for l in line]))
-
-    street_address = line[0]
-    line = line[1]
-    city = line.split(",")[0].strip()
-    line = line.split(",")[1].strip()
-    state = line.split()[0]
-    postal = line.split()[1]
+    location_name = "".join(
+        tree.xpath("//div[@class='address-block text-white']/h3/text()")
+    ).strip()
+    raw_address = " ".join(
+        "".join(tree.xpath("//p[@class='mb-0 address-block-text']/text()")).split()
+    )
+    street_address, city, state, postal = get_address(raw_address)
     country_code = "US"
-    store_number = "<MISSING>"
-    phone = (
-        "".join(
-            tree.xpath("//div[@class='storeInfo']//span[@class='tel']/text()")
-        ).strip()
-        or "<MISSING>"
-    )
-
-    text = "".join(
-        tree.xpath("//script[contains(text(), 'google.maps.LatLng')]/text()")
-    )
-    latitude = text.split('parseFloat("')[1].split('"')[0]
-    longitude = text.split('parseFloat("')[-1].split('"')[0]
-    location_type = "<MISSING>"
+    store_number = page_url.split("/")[-1]
+    phone = "".join(
+        tree.xpath("//span[@class='address-details-link tel']/text()")
+    ).strip()
 
     _tmp = []
-    days = tree.xpath("//div[@class='days']/p/text()")
+    days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
     text = "".join(tree.xpath("//script[contains(text(), 'siteHour ?')]/text()"))
     times = eval(text.split("siteHour ?")[1].split(": [")[0])
 
     for d, t in zip(days, times):
-        if d.strip():
-            _tmp.append(f"{d.strip()} {t.strip()}")
+        if t.strip() == "-":
+            _tmp.append(f"{d.strip()}: Closed")
+        else:
+            _tmp.append(f"{d.strip()}: {t.strip()}")
 
-    hours_of_operation = ";".join(_tmp).replace(": -", ": Closed") or "<MISSING>"
+    hours_of_operation = ";".join(_tmp).replace(": -", ": Closed")
 
-    row = [
-        locator_domain,
-        page_url,
-        location_name,
-        street_address,
-        city,
-        state,
-        postal,
-        country_code,
-        store_number,
-        phone,
-        location_type,
-        latitude,
-        longitude,
-        hours_of_operation,
-    ]
+    row = SgRecord(
+        page_url=page_url,
+        location_name=location_name,
+        street_address=street_address,
+        city=city,
+        state=state,
+        zip_postal=postal,
+        country_code=country_code,
+        store_number=store_number,
+        phone=phone,
+        locator_domain=locator_domain,
+        hours_of_operation=hours_of_operation,
+        raw_address=raw_address,
+    )
 
-    return row
+    sgw.write_row(row)
 
 
-def fetch_data():
-    out = []
+def fetch_data(sgw: SgWriter):
     urls = get_urls()
 
     with futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {executor.submit(get_data, url): url for url in urls}
+        future_to_url = {executor.submit(get_data, url, sgw): url for url in urls}
         for future in futures.as_completed(future_to_url):
-            row = future.result()
-            if row:
-                out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+            future.result()
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://eyemart.com/"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:95.0) Gecko/20100101 Firefox/95.0",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+    }
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        fetch_data(writer)

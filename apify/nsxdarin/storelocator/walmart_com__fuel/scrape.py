@@ -127,6 +127,19 @@ def add_walmart(x):
     return x if "Walmart" in x else "Walmart " + x
 
 
+def test_fuel(x):
+    result = []
+    x = x.keys()
+    for i in x:
+        if "FUEL" in i:
+            result.append(str(i))
+    for i in x:
+        if "GAS" in i:
+            result.append(str(i))
+
+    return ", ".join(result)
+
+
 def scrape():
     url = "https://www.walmart.com/vision"
     field_defs = sp.SimpleScraperPipeline.field_definitions(
@@ -177,7 +190,8 @@ def scrape():
             is_required=False,
         ),
         location_type=sp.MappingField(
-            mapping=["storeType", "displayName"],
+            mapping=["servicesMap"],
+            raw_value_transform=test_fuel,
             part_of_record_identity=True,
         ),
         raw_address=sp.MissingField(),

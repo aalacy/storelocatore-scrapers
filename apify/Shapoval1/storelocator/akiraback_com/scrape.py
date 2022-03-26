@@ -1,42 +1,14 @@
-import csv
 from lxml import html
-from sgscrape.sgpostal import International_Parser, parse_address
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgpostal.sgpostal import International_Parser, parse_address
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def fetch_data(sgw: SgWriter):
 
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
-
-    locator_domain = "https://www.akiraback.com"
     api_url = "https://www.akiraback.com/locations"
     session = SgRequests()
     headers = {
@@ -45,7 +17,7 @@ def fetch_data():
     r = session.get(api_url, headers=headers)
     tree = html.fromstring(r.text)
     div = tree.xpath('//div[@id="sortMain"]/div[position()<5]//a')
-    s = set()
+
     for d in div:
 
         page_url = "".join(d.xpath(".//@href"))
@@ -77,15 +49,19 @@ def fetch_data():
 
         session = SgRequests()
         r = session.get(page_url, headers=headers)
-        tree = html.fromstring(r.text)
-
+        try:
+            tree = html.fromstring(r.text)
+        except:
+            tree = html.fromstring("<html></html>")
         if (
             slug.find("beverly hills") != -1
             or slug.find("san diego") != -1
             or slug.find("las vegas") != -1
+            or slug.find("SAN DIEGO") != -1
+            or slug.find("Los Angeles") != -1
         ):
             slug = "US"
-        if slug.find("toronto") != -1:
+        if slug.find("toronto") != -1 or slug.find("TORONTO") != -1:
             slug = "CA"
         if slug.find("NORTH ISLAND SEYCHELLES") != -1:
             slug = "NORTH ISLAND"
@@ -95,9 +71,10 @@ def fetch_data():
             slug = "Vietnam"
         if slug.find("BANGKOK") != -1:
             slug = "Thailand"
+
         country_code = slug
         city = "<MISSING>"
-        store_number = "<MISSING>"
+        street_address = "<MISSING>"
         latitude = "<MISSING>"
         longitude = "<MISSING>"
         phone = "<MISSING>"
@@ -106,7 +83,7 @@ def fetch_data():
             ad = (
                 " ".join(
                     tree.xpath(
-                        '//h2[./span[text()="LOCATION"]]/following-sibling::p[1]//text()'
+                        '//h2[./mark[text()="LOCATION"]]/following-sibling::p[1]//text()'
                     )
                 )
                 .replace("\n", "")
@@ -120,7 +97,7 @@ def fetch_data():
             hours_of_operation = (
                 " ".join(
                     tree.xpath(
-                        '//h2[./span[text()="HOURS OF OPERATION"]]/following-sibling::p//text()'
+                        '//h2[./mark[text()="HOURS OF OPERATION"]]/following-sibling::p//text()'
                     )
                 )
                 .replace("\n", "")
@@ -250,9 +227,16 @@ def fetch_data():
             phone = "".join(
                 tree.xpath('//h3[text()="CONTACT"]/following-sibling::div/a[2]/text()')
             ).strip()
-            hours_of_operation = "".join(
-                tree.xpath('//h3[text()="HOURS"]/following-sibling::div//text()')
-            ).strip()
+            hours_of_operation = (
+                " ".join(
+                    tree.xpath('//h3[text()="HOURS"]/following-sibling::div/p/text()')
+                )
+                .replace("\r\n", "")
+                .replace("\n", "")
+                .replace("\r", "")
+                .strip()
+            )
+
             latitude = (
                 "".join(tree.xpath('//script[contains(text(), "geo")]/text()'))
                 .split('"latitude": "')[1]
@@ -266,19 +250,22 @@ def fetch_data():
                 .strip()
             )
         if page_url == "https://www.akirabackdubai.com/contact-us":
-            ad = "".join(tree.xpath('//a[@id="hotel-address"]/text()'))
+            ad = "".join(tree.xpath('//input[@class="daddr"]/@value'))
             phone = "".join(
-                tree.xpath(
-                    '//div[@class="hotel-adddress"]//a[contains(@href, "tel")]/text()'
-                )
+                tree.xpath('//div[contains(text(), "Inquiries: ")]/a/text()')
             ).strip()
-            hours_of_operation = tree.xpath(
-                '//*[contains(text(), "Opening Hours")]/following-sibling::*[1]//text()'
+            hours_of_operation = (
+                " ".join(
+                    tree.xpath(
+                        '//*[contains(text(), "Opening Hours")]/following-sibling::*[1]//text()'
+                    )
+                )
+                .replace("\r\n", "")
+                .replace("\n", "")
+                .replace("\r", "")
+                .strip()
             )
-            hours_of_operation = list(
-                filter(None, [a.strip() for a in hours_of_operation])
-            )
-            hours_of_operation = " ".join(hours_of_operation)
+
             latitude = (
                 "".join(tree.xpath('//script[contains(text(), "geo")]/text()'))
                 .split('"latitude": "')[1]
@@ -340,64 +327,9 @@ def fetch_data():
                 .split('"')[0]
                 .strip()
             )
-        if page_url == "https://portal.marriott.com/hanjw-dining/akira-back":
-            ad = "".join(
-                tree.xpath('//i[@class="icon-maps-pin"]/following-sibling::span/text()')
-            )
-            phone = (
-                "".join(
-                    tree.xpath('//div[@class="header-main-details-phone"]/a/text()')
-                )
-                .replace("\n", "")
-                .strip()
-            )
-            hours_of_operation = (
-                "".join(tree.xpath('//ul[@class="hourlist carouselitems"]/li//text()'))
-                .replace("\n", "")
-                .strip()
-            )
-            if hours_of_operation.find("Temporarily closed") != -1:
-                hours_of_operation = "Temporarily closed"
-            latitude = (
-                "".join(tree.xpath('//script[contains(text(), "geo")]/text()'))
-                .split('"latitude": "')[1]
-                .split('"')[0]
-                .strip()
-            )
-            longitude = (
-                "".join(tree.xpath('//script[contains(text(), "geo")]/text()'))
-                .split('"longitude": "')[1]
-                .split('"')[0]
-                .strip()
-            )
-        if (
-            page_url
-            == "https://bangkokmarriottmarquisqueenspark.com/dining/akira-back/"
-        ):
-            ad = "".join(
-                tree.xpath('//i[@class="icon-maps-pin"]/following-sibling::span/text()')
-            )
-            phone = (
-                "".join(tree.xpath('//span[@class="header-main-phone"]/a/text()'))
-                .replace("\n", "")
-                .strip()
-            )
-            latitude = (
-                "".join(tree.xpath('//script[contains(text(), "geo")]/text()'))
-                .split('"latitude": "')[1]
-                .split('"')[0]
-                .strip()
-            )
-            longitude = (
-                "".join(tree.xpath('//script[contains(text(), "geo")]/text()'))
-                .split('"longitude": "')[1]
-                .split('"')[0]
-                .strip()
-            )
+
         if page_url == "https://bangkokmarriottmarquisqueenspark.com/dining/abar/":
-            ad = "".join(
-                tree.xpath('//i[@class="icon-maps-pin"]/following-sibling::span/text()')
-            )
+            continue
         if (
             page_url
             == "https://www.marriott.com/hotels/hotel-information/restaurant/details/sinjw-jw-marriott-hotel-singapore-south-beach/5895579"
@@ -428,13 +360,17 @@ def fetch_data():
                 .split("}")[0]
                 .strip()
             )
-            hours_of_operation = tree.xpath(
-                '//p[text()="Hours of Operation"]/following-sibling::div//div//text()'
+            hours_of_operation = (
+                " ".join(
+                    tree.xpath(
+                        '//p[text()="Hours of Operation"]/following-sibling::div//div//text()'
+                    )
+                )
+                .replace("\r\n", "")
+                .replace("\n", "")
+                .replace("\r", "")
+                .strip()
             )
-            hours_of_operation = list(
-                filter(None, [a.strip() for a in hours_of_operation])
-            )
-            hours_of_operation = " ".join(hours_of_operation)
 
         a = parse_address(International_Parser(), ad)
         street_address = (
@@ -444,41 +380,54 @@ def fetch_data():
         city = a.city or "<MISSING>"
         state = a.state or "<MISSING>"
         postal = a.postcode or "<MISSING>"
-        if street_address == "<MISSING>":
-            street_address = ad.split(",")[0].strip()
-            city = ad.split(",")[1].strip()
-            country_code = a.country
-
-        line = ad
-        if line in s:
+        if page_url == "https://portal.marriott.com/hanjw-dining/akira-back":
+            street_address = "No 8 Do Duc Duc Road, Me Tri Ward, South Tu Liem District"
+            city = "Hanoi"
+            state = "Hanoi"
+            phone = "+842438335588"
+            hours_of_operation = "<MISSING>"
+            latitude = "21.007734"
+            longitude = "105.7825177"
+        if (
+            page_url
+            == "https://bangkokmarriottmarquisqueenspark.com/dining/akira-back/"
+        ):
+            street_address = "199 Sukhumvit Soi 22, Klong Ton"
+            city = "Klong Toey"
+            state = "Bangkok"
+            postal = "10110"
+            phone = "+1-66-2-059-5999"
+            latitude = "13.7304211"
+            longitude = "100.5655813"
+        if page_url == "https://www.north-island.com/dining-options/":
+            street_address = "PO Box 1176"
+        if city.find("Los Angeles") != -1:
+            country_code = "US"
+        if page_url.find("voxcinemas") != -1 or location_name == "DOSA":
             continue
-        s.add(line)
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=SgRecord.MISSING,
+            phone=phone,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+        )
 
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    locator_domain = "https://www.akiraback.com"
+    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))) as writer:
+        fetch_data(writer)

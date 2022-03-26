@@ -1,196 +1,71 @@
-import csv
-import usaddress
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
-from concurrent import futures
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def fetch_data(sgw: SgWriter):
 
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def get_urls():
+    api_url = "https://mccrawoilandpropane.com/wp-admin/admin-ajax.php?action=store_search&lat=33.53106&lng=-96.17391&max_results=25&search_radius=5000&autoload=1"
     session = SgRequests()
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:86.0) Gecko/20100101 Firefox/86.0",
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-        "Accept-Language": "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3",
-        "Connection": "keep-alive",
-        "Upgrade-Insecure-Requests": "1",
-        "Pragma": "no-cache",
-        "Cache-Control": "no-cache",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
-    r = session.get("https://mccrawoilandpropane.com/locations/", headers=headers)
-    tree = html.fromstring(r.text)
-    return tree.xpath("//b/a/@href")
+    r = session.get(api_url, headers=headers)
+    js = r.json()
+    for j in js:
 
-
-def get_data(url):
-    locator_domain = "https://mccrawoilandpropane.com"
-    page_url = url
-    session = SgRequests()
-    tag = {
-        "Recipient": "recipient",
-        "AddressNumber": "address1",
-        "AddressNumberPrefix": "address1",
-        "AddressNumberSuffix": "address1",
-        "StreetName": "address1",
-        "StreetNamePreDirectional": "address1",
-        "StreetNamePreModifier": "address1",
-        "StreetNamePreType": "address1",
-        "StreetNamePostDirectional": "address1",
-        "StreetNamePostModifier": "address1",
-        "StreetNamePostType": "address1",
-        "CornerOf": "address1",
-        "IntersectionSeparator": "address1",
-        "LandmarkName": "address1",
-        "USPSBoxGroupID": "address1",
-        "USPSBoxGroupType": "address1",
-        "USPSBoxID": "address1",
-        "USPSBoxType": "address1",
-        "BuildingName": "address2",
-        "OccupancyType": "address2",
-        "OccupancyIdentifier": "address2",
-        "SubaddressIdentifier": "address2",
-        "SubaddressType": "address2",
-        "PlaceName": "city",
-        "StateName": "state",
-        "ZipCode": "postal",
-    }
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:86.0) Gecko/20100101 Firefox/86.0",
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-        "Accept-Language": "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3",
-        "Connection": "keep-alive",
-        "Upgrade-Insecure-Requests": "1",
-        "Pragma": "no-cache",
-        "Cache-Control": "no-cache",
-    }
-    r = session.get(page_url, headers=headers)
-    tree = html.fromstring(r.text)
-    location_name = "".join(tree.xpath("//h1/text()"))
-    line = (
-        " ".join(tree.xpath("//p[./a[contains(text(), 'map')]]/text()"))
-        .replace("\n", "")
-        .replace("[ ]", "")
-        .strip()
-    )
-    if location_name.find("McCraw Oil & Propane – Clayton, Oklahoma") != -1:
-        line = (
-            " ".join(
-                tree.xpath('//div[@class="midcontent borderbold-right"]/p[3]/text()')
-            )
-            .replace("\n", "")
+        page_url = j.get("permalink")
+        location_name = (
+            "".join(j.get("store"))
+            .replace("&#8211;", "–")
+            .replace("&#038;", "&")
             .strip()
         )
-    if location_name.find("McCraw Oil & Propane – Paris, Texas") != -1:
-        line = (
-            " ".join(
-                tree.xpath('//div[@class="midcontent borderbold-right"]/p[2]/text()')
+        street_address = f"{j.get('address')} {j.get('address2')}".strip()
+        state = j.get("state")
+        postal = "".join(j.get("zip"))
+        if postal.find(" ") != -1:
+            postal = postal.split()[1].strip()
+        country_code = j.get("country")
+        city = j.get("city")
+        latitude = j.get("lat")
+        longitude = j.get("lng")
+        phone = j.get("phone")
+        hours_of_operation = "<MISSING>"
+        hours = j.get("hours") or "<MISSING>"
+        if hours != "<MISSING>":
+            a = html.fromstring(hours)
+            hours_of_operation = (
+                " ".join(a.xpath("//*//text()")).replace("\n", "").strip()
             )
-            .replace("\n", "")
-            .strip()
+
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=SgRecord.MISSING,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
         )
-    a = usaddress.tag(line, tag_mapping=tag)[0]
-    street_address = f"{a.get('address1')} {a.get('address2')}".replace(
-        "None", ""
-    ).strip()
-    city = a.get("city")
-    state = a.get("state")
-    postal = a.get("postal")
-    country_code = "US"
-    store_number = "<MISSING>"
 
-    phone = "".join(
-        tree.xpath(
-            "//strong[contains(text(), 'Tel')]/following-sibling::text() | //p[contains(text(), 'Tel')]/text() | //h6[contains(text(), 'Call Our Burleson, Texas Location:')]/text()"
-        )
-    ).strip()
-    if phone.find("Tel:") != -1:
-        phone = phone.split("Tel:")[1].strip()
-    if phone.find("Location:") != -1:
-        phone = phone.split("Location:")[1].strip()
-    ll = "".join(
-        "".join(
-            tree.xpath('//a[contains(@href, "https://www.google.com/maps/")]/@href')
-        )
-        .split("/@")[1]
-        .split(",")[:2]
-    ).replace("-", ",-")
-    latitude = ll.split(",")[0]
-    longitude = ll.split(",")[1]
-    location_type = "<MISSING>"
-    hours_of_operation = (
-        "".join(
-            tree.xpath("//strong[contains(text(), 'Hours')]/following-sibling::text()")
-        )
-        .replace("\n", "")
-        .strip()
-        or "<MISSING>"
-    )
-
-    row = [
-        locator_domain,
-        page_url,
-        location_name,
-        street_address,
-        city,
-        state,
-        postal,
-        country_code,
-        store_number,
-        phone,
-        location_type,
-        latitude,
-        longitude,
-        hours_of_operation,
-    ]
-
-    return row
-
-
-def fetch_data():
-    out = []
-    urls = get_urls()
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {executor.submit(get_data, url): url for url in urls}
-        for future in futures.as_completed(future_to_url):
-            row = future.result()
-            if row:
-                out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    locator_domain = "https://mccrawoilandpropane.com/"
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
+    ) as writer:
+        fetch_data(writer)

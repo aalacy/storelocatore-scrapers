@@ -2,15 +2,14 @@ from sgrequests import SgRequests
 from sglogging import SgLogSetup
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-from sgscrape.sgpostal import parse_address_intl
-from lxml import html
-import json
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgpostal.sgpostal import parse_address_intl
 
 
-session = SgRequests()
-locator_domain_url = "https://gpminvestments.com/breadandbutter"
+DOMAIN = "gpminvestments.com/breadandbutter"
 logger = SgLogSetup().get_logger("gpminvestments_com__breadandbutter")
-MISSING = "<MISSING>"
+MISSING = SgRecord.MISSING
 INACCESSIBLE = "<INACCESSIBLE>"
 
 headers = {
@@ -19,122 +18,123 @@ headers = {
 
 
 def fetch_data():
-    base_url = "https://gpminvestments.com/store-locator"
-    r1 = session.get(base_url, headers=headers)
-    datar1 = html.fromstring(r1.text, "lxml")
-    data_raw = datar1.xpath(
-        '//script[@type="text/javascript" and contains(., "wpgmaps_localize")]/text()'
-    )
-    data_raw = "".join(data_raw)
-    data_json_raw = data_raw.split("wpgmaps_localize_marker_data = ")[-1].split(";")[0]
-    data_json = json.loads(data_json_raw)
-    for k, v in data_json["7"].items():
-        # Location Domain
-        locator_domain = locator_domain_url
+    with SgRequests() as session:
+        API_ENDPOINT_URL = "https://gpminvestments.com/wp-json/wpgmza/v1/features/base64eJyrVkrLzClJLVKyUqqOUcpNLIjPTIlRsopRMo9R0gEJFGeUFni6FAPFomOBAsmlxSX5uW6ZqTkpELFapVoABk8WwA"
+        data_list_json = session.get(API_ENDPOINT_URL, headers=headers).json()
+        data_markers = data_list_json["markers"]
+        for idx, item in enumerate(data_markers[0:]):
+            # Location Domain
+            locator_domain = DOMAIN
 
-        # Page URL
-        page_url = MISSING
+            # Page URL
+            page_url = MISSING
 
-        # Location Name
-        location_name = v["title"]
-        location_name = " ".join(location_name.split())
-        location_name = location_name if location_name else MISSING
-        logger.info(f": Location Name: {location_name}")
+            # Location Name
+            location_name = item["title"]
+            location_name = " ".join(location_name.split())
+            location_name = location_name if location_name else MISSING
+            logger.info(f"[{idx}] Location Name: {location_name}")
 
-        # Parse Raw Address
-        address_to_be_parsed = v["address"]
-        logger.info(
-            f"Parsing Address for the Store Number-->{k}: {address_to_be_parsed}"
-        )
+            # Parse Raw Address
+            address_to_be_parsed = item["address"]
+            logger.info(f"[{idx}] Address being parsed: {address_to_be_parsed}")
 
-        address_to_be_parsed = address_to_be_parsed.replace(" -", "-")
-        pa = parse_address_intl(address_to_be_parsed)
+            address_to_be_parsed = address_to_be_parsed.replace(" -", "-")
+            pa = parse_address_intl(address_to_be_parsed)
 
-        # Street Address
-        street_address_1 = pa.street_address_1
-        street_address_2 = pa.street_address_2
-        street_address = ""
-        if street_address_1 and street_address_2:
-            street_address = street_address_1 + " " + street_address_2
-        elif street_address_1:
-            street_address = street_address_1
-        else:
-            street_address = MISSING
-
-        # City
-        city = pa.city
-        city = city if city else MISSING
-
-        # State
-        state = pa.state
-        state = state if state else MISSING
-
-        # Zip Code
-        zipcode = pa.postcode
-        zipcode = zipcode if zipcode else INACCESSIBLE
-
-        # Country Code
-        country_code = "US"
-
-        # Store Number
-        store_number = k if k else MISSING
-
-        # Phone Data
-        phone = MISSING
-
-        # Location Type
-        location_type = MISSING
-
-        # Latitude
-        latitude = ""
-        lat = v["lat"]
-        if lat == str(0):
-            latitude = MISSING
-        else:
-            if lat:
-                latitude = lat
+            # Street Address
+            street_address_1 = pa.street_address_1
+            street_address_2 = pa.street_address_2
+            street_address = ""
+            if street_address_1 and street_address_2:
+                street_address = street_address_1 + " " + street_address_2
+            elif street_address_1 and street_address_2 is None:
+                street_address = street_address_1
+            elif street_address_1 is None and street_address_2 is not None:
+                street_address = street_address_2
             else:
+                street_address = MISSING
+
+            if street_address == "3630":
+                street_address = street_address.replace("3630", "3630 Greenbush")
+
+            # City
+            city = pa.city
+            city = city if city else MISSING
+
+            # State
+            state = pa.state
+            state = state if state else MISSING
+
+            # Zip Code
+            zipcode = pa.postcode
+            zipcode = zipcode if zipcode else INACCESSIBLE
+
+            # Country Code
+            country_code = "US"
+
+            # Store Number
+            store_number = item["id"]
+            store_number = store_number if store_number else MISSING
+
+            # Phone Data
+            phone = MISSING
+
+            # Location Type
+            location_type = MISSING
+
+            # Latitude
+            latitude = ""
+            lat = item["lat"]
+            if lat == str(0):
                 latitude = MISSING
-
-        # Longitude
-        longitude = ""
-        lng = v["lng"]
-        if lng == str(0):
-            longitude = MISSING
-        else:
-            if lng:
-                longitude = lng
             else:
+                if lat:
+                    latitude = lat
+                else:
+                    latitude = MISSING
+
+            # Longitude
+            longitude = ""
+            lng = item["lng"]
+            if lng == str(0):
                 longitude = MISSING
+            else:
+                if lng:
+                    longitude = lng
+                else:
+                    longitude = MISSING
 
-        # Hours of Operation
-        hours_of_operation = MISSING
+            # Hours of Operation
+            hours_of_operation = MISSING
 
-        # Raw Address
-        raw_address = v["address"] if v["address"] else MISSING
-        yield SgRecord(
-            locator_domain=locator_domain,
-            page_url=page_url,
-            location_name=location_name,
-            street_address=street_address,
-            city=city,
-            state=state,
-            zip_postal=zipcode,
-            country_code=country_code,
-            store_number=store_number,
-            phone=phone,
-            location_type=location_type,
-            latitude=latitude,
-            longitude=longitude,
-            hours_of_operation=hours_of_operation,
-            raw_address=raw_address,
-        )
+            # Raw Address
+            raw_address = item["address"] if item["address"] else MISSING
+            yield SgRecord(
+                locator_domain=locator_domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zipcode,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+                raw_address=raw_address,
+            )
 
 
 def scrape():
     logger.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

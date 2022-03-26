@@ -1,260 +1,169 @@
-import csv
+# -*- coding: utf-8 -*-
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
+from sglogging import sglog
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+import json
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-session = SgRequests()
+website = "lacoste.com"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
 headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36",
 }
-
-logger = SgLogSetup().get_logger("lacoste_com")
-
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
 
 
 def fetch_data():
-    locs = []
-    url = "https://global.lacoste.com/us/stores/unitedstates"
-    r = session.get(url, headers=headers)
-    website = "lacoste.com"
-    typ = "<MISSING>"
-    logger.info("Pulling Stores")
-    for line in r.iter_lines():
-        line = str(line.decode("utf-8"))
-        if '{"name":"' in line:
-            items = line.split('{"name":"')
-            for item in items:
-                if '"url":"/unitedstates/' in item:
-                    locs.append(
-                        "https://global.lacoste.com/us/stores?country=unitedstates&city="
-                        + item.split('"url":"/unitedstates/')[1].split('"')[0]
-                        + "&json=true"
+    # Your scraper here
+    search_url = "https://global.lacoste.com/en/stores"
+
+    with SgRequests() as session:
+        search_res = session.get(search_url, headers=headers)
+        region_str = (
+            search_res.text.split('"searchList":')[1].split(',"store":')[0].strip()
+        )
+
+        region_list = json.loads(region_str)
+
+        for region in region_list:
+
+            region_url = search_url + region["url"]
+            log.info(region_url)
+
+            region_res = session.get(region_url, headers=headers)
+            try:
+                country_str = (
+                    region_res.text.split('"searchList":')[1]
+                    .split(',"store":')[0]
+                    .strip()
+                )
+            except:
+                continue
+
+            country_list = json.loads(country_str)
+
+            for countryy in country_list:  # countryy is json
+
+                country_url = search_url + countryy["url"]
+                log.info(country_url)
+                country_res = session.get(country_url, headers=headers)
+                try:
+                    cities_str = (
+                        country_res.text.split('"searchList":')[1]
+                        .split(',"store":')[0]
+                        .strip()
                     )
-    for loc in locs:
-        logger.info(loc)
-        r2 = session.get(loc, headers=headers)
-        for line2 in r2.iter_lines():
-            line2 = str(line2.decode("utf-8"))
-            if '{"id":"' in line2:
-                items = line2.split('{"id":"')
-                for item in items:
-                    if '"name":"' in item:
-                        name = item.split('"name":"')[1].split('"')[0]
-                        country = "US"
-                        add = item.split('"address":"')[1].split('"')[0]
-                        city = item.split('"city":"')[1].split('"')[0]
-                        state = "<MISSING>"
-                        zc = item.split('"postalCode":"')[1].split('"')[0]
-                        try:
-                            phone = (
-                                item.split('"phone":"')[1]
-                                .split('"')[0]
-                                .replace("+1", "")
+                except:
+                    continue
+
+                cities = json.loads(cities_str)
+                for cityy in cities:  # cityy is json
+
+                    api_url = (
+                        search_url
+                        + f'?country={cityy["url"].split("/")[1]}&city={cityy["url"].split("/")[-1]}&json=true'
+                    )
+                    log.info(api_url)
+
+                    if "=null" in api_url:
+                        continue
+
+                    api_res = session.get(api_url, headers=headers)
+                    json_res = json.loads(api_res.text)
+
+                    stores = json_res["stores"]
+
+                    for idx, store in enumerate(stores, 1):
+
+                        locator_domain = website
+
+                        location_name = store["name"].strip()
+
+                        page_url = search_url + store["url"]
+
+                        raw_address = "<MISSING>"
+
+                        street_address = store["address"]
+                        if street_address:
+                            street_address = (
+                                street_address.replace("&#35;", "#")
+                                .strip()
+                                .replace("&#41;", ")")
+                                .strip()
+                                .replace("&#40;", "(")
+                                .strip()
+                                .replace("&#39;", "'")
+                                .strip()
                             )
-                        except:
+
+                        city = store["city"]
+                        state = store.get("state")
+                        zip = store["postalCode"]
+                        if zip:
+                            zip = zip.strip(":* ")
+
+                        country_code = json_res["country"]
+                        phone = store["phone"]
+
+                        if phone and phone.strip("+ ").strip() == "":
                             phone = "<MISSING>"
-                        lat = item.split('"latitude":')[1].split(",")[0]
-                        lng = item.split('"longitude":')[1].split(",")[0]
-                        store = item.split('"')[0]
-                        try:
-                            hours = item.split('"hours":"')[1].split('"')[0]
-                            hours = (
+
+                        location_type = store["type"]
+
+                        store_number = store["id"]
+                        hours = store["hours"]
+                        if hours:
+
+                            hours_of_operation = (
                                 hours.replace("1-6", "Mon-Sat: ")
+                                .replace("1-4", "Mon-Thu: ")
+                                .replace("5-6", "Fri-Sat: ")
                                 .replace("7:", "Sun: ")
                                 .replace(",", "; ")
+                                .replace("1-Sun", "Mon-Sun")
+                                .replace(": :", ":")
+                                .replace("6-Sun", "Sat-Sun")
+                                .replace("6:", "Sat:")
                             )
-                            hours = hours.replace("1-Sun", "Mon-Sun").replace(
-                                ": :", ":"
-                            )
-                            hours = hours.replace("6-Sun", "Sat-Sun").replace(
-                                "6:", "Sat:"
-                            )
-                        except:
-                            hours = "<MISSING>"
-                        lurl = (
-                            "https://global.lacoste.com/us/stores"
-                            + item.split('"url":"')[1].split('"')[0]
+                        else:
+                            hours_of_operation = "<MISSING>"
+
+                        latitude, longitude = store["latitude"], store["longitude"]
+
+                        yield SgRecord(
+                            locator_domain=locator_domain,
+                            page_url=page_url,
+                            location_name=location_name,
+                            street_address=street_address,
+                            city=city,
+                            state=state,
+                            zip_postal=zip,
+                            country_code=country_code,
+                            store_number=store_number,
+                            phone=phone,
+                            location_type=location_type,
+                            latitude=latitude,
+                            longitude=longitude,
+                            hours_of_operation=hours_of_operation,
+                            raw_address=raw_address,
                         )
-                        name = (
-                            name.replace("&#39;", "'")
-                            .replace("&amp;", "&")
-                            .replace("&#35;", "#")
-                        )
-                        add = (
-                            add.replace("&#39;", "'")
-                            .replace("&amp;", "&")
-                            .replace("&#35;", "#")
-                        )
-                        hours = (
-                            hours.replace("5:", "Fri:")
-                            .replace("1-", "Mon-")
-                            .replace("4-", "Thu-")
-                            .replace("3:", "Wed:")
-                        )
-                        hours = (
-                            hours.replace("1:", "Mon:")
-                            .replace("2:", "Tue:")
-                            .replace("3:", "Wed:")
-                        )
-                        hours = (
-                            hours.replace("4:", "Thu:")
-                            .replace("5-", "Fri-")
-                            .replace("3-", "Wed-")
-                            .replace("2-", "Tue-")
-                        )
-                        if "closed" not in lurl:
-                            yield [
-                                website,
-                                lurl,
-                                name,
-                                add,
-                                city,
-                                state,
-                                zc,
-                                country,
-                                store,
-                                phone,
-                                typ,
-                                lat,
-                                lng,
-                                hours,
-                            ]
-    locs = []
-    url = "https://global.lacoste.com/us/stores/canada"
-    r = session.get(url, headers=headers)
-    website = "lacoste.com"
-    typ = "<MISSING>"
-    logger.info("Pulling Stores")
-    for line in r.iter_lines():
-        line = str(line.decode("utf-8"))
-        if '{"name":"' in line:
-            items = line.split('{"name":"')
-            for item in items:
-                if '"url":"/canada/' in item:
-                    locs.append(
-                        "https://global.lacoste.com/us/stores?country=canada&city="
-                        + item.split('"url":"/canada/')[1].split('"')[0]
-                        + "&json=true"
-                    )
-    for loc in locs:
-        logger.info(loc)
-        r2 = session.get(loc, headers=headers)
-        for line2 in r2.iter_lines():
-            line2 = str(line2.decode("utf-8"))
-            if '{"id":"' in line2:
-                items = line2.split('{"id":"')
-                for item in items:
-                    if '"name":"' in item:
-                        name = item.split('"name":"')[1].split('"')[0]
-                        country = "CA"
-                        add = item.split('"address":"')[1].split('"')[0]
-                        city = item.split('"city":"')[1].split('"')[0]
-                        state = "<MISSING>"
-                        zc = item.split('"postalCode":"')[1].split('"')[0]
-                        try:
-                            phone = (
-                                item.split('"phone":"')[1]
-                                .split('"')[0]
-                                .replace("+1", "")
-                            )
-                        except:
-                            phone = "<MISSING>"
-                        lat = item.split('"latitude":')[1].split(",")[0]
-                        lng = item.split('"longitude":')[1].split(",")[0]
-                        store = item.split('"')[0]
-                        try:
-                            hours = item.split('"hours":"')[1].split('"')[0]
-                            hours = (
-                                hours.replace("1-6", "Mon-Sat: ")
-                                .replace("7:", "Sun: ")
-                                .replace(",", "; ")
-                            )
-                            hours = hours.replace("1-Sun", "Mon-Sun").replace(
-                                ": :", ":"
-                            )
-                            hours = hours.replace("6-Sun", "Sat-Sun").replace(
-                                "6:", "Sat:"
-                            )
-                        except:
-                            hours = "<MISSING>"
-                        lurl = (
-                            "https://global.lacoste.com/us/stores"
-                            + item.split('"url":"')[1].split('"')[0]
-                        )
-                        name = (
-                            name.replace("&#39;", "'")
-                            .replace("&amp;", "&")
-                            .replace("&#35;", "#")
-                        )
-                        add = (
-                            add.replace("&#39;", "'")
-                            .replace("&amp;", "&")
-                            .replace("&#35;", "#")
-                        )
-                        hours = (
-                            hours.replace("5:", "Fri:")
-                            .replace("1-", "Mon-")
-                            .replace("4-", "Thu-")
-                            .replace("3:", "Wed:")
-                        )
-                        hours = (
-                            hours.replace("1:", "Mon:")
-                            .replace("2:", "Tue:")
-                            .replace("3:", "Wed:")
-                        )
-                        hours = (
-                            hours.replace("4:", "Thu:")
-                            .replace("5-", "Fri-")
-                            .replace("3-", "Wed-")
-                            .replace("2-", "Tue-")
-                        )
-                        if "closed" not in lurl:
-                            yield [
-                                website,
-                                lurl,
-                                name,
-                                add,
-                                city,
-                                state,
-                                zc,
-                                country,
-                                store,
-                                phone,
-                                typ,
-                                lat,
-                                lng,
-                                hours,
-                            ]
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    log.info("Started")
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.StoreNumberId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()

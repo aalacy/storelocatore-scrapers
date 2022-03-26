@@ -1,56 +1,12 @@
-import time
-import csv
 import json
-
-from sgselenium.sgselenium import SgChrome
-from webdriver_manager.chrome import ChromeDriverManager
-
-from sglogging import sglog
-
 import ssl
 
-try:
-    _create_unverified_https_context = (
-        ssl._create_unverified_context
-    )  # Legacy Python that doesn't verify HTTPS certificates by default
-except AttributeError:
-    pass
-else:
-    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
-
-
-DOMAIN = "unitedrentals.com"
-
-log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
-
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgselenium.sgselenium import SgChrome
+from webdriver_manager.chrome import ChromeDriverManager
 
 
 def get_driver(url, driver=None):
@@ -81,8 +37,7 @@ def get_driver(url, driver=None):
     return driver
 
 
-# As selenium so cleaning HTML tags to get solid JSON
-def getJsonObj(html_string):
+def get_js(html_string):
     html_string = (
         html_string.replace("\n", "")
         .replace("\r", "")
@@ -92,35 +47,28 @@ def getJsonObj(html_string):
     return html_string
 
 
-def fetch_data():
-    out = []
+def fetch_data(sgw):
     api_url = "https://www.unitedrentals.com/api/v2/branches"
 
     driver = get_driver(api_url)
     response = driver.page_source
-    jsonobj = getJsonObj(response.split('pre-wrap;">')[1])
-    jsonData = json.loads(jsonobj)
-    js = jsonData["data"]
+    text = get_js(response.split('pre-wrap;">')[1])
+    js = json.loads(text)["data"]
 
-    s = set()
     for j in js:
-        locator_domain = DOMAIN
         page_url = f'https://www.unitedrentals.com{j.get("url")}'
         location_name = j.get("name").strip()
-        street_address = (
-            f"{j.get('address1')} {j.get('address2') or ''}".strip() or "<MISSING>"
-        )
-        city = j.get("city") or "<MISSING>"
-        state = j.get("state") or "<MISSING>"
-        postal = j.get("zip") or "<MISSING>"
-        country_code = j.get("countryCode") or "<MISSING>"
-        store_number = j.get("branchId") or "<MISSING>"
-        phone = j.get("phone") or "<MISSING>"
+        street_address = f"{j.get('address1')} {j.get('address2') or ''}".strip()
+        city = j.get("city")
+        state = j.get("state")
+        postal = j.get("zip")
+        country_code = j.get("countryCode")
+        store_number = j.get("branchId")
+        phone = j.get("phone")
         if phone == "00":
             phone = "<MISSING>"
-        latitude = j.get("latitude") or "<MISSING>"
-        longitude = j.get("longitude") or "<MISSING>"
-        location_type = "<MISSING>"
+        latitude = j.get("latitude")
+        longitude = j.get("longitude")
 
         _tmp = []
         start = j.get("weekdayHours").get("open")
@@ -141,45 +89,36 @@ def fetch_data():
                 _tmp.append(f"{d.capitalize()}: {start} - {close}")
 
         hours_of_operation = ";".join(_tmp)
-
         if hours_of_operation.count("Closed") == 7:
-            continue
+            hours_of_operation = "Closed"
 
-        line = (street_address, city, state, postal)
-        if line in s:
-            continue
+        row = SgRecord(
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            locator_domain=locator_domain,
+            hours_of_operation=hours_of_operation,
+        )
 
-        s.add(line)
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
-
-    return out
-
-
-def scrape():
-    log.info("Scraping Started")
-    start = time.time()
-    data = fetch_data()
-    write_output(data)
-    end = time.time()
-    log.info(f"Total Locations added = {len(data)}")
-    log.info(f"It took {end-start} seconds to complete the crawl.")
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://www.unitedrentals.com"
+    try:
+        _create_unverified_https_context = ssl._create_unverified_context
+    except AttributeError:
+        pass
+    else:
+        ssl._create_default_https_context = _create_unverified_https_context
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+        fetch_data(writer)

@@ -1,3 +1,6 @@
-lxml==4.3.4
-sgrequests
-usaddress==0.5.10
+--extra-index-url https://dl.cloudsmith.io/KVaWma76J5VNwrOm/crawl/crawl/python/simple/
+sgvalidator==0.0.71
+sglogging==0.0.4
+sgscrape==0.1.11
+sgrequests==0.1.12
+beautifulsoup4==4.9.3

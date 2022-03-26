@@ -1,133 +1,73 @@
-import csv
-import json
-from datetime import datetime
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgpostal.sgpostal import USA_Best_Parser, parse_address
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def fetch_data(sgw: SgWriter):
 
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
-    locator_domain = "https://www.wirelessplus.com"
+    locator_domain = "http://wirelessplus.com/"
+    api_url = "http://wirelessplus.com/wp-json/wpgmza/v1/features"
     session = SgRequests()
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:88.0) Gecko/20100101 Firefox/88.0",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
-
-    r = session.get("https://www.wirelessplus.com/locations/", headers=headers)
-    tree = html.fromstring(r.text)
-    jsblock = (
-        "".join(tree.xpath('//script[contains(text(), "page.locations")]/text()'))
-        .split("page.locations = ")[1]
-        .split(";")[0]
-        .strip()
-    )
-    js = json.loads(jsblock)
+    r = session.get(api_url, headers=headers)
+    js = r.json()["markers"]
     for j in js:
 
-        street_address = f"{j.get('Address')} {j.get('Address2') or ''}".replace(
+        page_url = "http://wirelessplus.com/locations/"
+        location_name = j.get("title") or "<MISSING>"
+        ad = j.get("address")
+        ad = str(ad).replace(", USA", "").strip()
+        a = parse_address(USA_Best_Parser(), ad)
+        street_address = f"{a.street_address_1} {a.street_address_2}".replace(
             "None", ""
         ).strip()
-        city = "".join(j.get("City")).replace("(DTLA)", "")
-        state = j.get("ProvinceAbbrev")
-        postal = j.get("PostalCode")
+        state = a.state or "<MISSING>"
+        postal = a.postcode or "<MISSING>"
+        country_code = "US"
+        city = a.city or "<MISSING>"
+        latitude = j.get("lat") or "<MISSING>"
+        longitude = j.get("lng") or "<MISSING>"
+        desc = j.get("description")
+        i = html.fromstring(desc)
+        info = i.xpath("//*//text()")
+        info = list(filter(None, [a.strip() for a in info]))
+        phone = "".join(info[0]).strip()
+        hours_of_operation = (
+            " ".join(info).replace("\\xa0", "").split("Hours of Operation")[1].strip()
+        )
 
-        country_code = j.get("CountryCode")
-        store_number = j.get("LocationId")
-        latitude = j.get("Position").get("Latitude")
-        longitude = j.get("Position").get("Longitude")
-        if latitude == longitude:
-            latitude, longitude = "<MISSING>", "<MISSING>"
-        location_type = "<MISSING>"
-        slug = "".join(city).lower()
-        if slug.find(" ") != -1:
-            slug = slug.replace(" ", "-")
-        if store_number == 134840:
-            slug = "dtla-olive"
-        if store_number == 159025:
-            slug = "dtla-wakaba"
-        page_url = f"https://www.wirelessplus.com/locations/{store_number}/{slug}"
-        hours = j.get("HoursOfOperation")
-        tmp = []
-        for h in hours:
-            day = h.get("DayOfWeek")
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=SgRecord.MISSING,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+            raw_address=ad,
+        )
 
-            try:
-                opens = datetime.strptime(str(h.get("Open")), "%H%M").strftime(
-                    "%I:%M %p"
-                )
-                closes = datetime.strptime(str(h.get("Close")), "%H%M").strftime(
-                    "%I:%M %p"
-                )
-            except ValueError:
-                opens = "Close"
-                closes = "Close"
-            line = f"{day} {opens} - {closes}"
-            if opens == "Close" and closes == "Close":
-                line = f"{day} Closed"
-            tmp.append(line)
-        hours_of_operation = ";".join(tmp) or "<MISSING>"
-        phone = j.get("Phone")
-
-        session = SgRequests()
-        r = session.get(page_url, headers=headers)
-        tree = html.fromstring(r.text)
-
-        location_name = "".join(tree.xpath("//h1//text()"))
-
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID({SgRecord.Headers.STREET_ADDRESS, SgRecord.Headers.LATITUDE})
+        )
+    ) as writer:
+        fetch_data(writer)

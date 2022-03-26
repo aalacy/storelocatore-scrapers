@@ -3,8 +3,12 @@ from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-from sgscrape import sgpostal as parser
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgpostal.sgpostal import parse_address_intl
+from ez_address_parser import AddressParser
 
+ap = AddressParser()
 session = SgRequests()
 website = "thebrick_com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -51,7 +55,7 @@ def fetch_data():
                 )
             log.info(page_url)
 
-            formatted_addr = parser.parse_address_intl(raw_address)
+            formatted_addr = parse_address_intl(raw_address)
             street_address = formatted_addr.street_address_1
             if street_address is None:
                 street_address = formatted_addr.street_address_2
@@ -60,6 +64,16 @@ def fetch_data():
             city = formatted_addr.city
             state = formatted_addr.state if formatted_addr.state else "<MISSING>"
             zip_postal = formatted_addr.postcode
+            if zip_postal is None:
+                resultAddr = ap.parse(raw_address)
+                for t, l in resultAddr:
+                    if l == "PostalCode":
+                        zip_postal = t
+                    if l == "Province":
+                        state = t
+                    if l == "Municipality":
+                        city = t
+
             hours = soup.find("span", {"class": "hours"})
             mo = hours.find("i", {"data-d": "M"}).find("i", {"data-l": "E"}).text
             tu = hours.find("i", {"data-d": "T"}).find("i", {"data-l": "E"}).text
@@ -112,7 +126,7 @@ def fetch_data():
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

@@ -1,46 +1,18 @@
-import csv
-
 from sglogging import sglog
 from sgrequests import SgRequests
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
+
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
 
 logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
 identities = set()
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
 def record_transformer(poi):
-    DOMAIN = "zara.com"
-    store_url = "<MISSING>"
+    domain = "zara.com"
     location_name = poi["addressLines"][0]
     street_address = poi["addressLines"][0]
     city = poi["city"]
@@ -58,24 +30,23 @@ def record_transformer(poi):
     latitude = latitude if latitude else "<MISSING>"
     longitude = poi["longitude"]
     longitude = longitude if longitude else "<MISSING>"
-    hours_of_operation = "<MISSING>"
 
-    item = [
-        DOMAIN,
-        store_url,
-        location_name,
-        street_address,
-        city,
-        state,
-        zip_code,
-        country_code,
-        store_number,
-        phone,
-        location_type,
-        latitude,
-        longitude,
-        hours_of_operation,
-    ]
+    item = SgRecord(
+        locator_domain=domain,
+        page_url=SgRecord.MISSING,
+        location_name=location_name,
+        street_address=street_address,
+        city=city,
+        state=state,
+        zip_postal=zip_code,
+        country_code=country_code,
+        store_number=store_number,
+        phone=phone,
+        location_type=location_type,
+        latitude=latitude,
+        longitude=longitude,
+        hours_of_operation=SgRecord.MISSING,
+    )
     return (item, latitude, longitude)
 
 
@@ -99,6 +70,7 @@ def search_all(session, search, hdr):
                 identities.add(str(record))
                 found += 1
                 yield record
+
         progress = str(round(100 - (search.items_remaining() / maxZ * 100), 2)) + "%"
         total += found
         logzilla.info(
@@ -107,7 +79,6 @@ def search_all(session, search, hdr):
 
 
 def fetch_data():
-    # Your scraper here
     hdr = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.182 Safari/537.36"
     }
@@ -120,10 +91,15 @@ def fetch_data():
 
 
 def scrape():
-    data = []
-    for item in fetch_data():
-        data.append(item)
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":

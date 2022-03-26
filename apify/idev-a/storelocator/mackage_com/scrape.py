@@ -1,39 +1,15 @@
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
-import json
+import dirtyjson as json
 from bs4 import BeautifulSoup as bs
-from sgscrape.sgpostal import parse_address_intl
-import us
+from sgpostal.sgpostal import parse_address_intl
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
 }
-
-ca_provinces_codes = {
-    "AB",
-    "BC",
-    "MB",
-    "NB",
-    "NL",
-    "NS",
-    "NT",
-    "NU",
-    "ON",
-    "PE",
-    "QC",
-    "SK",
-    "YT",
-}
-
-
-def get_country_by_code(code):
-    if us.states.lookup(code):
-        return "US"
-    elif code in ca_provinces_codes:
-        return "CA"
-    else:
-        return "<MISSING>"
 
 
 def fetch_data():
@@ -48,21 +24,24 @@ def fetch_data():
             .replace("&#41;", ")")
         )
         for _ in locations:
-            addr = parse_address_intl(
-                f"{_['address1']} {_['address2']} {_['city']} {_['stateCode']}"
-            )
-            street_address = addr.street_address_1
-            if addr.street_address_2:
-                street_address += " " + addr.street_address_2
-            country_code = addr.country
+            country_code = _["countryCode"]
+            state = _["stateCode"]
             if not country_code:
-                country_code = get_country_by_code(addr.state)
+                addr = parse_address_intl(
+                    f"{_['address1']}, {_['address2']}, {_['city']}, {_['stateCode']}"
+                )
+                if addr.country:
+                    country_code = addr.country
+                state = addr.state
+            street_address = _["address1"]
+            if _["address2"]:
+                street_address += " " + _["address2"]
             yield SgRecord(
                 page_url=base_url,
                 location_name=_["name"],
                 street_address=street_address,
                 city=_["city"],
-                state=addr.state,
+                state=state,
                 zip_postal=_["postalCode"],
                 latitude=_["latitude"],
                 longitude=_["longitude"],
@@ -73,7 +52,7 @@ def fetch_data():
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

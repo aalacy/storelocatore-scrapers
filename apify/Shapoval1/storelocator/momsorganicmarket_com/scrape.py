@@ -11,12 +11,13 @@ def fetch_data(sgw: SgWriter):
 
     api_url = "https://momsorganicmarket.com/"
 
-    session = SgRequests()
     r = session.get(api_url)
     tree = html.fromstring(r.text)
-    page_urls = tree.xpath('//ul[@id="top-menu"]/li[1]/ul[1]/li/a/@href')
+    page_urls = tree.xpath(
+        '//ul[@id="top-menu"]/li[1]/ul[1]/li[position() > 1]/a/@href'
+    )
     for i in page_urls:
-        session = SgRequests()
+
         tag = {
             "Recipient": "recipient",
             "AddressNumber": "address1",
@@ -49,17 +50,9 @@ def fetch_data(sgw: SgWriter):
         subr = session.get(i)
         trees = html.fromstring(subr.text)
         block = trees.xpath('//div[@class="et_pb_blurb_container"]')
-
         for b in block:
-            ad = "".join(
-                b.xpath(
-                    './/div[contains(@class,"et_pb_blurb_description")]/p[2]/text()'
-                )
-            ) or "".join(
-                b.xpath(
-                    './/div[contains(@class,"et_pb_blurb_description")]/p[3]/text()'
-                )
-            )
+            ad = "".join(b.xpath(".//h1/following-sibling::div[1]/p[2]/text()"))
+
             a = usaddress.tag(ad, tag_mapping=tag)[0]
             street_address = f"{a.get('address1')} {a.get('address2')}".replace(
                 "None", ""
@@ -72,7 +65,7 @@ def fetch_data(sgw: SgWriter):
             country_code = "US"
 
             page_url = "".join(b.xpath(".//h1/a/@href")) or i
-            cms = "".join(b.xpath('.//strong[contains(text(), "Coming Late")]/text()'))
+            cms = "".join(b.xpath('.//strong[contains(text(), "Coming Early")]/text()'))
 
             location_name = "".join(b.xpath(".//h1//text()"))
             phone = "".join(b.xpath(".//a[contains(@href, 'tel')]/text()"))
@@ -89,7 +82,7 @@ def fetch_data(sgw: SgWriter):
                     b.xpath(".//div[@class='et_pb_blurb_description']/p[3]/text()")
                 )
                 hours_of_operation = b.xpath(
-                    ".//div[@class='et_pb_blurb_description']/p[6]//text()"
+                    ".//div[@class='et_pb_blurb_description']/p[5]//text()"
                 )
                 hours_of_operation = list(
                     filter(None, [a.strip() for a in hours_of_operation])
@@ -97,7 +90,6 @@ def fetch_data(sgw: SgWriter):
                 hours_of_operation = " ".join(hours_of_operation).replace(",", "")
 
             hours_of_operation = hours_of_operation.replace("\n", " ").strip()
-            session = SgRequests()
             rr = session.get(page_url)
             ttree = html.fromstring(rr.text)
             text = "".join(ttree.xpath(".//a[1][contains(@href, 'google')]/@href"))
@@ -110,6 +102,17 @@ def fetch_data(sgw: SgWriter):
                     longitude = text.split("@")[1].split(",")[1]
             except IndexError:
                 latitude, longitude = "<MISSING>", "<MISSING>"
+            if latitude == "<MISSING>":
+                text = "".join(ttree.xpath("//div/@data-et-multi-view"))
+                try:
+                    if text.find("ll=") != -1:
+                        latitude = text.split("ll=")[1].split(",")[0]
+                        longitude = text.split("ll=")[1].split(",")[1].split("&")[0]
+                    else:
+                        latitude = text.split("@")[1].split(",")[0]
+                        longitude = text.split("@")[1].split(",")[1]
+                except IndexError:
+                    latitude, longitude = "<MISSING>", "<MISSING>"
             if cms:
                 phone, hours_of_operation = "<MISSING>", "Coming Soon"
             if hours_of_operation.find("Hour") != -1:

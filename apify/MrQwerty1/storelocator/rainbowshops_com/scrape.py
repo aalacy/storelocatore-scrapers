@@ -1,66 +1,98 @@
-import csv
-
+from concurrent import futures
+from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 
-def write_output(data):
-    with open('data.csv', mode='w', encoding='utf8', newline='') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
-        writer.writerow(
-            ["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code",
-             "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-
-        for row in data:
-            writer.writerow(row)
+def get_tree(url):
+    r = session.get(url, headers=headers)
+    return html.fromstring(r.text)
 
 
-def get_clean_hoo(hoo):
-    return hoo.replace('<br>', ';').replace('<', '').replace('>', '').replace('br', '').replace('\n', '')
+def get_urls_from_regions(regions):
+    urls = []
+    for region in regions:
+        tree = get_tree(f"https://stores.rainbowshops.com{region}")
+        urls += tree.xpath("//div[@class='state-infobox-title']/a/@href")
+
+    return urls
 
 
-def fetch_data():
-    out = []
-    url = 'https://www.rainbowshops.com/store-locator'
+def get_urls():
+    tree = get_tree("https://stores.rainbowshops.com/")
+    regions = tree.xpath("//div[@class='state']/a/@href")
 
-    for i in range(0, 10000, 200):
-        session = SgRequests()
-        r = session.get(f'https://www.rainbowshops.com/s/rainbow/dw/shop/v19_10/stores?client_id=5a2fe18e-5bc7-4512'
-                        f'-8c1e-f1b231245f8c&max_distance=5000&latitude=33.02&longitude=-97.12&count=200&start={i}')
-        js = r.json()['data']
-
-        for j in js:
-            locator_domain = url
-            store_number = j.get('id') or '<MISSING>'
-            page_url = f"https://www.rainbowshops.com/store-details?storeid={store_number}"
-            location_name = f"Rainbow, Store Number {int(store_number)}"
-            street_address = j.get('address1') or '<MISSING>'
-            city = j.get('city') or '<MISSING>'
-            state = j.get('state_code') or '<MISSING>'
-            # to avoid garbage value
-            if len(state) > 2:
-                state = state[:2]
-            postal = j.get('postal_code') or '<MISSING>'
-            country_code = j.get('country_code') or '<MISSING>'
-            phone = j.get('phone') or '<MISSING>'
-            latitude = j.get('latitude') or '<MISSING>'
-            longitude = j.get('longitude') or '<MISSING>'
-            location_type = j.get('_type', '<MISSING>')
-            hours_of_operation = get_clean_hoo(j.get('store_hours', '')) or '<MISSING>'
-
-            row = [locator_domain, page_url, location_name, street_address, city, state, postal,
-                   country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation]
-            out.append(row)
-
-        if len(js) < 200:
-            break
-    return out
+    return get_urls_from_regions(regions)
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
+def get_data(slug, sgw: SgWriter):
+    page_url = f"https://stores.rainbowshops.com{slug}"
+    store_number = page_url.split("/")[-2]
+    tree = get_tree(page_url)
+    location_name = "".join(tree.xpath("//div[@id='main-content']/h1/text()")).strip()
+    div = tree.xpath("//div[@role='main']")[0]
+    line = div.xpath(".//div[@id='locdetails']//div[@class='loc-address']/div/text()")
+    line = list(filter(None, [li.strip() for li in line]))
+
+    street_address = ", ".join(line[:-1])
+    csz = line.pop()
+    city = csz.split(", ")[0]
+    csz = csz.split(", ")[1]
+    state, postal = csz.split()
+
+    phone = "".join(
+        div.xpath(".//div[@id='locdetails']//a[contains(@href, 'tel:')]/text()")
+    ).strip()
+    latitude = "".join(div.xpath(".//div/@data-lat"))
+    longitude = "".join(div.xpath(".//div/@data-lng"))
+
+    _tmp = []
+    hours = div.xpath(".//div[@id='locdetails']//tr")
+    for h in hours:
+        day = "".join(h.xpath("./td[1]//text()")).strip()
+        inter = "".join(h.xpath("./td[2]//text()")).strip()
+        _tmp.append(f"{day}: {inter}")
+
+    hours_of_operation = ";".join(_tmp)
+
+    row = SgRecord(
+        page_url=page_url,
+        location_name=location_name,
+        street_address=street_address,
+        city=city,
+        state=state,
+        zip_postal=postal,
+        country_code="US",
+        store_number=store_number,
+        phone=phone,
+        latitude=latitude,
+        longitude=longitude,
+        locator_domain=locator_domain,
+        hours_of_operation=hours_of_operation,
+    )
+
+    sgw.write_row(row)
+
+
+def fetch_data(sgw: SgWriter):
+    urls = get_urls()
+
+    with futures.ThreadPoolExecutor(max_workers=3) as executor:
+        future_to_url = {executor.submit(get_data, url, sgw): url for url in urls}
+        for future in futures.as_completed(future_to_url):
+            future.result()
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://www.rainbowshops.com/"
+
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:95.0) Gecko/20100101 Firefox/95.0",
+        "Accept": "*/*",
+    }
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        fetch_data(writer)
