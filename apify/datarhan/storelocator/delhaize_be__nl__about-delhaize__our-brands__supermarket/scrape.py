@@ -36,7 +36,7 @@ def fetch_data():
             page_url=page_url,
             location_name=poi["localizedName"],
             street_address=street_address,
-            city=poi["address"]["town"],
+            city=poi["address"]["town"].split(", ")[0],
             state="",
             zip_postal=poi["address"]["postalCode"],
             country_code=poi["address"]["country"]["name"],
