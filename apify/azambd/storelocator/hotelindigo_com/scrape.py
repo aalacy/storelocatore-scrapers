@@ -56,7 +56,7 @@ def get_XML_object_variable(Object, varNames, noVal=MISSING, noText=False):
             return noVal
         Object = value
 
-    if noText == True:
+    if noText is True:
         return Object
     if len(Object) == 0 or Object[0].text is None:
         return MISSING
@@ -68,7 +68,7 @@ def get_response(url):
 
 
 def get_empty_string(string=""):
-    if string == None or string == MISSING:
+    if string is None or string == MISSING:
         return MISSING
     string = f"{string}".replace(".0", "").replace("-|", "").replace("|", "").strip()
 
