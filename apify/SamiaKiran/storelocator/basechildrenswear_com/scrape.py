@@ -67,7 +67,6 @@ def fetch_data():
                 zip_postal = address["postalCode"]
                 country_code = address["addressCountry"]
                 phone = loc["telephone"]
-                hour_list = loc["openingHoursSpecification"]
                 latitude = loc["geo"]["latitude"]
                 longitude = loc["geo"]["longitude"]
                 hours_of_operation = (
