@@ -1,10 +1,13 @@
-import csv
+from bs4 import BeautifulSoup
+import re
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds, SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
-headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
-}
+
 headers = {
     "Request-Id": "|HTTDs.jfJ5R",
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.141 Safari/537.36",
@@ -12,39 +15,8 @@ headers = {
 }
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
 def fetch_data():
-    p = 0
-    data = []
+
     streetlist = []
     states = [
         "AL",
@@ -99,28 +71,20 @@ def fetch_data():
         "WI",
         "WY",
     ]
+
+    pattern = re.compile(r"\s\s+")
     for statenow in states:
-        gurl = (
-            "https://maps.googleapis.com/maps/api/geocode/json?address="
-            + statenow
-            + "&key=AIzaSyCT4uvUVAv4U6-Lgeg94CIuxUg-iM2aA4s&components=country%3AUS"
-        )
-        r = session.get(gurl, headers=headers, verify=False).json()
-        if r["status"] == "REQUEST_DENIED":
-            pass
-        else:
-            coord = r["results"][0]["geometry"]["location"]
-            latnow = coord["lat"]
-            lngnow = coord["lng"]
+
         url = (
-            "https://locations.alliedcash.com/service/location/getlocationsnear?latitude="
-            + str(latnow)
-            + "&longitude="
-            + str(lngnow)
+            "https://www.alliedcash.com/service/location/getlocationsin?state="
+            + statenow
             + "&radius=1000&brandFilter=Allied%20Cash"
         )
-        loclist = session.get(url, headers=headers, verify=False).json()
+
+        loclist = session.get(url, headers=headers).json()
+
         for loc in loclist:
+
             title = loc["ColloquialName"]
             street = loc["Address1"] + " " + str(loc["Address2"])
             city = loc["City"]
@@ -130,59 +94,47 @@ def fetch_data():
             lat = loc["Latitude"]
             longt = loc["Longitude"]
             store = loc["StoreNum"]
-            if street in streetlist:
+            if title in streetlist:
                 continue
-            streetlist.append(street)
+            streetlist.append(title)
             link = "https://locations.alliedcash.com/locations" + loc["Url"]
-            hours = (
-                "Monday "
-                + str(loc["MondayOpen"])
-                + "-"
-                + str(loc["MondayClose"])
-                + " Tuesday "
-                + str(loc["TuesdayOpen"])
-                + "-"
-                + str(loc["TuesdayClose"])
-                + " Wednesday "
-                + str(loc["WednesdayOpen"])
-                + "-"
-                + str(loc["WednesdayClose"])
-                + " Thursday "
-                + str(loc["ThursdayOpen"])
-                + "-"
-                + str(loc["ThursdayClose"])
-                + " Friday "
-                + str(loc["FridayOpen"])
-                + "-"
-                + str(loc["FridayClose"])
-            )
-            data.append(
-                [
-                    "https://www.alliedcash.com/",
-                    link,
-                    title,
-                    street,
-                    city,
-                    state,
-                    pcode,
-                    "US",
-                    store,
-                    phone,
-                    "<MISSING>",
-                    lat,
-                    longt,
-                    hours,
-                ]
-            )
 
-            p += 1
-    return data
+            r = session.get(link, headers=headers)
+            soup = BeautifulSoup(r.text, "html.parser")
+            hours = (
+                soup.find("table", {"class": "store-hours-details"})
+                .text.replace("Day of the Week", "")
+                .replace("Hours", "")
+            )
+            hours = re.sub(pattern, " ", hours).strip()
+
+            yield SgRecord(
+                locator_domain="https://www.alliedcash.com/",
+                page_url=link,
+                location_name=title,
+                street_address=street.strip(),
+                city=city.strip(),
+                state=state.strip(),
+                zip_postal=pcode.strip(),
+                country_code="US",
+                store_number=str(store),
+                phone=phone.strip(),
+                location_type=SgRecord.MISSING,
+                latitude=str(lat),
+                longitude=str(longt),
+                hours_of_operation=hours,
+            )
 
 
 def scrape():
 
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()
