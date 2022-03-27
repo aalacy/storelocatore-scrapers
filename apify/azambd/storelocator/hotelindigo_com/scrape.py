@@ -22,7 +22,7 @@ def get_XML_root(text):
 
 
 def XML_url_pull():
-    response = get_response(f"https://www.ihg.com/bin/sitemapindex.xml")
+    response = get_response("https://www.ihg.com/bin/sitemapindex.xml")
     data = get_XML_root(
         response.text.replace('xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"', "")
     )
