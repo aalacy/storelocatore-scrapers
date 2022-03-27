@@ -45,8 +45,7 @@ def get_driver(url, class_name, driver=None):
                 EC.presence_of_element_located((By.CLASS_NAME, class_name))
             )
             break
-        except Exception as e:
-            print(e)
+        except Exception:
             driver.quit()
             if x == 10:
                 raise Exception(
@@ -98,12 +97,9 @@ def get_data():
                     .then(data => done(data))
                     """
                 )
-                with open("file.txt", "w", encoding="utf-8") as output:
-                    print(data, file=output)
                 break
 
-            except Exception as e:
-                print(e)
+            except Exception:
                 driver = get_driver(
                     "https://www.schuh.co.uk/stores/", "headerStore", driver=driver
                 )
