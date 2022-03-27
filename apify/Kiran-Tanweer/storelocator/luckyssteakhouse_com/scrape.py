@@ -70,7 +70,7 @@ def fetch_data():
             hours = (
                 hours.replace("\n", " ")
                 .replace("Our MenuRestaurant Hours", "")
-                .repace("“*Now Accepting reservations, call to inquire**", "")
+                .replace("“*Now Accepting reservations, call to inquire**", "")
                 .strip()
             )
 
