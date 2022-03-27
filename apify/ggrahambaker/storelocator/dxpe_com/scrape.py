@@ -51,7 +51,7 @@ def fetch_data():
     }
     all_codes = DynamicZipSearch(
         country_codes=[SearchableCountries.CANADA, SearchableCountries.USA],
-        max_radius_miles=500,
+        max_search_distance_miles=500,
     )
 
     all_locations = []

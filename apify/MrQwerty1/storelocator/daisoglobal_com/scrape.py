@@ -39,6 +39,8 @@ def get_address(line):
     adr1 = a.get("address1") or ""
     adr2 = a.get("address2") or ""
     street_address = f"{adr1} {adr2}".strip()
+    if not street_address:
+        street_address = line.split(",")[0]
     city = a.get("city")
     state = a.get("state")
     postal = a.get("postal")

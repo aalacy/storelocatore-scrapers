@@ -31,7 +31,10 @@ def fetch_data():
             if not _["title"] or not page_url or page_url == "#":
                 continue
             logger.info(page_url)
-            sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
+            res = session.get(page_url, headers=_headers)
+            if res.status_code != 200:
+                continue
+            sp1 = bs(res.text, "lxml")
             _pp = sp1.find("", string=re.compile(r"^Phone:"))
             phone = ""
             if _pp:

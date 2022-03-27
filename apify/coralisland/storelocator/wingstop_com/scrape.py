@@ -149,7 +149,7 @@ def fetch_data():
     max_distance = 100
 
     search = DynamicGeoSearch(
-        country_codes=[SearchableCountries.USA], max_radius_miles=max_distance
+        country_codes=[SearchableCountries.USA], max_search_distance_miles=max_distance
     )
 
     for lat, lng in search:
