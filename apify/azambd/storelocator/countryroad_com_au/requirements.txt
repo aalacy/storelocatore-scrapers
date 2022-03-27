@@ -1,0 +1,4 @@
+beautifulsoup4==4.10.0
+sglogging==0.0.4
+sgscrape==0.2.6
+sgselenium==0.1.5

@@ -31,6 +31,8 @@ def fetch_data():
             page_url = urljoin(start_url, url)
             loc_response = session.get(page_url)
             loc_dom = etree.HTML(loc_response.text)
+            if loc_dom.xpath('//strong[contains(text(), "Coming Soon")]'):
+                continue
 
             location_name = loc_dom.xpath(
                 '//div[@class="headerContent"]//div[@class="caption"]/text()'
@@ -59,12 +61,12 @@ def fetch_data():
                 city=addr.city,
                 state=addr.state,
                 zip_postal=addr.postcode,
-                country_code=geo["lat"],
-                store_number=geo["lng"],
+                country_code="",
+                store_number="",
                 phone=phone,
                 location_type="",
-                latitude="",
-                longitude="",
+                latitude=geo["lat"],
+                longitude=geo["lng"],
                 hours_of_operation=hoo,
                 raw_address=raw_address,
             )
