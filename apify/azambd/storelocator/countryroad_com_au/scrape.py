@@ -54,7 +54,7 @@ def fetch_data():
         soup = bs(driver.page_source, "html.parser")
 
         stores = soup.select("section.stores div.sitemap_catalogue li")
-        print(f"Total Stores: {len(stores)}")
+        logger.info(f"Total Stores: {len(stores)}")
         for store in stores:
             page_url = f"https://www.countryroad.com.au{store.select_one('a')['href']}"
             logger.info(f"Crawling: {page_url}")
