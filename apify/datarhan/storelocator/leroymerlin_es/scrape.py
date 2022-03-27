@@ -33,12 +33,8 @@ def fetch_data():
             store_number=poi["properties"]["code"],
             phone=poi["properties"]["phone"],
             location_type="",
-            latitude=poi["properties"]["materialsProperties"]["gpsCoordinates"].get(
-                "latitude"
-            ),
-            longitude=poi["properties"]["materialsProperties"]["gpsCoordinates"].get(
-                "longitude"
-            ),
+            latitude=poi["geometry"]["coordinates"][1],
+            longitude=poi["geometry"]["coordinates"][0],
             hours_of_operation=hoo,
         )
 
