@@ -27,57 +27,106 @@ def fetch_data():
             search_res = session.get(search_url, headers=headers)
             search_sel = lxml.html.fromstring(search_res.text)
 
-            stores = search_sel.xpath('//h3[@class="store-title"]/a/@href')
+            stores = search_sel.xpath('//article[.//h3[@class="store-title"]]')
 
-            for store_url in stores:
+            for store in stores:
 
-                page_url = store_url
+                page_url = "".join(
+                    store.xpath('.//h3[@class="store-title"]/a/@href')
+                ).strip()
                 log.info(page_url)
 
                 store_res = session.get(page_url, headers=headers)
                 if isinstance(store_res, SgRequestError):
                     continue
 
-                store_sel = lxml.html.fromstring(store_res.text)
+                if page_url != store_res.url:
+                    locator_domain = website
 
-                locator_domain = website
+                    location_name = page_url.split("/")[-2]
 
-                location_name = page_url.split("/")[-2]
+                    raw_address = "<MISSING>"
 
-                raw_address = "<MISSING>"
-
-                add_list = store_sel.xpath("//div[@data-lat]/div/span/text()")
-                street_address = ", ".join(add_list[:-3]).strip()
-
-                city = add_list[-3].strip()
-                state = add_list[-2].strip()
-                zip = add_list[-1].strip()
-
-                country_code = page_url.split("locations/")[1].split("/")[0].upper()
-
-                store_number = "<MISSING>"
-
-                phone = "".join(
-                    store_sel.xpath('//a[@itemprop="telephone"]//text()')
-                ).strip()
-                location_type = "<MISSING>"
-                hours = list(
-                    filter(
-                        str,
-                        [
-                            x.strip()
-                            for x in store_sel.xpath(
-                                '//div[h4/text()="Hours"]/p//text()'
-                            )
-                        ],
+                    add_list = list(
+                        filter(str, [x.strip() for x in store.xpath(".//text()")])
                     )
-                )
-                hours_of_operation = "; ".join(hours).strip().replace("day;", "day:")
+                    street_address = ", ".join(add_list[:-2]).strip()
 
-                latitude, longitude = (
-                    "".join(store_sel.xpath("//div[@data-lat]/@data-lat")),
-                    "".join(store_sel.xpath("//div[@data-lat]/@data-lng")),
-                )
+                    city = add_list[-2].strip().split(" ", 1)[0].strip()
+                    state = (
+                        add_list[-2]
+                        .strip()
+                        .split(" ", 1)[1]
+                        .strip()
+                        .split(",")[0]
+                        .strip()
+                    )
+                    zip = (
+                        add_list[-2]
+                        .strip()
+                        .split(" ", 1)[1]
+                        .strip()
+                        .split(",")[-1]
+                        .strip()
+                    )
+
+                    country_code = page_url.split("locations/")[1].split("/")[0].upper()
+
+                    store_number = "<MISSING>"
+
+                    phone = add_list[-1]
+                    location_type = "<MISSING>"
+                    hours_of_operation = "<MISSING>"
+
+                    latitude, longitude = "<MISSING>", "<MISSING>"
+
+                else:
+                    store_sel = lxml.html.fromstring(store_res.text)
+
+                    locator_domain = website
+
+                    location_name = page_url.split("/")[-2]
+
+                    raw_address = "<MISSING>"
+
+                    add_list = store_sel.xpath("//div[@data-lat]/div/span/text()")
+                    street_address = ", ".join(add_list[:-3]).strip()
+
+                    city = add_list[-3].strip()
+                    state = add_list[-2].strip()
+                    zip = add_list[-1].strip()
+
+                    country_code = page_url.split("locations/")[1].split("/")[0].upper()
+
+                    store_number = "<MISSING>"
+
+                    phone = "".join(
+                        store_sel.xpath('//a[@itemprop="telephone"]//text()')
+                    ).strip()
+                    if not phone:
+                        phone = "".join(
+                            store_sel.xpath('//div/p/a[contains(@href,"tel:")]//text()')
+                        ).strip()
+                    location_type = "<MISSING>"
+                    hours = list(
+                        filter(
+                            str,
+                            [
+                                x.strip()
+                                for x in store_sel.xpath(
+                                    '//div[h4/text()="Hours"]/p//text()'
+                                )
+                            ],
+                        )
+                    )
+                    hours_of_operation = (
+                        "; ".join(hours).strip().replace("day;", "day:")
+                    )
+
+                    latitude, longitude = (
+                        "".join(store_sel.xpath("//div[@data-lat]/@data-lat")),
+                        "".join(store_sel.xpath("//div[@data-lat]/@data-lng")),
+                    )
 
                 yield SgRecord(
                     locator_domain=locator_domain,
