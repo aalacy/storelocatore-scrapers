@@ -1,4 +1,3 @@
-from socket import timeout
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -8,7 +7,6 @@ from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 from sgscrape import simple_scraper_pipeline as sp
 import ast
 import ssl
-import time
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
