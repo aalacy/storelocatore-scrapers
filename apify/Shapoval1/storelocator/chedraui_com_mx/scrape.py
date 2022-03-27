@@ -28,7 +28,16 @@ def fetch_data(sgw: SgWriter):
         )
         state = j.get("estado")
         postal = a.postcode or "<MISSING>"
-        postal = str(postal).replace(".", "").replace("C", "").replace("P", "")
+        postal = (
+            str(postal)
+            .replace(".", "")
+            .replace("C", "")
+            .replace("P", "")
+            .replace("ENTRE", "")
+            .replace("ESTADO", "")
+            .strip()
+            or "<MISSING>"
+        )
         country_code = "MX"
         city = a.city or "<MISSING>"
         if city == "<MISSING>":

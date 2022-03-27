@@ -26,13 +26,14 @@ def fetch_data():
         for store in stores:
             locator_domain = website
             location_name = "".join(store.xpath(".//h2//text()")).strip()
+            log.info(location_name)
             country_code = "US"
             phone = "".join(
                 store.xpath('.//p//a[contains(@href,"tel:")][1]//text()')
             ).strip()
             location_type = "<MISSING>"
 
-            temp_url = store.xpath('.//a[@style="cursor:pointer"]/@href')
+            temp_url = store.xpath('.//a[@class="_2wYm8"]/@href')
             if len(temp_url) > 0:
                 page_url = "".join(temp_url[-1]).strip()
                 store_number = page_url.split("-")[-1].strip()
@@ -45,9 +46,17 @@ def fetch_data():
                         time.sleep(15)
                         store_sel = lxml.html.fromstring(driver.page_source)
 
-                        address = store_sel.xpath(
-                            "//div[@data-packed='false'][1]//text()"
+                        temp_addr = store_sel.xpath(
+                            "//p[@class='font_8']/span[@style='font-size:17px;']"
                         )
+                        if len(temp_addr) > 0:
+                            address = temp_addr[0].xpath("span//text()")
+                            if len(address) == 1:
+                                add_2 = temp_addr[1].xpath("span//text()")
+                                if len(add_2) > 0:
+                                    address = address + add_2
+
+                            log.info(address)
                         for add in address:
                             if len("".join(add).strip()) > 0:
                                 add_list.append("".join(add).strip())
@@ -69,16 +78,12 @@ def fetch_data():
                 )
                 hours_list = []
                 for hour in hours:
-                    day = "".join(hour.xpath("span[1]/text()")).strip()
-                    tim = "".join(hour.xpath("span[2]/text()")).strip()
+                    day = "".join(hour.xpath("span[1]//text()")).strip()
+                    if len(hour.xpath("span")) == 2:
+                        tim = "".join(hour.xpath("span[2]//text()")).strip()
+                    elif len(hour.xpath("span")) == 3:
+                        tim = "".join(hour.xpath("span[3]//text()")).strip()
                     hours_list.append(day + tim)
-
-                if len(hours_list) <= 0:
-                    hours = store_sel.xpath(
-                        '//div[@data-packed="true"]/p[@class="font_8" and not(@style)]'
-                    )
-                    for hour in hours:
-                        hours_list.append("".join(hour.xpath(".//text()")).strip())
 
                 hours_of_operation = (
                     "; ".join(hours_list)
@@ -95,6 +100,8 @@ def fetch_data():
                     .replace("; PM", "PM")
                 )
             else:
+                log.info("hahah")
+                continue
                 store_number = location_name.split(" ")[-1].strip()
                 page_url = search_url
                 address = store.xpath(".//div[@data-packed='false'][2]//text()")
