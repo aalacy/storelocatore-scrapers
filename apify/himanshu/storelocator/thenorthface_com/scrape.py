@@ -39,7 +39,7 @@ def write_output(data):
 def fetch_data():
     search = DynamicZipSearch(
         country_codes=[SearchableCountries.USA, SearchableCountries.CANADA],
-        max_radius_miles=49,
+        max_search_distance_miles=49,
         max_search_results=50,
     )
     return_main_object = []
