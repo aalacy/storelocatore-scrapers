@@ -105,7 +105,9 @@ def fetch_data():
                     ).strip()
                     if not phone:
                         phone = "".join(
-                            store_sel.xpath('//div/p/a[contains(@href,"tel:")]//text()')
+                            store_sel.xpath(
+                                '//div[./h4[contains(text(),"Phone")]]/p/a[contains(@href,"tel:")]//text()'
+                            )
                         ).strip()
                     location_type = "<MISSING>"
                     hours = list(
