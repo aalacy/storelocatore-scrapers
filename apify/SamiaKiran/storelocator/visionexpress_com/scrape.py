@@ -10,7 +10,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.pause_resume import SerializableRequest, CrawlState, CrawlStateSingleton
 
 
-website = "bargainbasementhomecenter_com"
+website = "visionexpress_com"
 logger = sglog.SgLogSetup().get_logger(logger_name=website)
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
@@ -49,30 +49,43 @@ def record_initial_requests(http: SgRequests, state: CrawlState) -> bool:
 def fetch_records(http: SgRequests, state: CrawlState) -> Iterable[SgRecord]:
     for next_r in state.request_stack_iter():
         r = http.get(next_r.url, headers=headers)
+        soup = BeautifulSoup(r.text, "html.parser")
         logger.info(f"Pulling the data from: {next_r.url}")
         page_url = next_r.url
-        schema = r.text.split('<script type="application/ld+json">')[2].split(
-            "</script>", 1
-        )[0]
+        try:
+            schema = r.text.split('<script type="application/ld+json">')[2].split(
+                "</script>", 1
+            )[0]
+        except:
+            r = http.get(next_r.url, headers=headers)
+            schema = r.text.split('<script type="application/ld+json">')[2].split(
+                "</script>", 1
+            )[0]
         schema = schema.replace("\n", "")
         loc = json.loads(schema)
         location_name = loc["name"]
         address = loc["address"][0]
         phone = loc["telephone"]
-        street_address = address["streetAddress"]
+        street_address = address["streetAddress"].replace("undefined", "")
         city = address["addressLocality"]
         state = MISSING
         zip_postal = address["postalCode"]
         country_code = address["addressCountry"]
-        latitude = r.text.split('"lat":')[1].split(",")
-        longitude = r.text.split('"lon":')[1].split(",")
-        hours_of_operation = (
-            str(loc["openingHours"])
-            .replace("[", "")
-            .replace("]", "")
-            .replace("', '", ", ")
-            .replace("'", "")
-        )
+        coords = r.text.split('"lat":')[1].split(',"emailAddress":')[0].split(',"lon":')
+        latitude = coords[0]
+        longitude = coords[1]
+        try:
+            hours_of_operation = (
+                soup.findAll("dl", {"class": "location-opening-hours__list"})[-1]
+                .get_text(separator="|", strip=True)
+                .replace("|", " ")
+            )
+        except:
+            hours_of_operation = (
+                soup.find("dl", {"class": "location-opening-hours__list"})
+                .get_text(separator="|", strip=True)
+                .replace("|", " ")
+            )
         store_number = MISSING
         location_type = MISSING
         raw_address = MISSING

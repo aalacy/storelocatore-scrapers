@@ -30,7 +30,8 @@ def fetch_data(sgw: SgWriter):
             '//*[text()="Adresse"]/following-sibling::*[1]//text() | //h3[text()="Heures d’ouverture"]/preceding-sibling::p[1]//text() | //h3[text()="HEURES D’OUVERTURE"]/preceding-sibling::p[1]//text()'
         )
         info = list(filter(None, [a.strip() for a in info]))
-        street_address = "".join(info[0]).strip()
+        street_address = "".join(info[0]).replace(",", "").strip()
+
         ad = "".join(info[1])
         if len(info) == 6:
             ad = "".join(info[1]) + " " + "".join(info[2])
@@ -40,6 +41,8 @@ def fetch_data(sgw: SgWriter):
         postal = " ".join(ad.split()[-2:])
         country_code = "CA"
         city = ad.split()[0].strip()
+        if ad.find(",") != -1:
+            city = ad.split(",")[0].strip()
         if city.find("(") != -1:
             city = city.split("(")[0].strip()
         map_link = "".join(tree.xpath("//iframe/@src"))
@@ -55,10 +58,11 @@ def fetch_data(sgw: SgWriter):
         hours_of_operation = (
             " ".join(
                 tree.xpath(
-                    '//*[text()="Heures d’ouverture"]/following-sibling::p[contains(text(), ":")]//text() | //*[text()="HEURES D’OUVERTURE"]/following-sibling::p[1]//text()'
+                    '//*[text()="Heures d’ouverture"]/following-sibling::p[contains(text(), ":")]//text() | //*[text()="HEURES D’OUVERTURE"]/following-sibling::p[1]//text() | //*[text()="Heures d’ouverture"]/following-sibling::p[contains(text(), "Jeudi")]//text()'
                 )
             )
             .replace("\n", "")
+            .replace("\r", "")
             .strip()
         )
         hours_of_operation = " ".join(hours_of_operation.split())

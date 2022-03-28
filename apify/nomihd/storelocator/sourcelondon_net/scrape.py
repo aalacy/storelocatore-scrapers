@@ -23,7 +23,6 @@ headers = {
 def fetch_data():
     # Your scraper here
     api_url = "https://www.sourcelondon.net/api/infra/location"
-    search_url = "https://www.sourcelondon.net/home/map"
 
     with SgRequests() as session:
         api_res = session.get(api_url, headers=headers)
@@ -38,11 +37,11 @@ def fetch_data():
 
             location_type = "<MISSING>"
 
-            page_url = search_url
+            page_url = "https://www.sourcelondon.net/home/map?evseId=" + store["emi3"]
 
             raw_address = "<MISSING>"
 
-            street_address = "<MISSING>"
+            street_address = location_name
 
             city = store["address"]["city"]
 

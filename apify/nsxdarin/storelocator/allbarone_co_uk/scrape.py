@@ -73,6 +73,8 @@ def fetch_data():
         hours = hours.replace("&#x3a;", ":")
         if "am" not in hours and "pm" not in hours and "closed" in hours.lower():
             hours = "Temporarily Closed"
+        if hours == "<MISSING>":
+            hours = "Temporarily Closed"
         if add != "":
             yield SgRecord(
                 locator_domain=website,

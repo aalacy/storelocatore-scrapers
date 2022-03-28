@@ -1,125 +1,87 @@
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-from sgselenium import SgChrome
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from webdriver_manager.chrome import ChromeDriverManager
 from bs4 import BeautifulSoup as bs
-import time
+from sgrequests import SgRequests
 import json
 from sglogging import SgLogSetup
-import ssl
-
-try:
-    _create_unverified_https_context = (
-        ssl._create_unverified_context
-    )  # Legacy Python that doesn't verify HTTPS certificates by default
-except AttributeError:
-    pass
-else:
-    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
 logger = SgLogSetup().get_logger("gaes")
 
+_headers = {
+    "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
+}
+
 locator_domain = "https://www.amplifon.com/nl-be/"
 my_urls = [
-    dict(
-        country="Portugal",
-        base_url="https://www.minisom.pt/centros-minisom",
-        domain="https://www.minisom.pt",
-    ),
-    dict(
-        country="Switzerland",
-        base_url="https://www.amplifon.com/de-ch/filiale-finden",
-        domain="https://www.amplifon.com",
-    ),
-    dict(
-        country="Belgium",
-        base_url="https://www.amplifon.com/nl-be/hoorcentrum",
-        domain="https://www.amplifon.com",
-    ),
+    "https://www.amplifon.com/de-ch/sitemap.xml",
+    "https://www.amplifon.com/nl-be/sitemap.xml",
 ]
-
-
-def get_driver():
-    return SgChrome(
-        executable_path=ChromeDriverManager().install(),
-        user_agent="Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0",
-        is_headless=True,
-    ).driver()
-
-
-def get_bs(driver=None, url=None):
-    while True:
-        if not driver:
-            driver = get_driver()
-        try:
-            driver.get(url)
-            break
-        except:
-            time.sleep(1)
-            logger.info(f"retry {url}")
-            driver = None
-
-    return bs(driver.page_source, "lxml")
+hr_obj = {
+    "1": "Monday",
+    "2": "Tuesday",
+    "3": "Wednesday",
+    "4": "Thursday",
+    "5": "Friday",
+    "6": "Saturday",
+    "7": "Sunday",
+}
 
 
 def fetch_data():
-    driver = get_driver()
-    for my_url in my_urls:
-        base_url = my_url["base_url"]
-        country = my_url["country"]
-        domain = my_url["domain"]
-        locations = []
-        driver.get(base_url)
-        urls = (
-            bs(driver.page_source, "lxml")
-            .select("div.richtext-container p")[1]
-            .select("a")
-        )
-
-        for url in urls:
-            del driver.requests
-            logger.info(domain + url["href"])
-            driver.get(domain + url["href"])
-            locations += [
-                loc.a["href"]
-                for loc in bs(driver.page_source, "lxml").select("div.m-store-teaser")
-            ]
-
-        driver = get_driver()
-        logger.info(f"{len(locations)} locations")
-        for page_url in locations:
-            logger.info(f"[***] {page_url}")
-            sp1 = get_bs(driver=driver, url=page_url)
-            if driver.current_url == base_url:
-                continue
-            _ = json.loads(sp1.find("script", type="application/ld+json").string)
-            phone = ""
-            if sp1.select_one("span.phone-list"):
-                phone = sp1.select_one("span.phone-list").text.strip()
-            hours = []
-            for hh in _["openingHoursSpecification"]:
-                day = hh["dayOfWeek"]
-                hours.append(f"{day}: {hh['opens']} - {hh['closes']}")
-            addr = _["address"]
-            yield SgRecord(
-                page_url=page_url,
-                location_name=_["name"],
-                street_address=addr["streetAddress"],
-                city=addr["addressLocality"],
-                state=addr["addressRegion"],
-                zip_postal=addr["postalCode"],
-                latitude=_["geo"]["latitude"],
-                longitude=_["geo"]["longitude"],
-                country_code=country,
-                phone=phone,
-                locator_domain=locator_domain,
-                hours_of_operation="; ".join(hours),
+    locations = []
+    with SgRequests() as session:
+        for base_url in my_urls:
+            locations = bs(session.get(base_url, headers=_headers).text, "lxml").select(
+                "loc"
             )
+            country = "Switzerland"
+            if "nl-be" in base_url:
+                country = "Belgium"
 
-    if driver:
-        driver.close()
+            logger.info(f"{len(locations)} locations")
+            for loc in locations:
+                page_url = loc.text
+                if "filiale-finden/" not in page_url and "hoorcentrum/" not in page_url:
+                    continue
+                if len(page_url.split("/")) < 7:
+                    continue
+                logger.info(page_url)
+                sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
+                ss = json.loads(
+                    sp1.select_one("main.store-detail-page")[
+                        "data-analytics-storedetail"
+                    ]
+                )
+                raw_address = " ".join(
+                    sp1.select_one("div.detail-address").stripped_strings
+                )
+                phone = ""
+                if ss["phones"]:
+                    phone = ss["phones"][0]["phoneNumber"]
+                hours = []
+                for hh in ss["openingTimes"]:
+                    hours.append(
+                        f"{hr_obj[str(hh['dayOfWeek'])]}: {hh['startTime']} - {hh['endTime']}"
+                    )
+
+                yield SgRecord(
+                    page_url=page_url,
+                    store_number=ss["shopNumber"],
+                    location_name=ss["shopName"],
+                    street_address=ss["address"],
+                    city=ss["city"],
+                    state=ss["province"],
+                    zip_postal=ss["cap"],
+                    country_code=country,
+                    phone=phone,
+                    latitude=ss["latitude"],
+                    longitude=ss["longitude"],
+                    locator_domain=locator_domain,
+                    raw_address=raw_address,
+                    hours_of_operation="; ".join(hours),
+                )
 
 
 if __name__ == "__main__":

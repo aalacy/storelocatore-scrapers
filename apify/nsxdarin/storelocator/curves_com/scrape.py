@@ -204,110 +204,84 @@ def fetch_data():
                 if ">&#x1F4DE;</i>" in line:
                     phone = line.split(">&#x1F4DE;</i>")[1].split("<")[0]
                 if '<a href="https://www.wellnessliving.com' in line:
-                    purl = line.split('href="')[1].split('"')[0]
-                    if purl not in ids:
-                        ids.append(purl)
-                        r2 = session.get(purl, headers=headers)
-                        name = ""
-                        website = "curves.com"
-                        typ = "Fitness Studio"
-                        add = ""
-                        city = ""
-                        state = ""
-                        zc = ""
-                        country = "US"
-                        store = "<MISSING>"
-                        lat = ""
-                        lng = ""
-                        hours = ""
-                        for line2 in r2.iter_lines():
-                            if '<meta name="geo.position" content="' in line2:
-                                lat = line2.split(
-                                    '<meta name="geo.position" content="'
-                                )[1].split(";")[0]
-                                lng = (
-                                    line2.split('<meta name="geo.position" content="')[
-                                        1
-                                    ]
-                                    .split(";")[1]
-                                    .split('"')[0]
-                                )
-                            if '"geo.placename" content="' in line2:
-                                name = line2.split('"geo.placename" content="')[
-                                    1
-                                ].split('"')[0]
-                            if 'margin:0;">  <li> <img alt="' in line2:
-                                typ = line2.split('margin:0;">  <li> <img alt="')[
-                                    1
-                                ].split(" in ")[0]
-                            if '<span itemprop="streetAddress">' in line2:
-                                add = line2.split('<span itemprop="streetAddress">')[
-                                    1
-                                ].split("<")[0]
-                                city = line2.split('itemprop="addressLocality">')[
-                                    1
-                                ].split("<")[0]
-                                state = line2.split('<span itemprop="addressRegion">')[
-                                    1
-                                ].split("<")[0]
-                                zc = line2.split('itemprop="postalCode">')[1].split(
-                                    "<"
-                                )[0]
-                            if 'class="rs-microsite-right-day-column"><span>' in line2:
-                                alldays = []
-                                allhrs = []
-                                days = (
-                                    line2.split('right-day-column">')[1]
-                                    .split("<br /></div>")[0]
-                                    .split("<br />")
-                                )
-                                for day in days:
-                                    if "</span>" in day:
-                                        dname = day.rsplit(">")[1].split("<")[0]
-                                        alldays.append(dname)
-                                hrs = (
-                                    line2.split('right-time-column">')[1]
-                                    .split("<br /></div>")[0]
-                                    .split("<br />")
-                                )
-                                for hour in hrs:
-                                    if "</span>" in hour:
-                                        if hour.count("</span>") == 1:
-                                            allhrs.append(
-                                                hour.split(">")[1].split("<")[0]
-                                            )
-                                        else:
-                                            allhrs.append(hour.split("</span>")[1])
-                                for x in range(0, len(alldays)):
-                                    if hours == "":
-                                        hours = alldays[x] + ": " + allhrs[x]
-                                    else:
-                                        hours = (
-                                            hours + "; " + alldays[x] + ": " + allhrs[x]
-                                        )
-                        if hours == "":
-                            hours = "<MISSING>"
-                        if phone == "":
-                            phone = "<MISSING>"
-                        if add != "":
-                            yield SgRecord(
-                                locator_domain=website,
-                                page_url=purl,
-                                location_name=name,
-                                street_address=add,
-                                city=city,
-                                state=state,
-                                zip_postal=zc,
-                                country_code=country,
-                                phone=phone,
-                                location_type=typ,
-                                store_number=store,
-                                latitude=lat,
-                                longitude=lng,
-                                hours_of_operation=hours,
-                            )
+                    curl = line.split('href="')[1].split('"')[0]
+                    if curl not in ids:
+                        ids.append(curl)
         except:
             pass
+    for purl in ids:
+        r2 = session.get(purl, headers=headers)
+        name = ""
+        website = "curves.com"
+        typ = "Fitness Studio"
+        add = ""
+        city = ""
+        state = ""
+        zc = ""
+        country = "US"
+        store = "<MISSING>"
+        lat = ""
+        lng = ""
+        hours = ""
+        for line2 in r2.iter_lines():
+            if '<meta name="geo.position" content="' in line2:
+                lat = line2.split('<meta name="geo.position" content="')[1].split(";")[
+                    0
+                ]
+                lng = (
+                    line2.split('<meta name="geo.position" content="')[1]
+                    .split(";")[1]
+                    .split('"')[0]
+                )
+            if '"geo.placename" content="' in line2:
+                name = line2.split('"geo.placename" content="')[1].split('"')[0]
+            if 'margin:0;">  <li> <img alt="' in line2:
+                typ = line2.split('margin:0;">  <li> <img alt="')[1].split(" in ")[0]
+            if '<span itemprop="streetAddress">' in line2:
+                add = line2.split('<span itemprop="streetAddress">')[1].split("<")[0]
+                city = line2.split('itemprop="addressLocality">')[1].split("<")[0]
+                state = line2.split('<span itemprop="addressRegion">')[1].split("<")[0]
+                zc = line2.split('itemprop="postalCode">')[1].split("<")[0]
+            if 'class="css-flex css-item-between">' in line2:
+                days = line2.split('class="css-flex css-item-between">')
+                for day in days:
+                    if (
+                        '<div class="css-flex css-flex-column"><span>' in day
+                        or '<span class="today">' in day
+                    ):
+                        hrs = (
+                            day.split("</span>")[0].rsplit(">", 1)[1]
+                            + ": "
+                            + day.split("</span></div>")[0].rsplit(">", 1)[1].strip()
+                        )
+                        if hours == "":
+                            hours = hrs
+                        else:
+                            hours = hours + "; " + hrs
+        if hours == "":
+            hours = "<MISSING>"
+        if phone == "":
+            phone = "<MISSING>"
+        add = add.replace("&amp;", "&")
+        city = city.replace("&amp;", "&")
+        name = name.replace("&amp;", "&")
+        if add != "":
+            yield SgRecord(
+                locator_domain=website,
+                page_url=purl,
+                location_name=name,
+                street_address=add,
+                city=city,
+                state=state,
+                zip_postal=zc,
+                country_code=country,
+                phone=phone,
+                location_type=typ,
+                store_number=store,
+                latitude=lat,
+                longitude=lng,
+                hours_of_operation=hours,
+            )
 
 
 def scrape():

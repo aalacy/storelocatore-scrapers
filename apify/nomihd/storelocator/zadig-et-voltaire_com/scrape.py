@@ -70,7 +70,14 @@ def fetch_data():
                     pass
 
                 store_number = "<MISSING>"
-                location_type = store["profile"].get("c_storeType", "<MISSING>")
+                location_type = store["profile"].get("c_storeType", "")
+                typ2 = store["profile"].get("c_typeDePDV", "")
+                if len(typ2) > 0:
+                    if len(location_type) > 0:
+                        location_type = location_type + ", " + typ2
+                    else:
+                        location_type = typ2
+
                 hours_list = []
                 try:
                     hours = store["profile"]["hours"]["normalHours"]

@@ -4,4 +4,3 @@ sglogging==0.0.4
 sgpostal==0.1.0
 sgrequests==0.2.9
 sgscrape==0.2.6
-sgselenium==0.1.4

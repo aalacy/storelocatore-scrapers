@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import json
 from sgzip.dynamic import SearchableCountries, DynamicGeoSearch
 
@@ -34,29 +35,21 @@ def fetch_data():
 
         for poi in data["response"]["collection"]:
             location_name = poi["name"]
-            location_name = location_name if location_name else "<MISSING>"
             street_address = poi["address1"]
-            street_address = street_address if street_address else "<MISSING>"
             city = poi["city"]
-            city = city if city else "<MISSING>"
             state = poi["state"]
             if not state:
                 state = poi["province"]
-            state = state if state else "<MISSING>"
             zip_code = poi["postalcode"]
             zip_code = zip_code if zip_code else "<MISSING>"
             country_code = poi["country"]
-            country_code = country_code if country_code else "<MISSING>"
             store_number = poi["clientkey"]
-            store_number = store_number if store_number else "<MISSING>"
             phone = poi["phone"]
-            phone = phone if phone else "<MISSING>"
-            location_type = poi["dealertype"]
-            location_type = location_type if location_type else "<MISSING>"
+            if phone:
+                phone = phone.replace("...", "").strip()
+            location_type = poi["icon"]
             latitude = poi["latitude"]
-            latitude = latitude if latitude else "<MISSING>"
             longitude = poi["longitude"]
-            longitude = longitude if longitude else "<MISSING>"
             hours_of_operation = []
             hours_dict = {}
             for key, value in poi.items():

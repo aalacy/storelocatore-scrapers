@@ -1,0 +1,13 @@
+--ignore CountryCodeFillRateChecker  (UK)
+
+
+--ignore GeoConsistencyValidator (NOT US ZIP)
+Found 1 concerning rows. Examples:
+     zip   state                REASON  rowNumber
+0  10999  Berlin  ZIPCODE_NOT_IN_STATE          0
+
+
+--ignore CountryValidator (NOT US ZIP)
+Found 1 concerning rows. Examples:
+    state      phone    zip            REASON  rowNumber
+0  Berlin  <MISSING>  10999  INVALID_US_STATE          0

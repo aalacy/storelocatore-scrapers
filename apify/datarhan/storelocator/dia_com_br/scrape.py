@@ -1,3 +1,4 @@
+import json
 from lxml import etree
 
 from sgrequests import SgRequests
@@ -15,7 +16,7 @@ def fetch_data():
     data = session.get(start_url).json()
 
     for poi in data["result"]["data"]["lojas"]["nodes"]:
-        page_url = "https://www.dia.com.br/lojas/" + poi["Slug"]
+        page_url = "https://www.dia.com.br/lojas/" + poi["slug"]
         loc_response = session.get(page_url)
         loc_dom = etree.HTML(loc_response.text)
         phone = loc_dom.xpath('//li[contains(@class, "footer-module--phone")]/text()')[
@@ -26,23 +27,25 @@ def fetch_data():
             .split("atendimento é")[-1][:-1]
             .strip()
         )
-        latitude = poi["Endereco"]["Lat"]
-        if latitude == "0":
+        latitude = poi["lat"]
+        if latitude == 0:
             latitude = ""
-        longitude = poi["Endereco"]["Lng"]
-        if longitude == "0":
+        longitude = poi["lng"]
+        if longitude == 0:
             longitude = ""
+        poi_data = loc_dom.xpath('//script[contains(text(), "address")]/text()')[0]
+        poi_data = json.loads(poi_data)
 
         item = SgRecord(
             locator_domain=domain,
             page_url=page_url,
-            location_name=poi["Nome"],
-            street_address=poi["Endereco"]["Logradouro"],
-            city=poi["Endereco"]["Municipio"],
-            state=poi["Endereco"]["Estado"],
-            zip_postal="",
+            location_name=poi["name"],
+            street_address=poi["address"],
+            city=poi["city"],
+            state=poi["district"],
+            zip_postal=poi["cep"],
             country_code="BR",
-            store_number=poi["Numero"],
+            store_number=poi["storeNumber"],
             phone=phone,
             location_type="",
             latitude=latitude,

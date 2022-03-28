@@ -5,6 +5,8 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import json
 import ast
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "greatamericanbagel.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -26,7 +28,7 @@ headers = {
 
 def fetch_data():
     # Your scraper here
-    api_url = "https://www.greatamericanbagel.com/wp-admin/admin-ajax.php?action=asl_load_stores&nonce=012e797e95&load_all=1&layout=1"
+    api_url = "https://www.greatamericanbagel.com/locations.txt?action=asl_load_stores&nonce=be8db204f6&load_all=1&layout=1"
     api_res = session.get(api_url, headers=headers)
     json_res = json.loads(api_res.text)
 
@@ -93,7 +95,9 @@ def fetch_data():
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.StoreNumberId)
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

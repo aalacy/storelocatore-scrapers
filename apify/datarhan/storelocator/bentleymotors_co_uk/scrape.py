@@ -1,120 +1,80 @@
-import csv
-import json
 from urllib.parse import urljoin
 
 from sgrequests import SgRequests
-
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
-    # Your scraper here
     session = SgRequests()
-
-    items = []
-    scraped_items = []
-
-    DOMAIN = "bentleymotors.com"
+    domain = "bentleymotors.co.uk"
     start_url = "https://www.bentleymotors.com/content/brandmaster/global/bentleymotors/en/apps/dealer-locator/jcr:content.api.6cac2a5a11b46ea2d9c31ae3f98bfeb0.json"
-
-    response = session.get(start_url)
-    data = json.loads(response.text)
-
+    data = session.get(start_url).json()
     for poi in data["dealers"]:
-        poi_response = session.get(urljoin(start_url, poi["url"]))
-        data = json.loads(poi_response.text)
-
+        data = session.get(urljoin(start_url, poi["url"])).json()
         location_name = data["dealerName"]
-        location_name = location_name if location_name else "<MISSING>"
-        street_address = data["addresses"][0]["street"]
-        street_address = street_address if street_address else "<MISSING>"
-        city = data["addresses"][0]["city"]
-        city = city if city else "<MISSING>"
-        state = "<MISSING>"
-        zip_code = data["addresses"][0].get("postcode")
-        zip_code = zip_code if zip_code else "<MISSING>"
-        country_code = data["addresses"][0]["country"]
-        country_code = country_code if country_code else "<MISSING>"
-        if country_code not in ["UK", "United Kingdom"]:
-            continue
-        store_number = data["id"]
-        phone = data["addresses"][0]["departments"][0].get("phone")
-        phone = phone if phone else "<MISSING>"
-        store_url = data["addresses"][0]["departments"][0].get("website")
-        store_url = store_url if store_url else "<MISSING>"
-        location_type = "<MISSING>"
-        latitude = data["addresses"][0]["wgs84"]["lat"]
-        latitude = latitude if latitude else "<MISSING>"
-        longitude = data["addresses"][0]["wgs84"]["lng"]
-        longitude = longitude if longitude else "<MISSING>"
-        hoo = []
-        for elem in data["addresses"][0]["departments"][0]["openingHours"]:
-            if elem["periods"]:
-                day = elem["day"]
-                if elem["closed"] is False:
-                    opens = elem["periods"][0]["open"]
-                    closes = elem["periods"][0]["close"]
-                    hoo.append(f"{day} {opens} - {closes}")
-                else:
-                    hoo.append(f"{day} closed")
+        for a in data["addresses"]:
+            street_address = a["street"]
+            city = a["city"]
+            zip_code = a.get("postcode")
+            country_code = a["country"]
+            store_number = a["id"]
+            phone = a["departments"][0].get("phone")
+            phone = phone.split("/")[0] if phone else ""
+            latitude = a["wgs84"]["lat"]
+            longitude = a["wgs84"]["lng"]
+            hoo = []
+            for elem in a["departments"][0]["openingHours"]:
+                if elem["periods"]:
+                    day = elem["day"]
+                    if elem["closed"] is False:
+                        opens = elem["periods"][0]["open"]
+                        closes = elem["periods"][0]["close"]
+                        hoo.append(f"{day} {opens} - {closes}")
+                    else:
+                        hoo.append(f"{day} closed")
 
-        hours_of_operation = ", ".join(hoo) if hoo else "<MISSING>"
+            hours_of_operation = ", ".join(hoo) if hoo else ""
+            if hours_of_operation:
+                if "Saturday" not in hours_of_operation:
+                    hours_of_operation += ", Saturday closed Sunday closed"
+                if "Sunday" not in hours_of_operation:
+                    hours_of_operation += ", Sunday closed"
+            else:
+                hours_of_operation = "Monday closed, Tuesday closed, Wednesday closed, Thursday closed, Friday closed, Saturday closed, Sunday closed"
+            page_url = f"https://www.bentleymotors.com/en/apps/dealer-locator.html/partner/{store_number}-{location_name.replace(' ', '-')}"
+            location_type = ", ".join([dep["name"] for dep in a["departments"]])
 
-        item = [
-            DOMAIN,
-            store_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip_code,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
+            item = SgRecord(
+                locator_domain=domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state="",
+                zip_postal=zip_code,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
 
-        if location_name not in scraped_items:
-            scraped_items.append(location_name)
-            items.append(item)
-
-    return items
+            yield item
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID({SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STORE_NUMBER})
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":

@@ -159,7 +159,7 @@ def get_store(driver, page_url, retry=1):
     if street_address1 != street_address:
         street_address = street_address1
         log.debug(
-            f"Separate address {street_address}, {street_address1}, {city1}, {state1}, {zip_postal1}"
+            f"Separate address: {street_address}, {street_address1}, {city1}, {state1}, {zip_postal1}"
         )
 
     return {
@@ -193,6 +193,7 @@ def fetch_data():
         for page_url in page_urls:
             count = count + 1
             log.debug(f"{count}. scrapping {page_url} ...")
+
             store = get_store(driver, page_url)
             if store is None:
                 log.error("Can't get response")

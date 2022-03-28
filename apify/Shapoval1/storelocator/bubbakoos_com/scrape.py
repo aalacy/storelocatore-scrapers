@@ -6,6 +6,9 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgselenium.sgselenium import SgFirefox
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 
 
 def fetch_data(sgw: SgWriter):
@@ -48,6 +51,9 @@ def fetch_data(sgw: SgWriter):
         div = tree.xpath('//div[@class="location_part my-3"]')
         for d in div:
             slug = "".join(d.xpath(".//h3/a/@href"))
+            cms = "".join(d.xpath('.//h2[contains(text(), "Coming Soon")]/text()'))
+            if cms:
+                continue
             page_url = f"https://www.bubbakoos.com/{slug}"
             location_name = "".join(d.xpath(".//h3/a/text()"))
             phone = (
@@ -58,7 +64,14 @@ def fetch_data(sgw: SgWriter):
                 driver.implicitly_wait(20)
                 driver.maximize_window()
                 driver.switch_to.frame(0)
-
+                try:
+                    WebDriverWait(driver, 20).until(
+                        EC.presence_of_element_located(
+                            (By.XPATH, '//div[@class="address"]')
+                        )
+                    )
+                except:
+                    driver.switch_to.default_content()
                 try:
                     ad = driver.find_element_by_xpath('//div[@class="address"]').text
                     ll = driver.find_element_by_xpath(
@@ -87,27 +100,22 @@ def fetch_data(sgw: SgWriter):
                     longitude = ll.split("ll=")[1].split(",")[1].split("&")[0].strip()
                 except:
                     latitude, longitude = "<MISSING>", "<MISSING>"
-
-                hours = driver.find_elements_by_xpath("//p[./span]/span")
+                sub_adr = []
+                if street_address == "US-46":
+                    sub_adr = driver.find_elements_by_xpath(
+                        f'//p[contains(text(), "{street_address}")]'
+                    )
+                tm = []
+                for k in sub_adr:
+                    line = "".join(k.text).split("\n")[0].strip()
+                    tm.append(line)
+                street_address = "".join(tm)
+                hours = driver.find_elements_by_xpath('//p[./i[@class="far fa-clock"]]')
                 tmp = []
                 for h in hours:
                     line = "".join(h.text).replace("\n", "").strip()
                     tmp.append(line)
                 hours_of_operation = " ".join(tmp)
-                if street_address == "<MISSING>":
-                    ad = driver.find_element_by_xpath(
-                        '//h3[./strong[contains(text(), "BUBBAKOO’S BURRITOS")]]/following-sibling::p[1]'
-                    ).text
-                    adr = driver.find_element_by_xpath(
-                        '//h3[./strong[contains(text(), "BUBBAKOO’S BURRITOS")]]/following-sibling::p[2]'
-                    ).text
-                    adrp = driver.find_element_by_xpath(
-                        '//h3[./strong[contains(text(), "BUBBAKOO’S BURRITOS")]]/following-sibling::p[4]'
-                    ).text
-                    city = "".join(ad).split(",")[0]
-                    state = "".join(ad).split(",")[1]
-                    street_address = "".join(adr)
-                    postal = "".join(adrp)
 
                 row = SgRecord(
                     locator_domain=locator_domain,

@@ -50,7 +50,10 @@ def fetch_data():
             raw_address = row["full_address"]
             phone = row["store_phone_number"]
             hoo = ""
-            if not row["standard_weekly_schedule"]:
+            if (
+                "standard_weekly_schedule" not in row
+                or not row["standard_weekly_schedule"]
+            ):
                 hoo = row["clinics"][0]["display"].split(" ")
                 del hoo[1:-4]
                 hours_of_operation = " ".join(
