@@ -51,6 +51,8 @@ def fetch_data():
                     start_hours = h["hours"][0]["startTime"]
                     end_hours = h["hours"][0]["endTime"]
                     hoo.append(f"{start_day} - {end_day}: {start_hours} - {end_hours}")
+            if not hoo:
+                continue
             hoo = " ".join(hoo).replace("SAT - SAT", "SAT").replace("SUN - SUN", "SUN")
             street_address = (
                 poi["address"]["address1"].strip().split("/İST")[0].split(" Tekirda")[0]
