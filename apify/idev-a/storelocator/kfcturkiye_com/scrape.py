@@ -44,8 +44,9 @@ def fetch_data():
             )
             addr = raw_address.split(",")
             hours = [
-                hh.text.strip()
+                hh.text.replace("/", "").strip()
                 for hh in sp1.select("div.working-hours-info div.hours-item")
+                if ":" in hh.text
             ]
             city = addr[-2]
             street_address = ", ".join(addr[:-2])
