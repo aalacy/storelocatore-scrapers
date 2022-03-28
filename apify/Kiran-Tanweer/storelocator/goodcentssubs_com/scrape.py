@@ -27,10 +27,13 @@ def fetch_data():
             link = stores["location_url"]
             city = stores["city"]
             title = stores["location_name"]
-            log.info(title)
             lng = stores["lon"]
             lat = stores["lat"]
-            street = stores["street"]
+            try:
+                street = stores["street"] + " " + stores["street2"]
+            except:
+                street = stores["street"]
+            log.info(street)
             country = stores["country"]
             raw_address = stores["geocoded"]
             hours = stores["formatted_hours"]["primary"]["grouped_days"]

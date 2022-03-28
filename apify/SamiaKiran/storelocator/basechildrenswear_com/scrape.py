@@ -43,6 +43,7 @@ def fetch_data():
                 page_url = DOMAIN + loc.find("a")["href"]
                 log.info(page_url)
                 driver.get(page_url)
+                soup = BeautifulSoup(driver.page_source, "html.parser")
                 schema = driver.page_source.split(
                     '<script type="application/ld+json">'
                 )[1].split("</script>", 1)[0]
@@ -51,26 +52,30 @@ def fetch_data():
                 location_name = loc["name"]
                 address = loc["address"]
                 phone = loc["telephone"]
-                street_address = address["streetAddress"]
+                street_address1 = driver.page_source.split('"address1": "')[1].split(
+                    '"'
+                )[0]
+                street_address2 = driver.page_source.split('"address2": "')[1].split(
+                    '"'
+                )[0]
+                street_address = street_address1 + " " + street_address2
+                street_address = street_address.replace("- Store Now Closed", "").strip(
+                    ","
+                )
                 city = address["addressLocality"]
                 state = address["addressRegion"]
                 zip_postal = address["postalCode"]
                 country_code = address["addressCountry"]
                 phone = loc["telephone"]
-                hour_list = loc["openingHoursSpecification"]
                 latitude = loc["geo"]["latitude"]
                 longitude = loc["geo"]["longitude"]
-                hours_of_operation = ""
-                for hour in hour_list:
-                    hours_of_operation = (
-                        hours_of_operation
-                        + " "
-                        + hour["dayOfWeek"]
-                        + " "
-                        + hour["opens"]
-                        + "-"
-                        + hour["closes"]
-                    )
+                hours_of_operation = (
+                    soup.find("div", {"id": "storeTimes"})
+                    .find("p")
+                    .get_text(separator="|", strip=True)
+                    .replace("|", " ")
+                    .replace("Normal Opening hours", "")
+                )
                 country_code = "UK"
                 yield SgRecord(
                     locator_domain=DOMAIN,
