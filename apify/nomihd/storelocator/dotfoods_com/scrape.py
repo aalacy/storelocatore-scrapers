@@ -46,9 +46,12 @@ def fetch_data():
         page_url = search_url
 
         location_name = store["Title"]
+        log.info(location_name)
         location_type = store["Subtitle"]
         locator_domain = website
 
+        if "Coming Soon" in store["DescLine1"]:
+            continue
         if "Canada" in location_type:
             street_address = store["DescLine1"]
             city_state = store["DescLine2"]

@@ -1,120 +1,129 @@
-import csv
+import tenacity
+from typing import Iterable, Tuple, Callable
 
-from concurrent import futures
+from sglogging import sglog
 from sgrequests import SgRequests
-from sgzip.static import static_coordinate_list, SearchableCountries
+from sgscrape.pause_resume import CrawlStateSingleton
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
+from sgzip.parallel import DynamicSearchMaker, ParallelDynamicSearch, SearchIteration
+from tenacity import retry, stop_after_attempt
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
+@retry(stop=stop_after_attempt(10), wait=tenacity.wait_fixed(5))
+def get_response(api_url):
+    with SgRequests() as http:
+        response = http.get(api_url, headers=headers)
+        logger.info(f"HTTP STATUS Return: {response.status_code}")
+        if response.status_code == 200:
+            return response
+        raise Exception(f"HTTP Error Code: {response.status_code}")
 
 
-def get_data(coord):
-    rows = []
-    lat, lon = coord
-    locator_domain = "https://www.bp.co.uk/"
-    api_url = f"https://bpretaillocator.geoapp.me/api/v1/locations/nearest_to?lat={lat}&lng={lon}&limit=50"
+class ExampleSearchIteration(SearchIteration):
+    def do(
+        self,
+        coord: Tuple[float, float],
+        zipcode: str,
+        current_country: str,
+        items_remaining: int,
+        found_location_at: Callable[[float, float], None],
+    ) -> Iterable[SgRecord]:
 
-    session = SgRequests()
-    r = session.get(api_url)
-    js = r.json()
-    for j in js:
-        page_url = j.get("permalink") or "<MISSING>"
-        location_name = j.get("name").strip()
-        street_address = j.get("address") or "<MISSING>"
-        city = j.get("city") or "<MISSING>"
-        state = j.get("state") or "<MISSING>"
-        postal = j.get("postcode") or "<MISSING>"
-        country_code = j.get("country_code") or "<MISSING>"
-        if country_code != "GB":
-            continue
-        store_number = j.get("id") or "<MISSING>"
-        phone = j.get("telephone") or "<MISSING>"
-        latitude = j.get("lat") or "<MISSING>"
-        longitude = j.get("lng") or "<MISSING>"
-        location_type = "<MISSING>"
+        lat, lng = coord
+        api = f"https://bpretaillocator.geoapp.me/api/v1/locations/nearest_to?lat={lat}&lng={lng}&autoload=true&travel_mode=driving&avoid_tolls=false&avoid_highways=false&show_stations_on_route=true&corridor_radius=5&key=AIzaSyDHlZ-hOBSpgyk53kaLADU18wq00TLWyEc&format=json"
+        r = get_response(api)
+        js = r.json()
+        logger.info(f"From {lat, lng} stores = {len(js)}")
+        if js:
+            for j in js:
+                location_name = j.get("name")
+                street_address = j.get("address")
+                city = j.get("city")
+                region = j.get("state")
+                postal = j.get("postcode") or ""
+                if "-" in postal:
+                    postal = SgRecord.MISSING
+                country = j.get("country_code")
+                logger.info(f"Country code: {country}")
+                phone = j.get("telephone")
+                latitude = j.get("lat")
+                longitude = j.get("lng")
 
-        _tmp = []
-        hours = j.get("opening_hours") or []
+                _tmp = []
+                hours = j.get("opening_hours") or []
+                for h in hours:
+                    days = h.get("days") or []
+                    inters = h.get("hours") or []
+                    try:
+                        _tmp.append(f'{"-".join(days)}: {"-".join(inters[0])}')
+                    except:
+                        pass
 
-        for h in hours:
-            day = "-".join(h.get("days"))
-            time = " - ".join(h.get("hours")[0])
-            _tmp.append(f"{day}: {time}")
+                hours_of_operation = ";".join(_tmp)
 
-        hours_of_operation = (
-            ";".join(_tmp).replace("Mon-Sun: 00:00 - 23:59", "24 hours") or "<MISSING>"
-        )
-
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-
-        rows.append(row)
-
-    return rows
-
-
-def fetch_data():
-    out = []
-    s = set()
-    coords = static_coordinate_list(radius=25, country_code=SearchableCountries.BRITAIN)
-
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {executor.submit(get_data, coord): coord for coord in coords}
-        for future in futures.as_completed(future_to_url):
-            rows = future.result()
-            for row in rows:
-                _id = row[8]
-                if _id not in s:
-                    s.add(_id)
-                    out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+                yield SgRecord(
+                    page_url=page_url,
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city,
+                    state=region,
+                    zip_postal=postal,
+                    country_code=country,
+                    phone=phone,
+                    latitude=latitude,
+                    longitude=longitude,
+                    locator_domain=locator_domain,
+                    hours_of_operation=hours_of_operation,
+                )
 
 
 if __name__ == "__main__":
-    scrape()
+    logger = sglog.SgLogSetup().get_logger(logger_name="bp.co.uk")
+    CrawlStateSingleton.get_instance().save(override=True)
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.51 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+    }
+    locator_domain = "https://www.bp.co.uk/"
+    page_url = "https://www.bp.com/en_gb/united-kingdom/home/products-and-services/our-sites/find-your-nearest-bp.html"
+    search_maker = DynamicSearchMaker(
+        search_type="DynamicGeoSearch",
+        expected_search_radius_miles=50,
+    )
+
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.STREET_ADDRESS, SgRecord.Headers.LOCATION_NAME}
+            ),
+            duplicate_streak_failure_factor=-1,
+        )
+    ) as writer:
+        search_iter = ExampleSearchIteration()
+        par_search = ParallelDynamicSearch(
+            search_maker=search_maker,
+            search_iteration=search_iter,
+            country_codes=[
+                "AT",
+                "AU",
+                "CH",
+                "DE",
+                "ES",
+                "FR",
+                "GB",
+                "GR",
+                "LU",
+                "NL",
+                "PL",
+                "RU",
+                "SA",
+                "TR",
+                "ZA",
+            ],
+        )
+
+        for rec in par_search.run():
+            writer.write_row(rec)

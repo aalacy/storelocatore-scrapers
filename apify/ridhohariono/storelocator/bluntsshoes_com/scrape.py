@@ -8,9 +8,7 @@ from sgscrape.sgpostal import parse_address_intl
 
 DOMAIN = "bluntsshoes.com"
 LOCATION_URL = "https://www.bluntsshoes.com/store-locator/"
-DATA_URL = (
-    "https://storemapper-herokuapp-com.global.ssl.fastly.net/api/users/7014/stores.js"
-)
+DATA_URL = "https://apps.elfsight.com/p/boot/?w=9066ef08-723b-4f59-8b0a-d8a8802786c6%2C2b5efb0c-f2ac-42a0-b6b1-1184ebb85b43"
 HEADERS = {
     "Accept": "*/*",
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
@@ -49,23 +47,23 @@ def getAddress(raw_address):
 
 def fetch_data():
     log.info("Fetching store_locator data")
-    data = session.get(DATA_URL, headers=HEADERS).json()
-    for row in data["stores"]:
-        location_name = row["name"]
-        raw_address = row["address"]
+    data = list(
+        session.get(DATA_URL, headers=HEADERS).json()["data"]["widgets"].values()
+    )[0]["data"]["settings"]["markers"]
+    for row in data:
+        location_name = row["infoTitle"]
+        if "Blunts Shoes" not in location_name:
+            continue
+        raw_address = row["infoAddress"]
         street_address, city, state, zip_postal = getAddress(raw_address)
         country_code = "UK"
-        phone = row["phone"]
-        location_type = row["category"]
-        hoo = ""
-        days = ["Monday - Friday", "Saturday", "Sunday"]
-        for i in range(len(days)):
-            num = i + 1
-            hoo += days[i] + ": " + row["custom_field_" + str(num)] + ","
-        hours_of_operation = hoo.rstrip(",")
-        store_number = row["id"]
-        latitude = row["latitude"]
-        longitude = row["longitude"]
+        phone = row["infoPhone"]
+        location_type = "BLUNTS SHOES STORE"
+        hours_of_operation = row["infoWorkingHours"]
+        store_number = MISSING
+        latlong = row["coordinates"].split(",")
+        latitude = latlong[0]
+        longitude = latlong[1]
         log.info("Append {} => {}".format(location_name, street_address))
         yield SgRecord(
             locator_domain=DOMAIN,
@@ -88,7 +86,7 @@ def fetch_data():
 def scrape():
     log.info("start {} Scraper".format(DOMAIN))
     count = 0
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

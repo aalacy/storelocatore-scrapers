@@ -38,6 +38,8 @@ def fetch_data():
                 page_url = DOMAIN + loc.find("a")["href"]
                 log.info(page_url)
                 driver.get(page_url)
+                if "Now Closed" in driver.page_source:
+                    continue
                 soup = BeautifulSoup(driver.page_source, "html.parser")
                 location_name = soup.find("h1").text
                 try:

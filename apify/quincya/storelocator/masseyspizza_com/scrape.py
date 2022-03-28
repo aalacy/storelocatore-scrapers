@@ -29,6 +29,8 @@ def fetch_data(sgw: SgWriter):
         except:
             continue
         raw_address = list(item.stripped_strings)[1:]
+        if "COMING SOON" in raw_address[0].upper():
+            continue
         if "NOW OPEN" in raw_address[0] or "VILLE/WORTH" in raw_address[0]:
             raw_address.pop(0)
         for i, y in enumerate(raw_address):
@@ -47,7 +49,7 @@ def fetch_data(sgw: SgWriter):
             street_address = " ".join(raw_address[:2]).strip()
             phone = raw_address[2]
             hours_of_operation = " ".join(raw_address[3:])
-
+        street_address = street_address.replace("Indian Mound Mall", "").strip()
         hours_of_operation = hours_of_operation.split("DINING")[0].strip()
         map_link = item.find("a", string="View Map")["href"]
         try:

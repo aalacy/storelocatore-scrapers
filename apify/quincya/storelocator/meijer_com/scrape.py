@@ -1,3 +1,5 @@
+import os
+
 from sglogging import SgLogSetup
 
 from sgscrape.sgwriter import SgWriter
@@ -17,6 +19,12 @@ def fetch_data(sgw: SgWriter):
     headers = {"User-Agent": user_agent}
 
     session = SgRequests()
+    proxy_password = os.environ["PROXY_PASSWORD"]
+    proxy_url = "http://groups-RESIDENTIAL,country-US:{}@proxy.apify.com:8000/".format(
+        proxy_password
+    )
+    proxies = {"http": proxy_url, "https": proxy_url}
+    session.proxies = proxies
 
     max_distance = 100
 
@@ -36,7 +44,13 @@ def fetch_data(sgw: SgWriter):
         )
 
         log.info(base_link)
-        stores = session.get(base_link, headers=headers).json()["pointsOfService"]
+        try:
+            stores = session.get(base_link, headers=headers).json()["pointsOfService"]
+        except:
+            session = SgRequests()
+            session.proxies = proxies
+            stores = session.get(base_link, headers=headers).json()["pointsOfService"]
+
         for store in stores:
             location_name = store["displayName"]
             street_address = store["address"]["line1"].strip()
@@ -49,14 +63,39 @@ def fetch_data(sgw: SgWriter):
             search.found_location_at(latitude, longitude)
             store_number = store["name"]
             location_type = "<MISSING>"
-            phone = store["phone"]
-            hours_of_operation = "<INACCESSIBLE>"
-            link = "<MISSING>"
+            try:
+                phone = store["phone"]
+            except:
+                phone = ""
+
+            hours_of_operation = ""
+
+            link = "https://www.meijer.com/bin/meijer/store/details?storeId=" + str(
+                store_number
+            )
+            raw_hours = session.get(link, headers=headers).json()["openingHours"][
+                "weekDayOpeningList"
+            ]
+            for raw_hour in raw_hours:
+                day = raw_hour["weekDay"]
+                if raw_hour["closed"]:
+                    day_hours = day + " Closed"
+                else:
+                    open_ = raw_hour["openingTime"]["formattedHour"]
+                    close = raw_hour["closingTime"]["formattedHour"]
+                    day_hours = day + " " + open_ + "-" + close
+                hours_of_operation = (hours_of_operation + " " + day_hours).strip()
+
+            page_url = (
+                "https://www.meijer.com/shopping/store-locator/"
+                + str(store_number)
+                + ".html"
+            )
 
             sgw.write_row(
                 SgRecord(
                     locator_domain=locator_domain,
-                    page_url=link,
+                    page_url=page_url,
                     location_name=location_name,
                     street_address=street_address,
                     city=city,

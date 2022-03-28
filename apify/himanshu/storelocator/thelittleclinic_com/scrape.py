@@ -46,7 +46,7 @@ def fetch_data():
     zip_codes = DynamicZipSearch(
         country_codes=[SearchableCountries.USA],
         max_search_results=100,
-        max_radius_miles=200,
+        max_search_distance_miles=200,
     )
     adressess = []
 

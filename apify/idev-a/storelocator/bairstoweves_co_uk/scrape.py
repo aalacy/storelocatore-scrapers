@@ -45,34 +45,30 @@ def fetch_data():
                 .strip()[:-2]
             )
             hours = []
-            for hh in ss["departments"][0]["openingTimes"]:
-                times = "closed"
-                if hh["open_time"] != "Closed":
-                    times = f"{hh['open_time']} - {hh['close_time']}"
-                hours.append(f"{days[hh['day_of_week']]}: {times}")
+            if ss["departments"]:
+                for hh in ss["departments"][0]["openingTimes"]:
+                    times = "closed"
+                    if hh["open_time"] != "Closed":
+                        times = f"{hh['open_time']} - {hh['close_time']}"
+                    hours.append(f"{days[hh['day_of_week']]}: {times}")
             raw_address = _["address"].replace("\n", ", ")
             addr = raw_address.split(",")
-            try:
-                yield SgRecord(
-                    page_url=page_url,
-                    store_number=_["branchID"],
-                    location_name=_["name"],
-                    street_address=", ".join(addr[:-3]),
-                    city=addr[-3],
-                    state=addr[-2],
-                    zip_postal=addr[-1],
-                    latitude=_["lat"],
-                    longitude=_["lng"],
-                    country_code="UK",
-                    phone=_["contactNumber"],
-                    locator_domain=locator_domain,
-                    hours_of_operation="; ".join(hours),
-                    raw_address=raw_address,
-                )
-            except:
-                import pdb
-
-                pdb.set_trace()
+            yield SgRecord(
+                page_url=page_url,
+                store_number=_["branchID"],
+                location_name=_["name"],
+                street_address=", ".join(addr[:-3]),
+                city=addr[-3],
+                state=addr[-2],
+                zip_postal=addr[-1],
+                latitude=_["lat"],
+                longitude=_["lng"],
+                country_code="UK",
+                phone=_["contactNumber"],
+                locator_domain=locator_domain,
+                hours_of_operation="; ".join(hours),
+                raw_address=raw_address,
+            )
 
 
 if __name__ == "__main__":

@@ -6,13 +6,8 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from bs4 import BeautifulSoup
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
-import os
 import json
 import re
-
-
-os.environ["PROXY_URL"] = "http://groups-BUYPROXIES94952:{}@proxy.apify.com:8000/"
-os.environ["PROXY_PASSWORD"] = "apify_proxy_4j1h689adHSx69RtQ9p5ZbfmGA3kw12p0N2q"
 
 
 session = SgRequests()
@@ -48,15 +43,9 @@ MISSING = SgRecord.MISSING
 def fetch_data():
     if True:
         pattern = re.compile(r"\s\s+")
-        search = DynamicZipSearch(
-            country_codes=[SearchableCountries.USA], expected_search_radius_miles=100
-        )
+        search = DynamicZipSearch(country_codes=[SearchableCountries.USA])
         for zipcode in search:
-            search_url = (
-                "https://www.hobbylobby.com/stores/search?q="
-                + zipcode
-                + "&CSRFToken=47258482-bb64-4eb0-9f18-77468d8a8186"
-            )
+            search_url = "https://www.hobbylobby.com/stores/search?q=" + zipcode
             stores_req = session.get(search_url, headers=headers2)
             try:
                 soup = BeautifulSoup(stores_req.text, "html.parser")
@@ -79,15 +68,16 @@ def fetch_data():
                     phone = loc["phone"]
                     loc_link = "https://www.hobbylobby.com" + loc["linkUrl"]
                     req = session.get(loc_link, headers=headers)
-                    bs = BeautifulSoup(req.text, "html.parser")
                     try:
+                        bs = BeautifulSoup(req.text, "html.parser")
                         hours = bs.find(
                             "table", {"class": "store-openings weekday_openings"}
                         ).text
                         hours = hours.replace("\n", " ")
                         hours = re.sub(pattern, " ", hours).strip()
+
                     except AttributeError:
-                        hours = MISSING
+                        hours = "Coming Soon"
 
                     title = "Hobby Lobby"
 
@@ -113,7 +103,8 @@ def scrape():
     log.info("Started")
     count = 0
     deduper = SgRecordDeduper(
-        SgRecordID({SgRecord.Headers.LATITUDE, SgRecord.Headers.LONGITUDE})
+        SgRecordID({SgRecord.Headers.LATITUDE, SgRecord.Headers.LONGITUDE}),
+        duplicate_streak_failure_factor=-1,
     )
     with SgWriter(deduper) as writer:
         results = fetch_data()

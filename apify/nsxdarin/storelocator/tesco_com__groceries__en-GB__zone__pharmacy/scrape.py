@@ -32,7 +32,7 @@ def fetch_data():
     for line in r.iter_lines():
         if 'hreflang="en" href="https://www.tesco.com/store-locator/' in line:
             lurl = line.split('href="')[1].split('"')[0]
-            if lurl.count("/") == 5 and "laurel-dr" in lurl:
+            if lurl.count("/") == 5:
                 locs.append(lurl)
     for loc in locs:
         Pharm = False

@@ -62,7 +62,7 @@ def fetch_data():
                 phone = MISSING
             log.info(location_name)
             place_id = loc["placeId"]
-            hours_of_operation = loc["otherText"]
+            hours_of_operation = loc["otherText"].replace("Horario:", "")
             address_url = (
                 "https://api.getjusto.com/graphql?operationName=getPlaceDetails_cached"
             )
