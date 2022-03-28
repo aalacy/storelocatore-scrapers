@@ -94,6 +94,8 @@ class _SearchIteration(SearchIteration):
                     locator_domain = website
                     location_name = store["name"]
                     raw_address = store["address"]
+                    if raw_address:
+                        raw_address = raw_address.replace("\n", "").strip()
                     formatted_addr = parser.parse_address_intl(raw_address)
                     street_address = formatted_addr.street_address_1
                     if street_address:
