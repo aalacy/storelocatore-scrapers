@@ -1,4 +1,4 @@
-import json
+# -*- coding: utf-8 -*-
 from lxml import etree
 
 from sgrequests import SgRequests
@@ -10,39 +10,38 @@ from sgscrape.sgwriter import SgWriter
 
 def fetch_data():
     session = SgRequests()
-    start_url = "https://www.sephora.com.tr/magazalar"
-    domain = "sephora.com.tr"
+
+    start_url = "https://www.briochedoree.fr/restaurants/getStores?q=&editing=true"
+    domain = "briochedoree.fr"
     hdr = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
-    response = session.get(start_url, headers=hdr)
-    dom = etree.HTML(response.text)
-
-    all_locations = dom.xpath('//a[@class="store-name"]/@href')
-    for page_url in all_locations:
-        loc_response = session.get(page_url, headers=hdr)
+    data = session.get(start_url, headers=hdr).json()
+    for poi in data["result"]:
+        page_url = "https://www.briochedoree.fr" + poi["url"]
+        loc_response = session.get(page_url)
         loc_dom = etree.HTML(loc_response.text)
 
-        poi = loc_dom.xpath('//script[contains(text(), "streetAddress")]/text()')[0]
-        poi = json.loads(poi)
-        geo = json.loads(loc_dom.xpath("//@data-coord")[0])
-        hoo = loc_dom.xpath('//div[@class="store-schedule"]//div/text()')
-        hoo = " ".join([e.strip() for e in hoo if e.strip()])
+        street_address = poi["address"]["line1"]
+        if poi["address"]["line2"]:
+            street_address += ", " + poi["address"]["line2"]
+        hoo = loc_dom.xpath('//li[@class="StoreDetail-schedulesItem"]/span/text()')
+        hoo = " ".join([" ".join(e.split()) for e in hoo if e.strip()])
 
         item = SgRecord(
             locator_domain=domain,
             page_url=page_url,
-            location_name=poi["name"],
-            street_address=poi["address"]["streetAddress"],
-            city=poi["address"]["addressLocality"],
+            location_name=poi["displayName"],
+            street_address=street_address,
+            city=poi["address"]["town"],
             state="",
             zip_postal=poi["address"]["postalCode"],
-            country_code="TR",
-            store_number=poi["URL"].split("=")[-1],
-            phone=poi["telephone"],
+            country_code="FR",
+            store_number=poi["name"],
+            phone=poi["address"]["phone"],
             location_type="",
-            latitude=geo["lat"],
-            longitude=geo["lng"],
+            latitude=poi["geoPoint"]["latitude"],
+            longitude=poi["geoPoint"]["longitude"],
             hours_of_operation=hoo,
         )
 
