@@ -22,6 +22,8 @@ def fetch_data():
         data = json.loads(response.text)
         all_locations = data["response"]["entities"]
         for poi in all_locations:
+            if not poi.get("address"):
+                continue
             store_url = poi.get("landingPageUrl")
             if not store_url:
                 store_url = poi.get("websiteUrl", {}).get("url")

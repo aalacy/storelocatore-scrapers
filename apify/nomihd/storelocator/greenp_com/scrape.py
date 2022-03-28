@@ -36,7 +36,7 @@ params = (
 def fetch_data():
     # Your scraper here
 
-    with SgRequests(dont_retry_status_codes=([404])) as session:
+    with SgRequests(dont_retry_status_codes=([404]), verify_ssl=False) as session:
         stores_req = session.get(
             "https://parking.greenp.com/api/carparks/", headers=headers, params=params
         )

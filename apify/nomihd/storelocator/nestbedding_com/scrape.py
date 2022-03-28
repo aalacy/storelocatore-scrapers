@@ -27,19 +27,33 @@ def fetch_data():
     for store in stores_list:
 
         page_url = "".join(store.xpath(".//a[@class='shop-detail-link']/@href")).strip()
+        if len(page_url) <= 0:
+            page_url = "https://www.nestbedding.com/pages/contact-us"
+
         locator_domain = website
 
         location_name = "".join(
             store.xpath('.//h3[@class="shop-title"]/text()')
         ).strip()
 
-        street_address = " ".join(
-            store.xpath('.//div[@class="shop-info-address-line"]/text()')
-        ).strip()
+        raw_address = store.xpath('.//div[@class="shop-info-address-line"]/text()')
 
-        city = "".join(store.xpath("./@data-city")).strip()
-        state = "".join(store.xpath("./@data-state")).strip()
-        zip = "<MISSING>"
+        if "Location Closed" in "".join(raw_address).strip():
+            continue
+
+        if "Phoenix, AZ" == "".join(raw_address).strip():
+            street_address = "<MISSING>"
+            city_state = raw_address[0].strip()
+            city = city_state.split(",")[0].strip()
+            state = city_state.split(",")[-1].strip()
+            zip = "<MISSING>"
+
+        else:
+            street_address = raw_address[0].strip()
+            city_state_zip = raw_address[1].strip()
+            city = city_state_zip.split(",")[0].strip()
+            state = city_state_zip.split(",")[-1].strip().split(" ")[0].strip()
+            zip = city_state_zip.split(",")[-1].strip().split(" ")[-1].strip()
 
         country_code = "US"
 
@@ -59,6 +73,9 @@ def fetch_data():
             hours_list.append(f"{hour_info[0]}: {hour_info[1]}")
 
         hours_of_operation = "; ".join(hours_list)
+
+        if hours_of_operation.count("Permanently closed") == 7:
+            location_type = "Permanently closed"
 
         latitude = "".join(store.xpath('.//div[@class="map"]/@data-lat')).strip()
         longitude = "".join(store.xpath('.//div[@class="map"]/@data-long')).strip()

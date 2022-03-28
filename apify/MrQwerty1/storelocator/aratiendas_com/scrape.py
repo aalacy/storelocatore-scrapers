@@ -1,4 +1,3 @@
-import json
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
@@ -21,18 +20,15 @@ def get_international(line):
 
 
 def fetch_data(sgw: SgWriter):
-    r = session.get(
-        "https://aratiendas.com/wp-content/litespeed/js/9e684628c51d3e6e6359287786f76455.js",
-        headers=headers,
-    )
-    text = r.text
-    text = text.split('"stores":')[1].split("],")[0] + "]"
-    js = json.loads(text)
+    r = session.get("https://aratiendas.com/wp-json/map-ara/v1/stores", headers=headers)
+    js = r.json()
 
     for j in js:
         location_name = j.get("name")
-        latitude = j.get("latitude")
-        longitude = j.get("longitude")
+        latitude = j.get("latitude") or ""
+        longitude = j.get("longitude") or ""
+        if str(latitude) == "0" or str(longitude) == "0":
+            latitude, longitude = SgRecord.MISSING, SgRecord.MISSING
         phone = j.get("phone")
         store_number = j.get("ID")
         street_address = j.get("address") or ""

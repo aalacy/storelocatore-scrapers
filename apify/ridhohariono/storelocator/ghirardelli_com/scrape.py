@@ -1,8 +1,13 @@
-import csv
-import re
+from bs4 import BeautifulSoup as bs
 from sgrequests import SgRequests
 from sglogging import sglog
-from bs4 import BeautifulSoup as bs
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+import re
+
+MISSING = "<MISSING>"
 
 DOMAIN = "ghirardelli.com"
 BASE_URL = "https://ghirardelli.com/"
@@ -16,109 +21,82 @@ log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
 session = SgRequests()
 
 
-def write_output(data):
-    log.info("Write Output of " + DOMAIN)
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
-def handle_missing(field):
-    if field is None or (isinstance(field, str) and len(field.strip()) == 0):
-        return "<MISSING>"
-    return field
+def pull_content(url):
+    log.info("Pull content => " + url)
+    soup = bs(session.get(url, headers=HEADERS).content, "lxml")
+    return soup
 
 
 def parse_hours(url):
-    soup = bs(session.get(url, headers=HEADERS).content, "lxml")
+    soup = pull_content(url)
     hours_content = soup.find("div", {"class": "panel"})
+    if not hours_content:
+        hours_content = soup.find("table")
     if not hours_content.find("table"):
         check = hours_content.text
         if "Temporarily closed" in check:
-            return "<MISSING>"
+            return MISSING
     else:
         hours_content = hours_content.find("table")
     hours = hours_content.get_text(strip=True, separator=",").replace("day,", "day: ")
     if "Temporarily Closed" in hours:
-        return "<MISSING>"
-    hoo = re.sub(r"Ice cream fountain opens daily at \d{1,2}:\d{2} \D{2},", "", hours)
+        return MISSING
+    hoo = re.sub(
+        r"Ice cream fountain opens daily at \d{1,2}:\d{2} \D{2},|Park Hours at Disneyland California",
+        "",
+        hours,
+    )
     return hoo
 
 
 def fetch_data():
     store_info = session.get(LOCATION_URL, headers=HEADERS).json()
-    locations = []
     for row in store_info:
         page_url = row["web"]
-        location_name = handle_missing(row["name"])
+        location_name = row["name"]
         if "address2" in row and len(row["address2"]) > 0:
             street_address = "{}, {}".format(row["address"], row["address2"])
         else:
             street_address = row["address"]
-        city = handle_missing(row["city"])
-        state = handle_missing(row["state"])
-        zip_code = handle_missing(row["postal"])
+        city = row["city"]
+        state = row["state"]
+        zip_postal = row["postal"]
         country_code = "US"
         store_number = row["id"]
-        phone = handle_missing(row["phone"])
-        latitude = handle_missing(row["lat"])
-        longitude = handle_missing(row["lng"])
+        phone = row["phone"]
+        latitude = row["lat"]
+        longitude = row["lng"]
         hours_of_operation = parse_hours(page_url)
-        if hours_of_operation == "<MISSING>":
-            location_type = "TEMP_CLOSED"
-        else:
-            location_type = "OPEN"
+        location_type = MISSING
         log.info("Append {} => {}".format(location_name, street_address))
-        locations.append(
-            [
-                DOMAIN,
-                page_url,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip_code,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
+        yield SgRecord(
+            locator_domain=DOMAIN,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zip_postal,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
         )
-    return locations
 
 
 def scrape():
-    log.info("Start {} Scraper".format(DOMAIN))
-    data = fetch_data()
-    log.info("Found {} locations".format(len(data)))
-    write_output(data)
-    log.info("Finish processed " + str(len(data)))
+    log.info("start {} Scraper".format(DOMAIN))
+    count = 0
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumAndPageUrlId)) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
 
 
 scrape()

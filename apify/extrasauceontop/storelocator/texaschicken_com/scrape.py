@@ -61,6 +61,7 @@ def scrape_malaysia(session, headers):
         state = location["state"]
         store_number = location["id"]
         address = location["address"]
+        raw_address = location["address"]
         zipp = location["zip"]
         phone = "".join(
             character for character in location["phone"] if character.isdigit() is True
@@ -87,6 +88,7 @@ def scrape_malaysia(session, headers):
                 "location_type": location_type,
                 "hours": hours,
                 "country_code": country_code,
+                "raw_address": raw_address,
             }
         )
 
@@ -147,7 +149,7 @@ def scrape_singapore(session, headers):
                 .find_all("p")[-1]
                 .text.strip()
             )
-
+            raw_address = address_parts
             address = ""
             address = (
                 address_parts.lower()
@@ -157,7 +159,7 @@ def scrape_singapore(session, headers):
                 .strip()[:-1]
             )
 
-            city = "<MISSING>"
+            city = "Singapore"
             state = "<MISSING>"
             zipp = address_parts.strip().split(" ")[-1]
             country_code = "Singapore"
@@ -185,6 +187,7 @@ def scrape_singapore(session, headers):
                     "location_type": location_type,
                     "hours": hours,
                     "country_code": country_code,
+                    "raw_address": raw_address,
                 }
             )
 
@@ -209,16 +212,15 @@ def scrape_belarus(session, headers):
         page_url = "https://texas-chicken.by/en/restorany"
         location_name = row.find("div", attrs={"class": "metro"}).text.strip()
         address = row.find("div", attrs={"class": "address"}).text.strip()
-        hours = address = (
-            "daily: " + row.find("div", attrs={"class": "work"}).text.strip()
-        )
+        raw_address = address
+        city = address.split(", ")[0]
+        address = address.replace(city + ", ", "")
+        hours = "daily: " + row.find("div", attrs={"class": "work"}).text.strip()
         phone = row.find("div", attrs={"class": "phone"}).text.strip()
 
         location_type = "<MISSING>"
         country_code = "Belarus"
         state = "<MISSING>"
-        city = "<MISSING>"
-        zipp = "<MISSING>"
 
         zipp = "<MISSING>"
         store_number = "<MISSING>"
@@ -244,6 +246,7 @@ def scrape_belarus(session, headers):
                 "location_type": location_type,
                 "hours": hours,
                 "country_code": country_code,
+                "raw_address": raw_address,
             }
         )
 
@@ -337,6 +340,7 @@ def scrape_bahrain(session, headers):
                     "location_type": location_type,
                     "hours": hours,
                     "country_code": country_code,
+                    "raw_address": address,
                 }
             )
 
@@ -372,7 +376,7 @@ def scrape_jordan(session, headers):
         zipp = "<MISSING>"
         location_type = "<MISSING>"
         hours = "<MISSING>"
-        country_code = "<MISSING>"
+        country_code = "Jordan"
 
         locs.append(
             {
@@ -390,6 +394,7 @@ def scrape_jordan(session, headers):
                 "location_type": location_type,
                 "hours": hours,
                 "country_code": country_code,
+                "raw_address": address,
             }
         )
 
@@ -451,7 +456,7 @@ def scrape_pakistan(session, headers):
                 .text.strip()
                 .replace('"', "")
             )
-
+            raw_address = address_parts
             address_parts = address_parts.lower().split(", ")
 
             if address_parts[-1] == "pakistan":
@@ -492,6 +497,7 @@ def scrape_pakistan(session, headers):
                     "location_type": location_type,
                     "hours": hours,
                     "country_code": country_code,
+                    "raw_address": raw_address,
                 }
             )
 
@@ -553,6 +559,7 @@ def scrape_riyadh(session, headers):
                 .text.strip()
                 .replace('"', "")
             )
+            raw_address = address_parts
 
             address = address_parts.split(", Riyadh")[0]
 
@@ -588,6 +595,7 @@ def scrape_riyadh(session, headers):
                     "location_type": location_type,
                     "hours": hours,
                     "country_code": country_code,
+                    "raw_address": raw_address,
                 }
             )
 
@@ -650,6 +658,12 @@ def scrape_uae(session, headers):
                 .replace('"', "")
                 .split(", ")
             )
+            raw_address = (
+                location_soup.find("div", attrs={"class": "col-md-12"})
+                .find_all("p")[-1]
+                .text.strip()
+                .replace('"', "")
+            )
 
             address = "".join(part + " " for part in address_parts[:-2])
 
@@ -690,6 +704,7 @@ def scrape_uae(session, headers):
                     "location_type": location_type,
                     "hours": hours,
                     "country_code": country_code,
+                    "raw_address": raw_address,
                 }
             )
 
@@ -756,6 +771,13 @@ def scrape_newzealand(session, headers):
                 .split(", ")
             )
 
+            raw_address = (
+                location_soup.find("div", attrs={"class": "col-md-12"})
+                .find_all("p")[-1]
+                .text.strip()
+                .replace('"', "")
+            )
+
             address = "".join(part + " " for part in address_parts[:-2])
 
             try:
@@ -788,6 +810,473 @@ def scrape_newzealand(session, headers):
                     "location_type": location_type,
                     "hours": hours,
                     "country_code": country_code,
+                    "raw_address": raw_address,
+                }
+            )
+
+    return locs
+
+
+def scrape_oman(session, headers):
+    response = session.get("https://oman.texaschicken.com/en/Locations").text
+    lines = response.split("\n")
+
+    locs = []
+    for line in lines:
+
+        if "markers.push" in line:
+            line = (
+                line.replace("markers.push([", "")
+                .replace("]);", "")
+                .strip()
+                .replace("\t", "")
+                .replace("\r", "")
+                .replace("'", "")
+                .split(",")
+            )
+
+            locator_domain = "oman.texaschicken.com"
+            page_url = "https://oman.texaschicken.com/en/Locations"
+            location_name = line[0]
+            latitude = line[2]
+            longitude = line[1]
+            store_number = line[-1].strip()
+
+            params = {
+                "ID": int(store_number),
+                "Text": "",
+                "isDelivery": "",
+                "isWifi": "",
+                "isDrive": "",
+                "isKidsArea": "",
+                "isHandicap": "",
+                "isHours": "",
+                "_isMall": "",
+                "_isBreakfast": "",
+                "_isfacility": "",
+                "_isfacility2": "",
+                "_isfacility3": "",
+                "lang": "en",
+            }
+
+            location_response = session.post(
+                "https://oman.texaschicken.com/Locations/AjaxSearch",
+                headers=headers,
+                json=params,
+            ).text
+            location_soup = bs(location_response, "html.parser")
+
+            address_parts = (
+                location_soup.find("div", attrs={"class": "col-md-12"})
+                .find_all("p")[-1]
+                .text.strip()
+                .replace('"', "")
+                .split(", ")
+            )
+            raw_address = (
+                location_soup.find("div", attrs={"class": "col-md-12"})
+                .find_all("p")[-1]
+                .text.strip()
+                .replace('"', "")
+            )
+
+            address = "".join(part + " " for part in address_parts[:-2])
+
+            if address == "":
+                address = "".join(part + " " for part in address_parts)
+
+            city = "<MISSING>"
+            state = "<MISSING>"
+            zipp = "<MISSING>"
+            country_code = "Oman"
+            phone = "<MISSING>"
+            location_type = "<MISSING>"
+
+            try:
+                hours = (
+                    location_soup.find("p", attrs={"class": "font-15"})
+                    .text.strip()
+                    .replace("Opening ", "")
+                    .replace("\r", " ")
+                    .replace("\n", " ")
+                    .replace("\t", " ")
+                    .replace("                          ", " ")
+                )
+
+                if hours.lower() == "daily: closed":
+                    continue
+
+            except Exception:
+                hours = "<MISSING>"
+
+            locs.append(
+                {
+                    "locator_domain": locator_domain,
+                    "page_url": page_url,
+                    "location_name": location_name,
+                    "latitude": latitude,
+                    "longitude": longitude,
+                    "city": city,
+                    "store_number": store_number,
+                    "street_address": address,
+                    "state": state,
+                    "zip": zipp,
+                    "phone": phone,
+                    "location_type": location_type,
+                    "hours": hours,
+                    "country_code": country_code,
+                    "raw_address": raw_address,
+                }
+            )
+
+    return locs
+
+
+def scrape_ksa(session, headers):
+    response = session.get("https://ksa.texaschicken.com/en/Locations").text
+    lines = response.split("\n")
+
+    locs = []
+    for line in lines:
+
+        if "markers.push" in line:
+            line = (
+                line.replace("markers.push([", "")
+                .replace("]);", "")
+                .strip()
+                .replace("\t", "")
+                .replace("\r", "")
+                .replace("'", "")
+                .split(",")
+            )
+
+            locator_domain = "ksa.texaschicken.com"
+            page_url = "https://ksa.texaschicken.com/en/Locations"
+            location_name = line[0]
+            latitude = line[2]
+            longitude = line[1]
+            store_number = line[-1].strip()
+
+            params = {
+                "ID": int(store_number),
+                "Text": "",
+                "isDelivery": "",
+                "isWifi": "",
+                "isDrive": "",
+                "isKidsArea": "",
+                "isHandicap": "",
+                "isHours": "",
+                "_isMall": "",
+                "_isBreakfast": "",
+                "_isfacility": "",
+                "_isfacility2": "",
+                "_isfacility3": "",
+                "lang": "en",
+            }
+
+            location_response = session.post(
+                "https://ksa.texaschicken.com/Locations/AjaxSearch",
+                headers=headers,
+                json=params,
+            ).text
+            location_soup = bs(location_response, "html.parser")
+
+            address_parts = (
+                location_soup.find("div", attrs={"class": "col-md-12"})
+                .find_all("p")[-1]
+                .text.strip()
+                .replace('"', "")
+                .split(", ")
+            )
+            raw_address = (
+                location_soup.find("div", attrs={"class": "col-md-12"})
+                .find_all("p")[-1]
+                .text.strip()
+                .replace('"', "")
+            )
+
+            address = "".join(part + " " for part in address_parts[:-2])
+
+            if address == "":
+                address = "".join(part + " " for part in address_parts)
+
+            city = "<MISSING>"
+            state = "<MISSING>"
+            zipp = "<MISSING>"
+            country_code = "Western KSA"
+            phone = "<MISSING>"
+            location_type = "<MISSING>"
+
+            try:
+                hours = (
+                    location_soup.find("p", attrs={"class": "font-15"})
+                    .text.strip()
+                    .replace("Opening ", "")
+                    .replace("\r", " ")
+                    .replace("\n", " ")
+                    .replace("\t", " ")
+                    .replace("                          ", " ")
+                )
+
+                if hours.lower() == "daily: closed":
+                    continue
+
+            except Exception:
+                hours = "<MISSING>"
+
+            if "temporarily closed" in hours.lower():
+                continue
+
+            locs.append(
+                {
+                    "locator_domain": locator_domain,
+                    "page_url": page_url,
+                    "location_name": location_name,
+                    "latitude": latitude,
+                    "longitude": longitude,
+                    "city": city,
+                    "store_number": store_number,
+                    "street_address": address,
+                    "state": state,
+                    "zip": zipp,
+                    "phone": phone,
+                    "location_type": location_type,
+                    "hours": hours,
+                    "country_code": country_code,
+                    "raw_address": raw_address,
+                }
+            )
+
+    return locs
+
+
+def scrape_iraq(session, headers):
+    response = session.get("https://iraq.texaschicken.com/en/Locations").text
+    lines = response.split("\n")
+
+    locs = []
+    for line in lines:
+
+        if "markers.push" in line:
+            line = (
+                line.replace("markers.push([", "")
+                .replace("]);", "")
+                .strip()
+                .replace("\t", "")
+                .replace("\r", "")
+                .replace("'", "")
+                .split(",")
+            )
+
+            locator_domain = "iraq.texaschicken.com"
+            page_url = "https://iraq.texaschicken.com/en/Locations"
+            location_name = line[0]
+            latitude = line[2]
+            longitude = line[1]
+            store_number = line[-1].strip()
+
+            params = {
+                "ID": int(store_number),
+                "Text": "",
+                "isDelivery": "",
+                "isWifi": "",
+                "isDrive": "",
+                "isKidsArea": "",
+                "isHandicap": "",
+                "isHours": "",
+                "_isMall": "",
+                "_isBreakfast": "",
+                "_isfacility": "",
+                "_isfacility2": "",
+                "_isfacility3": "",
+                "lang": "en",
+            }
+
+            location_response = session.post(
+                "https://iraq.texaschicken.com/Locations/AjaxSearch",
+                headers=headers,
+                json=params,
+            ).text
+            location_soup = bs(location_response, "html.parser")
+
+            address_parts = (
+                location_soup.find("div", attrs={"class": "col-md-12"})
+                .find_all("p")[-1]
+                .text.strip()
+                .replace('"', "")
+                .split(", ")
+            )
+            raw_address = (
+                location_soup.find("div", attrs={"class": "col-md-12"})
+                .find_all("p")[-1]
+                .text.strip()
+                .replace('"', "")
+            )
+
+            address = "".join(part + " " for part in address_parts[:-2])
+
+            if address == "":
+                address = "".join(part + " " for part in address_parts)
+
+            city = "<MISSING>"
+            state = "<MISSING>"
+            zipp = "<MISSING>"
+            country_code = "Iraq"
+            phone = "<MISSING>"
+            location_type = "<MISSING>"
+
+            try:
+                hours = (
+                    location_soup.find("p", attrs={"class": "font-15"})
+                    .text.strip()
+                    .replace("Opening ", "")
+                    .replace("\r", " ")
+                    .replace("\n", " ")
+                    .replace("\t", " ")
+                    .replace("                          ", " ")
+                )
+
+                if hours.lower() == "daily: closed":
+                    continue
+
+            except Exception:
+                hours = "<MISSING>"
+
+            locs.append(
+                {
+                    "locator_domain": locator_domain,
+                    "page_url": page_url,
+                    "location_name": location_name,
+                    "latitude": latitude,
+                    "longitude": longitude,
+                    "city": city,
+                    "store_number": store_number,
+                    "street_address": address,
+                    "state": state,
+                    "zip": zipp,
+                    "phone": phone,
+                    "location_type": location_type,
+                    "hours": hours,
+                    "country_code": country_code,
+                    "raw_address": raw_address,
+                }
+            )
+
+    return locs
+
+
+def scrape_qatar(session, headers):
+    response = session.get("https://qatar.texaschicken.com/en/Locations").text
+    lines = response.split("\n")
+
+    locs = []
+    for line in lines:
+
+        if "markers.push" in line:
+            line = (
+                line.replace("markers.push([", "")
+                .replace("]);", "")
+                .strip()
+                .replace("\t", "")
+                .replace("\r", "")
+                .replace("'", "")
+                .split(",")
+            )
+
+            locator_domain = "qatar.texaschicken.com"
+            page_url = "https://qatar.texaschicken.com/en/Locations"
+            location_name = line[0]
+            latitude = line[2]
+            longitude = line[1]
+            store_number = line[-1].strip()
+
+            params = {
+                "ID": int(store_number),
+                "Text": "",
+                "isDelivery": "",
+                "isWifi": "",
+                "isDrive": "",
+                "isKidsArea": "",
+                "isHandicap": "",
+                "isHours": "",
+                "_isMall": "",
+                "_isBreakfast": "",
+                "_isfacility": "",
+                "_isfacility2": "",
+                "_isfacility3": "",
+                "lang": "en",
+            }
+
+            location_response = session.post(
+                "https://qatar.texaschicken.com/Locations/AjaxSearch",
+                headers=headers,
+                json=params,
+            ).text
+            location_soup = bs(location_response, "html.parser")
+
+            address_parts = (
+                location_soup.find("div", attrs={"class": "col-md-12"})
+                .find_all("p")[-1]
+                .text.strip()
+                .replace('"', "")
+                .split(", ")
+            )
+            raw_address = (
+                location_soup.find("div", attrs={"class": "col-md-12"})
+                .find_all("p")[-1]
+                .text.strip()
+                .replace('"', "")
+            )
+
+            address = "".join(part + " " for part in address_parts[:-2])
+
+            if address == "":
+                address = "".join(part + " " for part in address_parts)
+
+            city = "<MISSING>"
+            state = "<MISSING>"
+            zipp = "<MISSING>"
+            country_code = "Qatar"
+            phone = "<MISSING>"
+            location_type = "<MISSING>"
+
+            try:
+                hours = (
+                    location_soup.find("p", attrs={"class": "font-15"})
+                    .text.strip()
+                    .replace("Opening ", "")
+                    .replace("\r", " ")
+                    .replace("\n", " ")
+                    .replace("\t", " ")
+                    .replace("                          ", " ")
+                )
+
+                if hours.lower() == "daily: closed":
+                    continue
+
+            except Exception:
+                hours = "<MISSING>"
+
+            if "temporarily closed" in hours.lower():
+                continue
+
+            locs.append(
+                {
+                    "locator_domain": locator_domain,
+                    "page_url": page_url,
+                    "location_name": location_name,
+                    "latitude": latitude,
+                    "longitude": longitude,
+                    "city": city,
+                    "store_number": store_number,
+                    "street_address": address,
+                    "state": state,
+                    "zip": zipp,
+                    "phone": phone,
+                    "location_type": location_type,
+                    "hours": hours,
+                    "country_code": country_code,
+                    "raw_address": raw_address,
                 }
             )
 
@@ -805,13 +1294,39 @@ def get_data():
     response = session.get(url).text
     soup = bs(response, "html.parser")
 
-    country_list = [
+    frosting_list = [
         url.text.strip()
         for url in soup.find_all("option", attrs={"data-tokens": "frosting"})
         if "facebook" not in url["value"]
         and "comingsoon" not in url["value"].lower()
         and url["value"] != "http://www.texaschicken.co.id/"
     ]
+
+    mustard_list = [
+        url.text.strip()
+        for url in soup.find_all("option", attrs={"data-tokens": "mustard"})
+        if "facebook" not in url["value"]
+        and "comingsoon" not in url["value"].lower()
+        and url["value"] != "http://www.texaschicken.co.id/"
+    ]
+
+    ketchup_list = [
+        url.text.strip()
+        for url in soup.find_all("option", attrs={"data-tokens": "ketchup mustard"})
+        if "facebook" not in url["value"]
+        and "comingsoon" not in url["value"].lower()
+        and url["value"] != "http://www.texaschicken.co.id/"
+    ]
+
+    country_list = []
+    for item in frosting_list:
+        country_list.append(item)
+
+    for item in mustard_list:
+        country_list.append(item)
+
+    for item in ketchup_list:
+        country_list.append(item)
 
     for country in country_list:
         if country == "Malaysia":
@@ -868,8 +1383,32 @@ def get_data():
             for loc in locs:
                 yield loc
 
+        elif country == "Oman":
+            locs = scrape_oman(session, headers)
+
+            for loc in locs:
+                yield loc
+
+        elif country == "Western KSA":
+            locs = scrape_ksa(session, headers)
+
+            for loc in locs:
+                yield loc
+
+        elif country == "Iraq":
+            locs = scrape_iraq(session, headers)
+
+            for loc in locs:
+                yield loc
+
+        elif country == "Qatar":
+            locs = scrape_qatar(session, headers)
+
+            for loc in locs:
+                yield loc
+
         else:
-            pass
+            raise Exception("New country not scraped")
 
 
 def scrape():
@@ -896,6 +1435,7 @@ def scrape():
         ),
         hours_of_operation=sp.MappingField(mapping=["hours"], is_required=False),
         location_type=sp.MappingField(mapping=["location_type"], is_required=False),
+        raw_address=sp.MappingField(mapping=["raw_address"], is_required=False),
     )
 
     pipeline = sp.SimpleScraperPipeline(

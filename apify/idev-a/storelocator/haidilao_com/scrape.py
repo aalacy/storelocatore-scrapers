@@ -10,6 +10,29 @@ _headers = {
 
 locator_domain = "https://www.haidilao.com"
 base_url = "https://www.haidilao.com/eportal/store/listObjByPosition?longitude=123.47109664&latitude=41.68383007&country=CN&language=zh"
+sg_url = "https://www.haidilao.com/eportal/store/listObjByPosition?country=SG&longitude=&latitude=&language=zh"
+
+
+def _d(_, street_address, city, state, zip_postal=None):
+    phone = _["storeTelephone"]
+    if phone:
+        phone = phone.split(",")[0]
+    return SgRecord(
+        page_url="https://www.haidilao.com/serve/storeSearch",
+        store_number=_["storeId"],
+        location_name=_["storeName"],
+        street_address=street_address,
+        city=city.replace("SM", ""),
+        state=state,
+        zip_postal=zip_postal,
+        latitude=_["latitude"],
+        longitude=_["longitude"],
+        country_code=_["countryId"],
+        phone=phone,
+        locator_domain=locator_domain,
+        hours_of_operation=_["openTime"],
+        raw_address=_["storeAddress"].replace("\n", ""),
+    )
 
 
 def fetch_data():
@@ -58,24 +81,18 @@ def fetch_data():
                 if "市" not in city:
                     city += "市"
 
-            phone = _["storeTelephone"]
-            if phone:
-                phone = phone.split(",")[0]
-            yield SgRecord(
-                page_url="https://www.haidilao.com/serve/storeSearch",
-                store_number=_["storeId"],
-                location_name=_["storeName"],
-                street_address=street_address,
-                city=city.replace("SM", ""),
-                state=state,
-                latitude=_["latitude"],
-                longitude=_["longitude"],
-                country_code=_["countryId"],
-                phone=phone,
-                locator_domain=locator_domain,
-                hours_of_operation=_["openTime"],
-                raw_address=_["storeAddress"].replace("\n", ""),
-            )
+            yield _d(_, street_address, city, state)
+
+        locations = session.get(sg_url, headers=_headers).json()["value"]
+        for _ in locations:
+            raw_address = _["storeAddress"].replace("\n", "").replace("，", ",")
+            state = city = ""
+            addr = raw_address.split(",")
+            city = addr[-1].strip().split()[0]
+            zip_postal = addr[-1].strip().split()[-1]
+            street_address = ", ".join(addr[:-1])
+
+            yield _d(_, street_address, city, state, zip_postal)
 
 
 if __name__ == "__main__":

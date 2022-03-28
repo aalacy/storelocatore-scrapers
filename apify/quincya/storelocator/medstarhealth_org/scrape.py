@@ -1,4 +1,6 @@
 import json
+import time
+
 from bs4 import BeautifulSoup
 
 from sgscrape.sgwriter import SgWriter
@@ -24,7 +26,14 @@ def fetch_data(sgw: SgWriter):
     for item in items:
         link = "https://www.medstarhealth.org" + item["Url"]
         req = session.get(link, headers=headers)
-        base = BeautifulSoup(req.text, "lxml")
+
+        try:
+            base = BeautifulSoup(req.text, "lxml")
+        except:
+            time.sleep(2)
+            session = SgRequests(verify_ssl=False)
+            req = session.get(link, headers=headers)
+            base = BeautifulSoup(req.text, "lxml")
 
         script = (
             base.find("script", attrs={"type": "application ld-json"})
@@ -37,8 +46,45 @@ def fetch_data(sgw: SgWriter):
             .replace('0""', '0"')
         )
         store = json.loads(script)
+
         location_name = base.h1.text.strip()
-        street_address = store["address"]["streetAddress"]
+
+        add_lines = base.find_all(class_="field-address")
+        street_address = add_lines[0].text.replace("Trinity Square", "").strip()
+        try:
+            line_3 = add_lines[2].text.split("Johnston Pro")[0].strip()
+            if ", 2nd" in line_3:
+                line_3 = line_3.split(",")[-1].strip()
+            street_address = street_address + " " + line_3
+        except:
+            try:
+                street_address = street_address + " " + add_lines[1].text.strip()
+            except:
+                pass
+
+        if not street_address.strip()[0].isdigit():
+            street_address = add_lines[1].text.strip() + " " + add_lines[2].text.strip()
+
+        if "NW Building" in street_address:
+            street_address = street_address.split("Building")[0]
+
+        street_address = (
+            street_address.replace(" Outpatient Center", "")
+            .replace(" Medical Arts Bldg.", "")
+            .replace(" Physicians Office Bldg. North,", "")
+            .replace("Gorman Building", "")
+            .replace("- Infusion Center", "")
+            .replace(" Russel Morgan Bldg", "")
+            .replace(" Outpatient Medical Center,", "")
+            .replace(" Barlow Building", "")
+            .replace(" - Physician Center", "")
+            .replace(" Building B", "")
+            .replace(" Main Hospital", "")
+            .replace(", PHC Building", "")
+            .replace(".,", ".")
+            .strip()
+        )
+
         city = store["address"]["addressLocality"]
         state = store["address"]["addressRegion"]
         zip_code = store["address"]["postalCode"].strip()
@@ -54,6 +100,8 @@ def fetch_data(sgw: SgWriter):
         if " " in zip_code:
             state = zip_code.split()[0]
             zip_code = zip_code.split()[1].strip()
+
+        state = state.replace(",", "").replace(".", "")
 
         sgw.write_row(
             SgRecord(

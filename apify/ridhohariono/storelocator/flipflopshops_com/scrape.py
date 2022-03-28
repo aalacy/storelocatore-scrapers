@@ -6,14 +6,10 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgpostal import parse_address_intl
-from sgzip.dynamic import (
-    DynamicGeoSearch,
-    SearchableCountries,
-)
 
 DOMAIN = "flipflopshops.com"
-LOCATION_URL = "https://flipflopshops.com/stores/"
-API_URL = "https://flipflopshops.locally.com/geo/point/{}/{}?switch_user_location=1"
+LOCATION_URL = "https://www.flipflopshops.com/pages/shop-locator"
+API_URL = "https://flipflopshops.locally.com/stores/conversion_data?has_data=true&company_id=14484&store_mode=&style=&color=&upc=&category=&inline=1&show_links_in_list=&parent_domain=&map_center_lat={}&map_center_lng={}&map_distance_diag=3000.000&sort_by=proximity&no_variants=0&only_retailer_id=&dealers_company_id=&only_store_id=false&uses_alt_coords=false&q=false&zoom_level=8"
 HEADERS = {
     "Accept": "application/json, text/plain, */*",
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
@@ -55,68 +51,37 @@ def pull_content(url):
     return soup
 
 
-def getTime(start, end):
-    if start == 0 and end == 0:
-        return "Closed"
-    start = str(start)
-    end = str(end)
-    if len(start) == 3:
-        start = "0" + str(start)
-    if len(end) == 3:
-        end = "0" + str(end)
-    start = start[:2] + ":" + start[2:]
-    end = end[:2] + ":" + end[2:]
-    return start + "-" + end
-
-
 def fetch_data():
     log.info("Fetching store_locator data")
-    search = DynamicGeoSearch(
-        country_codes=[SearchableCountries.USA],
-        max_search_distance_miles=100,
-    )
-    for lat, long in search:
-        url = API_URL.format(lat, long)
-        log.info("Fetch data from => " + url)
+    fix_coord = [
+        {"lat": -24.721393388152748, "lng": 134.48956260698222},
+        {"lat": 21.300970635530234, "lng": -157.8556999999998},
+        {"lat": 40.725444204821486, "lng": -73.98660000000041},
+    ]
+    for val in fix_coord:
+        url = API_URL.format(val["lat"], val["lng"])
         data = session.get(url, headers=HEADERS).json()
-        if not data["nearest_stores"]["data"]:
-            continue
-        for key, val in data["nearest_stores"]["data"].items():
-            store_number = val["id"]
-            search.found_location_at(lat, long)
+        for row in data["markers"]:
+            store_number = row["id"]
             page_url = f"https://flipflopshops.locally.com/hosted/redirect/14484/{store_number}"
-            location_name = val["name"].strip()
-            street_address = val["address"].strip()
-            city = val["city"]
-            state = val["state"]
-            zip_postal = val["zip"]
-            phone = val["phone"]
-            country_code = val["country"]
-            hours_of_operation = (
-                "Monday: "
-                + getTime(val["mon_time_open"], val["mon_time_close"])
-                + ","
-                + "Tuesday: "
-                + getTime(val["tue_time_open"], val["tue_time_close"])
-                + ","
-                + "Wednesday: "
-                + getTime(val["wed_time_open"], val["wed_time_close"])
-                + ","
-                + "Thursday: "
-                + getTime(val["thu_time_open"], val["thu_time_close"])
-                + ","
-                + "Friday: "
-                + getTime(val["fri_time_open"], val["fri_time_close"])
-                + ","
-                + "Saturday: "
-                + getTime(val["sat_time_open"], val["sat_time_close"])
-                + ","
-                + "Sunday: "
-                + getTime(val["sun_time_open"], val["sun_time_close"])
-            ).strip()
+            location_name = row["name"]
+            street_address = row["address"]
+            city = row["city"]
+            state = row["state"]
+            zip_postal = row["zip"]
+            phone = row["phone"]
+            country_code = row["country"]
+            hoo = ""
+            try:
+                for key, val in row["display_dow"].items():
+                    hoo += val["label"] + ": " + val["bil_hrs"] + ","
+            except:
+                for val in row["display_dow"]:
+                    hoo += val["label"] + ": " + val["bil_hrs"] + ","
+            hours_of_operation = hoo.rstrip(",")
             location_type = MISSING
-            latitude = val["lat"]
-            longitude = val["lng"]
+            latitude = row["lat"]
+            longitude = row["lng"]
             log.info("Append {} => {}".format(location_name, street_address))
             yield SgRecord(
                 locator_domain=DOMAIN,
@@ -139,11 +104,7 @@ def fetch_data():
 def scrape():
     log.info("start {} Scraper".format(DOMAIN))
     count = 0
-    with SgWriter(
-        SgRecordDeduper(
-            RecommendedRecordIds.StoreNumberId, duplicate_streak_failure_factor=-1
-        )
-    ) as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
