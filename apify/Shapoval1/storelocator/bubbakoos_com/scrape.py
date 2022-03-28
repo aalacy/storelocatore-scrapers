@@ -100,7 +100,16 @@ def fetch_data(sgw: SgWriter):
                     longitude = ll.split("ll=")[1].split(",")[1].split("&")[0].strip()
                 except:
                     latitude, longitude = "<MISSING>", "<MISSING>"
-
+                sub_adr = []
+                if street_address == "US-46":
+                    sub_adr = driver.find_elements_by_xpath(
+                        f'//p[contains(text(), "{street_address}")]'
+                    )
+                tm = []
+                for k in sub_adr:
+                    line = "".join(k.text).split("\n")[0].strip()
+                    tm.append(line)
+                street_address = "".join(tm)
                 hours = driver.find_elements_by_xpath('//p[./i[@class="far fa-clock"]]')
                 tmp = []
                 for h in hours:
