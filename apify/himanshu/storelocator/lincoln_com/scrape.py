@@ -1,5 +1,5 @@
 from sgrequests import SgRequests
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries, Grain_1_KM
 from sglogging import SgLogSetup
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
@@ -30,7 +30,9 @@ def fetch_data():
 
     base_url = "https://www.lincoln.com"
     zipcodes = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA], expected_search_radius_miles=20
+        country_codes=[SearchableCountries.USA],
+        expected_search_radius_miles=20,
+        granularity=Grain_1_KM(),
     )
     for zip_code in zipcodes:
         str_zip = str(zip_code)
