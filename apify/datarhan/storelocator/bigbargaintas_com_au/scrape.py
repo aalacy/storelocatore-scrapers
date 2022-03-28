@@ -56,9 +56,9 @@ def fetch_data():
 
         item = SgRecord(
             locator_domain=domain,
-            page_url=poi["sl_pages_url"],
+            page_url="https://www.bigbargaintas.com.au/store-finder/",
             location_name=poi["name"],
-            street_address=street_address,
+            street_address=street_address.replace(",", ""),
             city=poi["city"].replace(",", ""),
             state=poi["state"],
             zip_postal=poi["zip"],
@@ -73,7 +73,8 @@ def fetch_data():
             .replace("\r\n", "")
             .split("&lt;strong")[0]
             .replace("&lt;/br&gt;", "")
-            .split(", PUB HOL")[0],
+            .split(", PUB HOL")[0]
+            .split("PUB")[0],
         )
 
         yield item
