@@ -1,7 +1,11 @@
-from sgscrape.sgrecord import SgRecord
-from sgscrape.sgwriter import SgWriter
-from sgrequests import SgRequests
 from sglogging import SgLogSetup
+from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from typing import Iterable
+from sgscrape.pause_resume import SerializableRequest, CrawlState, CrawlStateSingleton
 from lxml import html
 import ssl
 
@@ -16,7 +20,7 @@ else:
 
 
 logger = SgLogSetup().get_logger("midas_com")
-MISSING = "<MISSING>"
+MISSING = SgRecord.MISSING
 DOMAIN = "https://www.midas.com"
 SITEMAP_URL = "https://www.midas.com/tabid/697/default.aspx"
 headers = {
@@ -24,11 +28,9 @@ headers = {
     "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.77 Safari/537.36",
 }
 
-session = SgRequests().requests_retry_session(retries=0)
 
-
-def get_all_store_url():
-    r1 = session.get(SITEMAP_URL, headers=headers)
+def record_initial_requests(http: SgRequests, state: CrawlState) -> bool:
+    r1 = http.get(SITEMAP_URL, headers=headers)
     d1 = html.fromstring(r1.text, "lxml")
     us_state_urls = d1.xpath(
         '//div[h2[contains(text(), "Midas Stores - United States")]]/ul/li/a/@href'
@@ -40,37 +42,35 @@ def get_all_store_url():
     )
     ca_state_urls = [f"{DOMAIN}{url}" for url in ca_state_urls]
     us_ca_state_urls = us_state_urls + ca_state_urls
-    us_ca_store_urls = []
     for u in us_ca_state_urls:
         logger.info(f"Pulling the store URLs from: {u}")
-        r3 = session.get(u, headers=headers)
-        d3 = html.fromstring(r3.text, "lxml")
-        store_url_list = d3.xpath(
-            '//li/a[contains(@class, "link") and contains(@href, "store.aspx")]/@href'
+        r2 = http.get(u, headers=headers)
+        d2 = html.fromstring(r2.text, "lxml")
+        store_url_list = d2.xpath(
+            '//ul[@class="list"]/li/a[contains(@class, "link")]/@href'
         )
         store_url_list = [f"{DOMAIN}{sul}" for sul in store_url_list]
         logger.info(f"Found: {len(store_url_list)}")
-        us_ca_store_urls.extend(store_url_list)
-    us_ca_store_urls = list(set(us_ca_store_urls))
+        for store_url in store_url_list:
+            state.push_request(SerializableRequest(url=store_url))
 
-    return us_ca_store_urls
+    return True
 
 
-def fetch_data():
+def fetch_records(http: SgRequests, state: CrawlState) -> Iterable[SgRecord]:
     # Your scraper here
-    all_store_urls = get_all_store_url()
-    identities = set()
-    for idx, store_url in enumerate(all_store_urls):
-        # for idx, store_url in enumerate(all_store_urls[0:20]):
-        logger.info(f"Pulling the data from: {store_url} ")
+
+    idx = 0
+    for next_r in state.request_stack_iter():
+        store_url = next_r.url
+        logger.info(f"[{idx}] Pulling the data from: {store_url} ")
         store_number = store_url.split("shopnum=")[-1].split("&dmanum")[0]
         get_store_details_by_shopnum = (
-            "https://www.midas.com/shop/getstorebyshopnumber?shopnum={}"
+            f"https://www.midas.com/shop/getstorebyshopnumber?shopnum={store_number}"
         )
-        poi = session.get(
+        poi = http.get(
             get_store_details_by_shopnum.format(store_number), headers=headers
         ).json()
-
         location_name = poi["Name"]
         location_name = location_name if location_name else "<MISSING>"
         page_url = store_url
@@ -102,9 +102,6 @@ def fetch_data():
 
         longitude = poi["Longitude"]
         longitude = longitude if longitude else "<MISSING>"
-        if store_number in identities:
-            continue
-        identities.add(store_number)
         hoo = []
         for i in poi["GroupDaysList"]:
             dayhours = i["DayLabel"] + " " + i["HoursLabel"]
@@ -112,6 +109,7 @@ def fetch_data():
         hours_of_operation = "; ".join(hoo)
         hours_of_operation = hours_of_operation if hours_of_operation else MISSING
         raw_address = MISSING
+        idx += 1
         yield SgRecord(
             locator_domain=locator_domain,
             page_url=page_url,
@@ -132,13 +130,19 @@ def fetch_data():
 
 
 def scrape():
-    logger.info(" Scraping Started")
+    logger.info("Started")
+    state = CrawlStateSingleton.get_instance()
     count = 0
-    with SgWriter() as writer:
-        results = fetch_data()
-        for rec in results:
-            writer.write_row(rec)
-            count = count + 1
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.STORE_NUMBER}))
+    ) as writer:
+        with SgRequests() as http:
+            state.get_misc_value(
+                "init", default_factory=lambda: record_initial_requests(http, state)
+            )
+            for rec in fetch_records(http, state):
+                writer.write_row(rec)
+                count = count + 1
 
     logger.info(f"No of records being processed: {count}")
     logger.info("Finished")

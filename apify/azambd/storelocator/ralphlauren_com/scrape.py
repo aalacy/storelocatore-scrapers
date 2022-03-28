@@ -1,40 +1,35 @@
 from lxml import html
 import time
-import json
 import random
-
+import json
 from sglogging import sglog
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
-
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgselenium.sgselenium import SgChrome
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
-
+from selenium.webdriver.common.action_chains import ActionChains
+from selenium.common.exceptions import NoSuchElementException
 import ssl
 
-try:
-    _create_unverified_https_context = (
-        ssl._create_unverified_context
-    )  # Legacy Python that doesn't verify HTTPS certificates by default
-except AttributeError:
-    pass
-else:
-    # Handle target environment that doesn't support HTTPS verification
-    ssl._create_default_https_context = _create_unverified_https_context
+ssl._create_default_https_context = ssl._create_unverified_context
 
-DOMAIN = "ralphlauren.com"
-website = "https://www.ralphlauren.com"
-MISSING = "<MISSING>"
+website = "ralphlauren.com"
+start_url = "https://www.ralphlauren.com/findstores?dwfrm_storelocator_distanceUnit=mi&dwfrm_storelocator_searchKey=10002&dwfrm_storelocator_maxdistance=50000&dwfrm_storelocator_latitude=&dwfrm_storelocator_longitude=&countryCode=&postalCode=&usePlaceDetailsAddress=false&dwfrm_storelocator_findbysearchkey=Search&findByValue=KeySearch"
+user_agent = (
+    "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0"
+)
+MISSING = SgRecord.MISSING
 
-log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
-
-countryCodes = ["CA", "GB", "US"]
+xpath_px_captcha = '//*[@id="px-captcha"]'
+EXPLICIT_WAIT_TIME = 10
 
 
-def driverSleep(driver, time=2):
+def driver_sleep(driver, time=2):
     try:
         WebDriverWait(driver, time).until(
             EC.presence_of_element_located((By.ID, MISSING))
@@ -43,11 +38,65 @@ def driverSleep(driver, time=2):
         pass
 
 
-def randomSleep(driver, start=5, limit=6):
-    driverSleep(driver, random.randint(start, start + limit))
+def random_sleep(driver, start=5, limit=3):
+    driver_sleep(driver, random.randint(start, start + limit))
 
 
-def getVarName(value):
+def check_if_xpath_exists(driver, xpath):
+    try:
+        driver.find_element_by_xpath(xpath)
+    except NoSuchElementException:
+        return False
+    return True
+
+
+log = sglog.SgLogSetup().get_logger(logger_name=website)
+
+
+def fetch_page_cf(driver, url):
+    driver.get(url)
+    random_sleep(driver, 5)
+    driver.execute_script("window.scrollTo(0, document.documentElement.scrollHeight);")
+    driver.execute_script("window.scrollTo(0, 0);")
+    driver.execute_script("window.scrollTo(0, document.documentElement.scrollHeight);")
+    random_sleep(driver, 2)
+
+    if check_if_xpath_exists(driver, xpath_px_captcha) is True:
+        try:
+            log.info("Dealing with CF ...")
+            WebDriverWait(driver, EXPLICIT_WAIT_TIME).until(
+                EC.presence_of_element_located((By.ID, "px-captcha"))
+            )
+            block_button_px = driver.find_element_by_id("px-captcha")
+            action = ActionChains(driver)
+            x = 50
+            y = 50
+            action.move_to_element_with_offset(block_button_px, x, y)
+            log.debug(f"Moving the cursor closer to the PRESS & HOLD button {x}, {y}")
+            random_sleep(driver, 10)
+            action.click_and_hold()
+            log.debug("Perform click and hold")
+            action.perform()
+            log.debug("Holding for a few seconds")
+            random_sleep(driver, 8)
+            log.debug("Pressed button")
+            action.release().perform()
+            log.debug("PRESS & HOLD BUTTON RELEASED")
+
+            random_sleep(driver, 30)
+
+            driver.execute_script("window.scrollTo(0, 0);")
+            random_sleep(driver, 10)
+            log.debug(f"Reloading again {url} ...")
+            return fetch_page_cf(driver, url)
+        except Exception as e:
+            log.debug(f"Retrying ...{e}")
+            return fetch_page_cf(driver, url)
+    else:
+        random_sleep(driver, 5)
+
+
+def get_var_name(value):
     try:
         return int(value)
     except ValueError:
@@ -55,163 +104,102 @@ def getVarName(value):
     return value
 
 
-def getJSONObjectVariable(Object, varNames, noVal=MISSING):
+def get_JSON_object_variable(Object, varNames, noVal=MISSING):
     value = noVal
     for varName in varNames.split("."):
-        varName = getVarName(varName)
+        varName = get_var_name(varName)
         try:
             value = Object[varName]
             Object = Object[varName]
         except Exception:
             return noVal
-    if value is None or value == "None" or value == "":
+    if value is None:
+        return MISSING
+    value = str(value).replace("null", "").replace("None", "").strip()
+    if len(value) == 0:
         return MISSING
     return value
 
 
-def fetchStores():
-    user_agent = (
-        "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0"
-    )
-    x = 0
-    driver = None
-    while True:
-        x = x + 1
-        try:
-            driver = SgChrome(
-                executable_path=ChromeDriverManager().install(),
-                user_agent=user_agent,
-                is_headless=True,
-            ).driver()
+def fetch_stores(driver):
+    fetch_page_cf(driver, start_url)
+    body = html.fromstring(driver.page_source, "lxml")
+    data = body.xpath('//*[contains(@data-storejson, "[")]/@data-storejson')[0]
+    stores = json.loads(data)
+    jsons = body.xpath('//script[contains(@type, "application/ld+json")]/text()')
+    dataJSON = []
+    for jsonData in jsons:
+        if '"openingHours"' in jsonData:
+            dataJSON = json.loads(jsonData)
+            dataJSON = dataJSON["store"]
+            break
 
-            log.debug("Loading store page ...")
-            driver.get(f"{website}/stores")
-            randomSleep(driver, 10)
-            body = html.fromstring(driver.page_source, "lxml")
-            allCountryCodes = body.xpath(
-                "//select[@id='dwfrm_storelocator_country']/option/@value"
-            )
+    for store in stores:
+        store["location_name"] = MISSING
+        store["street_address"] = MISSING
+        store["hoo"] = MISSING
+        store["country_code"] = "US"
 
-            allStores = []
-            for countryCode in countryCodes:
-                if countryCode not in allCountryCodes:
-                    log.debug(f"{countryCode} not in store options")
-                log.debug(f"Fetching country {countryCode} ...")
-                driver.get(
-                    f"{website}/findstores?dwfrm_storelocator_country={countryCode}&dwfrm_storelocator_findbycountry=Search&findByValue=CountrySearch"
-                )
-                randomSleep(driver, 20)
-                body = html.fromstring(driver.page_source, "lxml")
-
-                stores = json.loads(
-                    body.xpath(
-                        '//div[contains(@class, "storeJSON hide")]/@data-storejson'
-                    )[0]
-                )
-                jsonData = body.xpath(
-                    '//script[contains(@type, "application/ld+json")]/text()'
-                )
-
-                for data in jsonData:
-                    if 'store":[{' in data:
-                        dataJSON = json.loads(data)["store"]
-                        log.info(f"total stores in {countryCode} are {len(stores)}")
-                        for store in stores:
-                            store["location_name"] = MISSING
-                            store["street_address"] = MISSING
-                            store["hoo"] = MISSING
-                            store["country_code"] = "US"
-                            if "latitude" not in store:
-                                continue
-
-                            for data in dataJSON:
-                                if (
-                                    "latitude" in data["geo"]
-                                    and f'{data["geo"]["latitude"]} {data["geo"]["longitude"]}'
-                                    == f'{store["latitude"]} {store["longitude"]}'
-                                ):
-                                    store["location_name"] = data["name"]
-                                    store["street_address"] = data["address"][
-                                        "streetAddress"
-                                    ]
-                                    store["country_code"] = data["address"][
-                                        "addressCountry"
-                                    ]
-                                    store["hoo"] = (
-                                        data["openingHours"]
-                                        .replace("<br/>\n", "; ")
-                                        .replace("<br/>", " ")
-                                        .replace("<br>", "; ")
-                                        .replace("\n", " ")
-                                        .strip()
-                                    )
-
-                allStores = allStores + stores
-            return driver, allStores
-
-        except Exception as e:
-            log.error(f"Error loading : {e}")
-            driver.quit()
-            if x == 3:
-                raise Exception(
-                    "Make sure this ran with a Proxy, will fail without one"
-                )
+        if "latitude" not in store:
             continue
-    return driver, []
+        for data in dataJSON:
+            if data["telephone"] == "":
+                data_phone = "None"
+            else:
+                data_phone = data["telephone"]
+            if (
+                "latitude" in data["geo"]
+                and f"{data_phone}" == f'{store["phone"]}'
+                and f'{data["geo"]["latitude"]} {data["geo"]["longitude"]}'
+                == f'{store["latitude"]} {store["longitude"]}'
+            ):
+                store["location_name"] = data["name"]
+                store["street_address"] = data["address"]["streetAddress"]
+                store["country_code"] = data["address"]["addressCountry"]
+                store["hoo"] = (
+                    data["openingHours"]
+                    .replace("<br/>\n", "; ")
+                    .replace("<br/>", " ")
+                    .replace("<br>", "; ")
+                    .replace("\n", " ")
+                    .strip()
+                )
+
+    return stores
 
 
-def fetchData():
-    driver, stores = fetchStores()
+def fetch_data(driver):
+    stores = fetch_stores(driver)
     log.info(f"Total stores = {len(stores)}")
     for store in stores:
-
         location_type = MISSING
 
-        store_number = getJSONObjectVariable(store, "id")
-        page_url = f"{website}/Stores-Details?StoreID={store_number}"
-        location_name = getJSONObjectVariable(store, "location_name")
-        street_address = getJSONObjectVariable(store, "street_address")
-        city = getJSONObjectVariable(store, "city")
-        state = getJSONObjectVariable(store, "stateCode")
-        zip_postal = getJSONObjectVariable(store, "postalCode")
-        country_code = getJSONObjectVariable(store, "country_code")
-        phone = getJSONObjectVariable(store, "phone")
-        latitude = getJSONObjectVariable(store, "latitude")
-        longitude = getJSONObjectVariable(store, "longitude")
+        store_number = get_JSON_object_variable(store, "id")
+        page_url = f"https://www.ralphlauren.com/Stores-Details?StoreID={store_number}"
+        location_name = get_JSON_object_variable(store, "location_name")
+        location_name = location_name.split("-")[0].strip()
+        street_address = get_JSON_object_variable(store, "street_address")
+        city = get_JSON_object_variable(store, "city")
+        zip_postal = get_JSON_object_variable(store, "postalCode")
+        street_address = street_address.replace(f",{zip_postal}", "")
+        state = get_JSON_object_variable(store, "stateCode")
+        country_code = get_JSON_object_variable(store, "countryCode")
+        phone = get_JSON_object_variable(store, "phone")
+        latitude = get_JSON_object_variable(store, "latitude")
+        longitude = get_JSON_object_variable(store, "longitude")
 
-        street_address = street_address.replace(f",{zip_postal}", "").replace(",", ", ")
-        street_address = " ".join(street_address.split())
-        if state == MISSING:
-            raw_address = f"{street_address}, {city} {zip_postal}"
-        else:
-            raw_address = f"{street_address}, {city}, {state} {zip_postal}"
+        hours_of_operation = get_JSON_object_variable(store, "hoo")
 
-        hours_of_operation = store["hoo"]
-
-        if location_name == MISSING:
-            log.debug(f"Fetching page_url {page_url} ...")
-            driver.get(page_url)
-            body = html.fromstring(driver.page_source, "lxml")
-            jsonData = body.xpath(
-                '//script[contains(@type, "application/ld+json")]/text()'
-            )
-
-            for data in jsonData:
-                if '"openingHours"' in data:
-                    dataJSON = json.loads(data)
-                    location_name = dataJSON["name"]
-                    hours_of_operation = (
-                        "; ".join(dataJSON["openingHours"])
-                        .replace("<br/>\n", "; ")
-                        .replace("<br/>", " ")
-                        .replace("<br>", "; ")
-                        .replace("\n", " ")
-                        .strip()
-                    )
-                    raw_address = MISSING
+        raw_address = f"{street_address}, {city}, {state} {zip_postal}".replace(
+            MISSING, ""
+        )
+        raw_address = " ".join(raw_address.split())
+        raw_address = raw_address.replace(", ,", ",").replace(",,", ",")
+        if raw_address[len(raw_address) - 1] == ",":
+            raw_address = raw_address[:-1]
 
         yield SgRecord(
-            locator_domain=DOMAIN,
+            locator_domain=website,
             store_number=store_number,
             page_url=page_url,
             location_name=location_name,
@@ -227,18 +215,26 @@ def fetchData():
             hours_of_operation=hours_of_operation,
             raw_address=raw_address,
         )
-    driver.quit()
     return []
 
 
 def scrape():
-    log.info("Crawling started ...")
+    log.info(f"Start scrapping {website} ...")
     start = time.time()
-    result = fetchData()
-    with SgWriter() as writer:
-        for rec in result:
-            writer.write_row(rec)
+    count = 0
+    with SgChrome(
+        executable_path=ChromeDriverManager().install(),
+        is_headless=True,
+        user_agent=user_agent,
+    ) as driver:
+        with SgWriter(
+            deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)
+        ) as writer:
+            for rec in fetch_data(driver):
+                writer.write_row(rec)
+                count = count + 1
     end = time.time()
+    log.info(f"Total Rows Added= {count}")
     log.info(f"Scrape took {end-start} seconds.")
 
 

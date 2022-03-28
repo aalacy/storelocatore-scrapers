@@ -3,6 +3,9 @@ from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+import json
 import re
 
 logger = SgLogSetup().get_logger("baartprograms")
@@ -13,89 +16,106 @@ _headers = {
 
 days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 
+locator_domain = "https://baartprograms.com/"
+base_url = "https://baartprograms.com/locations/"
+
 
 def fetch_data():
-    locator_domain = "https://baartprograms.com/"
-    base_url = "https://baartprograms.com/locations/"
-    with SgRequests() as session:
-        soup = bs(session.get(base_url, headers=_headers).text, "lxml")
-        links = soup.select("div.fl-module-dual-color-heading")
-        logger.info(f"{len(links)} found")
-        for link in links:
-            page_url = link.a["href"]
-            logger.info(page_url)
-            sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
-            try:
-                coord = (
-                    sp1.select_one("div.fl-node-content iframe")["src"]
-                    .split("!2d")[1]
-                    .split("!2m")[0]
-                    .split("!3d")[::-1]
-                )
-            except:
-                coord = ["", ""]
-            addr = list(
-                sp1.find("h3", string=re.compile(r"^Contact Information"))
-                .find_parent()
-                .find_next_sibling()
-                .p.stripped_strings
-            )
-            block = list(
-                sp1.find("h3", string=re.compile(r"^Contact Information"))
-                .find_parent()
-                .find_next_sibling()
-                .select("p")[1]
-                .stripped_strings
-            )
+    with SgRequests(proxy_country="us") as session:
+        locations = json.loads(
+            session.get(base_url, headers=_headers)
+            .text.split("var baartSite = ")[1]
+            .split("</script>")[0]
+            .strip()[:-1]
+        )["locations"]
+        for _ in locations:
             hours = []
-            _hr = sp1.find("h3", string=re.compile(r"Operating Hours"))
-            if _hr:
-                temp = []
-                for hh in _hr.find_parent().find_next_sibling().select("p"):
-                    temp += list(hh.stripped_strings)
-                _day = []
-                _hour = []
-                for x, hh in enumerate(temp):
-                    if (
-                        hh.split("-")[0]
-                        .split("–")[0]
-                        .split(":")[0]
-                        .split("&")[0]
-                        .strip()
-                        in days
-                    ):
-                        if _day and _hour:
-                            hours.append(f"{''.join(_day)}: {' '.join(_hour)}")
-                            _day = []
-                        if hh.endswith(":"):
-                            hh = hh[:-1]
-                        _day.append(hh)
-                        _hour = []
-                    elif "holiday" not in hh.lower():
-                        _hour.append(hh)
+            info = bs(_["location_messages"], "lxml")
+            page_url = info.a["href"].strip().split()[0]
+            if page_url:
+                logger.info(page_url)
+                res = session.get(page_url, headers=_headers)
+                try:
+                    res.url
+                except:
+                    import pdb
 
-                    if x == len(temp) - 1 or hh.lower().startswith("holiday"):
-                        hours.append(f"{''.join(_day)}: {' '.join(_hour)}")
-                    if hh.lower().startswith("holiday"):
-                        break
+                    pdb.set_trace()
+                if res.url.__str__() != "https://medmark.com/":
+                    page_url = res.url.__str__()
+                    sp1 = bs(res.text, "lxml")
+                    try:
+                        ss = json.loads(
+                            sp1.find_all("script", type="application/ld+json")[
+                                -1
+                            ].string
+                        )
+                        for hh in ss.get("openingHoursSpecification", []):
+                            if type(hh["dayOfWeek"]) == list:
+                                day = f"{hh['dayOfWeek'][0]} - {hh['dayOfWeek'][-1]}"
+                            else:
+                                day = hh["dayOfWeek"]
+                            hours.append(f"{day}: {hh['opens']} - {hh['closes']}")
+                    except:
+                        if sp1.select("div.treatment-work"):
+                            for hh in sp1.select("div.treatment-work")[0].select(
+                                "div.tw-item"
+                            ):
+                                if "Holiday" in hh.text:
+                                    break
+                                hours.append(" ".join(hh.stripped_strings))
+                        elif sp1.select_one("div.sidebar-info-time p"):
+                            hours = list(
+                                sp1.select_one(
+                                    "div.sidebar-info-time p"
+                                ).stripped_strings
+                            )[1:]
+                        elif sp1.find("span", string=re.compile(r"OPERATING HOURS")):
+                            for hh in (
+                                sp1.find("span", string=re.compile(r"OPERATING HOURS"))
+                                .find_parent("p")
+                                .find_next_siblings("p")
+                            ):
+                                if not hh.text.strip():
+                                    continue
+                                hours.append(hh.text.strip())
+                        elif sp1.select("div.uabb-infobox-text.uabb-text-editor"):
+                            temp = list(
+                                sp1.select("div.uabb-infobox-text.uabb-text-editor")[
+                                    1
+                                ].stripped_strings
+                            )
+                            hh = []
+                            for hr in temp:
+                                hh.append(hr)
+                                if hr[0].isdigit():
+                                    hours.append(hh)
+                                    hh = []
+                        else:
+                            pass
+
             yield SgRecord(
                 page_url=page_url,
-                location_name=sp1.select_one("h1.fl-heading").text.strip(),
-                street_address=addr[0],
-                city=addr[1].split(",")[0].strip(),
-                state=addr[1].split(",")[1].strip().split(" ")[0].strip(),
-                zip_postal=addr[1].split(",")[1].strip().split(" ")[-1].strip(),
+                store_number=_["location_id"],
+                location_name=_["location_title"],
+                street_address=list(info.stripped_strings)[0].split("\n")[0].strip(),
+                city=_["location_address"].split(",")[-3],
+                state=_["location_state"],
+                zip_postal=_["location_postal_code"],
+                latitude=_["location_latitude"],
+                longitude=_["location_longitude"],
                 country_code="US",
-                phone=block[1],
+                phone=_["location_extrafields"].get("phone")
+                if _["location_extrafields"]
+                else "",
                 locator_domain=locator_domain,
-                latitude=coord[0],
-                longitude=coord[1],
-                hours_of_operation="; ".join(hours).replace("–", "-"),
+                hours_of_operation="; ".join(hours),
+                raw_address=_["location_address"],
             )
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

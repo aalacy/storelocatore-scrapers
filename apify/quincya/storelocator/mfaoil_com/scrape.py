@@ -1,4 +1,3 @@
-import csv
 import re
 import ssl
 import time
@@ -14,6 +13,11 @@ from selenium.webdriver.support.ui import WebDriverWait
 from sglogging import sglog
 
 from sgrequests import SgRequests
+
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 from sgselenium import SgChrome
 
@@ -31,34 +35,7 @@ else:
     ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
+def fetch_data(sgw: SgWriter):
 
     session = SgRequests()
 
@@ -69,7 +46,6 @@ def fetch_data():
 
     driver = SgChrome(user_agent=user_agent).driver()
 
-    max_results = 101
     max_distance = 100
 
     dup_tracker = []
@@ -78,8 +54,7 @@ def fetch_data():
         country_codes=[
             SearchableCountries.USA,
         ],
-        max_radius_miles=max_distance,
-        max_search_results=max_results,
+        max_search_distance_miles=max_distance,
     )
 
     driver.get("https://www.mfaoil.com/store-locator/")
@@ -128,6 +103,7 @@ def fetch_data():
                 phone = "<MISSING>"
             location_type = "<MISSING>"
 
+            log.info(link)
             req = session.get(link, headers=headers)
             base = BeautifulSoup(req.text, "lxml")
 
@@ -157,28 +133,25 @@ def fetch_data():
 
             hours_of_operation = (re.sub(" +", " ", hours_of_operation)).strip()
 
-            yield [
-                locator_domain,
-                link,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip_code,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
-    driver.close()
+            sgw.write_row(
+                SgRecord(
+                    locator_domain=locator_domain,
+                    page_url=link,
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=zip_code,
+                    country_code=country_code,
+                    store_number=store_number,
+                    phone=phone,
+                    location_type=location_type,
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=hours_of_operation,
+                )
+            )
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+    fetch_data(writer)

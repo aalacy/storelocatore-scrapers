@@ -4,17 +4,19 @@ from sgrequests import SgRequests
 import json
 from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 logger = SgLogSetup().get_logger("liquordepot")
 
 _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
 }
+locator_domain = "https://www.liquordepot.ca/"
+base_url = "https://www.liquordepot.ca/Our-Stores"
 
 
 def fetch_data():
-    locator_domain = "https://www.liquordepot.ca/"
-    base_url = "https://www.liquordepot.ca/Our-Stores"
     with SgRequests() as session:
         locations = json.loads(
             session.get(base_url, headers=_headers)
@@ -52,7 +54,7 @@ def fetch_data():
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

@@ -1,176 +1,66 @@
-import csv
-import json
-
 from bs4 import BeautifulSoup
 
-from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 from sgrequests import SgRequests
 
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 
-log = SgLogSetup().get_logger("pacsun.com")
-
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
+def fetch_data(sgw: SgWriter):
 
     session = SgRequests()
 
-    base_link = "https://www.pacsun.com/stores"
+    base_link = "https://www.pacsun.com/on/demandware.store/Sites-pacsun-Site/default/Stores-FindStores?showMap=false&radius=5000&findInStore=false&postalCode=43240"
 
-    headers = {
-        "authority": "www.pacsun.com",
-        "method": "POST",
-        "path": "/stores",
-        "scheme": "https",
-        "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-        "accept-encoding": "gzip, deflate, br",
-        "accept-language": "en-US,en;q=0.9",
-        "content-length": "100",
-        "content-type": "application/x-www-form-urlencoded",
-        "origin": "https://www.pacsun.com",
-        "sec-fetch-dest": "document",
-        "sec-fetch-mode": "navigate",
-        "sec-fetch-site": "same-origin",
-        "sec-fetch-user": "?1",
-        "upgrade-insecure-requests": "1",
-        "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36",
-    }
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
+    headers = {"User-Agent": user_agent}
 
-    search = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA],
-        max_radius_miles=50,
-    )
-    log.info("Running sgzips ..")
+    stores = session.get(base_link, headers=headers).json()["stores"]
 
-    found = []
-    i = 1
-    for zip_code in search:
+    locator_domain = "pacsun.com"
 
-        if len(str(zip_code)) == 3:
-            zip_code = "00" + str(zip_code)
-        if len(str(zip_code)) == 4:
-            zip_code = "0" + str(zip_code)
+    for store in stores:
+        location_type = "<MISSING>"
+        location_name = store["name"]
+        if "CLOSED" in location_name.upper():
+            location_type = "Closed"
+        try:
+            street_address = (store["address1"] + " " + store["address2"]).strip()
+        except:
+            street_address = store["address1"]
+        city = store["city"]
+        state = store["stateCode"]
+        zip_code = store["postalCode"]
+        country_code = store["countryCode"]
+        phone = store["phone"]
+        latitude = store["latitude"]
+        longitude = store["longitude"]
+        store_number = store["ID"]
+        hours_of_operation = BeautifulSoup(store["storeHours"], "lxml").get_text(" ")
 
-        payload = {"postalCode": zip_code}
+        link = "https://www.pacsun.com/store?id=" + str(store_number)
 
-        # New session every 50
-        if i % 50 == 0:
-            log.info("New session for next 50 zips..")
-            log.info(zip_code)
-            session = SgRequests()
-
-        i += 1
-
-        response = session.post(base_link, headers=headers, data=payload)
-        base = BeautifulSoup(response.text, "lxml")
-
-        locator_domain = "pacsun.com"
-
-        stores = base.find_all(class_="sl-store")
-
-        if len(stores) > 0:
-            all_scripts = base.find_all("script")
-            for script in all_scripts:
-                if "storeList = " in str(script):
-                    store_json = json.loads(
-                        str(script).split("=")[1].split("var slS")[0]
-                    )
-                    break
-
-            for store in stores:
-                location_type = "<MISSING>"
-                location_name = store.h2.text.strip()
-                if "CLOSED" in location_name.upper():
-                    location_type = "Closed"
-
-                link = "https://www.pacsun.com/stores"
-
-                phone = store.find(class_="phone-number").text.strip()
-
-                street_address = store.find(
-                    class_="address-phone-info"
-                ).div.text.strip()
-                city_line = (
-                    store.find(class_="address-phone-info")
-                    .find_all("div")[1]
-                    .text.strip()
-                    .replace("\t", "")
-                    .split("\n")
-                )
-                city = city_line[0].replace(",", "")
-                state = city_line[1]
-                zip_code = city_line[2]
-                country_code = "US"
-                latitude = "<MISSING>"
-                longitude = "<MISSING>"
-                store_number = store["id"]
-
-                for j in store_json:
-                    if j["ID"] == store_number:
-                        latitude = j["lat"]
-                        longitude = j["long"]
-                        search.found_location_at(latitude, longitude)
-                        break
-                if store_number in found:
-                    continue
-                found.append(store_number)
-
-                hours_of_operation = (
-                    store.find(class_="storehours").get_text(" ").strip()
-                )
-
-                yield [
-                    locator_domain,
-                    link,
-                    location_name,
-                    street_address,
-                    city,
-                    state,
-                    zip_code,
-                    country_code,
-                    store_number,
-                    phone,
-                    location_type,
-                    latitude,
-                    longitude,
-                    hours_of_operation,
-                ]
+        sgw.write_row(
+            SgRecord(
+                locator_domain=locator_domain,
+                page_url=link,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_code,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
+        )
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+    fetch_data(writer)
