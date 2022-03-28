@@ -1,142 +1,140 @@
-import csv
+from asyncio import as_completed
+from concurrent.futures import ThreadPoolExecutor
 import re
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from sgselenium.sgselenium import SgChrome
-from webdriver_manager.chrome import ChromeDriverManager
-from bs4 import BeautifulSoup
+import json
+from sgselenium import SgChrome
+from bs4 import BeautifulSoup as bs
+from sgzip.dynamic import SearchableCountries
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+
+headers = {
+    "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
+}
 
 
-def get_driver(url, class_name, driver=None):
-    if driver is not None:
-        driver.quit()
+class ScrapableSite:
+    def __init__(self, domain, country_code):
+        self.locator_domain = domain
+        self.stores_url = f"https://www.{domain}/store-locator/all-stores/"
+        self.country_code = country_code
+        self.store_css_selector = ".storeCard"
 
-    user_agent = (
-        "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0"
-    )
-    x = 0
-    while True:
-        x = x + 1
+    def get_session(self):
+        session = SgChrome(is_headless=False).driver()
+        session.set_page_load_timeout(30)
+
+        return session
+
+    def refresh_session(self, session):
+        session.refresh()
+
+    def get_locations(self, session, retry=0):
         try:
-            driver = SgChrome(
-                executable_path=ChromeDriverManager().install(),
-                user_agent=user_agent,
-                is_headless=True,
-            ).driver()
-            driver.get(url)
+            session.get(self.stores_url)
+            session.refresh()
+            soup = bs(session.page_source, "html.parser")
 
-            WebDriverWait(driver, 20).until(
-                EC.presence_of_element_located((By.CLASS_NAME, class_name))
-            )
-            break
-        except Exception:
-            driver.quit()
-            if x == 10:
-                raise Exception(
-                    "Make sure this ran with a Proxy, will fail without one"
+            return [
+                f'https://www.{self.locator_domain}{a["href"]}'
+                for a in soup.select(self.store_css_selector)
+            ]
+        except:
+            if retry < 3:
+                return self.get_locations(session, retry + 1)
+
+    def get_data(self, url, session, retry=0):
+        try:
+            session.get(url)
+            soup = bs(session.page_source, "html.parser")
+            script = soup.find("script", type="application/ld+json")
+
+            return json.loads(re.sub(r"\t", "", script.string))
+        except Exception as e:
+            self.refresh_session()
+            if retry < 3:
+                return self.get_data(url, session, retry + 1)
+
+            raise Exception(f"Unable to fetch {url}: {e}")
+
+
+sites = [
+    ["jdsports.co.uk", SearchableCountries.BRITAIN],
+    ["jdsports.es", SearchableCountries.SPAIN],
+    ["jdsports.se", SearchableCountries.SWEDEN],
+    ["jdsports.be", SearchableCountries.BELGIUM],
+    ["jd-sports.com.au", SearchableCountries.AUSTRALIA],
+    ["jdsports.de", SearchableCountries.GERMANY],
+    ["jdsports.dk", SearchableCountries.DENMARK],
+    ["jdsports.com.sg", SearchableCountries.SINGAPORE],
+    ["jdsports.fr", SearchableCountries.FRANCE],
+    ["jdsports.fi", SearchableCountries.FINLAND],
+    ["jdsports.my", SearchableCountries.MALAYSIA],
+    ["jdsports.it", SearchableCountries.ITALY],
+    ["jdsports.nl", SearchableCountries.NETHERLANDS],
+    ["jdsports.co.th", SearchableCountries.THAILAND],
+    ["jdsports.at", SearchableCountries.AUSTRIA],
+    ["jdsports.pt", SearchableCountries.PORTUGAL],
+    ["jdsports.co.nz", SearchableCountries.NEW_ZEALAND],
+]
+
+
+def format_hours(hours):
+    data = []
+    for hour in hours:
+        data.append(f'{hour["dayOfWeek"]}: {hour["opens"]}-{hour["closes"]}')
+
+    return ", ".join(data)
+
+
+def fetch_locations(country):
+    site = ScrapableSite(*country)
+    pois = []
+    with site.get_session() as driver:
+        locations = site.get_locations(driver)
+        for location in locations:
+            data = site.get_data(location, driver)
+
+            pois.append(
+                SgRecord(
+                    page_url=data.get("url"),
+                    location_name=data.get("name"),
+                    street_address=data["address"]["streetAddress"],
+                    city=data["address"]["addressLocality"],
+                    state=data["address"]["addressRegion"],
+                    country_code=site.country_code,
+                    zip_postal=data["address"]["postalCode"],
+                    store_number=re.sub(
+                        f"https://www.{site.locator_domain}/", "", data["@id"]
+                    ),
+                    phone=data["telephone"],
+                    latitude=data["geo"]["latitude"],
+                    longitude=data["geo"]["longitude"],
+                    locator_domain=site.locator_domain,
+                    hours_of_operation=format_hours(data["openingHoursSpecification"]),
                 )
-            continue
-    return driver
+            )
+
+        return pois
 
 
 def fetch_data():
-    link = "https://www.jdsports.co.uk/store-locator/all-stores/"
-    driver = get_driver(link, "storeName")
-    soup = BeautifulSoup(driver.page_source, "html.parser")
-    locations = soup.find_all("li", {"data-e2e": "storeLocator-list-item"})
-    base_url = "https://www.jdsports.co.uk"
-    loclist = []
+    pois = []
 
-    for location in locations:
-        name = location.find("h3", {"class": "storeName"}).text
-        url = base_url + location.find("a", href=True)["href"]
-        store_number = url.split("/")[-2]
-        loc = [name, url, store_number]
-        loclist.append(loc)
+    with ThreadPoolExecutor() as executor:
+        futures = [executor.submit(fetch_locations, site) for site in sites]
+        for future in as_completed(futures):
+            pois.extend(future.result())
 
-    data = []
-    for location in loclist:
-        loc_url = location[1]
-        driver.get(loc_url)
-        soup = BeautifulSoup(driver.page_source, "html.parser")
-        info = soup.find("div", {"class": "storeContentLeft"})
-        address = info.find("div", {"id": "storeAddress"})
-        address = address.find("p")
-        address = address.text.replace("\n", "")
-        address = address.split("\t")
-        [street, zip_code] = [x for x in address if x]
-        phone = info.find("div", {"id": "storeContact"})
-        phone = phone.find("p").text
-        phone = re.sub("[^0-9]", "", phone)
-        if phone == "":
-            phone = "<MISSING>"
-        elif int(phone) == 0:
-            phone = "<MISSING>"
-        hours = info.find("div", {"id": "storeTimes"})
-        days = hours.find_all("span", {"class": "day"})
-        hours = hours.find_all("span", {"class": "time"})
-        length = len(days)
-        hoo = ""
-        for x in range(length):
-            hoo = hoo + days[x].text + " " + hours[x].text + ", "
-        hoo = hoo[:-2]
-        coor = soup.find("div", {"class": "storeContentRight"})
-        coor = coor.find("div", {"id": "staticMap"})
-        coor = coor.attrs["data-staticmapmarkers"].split("|", 1)[1].split('"', 1)[0]
-        [lat, long] = coor.split(",")
-        location_data = [
-            base_url,
-            loc_url,
-            location[0],
-            street,
-            "<MISSING>",
-            "<MISSING>",
-            zip_code,
-            "UK",
-            location[2],
-            phone,
-            "<MISSING>",
-            lat,
-            long,
-            hoo,
-        ]
-        data.append(location_data)
-    return data
-
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
+    return pois
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+        for row in fetch_data():
+            writer.write_row(row)
 
 
 scrape()

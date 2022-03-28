@@ -1,6 +1,9 @@
-import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 session = SgRequests()
 headers = {
@@ -8,33 +11,6 @@ headers = {
 }
 
 logger = SgLogSetup().get_logger("butlerhealthsystem_org")
-
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
 
 
 def fetch_data():
@@ -46,13 +22,12 @@ def fetch_data():
     country = "US"
     logger.info("Pulling Stores")
     for line in r.iter_lines():
-        line = str(line.decode("utf-8"))
         if 'ata-longitude="' in line:
             llng = line.split('ata-longitude="')[1].split('"')[0]
             llat = line.split('ata-latitude="')[1].split('"')[0]
-        if 'class="btn v1">View Details</a>' in line:
+        if "More information</a>" in line:
             locs.append(
-                "https://www.butlerhealthsystem.org/"
+                "https://www.butlerhealthsystem.org"
                 + line.split('href="')[1].split('"')[0]
                 + "|"
                 + llat
@@ -76,8 +51,7 @@ def fetch_data():
         r2 = session.get(lurl, headers=headers)
         lines = r2.iter_lines()
         for line2 in lines:
-            line2 = str(line2.decode("utf-8"))
-            if "<h3>Hours" in line2:
+            if "Hours</strong>" in line2:
                 HFound = True
             if HFound and "</div>" in line2:
                 HFound = False
@@ -94,41 +68,24 @@ def fetch_data():
                     hours = hrs
                 else:
                     hours = hours + "; " + hrs
-            if "<h1><span>" in line2:
-                name = line2.split("<h1><span>")[1].split("<")[0]
-            if add == "" and '<span itemprop="streetAddress">' in line2:
-                add = (
-                    line2.split('<span itemprop="streetAddress">')[1]
-                    .replace("\t", "")
-                    .replace("\r", "")
-                    .replace("\n", "")
+            if '<meta itemprop="name" content="' in line2 and name == "":
+                name = line2.split('<meta itemprop="name" content="')[1].split('"')[0]
+            if 'itemprop="streetAddress" content="' in line2 and add == "":
+                add = line2.split('itemprop="streetAddress" content="')[1].split('"')[0]
+            if 'itemprop="addressLocality" content="' in line2 and city == "":
+                city = line2.split('itemprop="addressLocality" content="')[1].split(
+                    '"'
+                )[0]
+            if 'itemprop="addressRegion" content="' in line2 and state == "":
+                state = (
+                    line2.split('itemprop="addressRegion" content="')[1]
+                    .split('"')[0]
                     .strip()
                 )
-                g = next(lines)
-                g = next(lines)
-                g = str(g.decode("utf-8"))
-                if "<br>" in g:
-                    add = (
-                        add
-                        + " "
-                        + g.split("<br>")[1]
-                        .replace("\t", "")
-                        .replace("\r", "")
-                        .replace("\n", "")
-                        .strip()
-                    )
-            if 'state: "' in line2:
-                state = line2.split('state: "')[1].split('"')[0]
-            if 'city: "' in line2:
-                city = line2.split('city: "')[1].split('"')[0]
-            if 'zipcode: "' in line2:
-                zc = line2.split('zipcode: "')[1].split('"')[0]
-            if phone == "" and 'itemprop="telephone">' in line2:
-                phone = (
-                    line2.split('itemprop="telephone">')[1]
-                    .split("<")[0]
-                    .replace(".", "-")
-                )
+            if 'itemprop="postalCode" content="' in line2 and zc == "":
+                zc = line2.split('itemprop="postalCode" content="')[1].split('"')[0]
+            if 'itemprop="telephone" content="' in line2 and phone == "":
+                phone = line2.split('itemprop="telephone" content="')[1].split('"')[0]
         if hours == "":
             hours = "<MISSING>"
         hours = (
@@ -139,27 +96,41 @@ def fetch_data():
             .strip()
         )
         add = add.replace("Rose E. Schneider Family YMCA<br>", "")
-        yield [
-            website,
-            lurl,
-            name,
-            add,
-            city,
-            state,
-            zc,
-            country,
-            store,
-            phone,
-            typ,
-            lat,
-            lng,
-            hours,
-        ]
+        if "160 Medical Center" in add:
+            zc = "16025"
+        hours = (
+            hours.replace("<strong>", "")
+            .replace("</strong>", "")
+            .replace("<ul>", "")
+            .replace("<li>", "")
+            .replace("</ul>", "")
+            .replace("</li>", "")
+            .replace(":", ": ")
+            .replace("  ", " ")
+        )
+        yield SgRecord(
+            locator_domain=website,
+            page_url=lurl,
+            location_name=name,
+            street_address=add,
+            city=city,
+            state=state,
+            zip_postal=zc,
+            country_code=country,
+            phone=phone,
+            location_type=typ,
+            store_number=store,
+            latitude=lat,
+            longitude=lng,
+            hours_of_operation=hours,
+        )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()

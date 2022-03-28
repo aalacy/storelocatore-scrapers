@@ -1,3 +1,5 @@
+import datetime
+import json
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
@@ -6,14 +8,22 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
 def fetch_data(sgw: SgWriter):
+    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
+
     locator_domain = "https://www.edwardsfoodgiant.com"
-    api_url = "https://api.freshop.com/1/stores?app_key=edwards_food_giant&has_address=true&is_selectable=true&limit=100&token=6d448279ea6f0cf83b39568cbf5ff893"
-    session = SgRequests()
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
+    api_url = "https://api.freshop.com/1/stores?app_key=edwards_food_giant&has_address=true&is_selectable=true&limit=100&token={}"
+    d = datetime.datetime.now()
+    unixtime = datetime.datetime.timestamp(d) * 1000
+    frm = {
+        "app_key": "edwards_food_giant",
+        "referrer": "https://www.edwardsfoodgiant.com/",
+        "utc": str(unixtime).split(".")[0],
     }
-    r = session.get(api_url, headers=headers)
-    js = r.json()
+    r = session.post("https://api.freshop.com/2/sessions/create", data=frm).json()
+    token = r["token"]
+
+    r = session.get(api_url.format(token))
+    js = json.loads(r.text)
 
     for j in js["items"]:
         page_url = j.get("url")

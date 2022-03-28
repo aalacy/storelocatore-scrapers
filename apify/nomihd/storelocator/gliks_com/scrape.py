@@ -1,206 +1,116 @@
 # -*- coding: utf-8 -*-
-import csv
 from sgrequests import SgRequests
 from sglogging import sglog
 import json
-from sgzip.dynamic import SearchableCountries
-from sgzip.static import static_coordinate_list
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+import lxml.html
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "gliks.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
-session = SgRequests()
 headers = {
-    "Connection": "keep-alive",
-    "sec-ch-ua": '"Chromium";v="88", "Google Chrome";v="88", ";Not A Brand";v="99"',
+    "authority": "stockist.co",
+    "sec-ch-ua": '"Google Chrome";v="93", " Not;A Brand";v="99", "Chromium";v="93"',
     "sec-ch-ua-mobile": "?0",
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36",
-    "Accept": "*/*",
-    "Origin": "https://www.gliks.com",
-    "Sec-Fetch-Site": "cross-site",
-    "Sec-Fetch-Mode": "cors",
-    "Sec-Fetch-Dest": "empty",
-    "Referer": "https://www.gliks.com/",
-    "Accept-Language": "en-US,en-GB;q=0.9,en;q=0.8",
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.63 Safari/537.36",
+    "sec-ch-ua-platform": '"Windows"',
+    "accept": "*/*",
+    "sec-fetch-site": "cross-site",
+    "sec-fetch-mode": "no-cors",
+    "sec-fetch-dest": "script",
+    "referer": "https://www.gliks.com/",
+    "accept-language": "en-US,en-GB;q=0.9,en;q=0.8",
+    "if-modified-since": "Sat, 25 Sep 2021 13:18:13 GMT",
 }
-
-
-def write_output(data):
-    with open("data.csv", mode="w", newline="", encoding="utf8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        temp_list = []  # ignoring duplicates
-        for row in data:
-            comp_list = [
-                row[2].strip(),
-                row[3].strip(),
-                row[4].strip(),
-                row[5].strip(),
-                row[6].strip(),
-                row[8].strip(),
-                row[10].strip(),
-            ]
-            if comp_list not in temp_list:
-                temp_list.append(comp_list)
-                writer.writerow(row)
-
-        log.info(f"No of records being processed: {len(temp_list)}")
 
 
 def fetch_data():
     # Your scraper here
-    address_list = []
-    coords = static_coordinate_list(radius=200, country_code=SearchableCountries.USA)
-
-    for lat, lng in coords:
-        log.info(f"Pulling stores for {lat,lng}")
-
-        search_url = "https://rebase.global.ssl.fastly.net/api/places/index.json?api_key=a0f289f0b91b1b6177194e9e0336f7ef&lat={}&lng={}"
-        stores_req = session.get(search_url.format(lat, lng), headers=headers)
-        stores = json.loads(stores_req.text)["locations"]
+    with SgRequests() as session:
+        search_url = "https://stockist.co/api/v1/u9151/locations/all.js"
+        stores_req = session.get(search_url, headers=headers)
+        stores = json.loads(stores_req.text)
         for store_json in stores:
             page_url = "<MISSING>"
             latitude = store_json["latitude"]
             longitude = store_json["longitude"]
 
-            location_name = store_json["info"]["name"]
+            location_name = store_json["name"]
 
             locator_domain = website
 
             location_type = "<MISSING>"
+            if "Temporarily Closed" in store_json["description"]:
+                location_type = "Temporarily Closed"
 
-            street_address = store_json["info"]["location"]["street"]
-            if street_address in address_list:
-                continue
-            address_list.append(street_address)
-            city = store_json["info"]["location"]["city"]
-            state = store_json["info"]["location"]["state"]
-            zip = store_json["info"]["location"]["zip"]
-            country_code = store_json["info"]["location"]["country"]
-            phone = store_json["info"]["phone"]
-            hours_of_operation = ""
+            street_address = store_json["address_line_1"]
+            if store_json["address_line_2"]:
+                street_address = street_address + ", " + store_json["address_line_2"]
+
+            city = store_json["city"]
+            state = store_json["state"]
+            zip = store_json["postal_code"]
+            country_code = "US"
+            phone = store_json["phone"]
             hours_list = []
-            hours = store_json["info"]["hours"]
-            try:
-                daytime = "Monday:" + hours["mon_1_open"] + "-" + hours["mon_1_close"]
-                hours_list.append(daytime)
-            except:
-                pass
-            try:
-                daytime = "Tuesday:" + hours["tue_1_open"] + "-" + hours["tue_1_close"]
-                hours_list.append(daytime)
-            except:
-                pass
-            try:
-                daytime = (
-                    "Wednesday:" + hours["wed_1_open"] + "-" + hours["wed_1_close"]
-                )
-                hours_list.append(daytime)
-            except:
-                pass
-            try:
-                daytime = "Thursday:" + hours["thu_1_open"] + "-" + hours["thu_1_close"]
-                hours_list.append(daytime)
-            except:
-                pass
-            try:
-                daytime = "Friday:" + hours["fri_1_open"] + "-" + hours["fri_1_close"]
-                hours_list.append(daytime)
-            except:
-                pass
-            try:
-                daytime = "Saturday:" + hours["sat_1_open"] + "-" + hours["sat_1_close"]
-                hours_list.append(daytime)
-            except:
-                pass
-            try:
-                daytime = "Sunday:" + hours["sun_1_open"] + "-" + hours["sun_1_close"]
-                hours_list.append(daytime)
-            except:
-                pass
+            if store_json["description"] and len(store_json["description"]) > 0:
+                hours_sel = lxml.html.fromstring(store_json["description"])
+                hours_list = hours_sel.xpath(".//text()")
 
-            hours_of_operation = "; ".join(hours_list).strip()
+            hours_of_operation = (
+                "; ".join(hours_list)
+                .strip()
+                .replace("day; :", "day:")
+                .strip()
+                .split("; Shop Type")[0]
+                .strip()
+                .split("; Temporarily Closed")[0]
+                .strip()
+                .split("; Shop with")[0]
+                .strip()
+            )
 
-            store_number = str(store_json["id"])
-            if store_number == "":
-                store_number = "<MISSING>"
-
-            if location_name == "":
-                location_name = "<MISSING>"
-
-            if street_address == "" or street_address is None:
-                street_address = "<MISSING>"
-
-            if city == "" or city is None:
-                city = "<MISSING>"
-
-            if state == "" or state is None:
-                state = "<MISSING>"
-
-            if zip == "" or zip is None:
-                zip = "<MISSING>"
-
-            if country_code == "" or country_code is None:
-                country_code = "<MISSING>"
-
-            if phone == "" or phone is None:
-                phone = "<MISSING>"
-
-            if latitude == "" or latitude is None:
-                latitude = "<MISSING>"
-            if longitude == "" or longitude is None:
-                longitude = "<MISSING>"
-
-            if hours_of_operation == "":
-                hours_of_operation = "<MISSING>"
-
-            if location_type == "":
-                location_type = "<MISSING>"
-
-            curr_list = [
-                locator_domain,
-                page_url,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
-            yield curr_list
+            store_number = store_json["id"]
+            yield SgRecord(
+                locator_domain=locator_domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
 
 
 def scrape():
     log.info("Started")
-    data = fetch_data()
-    write_output(data)
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.CITY,
+                    SgRecord.Headers.ZIP,
+                }
+            )
+        )
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    log.info(f"No of records being processed: {count}")
     log.info("Finished")
 
 

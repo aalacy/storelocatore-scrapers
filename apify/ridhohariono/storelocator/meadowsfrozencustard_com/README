@@ -1,0 +1,6 @@
+--ignore CountryCodeFillRateChecker (International)
+
+--ignore LatLngDuplicationValidator (Confirmed scrape correctly)
+Found 1 <lat, lng> pair(s) that belong to multiple addresses. Examples:
+              latitude           longitude                                     street_address  num_addrs
+15  40.531594979351944  -78.36412258464065  {715 Gateway Center Blvd, 1420 E. Pleasant Val...          2

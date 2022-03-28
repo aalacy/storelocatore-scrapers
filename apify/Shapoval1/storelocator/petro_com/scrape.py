@@ -1,36 +1,10 @@
-import csv
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 from concurrent import futures
-
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
 
 
 def get_urls():
@@ -51,10 +25,7 @@ def get_urls():
     return tree.xpath("//div[@class='addressListing']/a/@href")
 
 
-print(get_urls())
-
-
-def get_data(url):
+def get_data(url, sgw: SgWriter):
     locator_domain = "https://www.petro.com"
     page_url = f"https://www.petro.com{url}"
     session = SgRequests()
@@ -86,58 +57,49 @@ def get_data(url):
     postal = ad.split()[1]
     country_code = "US"
 
-    store_number = "<MISSING>"
     location_name = f"Petro Home Services {city}, {state}"
     phone = (
-        "".join(tree.xpath('//p[contains(text(), "Sales")]/text()'))
+        "".join(tree.xpath('//p[contains(text(), "Sales")]/a[1]/text()'))
         .replace("Sales:", "")
         .strip()
         or "<MISSING>"
     )
     if phone.find("\n") != -1:
         phone = phone.split("\n")[0]
-    latitude = "<MISSING>"
-    longitude = "<MISSING>"
-    location_type = "<MISSING>"
-    hours_of_operation = "<MISSING>"
+    map_link = "".join(tree.xpath("//iframe/@src"))
+    latitude = map_link.split("!3d")[1].strip().split("!")[0].strip()
+    longitude = map_link.split("!2d")[1].strip().split("!")[0].strip()
 
-    row = [
-        locator_domain,
-        page_url,
-        location_name,
-        street_address,
-        city,
-        state,
-        postal,
-        country_code,
-        store_number,
-        phone,
-        location_type,
-        latitude,
-        longitude,
-        hours_of_operation,
-    ]
+    row = SgRecord(
+        locator_domain=locator_domain,
+        page_url=page_url,
+        location_name=location_name,
+        street_address=street_address,
+        city=city,
+        state=state,
+        zip_postal=postal,
+        country_code=country_code,
+        store_number=SgRecord.MISSING,
+        phone=phone,
+        location_type=SgRecord.MISSING,
+        latitude=latitude,
+        longitude=longitude,
+        hours_of_operation=SgRecord.MISSING,
+    )
 
-    return row
+    sgw.write_row(row)
 
 
-def fetch_data():
-    out = []
+def fetch_data(sgw):
+
     urls = get_urls()
     with futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {executor.submit(get_data, url): url for url in urls}
+        future_to_url = {executor.submit(get_data, url, sgw): url for url in urls}
         for future in futures.as_completed(future_to_url):
-            row = future.result()
-            if row:
-                out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+            future.result()
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))) as writer:
+        fetch_data(writer)
