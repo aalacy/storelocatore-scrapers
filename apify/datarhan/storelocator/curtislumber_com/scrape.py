@@ -1,3 +1,4 @@
+import re
 from lxml import etree
 
 from sgrequests import SgRequests
@@ -41,6 +42,7 @@ def fetch_data():
             '//section[@class="full-week block-box store hours "]/p//text()'
         )
         hoo = " ".join([e.strip() for e in hoo if e.strip()])
+        store_number = re.findall(r'id":(.+?)\}', loc_response.text)[0]
 
         item = SgRecord(
             locator_domain=domain,
@@ -51,7 +53,7 @@ def fetch_data():
             state=raw_address[2],
             zip_postal=raw_address[3],
             country_code=raw_address[4],
-            store_number="",
+            store_number=store_number,
             phone=phone,
             location_type="",
             latitude=geo[0],
