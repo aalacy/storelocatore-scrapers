@@ -4,6 +4,7 @@ from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgpostal.sgpostal import USA_Best_Parser, parse_address
 
 
 def fetch_data(sgw: SgWriter):
@@ -28,29 +29,27 @@ def fetch_data(sgw: SgWriter):
             .strip()
         )
 
-        if (
-            location_name == "HSN Retail Outlet of Bardmoor"
-            or location_name == "HSN RETAIL OUTLET OF NEW PORT RICHEY"
-        ):
+        if location_name == "HSN Retail Outlet of Bardmoor":
             ad = (
                 "".join(d.xpath(".//following-sibling::p[1]/text()[2]"))
                 .replace("\n", "")
                 .strip()
             )
-        street_address = ad.split(",")[0].strip()
-        state = ad.split(",")[2].replace(".", "").strip()
-        postal = ad.split(",")[3].strip()
+
+        a = parse_address(USA_Best_Parser(), ad)
+        street_address = f"{a.street_address_1} {a.street_address_2}".replace(
+            "None", ""
+        ).strip()
+        state = a.state or "<MISSING>"
+        postal = a.postcode or "<MISSING>"
         country_code = "US"
-        city = ad.split(",")[1].strip()
+        city = a.city or "<MISSING>"
         phone = (
             "".join(d.xpath(".//following-sibling::p[1]/text()[2]"))
             .replace("\n", "")
             .strip()
         )
-        if (
-            location_name == "HSN Retail Outlet of Bardmoor"
-            or location_name == "HSN RETAIL OUTLET OF NEW PORT RICHEY"
-        ):
+        if location_name == "HSN Retail Outlet of Bardmoor":
             phone = (
                 "".join(d.xpath(".//following-sibling::p[1]/text()[3]"))
                 .replace("\n", "")
@@ -80,6 +79,7 @@ def fetch_data(sgw: SgWriter):
             latitude=SgRecord.MISSING,
             longitude=SgRecord.MISSING,
             hours_of_operation=hours_of_operation,
+            raw_address=ad,
         )
 
         sgw.write_row(row)
@@ -89,6 +89,6 @@ if __name__ == "__main__":
     session = SgRequests()
     locator_domain = "https://www.hsn.com"
     with SgWriter(
-        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.RAW_ADDRESS}))
     ) as writer:
         fetch_data(writer)

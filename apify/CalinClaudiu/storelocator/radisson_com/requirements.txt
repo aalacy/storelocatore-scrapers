@@ -1,5 +1,7 @@
 beautifulsoup4==4.7.1
-httpx==0.16.1
+--extra-index-url https://dl.cloudsmith.io/KVaWma76J5VNwrOm/crawl/crawl/python/simple/
 sglogging==0.0.4
-sgscrape==0.0.23
+sgscrape==0.2.6
+sgrequests==0.2.10
 sgvalidator==0.0.71
+tenacity==7.0.0

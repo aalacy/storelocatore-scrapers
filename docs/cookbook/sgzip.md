@@ -49,6 +49,25 @@ from sgzip.dynamic import SearchableCountries
   - You can only use `DynamicGeoSearch` with these countries.
 - For a full dataset of countries, use: `SearchableCountries.ALL`.
 
+#### SovereigntyGroups
+
+- We're living in a post-colonial world, where several of the world's powers still hold dominion over other semi-independent nations.
+- For the cases where you need to fetch data from these territories, we have `SearchableCountries.SovereigntyGroups`
+- It is simply a `dict` of a list of countries under a particular dominion, which is keyed on the ruling entity name.
+- Here it is, as it stands now:
+```python
+SovereigntyGroups = {
+    'UK': [BRITAIN, GUERNSEY, ISLE_OF_MAN, JERSEY, FALKLAND_ISLANDS_MALVINAS, GIBRALTAR],
+    'DANISH': [DENMARK, FAROE_ISLANDS, GREENLAND],
+    'FINISH': [FINLAND, ALAND_ISLANDS],
+    'FRENCH': [FRANCE, FRENCH_GUIANA, GUADELOUPE, MARTINIQUE, MAYOTTE, NEW_CALEDONIA, REUNION,
+               ST_PIERRE_AND_MICHELON, WALLIS_FUTUNA, FRENCH_POLYNESIA],
+    'NORSE': [NORWAY, SVALBARD_JAN_MAYEN],
+    'AMERICAN': [USA, AMERICAN_SAMOA, GUAM, N_MARIANA_ISL, PUERTO_RICO, VIRGIN_ISLANDS],
+    'AUSTRALIAN': [AUSTRALIA, NORFOLK_ISLAND, CHRISTMAS_ISLAND]
+}
+```
+
 ### Dynamic Search
 
 - Import using:

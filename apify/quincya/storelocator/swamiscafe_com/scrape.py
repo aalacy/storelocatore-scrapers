@@ -1,42 +1,16 @@
-import csv
 import re
 
 from bs4 import BeautifulSoup
 
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+
 from sgrequests import SgRequests
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
+def fetch_data(sgw: SgWriter):
 
     base_link = "https://www.swamiscafe.com/our-locations"
 
@@ -47,10 +21,14 @@ def fetch_data():
     req = session.get(base_link, headers=headers)
     base = BeautifulSoup(req.text, "lxml")
 
-    data = []
-
     items = base.find(class_="pm-location-search-list").find_all("section")
-    locator_domain = "swamiscafe.com"
+    locator_domain = "https://www.swamiscafe.com"
+
+    script = base.find(id="popmenu-apollo-state")
+
+    lats = re.findall(r'lat":[0-9]{2}\.[0-9]+', str(script))
+    lngs = re.findall(r'lng":-[0-9]{2,3}\.[0-9]+', str(script))
+    phones = re.findall(r'displayPhone":"\([0-9]{3}\) [0-9]{3}-[0-9]{4}', str(script))
 
     for item in items:
 
@@ -71,40 +49,44 @@ def fetch_data():
         except:
             phone = "<MISSING>"
 
-        hours_of_operation = (
-            item.find(class_="hours")
-            .text.replace("\xa0", " ")
-            .replace("pm", "pm ")
-            .strip()
+        try:
+            hours_of_operation = (
+                item.find(class_="hours")
+                .text.replace("\xa0", " ")
+                .replace("pm", "pm ")
+                .strip()
+            )
+        except:
+            hours_of_operation = ""
+
+        link = locator_domain + item.find("a", string="View Menu")["href"]
+
+        latitude = ""
+        longitude = ""
+        for i, ph in enumerate(phones):
+            if ph.split(':"')[1] == phone:
+                latitude = lats[i].split(":")[1]
+                longitude = lngs[i].split(":")[1]
+
+        sgw.write_row(
+            SgRecord(
+                locator_domain=locator_domain,
+                page_url=link,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_code,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
         )
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
-
-        data.append(
-            [
-                locator_domain,
-                base_link,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip_code,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
-        )
-
-    return data
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    fetch_data(writer)

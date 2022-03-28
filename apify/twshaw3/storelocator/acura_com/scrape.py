@@ -1,100 +1,118 @@
-import re 
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
-import csv
-from sgzip import ClosestNSearch
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries
+from concurrent import futures
 
-from lxml import (html, etree,)
 
-search = ClosestNSearch() # TODO: OLD VERSION [sgzip==0.0.55]. UPGRADE IF WORKING ON SCRAPER!
-search.initialize()
+def get_data(zips, sgw: SgWriter):
 
-class Acura:
-    csv_filename = 'data.csv'
-    domain_name = 'acura.com'
-    url = 'https://www.acura.com/platform/api/v1/dealer'
-    seen = set()
-    csv_fieldnames = ['locator_domain', 'location_name', 'street_address', 'city', 'state', 'zip', 'country_code', 'store_number', 'phone', 'location_type', 'latitude', 'longitude', 'hours_of_operation', 'page_url']
-    default_country = 'US'
+    locator_domain = "https://www.acura.com/"
 
-    def write_to_csv(self, rows):
-        output_file = self.csv_filename
-        with open(output_file, 'w') as csvfile:
-            writer = csv.DictWriter(csvfile, fieldnames=self.csv_fieldnames)
-            writer.writeheader()
-            for row in rows:
-                if hasattr(self, 'map_data'):
-                    row = self.map_data(row)
-                writer.writerow(row)
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0",
+        "Accept": "application/json, text/javascript, */*; q=0.01",
+        "Accept-Language": "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3",
+        "X-Requested-With": "XMLHttpRequest",
+        "Connection": "keep-alive",
+        "Referer": "https://owners.acura.com/service-maintenance/dealer-search",
+        "Sec-Fetch-Dest": "empty",
+        "Sec-Fetch-Mode": "cors",
+        "Sec-Fetch-Site": "same-origin",
+        "TE": "trailers",
+    }
 
-    def handle_missing(self, x):
-        if x == None or len(x) == 0:
-            return "<MISSING>"
-        return x
-        
-    def map_data(self, row):
-        missing = '<MISSING>'
-        return {
-            'locator_domain': self.domain_name
-            ,'location_name': self.handle_missing(row.get('Name', missing))
-            ,'street_address': self.handle_missing(row.get('Address', missing))
-            ,'city': self.handle_missing(row.get('City', missing))
-            ,'state': self.handle_missing(row.get('State', missing))
-            ,'zip': self.handle_missing(row.get('ZipCode', missing))
-            ,'country_code': self.default_country
-            ,'store_number': row.get('DealerNumber', missing)
-            ,'phone': self.handle_missing(row.get('Phone', missing))
-            ,'location_type': ', '.join([attr['Code'] for attr in row.get('Attributes', [])])
-            ,'latitude': row.get('Latitude', missing)
-            ,'longitude': row.get('Longitude', missing)
-            ,'hours_of_operation': ', '.join(['%s-%s' % (hour['Days'], hour['Hours']) for hour in row.get('SalesHours', [])])
-            ,'page_url': self.handle_missing(row.get('WebAddress', missing))
-        }
+    session = SgRequests()
+    r = session.get(
+        f"https://owners.acura.com/service-maintenance/dealer-search?zip={zips}&searchRadius=1000&filters=",
+        headers=headers,
+    )
+    try:
+        js = r.json()["Dealers"]
+    except:
+        return
 
-    def crawl(self):
-        session = SgRequests()
-        headers = {
-            'authority': 'www.acura.com'
-            ,'method': 'GET'
-            ,'scheme': 'https'
-            ,'accept': 'application/json, text/plain, */*'
-            ,'accept-encoding': 'gzip, deflate, br'
-            ,'accept-language': 'en-US,en;q=0.9,it;q=0.8'
-            ,'user-agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 11_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/11.0 Mobile/15A372 Safari/604.1'
-        }
+    for j in js:
 
-        previous_zip_code = 90001
-        code = search.next_zip()
-        while code:
-            result_coords = []
-            previous_zip_code = code
-            query_params = {
-                'productDivisionCode': 'B'
-                ,'getDDPOnly': False
-                ,'zip': code
-                ,'maxResults': 100
-                ,'configGUID': '63be31ec-8c94-47bd-9f96-04a75e315f17'
-            }
-            headers.update({
-                'referer': 'https://www.acura.com/dealer-locator-inventory?zipcode=%s' % previous_zip_code
-                ,'path': '/platform/api/v1/dealer?productDivisionCode=B&getDDPOnly=false&zip=%s&maxResults=%s' % (code, 100,)
-            })
-            request = session.get(self.url, params=query_params, headers=headers)
-            if request.status_code == 200:
-                locations = request.json().get('Dealers', [])
-                if locations:
-                    for location in locations:
-                        result_coords.append((location['Latitude'], location['Longitude']))
-                        store_number = location.get('DealerNumber')
-                        if store_number in self.seen: continue
-                        else: self.seen.add(store_number)
-                        yield location
-                    search.max_count_update(result_coords)
-            code = search.next_zip()
+        page_url = j.get("Url") or "https://www.acura.com/dealer-locator-inventory"
+        a = j.get("Address")
+        location_name = j.get("Name") or "<MISSING>"
+        street_address = a.get("AddressLine1") or "<MISSING>"
+        city = a.get("City") or "<MISSING>"
+        state = a.get("State") or "<MISSING>"
+        postal = a.get("Zip") or "<MISSING>"
+        country_code = "US"
+        phone = j.get("Phone") or "<MISSING>"
+        latitude = a.get("Latitude") or "<MISSING>"
+        longitude = a.get("Longitude") or "<MISSING>"
+        hours_of_operation = "<MISSING>"
+        store_number = j.get("DealerId") or "<MISSING>"
+        tmp = []
+        tmp_hours = []
+        location_type = "<MISSING>"
+        types = j.get("Departments")
+        if types:
+            for t in types:
+                typ = t.get("Type")
+                line = f"{typ}"
+                tmp.append(line)
+                if typ == "Sales":
+                    hours = t.get("OperationHours")
+                    for h in hours:
+                        day = h.get("Day")
+                        times = h.get("Hours")
+                        lin = f"{day} {times}"
+                        tmp_hours.append(lin)
+                    hours_of_operation = "; ".join(tmp_hours)
+            location_type = ", ".join(tmp)
 
-    def run(self):
-        rows = self.crawl()
-        self.write_to_csv(rows)
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+        )
 
-if __name__ == '__main__':
-    a = Acura()
-    a.run()
+        sgw.write_row(row)
+
+
+def fetch_data(sgw: SgWriter):
+    zips = DynamicZipSearch(
+        country_codes=[SearchableCountries.USA],
+        max_search_distance_miles=80,
+        expected_search_radius_miles=80,
+        max_search_results=None,
+    )
+
+    with futures.ThreadPoolExecutor(max_workers=5) as executor:
+        future_to_url = {executor.submit(get_data, url, sgw): url for url in zips}
+        for future in futures.as_completed(future_to_url):
+            future.result()
+
+
+if __name__ == "__main__":
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.LATITUDE,
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.STORE_NUMBER,
+                }
+            )
+        )
+    ) as writer:
+        fetch_data(writer)
