@@ -101,6 +101,8 @@ def fetch_data(sgw: SgWriter):
                 except:
                     latitude, longitude = "<MISSING>", "<MISSING>"
 
+                if street_address == "US-46":
+                    street_address = "3079 US-46"
                 hours = driver.find_elements_by_xpath('//p[./i[@class="far fa-clock"]]')
                 tmp = []
                 for h in hours:

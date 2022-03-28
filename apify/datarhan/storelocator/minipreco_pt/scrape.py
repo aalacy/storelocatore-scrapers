@@ -11,10 +11,13 @@ from sgscrape.sgwriter import SgWriter
 def fetch_data():
     session = SgRequests()
 
-    start_url = "https://clube.minipreco.pt/PT/tiendas.v528.json.gz"
+    start_url = "https://clube.minipreco.pt/PT/tiendas.v{}.json.gz"
     domain = "minipreco.pt"
 
-    response = session.get(start_url)
+    for i in range(531, 1000):
+        response = session.get(start_url.format(str(i)))
+        if response.status_code == 200:
+            break
     all_locations = json.loads(gzip.decompress(response.content))
 
     for poi in all_locations:

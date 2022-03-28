@@ -10,7 +10,7 @@ def fetch_data():
     session = SgRequests()
 
     start_url = "https://api.delhaize.be/?operationName=GetStoreSearch&variables=%7B%22pageSize%22%3A900%2C%22lang%22%3A%22nl%22%2C%22query%22%3A%22%22%7D&extensions=%7B%22persistedQuery%22%3A%7B%22version%22%3A1%2C%22sha256Hash%22%3A%22611d08fab1e7b40c82c9130355453ebb74a30a00eb708c7af6be46ec8fbef330%22%7D%7D"
-    domain = "delhaize.be/nl/about-delhaize/our-brands/shop-and-go"
+    domain = "delhaize.be/nl/about-delhaize/our-brands/ad"
     hdr = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
@@ -28,7 +28,7 @@ def fetch_data():
                 closes = e["closingTime"].split()[-1][:-3]
                 opens = e["openingTime"].split()[-1][:-3]
                 hoo.append(f'{e["weekDay"]}: {opens} - {closes}')
-        hoo = " ".join(hoo)
+        hoo = " ".join(hoo).split(" donderdag:")[0]
         page_url = "https://www.delhaize.be/storedetails/" + poi["urlName"]
 
         item = SgRecord(
@@ -36,7 +36,7 @@ def fetch_data():
             page_url=page_url,
             location_name=poi["localizedName"],
             street_address=street_address,
-            city=poi["address"]["town"],
+            city=poi["address"]["town"].split(",")[0],
             state="",
             zip_postal=poi["address"]["postalCode"],
             country_code=poi["address"]["country"]["name"],
