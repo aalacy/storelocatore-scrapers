@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import csv
 from lxml import etree
 
 from sgrequests import SgRequests
@@ -6,11 +7,14 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries, Grain_2
 
 
 def fetch_data():
     session = SgRequests()
+
+    with open("belgian-cities-geocoded.csv", newline="") as f:
+        reader = csv.reader(f)
+        all_cities = list(reader)
 
     start_url = "https://www.texaco.be/handler/fillingstation/list.php"
     domain = "texaco.be"
@@ -21,13 +25,9 @@ def fetch_data():
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.80 Safari/537.36",
         "X-Requested-With": "XMLHttpRequest",
     }
-    all_codes = DynamicZipSearch(
-        country_codes=[SearchableCountries.BELGIUM],
-        expected_search_radius_miles=1,
-        granularity=Grain_2(),
-    )
-    for code in all_codes:
-        frm = f"type=search&show=private&address={code}&ajax=1"
+
+    for city in all_cities:
+        frm = f"type=search&show=private&address={city[1]}&ajax=1"
         data = session.post(start_url, headers=hdr, data=frm).json()
 
         if data["callback"]:
@@ -45,6 +45,12 @@ def fetch_data():
                 )
                 hoo = loc_dom.xpath('//ul[@class="striplist timetable"]//text()')
                 hoo = " ".join([e.strip() for e in hoo if e.strip()])
+                zip_code = poi["pc"]
+                country_code = ""
+                if len(zip_code) == 4:
+                    country_code = "Belgium"
+                elif len(zip_code.split()) == 2:
+                    country_code = "Netherlands"
 
                 item = SgRecord(
                     locator_domain=domain,
@@ -53,8 +59,8 @@ def fetch_data():
                     street_address=poi["st"],
                     city=poi["ct"],
                     state="",
-                    zip_postal=poi["pc"],
-                    country_code="BE",
+                    zip_postal=zip_code,
+                    country_code=country_code,
                     store_number="",
                     phone=phone,
                     location_type="",

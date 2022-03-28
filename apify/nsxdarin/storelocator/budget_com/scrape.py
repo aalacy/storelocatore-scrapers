@@ -24,7 +24,10 @@ def fetch_data():
             lurl = line.split("<loc>")[1].split("<")[0]
             if lurl.count("/") == 7:
                 locs.append(lurl)
-    urls = ["https://www.budget.com/en/locations/us"]
+    urls = [
+        "https://www.budget.com/en/locations/us",
+        "https://www.budget.com/en/locations/ca",
+    ]
     for url in urls:
         r = session.get(url, headers=headers)
         for line in r.iter_lines():
@@ -46,7 +49,7 @@ def fetch_data():
                 if lurl.count("/") == 8 and "uber-only" not in lurl:
                     locs.append(lurl)
     for loc in locs:
-        time.sleep(3)
+        time.sleep(5)
         LocFound = True
         logger.info("Pulling Location %s..." % loc)
         website = "budget.com"
@@ -142,6 +145,40 @@ def fetch_data():
             loc = loc.replace("&amp;", "&")
             raw_address = add + " " + city + ", " + state + " " + zc + ", " + country
             raw_address = raw_address.strip().replace("  ", " ")
+            if lat == "null":
+                lat = "<MISSING>"
+                lng = "<MISSING>"
+            if lng == "null":
+                lat = "<MISSING>"
+                lng = "<MISSING>"
+            if state == city and country != "United States" and country != "Canada":
+                state = "<MISSING>"
+            city = city.replace("29100,", "")
+            if "Bangkok" in city:
+                city = "Bangkok"
+            if "Chiangmai" in city:
+                city = "Chiangmai"
+            if "Chiangrai" in city:
+                city = "Chiangrai"
+            if "Krabi" in city:
+                city = "Krabi"
+            if "Chonburi" in city:
+                city = "Chonburi"
+            if " 8" in city:
+                city = city.split(" 8")[0]
+            if " 5" in city:
+                city = city.split(" 8")[0]
+            if " 6" in city:
+                city = city.split(" 8")[0]
+            if " 9" in city:
+                city = city.split(" 8")[0]
+            if " 2" in city:
+                city = city.split(" 8")[0]
+            if " Wien " in city:
+                city = "Wien"
+            if "@" in city or len(city) < 2:
+                city = "<MISSING>"
+            state = state.replace(" Cdx 3", "")
             if LocFound:
                 yield SgRecord(
                     locator_domain=website,

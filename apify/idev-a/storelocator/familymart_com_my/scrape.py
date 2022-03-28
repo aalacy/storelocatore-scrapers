@@ -27,9 +27,16 @@ def fetch_data():
             info = bs(_["content"], "lxml")
             raw_address = " ".join(info.p.stripped_strings)
             addr = parse_address_intl(raw_address + ", Malaysia")
-            street_address = addr.street_address_1
+            street_address = addr.street_address_1 or ""
             if addr.street_address_2:
                 street_address += " " + addr.street_address_2
+            zip_postal = addr.postcode
+            if not zip_postal:
+                zip_postal = raw_address.split(",")[-2].strip().split()[0]
+                if not zip_postal.isdigit():
+                    zip_postal = ""
+                if zip_postal:
+                    street_address = street_address.replace(zip_postal, "").strip()
             yield SgRecord(
                 page_url=base_url,
                 store_number=_["id"],
@@ -37,7 +44,7 @@ def fetch_data():
                 street_address=street_address,
                 city=addr.city,
                 state=addr.state,
-                zip_postal=addr.postcode,
+                zip_postal=zip_postal,
                 country_code="MY",
                 latitude=_["position"]["lat"],
                 longitude=_["position"]["lng"],

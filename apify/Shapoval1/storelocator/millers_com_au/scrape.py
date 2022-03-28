@@ -27,13 +27,11 @@ def fetch_data(sgw: SgWriter):
         ad = list(filter(None, [a.strip() for a in ad]))
         js_block = "".join(tree.xpath('//script[contains(text(), "latitude")]/text()'))
 
-        street_address = (
-            js_block.split('"streetAddress": "')[1]
-            .split('"')[0]
-            .replace("&amp;", "&")
-            .replace(",", "")
-            .strip()
-        )
+        street_address = "<MISSING>"
+        if len(ad) == 5:
+            street_address = "".join(ad[1]).strip()
+        if len(ad) == 4:
+            street_address = "".join(ad[0]).strip()
         if street_address == "1":
             street_address = "<MISSING>"
         city = js_block.split('"addressLocality": "')[1].split('"')[0].strip()

@@ -45,6 +45,10 @@ def fetch_data():
             hoo = loc_dom.xpath('//div[@id="hours-popper"]//text()')
         hoo = [e.strip() for e in hoo if e.strip()]
         hoo = " ".join(hoo).split("Access Hours:")[-1].strip()
+        if "sa " not in hoo:
+            hoo += " sa closed"
+        if "su " not in hoo:
+            hoo += " su closed"
 
         item = SgRecord(
             locator_domain=domain,

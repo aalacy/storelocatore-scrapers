@@ -22,7 +22,7 @@ def fetch_data():
         r = session.get(DOMAIN, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
         loclist = soup.findAll("ul", {"class": "nav-dropdown nav-dropdown-default"})[
-            1
+            2
         ].findAll("li")
         for loc in loclist:
             location_name = loc.text

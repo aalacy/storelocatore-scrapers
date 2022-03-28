@@ -54,7 +54,7 @@ def fetch_data():
                 street_address=street_address,
                 city=addr["city"],
                 state=addr.get("county"),
-                zip_postal=addr["postcode"],
+                zip_postal=addr["postcode"].split("(")[0],
                 latitude=_["coordinates"]["lat"],
                 longitude=_["coordinates"]["long"],
                 country_code="UK",

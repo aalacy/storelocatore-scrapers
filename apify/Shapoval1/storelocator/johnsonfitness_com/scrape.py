@@ -43,11 +43,12 @@ def get_data(zips, sgw: SgWriter):
     )
 
     tree = html.fromstring(r.text)
-    div = tree.xpath('//div[@class="address"]//h3/a')
+    div = tree.xpath('//div[@class="address"]')
 
     for d in div:
 
-        page_url = "".join(d.xpath(".//@href"))
+        page_url = "".join(d.xpath(".//h3/a/@href"))
+        phone = "".join(d.xpath('.//a[contains(@href, "tel")]/span[2]/text()'))
         r = session.get(page_url, headers=headers)
         tree = html.fromstring(r.text)
 
@@ -88,14 +89,7 @@ def get_data(zips, sgw: SgWriter):
             or "<MISSING>"
         )
         country_code = "US"
-        phone = (
-            "".join(
-                tree.xpath(
-                    '//p[@itemprop="address"]//span[@itemprop="telephone"]/text()'
-                )
-            )
-            or "<MISSING>"
-        )
+
         latitude = (
             "".join(tree.xpath('//a[./span[text()="Get Directions"]]/@href'))
             .split("ll=")[1]
@@ -109,15 +103,11 @@ def get_data(zips, sgw: SgWriter):
             .strip()
         )
         hours_of_operation = (
-            " ".join(
-                tree.xpath(
-                    '//div[contains(@class, "hours")]/span//meta[@itemprop="openingHours"]/@content'
-                )
-            )
+            " ".join(tree.xpath('//div[contains(@class, "hours")]/span//text()'))
             .replace("\n", "")
+            .replace("Today's Hours are ", "")
             .strip()
         )
-
         row = SgRecord(
             locator_domain=locator_domain,
             page_url=page_url,

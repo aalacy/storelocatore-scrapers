@@ -39,6 +39,10 @@ def fetch_data():
         )
         hoo = poi_html.xpath('.//p[@class="data schedule"]/text()')
         hoo = hoo[0] if hoo else ""
+        location_type = ""
+        if hoo == "Laborables: Cerrado definitivamente":
+            hoo = ""
+            location_type = "Cerrado definitivamente"
 
         item = SgRecord(
             locator_domain=domain,
@@ -51,7 +55,7 @@ def fetch_data():
             country_code="ES",
             store_number="",
             phone=phone,
-            location_type="",
+            location_type=location_type,
             latitude=geo[0],
             longitude=geo[1],
             hours_of_operation=hoo,

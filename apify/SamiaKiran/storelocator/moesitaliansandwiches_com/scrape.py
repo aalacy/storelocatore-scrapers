@@ -22,6 +22,7 @@ def fetch_data():
         url = "https://www.moesitaliansandwiches.com/locations"
         r = session.get(url, headers=headers)
         loclist = r.text.split('<script type="application/ld+json">')[1:]
+        coords_list = r.text.split('"lat":')[1:]
         for loc in loclist:
             loc = json.loads(loc.split("</script>")[0])
             location_name = loc["name"]
@@ -31,6 +32,12 @@ def fetch_data():
             city = address["addressLocality"]
             state = address["addressRegion"]
             zip_postal = address["postalCode"]
+            for coords in coords_list:
+                if str(phone) in coords:
+                    coords = coords.split(',"googlePlaceId"')[0].split(",")
+                    latitude = coords[0]
+                    longitude = coords[1].replace('"lng":', "")
+                    break
             country_code = "US"
             page_url = DOMAIN + city.lower()
             log.info(page_url)
@@ -49,8 +56,8 @@ def fetch_data():
                 store_number=MISSING,
                 phone=phone.strip(),
                 location_type=MISSING,
-                latitude=MISSING,
-                longitude=MISSING,
+                latitude=latitude,
+                longitude=longitude,
                 hours_of_operation=hours_of_operation,
             )
 

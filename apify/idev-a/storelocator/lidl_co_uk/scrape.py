@@ -19,6 +19,8 @@ base_url = "https://www.lidl.co.uk/bundles/retail/dist/scripts/FrontPage.js"
 session_url = "https://dev.virtualearth.net/webservices/v1/LoggingService/LoggingService.svc/Log?entry=0&fmt=1&type=3&group=MapControl&name=MVC&version=v8&mkt=en-US&auth={}&jsonp=Microsoft.Maps.NetworkCallbacks.f_logCallbackRequest"
 json_url = "{}$select=*,__Distance&$filter=Adresstyp%20eq%201&key={}&$format=json&jsonp=Microsoft_Maps_Network_QueryAPI_2&spatialFilter=nearby({},{},1000)"
 
+lv_log_url = "https://dev.virtualearth.net/webservices/v1/LoggingService/LoggingService.svc/Log?entry=0&fmt=1&type=3&group=MapControl&name=MVC&version=v8&mkt=en-US&auth=Ao9qjkbz2fsxw0EyySLTNvzuynLua7XKixA0yBEEGLeNmvrfkkb3XbfIs4fAyV-Z&jsonp=Microsoft.Maps.NetworkCallbacks.f_logCallbackRequest"
+
 
 def fetch_records(http, search, country_sessions):
     for lat, lng in search:
@@ -35,9 +37,6 @@ def fetch_records(http, search, country_sessions):
         except:
             continue
         logger.info(f"[{search.current_country()}] [{lat, lng}] {len(locations)}")
-        if locations:
-            search.found_location_at(lat, lng)
-
         for _ in locations:
             hours = []
             if _["OpeningTimes"]:
@@ -56,7 +55,9 @@ def fetch_records(http, search, country_sessions):
                     city = _["PostalCode"]
                     zip_postal = _["Locality"]
 
+            search.found_location_at(_["Latitude"], _["Longitude"])
             yield SgRecord(
+                store_number=_["EntityID"],
                 location_name=_["ShownStoreName"],
                 street_address=_["AddressLine"],
                 city=city,
@@ -101,8 +102,13 @@ if __name__ == "__main__":
 
         # addition
         # lv
+        lv_key = json.loads(
+            http.get(lv_log_url, headers=_headers)
+            .text.split("Microsoft.Maps.NetworkCallbacks.f_logCallbackRequest(")[1]
+            .strip()[:-1]
+        )["sessionId"]
         country_sessions["lv"] = dict(
-            key="AhE9Cgo9H723GaeyGVq65glk_Myd-CORB8xN0JJEkSt1qcXP7qy4HhcPZJZwp6jf",
+            key=lv_key,
             url="https://spatial.virtualearth.net/REST/v1/data/b2565f2cd7f64c759e2b5707b969e8dd/Filialdaten-LV/Filialdaten-lv?",
         )
         countries.append("lv")

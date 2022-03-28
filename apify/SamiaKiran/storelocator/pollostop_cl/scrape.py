@@ -52,7 +52,6 @@ def fetch_data():
             location_name = strip_accents(loc["name"])
             phone = loc["phone"]
             log.info(location_name)
-
             temp = loc["address"]
             raw_address = strip_accents(
                 temp["address"] + " " + temp["addressSecondary"]
@@ -90,13 +89,13 @@ def fetch_data():
                 locator_domain=DOMAIN,
                 page_url="https://www.pollostop.cl/locales",
                 location_name=location_name,
-                street_address=street_address.strip(),
-                city=city.strip(),
-                state=state.strip(),
-                zip_postal=zip_postal.strip(),
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_postal,
                 country_code=country_code,
                 store_number=MISSING,
-                phone=phone.strip(),
+                phone=phone,
                 location_type=MISSING,
                 latitude=latitude,
                 longitude=longitude,

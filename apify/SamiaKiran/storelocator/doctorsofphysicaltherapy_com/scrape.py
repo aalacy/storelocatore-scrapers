@@ -22,7 +22,7 @@ def fetch_data():
         identities = set()
         search = DynamicGeoSearch(
             country_codes=[SearchableCountries.USA],
-            max_radius_miles=1000,
+            max_search_distance_miles=1000,
             max_search_results=35,
         )
         for lat, long in search:

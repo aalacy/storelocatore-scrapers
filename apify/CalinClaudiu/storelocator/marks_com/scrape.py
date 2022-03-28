@@ -12,7 +12,7 @@ def fetch_data():
 
     search = DynamicGeoSearch(
         country_codes=[SearchableCountries.CANADA, SearchableCountries.USA],
-        expected_search_radius_miles=30,
+        expected_search_radius_miles=15,
         max_search_results=0,
     )
     with SgRequests(dont_retry_status_codes=set([424])) as session:
