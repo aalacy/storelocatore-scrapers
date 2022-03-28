@@ -19,9 +19,9 @@ base_url = 'https://storelocator.officedepot.com/ajax?&xml_request=<request><app
 days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 
 
-def fetch_data():
+def fetch_data(search):
     # Need to add dedupe. Added it in pipeline.
-    with SgRequests() as session:
+    with SgRequests(verify_ssl=False) as session:
         maxZ = search.items_remaining()
         total = 0
         MAX_DISTANCE = 250
@@ -36,9 +36,9 @@ def fetch_data():
                 + str(MAX_DISTANCE)
                 + "</searchradius>"
             )
-            locations = bs(
-                session.get(url, headers=headers, timeout=15).text, "lxml"
-            ).find_all("poi")
+            locations = bs(session.get(url, headers=headers).text, "lxml").find_all(
+                "poi"
+            )
             total += len(locations)
             for _ in locations:
                 search.found_location_at(
@@ -54,9 +54,9 @@ def fetch_data():
                     "https://www.officedepot.com/storelocator/"
                     + str(_.find("state").text.strip().lower())
                     + "/"
-                    + str(_["city"].text.strip().replace(" ", "-").lower())
+                    + str(_.find("city").text.strip().replace(" ", "-").lower())
                     + "/office-depot-"
-                    + str(_["clientkey"].text.strip())
+                    + str(_.find("clientkey").text.strip())
                     + "/"
                 )
                 yield SgRecord(
