@@ -24,7 +24,7 @@ class ScrapableSite:
 
     def get_session(self):
         session = SgChrome(is_headless=False).driver()
-        session .set_page_load_timeout(30)
+        session.set_page_load_timeout(30)
 
         return session
 
@@ -41,7 +41,7 @@ class ScrapableSite:
                 f'https://www.{self.locator_domain}{a["href"]}'
                 for a in soup.select(self.store_css_selector)
             ]
-        except Exception as e:
+        except:
             if retry < 3:
                 return self.get_locations(session, retry + 1)
 
@@ -88,16 +88,17 @@ def format_hours(hours):
 
     return ", ".join(data)
 
-def fetch_locations(country):
-    try:
-        site = ScrapableSite(*country) 
-        pois = []
-        with site.get_session() as driver:
-            locations = site.get_locations(driver)
-            for location in locations:
-                data = site.get_data(location, driver)
 
-                pois.append(SgRecord(
+def fetch_locations(country):
+    site = ScrapableSite(*country)
+    pois = []
+    with site.get_session() as driver:
+        locations = site.get_locations(driver)
+        for location in locations:
+            data = site.get_data(location, driver)
+
+            pois.append(
+                SgRecord(
                     page_url=data.get("url"),
                     location_name=data.get("name"),
                     street_address=data["address"]["streetAddress"],
@@ -112,26 +113,22 @@ def fetch_locations(country):
                     latitude=data["geo"]["latitude"],
                     longitude=data["geo"]["longitude"],
                     locator_domain=site.locator_domain,
-                    hours_of_operation=format_hours(
-                        data["openingHoursSpecification"]
-                    ),
-                ))
-            
-            return pois
-    except Exception as e:
-        print(e)
+                    hours_of_operation=format_hours(data["openingHoursSpecification"]),
+                )
+            )
+
+        return pois
+
 
 def fetch_data():
     pois = []
-    
-    with ThreadPoolExecutor(max_workers=5) as executor:
+
+    with ThreadPoolExecutor() as executor:
         futures = [executor.submit(fetch_locations, site) for site in sites]
         for future in as_completed(futures):
             pois.extend(future.result())
 
     return pois
-
-            
 
 
 def scrape():
