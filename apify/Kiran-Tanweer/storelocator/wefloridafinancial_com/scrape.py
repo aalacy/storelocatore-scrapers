@@ -99,9 +99,7 @@ def scrape():
     log.info("Started")
     count = 0
     deduper = SgRecordDeduper(
-        SgRecordID(
-            {SgRecord.Headers.STREET_ADDRESS, SgRecord.Headers.HOURS_OF_OPERATION}
-        )
+        SgRecordID({SgRecord.Headers.PAGE_URL, SgRecord.Headers.HOURS_OF_OPERATION})
     )
     with SgWriter(deduper) as writer:
         results = fetch_data()
