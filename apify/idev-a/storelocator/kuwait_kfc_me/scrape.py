@@ -1,97 +1,83 @@
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
-import json
-from sgscrape.sgpostal import parse_address_intl
 from bs4 import BeautifulSoup as bs
-from sgselenium import SgChrome
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.common.by import By
 from sglogging import SgLogSetup
+from datetime import datetime
 
 logger = SgLogSetup().get_logger("kuwait")
 
 
 locator_domain = "https://www.kuwait.kfc.me"
-base_url = "https://www.google.com/maps/d/embed?mid=1JR6Un5PljzpXAy7d0GEkvhfMkN0"
-map_url = "https://www.google.com/maps/dir//{},{}/@{},{}z"
+base_url = "https://www.kuwait.kfc.me/WebAPI/v2/Location/Cities"
 
 
-def _headers():
-    return {
-        "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
-    }
+_headers = {
+    "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
+}
+
+
+def _p(val):
+    return (
+        val.replace("(", "")
+        .replace(")", "")
+        .replace("+", "")
+        .replace("-", "")
+        .replace(".", " ")
+        .replace("to", "")
+        .replace(" ", "")
+        .strip()
+        .isdigit()
+    )
 
 
 def fetch_data():
-    with SgChrome() as driver:
-        with SgRequests() as session:
-            res = session.get(base_url, headers=_headers())
-            cleaned = (
-                res.text.replace("\\\\u003d", "=")
-                .replace("\\\\u0026", "&")
-                .replace('\\"', '"')
-                .replace("\xa0", " ")
-            )
-            locations = json.loads(
-                cleaned.split('var _pageData = "')[1].split('";</script>')[0]
-            )
-            for _ in locations[1][6][0][12][0][13][0]:
-                location_name = _[5][0][1][0].replace("\\n", "")
-                phone = ""
-                if "Contact No" in _[5][3][-2][0]:
-                    phone = _[5][3][-2][1][0].split(":")[-1].replace("\\n", "").strip()
-                latitude = _[1][0][0][0]
-                longitude = _[1][0][0][1]
-                hours = []
-                if _[5][3][1][0] == "Timing":
-                    hours = _[5][3][1][1]
-                logger.info(map_url.format(latitude, longitude, latitude, longitude))
-                driver.get(map_url.format(latitude, longitude, latitude, longitude))
-                WebDriverWait(driver, 10).until(
-                    EC.presence_of_element_located(
-                        (
-                            By.XPATH,
-                            "//input[@class='tactile-searchbox-input']",
-                        )
-                    )
+    with SgRequests() as session:
+        cities = session.get(base_url, headers=_headers).json()["data"]["CityList"]
+        date = datetime.now().strftime("%m/%d/%Y")
+        for city in cities:
+            url = f"https://www.kuwait.kfc.me/WebAPI/Location/Search?Channel=W&deliverymode=S&date={date}&city={city['CityId']}&ignoreslot=1&filters=deliverymode-date-slot-city&Format=html&CurrentEvent=Location_Search"
+            locations = bs(
+                session.get(url, headers=_headers)
+                .text.strip()[1:-1]
+                .strip()
+                .replace("\\r\\n", "")
+                .replace("\\t", "")
+                .replace('\\"', '"'),
+                "lxml",
+            ).select("div.store-list ul li")
+            logger.info(f"{city['CityName']} {len(locations)}")
+            for _ in locations:
+                phone = _.select("span")[-1].text.strip()
+                if not _p(phone):
+                    phone = ""
+                yield SgRecord(
+                    location_name=_.select_one("div.store-name").text.strip(),
+                    street_address=_.select_one("div.store-address").text.strip(),
+                    city=city["CityName"],
+                    country_code="Kuwait",
+                    phone=phone,
+                    locator_domain=locator_domain,
+                    hours_of_operation=" ".join(
+                        list(_.select_one("div.store-time").stripped_strings)[:-1]
+                    ),
                 )
-                sp1 = bs(driver.page_source, "lxml")
-                try:
-                    raw_address = (
-                        sp1.select("input.tactile-searchbox-input")[-1]["aria-label"]
-                        .replace("Destination", "")
-                        .strip()
-                    )
-                    addr = parse_address_intl(raw_address)
-                    street_address = addr.street_address_1
-                    if addr.street_address_2:
-                        street_address += ", " + addr.street_address_2
-                    yield SgRecord(
-                        location_name=location_name,
-                        street_address=street_address.replace("Kuwait", ""),
-                        city=addr.city,
-                        state=addr.state,
-                        zip_postal=addr.postcode,
-                        country_code="Kuwait",
-                        phone=phone,
-                        latitude=latitude,
-                        longitude=longitude,
-                        locator_domain=locator_domain,
-                        hours_of_operation="; ".join(hours).replace("\\n", " ").strip(),
-                        raw_address=raw_address,
-                    )
-                except:
-                    import pdb
-
-                    pdb.set_trace()
 
 
 if __name__ == "__main__":
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.PHONE,
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.CITY,
+                }
+            )
+        )
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

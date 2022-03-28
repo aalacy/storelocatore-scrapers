@@ -55,7 +55,7 @@ def fetch_data():
             SearchableCountries.BRITAIN,
             SearchableCountries.CANADA,
         ],
-        max_radius_miles=100,
+        max_search_distance_miles=100,
     )
     for lat, lng in all_coords:
         response = session.get(start_url.format(lat, lng), headers=hdr)

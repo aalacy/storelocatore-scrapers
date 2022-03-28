@@ -3,7 +3,9 @@ from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
-from sgscrape.sgpostal import parse_address_intl
+from sgpostal.sgpostal import parse_address_intl
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 logger = SgLogSetup().get_logger("transplace")
 
@@ -58,7 +60,8 @@ def fetch_data():
                         del block[-1]
                     if "phone" in block[-1].lower():
                         del block[-1]
-                    addr = parse_address_intl(" ".join(block))
+                    raw_address = " ".join(block)
+                    addr = parse_address_intl(raw_address)
                     street_address = addr.street_address_1
                     if addr.street_address_2:
                         street_address += " " + addr.street_address_2
@@ -76,11 +79,14 @@ def fetch_data():
                         country_code=country_code,
                         phone=phone,
                         locator_domain=locator_domain,
+                        raw_address=raw_address,
                     )
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.RAW_ADDRESS}))
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

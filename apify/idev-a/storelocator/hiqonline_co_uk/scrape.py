@@ -18,8 +18,9 @@ _headers = {
 
 base_url = "https://www.hiqonline.co.uk/hiq-centres"
 locator_domain = "https://www.hiqonline.co.uk"
-session = SgRequests().requests_retry_session()
+session = SgRequests()
 max_workers = 8
+days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 
 
 def fetchConcurrentSingle(link):
@@ -27,7 +28,7 @@ def fetchConcurrentSingle(link):
     if not page_url.startswith("http"):
         page_url = locator_domain + link["href"]
     response = request_with_retries(page_url)
-    return page_url, bs(response.text, "lxml")
+    return page_url, link, bs(response.text, "lxml")
 
 
 def fetchConcurrentList(list, occurrence=max_workers):
@@ -54,7 +55,43 @@ def request_with_retries(url):
     return session.get(url, headers=_headers)
 
 
-def _d(page_url, _):
+def _dd(page_url, _, loc, city):
+    logger.info(page_url)
+    state = ""
+    if _.select_one('span[itemprop="addressRegion"]'):
+        state = _.select_one('span[itemprop="addressRegion"]').text.strip()
+    temp = list(_.select("div.details ul li")[-1].stripped_strings)
+    hours = []
+    for x in range(0, len(temp), 2):
+        hours.append(f"{temp[x]} {temp[x+1]}")
+    if not hours:
+        for day in days:
+            hours.append(f"{day}: closed")
+    coord = loc.select_one(".address")["data-lat-long"].split(",")
+    raw_address = (
+        " ".join(_.select_one('li[itemprop="address"]').stripped_strings)
+        .replace("\n", " ")
+        .strip()
+    )
+    return SgRecord(
+        page_url=page_url,
+        location_name=_.h3.text.strip(),
+        street_address=_.select_one('span[itemprop="streetAddress"]').text.strip(),
+        city=_.select_one('span[itemprop="addressLocality"]').text.strip(),
+        state=state,
+        zip_postal=_.select_one('span[itemprop="postalCode"]').text.strip(),
+        country_code="UK",
+        phone=_.select_one('span[itemprop="telephone"]').text.strip(),
+        locator_domain=locator_domain,
+        latitude=coord[0],
+        longitude=coord[1],
+        hours_of_operation="; ".join(hours).replace("–", "-"),
+        raw_address=raw_address,
+    )
+
+
+def _d(page_url, _, city):
+    logger.info(page_url)
     raw_address = ", ".join(
         _.select_one(".address").text.strip().split(",")[1:]
     ).strip()
@@ -65,6 +102,12 @@ def _d(page_url, _):
     street_address = addr.street_address_1
     if addr.street_address_2:
         street_address += " " + addr.street_address_2
+    zip_postal = addr.postcode
+    if zip_postal and len(zip_postal.split(" ")) == 1:
+        for aa in raw_address.split(","):
+            if zip_postal.lower() in aa.lower():
+                zip_postal = aa.strip()
+                break
     temp = list(_.select_one("div.opening").stripped_strings)
     hours = []
     for x in range(0, len(temp), 2):
@@ -73,9 +116,9 @@ def _d(page_url, _):
         page_url=page_url,
         location_name=_.h3.text.strip(),
         street_address=street_address,
-        city=addr.city,
+        city=city.text.split("(")[0].strip(),
         state=addr.state,
-        zip_postal=addr.postcode,
+        zip_postal=zip_postal,
         country_code="UK",
         phone=_.select_one("a.tel").text.strip(),
         locator_domain=locator_domain,
@@ -90,13 +133,13 @@ def fetch_data():
     soup = bs(session.get(base_url, headers=_headers).text, "lxml")
     links = soup.select("div.cities-list ul a")
     logger.info(f"{len(links)} found")
-    for city_url, sp1 in fetchConcurrentList(links):
-        logger.info(city_url)
-        locations = sp1.select("ul#locations li.location")
-        for _ in locations:
-            yield _d(_.select_one("a.btn")["href"], _)
+    for city_url, city, sp1 in fetchConcurrentList(links):
+        locations = sp1.select("div.result-container")
+        locs = sp1.select("ul#locations li")
+        for x, _ in enumerate(locations):
+            yield _dd(_.select_one("a.btn")["href"], _, locs[x], city)
         if not locations:
-            yield _d(city_url, sp1)
+            yield _d(city_url, sp1, city)
 
 
 if __name__ == "__main__":

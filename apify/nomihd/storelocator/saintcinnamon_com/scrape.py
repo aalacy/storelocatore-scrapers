@@ -168,6 +168,16 @@ def fetch_data():
             if "Indonesia" in location
             else "PH"
         )
+
+        if city == "C-018":
+            city = MISSING
+        if city == "Plaza":
+            city = MISSING
+        if city == "50-1360":
+            city = MISSING
+        if city == "02-1250":
+            city = MISSING
+
         store_number = MISSING
 
         location_type = MISSING

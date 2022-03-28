@@ -1,38 +1,11 @@
-import csv
 import json
-
-from concurrent import futures
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
-
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from concurrent import futures
 
 
 def clean_phone(line):
@@ -80,8 +53,7 @@ def clean_hours(line):
 def get_params():
     _types = dict()
     coords = dict()
-    session = SgRequests()
-    r = session.get("https://www.baystatehealth.org/locations")
+    r = session.get("https://www.baystatehealth.org/locations", headers=headers)
     tree = html.fromstring(r.text)
     text = "".join(tree.xpath("//script[contains(text(),'var maplocations=')]/text()"))
     js = json.loads(text.split("var maplocations=")[1])
@@ -93,18 +65,18 @@ def get_params():
                 _types[slug] = _type
             else:
                 _types[slug] = f"{_types[slug]}, {_type}"
-            lat = record.get("LocationLat") or "<MISSING>"
-            lng = record.get("LocationLon") or "<MISSING>"
+            lat = record.get("LocationLat") or SgRecord.MISSING
+            lng = record.get("LocationLon") or SgRecord.MISSING
             coords[slug] = (lat, lng)
     return _types, coords
 
 
 def get_urls():
     urls = []
-    session = SgRequests()
     for i in range(1, 5000):
         r = session.get(
-            f"https://www.baystatehealth.org/locations/search-results?page={i}"
+            f"https://www.baystatehealth.org/locations/search-results?page={i}",
+            headers=headers,
         )
         tree = html.fromstring(r.text)
         links = tree.xpath(
@@ -118,107 +90,96 @@ def get_urls():
     return urls
 
 
-def get_data(url, _types, coords):
-    locator_domain = "https://www.baystatehealth.org/"
+def get_data(url, _types, coords, sgw: SgWriter):
     page_url = f"https://www.baystatehealth.org{url}"
-
-    session = SgRequests()
-    r = session.get(page_url)
+    r = session.get(page_url, headers=headers)
     tree = html.fromstring(r.text)
 
     location_name = "".join(tree.xpath("//h1/span/text()")).strip()
     if "-" in location_name:
         location_name = location_name.split("-")[0].strip()
 
-    street_address = (
-        ", ".join(
-            tree.xpath("//span[contains(@class, 'location-address')]/text()")
-        ).strip()
-        or "<MISSING>"
-    )
-    city = (
-        "".join(tree.xpath("//span[@class='location-town']/text()")).strip()
-        or "<MISSING>"
-    )
-    state = (
-        "".join(tree.xpath("//span[@class='location-state']/text()")).strip()
-        or "<MISSING>"
-    )
-    postal = (
-        "".join(tree.xpath("//span[@class='location-zip']/text()")).strip()
-        or "<MISSING>"
-    )
-    country_code = "US"
-    store_number = "<MISSING>"
+    street_address = ", ".join(
+        tree.xpath("//span[contains(@class, 'location-address')]/text()")
+    ).strip()
+    city = "".join(tree.xpath("//span[@class='location-town']/text()")).strip()
+    state = "".join(tree.xpath("//span[@class='location-state']/text()")).strip()
+
+    postal = "".join(tree.xpath("//span[@class='location-zip']/text()")).strip()
     phone = (
         "".join(tree.xpath("//span[@class='location-office-phone']/a/text()")).strip()
-        or "<MISSING>"
+        or ""
     )
-    if phone != "<MISSING>":
+
+    if phone:
         phone = clean_phone(phone)
     else:
-        phone = (
-            "".join(
-                tree.xpath("//span[@class='location-office-appointment-phone']/text()")
-            ).strip()
-            or "<MISSING>"
-        )
+        phone = "".join(
+            tree.xpath("//span[@class='location-office-appointment-phone']/text()")
+        ).strip()
+
     latitude, longitude = coords.get(url) or ("<MISSING>", "<MISSING>")
     if latitude == "<MISSING>":
         for k in coords.keys():
             if k in url:
                 latitude, longitude = coords[k]
                 break
-    location_type = _types.get(url) or "<MISSING>"
-    hours = tree.xpath("//div[@id='main_2_contentpanel_1_pnlOfficeHours']//text()")
+    location_type = _types.get(url)
+    hours = tree.xpath(
+        "//div[@id='main_2_contentpanel_1_pnlOfficeHours']//text()|//div[@id='main_2_contentpanel_0_pnlOfficeHours']//text()"
+    )
     hours = list(filter(None, [h.strip() for h in hours]))
 
     if hours:
         hours_of_operation = clean_hours(";".join(hours)) or "<MISSING>"
     else:
-        hours_of_operation = "<MISSING>"
+        hours_of_operation = SgRecord.MISSING
 
-    row = [
-        locator_domain,
-        page_url,
-        location_name,
-        street_address,
-        city,
-        state,
-        postal,
-        country_code,
-        store_number,
-        phone,
-        location_type,
-        latitude,
-        longitude,
-        hours_of_operation,
-    ]
+    row = SgRecord(
+        page_url=page_url,
+        location_name=location_name,
+        street_address=street_address,
+        city=city,
+        state=state,
+        zip_postal=postal,
+        country_code="US",
+        latitude=latitude,
+        longitude=longitude,
+        location_type=location_type,
+        phone=phone,
+        locator_domain=locator_domain,
+        hours_of_operation=hours_of_operation,
+    )
 
-    return row
+    sgw.write_row(row)
 
 
-def fetch_data():
-    out = []
+def fetch_data(sgw: SgWriter):
     urls = get_urls()
     _types, coords = get_params()
 
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
+    with futures.ThreadPoolExecutor(max_workers=3) as executor:
         future_to_url = {
-            executor.submit(get_data, url, _types, coords): url for url in urls
+            executor.submit(get_data, url, _types, coords, sgw): url for url in urls
         }
         for future in futures.as_completed(future_to_url):
-            row = future.result()
-            if row:
-                out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+            future.result()
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://www.baystatehealth.org/"
+
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:94.0) Gecko/20100101 Firefox/94.0",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+        "Connection": "keep-alive",
+        "Upgrade-Insecure-Requests": "1",
+        "Sec-Fetch-Dest": "document",
+        "Sec-Fetch-Mode": "navigate",
+        "Sec-Fetch-Site": "cross-site",
+        "Sec-Fetch-User": "?1",
+        "Cache-Control": "max-age=0",
+    }
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        fetch_data(writer)

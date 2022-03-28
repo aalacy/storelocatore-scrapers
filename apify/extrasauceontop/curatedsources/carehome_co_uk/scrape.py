@@ -1,12 +1,18 @@
-from sgselenium import SgChrome
-from bs4 import BeautifulSoup as bs
-from sgrequests import SgRequests
-import json
-import csv
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from sgselenium.sgselenium import SgChrome
 from webdriver_manager.chrome import ChromeDriverManager
+from sgrequests import SgRequests
 from sglogging import sglog
+from bs4 import BeautifulSoup as bs
+from sgscrape import simple_scraper_pipeline as sp
+import ssl
+from sgscrape.pause_resume import CrawlStateSingleton, SerializableRequest
+import json
 
-log = sglog.SgLogSetup().get_logger(logger_name="carehomes")
+ssl._create_default_https_context = ssl._create_unverified_context
+crawl_state = CrawlStateSingleton.get_instance()
 
 
 def extract_json(html_string):
@@ -37,13 +43,42 @@ def extract_json(html_string):
     return json_objects
 
 
+def get_driver(url, class_name, driver=None):
+    if driver is not None:
+        driver.quit()
+
+    user_agent = (
+        "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0"
+    )
+    x = 0
+    while True:
+        x = x + 1
+        try:
+            driver = SgChrome(
+                executable_path=ChromeDriverManager().install(),
+                user_agent=user_agent,
+                is_headless=True,
+            ).driver()
+            driver.get(url)
+
+            WebDriverWait(driver, 20).until(
+                EC.presence_of_element_located((By.CLASS_NAME, class_name))
+            )
+            break
+        except Exception:
+            driver.quit()
+            if x == 10:
+                raise Exception(
+                    "Make sure this ran with a Proxy, will fail without one"
+                )
+            continue
+    return driver
+
+
 def reset_sessions(data_url):
     s = SgRequests()
 
-    driver = SgChrome(
-        is_headless=True, executable_path=ChromeDriverManager().install()
-    ).driver()
-    driver.get(data_url)
+    driver = get_driver(data_url, "active")
 
     for request in driver.requests:
 
@@ -64,125 +99,153 @@ def reset_sessions(data_url):
             continue
 
 
-data_url = "https://www.carehome.co.uk/"
-new_sess = reset_sessions(data_url)
+def get_data():
+    log = sglog.SgLogSetup().get_logger(logger_name="carehomes")
+    if not crawl_state.get_misc_value("got_urls"):
+        breaker = 0
+        while True:
+            try:
+                data_url = "https://www.carehome.co.uk/"
+                new_sess = reset_sessions(data_url)
 
-s = new_sess[0]
-headers = new_sess[1]
-response_text = new_sess[2]
+                s = new_sess[0]
+                headers = new_sess[1]
+                response_text = new_sess[2]
+                break
+            except Exception:
+                breaker = breaker + 1
+                if breaker == 10:
+                    raise Exception
 
-soup = bs(response_text, "html.parser")
+        soup = bs(response_text, "html.parser")
 
-strong_tags = soup.find(
-    "div", attrs={"class": "row", "style": "margin-bottom:30px"}
-).find_all("strong")
-country_urls = []
-location_urls = []
-for strong_tag in strong_tags:
-    a_tag = strong_tag.find("a")
-    url = a_tag["href"]
+        strong_tags = soup.find(
+            "div", attrs={"class": "seo_links seo_links_country"}
+        ).find_all("strong")
+        country_urls = []
+        location_urls = []
+        for strong_tag in strong_tags:
+            a_tag = strong_tag.find("a")
+            url = a_tag["href"]
 
-    if "searchcountry" in url:
-        country_urls.append(url)
+            if "searchcountry" in url:
+                country_urls.append("https://www.carehome.co.uk" + url)
 
-x = 0
-for country_url in country_urls:
+        for country_url in country_urls:
 
-    response = s.get(country_url, headers=headers)
-    response_text = response.text
-    if len(response_text.split("div")) > 2:
-        pass
-    else:
-        new_sess = reset_sessions(country_url)
+            response = s.get(country_url, headers=headers)
+            response_text = response.text
+            if len(response_text.split("div")) > 2:
+                pass
+            else:
+                breaker = 0
+                while True:
+                    try:
+                        new_sess = reset_sessions(country_url)
 
-        s = new_sess[0]
-        headers = new_sess[1]
-        response_text = new_sess[2]
+                        s = new_sess[0]
+                        headers = new_sess[1]
+                        response_text = new_sess[2]
+                        break
 
-    soup = bs(response_text, "html.parser")
-    search_length = int(
-        soup.find_all("a", attrs={"class": "page-link"})[-2].text.strip()
-    )
+                    except Exception:
+                        breaker = breaker + 1
+                        if breaker == 10:
+                            raise Exception
+                        continue
 
-    count = 1
-    while count < search_length + 1:
-        search_url = country_url + "/startpage/" + str(count)
-        response = s.get(search_url, headers=headers)
-        response_text = response.text
-        log.info(search_url)
-        if len(response_text.split("div")) > 2:
-            pass
-        else:
-            y = 0
+            soup = bs(response_text, "html.parser")
+            search_length = int(
+                soup.find_all("a", attrs={"class": "page-link"})[-2].text.strip()
+            )
+
+            count = 1
+            while count < search_length + 1:
+                if count == 1:
+                    search_url = country_url
+                else:
+                    search_url = country_url + "/startpage/" + str(count)
+                response = s.get(search_url, headers=headers)
+                response_text = response.text
+                log.info(search_url)
+                if len(response_text.split("div")) > 2:
+                    pass
+                else:
+                    y = 0
+                    while True:
+                        y = y + 1
+                        if y == 10:
+                            raise Exception
+                        log.info("page_url_fail: " + str(y))
+                        try:
+                            new_sess = reset_sessions(search_url)
+
+                            s = new_sess[0]
+                            headers = new_sess[1]
+                            response_text = new_sess[2]
+                            break
+                        except Exception:
+                            continue
+
+                # raise Exception
+                soup = bs(response_text, "html.parser")
+
+                div_tags = soup.find_all("div", attrs={"class": "search-result"})
+                for div_tag in div_tags:
+                    try:
+                        location_url = div_tag.find(
+                            "a", attrs={"class": "search-result-name"}
+                        )["href"]
+                    except Exception:
+                        a_tags = div_tag.find_all("a")
+                        for a_tag in a_tags:
+                            try:
+                                location_url = a_tag["href"]
+                            except Exception:
+                                pass
+
+                    if location_url in location_urls or "#reviews" in location_url:
+                        pass
+                    else:
+                        crawl_state.push_request(SerializableRequest(url=location_url))
+                count = count + 1
+        crawl_state.set_misc_value("got_urls", True)
+
+    num_urls = len(crawl_state.request_stack_iter())
+    x = 0
+    for request_url in crawl_state.request_stack_iter():
+        location_url = request_url.url
+        x = x + 1
+
+        if "searchazref" not in location_url:
+            continue
+
+        try:
+            response = s.get(location_url, headers=headers)
+
+        except Exception:
+            x = 0
             while True:
-                y = y + 1
-                log.info("page_url_fail: " + str(y))
+                x = x + 1
                 try:
-                    new_sess = reset_sessions(search_url)
+                    new_sess = reset_sessions(location_url)
 
                     s = new_sess[0]
                     headers = new_sess[1]
                     response_text = new_sess[2]
                     break
+
                 except Exception:
-                    continue
+                    if x == 10:
+                        raise Exception
 
-        # raise Exception
-        soup = bs(response_text, "html.parser")
-        div_tags = soup.find_all("div", attrs={"class": "col-xs-12"})
-        for div_tag in div_tags:
-            try:
-                location_url = div_tag.find(
-                    "a", attrs={"style": "font-weight:bold;font-size:28px"}
-                )["href"]
-            except Exception:
-                a_tags = div_tag.find_all("a")
-                for a_tag in a_tags:
-                    try:
-                        location_url = a_tag["href"]
-                    except Exception:
-                        pass
+        response_text = response.text
+        log.info("URL " + str(x) + "/" + str(num_urls))
+        log.info(location_url)
 
-            if location_url in location_urls:
-                pass
-            else:
-                location_urls.append(location_url)
-        count = count + 1
-
-x = 0
-with open("data.csv", mode="w") as output_file:
-    writer = csv.writer(
-        output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-    )
-    writer.writerow(
-        [
-            "locator_domain",
-            "page_url",
-            "location_name",
-            "location_type",
-            "store_number",
-            "street_address",
-            "city",
-            "state",
-            "zip",
-            "country_code",
-            "latitude",
-            "longitude",
-            "phone",
-            "hours_of_operation",
-        ]
-    )
-
-    for location_url in location_urls:
-        if "searchazref" not in location_url:
+        if "404 - Page Missing" in response_text:
             continue
 
-        x = x + 1
-
-        response = s.get(location_url, headers=headers)
-        response_text = response.text
-        log.info("URL " + str(x) + "/" + str(len(location_urls)))
-        log.info(location_url)
         if len(response_text.split("div")) > 2:
             pass
         else:
@@ -204,28 +267,58 @@ with open("data.csv", mode="w") as output_file:
 
         locator_domain = "carehome.co.uk"
         page_url = location_url
-        location_name = soup.find("h1", attrs={"class": "mb-0 card-title"}).text.strip()
-        if len(location_name.split("\n")) > 1:
+        location_name = (
+            soup.find("div", attrs={"class": "profile-header-left"})
+            .find("h1")
+            .text.strip()
+        )
+
+        try:
+            check = (
+                soup.find("div", attrs={"class": "profile-header-left"})
+                .find("small")
+                .text.strip()
+            )
+            check = check
             continue
+
+        except Exception:
+            pass
 
         address_parts = soup.find("meta", attrs={"property": "og:title"})[
             "content"
         ].split(",")
-        address = address_parts[1].strip()
-        city = address_parts[-2].strip()
-        state_zipp_parts = address_parts[-1].split(" |")[0].split(" ")
-        state_parts = state_zipp_parts[:-2]
-        state = ""
-        for part in state_parts:
-            state = state + part + " "
-        state = state.strip().replace("County ", "")
 
-        zipp = state_zipp_parts[-2] + " " + state_zipp_parts[-1]
+        try:
+            address = address_parts[1].strip()
+            city = address_parts[-2].strip()
+            state_zipp_parts = address_parts[-1].split(" |")[0].split(" ")
+            state_parts = state_zipp_parts[:-2]
+            state = ""
+            for part in state_parts:
+                state = state + part + " "
+            state = state.strip().replace("County ", "")
+
+            zipp = state_zipp_parts[-2] + " " + state_zipp_parts[-1]
+        except Exception:
+            if len(address_parts) == 1:
+                address = "<MISSING>"
+                city = "<MISSING>"
+                state = "".join(part for part in address_parts[0].split(" ")[:-2])
+                zipp = (
+                    address_parts[0].split(" ")[1]
+                    + " "
+                    + address_parts[0].split(" ")[2]
+                )
+
+            else:
+                raise Exception
 
         country_code = "UK"
         store_number = location_url.split("/")[-1]
 
         try:
+            phone = ""
             phone_link = soup.find("button", attrs={"id": "brochure_phone"})["href"]
             phone_response = s.get(phone_link, headers=headers).text
             if len(phone_response.split("div")) > 2:
@@ -243,6 +336,9 @@ with open("data.csv", mode="w") as output_file:
                         phone_response = new_sess[2]
                         break
                     except Exception:
+                        if y == 5:
+                            phone == "<INACCESSIBLE>"
+                            raise Exception
                         continue
             response_soup = bs(phone_response, "html.parser")
             phone = (
@@ -251,7 +347,10 @@ with open("data.csv", mode="w") as output_file:
                 .text.strip()
             )
         except Exception:
-            phone = "<MISSING>"
+            if phone == "<INACCESSIBLE>":
+                pass
+            else:
+                phone = "<MISSING>"
 
         geo_json = extract_json(response_text.split('geo":')[1].split("reviews")[0])[0]
         latitude = geo_json["latitude"]
@@ -283,21 +382,61 @@ with open("data.csv", mode="w") as output_file:
             location_type = "<MISSING>"
 
         phone = phone.split("ext")[0].strip()
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            location_type,
-            store_number,
-            address,
-            city,
-            state,
-            zipp,
-            country_code,
-            latitude,
-            longitude,
-            phone,
-            hours,
-        ]
+        yield {
+            "locator_domain": locator_domain,
+            "page_url": page_url,
+            "location_name": location_name,
+            "latitude": latitude,
+            "longitude": longitude,
+            "city": city,
+            "store_number": store_number,
+            "street_address": address,
+            "state": state,
+            "zip": zipp,
+            "phone": phone,
+            "location_type": location_type,
+            "hours": hours,
+            "country_code": country_code,
+        }
 
-        writer.writerow(row)
+
+def scrape():
+    field_defs = sp.SimpleScraperPipeline.field_definitions(
+        locator_domain=sp.MappingField(mapping=["locator_domain"]),
+        page_url=sp.MappingField(mapping=["page_url"], part_of_record_identity=True),
+        location_name=sp.MappingField(
+            mapping=["location_name"],
+        ),
+        latitude=sp.MappingField(
+            mapping=["latitude"],
+        ),
+        longitude=sp.MappingField(
+            mapping=["longitude"],
+        ),
+        street_address=sp.MultiMappingField(
+            mapping=["street_address"], is_required=False
+        ),
+        city=sp.MappingField(
+            mapping=["city"],
+        ),
+        state=sp.MappingField(mapping=["state"], is_required=False),
+        zipcode=sp.MultiMappingField(mapping=["zip"], is_required=False),
+        country_code=sp.MappingField(mapping=["country_code"]),
+        phone=sp.MappingField(mapping=["phone"], is_required=False),
+        store_number=sp.MappingField(
+            mapping=["store_number"], part_of_record_identity=True
+        ),
+        hours_of_operation=sp.MappingField(mapping=["hours"], is_required=False),
+        location_type=sp.MappingField(mapping=["location_type"], is_required=False),
+    )
+
+    pipeline = sp.SimpleScraperPipeline(
+        scraper_name="Crawler",
+        data_fetcher=get_data,
+        field_definitions=field_defs,
+        log_stats_interval=15,
+    )
+    pipeline.run()
+
+
+scrape()

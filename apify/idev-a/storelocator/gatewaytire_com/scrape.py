@@ -4,6 +4,8 @@ from sgrequests import SgRequests
 import re
 from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 logger = SgLogSetup().get_logger("gatewaytire")
 
@@ -20,11 +22,13 @@ def fetch_data():
         for _ in locations:
             page_url = bs(_["description_2"], "lxml").a["href"]
             logger.info(page_url)
-            sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
-            _hr = sp1.find("b", string=re.compile(r"Hours"))
+            res = session.get(page_url, headers=_headers)
             hours = []
-            if _hr:
-                hours = list(_hr.find_parent("p").stripped_strings)[1:]
+            if res.status_code == 200:
+                sp1 = bs(res.text, "lxml")
+                _hr = sp1.find("b", string=re.compile(r"Hours"))
+                if _hr:
+                    hours = list(_hr.find_parent("p").stripped_strings)[1:]
             yield SgRecord(
                 page_url=page_url,
                 store_number=_["title"].split("#")[-1],
@@ -43,7 +47,7 @@ def fetch_data():
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
