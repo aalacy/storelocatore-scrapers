@@ -16,6 +16,7 @@ locator_domain = "https://mcdonalds.az"
 base_url = "https://mcdonalds.az/restaurant-locations"
 
 
+
 def fetch_data():
     with SgRequests() as session:
         soup = bs(session.get(base_url, headers=_headers).text, "lxml")
