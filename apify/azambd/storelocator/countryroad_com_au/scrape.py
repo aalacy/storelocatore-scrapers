@@ -4,6 +4,10 @@ from sgselenium import SgChrome
 from sgscrape import simple_scraper_pipeline as sp
 from sglogging import sglog
 
+import ssl
+
+ssl._create_default_https_context = ssl._create_unverified_context
+
 MISSING = "<MISSING>"
 DOMAIN = "countryroad.com.au"
 logger = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
