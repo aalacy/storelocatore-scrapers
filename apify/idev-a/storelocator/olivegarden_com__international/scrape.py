@@ -4,7 +4,7 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.sgpostal import parse_address_intl
+from sgpostal.sgpostal import parse_address_intl
 from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger("olivegarden")
@@ -56,7 +56,7 @@ def _p(val):
 def fetch_data():
     with SgRequests() as session:
         soup = bs(session.get(base_url, headers=_headers).text, "lxml")
-        locations = soup.select("article ul li")
+        locations = soup.select("main ul li")
         for _ in locations:
             if _.ul:
                 continue
@@ -71,7 +71,7 @@ def fetch_data():
             elif _p(block[-1]):
                 phone = _p(block[-1])
                 del block[-1]
-            raw_address = " ".join(block[1:])
+            raw_address = " ".join(block[1:]).replace("\n", " ")
             addr = parse_address_intl(raw_address)
             street_address = addr.street_address_1
             if addr.street_address_2:
@@ -87,8 +87,7 @@ def fetch_data():
                 for cc in _.find_parent().find_previous_siblings():
                     if cc.name != "p":
                         country = cc.text.strip()
-            if country in ["HAWAII", "Guam", ""]:
-                country = "US"
+                        break
             yield SgRecord(
                 page_url=base_url,
                 location_name=block[0],
@@ -108,9 +107,8 @@ if __name__ == "__main__":
         SgRecordDeduper(
             SgRecordID(
                 {
+                    SgRecord.Headers.RAW_ADDRESS,
                     SgRecord.Headers.PHONE,
-                    SgRecord.Headers.CITY,
-                    SgRecord.Headers.STREET_ADDRESS,
                 }
             )
         )

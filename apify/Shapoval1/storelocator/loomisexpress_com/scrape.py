@@ -1,17 +1,15 @@
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
-from concurrent import futures
 
 
-def get_data(coords, sgw: SgWriter):
-    lat, long = coords
+def fetch_data(sgw: SgWriter):
+
     locator_domain = "https://loomisexpress.com/"
     api_url = "https://loomisexpress.com/loomship/Common/queryLocations"
-
+    session = SgRequests()
     headers = {
         "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0",
         "Accept": "application/json, text/javascript, */*; q=0.01",
@@ -25,37 +23,78 @@ def get_data(coords, sgw: SgWriter):
         "Sec-Fetch-Mode": "cors",
         "Sec-Fetch-Site": "same-origin",
     }
-    data = (
-        '{"origin_lat":'
-        + str(lat)
-        + ',"origin_lng":'
-        + str(long)
-        + ',"include_otc":true,"include_smart":false,"include_terminal":false,"limit":500,"within_distance":100000}'
-    )
-
-    session = SgRequests()
+    data = '{"origin_lat":48.4824429,"origin_lng":-123.39337777551245,"include_otc":true,"include_smart":true,"include_terminal":true,"limit":5000,"within_distance":10000}'
 
     r = session.post(api_url, headers=headers, data=data)
     js = r.json()
-
     for j in js:
 
         page_url = "https://loomisexpress.com/loomship/Shipping/DropOffLocations"
         location_name = j.get("name") or "<MISSING>"
-        street_address = f"{j.get('address_line_1')} {j.get('address_line_2')}"
-        city = j.get("city") or "<MISSING>"
+        street_address = f"{j.get('address_line_1')}"
+        store_number = "".join(j.get("address_id")).strip() or "<MISSING>"
+        city = "".join(j.get("city")).strip() or "<MISSING>"
         state = j.get("province") or "<MISSING>"
         postal = j.get("postal_code") or "<MISSING>"
         country_code = "CA"
-        phone = j.get("phone") or "<MISSING>"
+        phone = "".join(j.get("phone")).strip() or "<MISSING>"
         if "MON-FRI: 08:30-1" in phone:
             phone = "<MISSING>"
-        latitude = j.get("latLng")[0]
-        longitude = j.get("latLng")[1]
+        if phone == "<MISSING>":
+            phone = "".join(j.get("address_line_2")).strip() or "<MISSING>"
+        if phone.find("C/O WHITELAND FREIGHT") != -1:
+            phone = "<MISSING>"
+        if phone.find("/") != -1:
+            phone = phone.split("/")[0].strip()
+        if phone == "UNIT 1 & 2":
+            phone = "<MISSING>"
+            street_address = street_address + " " + "UNIT 1 & 2"
+        if phone == "unit 2":
+            phone = "<MISSING>"
+            street_address = street_address + " " + "unit 2"
+        if phone == "UNIT 3":
+            phone = "<MISSING>"
+            street_address = street_address + " " + "UNIT 3"
+        if phone == "Unit 22":
+            phone = "<MISSING>"
+            street_address = street_address + " " + "Unit 22"
+        if phone == "UNIT 2":
+            phone = "<MISSING>"
+            street_address = street_address + " " + "UNIT 2"
+        if phone == "Unit H4":
+            phone = "<MISSING>"
+            street_address = street_address + " " + "Unit H4"
+        if phone == "UNIT 21":
+            phone = "<MISSING>"
+            street_address = street_address + " " + "UNIT 21"
+        if phone == "UNIT 234":
+            phone = "<MISSING>"
+            street_address = street_address + " " + "UNIT 234"
+        if (
+            phone == "( BESIDE KENNER HIGH SCHOOL)"
+            or phone == "AT REAR, ACCESS FROM MARCHET & VALET ST."
+        ):
+            phone = "<MISSING>"
+        if phone.find("UNI") != -1:
+            street_address = street_address + " " + " ".join(phone.split()[:-1])
+            phone = phone.split()[-1].strip()
+        street_address = street_address.replace(".", "").upper()
+        latitude = j.get("latLng")[0] or "<MISSING>"
+        longitude = j.get("latLng")[1] or "<MISSING>"
         hours_of_operation = (
-            "".join(j.get("attention")).replace(". Loca", "").replace("<b", "").strip()
+            "".join(j.get("attention"))
+            .replace(". Loca", "")
+            .replace("<b", "")
+            .replace("<BR>", " ")
+            .strip()
             or "<MISSING>"
         )
+        if hours_of_operation.find("By") != -1:
+            hours_of_operation = "<MISSING>"
+        if hours_of_operation.find("BY APPOINTMENT") != -1:
+            hours_of_operation = "<MISSING>"
+        if store_number == "<MISSING>":
+            continue
 
         row = SgRecord(
             locator_domain=locator_domain,
@@ -66,7 +105,7 @@ def get_data(coords, sgw: SgWriter):
             state=state,
             zip_postal=postal,
             country_code=country_code,
-            store_number=SgRecord.MISSING,
+            store_number=store_number,
             phone=phone,
             location_type=SgRecord.MISSING,
             latitude=latitude,
@@ -77,25 +116,9 @@ def get_data(coords, sgw: SgWriter):
         sgw.write_row(row)
 
 
-def fetch_data(sgw: SgWriter):
-    coords = DynamicGeoSearch(
-        country_codes=[SearchableCountries.CANADA],
-        max_search_distance_miles=70,
-        expected_search_radius_miles=70,
-        max_search_results=None,
-    )
-
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {executor.submit(get_data, url, sgw): url for url in coords}
-        for future in futures.as_completed(future_to_url):
-            future.result()
-
-
 if __name__ == "__main__":
     session = SgRequests()
     with SgWriter(
-        SgRecordDeduper(
-            RecommendedRecordIds.GeoSpatialId, duplicate_streak_failure_factor=-1
-        )
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
     ) as writer:
         fetch_data(writer)

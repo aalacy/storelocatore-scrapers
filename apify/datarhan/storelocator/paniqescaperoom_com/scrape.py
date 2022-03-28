@@ -1,49 +1,18 @@
 import re
-import csv
 import json
 from lxml import etree
 from urllib.parse import urljoin
 
 from sgrequests import SgRequests
-from sgscrape.sgpostal import parse_address_intl
-
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+from sgpostal.sgpostal import parse_address_intl
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
-    # Your scraper here
-    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
-
-    items = []
-
+    session = SgRequests()
     start_url = "https://paniqescaperoom.com/"
     domain = re.findall(r"://(.+?)/", start_url)[0].replace("www.", "")
     hdr = {
@@ -52,33 +21,37 @@ def fetch_data():
     response = session.get(start_url, headers=hdr)
     dom = etree.HTML(response.text)
 
-    all_locations = dom.xpath('//a[@data-region="us"]/@href')[:-1]
+    all_locations = dom.xpath('//a[@data-region="us"]/@href')
     for url in all_locations:
         store_url = urljoin(start_url, url)
         loc_response = session.get(store_url)
         loc_dom = etree.HTML(loc_response.text)
 
-        poi = loc_dom.xpath('//script[contains(text(), "GeoCoordinates")]/text()')[0]
-        poi = json.loads(poi)
+        if loc_dom.xpath('//div[contains(text(), "Coming Soon!")]'):
+            continue
+        poi = loc_dom.xpath('//script[contains(text(), "GeoCoordinates")]/text()')
+        if not poi:
+            continue
+        poi = json.loads(poi[0])
         if loc_dom.xpath('//div[contains(text(), "OPENING SOON")]'):
             continue
-        if loc_dom.xpath(
-            '//div[contains(text(), "PERMANENTLY CLOSED DUE TO COVID-19")]'
-        ):
+        if loc_dom.xpath('//div[contains(text(), "PERMANENTLY CLOSED")]'):
             continue
         if loc_dom.xpath('//div[contains(text(), "Permanently closed")]'):
             continue
 
         location_name = poi["name"]
         location_name = location_name if location_name else "<MISSING>"
+        raw_address = ""
         if not poi.get("address"):
-            addr = parse_address_intl(
+            raw_address = (
                 loc_dom.xpath('//a[contains(@href, "maps")]/@href')[0]
-                .split("q=")[-1]
-                .split("&")[0]
+                .split("query=")[-1]
+                .split("&query")[0]
                 .replace("+", " ")
-                .replace("%2C", "")
+                .replace("%2C", ",")
             )
+            addr = parse_address_intl(raw_address)
             street_address = addr.street_address_1
             if addr.street_address_2:
                 street_address += " " + addr.street_address_2
@@ -98,7 +71,6 @@ def fetch_data():
             zip_code = zip_code if zip_code else "<MISSING>"
             country_code = poi["address"]["addressCountry"]
             country_code = country_code if country_code else "<MISSING>"
-        store_number = "<MISSING>"
         if poi.get("telephone"):
             phone = poi["telephone"]
         else:
@@ -107,35 +79,44 @@ def fetch_data():
         location_type = poi["@type"]
         latitude = poi["geo"]["latitude"]
         longitude = poi["geo"]["longitude"]
-        hours_of_operation = "<MISSING>"
+        hoo = loc_dom.xpath(
+            '//h4[contains(text(), "Opening Hours")]/following-sibling::div[@class="table-wrap"][1]//text()'
+        )
+        hoo = " ".join([e.strip() for e in hoo if e.strip()])
         if loc_dom.xpath('//div[contains(text(), "temporarily closed")]'):
-            hours_of_operation = "temporarily closed"
+            location_type = "temporarily closed"
 
-        item = [
-            domain,
-            store_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip_code,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
+        item = SgRecord(
+            locator_domain=domain,
+            page_url=store_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zip_code,
+            country_code="US",
+            store_number="",
+            phone=phone,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hoo,
+            raw_address=raw_address,
+        )
 
-        items.append(item)
-
-    return items
+        yield item
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":

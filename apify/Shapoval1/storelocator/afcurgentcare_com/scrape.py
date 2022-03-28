@@ -1,126 +1,89 @@
-import csv
-from concurrent import futures
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
-from sgzip.static import static_coordinate_list, SearchableCountries
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
+def get_hours(hours) -> str:
+    tmp = []
+    for h in hours:
+        day = h.get("label")
+        time = h.get("content")
+        line = f"{day} {time}"
+        tmp.append(line)
+    hours_of_operation = ";".join(tmp)
+    return hours_of_operation
 
 
-def get_data(coord):
-    rows = []
-    lat, lng = coord
-    locator_domain = "https://www.wetzels.com"
+def fetch_data(sgw: SgWriter):
 
+    locator_domain = "https://afcurgentcare.com/"
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:88.0) Gecko/20100101 Firefox/88.0",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0",
     }
 
     session = SgRequests()
 
     r = session.get(
-        f"https://afcurgentcare.com/modules/multilocation/?near_lat={lat}&near_lon={lng}&services__in=&published=1&within_business=true",
+        "https://www.afcurgentcare.com/modules/multilocation/?near_location=10001&threshold=20000&geocoder_region=&limit=20000&services__in=&language_code=en-us&published=1&within_business=true",
         headers=headers,
     )
-
     js = r.json()
+
     for j in js["objects"]:
 
-        page_url = j.get("location_url")
-        location_name = j.get("location_name")
+        page_url = j.get("location_url") or "https://www.afcurgentcare.com/locations"
+        location_name = j.get("location_name") or "<MISSING>"
         street_address = (
             f"{j.get('street')} {j.get('street2') or ''}".replace("None", "").strip()
             or "<MISSING>"
         )
-        city = j.get("city")
-        state = j.get("state")
-        postal = j.get("postal_code")
+        city = j.get("city") or "<MISSING>"
+        state = j.get("state") or "<MISSING>"
+        postal = j.get("postal_code") or "<MISSING>"
         country_code = j.get("country")
-        store_number = "<MISSING>"
-        phone = j.get("phonemap").get("phone")
-        latitude = j.get("lon")
-        longitude = j.get("lat")
-        location_type = "<MISSING>"
-        hours = j.get("formatted_hours").get("primary").get("days")
-        tmp = []
-        for h in hours:
-            day = h.get("label")
-            time = h.get("content")
-            line = f"{day} {time}"
-            tmp.append(line)
-        hours_of_operation = ";".join(tmp) or "<MISSING>"
+        phone = j.get("phonemap").get("phone") or "<MISSING>"
+        latitude = j.get("lon") or "<MISSING>"
+        longitude = j.get("lat") or "<MISSING>"
+        hours = j.get("formatted_hours").get("primary").get("days") or "<MISSING>"
+        hours_of_operation = "<MISSING>"
+        if hours != "<MISSING>":
+            hours_of_operation = get_hours(hours)
         if hours_of_operation.count("Closed") == 7:
             hours_of_operation = "Closed"
+        cms = j.get("custom_fields").get("finder_cta_label")
+        if "Coming Soon" in str(cms):
+            hours_of_operation = "Coming Soon"
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        rows.append(row)
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=SgRecord.MISSING,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+            raw_address=f"{street_address} {city}, {state} {postal}",
+        )
 
-    return rows
-
-
-def fetch_data():
-    out = []
-    s = set()
-    coords = static_coordinate_list(radius=35, country_code=SearchableCountries.USA)
-
-    with futures.ThreadPoolExecutor(max_workers=8) as executor:
-        future_to_url = {executor.submit(get_data, coord): coord for coord in coords}
-        for future in futures.as_completed(future_to_url):
-            rows = future.result()
-            for row in rows:
-                _id = row[1]
-                if _id not in s:
-                    s.add(_id)
-                    out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.STREET_ADDRESS, SgRecord.Headers.LOCATION_NAME}
+            )
+        )
+    ) as writer:
+        fetch_data(writer)

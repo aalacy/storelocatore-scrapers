@@ -48,7 +48,6 @@ def fetch_data():
             locator_domain = website
 
             location_name = "".join(store_info_divs[0].xpath(".//text()")).strip()
-            page_url = search_url + location_name
 
             full_address = list(
                 filter(
@@ -59,9 +58,12 @@ def fetch_data():
             if "Canada" not in full_address[-1]:
                 full_address = full_address[:-1]
 
-            street_address = (
-                " ".join(full_address[0:-1]).split("International Airport")[0].strip()
-            )
+            street_address = " ".join(full_address[0:-1])
+            if "International Airport" in street_address:
+                street_address = street_address.split("International Airport")[
+                    -1
+                ].strip()
+
             city_state_zip = full_address[-1]
 
             city = city_state_zip.split(",")[0].strip()

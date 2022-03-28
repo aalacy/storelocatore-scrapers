@@ -75,7 +75,7 @@ def fetch_data(sgw: SgWriter):
             storename = soup.find("a", {"class": "locate-txt-nlink"}).text
             coords = soup.find("img", {"alt": "MapBox Maps Frame"})["src"]
             coords = coords.split("(")[1].split(")")[0]
-            [lat, long] = coords.split(",")
+            [long, lat] = coords.split(",")
             address_raw = soup.find("div", {"class": "locations-list"}).text.strip()
             [
                 country,
@@ -108,7 +108,7 @@ def fetch_data(sgw: SgWriter):
             storename = soup.find("a", {"class": "locate-txt-nlink"}).text
             coords = soup.find("img", {"alt": "MapBox Maps Frame"})["src"]
             coords = coords.split("(")[1].split(")")[0]
-            [lat, long] = coords.split(",")
+            [long, lat] = coords.split(",")
             address_raw = soup.find("div", {"class": "locations-list"}).text.strip()
             [
                 country,

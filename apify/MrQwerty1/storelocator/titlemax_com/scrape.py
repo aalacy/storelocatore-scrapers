@@ -8,8 +8,8 @@ from concurrent import futures
 
 
 def get_urls():
-    r = session.get("https://www.titlemax.com/stores.xml", headers=headers)
-    tree = html.fromstring(r.content)
+    r = session.get("https://www.titlemax.com/addl-sitemap.xml", headers=headers)
+    tree = html.fromstring(str(r.content).replace("<![CDATA[", "").replace("]]>", ""))
     return tree.xpath("//loc/text()")
 
 

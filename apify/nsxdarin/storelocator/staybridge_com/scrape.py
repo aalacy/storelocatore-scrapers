@@ -4,6 +4,7 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
+import time
 
 logger = SgLogSetup().get_logger("staybridge_com")
 
@@ -22,7 +23,6 @@ def fetch_data():
     Found = False
     cities = []
     for line in r.iter_lines():
-        line = str(line.decode("utf-8"))
         if '-hotels"><span>' in line:
             if (
                 'href="https://www.ihg.com/destinations/us/en/mexico/' in line
@@ -45,18 +45,16 @@ def fetch_data():
             if lurl not in states:
                 states.append(lurl)
     for url in states:
+        time.sleep(3)
         logger.info(url)
         try:
             r = session.get(url, headers=headers)
             lines = r.iter_lines()
             for line in lines:
-                line = str(line.decode("utf-8"))
                 if '<li class="listingItem"><a' in line:
                     g = next(lines)
-                    g = str(g.decode("utf-8"))
                     if 'href="' not in g:
                         g = next(lines)
-                        g = str(g.decode("utf-8"))
                     curl = g.split('href="')[1].split('"')[0]
                     if curl not in cities:
                         cities.append(curl)
@@ -72,12 +70,12 @@ def fetch_data():
         except:
             pass
     for url in cities:
+        time.sleep(3)
         try:
             logger.info(url)
             r = session.get(url, headers=headers)
             lines = r.iter_lines()
             for line in lines:
-                line = str(line.decode("utf-8"))
                 if '"@type":"Hotel","' in line:
                     curl = (
                         line.split('"@type":"Hotel","')[1]
@@ -90,6 +88,7 @@ def fetch_data():
         except:
             pass
     for loc in locs:
+        time.sleep(3)
         logger.info(loc)
         r2 = session.get(loc, headers=headers)
         website = "staybridge.com"
@@ -114,7 +113,6 @@ def fetch_data():
         lng2 = ""
         store = loc.split("/hoteldetail")[0].rsplit("/", 1)[1]
         for line2 in r2.iter_lines():
-            line2 = str(line2.decode("utf-8"))
             if 'property="og:title" content="' in line2 and name == "":
                 name = line2.split('property="og:title" content="')[1].split('"')[0]
             if '"name" : "' in line2 and name == "":
@@ -140,6 +138,8 @@ def fetch_data():
                 country = line2.split('<span itemprop="addressCountry">')[1].split("<")[
                     0
                 ]
+            if '"postalCode": "' in line2:
+                zc = line2.split('"postalCode": "')[1].split('"')[0]
             if '"addressLocality": "' in line2 and city == "":
                 city = line2.split('"addressLocality": "')[1].split('"')[0]
             if lat == "" and '<meta itemprop="latitude" content="' in line2:
