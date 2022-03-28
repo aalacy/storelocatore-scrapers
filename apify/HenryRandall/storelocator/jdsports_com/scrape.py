@@ -86,8 +86,8 @@ def get_location(item, page_url, is_details):
     hours_of_operation = ", ".join(hour.attrs["content"] for hour in hours)
 
     if is_details:
-        latitude = item.find('meta', itemprop='latitude').attrs['content']
-        longitude = item.find('meta', itemprop='longitude').attrs['content']
+        latitude = item.find("meta", itemprop="latitude").attrs["content"]
+        longitude = item.find("meta", itemprop="longitude").attrs["content"]
     else:
         latitude = None
         longitude = None
@@ -104,7 +104,7 @@ def get_location(item, page_url, is_details):
         phone=phone,
         hours_of_operation=hours_of_operation,
         latitude=latitude,
-        longitude=longitude
+        longitude=longitude,
     )
 
 
