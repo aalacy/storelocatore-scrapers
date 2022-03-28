@@ -65,7 +65,14 @@ def fetch_data():
 
                 street_address = "".join(add_list[0]).strip()
                 city = add_list[1]
-                state_zip = add_list[2].replace(",", "").strip()
+                try:
+                    state_zip = add_list[2].replace(",", "").strip()
+                except:
+                    pass
+
+                if page_url == "http://tubbys.com/location-page/tubbys-redford-104":
+                    state_zip = "MI 48240"
+
                 state = state_zip.split(" ")[0].strip()
                 if state == "City":
                     state = "MI"
