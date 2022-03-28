@@ -1,155 +1,138 @@
+import usaddress
+from sglogging import sglog
 from bs4 import BeautifulSoup
-import csv
-from sgzip.dynamic import SearchableCountries
-from sgzip.static import static_zipcode_list
 from sgrequests import SgRequests
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
+website = "storagepro_com"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
 headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
-}
-headers1 = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36",
-    "Accept": "application/json, text/plain, */*",
-    "Accept-Encoding": "gzip, deflate, br",
-    "Accept-Language": "en-US,en;q=0.9",
-    "cache-control": "no-cache",
-    "Connection": "keep-alive",
-    "Host": "tenantapi.com",
-    "newrelic": "eyJ2IjpbMCwxXSwiZCI6eyJ0eSI6IkJyb3dzZXIiLCJhYyI6IjI4MDczNjkiLCJhcCI6IjgyNzU0OTI1OSIsImlkIjoiZjdhOWZkMjg0ZWVlODllZSIsInRyIjoiM2I4ZTkxMGZmNDQ4YWEwOTY5NDIyYjg5YTdhN2Q1MzAiLCJ0aSI6MTYwNTg3MTQzNzgyM319",
-    "Origin": "https://www.storagepro.com",
-    "Referer": "https://www.storagepro.com/",
-    "Sec-Fetch-Dest": "empty",
-    "Sec-Fetch-Mode": "cors",
-    "Sec-Fetch-Site": "cross-site",
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.198 Safari/537.36",
-    "X-storageapi-date": "1609072757",
-    "X-storageapi-key": "8651844f76294d9f9ce61ac39ae0d33f",
-    "X-storageapi-trace-id": "9b92861f-fb2e-4afe-89d1-fb8727e82b9e",
+    "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36",
+    "Accept": "application/json",
 }
 
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+DOMAIN = "https://www.storagepro.com/"
+MISSING = SgRecord.MISSING
 
 
 def fetch_data():
-    p = 0
-    data = []
-    titlelist = []
-    for k in range(0, 2):
-        if k == 0:
-            zips = static_zipcode_list(radius=50, country_code=SearchableCountries.USA)
-        elif k == 1:
-            zips = static_zipcode_list(
-                radius=100, country_code=SearchableCountries.CANADA
+    if True:
+        loclist = []
+        states = ["arizona", "california", "nevada", "washington"]
+        for temp_state in states:
+            state_url = "https://www.storagepro.com/storage-units/" + temp_state
+            r = session.get(state_url, headers=headers)
+            soup = BeautifulSoup(r.text, "html.parser")
+            linklist = soup.findAll("div", {"class": "title"})
+            if not linklist:
+                loc = r.url
+                loclist.append(loc)
+            else:
+                for link in linklist:
+                    loc = "https://www.storagepro.com" + link.find("a")["href"]
+                    loclist.append(loc)
+        for loc in loclist:
+            page_url = loc
+            log.info(page_url)
+            r = session.get(page_url, headers=headers)
+            if r.status_code != 200:
+                continue
+            soup = BeautifulSoup(r.text, "html.parser")
+            temp = soup.find("div", {"class": "facility-info"})
+            location_name = temp.find("h2").text
+            address = (
+                temp.find("div", {"class": "facility-address"})
+                .get_text(separator="|", strip=True)
+                .replace("|", "")
             )
-        for zip_code in zips:
-
-            url = (
-                "https://tenantapi.com/v3/applications/app72d8cb0233044f5ba828421eb01e836b/v1/search/owners/own3635fb2e825d49a9a7a9f8d9bcdcd304/?&lat=&lon=&ip=&address="
-                + zip_code
-                + "&state=&filter_storage_type=undefined&filter_unit_size=&list_all=true"
-            )
-            loclist = session.get(url, headers=headers1, timeout=5).json()[
-                "applicationData"
-            ]["app72d8cb0233044f5ba828421eb01e836b"][0]["data"]
-
-            for loc in loclist:
-                link = loc["landing_page_url"]
-                if link in titlelist:
-                    continue
-                titlelist.append(link)
-                store = loc["id"]
-                title = loc["name"]
-                street = loc["address"]["street_address"]
-                city = loc["address"]["city"]
-                state = loc["address"]["state"]
-                pcode = loc["address"]["zipcode"]
-                phone = loc["phone"][0]["number"]
-                try:
-                    phone = phone[0:3] + "-" + phone[3:6] + "-" + phone[6:10]
-                except:
-                    phone = "<MISSING>"
-                lat = loc["geolocation"]["latitude"]
-                longt = loc["geolocation"]["longitude"]
-                try:
-                    r = session.get(link, headers=headers, timeout=5)
-                    soup = BeautifulSoup(r.text, "html.parser")
-                    link = r.url
-                    try:
-                        hours = soup.find("div", {"class": "office-hours"}).text
-                    except:
-                        hours = "<MISSING>"
-                except:
-                    link = "<MISSING>"
-                    hours = "<MISSING>"
-                ltype = "Store"
-                if link.find("storagepro.com") == -1:
-                    ltype = "Facility Partner"
-                ccode = "US"
-                if pcode.isdigit():
-                    pass
-                else:
-                    ccode = "CA"
-                if len(hours) < 3:
-                    hours = "<MISSING>"
-                if len(phone) < 3:
-                    phone = "<MISSING>"
-                data.append(
-                    [
-                        "https://www.storagepro.com/",
-                        link,
-                        title,
-                        street,
-                        city,
-                        state,
-                        pcode,
-                        ccode,
-                        store,
-                        phone,
-                        ltype,
-                        lat,
-                        longt,
-                        hours.replace("AM", " AM ")
-                        .replace("PM", " PM ")
-                        .replace("Closed", "Closed "),
-                    ]
+            phone = soup.find("span", {"class": "phone-number"}).text
+            try:
+                hours_of_operation = (
+                    soup.find("div", {"class": "office-hours"})
+                    .get_text(separator="|", strip=True)
+                    .replace("|", " ")
                 )
+            except:
+                try:
+                    hours_of_operation = (
+                        soup.find("div", {"class": "callcenter-timings-content-row"})
+                        .get_text(separator="|", strip=True)
+                        .replace("|", " ")
+                    )
+                except:
+                    try:
+                        hours_of_operation = (
+                            soup.find("div", {"class": "gate-hours"})
+                            .get_text(separator="|", strip=True)
+                            .replace("|", " ")
+                        )
+                    except:
 
-                p += 1
-    return data
+                        hours_of_operation = MISSING
+            raw_address = address.replace(",", " ")
+            address = usaddress.parse(raw_address)
+            i = 0
+            street_address = ""
+            city = ""
+            state = ""
+            zip_postal = ""
+            while i < len(address):
+                temp = address[i]
+                if (
+                    temp[1].find("Address") != -1
+                    or temp[1].find("Street") != -1
+                    or temp[1].find("Recipient") != -1
+                    or temp[1].find("Occupancy") != -1
+                    or temp[1].find("BuildingName") != -1
+                    or temp[1].find("USPSBoxType") != -1
+                    or temp[1].find("USPSBoxID") != -1
+                ):
+                    street_address = street_address + " " + temp[0]
+                if temp[1].find("PlaceName") != -1:
+                    city = city + " " + temp[0]
+                if temp[1].find("StateName") != -1:
+                    state = state + " " + temp[0]
+                if temp[1].find("ZipCode") != -1:
+                    zip_postal = zip_postal + " " + temp[0]
+                i += 1
+            country_code = "US"
+            yield SgRecord(
+                locator_domain=DOMAIN,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address.strip(),
+                city=city.strip(),
+                state=state.strip(),
+                zip_postal=zip_postal.strip(),
+                country_code=country_code,
+                store_number=MISSING,
+                phone=phone.strip(),
+                location_type=MISSING,
+                latitude=MISSING,
+                longitude=MISSING,
+                hours_of_operation=hours_of_operation,
+                raw_address=raw_address,
+            )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    log.info("Started")
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()

@@ -1,0 +1,3 @@
+--ignore CentroidValidator (AU)
+
+--ignore CountryCodeFillRateChecker (Confirmed on website)

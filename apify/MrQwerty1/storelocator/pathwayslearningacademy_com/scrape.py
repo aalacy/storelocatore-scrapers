@@ -1,47 +1,22 @@
-import csv
-
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def get_urls():
+    r = session.get(
+        "https://www.pathwayslearningacademy.com/child-care-centers/find-a-school/",
+        headers=headers,
+    )
+    tree = html.fromstring(r.text)
 
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
+    return tree.xpath("//map/area/@href")
 
 
-def fetch_data():
-    out = []
-    locator_domain = "https://www.pathwayslearningacademy.com/"
-    api = "https://www.pathwayslearningacademy.com/locations/"
-
-    session = SgRequests()
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0"
-    }
+def fetch_data(api, sgw: SgWriter):
     r = session.get(api, headers=headers)
     tree = html.fromstring(r.text)
     divs = tree.xpath("//div[@class='locationCard']")
@@ -49,16 +24,15 @@ def fetch_data():
     for d in divs:
         page_url = api
         location_name = "".join(d.xpath(".//h2[@class='school']//text()")).strip()
-        slug = "".join(d.xpath(".//a[@class='schoolNameLink']/@href"))
+        slug = "".join(d.xpath(".//a[@class='schoolNameLink']/@href")) or ""
+        if slug.startswith("http"):
+            continue
         if slug:
             page_url = f"https://www.pathwayslearningacademy.com{slug}"
 
-        street_address = (
-            "".join(
-                d.xpath(".//div[@class='addrMapDetails']//span[@class='street']/text()")
-            ).strip()
-            or "<MISSING>"
-        )
+        street_address = "".join(
+            d.xpath(".//div[@class='addrMapDetails']//span[@class='street']/text()")
+        ).strip()
         line = (
             "".join(
                 d.xpath(
@@ -71,57 +45,52 @@ def fetch_data():
         line = line.split(",")[1].strip()
         state = line.split()[0]
         postal = line.split()[1]
-        country_code = "US"
-        store_number = "".join(d.xpath("./@data-school-id")) or "<MISSING>"
-        phone = "".join(d.xpath(".//span[@class='tel']/text()")).strip() or "<MISSING>"
-        latitude = (
-            "".join(
-                d.xpath(
-                    ".//div[@class='addrMapDetails']//span[@data-latitude]/@data-latitude"
-                )
+        store_number = "".join(d.xpath("./@data-school-id"))
+        phone = "".join(d.xpath(".//span[@class='tel']/text()")).strip()
+        latitude = "".join(
+            d.xpath(
+                ".//div[@class='addrMapDetails']//span[@data-latitude]/@data-latitude"
             )
-            or "<MISSING>"
         )
-        longitude = (
-            "".join(
-                d.xpath(
-                    ".//div[@class='addrMapDetails']//span[@data-longitude]/@data-longitude"
-                )
+        longitude = "".join(
+            d.xpath(
+                ".//div[@class='addrMapDetails']//span[@data-longitude]/@data-longitude"
             )
-            or "<MISSING>"
         )
-        location_type = "<MISSING>"
+        location_type = SgRecord.MISSING
         if d.xpath(".//div[@class='schoolFeature']"):
             location_type = "Coming Soon"
         hours_of_operation = (
             "".join(d.xpath(".//p[@class='hours']/text()")).strip() or "<MISSING>"
         )
+        row = SgRecord(
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code="US",
+            store_number=store_number,
+            phone=phone,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            locator_domain=locator_domain,
+            hours_of_operation=hours_of_operation,
+        )
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    locator_domain = "https://www.pathwayslearningacademy.com/"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0"
+    }
+
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+        for url in get_urls():
+            ap = f"https://www.pathwayslearningacademy.com{url}"
+            fetch_data(ap, writer)

@@ -1,15 +1,10 @@
-import re
-
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
-from sglogging import SgLogSetup
 
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-
-logger = SgLogSetup().get_logger("metropolitan-market_com")
 
 
 def fetch_data(sgw: SgWriter):
@@ -27,7 +22,7 @@ def fetch_data(sgw: SgWriter):
     items = base.findAll("div", attrs={"class": "feature_box"})
 
     for item in items:
-        if "Coming Soon" in item.text:
+        if "Coming Soon" in item.text or "Opening" in item.text:
             continue
 
         link = "https://metropolitan-market.com" + item.a["href"]
@@ -35,11 +30,12 @@ def fetch_data(sgw: SgWriter):
         req = session.get(link, headers=headers)
         base = BeautifulSoup(req.text, "lxml")
 
+        link = req.url
+
         locator_domain = "metropolitan-market.com"
         location_name = (
             base.find("h3").text.strip() + " - " + base.find("h2").text.strip()
         )
-        logger.info(location_name)
         section = base.find("div", attrs={"class": "section_col_content"}).p
         raw_data = (
             str(section)
@@ -54,10 +50,7 @@ def fetch_data(sgw: SgWriter):
         zip_code = raw_data[1][raw_data[1].rfind(" ") + 1 :].strip()
         country_code = "US"
         store_number = "<MISSING>"
-        try:
-            phone = re.findall(r"[(\d)]{5} [\d]{3}-[\d]{4}", str(base))[0]
-        except:
-            phone = "<MISSING>"
+        phone = base.find("h2", string="Phone").find_next().text
         location_type = "<MISSING>"
 
         map_link = base.find("a", attrs={"class": "button"})["href"]
@@ -75,15 +68,7 @@ def fetch_data(sgw: SgWriter):
             longitude = latitude[latitude.rfind(",") + 1 :].strip()
             latitude = latitude[latitude.rfind("=") + 1 : latitude.rfind(",")].strip()
 
-        hours = (
-            str(base.findAll("div", attrs={"class": "section_col_content"})[1])
-            .replace("<p>", "")
-            .replace("</p>", "")
-            .replace("\n", "")
-            .replace("</div>", "")
-            .split("<br/>")
-        )
-        hours_of_operation = hours[-1][hours[-1].rfind(">") + 1 :]
+        hours_of_operation = base.find("h2", string="Hours").find_next().text
 
         sgw.write_row(
             SgRecord(

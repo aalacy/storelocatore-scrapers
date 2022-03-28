@@ -1,43 +1,27 @@
-import csv
-
-from concurrent import futures
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from concurrent import futures
 from sgscrape.sgpostal import parse_address, International_Parser
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def get_international(line):
+    adr = parse_address(International_Parser(), line)
+    street_address = f"{adr.street_address_1} {adr.street_address_2 or ''}".replace(
+        "None", ""
+    ).strip()
+    city = adr.city or ""
+    state = adr.state
+    postal = adr.postcode
 
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
+    return street_address, city, state, postal
 
 
 def get_urls():
     urls = []
-    session = SgRequests()
     r = session.get("https://www.waitrose.com/content/waitrose/en/bf_home/bf.html")
     tree = html.fromstring(r.text)
     ids = tree.xpath("//select[@id='global-form-select-branch']/option/@value")
@@ -52,7 +36,6 @@ def get_urls():
 
 
 def get_js(lat, lng, _id):
-    session = SgRequests()
     r = session.get(
         f"https://www.waitrose.com/shop/NearestBranchesCmd?latitude={lat}&longitude={lng}"
     )
@@ -69,30 +52,26 @@ def get_js(lat, lng, _id):
     return out
 
 
-def get_data(page_url):
-    locator_domain = "https://www.waitrose.com/"
-
-    session = SgRequests()
+def get_data(page_url, sgw: SgWriter):
     r = session.get(page_url)
+    if r.status_code == 404:
+        return
     tree = html.fromstring(r.text)
 
     latitude = "".join(tree.xpath("//a[@data-lat]/@data-lat"))
     longitude = "".join(tree.xpath("//a[@data-long]/@data-long"))
     store_number = page_url.split("/")[-1].replace(".html", "")
-    country_code = "GB"
 
     j = get_js(latitude, longitude, store_number)
     if j:
         street_address = (
             f"{j.get('addressLine1')} {j.get('addressLine2') or ''}".strip()
-            or "<MISSING>"
         )
-        city = j.get("city") or "<MISSING>"
-        state = j.get("state") or "<MISSING>"
-        postal = j.get("postCode") or "<MISSING>"
-        location_name = j.get("branchName") or "<MISSING>"
-        phone = j.get("phoneNumber") or "<MISSING>"
-        location_type = j.get("branchDesc") or "<MISSING>"
+        city = j.get("city") or ""
+        state = j.get("state")
+        postal = j.get("postCode")
+        phone = j.get("phoneNumber")
+        location_type = j.get("branchDesc")
     else:
         location_name = "".join(
             tree.xpath("//h1[contains(text(), 'Welcome to')]/text()")
@@ -101,9 +80,6 @@ def get_data(page_url):
             location_type = "Little Waitrose"
         else:
             location_type = "Standard Branch"
-        location_name = location_name.split("Welcome to")[-1].strip()
-        if not location_name:
-            location_name = "<MISSING>"
         line = tree.xpath("//div[@class='col branch-details']/p/text()")
         line = list(filter(None, [l.strip() for l in line]))
         if not line:
@@ -112,17 +88,8 @@ def get_data(page_url):
             return
 
         phone = line.pop()
-        adr = parse_address(International_Parser(), ", ".join(line))
-        street_address = (
-            f"{adr.street_address_1} {adr.street_address_2 or ''}".replace(
-                "None", ""
-            ).strip()
-            or "<MISSING>"
-        )
-
-        city = adr.city or "<MISSING>"
-        state = adr.state or "<MISSING>"
-        postal = adr.postcode or "<MISSING>"
+        raw_address = ", ".join(line)
+        street_address, city, state, postal = get_international(raw_address)
 
     _tmp = []
     tr = tree.xpath("//div[@class='tab' and not(@id)]//tr")
@@ -131,50 +98,48 @@ def get_data(page_url):
         time = "".join(t.xpath("./td[last()]//text()")).strip()
         _tmp.append(f"{day} {time}")
 
-    hours_of_operation = ";".join(_tmp) or "<MISSING>"
+    hours_of_operation = ";".join(_tmp)
 
-    row = [
-        locator_domain,
-        page_url,
-        location_name,
-        street_address.replace("&#039;", "'"),
-        city,
-        state,
-        postal,
-        country_code,
-        store_number,
-        phone,
-        location_type,
-        latitude,
-        longitude,
-        hours_of_operation,
-    ]
+    street_address = street_address.replace("&#039;", "'")
+    city = city.replace("&#039;", "'")
 
-    return row
+    if "Little" in location_type:
+        location_name = "Little Waitrose"
+    elif "from" in location_type:
+        location_name = location_type
+    else:
+        location_name = "Waitrose"
+
+    row = SgRecord(
+        page_url=page_url,
+        location_name=location_name,
+        street_address=street_address,
+        city=city,
+        state=state,
+        zip_postal=postal,
+        country_code="GB",
+        latitude=latitude,
+        longitude=longitude,
+        location_type=location_type,
+        phone=phone,
+        locator_domain=locator_domain,
+        hours_of_operation=hours_of_operation,
+    )
+
+    sgw.write_row(row)
 
 
-def fetch_data():
-    out = []
-    s = set()
+def fetch_data(sgw: SgWriter):
     urls = get_urls()
 
-    with futures.ThreadPoolExecutor(max_workers=2) as executor:
-        future_to_url = {executor.submit(get_data, url): url for url in urls}
+    with futures.ThreadPoolExecutor(max_workers=1) as executor:
+        future_to_url = {executor.submit(get_data, url, sgw): url for url in urls}
         for future in futures.as_completed(future_to_url):
-            row = future.result()
-            if row:
-                check = tuple(row[2:7])
-                if check not in s:
-                    s.add(check)
-                    out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+            future.result()
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://www.waitrose.com/"
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        fetch_data(writer)

@@ -1,11 +1,12 @@
-from bs4 import BeautifulSoup as bs
-from sgrequests import SgRequests
 from sglogging import sglog
-from sgscrape.sgrecord import SgRecord
+from sgrequests import SgRequests
+from bs4 import BeautifulSoup as bs
 from sgscrape.sgwriter import SgWriter
-from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import SgRecordID
-from sgscrape.sgpostal import parse_address_intl
+from sgpostal.sgpostal import parse_address_intl
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+
 
 DOMAIN = "pksa.com"
 BASE_URL = "https://www.pksa.com"
@@ -23,6 +24,7 @@ session = SgRequests()
 def getAddress(raw_address):
     try:
         if raw_address is not None and raw_address != MISSING:
+            raw_address = raw_address.replace(", Website", "")
             data = parse_address_intl(raw_address)
             street_address = data.street_address_1
             if data.street_address_2 is not None:
@@ -57,22 +59,23 @@ def fetch_data():
     soup = pull_content(LOCATION_URL)
     store_info = soup.find_all("div", {"role": "gridcell"})
     for row in store_info:
-        phone = MISSING
         info = (
             row.find("p", {"class": "font_2"})
             .get_text(strip=True, separator="@")
             .replace("\n\t\t", ",")
             .strip()
         ).split("@")
+        if "Website" in info[-1]:
+            del info[-1]
+        if "Phone" in info[-1]:
+            phone = info[-1].replace("Phone:", "")
+            raw_address = " ".join(info[:-1])
+        else:
+            phone = MISSING
+            raw_address = " ".join(info)
+        if "Phone" in raw_address:
+            raw_address = raw_address.split("Phone")[0]
         location_name = row.find("h4").text.replace("\n", " ")
-        for i in range(len(info)):
-            if "Phone" in info[i]:
-                phone = info[i].replace("Phone:", "")
-                if len(phone) < 3:
-                    phone = MISSING
-                del info[i]
-                break
-        raw_address = ", ".join(info).replace("Click to Email Up", "")
         street_address, city, state, zip_postal = getAddress(raw_address)
         hours_of_operation = MISSING
         store_number = MISSING

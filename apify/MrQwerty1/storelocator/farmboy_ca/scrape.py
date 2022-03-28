@@ -1,86 +1,37 @@
-import csv
-
-from concurrent import futures
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
-
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from concurrent import futures
 
 
 def get_urls():
-    session = SgRequests()
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:86.0) Gecko/20100101 Firefox/86.0",
-    }
     r = session.get("https://www.farmboy.ca/stores-sitemap.xml", headers=headers)
     tree = html.fromstring(r.content)
     return tree.xpath("//url/loc/text()")
 
 
-def get_data(page_url):
-    locator_domain = "https://www.farmboy.ca/"
-    if page_url == "https://www.farmboy.ca/stores/":
-        return
-    session = SgRequests()
-
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:86.0) Gecko/20100101 Firefox/86.0",
-    }
+def get_data(page_url, sgw: SgWriter):
     r = session.get(page_url, headers=headers)
     tree = html.fromstring(r.text)
 
     location_name = "".join(tree.xpath("//title/text()")).strip()
-
     ad = (
-        "".join(
-            tree.xpath('//h2[text()="Store Info"]/following-sibling::div[1]/text()')
-        )
-        .replace("\n", "")
-        .split(",")
+        "".join(tree.xpath("//div[@class='loc__address']/p/text()")).strip().split(", ")
     )
+    if len(ad) == 1:
+        return
 
-    street_address = ", ".join(ad[:-3]).strip()
-    if "Shop" in street_address:
-        street_address = street_address.split(",")[0].strip()
-    ad = ad[-3:]
-    postal = ad.pop().strip() or "<MISSING>"
-    state = ad.pop().strip() or "<MISSING>"
-    city = ad.pop().strip() or "<MISSING>"
-    country_code = "CA"
-    store_number = "<MISSING>"
-    phone = (
-        "".join(tree.xpath('//span[contains(text(), "Phone")]/text()'))
-        .replace("Phone:", "")
-        .strip()
-    )
-    location_type = "store"
+    raw_address = ", ".join(ad)
+    postal = ad.pop()
+    state = ad.pop()
+    city = ad.pop()
+    street_address = ", ".join(ad)
+    if "canada" in street_address.lower():
+        street_address = street_address.split(", ")[0]
+    phone = "".join(tree.xpath("//div[@class='loc__contact']//a/text()")).strip()
     hours_of_operation = (
         " ".join(tree.xpath("//ul/li/span//text()"))
         .replace("(Today) ", "")
@@ -89,46 +40,37 @@ def get_data(page_url):
         .strip()
     )
 
-    latitude, longitude = "<MISSING>", "<MISSING>"
+    row = SgRecord(
+        page_url=page_url,
+        location_name=location_name,
+        street_address=street_address,
+        city=city,
+        state=state,
+        zip_postal=postal,
+        country_code="CA",
+        phone=phone,
+        locator_domain=locator_domain,
+        hours_of_operation=hours_of_operation,
+        raw_address=raw_address,
+    )
 
-    row = [
-        locator_domain,
-        page_url,
-        location_name,
-        street_address,
-        city,
-        state,
-        postal,
-        country_code,
-        store_number,
-        phone,
-        location_type,
-        latitude,
-        longitude,
-        hours_of_operation,
-    ]
-
-    return row
+    sgw.write_row(row)
 
 
-def fetch_data():
-    out = []
+def fetch_data(sgw: SgWriter):
     urls = get_urls()
 
     with futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {executor.submit(get_data, url): url for url in urls}
+        future_to_url = {executor.submit(get_data, url, sgw): url for url in urls}
         for future in futures.as_completed(future_to_url):
-            row = future.result()
-            if row:
-                out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+            future.result()
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://www.farmboy.ca/"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:86.0) Gecko/20100101 Firefox/86.0",
+    }
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        fetch_data(writer)

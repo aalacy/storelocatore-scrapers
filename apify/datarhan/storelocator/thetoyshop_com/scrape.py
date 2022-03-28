@@ -1,6 +1,7 @@
 import json
 from lxml import etree
 from urllib.parse import urljoin
+from w3lib.url import add_or_replace_parameter
 
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
@@ -20,9 +21,18 @@ def fetch_data():
     all_urls = dom.xpath("//li/@data-url")
     all_locations = []
     for url in all_urls:
-        response = session.get(urljoin(start_url, url))
-        data = json.loads(response.text)
+        reg_url = urljoin(start_url, url)
+        data = session.get(reg_url).json()
         all_locations += data["data"]
+        total = data["total"]
+        if total > 10:
+            pages = total // 10 + 1
+            for p in range(1, pages):
+                page_url = add_or_replace_parameter(reg_url, "page", str(p))
+                data = session.get(page_url)
+                if data.text:
+                    data = json.loads(data.text)
+                    all_locations += data["data"]
 
     for poi in all_locations:
         store_url = "https://www.thetoyshop.com" + poi["url"]

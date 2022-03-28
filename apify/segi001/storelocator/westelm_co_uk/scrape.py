@@ -1,128 +1,76 @@
-import csv
-import sgrequests
-import bs4
+from lxml import html
+from sgscrape.sgrecord import SgRecord
+from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgpostal.sgpostal import International_Parser, parse_address
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+def fetch_data(sgw: SgWriter):
+
+    locator_domain = "https://www.westelm.co.uk"
+    api_url = "https://www.westelm.co.uk/store-locations"
+    session = SgRequests()
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
+    }
+    r = session.get(api_url, headers=headers)
+    tree = html.fromstring(r.text)
+    div = tree.xpath('//a[text()="STORE HOURS & DETAILS"]')
+    for d in div:
+        slug = "".join(d.xpath(".//@href"))
+        page_url = f"https://www.westelm.co.uk{slug}"
+
+        session = SgRequests()
+        r = session.get(page_url, headers=headers)
+        tree = html.fromstring(r.text)
+
+        location_name = "".join(tree.xpath("//h1/text()"))
+        ad = " ".join(tree.xpath('//div[@class="storeLanding-info-address"]/p/text()'))
+        a = parse_address(International_Parser(), ad)
+        street_address = f"{a.street_address_1} {a.street_address_2}".replace(
+            "None", ""
+        ).strip()
+        state = a.state or "<MISSING>"
+        postal = a.postcode or "<MISSING>"
+        country_code = "UK"
+        city = a.city or "<MISSING>"
+        map_link = "".join(tree.xpath("//iframe/@src"))
+        latitude = map_link.split("!3d")[1].strip().split("!")[0].strip()
+        longitude = map_link.split("!2d")[1].strip().split("!")[0].strip()
+        phone = "".join(tree.xpath('//div[@class="storeLanding-info-phone"]//a/text()'))
+        hours_of_operation = (
+            " ".join(
+                tree.xpath('//div[@class="storeLanding-info-hours-list"]/p/text()')
+            )
+            .replace("\n", "")
+            .strip()
         )
 
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    # Your scraper here
-    locator_domain = "https://www.westelm.co.uk/"
-    missingString = "<MISSING>"
-
-    sess = sgrequests.SgRequests()
-
-    req = sess.get("https://www.westelm.co.uk/store-locations").text
-
-    soup = bs4.BeautifulSoup(req, features="lxml")
-
-    locationRows = soup.findAll("div", {"class": "row storeLocationsRow"})
-
-    slugs = []
-
-    for locationRow in locationRows:
-        a = locationRow.findAll("a")
-        for ass in a:
-            if ass["href"] == "#":
-                pass
-            else:
-                slugs.append(ass["href"].split())
-
-    result = []
-
-    for s in slugs:
-        url = "{}{}".format(locator_domain, s[0].replace("/", ""))
-        r = sess.get(url).text
-        st = bs4.BeautifulSoup(r, features="lxml")
-        td = st.find("td", {"class": "bondi-junction-table-big-padding-cell"})
-        phone = td.find("a").text
-        ad = (
-            td.get_text(separator="$")
-            .replace("Phone:", "")
-            .replace(phone, "")
-            .split("$")
-        )
-        ad = list(filter(None, ad))
-        name = ad[0]
-        street = missingString
-        if " Unit SU1233 " in ad:
-            street = "{} {}".format(ad[1].strip(), ad[2].strip())
-        else:
-            street = ad[1].strip()
-        state = ad[-2].split(",")[1].strip()
-        zp = ad[-2].replace("London", "").split(",")[0].strip()
-        tr = st.findAll("tr")
-        city = missingString
-        if "London" in ad[-2]:
-            city = "London"
-        else:
-            city = missingString
-        if street == "Kingston upon Thames":
-            city = street
-            street = missingString
-        hours = "{}, {}, {}, {}, {}, {}, {}".format(
-            tr[3].text,
-            tr[4].text,
-            tr[5].text,
-            tr[6].text,
-            tr[7].text,
-            tr[8].text,
-            tr[9].text,
-        ).replace(u"\xa0", u" ")
-        result.append(
-            [
-                locator_domain,
-                url,
-                name,
-                street,
-                city,
-                state,
-                zp,
-                state,
-                missingString,
-                phone,
-                missingString,
-                missingString,
-                missingString,
-                hours,
-            ]
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=SgRecord.MISSING,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
         )
 
-    return result
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
+    ) as writer:
+        fetch_data(writer)
