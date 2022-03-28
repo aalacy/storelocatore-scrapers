@@ -23,7 +23,7 @@ def fetch_data():
             if addr["address_line_2"]:
                 street_address += " " + addr["address_line_2"]
             yield SgRecord(
-                page_url=_["link"],
+                page_url="https://westcornwallpasty.co.uk/find-us",
                 store_number=_["id"],
                 location_name=_["title"]["rendered"],
                 street_address=street_address,
