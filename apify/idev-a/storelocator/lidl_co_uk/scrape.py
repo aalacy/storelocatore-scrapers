@@ -1,6 +1,6 @@
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sglogging import SgLogSetup
 from sgrequests.sgrequests import SgRequests
@@ -19,21 +19,24 @@ base_url = "https://www.lidl.co.uk/bundles/retail/dist/scripts/FrontPage.js"
 session_url = "https://dev.virtualearth.net/webservices/v1/LoggingService/LoggingService.svc/Log?entry=0&fmt=1&type=3&group=MapControl&name=MVC&version=v8&mkt=en-US&auth={}&jsonp=Microsoft.Maps.NetworkCallbacks.f_logCallbackRequest"
 json_url = "{}$select=*,__Distance&$filter=Adresstyp%20eq%201&key={}&$format=json&jsonp=Microsoft_Maps_Network_QueryAPI_2&spatialFilter=nearby({},{},1000)"
 
+lv_log_url = "https://dev.virtualearth.net/webservices/v1/LoggingService/LoggingService.svc/Log?entry=0&fmt=1&type=3&group=MapControl&name=MVC&version=v8&mkt=en-US&auth=Ao9qjkbz2fsxw0EyySLTNvzuynLua7XKixA0yBEEGLeNmvrfkkb3XbfIs4fAyV-Z&jsonp=Microsoft.Maps.NetworkCallbacks.f_logCallbackRequest"
+
 
 def fetch_records(http, search, country_sessions):
     for lat, lng in search:
         data = country_sessions.get(search.current_country())
-        locations = json.loads(
-            http.get(
-                json_url.format(data["url"], data["key"], lat, lng), headers=_headers
-            )
-            .text.split("Microsoft_Maps_Network_QueryAPI_2(")[1]
-            .strip()[:-1]
-        )["d"]["results"]
+        try:
+            locations = json.loads(
+                http.get(
+                    json_url.format(data["url"], data["key"], lat, lng),
+                    headers=_headers,
+                )
+                .text.split("Microsoft_Maps_Network_QueryAPI_2(")[1]
+                .strip()[:-1]
+            )["d"]["results"]
+        except:
+            continue
         logger.info(f"[{search.current_country()}] [{lat, lng}] {len(locations)}")
-        if locations:
-            search.found_location_at(lat, lng)
-
         for _ in locations:
             hours = []
             if _["OpeningTimes"]:
@@ -52,9 +55,10 @@ def fetch_records(http, search, country_sessions):
                     city = _["PostalCode"]
                     zip_postal = _["Locality"]
 
+            search.found_location_at(_["Latitude"], _["Longitude"])
             yield SgRecord(
-                location_name=_["ShownStoreName"],
                 store_number=_["EntityID"],
+                location_name=_["ShownStoreName"],
                 street_address=_["AddressLine"],
                 city=city,
                 zip_postal=zip_postal,
@@ -67,7 +71,7 @@ def fetch_records(http, search, country_sessions):
 
 
 if __name__ == "__main__":
-    with SgRequests() as http:
+    with SgRequests(proxy_country="us") as http:
         countries = []
         country_sessions = {}
         json_data = json.loads(
@@ -95,12 +99,33 @@ if __name__ == "__main__":
                 )["sessionId"],
                 url=json_data["DATA_SOURCE_URL"][country],
             )
+
+        # addition
+        # lv
+        lv_key = json.loads(
+            http.get(lv_log_url, headers=_headers)
+            .text.split("Microsoft.Maps.NetworkCallbacks.f_logCallbackRequest(")[1]
+            .strip()[:-1]
+        )["sessionId"]
+        country_sessions["lv"] = dict(
+            key=lv_key,
+            url="https://spatial.virtualearth.net/REST/v1/data/b2565f2cd7f64c759e2b5707b969e8dd/Filialdaten-LV/Filialdaten-lv?",
+        )
+        countries.append("lv")
+
         search = DynamicGeoSearch(
             country_codes=list(set(countries)), granularity=Grain_4()
         )
         with SgWriter(
             deduper=SgRecordDeduper(
-                RecommendedRecordIds.StoreNumberId, duplicate_streak_failure_factor=100
+                SgRecordID(
+                    {
+                        SgRecord.Headers.STREET_ADDRESS,
+                        SgRecord.Headers.CITY,
+                        SgRecord.Headers.ZIP,
+                    }
+                ),
+                duplicate_streak_failure_factor=100,
             )
         ) as writer:
             for rec in fetch_records(http, search, country_sessions):

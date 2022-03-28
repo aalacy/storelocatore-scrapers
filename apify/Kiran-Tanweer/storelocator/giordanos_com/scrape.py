@@ -4,8 +4,8 @@ from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import SgRecordID
+from sgpostal.sgpostal import parse_address_intl
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape import sgpostal as parser
 
 session = SgRequests()
 website = "giordanos_com"
@@ -16,7 +16,7 @@ headers = {
 }
 
 DOMAIN = "https://giordanos.com/"
-MISSING = "<MISSING>"
+MISSING = SgRecord.MISSING
 
 
 def fetch_data():
@@ -27,23 +27,25 @@ def fetch_data():
         linklist = soup.find("div", {"class": "locationsection"}).findAll("a")
         for link in linklist:
             page = "https://giordanos.com" + link["href"]
+            log.info(page)
             p = session.get(page, headers=headers)
             soup = BeautifulSoup(p.text, "html.parser")
             address = soup.find("div", {"class": "address"}).text
             address = address.replace(",", "").strip()
-            address = address.strip()
-            parsed = parser.parse_address_usa(address)
-            street1 = (
-                parsed.street_address_1 if parsed.street_address_1 else "<MISSING>"
-            )
-            street = (
-                (street1 + ", " + parsed.street_address_2)
-                if parsed.street_address_2
-                else street1
-            )
-            city = parsed.city if parsed.city else "<MISSING>"
-            state = parsed.state if parsed.state else "<MISSING>"
-            pcode = parsed.postcode if parsed.postcode else "<MISSING>"
+            raw_address = address.strip()
+            pa = parse_address_intl(raw_address)
+
+            street_address = pa.street_address_1
+            street_address = street_address if street_address else MISSING
+
+            city = pa.city
+            city = city.strip() if city else MISSING
+
+            state = pa.state
+            state = state.strip() if state else MISSING
+
+            zip_postal = pa.postcode
+            zip_postal = zip_postal.strip() if zip_postal else MISSING
 
             phone = soup.find("div", {"class": "phone my-2"}).text.strip()
 
@@ -52,31 +54,23 @@ def fetch_data():
 
             title = soup.find("h1", {"class": "text-center"}).text.strip()
 
-            coords = soup.find("body").findAll("script")
-            if len(coords) == 11:
-                coords = coords[2]
-            else:
-                coords = coords[0]
-            coords = str(coords)
-            coords = coords.split("center: {")[1].split("}")[0]
-            lat = coords.split("lat: ")[1].split(",")[0]
-            lng = coords.split("lng: ")[1]
-
+            lat = p.text.split("lat: ")[1].split(",")[0]
+            lng = p.text.split("lng: ")[1].split("}")[0]
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url=page,
                 location_name=title.strip(),
-                street_address=street.strip(),
+                street_address=street_address.strip(),
                 city=city.strip(),
                 state=state.strip(),
-                zip_postal=pcode.strip(),
+                zip_postal=zip_postal.strip(),
                 country_code="US",
-                store_number=SgRecord.MISSING,
+                store_number=MISSING,
                 phone=phone.strip(),
-                location_type=SgRecord.MISSING,
+                location_type=MISSING,
                 latitude=lat.strip(),
                 longitude=lng.strip(),
-                hours_of_operation=hours.strip(),
+                hours_of_operation=hours,
             )
 
 

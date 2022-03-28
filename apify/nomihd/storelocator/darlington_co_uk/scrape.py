@@ -57,11 +57,13 @@ def fetch_data():
             street_address = (
                 store_info.split("address1:")[1]
                 .strip()
-                .split(",")[0]
+                .split("',")[0]
                 .strip()
                 .replace("'", "")
                 .strip()
             )
+            if "," in street_address:
+                street_address = street_address.split(",")[-1].strip()
             city = (
                 store_info.split("address2:")[1]
                 .strip()

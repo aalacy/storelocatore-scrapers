@@ -66,6 +66,10 @@ def fetch_data():
             if not city:
                 city = raw_address.split(",")[-2].strip()
 
+            city = city.replace("Brisbane Airport", "Brisbane").strip()
+            if "VIC" in city:
+                city = location_name.replace("DFO", "").strip()
+
             state = formatted_addr.state
             state = (
                 store_info.split("store.state =")[1].split(";")[0].strip('" ').strip()

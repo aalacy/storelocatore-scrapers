@@ -96,8 +96,18 @@ def fetch_data(sgw: SgWriter):
                     street_address = addr.street_address_1 + " " + addr.street_address_2
                 except:
                     street_address = addr.street_address_1
-                city = addr.city
+                city = (
+                    item.find_previous(
+                        class_="h4 mb-3 border-bottom-dotted border-lightgray"
+                    )
+                    .text.replace("The Style Outlets", "")
+                    .split(",")[0]
+                    .strip()
+                )
                 state = addr.state
+                if state:
+                    if state[:2].isdigit():
+                        state = ""
                 zip_code = addr.postcode
                 phone = raw_data[-2].strip()
             else:

@@ -14,7 +14,7 @@ headers = {
     "sec-ch-ua": '" Not A;Brand";v="99", "Chromium";v="96", "Google Chrome";v="96"',
     "Accept": "application/json",
     "Content-Type": "application/json",
-    "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZWdTY2hlZHVsZXIiLCJqdGkiOiJkYjA5N2Q5Ny1mY2E2LTRhY2ItYTI5Zi0xNmU5ZDhiMWUzNDgiLCJpYXQiOjE2Mzk0MTUyODEsImh0dHA6Ly9zY2hlbWFzLnhtbHNvYXAub3JnL3dzLzIwMDUvMDUvaWRlbnRpdHkvY2xhaW1zL25hbWVpZGVudGlmaWVyIjoiZGFlMmJlYzEtODllYy00YjBjLWFiMzEtYzFjZmJiOGVjMjRjIiwiaHR0cDovL3NjaGVtYXMueG1sc29hcC5vcmcvd3MvMjAwNS8wNS9pZGVudGl0eS9jbGFpbXMvbmFtZSI6ImFlZ1NjaGVkdWxlciIsImh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vd3MvMjAwOC8wNi9pZGVudGl0eS9jbGFpbXMvcm9sZSI6WyJTY2hlZHVsaW5nX1VzZXIiLCJTY2hlZHVsaW5nX1VzZXIiLCJTY2hlZHVsaW5nX1VzZXIiXSwibmJmIjoxNjM5NDE1MjgxLCJleHAiOjE2NDQ1OTkyODEsImlzcyI6Imh0dHA6Ly9BY3VpdHlVbml2ZXJzYWwuY29tIiwiYXVkIjoiRGVtb0F1ZGllbmNlIn0.Fm2hS_BrJn0ybK6whq79YJKaO_oZddWezPDQAApp7Xc",
+    "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZWdTY2hlZHVsZXIiLCJqdGkiOiJmZmYyYzAzOC0xZDUzLTQxM2QtODQ5Zi1kZWVlZjJjMGVkYzgiLCJpYXQiOjE2NDQ1MTI5NDMsImh0dHA6Ly9zY2hlbWFzLnhtbHNvYXAub3JnL3dzLzIwMDUvMDUvaWRlbnRpdHkvY2xhaW1zL25hbWVpZGVudGlmaWVyIjoiZGFlMmJlYzEtODllYy00YjBjLWFiMzEtYzFjZmJiOGVjMjRjIiwiaHR0cDovL3NjaGVtYXMueG1sc29hcC5vcmcvd3MvMjAwNS8wNS9pZGVudGl0eS9jbGFpbXMvbmFtZSI6ImFlZ1NjaGVkdWxlciIsImh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vd3MvMjAwOC8wNi9pZGVudGl0eS9jbGFpbXMvcm9sZSI6WyJTY2hlZHVsaW5nX1VzZXIiLCJTY2hlZHVsaW5nX1VzZXIiLCJTY2hlZHVsaW5nX1VzZXIiXSwibmJmIjoxNjQ0NTEyOTQzLCJleHAiOjE2NDk2OTMzNDMsImlzcyI6Imh0dHA6Ly9BY3VpdHlVbml2ZXJzYWwuY29tIiwiYXVkIjoiRGVtb0F1ZGllbmNlIn0.UQPARtvvwIaNU6RzuBpcIPbblemEqlWowVBRMy3FqPg",
     "sec-ch-ua-mobile": "?0",
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.93 Safari/537.36",
     "sec-ch-ua-platform": '"Windows"',
@@ -52,7 +52,11 @@ def fetch_data():
             location_name = store["office"]
             if "Your Family Eye Doctors" not in location_name:
                 continue
-            page_url = store["practiceSchedulerUrl"]
+            page_url = (
+                "https://eyecarespecialtiespa.com/your-family-eye-doctors/{}/".format(
+                    location_name.split("-")[1].strip().replace(" ", "-").strip()
+                )
+            )
 
             location_type = "<MISSING>"
 
@@ -61,7 +65,7 @@ def fetch_data():
 
             city = store["city"]
             state = store["state"]
-            zip = store["zip"]
+            zip = str(store["zip"]).replace(".0", "").strip()
 
             country_code = "US"
 
@@ -71,9 +75,11 @@ def fetch_data():
             hour_list = []
             for hour in hours:
                 day = hour["weekDay"]
-                start = hour["startTime"]
-                end = hour["endTime"]
-                hour_list.append(f"{day}: {start} - {end}")
+                if hour["isClosed"] is True:
+                    time = "Closed"
+                else:
+                    time = hour["startTime"] + " - " + hour["endTime"]
+                hour_list.append(f"{day}: {time}")
 
             hours_of_operation = "; ".join(hour_list)
             store_number = store["storeNumber"]

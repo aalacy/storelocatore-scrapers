@@ -17,9 +17,13 @@ def fetch_data():
     response = session.get(start_url)
     all_locations = json.loads(response.text)
     for poi in all_locations:
+        if poi["comingsoon"] == 1:
+            continue
         store_url = "https://pizzastudio.com/locations/" + poi["locationurl"]
         location_name = poi["locationname"].replace("&acirc;", "â")
         street_address = poi.get("address1")
+        if not street_address and location_name == "St. John":
+            street_address = "11 E Point Way"
         city = poi["city"]
         state = poi["stateabbrev"]
         if "," in city:
@@ -35,18 +39,21 @@ def fetch_data():
         hoo = ""
         if poi.get("hours"):
             hoo = etree.HTML(poi["hours"])
-            hoo = [elem.strip() for elem in hoo.xpath(".//text()") if elem.strip]
-            hours_of_operation = " ".join(hoo).split("Start")[0] if hoo else "<MISSING>"
-            hours_of_operation = hours_of_operation.replace("Catering Options", "")
-            hours_of_operation = (
-                hours_of_operation.split("Sign")[0]
-                .split("Click")[0]
-                .replace(" Delivery Available", "")
-            )
-            if "Re" in hours_of_operation:
-                hours_of_operation = re.findall(
-                    "Re-Opening.+?: (.+)", hours_of_operation
-                )[0].replace("\xa0", " ")
+            if hoo:
+                hoo = [elem.strip() for elem in hoo.xpath(".//text()") if elem.strip]
+                hours_of_operation = (
+                    " ".join(hoo).split("Start")[0] if hoo else "<MISSING>"
+                )
+                hours_of_operation = hours_of_operation.replace("Catering Options", "")
+                hours_of_operation = (
+                    hours_of_operation.split("Sign")[0]
+                    .split("Click")[0]
+                    .replace(" Delivery Available", "")
+                )
+                if "Re" in hours_of_operation:
+                    hours_of_operation = re.findall(
+                        "Re-Opening.+?: (.+)", hours_of_operation
+                    )[0].replace("\xa0", " ")
         country_code = ""
         if len(zip_code) == 5:
             country_code = "US"

@@ -92,11 +92,14 @@ def fetch_data():
                 store_sel.xpath('//p[@class="branch-details-map__telephone"]//text()')
             ).strip()
 
-            hours = json.loads(
-                store_res.text.split('"openingHours":')[1].split("],")[0].strip() + "]"
-            )
+            hours = store_sel.xpath('//tr[@class="branch-details-map__table-row"]')
+            hours_list = []
+            for hour in hours:
+                day = "".join(hour.xpath("th//text()")).strip()
+                time = "".join(hour.xpath("td//text()")).strip()
+                hours_list.append(day + ":" + time)
 
-            hours_of_operation = "; ".join(hours).strip("- ").strip()
+            hours_of_operation = "; ".join(hours_list).strip()
 
             store_number = "<MISSING>"
 

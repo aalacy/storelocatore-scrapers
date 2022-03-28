@@ -1,3 +1,4 @@
+import re
 from lxml import etree
 
 from sgrequests import SgRequests
@@ -40,6 +41,10 @@ def fetch_data():
 
         all_locations = dom.xpath("//li")
         for poi_html in all_locations:
+            page_url = re.findall(r'"v11":"(.+?)",', str(etree.tostring(poi_html)))
+            page_url = (
+                page_url[0] if page_url else "https://auto.suzuki.es/concesionarios#"
+            )
             location_name = poi_html.xpath(".//a/span/b/text()")[0]
             raw_address = poi_html.xpath('.//span[@class="search_txt"]/span[1]/text()')
             raw_address = ", ".join([e.strip() for e in raw_address if e.strip()])
@@ -56,7 +61,7 @@ def fetch_data():
 
             item = SgRecord(
                 locator_domain=domain,
-                page_url="https://auto.suzuki.es/concesionarios#",
+                page_url=page_url,
                 location_name=location_name,
                 street_address=street_address,
                 city=addr.city,

@@ -31,6 +31,11 @@ def fetch_data():
                 hours = "closed"
             hoo.append(f"{day}: {hours}")
         hoo = ", ".join(hoo)
+        if poi["name"] == "Test dealer":
+            continue
+        country_code = poi["country"]
+        if country_code in ["Sverige", "Danmark", "Polen"]:
+            continue
 
         item = SgRecord(
             locator_domain=domain,
@@ -40,7 +45,7 @@ def fetch_data():
             city=poi["city"],
             state="",
             zip_postal=poi["postalcode"],
-            country_code=poi["country"],
+            country_code=country_code,
             store_number=poi["orgnumber"],
             phone=poi["telephone"],
             location_type="",

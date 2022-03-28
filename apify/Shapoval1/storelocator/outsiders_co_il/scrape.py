@@ -46,6 +46,14 @@ def fetch_data(sgw: SgWriter):
             .replace(" :", "")
             .strip()
         )
+        hours_of_operation = (
+            hours_of_operation.replace("ייתכנו שינויים בשעות הפעילות: ", "")
+            .replace(" הבריאות.:", "")
+            .replace("החנות פתוחה בהתאם להנחיות הממשלה ומשרד", "")
+            .strip()
+        )
+        if hours_of_operation.find("יי") != -1:
+            hours_of_operation = hours_of_operation.split("יי")[0].strip()
 
         row = SgRecord(
             locator_domain=locator_domain,

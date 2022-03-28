@@ -40,7 +40,7 @@ def fetch_data():
                     "</script>"
                 )[0]
             )["address"]
-            street_address = address["streetAddress"]
+            street_address = address["streetAddress"].split(",")[0]
             city = address["addressLocality"]
             state = address["addressRegion"]
             if not state:
@@ -57,6 +57,8 @@ def fetch_data():
                 .replace("|", " ")
                 .replace("Opening hours", "")
             )
+            if not city:
+                city = location_name.replace("branch", "")
             coords = soup.find("div", {"class": "branch-information-map"})
             latitude = coords["data-lat"]
             longitude = coords["data-lng"]

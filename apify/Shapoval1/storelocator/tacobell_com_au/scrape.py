@@ -1,5 +1,5 @@
 from lxml import html
-from sgscrape.sgpostal import International_Parser, parse_address
+from sgpostal.sgpostal import International_Parser, parse_address
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
@@ -28,7 +28,11 @@ def fetch_data(sgw: SgWriter):
 
         location_name = "".join(tree.xpath('//h1[@class="location-title"]/text()'))
         ad = (
-            "".join(tree.xpath('//div[@class="address mb_20"]/p/text()'))
+            "".join(
+                tree.xpath(
+                    '//div[@class="address mb_20"]/*[contains(text(), "Address")]/text()'
+                )
+            )
             .replace("\n", "")
             .replace("Address:", "")
             .strip()
@@ -42,7 +46,12 @@ def fetch_data(sgw: SgWriter):
         country_code = "Australia"
         city = a.city or "<MISSING>"
         if city == "<MISSING>":
-            city = location_name.replace("TACO BELL", "").capitalize().strip()
+            city = (
+                location_name.replace("TACO BELL", "")
+                .replace("Taco Bell", "")
+                .strip()
+                .capitalize()
+            )
         try:
             latitude = (
                 "".join(tree.xpath('//a[@class="get-direction-btn"]/@href'))
@@ -66,6 +75,8 @@ def fetch_data(sgw: SgWriter):
         hours_of_operation = (
             "".join(tree.xpath('//p[@class="opening_hours"]/text()'))
             .replace("Opening hours:", "")
+            .replace("Regular", "")
+            .replace("Address:", "")
             .strip()
         )
         if hours_of_operation.find("Hours:") != -1:

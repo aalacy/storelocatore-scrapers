@@ -3,95 +3,84 @@ from sgrequests import SgRequests
 from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-import lxml.html
 import json
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-website = "www.primaryeyecare.com"
+website = "primaryeyecare.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.114 Safari/537.36",
+    "Connection": "keep-alive",
+    "sec-ch-ua": '" Not A;Brand";v="99", "Chromium";v="96", "Google Chrome";v="96"',
+    "Accept": "application/json",
+    "Content-Type": "application/json",
+    "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZWdTY2hlZHVsZXIiLCJqdGkiOiJmZmYyYzAzOC0xZDUzLTQxM2QtODQ5Zi1kZWVlZjJjMGVkYzgiLCJpYXQiOjE2NDQ1MTI5NDMsImh0dHA6Ly9zY2hlbWFzLnhtbHNvYXAub3JnL3dzLzIwMDUvMDUvaWRlbnRpdHkvY2xhaW1zL25hbWVpZGVudGlmaWVyIjoiZGFlMmJlYzEtODllYy00YjBjLWFiMzEtYzFjZmJiOGVjMjRjIiwiaHR0cDovL3NjaGVtYXMueG1sc29hcC5vcmcvd3MvMjAwNS8wNS9pZGVudGl0eS9jbGFpbXMvbmFtZSI6ImFlZ1NjaGVkdWxlciIsImh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vd3MvMjAwOC8wNi9pZGVudGl0eS9jbGFpbXMvcm9sZSI6WyJTY2hlZHVsaW5nX1VzZXIiLCJTY2hlZHVsaW5nX1VzZXIiLCJTY2hlZHVsaW5nX1VzZXIiXSwibmJmIjoxNjQ0NTEyOTQzLCJleHAiOjE2NDk2OTMzNDMsImlzcyI6Imh0dHA6Ly9BY3VpdHlVbml2ZXJzYWwuY29tIiwiYXVkIjoiRGVtb0F1ZGllbmNlIn0.UQPARtvvwIaNU6RzuBpcIPbblemEqlWowVBRMy3FqPg",
+    "sec-ch-ua-mobile": "?0",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.93 Safari/537.36",
+    "sec-ch-ua-platform": '"Windows"',
+    "Origin": "https://scheduling.aegvision.com",
+    "Sec-Fetch-Site": "cross-site",
+    "Sec-Fetch-Mode": "cors",
+    "Sec-Fetch-Dest": "empty",
+    "Referer": "https://scheduling.aegvision.com/",
+    "Accept-Language": "en-US,en;q=0.9,ar;q=0.8",
 }
 
-
-def get_latlng(map_link):
-    if "z/data" in map_link:
-        lat_lng = map_link.split("@")[1].split("z/data")[0]
-        latitude = lat_lng.split(",")[0].strip()
-        longitude = lat_lng.split(",")[1].strip()
-    elif "ll=" in map_link:
-        lat_lng = map_link.split("ll=")[1].split("&")[0]
-        latitude = lat_lng.split(",")[0]
-        longitude = lat_lng.split(",")[1]
-    elif "!2d" in map_link and "!3d" in map_link:
-        latitude = map_link.split("!3d")[1].strip().split("!")[0].strip()
-        longitude = map_link.split("!2d")[1].strip().split("!")[0].strip()
-    elif "/@" in map_link:
-        latitude = map_link.split("/@")[1].split(",")[0].strip()
-        longitude = map_link.split("/@")[1].split(",")[1].strip()
-    else:
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
-    return latitude, longitude
+params = (
+    ("lat", "0"),
+    ("lng", "0"),
+    ("brandId", "31"),
+    ("businessUnitId", "-1"),
+)
 
 
 def fetch_data():
     # Your scraper here
-    base = "https://www.primaryeyecare.com"
-    search_url = "https://www.primaryeyecare.com/about-us/"
+
+    api_url = "https://aeg.acuityeyecaregroup.com:8006/api/Store/GetNearbyStoresv3"
 
     with SgRequests() as session:
-        search_res = session.get(search_url, headers=headers)
-        search_sel = lxml.html.fromstring(search_res.text)
+        api_res = session.get(api_url, headers=headers, params=params)
+        json_res = json.loads(api_res.text)
+        log.info(json_res["Code"])
+        stores = json_res["Data"]["stores"]
 
-        stores = search_sel.xpath('//ul[@class="listing-subpages"]/li')
-
-        for _, store in enumerate(stores, 1):
-
-            page_url = base + "".join(store.xpath("./a/@href"))
+        for store in stores:
 
             locator_domain = website
 
-            log.info(page_url)
-            store_res = session.get(page_url, headers=headers)
-            store_sel = lxml.html.fromstring(store_res.text)
+            location_name = store["office"]
+            if "Primary EyeCare" not in location_name:
+                continue
+            page_url = "https://scheduling.aegvision.com/?brand=31&showstorelocator=1&businessunit=-1"
 
-            location_name = "".join(store.xpath("./a//text()")).strip()
-            store_info_str = (
-                store_res.text.split('<script type="application/ld+json">')[1]
-                .split("</script>")[0]
-                .strip()
-            )
-            store_info = json.loads(store_info_str)
-
-            raw_address = "<MISSING>"
-
-            street_address = store_info["address"]["streetAddress"].strip()
-            city = store_info["address"]["addressLocality"].strip()
-            state = store_info["address"]["addressRegion"].strip()
-            zip = store_info["address"]["postalCode"].strip()
-            country_code = store_info["address"]["addressCountry"].strip()
-            store_number = store_res.text.split("page-id-")[1].split(" ")[0].strip()
-
-            phone = store_info["telephone"].strip()
             location_type = "<MISSING>"
 
-            hours = list(
-                filter(
-                    str,
-                    [
-                        x.strip()
-                        for x in store_sel.xpath(
-                            '//div[./h3/text()="Office Hours"]//li[strong]//text()'
-                        )
-                    ],
-                )
-            )
-            hours_of_operation = "; ".join(hours).replace(":;", ":").strip()
+            raw_address = "<MISSING>"
+            street_address = store["address"]
 
-            map_link = "".join(store.xpath('//iframe[contains(@src,"maps")]/@src'))
-            latitude, longitude = get_latlng(map_link)
+            city = store["city"]
+            state = store["state"]
+            zip = str(store["zip"]).replace(".0", "").strip()
+
+            country_code = "US"
+
+            phone = store["phone"]
+
+            hours = store["hours"]
+            hour_list = []
+            for hour in hours:
+                day = hour["weekDay"]
+                if hour["isClosed"] is True:
+                    time = "Closed"
+                else:
+                    time = hour["startTime"] + " - " + hour["endTime"]
+                hour_list.append(f"{day}: {time}")
+
+            hours_of_operation = "; ".join(hour_list)
+            store_number = store["storeNumber"]
+
+            latitude, longitude = store["latitude"], store["longitude"]
 
             yield SgRecord(
                 locator_domain=locator_domain,
@@ -116,7 +105,7 @@ def scrape():
     log.info("Started")
     count = 0
     with SgWriter(
-        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.StoreNumberId)
     ) as writer:
         results = fetch_data()
         for rec in results:

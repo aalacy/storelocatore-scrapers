@@ -38,8 +38,6 @@ json_url = "https://www.att.com.mx/bin/att/storefinder"
 
 def _v(val):
     _city = val.replace("&amp;", "&")
-    if _city == "Jerez de García Salinas":
-        _city = _city.replace("García", "Garcia")
     return (
         _city.replace("&iacute;", "í")
         .replace("ó", "&oacute;")
@@ -49,6 +47,17 @@ def _v(val):
         .replace("á", "&aacute;")
         .replace("é", "&eacute;")
         .replace("í", "&iacute;")
+    )
+
+
+def _c(val):
+    return (
+        val.replace("&eacute;", "é")
+        .replace("&aacute;", "á")
+        .replace("&oacute;", "ó")
+        .replace("&iacute;", "í")
+        .replace("&uacute;", "ú")
+        .replace("&ntilde;", "ñ")
     )
 
 
@@ -68,10 +77,6 @@ def fetch_data():
                 locations = session.get(json_url, headers=header1).json()[
                     "objectResponse"
                 ]
-                if not locations:
-                    import pdb
-
-                    pdb.set_trace()
 
                 logger.info(
                     f"[{state['value']}] [{city['text']}] {len(locations)} locations"
@@ -84,7 +89,7 @@ def fetch_data():
                         location_name=title[0],
                         street_address=addr[0],
                         city=city["text"],
-                        state=_v(state["value"]),
+                        state=_c(state["value"].replace("&amp;", "&")),
                         zip_postal=addr[1].split("CP.")[-1],
                         country_code="Mexico",
                         locator_domain=locator_domain,

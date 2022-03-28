@@ -19,39 +19,40 @@ def fetch_data():
         soup = bs(session.get(base_url, headers=_headers).text, "lxml")
         locations = soup.select("table#tablepress-1 tbody tr")
         for _ in locations:
+            location_name = _.strong.text.strip()
+            if location_name == "GB CIRACAS":
+                continue
+            raw_address = _.select("p")[1].text.strip()
+            addr = parse_address_intl(raw_address)
+            street_address = addr.street_address_1
+            if addr.street_address_2:
+                street_address += " " + addr.street_address_2
+            city = addr.city
+            if city and city.isdigit():
+                city = ""
             try:
-                raw_address = _.select("p")[1].text.strip()
-                addr = parse_address_intl(raw_address)
-                street_address = addr.street_address_1
-                if addr.street_address_2:
-                    street_address += " " + addr.street_address_2
-                try:
-                    coord = (
-                        _.select("a")[-1]["href"]
-                        .split("/@")[1]
-                        .split("/data")[0]
-                        .split(",")
-                    )
-                except:
-                    coord = ["", ""]
-                yield SgRecord(
-                    page_url=base_url,
-                    location_name=_.strong.text.strip(),
-                    street_address=street_address,
-                    city=addr.city,
-                    state=addr.state,
-                    zip_postal=addr.postcode,
-                    country_code=addr.country,
-                    latitude=coord[1],
-                    longitude=coord[0],
-                    locator_domain=locator_domain,
-                    raw_address=raw_address,
-                    hours_of_operation=_.select("p")[-1].text.strip(),
+                coord = (
+                    _.select("a")[-1]["href"]
+                    .split("/@")[1]
+                    .split("/data")[0]
+                    .split(",")
                 )
             except:
-                import pdb
-
-                pdb.set_trace()
+                coord = ["", ""]
+            yield SgRecord(
+                page_url=base_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=addr.state,
+                zip_postal=addr.postcode,
+                country_code=addr.country,
+                latitude=coord[1],
+                longitude=coord[0],
+                locator_domain=locator_domain,
+                raw_address=raw_address,
+                hours_of_operation=_.select("p")[-1].text.strip(),
+            )
 
 
 if __name__ == "__main__":

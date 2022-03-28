@@ -5,7 +5,6 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
-from sgpostal.sgpostal import parse_address_intl
 
 
 def fetch_data():
@@ -19,29 +18,20 @@ def fetch_data():
     response = session.get(start_url, headers=hdr)
     dom = etree.HTML(response.text)
 
-    all_locations = dom.xpath('//article[@class="c-list-item"]')
+    all_locations = dom.xpath('//div[@data-gt-componentname="dealer-overview"]/div/div')
     for poi_html in all_locations:
-        location_name = poi_html.xpath(".//h3/text()")[0]
-        raw_address = poi_html.xpath('.//div[@class="c-list-item__body"]/p/text()')[
-            0
-        ].strip()
-        addr = parse_address_intl(raw_address)
-        street_address = addr.street_address_1
-        if addr.street_address_2:
-            street_address += ", " + addr.street_address_2
-        phone = poi_html.xpath(".//a/text()")[0]
-        city = addr.city
-        if city:
-            city = city.replace("Г.", "")
+        location_name = poi_html.xpath(".//h2/text()")[0]
+        raw_address = poi_html.xpath('.//li[@class="address"]/text()')[0].strip()
+        phone = poi_html.xpath('.//li[@class="phone"]/a/text()')[0]
 
         item = SgRecord(
             locator_domain=domain,
             page_url=start_url,
             location_name=location_name,
-            street_address=street_address,
-            city=city,
+            street_address=raw_address.split(" - ")[0],
+            city=raw_address.split(" - ")[-1],
             state="",
-            zip_postal=addr.postcode,
+            zip_postal="",
             country_code="KZ",
             store_number="",
             phone=phone,
@@ -49,7 +39,6 @@ def fetch_data():
             latitude="",
             longitude="",
             hours_of_operation="",
-            raw_address=raw_address,
         )
 
         yield item

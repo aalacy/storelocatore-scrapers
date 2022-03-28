@@ -8,6 +8,16 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgselenium import SgChrome
 import lxml.html
+import ssl
+
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
 website = "bridgfords.co.uk"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -35,6 +45,7 @@ def fetch_data():
             for store in stores:
 
                 page_url = "https://www.bridgfords.co.uk" + store["branchURL"]
+                log.info(page_url)
                 driver.get(page_url)
                 store_sel = lxml.html.fromstring(driver.page_source)
                 locator_domain = website

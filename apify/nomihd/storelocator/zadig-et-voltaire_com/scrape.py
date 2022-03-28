@@ -5,6 +5,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgpostal import sgpostal as parser
 
 website = "zadig-et-voltaire.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -42,12 +43,19 @@ def fetch_data():
                     continue
                 location_name = store["profile"]["c_pagesNom"]
                 addr = store["profile"]["address"]
-                street_address = addr["line1"]
+                raw_address = addr["line1"]
                 if addr["line2"] and len(addr["line2"]) > 0:
-                    street_address = street_address + ", " + addr["line2"]
+                    raw_address = raw_address + ", " + addr["line2"]
 
                 if addr["line3"] and len(addr["line3"]) > 0:
-                    street_address = street_address + ", " + addr["line3"]
+                    raw_address = raw_address + ", " + addr["line3"]
+
+                formatted_addr = parser.parse_address_intl(raw_address)
+                street_address = formatted_addr.street_address_1
+                if formatted_addr.street_address_2:
+                    street_address = (
+                        street_address + ", " + formatted_addr.street_address_2
+                    )
 
                 city = addr["city"]
 
@@ -62,7 +70,14 @@ def fetch_data():
                     pass
 
                 store_number = "<MISSING>"
-                location_type = store["profile"].get("c_storeType", "<MISSING>")
+                location_type = store["profile"].get("c_storeType", "")
+                typ2 = store["profile"].get("c_typeDePDV", "")
+                if len(typ2) > 0:
+                    if len(location_type) > 0:
+                        location_type = location_type + ", " + typ2
+                    else:
+                        location_type = typ2
+
                 hours_list = []
                 try:
                     hours = store["profile"]["hours"]["normalHours"]

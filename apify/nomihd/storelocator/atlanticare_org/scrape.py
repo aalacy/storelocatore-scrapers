@@ -36,9 +36,6 @@ def fetch_data():
             log.info(page_url)
             locator_domain = website
             location_name = store["Title"].split(",")[0].strip()
-            if location_name == "":
-                location_name = "<MISSING>"
-
             address = store["LocationAddress"]
             street_address = ""
             city = ""
@@ -88,7 +85,9 @@ def fetch_data():
                 .strip()
                 .split("=", 1)[1]
                 .strip()
-                .split("};")[0]
+                .split("</script>")[0]
+                .strip()
+                .rsplit("};", 1)[0]
                 .strip()
                 + "}"
             )

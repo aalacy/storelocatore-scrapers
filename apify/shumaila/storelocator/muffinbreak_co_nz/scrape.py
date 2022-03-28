@@ -59,6 +59,9 @@ def fetch_data():
         link = loc["web"]
         if "coming-soon" in link:
             continue
+        if "muffin-break-invercargill" in link and "<MISSING>" in pcode:
+            street = "21 Clyde Street"
+            pcode = "9810"
         yield SgRecord(
             locator_domain="https://muffinbreak.co.nz/",
             page_url=link,

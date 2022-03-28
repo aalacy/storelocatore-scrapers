@@ -103,18 +103,10 @@ def fetch_details(tup, retry=False):
     longitude = ""
     hours_of_operation = ""
     page_url = "https://www.circlek.com" + store["url"]
-    if store["country"].upper() not in ["US", "CA", "CANADA"]:  # for europe stores
-        page_url = page_url.replace("store-locator", "store-europe")
-        logger.info(page_url)
-        street_address = store["address"]
-        location_name = "Circle K at " + street_address
-        city = store["city"]
-        country_code = store["country"]
-
-        latitude = store["latitude"]
-        longitude = store["longitude"]
-    else:
-
+    if (
+        store["country"].upper() in ["US", "CA", "CANADA"]
+        and store["op_status"] != "Planned"
+    ):
         logger.info(page_url)
         try:
             store_req = SgRequests.raise_on_err(
@@ -128,14 +120,19 @@ def fetch_details(tup, retry=False):
                 logger.info(f"Respone invalid {store_req.status_code} - of {page_url}")
                 return retryer(fetch_details, (store, get_session(1)), True)
 
+            if '"streetAddress":' not in store_req.text:
+                logger.info(f"Respone invalid {store_req.status_code} - of {page_url}")
+                return retryer(fetch_details, (store, get_session(1)), True)
+
             store_sel = lxml.html.fromstring(store_req.text)
             json_list = store_sel.xpath('//script[@type="application/ld+json"]/text()')
             for js in json_list:
-                if '"address"' in js:
+                if "address" in js:
                     try:
                         store_json = json.loads(js)
                     except:
                         continue
+
                     location_name = (
                         store_json.get("description").split(",")[0]
                         or store.get("display_brand")
@@ -190,7 +187,16 @@ def fetch_details(tup, retry=False):
                     latitude = store_json["geo"]["latitude"].replace(",", ".")
                     longitude = store_json["geo"]["longitude"].replace(",", ".")
                     store_number = store["cost_center"]
-                    raw_address = store_json["name"]
+                    raw_address = (
+                        "".join(store_sel.xpath('//h1[@class="heading-big"]//text()'))
+                        .strip()
+                        .replace("Circle K,", "")
+                        .strip()
+                        + ","
+                        + "".join(
+                            store_sel.xpath('//h2[@class="heading-small"]//text()')
+                        ).strip()
+                    )
                     formatted_addr = parse_address_intl(raw_address)
                     state = formatted_addr.state
                     if state:
@@ -199,6 +205,7 @@ def fetch_details(tup, retry=False):
                         state = ""
                     if state == "ON":
                         country_code = "Canada"
+
                     hours = store_sel.xpath(
                         '//div[@class="columns large-12 middle hours-wrapper"]/div[contains(@class,"hours-item")]'
                     )
@@ -223,22 +230,22 @@ def fetch_details(tup, retry=False):
             latitude = store["latitude"]
             longitude = store["longitude"]
 
-    return [
-        locator_domain,
-        location_name,
-        street_address,
-        city,
-        state,
-        zipp,
-        country_code,
-        store_number,
-        phone,
-        location_type,
-        latitude,
-        longitude,
-        hours_of_operation,
-        page_url,
-    ]
+        return [
+            locator_domain,
+            location_name.replace("Visit your local", "").strip(),
+            street_address,
+            city,
+            state,
+            zipp,
+            country_code,
+            store_number,
+            phone,
+            location_type,
+            latitude,
+            longitude,
+            hours_of_operation,
+            page_url,
+        ]
 
 
 def fetch_data(sgw: SgWriter):

@@ -13,8 +13,8 @@ _headers = {
 }
 
 locator_domain = "https://www.shell.ae/"
-json_url = "https://shellgsllocator.geoapp.me/api/v1/locations/within_bounds?sw%5B%5D={}&sw%5B%5D={}&ne%5B%5D={}&ne%5B%5D={}&autoload=true&travel_mode=driving&avoid_tolls=false&avoid_highways=false&avoid_ferries=false&corridor_radius=50&driving_distances=false&format=json"
-base_url = "https://shellgsllocator.geoapp.me/api/v1/locations/within_bounds?sw%5B%5D=-80&sw%5B%5D=-179&ne%5B%5D=80&ne%5B%5D=179&autoload=true&travel_mode=driving&avoid_tolls=false&avoid_highways=false&avoid_ferries=false&corridor_radius=5&driving_distances=false&format=json"
+json_url = "https://shelllubricantslocator.geoapp.me/api/v1/global_lubes/locations/within_bounds?sw%5B%5D={}&sw%5B%5D={}&ne%5B%5D={}&ne%5B%5D={}&format=json"
+base_url = "https://shellgsllocator.geoapp.me/api/v1/locations/within_bounds?sw%5B%5D=-80&sw%5B%5D=-179&ne%5B%5D=80&ne%5B%5D=179&format=json"
 
 
 @retry(wait=wait_fixed(2), stop=stop_after_attempt(3))
@@ -37,15 +37,20 @@ def fetch_boundings(boundings, writer):
                 logger.info(f"{len(locations)} locations")
                 for _ in locations:
                     street_address = ""
-                    if _.get("address"):
-                        street_address = _["address"]
                     if _.get("address1"):
-                        street_address += " " + _["address1"]
+                        street_address = _["address1"]
                     if _.get("address2"):
                         street_address += " " + _["address2"]
                     zip_postal = _.get("postcode")
                     if zip_postal and zip_postal == "00000":
                         zip_postal = ""
+
+                    phone = _["telephone"]
+                    if phone == "0":
+                        phone = ""
+                    if phone:
+                        phone = phone.split("/")[0]
+
                     writer.write_row(
                         SgRecord(
                             store_number=_["id"],
@@ -57,13 +62,11 @@ def fetch_boundings(boundings, writer):
                             latitude=_["lat"],
                             longitude=_["lng"],
                             country_code=_["country"],
-                            phone=_["telephone"],
+                            phone=phone,
                             locator_domain=locator_domain,
                             location_type=", ".join(_.get("channel_types", [])),
                         )
                     )
-        else:
-            break
 
 
 def fetch_data(writer):

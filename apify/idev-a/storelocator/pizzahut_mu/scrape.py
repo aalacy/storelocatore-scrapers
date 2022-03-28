@@ -72,6 +72,7 @@ def fetch_data():
                 locations[1][6][0][12][0][13][0], location_name, raw_address
             )
             yield SgRecord(
+                page_url=contact_us_url,
                 location_name=location_name,
                 street_address=raw_address[0].replace(",", ""),
                 city=addr.city,

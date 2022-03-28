@@ -68,7 +68,10 @@ def fetch_data():
                     street_address = street_address.replace("Ste", "Suite")
                 city = formatted_addr.city
                 if not city:
-                    city = "".join(city_sel.xpath("./div//text()"))
+                    temp_city = city_sel.xpath("./div//text()")
+                    if len(temp_city) > 0:
+                        city = temp_city[0]
+
                 state = formatted_addr.state
                 zip = formatted_addr.postcode
 

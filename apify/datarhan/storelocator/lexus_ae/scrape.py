@@ -57,6 +57,10 @@ def fetch_data():
                 hoo = loc_dom.xpath(
                     '//p[contains(text(), "PRE-OWNED")]/following-sibling::table//text()'
                 )
+            if not hoo:
+                hoo = loc_dom.xpath(
+                    '//p[strong[contains(text(), "SALES")]]/following-sibling::table//text()'
+                )
             hoo = [e.replace("\xa0", "").strip() for e in hoo if e.strip()]
             hoo = " ".join(hoo)
 

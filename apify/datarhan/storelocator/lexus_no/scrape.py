@@ -38,8 +38,10 @@ def fetch_data():
         hoo = loc_dom.xpath(
             '//div[@class="c-dealer-contact-card__opening-times"]//text()'
         )
-        hoo = [e.strip() for e in hoo if e.strip()]
-        hoo = " ".join(hoo)
+        hoo = [e.replace("&nbsp", "").strip() for e in hoo if e.strip()]
+        hoo = " ".join(hoo).split("   Åpningstider")[0].replace("I dag: ", "").strip()
+        if hoo == "Åpningstider Mandag  Tirsdag  Onsdag  Torsdag  Fredag  lørdag":
+            hoo = ""
 
         item = SgRecord(
             locator_domain=domain,
