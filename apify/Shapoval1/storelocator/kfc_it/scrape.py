@@ -36,11 +36,26 @@ def fetch_data(sgw: SgWriter):
         latitude = j.get("lat")
         longitude = j.get("lng")
         phone = j.get("phone")
-        hours_of_operation = (
-            "".join(j.get("hours")).replace("[", "").replace("]", "").strip()
-        )
-        a = eval(hours_of_operation)
-        hours_of_operation = a[0].get("hour")
+        hours = j.get("hours")
+        hours_of_operation = "<MISSING>"
+        tmp = []
+        if hours:
+            hours_lst = eval(hours)
+            for h in hours_lst:
+                day = h.get("day")
+                times = h.get("hour")
+                line = f"{day} {times}"
+                tmp.append(line)
+            hours_of_operation = (
+                "; ".join(tmp)
+                .replace("Consumo al ristorante", "")
+                .replace(
+                    "Salvo diverse disposizioni delle autorità nazionali e locali.", ""
+                )
+                .strip()
+            )
+        if hours_of_operation.find("Delivery") != -1:
+            hours_of_operation = hours_of_operation.split("Delivery")[0].strip()
 
         row = SgRecord(
             locator_domain=locator_domain,
