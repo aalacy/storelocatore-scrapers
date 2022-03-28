@@ -1,8 +1,11 @@
-from sgscrape import simple_scraper_pipeline as sp
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 from sglogging import SgLogSetup
 import us
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
 logger = SgLogSetup().get_logger("76")
@@ -42,11 +45,9 @@ def fetch_data():
             except:
                 continue
             total += len(locations)
-            if locations:
-                search.found_location_at(lat, lng)
             for store in locations:
-
-                store["page_url"] = (
+                search.found_location_at(store["Latitude"], store["Longitude"])
+                page_url = (
                     "https://www.76.com/station/"
                     + store["Brand"]
                     + "-"
@@ -54,9 +55,21 @@ def fetch_data():
                     + "-"
                     + store["EntityID"]
                 )
-                store["Phone"] = store["Phone"] or "<MISSING>"
-                store["country"] = get_country_by_code(store["AdminDistrict"])
-                yield store
+                yield SgRecord(
+                    page_url=page_url,
+                    store_number=store["EntityID"],
+                    location_name=store["Name"],
+                    street_address=store["AddressLine"],
+                    city=store["Locality"],
+                    state=store["AdminDistrict"],
+                    zip_postal=store["PostalCode"],
+                    latitude=store["Latitude"],
+                    longitude=store["Longitude"],
+                    country_code=get_country_by_code(store["AdminDistrict"]),
+                    phone=store["Phone"],
+                    location_type=store["Brand"],
+                    locator_domain=locator_domain,
+                )
             progress = (
                 str(round(100 - (search.items_remaining() / maxZ * 100), 2)) + "%"
             )
@@ -66,63 +79,8 @@ def fetch_data():
             )
 
 
-def scrape():
-    field_defs = sp.SimpleScraperPipeline.field_definitions(
-        locator_domain=sp.ConstantField(locator_domain),
-        page_url=sp.MappingField(
-            mapping=["page_url"],
-            part_of_record_identity=True,
-        ),
-        location_name=sp.MappingField(
-            mapping=["Name"],
-        ),
-        latitude=sp.MappingField(
-            mapping=["Latitude"],
-            part_of_record_identity=True,
-        ),
-        longitude=sp.MappingField(
-            mapping=["Longitude"],
-            part_of_record_identity=True,
-        ),
-        street_address=sp.MappingField(
-            mapping=["AddressLine"],
-        ),
-        city=sp.MappingField(
-            mapping=["Locality"],
-        ),
-        state=sp.MappingField(
-            mapping=["AdminDistrict"],
-        ),
-        zipcode=sp.MappingField(
-            mapping=["PostalCode"],
-        ),
-        country_code=sp.MappingField(
-            mapping=["country"],
-        ),
-        phone=sp.MappingField(
-            mapping=["Phone"],
-            part_of_record_identity=True,
-        ),
-        hours_of_operation=sp.MissingField(),
-        store_number=sp.MappingField(
-            mapping=["EntityID"],
-        ),
-        location_type=sp.MappingField(
-            mapping=["Brand"],
-        ),
-        raw_address=sp.MissingField(),
-    )
-
-    pipeline = sp.SimpleScraperPipeline(
-        scraper_name="pipeline",
-        data_fetcher=fetch_data,
-        field_definitions=field_defs,
-        log_stats_interval=5,
-        duplicate_streak_failure_factor=1000,
-    )
-
-    pipeline.run()
-
-
 if __name__ == "__main__":
-    scrape()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
