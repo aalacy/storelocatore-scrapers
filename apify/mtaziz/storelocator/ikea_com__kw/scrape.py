@@ -283,7 +283,6 @@ def fetch_records_kw(sgw: SgWriter):
             try:
                 session = SgRequests()
                 r3 = session.get(gurl)
-                # get_response(gurl)
                 gurl_redirected = r3.url
                 logger.info(f"gurl: {gurl_redirected}")
                 lat, lng = get_latlng(str(gurl_redirected))
