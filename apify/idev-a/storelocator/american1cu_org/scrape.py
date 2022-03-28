@@ -83,7 +83,9 @@ def fetch_data():
         links = soup.select("div.loc_list.Abox div.listbox")
         logger.info(f"{len(links)} atm found")
         for link in links:
-            addr = list(link.select("p")[1].stripped_strings)
+            addr = list(
+                [pp for pp in link.select("p") if pp.text.strip()][0].stripped_strings
+            )
             yield SgRecord(
                 page_url=base_url,
                 location_name=link.select_one("span.cuname").text.strip(),

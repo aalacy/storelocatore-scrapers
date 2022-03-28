@@ -71,9 +71,11 @@ def fetch_data(sgw: SgWriter):
             )
         a = usaddress.tag(ad, tag_mapping=tag)[0]
 
-        street_address = f"{a.get('address1')} {a.get('address2')}".replace(
-            "None", ""
-        ).strip()
+        street_address = (
+            f"{a.get('address1')} {a.get('address2')}".replace("None", "")
+            .replace("P.O. Box 459", "")
+            .strip()
+        )
         city = a.get("city") or "<MISSING>"
         state = a.get("state") or "<MISSING>"
         country_code = "US"

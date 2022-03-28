@@ -1,5 +1,5 @@
 from sgrequests import SgRequests
-from sgzip.dynamic import DynamicGeoSearch, SearchableCountries, Grain_4
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries, Grain_1_KM
 from sglogging import SgLogSetup
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
@@ -82,7 +82,7 @@ locator_domain = "https://www.7eleven.co.th"
 base_url = "https://7eleven-api-prod.jenosize.tech/v1/Store/GetStoreByCurrentLocation"
 
 search = DynamicGeoSearch(
-    country_codes=[SearchableCountries.THAILAND], granularity=Grain_4()
+    country_codes=[SearchableCountries.THAILAND], granularity=Grain_1_KM()
 )
 
 
