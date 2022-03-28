@@ -49,7 +49,9 @@ def fetch_data():
             hoo = loc_dom.xpath(
                 '//h6[contains(text(), "Business Hours")]/following-sibling::div[1]//text()'
             )
-            hoo = " ".join([e.strip() for e in hoo if e.strip()]).split("Holidays")[0]
+            hoo = " ".join([e.strip() for e in hoo if e.strip()])
+            if "& Holidays" not in hoo:
+                hoo = hoo.split("Holidays")[0]
             geo = re.findall("mapCenter = (.+?);", loc_response.text)[0]
             geo = demjson.decode(geo)
 
