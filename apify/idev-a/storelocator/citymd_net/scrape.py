@@ -16,10 +16,12 @@ _headers = {
 locator_domain = "https://www.citymd.com"
 base_url = "https://www.citymd.com/all-locations"
 
+
 def fetch_data():
     with SgRequests() as session:
         soup = bs(session.get(base_url, headers=_headers).text, "lxml")
         links = soup.select("div.question-list a.link-btn")
+        
         for link in links:
             page_url = urljoin(locator_domain, link["href"])
             logger.info(page_url)
