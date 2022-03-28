@@ -1,177 +1,80 @@
-from lxml import html
-from sgscrape.sgpostal import International_Parser, parse_address
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
 def fetch_data(sgw: SgWriter):
 
     locator_domain = "https://uk.virginmoney.com/"
-    session = SgRequests()
+    api_url = "https://api.woosmap.com/stores/search?key=woos-89a9a4a8-799f-3cbf-9917-4e7b88e46c30&lat=56.817642&lng=-5.111418&max_distance=500000&stores_by_page=300&limit=5000"
     headers = {
         "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0",
-        "Accept": "application/json, text/javascript, */*; q=0.01",
+        "Accept": "*/*",
         "Accept-Language": "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3",
-        "X-Requested-With": "XMLHttpRequest",
+        "Origin": "https://uk.virginmoney.com",
         "Connection": "keep-alive",
-        "Referer": "https://uk.virginmoney.com/store-finder/",
+        "Referer": "https://uk.virginmoney.com/",
         "Sec-Fetch-Dest": "empty",
         "Sec-Fetch-Mode": "cors",
-        "Sec-Fetch-Site": "same-origin",
-        "Cache-Control": "max-age=0",
+        "Sec-Fetch-Site": "cross-site",
         "TE": "trailers",
     }
-
-    r = session.get(
-        "https://uk.virginmoney.com/store-finder/search/all/", headers=headers
-    )
-    js = r.json()["BranchList"]
-
+    r = session.get(api_url, headers=headers)
+    js = r.json()["features"]
     for j in js:
-
-        location_name = j.get("BranchName")
-        store_number = j.get("BranchID")
-        page_url = f"https://uk.virginmoney.com/virgin/store-finder/{store_number}.jsp"
-        location_type = "Branch"
-
-        session = SgRequests()
-        r = session.get(page_url, headers=headers)
-        tree = html.fromstring(r.text)
-
-        ad = (
-            " ".join(
-                tree.xpath('//h2[text()="Address"]/following-sibling::p[1]/text()')
-            )
-            .replace("\n", "")
-            .strip()
-        )
-        a = parse_address(International_Parser(), ad)
-        street_address = f"{a.street_address_1} {a.street_address_2}".replace(
-            "None", ""
-        ).strip()
-        state = a.state or "<MISSING>"
-        postal = a.postcode or "<MISSING>"
-        country_code = "UK"
-        city = a.city or "<MISSING>"
-        if page_url == "https://uk.virginmoney.com/virgin/store-finder/280.jsp":
-            city = "Baillieston"
-        if (
-            page_url == "https://uk.virginmoney.com/virgin/store-finder/281.jsp"
-            or page_url == "https://uk.virginmoney.com/virgin/store-finder/238.jsp"
-        ):
-            street_address = (
-                "".join(
-                    tree.xpath(
-                        '//h2[text()="Address"]/following-sibling::p[1]/text()[1]'
-                    )
-                )
-                .replace("\n", "")
-                .strip()
-            )
-            city = (
-                "".join(
-                    tree.xpath(
-                        '//h2[text()="Address"]/following-sibling::p[1]/text()[2]'
-                    )
-                )
-                .replace("\n", "")
-                .strip()
-            )
-            state = (
-                "".join(
-                    tree.xpath(
-                        '//h2[text()="Address"]/following-sibling::p[1]/text()[3]'
-                    )
-                )
-                .replace("\n", "")
-                .strip()
-            )
-        if (
-            page_url == "https://uk.virginmoney.com/virgin/store-finder/340.jsp"
-            or page_url == "https://uk.virginmoney.com/virgin/store-finder/26.jsp"
-        ):
-            city = (
-                "".join(
-                    tree.xpath(
-                        '//h2[text()="Address"]/following-sibling::p[1]/text()[2]'
-                    )
-                )
-                .replace("\n", "")
-                .strip()
-            )
-        if (
-            page_url.find("https://uk.virginmoney.com/virgin/store-finder/303.jsp")
-            != -1
-        ):
-            street_address = street_address.replace("Milngavie", "").strip()
-            city = "Milngavie"
-        if page_url == "https://uk.virginmoney.com/virgin/store-finder/501.jsp":
-            city = (
-                "".join(
-                    tree.xpath(
-                        '//h2[text()="Address"]/following-sibling::p[1]/text()[3]'
-                    )
-                )
-                .replace("\n", "")
-                .strip()
-            )
-        if (
-            page_url == "https://uk.virginmoney.com/virgin/store-finder/325.jsp"
-            or page_url == "https://uk.virginmoney.com/virgin/store-finder/501.jsp"
-            or page_url == "https://uk.virginmoney.com/virgin/store-finder/522.jsp"
-        ):
-            postal = (
-                "".join(
-                    tree.xpath(
-                        '//h2[text()="Address"]/following-sibling::p[1]/text()[4]'
-                    )
-                )
-                .replace("\n", "")
-                .strip()
-            )
-        if (
-            page_url == "https://uk.virginmoney.com/virgin/store-finder/520.jsp"
-            or page_url == "https://uk.virginmoney.com/virgin/store-finder/303.jsp"
-            or page_url == "https://uk.virginmoney.com/virgin/store-finder/341.jsp"
-        ):
-            postal = (
-                "".join(
-                    tree.xpath(
-                        '//h2[text()="Address"]/following-sibling::p[1]/text()[3]'
-                    )
-                )
-                .replace("\n", "")
-                .strip()
-            )
-        if page_url == "https://uk.virginmoney.com/virgin/store-finder/522.jsp":
-            street_address = (
-                "".join(
-                    tree.xpath(
-                        '//h2[text()="Address"]/following-sibling::p[1]/text()[1]'
-                    )
-                )
-                .replace("\n", "")
-                .strip()
-                + " "
-                + street_address
-            )
-
-        ll = "".join(tree.xpath('//div[@id="storefinder__map"]//img/@src'))
         try:
-            latitude = ll.split("center=")[1].split(",")[0].strip()
-            longitude = ll.split("center=")[1].split(",")[1].split("&")[0].strip()
+            a = j.get("properties")
         except:
-            latitude, longitude = "<MISSING>", "<MISSING>"
-        hours_of_operation = (
-            " ".join(
-                tree.xpath('//section[./h2[text()="Address"]]/table[1]//tr//text()')
-            )
-            .replace("\n", "")
-            .strip()
-        )
+            continue
+
+        location_name = a.get("name") or "<MISSING>"
+        adr = a.get("address").get("lines")
+        street_address = ""
+        location_type = ""
+        tmp_street = []
+        tmp_type = []
+        for i in adr:
+            if "Store closes" not in i:
+                tmp_street.append(i)
+            if "Store closes" in i:
+                tmp_type.append(i)
+            street_address = " ".join(tmp_street)
+            location_type = " ".join(tmp_type)
+        postal = "".join(a.get("address").get("zipcode"))
+        country_code = "GB"
+        city = "".join(a.get("address").get("city"))
+        store_number = a.get("store_id")
+        page_url = "https://uk.virginmoney.com/store-finder/"
+        latitude = j.get("geometry").get("coordinates")[1]
+        longitude = j.get("geometry").get("coordinates")[0]
+        days = [
+            "Monday",
+            "Tuesday",
+            "Wednesday",
+            "Thursday",
+            "Friday",
+            "Saturday",
+            "Sunday",
+        ]
+        tmp = []
+        for d in range(1, len(days) + 1):
+            day = days[d - 1]
+            try:
+                opens = a.get("weekly_opening")[str(d)].get("hours")[0].get("start")
+            except:
+                opens = "Closed"
+
+            try:
+                closes = a.get("weekly_opening")[str(d)].get("hours")[0].get("end")
+            except:
+                closes = "Closed"
+            line = f"{day} {opens} - {closes}"
+            if opens == closes:
+                line = f"{day} Closed"
+            tmp.append(line)
+        hours_of_operation = "; ".join(tmp) or "<MISSING>"
 
         row = SgRecord(
             locator_domain=locator_domain,
@@ -179,7 +82,7 @@ def fetch_data(sgw: SgWriter):
             location_name=location_name,
             street_address=street_address,
             city=city,
-            state=state,
+            state=SgRecord.MISSING,
             zip_postal=postal,
             country_code=country_code,
             store_number=store_number,
@@ -195,5 +98,7 @@ def fetch_data(sgw: SgWriter):
 
 if __name__ == "__main__":
     session = SgRequests()
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.STORE_NUMBER}))
+    ) as writer:
         fetch_data(writer)

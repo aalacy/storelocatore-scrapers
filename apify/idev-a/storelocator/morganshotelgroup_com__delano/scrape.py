@@ -36,7 +36,7 @@ def _d(page_url, session):
         country_code=ss["address"]["addressCountry"],
         latitude=coord["lat"],
         longitude=coord["lng"],
-        phone=ss["telephone"],
+        phone=ss.get("telephone"),
         locator_domain=locator_domain,
     )
 

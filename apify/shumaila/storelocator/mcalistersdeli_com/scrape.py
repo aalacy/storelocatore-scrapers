@@ -1,142 +1,208 @@
+from sglogging import sglog
 from bs4 import BeautifulSoup
-import csv
-import string
-import re, time
-
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('mcalistersdeli_com')
-
-
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
-headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
-           }
+website = "mcalistersdeli_com "
+log = sglog.SgLogSetup().get_logger(logger_name=website)
+session = SgRequests()
+headers = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36",
+    "Accept": "application/json",
+}
 
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+DOMAIN = "https://mcalistersdeli.com/"
+MISSING = SgRecord.MISSING
 
-        # Header
-        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-        # Body
-        for row in data:
-            writer.writerow(row)
+
+def store_data(soup):
+    location_name = soup.find("h2", {"class": "Core-title"}).text
+
+    try:
+        phone = soup.find("div", {"itemprop": "telephone"}).text
+    except:
+        phone = ""
+    try:
+        street_address = (
+            soup.find("span", {"class": "c-address-street-1"}).text
+            + " "
+            + soup.find("span", {"class": "c-address-street-2"}).text
+        )
+    except:
+        street_address = soup.find("span", {"class": "c-address-street-1"}).text
+    city = soup.find("span", {"class": "c-address-city"}).text
+    state = soup.find("abbr", {"class": "c-address-state"}).text
+    zip_postal = soup.find("span", {"class": "c-address-postal-code"}).text
+    country_code = "US"
+    hours_of_operation = soup.findAll("tr", {"itemprop": "openingHours"})
+    hours_of_operation = "  ".join(
+        x.get_text(separator="|", strip=True).replace("|", " ")
+        for x in hours_of_operation
+    )
+    latitude = soup.find("meta", {"itemprop": "latitude"})["content"]
+    longitude = soup.find("meta", {"itemprop": "longitude"})["content"]
+    return (
+        location_name,
+        phone,
+        street_address,
+        city,
+        state,
+        zip_postal,
+        hours_of_operation,
+        latitude,
+        longitude,
+        country_code,
+    )
 
 
 def fetch_data():
-    # Your scraper here
-    data = []
-    
-    url = 'https://www.mcalistersdeli.com/locations'
-    r = session.get(url, headers=headers, verify=False)
-  
-    soup =BeautifulSoup(r.text, "html.parser")
-   
-    state_list = soup.find('ul', {'class': 'cpt-state-city-list'}).findAll('a')
-    logger.info("states = ",len(state_list))
-    
-    p = 0
-    for states in state_list:
-        logger.info(states.text)
-        states = 'https://www.mcalistersdeli.com' + states['href']
-        r = session.get(states, headers=headers, verify=False)
-        ccode = 'US'
+    if True:
+        url = "https://www.mcalistersdeli.com/locations"
+        r = session.get(url, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
-        city_list = soup.find('ul', {'class': 'cpt-state-city-list'}).findAll('a')
-
-        #logger.info("cities = ",len(city_list))
-        
-
-        for cities in city_list:
-            #cities = cities.find('a')
-            #logger.info(cities.text.strip())
-            cities = 'https://www.mcalistersdeli.com' + cities['href']
-            r = session.get(cities, headers=headers, verify=False)
-            
+        statelist = soup.find("ul", {"class": "Directory-listLinks"}).findAll("li")
+        for state in statelist:
+            state_url = (
+                "https://locations.mcalistersdeli.com/" + state.find("a")["href"]
+            )
+            r = session.get(state_url, headers=headers)
             soup = BeautifulSoup(r.text, "html.parser")
-            branch_list = soup.find('div', {'class': 'sct-locations-list'}).findAll('p',{'class':'itm-store-name'})
-            #logger.info("Branches",len(branch_list),cities)
-
-            for branch in branch_list:
-                link = 'https://www.mcalistersdeli.com' + branch.find('a')['href'] 
-                        
-                r = session.get(link, headers=headers, verify=False)
-                soup = BeautifulSoup(r.text, "html.parser")
-                title = soup.find('h1',{'class':'itm-location-name'}).text.replace('\n','').replace('\r','').split(':')[0]
-                address = soup.find('p',{'class':'itm-location-address'}).find('a')['aria-label']
-                temp = address.split(', ')
-                state,pcode = temp[-1].split(' ',1)
-                city = temp[-2]
-                count = len(temp)- 2
-                street = '' 
-                for i in range(0,count):
-                    street = street + ' ' + temp[0]
-                try:
-                    phone =  soup.find('p',{'class':'itm-location-phone'}).text
-                except:
-                    phone = '<MISSING>'
-                try:
-                    hours= ''
-                    hourlist = soup.find('dl',{'class':'cpt-location-hours'})
-                    days = hourlist.findAll('dt')
-                    times = hourlist.findAll('dd')
-                    for i in range(0,len(days)):
-                        hours = hours + days[i].text + " : " + times[i].text + ' ' 
-                        
-                except:
-                    hours = '<MISSING>' 
-                    
-                try:
-                    coord = soup.find('div',{'class':'itm-location-map'}).find('img')['src'].split('(',1)[1].split(')',1)[0]
-                    longt,lat = coord.split(',')
-                except:
-                    lat =  '<MISSING>'
-                    longt =  '<MISSING>'
-
-                try:
-                    store = link.split('-')[-1]
-                except:
-                    store =  '<MISSING>'
-                try:
-                    pcode = pcode.split('-')[0]
-                except:
-                    pcode =  '<MISSING>'
-
-                    
-                data.append([
-                        'https://www.mcalistersdeli.com/',
-                        link,                   
-                        title,
-                        street,
-                        city,
-                        state,
-                        pcode,
-                        'US',
-                        store,
-                        phone,
-                        '<MISSING>',
-                        lat,
-                        longt,
-                        hours
-                    ])
-                #logger.info(p,data[p])
-                p += 1
-                #input()
-                
-
-                
-                
-            
-        
-    return data
+            if state.find("a")["data-count"] == "(1)":
+                log.info(state_url)
+                (
+                    location_name,
+                    phone,
+                    street_address,
+                    city,
+                    state,
+                    zip_postal,
+                    hours_of_operation,
+                    latitude,
+                    longitude,
+                    country_code,
+                ) = store_data(soup)
+                if not hours_of_operation:
+                    continue
+                yield SgRecord(
+                    locator_domain=DOMAIN,
+                    page_url=state_url,
+                    location_name=location_name,
+                    street_address=street_address.strip(),
+                    city=city.strip(),
+                    state=state.strip(),
+                    zip_postal=zip_postal.strip(),
+                    country_code=country_code,
+                    store_number=MISSING,
+                    phone=phone.strip(),
+                    location_type=MISSING,
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=hours_of_operation.strip(),
+                )
+            else:
+                citylist = soup.find("ul", {"class": "Directory-listLinks"}).findAll(
+                    "li"
+                )
+                for city in citylist:
+                    city_url = (
+                        "https://locations.mcalistersdeli.com/" + city.find("a")["href"]
+                    )
+                    r = session.get(city_url, headers=headers)
+                    soup = BeautifulSoup(r.text, "html.parser")
+                    if city.find("a")["data-count"] == "(1)":
+                        log.info(city_url)
+                        (
+                            location_name,
+                            phone,
+                            street_address,
+                            city,
+                            state,
+                            zip_postal,
+                            hours_of_operation,
+                            latitude,
+                            longitude,
+                            country_code,
+                        ) = store_data(soup)
+                        if not hours_of_operation:
+                            continue
+                        yield SgRecord(
+                            locator_domain=DOMAIN,
+                            page_url=city_url,
+                            location_name=location_name,
+                            street_address=street_address.strip(),
+                            city=city.strip(),
+                            state=state.strip(),
+                            zip_postal=zip_postal.strip(),
+                            country_code=country_code,
+                            store_number=MISSING,
+                            phone=phone.strip(),
+                            location_type=MISSING,
+                            latitude=latitude,
+                            longitude=longitude,
+                            hours_of_operation=hours_of_operation.strip(),
+                        )
+                    else:
+                        loclist = soup.find(
+                            "ul", {"class": "Directory-listTeasers Directory-row"}
+                        ).findAll("li")
+                        for loc in loclist:
+                            page_url = (
+                                "https://locations.mcalistersdeli.com/"
+                                + loc.find("a")["href"].replace("../", "")
+                            )
+                            log.info(page_url)
+                            r = session.get(page_url, headers=headers)
+                            soup = BeautifulSoup(r.text, "html.parser")
+                            (
+                                location_name,
+                                phone,
+                                street_address,
+                                city,
+                                state,
+                                zip_postal,
+                                hours_of_operation,
+                                latitude,
+                                longitude,
+                                country_code,
+                            ) = store_data(soup)
+                            if not hours_of_operation:
+                                continue
+                            yield SgRecord(
+                                locator_domain=DOMAIN,
+                                page_url=page_url,
+                                location_name=location_name,
+                                street_address=street_address.strip(),
+                                city=city.strip(),
+                                state=state.strip(),
+                                zip_postal=zip_postal.strip(),
+                                country_code=country_code,
+                                store_number=MISSING,
+                                phone=phone.strip(),
+                                location_type=MISSING,
+                                latitude=latitude,
+                                longitude=longitude,
+                                hours_of_operation=hours_of_operation.strip(),
+                            )
 
 
 def scrape():
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
-    data = fetch_data()
-    write_output(data)
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    log.info("Started")
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
 
-scrape()
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
+
+
+if __name__ == "__main__":
+    scrape()

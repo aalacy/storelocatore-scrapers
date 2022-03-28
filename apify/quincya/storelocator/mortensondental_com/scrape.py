@@ -1,103 +1,70 @@
-import csv
+from bs4 import BeautifulSoup
+
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 from sgrequests import SgRequests
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def fetch_data(sgw: SgWriter):
 
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-
-    base_link = "https://mortensondental.com/wp-content/plugins/mdp-connect/data/mdpConnect_mortensondental.com_locations.json"
+    base_link = "https://mortensondental.com/locations/"
 
     user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
     headers = {"User-Agent": user_agent}
 
     session = SgRequests()
-    stores = session.get(base_link, headers=headers).json()
-
-    data = []
+    req = session.get(base_link, headers=headers)
+    base = BeautifulSoup(req.text, "lxml")
 
     locator_domain = "mortensondental.com"
 
-    for store in stores:
-        location_name = store["name"].strip()
-        link = store["web"]
-        street_address = store["address"].strip()
-        city = store["city"]
-        state = store["state"]
-        zip_code = store["postal"]
+    links = base.find(id="dynamic_select").find_all("option")[1:]
+
+    for i in links:
+        link = i["value"]
+
+        req = session.get(link, headers=headers)
+        base = BeautifulSoup(req.text, "lxml")
+
+        location_name = base.h1.text.strip()
+        street_address = base.find(itemprop="streetAddress").text.strip()
+        city = base.find(itemprop="addressLocality").text.strip()
+        state = base.find(itemprop="addressRegion").text.strip()
+        zip_code = base.find(itemprop="postalCode").text.strip()
         country_code = "US"
-        store_number = store["id"]
-        phone = store["phone"]
-        latitude = store["lat"]
-        longitude = store["lng"]
-
-        hours_of_operation = ""
-        raw_hours = store["hours"]
-        for hours in raw_hours:
-            day = hours["day"]
-            opens = hours["begin"]
-            closes = hours["end"]
-            if opens != "" and closes != "":
-                clean_hours = day + " " + opens + "-" + closes
-            else:
-                clean_hours = day + " Closed"
-            hours_of_operation = (hours_of_operation + " " + clean_hours).strip()
-
         location_type = "<MISSING>"
-
-        data.append(
-            [
-                locator_domain,
-                link,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip_code,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
+        phone = base.find(itemprop="telephone").text.strip()
+        store_number = "<MISSING>"
+        hours_of_operation = (
+            " ".join(list(base.find(id="hours").stripped_strings))
+            .replace("Hours", "")
+            .strip()
         )
-    return data
+        latitude = base.find(itemprop="latitude")["content"]
+        longitude = base.find(itemprop="longitude")["content"]
+
+        sgw.write_row(
+            SgRecord(
+                locator_domain=locator_domain,
+                page_url=link,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_code,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
+        )
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    fetch_data(writer)

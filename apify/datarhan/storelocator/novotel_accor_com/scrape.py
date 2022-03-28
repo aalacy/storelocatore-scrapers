@@ -12,7 +12,7 @@ from sgscrape.sgwriter import SgWriter
 def fetch_data():
     session = SgRequests()
 
-    domain = "nothingbundtcakes.com"
+    domain = "novotel.accor.com"
     start_url = "https://novotel.accor.com/gb/world/hotels-novotel-monde.shtml"
 
     all_locations = []
@@ -36,6 +36,7 @@ def fetch_data():
             all_locations += dom.xpath(
                 '//div[@id="paginator-list-hotel"]//a[@class="Teaser-link"]/@href'
             )
+            all_locations += dom.xpath('//a[contains(@href, "/hotel/")]/@href')
             all_cities = dom.xpath(
                 '//div[@id="paginator-list-core"]//a[@class="Teaser-link"]/@href'
             )
@@ -45,6 +46,7 @@ def fetch_data():
                 all_locations += dom.xpath(
                     '//div[@id="paginator-list-hotel"]//a[@class="Teaser-link"]/@href'
                 )
+                all_locations += dom.xpath('//a[contains(@href, "/hotel/")]/@href')
                 all_subs = dom.xpath(
                     '//div[@id="paginator-list-core"]//a[@class="Teaser-link"]/@href'
                 )
@@ -64,34 +66,39 @@ def fetch_data():
         )
         if poi:
             poi = json.loads(poi[0])
-
             location_name = poi["name"]
             street = loc_dom.xpath('//meta[@property="og:street-address"]/@content')
-            street = street[0] if street else "<MISSING>"
+            street = street[0] if street else ""
             city = poi["address"]["addressLocality"]
-            city = city if city else "<MISSING>"
-            state = "<MISSING>"
+            city = city if city else ""
+            state = ""
             zip_code = poi["address"].get("postalCode")
-            zip_code = zip_code if zip_code else "<MISSING>"
+            zip_code = zip_code if zip_code else ""
             phone = poi["telephone"]
             location_type = poi["@type"]
             country_code = poi["address"]["addressCountry"]
-            country_code = country_code if country_code else "<MISSING>"
+            country_code = country_code if country_code else ""
         else:
             poi = loc_dom.xpath('//script[contains(text(), "streetAddress")]/text()')[0]
             poi = json.loads(poi)
 
-            location_name = loc_dom.xpath('//p[@class="hotel__title"]/text()')[0]
+            location_name = poi["hotelName"]
             street = poi["streetAddress"]
             city = poi["city"]
             state = SgRecord.MISSING
             zip_code = SgRecord.MISSING
             phone = loc_dom.xpath('//a[@class="infos__phone"]/text()')
-            phone = phone[0].strip() if phone else SgRecord.MISSING
+            phone = phone[0].strip() if phone else ""
             location_type = SgRecord.MISSING
             country_code = poi["country"]
+        if "Novotel" not in location_name:
+            continue
         latitude = loc_dom.xpath('//meta[@property="og:latitude"]/@content')[0]
         longitude = loc_dom.xpath('//meta[@property="og:longitude"]/@content')[0]
+        if not phone:
+            phone = loc_dom.xpath('//a[@class="infos__phone text-link"]/text()')[
+                0
+            ].strip()
 
         item = SgRecord(
             locator_domain=domain,
@@ -102,7 +109,7 @@ def fetch_data():
             state=state,
             zip_postal=zip_code,
             country_code=country_code,
-            store_number=SgRecord.MISSING,
+            store_number=poi_url.split("/")[-2],
             phone=phone,
             location_type=location_type,
             latitude=latitude,

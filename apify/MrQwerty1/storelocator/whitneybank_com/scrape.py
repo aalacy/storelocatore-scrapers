@@ -1,116 +1,72 @@
-import csv
-
-from concurrent import futures
+import json
+from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
-from sgzip.static import static_coordinate_list, SearchableCountries
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def fetch_data(sgw: SgWriter):
+    api = "https://maps.locations.hancockwhitney.com/api/getAsyncLocations?template=search&level=search&search=36037&radius=5000"
 
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def get_data(coord):
-    rows = []
-    lat, lon = coord
-    locator_domain = "https://www.hancockwhitney.com/"
-    api_url = f"https://hancockwhitney-api-production.herokuapp.com/location?latitude={lat}&locationTypes=atm,branch,business&longitude={lon}&pageSize=100&radius=500"
-    session = SgRequests()
-    r = session.get(api_url)
-
-    js = r.json()["data"]
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0"
+    }
+    r = session.get(api, headers=headers)
+    source = r.json()["maplist"]
+    tree = html.fromstring(source)
+    text = "[" + "".join(tree.xpath("//text()"))[:-1] + "]"
+    js = json.loads(text)
 
     for j in js:
-        location_name = j.get("name") or "<MISSING>"
-        a = j.get("address", {}) or {}
-        street_address = a.get("street") or "<MISSING>"
-        city = a.get("city") or "<MISSING>"
-        state = a.get("state") or "<MISSING>"
-        postal = a.get("zip") or "<MISSING>"
-        country_code = "US"
-        store_number = "<MISSING>"
-        page_url = "<MISSING>"
-        phone = j.get("phone") or "<MISSING>"
-        geo = j.get("geo", {}).get("coordinates") or ["<MISSING>", "<MISSING>"]
-        latitude = geo[1]
-        longitude = geo[0]
-        location_type = ",".join(j.get("locationTypes")) or "<MISSING>"
+        location_name = j.get("location_name")
+        page_url = j.get("url")
+        street_address = f'{j.get("address_1")} {j.get("address_2") or ""}'.strip()
+        city = j.get("city")
+        state = j.get("region")
+        postal = j.get("post_code")
+        country_code = j.get("country")
+        phone = j.get("local_phone")
+        latitude = j.get("lat")
+        longitude = j.get("lng")
+        store_number = j.get("fid")
+        location_type = j.get("Type_CS")
 
-        if location_type == "atm":
-            continue
+        _tmp = []
+        text = j.get("hours_sets:primary") or "{}"
+        h = json.loads(text).get("days") or {}
+        for k, v in h.items():
+            if type(v) == str:
+                _tmp.append(f"{k}: {v}")
+            else:
+                start = v[0].get("open")
+                end = v[0].get("close")
+                _tmp.append(f"{k}: {start} - {end}")
+        hours_of_operation = ";".join(_tmp)
 
-        hours_of_operation = (
-            j.get("lobbyHours").replace("(appointment only)", "") or "<MISSING>"
+        row = SgRecord(
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            locator_domain=locator_domain,
+            hours_of_operation=hours_of_operation,
         )
-        if hours_of_operation.find("(") != -1:
-            hours_of_operation = hours_of_operation.split("(")[0].strip()
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        rows.append(row)
-
-    return rows
-
-
-def fetch_data():
-    out = []
-    s = set()
-    coords = static_coordinate_list(radius=200, country_code=SearchableCountries.USA)
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {executor.submit(get_data, coord): coord for coord in coords}
-        for future in futures.as_completed(future_to_url):
-            rows = future.result()
-            for row in rows:
-                _id = tuple(row[2:6])
-                if _id not in s:
-                    s.add(_id)
-                    out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    locator_domain = "https://www.hancockwhitney.com/"
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        fetch_data(writer)

@@ -1,184 +1,136 @@
-import csv
-from sgrequests import SgRequests
-from bs4 import BeautifulSoup
 import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('avera_org')
-
+import usaddress
+from sglogging import sglog
+from bs4 import BeautifulSoup
+from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
+website = "avera_org"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
+session = SgRequests()
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+}
 
+DOMAIN = "https://www.avera.org/"
+MISSING = SgRecord.MISSING
 
-def write_output(data):
-    with open('data.csv', mode='w', newline='') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
-        # Body
-        for row in data:
-            writer.writerow(row)
 
 def fetch_data():
-    base_url = locator_domain = "https://www.avera.org"
-    addresses=[]
-    country_code = "US"
-    r = session.get("https://www.avera.org/locations/search-results/?sort=13&page=1")
-    soup = BeautifulSoup(r.text, "lxml")
-    option=soup.find("select",{"id":"ce9349e11bda4c59af2fe2dedcc42790_ddl"}).find_all("option")
-    
-    for d in option[1:]:
-        
-        location_type = d.text
-        # logger.info(location_type)
-        r1 = session.get("https://www.avera.org/locations/search-results/?termId="+d["value"]+"&zipCode=&sort=13&page=1")
-        soup1 = BeautifulSoup(r1.text, "lxml")        
-        if soup1.find("select",{"class":"SuperShort"}): 
-            for number in soup1.find("select",{"class":"SuperShort"}).find_all("option"):
-                # loc_list.append(d.text)
-                url1 = "https://www.avera.org/locations/search-results/?termId="+d['value']+"&zipCode=&sort=13&page="+str(number.text)
-                r2 = session.get(url1)
-                soup2 = BeautifulSoup(r2.text, "lxml")
-                for index,url in enumerate(soup2.find("div",{"class":"LocationsList"}).find_all("li")):
-                    link = 'https://www.avera.org/locations/'+url.find("a",{"class":"Name"})['href'].replace("..","")
-                    if "&id" in link:
-                        store_number = link.split("&id=")[-1]
-                    else:
-                        store_number = "<MISSING>"
-                    r3 = session.get(link)
-                    soup3 = BeautifulSoup(r3.text, "lxml")
-                    hp = soup3.find("div",{"class":"LocationProfile"})
-                    if  hp != None:
-                        links="https://www.avera.org/"+hp['id']+"&skipRedirect=true"
-                        # logger.info("new link===",links)
-                        r4 = session.get(links)
-                        soup4 = BeautifulSoup(r4.text, "lxml")
-                        data = json.loads(soup4.find("script",{"type":"application/ld+json"}).text)
-                        location_name = data['name']
-                        street_address = data['address']['streetAddress'].split("Suite")[0].replace(",","").split("Ste")[0].replace("Second Floor","").replace("3rd Floor","").replace("2nd Floor","").replace("4th Floor - Plaza 2","")
-                        city = data['address']['addressLocality']
-                        state = data['address']['addressRegion']
-                        zipp = data['address']['postalCode']
-                        phone = data['telephone']
-                        try:
-                            latitude = data['geo']['latitude']
-                            longitude = data['geo']['longitude']
-                        except:
-                            latitude="<MISSING>"
-                            longitude="<MISSING>"
-                        page_url = data['url']
-                        if soup4.find("div",{"class":"Hours"}):
-                            hours = " ".join(list(soup4.find("div",{"class":"Hours"}).stripped_strings)).replace("Hours of Operation","")
-                        else:
-                            hours = "<MISSING>"
-                    
-
-                    else:
-                        data = json.loads(soup3.find("script",{"type":"application/ld+json"}).text)
-                        # logger.info(data)
-                        location_name = data['name']
-                        street_address = data['address']['streetAddress'].split("Suite")[0].replace(",","").split("Ste")[0].replace("Second Floor","").replace("3rd Floor","").replace("2nd Floor","").replace("4th Floor - Plaza 2","")
-                        city = data['address']['addressLocality']
-                        state = data['address']['addressRegion']
-                        zipp = data['address']['postalCode']
-                        phone = data['telephone']
-                        try:
-                            latitude = data['geo']['latitude']
-                            longitude = data['geo']['longitude']
-                        except:
-                            latitude="<MISSING>"
-                            longitude="<MISSING>"
-                        page_url = data['url']
-                        if soup3.find("div",{"id":"OfficeHourComment"}):
-                            hours = " ".join(list(soup3.find("div",{"id":"OfficeHourComment"}).stripped_strings)).replace("Avera QuickLabs Hours","")
-                        else:
-                            hours = "<MISSING>"
-                    store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
-                            store_number, phone, location_type, latitude, longitude, hours,page_url]
-                    store = [str(x).strip() if x else "<MISSING>" for x in store]
-                    duplicate =str(store[1])+" "+str(store[2])+" "+str(store[3])+" "+str(store[4])+" "+str(store[5])+" "+str(store[6])+" "+str(store[7])+" "+str(store[8])+" "+str(store[9])+" "+str(store[10])+" "+str(store[11])+" "+str(store[12])+" "+str(store[13])
-                    if str(duplicate)  in addresses:
-                        continue
-                    addresses.append(str(duplicate))
-                    #logger.info("data = " + str(store))
-                    #logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-                    yield store
-                                        
-        else:
-            url1 = "https://www.avera.org/locations/search-results/?termId="+d["value"]+"&zipCode=&sort=13&page=1"
-            r2 = session.get(url1)
-            soup2 = BeautifulSoup(r2.text, "lxml")
-            for index,url in enumerate(soup2.find("div",{"class":"LocationsList"}).find_all("li")):
-                link = 'https://www.avera.org/locations/'+url.find("a",{"class":"Name"})['href'].replace("..","")
-                if "&id" in link:
-                    store_number = link.split("&id=")[-1]
-                else:
-                    store_number = "<MISSING>"
-                r3 = session.get(link)
-                soup3 = BeautifulSoup(r3.text, "lxml")
-                hp = soup3.find("div",{"class":"LocationProfile"})
-                if  hp != None:
-                    links="https://www.avera.org/"+hp['id']+"&skipRedirect=true"
-                    # logger.info("new link===",links)
-                    r4 = session.get(links)
-                    soup4 = BeautifulSoup(r4.text, "lxml")
-                    data = json.loads(soup4.find("script",{"type":"application/ld+json"}).text)
-                    location_name = data['name']
-                    street_address = data['address']['streetAddress'].split("Suite")[0].replace(",","").split("Ste")[0].replace("Second Floor","").replace("3rd Floor","").replace("2nd Floor","").replace("4th Floor - Plaza 2","")
-                    city = data['address']['addressLocality']
-                    state = data['address']['addressRegion']
-                    zipp = data['address']['postalCode']
-                    phone = data['telephone']
-                    try:
-                        latitude = data['geo']['latitude']
-                        longitude = data['geo']['longitude']
-                    except:
-                        latitude="<MISSING>"
-                        longitude="<MISSING>"
-                    page_url = data['url']
-                    if soup4.find("div",{"class":"Hours"}):
-                        hours = " ".join(list(soup4.find("div",{"class":"Hours"}).stripped_strings)).replace("Hours of Operation","")
-                    else:
-                        hours = "<MISSING>"
-                
-
-                else:
-                    data = json.loads(soup3.find("script",{"type":"application/ld+json"}).text)
-                    # logger.info(data)
-                    location_name = data['name']
-                    street_address = data['address']['streetAddress'].split("Suite")[0].replace(",","").split("Ste")[0].replace("Second Floor","").replace("3rd Floor","").replace("2nd Floor","").replace("4th Floor - Plaza 2","")
-                    city = data['address']['addressLocality']
-                    state = data['address']['addressRegion']
-                    zipp = data['address']['postalCode']
-                    phone = data['telephone']
-                    try:
-                        latitude = data['geo']['latitude']
-                        longitude = data['geo']['longitude']
-                    except:
-                        latitude="<MISSING>"
-                        longitude="<MISSING>"
-                    page_url = data['url']
-                    if soup3.find("div",{"id":"OfficeHourComment"}):
-                        hours = " ".join(list(soup3.find("div",{"id":"OfficeHourComment"}).stripped_strings)).replace("Avera QuickLabs Hours","")
-                    else:
-                        hours = "<MISSING>"
-                store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
-                            store_number, phone, location_type, latitude, longitude, hours,page_url]
-                store = [str(x).strip() if x else "<MISSING>" for x in store]
-                duplicate =str(store[1])+" "+str(store[2])+" "+str(store[3])+" "+str(store[4])+" "+str(store[5])+" "+str(store[6])+" "+str(store[7])+" "+str(store[8])+" "+str(store[9])+" "+str(store[10])+" "+str(store[11])+" "+str(store[12])+" "+str(store[13])
-                if str(duplicate)  in addresses:
-                    continue
-                addresses.append(str(duplicate))
-                # logger.info("data = " + str(store))
-                # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-                yield store       
-
-
+    if True:
+        url = "https://www.avera.org/locations/search-results/"
+        r = session.get(url, headers=headers)
+        soup = BeautifulSoup(r.text, "html.parser")
+        pagelist = soup.find("select", {"class": "SuperShort"}).findAll("option")
+        for page in pagelist:
+            page = page["value"].replace("~", "")
+            page = "https://www.avera.org" + page
+            log.info(page)
+            r = session.get(page, headers=headers)
+            soup = BeautifulSoup(r.text, "html.parser")
+            loclist = soup.find("div", {"class": "LocationsList"}).findAll("li")
+            for loc in loclist:
+                temp = loc.find("div", {"class": "Headline"})
+                page_url = temp.find("a")["href"]
+                page_url = "https://www.avera.org/locations" + page_url.replace(
+                    "..", ""
+                )
+                try:
+                    store_number = page_url.split("id=")[1]
+                except:
+                    store_number = MISSING
+                location_name = temp.find(class_="Name").text
+                location_name = location_name.split("-")[0].strip()
+                address = loc.find("p", {"class": "TheAddress"}).text
+                address = address.replace(",", " ")
+                address = usaddress.parse(address)
+                i = 0
+                street_address = ""
+                city = ""
+                state = ""
+                zip_postal = ""
+                while i < len(address):
+                    temp = address[i]
+                    if (
+                        temp[1].find("Address") != -1
+                        or temp[1].find("Street") != -1
+                        or temp[1].find("Recipient") != -1
+                        or temp[1].find("Occupancy") != -1
+                        or temp[1].find("BuildingName") != -1
+                        or temp[1].find("USPSBoxType") != -1
+                        or temp[1].find("USPSBoxID") != -1
+                    ):
+                        street_address = street_address + " " + temp[0]
+                    if temp[1].find("PlaceName") != -1:
+                        city = city + " " + temp[0]
+                    if temp[1].find("StateName") != -1:
+                        state = state + " " + temp[0]
+                    if temp[1].find("ZipCode") != -1:
+                        zip_postal = zip_postal + " " + temp[0]
+                    i += 1
+                try:
+                    phone = loc.find("span", {"class": "Phone"}).text
+                except:
+                    phone = MISSING
+                r = session.get(page_url, headers=headers)
+                soup = BeautifulSoup(r.text, "html.parser")
+                try:
+                    coords = r.text.split('"geo":')[1].split("}")[0]
+                    coords = json.loads(coords + "}")
+                    latitude = coords["latitude"]
+                    longitude = coords["longitude"]
+                except:
+                    latitude = MISSING
+                    longitude = MISSING
+                try:
+                    hours_of_operation = (
+                        soup.find("div", {"class": "Hours"})
+                        .get_text(separator="|", strip=True)
+                        .replace("|", " ")
+                        .replace("Hours of Operation", "")
+                        .replace("We are open from", "")
+                    ).strip()
+                except:
+                    hours_of_operation = MISSING
+                longitude = longitude.replace("},", "")
+                latitude = latitude.replace(",", "")
+                country_code = "US"
+                yield SgRecord(
+                    locator_domain=DOMAIN,
+                    page_url=page_url,
+                    location_name=location_name,
+                    street_address=street_address.strip(),
+                    city=city.strip(),
+                    state=state.strip(),
+                    zip_postal=zip_postal.strip(),
+                    country_code=country_code,
+                    store_number=store_number,
+                    phone=phone.strip(),
+                    location_type=MISSING,
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=hours_of_operation.strip(),
+                )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    log.info("Started")
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
 
-scrape()
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
+
+
+if __name__ == "__main__":
+    scrape()

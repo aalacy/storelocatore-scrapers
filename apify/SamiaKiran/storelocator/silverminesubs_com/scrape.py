@@ -2,51 +2,53 @@ import usaddress
 from sglogging import sglog
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
-from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
 website = "silverminesubs_com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
 headers = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36",
-    "Accept": "application/json",
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
 }
+
+DOMAIN = "https://silverminesubs.com/"
+MISSING = SgRecord.MISSING
 
 
 def fetch_data():
-    temp = []
     if True:
         url = "https://www.silverminesubs.com/locations/"
         r = session.get(url, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
-        loclist = soup.findAll("div", {"class": "storerow"})
+        loclist = soup.findAll("div", {"class": "fl-col-small"})
         for loc in loclist:
-            location_name = loc.find("div", {"class": "storename inlineblock"}).text
-            page_url = loc.find("div", {"class": "storename inlineblock"}).find("a")[
-                "href"
-            ]
-            phone = loc.find("div", {"class": "storephone inlineblock"}).text
-            log.info(page_url)
-            r = session.get(page_url, headers=headers)
-            if "Page not found" in r.text:
-                continue
-            soup = BeautifulSoup(r.text, "html.parser")
-            temp = soup.findAll("div", {"class": "storesideblock"})
-            try:
-                hours_of_operation = (
-                    temp[2].get_text(separator="|", strip=True).split("|")
-                )
-                hours_of_operation = hours_of_operation[1] + " " + hours_of_operation[2]
-            except:
+            if "Order Online" in loc.text:
                 try:
-                    hours_of_operation = temp[2].text.replace("Hours", "")
+                    location_name = (
+                        loc.find("h3", {"class": "heading-title"})
+                        .get_text(separator="|", strip=True)
+                        .replace("|", " ")
+                    )
                 except:
-                    hours_of_operation = "<MISSING>"
-            try:
-                address = temp[0].text.replace("Address", "").replace("\n", "").strip()
-                address = address.replace(",", "")
+                    continue
+                log.info(location_name)
+                hours_of_operation = (
+                    loc.find("div", {"class": "pp-sub-heading"}).findAll("p")[-1].text
+                )
+                address = (
+                    loc.find("iframe")["src"]
+                    .split("q=")[1]
+                    .split("&key")[0]
+                    .replace("+", " ")
+                    .replace("%2C", ",")
+                    .replace("%0A", "")
+                    .replace("Silver Mine Subs,", "")
+                )
+                address = address.replace(",", " ")
                 address = usaddress.parse(address)
                 i = 0
                 street_address = ""
@@ -72,61 +74,35 @@ def fetch_data():
                     if temp[1].find("ZipCode") != -1:
                         zip_postal = zip_postal + " " + temp[0]
                     i += 1
-
-            except:
-                link = soup.find("iframe")["src"]
-                r = session.get(link, headers=headers)
-                address = (
-                    r.text.split("Silver Mine Subs,")[1]
-                    .split("],", 1)[0]
-                    .replace("[", "")
-                    .split(",")
+                phone = MISSING
+                yield SgRecord(
+                    locator_domain=DOMAIN,
+                    page_url=url,
+                    location_name=location_name,
+                    street_address=street_address.strip(),
+                    city=city,
+                    state=state,
+                    zip_postal=zip_postal,
+                    country_code="US",
+                    store_number=MISSING,
+                    phone=phone.strip(),
+                    location_type=MISSING,
+                    latitude=MISSING,
+                    longitude=MISSING,
+                    hours_of_operation=hours_of_operation,
                 )
-                street_address = address[0]
-                city = address[1]
-                address = address[2].strip().split()
-                state = address[0].strip()
-                zip_postal = address[1]
-            coords = soup.find("iframe")["src"]
-            r = session.get(coords, headers=headers)
-            coords = r.text.split("],0],")[0].rsplit("[null,null,", 1)[1].split(",")
-            latitude = coords[0]
-            longitude = coords[1]
-            if latitude == "null":
-                coords = (
-                    r.text.split("],0,1]")[0].rsplit("[null,null,", 1)[1].split(",")
-                )
-                latitude = coords[0]
-                longitude = coords[1]
-            yield SgRecord(
-                locator_domain="https://www.silverminesubs.com/",
-                page_url=page_url,
-                location_name=location_name,
-                street_address=street_address.strip(),
-                city=city.strip(),
-                state=state.strip(),
-                zip_postal=zip_postal.strip(),
-                country_code="US",
-                store_number="<MISSING>",
-                phone=phone.strip(),
-                location_type="<MISSING>",
-                latitude=latitude.strip(),
-                longitude=longitude.strip(),
-                hours_of_operation=hours_of_operation.replace("NEW HOURS", "").strip(),
-            )
 
 
 def scrape():
-    log.info("Started")
-    count = 0
-    with SgWriter() as writer:
-        results = fetch_data()
-        for rec in results:
-            writer.write_row(rec)
-            count = count + 1
-
-    log.info(f"No of records being processed: {count}")
-    log.info("Finished")
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":
