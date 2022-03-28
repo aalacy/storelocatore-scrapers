@@ -84,7 +84,7 @@ def fetch_data():
                 country_code = url_country.split(",")[2].strip()
 
                 cleaned_zip = re.sub(
-                    rf"\s*({country_code}|SWIFT:)\s*", "", zip, re.IGNORECASE
+                    rf"\s*({country_code}|SWIFT:)\s*", "", str(zip), re.IGNORECASE
                 )
                 if re.search("po box", cleaned_zip, re.IGNORECASE):
                     cleaned_zip = SgRecord.MISSING
