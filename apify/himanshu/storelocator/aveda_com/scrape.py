@@ -52,7 +52,7 @@ def get_data(coords, sgw: SgWriter):
         return
 
     for j in js.values():
-
+        print(j)
         store_number = j.get("DOOR_ID")
         page_url = (
             f"https://www.aveda.com/locator/get_the_facts.tmpl?DOOR_ID={store_number}"
@@ -73,6 +73,7 @@ def get_data(coords, sgw: SgWriter):
         latitude = j.get("LATITUDE") or "<MISSING>"
         longitude = j.get("LONGITUDE") or "<MISSING>"
         hours_of_operation = "<INACCESSIBLE>"
+        location_type = j.get("CLASSIFICATION") or "<MISSING>"
 
         row = SgRecord(
             locator_domain=locator_domain,
@@ -85,7 +86,7 @@ def get_data(coords, sgw: SgWriter):
             country_code=country_code,
             store_number=store_number,
             phone=phone,
-            location_type=SgRecord.MISSING,
+            location_type=location_type,
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hours_of_operation,
