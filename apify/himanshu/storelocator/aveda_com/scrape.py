@@ -52,7 +52,7 @@ def get_data(coords, sgw: SgWriter):
         return
 
     for j in js.values():
-        print(j)
+
         store_number = j.get("DOOR_ID")
         page_url = (
             f"https://www.aveda.com/locator/get_the_facts.tmpl?DOOR_ID={store_number}"
