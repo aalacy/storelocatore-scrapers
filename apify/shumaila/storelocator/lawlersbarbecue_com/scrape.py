@@ -41,6 +41,7 @@ def fetch_data():
             .strip()
         )
         hours = soup.text.split("Hours", 1)[1].split("\n", 1)[1].split("\n", 1)[0]
+
         address = usaddress.parse(address)
 
         i = 0
@@ -90,6 +91,8 @@ def fetch_data():
                 )
             except:
                 store = "<MISSING>"
+        if "1303 N" in street:
+            hours = "Mon-Sat 10:30 am - 7:00 pm"
         yield SgRecord(
             locator_domain="https://www.lawlersbarbecue.com/",
             page_url=link,

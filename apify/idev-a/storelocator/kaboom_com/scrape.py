@@ -110,22 +110,26 @@ def fetch_data():
                 if not hh["insert"].strip():
                     continue
                 hours.append(hh["insert"].strip())
+
+            try:
+                latitude = loc_info["lat"]
+                longitude = loc_info["lng"]
+            except:
+                latitude = longitude = ""
             yield SgRecord(
                 page_url=page_url,
                 location_name=_["title"]["content"]["quill"]["ops"][0][
                     "insert"
                 ].strip(),
-                street_address=loc_info["street"],
-                city=loc_info["city"],
-                state=loc_info["region_code"]
-                if loc_info.get("region_code")
-                else loc_info["region"],
-                zip_postal=loc_info["postal_code"],
-                country_code=loc_info["country_code"],
-                latitude=loc_info["lat"],
-                longitude=loc_info["long"] if loc_info.get("long") else loc_info["lng"],
+                street_address=" ".join(addr[:-1]),
+                city=addr[-1].split(",")[0].strip(),
+                state=addr[-1].split(",")[1].strip().split()[0].strip(),
+                zip_postal=" ".join(addr[-1].split(",")[1].strip().split()[1:]),
+                country_code="CA",
+                latitude=latitude,
+                longitude=longitude,
                 location_type=location_type,
-                phone=loc_info.get("phone") or _p("".join(phone)),
+                phone=_p("".join(phone)),
                 locator_domain=locator_domain,
                 hours_of_operation="; ".join(hours).replace("\n", "; "),
                 raw_address=loc_info["formatted_address"],
