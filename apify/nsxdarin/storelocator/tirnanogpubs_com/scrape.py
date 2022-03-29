@@ -15,94 +15,83 @@ def fetch_data():
     website = "tirnanogpubs.com"
     typ = "<MISSING>"
     country = "CA"
+    locs = []
     logger.info("Pulling Stores")
     headers = {
-        "authority": "sheets.googleapis.com",
-        "sec-ch-ua": '"Chromium";v="92", " Not A;Brand";v="99", "Google Chrome";v="92"',
-        "accept": "application/json, text/javascript, */*; q=0.01",
-        "sec-ch-ua-mobile": "?0",
-        "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.159 Safari/537.36",
-        "origin": "https://www.paddyflahertys.com",
-        "x-client-data": "CK+1yQEIkrbJAQiktskBCKmdygEI7/LLAQi0+MsBCJ75ywEI+PnLAQi+/ssBCJ7/ywEYjp7LAQ==",
-        "sec-fetch-site": "cross-site",
-        "sec-fetch-mode": "cors",
-        "sec-fetch-dest": "empty",
-        "referer": "https://www.paddyflahertys.com/",
-        "accept-language": "en-US,en;q=0.9",
+        "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.159 Safari/537.36"
     }
     sid = ""
     url = "https://www.tirnanogpubs.com/en/locations.html"
     r = session.get(url, headers=headers)
     for line in r.iter_lines():
-        line = str(line.decode("utf-8"))
-        if 'spreadsheetID: "' in line:
-            sid = line.split('spreadsheetID: "')[1].split('"')[0]
-    sid = sid.replace("\\u002D", "-")
-    loc = (
-        "https://sheets.googleapis.com/v4/spreadsheets/"
-        + sid
-        + "/values/1Stores?key=AIzaSyCWzsoRvbqZ_ilWyJ2z88O4nps4oGU5idU"
-    )
-    name = ""
-    add = ""
-    city = ""
-    state = ""
-    zc = ""
-    store = ""
-    phone = ""
-    lat = ""
-    lng = ""
-    hours = ""
-    r2 = session.get(loc, headers=headers)
-    for item in json.loads(r2.content)["values"]:
-        if item[0] != "storeNumber" and item[0] != "":
-            store = item[0]
-            name = item[1]
-            lat = item[2]
-            lng = item[3]
-            add = item[5] + " " + item[6] + " " + item[7]
-            city = item[8].strip()
-            state = item[9]
-            zc = item[10]
-            phone = item[11]
-            hours = item[14]
-            hours = hours.replace("\n", "").replace("|", "; ").replace(" ;", ";")
-            hours = hours.replace("<br>", "").replace("<b>", "")
-            if "HAPPY" in hours:
-                hours = hours.split("HAPPY")[0].strip()
-            purl = (
-                "https://www.tirnanogpubs.com/en/locations/"
-                + store
-                + "/"
-                + city.lower()
-                + "-"
-                + item[6].replace(" ", "-").lower()
-                + ".html"
-            )
-            if "permanently closed" not in hours:
-                yield SgRecord(
-                    locator_domain=website,
-                    page_url=purl,
-                    location_name=name,
-                    street_address=add,
-                    city=city,
-                    state=state,
-                    zip_postal=zc,
-                    country_code=country,
-                    phone=phone,
-                    location_type=typ,
-                    store_number=store,
-                    latitude=lat,
-                    longitude=lng,
-                    hours_of_operation=hours,
-                )
+        if '<a class="Directory-listLink" href="' in line:
+            items = line.split('<a class="Directory-listLink" href="')
+            for item in items:
+                if 'data-ya-track="todirectory"' in item:
+                    lurl = (
+                        "https://www.tirnanogpubs.com/en/locations/"
+                        + item.split('"')[0]
+                    )
+                    locs.append(lurl)
+    for loc in locs:
+        name = ""
+        add = ""
+        city = ""
+        state = ""
+        zc = ""
+        store = "<MISSING>"
+        phone = ""
+        lat = ""
+        lng = ""
+        hours = ""
+        r2 = session.get(loc, headers=headers)
+        for line2 in r2.iter_lines():
+            if '"c-bread-crumbs-name" itemprop="name">' in line2 and name == "":
+                name = line2.rsplit('"c-bread-crumbs-name" itemprop="name">', 1)[
+                    1
+                ].split("<")[0]
+            if '<meta itemprop="streetAddress" content="' in line2:
+                add = line2.split('<meta itemprop="streetAddress" content="')[1].split(
+                    '"'
+                )[0]
+                city = line2.split('"c-address-city">')[1].split("<")[0]
+                state = line2.split('itemprop="addressRegion">')[1].split("<")[0]
+                zc = line2.split('itemprop="postalCode">')[1].split("<")[0]
+            if 'itemprop="latitude" content="' in line2:
+                lat = line2.split('itemprop="latitude" content="')[1].split('"')[0]
+                lng = line2.split('itemprop="longitude" content="')[1].split('"')[0]
+            if '"Phone-link" href="tel:' in line2:
+                phone = line2.split('"Phone-link" href="tel:')[1].split('"')[0]
+            if 'itemprop="openingHours" content="' in line2:
+                days = line2.split('itemprop="openingHours" content="')
+                for day in days:
+                    if '<td class="c-hours-details-row-day">' in day:
+                        hrs = day.split('"')[0]
+                        if hours == "":
+                            hours = hrs
+                        else:
+                            hours = hours + "; " + hrs
+        yield SgRecord(
+            locator_domain=website,
+            page_url=loc,
+            location_name=name,
+            street_address=add,
+            city=city,
+            state=state,
+            zip_postal=zc,
+            country_code=country,
+            phone=phone,
+            location_type=typ,
+            store_number=store,
+            latitude=lat,
+            longitude=lng,
+            hours_of_operation=hours,
+        )
 
 
 def scrape():
     results = fetch_data()
-    with SgWriter(
-        deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
-    ) as writer:
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         for rec in results:
             writer.write_row(rec)
 
