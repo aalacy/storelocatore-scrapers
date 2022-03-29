@@ -88,7 +88,7 @@ def fetch_data():
                     .strip()
                 )
 
-                if not raw_info:
+                if len(street_address) <= 0:
                     street_address = location_name.replace(".  Copy", "").strip()
                     city_state_zip = (
                         "".join(store_sel.xpath('//h1[@class="entry-title"]/text()'))
