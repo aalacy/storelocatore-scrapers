@@ -31,7 +31,9 @@ def fetch_data():
         address = address.split(", ")
         pcode = address[-1]
         city = address[-2]
-        street = " ".join(address[0 : len(address) - 3])
+        street = content.findAll("div", {"class": "stockist-address"})[-1].text.split(
+            ", " + city, 1
+        )[0]
         try:
             phone = content.find("span", {"class": "highlight"}).text
         except:
@@ -42,6 +44,10 @@ def fetch_data():
         r = session.get(link, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
         hours = soup.find("ul", {"id": "hours"}).text.replace("pm", "pm ")
+        if "closing due" in hours or " closed " in hours:
+            hours = "Temporarily Closed"
+        if "coming" in hours:
+            hours = "Coming Soon"
         try:
             hours = hours.split("half", 1)[0]
         except:

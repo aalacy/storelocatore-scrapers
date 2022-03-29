@@ -1,7 +1,6 @@
 --extra-index-url https://dl.cloudsmith.io/KVaWma76J5VNwrOm/crawl/crawl/python/simple/
-sgrequests==0.2.9
-sgscrape==0.2.6
+sgrequests==0.2.10
+sgscrape==0.2.9
 sglogging==0.0.4
-sgvalidator==0.0.71
-sgzip==0.10.9
+sgzip==0.10.15
 beautifulsoup4==4.10.0
