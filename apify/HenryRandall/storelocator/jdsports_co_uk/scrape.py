@@ -22,20 +22,19 @@ class ScrapableSite:
         self.stores_url = f"https://www.{domain}/store-locator/all-stores/"
         self.country_code = country_code
         self.store_css_selector = ".storeCard"
+        self.session = None
 
-    def get_session(self):
-        session = SgChrome(is_headless=True).driver()
-        session.set_page_load_timeout(30)
+    def get_session(self, refresh):
+        if not self.session or refresh:
+            self.session = SgChrome(is_headless=True).driver()
+            self.session.set_page_load_timeout(30)
 
-        return session
+        return self.session
 
-    def refresh_session(self, session):
-        session.refresh()
-
-    def get_locations(self, session, retry=0):
+    def get_locations(self, retry=0):
         try:
+            session = self.get_session(retry)
             session.get(self.stores_url)
-            session.refresh()
             soup = bs(session.page_source, "html.parser")
 
             locations = [
@@ -48,23 +47,22 @@ class ScrapableSite:
 
             return locations
         except Exception as e:
-            self.refresh_session(session)
             if retry < 3:
-                return self.get_locations(session, retry + 1)
+                return self.get_locations(retry + 1)
 
             raise e
 
-    def get_data(self, url, session, retry=0):
+    def get_data(self, url, retry=0):
         try:
+            session = self.get_session(retry)
             session.get(url)
             soup = bs(session.page_source, "html.parser")
             script = soup.find("script", type="application/ld+json")
 
             return json.loads(re.sub(r"\t", "", script.string))
         except Exception as e:
-            self.refresh_session(session)
             if retry < 3:
-                return self.get_data(url, session, retry + 1)
+                return self.get_data(url, retry + 1)
 
             raise Exception(f"Unable to fetch {url}: {e}")
 
@@ -103,35 +101,30 @@ def fetch_data():
 
     for site in sites:
         count = 0
-        with site.get_session() as driver:
-            locations = site.get_locations(driver)
-            for location in locations:
-                data = site.get_data(location, driver)
+        locations = site.get_locations()
+        for location in locations:
+            data = site.get_data(location)
 
-                count += 1
-                pois.append(
-                    SgRecord(
-                        page_url=data.get("url"),
-                        location_name=data.get("name"),
-                        street_address=data["address"]["streetAddress"],
-                        city=data["address"]["addressLocality"],
-                        state=data["address"]["addressRegion"],
-                        country_code=site.country_code,
-                        zip_postal=data["address"]["postalCode"],
-                        store_number=re.sub(
-                            f"https://www.{site.locator_domain}/", "", data["@id"]
-                        ),
-                        phone=data["telephone"],
-                        latitude=data["geo"]["latitude"],
-                        longitude=data["geo"]["longitude"],
-                        locator_domain=site.locator_domain,
-                        hours_of_operation=format_hours(
-                            data["openingHoursSpecification"]
-                        ),
-                    )
+            count += 1
+            pois.append(
+                SgRecord(
+                    page_url=data.get("url"),
+                    location_name=data.get("name"),
+                    street_address=data["address"]["streetAddress"],
+                    city=data["address"]["addressLocality"],
+                    state=data["address"]["addressRegion"],
+                    country_code=site.country_code,
+                    zip_postal=data["address"]["postalCode"],
+                    store_number=re.sub(
+                        f"https://www.{site.locator_domain}/", "", data["@id"]
+                    ),
+                    phone=data["telephone"],
+                    latitude=data["geo"]["latitude"],
+                    longitude=data["geo"]["longitude"],
+                    locator_domain=site.locator_domain,
+                    hours_of_operation=format_hours(data["openingHoursSpecification"]),
                 )
-
-            logger.info(f"{site.country_code}: {count}")
+            )
 
     return pois
 
