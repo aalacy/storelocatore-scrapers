@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from sgrequests import SgRequests
+from sgrequests import SgRequests, SgRequestError
 from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
@@ -43,7 +43,9 @@ def fetch_data():
             log.info(search_url)
 
             search_res = session.get(search_url, headers=headers)
-
+            if isinstance(search_res, SgRequestError):
+                log.error(f"URL is not working: {search_url}")
+                continue
             search_sel = lxml.html.fromstring(search_res.text)
             stores = search_sel.xpath("//div[h4]")
             locator_domain = website
