@@ -1,5 +1,3 @@
-from asyncio import as_completed
-from concurrent.futures import ThreadPoolExecutor
 import re
 import json
 from sgselenium import SgChrome
@@ -9,10 +7,13 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sglogging import SgLogSetup
 
 headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
 }
+
+logger = SgLogSetup().get_logger("jdsports_co_ul")
 
 
 class ScrapableSite:
@@ -23,7 +24,7 @@ class ScrapableSite:
         self.store_css_selector = ".storeCard"
 
     def get_session(self):
-        session = SgChrome(is_headless=False).driver()
+        session = SgChrome(is_headless=True).driver()
         session.set_page_load_timeout(30)
 
         return session
@@ -37,13 +38,21 @@ class ScrapableSite:
             session.refresh()
             soup = bs(session.page_source, "html.parser")
 
-            return [
+            locations = [
                 f'https://www.{self.locator_domain}{a["href"]}'
                 for a in soup.select(self.store_css_selector)
             ]
-        except:
+
+            if not len(locations):
+                raise Exception(f"Unable to fetch locations for {self.country_code}")
+
+            return locations
+        except Exception as e:
+            self.refresh_session(session)
             if retry < 3:
                 return self.get_locations(session, retry + 1)
+
+            raise e
 
     def get_data(self, url, session, retry=0):
         try:
@@ -53,7 +62,7 @@ class ScrapableSite:
 
             return json.loads(re.sub(r"\t", "", script.string))
         except Exception as e:
-            self.refresh_session()
+            self.refresh_session(session)
             if retry < 3:
                 return self.get_data(url, session, retry + 1)
 
@@ -61,23 +70,23 @@ class ScrapableSite:
 
 
 sites = [
-    ["jdsports.co.uk", SearchableCountries.BRITAIN],
-    ["jdsports.es", SearchableCountries.SPAIN],
-    ["jdsports.se", SearchableCountries.SWEDEN],
-    ["jdsports.be", SearchableCountries.BELGIUM],
-    ["jd-sports.com.au", SearchableCountries.AUSTRALIA],
-    ["jdsports.de", SearchableCountries.GERMANY],
-    ["jdsports.dk", SearchableCountries.DENMARK],
-    ["jdsports.com.sg", SearchableCountries.SINGAPORE],
-    ["jdsports.fr", SearchableCountries.FRANCE],
-    ["jdsports.fi", SearchableCountries.FINLAND],
-    ["jdsports.my", SearchableCountries.MALAYSIA],
-    ["jdsports.it", SearchableCountries.ITALY],
-    ["jdsports.nl", SearchableCountries.NETHERLANDS],
-    ["jdsports.co.th", SearchableCountries.THAILAND],
-    ["jdsports.at", SearchableCountries.AUSTRIA],
-    ["jdsports.pt", SearchableCountries.PORTUGAL],
-    ["jdsports.co.nz", SearchableCountries.NEW_ZEALAND],
+    ScrapableSite("jdsports.co.uk", SearchableCountries.BRITAIN),
+    ScrapableSite("jdsports.es", SearchableCountries.SPAIN),
+    ScrapableSite("jdsports.se", SearchableCountries.SWEDEN),
+    ScrapableSite("jdsports.be", SearchableCountries.BELGIUM),
+    ScrapableSite("jd-sports.com.au", SearchableCountries.AUSTRALIA),
+    ScrapableSite("jdsports.de", SearchableCountries.GERMANY),
+    ScrapableSite("jdsports.dk", SearchableCountries.DENMARK),
+    ScrapableSite("jdsports.com.sg", SearchableCountries.SINGAPORE),
+    ScrapableSite("jdsports.fr", SearchableCountries.FRANCE),
+    ScrapableSite("jdsports.fi", SearchableCountries.FINLAND),
+    ScrapableSite("jdsports.my", SearchableCountries.MALAYSIA),
+    ScrapableSite("jdsports.it", SearchableCountries.ITALY),
+    ScrapableSite("jdsports.nl", SearchableCountries.NETHERLANDS),
+    ScrapableSite("jdsports.co.th", SearchableCountries.THAILAND),
+    ScrapableSite("jdsports.at", SearchableCountries.AUSTRIA),
+    ScrapableSite("jdsports.pt", SearchableCountries.PORTUGAL),
+    ScrapableSite("jdsports.co.nz", SearchableCountries.NEW_ZEALAND),
 ]
 
 
@@ -89,50 +98,46 @@ def format_hours(hours):
     return ", ".join(data)
 
 
-def fetch_locations(country):
-    site = ScrapableSite(*country)
-    pois = []
-    with site.get_session() as driver:
-        locations = site.get_locations(driver)
-        for location in locations:
-            data = site.get_data(location, driver)
-
-            pois.append(
-                SgRecord(
-                    page_url=data.get("url"),
-                    location_name=data.get("name"),
-                    street_address=data["address"]["streetAddress"],
-                    city=data["address"]["addressLocality"],
-                    state=data["address"]["addressRegion"],
-                    country_code=site.country_code,
-                    zip_postal=data["address"]["postalCode"],
-                    store_number=re.sub(
-                        f"https://www.{site.locator_domain}/", "", data["@id"]
-                    ),
-                    phone=data["telephone"],
-                    latitude=data["geo"]["latitude"],
-                    longitude=data["geo"]["longitude"],
-                    locator_domain=site.locator_domain,
-                    hours_of_operation=format_hours(data["openingHoursSpecification"]),
-                )
-            )
-
-        return pois
-
-
 def fetch_data():
     pois = []
 
-    with ThreadPoolExecutor() as executor:
-        futures = [executor.submit(fetch_locations, site) for site in sites]
-        for future in as_completed(futures):
-            pois.extend(future.result())
+    for site in sites:
+        count = 0
+        with site.get_session() as driver:
+            locations = site.get_locations(driver)
+            for location in locations:
+                data = site.get_data(location, driver)
+
+                count += 1
+                pois.append(
+                    SgRecord(
+                        page_url=data.get("url"),
+                        location_name=data.get("name"),
+                        street_address=data["address"]["streetAddress"],
+                        city=data["address"]["addressLocality"],
+                        state=data["address"]["addressRegion"],
+                        country_code=site.country_code,
+                        zip_postal=data["address"]["postalCode"],
+                        store_number=re.sub(
+                            f"https://www.{site.locator_domain}/", "", data["@id"]
+                        ),
+                        phone=data["telephone"],
+                        latitude=data["geo"]["latitude"],
+                        longitude=data["geo"]["longitude"],
+                        locator_domain=site.locator_domain,
+                        hours_of_operation=format_hours(
+                            data["openingHoursSpecification"]
+                        ),
+                    )
+                )
+
+            logger.info(f"{site.country_code}: {count}")
 
     return pois
 
 
 def scrape():
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
         for row in fetch_data():
             writer.write_row(row)
 
