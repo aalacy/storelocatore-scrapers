@@ -1,4 +1,5 @@
 import json
+import time
 
 from bs4 import BeautifulSoup
 
@@ -11,7 +12,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 from sgrequests import SgRequests
 
-logger = SgLogSetup().get_logger("arbys.com")
+logger = SgLogSetup().get_logger("arbys_com")
 
 
 def fetch_data(sgw: SgWriter):
@@ -34,7 +35,9 @@ def fetch_data(sgw: SgWriter):
         logger.info("Processing: " + main_link)
         req = session.get(main_link, headers=headers)
         base = BeautifulSoup(req.text, "lxml")
+        state_count = int(base.find(class_="h2").text.split()[0])
         next_items = base.find(class_="border-container-top").find_all(class_="ga-link")
+        link_num = 0
         for next_item in next_items:
             link = next_item["href"]
             next_req = session.get(link, headers=headers)
@@ -43,7 +46,33 @@ def fetch_data(sgw: SgWriter):
             other_links = next_base.find_all(class_="location-name ga-link")
             for other_link in other_links:
                 new_link = other_link["href"]
-                final_links.append(new_link)
+                if new_link not in final_links:
+                    final_links.append(new_link)
+                    link_num = link_num + 1
+        logger.info("Expected: " + str(state_count) + " / Found: " + str(link_num))
+        if state_count - link_num > 5:
+            logger.info("RECHECK!")
+            session = SgRequests()
+            time.sleep(5)
+            logger.info("Processing: " + main_link)
+            req = session.get(main_link, headers=headers)
+            base = BeautifulSoup(req.text, "lxml")
+            state_count = int(base.find(class_="h2").text.split()[0])
+            next_items = base.find(class_="border-container-top").find_all(
+                class_="ga-link"
+            )
+            link_num = 0
+            for next_item in next_items:
+                link = next_item["href"]
+                next_req = session.get(link, headers=headers)
+                next_base = BeautifulSoup(next_req.text, "lxml")
+
+                other_links = next_base.find_all(class_="location-name ga-link")
+                for other_link in other_links:
+                    new_link = other_link["href"]
+                    if new_link not in final_links:
+                        final_links.append(new_link)
+                        link_num = link_num + 1
 
     logger.info("Processing %s links ..." % (len(final_links)))
     for final_link in final_links:
@@ -79,9 +108,12 @@ def fetch_data(sgw: SgWriter):
             phone = "<MISSING>"
         if not location_name:
             location_name = "<MISSING>"
-        store_number = (
-            item.find(class_="store-id").text.replace("Store ID:", "").strip()
-        )
+        try:
+            store_number = (
+                item.find(class_="store-id").text.replace("Store ID:", "").strip()
+            )
+        except:
+            store_number = ""
         latitude = store["geo"]["latitude"]
         longitude = store["geo"]["longitude"]
 

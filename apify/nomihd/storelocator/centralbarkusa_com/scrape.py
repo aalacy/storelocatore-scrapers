@@ -4,7 +4,9 @@ from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import lxml.html
-from sgscrape import sgpostal as parser
+from sgpostal import sgpostal as parser
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
 website = "centralbarkusa.com"
@@ -27,7 +29,6 @@ def fetch_data():
     for store in stores_list:
 
         page_url = "".join(store.xpath('.//h2[@class="name-line"]/a/@href')).strip()
-
         locator_domain = website
         location_name = "".join(
             store.xpath('.//h2[@class="name-line"]/a/text()')
@@ -59,15 +60,33 @@ def fetch_data():
             store_page_res = session.get(page_url, headers=headers)
             store_page_sel = lxml.html.fromstring(store_page_res.text)
 
+            if (
+                len(
+                    "".join(
+                        store_page_sel.xpath('//span[@class="coming-soon"]/text()')
+                    ).strip()
+                )
+                > 0
+            ):
+                continue
             hours = store_page_sel.xpath('//div[@class="location-hours"]/p')
             hours_list = []
             for hour in hours:
                 day = "".join(hour.xpath("span[1]/text()")).strip()
-                time = "".join(hour.xpath("span[2]/text()")).strip()
+                time = (
+                    "".join(hour.xpath("span[2]/text()")).strip().split("(")[0].strip()
+                )
                 if len(day) > 0 and len(time) > 0:
                     hours_list.append(day + ":" + time)
 
-            hours_of_operation = "; ".join(hours_list).strip()
+            hours_of_operation = (
+                "; ".join(hours_list)
+                .strip()
+                .split("Sleepovers ")[0]
+                .strip()
+                .split("for Stay-n-Play")[0]
+                .strip()
+            )
             lat_lng = (
                 store_page_res.text.split("var myLatLng = { ")[1].split("};")[0].strip()
             )
@@ -75,7 +94,7 @@ def fetch_data():
             latitude = lat_lng.split(",")[0].replace("lat:", "").strip()
             longitude = lat_lng.split(",")[1].replace("lng:", "").strip()
         else:
-            page_url = "<MISSING>"
+            page_url = search_url
             hours_of_operation = "<MISSING>"
             latitude = "<MISSING>"
             longitude = "<MISSING>"
@@ -102,7 +121,18 @@ def fetch_data():
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.LOCATION_NAME,
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.CITY,
+                    SgRecord.Headers.ZIP,
+                }
+            )
+        )
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

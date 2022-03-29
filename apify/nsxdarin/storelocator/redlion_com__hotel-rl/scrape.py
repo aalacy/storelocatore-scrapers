@@ -1,52 +1,27 @@
-import csv
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger("redlion_com__hotel-rl")
-
-session = SgRequests()
-headers = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
-}
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
+def fetch_data(sgw: SgWriter):
 
-
-def fetch_data():
+    session = SgRequests()
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+    }
     url = "https://www.redlion.com/sitemap.xml"
     locs = []
     r = session.get(url, headers=headers)
     for line in r.iter_lines():
-        line = str(line.decode("utf-8"))
+        line = str(line)
         if "<loc>https://www.redlion.com/hotel-rl/" in line:
             locs.append(line.split("<loc>")[1].split("<")[0])
     for loc in locs:
-        logger.info(("Pulling Location %s..." % loc))
+        if "do-not" in loc:
+            continue
         loc2 = (
             loc.replace("www.redlion.com/", "www.redlion.com/page-data/")
             + "/page-data.json"
@@ -54,7 +29,7 @@ def fetch_data():
         r2 = session.get(loc2, headers=headers)
         website = "redlion.com/hotel-rl"
         for line2 in r2.iter_lines():
-            line2 = str(line2.decode("utf-8"))
+            line2 = str(line2)
             if '{"hotel":{"name":"' in line2:
                 name = line2.split('{"hotel":{"name":"')[1].split('"')[0]
                 country = line2.split('"country_code":"')[1].split('"')[0]
@@ -67,28 +42,27 @@ def fetch_data():
                 lat = line2.split('{"lat":')[1].split(",")[0]
                 lng = line2.split('"lon":')[1].split("}")[0]
                 hours = "<MISSING>"
-                typ = "Red Lion Hotel RL"
-                yield [
-                    website,
-                    loc,
-                    name,
-                    add,
-                    city,
-                    state,
-                    zc,
-                    country,
-                    store,
-                    phone,
-                    typ,
-                    lat,
-                    lng,
-                    hours,
-                ]
+                typ = ""
+
+                sgw.write_row(
+                    SgRecord(
+                        locator_domain=website,
+                        page_url=loc,
+                        location_name=name,
+                        street_address=add,
+                        city=city,
+                        state=state,
+                        zip_postal=zc,
+                        country_code=country,
+                        store_number=store,
+                        phone=phone,
+                        location_type=typ,
+                        latitude=lat,
+                        longitude=lng,
+                        hours_of_operation=hours,
+                    )
+                )
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    fetch_data(writer)

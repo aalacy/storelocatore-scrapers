@@ -127,6 +127,16 @@ def human_hours(raw):
     return "; ".join(hours)
 
 
+def onlydigits(x):
+    new = []
+    for i in x:
+        if i.isdigit():
+            new.append(i)
+    if len(new) < 3:
+        return "<MISSING>"
+    return "".join(new)
+
+
 def scrape():
     url = "www.allsaints.com"
     field_defs = sp.SimpleScraperPipeline.field_definitions(
@@ -160,6 +170,7 @@ def scrape():
         phone=sp.MappingField(
             mapping=["phone_number"],
             part_of_record_identity=True,
+            value_transform=onlydigits,
         ),
         store_number=sp.MappingField(
             mapping=["uuid"],
@@ -170,7 +181,7 @@ def scrape():
             raw_value_transform=human_hours,
         ),
         location_type=sp.MappingField(
-            mapping=["locationType"],
+            mapping=["locationType"], value_transform=lambda x: "<MISSING>"
         ),
         raw_address=sp.MappingField(
             mapping=["raw"],

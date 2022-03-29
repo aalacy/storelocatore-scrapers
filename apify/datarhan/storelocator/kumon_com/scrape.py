@@ -54,10 +54,13 @@ def fetch_data():
 
             all_poi = data["d"]
             for poi in all_poi:
+                hdr = {
+                    "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
+                }
                 page_url = "https://www.kumon.com/{}".format(poi["EpageUrl"])
                 if page_url == "https://www.kumon.com/":
                     continue
-                loc_response = session.get(page_url)
+                loc_response = session.get(page_url, headers=hdr)
                 loc_dom = etree.HTML(loc_response.text)
                 hoo = loc_dom.xpath(
                     '//input[@id="hour1"]/following-sibling::div[@class="card-hour"]//text()'

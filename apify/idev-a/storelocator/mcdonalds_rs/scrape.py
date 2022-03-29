@@ -1,11 +1,9 @@
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
-from sgscrape.sgpostal import parse_address_intl
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 import json
-import re
 from bs4 import BeautifulSoup as bs
 
 _headers = {
@@ -13,76 +11,40 @@ _headers = {
 }
 
 locator_domain = "https://www.mcdonalds.rs"
-base_url = "https://www.mcdonalds.rs/restoran-lokator/"
-
-
-def _p(val):
-    return (
-        val.replace("(", "")
-        .replace(")", "")
-        .replace("+", "")
-        .replace("-", "")
-        .replace(".", " ")
-        .replace("to", "")
-        .replace(" ", "")
-        .replace("\xa0", "")
-        .strip()
-        .isdigit()
-    )
+base_url = "https://www.mcdonalds.rs/restorani/"
 
 
 def fetch_data():
     with SgRequests() as session:
         locations = json.loads(
             session.get(base_url, headers=_headers)
-            .text.split("var locations =")[1]
+            .text.split("var restaurantMarkers =")[1]
             .split("</script>")[0]
+            .strip()[:-1]
         )
         for _ in locations:
-            sp1 = bs(_[3], "lxml")
-            raw_address = sp1.p.text.strip()
-            addr = parse_address_intl(raw_address + ", Serbia")
-            street_address = addr.street_address_1
-            if addr.street_address_2:
-                street_address += " " + addr.street_address_2
-
-            phone = ""
-            hours = []
-            block = []
-            for p in (
-                sp1.find("strong", string=re.compile(r"Radno vreme restorana"))
-                .find_parent()
-                .find_next_siblings("p")
-            ):
-                block += list(p.stripped_strings)
-            for x, hh in enumerate(block):
-                if _p(hh):
-                    phone = hh.replace("\xa0", "")
-                    break
-            for x, hh in enumerate(block):
-                if "Rođendanski" in hh or "Broj parking mesta" in hh or "McDrive" in hh:
-                    break
-                hours.append(hh)
+            hours_of_operation = "; ".join(
+                bs(_["restaurant_worktime"], "lxml").stripped_strings
+            )
+            if "USKORO" in hours_of_operation:
+                continue
             yield SgRecord(
-                page_url=_[2],
-                store_number=_[0],
-                location_name=_[1],
-                street_address=street_address,
-                city=addr.city,
-                state=addr.state,
-                zip_postal=addr.postcode,
-                latitude=_[4],
-                longitude=_[5],
+                page_url=base_url,
+                store_number=_["id"],
+                location_name=_["name"],
+                street_address=_["address"],
+                city=_["city"],
+                latitude=_["latitude"],
+                longitude=_["longitude"],
                 country_code="Serbia",
-                phone=phone,
+                phone=_["phone"],
                 locator_domain=locator_domain,
-                hours_of_operation="; ".join(hours).replace("–", "-"),
-                raw_address=raw_address,
+                hours_of_operation=hours_of_operation,
             )
 
 
 if __name__ == "__main__":
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

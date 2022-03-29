@@ -53,7 +53,7 @@ def fetch_data():
         stores_sel = lxml.html.fromstring(driver.page_source)
         stores = json.loads(
             "".join(stores_sel.xpath('//script[@id="__NEXT_DATA__"]/text()')).strip()
-        )["props"]["pageProps"]["sections"][1]["data"]["articles"]
+        )["props"]["pageProps"]["pageSections"][1]["data"]["articles"]
         for store in stores:
             page_url = search_url
             location_type = "<MISSING>"

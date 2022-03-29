@@ -96,6 +96,7 @@ def fetch_data():
                         .rsplit(" ", 1)[0]
                     )
                     zc = address.strip().rsplit(" ", 1)[1]
+                    rawadd = address.replace("<br>", ", ").replace("  ", " ")
                 if '<div class="day_name">' in line2:
                     days = line2.split('<div class="day_name">')
                     for day in days:
@@ -111,8 +112,20 @@ def fetch_data():
                                 hours = hours + "; " + hrs
             if hours == "":
                 hours = "<MISSING>"
-            if "," in add:
-                add = add.split(",")[1].strip()
+            if (
+                "," in add
+                and "Km " not in add
+                and "Lot " not in add
+                and "Int. " not in add
+                and "Pr2" not in add
+                and "Pr-3" not in add
+                and "Suite" not in add
+            ):
+                addnew = add.split(",")[1].strip()
+                if len(addnew) <= 2:
+                    add = add.replace(",", "")
+                else:
+                    add = addnew
             if len(zc) >= 5:
                 yield SgRecord(
                     locator_domain=website,
@@ -128,6 +141,7 @@ def fetch_data():
                     store_number=store,
                     latitude=lat,
                     longitude=lng,
+                    raw_address=rawadd,
                     hours_of_operation=hours,
                 )
         except:

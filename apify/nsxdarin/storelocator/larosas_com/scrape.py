@@ -46,6 +46,11 @@ def fetch_data():
                         hours = hours.replace("\\u003Cbr/\\u003E", "; ")
                         if hours == "":
                             hours = "<MISSING>"
+                        hours = (
+                            hours.replace("<br/>", "; ")
+                            .replace("<br />", "; ")
+                            .replace("<br>", "; ")
+                        )
                         if "closed" not in name.lower():
                             yield SgRecord(
                                 locator_domain=website,

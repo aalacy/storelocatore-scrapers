@@ -1,142 +1,128 @@
-import csv
+from bs4 import BeautifulSoup
+
+from sglogging import SgLogSetup
+
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 from sgrequests import SgRequests
 
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
+logger = SgLogSetup().get_logger("fendi.com")
 
 
-def fetch_data():
+def fetch_data(sgw: SgWriter):
 
     user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36"
     headers = {"User-Agent": user_agent}
 
-    base_links = [
-        "https://www.fendi.com/us/store-locator?listJson=true&country-selectize=&fendiType=BOUTIQUE&service=&line=&xlat=25.82&xlng=-124.39&ylat=49.38&ylng=-66.94&country=US",
-        "https://www.fendi.com/us/store-locator?listJson=true&country-selectize=&fendiType=BOUTIQUE&service=&line=&xlat=41.631435&xlng=-141.06047&ylat=83.185506&ylng=-52.569408",
-        "https://www.fendi.com/us/store-locator?listJson=true&country-selectize=&fendiType=BOUTIQUE&service=&line=&xlat=49.816770000000005&xlng=-8.699566&ylat=60.906456999999996&ylng=1.8129570000000002",
-    ]
+    base_link = "https://www.fendi.com/us-en/store-locator/directory"
 
     session = SgRequests()
-    data = []
-    found = []
+    req = session.get(base_link, headers=headers)
+    base = BeautifulSoup(req.text, "lxml")
 
-    for base_link in base_links:
-        stores = session.get(base_link, headers=headers).json()
+    locator_domain = "fendi.com"
 
-        locator_domain = "fendi.com"
+    country_links = []
+    final_links = []
 
-        for store in stores:
-            location_name = store["displayName"]
+    countries = base.find_all(class_="Directory-listLink")
 
-            if location_name in found:
-                continue
-            found.append(location_name)
-            try:
-                street_address = (
-                    store["address"]["line1"] + " " + store["address"]["line2"]
-                ).strip()
-            except:
-                street_address = store["address"]["line1"].strip()
-            if ":" in street_address:
-                street_address = street_address.split(":")[1].strip()
-            if street_address[-1:] == ",":
-                street_address = street_address[:-1]
-            city = store["address"]["town"]
-            try:
-                state = store["address"]["region"]["isocodeShort"]
-            except:
-                state = "<MISSING>"
-            zip_code = store["address"]["postalCode"]
-            country_code = store["address"]["country"]["isocode"]
-            if country_code == "GB":
-                state = "<MISSING>"
-            store_number = store["name"]
-            location_type = "<MISSING>"
+    for country in countries:
+        country_link = country["href"]
+        count = country["data-count"].replace("(", "").replace(")", "").strip()
+        if count == "1":
+            final_links.append(country_link)
+        else:
+            country_links.append(country_link)
 
-            try:
-                hours = store["openingHours"]["weekDayOpeningList"]
-            except:
-                hours_of_operation = "<MISSING>"
-            try:
-                hours_of_operation = ""
-                for hour in hours:
-                    hours_of_operation = (
-                        hours_of_operation
-                        + " "
-                        + hour["weekDay"]
-                        + " "
-                        + hour["openingHours"]
-                    ).strip()
-            except:
-                hours_of_operation = ""
-                for hour in hours:
-                    hours_of_operation = (
-                        hours_of_operation
-                        + " "
-                        + hour["weekDay"]
-                        + " "
-                        + hour["openingTime"]["formattedHour"]
-                        + " "
-                        + hour["closingTime"]["formattedHour"]
-                    ).strip()
+    for country_link in country_links:
+        logger.info(country_link)
+        req = session.get(country_link, headers=headers)
+        base = BeautifulSoup(req.text, "lxml")
 
-            latitude = store["geoPoint"]["latitude"]
-            longitude = store["geoPoint"]["longitude"]
-            try:
-                phone = store["address"]["phone"]
-            except:
-                phone = "<MISSING>"
-            # Store data
-            data.append(
-                [
-                    locator_domain,
-                    "https://www.fendi.com/us/store-locator",
-                    location_name,
-                    street_address,
-                    city,
-                    state,
-                    zip_code,
-                    country_code,
-                    store_number,
-                    phone,
-                    location_type,
-                    latitude,
-                    longitude,
-                    hours_of_operation,
-                ]
+        final_items = base.find_all(class_="Teaser-titleLink")
+        for final_item in final_items:
+            final_link = final_item["href"]
+            final_links.append(final_link)
+
+    logger.info("Processing " + str(len(final_links)) + " links ..")
+    for final_link in final_links:
+        req = session.get(final_link, headers=headers)
+        base = BeautifulSoup(req.text, "lxml")
+        location_name = base.find(id="location-name").text.strip()
+        raw_address = base.find(itemprop="streetAddress")["content"].replace(
+            "Bejing", "Beijing"
+        )
+        raw_low = raw_address.lower()
+        if "shop " in raw_low:
+            loc = raw_low.find("shop")
+            street_address = (
+                raw_address[:loc] + " " + raw_address[raw_address.find(" ", loc + 6) :]
+            ).strip()
+        else:
+            street_address = raw_address.split(", Florentia")[0].strip()
+        city = base.find(class_="Address-field Address-city").text.strip()
+        if ", " + city in street_address:
+            street_address = street_address.split(", " + city)[0].strip()
+        street_address = street_address.replace("   ", " ")
+        try:
+            state = base.find(itemprop="addressRegion").text.strip()
+        except:
+            state = ""
+        try:
+            zip_code = base.find(itemprop="postalCode").text.strip()
+        except:
+            zip_code = ""
+
+        try:
+            country_code = base.find(itemprop="addressCountry").text.strip()
+        except:
+            country_code = final_link.split("locator/")[1].split("/")[0].title()
+
+        try:
+            phone = base.find(id="phone-main").text.strip()
+            if not phone:
+                phone = ""
+        except:
+            phone = ""
+        store_number = ""
+        location_type = ""
+
+        try:
+            hours_of_operation = (
+                " ".join(list(base.find(class_="c-hours-details").stripped_strings))
+                .replace("Day of the Week Hours", "")
+                .strip()
             )
+        except:
+            hours_of_operation = ""
 
-    return data
+        latitude = base.find(itemprop="latitude")["content"]
+        longitude = base.find(itemprop="longitude")["content"]
+
+        sgw.write_row(
+            SgRecord(
+                locator_domain=locator_domain,
+                page_url=final_link,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_code,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+                raw_address=raw_address,
+            )
+        )
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    fetch_data(writer)
