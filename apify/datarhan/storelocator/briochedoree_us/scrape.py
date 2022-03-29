@@ -33,8 +33,10 @@ def fetch_data():
         thu = f'THURSDAY {poi["heureJeudiDebut"]} - {poi["heureJeudiFin"]}'
         fri = f'FRIDAY {poi["heureVendrediDebut"]} - {poi["heureVendrediFin"]}'
         sat = f'SATURDAY {poi["heureSamediDebut"]} - {poi["heureSamediFin"]}'
-        sun = f'SUNDAY {poi["heureDimancheDebut"]} - poi{"heureDimancheFin"}'
-        hoo = f"{mon}, {tue}, {wed}, {thu}, {fri}, {sat}, {sun}"
+        sun = f'SUNDAY {poi["heureDimancheDebut"]} - {poi["heureDimancheFin"]}'
+        hoo = f"{mon}, {tue}, {wed}, {thu}, {fri}, {sat}, {sun}".replace(
+            "Closed - Closed", "Closed"
+        )
 
         item = SgRecord(
             locator_domain=domain,
