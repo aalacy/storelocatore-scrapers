@@ -47,7 +47,13 @@ def _d(_, country, url):
     _hr = _.find("li", string=re.compile(r"Branch hours are"))
     if _hr:
         hours = _hr.text.split("Branch hours are")[-1].split("(")[0].strip()
-    location_type = ["atm"]
+    location_type = []
+    if _.caption:
+        caption = _.caption.text.lower().strip()
+        if "office" in caption:
+            location_type.append("office")
+        if "atm" in caption:
+            location_type.append("atm")
     if _.find("span", {"class": re.compile(r"fa-university")}):
         location_type = ["branch"]
 
