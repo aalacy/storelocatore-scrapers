@@ -15,8 +15,6 @@ logger = SgLogSetup().get_logger("crowneplaza_co_uk")
 
 def fetch_data():
     locs = []
-    states = []
-    alllocs = []
     url = "https://www.ihg.com/bin/sitemap.crowneplaza.en-gb.hoteldetail.xml"
     r = session.get(url, headers=headers)
     website = "crowneplaza.co.uk"
