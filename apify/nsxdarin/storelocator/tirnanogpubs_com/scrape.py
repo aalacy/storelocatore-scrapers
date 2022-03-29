@@ -4,7 +4,6 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
-import json
 
 session = SgRequests()
 
@@ -20,7 +19,6 @@ def fetch_data():
     headers = {
         "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.159 Safari/537.36"
     }
-    sid = ""
     url = "https://www.tirnanogpubs.com/en/locations.html"
     r = session.get(url, headers=headers)
     for line in r.iter_lines():
