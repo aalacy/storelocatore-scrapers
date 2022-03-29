@@ -95,10 +95,19 @@ def fetch_data():
 
                 hours_of_operation = "; ".join(hours_list).strip()
 
-                latitude, longitude = (
-                    store_res.text.split('"lat":"')[1].strip().split('",')[0].strip(),
-                    store_res.text.split('"lng":"')[1].strip().split('"}')[0].strip(),
-                )
+                try:
+                    latitude, longitude = (
+                        store_res.text.split('"lat":"')[1]
+                        .strip()
+                        .split('",')[0]
+                        .strip(),
+                        store_res.text.split('"lng":"')[1]
+                        .strip()
+                        .split('"}')[0]
+                        .strip(),
+                    )
+                except:
+                    latitude, longitude = "<MISSING>", "<MISSING>"
 
                 yield SgRecord(
                     locator_domain=locator_domain,
