@@ -20,12 +20,13 @@ kw_url = "https://www.carrefourkuwait.com/mafkwt/en/store-finder?q=Al%20A%E1%B8%
 
 country_map = {
     "ae": "https://www.carrefourksa.com/mafsau",
+    "sa": "https://www.carrefourksa.com/mafsau",
     "jo": "https://www.carrefourjordan.com/mafjor",
     "pk": "https://www.carrefour.pk/mafpak",
 }
 
 
-def _d(_, current_country):
+def _d(_, found_location_at, current_country):
     street_address = _["line1"]
     if _["line2"]:
         street_address += " " + _["line2"]
@@ -53,6 +54,8 @@ def _d(_, current_country):
         location_name = f"{_['displayName']} - {_['town']}"
     else:
         location_name = _["town"]
+
+    found_location_at(_["latitude"], _["longitude"])
     return SgRecord(
         location_name=location_name,
         street_address=street_address,
@@ -99,10 +102,8 @@ class ExampleSearchIteration(SearchIteration):
                 logger.info(
                     f"[{current_country}] [page {page}] [{lat, lng}] {len(locations)}"
                 )
-                if locations:
-                    found_location_at(lat, lng)
                 for _ in locations:
-                    yield _d(_, current_country)
+                    yield _d(_, found_location_at, current_country)
 
 
 def fetch_kw():
@@ -136,6 +137,7 @@ if __name__ == "__main__":
                 SearchableCountries.UNITED_ARAB_EMIRATES,
                 SearchableCountries.PAKISTAN,
                 SearchableCountries.JORDAN,
+                SearchableCountries.SAUDI_ARABIA,
             ],
         )
 

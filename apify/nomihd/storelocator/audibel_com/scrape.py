@@ -62,7 +62,7 @@ def write_output(data):
 def fetch_data():
     # Your scraper here
     zips = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA], max_radius_miles=200
+        country_codes=[SearchableCountries.USA], max_search_distance_miles=200
     )
     for zip_code in zips:
         log.info(f"{zip_code} | remaining: {zips.items_remaining()}")

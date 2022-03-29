@@ -48,7 +48,7 @@ def fetch_data():
 
     all_locations = []
     all_coords = DynamicZipAndGeoSearch(
-        country_codes=[SearchableCountries.USA], max_radius_miles=500
+        country_codes=[SearchableCountries.USA], max_search_distance_miles=500
     )
     for code, coord in all_coords:
         lat, lng = coord
