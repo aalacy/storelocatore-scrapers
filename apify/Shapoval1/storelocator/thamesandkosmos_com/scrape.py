@@ -49,6 +49,8 @@ def get_data(coords, sgw: SgWriter):
         latitude = "".join(d.xpath(".//lat/text()")) or "<MISSING>"
         longitude = "".join(d.xpath(".//lng/text()")) or "<MISSING>"
         phone = "".join(d.xpath(".//phone/text()")) or "<MISSING>"
+        if street_address == "111 Miranda Ave" and phone == "<MISSING>":
+            continue
 
         row = SgRecord(
             locator_domain=locator_domain,
