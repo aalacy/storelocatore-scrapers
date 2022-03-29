@@ -22,9 +22,6 @@ json_url = "https://dbrgenipc.interplay.iterate.ai/api/v1/carwash/allstores"
 
 def fetch_data():
     with SgRequests() as session:
-        import pdb
-
-        pdb.set_trace()
         _headers["apikey"] = (
             session.get(base_url).text.split("apiKey:")[1].split("}")[0].strip()[1:-1]
         )
