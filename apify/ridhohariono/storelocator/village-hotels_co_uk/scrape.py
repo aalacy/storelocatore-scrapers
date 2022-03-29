@@ -74,7 +74,6 @@ def fetch_data():
         street_address = re.sub(
             zip_postal, "", street_address, flags=re.IGNORECASE
         ).strip()
-        print(zip_postal)
         phone = store.find("a", {"class": "text-link tel"}).text.strip()
         country_code = "UK"
         hours_of_operation = MISSING
