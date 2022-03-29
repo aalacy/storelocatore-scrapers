@@ -74,11 +74,18 @@ def fetch_records(http: SgRequests, state: CrawlState) -> Iterable[SgRecord]:
         coords = r.text.split('"lat":')[1].split(',"emailAddress":')[0].split(',"lon":')
         latitude = coords[0]
         longitude = coords[1]
-        hours_of_operation = (
-            soup.find("dl", {"class": "location-opening-hours__list"})
-            .get_text(separator="|", strip=True)
-            .replace("|", " ")
-        )
+        try:
+            hours_of_operation = (
+                soup.findAll("dl", {"class": "location-opening-hours__list"})[-1]
+                .get_text(separator="|", strip=True)
+                .replace("|", " ")
+            )
+        except:
+            hours_of_operation = (
+                soup.find("dl", {"class": "location-opening-hours__list"})
+                .get_text(separator="|", strip=True)
+                .replace("|", " ")
+            )
         store_number = MISSING
         location_type = MISSING
         raw_address = MISSING

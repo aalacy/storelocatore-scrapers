@@ -43,7 +43,7 @@ def fetch_data():
     addresses = []
     coords = DynamicGeoSearch(
         country_codes=[SearchableCountries.USA],
-        max_radius_miles=25,
+        max_search_distance_miles=25,
     )
 
     headers = {
