@@ -120,7 +120,6 @@ if __name__ == "__main__":
             SgRecordID(
                 {
                     SgRecord.Headers.LOCATION_NAME,
-                    SgRecord.Headers.COUNTRY_CODE,
                     SgRecord.Headers.LOCATION_TYPE,
                     SgRecord.Headers.RAW_ADDRESS,
                 }
@@ -133,7 +132,6 @@ if __name__ == "__main__":
             search_maker=search_maker,
             search_iteration=search_iter,
             country_codes=[
-                SearchableCountries.KUWAIT,
                 SearchableCountries.UNITED_ARAB_EMIRATES,
                 SearchableCountries.PAKISTAN,
                 SearchableCountries.JORDAN,
