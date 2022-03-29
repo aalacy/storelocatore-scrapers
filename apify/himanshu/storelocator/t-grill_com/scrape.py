@@ -6,7 +6,6 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
-from sgpostal.sgpostal import parse_address_usa
 
 
 def fetch_data():
@@ -20,7 +19,7 @@ def fetch_data():
     response = session.get(start_url, headers=hdr)
     dom = etree.HTML(response.text)
 
-    all_locations = dom.xpath('//*[@data-ux="ContentCardText"]')
+    all_locations = dom.xpath('//*[@data-ux="ContentText"]')
     for poi_html in all_locations:
         raw_data = poi_html.xpath(".//text()")
         raw_data = [e.strip() for e in raw_data]
@@ -28,22 +27,18 @@ def fetch_data():
         raw_address = raw_data[0]
         if "now open" in raw_address.lower():
             raw_address = raw_data[1]
-        addr = parse_address_usa(raw_address)
-        street_address = addr.street_address_1
-        if addr.street_address_2:
-            street_address += ", " + addr.street_address_2
-        state = addr.state
-        if not state and "UT" in raw_address:
-            state = "UT"
+        city = raw_address.split(", ")[0]
+        state = raw_address.split(",")[1].split()[0].strip()
+        street_address = " ".join(raw_address.split(",")[1].split()[1:])
 
         item = SgRecord(
             locator_domain=domain,
             page_url=start_url,
             location_name="",
             street_address=street_address,
-            city=raw_address.split(", ")[0],
+            city=city,
             state=state,
-            zip_postal=addr.postcode,
+            zip_postal="",
             country_code="",
             store_number="",
             phone=raw_data[-1],
