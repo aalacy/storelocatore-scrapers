@@ -42,7 +42,7 @@ def fetch_data():
             locator_domain=domain,
             page_url=poi["url"],
             location_name=poi["titre"],
-            street_address=poi["rue"],
+            street_address=poi["rue"] + ", " + poi["infoSup"],
             city=poi["ville"].split(", ")[0],
             state=poi["ville"].split(", ")[-1],
             zip_postal=poi["codepostal"],
@@ -61,9 +61,7 @@ def fetch_data():
 def scrape():
     with SgWriter(
         SgRecordDeduper(
-            SgRecordID(
-                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
-            )
+            SgRecordID({SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STORE_NUMBER})
         )
     ) as writer:
         for item in fetch_data():
