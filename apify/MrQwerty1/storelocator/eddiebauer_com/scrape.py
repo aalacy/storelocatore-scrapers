@@ -18,7 +18,6 @@ def fetch_data(sgw: SgWriter):
         params = (("lat", lat), ("radius", "200"), ("lng", lng), ("hdog", hdog))
         r = session.get(api, headers=headers, params=params)
         js = r.json()["results"]
-        print((lat, lng), ":", len(js))
 
         for j in js:
             location_name = j.get("name") or ""
