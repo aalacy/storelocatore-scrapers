@@ -79,7 +79,7 @@ def fetch_data():
     store_number = MISSING
     location_type = MISSING
     country_code = "AU"
-    page_url = f"{website}/stors"
+    page_url = f"{website}/stores/"
 
     for store in stores:
         location_name = get_JSON_object_variable(store, "name")

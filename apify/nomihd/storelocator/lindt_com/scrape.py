@@ -79,6 +79,18 @@ def fetch_data():
                 if country_code == "US":
                     continue
                 phone = store["phone"]
+                if phone:
+                    phone = phone.split(";")[0].strip()
+                    if (
+                        not phone.replace("(", "")
+                        .replace(")", "")
+                        .replace("-", "")
+                        .replace(" ", "")
+                        .replace("+", "")
+                        .strip()
+                        .isdigit()
+                    ):
+                        phone = "<MISSING>"
 
                 hours = []
                 for day in [
