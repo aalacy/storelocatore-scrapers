@@ -3,4 +3,4 @@ beautifulsoup4==4.9.3
 sgzip==0.10.4
 sgselenium==0.1.5
 sgscrape==0.2.4
-sglogging=0.0.4
+sglogging==0.0.4
