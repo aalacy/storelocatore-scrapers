@@ -1,7 +1,7 @@
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
-from sgscrape.sgpostal import parse_address_intl
+from sgpostal.sgpostal import parse_address_intl
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 import json
@@ -36,6 +36,12 @@ def fetch_data():
             city = addr.city
             if city:
                 city = city.replace("Road44", "").replace("Road1315", "")
+            latitude = _["MapLocation"]["Latitude"]
+            if latitude == 0:
+                latitude = ""
+            longitude = _["MapLocation"]["Longitude"]
+            if longitude == 0:
+                longitude = ""
             yield SgRecord(
                 page_url=page_url,
                 store_number=store_number,
@@ -43,8 +49,8 @@ def fetch_data():
                 street_address=street_address.replace("Bahrain", ""),
                 city=city,
                 state=addr.state,
-                latitude=_["MapLocation"]["Latitude"],
-                longitude=_["MapLocation"]["Longitude"],
+                latitude=latitude,
+                longitude=longitude,
                 country_code="Bahrain",
                 locator_domain=locator_domain,
                 hours_of_operation=hours,
@@ -53,7 +59,7 @@ def fetch_data():
 
 
 if __name__ == "__main__":
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

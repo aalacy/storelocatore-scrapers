@@ -1,3 +1,4 @@
+import ssl
 from lxml import etree
 
 from sgscrape.sgrecord import SgRecord
@@ -5,15 +6,19 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
 from sgpostal.sgpostal import parse_address_intl
-from sgselenium.sgselenium import SgFirefox
+from sgselenium.sgselenium import SgChrome
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 
 def fetch_data():
+    user_agent = "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1"
     start_url = "https://www.goape.com/locations/"
     domain = "goape.com"
 
-    with SgFirefox() as driver:
+    with SgChrome(user_agent=user_agent) as driver:
         driver.get(start_url)
+        driver.implicitly_wait(30)
         dom = etree.HTML(driver.page_source)
 
         all_locations = dom.xpath('//a[contains(text(), "Visit Location")]/@href')

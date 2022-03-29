@@ -2,8 +2,6 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
-from bs4 import BeautifulSoup as bs
-import re
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
@@ -14,6 +12,7 @@ logger = SgLogSetup().get_logger("amplehills")
 _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
 }
+days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 
 
 def fetch_data():
@@ -25,15 +24,10 @@ def fetch_data():
         logger.info(f"{len(locations['result'])} found")
         for _ in locations["result"]:
             page_url = f"https://www.amplehills.com/location/{_['slug']}"
-            logger.info(page_url)
-            sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
             hours = []
-            _hr = sp1.find("p", string=re.compile(r"^hours"))
-            if _hr:
-                hours = [
-                    ": ".join(hh.stripped_strings)
-                    for hh in _hr.find_next_siblings("div")
-                ]
+            for day in days:
+                day = day.lower()
+                hours.append(f"{day}: {_.get('hours', {}).get(day)}")
             street_address = _["address1"].strip()
             if _.get("address2"):
                 street_address += " " + _["address1"].strip()

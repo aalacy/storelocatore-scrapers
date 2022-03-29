@@ -21,27 +21,65 @@ def fetch_data(sgw: SgWriter):
     for d in div:
 
         slug = "".join(d.xpath(".//@href"))
-        page_url = f"https://ultrastarus.com{slug}"
-        if page_url.count("https") > 1:
-            continue
+        page_url = slug
+        if page_url.find("https") == -1:
+            page_url = f"https://ultrastarus.com{slug}"
         location_name = "".join(d.xpath(".//preceding::h1[1]//text()")).strip()
         if page_url.find("valleyriver") != -1:
             page_url = page_url.replace("valleyriver", "valley-river")
+        if page_url == "https://ultrastarmovies.com/":
+            page_url = "https://ultrastarmovies.com/page/contact"
+
         session = SgRequests()
         r = session.get(page_url, headers=headers)
         tree = html.fromstring(r.text)
-        ad = "".join(tree.xpath("//p[./span/em]//em/text()"))
-
-        street_address = " ".join(ad.split(",")[0].split()[:-1]).strip()
-        phone = "".join(
-            tree.xpath(
-                '//div[contains(@class, "fusion-text fusion-text-")]//h4[2]//text()'
+        try:
+            street_address = "".join(
+                tree.xpath(
+                    '//div[@class="fusion-column-wrapper fusion-flex-justify-content-center fusion-content-layout-column"]//h4[1]/span[1]/text()'
+                )
             )
-        )
-        state = ad.split(",")[1].split()[0].strip()
-        postal = ad.split(",")[1].split()[1].strip()
-        country_code = "US"
-        city = ad.split(",")[0].split()[-1].strip()
+            ad = "".join(
+                tree.xpath(
+                    '//div[@class="fusion-column-wrapper fusion-flex-justify-content-center fusion-content-layout-column"]//h4[1]/span[2]/text()'
+                )
+            )
+            phone = "".join(
+                tree.xpath(
+                    '//div[contains(@class, "fusion-text fusion-text-")]//h4[2]//text()'
+                )
+            )
+            state = ad.split(",")[1].split()[0].strip()
+            postal = ad.split(",")[1].split()[1].strip()
+            country_code = "US"
+            city = ad.split(",")[0].split()[-1].strip()
+        except:
+            street_address = (
+                "".join(tree.xpath('//div[@class="mx-auto mb-8"]/div[2]/text()[1]'))
+                .replace("\n", "")
+                .strip()
+            )
+            ad = (
+                "".join(tree.xpath('//div[@class="mx-auto mb-8"]/div[2]/text()[2]'))
+                .replace("\n", "")
+                .strip()
+            )
+            city = ad.split(",")[0].strip()
+            state = ad.split(",")[1].split()[0].strip()
+            postal = ad.split(",")[1].split()[1].strip()
+            country_code = "US"
+            phone = (
+                "".join(tree.xpath('//div[contains(text(), "Showtimes:")]/text()'))
+                .split("Showtimes:")[1]
+                .replace("\n", "")
+                .strip()
+            )
+        map_link = "".join(tree.xpath("//iframe/@src"))
+        try:
+            latitude = map_link.split("!3d")[1].strip().split("!")[0].strip()
+            longitude = map_link.split("!2d")[1].strip().split("!")[0].strip()
+        except:
+            latitude, longitude = "<MISSING>", "<MISSING>"
         hours_of_operation = (
             " ".join(
                 tree.xpath(
@@ -66,9 +104,10 @@ def fetch_data(sgw: SgWriter):
             store_number=SgRecord.MISSING,
             phone=phone,
             location_type=SgRecord.MISSING,
-            latitude=SgRecord.MISSING,
-            longitude=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
             hours_of_operation=hours_of_operation,
+            raw_address=f"{street_address} {ad}",
         )
 
         sgw.write_row(row)

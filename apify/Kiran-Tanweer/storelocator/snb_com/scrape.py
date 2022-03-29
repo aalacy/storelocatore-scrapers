@@ -1,162 +1,200 @@
-from bs4 import BeautifulSoup
-import csv
-import time
-import usaddress
+import json
+from sglogging import sglog
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger("snb_com")
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from bs4 import BeautifulSoup
 
 
 session = SgRequests()
+website = "snb_com"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
+session = SgRequests()
 headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
 }
 
-
-def write_output(data):
-    with open("data.csv", mode="w", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        temp_list = []
-        for row in data:
-            comp_list = [
-                row[2].strip(),
-                row[3].strip(),
-                row[4].strip(),
-                row[5].strip(),
-                row[6].strip(),
-                row[8].strip(),
-                row[10].strip(),
-            ]
-            if comp_list not in temp_list:
-                temp_list.append(comp_list)
-                writer.writerow(row)
-        logger.info(f"No of records being processed: {len(temp_list)}")
+DOMAIN = "https://snb.com/"
+MISSING = SgRecord.MISSING
 
 
 def fetch_data():
-    data = []
-    url = "https://snb.com/locations?range=20"
-    r = session.get(url, headers=headers, verify=False)
-    soup = BeautifulSoup(r.text, "html.parser")
-    divlist = soup.findAll("div", {"class": "location"})
-    for div in divlist:
-        title = div.find("span", {"class": "title"}).text
-        address = div.find("p", {"class": "address"}).text
-        hours = div.find("div", {"class": "hours"})
-        if hours is None:
-            hours = "<MISSING>"
-        else:
-            hours = hours.findAll("p")[1].text
-        phone = div.find("div", {"class": "contact-info"})
-        if phone is None:
-            phone = "<MISSING>"
-        else:
-            phone = phone.text.strip()
-            phone = phone.split("\n")[1].strip()
-        link = div.find("a", {"class": "button button--text"})["href"]
-        hours = hours.split("Drive")[0]
-        hours = hours.split("Transactions")[0]
-        hours = hours.replace("PM", "PM ").strip()
-        address = usaddress.parse(address)
-
-        i = 0
-        street = ""
-        city = ""
-        state = ""
-        pcode = ""
-        while i < len(address):
-            temp = address[i]
-            if (
-                temp[1].find("Address") != -1
-                or temp[1].find("Street") != -1
-                or temp[1].find("Recipient") != -1
-                or temp[1].find("Occupancy") != -1
-                or temp[1].find("BuildingName") != -1
-                or temp[1].find("USPSBoxType") != -1
-                or temp[1].find("USPSBoxID") != -1
-            ):
-                street = street + " " + temp[0]
-            if temp[1].find("PlaceName") != -1:
-                city = city + " " + temp[0]
-            if temp[1].find("StateName") != -1:
-                state = state + " " + temp[0]
-            if temp[1].find("ZipCode") != -1:
-                pcode = pcode + " " + temp[0]
-            i += 1
-        street = street.lstrip()
-        street = street.replace(",", "")
-        city = city.lstrip()
-        city = city.replace(",", "")
-        state = state.lstrip()
-        state = state.replace(",", "")
-        pcode = pcode.lstrip()
-        pcode = pcode.replace(",", "")
-
-        if link == "https://www.snb.com/locations/somers/":
-            street = "Towne Centre at Somers"
-        if link == "https://www.snb.com/locations/ridge/":
-            city = "Ridge"
-            street = "1880 Middle Country Road"
-        if state == "New York":
-            state = "NY"
-
-        p = session.get(link, headers=headers, verify=False)
+    if True:
+        p = session.get(
+            "https://public.websteronline.com/location/1550-flatbush-ave-brooklyn-ny",
+            headers=headers,
+        )
         bs = BeautifulSoup(p.text, "html.parser")
 
-        coords = bs.find("div", {"class": "marker"})
-
-        lat = coords["data-lat"]
-        lng = coords["data-lng"]
-
-        data.append(
-            [
-                "https://www.snb.com/",
-                link,
-                title,
-                street,
-                city,
-                state,
-                pcode,
-                "US",
-                "<MISSING>",
-                phone,
-                "<MISSING>",
-                lat,
-                lng,
-                hours,
-            ]
+        all_json = bs.find("script", {"type": "application/json"})
+        all_json = str(all_json)
+        all_json = all_json.replace(
+            '<script data-drupal-selector="drupal-settings-json" type="application/json">',
+            "",
         )
-    return data
+        all_json = all_json.replace("</script>", "")
+        all_json = json.loads(all_json)
+        for loc in all_json["wbLocationFinder"]["locations"]:
+            name = loc["attributes"]["title"]
+            store_id = loc["id"]
+            url = "https://public.websteronline.com/" + loc["url"]
+            lat = loc["attributes"]["geolocation"]["lat"]
+            lng = loc["attributes"]["geolocation"]["lng"]
+            street = (
+                loc["attributes"]["address"]["street_1"]
+                + " "
+                + loc["attributes"]["address"]["street_2"]
+            )
+            city = loc["attributes"]["address"]["city"]
+            state = loc["attributes"]["address"]["state"]
+            pcode = loc["attributes"]["address"]["zip"]
+            country = loc["attributes"]["address"]["country"]
+            phone = loc["attributes"]["phone"]
+
+            is_branch = loc["attributes"]["branch"]
+            is_atm = loc["attributes"]["atm"]
+            is_itm = loc["attributes"]["itm"]
+
+            if is_branch is True:
+                store_type = "branch"
+            if is_atm is True:
+                store_type = "ATM"
+            if is_itm is True:
+                store_type = "ITM"
+
+            if phone is None:
+                phone = "<MISSING>"
+            if phone == "":
+                phone = "<MISSING>"
+
+            hours = loc["attributes"]["open_hours"]
+            if hours is not None:
+                day1 = loc["attributes"]["open_hours"]["sunday"]
+                if day1 is not None:
+                    day1 = (
+                        loc["attributes"]["open_hours"]["sunday"][0]["start"][
+                            "formatted"
+                        ]
+                        + "-"
+                        + loc["attributes"]["open_hours"]["sunday"][0]["end"][
+                            "formatted"
+                        ]
+                    )
+                if day1 is None:
+                    day1 = "Closed"
+                day2 = (
+                    "monday"
+                    + ":"
+                    + loc["attributes"]["open_hours"]["monday"][0]["start"]["formatted"]
+                    + "-"
+                    + loc["attributes"]["open_hours"]["monday"][0]["end"]["formatted"]
+                )
+                day3 = (
+                    "tuesday"
+                    + ":"
+                    + loc["attributes"]["open_hours"]["tuesday"][0]["start"][
+                        "formatted"
+                    ]
+                    + "-"
+                    + loc["attributes"]["open_hours"]["tuesday"][0]["end"]["formatted"]
+                )
+                day4 = (
+                    "wednesday"
+                    + ":"
+                    + loc["attributes"]["open_hours"]["wednesday"][0]["start"][
+                        "formatted"
+                    ]
+                    + "-"
+                    + loc["attributes"]["open_hours"]["wednesday"][0]["end"][
+                        "formatted"
+                    ]
+                )
+                day5 = (
+                    "thursday"
+                    + ":"
+                    + loc["attributes"]["open_hours"]["thursday"][0]["start"][
+                        "formatted"
+                    ]
+                    + "-"
+                    + loc["attributes"]["open_hours"]["thursday"][0]["end"]["formatted"]
+                )
+                day6 = (
+                    "friday"
+                    + ":"
+                    + loc["attributes"]["open_hours"]["friday"][0]["start"]["formatted"]
+                    + "-"
+                    + loc["attributes"]["open_hours"]["friday"][0]["end"]["formatted"]
+                )
+                day7 = loc["attributes"]["open_hours"]["saturday"]
+                if day7 is not None:
+                    day7 = (
+                        loc["attributes"]["open_hours"]["saturday"][0]["start"][
+                            "formatted"
+                        ]
+                        + "-"
+                        + loc["attributes"]["open_hours"]["saturday"][0]["end"][
+                            "formatted"
+                        ]
+                    )
+                if day7 is None:
+                    day7 = "Closed"
+
+                hours = (
+                    "sunday: "
+                    + day1
+                    + " "
+                    + day2
+                    + " "
+                    + day3
+                    + " "
+                    + day4
+                    + " "
+                    + day5
+                    + " "
+                    + day6
+                    + "saturday: "
+                    + day7
+                )
+
+            else:
+                hours = MISSING
+
+            if lat == "0" and lng == "0":
+                lat = MISSING
+                lng = MISSING
+
+            yield SgRecord(
+                locator_domain=DOMAIN,
+                page_url=url,
+                location_name=name,
+                street_address=street.strip(),
+                city=city.replace(",", "").strip(),
+                state=state.strip(),
+                zip_postal=pcode.strip(),
+                country_code=country,
+                store_number=store_id,
+                phone=phone.strip(),
+                location_type=store_type,
+                latitude=lat,
+                longitude=lng,
+                hours_of_operation=hours.strip(),
+            )
 
 
 def scrape():
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
-    data = fetch_data()
-    write_output(data)
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    log.info("Started")
+    count = 0
+    deduper = SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))
+    with SgWriter(deduper) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()

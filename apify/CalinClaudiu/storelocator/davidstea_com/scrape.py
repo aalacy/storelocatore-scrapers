@@ -1,7 +1,7 @@
 from sgscrape import simple_scraper_pipeline as sp
 from sglogging import sglog
 
-from sgrequests import SgRequests
+from sgrequests.sgrequests import SgRequests
 from bs4 import BeautifulSoup as b4
 
 import json
@@ -12,9 +12,7 @@ def form_url(url):
         "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
     }
     session = SgRequests()
-    soup = b4(session.get(url, headers=headers).text, "lxml")
-
-    api_url = "https://sls-api-service.sweetiq-sls-production-west.sweetiq.com/"
+    soup = b4(SgRequests.raise_on_err(session.get(url, headers=headers)).text, "lxml")
 
     scripts = soup.find_all("script")
     theScript = ""
@@ -27,8 +25,8 @@ def form_url(url):
     ids = []
     for i in theScript["dataLocations"]["collection"]["features"]:
         ids.append(str(i["properties"]["id"]))
-
-    api_url = api_url + theScript["dataSettings"]["storeLocatorId"]
+    api_url = theScript["env"]["presBaseUrl"]
+    api_url = api_url + "/" + theScript["dataSettings"]["storeLocatorId"]
     api_url = api_url + "/locations-details?locale=en_US&ids="
     api_url = api_url + "%2C".join(ids) + "&clientId="
     api_url = api_url + theScript["dataSettings"]["clientId"] + "&cname="
@@ -44,7 +42,7 @@ def fetch_data():
         "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
     }
     session = SgRequests()
-    son = session.get(url, headers=headers).json()
+    son = SgRequests.raise_on_err(session.get(url, headers=headers)).json()
     for i in son["features"]:
         if not i["properties"]["isPermanentlyClosed"]:
             yield i
@@ -87,15 +85,16 @@ def scrape():
         ),
         location_name=sp.MappingField(mapping=["properties", "name"]),
         latitude=sp.MappingField(
-            mapping=["geometry", "coordinates", 1],
+            mapping=["geometry", "coordinates", 1], part_of_record_identity=True
         ),
         longitude=sp.MappingField(
-            mapping=["geometry", "coordinates", 0],
+            mapping=["geometry", "coordinates", 0], part_of_record_identity=True
         ),
         street_address=sp.MultiMappingField(
             mapping=[["properties", "addressLine1"], ["properties", "addressLine2"]],
             multi_mapping_concat_with=", ",
             value_transform=fix_comma,
+            part_of_record_identity=True,
         ),
         city=sp.MappingField(
             mapping=["properties", "city"],
@@ -104,19 +103,21 @@ def scrape():
             mapping=["properties", "province"],
         ),
         zipcode=sp.MappingField(
-            mapping=["properties", "postalCode"],
+            mapping=["properties", "postalCode"], part_of_record_identity=True
         ),
         country_code=sp.MappingField(
             mapping=["properties", "country"],
         ),
         phone=sp.MappingField(
-            mapping=["properties", "phoneNumber"],
+            mapping=["properties", "phoneNumber"], part_of_record_identity=True
         ),
         store_number=sp.MappingField(
-            mapping=["properties", "id"],
+            mapping=["properties", "id"], part_of_record_identity=True
         ),
         hours_of_operation=sp.MappingField(
-            mapping=["properties", "hoursOfOperation"], raw_value_transform=human_hours
+            mapping=["properties", "hoursOfOperation"],
+            raw_value_transform=human_hours,
+            part_of_record_identity=True,
         ),
         location_type=sp.MappingField(
             mapping=["properties", "categories"],

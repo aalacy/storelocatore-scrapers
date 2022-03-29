@@ -24,7 +24,7 @@ def fetch_data(sgw: SgWriter):
 
     locator_domain = "https://www.columbia.com/"
     api_url = "https://stores.columbia.com/"
-    session = SgRequests()
+    session = SgRequests(verify_ssl=False)
 
     headers = {
         "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0",
@@ -60,7 +60,7 @@ def fetch_data(sgw: SgWriter):
         if store_number == "<MISSING>":
             store_number = location_name.split("Store")[1].split()[0].strip()
         phone = j.get("telephone")
-        session = SgRequests()
+        session = SgRequests(verify_ssl=False)
         r = session.get(page_url, headers=headers)
         tree = html.fromstring(r.text)
 

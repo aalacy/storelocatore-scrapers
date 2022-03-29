@@ -35,11 +35,19 @@ def fetch_data():
             logger.info(page_url)
             sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
             _hr = sp1.find("", string=re.compile(r"Hours of Operation:"))
+            hours = []
             if _hr:
+                span = (
+                    _hr.find_parent("h2")
+                    .find_next_siblings("div")[-1]
+                    .select("span")[-1]
+                )
+                if span and "location is closing" in span.text.lower():
+                    continue
                 hours = [
                     ": ".join(hh.stripped_strings)
                     for hh in _hr.find_parent("h2")
-                    .find_next_sibling()
+                    .find_next_siblings("div")[-1]
                     .select("div.flex")
                 ]
             yield SgRecord(

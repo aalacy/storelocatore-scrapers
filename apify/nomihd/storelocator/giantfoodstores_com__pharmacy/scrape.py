@@ -96,7 +96,7 @@ class _SearchIteration(SearchIteration):
                     except:
                         pass
 
-                    page_url = "<MISSING>"
+                    page_url = "https://giantfoodstores.com/pharmacy"
                     try:
                         store_number = location_name.split("#")[1].strip()
                     except:
@@ -132,7 +132,10 @@ def scrape():
     )
 
     with SgWriter(
-        deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
+        deduper=SgRecordDeduper(
+            record_id=RecommendedRecordIds.StoreNumberId,
+            duplicate_streak_failure_factor=-1,
+        )
     ) as writer:
         with SgRequests(dont_retry_status_codes=([404])) as http:
             search_iter = _SearchIteration(http=http)

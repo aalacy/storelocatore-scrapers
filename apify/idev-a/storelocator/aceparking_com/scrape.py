@@ -4,13 +4,12 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries, Grain_8
-from datetime import date, timedelta
-import urllib.parse
+from urllib.parse import urlencode
 import dirtyjson as json
+import csv
 from sglogging import SgLogSetup
 
-logger = SgLogSetup().get_logger("quizclothing")
+logger = SgLogSetup().get_logger("aceparking")
 
 _headers = {
     "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
@@ -23,17 +22,25 @@ locator_domain = "https://aceparking.com"
 base_url = "https://space.aceparking.com/site/results?"
 
 
-def params(hourly, zip):
+def params(hourly, row):
     return {
         "hourly": str(hourly),
-        "address": str(zip),
-        "Reservation[date_start]": date.today().strftime("%a, %m/%d"),
-        "start_time": "10:07",
-        "Reservation[date_end]": (date.today() + timedelta(days=1)).strftime(
-            "%a, %m/%d"
-        ),
-        "end_time": "19:07",
+        "address": f"{', '.join(row)}, USA",
     }
+
+
+def get_city_list():
+    city_list = []
+    logger.info("... reading city list csv")
+    with open("./uscities.csv") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            val = [row["city"], row["state_id"]]
+            if val not in city_list:
+                city_list.append(val)
+
+        logger.info(f"filtered {len(city_list)} cities from csv")
+        return city_list
 
 
 def _coord(locs, name):
@@ -47,27 +54,31 @@ def _coord(locs, name):
     return coord
 
 
-def fetch_data(search):
+def fetch_data(city_list):
     with SgRequests() as session:
-        for zip in search:
+        for row in city_list:
             for hourly in range(1, 3):
-                url = base_url + urllib.parse.urlencode(params(hourly, zip))
+                url = base_url + urlencode(params(hourly, row))
                 logger.info(url)
                 res = session.get(url, headers=_headers)
                 locs = res.text.split("new google.maps.Marker(")[2:]
                 soup = bs(res, "lxml")
                 if soup.select_one("div.siteResults h4.error"):
+                    logger.warning("div.siteResults h4.error")
                     continue
+
                 locations = soup.select("div.lotSection")
                 try:
                     soup.select_one("div.resultAddress").text.strip().split(",")
                 except:
+                    logger.warning("div.resultAddress")
                     continue
+
                 if hourly == 1:
                     location_type = "daily"
                 else:
                     location_type = "monthly"
-                logger.info(f"[{zip}] {len(locations)}")
+                logger.info(f"[{row[0]}] {len(locations)}")
                 for _ in locations:
                     street_address = [
                         aa.text.strip() for aa in _.select("div.infoAddress")
@@ -82,7 +93,9 @@ def fetch_data(search):
                         page_url="https://space.aceparking.com/site/results",
                         store_number=_["id"].split("-")[-1],
                         location_name=location_name,
-                        street_address=" ".join(street_address),
+                        street_address=" ".join(street_address).split("Lot")[0].strip(),
+                        city=row[0],
+                        state=row[1],
                         country_code="US",
                         latitude=coord.get("lat"),
                         longitude=coord.get("lng"),
@@ -93,10 +106,12 @@ def fetch_data(search):
 
 
 if __name__ == "__main__":
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
-        search = DynamicZipSearch(
-            country_codes=[SearchableCountries.USA], granularity=Grain_8()
+    with SgWriter(
+        SgRecordDeduper(
+            RecommendedRecordIds.StoreNumberId, duplicate_streak_failure_factor=100
         )
-        results = fetch_data(search)
+    ) as writer:
+        city_list = get_city_list()
+        results = fetch_data(city_list)
         for rec in results:
             writer.write_row(rec)

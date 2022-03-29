@@ -3,8 +3,9 @@ from sgrequests import SgRequests
 from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-import json
 import lxml.html
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "woodntap.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -21,35 +22,31 @@ headers = {
 
 def fetch_data():
     # Your scraper here
-    base = "https://www.woodntap.com/locations/"
-    api_url = "https://www.woodntap.com/index.php/ajax/loadLocations"
-    api_res = session.get(api_url, headers=headers)
+    stores_req = session.get("https://www.woodntap.com/", headers=headers)
+    stores_sel = lxml.html.fromstring(stores_req.text)
+    stores = stores_sel.xpath('//li[./a[text()="Locations"]]/ul/li/a/@href')
+    for store_url in stores:
 
-    store_list = json.loads(api_res.text)
-
-    for store in store_list:
-
-        page_url = base + store["title"].replace(" ", "-").strip()
+        page_url = store_url
         log.info(page_url)
-        store_req = session.get(page_url)
+        store_req = session.get(page_url, headers=headers)
         store_sel = lxml.html.fromstring(store_req.text)
         locator_domain = website
 
-        location_name = store["title"]
+        location_name = "".join(
+            store_sel.xpath('//div[@class="page-masthead-body"]/h1/text()')
+        ).strip()
 
-        add_sections = store_sel.xpath('//div[@class="article-body"]/p')
+        address = store_sel.xpath('//div[@class="page-masthead-body"]/address//text()')
         add_list = []
-        for add in add_sections:
-            if ", " in " ".join(add.xpath("text()")).strip():
-                address = add.xpath("text()")
-                add_list = []
-                for add in address:
-                    if len("".join(add).strip()) > 0:
-                        add_list.append("".join(add).strip())
-
-                break
+        for add in address:
+            if len("".join(add).strip()) > 0:
+                add_list.append("".join(add).strip())
 
         street_address = add_list[0].strip()
+        if street_address[-1] == ",":
+            street_address = "".join(street_address[:-1]).strip()
+
         city = add_list[-1].strip().split(",")[0].strip()
         state_zip = add_list[-1].strip().split(",")[-1].strip().split(" ")
         state = "<MISSING>"
@@ -64,32 +61,28 @@ def fetch_data():
 
         store_number = "<MISSING>"
 
-        phone = store["phone"]
+        phone = "".join(
+            store_sel.xpath(
+                '//div[@class="page-masthead-body"]//a[@class="phone"]/text()'
+            )
+        ).strip()
 
         location_type = "<MISSING>"
         if "We are CLOSED temporarily" in store_req.text:
             location_type = "temporarily closed"
 
-        hours_of_operation = "<MISSING>"
-        sections = store_sel.xpath("//p")
-        for index in range(0, len(sections)):
-            if "hours" in "".join(sections[index].xpath("text()")).strip().lower():
-                hours_of_operation = sections[index + 1].xpath("text()")
-                if len(hours_of_operation) > 0:
-                    hours_of_operation = "".join(hours_of_operation[0]).strip()
-                break
-
-        if hours_of_operation == "<MISSING>":
-            try:
-                hours_of_operation = (
-                    store_req.text.split("<h6>Hours</h6><p>")[1]
-                    .strip()
-                    .split("<")[0]
-                    .strip()
+        hours_of_operation = (
+            "; ".join(
+                store_sel.xpath(
+                    '//div[@class="info-card "][./header/h3[contains(text(),"Hours")]]/div[@class="info-card-body"]/text()'
                 )
-            except:
-                pass
-
+            )
+            .strip()
+            .split("\n")[0]
+            .strip()
+        )
+        if len(hours_of_operation) > 0 and hours_of_operation[-1] == ";":
+            hours_of_operation = "".join(hours_of_operation[:-1]).strip()
         latitude = ""
         try:
             latitude = (
@@ -115,12 +108,14 @@ def fetch_data():
 
         if len(latitude) <= 0:
             map_link = "".join(
-                store_sel.xpath('//iframe[contains(@src,"maps/embed?")]/@src')
+                store_sel.xpath(
+                    '//div[@class="page-masthead-body"]//a[contains(text(),"Get Directions")]/@href'
+                )
             ).strip()
 
             if len(map_link) > 0:
-                latitude = map_link.split("!3d")[1].strip().split("!")[0].strip()
-                longitude = map_link.split("!2d")[1].strip().split("!")[0].strip()
+                latitude = map_link.split("/@")[1].strip().split(",")[0].strip()
+                longitude = map_link.split("/@")[1].strip().split(",")[1].strip()
 
         yield SgRecord(
             locator_domain=locator_domain,
@@ -143,7 +138,9 @@ def fetch_data():
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

@@ -13,7 +13,7 @@ from sgrequests import SgRequests
 
 def fetch_data(sgw: SgWriter):
 
-    base_link = "https://bohemian-studios.com/schedule-classes"
+    base_link = "https://bohemian-studios.com/"
 
     user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36"
     headers = {"User-Agent": user_agent}
@@ -28,19 +28,19 @@ def fetch_data(sgw: SgWriter):
             script = str(script)
             break
 
-    raw_address = list(
-        base.find(class_="col sqs-col-6 span-6")
-        .find(class_="sqs-block-content")
-        .stripped_strings
-    )[1:-1]
+    raw_address = list(base.find(class_="Footer-business-info").stripped_strings)
     locator_domain = "bohemian-studios.com"
 
-    location_name = "Bohemian Studios - " + raw_address[0]
-    street_address = " ".join(raw_address[1:-1]).strip()
-    city_line = raw_address[-1].strip().split(",")
+    location_name = raw_address[0]
+    street_address = raw_address[1]
+    if street_address[-1:] == ",":
+        street_address = street_address[:-1]
+    city_line = raw_address[2].strip().split(",")
     city = city_line[0].strip()
-    state = city_line[-1].strip().split()[0].strip()
-    zip_code = city_line[-1].strip().split()[1].strip()
+    state = city_line[1].strip()
+    zip_code = ""
+    if "Fauntleroy" in street_address:
+        zip_code = "98116"
     country_code = "US"
     store_number = "<MISSING>"
     location_type = "<MISSING>"

@@ -1,120 +1,226 @@
-import csv
-from sgrequests import SgRequests
-from bs4 import BeautifulSoup
-import re
+from sglogging import sglog
+from sgrequests import SgRequests, SgRequestError
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+import lxml.html
 import json
-import sgzip
-session = SgRequests()
-def write_output(data):
-    with open('data.csv', mode='w',encoding="utf-8") as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
-        for row in data:
-            writer.writerow(row)
-def fetch_data():
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
-    }
-    address = []
-    search = sgzip.ClosestNSearch() # TODO: OLD VERSION [sgzip==0.0.55]. UPGRADE IF WORKING ON SCRAPER!
-    search.initialize()
-    result_coords = []
-    data_len = 0
-    MAX_RESULTS = 100
-    MAX_DISTANCE = 100
-    coords = search.next_coord()
-    while coords:
-        try:
-            r = session.get("https://www.desigual.com/on/demandware.store/Sites-dsglcom_prod_us-Site/en_US/Address-SearchStoreAddress?longitude="+str(coords[1])+"&latitude="+str(coords[0])+"&deliveryPoint=STORE&radius=7000&showOfficialStores=false&showOutlets=false&showAuthorized=false&showOnlyAllowDevosStores=false")
-        except:
-            continue
-        data = r.json()
-        mp = data['shippingAddresses']
-        for i in data['shippingAddresses']:
-            if i["countryCode"] not in ["US","CA"]:
-                continue
-            if 'address' in i:
-                street_address = i['address'].replace("Orlando Florida Mall,","").replace("McArthurGlen Designer Outlet,","").replace("Miromar Outlets,","").replace("Shopping Center Dolphin Mall,","").replace("Miracle Mile Shops,","").strip()
-            else:
-                street_address = "<MISSING>"
-            if 'name' in i:
-                loacation_name = i['name']
-            else:
-                loacation_name = "<MISSING>"
-            if "Desigual" not in loacation_name:
-                continue
-            if 'city' in i:
-                city = i['city']
-            else:
-                city = "<MISSING>"
-            if 'region' in i:
-                state = i['regionSapId']
-            else:
-                state = "<MISSING>"
-            if 'postalCode' in i:
-                zipp =i['postalCode']
-            else:
-                zipp = "<MISSING>"
-            if 'latitude' in i:
-                latitude = i['latitude']
-            else:
-                latitude = "<MISSING>"
-            if 'countryCode' in i:
-                country_code = i['countryCode']
-            else:
-                country_code = "<MISSING>"
-            if 'longitude' in i:
-                longitude = i['longitude']
-            else:
-                longitude = "<MISSING>"
-            result_coords.append((latitude, longitude))
-            if 'storeId' in i:
-                store_number = i['storeId'].replace("R","")
-            else:
-                store_number = "<MISSING>"
-            if 'phone' in i:
-                temp_phone = i['phone'].replace("+1","").replace(" ","").strip()
-                phone = "("+temp_phone[:3]+")"+temp_phone[3:6]+"-"+temp_phone[6:]
-            else:
-                phone = "<MISSING>"
-            hours = ""
-            days = {1:"Sunday",2:"Monday",3:"Tuesday",4:"Wednesday",5:"Thursday",6:"Friday",7:"Saturday"}
-            if "schedule" in mp and mp["schedule"]:
-                store_hours = mp["schedule"]
-                for hour in store_hours:
-                    hours = hours + " " + days[hour["dayNumber"]] + " " + hour["value"]
-                store.append(hours)
-            if "Desigual" in loacation_name:
-                if i['isOpen'] == True:
-                    hours = "Temporary closed"
-                store = []
-                store.append("https://www.desigual.com/")
-                store.append(loacation_name if loacation_name else "<MISSING>") 
-                store.append(street_address if street_address else "<MISSING>")
-                store.append(city if city else "<MISSING>")
-                store.append(state if state else "<MISSING>")
-                store.append(zipp if zipp else "<MISSING>")
-                store.append(country_code if country_code else "<MISSING>")
-                store.append(store_number if store_number else"<MISSING>") 
-                store.append(phone if phone else "<MISSING>")
-                store.append("<MISSING>")
-                store.append(latitude if latitude else "<MISSING>")
-                store.append(longitude if longitude else "<MISSING>")
-                store.append(hours if hours else "<MISSING>")
-                store.append("<MISSING>")
-                if store[2] in address :
-                    continue
-                address.append(store[2])
-                yield store
-        if data_len < MAX_RESULTS:
-            search.max_distance_update(MAX_DISTANCE)
-        elif data_len == MAX_RESULTS:
-            search.max_count_update(result_coords)
-        else:
-            raise Exception("expected at most " + str(MAX_RESULTS) + " results")
-        coords = search.next_coord()
-def scrape():
-    data = fetch_data()
-    write_output(data)
+import html
 
-scrape()
+session = SgRequests()
+website = "desigual_com"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
+
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36"
+}
+
+DOMAIN = "https://desigual.com"
+MISSING = SgRecord.MISSING
+
+
+def encode_string(data_field):
+    if data_field:
+        return html.unescape(str(data_field))
+    else:
+        return data_field
+
+
+def fetch_data():
+    countries_req = session.get("https://www.desigual.com/", headers=headers)
+    countries_sel = lxml.html.fromstring(countries_req.text)
+
+    country_list = countries_sel.xpath(
+        '//select[@name="countrySelector"]/option/@data-locale'
+    )
+    for country in country_list:
+        country_url = (
+            "https://www.desigual.com/"
+            + country
+            + "/shops/?showMap=true&horizontalView=true&isForm=true"
+        )
+        log.info(country_url)
+        stores_req = session.get(country_url, headers=headers)
+        if isinstance(stores_req, SgRequestError):
+            log.error(f"countryURL ERROR: {country_url}")
+            country_url = country_url.replace("/shops/", "/tiendas/")
+            stores_req = session.get(country_url, headers=headers)
+        try:
+            stores_sel = lxml.html.fromstring(stores_req.text)
+            loclist = stores_sel.xpath('//ul[@id="collapseExample"]/li')
+            for loc in loclist:
+                if "(1)" in "".join(loc.xpath("a/text()")).strip():
+                    page_url = "".join(loc.xpath("a/@href")).strip()
+                    log.info(page_url)
+                    store_req = session.get(page_url, headers=headers)
+                    store_json = json.loads(
+                        store_req.text.split('initial-stores="')[1]
+                        .split('">')[0]
+                        .replace("&quot;", '"')
+                    )["stores"][0]
+                    store_number = store_json["storeId"]
+                    location_name = store_json["name"].strip()
+                    street_address = store_json["address"].strip()
+                    city = store_json.get("city", MISSING)
+                    state = store_json.get("region", MISSING)
+                    zip_postal = store_json.get("postalCode", MISSING)
+                    country_code = store_json.get("countryCode", MISSING)
+                    latitude = store_json.get("latitude", MISSING)
+                    longitude = store_json.get("longitude", MISSING)
+                    if latitude == "0" or latitude == 0:
+                        latitude, longitude = "<MISSING>", "<MISSING>"
+                    phone = store_json.get("phone", MISSING)
+                    hours = store_json["schedule"]
+                    hours_list = []
+                    if hours:
+                        for hour in hours:
+                            day = hour["name"]
+                            if hour["isOpen"] is True:
+                                time = hour["value"]
+                            else:
+                                time = "Closed"
+                            hours_list.append(day + ":" + time)
+
+                    hours_of_operation = "; ".join(hours_list).strip()
+
+                    yield SgRecord(
+                        locator_domain=DOMAIN,
+                        page_url=page_url,
+                        location_name=encode_string(location_name),
+                        street_address=encode_string(street_address),
+                        city=encode_string(city),
+                        state=encode_string(state),
+                        zip_postal=encode_string(zip_postal),
+                        country_code=encode_string(country_code),
+                        store_number=encode_string(store_number),
+                        phone=encode_string(phone),
+                        location_type=MISSING,
+                        latitude=encode_string(latitude),
+                        longitude=encode_string(longitude),
+                        hours_of_operation=encode_string(hours_of_operation),
+                    )
+                else:
+                    cities_url = "".join(loc.xpath("a/@href")).strip()
+                    log.info(f"cities_URL: {cities_url}")
+                    stores_req = session.get(cities_url, headers=headers)
+                    stores_sel = lxml.html.fromstring(stores_req.text)
+                    loclist = stores_sel.xpath('//ul[@id="collapseExample"]/li')
+                    for loc in loclist:
+                        page_url = "".join(loc.xpath("a/@href")).strip()
+                        log.info(page_url)
+                        store_req = session.get(page_url, headers=headers)
+                        store_json = json.loads(
+                            store_req.text.split('initial-stores="')[1]
+                            .split('">')[0]
+                            .replace("&quot;", '"')
+                        )["stores"][0]
+                        store_number = store_json["storeId"]
+                        location_name = store_json["name"].strip()
+                        street_address = store_json["address"].strip()
+                        city = store_json.get("city", MISSING)
+                        state = store_json.get("region", MISSING)
+                        zip_postal = store_json.get("postalCode", MISSING)
+                        country_code = store_json.get("countryCode", MISSING)
+                        latitude = store_json.get("latitude", MISSING)
+                        longitude = store_json.get("longitude", MISSING)
+                        if latitude == "0" or latitude == 0:
+                            latitude, longitude = "<MISSING>", "<MISSING>"
+                        phone = store_json.get("phone", MISSING)
+                        hours = store_json["schedule"]
+                        hours_list = []
+                        if hours:
+                            for hour in hours:
+                                day = hour["name"]
+                                if hour["isOpen"] is True:
+                                    time = hour["value"]
+                                else:
+                                    time = "Closed"
+                                hours_list.append(day + ":" + time)
+
+                        hours_of_operation = "; ".join(hours_list).strip()
+
+                        yield SgRecord(
+                            locator_domain=DOMAIN,
+                            page_url=page_url,
+                            location_name=encode_string(location_name),
+                            street_address=encode_string(street_address),
+                            city=encode_string(city),
+                            state=encode_string(state),
+                            zip_postal=encode_string(zip_postal),
+                            country_code=encode_string(country_code),
+                            store_number=encode_string(store_number),
+                            phone=encode_string(phone),
+                            location_type=MISSING,
+                            latitude=encode_string(latitude),
+                            longitude=encode_string(longitude),
+                            hours_of_operation=encode_string(hours_of_operation),
+                        )
+        except:
+            r = session.get(
+                "https://www.desigual.com/on/demandware.store/Sites-dsglfranchise_hr-Site/it_IT/Address-SearchStoreAddress?longitude=15.9644&latitude=45.8071&deliveryPoint=STORE&radius=21&showOfficialStores=false&showOutlets=false&showAuthorized=false&showOnlyAllowDevosStores=false",
+                headers=headers,
+            )
+            js = r.json()["shippingAddresses"]
+            for j in js:
+
+                page_url = j.get("detailUrl") or "<MISSING>"
+                location_name = j.get("name") or "<MISSING>"
+                street_address = j.get("address")
+                city = j.get("city") or "<MISSING>"
+                country_code = j.get("countryName") or "<MISSING>"
+                zip_postal = j.get("postalCode") or "<MISSING>"
+                latitude = j.get("latitude") or "<MISSING>"
+                longitude = j.get("longitude") or "<MISSING>"
+                if latitude == "0" or latitude == 0:
+                    latitude, longitude = "<MISSING>", "<MISSING>"
+                phone = j.get("phone") or "<MISSING>"
+                state = "<MISSING>"
+                hours_of_operation = "<MISSING>"
+                store_number = j.get("id")
+                hours = j.get("schedule")
+                tmp = []
+                if hours:
+                    for h in hours:
+                        day = h.get("name")
+                        opens = h.get("open")
+                        closes = h.get("close")
+                        line = f"{day} {opens} - {closes}"
+                        tmp.append(line)
+                    hours_of_operation = "; ".join(tmp)
+
+                yield SgRecord(
+                    locator_domain=DOMAIN,
+                    page_url=page_url,
+                    location_name=encode_string(location_name),
+                    street_address=encode_string(street_address),
+                    city=encode_string(city),
+                    state=encode_string(state),
+                    zip_postal=encode_string(zip_postal),
+                    country_code=encode_string(country_code),
+                    store_number=encode_string(store_number),
+                    phone=encode_string(phone),
+                    location_type=MISSING,
+                    latitude=encode_string(latitude),
+                    longitude=encode_string(longitude),
+                    hours_of_operation=encode_string(hours_of_operation),
+                )
+
+
+def scrape():
+    log.info("Started")
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
+
+
+if __name__ == "__main__":
+    scrape()
