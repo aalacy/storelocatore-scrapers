@@ -15,7 +15,7 @@ from sgselenium.sgselenium import SgChrome
 
 from sglogging import SgLogSetup
 
-logger = SgLogSetup().get_logger("magnusonhotels_com")
+logger = SgLogSetup().get_logger("magnusonhotels.com")
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
