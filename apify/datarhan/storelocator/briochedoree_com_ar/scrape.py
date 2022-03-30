@@ -30,6 +30,8 @@ def fetch_data():
         phone = loc_dom.xpath(
             '//div[svg[@class="w-5 h-5 text-primary-500"]]/span/text()'
         )[-1].split(" - ")[0]
+        if phone in street_address:
+            street_address = ""
         if "Sector" in phone:
             phone = ""
 
