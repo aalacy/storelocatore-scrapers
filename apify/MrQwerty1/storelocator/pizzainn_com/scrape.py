@@ -43,7 +43,7 @@ def fetch_data(sgw: SgWriter):
         state = line.split()[0].strip()
         postal = line.split()[1].strip()
         page_url = "".join(l.xpath(".//h3[@class='loc-name']/a/@href"))
-        phone = "".join(l.xpath(".//span[@class='loc-phone']/text()")).strip()
+        phone = "".join(l.xpath(".//span[@class='loc-phone']//text()")).strip()
 
         if phone.find("/") != -1:
             phone = phone.split("/")[0].strip()

@@ -32,6 +32,7 @@ def fetch_data(sgw: SgWriter):
         postal = a.postcode or "<MISSING>"
         country_code = "BR"
         city = a.city or "<MISSING>"
+        city = str(city).replace("/", "").strip()
         text = "".join(d.xpath(".//following-sibling::div[1]//a/@href"))
         try:
             if text.find("ll=") != -1:
