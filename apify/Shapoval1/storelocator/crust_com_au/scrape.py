@@ -60,8 +60,8 @@ def fetch_data(sgw: SgWriter):
             del tmp[2]
         if len(tmp) == 4:
             tmp[1] = "".join(tmp[1]).split("-")[0] + "-" + "".join(tmp[3]).split("-")[1]
-            del tmp_4[2]
-            del tmp_4[2]
+            del tmp[2]
+            del tmp[2]
 
         day_2 = tree.xpath(
             '//h5[text()="Opening Hours"]/following-sibling::table//tr[./td][2]//text()'
@@ -82,8 +82,8 @@ def fetch_data(sgw: SgWriter):
             tmp_1[1] = (
                 "".join(tmp_1[1]).split("-")[0] + "-" + "".join(tmp_1[3]).split("-")[1]
             )
-            del tmp_4[2]
-            del tmp_4[2]
+            del tmp_1[2]
+            del tmp_1[2]
 
         day_3 = tree.xpath(
             '//h5[text()="Opening Hours"]/following-sibling::table//tr[./td][3]//text()'
@@ -104,8 +104,8 @@ def fetch_data(sgw: SgWriter):
             tmp_2[1] = (
                 "".join(tmp_2[1]).split("-")[0] + "-" + "".join(tmp_2[3]).split("-")[1]
             )
-            del tmp_4[2]
-            del tmp_4[2]
+            del tmp_2[2]
+            del tmp_2[2]
 
         day_4 = tree.xpath(
             '//h5[text()="Opening Hours"]/following-sibling::table//tr[./td][4]//text()'
@@ -126,8 +126,8 @@ def fetch_data(sgw: SgWriter):
             tmp_3[1] = (
                 "".join(tmp_3[1]).split("-")[0] + "-" + "".join(tmp_3[3]).split("-")[1]
             )
-            del tmp_4[2]
-            del tmp_4[2]
+            del tmp_3[2]
+            del tmp_3[2]
 
         day_5 = tree.xpath(
             '//h5[text()="Opening Hours"]/following-sibling::table//tr[./td][5]//text()'
@@ -170,8 +170,8 @@ def fetch_data(sgw: SgWriter):
             tmp_5[1] = (
                 "".join(tmp_5[1]).split("-")[0] + "-" + "".join(tmp_5[3]).split("-")[1]
             )
-            del tmp_4[2]
-            del tmp_4[2]
+            del tmp_5[2]
+            del tmp_5[2]
 
         day_7 = tree.xpath(
             '//h5[text()="Opening Hours"]/following-sibling::table//tr[./td][7]//text()'
@@ -192,8 +192,8 @@ def fetch_data(sgw: SgWriter):
             tmp_6[1] = (
                 "".join(tmp_6[1]).split("-")[0] + "-" + "".join(tmp_6[3]).split("-")[1]
             )
-            del tmp_4[2]
-            del tmp_4[2]
+            del tmp_6[2]
+            del tmp_6[2]
 
         hours_of_operation = (
             " ".join(tmp)
