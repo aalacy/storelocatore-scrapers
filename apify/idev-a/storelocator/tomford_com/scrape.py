@@ -82,7 +82,9 @@ if __name__ == "__main__":
         country_codes=[SearchableCountries.USA], expected_search_radius_miles=500
     )
     with SgWriter(
-        deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
+        SgRecordDeduper(
+            RecommendedRecordIds.StoreNumberId, duplicate_streak_failure_factor=10
+        )
     ) as writer:
         # Search all countries except for USA
         for rec in record_initial_requests():
