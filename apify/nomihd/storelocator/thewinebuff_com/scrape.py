@@ -74,7 +74,7 @@ def fetch_data():
             phone = ""
             add_list = []
             for cont in contact_info:
-                if "Telephone:" in cont:
+                if "Telephone" in cont:
                     phone = "".join(cont).strip().replace("Telephone:", "").strip()
                     break
                 else:
