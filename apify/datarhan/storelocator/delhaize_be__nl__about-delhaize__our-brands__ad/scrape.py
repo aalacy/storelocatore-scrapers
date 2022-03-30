@@ -28,7 +28,7 @@ def fetch_data():
                 closes = e["closingTime"].split()[-1][:-3]
                 opens = e["openingTime"].split()[-1][:-3]
                 hoo.append(f'{e["weekDay"]}: {opens} - {closes}')
-        hoo = " ".join(hoo)
+        hoo = " ".join(hoo).split(" donderdag:")[0]
         page_url = "https://www.delhaize.be/storedetails/" + poi["urlName"]
 
         item = SgRecord(
@@ -36,7 +36,7 @@ def fetch_data():
             page_url=page_url,
             location_name=poi["localizedName"],
             street_address=street_address,
-            city=poi["address"]["town"],
+            city=poi["address"]["town"].split(",")[0],
             state="",
             zip_postal=poi["address"]["postalCode"],
             country_code=poi["address"]["country"]["name"],
