@@ -20,7 +20,7 @@ def fetch_data():
     website = "hardees.com"
     for line in r.iter_lines():
         if "<loc>https://locations.hardees.com/" in line:
-            locs.append(line.split("<loc>")[1].split("<")[0])
+            locs.append(line.split("<loc>")[1].split("<")[0].replace("--", "-"))
     for loc in locs:
         logger.info(loc)
         country = "US"
