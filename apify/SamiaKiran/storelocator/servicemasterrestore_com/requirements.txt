@@ -3,4 +3,3 @@ sgrequests==0.2.9
 sglogging==0.0.4
 sgscrape==0.2.9
 sgzip==0.10.15
-sgvalidator==0.0.71
