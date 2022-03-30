@@ -27,8 +27,14 @@ def fetch_data():
         all_coords = DynamicGeoSearch(
             country_codes=[country.lower()], expected_search_radius_miles=50
         )
+        added = False
         for lat, lng in all_coords:
             data = session.get(url.format(lat, lng, lat, lng)).json()
+            if country == "US" and not added:
+                url = "https://www.birkenstock.com/on/demandware.store/Sites-US-Site/en_US/Stores-GetStoresJson?latitude=44.80903629923841&longitude=-2.6095184654691828&latituderef=40.724351&longituderef=-74.001120&storeid=&distance=20000&distanceunit=mi&searchText=&countryCode=US&storeLocatorType=regular&storetype1=true"
+                data_2 = session.get(url).json()
+                data["stores"].update(data_2["stores"])
+                added = True
             for i, poi in data["stores"].items():
                 page_url = f"https://www.birkenstock.com/{country.lower()}/storelocator"
                 if country == "FI":
