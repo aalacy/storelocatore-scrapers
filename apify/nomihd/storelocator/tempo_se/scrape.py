@@ -36,7 +36,6 @@ def fetch_data():
             stores_req.text.split("createMap(")[1].strip().split("}],")[0].strip()
             + "}]"
         )
-        print(len(stores))
         for store in stores:
 
             store_number = store["StoreId"]
