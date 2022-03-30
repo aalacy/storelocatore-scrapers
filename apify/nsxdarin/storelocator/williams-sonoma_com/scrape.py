@@ -86,8 +86,6 @@ def fetch_data():
             state = "<MISSING>"
             zc = "<MISSING>"
             hours = "Sun-Wed: 10AM - 10PM; Thur-Sat: 10AM - MIDNIGHT"
-        if "-Sat:" in line:
-            hours = line.split("<span>")[1].split("<")[0]
         if Found and '<a href="https://www.williams-sonoma.com/stores/' in line:
             loc = line.split('href="')[1].split('"')[0]
         if Found and "</div>" in line:
