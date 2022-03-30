@@ -1,9 +1,7 @@
-from typing import Iterable
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-from sgscrape.pause_resume import CrawlStateSingleton, SerializableRequest, CrawlState
 from sgrequests.sgrequests import SgRequests
 from sgzip.dynamic import SearchableCountries, DynamicZipSearch
 from sglogging import SgLogSetup
@@ -52,59 +50,48 @@ def _d(_, current_country):
     )
 
 
-def fetch_records(http: SgRequests, search: DynamicZipSearch) -> Iterable[SgRecord]:
+def fetch_records(search):
     for zipcode in search:
-        http.clear_cookies()
-        url = f"{json_url}?dwfrm_storelocator_address_country=US"
-        url += f"&dwfrm_storelocator_postalCode={zipcode}&dwfrm_storelocator_maxdistance=3000.0&dwfrm_storelocator_longitude=&dwfrm_storelocator_latitude="
+        with SgRequests() as http:
+            url = f"{json_url}?dwfrm_storelocator_address_country=US"
+            url += f"&dwfrm_storelocator_postalCode={zipcode}&dwfrm_storelocator_maxdistance=3000.0&dwfrm_storelocator_longitude=&dwfrm_storelocator_latitude="
 
-        locations = http.get(url, headers=_headers).json()
-        logger.info(f"[USA] {len(locations)}")
-        for _ in locations:
-            yield _d(_, "USA")
+            locations = http.get(url, headers=_headers).json()
+            logger.info(f"[USA] {len(locations)}")
+            for _ in locations:
+                yield _d(_, "USA")
 
 
-def record_initial_requests(http: SgRequests, state: CrawlState) -> bool:
-    countries = bs(http.get(base_url, headers=_headers).text, "lxml").select(
-        "select.country option"
-    )
-    for country in countries:
-        if country["value"] == "US":
-            continue
-        url = f"{json_url}?dwfrm_storelocator_address_country={country['value']}&dwfrm_storelocator_postalCode=&dwfrm_storelocator_maxdistance=3000.0&dwfrm_storelocator_longitude=&dwfrm_storelocator_latitude="
-        state.push_request(
-            SerializableRequest(url=url, context={"country": country["value"]})
+def record_initial_requests():
+    with SgRequests() as http:
+        countries = bs(http.get(base_url, headers=_headers).text, "lxml").select(
+            "select.country option"
         )
-
-    return True
-
-
-def fetch_records_by_option(http: SgRequests, state: CrawlState) -> Iterable[SgRecord]:
-    for next_r in state.request_stack_iter():
-        locations = http.get(next_r.url, headers=_headers).json()
-        logger.info(f"[{next_r.context.get('country')}] {len(locations)}")
-        for _ in locations:
-            yield _d(_, next_r.context.get("country"))
+        for country in countries:
+            if country["value"] == "US":
+                continue
+            url = f"{json_url}?dwfrm_storelocator_address_country={country['value']}&dwfrm_storelocator_postalCode=&dwfrm_storelocator_maxdistance=3000.0&dwfrm_storelocator_longitude=&dwfrm_storelocator_latitude="
+            locations = http.get(url, headers=_headers).json()
+            logger.info(f"[{country['value']}] {len(locations)}")
+            for _ in locations:
+                yield _d(_, country["value"])
 
 
 if __name__ == "__main__":
     search = DynamicZipSearch(
         country_codes=[SearchableCountries.USA], expected_search_radius_miles=500
     )
-    state = CrawlStateSingleton.get_instance()
     with SgWriter(
-        deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
+        SgRecordDeduper(
+            RecommendedRecordIds.StoreNumberId, duplicate_streak_failure_factor=10
+        )
     ) as writer:
-        with SgRequests() as http:
-            # Search all countries except for USA
-            state.get_misc_value(
-                "init", default_factory=lambda: record_initial_requests(http, state)
-            )
-            for rec in fetch_records_by_option(http, state):
-                if rec:
-                    writer.write_row(rec)
+        # Search all countries except for USA
+        for rec in record_initial_requests():
+            if rec:
+                writer.write_row(rec)
 
-            # Search USA
-            for rec in fetch_records(http, search):
-                if rec:
-                    writer.write_row(rec)
+        # Search USA
+        for rec in fetch_records(search):
+            if rec:
+                writer.write_row(rec)

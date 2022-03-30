@@ -35,7 +35,9 @@ def fetch_data():
 
         for poi in data["response"]["collection"]:
             location_name = poi["name"]
-            street_address = poi["address1"]
+            street_address = (
+                poi["address1"].replace("&#xe9;", "é").replace("&#xe8;", "è")
+            )
             city = poi["city"]
             state = poi["state"]
             if not state:
