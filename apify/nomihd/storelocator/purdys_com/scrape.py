@@ -41,6 +41,12 @@ def fetch_data():
     )
     stores = jsonLocations["items"]
     for index, store in enumerate(stores):
+        latitude = store["lat"]
+        longitude = store["lng"]
+        location_type = "<MISSING>"
+        locator_domain = website
+        store_number = "<MISSING>"
+
         popup_sel = lxml.html.fromstring(store["popup_html"])
         page_url = "".join(
             popup_sel.xpath("//a[@class='amlocator-link']/@href")
@@ -48,75 +54,133 @@ def fetch_data():
         log.info(page_url)
         store_req = session.get(page_url, headers=headers)
         if isinstance(store_req, SgRequestError):
-            continue
-        store_sel = lxml.html.fromstring(store_req.text)
+            page_url = "https://www.purdys.com/shops"
+            location_name = "".join(
+                popup_sel.xpath('//div[@class="amlocator-title"]//text()')
+            ).strip()
 
-        location_type = "<MISSING>"
-        locator_domain = website
-        location_name = "".join(
-            store_sel.xpath("//h1[@class='page-title']//text()")
-        ).strip()
+            add_list = list(
+                filter(
+                    str,
+                    [
+                        x.strip()
+                        for x in popup_sel.xpath(
+                            "//div[@class='amlocator-info-popup']/text()"
+                        )
+                    ],
+                )
+            )
 
-        raw_address = "".join(
-            store_sel.xpath("//span[@class='amlocator-text -address']/text()")
-        ).strip()
-        formatted_addr = parser.parse_address_intl(raw_address)
-        street_address = formatted_addr.street_address_1
-        if formatted_addr.street_address_2:
-            street_address = street_address + ", " + formatted_addr.street_address_2
+            street_address = ""
+            city = ""
+            state = ""
+            zip = ""
 
-        city = formatted_addr.city
-        state = formatted_addr.state
-        zip = formatted_addr.postcode
+            for add in add_list:
+                if "City" in add:
+                    city = add.replace("City:", "").strip()
+                if "Postal Code:" in add:
+                    zip = add.replace("Postal Code:", "").strip()
+                if "Address" in add:
+                    street_address = add.replace("Address:", "").strip()
+                if "State" in add:
+                    state = add.replace("State:", "").strip()
 
-        country_code = "CA"
+            raw_address = ""
+            if street_address:
+                raw_address = street_address
+            if city:
+                raw_address = raw_address + ", " + city
+            if state:
+                raw_address = raw_address + ", " + state
+            if zip:
+                raw_address = raw_address + ", " + zip
 
-        phone = "".join(
-            store_sel.xpath('//div[./i[@class="fa fa-phone-square"]]//text()')
-        ).strip()
+            country_code = "CA"
 
-        hours_list = []
-        hours = store_sel.xpath('//div[@class="amlocator-schedule-table"]/div')
-        for hour in hours:
-            day = "".join(hour.xpath("span[1]/text()")).strip()
-            time = "".join(hour.xpath("span[2]/text()")).strip()
-            hours_list.append(day + ":" + time)
+            phone = "<MISSING>"
 
-        hours_of_operation = "; ".join(hours_list).strip()
-        if hours_of_operation:
-            if hours_of_operation.count("Gesloten") == 7:
-                continue
-        store_number = "<MISSING>"
+            hours_of_operation = "<MISSING>"
+            yield SgRecord(
+                locator_domain=locator_domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+                raw_address=raw_address,
+            )
+            break
+        else:
+            store_sel = lxml.html.fromstring(store_req.text)
+            location_name = "".join(
+                store_sel.xpath("//h1[@class='page-title']//text()")
+            ).strip()
 
-        latitude = store["lat"]
-        longitude = store["lng"]
+            raw_address = "".join(
+                store_sel.xpath("//span[@class='amlocator-text -address']/text()")
+            ).strip()
+            formatted_addr = parser.parse_address_intl(raw_address)
+            street_address = formatted_addr.street_address_1
+            if formatted_addr.street_address_2:
+                street_address = street_address + ", " + formatted_addr.street_address_2
 
-        if len(hours_list) <= 0:
-            hours_of_operation = "".join(popup_sel.xpath(".//text()")).strip()
-            if "Hours of Operation" in hours_of_operation:
-                hours_of_operation = hours_of_operation.split("Hours of Operation")[
-                    1
-                ].strip()
-            else:
-                hours_of_operation = "<MISSING>"
+            city = formatted_addr.city
+            state = formatted_addr.state
+            zip = formatted_addr.postcode
 
-        yield SgRecord(
-            locator_domain=locator_domain,
-            page_url=page_url,
-            location_name=location_name,
-            street_address=street_address,
-            city=city,
-            state=state,
-            zip_postal=zip,
-            country_code=country_code,
-            store_number=store_number,
-            phone=phone,
-            location_type=location_type,
-            latitude=latitude,
-            longitude=longitude,
-            hours_of_operation=hours_of_operation,
-            raw_address=raw_address,
-        )
+            country_code = "CA"
+
+            phone = "".join(
+                store_sel.xpath('//div[./i[@class="fa fa-phone-square"]]//text()')
+            ).strip()
+
+            hours_list = []
+            hours = store_sel.xpath('//div[@class="amlocator-schedule-table"]/div')
+            for hour in hours:
+                day = "".join(hour.xpath("span[1]/text()")).strip()
+                time = "".join(hour.xpath("span[2]/text()")).strip()
+                hours_list.append(day + ":" + time)
+
+            hours_of_operation = "; ".join(hours_list).strip()
+            if hours_of_operation:
+                if hours_of_operation.count("Gesloten") == 7:
+                    continue
+
+            if len(hours_list) <= 0:
+                hours_of_operation = "".join(popup_sel.xpath(".//text()")).strip()
+                if "Hours of Operation" in hours_of_operation:
+                    hours_of_operation = hours_of_operation.split("Hours of Operation")[
+                        1
+                    ].strip()
+                else:
+                    hours_of_operation = "<MISSING>"
+
+            yield SgRecord(
+                locator_domain=locator_domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+                raw_address=raw_address,
+            )
 
 
 def scrape():

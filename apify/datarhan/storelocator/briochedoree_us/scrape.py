@@ -33,14 +33,16 @@ def fetch_data():
         thu = f'THURSDAY {poi["heureJeudiDebut"]} - {poi["heureJeudiFin"]}'
         fri = f'FRIDAY {poi["heureVendrediDebut"]} - {poi["heureVendrediFin"]}'
         sat = f'SATURDAY {poi["heureSamediDebut"]} - {poi["heureSamediFin"]}'
-        sun = f'SUNDAY {poi["heureDimancheDebut"]} - poi{"heureDimancheFin"}'
-        hoo = f"{mon}, {tue}, {wed}, {thu}, {fri}, {sat}, {sun}"
+        sun = f'SUNDAY {poi["heureDimancheDebut"]} - {poi["heureDimancheFin"]}'
+        hoo = f"{mon}, {tue}, {wed}, {thu}, {fri}, {sat}, {sun}".replace(
+            "Closed - Closed", "Closed"
+        )
 
         item = SgRecord(
             locator_domain=domain,
             page_url=poi["url"],
             location_name=poi["titre"],
-            street_address=poi["rue"],
+            street_address=poi["rue"] + ", " + poi["infoSup"],
             city=poi["ville"].split(", ")[0],
             state=poi["ville"].split(", ")[-1],
             zip_postal=poi["codepostal"],
@@ -59,9 +61,7 @@ def fetch_data():
 def scrape():
     with SgWriter(
         SgRecordDeduper(
-            SgRecordID(
-                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
-            )
+            SgRecordID({SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STORE_NUMBER})
         )
     ) as writer:
         for item in fetch_data():
