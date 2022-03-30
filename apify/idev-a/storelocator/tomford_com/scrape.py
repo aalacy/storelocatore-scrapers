@@ -3,7 +3,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests.sgrequests import SgRequests
-from sgzip.dynamic import SearchableCountries, DynamicZipSearch, Grain_8
+from sgzip.dynamic import SearchableCountries, DynamicZipSearch
 from sglogging import SgLogSetup
 import re
 from bs4 import BeautifulSoup as bs
