@@ -2,6 +2,7 @@
 import json
 import datetime
 from lxml import etree
+from pytest import Session
 
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
@@ -30,7 +31,7 @@ def fetch_data():
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.99 Safari/537.36",
     }
     all_codes = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA], expected_search_radius_miles=200
+        country_codes=[SearchableCountries.USA], expected_search_radius_miles=50
     )
     for code in all_codes:
         frm = {"__RequestVerificationToken": token, "SearchInput": code}
@@ -78,9 +79,7 @@ def fetch_data():
 def scrape():
     with SgWriter(
         SgRecordDeduper(
-            SgRecordID(
-                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
-            )
+            SgRecordID({SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STORE_NUMBER})
         )
     ) as writer:
         for item in fetch_data():
