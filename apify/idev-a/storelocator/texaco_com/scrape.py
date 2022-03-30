@@ -16,6 +16,10 @@ locator_domain = "https://www.texaco.com"
 base_url = "https://apis.chevron.com/api/StationFinder/nearby?clientid=A67B7471&lat={}&lng={}&oLat={}&oLng={}&brand=chevronTexaco&radius=35"
 
 
+def _c(val):
+    return val.replace(" ", "-").replace("#", "").replace(",", "").replace(".", "")
+
+
 def fetch_records(http, search):
     for lat, lng in search:
         locations = http.get(
@@ -26,8 +30,9 @@ def fetch_records(http, search):
         logger.info(f"[{lat, lng}] {len(locations)}")
         for _ in locations:
             street_address = _["address"]
+            page_url = f"https://www.texaco.com/en_us/home/find-a-station.html?/station/{_c(street_address)}-{_c(_['city'])}-{_c(_['state'])}--{_c(_['zip'])}-id{_['id']}"
             yield SgRecord(
-                page_url="https://www.texaco.com/en_us/home/find-a-station.html",
+                page_url=page_url,
                 location_name=_["name"],
                 store_number=_["id"],
                 street_address=street_address,
