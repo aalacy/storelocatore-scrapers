@@ -49,6 +49,8 @@ def fetch_data():
             phone = poi["phone"]
             if phone:
                 phone = phone.replace("...", "").strip()
+                if country_code == "TH":
+                    phone = phone.split("/")[0]
             location_type = poi["icon"]
             latitude = poi["latitude"]
             longitude = poi["longitude"]
