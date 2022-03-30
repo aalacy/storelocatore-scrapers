@@ -29,7 +29,7 @@ def fetch_data(sgw: SgWriter):
         store = json.loads(script.contents[0])
 
         location_name = store["name"]
-        street_address = store["address"]["streetAddress"]
+        street_address = store["address"]["streetAddress"].replace(" -", ",")
         city = store["address"]["addressLocality"]
         country_code = ""
         try:
@@ -59,6 +59,8 @@ def fetch_data(sgw: SgWriter):
             link = "https://www.sbe.com/restaurants/katsuya/south-beach"
         if "nassau" in link:
             link = "https://www.sbe.com/restaurants/katsuya/baha-mar"
+        if "dubai" in link:
+            link = "https://www.sbe.com/restaurants/katsuya/dubai"
         req = session.get(link, headers=headers)
         base = BeautifulSoup(req.text, "lxml")
 

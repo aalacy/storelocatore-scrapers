@@ -1,9 +1,12 @@
 from sgrequests import SgRequests
+from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
+
+log = sglog.SgLogSetup().get_logger(logger_name="lexus.com")
 
 
 def fetch_data():
@@ -14,6 +17,7 @@ def fetch_data():
         expected_search_radius_miles=100,
     )
     for code in zips:
+        log.info(f"fetching data for zipcode: {code}")
         headers = {
             "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36"
         }
@@ -39,6 +43,8 @@ def fetch_data():
                 + poi["dealerDetailSlug"]
             )
 
+            zips.found_location_at(poi["dealerLatitude"], poi["dealerLongitude"])
+            log.info(poi["dealerName"])
             item = SgRecord(
                 locator_domain=domain,
                 page_url=page_url,
@@ -64,7 +70,8 @@ def scrape():
         SgRecordDeduper(
             SgRecordID(
                 {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
-            )
+            ),
+            duplicate_streak_failure_factor=-1,
         )
     ) as writer:
         for item in fetch_data():

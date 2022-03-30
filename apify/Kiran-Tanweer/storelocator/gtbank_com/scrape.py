@@ -1,4 +1,4 @@
-from sgpostal.sgpostal import parse_address_intl
+from sgscrape import sgpostal as parser
 import random
 import ssl
 from selenium.webdriver.common.by import By
@@ -83,26 +83,21 @@ def get_dir_url(list):
 def get_address(raw_address):
     try:
         if raw_address is not None and raw_address != MISSING:
-            data = parse_address_intl(raw_address)
-            street_address = data.street_address_1
-            if data.street_address_2 is not None:
-                street_address = street_address + " " + data.street_address_2
-            city = data.city
-            state = data.state
-            zip_postal = data.postcode
-            country_code = data.country
-
-            if street_address is None or len(street_address) == 0:
-                street_address = MISSING
-            if city is None or len(city) == 0:
-                city = MISSING
-            if state is None or len(state) == 0:
-                state = MISSING
-            if zip_postal is None or len(zip_postal) == 0:
-                zip_postal = MISSING
-            if country_code is None or len(country_code) == 0:
-                country_code = MISSING
-            return street_address, city, state, zip_postal, country_code
+            raw_address = raw_address.replace(",", "").strip()
+            parsed = parser.parse_address_intl(raw_address)
+            street1 = (
+                parsed.street_address_1 if parsed.street_address_1 else "<MISSING>"
+            )
+            street = (
+                (street1 + ", " + parsed.street_address_2)
+                if parsed.street_address_2
+                else street1
+            )
+            city = parsed.city if parsed.city else "<MISSING>"
+            state = parsed.state if parsed.state else "<MISSING>"
+            pcode = parsed.postcode if parsed.postcode else "<MISSING>"
+            country_code = "NG"
+            return street, city, state, pcode, country_code
     except Exception as e:
         log.info(f"No Address {e}")
         pass
@@ -125,9 +120,8 @@ def fetch_data(driver):
 
         latlng = body.xpath('//div[contains(@id, "locator-entry")]/@data-dna')[0]
         coords = json.loads(latlng)
-
-        latitude = coords[0]["locations"][0]["lat"] or MISSING
-        longitude = coords[0]["locations"][0]["lng"] or MISSING
+        latitude = coords[1]["locations"][0]["lat"] or MISSING
+        longitude = coords[1]["locations"][0]["lng"] or MISSING
 
         location_name = stringify_children(
             body, '//div[contains(@class, "branch-info-title")]/span'

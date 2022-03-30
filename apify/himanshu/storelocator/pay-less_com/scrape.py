@@ -1,4 +1,5 @@
 import json
+import time
 
 from bs4 import BeautifulSoup
 
@@ -9,16 +10,18 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 from sgrequests import SgRequests
 
-session = SgRequests()
-
 
 def fetch_data(sgw: SgWriter):
+
+    session = SgRequests()
+
     base_url = "https://www.pay-less.com/"
     headers = {
         "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
         "cache-control": "max-age=0",
         "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.105 Safari/537.36",
     }
+
     soup = BeautifulSoup(
         session.get(
             "https://www.pay-less.com/storelocator-sitemap.xml", headers=headers
@@ -27,12 +30,18 @@ def fetch_data(sgw: SgWriter):
     )
     for url in soup.find_all("loc")[:-1]:
         page_url = url.text
-        location_soup = BeautifulSoup(
-            session.get(page_url, headers=headers).text, "lxml"
-        )
-        script = location_soup.find(
-            "script", attrs={"type": "application/ld+json"}
-        ).contents[0]
+        for i in range(6):
+            try:
+                req = session.get(page_url, headers=headers)
+                location_soup = BeautifulSoup(req.text, "lxml")
+                script = location_soup.find(
+                    "script", attrs={"type": "application/ld+json"}
+                ).contents[0]
+                break
+            except:
+                time.sleep(10)
+                session = SgRequests()
+
         data = json.loads(script)
         location_name = location_soup.find(
             "h1", {"data-qa": "storeDetailsHeader"}
