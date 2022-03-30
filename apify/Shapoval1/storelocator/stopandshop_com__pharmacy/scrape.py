@@ -89,8 +89,8 @@ def get_data(zips, sgw: SgWriter):
 def fetch_data(sgw: SgWriter):
     zips = DynamicZipSearch(
         country_codes=[SearchableCountries.USA],
-        max_search_distance_miles=70,
-        expected_search_radius_miles=70,
+        max_search_distance_miles=20,
+        expected_search_radius_miles=20,
         max_search_results=None,
     )
 
