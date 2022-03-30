@@ -70,31 +70,50 @@ def fetch_data():
             ).strip()
 
             contact_info = list(filter(str, [x.strip() for x in store.xpath("text()")]))
-            raw_address = "".join(contact_info[0]).strip()
-            street_address = raw_address.rsplit(",")[0].strip()
-            city = raw_address.rsplit(",")[-1].strip()
-            state = "<MISSING>"
-            zip = "<MISSING>"
             country_code = "IE"
             phone = ""
+            add_list = []
             for cont in contact_info:
                 if "Telephone:" in cont:
                     phone = "".join(cont).strip().replace("Telephone:", "").strip()
+                    break
+                else:
+                    add_list.append("".join(cont).strip())
+
+            if len(add_list) > 1:
+                temp_addr = add_list[1]
+            else:
+                temp_addr = add_list[0]
+
+            raw_address = temp_addr
+            street_address = raw_address.rsplit(",", 1)[0].strip()
+            city = raw_address.rsplit(",", 1)[-1].strip()
+            state = "<MISSING>"
+            zip = "<MISSING>"
 
             location_type = "<MISSING>"
 
-            hours_of_operation = "; ".join(
-                list(
-                    filter(
-                        str,
-                        [
-                            x.strip()
-                            for x in store_sel.xpath(
-                                '//div[@class="shop-hours"]/p//text()'
-                            )
-                        ],
+            hours_of_operation = (
+                "; ".join(
+                    list(
+                        filter(
+                            str,
+                            [
+                                x.strip()
+                                for x in store_sel.xpath(
+                                    '//div[@class="shop-hours"]/p//text()'
+                                )
+                            ],
+                        )
                     )
                 )
+                .strip()
+                .replace(":;", ":")
+                .strip()
+                .replace("-;", ":")
+                .strip()
+                .split("; Out of season")[0]
+                .strip()
             )
 
             map_link = "".join(
