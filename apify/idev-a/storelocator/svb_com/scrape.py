@@ -47,12 +47,20 @@ def _d(_, country, url):
     _hr = _.find("li", string=re.compile(r"Branch hours are"))
     if _hr:
         hours = _hr.text.split("Branch hours are")[-1].split("(")[0].strip()
-    location_type = ["atm"]
+    location_type = []
+    if _.caption:
+        caption = _.caption.text.lower().strip()
+        if "office" in caption:
+            location_type.append("office")
+        if "atm" in caption:
+            location_type.append("atm")
+    if "Corporate office only" in _.text:
+        location_type = ["corporate office"]
     if _.find("span", {"class": re.compile(r"fa-university")}):
         location_type = ["branch"]
 
     return SgRecord(
-        page_url=url,
+        page_url=f"{url}&office_id={_title['data-id']}",
         store_number=_title["data-id"],
         location_name=_title.text.strip(),
         street_address=street_address,
