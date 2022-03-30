@@ -3,5 +3,4 @@ sgscrape==0.2.6
 pandas==1.1.5
 sglogging==0.0.4
 tenacity==7.0.0
-geopy==2.0.0
 sgrequests==0.2.10

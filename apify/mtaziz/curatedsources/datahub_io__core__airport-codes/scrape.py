@@ -12,12 +12,10 @@ import zipfile
 import time
 import warnings
 import pandas as pd
-from geopy.geocoders import Nominatim
 import ssl
 import datetime
 from tenacity import retry, stop_after_attempt
 import tenacity
-import json
 
 
 try:
@@ -52,12 +50,12 @@ def download_and_get_dataframe(dir_name):
     logger.info(f"extract_dir: {extract_dir}")
     path_join = os.path.join(extract_dir, "data/airport-codes_csv.csv")
     if os.path.exists(path_join) is False:
-        logger.info(f"Downloading and Extracting file")
+        logger.info("Downloading and Extracting file")
         zip_path, _ = urllib.request.urlretrieve(url)
         logger.info(f"zip_path: {zip_path} | _ {_}")
         with zipfile.ZipFile(zip_path, "r") as f:
             f.extractall(extract_dir)
-        logger.info(f"Download Complete")
+        logger.info("Download Complete")
     else:
         logger.info("The file already downloaeded")
     df = pd.read_csv(path_join)
@@ -106,7 +104,6 @@ def fetch_data():
             logger.info(coord)
             coord_lat = coord[1]
             coord_lng = coord[0]
-        to_be_reversed_latlng = f"{coord_lat}, {coord_lng}"
         openstreetmap_url = "https://nominatim.openstreetmap.org"
         coord_lat = coord_lat.strip()
         coord_lng = coord_lng.strip()
