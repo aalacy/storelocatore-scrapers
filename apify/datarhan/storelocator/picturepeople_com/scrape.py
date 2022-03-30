@@ -20,7 +20,7 @@ def fetch_data():
         "https://tpp.mystratus.com/onlinebooking.aspx?loginoption=defaultnew",
         headers=headers,
     )
-    response = session.get(response.url, proxies=proxies, verify=False)
+    response = session.get(response.url)
     response = session.get(
         "https://tpp.mystratus.com/22.05/OnlineBooking/verify.aspx?loginoption=defaultnew",
     )
