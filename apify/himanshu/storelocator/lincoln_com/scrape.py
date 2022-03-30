@@ -31,7 +31,6 @@ def fetch_data():
     base_url = "https://www.lincoln.com"
     zipcodes = DynamicZipSearch(
         country_codes=[SearchableCountries.USA],
-        
     )
     for zip_code in zipcodes:
         str_zip = str(zip_code)
