@@ -32,7 +32,6 @@ def fetch_data():
         proxies=proxies,
         verify=False,
     )
-    session_id = response.url.split("S(")[-1].split("))")[0]
     dom = etree.HTML(response.text)
     viewstate = dom.xpath('//input[@name="__VIEWSTATE"]/@value')[0]
     viewgen = dom.xpath('//input[@name="__VIEWSTATEGENERATOR"]/@value')[0]
