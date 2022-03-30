@@ -3,7 +3,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests.sgrequests import SgRequests
-from sgzip.dynamic import SearchableCountries, DynamicZipSearch
+from sgzip.dynamic import SearchableCountries, DynamicZipSearch, Grain_8
 from sglogging import SgLogSetup
 import re
 from bs4 import BeautifulSoup as bs
@@ -79,11 +79,11 @@ def record_initial_requests():
 
 if __name__ == "__main__":
     search = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA], expected_search_radius_miles=500
+        country_codes=[SearchableCountries.USA], granularity=Grain_8()
     )
     with SgWriter(
         SgRecordDeduper(
-            RecommendedRecordIds.StoreNumberId, duplicate_streak_failure_factor=10
+            RecommendedRecordIds.StoreNumberId, duplicate_streak_failure_factor=100
         )
     ) as writer:
         # Search all countries except for USA
