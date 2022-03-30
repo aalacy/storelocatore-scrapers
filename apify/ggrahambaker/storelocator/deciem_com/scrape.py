@@ -1,46 +1,17 @@
 import re
-import csv
 import json
-
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
 def fetch_data():
-    # Your scraper here
+
     session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
 
-    items = []
     scraped_items = []
 
     start_url = "https://deciem.com/on/demandware.store/Sites-deciem-global-Site/en_ES/Stores-FindStores?lat={}&long={}&radius=100&distanceUnit=mi"
@@ -61,7 +32,6 @@ def fetch_data():
         response = session.get(start_url.format(lat, lng), headers=hdr)
         data = json.loads(response.text)
         all_locations += data["stores"]
-
     for poi in all_locations:
         store_url = "https://deciem.com/es/find-us"
         location_name = poi["name"]
@@ -86,35 +56,36 @@ def fetch_data():
         latitude = poi["latitude"]
         longitude = poi["longitude"]
         hours_of_operation = "<MISSING>"
-
-        item = [
-            domain,
-            store_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip_code,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
         check = f"{location_name} {street_address}"
         if check not in scraped_items:
             scraped_items.append(check)
-            items.append(item)
-
-    return items
+            yield SgRecord(
+                locator_domain=domain,
+                page_url=store_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city.strip(),
+                state=state.strip(),
+                zip_postal=zip_code,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone.strip(),
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
 
 
-if __name__ == "__main__":
-    scrape()
+scrape()
