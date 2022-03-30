@@ -7,7 +7,7 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 logger = SgLogSetup().get_logger("lincoln_com")
-session = SgRequests()
+session = SgRequests(dont_retry_status_codes=([404]))
 headers = {
     "authority": "www.lincoln.com",
     "sec-ch-ua": '" Not A;Brand";v="99", "Chromium";v="99", "Google Chrome";v="99"',
@@ -30,7 +30,7 @@ def fetch_data():
 
     base_url = "https://www.lincoln.com"
     zipcodes = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA], expected_search_radius_miles=20
+        country_codes=[SearchableCountries.USA],
     )
     for zip_code in zipcodes:
         str_zip = str(zip_code)

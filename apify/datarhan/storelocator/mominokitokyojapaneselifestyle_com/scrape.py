@@ -60,6 +60,8 @@ def fetch_data():
             for day in all_days:
                 if day in e:
                     check = True
+                elif "am —" in e:
+                    check = True
             if not check:
                 break
             hoo.append(e)

@@ -84,6 +84,7 @@ def fetch_data():
         phone = phone.lstrip("Phone: ").strip()
         latitude = lat[j].strip()
         longitude = lng[j].split('",')[0].strip()
+        hours = hours.split("Delivery")[0].strip()
 
         yield SgRecord(
             locator_domain=DOMAIN,
