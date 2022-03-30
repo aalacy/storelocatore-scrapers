@@ -37,6 +37,7 @@ def get_hoo(j, _any=False):
 
 def clean_phone(text):
     text = str(text).replace("?", "")
+    start = text
     black_list = [",", ";", "/", "or", "mo", "cp", "-", "    "]
     for b in black_list:
         if b in text.lower():
@@ -47,6 +48,27 @@ def clean_phone(text):
         return SgRecord.MISSING
     if text.endswith(")"):
         text = "(".join(text.split("(")[:-1])
+
+    if len(text) < 6:
+        fixed = False
+        if ";" in start:
+            text = start.split(";")[0].strip()
+            fixed = True
+
+        if "/" in start:
+            text = start.split("/")[0].strip()
+            fixed = True
+
+        if "and" in start:
+            text = start.split("and")[0].strip()
+            fixed = True
+
+        if ":" in start:
+            text = start.split(":")[-1].strip()
+            fixed = True
+
+        if not fixed:
+            text = start
 
     return text
 
