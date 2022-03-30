@@ -63,7 +63,7 @@ def fetch_data():
                     hours = hoo_data[7:]
                     hoo = list(map(lambda d, h: d + " " + h, days, hours))
                     hoo = " ".join(hoo)
-                print(country)
+
                 item = SgRecord(
                     locator_domain=domain,
                     page_url=page_url,
