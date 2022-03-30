@@ -61,13 +61,17 @@ def fetch_data():
             )
             street = street.replace("None", "")
             link = loc["c_pagesURL"]
+
             try:
                 lat = loc["geocodedCoordinate"]["lat"]
                 longt = loc["geocodedCoordinate"]["long"]
             except:
                 lat = loc["yextDisplayCoordinate"]["lat"]
                 longt = loc["yextDisplayCoordinate"]["long"]
-            phone = loc["mainPhone"]["display"]
+            try:
+                phone = loc["mainPhone"]["display"]
+            except:
+                phone = "<MISSING>"
             try:
                 store = loc["facebookStoreId"]
             except:
