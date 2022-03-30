@@ -64,7 +64,7 @@ def parse_simon(location):
     )
     ooh = []
     for x in location[0]["hours"]:
-        if x["isClosed"] == False:
+        if x["isClosed"] is False:
             if x["startDayOfWeek"] == x["endDayOfWeek"]:
                 ooh.append(
                     x["startDayOfWeek"] + ": " + x["startTime"] + "-" + x["endTime"]
