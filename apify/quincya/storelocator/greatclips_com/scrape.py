@@ -39,7 +39,10 @@ def fetch_data(sgw: SgWriter):
         req = session.get(final_link, headers=headers)
         base = BeautifulSoup(req.text, "lxml")
         location_name = base.h1.text.strip()
-        street_address = base.find(itemprop="streetAddress")["content"]
+        try:
+            street_address = base.find(itemprop="streetAddress")["content"]
+        except:
+            continue
         city = base.find(class_="c-address-city").text.strip()
         state = base.find(itemprop="addressRegion").text.strip()
         zip_code = base.find(itemprop="postalCode").text.strip()
