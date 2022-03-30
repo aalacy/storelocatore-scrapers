@@ -10,27 +10,19 @@ from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 
 
 def fetch_data():
-    session = SgRequests()
+    session = SgRequests(verify_ssl=False)
     DOMAIN = "picturepeople.com"
     headers = {
         "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.83 Safari/537.36",
     }
-    import requests
-
-    session = requests.Session()
-    proxies = {"https": "127.0.0.1:24000", "http": "127.0.0.1:24000"}
     response = session.get(
         "https://tpp.mystratus.com/onlinebooking.aspx?loginoption=defaultnew",
         headers=headers,
-        proxies=proxies,
-        verify=False,
     )
     response = session.get(response.url, proxies=proxies, verify=False)
     response = session.get(
         "https://tpp.mystratus.com/22.05/OnlineBooking/verify.aspx?loginoption=defaultnew",
-        proxies=proxies,
-        verify=False,
     )
     dom = etree.HTML(response.text)
     viewstate = dom.xpath('//input[@name="__VIEWSTATE"]/@value')[0]
@@ -47,9 +39,7 @@ def fetch_data():
         "hdnTimeZone": "Europe/Madrid",
     }
     hdr = {"Content-Type": "application/x-www-form-urlencoded"}
-    response = session.post(
-        response.url, proxies=proxies, data=frm, verify=False, headers=hdr
-    )
+    response = session.post(response.url, data=frm, headers=hdr)
     dom = etree.HTML(response.text)
     viewstate = dom.xpath('//input[@name="__VIEWSTATE"]/@value')[0]
     viewgen = dom.xpath('//input[@name="__VIEWSTATEGENERATOR"]/@value')[0]
@@ -78,9 +68,7 @@ def fetch_data():
         me_boundary = me.boundary[2:]
         me_body = me.to_string()
         headers = {"Content-Type": "multipart/form-data; boundary=" + me_boundary}
-        response = session.post(
-            response.url, data=me_body, headers=headers, verify=False, proxies=proxies
-        )
+        response = session.post(response.url, data=me_body, headers=headers)
         dom = etree.HTML(response.text)
         viewstate = dom.xpath('//input[@name="__VIEWSTATE"]/@value')[0]
         viewgen = dom.xpath('//input[@name="__VIEWSTATEGENERATOR"]/@value')[0]
