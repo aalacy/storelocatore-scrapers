@@ -1,4 +1,5 @@
 import re
+import time
 import json
 import threading
 from sgselenium import SgChrome
@@ -54,7 +55,13 @@ def fetch_location(id, retry_count=0):
 
         with SgChrome(is_headless=True).driver() as driver:
             driver.get(url)
+
+            time.sleep(2)
             soup = BeautifulSoup(driver.page_source, "html.parser")
+
+            if "404 - File or directory not found." in soup.text:
+                logger.info(f"Failed to fetch: {id}")
+                return None
 
             result = json.loads(soup.pre.text)
 
