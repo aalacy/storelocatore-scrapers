@@ -1,80 +1,79 @@
-import csv
-
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 
-def write_output(data):
-    with open('data.csv', mode='w', encoding='utf8', newline='') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
-        writer.writerow(
-            ["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code",
-             "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
-    url = 'https://directauto.com/'
-
-    session = SgRequests()
-    headers = {'Accept': 'application/json'}
-
+def fetch_data(sgw: SgWriter):
     for i in range(0, 100000, 10):
-        r = session.get(f'https://local.directauto.com/search?q=&l=en&offset={i}', headers=headers)
-        js = r.json()['response']['entities']
+        r = session.get(
+            f"https://local.directauto.com/search?l=en&offset={i}", headers=headers
+        )
+        js = r.json()["response"]["entities"]
+
         for jj in js:
+            j = jj.get("profile")
+            a = j.get("address")
+            street_address = f"{a.get('line1')} {a.get('line2') or ''}".strip()
+            city = a.get("city")
+            location_name = j.get("name")
+            state = a.get("region")
+            postal = a.get("postalCode")
+            country_code = a.get("countryCode")
+            page_url = f'https://local.directauto.com/{jj.get("url")}'
+            phone = j.get("mainPhone", {}).get("display")
+            latitude = j.get("yextDisplayCoordinate", {}).get("lat")
+            longitude = j.get("yextDisplayCoordinate", {}).get("long")
 
-            j = jj.get('profile')
-            a = j.get('address')
-            locator_domain = url
-            street_address = f"{a.get('line1')} {a.get('line2') or ''}".strip() or '<MISSING>'
-            city = a.get('city') or '<MISSING>'
-            location_name = j.get('name')
-            state = a.get('region') or '<MISSING>'
-            postal = a.get('postalCode') or '<MISSING>'
-            country_code = a.get('countryCode') or '<MISSING>'
-            store_number = '<MISSING>'
-            page_url = f'https://local.directauto.com/{jj.get("url")}' or '<MISSING>'
-            phone = j.get('mainPhone', {}).get('display') or '<MISSING>'
-            latitude = j.get('yextDisplayCoordinate', {}).get('lat') or '<MISSING>'
-            longitude = j.get('yextDisplayCoordinate', {}).get('long') or '<MISSING>'
-            location_type = '<MISSING>'
-
-            hours = j.get('hours', {}).get('normalHours')
+            hours = j.get("hours", {}).get("normalHours")
             _tmp = []
             for h in hours:
-                day = h.get('day')
-                if not h.get('isClosed'):
-                    interval = h.get('intervals')
-                    start = str(interval[0].get('start'))
-                    if len(start) == 3:
-                        start = f'0{start}'
-                    end = str(interval[0].get('end'))
+                day = h.get("day")
+                if not h.get("isClosed"):
+                    interval = h.get("intervals")
+                    start = str(interval[0].get("start")).zfill(4)
+                    end = str(interval[0].get("end")).zfill(4)
                     line = f"{day[:3].capitalize()}: {start[:2]}:{start[2:]} - {end[:2]}:{end[2:]}"
                 else:
-                    line = f'{day[:3].capitalize()}: Closed'
+                    line = f"{day[:3].capitalize()}: Closed"
                 _tmp.append(line)
 
-            hours_of_operation = ';'.join(_tmp) or '<MISSING>'
-            if hours_of_operation.count('Closed') == 7:
-                hours_of_operation = 'Closed'
+            hours_of_operation = ";".join(_tmp)
 
-            row = [locator_domain, page_url, location_name, street_address, city, state, postal,
-                   country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation]
-            out.append(row)
+            row = SgRecord(
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=postal,
+                country_code=country_code,
+                latitude=latitude,
+                longitude=longitude,
+                phone=phone,
+                locator_domain=locator_domain,
+                hours_of_operation=hours_of_operation,
+            )
+
+            sgw.write_row(row)
+
         if len(js) < 10:
             break
 
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://directauto.com/"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:98.0) Gecko/20100101 Firefox/98.0",
+        "Accept": "application/json",
+        "Accept-Language": "ru,en-US;q=0.7,en;q=0.3",
+        "Referer": "https://local.directauto.com/search?q=",
+        "Connection": "keep-alive",
+        "Sec-Fetch-Dest": "empty",
+        "Sec-Fetch-Mode": "cors",
+        "Sec-Fetch-Site": "same-origin",
+    }
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        fetch_data(writer)
