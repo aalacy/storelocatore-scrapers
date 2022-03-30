@@ -11,6 +11,20 @@ from sgzip.dynamic import DynamicGeoSearch
 def fetch_data():
     session = SgRequests()
     domain = "birkenstock.com"
+    all_types = {
+        "US": {"1": "BIRKENSTOCK STORE", "2": "Authorized Retailer"},
+        "AT": {
+            "1": "Store",
+        },
+        "JP": {"1": "ビルケンシュトックショップ", "2": "ビルケンシュトック コーナー", "5": "POP-UP SHOP"},
+        "DK": {"1": "Store"},
+        "GB": {"1": "Store", "2": "Outlet"},
+        "DE": {"1": "Store", "2": "Outlet", "3": "Vertriebspartner"},
+        "IT": {"1": "Store"},
+        "FI": {},
+        "NL": {"1": "Store", "3": "Verkooppartner"},
+        "ES": {"1": "Store"},
+    }
     all_countries = {
         "US": "https://www.birkenstock.com/on/demandware.store/Sites-US-Site/en_US/Stores-GetStoresJson?latitude={}&longitude={}&latituderef={}&longituderef={}&storeid=&distance=100&distanceunit=mi&searchText=&countryCode=US&storeLocatorType=regular",
         "AT": "https://www.birkenstock.com/on/demandware.store/Sites-DE-Site/de_AT/Stores-GetStoresJson?latitude={}&longitude={}&latituderef={}&longituderef={}&storeid=&distance=100&distanceunit=km&searchText=&countryCode=AT&storeLocatorType=regular",
@@ -25,10 +39,16 @@ def fetch_data():
     }
     for country, url in all_countries.items():
         all_coords = DynamicGeoSearch(
-            country_codes=[country.lower()], expected_search_radius_miles=50
+            country_codes=[country.lower()], expected_search_radius_miles=30
         )
+        added = False
         for lat, lng in all_coords:
             data = session.get(url.format(lat, lng, lat, lng)).json()
+            if country == "US" and not added:
+                url = "https://www.birkenstock.com/on/demandware.store/Sites-US-Site/en_US/Stores-GetStoresJson?latitude=44.80903629923841&longitude=-2.6095184654691828&latituderef=40.724351&longituderef=-74.001120&storeid=&distance=2000&distanceunit=mi&searchText=&countryCode=US&storeLocatorType=regular"
+                data_2 = session.get(url).json()
+                data["stores"].update(data_2["stores"])
+                added = True
             for i, poi in data["stores"].items():
                 page_url = f"https://www.birkenstock.com/{country.lower()}/storelocator"
                 if country == "FI":
@@ -55,7 +75,7 @@ def fetch_data():
                     country_code=poi["countryCode"],
                     store_number=poi["id"],
                     phone=poi["phone"],
-                    location_type=poi["storeType"],
+                    location_type=all_types[country][str(poi["storeType"])],
                     latitude=poi["latitude"],
                     longitude=poi["longitude"],
                     hours_of_operation=hoo,
