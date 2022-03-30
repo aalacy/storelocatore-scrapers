@@ -37,12 +37,16 @@ def fetch_data():
         hoo = f"{mon}, {tue}, {wed}, {thu}, {fri}, {sat}, {sun}".replace(
             "Closed - Closed", "Closed"
         )
+        if poi["infoSup"] and poi["infoSup"].strip():
+            street_address = poi["rue"] + ", " + poi["infoSup"]
+        else:
+            street_address = poi["rue"]
 
         item = SgRecord(
             locator_domain=domain,
             page_url=poi["url"],
             location_name=poi["titre"],
-            street_address=poi["rue"] + ", " + poi["infoSup"],
+            street_address=street_address,
             city=poi["ville"].split(", ")[0],
             state=poi["ville"].split(", ")[-1],
             zip_postal=poi["codepostal"],
