@@ -213,7 +213,6 @@ def get_data(zipps, sgw: SgWriter):
                 store_number = "<MISSING>"
             if is_missing_hours:
                 hours_of_operation = "<MISSING>"
-            print(street_address)
 
             row = SgRecord(
                 locator_domain=base_url,
