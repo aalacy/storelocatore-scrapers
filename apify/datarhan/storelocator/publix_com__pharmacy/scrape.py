@@ -2,7 +2,6 @@
 import json
 import datetime
 from lxml import etree
-from pytest import Session
 
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
