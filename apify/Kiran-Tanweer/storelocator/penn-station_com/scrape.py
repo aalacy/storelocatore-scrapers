@@ -3,7 +3,7 @@ from sgrequests import SgRequests
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 from sglogging import SgLogSetup
 from sgscrape import sgpostal as parser
-from requests import exceptions  # noqa
+from requests import exceptions
 from urllib3 import exceptions as urllibException
 
 logger = SgLogSetup().get_logger("penn-station_com")
@@ -15,7 +15,7 @@ headers["Content-Type"] = "application/x-www-form-urlencoded"
 
 search = DynamicGeoSearch(
     country_codes=[SearchableCountries.CANADA, SearchableCountries.USA],
-    max_radius_miles=100,
+    max_search_distance_miles=100,
     max_search_results=15,
 )
 
