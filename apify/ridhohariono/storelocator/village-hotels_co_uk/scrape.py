@@ -68,7 +68,9 @@ def fetch_data():
         )
         street_address, _, state, _ = getAddress(raw_address)
         city = addr["data-city"].strip()
-        zip_postal = addr["data-zipcode"].strip()
+        zip_postal = addr["data-zipcode"] or MISSING
+        if zip_postal == MISSING:
+            zip_postal = raw_address.split(",")[-1].strip()
         street_address = re.sub(
             zip_postal, "", street_address, flags=re.IGNORECASE
         ).strip()
