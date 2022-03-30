@@ -4,4 +4,4 @@ sglogging==0.0.4
 sgscrape==0.2.9
 sgzip==0.10.15
 lxml==4.5.2
-tenacity
+tenacity==7.0.0
