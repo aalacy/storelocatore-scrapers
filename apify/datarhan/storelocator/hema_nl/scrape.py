@@ -19,7 +19,7 @@ def fetch_data():
         "NL": "https://www.hema.nl/on/demandware.store/Sites-HemaNL-Site/nl_NL/Stores-Load?start=0&count=1000&shipmentId=&isSunday=&mode=fullpage&services=&format=ajax&mode=fullpage",
         "BE": "https://www.hema.com/on/demandware.store/Sites-HemaBE-Site/nl_BE/Stores-Load?start=0&count=1000&shipmentId=&isSunday=&mode=fullpage&services=&format=ajax&mode=fullpage",
         "DE": "https://www.hema.com/on/demandware.store/Sites-HemaDE-Site/de_DE/Stores-Load?start=0&count=1000&shipmentId=&isSunday=&mode=fullpage&services=&format=ajax&mode=fullpage",
-        "FR": "https://www.hema.com/on/demandware.store/Sites-HemaFR-Site/fr_FR/Stores-Load?start=6&count=5&shipmentId=&isSunday=&mode=fullpage&services=&format=ajax&mode=fullpage",
+        "FR": "https://www.hema.com/on/demandware.store/Sites-HemaFR-Site/fr_FR/Stores-Load?start=0&count=1000&shipmentId=&isSunday=&mode=fullpage&services=&format=ajax&mode=fullpage",
     }
     page_urls = {
         "FR": "https://www.hema.com/fr-fr/magasins",
