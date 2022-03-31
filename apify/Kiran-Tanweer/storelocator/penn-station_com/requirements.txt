@@ -6,3 +6,4 @@ sgvalidator==0.0.71
 sgzip==0.10.15
 requests==2.25.0
 urllib3==1.26.2
+sgpostal==0.1.0

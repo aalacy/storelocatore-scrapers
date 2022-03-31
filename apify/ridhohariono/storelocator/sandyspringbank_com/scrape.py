@@ -77,7 +77,11 @@ def fetch_data():
         stores = bs(data, "lxml").find_all("marker")
         log.info(f"Found ({len(stores)}) locations with coord => {lat},{lng}")
         for row in stores:
-            location_name = row.find("title").text.strip()
+            location_name = (
+                row.find("title")
+                .text.replace("Please visit us at our new address.", "")
+                .strip()
+            )
             street_address = row.find("add1").text.strip()
             ctt = list(row.find("add2").stripped_strings)
             ct = ctt[0].split(",")
