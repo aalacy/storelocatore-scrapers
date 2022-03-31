@@ -49,7 +49,6 @@ def parse_json(soup, driver):
         ooh.append(day + ": " + time)
 
     ooh = ", ".join(ooh)
-    print(ooh)
     data["hours_of_operation"] = ooh
 
     return data
@@ -73,11 +72,9 @@ def fetch_data():
         ]
         stores.append("https://www.davidjones.com/newmarket")
         for store in stores:
-            store = "https://www.davidjones.com/stores/bourke-street-mall"
+            logger.info(f"Crawling: {store}")
             driver.get(store)
             soup2 = bs(driver.page_source, "html.parser")
-            with open("test.html", "w", encoding="utf-8") as output:
-                print(driver.page_source, file=output)
             i = parse_json(soup2, driver)
             yield i
 
