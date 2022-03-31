@@ -6,8 +6,6 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-session = SgRequests()
-
 
 headers = {
     "authority": "locations.fivebelow.com",
@@ -30,7 +28,7 @@ headers = {
 
 
 def fetch_data():
-
+    session = SgRequests()
     mylist = static_zipcode_list(radius=10, country_code=SearchableCountries.USA)
     for zip_code in mylist:
 
@@ -41,10 +39,18 @@ def fetch_data():
             + str(zip_code)
             + "&l=en"
         )
-
-        headers["path"] = url.replace("https://locations.fivebelow.com", "")
-        loclist = session.get(url, headers=headers).json()["response"]["entities"]
-
+        try:
+            headers["path"] = url.replace("https://locations.fivebelow.com", "")
+            loclist = session.get(url, headers=headers).json()["response"]["entities"]
+        except:
+            try:
+                session = SgRequests()
+                headers["path"] = url.replace("https://locations.fivebelow.com", "")
+                loclist = session.get(url, headers=headers).json()["response"][
+                    "entities"
+                ]
+            except:
+                continue
         for loc in loclist:
             loc = loc["profile"]
 
