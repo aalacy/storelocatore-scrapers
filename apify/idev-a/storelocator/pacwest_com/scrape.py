@@ -37,7 +37,7 @@ def fetch_data():
         for cookie in driver.get_cookies():
             cookies.append(f"{cookie['name']}={cookie['value']}")
         _headers["Cookie"] = "; ".join(cookies)
-        with SgRequests() as session:
+        with SgRequests(verify_ssl=False) as session:
             locations = session.get(base_url, headers=_headers).json()
             for _ in locations:
                 street_address = _["street"]

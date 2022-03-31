@@ -4,6 +4,7 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
+from sgpostal.sgpostal import International_Parser, parse_address
 from concurrent import futures
 
 
@@ -50,7 +51,12 @@ def get_data(coords, sgw: SgWriter):
             typee = t.get("reference_type")
             tmp_type.append(typee)
         location_type = ", ".join(tmp_type)
-        street_address = a.get("address") or "<MISSING>"
+        ad = a.get("address") or "<MISSING>"
+        b = parse_address(International_Parser(), ad)
+        street_address = (
+            f"{b.street_address_1} {b.street_address_2}".replace("None", "").strip()
+            or "<MISSING>"
+        )
         state = "<MISSING>"
         postal = a.get("zip") or "<MISSING>"
         country_code = "CL"
@@ -87,6 +93,7 @@ def get_data(coords, sgw: SgWriter):
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hours_of_operation,
+            raw_address=ad,
         )
 
         sgw.write_row(row)

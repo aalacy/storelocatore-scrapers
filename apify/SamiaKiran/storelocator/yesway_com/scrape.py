@@ -36,6 +36,12 @@ def fetch_data():
                 street_address = loc["address_line_1"] + " " + loc["address_line_2"]
             except:
                 street_address = loc["address_line_1"]
+            if "PO Box" in street_address:
+                try:
+                    street_address = street_address.split(",")[1]
+                except:
+                    street_address = street_address.split("PO Box")[0]
+            street_address = street_address.replace('"', "").replace("]", "")
             log.info(street_address)
             city = loc["city"]
             state = loc["state"]

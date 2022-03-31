@@ -1,13 +1,18 @@
-import usaddress
+import ssl
 from sglogging import sglog
 from bs4 import BeautifulSoup
-from sgselenium import SgChrome
-from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgselenium.sgselenium import SgChrome
+from selenium.webdriver.common.by import By
+from sgpostal.sgpostal import parse_address_intl
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-import ssl
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from selenium.webdriver.support.ui import WebDriverWait
+from webdriver_manager.chrome import ChromeDriverManager
+
+from selenium.webdriver.support import expected_conditions as EC
+
 
 try:
     _create_unverified_https_context = (
@@ -21,86 +26,112 @@ else:
 
 website = "genesishcc_com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
-session = SgRequests()
-headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-}
 
-DOMAIN = "https://genesishcc.com/"
+DOMAIN = "https://genesishcc.com"
 MISSING = SgRecord.MISSING
 
 
-def fetch_data():
-    with SgChrome() as driver:
-        log.info("Loading Page......")
-        url = "https://genesishcc.com/findlocations/"
-        driver.get(url)
-        loclist = driver.find_elements_by_css_selector("div.p-1.nano")
-        for loc in loclist:
-            page_url = loc.find_element_by_css_selector("a").get_attribute("href")
-            location_name = loc.find_element_by_css_selector("div.cI-title").text
-            address = loc.find_element_by_css_selector("div.cI-address").text.split(
-                "\n"
-            )
-            address = " ".join(x for x in address[:-1])
-            address = address.replace(",", " ")
-            address = usaddress.parse(address)
-            i = 0
-            street_address = ""
-            city = ""
-            state = ""
-            zip_postal = ""
-            while i < len(address):
-                temp = address[i]
-                if (
-                    temp[1].find("Address") != -1
-                    or temp[1].find("Street") != -1
-                    or temp[1].find("Recipient") != -1
-                    or temp[1].find("Occupancy") != -1
-                    or temp[1].find("BuildingName") != -1
-                    or temp[1].find("USPSBoxType") != -1
-                    or temp[1].find("USPSBoxID") != -1
-                ):
-                    street_address = street_address + " " + temp[0]
-                if temp[1].find("PlaceName") != -1:
-                    city = city + " " + temp[0]
-                if temp[1].find("StateName") != -1:
-                    state = state + " " + temp[0]
-                if temp[1].find("ZipCode") != -1:
-                    zip_postal = zip_postal + " " + temp[0]
-                i += 1
-            street_address = street_address.replace(
-                "Rating Not Currently Available", ""
-            )
-            log.info(page_url)
-            r = session.get(page_url, headers=headers)
-            soup = BeautifulSoup(r.text, "html.parser")
-            try:
-                phone = (
-                    soup.select_one("a[href*=tel]")
-                    .get_text(separator="|", strip=True)
-                    .replace("|", " ")
-                    .replace("Phone: ", "")
-                )
-            except:
-                phone = MISSING
+def get_driver(url, class_name, driver=None):
+    if driver is not None:
+        driver.quit()
 
-            yield SgRecord(
-                locator_domain=DOMAIN,
-                page_url=page_url,
-                location_name=location_name,
-                street_address=street_address.strip(),
-                city=city.strip(),
-                state=state.strip(),
-                zip_postal=zip_postal.strip(),
-                country_code="US",
-                store_number=MISSING,
-                phone=phone.strip(),
-                location_type=MISSING,
-                latitude=MISSING,
-                longitude=MISSING,
-                hours_of_operation=MISSING,
+    user_agent = (
+        "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:89.0) Gecko/20100101 Firefox/89.0"
+    )
+    x = 0
+    while True:
+        x = x + 1
+        try:
+            driver = SgChrome(
+                executable_path=ChromeDriverManager().install(),
+                user_agent=user_agent,
+                is_headless=True,
+            ).driver()
+            driver.get(url)
+
+            WebDriverWait(driver, 30).until(
+                EC.presence_of_element_located((By.CLASS_NAME, class_name))
             )
+            break
+        except Exception:
+            driver.quit()
+            if x == 10:
+                raise Exception(
+                    "Make sure this ran with a Proxy, will fail without one"
+                )
+            continue
+    return driver
+
+
+def fetch_data():
+    x = 0
+    while True:
+        x = x + 1
+        class_name = "nano"
+        url = "https://genesishcc.com/findlocations/"
+        if x == 1:
+            driver = get_driver(url, class_name)
+        else:
+            driver = get_driver(url, class_name, driver=driver)
+        soup = BeautifulSoup(driver.page_source, "html.parser")
+        loclist = soup.findAll("div", {"class": "nano"})
+        if len(loclist) == 0:
+            continue
+        else:
+            break
+    for loc in loclist:
+        page_url = DOMAIN + loc.find("a")["href"]
+        log.info(page_url)
+        location_name = loc.find("div", {"class": "cI-title"}).text
+        raw_address = (
+            loc.find("div", {"class": "cI-address"})
+            .get_text(separator="|", strip=True)
+            .replace("|", " ")
+        )
+
+        # Parse the address
+        pa = parse_address_intl(raw_address)
+
+        street_address = pa.street_address_1
+        street_address = street_address if street_address else MISSING
+
+        city = pa.city
+        city = city.strip() if city else MISSING
+
+        state = pa.state
+        state = state.strip() if state else MISSING
+
+        zip_postal = pa.postcode
+        zip_postal = zip_postal.strip() if zip_postal else MISSING
+        street_address = street_address.replace("Rating Not Currently Available", "")
+        driver.get(page_url)
+        soup = BeautifulSoup(driver.page_source, "html.parser")
+        try:
+            phone = (
+                soup.select_one("a[href*=tel]")
+                .get_text(separator="|", strip=True)
+                .replace("|", " ")
+                .replace("Phone: ", "")
+            )
+        except:
+            phone = MISSING
+        yield SgRecord(
+            locator_domain=DOMAIN,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address.strip(),
+            city=city.strip(),
+            state=state.strip(),
+            zip_postal=zip_postal.strip(),
+            country_code="US",
+            store_number=MISSING,
+            phone=phone.strip(),
+            location_type=MISSING,
+            latitude=MISSING,
+            longitude=MISSING,
+            hours_of_operation=MISSING,
+            raw_address=raw_address,
+        )
 
 
 def scrape():

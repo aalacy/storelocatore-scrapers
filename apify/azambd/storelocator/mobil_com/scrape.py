@@ -62,6 +62,7 @@ def request_with_retries(payload):
         latitude = store["Latitude"]
         longitude = store["Longitude"]
         page_url = f'https://www.exxon.com/en/find-station/exxon-{city.replace(" ", "").lower()}-{state.lower()}-{location_name.lower().replace(" ", "")}-{store_number}'
+        page_url = page_url.replace("#", "")
 
         hoo = ""
         if store["WeeklyOperatingHours"]:

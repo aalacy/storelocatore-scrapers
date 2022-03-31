@@ -5,6 +5,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
+from sgpostal.sgpostal import parse_address_intl
 
 
 def fetch_data():
@@ -14,13 +15,24 @@ def fetch_data():
     data = session.get(start_url)
     data = json.loads(data.text.replace("slw(", "")[:-1])
     for poi in data["stores"]:
+        if poi["filters"] != ["Cinnabon"]:
+            continue
         hoo = ""
-        raw_data = poi["data"]["address"].replace("\r\n", ", ").split(", ")
-        if len(raw_data) == 2:
-            raw_data.insert(1, "")
-        if len(raw_data) == 1:
-            raw_data.insert(0, "")
-            raw_data.insert(1, "")
+        raw_data = (
+            poi["data"]["address"].replace("\r\n", ", ").replace(",,", ",").split(", ")
+        )
+        raw_address = ", ".join(raw_data)
+        addr = parse_address_intl(raw_address)
+        street_address = addr.street_address_1
+        if addr.street_address_2:
+            street_address += ", " + addr.street_address_2
+        city = addr.city
+        zip_code = addr.postcode
+        if not zip_code:
+            zip_code = raw_address.split(",")[-1].strip()
+            if zip_code:
+                if len(zip_code.split()[-1]) > 3:
+                    zip_code = ""
 
         if poi["data"].get("hours_Monday"):
             mon = f'Monday: {poi["data"]["hours_Monday"]}'
@@ -36,10 +48,10 @@ def fetch_data():
             locator_domain=domain,
             page_url="https://www.cinnabon.uk/stores",
             location_name=poi["name"],
-            street_address=raw_data[0],
-            city=raw_data[1],
+            street_address=street_address,
+            city=city,
             state="",
-            zip_postal=raw_data[2],
+            zip_postal=zip_code,
             country_code="",
             store_number=poi["storeid"],
             phone=poi["data"].get("phone"),
@@ -47,6 +59,7 @@ def fetch_data():
             latitude=poi["data"]["map_lat"],
             longitude=poi["data"]["map_lng"],
             hours_of_operation=hoo,
+            raw_address=raw_address,
         )
 
         yield item

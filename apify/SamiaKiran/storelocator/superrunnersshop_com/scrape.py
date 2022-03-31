@@ -85,7 +85,7 @@ def fetch_data():
             country_code = "US"
             yield SgRecord(
                 locator_domain=DOMAIN,
-                page_url=DOMAIN,
+                page_url="https://www.powr.io/map/u/3d9b67a5_1603318064",
                 location_name=location_name,
                 street_address=street_address.strip(),
                 city=city.strip(),
