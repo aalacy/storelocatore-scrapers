@@ -107,7 +107,26 @@ def try_again(session, url):
     response = SgRequests.raise_on_err(session.get(url, headers=headers))
     return response.json()
 
-
+def fetch_data():
+    with SgChrome() as driver:
+        driver.get("https://www.radissonhotels.com/en-us/destination")
+        locator = WebDriverWait(driver, 10).until(  # noqa
+            EC.visibility_of_element_located(
+                (
+                    By.XPATH,
+                    "/html/body/main/section/div/div/div/div/p/p/a",
+                )
+            )
+        )  # noqa
+        time.sleep(15)
+        time.sleep(5)
+        reqs = list(driver.requests)
+        logzilla.info(f"Length of driver.requests: {len(reqs)}")
+        for r in reqs:
+            x = r.url
+            logzilla.info(x)
+            if "zimba" in x and "hotels?" in x:
+                son = json.loads(r.response.body)
 def fetch_data(index: int, url: str, headers, session) -> dict:
     data = {}
     if len(url) > 0:
@@ -163,75 +182,6 @@ def fetch_data(index: int, url: str, headers, session) -> dict:
     return data
 
 
-def get_brand2(brand_code, brand_name, url, url2, session):
-    headers = {}
-    headers["accept"] = "application/json, text/plain, */*"
-    headers["accept-encoding"] = "gzip, deflate, br"
-    headers["accept-language"] = "en-us"
-    headers["cache-control"] = "no-cache"
-    headers["pragma"] = "no-cache"
-    headers["referer"] = str(url) + "/en-us/destination"
-    headers[
-        "sec-ch-ua"
-    ] = '" Not A;Brand";v="99", "Chromium";v="99", "Google Chrome";v="99"'
-    headers["sec-ch-ua-mobile"] = "?0"
-    headers["sec-ch-ua-platform"] = '"Windows"'
-    headers["sec-fetch-dest"] = "empty"
-    headers["sec-fetch-mode"] = "cors"
-    headers["sec-fetch-site"] = "same-origin"
-    headers[
-        "user-agent"
-    ] = "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.51 Safari/537.36"
-    son = get_main(str(url + url2 + brand_code), headers, session)
-    results = []
-    total_records = len(son["hotels"])
-    global EXPECTED_TOTAL
-    EXPECTED_TOTAL += total_records
-    for index, record in enumerate(son["hotels"]):
-        z = fetch_data(index, record["overviewPath"], headers, session)
-        results.append(
-            {
-                "main": son["hotels"][z["index"]],
-                "sub": z,
-                "@type": brand_name,
-            }
-        )
-    return results
-
-
-def get_brand(brand_code, brand_name, url, url2, session):
-
-    headers = {}
-    headers["authority"] = str(url).replace("https://", "")
-    headers["method"] = "GET"
-    headers["path"] = "/zimba-api/destinations/hotels?brand=" + brand_code
-    headers["scheme"] = "https"
-    headers["accept"] = "application/json, text/plain, */*"
-    headers["accept-encoding"] = "gzip, deflate, br"
-    headers["accept-language"] = "en-us"
-    headers["referer"] = str("{}/en-us/destination").format(url)
-    headers["sec-fetch-dest"] = "empty"
-    headers["sec-fetch-mode"] = "cors"
-    headers["sec-fetch-site"] = "same-origin"
-    headers[
-        "user-agent"
-    ] = "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36"
-
-    son = get_main(str(url + url2 + brand_code), headers, session)
-    results = []
-    total_records = len(son["hotels"])
-    global EXPECTED_TOTAL
-    EXPECTED_TOTAL += total_records
-    for index, record in enumerate(son["hotels"]):
-        z = fetch_data(index, record["overviewPath"], headers, session)
-        results.append(
-            {
-                "main": son["hotels"][z["index"]],
-                "sub": z,
-                "@type": brand_name,
-            }
-        )
-    return results
 
 
 def clean_record(k):
