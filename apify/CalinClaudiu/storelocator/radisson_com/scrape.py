@@ -310,7 +310,6 @@ def initial(driver, url, state):
         logzilla.info(f"Length of driver.requests: {len(reqs)}")
         for r in reqs:
             x = r.url
-            # logzilla.info(x)
             if "zimba" in x and "hotels?" in x:
                 son = json.loads(r.response.body)
                 for item in son["hotels"]:
