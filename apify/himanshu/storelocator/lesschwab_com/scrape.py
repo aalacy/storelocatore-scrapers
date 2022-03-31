@@ -73,9 +73,12 @@ def fetch_data():
                 except:
                     phone = ""
                 if not phone:
-                    phone = loc_dom.xpath(
-                        '//ul[@class="storeDetails__contact"]//li//span/text()'
-                    )[0]
+                    try:
+                        phone = loc_dom.xpath(
+                            '//ul[@class="storeDetails__contact"]//li//span/text()'
+                        )[0]
+                    except:
+                        phone = MISSING
                 if raw_address:
                     raw_address = raw_address[0].strip().split(", ")
                     city = raw_address[0]
