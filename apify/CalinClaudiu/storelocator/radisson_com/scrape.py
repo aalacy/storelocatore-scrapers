@@ -6,7 +6,6 @@ from sgselenium import SgChrome
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.common.keys import Keys
 import time
 import ssl
 from sgscrape.pause_resume import SerializableRequest, CrawlStateSingleton
@@ -334,7 +333,7 @@ def data_fetcher(session, state):
         k["main"] = next_r.context
         k["sub"] = get_subpage(session, next_r.url)
         try:
-            k["sub"]["requrl"] = rec["sub"]["requrl"]
+            k["sub"]["requrl"] = k["sub"]["requrl"]
         except Exception:
             k["sub"]["requrl"] = next_r.url
         k = clean_record(k)
