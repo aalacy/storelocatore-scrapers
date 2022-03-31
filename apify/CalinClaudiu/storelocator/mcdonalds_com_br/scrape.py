@@ -10,6 +10,17 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.keys import Keys
 import time
+import ssl
+
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
+
 
 logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
 
@@ -134,7 +145,7 @@ def fetch_for_real(data, session):
     country, url = fix_data(data[0])
     search = DynamicGeoSearch(
         country_codes=[country.lower()],
-        expected_search_radius_miles=100,
+        expected_search_radius_miles=8,
     )
     for coord in search:
         for item in fetch_point(url.format(*coord), data[1], session):
@@ -173,6 +184,7 @@ def scrape():
         location_name=sp.MappingField(
             mapping=["name"],
             is_required=False,
+            part_of_record_identity=True,
         ),
         latitude=sp.MappingField(
             mapping=["latitude"],
@@ -186,6 +198,7 @@ def scrape():
         ),
         street_address=sp.MappingField(
             mapping=["address"],
+            part_of_record_identity=True,
         ),
         city=sp.MappingField(mapping=["city"], is_required=False),
         state=sp.MappingField(mapping=["neighborhood"], is_required=False),

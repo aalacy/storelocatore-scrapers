@@ -50,13 +50,13 @@ def fetch_data():
     }
     all_locations = []
     ca_codes = DynamicGeoSearch(
-        country_codes=[SearchableCountries.CANADA], max_radius_miles=100
+        country_codes=[SearchableCountries.CANADA], max_search_distance_miles=100
     )
     uk_codes = DynamicGeoSearch(
-        country_codes=[SearchableCountries.BRITAIN], max_radius_miles=50
+        country_codes=[SearchableCountries.BRITAIN], max_search_distance_miles=50
     )
     us_codes = DynamicGeoSearch(
-        country_codes=[SearchableCountries.USA], max_radius_miles=100
+        country_codes=[SearchableCountries.USA], max_search_distance_miles=100
     )
     all_countries = {"CA": ca_codes, "US": us_codes, "UK": uk_codes}
     for country_code, coordinates in all_countries.items():

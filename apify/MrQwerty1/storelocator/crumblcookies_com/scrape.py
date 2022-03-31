@@ -1,96 +1,66 @@
-import csv
-import json
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
-    locator_domain = "https://crumblcookies.com/"
-    api_url = "https://backend.crumbl.com/graphql/"
-    data = {
-        "query": "\n query StoresPage {\n allActiveStores {\n name\n city\n slug\n street\n zip\n state\n storeId\n email\n phone\n address\n latitude\n longitude\n storeHours {\n description\n }\n deliveryHours {\n description\n }\n }\n }\n "
-    }
-
-    session = SgRequests()
-    r = session.post(api_url, data=json.dumps(data))
-    js = r.json()["data"]["allActiveStores"]
-    states = {"TX", "MO", "WI", "UT"}
+def fetch_data(sgw: SgWriter):
+    api = "https://crumblcookies.com/_next/data/oMoph6vq1lN5_-O8x_HJw/en/stores.json"
+    r = session.get(api, headers=headers)
+    js = r.json()["pageProps"]["stores"]
 
     for j in js:
-        city = j.get("city") or "<MISSING>"
-        state = j.get("state") or "<MISSING>"
-        postal = j.get("zip")
-        street_address = j.get("street")
-        for s in states:
-            if s in street_address:
-                street_address = street_address.split(s)[0].strip()
-            if street_address[-1] == ",":
-                street_address = street_address[:-1]
+        raw_address = j.get("address") or ""
+        city = j.get("city") or ""
+        state = j.get("state")
+        postal = raw_address.split()[-1]
+        street_address = raw_address.split(f", {city}")[0]
+        if postal in street_address:
+            street_address = street_address.split(city)[0].strip()
+
         country_code = "US"
-        store_number = j.get("storeId").replace(":Store", "")
-        page_url = f'https://crumblcookies.com/{j.get("slug")}'
         location_name = j.get("name")
-        phone = j.get("phone") or "<MISSING>"
-        latitude = j.get("latitude") or "<MISSING>"
-        longitude = j.get("longitude") or "<MISSING>"
-        location_type = "<MISSING>"
-        hours = j.get("storeHours") or {}
-        hours_of_operation = hours.get("description") or "<INACCESSIBLE>"
+        slug = j.get("slug")
+        page_url = f"{locator_domain}{slug}"
+        phone = j.get("phone") or ""
+        phone = phone.replace("`", "").strip()
+        if ":" in phone:
+            phone = phone.split(":")[-1].strip()
+        if "moore" in phone:
+            phone = phone.split("moore")[0].strip()
+        latitude = j.get("latitude")
+        longitude = j.get("longitude")
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
+        try:
+            hours_of_operation = j["storeHours"]["description"]
+        except KeyError:
+            hours_of_operation = SgRecord.MISSING
 
-    return out
+        row = SgRecord(
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            latitude=latitude,
+            longitude=longitude,
+            phone=phone,
+            locator_domain=locator_domain,
+            hours_of_operation=hours_of_operation,
+            raw_address=raw_address,
+        )
 
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://crumblcookies.com/"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:97.0) Gecko/20100101 Firefox/97.0",
+    }
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        fetch_data(writer)

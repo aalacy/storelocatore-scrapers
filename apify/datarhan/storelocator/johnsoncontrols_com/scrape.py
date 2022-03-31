@@ -58,7 +58,7 @@ def fetch_data():
 
     all_coordinates = DynamicGeoSearch(
         country_codes=[SearchableCountries.USA, SearchableCountries.CANADA],
-        max_radius_miles=50,
+        max_search_distance_miles=50,
         max_search_results=None,
     )
     for coord in all_coordinates:
