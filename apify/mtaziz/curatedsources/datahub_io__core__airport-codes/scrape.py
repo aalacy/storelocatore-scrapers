@@ -128,6 +128,13 @@ def fetch_records(idx, row, sgw: SgWriter):
 
     logger.info(f"[{idx}] => {street_address} | {city} | {state} | {zip_postal} | {cc}")
     storeid = row["iata_code"]
+
+    # location name to be copied to street_address
+    # if street_address having <MISSING>
+    if "<MISSING>" in street_address:
+        street_address = location_name
+    if not street_address:
+        street_address = location_name
     item = SgRecord(
         locator_domain=DOMAIN,
         page_url=page_url,
@@ -164,16 +171,43 @@ def fetch_data(sgw: SgWriter):
 
     df_filter_zero = df_filter_dash[(df_filter_dash["iata_code"].astype(str) != "0")]
     df_filter_zero = df_filter_zero.reset_index(drop=True)
-    df_chunk1000 = df_filter_zero[0:50]
-
+    country_code_and_ap_count = [
+        ("AU", "605"),
+        ("BR", "333"),
+        ("CA", "495"),
+        ("CN", "262"),
+        ("CO", "149"),
+        ("ID", "233"),
+        ("IN", "138"),
+        ("PG", "381"),
+        ("RU", "209"),
+        ("US", "2031"),
+    ]
     logger.info(
-        f"Airports Data is ready to be used!! << Total Store Count: {df_chunk1000.shape[0]}>>"
+        f"Country Code and Corresponding Num of Airports in a region: {country_code_and_ap_count}"
     )
+
+    df10countries = df_filter_zero[
+        (df_filter_zero["iso_country"] == "AU")
+        | (df_filter_zero["iso_country"] == "BR")
+        | (df_filter_zero["iso_country"] == "CA")
+        | (df_filter_zero["iso_country"] == "CN")
+        | (df_filter_zero["iso_country"] == "CO")
+        | (df_filter_zero["iso_country"] == "ID")
+        | (df_filter_zero["iso_country"] == "IN")
+        | (df_filter_zero["iso_country"] == "PG")
+        | (df_filter_zero["iso_country"] == "RU")
+        | (df_filter_zero["iso_country"] == "US")
+    ]
+    logger.info(
+        f"Airports Data is ready to be used!! << Total Store Count: {df10countries.shape[0]}>>"
+    )
+
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
         tasks = []
         store_data = [
             executor.submit(fetch_records, storenum, row, sgw)
-            for storenum, row in df_chunk1000.iterrows()
+            for storenum, row in df10countries.iterrows()
         ]
         tasks.extend(store_data)
         for future in as_completed(tasks):
