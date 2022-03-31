@@ -87,7 +87,6 @@ def fetch_data():
                     )
                 )
                 hoo = " ".join(hoo).replace("By Appointment Only", "").strip()
-            print(hoo)
             store_number = loc_dom.xpath("//div[@data-store-id]/@data-store-id")[0]
             log.info("Append {} => {}".format(location_name, street_address))
             yield SgRecord(
