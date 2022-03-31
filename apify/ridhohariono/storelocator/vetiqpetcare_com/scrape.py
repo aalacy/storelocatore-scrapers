@@ -43,7 +43,7 @@ def fetch_data():
         data = session.get(search_url, headers=HEADERS).json()
         for row in data["data"]:
             location_name = row["name"]
-            street_address = row["street"]
+            street_address = row["street"].strip().rstrip(",")
             city = row["city"]
             state = row["state"]
             zip_postal = row["zip"]
@@ -68,7 +68,7 @@ def fetch_data():
             country_code = "US"
             latitude = row["latLng"][0]
             longitude = row["latLng"][1]
-            location_type = MISSING
+            location_type = row["brand"]["name"]
             log.info("Append {} => {}".format(location_name, street_address))
             yield SgRecord(
                 locator_domain=DOMAIN,
