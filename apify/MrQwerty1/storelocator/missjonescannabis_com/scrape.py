@@ -1,58 +1,53 @@
-from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
-from sgscrape.sgpostal import parse_address, International_Parser
-
-
-def get_international(line):
-    adr = parse_address(International_Parser(), line)
-    street_address = f"{adr.street_address_1} {adr.street_address_2 or ''}".replace(
-        "None", ""
-    ).strip()
-    city = adr.city or ""
-    state = adr.state or SgRecord.MISSING
-    postal = adr.postcode
-
-    return street_address, city, state, postal
-
-
-def get_additional(page_url):
-    r = session.get(page_url, headers=headers)
-    tree = html.fromstring(r.text)
-
-    _tmp = []
-    hours = tree.xpath("//ul[@class='location-hours']/li")
-    for h in hours:
-        day = "".join(h.xpath("./div[1]/text()")).strip()
-        inter = "".join(h.xpath("./div[2]/text()")).strip()
-        _tmp.append(f"{day}: {inter}")
-    phone = "".join(tree.xpath("//a[contains(@href, 'tel:')]/text()")).strip()
-    if tree.xpath("//strong[contains(text(), 'COMING SOON')]"):
-        _tmp.append("Coming Soon")
-
-    return phone, ";".join(_tmp)
 
 
 def fetch_data(sgw: SgWriter):
-    r = session.get(locator_domain, headers=headers)
-    tree = html.fromstring(r.text)
+    api = "https://locations-service.api.unoapp.io/clients/businesses/f03251d1-ba69-4d0c-a1de-c2e0f734c48e/locations/search/nearby"
+    r = session.get(api, headers=headers, params=params)
+    js = r.json()["payload"]
 
-    divs = tree.xpath("//li[@class='location-list-item']")
-    for d in divs:
-        location_name = "".join(
-            d.xpath(".//div[@class='location-list-item-name']/a/text()")
-        ).strip()
-        page_url = "".join(d.xpath(".//div[@class='location-list-item-name']/a/@href"))
-        raw_address = "".join(d.xpath(".//address/text()")).strip()
-        street_address, city, state, postal = get_international(raw_address)
-        if state == SgRecord.MISSING and "-on/" in page_url:
-            state = "ON"
-        latitude = "".join(d.xpath("./@data-lat"))
-        longitude = "".join(d.xpath("./@data-lng"))
-        phone, hours_of_operation = get_additional(page_url)
+    for j in js:
+        a = j.get("address") or {}
+        raw_address = a.get("formatted_address") or ""
+        adr1 = a.get("address_line_1") or ""
+        adr2 = a.get("address_line_2") or ""
+        street_address = f"{adr1} {adr2}".strip()
+        city = a.get("city")
+        state = raw_address.split(", ")[-2].split()[0]
+        postal = a.get("postal_code")
+        country_code = "CA"
+        store_number = j.get("id")
+        location_name = j.get("display_name")
+        slug = adr1.replace(" ", "-").lower()
+        page_url = f"https://missjonescannabis.com/outposts/{slug}"
+        latitude = a.get("latitude")
+        longitude = a.get("longitude")
+
+        phone = SgRecord.MISSING
+        details = j.get("contact_details") or []
+        for d in details:
+            if d.get("type") == "phone":
+                phone = d.get("value")
+                break
+
+        _tmp = []
+        hours = j.get("hours_of_operation") or []
+        for h in hours:
+            day = h.get("day_name")
+            start = str(h.get("open_time")).rsplit(":00", 1).pop(0)
+            end = str(h.get("close_time")).rsplit(":00", 1).pop(0)
+            if start == end:
+                _tmp.append(f"{day}: Closed")
+                continue
+            _tmp.append(f"{day}: {start}-{end}")
+
+        hours_of_operation = ";".join(_tmp)
+        if hours_of_operation.count("Closed") == 7:
+            page_url = page_url.replace("/outposts/", "/shop/")
 
         row = SgRecord(
             page_url=page_url,
@@ -61,13 +56,14 @@ def fetch_data(sgw: SgWriter):
             city=city,
             state=state,
             zip_postal=postal,
-            country_code="CA",
-            phone=phone,
+            country_code=country_code,
             latitude=latitude,
             longitude=longitude,
-            locator_domain=locator_domain,
+            phone=phone,
+            store_number=store_number,
             hours_of_operation=hours_of_operation,
             raw_address=raw_address,
+            locator_domain=locator_domain,
         )
 
         sgw.write_row(row)
@@ -75,17 +71,33 @@ def fetch_data(sgw: SgWriter):
 
 if __name__ == "__main__":
     locator_domain = "https://missjonescannabis.com/"
+
     headers = {
-        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:96.0) Gecko/20100101 Firefox/96.0",
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:98.0) Gecko/20100101 Firefox/98.0",
+        "Accept": "application/json, text/plain, */*",
         "Accept-Language": "ru,en-US;q=0.7,en;q=0.3",
+        "Accept-Encoding": "gzip, deflate, br",
+        "api-token": "b09172c4e50751f49bf00180aa0cd3b7b24d3f0e",
+        "auth-token": "",
+        "Origin": "https://budler.ca",
         "Connection": "keep-alive",
-        "Upgrade-Insecure-Requests": "1",
-        "Sec-Fetch-Dest": "document",
-        "Sec-Fetch-Mode": "navigate",
+        "Referer": "https://budler.ca/",
+        "Sec-Fetch-Dest": "empty",
+        "Sec-Fetch-Mode": "cors",
         "Sec-Fetch-Site": "cross-site",
-        "Cache-Control": "max-age=0",
-        "TE": "trailers",
+    }
+
+    params = {
+        "lat": "41.6284672",
+        "long": "41.6120832",
+        "radius": "500000",
+        "operation_hours": "true",
+        "address": "true",
+        "contact_details": "true",
+        "settings": "true",
+        "images": "true",
+        "delivery_hours": "false",
+        "timeslots": "false",
     }
     session = SgRequests()
     with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:

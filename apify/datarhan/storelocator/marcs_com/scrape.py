@@ -1,44 +1,22 @@
-import re
-import csv
 from lxml import etree
 from urllib.parse import urljoin
-from tqdm import tqdm
 from tenacity import retry, stop_after_attempt
 from sgrequests import SgRequests
+from sglogging import sglog
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
+import re
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+DOMAIN = "marcs.com"
 
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+MISSING = "<MISSING>"
+log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
 
-
-session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
+session = SgRequests()
 
 
 @retry(stop=stop_after_attempt(3))
@@ -65,12 +43,7 @@ def post(url, data):
 
 def fetch_data():
     # Your scraper here
-
-    items = []
-
-    DOMAIN = "marcs.com"
     start_url = "https://www.marcs.com/Store-Finder"
-
     response = get(start_url)
     dom = etree.HTML(response.text)
     viewstate = dom.xpath('//input[@id="__VIEWSTATE"]/@value')[0]
@@ -82,7 +55,7 @@ def fetch_data():
         max_radius_miles=50,
         max_search_results=None,
     )
-    for code in tqdm(all_codes):
+    for code in all_codes:
         formdata = {
             "manScript": "p$lt$ctl04$pageplaceholder$p$lt$ctl03$Locations$UpdatePanel1|p$lt$ctl04$pageplaceholder$p$lt$ctl03$Locations$submit",
             "__EVENTTARGET": "",
@@ -109,11 +82,10 @@ def fetch_data():
         viewstate = dom.xpath('//input[@id="__VIEWSTATE"]/@value')[0]
         viewgen = dom.xpath('//input[@id="__VIEWSTATEGENERATOR"]/@value')[0]
 
-    for url in tqdm(list(set(all_locations))):
+    for url in list(set(all_locations)):
         store_url = urljoin(start_url, url)
         loc_response = get(store_url)
         loc_dom = etree.HTML(loc_response.text)
-
         location_name = loc_dom.xpath('//h1[@class="display-text"]/text()')
         location_name = location_name[0] if location_name else "<MISSING>"
         address_raw = loc_dom.xpath('//div[@class="col-half sm-col-full"]/p/text()')
@@ -137,32 +109,45 @@ def fetch_data():
         hours_of_operation = (
             " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
         )
-
-        item = [
-            DOMAIN,
-            store_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip_code,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-
-        items.append(item)
-
-    return items
+        log.info("Append {} => {}".format(location_name, street_address))
+        yield SgRecord(
+            locator_domain=DOMAIN,
+            page_url=store_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zip_code,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+        )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    log.info("start {} Scraper".format(DOMAIN))
+    count = 0
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.PAGE_URL,
+                    SgRecord.Headers.LOCATION_NAME,
+                    SgRecord.Headers.STREET_ADDRESS,
+                }
+            )
+        )
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
 
 
 if __name__ == "__main__":

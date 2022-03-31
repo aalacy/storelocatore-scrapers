@@ -118,7 +118,7 @@ def fetch_data():
                 hours_of_operation=hours_of_operation,
                 raw_address=raw_address,
             )
-            break
+
         else:
             store_sel = lxml.html.fromstring(store_req.text)
             location_name = "".join(
