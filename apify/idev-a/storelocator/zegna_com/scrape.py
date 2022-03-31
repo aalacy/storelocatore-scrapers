@@ -42,7 +42,6 @@ def fetch_data():
                 json_url.format(c_code, c_code, c_lang), headers=_headers
             ).json()
             logger.info(f"{c_code}, {len(locations)}")
-            open("w.out", "a").write(f"{c_code}, {len(locations)} \n")
             for _ in locations:
                 _city = "-".join(_["CITY"].strip().split(" "))
                 _address = "-".join(_["ADDRESS"].strip().split(" ")).replace("#", "")
