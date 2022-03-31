@@ -39,7 +39,7 @@ def fetch_data():
                 city = city[:-1]
             state = raw_data[2]
             zip_code = raw_data[3]
-            phone = loc_dom.xpath('//div[@class="wpsl-contact-details"]/span/text()')
+            phone = loc_dom.xpath('//div[@class="wpsl-contact-details"]//a/text()')
             phone = phone[0] if phone else ""
             geo = (
                 loc_dom.xpath("//iframe/@src")[0]
@@ -59,7 +59,7 @@ def fetch_data():
                 city=city,
                 state=state,
                 zip_postal=zip_code,
-                country_code="",
+                country_code="United States",
                 store_number="",
                 phone=phone,
                 location_type="",

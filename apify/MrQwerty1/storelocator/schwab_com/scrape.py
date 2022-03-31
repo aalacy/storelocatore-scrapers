@@ -39,6 +39,7 @@ def get_data(page_url, sgw: SgWriter):
         "//p[@id='ctl00_wpMngr_BranchDetail_BranchDetails_brAddress']/text()"
     )
     line = list(filter(None, [l.strip() for l in line]))
+
     street_address = line.pop(0)
     csz = line.pop()
     city = csz.split(",")[0].strip()
@@ -55,6 +56,13 @@ def get_data(page_url, sgw: SgWriter):
         _tmp.append(" ".join(t.xpath("./td/text()")).strip())
 
     hours_of_operation = ";".join(_tmp)
+    isclosed = tree.xpath("//p[contains(text(), 'temporarily closed')]")
+    if isclosed:
+        hours_of_operation = "Temporarily Closed"
+
+    iscoming = tree.xpath("//p[contains(text(), 'Coming soon')]")
+    if iscoming:
+        hours_of_operation = "Coming Soon"
 
     row = SgRecord(
         page_url=page_url,

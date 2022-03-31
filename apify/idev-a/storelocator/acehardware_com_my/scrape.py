@@ -61,7 +61,7 @@ def fetch_data():
                 latitude=coord["latitude"],
                 longitude=coord["longitude"],
                 locator_domain=locator_domain,
-                hours_of_operation=hours,
+                hours_of_operation=hours.replace("Operation Hours:", "").strip(),
                 raw_address=raw_address,
             )
 

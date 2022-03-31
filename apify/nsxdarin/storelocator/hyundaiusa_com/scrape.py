@@ -42,7 +42,7 @@ def fetch_data():
         r = session.get(url, headers=headers)
         if r.encoding is None:
             r.encoding = "utf-8"
-        for line in r.iter_lines(decode_unicode=True):
+        for line in r.iter_lines():
             if '{"cobaltDealerURL":"' in line:
                 items = line.split('{"cobaltDealerURL":"')
                 for item in items:

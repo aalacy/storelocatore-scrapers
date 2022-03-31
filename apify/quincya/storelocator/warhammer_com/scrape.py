@@ -1,86 +1,34 @@
-import csv
 import json
 import re
-import time
+import ssl
 
 from bs4 import BeautifulSoup
 
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support import expected_conditions as ec
-from selenium.webdriver.support.ui import WebDriverWait
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-from sgselenium import SgChrome
+from sgselenium.sgselenium import SgChrome
 
 URL = "https://www.games-workshop.com/"
 
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+ssl._create_default_https_context = ssl._create_unverified_context
 
 
-def fetch_data():
+def fetch_data(sgw: SgWriter):
 
-    # store data
-    locations_ids = []
-    locations_titles = []
-    street_addresses = []
-    cities = []
-    store_type_list = []
-    states = []
-    zip_codes = []
-    latitude_list = []
-    longitude_list = []
-    phone_numbers = []
-    hours = []
-    countries = []
-    stores = []
-    links = []
-
-    data = []
-    seen = []
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
+    driver = SgChrome(user_agent=user_agent).driver()
 
     base_links = [
         "https://www.games-workshop.com/en-US/store/fragments/resultsJSON.jsp?latitude=40.2475923&radius=20000&longitude=-77.03341790000002",
         "https://www.games-workshop.com/en-GB/store/fragments/resultsJSON.jsp?latitude=53.2362&radius=500&longitude=-1.42718",
     ]
 
-    driver = SgChrome().driver()
-    time.sleep(2)
-
     for base_link in base_links:
+
         driver.get(base_link)
-
-        WebDriverWait(driver, 30).until(
-            ec.presence_of_element_located((By.TAG_NAME, "body"))
-        )
-        time.sleep(5)
-
         base = BeautifulSoup(driver.page_source, "lxml")
         stores = json.loads(base.text)["locations"]
         for store in stores:
@@ -96,11 +44,6 @@ def fetch_data():
 
             # Country
             country = store["country"] if "country" in store.keys() else "<MISSING>"
-            if country not in ["CA", "US", "GB"]:
-                if "county" in store.keys():
-                    country = "GB"
-                else:
-                    continue
 
             # Name
             location_title = (
@@ -115,12 +58,10 @@ def fetch_data():
 
             street_address = (re.sub(" +", " ", street_address)).strip()
 
-            try:
-                digit = re.search(r"\d", street_address).start(0)
-                if digit != 0:
-                    street_address = street_address[digit:]
-            except:
-                pass
+            if re.search(r"\d", street_address):
+                digit = str(re.search(r"\d", street_address))
+                start = int(digit.split("(")[1].split(",")[0])
+                street_address = street_address[start:]
 
             # State
             state = store["state"] if "state" in store.keys() else "<MISSING>"
@@ -139,9 +80,6 @@ def fetch_data():
             )
             if len(zipcode) == 4:
                 zipcode = "0" + zipcode
-
-            if country == "GB" and " " not in zipcode:
-                continue
 
             # store type
             store_type = "<MISSING>"
@@ -171,78 +109,26 @@ def fetch_data():
                 "https://www.games-workshop.com/en-" + country + "/" + store["seoUrl"]
             )
 
-            # Store data
-            locations_ids.append(location_id)
-            store_type_list.append(store_type)
-            locations_titles.append(location_title)
-            street_addresses.append(street_address)
-            states.append(state)
-            zip_codes.append(zipcode)
-            hours.append(hour)
-            latitude_list.append(lat)
-            longitude_list.append(lon)
-            phone_numbers.append(phone)
-            cities.append(city)
-            countries.append(country)
-            links.append(link)
-
-    for (
-        link,
-        locations_title,
-        street_address,
-        city,
-        state,
-        zipcode,
-        phone_number,
-        latitude,
-        longitude,
-        hour,
-        location_id,
-        country,
-        store_type,
-    ) in zip(
-        links,
-        locations_titles,
-        street_addresses,
-        cities,
-        states,
-        zip_codes,
-        phone_numbers,
-        latitude_list,
-        longitude_list,
-        hours,
-        locations_ids,
-        countries,
-        store_type_list,
-    ):
-        if location_id not in seen:
-            data.append(
-                [
-                    URL,
-                    link,
-                    locations_title,
-                    street_address,
-                    city,
-                    state,
-                    zipcode,
-                    country,
-                    location_id,
-                    phone_number,
-                    store_type,
-                    latitude,
-                    longitude,
-                    hour,
-                ]
+            sgw.write_row(
+                SgRecord(
+                    locator_domain=URL,
+                    page_url=link,
+                    location_name=location_title,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=zipcode,
+                    country_code=country,
+                    store_number=location_id,
+                    phone=phone,
+                    location_type=store_type,
+                    latitude=lat,
+                    longitude=lon,
+                    hours_of_operation=hour,
+                )
             )
-            seen.append(location_id)
-
     driver.close()
-    return data
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    fetch_data(writer)
