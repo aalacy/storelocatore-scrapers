@@ -46,10 +46,15 @@ def fetch_data():
                             .split('href=\\"')[1]
                             .split("\\")[0]
                         )
-                        csz = item.split("\\u003cdiv\\u003e")[2].split("\\")[0]
-                        city = csz.split(",")[0]
-                        zc = csz.rsplit(" ", 1)[1]
-                        state = csz.split(",")[1].strip().rsplit(" ", 1)[0]
+                        try:
+                            csz = item.split("\\u003cdiv\\u003e")[2].split("\\")[0]
+                            city = csz.split(",")[0]
+                            zc = csz.rsplit(" ", 1)[1]
+                            state = csz.split(",")[1].strip().rsplit(" ", 1)[0]
+                        except:
+                            city = "<MISSING>"
+                            state = "<MISSING>"
+                            zc = "<MISSING>"
                         hours = "<INACCESSIBLE>"
                         yield SgRecord(
                             locator_domain=website,
