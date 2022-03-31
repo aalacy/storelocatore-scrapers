@@ -39,7 +39,7 @@ def fetch_data():
     }
     for country, url in all_countries.items():
         all_coords = DynamicGeoSearch(
-            country_codes=[country.lower()], expected_search_radius_miles=500
+            country_codes=[country.lower()], expected_search_radius_miles=30
         )
         added = False
         for lat, lng in all_coords:
