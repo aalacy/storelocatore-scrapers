@@ -35,7 +35,9 @@ def fetch_data():
 
         for poi in data["response"]["collection"]:
             location_name = poi["name"]
-            street_address = poi["address1"]
+            street_address = (
+                poi["address1"].replace("&#xe9;", "é").replace("&#xe8;", "è")
+            )
             city = poi["city"]
             state = poi["state"]
             if not state:
@@ -47,6 +49,8 @@ def fetch_data():
             phone = poi["phone"]
             if phone:
                 phone = phone.replace("...", "").strip()
+                if country_code == "TH":
+                    phone = phone.split("/")[0]
             location_type = poi["icon"]
             latitude = poi["latitude"]
             longitude = poi["longitude"]
