@@ -13,6 +13,12 @@ headers = {
 }
 
 
+from sglogging import SgLogSetup
+
+
+logger = SgLogSetup().get_logger("bluefcu_com")
+
+
 def fetch_data():
 
     pattern = re.compile(r"\s\s+")
@@ -34,11 +40,6 @@ def fetch_data():
             continue
         checklist.append(link)
         r = session.get(link, headers=headers)
-
-        state = r.text.split('"businesLocationsState":"', 1)[1].split('"', 1)[0]
-        city = r.text.split('"businessLocationCity"', 1)[1].split('"', 1)[0]
-        street = r.text.split('"businesLocationsStreet":"', 1)[1].split('"', 1)[0]
-        pcode = r.text.split('"businessPostalCode":"44312"', 1)[1].split('"', 1)[0]
 
         ltype = "<MISSING>"
         soup = BeautifulSoup(r.text, "html.parser")
@@ -100,6 +101,8 @@ def fetch_data():
                     )
             except:
                 hours = "<MISSING>"
+        if len(address) < 4:
+            address = soup.find("div", {"id": "comp-j3w0h1ql"}).text.split("\n", 1)[0]
         address = usaddress.parse(address.strip())
 
         i = 0
