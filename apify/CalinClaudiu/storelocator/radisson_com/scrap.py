@@ -107,6 +107,7 @@ def try_again(session, url):
     response = SgRequests.raise_on_err(session.get(url, headers=headers))
     return response.json()
 
+
 def fetch_data():
     with SgChrome() as driver:
         driver.get("https://www.radissonhotels.com/en-us/destination")
@@ -127,6 +128,8 @@ def fetch_data():
             logzilla.info(x)
             if "zimba" in x and "hotels?" in x:
                 son = json.loads(r.response.body)
+
+
 def fetch_data(index: int, url: str, headers, session) -> dict:
     data = {}
     if len(url) > 0:
@@ -180,8 +183,6 @@ def fetch_data(index: int, url: str, headers, session) -> dict:
         data["requrl"] = "<MISSING>"
         data["STATUS"] = False
     return data
-
-
 
 
 def clean_record(k):
