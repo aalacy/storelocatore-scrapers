@@ -55,6 +55,9 @@ def fetch_data():
                     + "-"
                     + store["EntityID"]
                 )
+                phone = store["Phone"]
+                if phone == "0000000000":
+                    phone = ""
                 yield SgRecord(
                     page_url=page_url,
                     store_number=store["EntityID"],
@@ -66,7 +69,7 @@ def fetch_data():
                     latitude=store["Latitude"],
                     longitude=store["Longitude"],
                     country_code=get_country_by_code(store["AdminDistrict"]),
-                    phone=store["Phone"],
+                    phone=phone,
                     location_type=store["Brand"],
                     locator_domain=locator_domain,
                 )
@@ -80,7 +83,11 @@ def fetch_data():
 
 
 if __name__ == "__main__":
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    with SgWriter(
+        SgRecordDeduper(
+            RecommendedRecordIds.StoreNumberId, duplicate_streak_failure_factor=100
+        )
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
