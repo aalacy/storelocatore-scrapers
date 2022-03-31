@@ -189,6 +189,29 @@ def clean_record(k):
     return k
 
 
+def try_again(session, url):
+    headers = {}
+    headers["accept"] = "application/json, text/plain, */*"
+    headers["accept-encoding"] = "gzip, deflate, br"
+    headers["accept-language"] = "en-us"
+    headers["cache-control"] = "no-cache"
+    headers["pragma"] = "no-cache"
+    headers["referer"] = "https://www.radissonhotels.com/en-us/destination"
+    headers[
+        "sec-ch-ua"
+    ] = '" Not A;Brand";v="99", "Chromium";v="99", "Google Chrome";v="99"'
+    headers["sec-ch-ua-mobile"] = "?0"
+    headers["sec-ch-ua-platform"] = '"Windows"'
+    headers["sec-fetch-dest"] = "empty"
+    headers["sec-fetch-mode"] = "cors"
+    headers["sec-fetch-site"] = "same-origin"
+    headers[
+        "user-agent"
+    ] = "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.82 Safari/537.36"
+    response = SgRequests.raise_on_err(session.get(url, headers=headers))
+    return response.json()
+
+
 def get_subpage(session, url):
     headers = {}
     headers["accept"] = "application/json, text/plain, */*"
