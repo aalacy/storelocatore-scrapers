@@ -10,7 +10,7 @@ from sgrequests import SgRequests
 
 def fetch_data(sgw: SgWriter):
 
-    session = SgRequests()
+    session = SgRequests(verify_ssl=False)
 
     base_link = "https://www.superthrifty.com/locations/"
 

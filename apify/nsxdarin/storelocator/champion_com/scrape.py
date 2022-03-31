@@ -1,6 +1,11 @@
-import csv
-from sgrequests import SgRequests
 from sglogging import SgLogSetup
+
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+
+from sgrequests import SgRequests
 
 session = SgRequests()
 headers = {
@@ -10,34 +15,7 @@ headers = {
 logger = SgLogSetup().get_logger("champion_com")
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
+def fetch_data(sgw: SgWriter):
     locs = []
     states = []
     cities = ["https://stores.champion.com/nv/las-vegas.html"]
@@ -48,7 +26,7 @@ def fetch_data():
     country = "US"
     logger.info("Pulling Stores")
     for line in r.iter_lines():
-        line = str(line.decode("utf-8"))
+        line = str(line)
         if 'list-content-item-link" href="' in line:
             items = line.split('list-content-item-link" href="')
             for item in items:
@@ -66,7 +44,7 @@ def fetch_data():
         logger.info(state)
         r2 = session.get(state, headers=headers)
         for line2 in r2.iter_lines():
-            line2 = str(line2.decode("utf-8"))
+            line2 = str(line2)
             if '-list-content-item-link" href="' in line2:
                 items = line2.split('-list-content-item-link" href="')
                 for item in items:
@@ -86,7 +64,7 @@ def fetch_data():
         logger.info(city)
         r2 = session.get(city, headers=headers)
         for line2 in r2.iter_lines():
-            line2 = str(line2.decode("utf-8"))
+            line2 = str(line2)
             if '</a></div></div><a href="../' in line2:
                 items = line2.split('</a></div></div><a href="../')
                 for item in items:
@@ -106,7 +84,7 @@ def fetch_data():
         hours = ""
         r2 = session.get(loc, headers=headers)
         for line2 in r2.iter_lines():
-            line2 = str(line2.decode("utf-8"))
+            line2 = str(line2)
             if name == "" and '="location-name-geo">' in line2:
                 name = line2.split('="location-name-geo">')[1].split("<")[0]
             if '<meta itemprop="latitude" content="' in line2:
@@ -149,27 +127,28 @@ def fetch_data():
                             hours = hrs
                         else:
                             hours = hours + "; " + hrs
-        yield [
-            website,
-            loc,
-            name,
-            add,
-            city,
-            state,
-            zc,
-            country,
-            store,
-            phone,
-            typ,
-            lat,
-            lng,
-            hours,
-        ]
+        if hours.count("Closed") == 7:
+            continue
+
+        sgw.write_row(
+            SgRecord(
+                locator_domain=website,
+                page_url=loc,
+                location_name=name,
+                street_address=add,
+                city=city,
+                state=state,
+                zip_postal=zc,
+                country_code=country,
+                store_number=store,
+                phone=phone,
+                location_type=typ,
+                latitude=lat,
+                longitude=lng,
+                hours_of_operation=hours,
+            )
+        )
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    fetch_data(writer)

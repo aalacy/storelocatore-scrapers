@@ -34,6 +34,8 @@ def fetch_data(sgw: SgWriter):
         zip_code = raw_address[2].split()[-1].strip()
         if not zip_code.isdigit():
             zip_code = ""
+            if "1600 East" in street_address:
+                zip_code = "07036"
         country_code = "US"
         store_number = store["id"]
         phone = store["phone"]
