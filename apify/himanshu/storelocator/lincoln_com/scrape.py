@@ -3,7 +3,7 @@ from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 from sglogging import SgLogSetup
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 logger = SgLogSetup().get_logger("lincoln_com")
@@ -174,7 +174,17 @@ def scrape():
     count = 0
     with SgWriter(
         deduper=SgRecordDeduper(
-            record_id=RecommendedRecordIds.PageUrlId, duplicate_streak_failure_factor=-1
+            SgRecordID(
+                {
+                    SgRecord.Headers.LOCATION_NAME,
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.CITY,
+                    SgRecord.Headers.STATE,
+                    SgRecord.Headers.PHONE,
+                    SgRecord.Headers.ZIP,
+                }
+            ),
+            duplicate_streak_failure_factor=-1,
         )
     ) as writer:
         results = fetch_data()
