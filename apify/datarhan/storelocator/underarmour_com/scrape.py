@@ -25,7 +25,8 @@ def fetch_data():
     }
 
     all_coords = DynamicGeoSearch(
-        country_codes=SearchableCountries.ALL, expected_search_radius_miles=200
+        country_codes=SearchableCountries.ALL,
+        expected_search_radius_miles=200,
     )
     for lat, lng in all_coords:
         response = session.post(start_url, data=body % (lat, lng), headers=headers)
@@ -34,19 +35,59 @@ def fetch_data():
             continue
 
         for poi in data["response"]["collection"]:
-            location_name = poi["name"]
-            street_address = poi["address1"]
-            city = poi["city"]
+            location_name = (
+                poi["name"]
+                .replace("&#xe9;", "é")
+                .replace("&#xe8;", "è")
+                .replace("&#xe1;", "á")
+                .replace("&#xdf;", "ß")
+                .replace("&#xdc;", "Ü")
+                .replace("&#xfc;", "ü")
+                .replace("&#xd6;", "Ö")
+                .replace("&#xf6;", "ö")
+                .replace("&#xe4;", "ä")
+                .replace("&#x96;", "-")
+                .replace("&#xc4;", "Ä")
+            )
+            street_address = (
+                poi["address1"]
+                .replace("&#xe9;", "é")
+                .replace("&#xe8;", "è")
+                .replace("&#xe1;", "á")
+                .replace("&#xdf;", "ß")
+                .replace("&#xdc;", "Ü")
+                .replace("&#xfc;", "ü")
+                .replace("&#xd6;", "Ö")
+                .replace("&#xf6;", "ö")
+                .replace("&#xe4;", "ä")
+                .replace("&#x96;", "-")
+                .replace("&#xc4;", "Ä")
+            )
+            city = (
+                poi["city"]
+                .replace("&#xe9;", "é")
+                .replace("&#xe8;", "è")
+                .replace("&#xe1;", "á")
+                .replace("&#xdf;", "ß")
+                .replace("&#xdc;", "Ü")
+                .replace("&#xfc;", "ü")
+                .replace("&#xd6;", "Ö")
+                .replace("&#xf6;", "ö")
+                .replace("&#xe4;", "ä")
+                .replace("&#x96;", "-")
+                .replace("&#xc4;", "Ä")
+            )
             state = poi["state"]
             if not state:
                 state = poi["province"]
             zip_code = poi["postalcode"]
-            zip_code = zip_code if zip_code else "<MISSING>"
             country_code = poi["country"]
             store_number = poi["clientkey"]
             phone = poi["phone"]
             if phone:
                 phone = phone.replace("...", "").strip()
+                if country_code == "TH":
+                    phone = phone.split("/")[0]
             location_type = poi["icon"]
             latitude = poi["latitude"]
             longitude = poi["longitude"]
@@ -72,7 +113,7 @@ def fetch_data():
                         hours_dict[day] = {}
                         hours_dict[day]["closes"] = value
             hours_of_operation = (
-                ", ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
+                ", ".join(hours_of_operation) if hours_of_operation else ""
             )
 
             store_url = "https://www.underarmour.com/en-us/store-locator"
