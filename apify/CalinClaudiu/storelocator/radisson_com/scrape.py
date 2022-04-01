@@ -344,10 +344,7 @@ def data_fetcher(session, state):
 
 def fetch_data():
     state = CrawlStateSingleton.get_instance()
-    with SgChrome() as driver:
-        state.get_misc_value(
-            "init", default_factory=lambda: record_initial_requests(state)
-        )
+    state.get_misc_value("init", default_factory=lambda: record_initial_requests(state))
 
     with SgRequests() as session:
         for item in data_fetcher(session, state):
