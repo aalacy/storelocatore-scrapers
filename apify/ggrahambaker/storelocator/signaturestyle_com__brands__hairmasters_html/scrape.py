@@ -23,7 +23,7 @@ def get_hours(hours) -> str:
 
 def fetch_data(sgw: SgWriter):
 
-    locator_domain = "https://signaturestyle.com/brands/hairmasters.html"
+    locator_domain = "https://www.signaturestyle.com/"
     api_url = "https://www.signaturestyle.com/salon-directory.html"
     session = SgRequests()
     headers = {
