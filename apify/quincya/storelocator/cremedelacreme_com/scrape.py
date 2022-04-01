@@ -1,133 +1,91 @@
-import csv
-
-from bs4 import BeautifulSoup
-
-from sglogging import SgLogSetup
-
+from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
-
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
-
-logger = SgLogSetup().get_logger("cremedelacreme_com")
-
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+from concurrent import futures
 
 
-def fetch_data():
+def get_data(coords, sgw: SgWriter):
+    lat, long = coords
+    locator_domain = "https://cremedelacreme.com/"
+    api_url = f"https://cremedelacreme.com/wp-admin/admin-ajax.php?action=store_search&lat={str(lat)}&lng={str(long)}&max_results=100&search_radius=500"
 
-    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36"
-    headers = {"User-Agent": user_agent}
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0",
+    }
 
     session = SgRequests()
 
-    locator_domain = "cremedelacreme.com"
+    r = session.get(api_url, headers=headers)
 
-    found_poi = []
-    data = []
+    js = r.json()
 
-    max_results = 100
-    max_distance = 500
+    for j in js:
 
-    search = DynamicGeoSearch(
+        page_url = j.get("permalink") or "https://cremedelacreme.com/locations/"
+        location_name = j.get("store") or "<MISSING>"
+        location_name = str(location_name).replace("&#8211;", "&").strip()
+        street_address = (
+            f"{j.get('address')} {j.get('address2')}".replace("None", "").strip()
+            or "<MISSING>"
+        )
+        city = j.get("city") or "<MISSING>"
+        state = j.get("state") or "<MISSING>"
+        postal = j.get("zip") or "<MISSING>"
+        country_code = "US"
+        phone = j.get("phone") or "<MISSING>"
+        latitude = j.get("lat") or "<MISSING>"
+        longitude = j.get("lng") or "<MISSING>"
+        hours_of_operation = "<MISSING>"
+        store_number = j.get("id") or "<MISSING>"
+        hours = j.get("hours")
+        if hours:
+            a = html.fromstring(hours)
+            hours_of_operation = (
+                " ".join(a.xpath("//*//text()")).replace("\n", "").strip()
+            )
+            hours_of_operation = " ".join(hours_of_operation.split())
+
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+        )
+
+        sgw.write_row(row)
+
+
+def fetch_data(sgw: SgWriter):
+    coords = DynamicGeoSearch(
         country_codes=[SearchableCountries.USA],
-        max_search_distance_miles=max_distance,
-        max_search_results=max_results,
+        max_search_distance_miles=100,
+        expected_search_radius_miles=100,
+        max_search_results=None,
     )
 
-    for lat, lng in search:
-        logger.info(
-            "Searching: %s, %s | Items remaining: %s"
-            % (lat, lng, search.items_remaining())
-        )
-
-        base_link = (
-            "https://cremedelacreme.com/wp-admin/admin-ajax.php?action=store_search&lat=%s&lng=%s&max_results=%s&search_radius=%s"
-            % (lat, lng, max_results, max_distance)
-        )
-        stores = session.get(base_link, headers=headers).json()
-
-        for store in stores:
-            location_name = (
-                store["store"].split(",")[0].replace("IL", "").split("&#")[0].strip()
-            )
-            if "OPENING SOON" in store["store"].upper():
-                continue
-            street_address = (store["address"] + " " + store["address2"]).strip()
-            city = store["city"]
-            state = store["state"]
-            zip_code = store["zip"]
-            country_code = "US"
-            store_number = store["id"]
-
-            if store_number not in found_poi:
-                found_poi.append(store_number)
-            else:
-                continue
-
-            location_type = "<MISSING>"
-            phone = store["phone"]
-            try:
-                hours = BeautifulSoup(store["hours"], "lxml")
-                hours_of_operation = " ".join(list(hours.stripped_strings))
-            except:
-                hours_of_operation = "<MISSING>"
-            latitude = store["lat"]
-            longitude = store["lng"]
-            search.found_location_at(latitude, longitude)
-            link = store["permalink"]
-
-            data.append(
-                [
-                    locator_domain,
-                    link,
-                    location_name,
-                    street_address,
-                    city,
-                    state,
-                    zip_code,
-                    country_code,
-                    store_number,
-                    phone,
-                    location_type,
-                    latitude,
-                    longitude,
-                    hours_of_operation,
-                ]
-            )
-    return data
+    with futures.ThreadPoolExecutor(max_workers=10) as executor:
+        future_to_url = {executor.submit(get_data, url, sgw): url for url in coords}
+        for future in futures.as_completed(future_to_url):
+            future.result()
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+if __name__ == "__main__":
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.STORE_NUMBER}))
+    ) as writer:
+        fetch_data(writer)
