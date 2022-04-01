@@ -27,46 +27,46 @@ def get_data(_id, sgw: SgWriter):
         "https://www.vodafone.ua/shops", data=data, headers=headers, cookies=cookies
     )
 
-    if r.status_code == 500:
-        return
+    if r.status_code == 200:
+        jso = r.json()
+        js = jso["data"]
+        c = jso["city"]
+        city = c.get("label")
 
-    jso = r.json()
-    js = jso["data"]
-    c = jso["city"]
-    city = c.get("label")
+        for j in js:
+            location_name = j.get("name")
+            street_address = location_name
+            p = j.get("position") or {}
+            latitude = p.get("lat")
+            longitude = p.get("lng")
+            if latitude == 0:
+                latitude, longitude = SgRecord.MISSING, SgRecord.MISSING
+            hours_of_operation = j.get("work_hours") or ""
+            hours_of_operation = " ".join(
+                hours_of_operation.replace("<br>", ";").split()
+            )
+            if "Згідно" in hours_of_operation:
+                hours_of_operation = SgRecord.MISSING
 
-    for j in js:
-        location_name = j.get("name")
-        street_address = location_name
-        p = j.get("position") or {}
-        latitude = p.get("lat")
-        longitude = p.get("lng")
-        if latitude == 0:
-            latitude, longitude = SgRecord.MISSING, SgRecord.MISSING
-        hours_of_operation = j.get("work_hours") or ""
-        hours_of_operation = " ".join(hours_of_operation.replace("<br>", ";").split())
-        if "Згідно" in hours_of_operation:
-            hours_of_operation = SgRecord.MISSING
+            row = SgRecord(
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                country_code="UA",
+                latitude=latitude,
+                longitude=longitude,
+                locator_domain=locator_domain,
+                hours_of_operation=hours_of_operation,
+            )
 
-        row = SgRecord(
-            page_url=page_url,
-            location_name=location_name,
-            street_address=street_address,
-            city=city,
-            country_code="UA",
-            latitude=latitude,
-            longitude=longitude,
-            locator_domain=locator_domain,
-            hours_of_operation=hours_of_operation,
-        )
-
-        sgw.write_row(row)
+            sgw.write_row(row)
 
 
 def fetch_data(sgw: SgWriter):
     ids = [str(i) for i in range(1, 400)]
 
-    with futures.ThreadPoolExecutor(max_workers=3) as executor:
+    with futures.ThreadPoolExecutor(max_workers=1) as executor:
         future_to_url = {executor.submit(get_data, _id, sgw): _id for _id in ids}
         for future in futures.as_completed(future_to_url):
             future.result()
@@ -75,7 +75,7 @@ def fetch_data(sgw: SgWriter):
 if __name__ == "__main__":
     locator_domain = "https://www.vodafone.ua/"
     page_url = "https://www.vodafone.ua/en/support/search-shop"
-    session = SgRequests(proxy_country="ua")
+    session = SgRequests(proxy_country="pl")
 
     headers = {
         "Content-Type": "application/json; charset=UTF-8",
