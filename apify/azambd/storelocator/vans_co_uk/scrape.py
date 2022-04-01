@@ -33,6 +33,7 @@ def parse_json(store):
     if str(store_number) == "None":
         store_number = MISSING
     data["store_number"] = store_number
+
     page_url = store["url"]
     if str(page_url) == "None":
         page_url = MISSING
@@ -123,7 +124,13 @@ def fetch_data():
 
     for store in data_json["response"]["collection"]:
         country_code = store["country"]
-        if country_code == "CY" or country_code == "CA" or country_code == "US":
+        if (
+            country_code == "CY"
+            or country_code == "CA"
+            or country_code == "US"
+            or country_code == "IN"
+            or country_code == "KR"
+        ):
             continue
 
         yield parse_json(store)
