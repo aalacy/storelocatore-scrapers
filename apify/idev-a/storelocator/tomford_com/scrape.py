@@ -3,7 +3,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests.sgrequests import SgRequests
-from sgzip.dynamic import SearchableCountries, DynamicZipSearch, Grain_8
+from sgzip.dynamic import SearchableCountries, DynamicZipSearch
 from sglogging import SgLogSetup
 import re
 from bs4 import BeautifulSoup as bs
@@ -54,11 +54,12 @@ def fetch_records(search):
     for zipcode in search:
         with SgRequests() as http:
             url = f"{json_url}?dwfrm_storelocator_address_country=US"
-            url += f"&dwfrm_storelocator_postalCode={zipcode}&dwfrm_storelocator_maxdistance=3000.0&dwfrm_storelocator_longitude=&dwfrm_storelocator_latitude="
+            url += f"&dwfrm_storelocator_postalCode={zipcode}&dwfrm_storelocator_maxdistance=1000.0&dwfrm_storelocator_longitude=&dwfrm_storelocator_latitude="
 
             locations = http.get(url, headers=_headers).json()
             logger.info(f"[USA] {len(locations)}")
             for _ in locations:
+                search.found_location_at(_["latLng"][0], _["latLng"][1])
                 yield _d(_, "USA")
 
 
@@ -79,11 +80,11 @@ def record_initial_requests():
 
 if __name__ == "__main__":
     search = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA], granularity=Grain_8()
+        country_codes=[SearchableCountries.USA], expected_search_radius_miles=1000
     )
     with SgWriter(
         SgRecordDeduper(
-            RecommendedRecordIds.StoreNumberId, duplicate_streak_failure_factor=100
+            RecommendedRecordIds.StoreNumberId, duplicate_streak_failure_factor=1000
         )
     ) as writer:
         # Search all countries except for USA

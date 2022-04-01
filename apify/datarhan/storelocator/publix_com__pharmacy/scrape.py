@@ -30,7 +30,7 @@ def fetch_data():
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.99 Safari/537.36",
     }
     all_codes = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA], expected_search_radius_miles=50
+        country_codes=[SearchableCountries.USA], expected_search_radius_miles=10
     )
     for code in all_codes:
         frm = {"__RequestVerificationToken": token, "SearchInput": code}

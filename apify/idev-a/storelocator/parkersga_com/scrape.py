@@ -5,13 +5,14 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
 from sglogging import SgLogSetup
+import time
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+import ssl
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 logger = SgLogSetup().get_logger("parkersga")
-
-_headers = {
-    "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
-}
-
 
 days = {
     "Dimanche": "Sun",
@@ -37,13 +38,19 @@ def fetch_data():
         links = driver.find_elements_by_xpath("//ul[@class='dmGeoMLocList']/li")
         for link in links:
             logger.info(link.find_element_by_xpath(".//a").text)
-            driver.execute_script(
-                "arguments[0].click();", link.find_element_by_xpath(".//a")
-            )
-            block = driver.find_element_by_xpath("//div[@class='dmGeoSingleView']")
-            content = block.find_element_by_xpath(
+            block = None
+            while True:
+                driver.execute_script(
+                    "arguments[0].click();", link.find_element_by_xpath(".//a")
+                )
+                time.sleep(1)
+                block = driver.find_element_by_xpath("//div[@class='dmGeoSingleView']")
+                if block.text.strip():
+                    break
+            raw_address = block.find_element_by_xpath(
                 './/div[@class="dmGeoSVAddr"]'
-            ).text.split(",")
+            ).text
+            content = raw_address.split(",")
             zip_postal = content[2]
             state = content[-3]
             if not zip_postal.strip().isdigit():
@@ -64,11 +71,12 @@ def fetch_data():
                 country_code=content[-2],
                 phone=content[-1],
                 locator_domain=locator_domain,
+                raw_address=raw_address,
             )
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
