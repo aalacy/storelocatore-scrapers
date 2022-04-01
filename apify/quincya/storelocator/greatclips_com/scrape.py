@@ -20,7 +20,7 @@ def fetch_data(sgw: SgWriter):
 
     session = SgRequests()
 
-    locator_domain = "https://salons.greatclips.com/"
+    locator_domain = "https://greatclips.com"
 
     final_links = []
     r = session.get(base_link, headers=headers)
@@ -31,7 +31,7 @@ def fetch_data(sgw: SgWriter):
             or 'hreflang="en" href="https://salons.greatclips.com/ca/' in line
         ):
             lurl = line.split('hreflang="en" href="')[1].split('"')[0]
-            if lurl.count("/") == 6:
+            if "/salon-services" not in lurl and lurl.count("/") > 5:
                 final_links.append(lurl.replace("&#39;", "'"))
 
     logger.info("Processing " + str(len(final_links)) + " links ..")
@@ -61,11 +61,16 @@ def fetch_data(sgw: SgWriter):
         location_type = ""
 
         try:
-            hours_of_operation = " ".join(
-                list(base.find(class_="c-hours-details").stripped_strings)
-            ).strip()
+            hours_of_operation = (
+                " ".join(list(base.find(class_="c-hours-details").stripped_strings))
+                .replace("Day of the Week Hours", "")
+                .strip()
+            )
         except:
             hours_of_operation = ""
+
+        if "coming soon" in base.find(class_="Hero-content").text.lower():
+            hours_of_operation = "Coming Soon"
 
         latitude = base.find(itemprop="latitude")["content"]
         longitude = base.find(itemprop="longitude")["content"]
