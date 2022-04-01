@@ -2,6 +2,7 @@ import re
 import ssl
 import time
 import json
+import threading
 from bs4 import BeautifulSoup
 from lxml import html
 from sgscrape.sgrecord import SgRecord
@@ -11,8 +12,6 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sglogging import SgLogSetup
 from sgrequests import SgRequests
 from concurrent.futures import ThreadPoolExecutor, as_completed
-
-from tenacity import threading
 
 logger = SgLogSetup().get_logger("questdiagonstics.com")
 
