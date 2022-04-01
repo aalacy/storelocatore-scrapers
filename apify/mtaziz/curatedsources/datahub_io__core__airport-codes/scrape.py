@@ -94,65 +94,79 @@ def fetch_records(idx, row, sgw: SgWriter):
     coord_lat = coord_lat.strip()
     coord_lng = coord_lng.strip()
     api_endpoint_url = f"{openstreetmap_url}/reverse?lat={coord_lat}&lon={coord_lng}&format=json&accept-language=en&addressdetails=1"
-    r = get_response(idx, api_endpoint_url)
-    rev_add_dict = r.json()
-    time.sleep(1.5)
-    raw_address = rev_add_dict["display_name"]
-    logger.info(f"geo raw address: {raw_address}")
-    lat = rev_add_dict["lat"]
-    lng = rev_add_dict["lon"]
+    try:
+        r = get_response(idx, api_endpoint_url)
+        rev_add_dict = r.json()
+        time.sleep(1.5)
 
-    street_address = ""
-    if "road" in rev_add_dict["address"]:
-        street_address = rev_add_dict["address"]["road"]
+        raw_address = ""
+        if "display_name" in rev_add_dict:
+            raw_address = rev_add_dict["display_name"]
+        logger.info(f"geo raw address: {raw_address}")
+        lat = ""
+        if "lat" in rev_add_dict:
+            lat = rev_add_dict["lat"]
+        lng = ""
+        if "lon" in rev_add_dict:
+            lng = rev_add_dict["lon"]
 
-    city = ""
-    municipality = row["municipality"]
-    if "city" in rev_add_dict["address"]:
-        city = rev_add_dict["address"]["city"]
-    else:
-        city = municipality
+        street_address = ""
+        if "road" in rev_add_dict["address"]:
+            street_address = rev_add_dict["address"]["road"]
 
-    state = ""
-    if "state" in rev_add_dict["address"]:
-        state = rev_add_dict["address"]["state"]
+        city = ""
+        municipality = row["municipality"]
+        if "city" in rev_add_dict["address"]:
+            city = rev_add_dict["address"]["city"]
+        else:
+            city = municipality
 
-    cc = ""
-    if "country_code" in rev_add_dict["address"]:
-        cc = rev_add_dict["address"]["country_code"]
-        cc = cc.upper()
+        state = ""
+        if "state" in rev_add_dict["address"]:
+            state = rev_add_dict["address"]["state"]
 
-    zip_postal = ""
-    if "postcode" in rev_add_dict["address"]:
-        zip_postal = rev_add_dict["address"]["postcode"]
+        cc = ""
+        if "country_code" in rev_add_dict["address"]:
+            cc = rev_add_dict["address"]["country_code"]
+            cc = cc.upper()
 
-    logger.info(f"[{idx}] => {street_address} | {city} | {state} | {zip_postal} | {cc}")
-    storeid = row["iata_code"]
+        zip_postal = ""
+        if "postcode" in rev_add_dict["address"]:
+            zip_postal = rev_add_dict["address"]["postcode"]
 
-    # location name to be copied to street_address
-    # if street_address having <MISSING>
-    if "<MISSING>" in street_address:
-        street_address = location_name
-    if not street_address:
-        street_address = location_name
-    item = SgRecord(
-        locator_domain=DOMAIN,
-        page_url=page_url,
-        location_name=location_name,
-        street_address=street_address,
-        city=city,
-        state=state,
-        zip_postal=zip_postal,
-        country_code=cc,
-        store_number=storeid,
-        phone="",
-        location_type=row["type"] or "",
-        latitude=lat,
-        longitude=lng,
-        hours_of_operation="",
-        raw_address=raw_address,
-    )
-    sgw.write_row(item)
+        logger.info(
+            f"[{idx}] => {street_address} | {city} | {state} | {zip_postal} | {cc}"
+        )
+        storeid = row["iata_code"]
+
+        # location name to be copied to street_address
+        # if street_address having <MISSING>
+        if "<MISSING>" in street_address:
+            street_address = location_name
+        if not street_address:
+            street_address = location_name
+        item = SgRecord(
+            locator_domain=DOMAIN,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zip_postal,
+            country_code=cc,
+            store_number=storeid,
+            phone="",
+            location_type=row["type"] or "",
+            latitude=lat,
+            longitude=lng,
+            hours_of_operation="",
+            raw_address=raw_address,
+        )
+        sgw.write_row(item)
+    except Exception as e:
+        logger.info(
+            f"Please Fix FetchRecordsError << {e} | {idx} >> | {api_endpoint_url}"
+        )
 
 
 def fetch_data(sgw: SgWriter):
@@ -187,18 +201,8 @@ def fetch_data(sgw: SgWriter):
         f"Country Code and Corresponding Num of Airports in a region: {country_code_and_ap_count}"
     )
 
-    df10countries = df_filter_zero[
-        (df_filter_zero["iso_country"] == "AU")
-        | (df_filter_zero["iso_country"] == "BR")
-        | (df_filter_zero["iso_country"] == "CA")
-        | (df_filter_zero["iso_country"] == "CN")
-        | (df_filter_zero["iso_country"] == "CO")
-        | (df_filter_zero["iso_country"] == "ID")
-        | (df_filter_zero["iso_country"] == "IN")
-        | (df_filter_zero["iso_country"] == "PG")
-        | (df_filter_zero["iso_country"] == "RU")
-        | (df_filter_zero["iso_country"] == "US")
-    ]
+    countries_top10 = ["AU", "BR", "CA", "CN", "CO", "ID", "IN", "PG", "RU", "US"]
+    df10countries = df_filter_zero[df_filter_zero["iso_country"].isin(countries_top10)]
     logger.info(
         f"Airports Data is ready to be used!! << Total Store Count: {df10countries.shape[0]}>>"
     )
