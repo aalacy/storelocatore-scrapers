@@ -52,8 +52,11 @@ def fetch_data():
         country2 = ""
         lat2 = ""
         lng2 = ""
+        CS = False
         store = loc.split("/hoteldetail")[0].rsplit("/", 1)[1]
         for line2 in r2.iter_lines():
+            if ">Opening soon<" in line2:
+                CS = True
             if 'value="MXN"' in line2:
                 country = "MX"
             if 'property="og:title" content="' in line2 and name == "":
@@ -155,6 +158,8 @@ def fetch_data():
         state = state.replace("&nbsp;", "")
         city = city.replace("&nbsp;", "")
         if " Hotels" not in name and name != "":
+            if CS:
+                name = name + " - Coming Soon"
             if "86 " in phone or "86-" in phone:
                 country = "CN"
             phone = phone.replace("--| ", "")
