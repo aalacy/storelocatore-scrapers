@@ -29,21 +29,23 @@ def fetch_data():
                     )
                     states.append(lurl)
     for state in states:
-        logger.info(state)
-        r2 = session.get(state, headers=headers)
-        for line2 in r2.iter_lines():
-            if '<a class="record" href="/locations/' in line2:
-                items = line2.split('<a class="record" href="/locations/')
-                for item in items:
-                    if 'data-ga-event="locationClick"' in item:
-                        lurl = (
-                            "https://www.pandaexpress.com/locations/"
-                            + item.split('"')[0]
-                        )
-                        if "(1) </a>" in item:
-                            locs.append(lurl)
-                        else:
-                            cities.append(lurl)
+        if "/locations/ga" in state:
+            logger.info(state)
+            r2 = session.get(state, headers=headers)
+            for line2 in r2.iter_lines():
+                if '<a class="record" href="/locations/' in line2:
+                    items = line2.split('<a class="record" href="/locations/')
+                    for item in items:
+                        if 'data-ga-event="locationClick"' in item:
+                            lurl = (
+                                "https://www.pandaexpress.com/locations/"
+                                + item.split('"')[0]
+                            )
+                            lurl = lurl.replace("coeur-dalene", "coeur-d'alene")
+                            if "(1) </a>" in item:
+                                locs.append(lurl)
+                            else:
+                                cities.append(lurl)
     for city in cities:
         logger.info(city)
         r2 = session.get(city, headers=headers)
@@ -62,6 +64,7 @@ def fetch_data():
     country = "US"
     logger.info("Pulling Stores")
     for loc in locs:
+        loc = loc.replace("coeur-dalene", "coeur-d'alene")
         try:
             logger.info(loc)
             hours = ""
@@ -126,7 +129,7 @@ def fetch_data():
                     add = add.replace(",", "")
                 else:
                     add = addnew
-            if len(zc) >= 5:
+            if len(zc) >= 1:
                 yield SgRecord(
                     locator_domain=website,
                     page_url=purl,
