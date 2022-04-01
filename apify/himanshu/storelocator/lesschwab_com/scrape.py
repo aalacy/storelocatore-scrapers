@@ -27,23 +27,24 @@ def fetch_data():
     )
     for lat, lng in all_coords:
         response = session.get(start_url.format(lat, lng), headers=hdr)
+        log.info("Getting store locations => " + start_url.format(lat, lng))
         dom = etree.HTML(response.text)
-
-        all_locations = dom.xpath('//a[@title="Store Details"]/@href')
+        data_json = json.loads(dom.xpath("//div[@data-locations]/@data-locations")[0])
+        all_locations = dom.xpath(
+            '//div[@class="storeLocator"]//a[@title="Store Details"]/@href'
+        )
+        num = 0
         for url in list(set(all_locations)):
             page_url = urljoin(start_url, url)
             if page_url in scraped_urls:
+                num += 1
                 continue
             scraped_urls.append(page_url)
             log.info("Pull content => " + page_url)
             loc_response = session.get(page_url)
             loc_dom = etree.HTML(loc_response.text)
             poi = loc_dom.xpath('//script[contains(text(), "postalCode")]/text()')
-            location_name = (
-                loc_dom.xpath('//h2[@class="storeDetails__storeName"]/text()')[0]
-                .replace("\n", "")
-                .strip()
-            )
+            location_name = data_json[num]["name"]
             if poi:
                 poi = json.loads(poi[0])
                 hoo = loc_dom.xpath(
@@ -63,8 +64,21 @@ def fetch_data():
                     .strip()
                 )
                 raw_address = loc_dom.xpath(
-                    '//div[@class="storeSearch__resultsSection"]//address[@class="storeDetails__address"]//div[@class="storeDetails__zip"]/text()'
+                    '//address[@class="storeDetails__address"]//div[@class="storeDetails__zip"]/text()'
                 )
+                try:
+                    phone = loc_dom.xpath(
+                        '//li[@class="storeDetails__contact-phone storeDetails__contact-item"]//span[@class="show-for-medium"]/text()'
+                    )[num]
+                except:
+                    phone = ""
+                if not phone:
+                    try:
+                        phone = loc_dom.xpath(
+                            '//ul[@class="storeDetails__contact"]//li//span/text()'
+                        )[0]
+                    except:
+                        phone = MISSING
                 if raw_address:
                     raw_address = raw_address[0].strip().split(", ")
                     city = raw_address[0]
@@ -87,7 +101,9 @@ def fetch_data():
                     )
                 )
                 hoo = " ".join(hoo).replace("By Appointment Only", "").strip()
-            store_number = loc_dom.xpath("//div[@data-store-id]/@data-store-id")[1]
+            store_number = data_json[num]["id"]
+            latitude = data_json[num]["latitude"]
+            longitude = data_json[num]["longitude"]
             log.info("Append {} => {}".format(location_name, street_address))
             yield SgRecord(
                 locator_domain=DOMAIN,
@@ -101,10 +117,11 @@ def fetch_data():
                 store_number=store_number,
                 phone=phone,
                 location_type=loc_type,
-                latitude="",
-                longitude="",
+                latitude=latitude,
+                longitude=longitude,
                 hours_of_operation=hoo,
             )
+            num += 1
 
 
 def scrape():

@@ -33,7 +33,7 @@ def fetch_data():
             country_code=poi["country"],
             store_number=poi["internalid"],
             phone=poi["phone"],
-            location_type="",
+            location_type=poi["isBranded"],
             latitude=poi["latitude"],
             longitude=poi["longitude"],
             hours_of_operation="",

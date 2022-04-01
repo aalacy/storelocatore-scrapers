@@ -111,11 +111,7 @@ def fetch_data(sgw: SgWriter):
                 state = line2.split('addressRegion">')[1].split("<")[0]
                 zc = line2.split('="postalCode">')[1].split("<")[0]
                 try:
-                    phone = (
-                        line2.split('umber-link" href="tel:')[1]
-                        .split('"')[0]
-                        .replace("+1", "")
-                    )
+                    phone = line2.split('umber-link" href="tel:')[1].split('"')[0]
                 except:
                     phone = "<MISSING>"
             if 'itemprop="openingHours" content="' in line2:
