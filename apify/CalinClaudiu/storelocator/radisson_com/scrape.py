@@ -246,7 +246,7 @@ def get_subpage(session, url):
                 logzilla.error(f"{response.text}")
             except Exception:
                 pass
-        if not response:
+        if response:
             if len(response.text) < 400:
                 try:
                     response = try_again(session, url)
