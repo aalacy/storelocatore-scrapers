@@ -115,7 +115,11 @@ def fetch_data():
                 zip_postal = zip_postal + " " + temp[0]
             i += 1
         street_address = street_address.replace("Rating Not Currently Available", "")
-        driver.get(page_url)
+        try:
+            driver.get(page_url)
+        except:
+            driver.get(page_url)
+            WebDriverWait(driver, 30)
         soup = BeautifulSoup(driver.page_source, "html.parser")
         try:
             phone = (
