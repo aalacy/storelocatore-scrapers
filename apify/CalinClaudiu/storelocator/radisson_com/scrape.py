@@ -231,6 +231,7 @@ def get_subpage(session, url):
     ] = "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.82 Safari/537.36"
 
     data = {}
+    response = None
     if len(url) > 0:
         try:
             response = SgRequests.raise_on_err(session.get(url, headers=headers))
@@ -245,15 +246,16 @@ def get_subpage(session, url):
                 logzilla.error(f"{response.text}")
             except Exception:
                 pass
-        if len(response.text) < 400:
-            try:
-                response = try_again(session, url)
-                if len(response.text) < 400:
-                    logzilla.info(f"Content\n{response.text}\n\n")
-                soup = b4(response.text, "lxml")
-            except Exception as e:
-                logzilla.error(f"{str(e)}")
-                raise
+        if not response:
+            if len(response.text) < 400:
+                try:
+                    response = try_again(session, url)
+                    if len(response.text) < 400:
+                        logzilla.info(f"Content\n{response.text}\n\n")
+                    soup = b4(response.text, "lxml")
+                except Exception as e:
+                    logzilla.error(f"{str(e)}")
+                    raise
 
         try:
             data = json.loads(
