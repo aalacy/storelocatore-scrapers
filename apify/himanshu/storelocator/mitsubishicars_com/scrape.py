@@ -24,9 +24,6 @@ def fetch_data(sgw: SgWriter):
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.130 Safari/537.36"
     }
     for zip_code in search:
-        print(
-            f"Coordinates remaining: {search.items_remaining()} For country: {search.current_country()}"
-        )
         try:
             link = (
                 "https://www.mitsubishicars.com/rs/dealers?bust=1569242590201&zipCode="
@@ -34,7 +31,6 @@ def fetch_data(sgw: SgWriter):
                 + "&idealer=false&ecommerce=false"
             )
             json_data = session.get(link, headers=headers).json()
-            print(link)
         except:
             continue
         for loc in json_data:
