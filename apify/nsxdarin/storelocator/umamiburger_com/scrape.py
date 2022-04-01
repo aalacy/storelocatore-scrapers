@@ -68,7 +68,7 @@ def fetch_data():
                     street_address = (
                         value["streetAddress"]
                         .replace("\n", ", ")
-                        .replace("Level 1 Pullman Paris Montparnasse Hotel", "")
+                        .replace("Level 1 Pullman Paris Montparnasse Hotel,", "")
                         .strip()
                     )
                 except:
