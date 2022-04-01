@@ -323,7 +323,7 @@ def initial(driver, url, state):
 def record_initial_requests(driver, state):
     for url in [
         "https://www.radissonhotels.com/en-us/destination",
-        "https://www.radissonhotelsamericas.com/en-us/destination", 
+        "https://www.radissonhotelsamericas.com/en-us/destination",
     ]:
         initial(driver, url, state)
 
