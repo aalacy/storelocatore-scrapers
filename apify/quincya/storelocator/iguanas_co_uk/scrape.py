@@ -54,7 +54,10 @@ def fetch_data(sgw: SgWriter):
         except:
             street_address = store["fields"]["addressLine1"].strip()
         city = store["fields"]["addressCity"]
-        state = store["fields"]["county"]
+        try:
+            state = store["fields"]["county"]
+        except:
+            state = ""
         zip_code = store["fields"]["postcode"]
         country_code = "GB"
         store_number = store["fields"]["storeId"]
