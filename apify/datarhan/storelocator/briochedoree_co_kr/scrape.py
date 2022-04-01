@@ -10,7 +10,7 @@ from sgselenium import SgChrome
 from sgpostal.sgpostal import parse_address_intl
 
 proxy = "http://groups-RESIDENTIAL,country-kr:{}@proxy.apify.com:8000/"
-os.environ['HTTPS_PROXY'] = proxy
+os.environ["HTTPS_PROXY"] = proxy
 
 
 def fetch_data():
