@@ -246,7 +246,7 @@ def get_subpage(session, url):
                 logzilla.error(f"{response.text}")
             except Exception:
                 pass
-        if not response:
+        if response:
             if len(response.text) < 400:
                 try:
                     response = try_again(session, url)
@@ -320,12 +320,13 @@ def initial(driver, url, state):
                     )
 
 
-def record_initial_requests(driver, state):
+def record_initial_requests(state):
     for url in [
         "https://www.radissonhotels.com/en-us/destination",
         "https://www.radissonhotelsamericas.com/en-us/destination",
     ]:
-        initial(driver, url, state)
+        with SgChrome() as driver:
+            initial(driver, url, state)
 
 
 def data_fetcher(session, state):
@@ -343,10 +344,7 @@ def data_fetcher(session, state):
 
 def fetch_data():
     state = CrawlStateSingleton.get_instance()
-    with SgChrome() as driver:
-        state.get_misc_value(
-            "init", default_factory=lambda: record_initial_requests(driver, state)
-        )
+    state.get_misc_value("init", default_factory=lambda: record_initial_requests(state))
 
     with SgRequests() as session:
         for item in data_fetcher(session, state):
