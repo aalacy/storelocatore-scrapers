@@ -184,7 +184,16 @@ def clean_record(k):
         k["main"]["name"] = k["main"]["name"]
     except Exception:
         k["main"]["name"] = "<MISSING>"
-
+    try:
+        k["sub"]["publisher"] = k["sub"]["publisher"]
+    except Exception:
+        k["sub"]["publisher"] = {}
+        k["sub"]["publisher"]["brand"] = {}
+        try:
+            k["sub"]["publisher"]["brand"]["name"] = k["main"]["brand"]
+            # will need to decode this^ cis  = Country Inn
+        except Exception:
+            pass
     return k
 
 
@@ -415,7 +424,7 @@ def scrape():
         ),
         hours_of_operation=sp.MissingField(),
         location_type=sp.MappingField(
-            mapping=["sub","publisher","brand","name"],
+            mapping=["sub", "publisher", "brand", "name"],
             is_required=False,
         ),
     )
