@@ -45,8 +45,6 @@ def fetch_data():
     sections = stores_sel.xpath('//div[@class="col-lg-4 col-sm-4 col-xs-12"]')
     for sec in sections:
         names = sec.xpath("h5")
-        raw_info = sec.xpath("p")
-        raw_info_index = 0
         for index in range(0, len(names)):
             locator_domain = website
 
