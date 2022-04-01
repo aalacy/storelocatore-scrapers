@@ -415,7 +415,7 @@ def scrape():
         ),
         hours_of_operation=sp.MissingField(),
         location_type=sp.MappingField(
-            mapping=["@type"],
+            mapping=["sub","publisher","brand","name"],
             is_required=False,
         ),
     )
