@@ -1,5 +1,3 @@
-import json
-import unicodedata
 from sglogging import sglog
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
@@ -9,40 +7,40 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
-website = "tablapizza_fr"
+website = "pizzamann_at"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
+
 headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36"
 }
 
-DOMAIN = "https://tablapizza.fr/"
+DOMAIN = "https://www.pizzamann.at"
 MISSING = SgRecord.MISSING
-
-
-def strip_accents(text):
-
-    text = unicodedata.normalize("NFD", text).encode("ascii", "ignore").decode("utf-8")
-
-    return str(text)
 
 
 def fetch_data():
     if True:
-        url = "https://pizzeria.tablapizza.fr/"
-        r = session.get(url, headers=headers)
-        loclist = r.text.split("var all_restaurants =")[1].split("}];")[0]
-        loclist = json.loads(loclist + "}]")
+        daylist = {
+            1: "Monday",
+            2: "Tuesday",
+            3: "Wednesday",
+            4: "Thursday",
+            5: "Friday",
+            6: "Saturday",
+            7: "Sunday",
+        }
+        url = "https://www.pizzamann.at/api/filialen"
+        loclist = session.get(url, headers=headers).json()
         for loc in loclist:
-            location_name = loc["post_title"]
-            store_number = loc["ID"]
-            page_url = loc["permalink"]
-            log.info(page_url)
-            address = loc["meta"]
-            phone = address["telephone"]
-            raw_address = strip_accents(
-                address["adresse"] + " " + address["cp_ville"]
-            ).replace("\n", " ")
-            # Parse the address
+            location_name = loc["short_name"]
+            log.info(location_name)
+            raw_address = loc["name"]
+            store_number = loc["key"]
+            phone = MISSING
+            latitude = loc["coords"]["position"]["lat"]
+            longitude = loc["coords"]["position"]["lng"]
+            country_code = "AT"
+            hour_list = loc["oeffnungszeiten"]
             pa = parse_address_intl(raw_address)
 
             street_address = pa.street_address_1
@@ -56,21 +54,15 @@ def fetch_data():
 
             zip_postal = pa.postcode
             zip_postal = zip_postal.strip() if zip_postal else MISSING
-
-            country_code = "FR"
-            latitude = address["latitude"]
-            longitude = address["longitude"]
-            mon = "lundi " + address["horaires_lundi"]
-            tue = " mardi " + address["horaires_mardi"]
-            wed = " mercredi " + address["horaires_mercredi"]
-            thu = " jeudi " + address["horaires_jeudi"]
-            fri = " vendredi " + address["horaires_vendredi"]
-            sat = " samedi " + address["horaires_samedi"]
-            sun = " dimanche " + address["horaires_dimanche"]
-            hours_of_operation = mon + tue + wed + thu + fri + sat + sun
+            hours_of_operation = ""
+            for idx, hour in enumerate(hour_list):
+                day = daylist[int(hour)]
+                time = hour_list[str(hour)]
+                time = time["offen_von"] + "-" + time["offen_von"]
+                hours_of_operation = hours_of_operation + " " + day + " " + time
             yield SgRecord(
                 locator_domain=DOMAIN,
-                page_url=page_url,
+                page_url="https://www.pizzamann.at/filialen",
                 location_name=location_name,
                 street_address=street_address,
                 city=city,
@@ -91,7 +83,7 @@ def scrape():
     log.info("Started")
     count = 0
     with SgWriter(
-        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.GeoSpatialId)
     ) as writer:
         results = fetch_data()
         for rec in results:
