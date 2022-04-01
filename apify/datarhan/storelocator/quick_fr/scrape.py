@@ -9,15 +9,16 @@ from sgscrape.sgwriter import SgWriter
 def fetch_data():
     session = SgRequests()
 
-    start_url = "https://api.quick.fr/v2/stores/store/locator?bbox=46.81080002456905%2C-7.9636684375%2C50.843607037110765%2C12.6906284375&services="
+    start_url = "https://api.quick.fr/v2/stores/store/locator?bbox=42.26934594596151%2C-8.163851305988823%2C51.0346270866046%2C12.490445569011177&services="
     domain = "quick.fr"
 
     all_locations = session.get(start_url).json()
     for poi in all_locations:
         page_url = "https://www.quick.fr/" + poi["slug"]
         hoo = []
-        for day, hours in poi["opening_hours"].items():
-            hoo.append(f"{day}: {hours[0]}-{hours[1]}")
+        if poi["opening_hours"]:
+            for day, hours in poi["opening_hours"].items():
+                hoo.append(f"{day}: {hours[0]}-{hours[1]}")
         hoo = " ".join(hoo)
 
         item = SgRecord(

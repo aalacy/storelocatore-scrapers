@@ -1,17 +1,21 @@
 import json
 from lxml import etree
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
-
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
+from sglogging import sglog
+
+DOMAIN = "ml.com"
+MISSING = SgRecord.MISSING
+
+log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
 
 
 def fetch_data():
     session = SgRequests()
-    domain = "ml.com"
     scraped_urls = []
     start_url = "https://fa.ml.com/find-an-advisor/locator/api/InternalSearch"
     hdr = {
@@ -43,6 +47,8 @@ def fetch_data():
             store_url = "https:" + poi["XmlData"]["parameters"]["Url"]
             if store_url in scraped_urls:
                 continue
+            store_url = "https://www.local.ml.com/ogden/"
+            log.info("Pull content => " + store_url)
             scraped_urls.append(store_url)
             location_name = poi["Company"]
             street_address = poi["Address1"]
@@ -63,16 +69,22 @@ def fetch_data():
                 continue
             store_dom = etree.HTML(store_response.text)
             hours_of_operation = ""
-            if store_dom:
+            if store_dom is not None:
                 hours_of_operation = store_dom.xpath(
                     '//div[@id="more-hours"]//ul/li/text()'
                 )
+                if not hours_of_operation:
+                    hours_of_operation = store_dom.xpath(
+                        '//li[@class="more-hours"]//span/text()'
+                    )
                 hours_of_operation = (
-                    " ".join(hours_of_operation) if hours_of_operation else ""
+                    (" ".join(hours_of_operation) if hours_of_operation else "")
+                    .replace("Hours of Operation:", "")
+                    .strip()
                 )
-
-            item = SgRecord(
-                locator_domain=domain,
+            log.info("Append {} => {}".format(location_name, street_address))
+            yield SgRecord(
+                locator_domain=DOMAIN,
                 page_url=store_url,
                 location_name=location_name,
                 street_address=street_address,
@@ -88,10 +100,10 @@ def fetch_data():
                 hours_of_operation=hours_of_operation,
             )
 
-            yield item
-
 
 def scrape():
+    log.info("start {} Scraper".format(DOMAIN))
+    count = 0
     with SgWriter(
         SgRecordDeduper(
             SgRecordID(
@@ -99,8 +111,12 @@ def scrape():
             )
         )
     ) as writer:
-        for item in fetch_data():
-            writer.write_row(item)
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
 
 
 if __name__ == "__main__":
