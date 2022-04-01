@@ -3,7 +3,7 @@ from sgrequests import SgRequests
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 from sglogging import SgLogSetup
 from sgscrape import sgpostal as parser
-from requests import exceptions  # noqa
+from sgrequests import exceptions
 from urllib3 import exceptions as urllibException
 
 logger = SgLogSetup().get_logger("penn-station_com")
@@ -15,7 +15,7 @@ headers["Content-Type"] = "application/x-www-form-urlencoded"
 
 search = DynamicGeoSearch(
     country_codes=[SearchableCountries.CANADA, SearchableCountries.USA],
-    max_radius_miles=100,
+    max_search_distance_miles=100,
     max_search_results=15,
 )
 
@@ -25,12 +25,12 @@ def api_get(start_url, headers, data, attempts, maxRetries):
     session = SgRequests()
     try:
         results = session.post(start_url, headers=headers, data=data)
-    except exceptions.RequestException as requestsException:
-        if "ProxyError" in str(requestsException):
+    except exceptions.RequestException as sgrequestsException:
+        if "ProxyError" in str(sgrequestsException):
             attempts += 1
             error = True
         else:
-            raise requestsException
+            raise sgrequestsException
 
     except urllibException.SSLError as urlException:
         if "BAD_RECORD_MAC" in str(urlException):

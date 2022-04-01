@@ -46,41 +46,44 @@ def fetch_records(zc, sgw: SgWriter):
     with SgRequests() as session:
         api_url = f"https://www.lowes.com/store/api/search?maxResults=&responseGroup=large&searchTerm={zc}"
         rapi = session.get(api_url, headers=headers_cus)
-        api_js = rapi.json()
-        stores = api_js["stores"]
-        logger.info(f"Store Count: [{len(stores)}] for {zc}")  # noqa
-        for idx, i in enumerate(stores[0:]):
-            store = i["store"]
-            city_f = store["city"] or ""
-            if city_f:
-                city_f = city_f.lower().replace(" ", "-")
-            state_f = store["state"] or ""
-            sn_f = store["id"] or ""
-            purl = ""
-            if city_f and state_f and sn_f:
-                purl = f"https://www.lowes.com/store/{state_f}-{city_f}/{sn_f}"
-            else:
+        if rapi.status_code == 200:
+            api_js = rapi.json()
+            stores = api_js["stores"]
+            logger.info(f"Store Count: [{len(stores)}] Pulling data for {zc}")  # noqa
+            for idx, i in enumerate(stores[0:]):
+                store = i["store"]
+                city_f = store["city"] or ""
+                if city_f:
+                    city_f = city_f.lower().replace(" ", "-")
+                state_f = store["state"] or ""
+                sn_f = store["id"] or ""
                 purl = ""
+                if city_f and state_f and sn_f:
+                    purl = f"https://www.lowes.com/store/{state_f}-{city_f}/{sn_f}"
+                else:
+                    purl = ""
 
-            item = SgRecord(
-                locator_domain=DOMAIN,
-                page_url=purl,
-                location_name=store["store_name"] or "",
-                street_address=store["address"] or "",
-                city=store["city"] or "",
-                state=store["state"] or "",
-                zip_postal=store["zip"] or "",
-                country_code=store["country"] or "",
-                store_number=store["id"] or "",
-                phone=store["phone"] or "",
-                location_type=store["storeFeature"] or "",
-                latitude=store["lat"] or "",
-                longitude=store["long"] or "",
-                hours_of_operation=get_hoo(store),
-                raw_address="",
-            )
+                item = SgRecord(
+                    locator_domain=DOMAIN,
+                    page_url=purl,
+                    location_name=store["store_name"] or "",
+                    street_address=store["address"] or "",
+                    city=store["city"] or "",
+                    state=store["state"] or "",
+                    zip_postal=store["zip"] or "",
+                    country_code=store["country"] or "",
+                    store_number=store["id"] or "",
+                    phone=store["phone"] or "",
+                    location_type=store["storeFeature"] or "",
+                    latitude=store["lat"] or "",
+                    longitude=store["long"] or "",
+                    hours_of_operation=get_hoo(store),
+                    raw_address="",
+                )
 
-            sgw.write_row(item)
+                sgw.write_row(item)
+        else:
+            return
 
 
 def fetch_data(sgw: SgWriter):
@@ -91,7 +94,6 @@ def fetch_data(sgw: SgWriter):
         granularity=Grain_8(),
         use_state=False,
     )
-
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
         tasks = []
         task_global = [
@@ -99,7 +101,9 @@ def fetch_data(sgw: SgWriter):
         ]
         tasks.extend(task_global)
         for future in as_completed(tasks):
-            future.result()
+            record = future.result()
+            if record is not None or record:
+                future.result()
 
 
 def scrape():

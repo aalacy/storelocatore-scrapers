@@ -70,6 +70,10 @@ def fetch_data():
             .strip()
             .replace(" ", "")
             .strip()
+            .encode("ascii", "replace")
+            .decode("utf-8")
+            .replace("?", "")
+            .strip()
             .isdigit()  # checking if it's phonenumber or zip
         ):
             raw_address = ", ".join(raw_address[:-1]).strip().replace(",,", ",").strip()
@@ -137,7 +141,46 @@ def fetch_data():
             hours_of_operation=hours_of_operation,
             raw_address=raw_address,
         )
-        # break
+
+    # hardcoding missing location
+    location_name = "Saint-Michel"
+    raw_address = ", ".join(
+        search_sel.xpath(f'//td/strong[text()="{location_name}"]/parent::node()/text()')
+    ).strip()
+
+    formatted_addr = parser.parse_address_intl(raw_address)
+    street_address = formatted_addr.street_address_1
+    if formatted_addr.street_address_2:
+        street_address = street_address + ", " + formatted_addr.street_address_2
+
+    city = formatted_addr.city
+    if city is None:
+        city = location_name
+    state = formatted_addr.state
+    zip = raw_address.split(",")[-1].strip()
+    if len(zip) != 7:
+        zip = formatted_addr.postcode
+
+    street_address = street_address.replace(zip, "").strip()
+    street_address = street_address.replace(zip.split(" ")[0], "").strip()
+
+    yield SgRecord(
+        locator_domain=website,
+        page_url=search_url,
+        location_name=location_name,
+        street_address=street_address,
+        city=city,
+        state=state,
+        zip_postal=zip,
+        country_code="CA",
+        store_number="<MISSING>",
+        phone="<MISSING>",
+        location_type="<MISSING>",
+        latitude="<MISSING>",
+        longitude="<MISSING>",
+        hours_of_operation="<MISSING>",
+        raw_address=raw_address,
+    )
 
 
 def scrape():

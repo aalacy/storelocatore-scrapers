@@ -30,6 +30,8 @@ def fetch_data():
             if "COLOMBO" in city or "CENTRE" in city:
                 street_address += " " + city
                 city = ""
+            if not city and _["store_state"] != "NEW ZEALAND":
+                city = _["store_state"]
             yield SgRecord(
                 page_url="https://mcdonalds.co.nz/find-us/restaurants",
                 store_number=_["nid"],

@@ -92,7 +92,10 @@ def fetch_data(sgw: SgWriter):
         if "temporarily closed" in str(store).lower():
             hours_of_operation = "Temporarily Closed"
         else:
-            days = list(store.time.stripped_strings)[:7]
+            try:
+                days = list(store.time.stripped_strings)[:7]
+            except:
+                continue
             hours = list(store.time.stripped_strings)[7:]
             hours_of_operation = ""
             for i in range(len(days)):

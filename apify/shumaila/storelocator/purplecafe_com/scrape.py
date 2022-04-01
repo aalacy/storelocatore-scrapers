@@ -4,6 +4,7 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+import re
 
 session = SgRequests()
 headers = {
@@ -13,6 +14,7 @@ headers = {
 
 def fetch_data():
 
+    pattern = re.compile(r"\s\s+")
     url = "https://www.purplecafe.com/"
     r = session.get(url, headers=headers)
     soup = BeautifulSoup(r.text, "html.parser")
@@ -32,6 +34,7 @@ def fetch_data():
         city, state = address[1].split(", ")
         state, pcode = state.split(" ", 1)
         phone = address[-1]
+        hours = re.sub(pattern, " ", hours).strip()
 
         yield SgRecord(
             locator_domain="https://www.purplecafe.com/",

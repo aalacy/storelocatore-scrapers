@@ -1,11 +1,11 @@
 from sgrequests import SgRequests
 from sgscrape import simple_scraper_pipeline as sp
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries, Grain_8
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries, Grain_2
 
 
 def get_data():
     search = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA], granularity=Grain_8()
+        country_codes=[SearchableCountries.USA], granularity=Grain_2()
     )
     session = SgRequests(retry_behavior=False)
     headers = {
@@ -28,11 +28,14 @@ def get_data():
             + my_code
         )
 
-        try:
-            response = session.get(url, headers=headers, timeout=5).json()
-
-        except Exception:
-            response = session.get(url, headers=headers, timeout=10).json()
+        x = 0
+        while True:
+            x = x + 1
+            try:
+                response = session.get(url, headers=headers, timeout=5 + x).json()
+                break
+            except Exception:
+                continue
 
         for location in response["data"]["storeSearch"]["fuelResults"]:
             locator_domain = "picknsave.com"
@@ -49,6 +52,8 @@ def get_data():
                 + location["storeNumber"]
             )
             location_name = location["vanityName"]
+            if location_name[0:3] == "PNS":
+                location_name = "Pick n Save" + location_name[3:]
             latitude = location["location"]["lat"]
             longitude = location["location"]["lng"]
             search.found_location_at(latitude, longitude)
@@ -69,7 +74,7 @@ def get_data():
             except Exception:
                 phone = "<MISSING>"
 
-            location_type = "fuel"
+            location_type = location["brand"]
 
             if location["open24Hours"] is True:
                 hours = "24/7"
@@ -120,6 +125,8 @@ def get_data():
                 + location["storeNumber"]
             )
             location_name = location["vanityName"]
+            if location_name[0:3] == "PNS":
+                location_name = "Pick n Save" + location_name[3:]
             latitude = location["location"]["lat"]
             longitude = location["location"]["lng"]
             search.found_location_at(latitude, longitude)
@@ -140,7 +147,7 @@ def get_data():
             except Exception:
                 phone = "<MISSING>"
 
-            location_type = "grocery"
+            location_type = location["brand"]
 
             if location["open24Hours"] is True:
                 hours = "24/7"
