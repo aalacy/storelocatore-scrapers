@@ -185,21 +185,6 @@ def fetch_data(sgw: SgWriter):
 
     df_filter_zero = df_filter_dash[(df_filter_dash["iata_code"].astype(str) != "0")]
     df_filter_zero = df_filter_zero.reset_index(drop=True)
-    country_code_and_ap_count = [
-        ("AU", "605"),
-        ("BR", "333"),
-        ("CA", "495"),
-        ("CN", "262"),
-        ("CO", "149"),
-        ("ID", "233"),
-        ("IN", "138"),
-        ("PG", "381"),
-        ("RU", "209"),
-        ("US", "2031"),
-    ]
-    logger.info(
-        f"Country Code and Corresponding Num of Airports in a region: {country_code_and_ap_count}"
-    )
 
     countries_not_to_be_in_df = [
         "AU",
@@ -220,6 +205,13 @@ def fetch_data(sgw: SgWriter):
     ]
     logger.info(
         f"Airports Data is ready to be used!! << Total Store Count: {df_rest_of_the_world.shape[0]}>>"
+    )
+
+    rest_of_the_country = list(set(df_rest_of_the_world.iso_country.tolist()))
+    rest_of_the_country_ = [i for i in rest_of_the_country if str(i) != "nan"]
+    rest_of_the_country_ = sorted(rest_of_the_country_)
+    logger.info(
+        f"Airports to be crawled for the List of countries: {rest_of_the_country_}"
     )
 
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
