@@ -156,7 +156,6 @@ def fetch_data(sgw: SgWriter):
                 else "<MISSING>"
                 for x in store
             ]
-            print("Writing ..")
             sgw.write_row(
                 SgRecord(
                     locator_domain=store[0],
