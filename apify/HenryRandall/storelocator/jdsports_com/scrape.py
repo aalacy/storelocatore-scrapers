@@ -85,6 +85,13 @@ def get_location(item, page_url, is_details):
 
     hours_of_operation = ", ".join(hour.attrs["content"] for hour in hours)
 
+    if is_details:
+        latitude = item.find("meta", itemprop="latitude").attrs["content"]
+        longitude = item.find("meta", itemprop="longitude").attrs["content"]
+    else:
+        latitude = None
+        longitude = None
+
     return SgRecord(
         locator_domain="jdsports.com",
         page_url=page_url,
@@ -96,6 +103,8 @@ def get_location(item, page_url, is_details):
         country_code=country_code,
         phone=phone,
         hours_of_operation=hours_of_operation,
+        latitude=latitude,
+        longitude=longitude,
     )
 
 

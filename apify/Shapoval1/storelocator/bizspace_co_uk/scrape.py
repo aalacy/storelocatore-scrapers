@@ -1,4 +1,3 @@
-import json
 from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
@@ -21,44 +20,81 @@ def fetch_data(sgw: SgWriter):
 
     for d in div:
         slug = "".join(d.xpath("./a/@href"))
-        region_page_url = f"https://www.bizspace.co.uk{slug}"
-        r = session.get(region_page_url, headers=headers)
-        tree = html.fromstring(r.text)
+        state_slg = "".join(
+            tree.xpath(f'//a[contains(@href, "{slug}")]/h4/text()')
+        ).lower()
+        if state_slg == "wales & the south west":
+            state_slg = "wales%20%26%20the%20south%20west"
 
-        div = tree.xpath("//div[@data-titleurl]//h3/a")
-        for d in div:
-            slug = "".join(d.xpath(".//@href"))
-            page_url = f"https://www.bizspace.co.uk{slug}"
-            r = session.get(page_url, headers=headers)
-            tree = html.fromstring(r.text)
+        headers = {
+            "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0",
+            "Accept": "application/json",
+            "Accept-Language": "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3",
+            "content-type": "application/x-www-form-urlencoded",
+            "Origin": "https://www.bizspace.co.uk",
+            "Connection": "keep-alive",
+            "Referer": "https://www.bizspace.co.uk/",
+            "Sec-Fetch-Dest": "empty",
+            "Sec-Fetch-Mode": "cors",
+            "Sec-Fetch-Site": "cross-site",
+        }
 
-            location_name = "".join(tree.xpath("//h1/text()")) or "<MISSING>"
-            js_block = (
-                "".join(
-                    tree.xpath(
-                        '//script[contains(text(), "window.__PRELOADED_STATE__")]/text()'
-                    )
-                )
-                .split("window.__PRELOADED_STATE__ = ")[1]
-                .strip()
+        params = {
+            "x-algolia-agent": "Algolia for JavaScript (3.34.0); Browser",
+            "x-algolia-application-id": "G76STO80LV",
+            "x-algolia-api-key": "3afbdea905479d7d5dd6d53c8d1bc0ef",
+        }
+
+        data = (
+            '{"params":"query=&aroundLatLngViaIP=true&getRankingInfo=1&filters=Region%3A%22'
+            + state_slg
+            + '%22"}'
+        )
+
+        r = session.post(
+            "https://g76sto80lv-dsn.algolia.net/1/indexes/property/query",
+            headers=headers,
+            params=params,
+            data=data,
+        )
+        js = r.json()["hits"]
+        for j in js:
+
+            location_name = j.get("Name") or "<MISSING>"
+            a = j.get("Address")
+            street_address = (
+                f"{a.get('AddressLine1')} {a.get('AddressLine2')}".replace(
+                    "None", ""
+                ).strip()
+                or "<MISSING>"
             )
-            js = json.loads(js_block)["property"]["propertyDetails"]
-
-            a = js.get("address")
-            street_address = a.get("addressLine1") or "<MISSING>"
-            state = a.get("county") or "<MISSING>"
-            state = str(state).strip() or "<MISSING>"
-            postal = a.get("postcode") or "<MISSING>"
+            street_address = " ".join(street_address.split())
+            state = j.get("Region") or "<MISSING>"
+            postal = a.get("Postcode") or "<MISSING>"
             country_code = "UK"
-            city = a.get("city") or "<MISSING>"
-            if city == "<MISSING>":
-                city = a.get("town")
-            if city == "<MISSING>":
-                city = state
-            store_number = a.get("id") or "<MISSING>"
-            latitude = a.get("latitude") or "<MISSING>"
-            longitude = a.get("longitude") or "<MISSING>"
-            phone = js.get("phone")
+            city = j.get("Town") or "<MISSING>"
+            store_number = a.get("Id") or "<MISSING>"
+            latitude = a.get("Latitude") or "<MISSING>"
+            longitude = a.get("Longitude") or "<MISSING>"
+            phone = "<MISSING>"
+            location_type = ",".join(j.get("PropertyTypes"))
+            hours_of_operation = "<MISSING>"
+            hours = j.get("OpeningHours")
+            tmp = []
+            if hours:
+                for h in hours:
+                    day = h.get("DayOfWeek")
+                    opens = h.get("OpeningTime")
+                    closes = h.get("ClosingTime")
+                    line = (
+                        f"{day} {opens} - {closes}".replace(":00:00", ":00")
+                        .replace(":30:00", ":30")
+                        .strip()
+                    )
+                    tmp.append(line)
+                hours_of_operation = "; ".join(tmp)
+            slug_page = j.get("TitleUrl")
+            page_url = f"https://www.bizspace.co.uk/spaces/{slug_page}"
 
             row = SgRecord(
                 locator_domain=locator_domain,
@@ -71,10 +107,10 @@ def fetch_data(sgw: SgWriter):
                 country_code=country_code,
                 store_number=store_number,
                 phone=phone,
-                location_type=SgRecord.MISSING,
+                location_type=location_type,
                 latitude=latitude,
                 longitude=longitude,
-                hours_of_operation=SgRecord.MISSING,
+                hours_of_operation=hours_of_operation,
             )
 
             sgw.write_row(row)
@@ -82,5 +118,7 @@ def fetch_data(sgw: SgWriter):
 
 if __name__ == "__main__":
     session = SgRequests()
-    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))) as writer:
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.STORE_NUMBER}))
+    ) as writer:
         fetch_data(writer)
