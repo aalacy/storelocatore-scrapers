@@ -49,6 +49,7 @@ def fetch_records(http: SgRequests, state: CrawlState) -> Iterable[SgRecord]:
         r = http.get(next_r.url, headers=headers)
         logger.info(f"Pulling the data from: {next_r.url}")
         page_url = next_r.url
+        store_number = page_url.split("/")[-2]
         soup = BeautifulSoup(r.text, "html.parser")
         temp = soup.find("div", {"class": "detailbox"})
         phone = (
@@ -76,7 +77,6 @@ def fetch_records(http: SgRequests, state: CrawlState) -> Iterable[SgRecord]:
 
         zip_postal = pa.postcode
         zip_postal = zip_postal.strip() if zip_postal else MISSING
-        store_number = MISSING
         location_type = MISSING
         country_code = "Japan"
         yield SgRecord(
