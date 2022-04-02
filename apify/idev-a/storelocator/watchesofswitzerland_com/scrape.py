@@ -47,7 +47,6 @@ def fetch_records(search):
                 yield SgRecord(
                     page_url=locator_domain + "/store/" + _["name"],
                     location_name=_["name"],
-                    store_number=_["id"],
                     street_address=street_address,
                     city=_["address"]["town"],
                     state=_["address"]["region"]["isocodeShort"],
