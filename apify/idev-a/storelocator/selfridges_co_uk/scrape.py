@@ -15,7 +15,7 @@ base_url = "https://www.selfridges.com/US/en/features/info/stores/london/"
 
 
 def fetch_data():
-    with SgRequests() as session:
+    with SgRequests(proxy_country="us") as session:
         soup = bs(session.get(base_url, headers=_headers).text, "lxml")
         page_links = soup.select("ul.navigation-root a")
         for link in page_links:
