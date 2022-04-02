@@ -44,7 +44,11 @@ def fetch_data():
             locator_domain = website
             location_name = store["displayName"]
             street_address = store["line1"]
-            if "line2" in store and store["line2"] is not None:
+            if (
+                "line2" in store
+                and store["line2"] is not None
+                and len(store["line2"]) > 0
+            ):
                 street_address = street_address + ", " + store["line2"]
 
             city = store.get("town", "<MISSING>")
