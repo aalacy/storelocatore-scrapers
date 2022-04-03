@@ -23,16 +23,11 @@ logger = SgLogSetup().get_logger("lowes_com")
 DOMAIN = "lowes.com"
 MAX_WORKERS = 10
 
-# headers_cus = {
-#     "accept": "application/json, text/plain, */*",
-#     "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.102 Safari/537.36",
-#     "x-component-location": "store-locator",
-#     "x-sec-clge-req-type": "ajax",
-# }
-
 headers_cus = {
+    "accept": "application/json, text/plain, */*",
     "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.102 Safari/537.36",
-    "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+    "x-component-location": "store-locator",
+    "x-sec-clge-req-type": "ajax",
 }
 
 
