@@ -42,9 +42,6 @@ def get_data():
             url = "https://www.caobakerycafe.com/locations"
             response = scraper.get(url).text
 
-            with open("html.txt", "w", encoding="utf-8") as output:
-                print(response, file=output)
-
             json_objects = extract_json(
                 response.split('<script id="POPMENU_REQUIRED_CHUNKS"></script>')[1]
             )
