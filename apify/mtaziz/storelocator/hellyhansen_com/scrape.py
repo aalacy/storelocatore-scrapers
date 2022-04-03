@@ -83,7 +83,6 @@ def fetch_records_eu_based_on_france(latlng, sgw):
     )
     input_keys = f"has_data=true&company_id=58&store_mode=&style=&color=&upc=&category=Sportswear%2Bor%2Bbrandstore%2Bor%2Boutlet&inline=1&show_links_in_list=&parent_domain=&map_center_lat={str(lat)}&map_center_lng={str(lng)}&map_distance_diag=3000&sort_by=proximity&no_variants=0&only_retailer_id=&dealers_company_id=&only_store_id=false&uses_alt_coords=false&q=France&zoom_level=9&lang=en-us&forced_coords="
     api_endpoint_url = f"{conversion_data_base_url}{input_keys}"
-    # logger.info(f"API Endpoint URL: {api_endpoint_url}")
 
     try:
         r = get_response(api_endpoint_url)
@@ -213,7 +212,6 @@ def fetch_records_eu_based_on_chile(latlng, sgw):
         if js:
             total += len(js)
             for idx, _ in enumerate(js[0:]):
-                # for idx, _ in enumerate(test_markers[0:10]):
                 hoo = ""
                 suno = ""
                 if "sun_time_open" in _:
@@ -567,7 +565,6 @@ def fetch_records_ca(latlng, sgw):
         if js:
             total += len(js)
             for idx, _ in enumerate(js[0:]):
-                # for idx, _ in enumerate(test_markers[0:10]):
                 hoo = ""
                 suno = ""
                 if "sun_time_open" in _:
