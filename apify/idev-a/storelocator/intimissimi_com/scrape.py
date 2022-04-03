@@ -1,11 +1,9 @@
-from typing import Iterable, Tuple, Callable
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests.sgrequests import SgRequests
-from sgzip.dynamic import SearchableCountries
-from sgzip.parallel import DynamicSearchMaker, ParallelDynamicSearch, SearchIteration
+from sgzip.dynamic import SearchableCountries, DynamicGeoSearch
 from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger("intimissimi")
@@ -18,34 +16,40 @@ locator_domain = "https://www.intimissimi.com/"
 base_url = "https://www.intimissimi.com/on/demandware.store/Sites-intimissimi-ww-Site/en_WS/Stores-FindStores?radius=100&lat={}&long={}&geoloc=false"
 
 
-class ExampleSearchIteration(SearchIteration):
-    def __init__(self, http: SgRequests):
-        self._http = http
+def _v(val):
+    return (
+        val.replace("Castell-Platja D&apos;aro-Platja D&apos;aro", "")
+        .replace("Cornate D&apos;adda", "")
+        .replace("AFFI CCLE GRAND&apos;AFFI", "")
+        .replace(
+            "&quot;Via Rodolfo Rodolfo Morandi 16  - CCle &quot;&quot;Ariosto&quot;&quot;&quot;",
+            "",
+        )
+        .replace("&apos;", "'")
+        .strip()
+    )
 
-    def do(
-        self,
-        coord: Tuple[float, float],
-        zipcode: str,
-        current_country: str,
-        items_remaining: int,
-        found_location_at: Callable[[float, float], None],
-    ) -> Iterable[SgRecord]:
 
-        self._http.clear_cookies()
-        # here you'd use self.__http, and call `found_location_at(lat, long)` for all records you find.
-        res = self._http.get(base_url.format(coord[0], coord[1]), headers=_headers)
+def fetch_records(http, search):
+    for lat, lng in search:
+        res = http.get(base_url.format(lat, lng), headers=_headers)
         if res.status_code == 200:
             locations = res.json()["stores"]
-            logger.info(f"[{current_country}] found: {len(locations)}")
+            logger.info(f"[{search.current_country()}] found: {len(locations)}")
             for store in locations:
                 hours = []
                 for hr in store.get("storeHours", []):
-                    hours.append(f"{hr['name']}: {hr['phases']}")
+                    times = hr["phases"]
+                    if not hr["phases"]:
+                        times = "Closed"
+                    hours.append(f"{hr['name']}: {times}")
 
                 street_address = store["address1"]
                 if store.get("address2"):
                     street_address += " " + store["address2"]
                 page_url = f'https://www.intimissimi.com/world/stores/{store["name"].lower().replace(" ","_")}/{store["ID"]}.html'
+                if store["ID"] == "IBO4":
+                    page_url = ""
                 city = store.get("city", "")
                 if city:
                     street_address = street_address.replace(city, "")
@@ -55,11 +59,9 @@ class ExampleSearchIteration(SearchIteration):
                 yield SgRecord(
                     page_url=page_url,
                     store_number=store["ID"],
-                    location_name=store["name"],
-                    street_address=street_address.replace(",", "")
-                    .replace("&apos;", "'")
-                    .strip(),
-                    city=city,
+                    location_name=_v(store["name"]),
+                    street_address=_v(street_address).replace(",", ""),
+                    city=_v(city),
                     state=store.get("state", ""),
                     zip_postal=zip_postal,
                     latitude=store["latitude"],
@@ -72,23 +74,14 @@ class ExampleSearchIteration(SearchIteration):
 
 
 if __name__ == "__main__":
-    search_maker = DynamicSearchMaker(
-        search_type="DynamicGeoSearch",
-        expected_search_radius_miles=100,
+    search = DynamicGeoSearch(
+        country_codes=SearchableCountries.ALL, expected_search_radius_miles=500
     )
-
     with SgWriter(
-        deduper=SgRecordDeduper(
-            RecommendedRecordIds.PageUrlId, duplicate_streak_failure_factor=5
+        SgRecordDeduper(
+            RecommendedRecordIds.StoreNumberId, duplicate_streak_failure_factor=15
         )
     ) as writer:
-        with SgRequests(proxy_country="us", retries_with_fresh_proxy_ip=10) as http:
-            search_iter = ExampleSearchIteration(http=http)
-            par_search = ParallelDynamicSearch(
-                search_maker=search_maker,
-                search_iteration=search_iter,
-                country_codes=SearchableCountries.ALL,
-            )
-
-            for rec in par_search.run():
+        with SgRequests(proxy_country="us") as http:
+            for rec in fetch_records(http, search):
                 writer.write_row(rec)

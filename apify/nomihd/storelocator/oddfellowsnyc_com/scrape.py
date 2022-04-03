@@ -5,7 +5,9 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import lxml.html
 import re
-from sgscrape import sgpostal as parser
+from sgpostal import sgpostal as parser
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
 website = "oddfellowsnyc.com"
@@ -65,7 +67,7 @@ def fetch_data():
 
     search_sel = lxml.html.fromstring(search_res.text)
 
-    store_list = list(search_sel.xpath('//div[contains(@class,"shops-contact")]'))
+    store_list = list(search_sel.xpath('//div[@class="module-details module-item"]'))
     store_name_list = list(
         search_sel.xpath('//div[contains(@class,"shops-header-")]/h3/text()')
     )
@@ -74,17 +76,29 @@ def fetch_data():
         page_url = search_url
 
         locator_domain = website
+        location_name = "".join(
+            store.xpath('div[@class="module-title"]/h3/text()')
+        ).strip()
+        if no >= len(store_name_list):
+            temp_loc_name = store_name_list[-1].strip()
+        else:
+            temp_loc_name = store_name_list[no].strip()
 
-        location_name = store_name_list[no].strip()
-
-        coming_soon = store.xpath('.//p[contains(text(),"OPEN")]')
+        coming_soon = store.xpath(
+            'div[@class="shops-contact"]//p[contains(text(),"OPEN")]'
+        )
         if coming_soon:
             continue
 
         store_info = list(
             filter(
                 str,
-                [x.strip() for x in store.xpath(".//p[text()]/text()")],
+                [
+                    x.strip()
+                    for x in store.xpath(
+                        "div[@class='shops-contact']//p[text()]/text()"
+                    )
+                ],
             )
         )
         store_info = list(filter(addr_phn, store_info))
@@ -99,7 +113,15 @@ def fetch_data():
             full_address = store_info
             phone = "<MISSING>"
 
-        raw_address = ", ".join(full_address).strip().replace(",,", ",").strip()
+        raw_address = (
+            ", ".join(full_address)
+            .strip()
+            .replace(",,", ",")
+            .strip()
+            .split(", charleston@")[0]
+            .strip()
+            .replace("StreetBrooklyn", "Street, Brooklyn")
+        )
         formatted_addr = parser.parse_address_intl(raw_address)
         street_address = formatted_addr.street_address_1
         if formatted_addr.street_address_2:
@@ -118,7 +140,7 @@ def fetch_data():
 
         zip = formatted_addr.postcode
         country_code = "US"
-        if location_name == "Korea":
+        if temp_loc_name == "Korea":
             country_code = "Korea"
 
         store_number = "<MISSING>"
@@ -128,13 +150,34 @@ def fetch_data():
         hours = list(
             filter(
                 str,
-                [x.strip() for x in store.xpath(".//p[./strong]/strong/text()")],
+                [
+                    x.strip()
+                    for x in store.xpath(
+                        "div[@class='shops-contact']//p[./strong]/strong/text()"
+                    )
+                ],
             )
         )
-
+        if "HOURS" in "".join(hours).strip():
+            hours = list(
+                filter(
+                    str,
+                    [
+                        x.strip()
+                        for x in store.xpath(
+                            "div[@class='shops-contact']//p[./strong[contains(text(),'HOURS')]]/following-sibling::p/text()"
+                        )
+                    ],
+                )
+            )
         hours_of_operation = "; ".join(hours).replace("; :", ":").strip()
+        if "843.203.6139;" in hours_of_operation:
+            hours_of_operation = hours_of_operation.replace("843.203.6139;", "").strip()
+            phone = "843.203.6139"
 
-        map_link = "".join(store.xpath('.//a[contains(@href,"maps")]/@href'))
+        map_link = "".join(
+            store.xpath('div[@class="shops-contact"]//a[contains(@href,"maps")]/@href')
+        )
 
         latitude, longitude = get_latlng(map_link)
 
@@ -160,7 +203,9 @@ def fetch_data():
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(SgRecordID({SgRecord.Headers.RAW_ADDRESS}))
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

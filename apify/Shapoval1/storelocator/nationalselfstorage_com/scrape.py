@@ -127,6 +127,13 @@ def get_data(url, sgw: SgWriter):
         .strip()
         or "<MISSING>"
     )
+    if hours_of_operation == "<MISSING>":
+        hours_of_operation = (
+            " ".join(tree.xpath('//div[@class="business-hours-row"]/div/text()'))
+            .replace("\n", "")
+            .strip()
+            or "<MISSING>"
+        )
     if hours_of_operation.count("Open 24h") == 7:
         hours_of_operation = "Open 24h"
     ll = "".join(tree.xpath("//img/@data-src")) or "<MISSING>"
@@ -135,10 +142,6 @@ def get_data(url, sgw: SgWriter):
         longitude = ll.split("markers=")[1].split(",")[1].split("h")[0].strip()
     except:
         latitude, longitude = "<MISSING>", "<MISSING>"
-    map_link = "".join(tree.xpath("//iframe/@src"))
-    if location_name.find("Tucson") != -1:
-        latitude = map_link.split("!3d")[1].strip().split("!")[0].strip()
-        longitude = map_link.split("!2d")[1].strip().split("!")[0].strip()
 
     row = SgRecord(
         locator_domain=locator_domain,
@@ -171,6 +174,10 @@ def fetch_data(sgw: SgWriter):
 if __name__ == "__main__":
     session = SgRequests()
     with SgWriter(
-        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.STREET_ADDRESS, SgRecord.Headers.LOCATION_NAME}
+            )
+        )
     ) as writer:
         fetch_data(writer)

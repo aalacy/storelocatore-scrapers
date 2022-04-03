@@ -6,6 +6,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
+
 session = SgRequests()
 website = "1000degreespizza_com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -16,7 +17,7 @@ headers = {
     "path": "/pizza-place-near-me-locations/",
     "scheme": "https",
     "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-    "accept-encoding": "gzip, deflate, br",
+    "accept-encoding": "identity",
     "accept-language": "en-US,en;q=0.9",
     "cache-control": "max-age=0",
     "cookie": "_ga=GA1.2.151889300.1611623194; _gid=GA1.2.2137413542.1611623194; _gat=1",
@@ -36,12 +37,11 @@ MISSING = SgRecord.MISSING
 def fetch_data():
     if True:
         url = "https://www.1000degreespizza.com/pizza-place-near-me-locations/"
-        r = session.get(url, headers=headers, verify=False)
+        r = session.get(url, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
         locations = soup.findAll("div", {"class": "location-1000d"})
         for info in locations:
             atgs = info.findAll("a")
-
             details = info.text.strip()
             details = details.split("\n")
             if len(details) == 4:
@@ -80,10 +80,10 @@ def fetch_data():
                 link = link.replace('<a href="', "")
                 link = link.replace('" style="margin-top: 20px;">', "")
                 link = link.replace("</a>", "")
-                link = link.replace(
-                    '<img alt="" src="../wp-content/uploads/2020/01/view-store-btn.jpg"/>',
-                    "",
-                )
+                if link.find("/<img alt") != -1:
+                    link = link.split("/<img alt")[0]
+                if link.find("revelup.com") != -1:
+                    link = SgRecord.MISSING
                 if link.find("..") != -1:
                     link = link.replace("..", "https://www.1000degreespizza.com")
             except IndexError:

@@ -1,49 +1,55 @@
-from lxml import etree
-
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 
 
 def fetch_data():
-    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
+    session = SgRequests()
 
-    start_url = "https://www.sephora.gr/el/sephora-katasthmata?ajax=1&all=1"
+    start_url = "https://www.sephora.gr/on/demandware.store/Sites-Sephora_RO-Site/el_GR/Stores-FindNearestStores?latitude={}&longitude={}&storeservices="
     domain = "sephora.gr"
+
     hdr = {
-        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.83 Safari/537.36",
+        "x-dtpc": "11$516278662_404h35vRADKROPLASUEALIPEUQQWRMAECAJBKOG-0e0",
+        "x-requested-with": "XMLHttpRequest",
     }
-    response = session.get(start_url, headers=hdr)
-    dom = etree.HTML(response.text.encode("utf-8"))
+    all_coords = DynamicGeoSearch(
+        country_codes=[SearchableCountries.GREECE], expected_search_radius_miles=20
+    )
+    for lat, lng in all_coords:
+        data = session.get(start_url.format(lat, lng), headers=hdr).json()
+        for poi in data["locations"]:
+            street_address = poi["address1"]
+            if poi["address2"]:
+                street_address += ", " + poi["address2"]
+            if poi["address3"]:
+                street_address += ", " + poi["address3"]
+            hoo = []
+            for e in poi["schedule"]:
+                hoo.append(f'{e["Day"]} {e["Time"]}')
+            hoo = " ".join(hoo)
 
-    all_locations = dom.xpath("//marker")
-    for poi_html in all_locations:
-        store_number = poi_html.xpath("@id_store")[0]
-        page_url = f"https://www.sephora.gr/el/store?storeid={store_number}"
-        loc_response = session.get(page_url)
-        loc_dom = etree.HTML(loc_response.text)
-        hoo = " ".join(loc_dom.xpath('//div[@class="description"]//text()'))
-
-        item = SgRecord(
-            locator_domain=domain,
-            page_url=page_url,
-            location_name=poi_html.xpath("@name")[0],
-            street_address=loc_dom.xpath('//div[@class="address"]/text()')[0],
-            city=loc_dom.xpath('//div[@class="city"]/text()')[0],
-            state=SgRecord.MISSING,
-            zip_postal=SgRecord.MISSING,
-            country_code="GR",
-            store_number=store_number,
-            phone=poi_html.xpath("@phone")[0],
-            location_type=SgRecord.MISSING,
-            latitude=poi_html.xpath("@lat")[0],
-            longitude=poi_html.xpath("@lng")[0],
-            hours_of_operation=hoo,
-        )
-
-        yield item
+            item = SgRecord(
+                locator_domain=domain,
+                page_url=poi["url"],
+                location_name=poi["name"],
+                street_address=street_address,
+                city=poi["city"],
+                state="",
+                zip_postal=poi["postal"],
+                country_code=poi["country_code"],
+                store_number=poi["id"],
+                phone=poi["phone"],
+                location_type="",
+                latitude=poi["latitude"],
+                longitude=poi["longitude"],
+                hours_of_operation=hoo,
+            )
+            yield item
 
 
 def scrape():

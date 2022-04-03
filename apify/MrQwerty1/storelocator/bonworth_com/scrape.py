@@ -1,123 +1,52 @@
-import csv
-import json
-import usaddress
-
-from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def fetch_data(sgw: SgWriter):
+    api = "https://cdn.shopify.com/s/files/1/0316/1577/8951/t/5/assets/sca.storelocatordata.json"
 
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
+    r = session.get(api, headers=headers)
 
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
-    locator_domain = "https://bonworth.com/"
-    page_url = "https://bonworth.com/pages/maps"
-
-    tag = {
-        "Recipient": "recipient",
-        "AddressNumber": "address1",
-        "AddressNumberPrefix": "address1",
-        "AddressNumberSuffix": "address1",
-        "StreetName": "address1",
-        "StreetNamePreDirectional": "address1",
-        "StreetNamePreModifier": "address1",
-        "StreetNamePreType": "address1",
-        "StreetNamePostDirectional": "address1",
-        "StreetNamePostModifier": "address1",
-        "StreetNamePostType": "address1",
-        "CornerOf": "address1",
-        "IntersectionSeparator": "address1",
-        "LandmarkName": "address1",
-        "USPSBoxGroupID": "address1",
-        "USPSBoxGroupType": "address1",
-        "USPSBoxID": "address1",
-        "USPSBoxType": "address1",
-        "BuildingName": "address2",
-        "OccupancyType": "address2",
-        "OccupancyIdentifier": "address2",
-        "SubaddressIdentifier": "address2",
-        "SubaddressType": "address2",
-        "PlaceName": "city",
-        "StateName": "state",
-        "ZipCode": "postal",
-    }
-
-    session = SgRequests()
-    r = session.get(page_url)
-    tree = html.fromstring(r.text)
-    text = "".join(tree.xpath("//div[@develic-map]/@develic-map"))
-    js = json.loads(text)["items"]
-
-    for j in js:
-        line = j.get("addr")
-        a = usaddress.tag(line, tag_mapping=tag)[0]
-        street_address = f"{a.get('address1')} {a.get('address2') or ''}".strip()
-        if street_address == "None":
-            street_address = "<MISSING>"
-        city = a.get("city") or "<INACCESSIBLE>"
-        state = a.get("state") or "<INACCESSIBLE>"
-        postal = a.get("postal") or "<INACCESSIBLE>"
+    for j in r.json():
+        location_name = j.get("name")
+        street_address = j.get("address")
+        city = j.get("city") or ""
+        if "," in city:
+            city = city.split(",")[0].strip()
+        state = j.get("state")
+        postal = j.get("postal")
         country_code = "US"
-        store_number = "<MISSING>"
-        location_name = j.get("t")
-        phone = "<MISSING>"
-        latitude = j.get("lt") or "<MISSING>"
-        longitude = j.get("lg") or "<MISSING>"
-        location_type = "<MISSING>"
-        hours_of_operation = "<MISSING>"
+        latitude = j.get("lat")
+        longitude = j.get("lng")
+        hours_of_operation = j.get("schedule")
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
+        row = SgRecord(
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            latitude=latitude,
+            longitude=longitude,
+            locator_domain=locator_domain,
+            hours_of_operation=hours_of_operation,
+        )
 
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    locator_domain = "https://bonworth.com/"
+    page_url = "https://bonworth.com/pages/store-locator"
+
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0"
+    }
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
+        fetch_data(writer)

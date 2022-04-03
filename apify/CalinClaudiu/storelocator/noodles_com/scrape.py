@@ -34,35 +34,47 @@ def record_initial_requests(http: SgRequests, state: CrawlState) -> bool:
             state.push_request(SerializableRequest(url=temp))
         else:
             state_url = "https://locations.noodles.com/" + state_url.find("a")["href"]
-            r2 = session.get(state_url, headers=headers, timeout=180)
+            r2 = session.get(state_url, headers=headers)
             soup2 = BeautifulSoup(r2.text, "html.parser")
             city_list = soup2.findAll("li", {"class": "c-directory-list-content-item"})
-            for city in city_list:
-                if city.find("span").text == "(1)":
-                    temp = "https://locations.noodles.com/" + city.find("a")["href"]
-                    store_url_list.append(temp)
-                    logger.info(temp)
-                    state.push_request(SerializableRequest(url=temp))
-                else:
-                    city_url = "https://locations.noodles.com/" + city.find("a")["href"]
-                    r4 = session.get(city_url, headers=headers, timeout=180)
-                    soup4 = BeautifulSoup(r4.text, "html.parser")
-                    loclist = soup4.findAll("div", {"class": "c-location-grid-item"})
-                    for loc in loclist:
-                        loc = "https://locations.noodles.com/" + loc.find("a")[
-                            "href"
-                        ].replace("..", "")
-                        store_url_list.append(loc)
-                        logger.info(loc)
-                        state.push_request(SerializableRequest(url=loc))
+            if not city_list:
+                city_list = soup2.findAll("div", {"class": "c-location-grid-item"})
+                for city in city_list:
+                    loc = "https://locations.noodles.com/" + city.find("a")[
+                        "href"
+                    ].replace("..", "")
+                    store_url_list.append(loc)
+                    logger.info(loc)
+                    state.push_request(SerializableRequest(url=loc))
+            else:
+                for city in city_list:
+                    if city.find("span").text == "(1)":
+                        temp = "https://locations.noodles.com/" + city.find("a")["href"]
+                        store_url_list.append(temp)
+                        logger.info(temp)
+                        state.push_request(SerializableRequest(url=temp))
+                    else:
+                        city_url = (
+                            "https://locations.noodles.com/" + city.find("a")["href"]
+                        )
+                        r4 = session.get(city_url, headers=headers)
+                        soup4 = BeautifulSoup(r4.text, "html.parser")
+                        loclist = soup4.findAll(
+                            "div", {"class": "c-location-grid-item"}
+                        )
+                        for loc in loclist:
+                            loc = "https://locations.noodles.com/" + loc.find("a")[
+                                "href"
+                            ].replace("..", "")
+                            store_url_list.append(loc)
+                            logger.info(loc)
+                            state.push_request(SerializableRequest(url=loc))
     return True
 
 
 def fetch_records(session: SgRequests, state: CrawlState) -> Iterable[SgRecord]:
     for next_r in state.request_stack_iter():
-        r = session.get(
-            next_r.url.replace(".com//", ".com/"), headers=headers, timeout=180
-        )
+        r = session.get(next_r.url.replace(".com//", ".com/"), headers=headers)
         logger.info(f"Pulling the data from: {next_r.url}")
         soup = BeautifulSoup(r.text, "html.parser")
         page_url = next_r.url
@@ -79,12 +91,20 @@ def fetch_records(session: SgRequests, state: CrawlState) -> Iterable[SgRecord]:
         state = soup.find("abbr", {"itemprop": "addressRegion"}).text
         zip_postal = soup.find("span", {"class": "c-address-postal-code"}).text
         country_code = soup.find("abbr", {"itemprop": "addressCountry"}).text
-        phone = soup.find("span", {"itemprop": "telephone"}).text
-        hours_of_operation = (
-            soup.find("table", {"class": "c-location-hours-details"})
-            .get_text(separator="|", strip=True)
-            .replace("|", " ")
-        )
+        try:
+            phone = soup.find("span", {"itemprop": "telephone"}).text
+        except Exception:
+            phone = "<MISSING>"
+
+        try:
+            hours_of_operation = (
+                soup.find("table", {"class": "c-location-hours-details"})
+                .get_text(separator="|", strip=True)
+                .replace("|", " ")
+                .replace("Day of the Week Hours ", "")
+            )
+        except Exception:
+            hours_of_operation = "<MISSING>"
         latitude = soup.find("meta", {"itemprop": "latitude"})["content"]
         longitude = soup.find("meta", {"itemprop": "longitude"})["content"]
         yield SgRecord(

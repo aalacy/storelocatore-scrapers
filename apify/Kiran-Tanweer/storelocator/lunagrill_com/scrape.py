@@ -6,6 +6,11 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape import sgpostal as parser
+import os
+
+
+os.environ["PROXY_URL"] = "http://groups-BUYPROXIES94952:{}@proxy.apify.com:8000/"
+os.environ["PROXY_PASSWORD"] = "apify_proxy_4j1h689adHSx69RtQ9p5ZbfmGA3kw12p0N2q"
 
 session = SgRequests()
 website = "lunagrill_com"
@@ -23,7 +28,7 @@ def fetch_data():
     if True:
         linklist = []
         url = "https://locations.lunagrill.com/site-map/US"
-        r = session.get(url, headers=headers, verify=False)
+        r = session.get(url, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
         info = soup.text
         links = str(soup)
@@ -36,6 +41,7 @@ def fetch_data():
             if len(coordslink) == 2:
                 link = coordslink[1].split('" rel="')[0]
                 linklist.append(link)
+
         info = info.split("Get Directions")
         for j, k in zip(info, linklist):
             title = "Luna Grill"
@@ -84,6 +90,7 @@ def fetch_data():
                     sat_start = "11:00 AM"
                 if sun_start == "1100":
                     sun_start = "11:00 AM"
+
                 if mon_start == "1030":
                     mon_start = "10:30 AM"
                 if tues_start == "1030":
@@ -98,10 +105,12 @@ def fetch_data():
                     sat_start = "10:30 AM"
                 if sun_start == "1030":
                     sun_start = "10:30 AM"
+
                 if sun_start == "1200":
                     sun_start = "12:00 PM"
                 if sun_start == "0":
                     sun_start = "12:00 AM"
+
                 if mon_end == "2100":
                     mon_end = "9:00 PM"
                 if tues_end == "2100":
@@ -116,6 +125,7 @@ def fetch_data():
                     sat_end = "9:00 PM"
                 if sun_end == "2100":
                     sun_end = "9:00 PM"
+
                 if mon_end == "2030":
                     mon_end = "8:30 PM"
                 if tues_end == "2030":
@@ -130,6 +140,7 @@ def fetch_data():
                     sat_end = "8:30 PM"
                 if sun_end == "2030":
                     sun_end = "8:30 PM"
+
                 if mon_end == "2000":
                     mon_end = "8:00 PM"
                 if tues_end == "2000":
@@ -146,6 +157,7 @@ def fetch_data():
                     sun_end = "8:00 PM"
                 if sun_end == "1900":
                     sun_end = "7:00 PM"
+
                 if mon_end == "1900":
                     mon_end = "7:00 PM"
                 if tues_end == "1900":
@@ -160,6 +172,7 @@ def fetch_data():
                     sat_end = "7:00 PM"
                 if sun_end == "1800":
                     sun_end = "6:00 PM"
+
                 if mon_end == "1930":
                     mon_end = "7:30 PM"
                 if tues_end == "1930":
@@ -174,6 +187,7 @@ def fetch_data():
                     sat_end = "7:30 PM"
                 if sun_end == "1930":
                     sun_end = "7:30 PM"
+
                 HOO = (
                     "Monday: "
                     + mon_start
@@ -210,6 +224,7 @@ def fetch_data():
                     + " - "
                     + sun_end
                 )
+
             address = j.split("}]}")
             if len(address) == 2:
                 address = address[1].split("USPhone:")[0]
@@ -227,6 +242,7 @@ def fetch_data():
                 city = parsed.city if parsed.city else "<MISSING>"
                 state = parsed.state if parsed.state else "<MISSING>"
                 pcode = parsed.postcode if parsed.postcode else "<MISSING>"
+
             phone = j.split("Phone: ")
             if len(phone) == 3:
                 phone = phone[1].split("Details:")[0]
@@ -270,6 +286,7 @@ def scrape():
         for rec in results:
             writer.write_row(rec)
             count = count + 1
+
     log.info(f"No of records being processed: {count}")
     log.info("Finished")
 

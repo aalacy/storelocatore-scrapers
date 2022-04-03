@@ -53,7 +53,16 @@ def fetch_data():
                             .split(",")
                         )
                     except:
-                        pass
+                        try:
+                            coord = (
+                                sp1.select_one("div.store-map iframe")["src"]
+                                .split("!2d")[1]
+                                .split("!3m")[0]
+                                .split("!2m")[0]
+                                .split("!3d")[::-1]
+                            )
+                        except:
+                            pass
             yield SgRecord(
                 page_url=page_url,
                 location_name=_.select_one('div[itemprop="name"]').text.strip(),

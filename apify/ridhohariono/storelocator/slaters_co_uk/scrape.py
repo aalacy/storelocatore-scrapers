@@ -1,3 +1,4 @@
+import re
 from bs4 import BeautifulSoup as bs
 from sgrequests import SgRequests
 from sglogging import sglog
@@ -11,7 +12,7 @@ DOMAIN = "slaters.co.uk"
 BASE_URL = "https://slaters.co.uk"
 LOCATION_URL = "https://slaters.co.uk/store-locator"
 HEADERS = {
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+    "Accept": "*/*",
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.63 Safari/537.36",
 }
 MISSING = "<MISSING>"
@@ -55,24 +56,39 @@ def pull_content(url):
     return soup
 
 
+def get_latlong(soup):
+    content = soup.find(
+        "script",
+        type="text/x-magento-init",
+        string=re.compile("Slaters_StoreLocator/js/store-locator-detail.*"),
+    )
+    latitude = re.search(
+        r'"lat":\s+(-?[\d]*\.[\d]*),$', content.string, re.MULTILINE
+    ).group(1)
+    longitude = re.search(
+        r'"lng":\s+(-?[\d]*\.[\d]*),$', content.string, re.MULTILINE
+    ).group(1)
+    return latitude, longitude
+
+
 def fetch_data():
     log.info("Fetching store_locator data")
     soup = pull_content(LOCATION_URL)
     links = soup.find_all("a", {"class": "store-item"})
     for link in links:
         page_url = link["href"]
-        info = pull_content(page_url).find(
-            "div", {"class": "stores-wrapper j-stores-wrapper"}
-        )
+        content = pull_content(page_url)
+        info = content.find("div", {"class": "stores-wrapper j-stores-wrapper"})
         location_name = info.find("h1", {"class": "store-name"}).text
         raw_address = info.find("p", {"class": "address"}).text.strip()
         street_address, city, state, zip_postal = getAddress(raw_address)
+        if zip_postal == MISSING and len(raw_address.split(",")) == 3:
+            zip_postal = raw_address.split(",")[-1]
         store_number = MISSING
         phone = info.find("a", {"class": "phone"}).text.strip()
         country_code = "UK"
         location_type = "slaters"
-        latitude = MISSING
-        longitude = MISSING
+        latitude, longitude = get_latlong(content)
         hours_of_operation = (
             info.find("ul", {"class": "store-info j-store-info"})
             .find("li")

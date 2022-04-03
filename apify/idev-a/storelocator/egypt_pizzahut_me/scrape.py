@@ -26,9 +26,8 @@ def fetch_data():
             for hh in _.get("storeTimings", {}).get("HomeDelivery", []):
                 day = datetime.strptime(hh["date"], "%Y-%m-%d").strftime("%A")
                 hours.append(f"{day}: {_t(hh['onTime'])} PM - {_t(hh['offTime'])} AM")
-            addr = parse_address_intl(
-                f'{_["address"].strip()}, {_["city"]["name"].strip()}, {_["state"]["name"].strip()}, Egypt'
-            )
+            raw_address = f'{_["address"].strip()}, {_["city"]["name"].strip()}, {_["state"]["name"].strip()}, Egypt'
+            addr = parse_address_intl(raw_address)
             yield SgRecord(
                 page_url="https://www.egypt.pizzahut.me/en/search-location",
                 store_number=_["id"],
@@ -42,6 +41,7 @@ def fetch_data():
                 phone=_["contactNo"],
                 locator_domain=locator_domain,
                 hours_of_operation="; ".join(hours),
+                raw_address=raw_address,
             )
 
 

@@ -25,7 +25,7 @@ def fetch_data():
             link = st["href"]
         else:
             link = "https://www.rebeccataylor.com" + st["href"]
-        r = session.get(link, headers=headers, timeout=100)
+        r = session.get(link, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
         title = soup.find("h2", {"class": "card-title"}).text
         try:
@@ -84,7 +84,7 @@ def fetch_data():
             locator_domain="https://www.rebeccataylor.com/",
             page_url=link,
             location_name=title,
-            street_address=street.strip(),
+            street_address=street.replace(",", "").strip(),
             city=city.replace(",", "").strip(),
             state=state.strip(),
             zip_postal=pcode.strip(),

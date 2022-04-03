@@ -1,126 +1,118 @@
-import csv
-
-from concurrent import futures
+from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
-from sgzip.static import static_coordinate_list, SearchableCountries
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def get_data(coord):
-    rows = []
-    lat, lon = coord
-    locator_domain = "https://goodtimesburgers.com/"
-    api_url = f"https://goodtimesburgers.com/wp-admin/admin-ajax.php?action=store_search&lat={lat}&lng={lon}&max_results=10&search_radius=100"
-
-    session = SgRequests()
-    r = session.get(api_url)
-    js = r.json()
+def get_coords():
+    coords = dict()
+    api = "https://api.dineengine.io/goodtimes/custom/dineengine/vendor/olo/restaurants?includePrivate=false"
+    r = session.get(api, headers=headers)
+    js = r.json()["restaurants"]
 
     for j in js:
-        page_url = j.get("permalink") or "<MISSING>"
-        location_name = (
-            j.get("store").replace("&#8211;", "-").replace("&#038;", "&").strip()
-        )
-        street_address = (
-            f"{j.get('address')} {j.get('address2') or ''}".strip() or "<MISSING>"
-        )
-        city = j.get("city") or "<MISSING>"
-        state = j.get("state") or "<MISSING>"
-        postal = j.get("zip") or "<MISSING>"
-        country_code = j.get("country") or "<MISSING>"
-        if country_code == "United States":
-            country_code = "US"
+        phone = j.get("telephone") or ""
+        key = phone.replace("(", "").replace(")", "").replace(" ", "-")
+        lat = j.get("latitude")
+        lng = j.get("longitude")
+        coords[key] = (lat, lng)
 
-        store_number = j.get("id") or "<MISSING>"
-        phone = j.get("phone") or "<MISSING>"
-        latitude = j.get("lat") or "<MISSING>"
-        longitude = j.get("lng") or "<MISSING>"
-        location_type = "<MISSING>"
+    return coords
+
+
+def fetch_data(sgw: SgWriter):
+    api = "https://api.dineengine.io/goodtimes/items/custom_pages?fields%5B0%5D=%2A.%2A.%2A.%2A&single=false&limit=-1"
+    r = session.get(api, headers=headers)
+    js = r.json()["data"]
+
+    for j in js:
+        if j.get("title") == "Find Us":
+            source = j.get("content")
+            break
+    else:
+        source = "<html></html>"
+
+    coords = get_coords()
+    tree = html.fromstring(source)
+    divs = tree.xpath("//li[@class='container']")
+
+    for d in divs:
+        location_name = "".join(
+            d.xpath(".//div[@class='h-fit-content']/div[1]/div[1]/text()")
+        ).strip()
+        phone = "".join(d.xpath(".//a[contains(@href, 'tel:')]/text()")).strip()
+
+        street_address = (
+            "".join(d.xpath(".//div[@class='h-fit-content']/div[1]/div[2]/text()"))
+            .replace(" v ", "")
+            .strip()
+        )
+        csz = (
+            "".join(d.xpath(".//div[@class='h-fit-content']/div[1]/div[3]/text()"))
+            .strip()
+            .split()
+        )
+        if not csz:
+            continue
+
+        postal = csz.pop()
+        state = csz.pop()
+        city = " ".join(csz)
+        latitude, longitude = coords.get(phone) or (SgRecord.MISSING, SgRecord.MISSING)
 
         _tmp = []
-        items = {"sun_thurs": "Sun-Thurs", "fri_sat": "Fri-Sat", "mon_sat": "Mon-Sat"}
-        for k in items.keys():
-            v = j.get(k)
-            if v:
-                _tmp.append(f"{items[k]}: {v}")
+        hours = d.xpath(
+            ".//div[@class='d-grid-locations']/preceding-sibling::div[1]/div/span"
+        )
+        for h in hours:
+            day = "".join(h.xpath("./text()")).strip()
+            d = day.lower()
+            if "break" in d or "lunch" in d or "lobby" in d:
+                break
+            inter = "".join(h.xpath("./following-sibling::text()[1]")).strip()
+            _tmp.append(f"{day} {inter}")
 
-        hours_of_operation = ";".join(_tmp) or "<MISSING>"
-        everyday = j.get("everyday")
-        if everyday:
-            hours_of_operation = f"Daily: {everyday}"
+        hours_of_operation = ";".join(_tmp)
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
+        row = SgRecord(
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code="US",
+            phone=phone,
+            latitude=latitude,
+            longitude=longitude,
+            locator_domain=locator_domain,
+            hours_of_operation=hours_of_operation,
+        )
 
-        rows.append(row)
-
-    return rows
-
-
-def fetch_data():
-    out = []
-    s = set()
-    coords = static_coordinate_list(radius=100, country_code=SearchableCountries.USA)
-
-    with futures.ThreadPoolExecutor(max_workers=2) as executor:
-        future_to_url = {executor.submit(get_data, coord): coord for coord in coords}
-        for future in futures.as_completed(future_to_url):
-            rows = future.result()
-            for row in rows:
-                _id = row[8]
-                if _id not in s:
-                    s.add(_id)
-                    out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://goodtimesburgers.com/"
+    page_url = "https://goodtimesburgers.com/find-us/"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:95.0) Gecko/20100101 Firefox/95.0",
+        "Accept": "application/json",
+        "Accept-Language": "ru,en-US;q=0.7,en;q=0.3",
+        "Accept-Encoding": "gzip, deflate, br",
+        "Content-Type": "application/json",
+        "X-Device-Id": "7ce71050-5d71-4f10-bbff-eb5b2ae062ea",
+        "Origin": "https://goodtimesburgers.com",
+        "Connection": "keep-alive",
+        "Referer": "https://goodtimesburgers.com/",
+        "Sec-Fetch-Dest": "empty",
+        "Sec-Fetch-Mode": "cors",
+        "Sec-Fetch-Site": "cross-site",
+        "Cache-Control": "max-age=0",
+        "TE": "trailers",
+    }
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PhoneNumberId)) as writer:
+        fetch_data(writer)

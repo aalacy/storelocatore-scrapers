@@ -55,6 +55,7 @@ def fetch_data():
             soup.find("span", {"class": "ml-storelocator-hours-details"})
             .text.replace("Book Appointment", "")
             .replace("Call", "")
+            .split("IMPORTANT INFORMATION")[0]
             .strip()
         )
         if tim == "":

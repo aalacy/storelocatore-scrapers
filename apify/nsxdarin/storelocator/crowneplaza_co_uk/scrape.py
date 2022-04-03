@@ -15,9 +15,7 @@ logger = SgLogSetup().get_logger("crowneplaza_co_uk")
 
 def fetch_data():
     locs = []
-    states = []
-    alllocs = []
-    url = "https://www.ihg.com/crowneplaza/destinations/gb/en/united-kingdom-hotels"
+    url = "https://www.ihg.com/bin/sitemap.crowneplaza.en-gb.hoteldetail.xml"
     r = session.get(url, headers=headers)
     website = "crowneplaza.co.uk"
     typ = "<MISSING>"
@@ -25,15 +23,11 @@ def fetch_data():
     logger.info("Pulling Stores")
     for line in r.iter_lines():
         line = str(line.decode("utf-8"))
-        if "Hotels</span></a>" in line:
-            states.append(line.split('href="')[1].split('"')[0])
-    for state in states:
-        logger.info(state)
-        r2 = session.get(state, headers=headers)
-        for line2 in r2.iter_lines():
-            line2 = str(line2.decode("utf-8"))
-            if ',"@type":"Hotel","name":"Crowne Plaza' in line2:
-                locs.append(line2.split('"url":"')[1].split('"')[0])
+        if (
+            'href="https://www.ihg.com/crowneplaza/hotels/gb/en/' in line
+            and "hoteldetail" in line
+        ):
+            locs.append(line.split('href="')[1].split('"')[0])
     for loc in locs:
         logger.info(loc)
         name = ""
@@ -45,25 +39,28 @@ def fetch_data():
         phone = ""
         lat = ""
         lng = ""
+        GB = False
         hours = "<MISSING>"
         r2 = session.get(loc, headers=headers)
         for line2 in r2.iter_lines():
             line2 = str(line2.decode("utf-8"))
+            if 'id="currencycode" value="GBP"' in line2:
+                GB = True
             if '"og:title" content="' in line2:
                 name = line2.split('"og:title" content="')[1].split('"')[0]
             if 'location:latitude"  content="' in line2:
                 lat = line2.split('location:latitude"  content="')[1].split('"')[0]
             if 'location:longitude" content="' in line2:
                 lng = line2.split('location:longitude" content="')[1].split('"')[0]
-            if "|  United Kingdom |" in line2:
-                add = line2.split("|")[0].strip().replace("\t", "").split(",")[0]
-                city = line2.split("|")[0].split(",")[1].strip().replace("\t", "")
-                state = "<MISSING>"
-                zc = line2.split("|")[1].strip().replace("\t", "")
+            if '"streetAddress": "' in line2:
+                add = line2.split('"streetAddress": "')[1].split('"')[0]
+            if '"addressLocality": "' in line2:
+                city = line2.split('"addressLocality": "')[1].split('"')[0]
+            if '"postalCode": "' in line2:
+                zc = line2.split('"postalCode": "')[1].split('"')[0]
             if '<a href="tel:' in line2:
                 phone = line2.split('<a href="tel:')[1].split('"')[0]
-        if loc not in alllocs:
-            alllocs.append(loc)
+        if GB is True:
             yield SgRecord(
                 locator_domain=website,
                 page_url=loc,

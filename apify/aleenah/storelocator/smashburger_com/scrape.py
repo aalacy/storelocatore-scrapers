@@ -1,126 +1,72 @@
-import json
 from sgrequests import SgRequests
-from bs4 import BeautifulSoup
-from sglogging import SgLogSetup
 from sgscrape.sgrecord import SgRecord
-from sgscrape.sgwriter import SgWriter
-from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-
-logger = SgLogSetup().get_logger("smashburger_com")
-
-
-def write_output(data):
-    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
-        for row in data:
-            writer.write_row(row)
-
-
-session = SgRequests()
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
+    session = SgRequests()
 
-    all = []
-
-    headers = {
-        "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-        "accept-encoding": "gzip, deflate",
-        "accept-language": "en-US,en;q=0.9",
-        "cache-control": "max-age=0",
-        "sec-fetch-dest": "document",
-        "sec-fetch-mode": "navigate",
-        "sec-fetch-site": "none",
-        "sec-fetch-user": "?1",
-        "upgrade-insecure-requests": "1",
-        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36",
+    start_url = "https://api.smashburger.com/mobilem8-web-service/rest/storeinfo/distance?_=1631577365113&attributes=&disposition=PICKUP&latitude=39.41116&longitude=-104.87308&maxResults=500&radius=20000&radiusUnit=mi&statuses=ACTIVE,TEMP-INACTIVE&tenant=sb-us"
+    domain = "smashburger.com"
+    hdr = {
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
+    data = session.get(start_url, headers=hdr).json()
 
-    res = session.get("https://smashburger.com/locations/", headers=headers)
-    soup = BeautifulSoup(res.text, "html.parser")
-    ca = soup.find("div", {"id": "accordion-country-ca"}).find_all(
-        "a", {"class": "link-title"}
-    )
-    us = soup.find("div", {"id": "accordion-country-us"}).find_all(
-        "a", {"class": "link-title"}
-    )
-    dic = {"CA": ca, "US": us}
-    for country in dic:
-        states = dic[country]
-        for state in states:
-            url = state.get("href")
-            logger.info(url)
-            res = session.get(url, headers=headers)
-            soup = BeautifulSoup(res.text, "html.parser")
-            stores = soup.find_all("h3", {"class": "store-title"})
+    all_locations = data["getStoresResult"]["stores"]
+    for poi in all_locations:
+        if poi["city"] == "NO WHERE":
+            continue
 
-            for store in stores:
+        hoo = []
+        days = [
+            "monday",
+            "tuesday",
+            "wednesday",
+            "thursday",
+            "friday",
+            "saturday",
+            "sunday",
+        ]
+        for day in days:
+            opens = poi["storeHours"][0][day]["openTime"]["timeString"].split(",")[0]
+            closes = poi["storeHours"][0][day]["closeTime"]["timeString"].split(",")[0]
+            hoo.append(f"{day} {opens} - {closes}")
+        hoo = " ".join(hoo)
 
-                url = store.find("a").get("href")
-                logger.info(url)
-                res = session.get(url, headers=headers)
-                soup = BeautifulSoup(res.text, "html.parser")
-                jso = soup.find("script", {"type": "application/ld+json"}).contents
-                jso = json.loads(jso[0])
-                jso = jso[0]
-                logger.info(jso)
+        item = SgRecord(
+            locator_domain=domain,
+            page_url="https://order.smashburger.com/store-selection",
+            location_name=poi["city"],
+            street_address=poi["street"],
+            city=poi["city"],
+            state=poi["state"],
+            zip_postal=poi["zipCode"],
+            country_code=poi["country"],
+            store_number=poi["storeName"],
+            phone=poi["phoneNumber"],
+            location_type="",
+            latitude=poi["latitude"],
+            longitude=poi["longitude"],
+            hours_of_operation=hoo,
+        )
 
-                loc = jso["name"]
-                id = jso["branchCode"]
-                addr = jso["address"]
-                city = addr["addressLocality"]
-                state = addr["addressRegion"]
-                zip = addr["postalCode"].strip()
-                if zip == "":
-                    zip = "<MISSING>"
-                street = addr["streetAddress"].replace(",", " ").strip()
-                lat = jso["location"]["geo"]["latitude"]
-                if str(lat) == "None":
-                    lat = "<MISSING>"
-                long = jso["location"]["geo"]["longitude"]
-                if str(long) == "None" or long == "":
-                    long = "<MISSING>"
-                type = jso["@type"]
-                phone = jso["telephone"]
-                if phone == "1":
-                    phone = "<MISSING>"
-                days = jso["openingHoursSpecification"]
-                tim = ""
-                for day in days:
-                    if not day.get("dayOfWeek"):
-                        continue
-                    tim += (
-                        day["dayOfWeek"]
-                        + ": "
-                        + day["opens"]
-                        + " - "
-                        + day["closes"]
-                        + " "
-                    )
-                logger.info(tim)
-                yield SgRecord(
-                    locator_domain="https://smashburger.com",
-                    page_url=url,
-                    location_name=loc,
-                    street_address=street,
-                    city=city,
-                    state=state,
-                    zip_postal=zip,
-                    country_code=country,
-                    store_number=id,
-                    phone=phone,
-                    location_type=type,
-                    latitude=lat,
-                    longitude=long,
-                    hours_of_operation=tim.strip(),
-                )
-
-    return all
+        yield item
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()

@@ -1,6 +1,9 @@
-import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 session = SgRequests()
 headers = {
@@ -10,36 +13,12 @@ headers = {
 logger = SgLogSetup().get_logger("unitedsupermarkets_com")
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
-
-
 def fetch_data():
     url = "https://www.unitedsupermarkets.com/RS.Relationshop/StoreLocation/GetListClosestStores"
-    r = session.get(url, headers=headers)
+    payload = {
+        "__RequestVerificationToken": "i0uRi5H_YVPKWOH-rOiBsz003fjy1y-l6DqfTxHP_WsWwsjgewRjUXVOhvxho4YhJhkELE9SL_SeL8NHeZmubA9_RGU1"
+    }
+    r = session.post(url, headers=headers, data=payload)
     website = "unitedsupermarkets.com"
     typ = "<MISSING>"
     country = "US"
@@ -63,27 +42,29 @@ def fetch_data():
                     lat = item.split('"Latitude":')[1].split(",")[0]
                     lng = item.split('"Longitude":')[1].split(",")[0]
                     hours = item.split('"StoreHours":"')[1].split('"')[0]
-                    yield [
-                        website,
-                        loc,
-                        name,
-                        add,
-                        city,
-                        state,
-                        zc,
-                        country,
-                        store,
-                        phone,
-                        typ,
-                        lat,
-                        lng,
-                        hours,
-                    ]
+                    yield SgRecord(
+                        locator_domain=website,
+                        page_url=loc,
+                        location_name=name,
+                        street_address=add,
+                        city=city,
+                        state=state,
+                        zip_postal=zc,
+                        country_code=country,
+                        phone=phone,
+                        location_type=typ,
+                        store_number=store,
+                        latitude=lat,
+                        longitude=lng,
+                        hours_of_operation=hours,
+                    )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()

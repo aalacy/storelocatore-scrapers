@@ -9,7 +9,6 @@ import json
 
 website = "ikea.com/ca"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
-session = SgRequests()
 headers = {
     "Connection": "keep-alive",
     "Cache-Control": "max-age=0",
@@ -30,57 +29,62 @@ headers = {
 def fetch_data():
     # Your scraper here
     search_url = "https://cat-tool.ikea-canada.ca/api/postal-codes/get_locations/en/"
-    search_res = session.get(search_url, headers=headers)
+    with SgRequests() as session:
+        search_res = session.get(search_url, headers=headers)
 
-    stores = json.loads(search_res.text)
+        stores = json.loads(search_res.text)
 
-    for key in stores.keys():
+        for key in stores.keys():
 
-        if stores[key]["type"] == "DS" or stores[key]["type"] == "CP":
-            continue
-        page_url = "https://www.ikea.com" + stores[key]["lsp_url"]
-        locator_domain = website
-
-        location_name = stores[key]["location_name"]
-        street_address = stores[key]["address"]
-        city = stores[key]["city"]
-        state = stores[key]["prov"]
-        zip = stores[key]["postal"]
-        country_code = "CA"
-
-        phone = "1-866-866-4532"
-        store_number = "<MISSING>"
-
-        location_type = "<MISSING>"
-        hours = stores[key]["hours"]
-        hours_list = []
-        for hour in hours:
-            day = hour["day"]
-            if day == "any":
+            if stores[key]["type"] == "DS" or stores[key]["type"] == "CP":
                 continue
-            time = hour["open_time"] + " - " + hour["close_time"]
-            hours_list.append(day + ": " + time)
+            page_url = "https://www.ikea.com" + stores[key]["lsp_url"]
+            locator_domain = website
 
-        hours_of_operation = "; ".join(hours_list).strip()
-        latitude = stores[key]["lat"]
-        longitude = stores[key]["long"]
+            location_name = stores[key]["location_name"]
+            if location_name == "Outside Market Area":
+                continue
+            street_address = stores[key]["address"]
+            city = stores[key]["city"]
+            state = stores[key]["prov"]
+            zip = stores[key]["postal"]
+            country_code = "CA"
 
-        yield SgRecord(
-            locator_domain=locator_domain,
-            page_url=page_url,
-            location_name=location_name,
-            street_address=street_address,
-            city=city,
-            state=state,
-            zip_postal=zip,
-            country_code=country_code,
-            store_number=store_number,
-            phone=phone,
-            location_type=location_type,
-            latitude=latitude,
-            longitude=longitude,
-            hours_of_operation=hours_of_operation,
-        )
+            phone = "1-866-866-4532"
+            store_number = "<MISSING>"
+
+            location_type = "<MISSING>"
+            if "temporarily closed" in stores[key]["location_notes"]:
+                location_type = "temporarily closed"
+            hours = stores[key]["hours"]
+            hours_list = []
+            for hour in hours:
+                day = hour["day"]
+                if day == "any":
+                    continue
+                time = hour["open_time"] + " - " + hour["close_time"]
+                hours_list.append(day + ": " + time)
+
+            hours_of_operation = "; ".join(hours_list).strip()
+            latitude = stores[key]["lat"]
+            longitude = stores[key]["long"]
+
+            yield SgRecord(
+                locator_domain=locator_domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
 
 
 def scrape():

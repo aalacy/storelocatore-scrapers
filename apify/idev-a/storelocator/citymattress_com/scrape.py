@@ -20,19 +20,27 @@ def fetch_data():
             )
             location_name = location.select_one("a.store-item__title").text.strip()
             address = list(location.select_one(".store-item__address").stripped_strings)
+            street_address = (
+                " ".join(address[:-1])
+                .replace("Wellington Green Square", "")
+                .replace("Pines City Center", "")
+                .strip()
+            )
+            city = address[-1].split(",")[0]
+            if "9293 Glades Rd" in city:
+                street_address = "9293 Glades Rd"
+                city = city.replace("9293 Glades Rd", "").strip()
             hours = [
                 _
                 for _ in location.select_one(".store-item__hours").text.split("\n")
                 if _.strip() and "appointment" not in _.lower()
             ]
+
             yield SgRecord(
                 page_url=page_url,
                 location_name=location_name,
-                street_address=" ".join(address[:-1])
-                .replace("Wellington Green Square", "")
-                .replace("Pines City Center", "")
-                .strip(),
-                city=address[-1].split(",")[0],
+                street_address=street_address,
+                city=city,
                 state=address[-1].split(",")[1].strip().split(" ")[0],
                 zip_postal=address[-1].split(",")[1].strip().split(" ")[1],
                 country_code="US",
@@ -44,6 +52,7 @@ def fetch_data():
                 .replace("\xa0", " ")
                 .replace("–", "-")
                 .replace("GRAND OPENING", "")
+                .replace("pmS", "pm S")
                 .strip(),
             )
 

@@ -1,112 +1,141 @@
-import csv
-
-from concurrent import futures
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgpostal import parse_address, International_Parser
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def get_international(line, post=""):
+    if post:
+        adr = parse_address(International_Parser(), line, postcode=post)
+    else:
+        adr = parse_address(International_Parser(), line)
+    street_address = f"{adr.street_address_1} {adr.street_address_2 or ''}".replace(
+        "None", ""
+    ).strip()
+    city = adr.city or SgRecord.MISSING
+    postal = adr.postcode or SgRecord.MISSING
 
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
+    return street_address, city, postal
 
 
-def get_ids():
-    session = SgRequests()
-    r = session.get("https://www.frenchconnection.com/store-locator.htm")
+def get_coords():
+    coords = dict()
+    api = "https://storemapper-herokuapp-com.global.ssl.fastly.net/api/users/11232/stores.js"
+    r = session.get(api)
+    js = r.json()["stores"]
+
+    for j in js:
+        phone = j.get("phone") or ""
+        key = phone.replace(" ", "")[-8:]
+        latitude = j.get("latitude")
+        longitude = j.get("longitude")
+        coords[key] = (latitude, longitude)
+
+    return coords
+
+
+def fetch_data(sgw: SgWriter):
+    coords = get_coords()
+    page_url = "https://www.frenchconnection.com/pages/store-locator"
+    r = session.get(page_url)
     tree = html.fromstring(r.text)
 
-    return tree.xpath("//a[@data-store-id]/@data-store-id")
+    divs = tree.xpath("//div[@class='store']")
+    for d in divs:
+        text = "".join(d.xpath("./@data-address")).upper()
+        source = "".join(d.xpath("./@data-opening"))
+        root = html.fromstring(text)
+        lines = root.xpath("//text()")
+        phone = lines.pop()
+        postal = SgRecord.MISSING
+        if phone[0].isalpha():
+            postal = phone.split("0")[0]
+            phone = phone.replace(postal, "")
+        phone = phone.replace("(", "").replace(")", "").replace(" ", "").lower()
+        if "ext" in phone:
+            phone = phone.split("ext")[0]
+        key = phone[-8:]
+        latitude, longitude = coords.get(key) or (SgRecord.MISSING, SgRecord.MISSING)
 
+        brands = ["HOUSE OF FRASER", "FENWICK", "JOHN LEWIS", "FRENCH CONNECTION"]
+        i = 0
+        for line in lines:
+            for b in brands:
+                if b in line:
+                    break
+            else:
+                i += 1
+                continue
+            break
 
-def get_data(_id):
-    locator_domain = "https://www.frenchconnection.com/"
-    api_url = "https://www.frenchconnection.com/services/storesandstockservice.asmx/GetStoreById"
-    data = {"storeId": _id}
+        if i == len(lines):
+            i = 0
+        if lines[i + 1] in lines[i]:
+            i += 1
 
-    session = SgRequests()
-    r = session.post(api_url, data=data)
-    tree = html.fromstring(r.content)
+        location_name = lines[i]
+        raw_address = ", ".join(lines[i + 1 :]).replace(",,", ",")
+        country = "UK"
+        if "IRELAND" in raw_address:
+            country = "IE"
+            raw_address = raw_address.replace(", IRELAND", "")
+        if "AMSTERDAM" in raw_address:
+            country = "NL"
 
-    location_name = "".join(tree.xpath("//name/text()"))
-    street_address = "".join(tree.xpath("//addressline2/text()")) or "<MISSING>"
-    city = "".join(tree.xpath("//addresscity/text()")) or "<MISSING>"
-    state = "<MISSING>"
-    postal = "".join(tree.xpath("//addresspostcode/text()")) or "<MISSING>"
-    country_code = "".join(tree.xpath("//addresscountrycode/text()")) or "<MISSING>"
-    store_number = _id
-    phone = "".join(tree.xpath("//addressphone/text()")) or "<MISSING>"
-    if phone.find("(") != -1:
-        phone = phone.split("(")[0].strip()
-    if phone.find("EXT") != -1:
-        phone = phone.split("EXT")[0].strip()
-    latitude = "".join(tree.xpath("//latitude/text()")) or "<MISSING>"
-    longitude = "".join(tree.xpath("//longitude/text()")) or "<MISSING>"
-    location_type = "".join(tree.xpath("//addressline1/text()")) or "<MISSING>"
-    page_url = "https://www.frenchconnection.com/store-locator.htm"
-    hours_of_operation = "<MISSING>"
+        location_type = "Retail"
+        if "outlet" in location_name.lower():
+            location_type = "Outlet"
+        street_address, city, postal = get_international(raw_address, postal)
+        if (
+            (postal == SgRecord.MISSING and country == "UK")
+            or len(postal) < 2
+            or len(postal) > 10
+        ):
+            postal = raw_address.split(", ")[-1]
+        if len(street_address) < 3 or ("5A" in postal and "5A" in street_address):
+            street_address = raw_address.split(", ")[0]
+        if city == SgRecord.MISSING and country == "UK":
+            city = raw_address.split(", ")[-2]
+        if city == SgRecord.MISSING and country == "IE":
+            city = raw_address.split(", ")[0]
+        if city.upper() in street_address.upper():
+            street_address = street_address.upper().replace(city.upper(), "", 1)
+        if postal.upper() in street_address.upper():
+            street_address = street_address.upper().replace(postal.upper(), "")
 
-    row = [
-        locator_domain,
-        page_url,
-        location_name,
-        street_address,
-        city,
-        state,
-        postal,
-        country_code,
-        store_number,
-        phone,
-        location_type,
-        latitude,
-        longitude,
-        hours_of_operation,
-    ]
+        try:
+            hours_of_operation = (
+                html.fromstring(source).xpath(".//text()")[-2].replace(":00 ", ":00;")
+            )
+        except:
+            hours_of_operation = SgRecord.MISSING
 
-    return row
+        row = SgRecord(
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            zip_postal=postal,
+            country_code=country,
+            phone=phone,
+            latitude=latitude,
+            longitude=longitude,
+            location_type=location_type,
+            locator_domain=locator_domain,
+            hours_of_operation=hours_of_operation,
+            raw_address=raw_address,
+        )
 
-
-def fetch_data():
-    out = []
-    ids = get_ids()
-
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {executor.submit(get_data, _id): _id for _id in ids}
-        for future in futures.as_completed(future_to_url):
-            row = future.result()
-            if row:
-                out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://www.frenchconnection.com/"
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.RAW_ADDRESS}))
+    ) as writer:
+        fetch_data(writer)
