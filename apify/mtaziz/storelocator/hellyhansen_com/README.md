@@ -1,4 +1,4 @@
-# The covers the following countries - country code and corresponding store count provided below:
+# This crawler covers the following countries - country code and corresponding store count provided below:
 
 |sn | country_code | store_count|
 |----|-------------|------------| 
@@ -41,3 +41,21 @@
 |36 | UA | 1 | 
 |37 | US | 817 | 
 |38 | VE | 5 | 
+
+
+# This crawler does not cover the following countries, most likely need to create separate crawlers.
+
+- Australia EN
+https://hellyhansen.com.au/
+
+- Chile ES
+https://www.hellyhansenchile.cl/
+
+- Japan JP
+https://www.goldwin.co.jp/hellyhansen
+
+- New Zealand EN
+https://www.hellyhansen.co.nz/
+
+- South Africa EN
+https://www.hellyhansen.co.za/
