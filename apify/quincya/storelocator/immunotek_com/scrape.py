@@ -23,63 +23,49 @@ def fetch_data(sgw: SgWriter):
 
     locator_domain = "immunotek.com"
 
-    sections = base.find(
-        class_="et_pb_section et_pb_section_2 et_pb_with_background et_section_regular"
-    ).find_all("div", recursive=False)
-    for section in sections:
-        items = section.find_all("div", recursive=False)
-        for item in items:
-            if not list(item.stripped_strings):
-                continue
-            if "coming-soon" in str(item):
-                continue
+    items = base.find_all(class_="location_entry")
+    for i in items:
 
-            location_name = "ImmunoTek " + item.p.text.split(",")[0].strip()
+        location_name = "ImmunoTek " + i.find(class_="location_title").text
+        if "*" in location_name:
+            continue
 
-            raw_address = list(item.find_all("p")[2].stripped_strings)
-            street_address = raw_address[0].replace("Rd,", "Rd.")
-            city = raw_address[1].split(",")[0]
-            state = raw_address[1].split(",")[1].split()[0]
-            zip_code = raw_address[1].split(",")[1].split()[1]
-            country_code = "US"
-            store_number = "<MISSING>"
-            location_type = "<MISSING>"
-            phone = item.find_all("p")[1].text
+        link = i.a["href"]
+        req = session.get(link, headers=headers)
+        item = BeautifulSoup(req.text, "lxml")
 
-            map_str = item.find_all("p")[2].a["href"]
-            try:
-                geo = re.findall(r"[0-9]{2}\.[0-9]+,-[0-9]{2,3}\.[0-9]+", map_str)[
-                    0
-                ].split(",")
-                latitude = geo[0]
-                longitude = geo[1]
-            except:
-                latitude = "<MISSING>"
-                longitude = "<MISSING>"
+        raw_address = list(item.find(class_="address").stripped_strings)
+        street_address = raw_address[0]
+        city = raw_address[1].split(",")[0]
+        state = raw_address[1].split(",")[1].split()[0]
+        zip_code = raw_address[1].split(",")[1].split()[1]
+        country_code = "US"
+        store_number = item.article["id"].split("-")[1]
+        location_type = "<MISSING>"
+        phone = item.find("a", {"href": re.compile(r"tel:")}).text
+        latitude = item.find(class_="marker")["data-lat"]
+        longitude = item.find(class_="marker")["data-lng"]
+        hours_of_operation = " ".join(list(item.find(class_="hours").stripped_strings))
 
-            hours_of_operation = " ".join(
-                list(item.find_all(class_="et_pb_text_inner")[-1].stripped_strings)
-            ).strip()
-
-            sgw.write_row(
-                SgRecord(
-                    locator_domain=locator_domain,
-                    page_url=base_link,
-                    location_name=location_name,
-                    street_address=street_address,
-                    city=city,
-                    state=state,
-                    zip_postal=zip_code,
-                    country_code=country_code,
-                    store_number=store_number,
-                    phone=phone,
-                    location_type=location_type,
-                    latitude=latitude,
-                    longitude=longitude,
-                    hours_of_operation=hours_of_operation,
-                )
+        sgw.write_row(
+            SgRecord(
+                locator_domain=locator_domain,
+                page_url=link,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_code,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
             )
+        )
 
 
-with SgWriter(SgRecordDeduper(RecommendedRecordIds.PhoneNumberId)) as writer:
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
     fetch_data(writer)

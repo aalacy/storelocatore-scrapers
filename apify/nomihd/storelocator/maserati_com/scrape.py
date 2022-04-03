@@ -56,6 +56,8 @@ def fetch_data():
             prop = store["U"]
             page_url = prop.get("url", "<MISSING>")
             location_name = store["D"]
+            if location_name and location_name == "GHOST":
+                continue
             street_address = prop.get("address", "<MISSING>")
             city = prop.get("city", "<MISSING>")
             state = prop.get("province", "<MISSING>")

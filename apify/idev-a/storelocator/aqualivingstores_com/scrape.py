@@ -15,7 +15,7 @@ _headers = {
 }
 
 locator_domain = "https://aqualivingstores.com"
-base_url = "https://aqualivingstores.com/locations/"
+base_url = "https://aqualivingstores.com/sitemap/"
 
 
 def _p(val):
@@ -38,10 +38,12 @@ def _p(val):
 def _addr(_aa):
     addr = list(_aa.find_parent("p").stripped_strings)[1:]
     if not addr:
-        addr = [
-            list(cc.stripped_strings)
-            for cc in _aa.find_parent("p").find_next_siblings("p")
-        ]
+        addr = []
+        for cc in _aa.find_parent("p").find_next_siblings("p"):
+            if "Hours:" in cc.text:
+                break
+
+            addr.append(list(cc.stripped_strings))
         addr = list(itertools.chain(*addr))
     return addr[:-1]
 
@@ -49,15 +51,18 @@ def _addr(_aa):
 def fetch_data():
     with SgRequests() as session:
         soup = bs(session.get(base_url, headers=_headers).text, "lxml")
-        links = soup.select("div.fusion-builder-row table tr")
+        links = (
+            soup.find_all("a", string=re.compile(r"^Locations$"))[2]
+            .find_next_sibling("ul")
+            .select("li ul li ul li a")
+        )
         for link in links:
-            if not link.select("td")[0].a:
-                continue
-            location_name = link.a.text.strip()
-            page_url = link.a["href"]
+            location_name = link.text.strip()
+            page_url = link["href"]
             logger.info(page_url)
             sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
             _aa = sp1.find("", string=re.compile(r"Address$"))
+            phone = ""
             addr = []
             if _aa:
                 addr = _addr(_aa)
@@ -81,8 +86,21 @@ def fetch_data():
                             if "outlet" in _a or "address" in _a or "location" in _a:
                                 continue
                             if _p(aa):
+                                phone = aa
                                 continue
                             addr.append(aa)
+            if not addr:
+                addr = list(
+                    sp1.select_one("div.fusion-text.fusion-text-3 p").stripped_strings
+                )
+            if addr and "hour" in addr[0].lower():
+                if sp1.select_one("div.fusion-text.fusion-text-4"):
+                    addr = list(
+                        sp1.select_one("div.fusion-text.fusion-text-4").stripped_strings
+                    )
+            if _p(addr[-1]):
+                phone = addr[-1]
+                del addr[-1]
             _hr = sp1.find("strong", string=re.compile(r"^Hours:"))
             hours = ""
             if _hr:
@@ -92,9 +110,9 @@ def fetch_data():
                         list(_hr.find_parent("p").find_next_sibling().stripped_strings)
                     )
                 else:
-                    hh = _tt[1]
+                    hh = _tt[1].lower()
                     if (
-                        "open by appointment only" in hh
+                        "by appointment only. please give" in hh
                         or "call for an appointment" in hh
                     ):
                         hours = ""
@@ -102,15 +120,23 @@ def fetch_data():
                         hours = "seven days a week"
                     else:
                         hours = (
-                            hh.split("We’re open")[1]
-                            .split("Please")[0]
-                            .split("Give")[0]
-                            .split("To")[0]
-                            .split("Call")[0]
+                            hh.split("open")[-1]
+                            .split("only")[-1]
+                            .split("call")[0]
+                            .split("give")[0]
+                            .replace("please", "")
                             .replace(".", "")
                             .strip()
                         )
+            if hours:
+                if hours.startswith(","):
+                    hours = hours[1:]
+                if hours.startswith(":"):
+                    hours = hours[1:]
+                if "appointment" in hours:
+                    hours = ""
             street_address = city = state = zip_postal = ""
+
             if len(addr) > 1:
                 c_s = [
                     cc.strip()
@@ -122,8 +148,8 @@ def fetch_data():
                 state = c_s[-2]
                 zip_postal = c_s[-1]
             else:
-                city = location_name.split(",")[0].strip()
-                state = location_name.split(",")[1].strip()
+                city = addr[-1].split(",")[0].strip()
+                state = addr[-1].split(",")[-1].strip()
             yield SgRecord(
                 page_url=page_url,
                 location_name=location_name,
@@ -132,9 +158,9 @@ def fetch_data():
                 state=state.replace(".", ""),
                 zip_postal=zip_postal,
                 country_code="US",
-                phone=link.select("td")[-1].text.strip(),
+                phone=phone,
                 locator_domain=locator_domain,
-                hours_of_operation=hours,
+                hours_of_operation=hours.strip(),
                 raw_address=" ".join(addr),
             )
 

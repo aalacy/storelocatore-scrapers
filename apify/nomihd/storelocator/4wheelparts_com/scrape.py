@@ -23,7 +23,7 @@ def fetch_data():
     # Your scraper here
 
     search_url = "https://www.4wheelparts.com/stores/find-a-store"
-    with SgRequests() as session:
+    with SgRequests(dont_retry_status_codes=([404])) as session:
         states_req = session.get(search_url, headers=headers)
         states_sel = lxml.html.fromstring(states_req.text)
         states = states_sel.xpath(
@@ -45,10 +45,10 @@ def fetch_data():
                     ).strip(),
                     "html.parser",
                 ).get_text()
-
                 json_str = (
                     (
                         json_without_html.replace(': "\r\n', ': "')
+                        .replace(': "\n', ': "')
                         .replace("\t\t\t\t\t\t", "")
                         .strip()
                         .split('"description":')[0]

@@ -27,7 +27,9 @@ def fetch_data():
         for poi in data["stores"]:
             hoo = []
             for day, hours in poi["hours"].items():
-                if hours.get("openIntervals"):
+                if day == "holidayHours":
+                    continue
+                if hours and hours.get("openIntervals"):
                     opens = hours["openIntervals"][0]["start"]
                     closes = hours["openIntervals"][0]["end"]
                     hoo.append(f"{day} {opens} - {closes}")

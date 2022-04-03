@@ -13,10 +13,8 @@ website = "thelashlounge_com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
 
-
-headers = {
-    "User-Agent": "Mozilla/5.0 (iPad; CPU OS 11_0 like Mac OS X) AppleWebKit/604.1.34 (KHTML, like Gecko) Version/11.0 Mobile/15A5341f Safari/604.1",
-}
+user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
+headers = {"User-Agent": user_agent}
 
 DOMAIN = "https://www.thelashlounge.com/"
 MISSING = SgRecord.MISSING
@@ -32,12 +30,16 @@ def fetch_data():
             page_url = loc["href"]
             log.info(page_url)
             r = session.get(page_url, headers=headers)
-            temp = r.text.split('<script type="application/ld+json">')[1].split(
+            base = BeautifulSoup(r.text, "html.parser")
+            temp = r.text.split("<script type='application/ld+json'> ")[1].split(
                 "</script>"
             )[0]
             temp = json.loads(temp)
             location_name = temp["name"]
-            phone = temp["telephone"]
+            try:
+                phone = temp["telephone"]
+            except:
+                phone = base.find(class_="pre-footer-details").a.text.strip()
             address = temp["address"]
             city = address["addressLocality"]
             state = address["addressRegion"]
@@ -45,19 +47,30 @@ def fetch_data():
             street_address = (
                 address["streetAddress"]
                 .replace("<br/>", "")
+                .replace(" </br>", "")
                 .replace(city, "")
                 .replace(state, "")
                 .replace(zip_postal, "")
+                .replace("Shoppes at", "")
+                .strip()
             )
             country_code = address["addressCountry"]
             latitude = str(temp["geo"]["latitude"])
             longitude = str(temp["geo"]["longitude"])
-            hours_of_operation = (
-                str(temp["openingHours"])
-                .replace("'", "")
-                .replace("[", "")
-                .replace("]", "")
+            if (
+                "COMING SOON"
+                in base.find_all(class_="home-contact-content")[-1].text.upper()
+            ):
+                continue
+            try:
+                if "COMING SOON" in base.find(class_="banner-title").text.upper():
+                    continue
+            except:
+                pass
+            hours_of_operation = " ".join(
+                list(base.find(class_="hours").stripped_strings)
             )
+
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url=page_url,

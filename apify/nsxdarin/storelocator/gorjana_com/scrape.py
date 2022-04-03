@@ -67,16 +67,38 @@ def fetch_data():
                 "class": "elm text-edit gf-elm-left gf-elm-center-lg gf-elm-center-md gf-elm-center-sm gf-elm-center-xs"
             },
         )
-        raw_address = addr[1].get_text(strip=True, separator=",").rstrip(",")
-        street_address, city, state, zip_postal = getAddress(raw_address)
-        phone = addr[2].text.strip()
+        ptext = addr[2].text.strip()
+        if "LEARN MORE" in ptext:
+            raw_address = addr[0].get_text(strip=True, separator=",").rstrip(",")
+            street_address, city, state, zip_postal = getAddress(raw_address)
+            phone = addr[1].text.strip()
+            hrs = info.find_all(
+                "div",
+                {
+                    "class": "elm text-edit gf-elm-center-lg gf-elm-center-md gf-elm-center-sm gf-elm-center-xs gf-elm-center"
+                },
+            )
+            hours_of_operation = hrs[0].get_text(strip=True, separator=",")
+        else:
+            raw_address = addr[1].get_text(strip=True, separator=",").rstrip(",")
+            street_address, city, state, zip_postal = getAddress(raw_address)
+            phone = addr[2].text.strip()
+            hours_of_operation = addr[0].get_text(strip=True, separator=",")
         country_code = "US"
-        hours_of_operation = addr[0].get_text(strip=True, separator=",")
         store_number = MISSING
         location_type = MISSING
         latitude = MISSING
         longitude = MISSING
         log.info("Append {} => {}".format(location_name, street_address))
+        if "glendale-store-details" in page_url or "Glendale" in location_name:
+            street_address = "773 Americana Way, Suite E15"
+            city = "Glendale"
+            state = "CA"
+            zip_postal = "91210"
+            phone = "(818) 409-9338"
+            hours_of_operation = (
+                "Mon-Thurs: 11AM - 8PM; Fri-Sat: 10AM - 8PM; Sun: 11AM - 8PM"
+            )
         yield SgRecord(
             locator_domain=DOMAIN,
             page_url=page_url,

@@ -71,7 +71,8 @@ def fetch_data():
             .split("&")[0]
             .split(",")
         )
-        hoo = poi_html.xpath('.//p[contains(text(), "Lunes")]//text()')
+        hoo = poi_html.xpath('.//*[contains(text(), "00 a")]/text()')
+        hoo = [e.strip() for e in hoo if e.strip()]
         hoo = " ".join(hoo)
         if "obispado" in location_name:
             city = "Monterrey"

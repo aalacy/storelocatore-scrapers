@@ -28,9 +28,11 @@ headers = {
     "accept-language": "en-US,en;q=0.9,ar;q=0.8",
 }
 
-data1 = {"rid": "", "localType": "ALL"}
+data1 = {"rid": "", "localType": ""}
 
 data2 = {"skid": ""}
+
+cit_Data = {"com": ""}
 
 
 def fetch_data():
@@ -45,25 +47,36 @@ def fetch_data():
         for region in regions[1:]:
 
             r_id = "".join(region.xpath("./@value"))
-            data1["rid"] = r_id  # update data1
-            log.info(r_id)
-            region_url = "https://dodge.cl/Async/getDealersAndLocalsFromRegionWS"
-            region_res = session.post(region_url, headers=headers, data=data1)
-
-            json_res = json.loads(region_res.text)
-            stores = json_res
+            stores = []
+            if r_id == "13":
+                region_url = "https://dodge.cl/Async/getDealersAndLocalsFromRegionWS"
+                mdata = {"rid": "13", "localType": "ALL"}
+                region_res = session.post(region_url, headers=headers, data=mdata)
+                stores = json.loads(region_res.text)
+            else:
+                data1["rid"] = r_id  # update data1
+                log.info(r_id)
+                region_url = "https://dodge.cl/Async/getCommunesWithConces"
+                region_res = session.post(region_url, headers=headers, data=data1)
+                cities = json.loads(region_res.text)
+                for cit in cities:
+                    cit_Data["com"] = str(cit["id"])
+                    cities_req = session.post(
+                        "https://dodge.cl/Async/getLocalsInCom",
+                        headers=headers,
+                        data=cit_Data,
+                    )
+                    stores = json.loads(cities_req.text)
 
             for no, store in enumerate(stores, 1):
 
                 sk_id = store["skId"]
-
                 store_url = "https://dodge.cl/Async/getLocalInfoBySkId"
                 data2["skid"] = sk_id
 
                 store_res = session.post(store_url, headers=headers, data=data2)
 
                 store_info = json.loads(store_res.text)
-
                 if store_info.get("status"):
                     continue
 
@@ -115,7 +128,10 @@ def fetch_data():
 
                     store_number = store_info["id_local_sk"]
 
-                    latitude, longitude = store_info["latitud"], store_info["longitud"]
+                    latitude, longitude = (
+                        store_info["latitud"],
+                        store_info["longitud"],
+                    )
 
                     yield SgRecord(
                         locator_domain=locator_domain,

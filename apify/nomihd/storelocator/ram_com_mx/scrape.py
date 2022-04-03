@@ -69,6 +69,8 @@ def fetch_data():
                     state = formatted_addr.state
 
                     zip = formatted_addr.postcode
+                    if zip:
+                        zip = zip.replace("C.P.", "").strip()
 
                     country_code = "MX"
 
@@ -76,11 +78,11 @@ def fetch_data():
                     if phone:
                         phone = phone[0]
 
-                    log.info(page_url)
                     hours_of_operation = "<MISSING>"
 
                     try:
                         if page_url:
+                            log.info(page_url)
                             store_res = SgRequests.raise_on_err(
                                 session.get(page_url, headers=headers)
                             )
@@ -98,9 +100,23 @@ def fetch_data():
                                         ],
                                     )
                                 )
+                                if len(hours) <= 0:
+                                    hours = list(
+                                        filter(
+                                            str,
+                                            [
+                                                x.strip()
+                                                for x in store_sel.xpath(
+                                                    '//div[./strong[contains(text(),"Horario de Ventas")]]/text()'
+                                                )
+                                            ],
+                                        )
+                                    )
                                 hours_of_operation = (
                                     "; ".join(hours).replace(".;", ":").strip()
                                 )
+                                if "Por favor contacta al" in hours_of_operation:
+                                    hours_of_operation = "<MISSING>"
                             except:
                                 pass
                     except SgRequestError as e:
@@ -152,6 +168,8 @@ def fetch_data():
                     state = formatted_addr.state
 
                     zip = formatted_addr.postcode
+                    if zip:
+                        zip = zip.replace("C.P.", "").strip()
 
                     country_code = "MX"
 
@@ -159,11 +177,11 @@ def fetch_data():
                     if phone:
                         phone = phone[0]
 
-                    log.info(page_url)
                     hours_of_operation = "<MISSING>"
 
                     try:
                         if page_url:
+                            log.info(page_url)
                             store_res = SgRequests.raise_on_err(
                                 session.get(page_url, headers=headers)
                             )
@@ -180,9 +198,25 @@ def fetch_data():
                                     ],
                                 )
                             )
+                            if len(hours) <= 0:
+                                hours = list(
+                                    filter(
+                                        str,
+                                        [
+                                            x.strip()
+                                            for x in store_sel.xpath(
+                                                '//div[./strong[contains(text(),"Horario de Ventas")]]/text()'
+                                            )
+                                        ],
+                                    )
+                                )
+
                             hours_of_operation = (
                                 "; ".join(hours).replace(".;", ":").strip()
                             )
+                            if "Por favor contacta al" in hours_of_operation:
+                                hours_of_operation = "<MISSING>"
+
                     except SgRequestError as e:
                         log.error(e.status_code)
 

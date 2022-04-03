@@ -2,7 +2,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sglogging import SgLogSetup
 from sgpostal.sgpostal import parse_address_intl
@@ -40,18 +40,26 @@ def fetch_data():
                 if "Work Hours" not in hours:
                     hours = ""
 
-                coord = (
-                    _.iframe["src"]
-                    .split("!2d")[1]
-                    .split("!2m")[0]
-                    .split("!3m")[0]
-                    .split("!3d")
-                )
+                try:
+                    coord = (
+                        _.iframe["src"]
+                        .split("!2d")[1]
+                        .split("!2m")[0]
+                        .split("!3m")[0]
+                        .split("!3d")
+                    )
+                except:
+                    coord = ["", ""]
+
+                city = addr.city
+                location_name = _.h4.text.strip()
+                if not city:
+                    city = location_name
                 yield SgRecord(
                     page_url=page_url,
-                    location_name=_.h4.text.strip(),
+                    location_name=location_name,
                     street_address=street_address,
-                    city=addr.city,
+                    city=city,
                     state=addr.state,
                     zip_postal=addr.postcode,
                     country_code="Egypt",
@@ -67,7 +75,11 @@ def fetch_data():
 
 
 if __name__ == "__main__":
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID({SgRecord.Headers.PAGE_URL, SgRecord.Headers.RAW_ADDRESS})
+        )
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

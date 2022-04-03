@@ -30,9 +30,11 @@ def fetch_data():
             page_url = loc["href"]
             closed = loc.text.split(" - ")
             closed = closed[-1]
-            if closed == "CLOSED":
-                continue
-            elif closed == "TEMP CLOSED" or closed == "TEMPORARILY CLOSED":
+            if (
+                closed == "TEMP CLOSED"
+                or closed == "TEMPORARILY CLOSED"
+                or closed == "CLOSED"
+            ):
                 location_type = "TEMPORARILY CLOSED"
             r = session.get(page_url, headers=headers)
             soup = BeautifulSoup(r.text, "html.parser")
@@ -62,7 +64,7 @@ def fetch_data():
             if hours_of_operation == "Temporarily Closed":
                 hours_of_operation = MISSING
                 location_type = "TEMPORARILY CLOSED"
-            elif hours_of_operation == "TEMP: CLOSED Mon":
+            elif "TEMP: CLOSED Mon" in hours_of_operation:
                 hours_of_operation = hours_of_operation.replace("TEMP: CLOSED", "")
                 location_type = "TEMPORARILY CLOSED"
             elif hours_of_operation == "TEMP: CLOSED":
@@ -74,6 +76,10 @@ def fetch_data():
                 .get_text(separator="|", strip=True)
                 .replace("|", "")
             )
+            if "26/09/21: 11:30 - 21:30" in hours_of_operation:
+                hours_of_operation = hours_of_operation.split(
+                    "26/09/21: 11:30 - 21:30"
+                )[1]
             country_code = "AUS"
             yield SgRecord(
                 locator_domain=DOMAIN,

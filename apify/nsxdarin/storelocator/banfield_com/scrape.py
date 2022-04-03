@@ -20,7 +20,6 @@ headers = {
     "sec-fetch-mode": "navigate",
     "sec-fetch-user": "?1",
     "sec-fetch-dest": "document",
-    "referer": "https://www.banfield.com/",
     "accept-language": "en-US,en-GB;q=0.9,en;q=0.8",
 }
 
@@ -97,7 +96,8 @@ def fetch_data():
             .replace(")", "")
             .strip()
         )
-
+        if len(store) <= 0:
+            logger.error(page_url)
         add = add.replace("&amp;", "&").replace("amp;", "&")
 
         yield SgRecord(

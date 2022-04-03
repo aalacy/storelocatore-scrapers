@@ -26,9 +26,7 @@ def fetch_data():
         city = raw_address[1]
         state = " ".join(raw_address[2].split()[:-1])
         zip_code = raw_address[2].split()[-1]
-        phone = poi_html.xpath(
-            './/h4[contains(text(), "Phone")]/following-sibling::p[1]/text()'
-        )
+        phone = poi_html.xpath('.//a[contains(@href, "tel")]/text()')
         phone = phone[0] if phone else "<MISSING>"
         hoo = poi_html.xpath(
             './/h4[contains(text(), "Hours")]/following-sibling::p[1]/text()'

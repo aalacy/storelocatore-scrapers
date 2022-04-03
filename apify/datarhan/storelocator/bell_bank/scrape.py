@@ -21,7 +21,9 @@ def fetch_data():
     for start_url in start_urls:
         all_locations = session.get(start_url).json()
         for poi in all_locations:
-            page_url = "https://bell.bank" + poi["url"]
+            page_url = poi["url"]
+            if "http" not in page_url:
+                page_url = "https://bell.bank" + poi["url"]
             loc_response = session.get(page_url)
             loc_dom = etree.HTML(loc_response.text)
             hoo = loc_dom.xpath(

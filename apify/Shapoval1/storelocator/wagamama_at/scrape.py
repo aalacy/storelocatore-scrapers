@@ -9,75 +9,45 @@ from sgpostal.sgpostal import International_Parser, parse_address
 
 def fetch_data(sgw: SgWriter):
 
-    locator_domain = "https://www.wagamama.com"
-    api_url = "https://www.wagamama.com/_nuxt/static/1636984941/home/state.js"
+    locator_domain = "https://www.wagamama.com/"
+    api_url = "https://www.wagamama.com/restaurants/search"
     session = SgRequests()
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
     r = session.get(api_url, headers=headers)
-
-    div = r.text.split('url="')
+    tree = html.fromstring(r.text)
+    div = tree.xpath('//div[@class="SelectLocaleDropdown-content"]/a')
     for d in div:
-        try:
-            spage_url = (
-                d.split('url:"')[1]
-                .replace("\\u002F\\u002F", "//")
-                .split('"')[0]
-                .strip()
-            )
-        except:
-            spage_url = d.split('"')[0].replace("\\u002F\\u002F", "//").strip()
-        if spage_url.find("wagamama") == -1:
+        country_code = "".join(d.xpath("./@data-country"))
+        sub_page_url = "".join(d.xpath(".//@href"))
+        sitemap_url = f"{sub_page_url}sitemap.xml"
+        if country_code == "northern ireland":
+            sitemap_url = "https://www.wagamamani.com/sitemap.xml"
+        if (
+            sitemap_url.find("us") != -1
+            or sitemap_url == "https://www.wagamama.com/"
+            or sitemap_url == "https://www.wagamama.fr/sitemap.xml"
+            or sitemap_url == "https://www.wagamama.es/sitemap.xml"
+        ):
             continue
-
         try:
-            country_code = d.split('code="')[1].split('"')[0].strip()
+            r = session.get(sitemap_url, headers=headers)
+            tree = html.fromstring(r.content)
         except:
-            country_code = "<MISSING>"
-        if spage_url == "https://www.wagamama.gr":
-            spage_url = "https://www.wagamama.com.gr"
-        r = session.get(spage_url, headers=headers)
-        tree = html.fromstring(r.text)
-        slug = "".join(
-            tree.xpath('//ul[contains(@class, "HeaderNavDesktop")]/li[2]//a/@href')
-        )
-        if slug.find(".us") != -1:
             continue
-        page_url = f"{spage_url}{slug}"
-
-        r = session.get(page_url, headers=headers)
-        tree = html.fromstring(r.text)
-        slug = tree.xpath(
-            '//div[./a[contains(@href, "tel")]]/following::div[1]/a[1]/@href'
+        div = tree.xpath(
+            '//url/loc[contains(text(), "restaurants/")] | //url/loc[contains(text(), "restauranter/")] | //url/loc[contains(text(), "ristoranti/")] | //url/loc[contains(text(), "restauracie/")] | //url/loc[contains(text(), "restauranger/")]'
         )
-        tmp = []
-        tmp.append(page_url)
-        for b in slug:
-
-            page_url = f"{spage_url}{b}"
-
-            tmp.append(page_url)
-        for t in tmp:
-
-            if t == "https://www.wagamama.at":
-                t = "https://www.wagamama.at/restaurants/parndorf"
-            if t == "https://www.wagamama.bh":
-                t = "https://www.wagamama.bh/restaurants/bahrain-city-centre"
-            if t == "https://www.wagamama.gi":
-                t = "https://www.wagamama.gi/restaurants/gibraltar-ocean-village"
-            if t == "https://www.wagamamanorway.no":
-                t = "https://www.wagamamanorway.no/restaurants/oslo-airport"
-            if t == "https://www.wagamama.om":
-                t = "https://www.wagamama.om/restaurants/al-qurum-complex"
-            if t == "https://www.wagamama.sk":
-                t = "https://www.wagamama.sk/restauracie/bratislava"
-            if t == "https://www.wagamama.se":
-                t = "https://www.wagamama.se/restauranger/stockholm-waterfront"
-            page_url = t
-            if page_url.count("/") != 4:
+        for b in div:
+            page_url = "".join(b.xpath(".//text()")).replace("https://", "https://www.")
+            if (
+                page_url.find("/en/") != -1
+                or page_url.find("/fr/") != -1
+                or page_url.find("/de_nl/") != -1
+                or page_url.find("/ar/") != -1
+            ):
                 continue
-
             r = session.get(page_url, headers=headers)
             tree = html.fromstring(r.text)
             location_name = "".join(tree.xpath("//h1/text()")).replace("\n", "").strip()
@@ -91,10 +61,7 @@ def fetch_data(sgw: SgWriter):
             state = a.state or "<MISSING>"
             postal = a.postcode or "<MISSING>"
             city = a.city or "<MISSING>"
-            if country_code == "<MISSING>" and page_url.find("wagamamani") != -1:
-                country_code = "NI"
-            if ".ie/" in page_url:
-                country_code = "IE"
+
             phone = (
                 "".join(tree.xpath("//p[./a]/a[1]/text()")).replace("\n", "").strip()
             )
@@ -102,18 +69,16 @@ def fetch_data(sgw: SgWriter):
                 phone = "+" + phone.split("+")[1].strip()
             if phone.find("/") != -1:
                 phone = phone.split("/")[0].strip()
-            hours_of_operation = (
-                " ".join(
-                    tree.xpath(
-                        '//p[./a]/following::div[@class="VenueOverview__preview_1D9p"][2]/following-sibling::ul/li/span/text()'
-                    )
-                )
-                .replace("\n", "")
-                .strip()
-            )
-            hours_of_operation = " ".join(hours_of_operation.split())
+            hours = tree.xpath('//ul[contains(@class, "hours")]/li/span/text()')
+
+            hours = list(filter(None, [a.strip() for a in hours]))
+            try:
+                hours_of_operation = " ".join(hours[:14])
+            except:
+                hours_of_operation = "<MISSING>"
             if hours_of_operation.count("- - ") == 7:
                 hours_of_operation = "Closed"
+
             text = "".join(tree.xpath('//a[contains(@href,"maps")]/@href'))
             try:
                 if text.find("ll=") != -1:
@@ -133,6 +98,8 @@ def fetch_data(sgw: SgWriter):
                     )
                 except:
                     latitude, longitude = "<MISSING>", "<MISSING>"
+            if country_code == "northern ireland":
+                country_code = "United Kingdom"
 
             row = SgRecord(
                 locator_domain=locator_domain,
