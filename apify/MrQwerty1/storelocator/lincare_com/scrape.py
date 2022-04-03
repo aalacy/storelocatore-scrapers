@@ -24,9 +24,15 @@ def fetch_data(sgw: SgWriter):
     r = session.get(api, headers=headers)
     js = r.json()["documents"]
 
+    s = js[0].get("LocationDetailPageLink")
+    url = f"https://www.lincare.com{s}"
+    hours_of_operation = get_hours(url)
+
     for j in js:
         adr1 = j.get("Address1") or ""
         adr2 = j.get("Address2") or ""
+        if "box" in adr2.lower() or "white" in adr2.lower():
+            adr2 = ""
         street_address = f"{adr1} {adr2}".strip()
         city = j.get("City")
         state = j.get("State")
@@ -41,10 +47,6 @@ def fetch_data(sgw: SgWriter):
         phone = j.get("Phone")
         latitude = j.get("Lat")
         longitude = j.get("Lon")
-        try:
-            hours_of_operation = get_hours(page_url)
-        except:
-            hours_of_operation = SgRecord.MISSING
 
         row = SgRecord(
             page_url=page_url,

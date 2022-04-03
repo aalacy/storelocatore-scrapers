@@ -70,7 +70,11 @@ def fetch_data():
         page_url = (BASE_URL + row["websiteUrl"]) or LOCATION_URL
         store = pull_content(page_url)
         location_name = row["name"].replace("<br />", " ").strip()
+        if not location_name:
+            location_name = row["cityName"]
         raw_address = row["adrOnly"].replace("<br />", ",").strip().rstrip(",")
+        if not raw_address:
+            raw_address = row["cityName"]
         street_address, city, state, zip_postal = getAddress(raw_address)
         if street_address == MISSING:
             street_address = row["adrOnly"].replace("<br />", ",").strip()
@@ -88,11 +92,14 @@ def fetch_data():
             state = MISSING
         country_code = row["countryCode"]
         location_type = "BOUTIQUE" if row["is_boutique"] == 1 else "RETAILERS"
-        phone = (
-            store.find("a", {"class": "ow-store-view__tel"})
-            .text.replace("T.", "")
-            .strip()
-        )
+        try:
+            phone = (
+                store.find("a", {"class": "ow-store-view__tel"})
+                .text.replace("T.", "")
+                .strip()
+            )
+        except:
+            phone = MISSING
         if phone == MISSING:
             phone = row["contacts"]["phone"]
             if not phone:

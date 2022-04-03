@@ -1,25 +1,25 @@
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
 def fetch_data(sgw: SgWriter):
     api_url = "https://api.storerocket.io/api/user/2BkJ1wEpqR/locations?filters=37343"
-
     r = session.get(api_url)
     js = r.json()["results"]["locations"]
 
     for j in js:
-        street_address = (
-            f"{j.get('address_line_1')} {j.get('address_line_2') or ''}".strip()
+        street_address = " ".join(
+            f"{j.get('address_line_1')} {j.get('address_line_2') or ''}".split()
         )
         city = j.get("state")
         postal = j.get("postcode")
         country_code = j.get("country")
         page_url = j.get("url") or "https://www.jetlocal.co.uk/drivers/locator"
-        location_name = j.get("name")
+        location_name = j.get("name") or ""
+        location_name = " ".join(location_name.split())
         latitude = j.get("lat")
         longitude = j.get("lng")
 
@@ -51,5 +51,11 @@ def fetch_data(sgw: SgWriter):
 if __name__ == "__main__":
     session = SgRequests()
     locator_domain = "https://www.jetlocal.co.uk/"
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
         fetch_data(writer)

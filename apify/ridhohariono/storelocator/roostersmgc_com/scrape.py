@@ -88,8 +88,8 @@ def fetch_data():
             )
             location_type = MISSING
             store_number = store.find("div", id="book-online").find("a")["data-id"]
-            latitude = store.find("meta", {"itemprop": "latitude"})["content"]
-            longitude = store.find("meta", {"itemprop": "longitude"})["content"]
+            latitude = MISSING
+            longitude = MISSING
             log.info("Append {} => {}".format(location_name, street_address))
             yield SgRecord(
                 locator_domain=DOMAIN,

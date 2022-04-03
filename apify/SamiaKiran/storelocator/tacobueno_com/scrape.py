@@ -84,7 +84,16 @@ def fetch_data():
                     if temp[1].find("ZipCode") != -1:
                         zip_postal = zip_postal + " " + temp[0]
                     i += 1
-
+                if (
+                    "Sunday: varies Monday: varies Tuesday: varies Wednesday: varies Thursday: varies Friday: varies Saturday: varies"
+                    in hours_of_operation
+                ):
+                    hours_of_operation = MISSING
+                elif (
+                    "Sunday:  Monday:  Tuesday:  Wednesday:  Thursday:  Friday:  Saturday:"
+                    in hours_of_operation
+                ):
+                    hours_of_operation = MISSING
                 yield SgRecord(
                     locator_domain=DOMAIN,
                     page_url="https://www.tacobueno.com/locations/",

@@ -103,6 +103,16 @@ def fetch_data():
                             ].replace("..", "")
                         if lurl not in locs:
                             locs.append(lurl)
+            if '"Teaser-cta Button--AAP" href="https://www.carquest.com/' in line:
+                items = line.split(
+                    '"Teaser-cta Button--AAP" href="https://www.carquest.com/'
+                )
+                for item in items:
+                    if "Store Details" in item:
+                        lurl = "https://www.carquest.com/" + item.split('"')[0]
+                        if lurl not in locs:
+                            locs.append(lurl)
+
     for loc in locs:
         loc = (
             loc.replace("&#39;", "%27")
@@ -191,6 +201,34 @@ def fetch_data():
                 if state == "PR":
                     country = "US"
                 name = "Advance Auto Parts #" + store
+                if "carquest" in loc:
+                    typ = "Carquest Auto Parts"
+                else:
+                    typ = "Advance Auto Parts"
+                hours = hours.replace(" 1000", " 10:00")
+                hours = hours.replace(" 900", " 9:00")
+                hours = hours.replace(" 800", " 8:00")
+                hours = hours.replace(" 700", " 7:00")
+                hours = hours.replace(" 1100", " 11:00")
+                hours = hours.replace(" 1200", " 12:00")
+                hours = hours.replace(" 730", " 7:30")
+                hours = hours.replace(" 830", " 8:30")
+                hours = hours.replace(" 930", " 9:30")
+                hours = hours.replace(" 1030", " 10:30")
+                hours = hours.replace(" 1130", " 11:30")
+                hours = hours.replace("-1700", "-5:00")
+                hours = hours.replace("-1730", "-5:30")
+                hours = hours.replace("-1800", "-6:00")
+                hours = hours.replace("-1830", "-6:30")
+                hours = hours.replace("-1900", "-7:00")
+                hours = hours.replace("-1930", "-7:30")
+                hours = hours.replace("-2000", "-8:00")
+                hours = hours.replace("-2030", "-8:30")
+                hours = hours.replace("-2100", "-9:00")
+                hours = hours.replace("-2130", "-9:30")
+                hours = hours.replace("-2200", "-10:00")
+                hours = hours.replace("-2230", "-10:30")
+                hours = hours.replace("-2300", "-11:00")
                 yield SgRecord(
                     locator_domain=website,
                     page_url=loc,

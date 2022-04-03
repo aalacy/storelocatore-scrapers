@@ -56,7 +56,7 @@ def fetch_data(sgw: SgWriter):
                         raw_address = raw_address[:-1]
                 except:
                     raw_address = ""
-                if "Company Driver" in raw_address:
+                if "Company Driver" in location_name:
                     continue
                 addr = parser.parse_address_intl(raw_address)
                 try:
@@ -65,7 +65,11 @@ def fetch_data(sgw: SgWriter):
                     street_address = addr.street_address_1
                 try:
                     city = (
-                        store["address"]["town"].replace("   ", " ").replace("  ", " ")
+                        store["address"]["town"]
+                        .replace("   ", " ")
+                        .replace("  ", " ")
+                        .split(", STAFFORD")[0]
+                        .strip()
                     )
                     if city[-1:] == ",":
                         city = city[:-1]
@@ -81,6 +85,8 @@ def fetch_data(sgw: SgWriter):
                     phone = ""
                 try:
                     zip_code = store["address"]["postalCode"]
+                    if str(zip_code) == "0":
+                        zip_code = ""
                 except:
                     zip_code = ""
                 store_number = store["name"]

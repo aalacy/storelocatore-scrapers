@@ -48,7 +48,7 @@ def fetch_data():
     start_url = "https://www.jamesavery.com/store_locations?utf8=%E2%9C%93&distance=any&address={}&store_type%5B%5D=retail&authenticity_token=yEwudnl2zo%2FdiLBCZIncYa3relP0t3%2FZPLiT4xG8SaJbVKaPckX7qzA1x6Ve%2F1uMa2N2xOUCG0%2FlPJcccmfIoA%3D%3D"
 
     all_codes = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA], max_radius_miles=500
+        country_codes=[SearchableCountries.USA], max_search_distance_miles=500
     )
     for code in all_codes:
         response = session.get(start_url.format(code))

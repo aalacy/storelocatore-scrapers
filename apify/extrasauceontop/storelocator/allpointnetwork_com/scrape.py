@@ -1,31 +1,34 @@
-from sgrequests import SgRequests
-from sgzip.dynamic import DynamicGeoSearch, SearchableCountries, Grain_2
-from sgscrape import simple_scraper_pipeline as sp
-from sglogging import sglog
-import os
+from typing import Iterable, Tuple, Callable
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sgscrape.pause_resume import CrawlStateSingleton
+from sgrequests.sgrequests import SgRequests
+from sgzip.dynamic import SearchableCountries, Grain_1_KM
+from sgzip.parallel import DynamicSearchMaker, ParallelDynamicSearch, SearchIteration
+import time
 
-log = sglog.SgLogSetup().get_logger(logger_name="allpoint")
-session = SgRequests()
 
+class ExampleSearchIteration(SearchIteration):
+    def __init__(self, http: SgRequests):
+        self.__http = http  # noqa
+        self.__state = CrawlStateSingleton.get_instance()
 
-def get_data():
-    search = DynamicGeoSearch(
-        country_codes=[
-            SearchableCountries.CANADA,
-            SearchableCountries.USA,
-            SearchableCountries.BRITAIN,
-        ],
-        granularity=Grain_2(),
-    )
+    def do(
+        self,
+        coord: Tuple[float, float],
+        zipcode: str,  # noqa
+        current_country: str,
+        items_remaining: int,  # noqa
+        found_location_at: Callable[[float, float], None],
+    ) -> Iterable[SgRecord]:  # noqa
 
-    ids = []
-    for search_lat, search_lon in search:
-        log.info(search_lat)
-        log.info(search_lon)
-        log.info("")
         url = "https://clsws.locatorsearch.net/Rest/LocatorSearchAPI.svc/GetLocations"
 
         x = 0
+        search_lat = coord[0]
+        search_lon = coord[1]
         while True:
             x = x + 1
             params = {
@@ -36,7 +39,22 @@ def get_data():
                 "PageIndex": str(x),
                 "SearchByOptions": "",
             }
-            response = session.post(url, json=params).json()
+
+            y = 0
+            while True:
+                y = y + 1
+                if y % 10 == 0:
+                    time.sleep(1)
+
+                if y == 50:
+                    raise Exception
+                response_obj = http.post(url, json=params)
+
+                if response_obj.status_code != 200:
+                    continue
+
+                response = response_obj.json()
+                break
 
             try:
                 for location in response["data"]["ATMInfo"]:
@@ -55,28 +73,31 @@ def get_data():
                     location_type = location["RetailOutlet"]
                     latitude = location["Latitude"]
                     longitude = location["Longitude"]
-
+                    found_location_at(latitude, longitude)
                     hours = "<MISSING>"
-                    if store_number in ids:
-                        continue
+                    rec_count = self.__state.get_misc_value(
+                        current_country, default_factory=lambda: 0
+                    )
+                    self.__state.set_misc_value(current_country, rec_count + 1)
 
-                    ids.append(store_number)
-                    yield {
-                        "locator_domain": locator_domain,
-                        "page_url": page_url,
-                        "location_name": location_name,
-                        "latitude": latitude,
-                        "longitude": longitude,
-                        "city": city,
-                        "store_number": store_number,
-                        "street_address": address,
-                        "state": state,
-                        "zip": zipp,
-                        "phone": phone,
-                        "location_type": location_type,
-                        "hours": hours,
-                        "country_code": country_code,
-                    }
+                    yield SgRecord(
+                        raw={
+                            "locator_domain": locator_domain,
+                            "page_url": page_url,
+                            "location_name": location_name,
+                            "latitude": latitude,
+                            "longitude": longitude,
+                            "city": city,
+                            "store_number": store_number,
+                            "street_address": address,
+                            "state": state,
+                            "zip": zipp,
+                            "phone": phone,
+                            "location_type": location_type,
+                            "hours": hours,
+                            "country_code": country_code,
+                        }
+                    )
 
                 if len(response["data"]["ATMInfo"]) < 100:
                     break
@@ -84,47 +105,31 @@ def get_data():
                 break
 
 
-def scrape():
-
-    try:
-        proxy_pass = os.environ["PROXY_PASSWORD"]
-
-    except Exception:
-        proxy_pass = "No"
-
-    if proxy_pass != "No":
-        raise Exception("Do not run this with a proxy")
-
-    field_defs = sp.SimpleScraperPipeline.field_definitions(
-        locator_domain=sp.MappingField(mapping=["locator_domain"]),
-        page_url=sp.MappingField(mapping=["page_url"], part_of_record_identity=True),
-        location_name=sp.MappingField(
-            mapping=["location_name"], part_of_record_identity=True
-        ),
-        latitude=sp.MappingField(mapping=["latitude"]),
-        longitude=sp.MappingField(mapping=["longitude"]),
-        street_address=sp.MultiMappingField(
-            mapping=["street_address"], part_of_record_identity=True
-        ),
-        city=sp.MappingField(mapping=["city"], part_of_record_identity=True),
-        state=sp.MappingField(mapping=["state"], part_of_record_identity=True),
-        zipcode=sp.MultiMappingField(mapping=["zip"], part_of_record_identity=True),
-        country_code=sp.MappingField(mapping=["country_code"]),
-        phone=sp.MappingField(mapping=["phone"], is_required=False),
-        store_number=sp.MappingField(
-            mapping=["store_number"], part_of_record_identity=True
-        ),
-        hours_of_operation=sp.MappingField(mapping=["hours"], is_required=False),
-        location_type=sp.MappingField(mapping=["location_type"], is_required=False),
+if __name__ == "__main__":
+    # additionally to 'search_type', 'DynamicSearchMaker' has all options that all `DynamicXSearch` classes have.
+    search_maker = DynamicSearchMaker(
+        search_type="DynamicGeoSearch", granularity=Grain_1_KM()
     )
 
-    pipeline = sp.SimpleScraperPipeline(
-        scraper_name="Crawler",
-        data_fetcher=get_data,
-        field_definitions=field_defs,
-        log_stats_interval=15,
-    )
-    pipeline.run()
+    with SgWriter(
+        deduper=SgRecordDeduper(
+            RecommendedRecordIds.StoreNumberId, duplicate_streak_failure_factor=100
+        )
+    ) as writer:
+        with SgRequests() as http:
+            search_iter = ExampleSearchIteration(http=http)
+            par_search = ParallelDynamicSearch(
+                search_maker=search_maker,
+                search_iteration=search_iter,
+                country_codes=[
+                    SearchableCountries.USA,
+                    SearchableCountries.CANADA,
+                    SearchableCountries.BRITAIN,
+                ],
+            )
+            #    max_threads=8)
 
+            for rec in par_search.run():
+                writer.write_row(rec)
 
-scrape()
+    state = CrawlStateSingleton.get_instance()

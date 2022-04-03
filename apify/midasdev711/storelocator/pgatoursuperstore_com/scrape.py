@@ -49,10 +49,12 @@ def fetch_data():
         hoo = poi_html.xpath('.//div[@class="hours"]/text()')
         hoo = [e.strip() for e in hoo if e.strip()]
         hours_of_operation = " ".join(hoo)
+        location_type = SgRecord.MISSING
+        if "Temporarily closed" in hours_of_operation:
+            hours_of_operation = hours_of_operation.split("Temporarily closed")[0]
+            location_type = "Temporarily closed"
         if "Coming" in location_name:
-            location_type = "COMING_SOON"
-        else:
-            location_type = SgRecord.MISSING
+            continue
         log.info("Append {} => {}".format(location_name, street_address))
         item = SgRecord(
             locator_domain=domain,
@@ -62,7 +64,7 @@ def fetch_data():
             city=raw_address[0],
             state=raw_address[1].split()[0],
             zip_postal=raw_address[1].split()[-1],
-            country_code=SgRecord.MISSING,
+            country_code="US",
             store_number=store_url.split("/")[-1].split(".")[0],
             phone=phone,
             location_type=location_type,
