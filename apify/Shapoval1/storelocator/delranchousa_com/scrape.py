@@ -1,47 +1,18 @@
-import csv
 import usaddress
-from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
+def fetch_data(sgw: SgWriter):
 
     locator_domain = "https://www.delranchousa.com"
     api_url = "https://www.delranchousa.com/wp-json/wpgmza/v1/features/base64eJyrVkrLzClJLVKyUqqOUcpNLIjPTIlRsopRMoxR0gEJFGeUFni6FAPFomOBAsmlxSX5uW6ZqTkpELFapVoABU0Wug"
 
     session = SgRequests()
     r = session.get(api_url)
-
     tag = {
         "Recipient": "recipient",
         "AddressNumber": "address1",
@@ -73,74 +44,56 @@ def fetch_data():
 
     js = r.json()
     for j in js["markers"]:
+
         line = "".join(j.get("address"))
         a = usaddress.tag(line, tag_mapping=tag)[0]
-        street_address = f"{a.get('address1')} {a.get('address2')}".replace(
-            "None", ""
-        ).strip()
+        street_address = (
+            f"{a.get('address1')} {a.get('address2')}".replace("None", "").strip()
+            or "<MISSING>"
+        )
         city = a.get("city") or "<MISSING>"
         postal = a.get("postal")
         if street_address.find("462") != -1:
             postal = "73064"
-        state = a.get("state")
-        phone = j.get("description")
+        state = a.get("state").replace("OKC", "OK").strip() or "<MISSING>"
+        phone = (
+            "".join(j.get("description"))
+            .replace("<p>Ph.", "")
+            .replace("</p>", "")
+            .strip()
+            or "<MISSING>"
+        )
         country_code = "US"
-        store_number = "<MISSING>"
-        location_name = "".join(j.get("title")).replace("<br>", "")
-        latitude = j.get("lat")
-        longitude = j.get("lng")
-        location_type = "<MISSING>"
-        hours_of_operation = "<MISSING>"
+        location_name = "".join(j.get("title")).replace("<br>", "") or "<MISSING>"
+        if "Oklahoma City" in location_name:
+            city = "Oklahoma City"
+        latitude = j.get("lat") or "<MISSING>"
+        longitude = j.get("lng") or "<MISSING>"
         page_url = "https://www.delranchousa.com/locations/"
-        if city == "<MISSING>":
-            session = SgRequests()
-            r = session.get(
-                "https://delranchousa.com/locations/oklahoma-city-2741-ne-23rd/"
-            )
-            tree = html.fromstring(r.text)
-            line = "".join(tree.xpath('//div[@class="fusion-text"]/p[1]/text()[2]'))
-            a = usaddress.tag(line, tag_mapping=tag)[0]
-            city = a.get("city")
-            state = a.get("state")
-            postal = a.get("postal")
-            phone = "".join(tree.xpath("//p[./b]/text()"))
-        if page_url == "https://www.delranchousa.com/locations/":
-            session = SgRequests()
-            r = session.get("https://www.delranchousa.com/locations/")
-            tree = html.fromstring(r.text)
-            block = tree.xpath('//p[./a[contains(text(), "Read More")]]')
-            for b in block:
-                slug = "".join(b.xpath("./text()")).replace("\n", "").split()[0].strip()
-                if street_address.find(slug) != -1:
-                    page_url = "".join(
-                        b.xpath('./a[contains(text(), "Read More")]/@href')
-                    )
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=SgRecord.MISSING,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=SgRecord.MISSING,
+        )
 
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
+    ) as writer:
+        fetch_data(writer)

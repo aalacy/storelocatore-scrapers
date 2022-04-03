@@ -5,8 +5,7 @@ from sgrequests import SgRequests
 from urllib.parse import urljoin
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-import math
-from concurrent.futures import ThreadPoolExecutor
+from sgpostal.sgpostal import parse_address_intl
 from sglogging import SgLogSetup
 import re
 
@@ -15,100 +14,54 @@ logger = SgLogSetup().get_logger("massageaddict")
 _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
 }
-
-
 base_url = "https://www.massageaddict.ca/locations/"
 locator_domain = "https://www.massageaddict.ca"
-session = SgRequests().requests_retry_session()
-max_workers = 8
-
-
-def fetchConcurrentSingle(link):
-    page_url = urljoin(locator_domain, link["href"])
-    response = request_with_retries(page_url)
-    return page_url, bs(response.text, "lxml")
-
-
-def fetchConcurrentList(list, occurrence=max_workers):
-    output = []
-    total = len(list)
-    reminder = math.floor(total / 50)
-    if reminder < occurrence:
-        reminder = occurrence
-
-    count = 0
-    with ThreadPoolExecutor(
-        max_workers=occurrence, thread_name_prefix="fetcher"
-    ) as executor:
-        for result in executor.map(fetchConcurrentSingle, list):
-            count = count + 1
-            if count % reminder == 0:
-                logger.debug(f"Concurrent Operation count = {count}")
-            output.append(result)
-    return output
-
-
-def request_with_retries(url):
-    return session.get(url, headers=_headers)
 
 
 def fetch_data():
-    soup = bs(session.get(base_url, headers=_headers).text, "lxml")
-    links = soup.select("div.mobileShow.mobileProv ul a")
-    logger.info(f"{len(links)} found")
-    for url, sp1 in fetchConcurrentList(links):
-        locations = sp1.select("ul.clinicSearch li")
-        for _ in locations:
-            addr = list(_.select_one(".col-sm-8").stripped_strings)[-1].split(",")
-            hours = []
-            page_url = _.h2.a["href"]
-            logger.info(page_url)
-            sp2 = bs(request_with_retries(page_url).text, "lxml")
-            try:
-                coord = (
-                    sp2.iframe["src"]
-                    .split("!2d")[1]
-                    .split("!3m")[0]
-                    .split("!2m")[0]
-                    .split("!3d")
-                )
-            except:
-                try:
-                    sp2.iframe["src"].split("&ll=")[1].split("&")[0].split(",")[::-1]
-                except:
-                    coord = ["", ""]
-            _hr = sp2.find("", string=re.compile(r"^Hours"))
-            if _hr:
-                temp = list(_hr.find_parent("p").stripped_strings)
-                for x, hh in enumerate(temp):
-                    if hh == "Hours":
-                        hours = temp[x + 1 :]
-                        break
-            else:
-                _hr = sp2.find("", string=re.compile(r"^Mon "))
-                if not _hr:
-                    _hr = sp2.find("", string=re.compile(r"Mon-"))
-                if _hr:
-                    temp = list(_hr.find_parent("p").stripped_strings)
-                    for x, hh in enumerate(temp):
-                        if hh.startswith("Mon"):
-                            hours = temp[x:]
-                            break
-
-            yield SgRecord(
-                page_url=page_url,
-                location_name=_.h2.text.strip(),
-                street_address=" ".join(addr[:-3]),
-                city=addr[-3].strip(),
-                state=addr[-2].strip(),
-                zip_postal=addr[-1].strip(),
-                country_code="CA",
-                phone=_.select_one("div.clinicSearchPhone").text.strip(),
-                locator_domain=locator_domain,
-                latitude=coord[1],
-                longitude=coord[0],
-                hours_of_operation="; ".join(hours).replace("–", "-"),
+    with SgRequests() as session:
+        soup = bs(session.get(base_url, headers=_headers).text, "lxml")
+        links = soup.select("div.mobileShow.mobileProv ul a")
+        logger.info(f"{len(links)} found")
+        for link in links:
+            url = urljoin(locator_domain, link["href"])
+            locations = bs(session.get(url, headers=_headers).text, "lxml").select(
+                "ul.clinicSearch li"
             )
+            for _ in locations:
+                raw_address = list(_.select_one(".col-sm-8").stripped_strings)[-1]
+                addr = parse_address_intl(raw_address)
+                street_address = addr.street_address_1
+                if addr.street_address_2:
+                    street_address += " " + addr.street_address_2
+                hours = []
+                page_url = urljoin(locator_domain, _.a["href"])
+                logger.info(page_url)
+                res = session.get(page_url, headers=_headers)
+                if res.status_code != 200:
+                    continue
+                sp2 = bs(res.text, "lxml")
+                _hr = sp2.find("", string=re.compile(r"^Hours"))
+                if _hr:
+                    hours = list(
+                        _hr.find_parent("p").find_next_sibling().stripped_strings
+                    )
+
+                yield SgRecord(
+                    page_url=page_url,
+                    location_name=sp2.h2.text.split("|")[-1].strip(),
+                    street_address=street_address,
+                    city=addr.city,
+                    state=addr.state,
+                    zip_postal=addr.postcode,
+                    country_code="CA",
+                    phone=_.select_one("div.clinicSearchPhone a").text.strip(),
+                    locator_domain=locator_domain,
+                    hours_of_operation="; ".join(hours)
+                    .replace("\xa0", " ")
+                    .replace("–", "-"),
+                    raw_address=raw_address,
+                )
 
 
 if __name__ == "__main__":

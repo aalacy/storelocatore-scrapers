@@ -1,7 +1,10 @@
 from bs4 import BeautifulSoup
-import csv
 import re
 import usaddress
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -10,59 +13,27 @@ headers = {
 }
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
 def fetch_data():
-    data = []
-    titlelist = []
+
     pattern = re.compile(r"\s\s+")
     url = "https://www.rebeccataylor.com/our-stores/"
     r = session.get(url, headers=headers)
     soup = BeautifulSoup(r.text, "html.parser")
     store_list = soup.select('a:contains("Details")')
-    p = 0
     for st in store_list:
         if "https://www.rebeccataylor.com" in st["href"]:
             link = st["href"]
         else:
             link = "https://www.rebeccataylor.com" + st["href"]
-        if link in titlelist:
-            continue
-        titlelist.append(link)
-        r = session.get(link, headers=headers, verify=False, timeout=100)
+        r = session.get(link, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
         title = soup.find("h2", {"class": "card-title"}).text
-        address = (
-            soup.find("div", {"class": "directions"}).text.strip().split("\n", 1)[0]
-        )
+        try:
+            address = (
+                soup.find("div", {"class": "directions"}).text.strip().split("\n", 1)[0]
+            )
+        except:
+            continue
         try:
             lat, longt = (
                 soup.find("div", {"class": "directions"})
@@ -109,32 +80,31 @@ def fetch_data():
             if temp[1].find("ZipCode") != -1:
                 pcode = pcode + " " + temp[0]
             i += 1
-        data.append(
-            [
-                "https://www.rebeccataylor.com/",
-                link,
-                title,
-                street.strip().replace(",", ""),
-                city.strip().replace(",", ""),
-                state.strip(),
-                pcode.strip().replace(".", ""),
-                "US",
-                "<MISSING>",
-                phone.rstrip(),
-                ltype,
-                lat,
-                longt,
-                hours.strip(),
-            ]
+        yield SgRecord(
+            locator_domain="https://www.rebeccataylor.com/",
+            page_url=link,
+            location_name=title,
+            street_address=street.replace(",", "").strip(),
+            city=city.replace(",", "").strip(),
+            state=state.strip(),
+            zip_postal=pcode.strip(),
+            country_code="US",
+            store_number=SgRecord.MISSING,
+            phone=phone.strip(),
+            location_type=ltype,
+            latitude=str(lat),
+            longitude=str(longt),
+            hours_of_operation=hours,
         )
-
-        p += 1
-    return data
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()

@@ -1,54 +1,25 @@
-import csv
 from bs4 import BeautifulSoup as bs
+
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+
 from sgrequests import SgRequests
-from sglogging import sglog
 import re
 
 
 DOMAIN = "larosagrill.com"
-BASE_URL = "https://larosagrill.com"
 LOCATION_URL = "https://larosagrill.com/menu-locations"
 HEADERS = {
     "Accept": "application/json, text/plain, */*",
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
 }
-log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
 
 session = SgRequests()
 
 
-def write_output(data):
-    log.info("Write Output of " + DOMAIN)
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
 def pull_content(url):
-    log.info("Pull content => " + url)
     soup = bs(session.get(url, headers=HEADERS).content, "lxml")
     return soup
 
@@ -59,28 +30,28 @@ def handle_missing(field):
     return field
 
 
-def fetch_data():
-    log.info("Fetching store_locator data")
+def fetch_data(sgw: SgWriter):
     soup = pull_content(LOCATION_URL)
     content = (
         soup.find_all("div", {"class": "blog"})[1]
         .find("div", {"class": "container"})
         .find_all("div", {"class": "marginall-5"})
     )
-    locations = []
     for row in content:
         locator_domain = DOMAIN
-        location_name = handle_missing(
-            row.find("div", {"class": "locationheader"}).text.strip()
-        )
-        address = (
-            row.find("div", {"style": "margin:5px 0;color:white;text-align:center;"})
-            .get_text(strip=True, separator=",")
-            .replace(",,", ",")
-            .split(",")
-        )
         coming_soon = row.find("img", {"src": "images/coming soon.jpg"})
         if not coming_soon:
+            location_name = handle_missing(
+                row.find("div", {"class": "locationheader"}).text.strip()
+            )
+            address = (
+                row.find(
+                    "div", {"style": "margin:5px 0;color:white;text-align:center;"}
+                )
+                .get_text(strip=True, separator=",")
+                .replace(",,", ",")
+                .split(",")
+            )
             if len(address) > 1:
                 street_address = address[0].strip()
                 city = address[1].strip()
@@ -103,45 +74,38 @@ def fetch_data():
             hours_of_operation = "<MISSING>"
             hoo = row.find("a", text=re.compile(r"OPEN\s+HOURS"))
             if hoo:
-                hours_of_operation = (
-                    hoo.find_next("a").text.replace("Open Daily", "").strip()
-                )
+                hours_of_operation = hoo.find_next("a").text.strip()
             location_type = "<MISSING>"
             latlong = row.find("a", {"href": re.compile(r"www.google.com/maps")})
             latitude = "<MISSING>"
             longitude = "<MISSING>"
             if latlong:
-                latlong = re.search(r"\@(\d+.*)", latlong["href"]).group(1).split(",")
-                latitude = latlong[0]
-                longitude = latlong[1]
-            log.info("Append {} => {}".format(location_name, street_address))
-            locations.append(
-                [
-                    locator_domain,
-                    LOCATION_URL,
-                    location_name,
-                    street_address,
-                    city,
-                    state,
-                    zip_code,
-                    country_code,
-                    store_number,
-                    phone,
-                    location_type,
-                    latitude,
-                    longitude,
-                    hours_of_operation,
-                ]
+                geo = re.findall(
+                    r"[0-9]{2}\.[0-9]+,-[0-9]{2,3}\.[0-9]+", latlong["href"]
+                )[0].split(",")
+                latitude = geo[0]
+                longitude = geo[1]
+            link = "https://larosagrill.com/" + row.a["href"]
+
+            sgw.write_row(
+                SgRecord(
+                    locator_domain=locator_domain,
+                    page_url=link,
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=zip_code,
+                    country_code=country_code,
+                    store_number=store_number,
+                    phone=phone,
+                    location_type=location_type,
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=hours_of_operation,
+                )
             )
-    return locations
 
 
-def scrape():
-    log.info("Start {} Scraper".format(DOMAIN))
-    data = fetch_data()
-    log.info("Found {} locations".format(len(data)))
-    write_output(data)
-    log.info("Finish processed " + str(len(data)))
-
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    fetch_data(writer)
