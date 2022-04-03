@@ -30,7 +30,7 @@ def fetch_data():
             if addr.city:
                 city = " ".join([cc for cc in addr.city.split() if not cc.isdigit()])
             yield SgRecord(
-                page_url=_.exturl.text.strip(),
+                page_url="https://boulangeries.marieblachere.com",
                 store_number=_.storeid.text.strip(),
                 location_name=_.location.text.strip(),
                 street_address=street_address,
