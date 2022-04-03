@@ -20,22 +20,33 @@ def fetch_data(sgw: SgWriter):
     div = tree.xpath('//ul[@class="menu menu--jysk-nordic nav"]/li/a')
     for d in div:
         country_url = "".join(d.xpath(".//@href"))
+        if country_url == "https://jysk.ru/":
+            continue
+        if country_url == "https://jysk.ua/":
+            continue
         country_code = "".join(d.xpath(".//text()"))
         r = session.get(country_url)
         tree = html.fromstring(r.text)
         slug = "".join(
-            tree.xpath('//a[@data-drupal-link-system-path="stores-locator"]/@href')
+            tree.xpath('//div[@class="mb-4 mb-md-0 col-sm-3 col-6"][2]//a/@href')
         )
         single_page_url = f"{country_url}{slug}".replace("//", "/").replace(
             "https:/", "https://"
         )
         r = session.get(single_page_url)
         tree = html.fromstring(r.text)
-        js_block = "".join(
-            tree.xpath("//div[@data-jysk-react-properties]/@data-jysk-react-properties")
+        js_block = (
+            "".join(
+                tree.xpath(
+                    "//div[@data-jysk-react-properties]/@data-jysk-react-properties"
+                )
+            )
+            .split('storesCoordinates":')[1]
+            .split(',"initialPapersCatalogueBlock"')[0]
+            .strip()
         )
         js = json.loads(js_block)
-        for j in js["storesCoordinates"]:
+        for j in js:
             location_name = j.get("name")
             latitude = j.get("lat")
             longitude = j.get("lng")
@@ -50,28 +61,42 @@ def fetch_data(sgw: SgWriter):
                 "//", "/"
             ).replace("https:/", "https://")
             location_type = "<MISSING>"
-            street_address = f"{js.get('street')} {js.get('house')}".strip()
-            state = "<MISSING>"
-            postal = js.get("zipcode")
-            city = js.get("city")
-            phone = js.get("tel") or "<MISSING>"
-            hours = js.get("opening")
-            tmp = []
-            for h in hours:
-                day = (
-                    "".join(h.get("day"))
-                    .replace("0", "Sunday")
-                    .replace("1", "Monday")
-                    .replace("2", "Tuesday")
-                    .replace("3", "Wednesday")
-                    .replace("4", "Thursday")
-                    .replace("5", "Friday")
-                    .replace("6", "Saturday")
+            try:
+                street_address = f"{js.get('street')} {js.get('house')}".strip()
+                state = "<MISSING>"
+                postal = js.get("zipcode")
+                city = js.get("city")
+                phone = js.get("tel") or "<MISSING>"
+                hours = js.get("opening")
+                tmp = []
+                for h in hours:
+                    day = (
+                        "".join(h.get("day"))
+                        .replace("0", "Sunday")
+                        .replace("1", "Monday")
+                        .replace("2", "Tuesday")
+                        .replace("3", "Wednesday")
+                        .replace("4", "Thursday")
+                        .replace("5", "Friday")
+                        .replace("6", "Saturday")
+                    )
+                    time = h.get("format_time")
+                    line = f"{day} {time}"
+                    if line == "Sunday 0:00 - 24:00":
+                        line = "Sunday Closed"
+                    tmp.append(line)
+                hours_of_operation = "; ".join(tmp)
+            except:
+                street_address, city, state, postal, phone, hours_of_operation = (
+                    "<MISSING>",
+                    "<MISSING>",
+                    "<MISSING>",
+                    "<MISSING>",
+                    "<MISSING>",
+                    "<MISSING>",
                 )
-                time = h.get("format_time")
-                line = f"{day} {time}"
-                tmp.append(line)
-            hours_of_operation = "; ".join(tmp)
+            if street_address == "<MISSING>":
+                continue
 
             row = SgRecord(
                 locator_domain=locator_domain,

@@ -20,11 +20,16 @@ def fetch_data():
     all_locations = session.get(start_url, headers=hdr).json()
     for poi in all_locations:
         page_url = poi["url"]
-        with SgFirefox() as driver:
-            driver.get(page_url)
-            loc_dom = etree.HTML(driver.page_source)
-        hoo = loc_dom.xpath('//div[@class="hours"]/div/text()')
-        hoo = ", ".join(hoo)
+        if "coming soon" in poi["name"]:
+            continue
+
+        hoo = ""
+        if page_url:
+            with SgFirefox() as driver:
+                driver.get(page_url)
+                loc_dom = etree.HTML(driver.page_source)
+            hoo = loc_dom.xpath('//div[@class="hours"]/div/text()')
+            hoo = ", ".join(hoo)
 
         item = SgRecord(
             locator_domain=domain,

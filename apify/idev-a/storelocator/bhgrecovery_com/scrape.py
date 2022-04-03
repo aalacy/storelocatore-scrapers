@@ -17,7 +17,6 @@ _headers = {
 }
 
 
-session = SgRequests().requests_retry_session()
 max_workers = 8
 
 
@@ -47,12 +46,13 @@ def fetchConcurrentList(list, occurrence=max_workers):
 
 
 def request_with_retries(url):
-    return session.get(url, headers=_headers)
+    with SgRequests() as session:
+        return session.get(url, headers=_headers)
 
 
 def fetch_data():
     locator_domain = "https://bhgrecovery.com/"
-    base_url = "https://www.bhgrecovery.com/locations?lat=36.9138353&lon=-76.2826675&searched=23505"
+    base_url = "https://www.bhgrecovery.com/locations"
     with SgRequests() as session:
         links = json.loads(
             session.get(base_url, headers=_headers)

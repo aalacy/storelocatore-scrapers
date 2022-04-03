@@ -39,15 +39,22 @@ def fetch_data():
             logger.info(page_url)
             sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
             hours = []
-            hr = list(sp1.select_one("div#hours dl").stripped_strings)
-            for x, hh in enumerate(hr):
-                if "Regular Hours" in hh:
-                    temp = hr[x + 1 :]
-                    if len(temp) % 2 == 0:
-                        for x in range(0, len(temp), 2):
-                            hours.append(f"{temp[x]} {temp[x+1]}")
-
+            days = sp1.select("div#hours dt")
+            times = sp1.select("div#hours dd")
+            for x in range(len(days)):
+                if times[x].text.strip() == "Regular Hours":
+                    for y in range(len(days[x + 1 :])):
+                        hours.append(
+                            f"{days[x+y+1].text.strip()}: {times[x+y+1].text.strip()}"
+                        )
                     break
+                else:
+                    for y in range(len(days)):
+                        hours.append(
+                            f"{days[x+y].text.strip()}: {times[x+y].text.strip()}"
+                        )
+                    break
+
             yield SgRecord(
                 page_url=page_url,
                 store_number=_["loc_id"],

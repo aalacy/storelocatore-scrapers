@@ -23,6 +23,8 @@ def fetch_data():
     )
     for code in all_codes:
         response = session.get(start_url.format(code.replace(" ", "+")), headers=hdr)
+        if response.status_code != 200:
+            continue
         dom = etree.HTML(response.text)
 
         all_locations = dom.xpath(

@@ -30,11 +30,8 @@ def fetch_data():
         raw_address = poi_html.xpath(
             './/div[@class="mf-storefinder-listitem-inner"]/p[1]/text()'
         )
-        phone = (
-            poi_html.xpath('.//p[strong[contains(text(), "Telefon")]]/text()')[-1]
-            .strip()
-            .split(": ")[-1]
-        )
+        phone = poi_html.xpath('.//p[strong[contains(text(), "Telefon")]]/text()')
+        phone = phone[-1].strip().split(": ")[-1] if phone else ""
         geo = poi_html.xpath("@data-options-mf-storefinder-listitem")[0]
         geo = json.loads(geo)
         hoo = poi_html.xpath(

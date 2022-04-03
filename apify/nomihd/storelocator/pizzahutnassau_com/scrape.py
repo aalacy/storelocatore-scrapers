@@ -30,14 +30,17 @@ def fetch_data():
     )
     stores_req = session.get(search_url, headers=headers)
     stores_sel = lxml.html.fromstring(stores_req.text)
-    addresses = (
-        stores_sel.xpath('//article[@id="thecontent"]/p[1]/text()')[0]
-        .replace("\xa0", "?")
-        .strip()
-    )
+    addresses = stores_sel.xpath('//article[@id="thecontent"]//p[1]')
     add_list = []
-    add_list.append(addresses.split("?", 1)[0].strip())
-    add_list.append(addresses.rsplit("?", 1)[-1].strip())
+    for add in addresses:
+        add_list.append(
+            "".join(add.xpath(".//text()"))
+            .strip()
+            .split("\n")[0]
+            .strip()
+            .split("(")[0]
+            .strip()
+        )
 
     stores = json.loads(search_res.text)
 
@@ -46,7 +49,10 @@ def fetch_data():
         store_number = "<MISSING>"
         page_url = search_url
         locator_domain = website
-        location_name = "PIZZA HUT " + store["title"]
+        if "pizza hut" not in store["title"].lower():
+            location_name = "PIZZA HUT " + store["title"]
+        else:
+            location_name = store["title"]
 
         street_address = add_list[index]
         city = "Nassau Bahamas"

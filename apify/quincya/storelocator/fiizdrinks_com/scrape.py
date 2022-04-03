@@ -24,6 +24,8 @@ def fetch_data(sgw: SgWriter):
     response = session.get(base_link, headers=headers)
     base = BeautifulSoup(response.text, "lxml")
 
+    found = []
+
     sections = base.find(class_="elementor-section-wrap").find_all(
         "section", recursive=False
     )[1:]
@@ -36,19 +38,28 @@ def fetch_data(sgw: SgWriter):
             if "opening" in item.text.lower() or "coming" in item.text.lower():
                 continue
             try:
-                location_name = item.h3.text.strip()
+                location_name = item.h3.text.replace("CREEKCOL", "CREEK COL").strip()
             except:
                 continue
             raw_address = list(item.h5.stripped_strings)
-            if "Rd Cedar" in raw_address[0]:
+            if "188," in raw_address[0]:
+                raw_address = raw_address[0].replace("188,", "188RR").split("RR")
+            if "land Dr," in raw_address[0]:
                 raw_address = (
-                    raw_address[0].replace("Rd Cedar", "Rd, Cedar").split(" Rd, ")
+                    raw_address[0].replace("land Dr,", "land DrRR").split("RR")
                 )
             street_address = " ".join(raw_address[:-1])
+            if street_address in found:
+                continue
             city_line = raw_address[-1]
             city = city_line.split(",")[0]
             state = city_line.split(",")[1].split()[0].strip()
             zip_code = city_line.split(",")[1].split()[1].strip()
+            if "Cedar City" in city:
+                street_address = city.split("Cedar")[0].strip()
+                city = "Cedar City"
+            if "Lagoon" not in street_address:
+                found.append(street_address)
             country_code = "US"
             location_type = ""
             try:
@@ -60,9 +71,10 @@ def fetch_data(sgw: SgWriter):
             except:
                 hours_of_operation = ""
 
-            phone = item.a.text
-            if not phone[2].isdigit():
+            phone = item.a.text.replace("NOW OPEN!", "").strip()
+            if not phone[2].isdigit() or "-0000" in phone:
                 phone = ""
+
             if "follow" in hours_of_operation:
                 hours_of_operation = ""
             store_number = ""
@@ -96,5 +108,9 @@ def fetch_data(sgw: SgWriter):
             )
 
 
-with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))) as writer:
+with SgWriter(
+    SgRecordDeduper(
+        SgRecordID({SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS})
+    )
+) as writer:
     fetch_data(writer)

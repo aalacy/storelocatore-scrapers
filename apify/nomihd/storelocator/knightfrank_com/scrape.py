@@ -146,7 +146,7 @@ def fetch_data():
                             if len("".join(hour).strip()) > 0:
                                 hours_list.append("".join(hour).strip())
 
-                        hours_of_operation = (
+                        hours_temp = (
                             "; ".join(hours_list)
                             .strip()
                             .replace("\r\n", "")
@@ -159,7 +159,19 @@ def fetch_data():
                             .strip()
                             .replace("::", ":")
                             .strip()
+                            .split("; Bank Holiday")[0]
+                            .strip()
                         )
+                        temp_hours = hours_temp.split(";")
+                        hours_list = []
+                        if len(temp_hours) > 1:
+                            for t in temp_hours:
+                                day = t.split("day:")[0].strip() + "day:"
+                                tim = t.split("day:")[1].strip()
+                                hours_list.append(day + tim)
+
+                        hours_of_operation = "; ".join(hours_list).strip()
+
                     except SgRequestError as e:
                         log.error(e.status_code)
 

@@ -1,91 +1,62 @@
-import csv
+import json
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
-    locator_domain = "https://www.lakeshorelearning.com/"
-    api_url = "https://www.lakeshorelearning.com/api/v1.14.0/int/getAllStores"
-
-    session = SgRequests()
-    r = session.get(api_url)
+def fetch_data(sgw: SgWriter):
+    api = "https://www.lakeshorelearning.com/api/v1.20.0/int/getAllStores"
+    r = session.get(api, headers=headers)
     js = r.json()
 
     for j in js:
-        street_address = (
-            f"{j.get('address1')} {j.get('address2') or ''}".strip() or "<MISSING>"
-        )
-        city = j.get("city") or "<MISSING>"
-        state = j.get("stateAddress") or "<MISSING>"
-        postal = j.get("postalCode") or "<MISSING>"
-        country_code = j.get("country") or "<MISSING>"
-        store_number = j.get("id") or "<MISSING>"
-        page_url = f'https://www.lakeshorelearning.com{j.get("seoUrl")}'
+        slug = j.get("seoUrl")
+        page_url = f"https://www.lakeshorelearning.com{slug}"
         location_name = j.get("name")
-        phone = j.get("phoneNumber") or "<MISSING>"
-        latitude = j.get("latitude") or "<MISSING>"
-        longitude = j.get("longitude") or "<MISSING>"
-        location_type = "<MISSING>"
-        text = j.get("openingHours")
-        if text:
-            hours_of_operation = ";".join(eval(text))
-        else:
-            hours_of_operation = "<MISSING>"
+        city = j.get("city")
+        state = j.get("stateAddress")
+        postal = j.get("postalCode")
+        adr1 = j.get("address1") or ""
+        if adr1[0].isalpha():
+            adr1 = ""
+        adr2 = j.get("address2") or ""
+        street_address = f"{adr1} {adr2}".strip()
+        phone = j.get("phoneNumber")
+        latitude = j.get("latitude")
+        longitude = j.get("longitude")
+        store_number = j.get("id")
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
+        source = j.get("openingHours") or "[]"
+        hours_of_operation = ";".join(json.loads(source))
 
-    return out
+        row = SgRecord(
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code="US",
+            store_number=store_number,
+            phone=phone,
+            latitude=latitude,
+            longitude=longitude,
+            locator_domain=locator_domain,
+            hours_of_operation=hours_of_operation,
+        )
 
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://www.lakeshorelearning.com/"
+
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:95.0) Gecko/20100101 Firefox/95.0",
+        "Accept": "*/*",
+    }
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        fetch_data(writer)

@@ -69,6 +69,8 @@ class _SearchIteration(SearchIteration):
                 for data in json_data["data"]:
                     locator_domain = website
                     location_name = data["nvcStoreName"]
+                    if "Demo" in location_name:
+                        continue
                     street_address = data["nvcAddress1"]
 
                     if data["nvcAddress2"]:
