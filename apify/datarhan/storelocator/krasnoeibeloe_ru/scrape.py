@@ -25,7 +25,7 @@ def fetch_data():
         all_regions = driver.find_elements_by_xpath(
             '//select[@name="region"]/following-sibling::div[1]//div[@class="option"]'
         )
-        print(f"Total regions = {len(all_regions)}")
+
         for i1, r in enumerate(all_regions[0:1]):
             all_regions = driver.find_elements_by_xpath(
                 '//select[@name="region"]/following-sibling::div[1]//div[@class="option"]'
