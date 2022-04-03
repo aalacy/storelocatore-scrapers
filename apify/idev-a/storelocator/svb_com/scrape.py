@@ -43,10 +43,15 @@ def _d(_, country, url):
         coord = json.loads(_title["data-map-coord"])
     except:
         coord = {"latitude": "", "longitude": ""}
-    hours = ""
+    hours = []
     _hr = _.find("li", string=re.compile(r"Branch hours are"))
     if _hr:
-        hours = _hr.text.split("Branch hours are")[-1].split("(")[0].strip()
+        hours = [_hr.text.split("Branch hours are")[-1].split("(")[0].strip()]
+    elif _.table:
+        for hh in _.table.select("table tr"):
+            if "Days" in hh.text or "Hours" in hh.text:
+                continue
+            hours.append(": ".join(hh.stripped_strings).split("(")[0].strip())
     location_type = []
     if _.caption:
         caption = _.caption.text.lower().strip()
@@ -73,7 +78,7 @@ def _d(_, country, url):
         latitude=coord["latitude"],
         longitude=coord["longitude"],
         locator_domain=locator_domain,
-        hours_of_operation=hours,
+        hours_of_operation="; ".join(hours),
         raw_address=raw_address,
     )
 

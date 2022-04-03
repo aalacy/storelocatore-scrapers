@@ -165,7 +165,6 @@ def fetch_data(sgw: SgWriter):
     logger.info("Processing %s links.." % (len(all_links)))
     for page_url in all_links:
         got_page = False
-
         store_number = MISSING
         phone = MISSING
         hours_of_operation = MISSING
@@ -183,9 +182,12 @@ def fetch_data(sgw: SgWriter):
                 logger.info("Error loading page %s..skipping" % (page_url))
                 continue
 
-        if ".abbeycarpet.com" in home.url:
-            page_url = home.url
-            got_page = True
+        try:
+            if ".abbeycarpet.com" in home.url:
+                page_url = home.url
+                got_page = True
+        except:
+            pass
 
         if not got_page:
             logger.info("---- Saving from result list ----")

@@ -52,28 +52,29 @@ def fetch_data():
                 country = store["node"]["country"]
                 phone = store["node"]["phone"]
                 coords = store["node"]["point"]["coordinates"]
-                lat = coords[0]
-                lng = coords[1]
+                lng = coords[0]
+                lat = coords[1]
                 loc_type = store["node"]["locationType"]
                 if country == "Canada":
                     country = "CA"
+                if title.find("Corporate Office") == -1:
 
-                yield SgRecord(
-                    locator_domain=DOMAIN,
-                    page_url=DOMAIN,
-                    location_name=title,
-                    street_address=street.strip(),
-                    city=city.strip(),
-                    state=state.strip(),
-                    zip_postal=pcode,
-                    country_code=country,
-                    store_number=MISSING,
-                    phone=phone,
-                    location_type=loc_type,
-                    latitude=lat,
-                    longitude=lng,
-                    hours_of_operation=MISSING,
-                )
+                    yield SgRecord(
+                        locator_domain=DOMAIN,
+                        page_url=DOMAIN,
+                        location_name=title,
+                        street_address=street.strip(),
+                        city=city.strip(),
+                        state=state.strip(),
+                        zip_postal=pcode,
+                        country_code=country,
+                        store_number=MISSING,
+                        phone=phone,
+                        location_type=loc_type,
+                        latitude=lat,
+                        longitude=lng,
+                        hours_of_operation=MISSING,
+                    )
 
 
 def scrape():
