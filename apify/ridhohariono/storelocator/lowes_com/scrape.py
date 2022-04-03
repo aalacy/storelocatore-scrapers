@@ -23,11 +23,16 @@ logger = SgLogSetup().get_logger("lowes_com")
 DOMAIN = "lowes.com"
 MAX_WORKERS = 10
 
+# headers_cus = {
+#     "accept": "application/json, text/plain, */*",
+#     "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.102 Safari/537.36",
+#     "x-component-location": "store-locator",
+#     "x-sec-clge-req-type": "ajax",
+# }
+
 headers_cus = {
-    "accept": "application/json, text/plain, */*",
     "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.102 Safari/537.36",
-    "x-component-location": "store-locator",
-    "x-sec-clge-req-type": "ajax",
+    "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
 }
 
 
@@ -45,11 +50,13 @@ def get_hoo(store):
 def fetch_records(zc, sgw: SgWriter):
     with SgRequests() as session:
         api_url = f"https://www.lowes.com/store/api/search?maxResults=&responseGroup=large&searchTerm={zc}"
+        logger.info(f"Pulling data from {api_url}")
         rapi = session.get(api_url, headers=headers_cus)
         if rapi.status_code == 200:
+            logger.info(f"[HTTP STATUS] << {rapi.status_code} OK!! >> ")
             api_js = rapi.json()
             stores = api_js["stores"]
-            logger.info(f"Store Count: [{len(stores)}] Pulling data for {zc}")  # noqa
+            logger.info(f"Store Count: [{len(stores)}] || << Pulling data for {zc} >>")
             for idx, i in enumerate(stores[0:]):
                 store = i["store"]
                 city_f = store["city"] or ""
@@ -90,7 +97,7 @@ def fetch_data(sgw: SgWriter):
     logger.info("Started")
     search = DynamicZipSearch(
         country_codes=[SearchableCountries.USA],
-        expected_search_radius_miles=50,
+        expected_search_radius_miles=200,
         granularity=Grain_8(),
         use_state=False,
     )
