@@ -27,6 +27,8 @@ def fix_record(record):
 
 
 def fetch_data():
+
+    # possibly new API: https://branches.northeast.aaa.com/api/v1/stores/locations/ # noqa
     logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
     url = "https://tdr.aaa.com/tdrl/search.jsp?searchtype=O&radius=50000&format=json&ident=AAACOM&destination={zipCode}"
     headers = {
@@ -35,9 +37,8 @@ def fetch_data():
     session = SgRequests()
 
     search = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA],
-        max_radius_miles=90,
-        max_search_results=None,
+        country_codes=[SearchableCountries.USA, SearchableCountries.CANADA],
+        expected_search_radius_miles=90,
     )
     identities = set()
     maxZ = search.items_remaining()
@@ -47,7 +48,9 @@ def fetch_data():
             maxZ = search.items_remaining()
         found = 0
 
-        son = session.get(url.format(zipCode=zipcode), headers=headers).json()
+        son = SgRequests.raise_on_err(
+            session.get(url.format(zipCode=zipcode), headers=headers)
+        ).json()
         try:
             results = son["aaa"]["services"]["travelItems"]["travelItem"]
         except Exception:
@@ -144,9 +147,11 @@ def scrape():
         ),
         location_name=sp.MappingField(
             mapping=["itemName"],
+            part_of_record_identity=True,
         ),
         latitude=sp.MappingField(
             mapping=["position", "latitude"],
+            part_of_record_identity=True,
         ),
         longitude=sp.MappingField(
             mapping=["position", "longitude"],
@@ -172,6 +177,7 @@ def scrape():
         ),
         store_number=sp.MappingField(
             mapping=["id"],
+            part_of_record_identity=True,
         ),
         hours_of_operation=sp.MappingField(
             mapping=["operatingDays", "operatingDay"],

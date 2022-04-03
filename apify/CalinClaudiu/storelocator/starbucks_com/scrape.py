@@ -93,7 +93,7 @@ def ret_record(record):
         pass
 
     try:
-        store_number = str(record["id"])
+        store_number = str(record["storeNumber"].split("-")[0])
     except Exception:
         pass
 
