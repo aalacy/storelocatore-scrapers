@@ -4,7 +4,6 @@ from sgrequests import SgRequests
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from bs4 import BeautifulSoup as bs
-import json
 from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger("")
@@ -33,11 +32,8 @@ def fetch_data():
                         locator_domain + sp1.select_one("div.links a.btn")["href"]
                     )
 
-            try:
-                if "Opening Soon" in json.dumps(store["OpeningHours"]):
-                    continue
-            except:
-                pass
+            if not store["Phone"] and not street_address:
+                continue
 
             if page_url:
                 logger.info(page_url)
