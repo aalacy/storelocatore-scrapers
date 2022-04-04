@@ -78,7 +78,14 @@ def fetch_data():
 def scrape():
     with SgWriter(
         SgRecordDeduper(
+<<<<<<< Updated upstream
             SgRecordID({SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STORE_NUMBER})
+=======
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            ),
+            duplicate_streak_failure_factor=-1,
+>>>>>>> Stashed changes
         )
     ) as writer:
         for item in fetch_data():
