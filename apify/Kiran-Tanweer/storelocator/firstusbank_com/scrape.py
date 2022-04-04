@@ -1,16 +1,21 @@
-import csv
-import time
+from sglogging import sglog
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 
-logger = SgLogSetup().get_logger("firstusbank_com")
-
 session = SgRequests()
-
+website = "firstusbank.com"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
+session = SgRequests()
 headers = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.141 Safari/537.36",
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
 }
+
+DOMAIN = "https://firstusbank.com/"
+MISSING = SgRecord.MISSING
 
 search = DynamicGeoSearch(
     country_codes=[SearchableCountries.USA],
@@ -19,50 +24,7 @@ search = DynamicGeoSearch(
 )
 
 
-def write_output(data):
-    with open("data.csv", mode="w", newline="", encoding="utf8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        temp_list = []
-        for row in data:
-            comp_list = [
-                row[2].strip(),
-                row[3].strip(),
-                row[4].strip(),
-                row[5].strip(),
-                row[6].strip(),
-                row[8].strip(),
-                row[10].strip(),
-            ]
-            if comp_list not in temp_list:
-                temp_list.append(comp_list)
-                writer.writerow(row)
-        logger.info(f"No of records being processed: {len(temp_list)}")
-
-
 def fetch_data():
-    data = []
     store_types = ["branches", "atms"]
     for lat, lng in search:
         for types in store_types:
@@ -105,38 +67,49 @@ def fetch_data():
                 else:
                     phone = "<MISSING>"
                     hours = "<MISSING>"
+
                 if street == "100W.EmoryRoad":
                     street = "100W. Emory Road"
                 if street == "8710Highway69South":
                     street = "8710 Highway 69 South"
                 if street == "2619UniversityBlvd":
                     street = "2619 University Blvd"
-                data.append(
-                    [
-                        "https://www.fusb.com/",
-                        "https://www.fusb.com/resources/locations",
-                        title,
-                        street,
-                        city,
-                        state,
-                        pcode,
-                        "US",
-                        "<MISSING>",
-                        phone,
-                        types,
-                        lat,
-                        lng,
-                        hours,
-                    ]
+
+                yield SgRecord(
+                    locator_domain=DOMAIN,
+                    page_url="https://www.fusb.com/resources/locations",
+                    location_name=title,
+                    street_address=street.strip(),
+                    city=city.strip(),
+                    state=state.strip(),
+                    zip_postal=pcode,
+                    country_code="US",
+                    store_number=MISSING,
+                    phone=phone,
+                    location_type=types,
+                    latitude=lat,
+                    longitude=lng,
+                    hours_of_operation=hours.strip(),
                 )
-    return data
 
 
 def scrape():
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
-    data = fetch_data()
-    write_output(data)
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    log.info("Started")
+    count = 0
+    deduper = SgRecordDeduper(
+        SgRecordID(
+            {SgRecord.Headers.STREET_ADDRESS, SgRecord.Headers.HOURS_OF_OPERATION}
+        ),
+        duplicate_streak_failure_factor=-1,
+    )
+    with SgWriter(deduper) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()

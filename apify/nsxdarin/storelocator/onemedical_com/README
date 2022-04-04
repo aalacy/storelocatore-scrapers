@@ -1,1 +1,1 @@
-rewrite of https://github.com/SafeGraphInc/crawl-service/blob/master/apify/richard/storelocator/onemedical_com/scrape.py
+--ignore StreetAddressHasNumber --ignore StreetAddressHasStateName (Confirmed on website)

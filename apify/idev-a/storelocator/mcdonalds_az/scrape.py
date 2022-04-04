@@ -13,6 +13,7 @@ _headers = {
 }
 
 locator_domain = "https://mcdonalds.az"
+
 base_url = "https://mcdonalds.az/restaurant-locations"
 
 

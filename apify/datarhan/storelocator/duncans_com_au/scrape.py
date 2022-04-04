@@ -44,6 +44,8 @@ def fetch_data():
             city = loc_dom.xpath('//span[@property="schema:addressLocality"]/text()')[0]
             state = loc_dom.xpath('//span[@property="schema:addressRegion"]/text()')[0]
             zip_code = loc_dom.xpath('//span[@property="schema:postalCode"]/text()')[0]
+            if zip_code == "VIC":
+                zip_code = ""
             country_code = loc_dom.xpath(
                 '//span[@property="schema:addressCountry"]/text()'
             )[0]
