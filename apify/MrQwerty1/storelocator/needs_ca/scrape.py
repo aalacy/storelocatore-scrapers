@@ -33,7 +33,8 @@ def fetch_data(sgw: SgWriter):
         text = "".join(d.xpath("./@data-hours")) or "{}"
         j = json.loads(text)
         for day, inter in j.items():
-            _tmp.append(f"{day}: {inter}")
+            if inter:
+                _tmp.append(f"{day}: {inter}")
 
         hours_of_operation = ";".join(_tmp)
 
