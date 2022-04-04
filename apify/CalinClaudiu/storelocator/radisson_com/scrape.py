@@ -389,6 +389,7 @@ def old_brands(x):
 
 def fix_india(x):
     if x.count("<") == x.count(">"):
+        x = list(x)
         inside = False
         copy = []
         while x:
