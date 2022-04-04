@@ -56,7 +56,7 @@ def pull_content(url):
 def get_latlong(url):
     longlat = re.search(r"!2d(-[\d]*\.[\d]*)\!3d(-?[\d]*\.[\d]*)", url)
     if not longlat:
-        return "<MISSING>", "<MISSING>"
+        return MISSING, MISSING
     return longlat.group(2), longlat.group(1)
 
 
@@ -71,11 +71,14 @@ def fetch_data():
             page_url = BASE_URL + row["href"]
         content = pull_content(page_url)
         location_name = row.text.strip()
-        raw_address = (
-            content.find("div", {"class": "z-t-18 z-mb-10 location-address"})
-            .get_text(strip=True, separator=",")
-            .replace(",Get Directions", "")
-        )
+        try:
+            raw_address = (
+                content.find("div", {"class": "z-t-18 z-mb-10 location-address"})
+                .get_text(strip=True, separator=",")
+                .replace(",Get Directions", "")
+            )
+        except:
+            continue
         street_address, city, state, zip_postal = getAddress(raw_address)
         phone = content.find("a", {"href": re.compile(r"tel:.*")}).text.strip()
         hoo_content = content.find("div", {"class": "z-t-18 z-mb-20 location-hours"})

@@ -99,7 +99,8 @@ def scrape():
     deduper = SgRecordDeduper(
         SgRecordID(
             {SgRecord.Headers.STREET_ADDRESS, SgRecord.Headers.HOURS_OF_OPERATION}
-        )
+        ),
+        duplicate_streak_failure_factor=-1,
     )
     with SgWriter(deduper) as writer:
         results = fetch_data()
