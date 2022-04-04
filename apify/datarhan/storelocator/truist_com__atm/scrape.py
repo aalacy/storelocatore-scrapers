@@ -28,7 +28,8 @@ def fetch_data():
             state = poi["locationAddress"]["state"]
             zip_code = poi["locationAddress"]["zipCode"]
             ls = street_address.replace(" ", "-")
-            page_url = f"https://www.truist.com/atm/{state}/{city}/{zip_code}/{ls}"
+            location_type = poi["locationType"]
+            page_url = f"https://www.truist.com/{location_type.lower()}/{state.lower()}/{city.replace(' ', '-').lower()}/{zip_code.lower()}/{ls}"
             h_check = ""
             if poi.get("locationService"):
                 h_check = [
@@ -49,7 +50,7 @@ def fetch_data():
                 country_code="",
                 store_number="",
                 phone=poi["phone"],
-                location_type=poi["locationType"],
+                location_type=location_type,
                 latitude=poi["locationAddress"]["lat"],
                 longitude=poi["locationAddress"]["long"],
                 hours_of_operation=hoo,
