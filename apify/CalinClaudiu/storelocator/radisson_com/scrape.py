@@ -366,6 +366,27 @@ def fix_phone(x):
     return x
 
 
+def old_brands(x):
+    brands = {
+        "ry": "noClue",
+        "pii": "Park Inn by Radisson",
+        "rdb": "Radisson Blu",
+        "rdr": "Radisson RED",
+        "art": "art'otel",
+        "rad": "Radisson",
+        "ri": "Radisson Individuals",
+        "prz": "prizeotel",
+        "pph": "Park Plaza",
+        "cis": "Country Inn & Suites",
+        "rco": "Radisson Collection",
+    }
+
+    try:
+        return brands[x]
+    except Exception:
+        return x
+
+
 def scrape():
     url = "https://www.radissonhotels.com/en-us/destination"
     field_defs = sp.SimpleScraperPipeline.field_definitions(
@@ -424,7 +445,8 @@ def scrape():
         ),
         hours_of_operation=sp.MissingField(),
         location_type=sp.MappingField(
-            mapping=["sub", "publisher", "brand", "name"],
+            mapping=["main", "brand"],
+            value_transform=old_brands,
             is_required=False,
         ),
     )
