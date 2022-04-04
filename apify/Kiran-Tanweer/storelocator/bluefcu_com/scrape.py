@@ -6,6 +6,7 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgselenium.sgselenium import SgChrome
 import ssl
+import re
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
@@ -15,7 +16,8 @@ user_agent = (
 
 
 def fetch_data():
-
+    pattern = re.compile(r"\s\s+")
+    cleanr = re.compile(r"<[^>]+>")
     url = "https://www.bluefcu.com/sitemaps-1-section-locations-1-sitemap.xml"
     with SgChrome(user_agent=user_agent) as driver:
         driver.get(url)
@@ -62,6 +64,13 @@ def fetch_data():
                 .split('"', 1)[0]
                 .split(",", 1)
             )
+            driver.get(link)
+            bs = BeautifulSoup(driver.page_source, "html.parser")
+            address = bs.find("div", {"class": "address"}).text
+            address = re.sub(pattern, " ", address)
+            address = re.sub(cleanr, " ", address)
+            street = address
+            street = street.split(city)[0]
 
             yield SgRecord(
                 locator_domain="https://www.bluefcu.com/",
