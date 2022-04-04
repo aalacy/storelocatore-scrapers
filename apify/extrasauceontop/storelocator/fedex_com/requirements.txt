@@ -2,3 +2,4 @@
 sgzip==0.10.15
 sgrequests==0.2.10
 sgscrape==0.2.9
+SGLOGGING==0.0.4
