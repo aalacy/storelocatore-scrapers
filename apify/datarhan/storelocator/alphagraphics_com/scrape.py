@@ -12,18 +12,19 @@ from sgzip.dynamic import SearchableCountries, DynamicZipAndGeoSearch
 def fetch_data():
     session = SgRequests()
     domain = "alphagraphics.com"
-    start_url = "https://www.alphagraphics.com/agmapapi/AGLocationFinder/SearchByLocation?ParentSiteIds%5B%5D=759afee9-1554-4283-aa6c-b1e5c4a2b1de&MetroAreaName=&SearchLocation={}&Latitude={}&Longitude={}&Radius=500"
+    start_url = "https://www.alphagraphics.com/agmapapi/AGLocationFinder/SearchByLocation?ParentSiteIds%5B%5D=e5792715-7cfc-40ef-8fdc-8b7188a178f8&ParentSiteIds%5B%5D=759afee9-1554-4283-aa6c-b1e5c4a2b1de&MetroAreaName=&SearchLocation={}&Latitude={}&Longitude={}&Radius=200"
     scraped_items = []
     all_coords = DynamicZipAndGeoSearch(
-        country_codes=[SearchableCountries.USA], expected_search_radius_miles=500
+        country_codes=[SearchableCountries.USA], expected_search_radius_miles=200
     )
     for code, coord in all_coords:
         lat, lng = coord
         response = session.get(start_url.format(code, lat, lng))
         data = json.loads(response.text)
-        if data.get("results"):
-            all_locations = data["results"]
+        if not data.get("results"):
+            continue
 
+        all_locations = data["results"]
         for poi in all_locations:
             store_url = poi["url"]
             location_name = poi["title"]
