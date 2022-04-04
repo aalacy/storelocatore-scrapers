@@ -1,4 +1,3 @@
-import re
 from lxml import html
 from xml.etree import ElementTree as ET
 import time
