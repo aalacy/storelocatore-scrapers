@@ -128,7 +128,7 @@ def nice_hours(operatingHours):
             )
             > 5
         ):
-            return str(
+            res = str(
                 operatingHours["days"]
                 + ": "
                 + operatingHours["open"]
@@ -136,6 +136,9 @@ def nice_hours(operatingHours):
                 + operatingHours["close"]
                 + ";"
             )
+            if res[-1] == ";":
+                res.pop(-1)
+            return res
         else:
             return "<MISSING>"
 
@@ -157,18 +160,23 @@ def scrape():
         ),
         longitude=sp.MappingField(
             mapping=["position", "longitude"],
+            part_of_record_identity=True,
         ),
         street_address=sp.MultiMappingField(
             mapping=["addresses", "address", "addressLine"],
+            part_of_record_identity=True,
         ),
         city=sp.MappingField(
             mapping=["addresses", "address", "cityName"],
+            part_of_record_identity=True,
         ),
         state=sp.MappingField(
             mapping=["addresses", "address", "stateProv", "code"],
+            value_transform=lambda x: x.replace("99", "PR"),
         ),
         zipcode=sp.MappingField(
             mapping=["addresses", "address", "postalCode"],
+            part_of_record_identity=True,
         ),
         country_code=sp.MappingField(
             mapping=["addresses", "address", "countryName", "code"],
