@@ -387,6 +387,26 @@ def old_brands(x):
         return x
 
 
+def fix_india(x):
+    if x.count("<") == x.count(">"):
+        inside = False
+        copy = []
+        while x:
+            whatis = x.pop(0)
+            if whatis == "<":
+                inside = True
+            if whatis == ">":
+                inside = False
+                continue
+            if not inside:
+                copy.append(whatis)
+        if len(copy) > 0:
+            return copy
+        return x
+    else:
+        return x
+
+
 def scrape():
     url = "https://www.radissonhotels.com/en-us/destination"
     field_defs = sp.SimpleScraperPipeline.field_definitions(
@@ -432,6 +452,7 @@ def scrape():
         country_code=sp.MappingField(
             mapping=["sub", "mainEntity", "address", "addressCountry"],
             is_required=False,
+            value_transform=fix_india,
         ),
         phone=sp.MappingField(
             mapping=["sub", "mainEntity", "telephone", 0],
