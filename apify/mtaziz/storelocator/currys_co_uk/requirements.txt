@@ -2,7 +2,6 @@
 sgscrape==0.2.6
 sglogging==0.0.4
 pyppeteer_stealth==2.7.3
-lxml==4.6.2
 pyppdf==0.1.2
 sgrequests==0.2.10
 pyppeteer==1.0.2
