@@ -22,7 +22,13 @@ def fix_record(record):
         record["operatingDays"] = {
             "operatingDay": {"days": "", "open": "", "close": ""}
         }
-
+    record["page_url"] = ""
+    try:
+        record["page_url"] = str(
+            f"https://branches.northeast.aaa.com/{record['addresses']['address']['stateProv']['code']}/{record['addresses']['address']['cityName'].replace(' ','-')}"
+        )
+    except Exception:
+        pass
     return record
 
 
@@ -139,11 +145,7 @@ def scrape():
     field_defs = sp.SimpleScraperPipeline.field_definitions(
         locator_domain=sp.ConstantField(url),
         page_url=sp.MappingField(
-            mapping=["id"],
-            value_transform=lambda x: str(
-                "https://tdr.aaa.com/tdrl/search.jsp?searchtype=O&format=json&ident=AAACOM&destination=null&id="
-                + x
-            ),
+            mapping=["page_url"],
         ),
         location_name=sp.MappingField(
             mapping=["itemName"],
