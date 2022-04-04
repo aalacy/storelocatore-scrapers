@@ -26,7 +26,6 @@ def fetch_data():
         .split(";;\n\tjQuery")[0]
     )
     data = json.loads(data)
-    nonce = dom.xpath('//input[@name="nonce"]/@value')[0]
     for r in data["regiones"]:
         for c in r["comunas"]:
             url = "https://www.walmartchile.cl/wp-admin/admin-ajax.php"
