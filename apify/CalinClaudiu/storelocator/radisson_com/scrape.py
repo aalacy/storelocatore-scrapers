@@ -184,7 +184,16 @@ def clean_record(k):
         k["main"]["name"] = k["main"]["name"]
     except Exception:
         k["main"]["name"] = "<MISSING>"
-
+    try:
+        k["sub"]["publisher"] = k["sub"]["publisher"]
+    except Exception:
+        k["sub"]["publisher"] = {}
+        k["sub"]["publisher"]["brand"] = {}
+        try:
+            k["sub"]["publisher"]["brand"]["name"] = k["main"]["brand"]
+            # will need to decode this^ cis  = Country Inn
+        except Exception:
+            pass
     return k
 
 
@@ -320,12 +329,13 @@ def initial(driver, url, state):
                     )
 
 
-def record_initial_requests(driver, state):
+def record_initial_requests(state):
     for url in [
         "https://www.radissonhotels.com/en-us/destination",
-        # "https://www.radissonhotelsamericas.com/en-us/destination", # noqa
+        "https://www.radissonhotelsamericas.com/en-us/destination",
     ]:
-        initial(driver, url, state)
+        with SgChrome() as driver:
+            initial(driver, url, state)
 
 
 def data_fetcher(session, state):
@@ -343,10 +353,7 @@ def data_fetcher(session, state):
 
 def fetch_data():
     state = CrawlStateSingleton.get_instance()
-    with SgChrome() as driver:
-        state.get_misc_value(
-            "init", default_factory=lambda: record_initial_requests(driver, state)
-        )
+    state.get_misc_value("init", default_factory=lambda: record_initial_requests(state))
 
     with SgRequests() as session:
         for item in data_fetcher(session, state):
@@ -417,7 +424,7 @@ def scrape():
         ),
         hours_of_operation=sp.MissingField(),
         location_type=sp.MappingField(
-            mapping=["@type"],
+            mapping=["sub", "publisher", "brand", "name"],
             is_required=False,
         ),
     )
