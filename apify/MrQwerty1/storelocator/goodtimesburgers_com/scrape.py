@@ -54,6 +54,9 @@ def fetch_data(sgw: SgWriter):
             .strip()
             .split()
         )
+        if not csz:
+            continue
+
         postal = csz.pop()
         state = csz.pop()
         city = " ".join(csz)
