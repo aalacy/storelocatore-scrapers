@@ -1,109 +1,84 @@
-import csv
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
-from bs4 import BeautifulSoup
-import json
-import sgzip
-from sgzip import DynamicGeoSearch, SearchableCountries
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
+from concurrent import futures
 
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
-        # Body
-        for row in data:
-            writer.writerow(row)
+def get_data(coords, sgw: SgWriter):
+    lat, long = coords
+    locator_domain = "https://www.regissalons.com/"
+    api_url = f"https://www.regissalons.com/wp-admin/admin-ajax.php?action=store_search&lat={str(lat)}&lng={str(long)}&max_results=25&search_radius=500&autoload=1"
 
-def fetch_data():
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0",
+    }
+
     session = SgRequests()
-    HEADERS = { 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36' }
-    locator_domain = 'https://www.regissalons.com/'
 
-    MAX_RESULTS = 25
-    MAX_DISTANCE = 500
+    r = session.get(api_url, headers=headers)
 
-    all_store_data = []
+    js = r.json()
 
-    dup_tracker = []
+    for j in js:
 
-    search = sgzip.DynamicGeoSearch(country_codes=[SearchableCountries.USA, SearchableCountries.CANADA],max_radius_miles=MAX_DISTANCE, max_search_results=MAX_RESULTS)
+        page_url = j.get("permalink") or "<MISSING>"
+        location_name = j.get("store") or "<MISSING>"
+        location_name = (
+            str(location_name)
+            .replace("&#8211;", "-")
+            .replace("&#8217;", "'")
+            .replace("&#038;", "&")
+            .split("|")[0]
+            .strip()
+        )
+        street_address = f"{j.get('address')} {j.get('address2')}".strip()
+        city = j.get("city") or "<MISSING>"
+        state = j.get("state") or "<MISSING>"
+        postal = j.get("zip") or "<MISSING>"
+        country_code = j.get("country") or "<MISSING>"
+        phone = j.get("phone") or "<MISSING>"
+        latitude = j.get("lat") or "<MISSING>"
+        longitude = j.get("lng") or "<MISSING>"
+        store_number = j.get("id")
 
-    search.initialize()
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=SgRecord.MISSING,
+        )
 
-    coord = search.next()
+        sgw.write_row(row)
 
-    while coord:
-        x = coord[0]
-        y = coord[1]
 
-        url = 'https://www.regissalons.com/wp-admin/admin-ajax.php?action=store_search&lat=' + str(x) + '&lng=' + str(y) + '&max_results=' + str(MAX_RESULTS) + '&search_radius=' + str(MAX_DISTANCE) 
-        r = session.get(url, headers=HEADERS)
-        
-        res_json = json.loads(r.content)
-        
-        result_coords = []
-        result_coords.append([x, y])
+def fetch_data(sgw: SgWriter):
+    coords = DynamicGeoSearch(
+        country_codes=[SearchableCountries.USA, SearchableCountries.CANADA],
+        max_search_distance_miles=100,
+        expected_search_radius_miles=100,
+        max_search_results=None,
+    )
 
-        for loc in res_json:
-            lat = loc['lat']
-            longit = loc['lng']
-            result_coords.append([lat, longit])
-            search.update_with(result_coords)
-            
-            location_name = loc['store'].replace('&#8211;', '-').replace('&#8217;', "'").replace('&#038;', '&').split("|")[0].strip()
-           
-            phone_number = loc['phone']
-            if phone_number not in dup_tracker:
-                dup_tracker.append(phone_number)
-            else:
-                continue
+    with futures.ThreadPoolExecutor(max_workers=7) as executor:
+        future_to_url = {executor.submit(get_data, url, sgw): url for url in coords}
+        for future in futures.as_completed(future_to_url):
+            future.result()
 
-            street_address = loc['address2']
-            city = loc['city']
-            state = loc['state']
-            zip_code = loc['zip']
-            if len(zip_code) < 5:
-                zip_code = "0" + zip_code
 
-            if len(zip_code.split(' ')) == 2:
-                country_code = 'CA'
-            else:
-                country_code = 'US'
-            
-            store_number = loc['id']
-            
-            try:
-                hours_obj = loc['hours']
-                
-                soup = BeautifulSoup(hours_obj, 'html.parser')
-                
-                hours_table = soup.find_all('tr')
-                hours = ''
-                for row in hours_table:
-                    tds = row.find_all('td')
-                    for td in tds:
-                        hours += td.text + ' '
-            except:
-                hours = '<MISSING>'
-
-            page_url = loc['permalink']
-            
-            location_type = '<MISSING>'
-            
-            store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
-                        store_number, phone_number, location_type, lat, longit, hours, page_url]
-
-            all_store_data.append(store_data)
-            
-        if len(res_json) == 0:
-            search.update_with(result_coords)
-        coord = search.next()
-
-    return all_store_data
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-scrape()
+if __name__ == "__main__":
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+        fetch_data(writer)
