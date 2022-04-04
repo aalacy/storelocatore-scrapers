@@ -1,18 +1,15 @@
 from sgscrape import simple_scraper_pipeline as sp
 from sglogging import sglog
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup as b4
-from sgrequests.sgrequests import SgRequests
-import json
+from sgselenium import SgChrome
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as EC
 import time
-from sgscrape.pause_resume import CrawlStateSingleton
-from tenacity import retry, wait_random, stop_after_attempt
-
-# Major code change
-
-EXPECTED_TOTAL = 0
-logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
-
 import ssl
+from sgscrape.pause_resume import SerializableRequest, CrawlStateSingleton
+import json
 
 try:
     _create_unverified_https_context = (
@@ -24,16 +21,7 @@ else:
     ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
 
-@retry(wait=wait_random(min=1, max=3), stop=(stop_after_attempt(3)))  # noqa
-def get_main(url, headers, session):
-    try:
-        response = SgRequests.raise_on_err(session.get(url, headers=headers)).json()
-        if len(response.json()) < 100:
-            raise
-        return response.json()
-    except Exception:
-        response = try_again(session, url)
-        return response.json()
+logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
 
 
 def no_json(soup):
@@ -85,155 +73,6 @@ def no_json(soup):
     k["mainEntity"]["address"]["postalCode"] = zipcode
     k["mainEntity"]["address"]["addressCountry"] = country
     return k
-
-
-def try_again(session, url):
-    headers = {}
-    headers["accept"] = "application/json, text/plain, */*"
-    headers["accept-encoding"] = "gzip, deflate, br"
-    headers["accept-language"] = "en-us"
-    headers["cache-control"] = "no-cache"
-    headers["pragma"] = "no-cache"
-    headers["referer"] = "https://www.radissonhotels.com/en-us/destination"
-    headers[
-        "sec-ch-ua"
-    ] = '" Not A;Brand";v="99", "Chromium";v="99", "Google Chrome";v="99"'
-    headers["sec-ch-ua-mobile"] = "?0"
-    headers["sec-ch-ua-platform"] = '"Windows"'
-    headers["sec-fetch-dest"] = "empty"
-    headers["sec-fetch-mode"] = "cors"
-    headers["sec-fetch-site"] = "same-origin"
-    headers[
-        "user-agent"
-    ] = "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.82 Safari/537.36"
-    response = SgRequests.raise_on_err(session.get(url, headers=headers))
-    return response
-
-
-def fetch_data(index: int, url: str, headers, session) -> dict:
-    data = {}
-    if len(url) > 0:
-        try:
-            response = SgRequests.raise_on_err(session.get(url, headers=headers))
-            soup = b4(response.text, "lxml")
-            logzilla.info(f"URL\n{url}\nLen:{len(response.text)}\n")
-            if len(response.text) < 400:
-                logzilla.info(f"Content\n{response.text}\n\n")
-        except Exception as e:
-            logzilla.error(f"err\n{str(e)}\nUrl:{url}\n\n")
-            try:
-                logzilla.error(f"{response}")
-                logzilla.error(f"{response.text}")
-            except Exception:
-                pass
-        if len(response.text) < 400:
-            try:
-                response = try_again(session, url)
-                if len(response.text) < 400:
-                    logzilla.info(f"Content\n{response.text}\n\n")
-                soup = b4(response.text, "lxml")
-            except Exception as e:
-                logzilla.error(f"{str(e)}")
-                raise
-
-        try:
-            data = json.loads(
-                str(
-                    soup.find(
-                        "script",
-                        {"type": "application/ld+json", "id": "schema-webpage"},
-                    ).text
-                )
-                .replace("\u0119", "e")
-                .replace("\u011f", "g")
-                .replace("\u0144", "n")
-                .replace("\u0131", "i"),
-                strict=False,
-            )
-        except Exception:
-            try:
-                data = no_json(response.text)
-            except Exception:
-                data = {}
-        data["index"] = index
-        data["requrl"] = url
-        data["STATUS"] = True
-    else:
-        data["index"] = index
-        data["requrl"] = "<MISSING>"
-        data["STATUS"] = False
-    return data
-
-
-def get_brand2(brand_code, brand_name, url, url2, session):
-    headers = {}
-    headers["accept"] = "application/json, text/plain, */*"
-    headers["accept-encoding"] = "gzip, deflate, br"
-    headers["accept-language"] = "en-us"
-    headers["cache-control"] = "no-cache"
-    headers["pragma"] = "no-cache"
-    headers["referer"] = str(url) + "/en-us/destination"
-    headers[
-        "sec-ch-ua"
-    ] = '" Not A;Brand";v="99", "Chromium";v="99", "Google Chrome";v="99"'
-    headers["sec-ch-ua-mobile"] = "?0"
-    headers["sec-ch-ua-platform"] = '"Windows"'
-    headers["sec-fetch-dest"] = "empty"
-    headers["sec-fetch-mode"] = "cors"
-    headers["sec-fetch-site"] = "same-origin"
-    headers[
-        "user-agent"
-    ] = "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.51 Safari/537.36"
-    son = get_main(str(url + url2 + brand_code), headers, session)
-    results = []
-    total_records = len(son["hotels"])
-    global EXPECTED_TOTAL
-    EXPECTED_TOTAL += total_records
-    for index, record in enumerate(son["hotels"]):
-        z = fetch_data(index, record["overviewPath"], headers, session)
-        results.append(
-            {
-                "main": son["hotels"][z["index"]],
-                "sub": z,
-                "@type": brand_name,
-            }
-        )
-    return results
-
-
-def get_brand(brand_code, brand_name, url, url2, session):
-
-    headers = {}
-    headers["authority"] = str(url).replace("https://", "")
-    headers["method"] = "GET"
-    headers["path"] = "/zimba-api/destinations/hotels?brand=" + brand_code
-    headers["scheme"] = "https"
-    headers["accept"] = "application/json, text/plain, */*"
-    headers["accept-encoding"] = "gzip, deflate, br"
-    headers["accept-language"] = "en-us"
-    headers["referer"] = str("{}/en-us/destination").format(url)
-    headers["sec-fetch-dest"] = "empty"
-    headers["sec-fetch-mode"] = "cors"
-    headers["sec-fetch-site"] = "same-origin"
-    headers[
-        "user-agent"
-    ] = "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36"
-
-    son = get_main(str(url + url2 + brand_code), headers, session)
-    results = []
-    total_records = len(son["hotels"])
-    global EXPECTED_TOTAL
-    EXPECTED_TOTAL += total_records
-    for index, record in enumerate(son["hotels"]):
-        z = fetch_data(index, record["overviewPath"], headers, session)
-        results.append(
-            {
-                "main": son["hotels"][z["index"]],
-                "sub": z,
-                "@type": brand_name,
-            }
-        )
-    return results
 
 
 def clean_record(k):
@@ -345,129 +184,180 @@ def clean_record(k):
         k["main"]["name"] = k["main"]["name"]
     except Exception:
         k["main"]["name"] = "<MISSING>"
-
+    try:
+        k["sub"]["publisher"] = k["sub"]["publisher"]
+    except Exception:
+        k["sub"]["publisher"] = {}
+        k["sub"]["publisher"]["brand"] = {}
+        try:
+            k["sub"]["publisher"]["brand"]["name"] = k["main"]["brand"]
+            # will need to decode this^ cis  = Country Inn
+        except Exception:
+            pass
     return k
 
 
-def start():
+def try_again(session, url):
+    headers = {}
+    headers["accept"] = "application/json, text/plain, */*"
+    headers["accept-encoding"] = "gzip, deflate, br"
+    headers["accept-language"] = "en-us"
+    headers["cache-control"] = "no-cache"
+    headers["pragma"] = "no-cache"
+    headers["referer"] = "https://www.radissonhotels.com/en-us/destination"
+    headers[
+        "sec-ch-ua"
+    ] = '" Not A;Brand";v="99", "Chromium";v="99", "Google Chrome";v="99"'
+    headers["sec-ch-ua-mobile"] = "?0"
+    headers["sec-ch-ua-platform"] = '"Windows"'
+    headers["sec-fetch-dest"] = "empty"
+    headers["sec-fetch-mode"] = "cors"
+    headers["sec-fetch-site"] = "same-origin"
+    headers[
+        "user-agent"
+    ] = "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.82 Safari/537.36"
+    response = SgRequests.raise_on_err(session.get(url, headers=headers))
+    return response.json()
+
+
+def get_subpage(session, url):
+    headers = {}
+    headers["accept"] = "application/json, text/plain, */*"
+    headers["accept-encoding"] = "gzip, deflate, br"
+    headers["accept-language"] = "en-us"
+    headers["cache-control"] = "no-cache"
+    headers["pragma"] = "no-cache"
+    headers[
+        "sec-ch-ua"
+    ] = '" Not A;Brand";v="99", "Chromium";v="99", "Google Chrome";v="99"'
+    headers["sec-ch-ua-mobile"] = "?0"
+    headers["sec-ch-ua-platform"] = '"Windows"'
+    headers["sec-fetch-dest"] = "empty"
+    headers["sec-fetch-mode"] = "cors"
+    headers["sec-fetch-site"] = "same-origin"
+    headers[
+        "user-agent"
+    ] = "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.82 Safari/537.36"
+
+    data = {}
+    response = None
+    if len(url) > 0:
+        try:
+            response = SgRequests.raise_on_err(session.get(url, headers=headers))
+            soup = b4(response.text, "lxml")
+            logzilla.info(f"URL\n{url}\nLen:{len(response.text)}\n")
+            if len(response.text) < 400:
+                logzilla.info(f"Content\n{response.text}\n\n")
+        except Exception as e:
+            logzilla.error(f"err\n{str(e)}\nUrl:{url}\n\n")
+            try:
+                logzilla.error(f"{response}")
+                logzilla.error(f"{response.text}")
+            except Exception:
+                pass
+        if response:
+            if len(response.text) < 400:
+                try:
+                    response = try_again(session, url)
+                    if len(response.text) < 400:
+                        logzilla.info(f"Content\n{response.text}\n\n")
+                    soup = b4(response.text, "lxml")
+                except Exception as e:
+                    logzilla.error(f"{str(e)}")
+                    raise
+
+        try:
+            data = json.loads(
+                str(
+                    soup.find(
+                        "script",
+                        {"type": "application/ld+json", "id": "schema-webpage"},
+                    ).text
+                )
+                .replace("\u0119", "e")
+                .replace("\u011f", "g")
+                .replace("\u0144", "n")
+                .replace("\u0131", "i"),
+                strict=False,
+            )
+        except Exception:
+            try:
+                data = no_json(response.text)
+            except Exception:
+                data = {}
+        data["requrl"] = url
+        data["STATUS"] = True
+    else:
+        data["requrl"] = "<MISSING>"
+        data["STATUS"] = False
+    return data
+
+
+def initial(driver, url, state):
+    with SgChrome() as driver:
+        driver.get(url)
+        try:
+            locator = WebDriverWait(driver, 10).until(  # noqa
+                EC.visibility_of_element_located(
+                    (
+                        By.XPATH,
+                        "/html/body/main/section/div/div/div/div/p/p/a",
+                    )
+                )
+            )  # noqa
+        except Exception:
+            locator2 = WebDriverWait(driver, 10).until(  # noqa
+                EC.visibility_of_element_located(
+                    (
+                        By.XPATH,
+                        "/html/body/main/div[3]/div/div/div/div/span",
+                    )
+                )
+            )  # noqa
+
+        time.sleep(15)
+        time.sleep(5)
+        reqs = list(driver.requests)
+        logzilla.info(f"Length of driver.requests: {len(reqs)}")
+        for r in reqs:
+            x = r.url
+            if "zimba" in x and "hotels?" in x:
+                son = json.loads(r.response.body)
+                for item in son["hotels"]:
+                    state.push_request(
+                        SerializableRequest(url=item["overviewPath"], context=item)
+                    )
+
+
+def record_initial_requests(state):
+    for url in [
+        "https://www.radissonhotels.com/en-us/destination",
+        "https://www.radissonhotelsamericas.com/en-us/destination",
+    ]:
+        with SgChrome() as driver:
+            initial(driver, url, state)
+
+
+def data_fetcher(session, state):
+    for next_r in state.request_stack_iter():
+        k = {}
+        k["main"] = next_r.context
+        k["sub"] = get_subpage(session, next_r.url)
+        try:
+            k["sub"]["requrl"] = k["sub"]["requrl"]
+        except Exception:
+            k["sub"]["requrl"] = next_r.url
+        k = clean_record(k)
+        yield k
+
+
+def fetch_data():
     state = CrawlStateSingleton.get_instance()
-    urlC = "https://www.radissonhotelsamericas.com"  # noqa
-    urlB = "https://www.radissonhotels.com"
-    urlA = "https://www.radissonhotels.com"
-    url2 = "/zimba-api/destinations/hotels?brand="
-    brandsA = state.get_misc_value(
-        "brandsA",
-        default_factory=lambda: [
-            {"code": "pii", "name": "Park Inn by Radisson", "done": False},
-            {"code": "rdb", "name": "Radisson Blu", "done": False},
-            {"code": "rdr", "name": "Radisson RED", "done": False},
-            {"code": "art", "name": "art'otel", "done": False},
-            {"code": "rad", "name": "Radisson", "done": False},
-            {"code": "ri", "name": "Radisson Individuals", "done": False},
-            {"code": "ry", "name": "I have no clue", "done": False},
-            {"code": "prz", "name": "prizeotel", "done": False},
-            {"code": "pph", "name": "Park Plaza", "done": False},
-            {"code": "cis", "name": "Country Inn & Suites", "done": False},
-            {"code": "rco", "name": "Radisson Collection", "done": False},
-        ],
-    )
-    brandsB = state.get_misc_value(
-        "brandsB",
-        default_factory=lambda: [
-            {"code": "pii", "name": "Park Inn by Radisson", "done": False},
-            {"code": "rdb", "name": "Radisson Blu", "done": False},
-            {"code": "rdr", "name": "Radisson RED", "done": False},
-            {"code": "art", "name": "art'otel", "done": False},
-            {"code": "rad", "name": "Radisson", "done": False},
-            {"code": "ri", "name": "Radisson Individuals", "done": False},
-            {"code": "ry", "name": "I have no clue", "done": False},
-            {"code": "prz", "name": "prizeotel", "done": False},
-            {"code": "pph", "name": "Park Plaza", "done": False},
-            {"code": "cis", "name": "Country Inn & Suites", "done": False},
-            {"code": "rco", "name": "Radisson Collection", "done": False},
-        ],
-    )
-    badrecords = []
+    state.get_misc_value("init", default_factory=lambda: record_initial_requests(state))
+
     with SgRequests() as session:
-        for url in [urlA, urlB]:
-            if url == urlA:
-                for brand in brandsA:
-                    if not brand["done"]:
-                        start_time = time.monotonic()
-                        logzilla.info(f"Selected brand: {brand}")
-                        try:
-                            try:
-                                data = get_brand(
-                                    brand["code"],
-                                    brand["name"],
-                                    url,
-                                    url2,
-                                    session,
-                                )
-                            except Exception:
-                                data = get_brand2(
-                                    brand["code"],
-                                    brand["name"],
-                                    url,
-                                    url2,
-                                    session,
-                                )
-
-                            for i in data:
-                                k = clean_record(i)
-                                if k["sub"]["STATUS"]:
-                                    yield k
-                                else:
-                                    badrecords.append(k)
-                                    yield k
-                            logzilla.info(
-                                f"Finished brand {brand['name']}, it took {round(time.monotonic()-start_time,5)}\n it has {len(data)} locations"
-                            )
-                            brand["done"] = True
-                            state.set_misc_value("brandsA", brandsA)
-                        except Exception:
-                            continue
-            if url == urlB:
-                for brand in brandsB:
-                    if not brand["done"]:
-                        start_time = time.monotonic()
-                        logzilla.info(f"Selected brand: {brand}")
-                        try:
-                            try:
-                                data = get_brand(
-                                    brand["code"],
-                                    brand["name"],
-                                    url,
-                                    url2,
-                                    session,
-                                )
-                            except Exception:
-                                data = get_brand2(
-                                    brand["code"],
-                                    brand["name"],
-                                    url,
-                                    url2,
-                                    session,
-                                )
-
-                            for i in data:
-                                k = clean_record(i)
-                                if k["sub"]["STATUS"]:
-                                    yield k
-                                else:
-                                    badrecords.append(k)
-                                    yield k
-                            logzilla.info(
-                                f"Finished brand {brand['name']}, it took {round(time.monotonic()-start_time,5)}\n it has {len(data)} locations"
-                            )
-                            brand["done"] = True
-                            state.set_misc_value("brandsB", brandsB)
-                        except Exception:
-                            continue
-
-    logzilla.info(f"Badrecords :\n\n{badrecords}")
-    global EXPECTED_TOTAL
-    logzilla.info(f"Finished grabbing data!!\n expected total {EXPECTED_TOTAL}")  # noqa
+        for item in data_fetcher(session, state):
+            yield item
 
 
 def fix_phone(x):
@@ -534,14 +424,14 @@ def scrape():
         ),
         hours_of_operation=sp.MissingField(),
         location_type=sp.MappingField(
-            mapping=["@type"],
+            mapping=["sub", "publisher", "brand", "name"],
             is_required=False,
         ),
     )
 
     pipeline = sp.SimpleScraperPipeline(
         scraper_name="pipeline",
-        data_fetcher=start,
+        data_fetcher=fetch_data,
         field_definitions=field_defs,
         log_stats_interval=30,
     )
