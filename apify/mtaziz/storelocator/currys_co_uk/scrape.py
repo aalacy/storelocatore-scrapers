@@ -5,13 +5,11 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 import time
-from lxml import html
 import asyncio
 import logging
 import os
 from pyppeteer import launch
 from pyppeteer_stealth import stealth
-import traceback
 import json
 import ssl
 import pyppdf.patch_pyppeteer
@@ -44,6 +42,11 @@ logging.getLogger("websockets.protocol").setLevel(pyppeteer_level)
 LOCATOR_URL = (
     "https://www.currys.co.uk/store-finder?showMap=true&horizontalView=true&isForm=true"
 )
+fake_session_sgrequests = SgRequests()
+r_fake = fake_session_sgrequests.get(LOCATOR_URL)
+logger.info(f"Fake SgRequests: {r_fake.status_code}")
+
+
 logger.info(f"LOCATOR URL for reference only: {LOCATOR_URL}")
 
 
