@@ -28,6 +28,11 @@ def fetch_data():
                 if poi.get("lobbyHours")
                 else ""
             )
+            if hoo:
+                hoo = hoo.replace("*", "")
+                if "Mon: *" in hoo:
+                    hoo = ""
+
             item = SgRecord(
                 locator_domain=domain,
                 page_url="https://www.truist.com/locations",
