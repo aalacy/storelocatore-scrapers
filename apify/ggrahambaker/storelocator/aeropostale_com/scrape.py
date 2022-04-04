@@ -1,96 +1,80 @@
-import csv
-from sgrequests import SgRequests
-from bs4 import BeautifulSoup
-import sgzip 
 import json
-from sglogging import SgLogSetup
+from lxml import html
+from sgscrape.sgrecord import SgRecord
+from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-logger = SgLogSetup().get_logger('aeropostale_com')
 
+def fetch_data(sgw: SgWriter):
 
-
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-def fetch_data():
-    search = sgzip.ClosestNSearch() # TODO: OLD VERSION [sgzip==0.0.55]. UPGRADE IF WORKING ON SCRAPER!
-    search.initialize(country_codes = ['us'])
-
-    MAX_RESULTS = 1000
-    MAX_DISTANCE = 1000
+    locator_domain = "https://aeropostale.com/"
+    api_url = "https://www.aeropostale.com/on/demandware.store/Sites-aeropostale-Site/default/Stores-GetNearestStores?latitude=40.75368539999999&longitude=-73.9991637&countryCode=US&distanceUnit=mi&maxdistance=500000"
     session = SgRequests()
-    HEADERS = { 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36' }
+    headers = {
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+    }
+    r = session.get(api_url, headers=headers)
+    js = json.loads(r.content)["stores"]
+    for j in js.values():
 
-    coord = search.next_coord()
-    dup_tracker = set()
-    all_store_data = []
-    base_url = 'https://www.aeropostale.com/storedetails/?StoreID='
-    locator_domain = 'https://www.aeropostale.com/'
-    while coord:
-        x = coord[0]
-        y = coord[1]
-        url = 'https://www.aeropostale.com/on/demandware.store/Sites-aeropostale-Site/default/Stores-GetNearestStores?latitude=' + str(x) + '&longitude=' + str(y) + '&countryCode=US&distanceUnit=mi&maxdistance=' + str(MAX_DISTANCE)
-        r = session.get(url, headers=HEADERS)
-        
-        res_json = json.loads(r.content)['stores']
-        result_coords = []
-        
-        for num, loc in res_json.items():
-            lat = loc['latitude']
-            longit = loc['longitude']
-            result_coords.append((lat, longit))
-            store_number = num
-            if store_number not in dup_tracker:
-                dup_tracker.add(store_number)
-            else:
-                continue
-                
-            location_name = loc['name'].strip()
-            street_address = loc['address1'] + ' ' + loc['address2']
-            street_address = street_address.strip()
-            city = loc['city']
-            state = loc['stateCode']
-            zip_code = loc['postalCode']
-            country_code = 'US'
-            
-            phone_number = loc['phone'].strip()
-            if phone_number == '':
-                phone_number = '<MISSING>'
-            
-            soup = BeautifulSoup(loc['storeHours'], 'html.parser')
-            hours = soup.text.replace('Store Hours', '').replace('\n', ' ').strip()
-            divs = soup.find_all('div')            
+        store_number = j.get("ID")
+        page_url = f"https://www.aeropostale.com/storedetails/?StoreID={store_number}"
+        location_name = j.get("name") or "<MISSING>"
+        location_type = "<MISSING>"
+        street_address = (
+            f"{j.get('address1')} {j.get('address2')}".strip() or "<MISSING>"
+        )
+        state = j.get("stateCode") or "<MISSING>"
+        postal = j.get("postalCode") or "<MISSING>"
+        country_code = "US"
+        city = j.get("city") or "<MISSING>"
+        latitude = j.get("latitude") or "<MISSING>"
+        longitude = j.get("longitude") or "<MISSING>"
+        phone = j.get("phone") or "<MISSING>"
+        hours = j.get("storeHours")
+        hours_of_operation = "<MISSING>"
+        if hours:
+            a = html.fromstring(hours)
+            hours_of_operation = (
+                " ".join(a.xpath("//*//text()")).replace("\n", "").strip()
+            )
+            hours_of_operation = " ".join(hours_of_operation.split())
+        if hours_of_operation.find("This Location Is Open!") != -1:
+            hours_of_operation = hours_of_operation.split("This Location Is Open!")[
+                0
+            ].strip()
+        if hours_of_operation.find("This location is closed.") != -1:
+            hours_of_operation = hours_of_operation.replace(
+                "This location is closed.", ""
+            ).strip()
+            location_type = "Closed"
+        if hours_of_operation.find("For your") != -1:
+            hours_of_operation = hours_of_operation.split("For your")[0].strip()
 
-            page_url = base_url + str(store_number)
-            
-            location_type = '<MISSING>'
-            
-            store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
-                        store_number, phone_number, location_type, lat, longit, hours, page_url]
-           
-            all_store_data.append(store_data)
-        
-        if len(res_json) < MAX_RESULTS:
-            logger.info("max distance update")
-            search.max_distance_update(MAX_DISTANCE)
-        elif len(res_json) == MAX_RESULTS:
-            logger.info("max count update")
-            search.max_count_update(result_coords)
-        else:
-            raise Exception("expected at most " + str(MAX_RESULTS) + " results")
-        coord = search.next_coord()  
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+            raw_address=f"{street_address} {city}, {state} {postal}",
+        )
 
-    return all_store_data
+        sgw.write_row(row)
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
 
-scrape()
+if __name__ == "__main__":
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))) as writer:
+        fetch_data(writer)
