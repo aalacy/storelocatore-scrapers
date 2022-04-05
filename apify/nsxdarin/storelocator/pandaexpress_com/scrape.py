@@ -40,6 +40,7 @@ def fetch_data():
                             "https://www.pandaexpress.com/locations/"
                             + item.split('"')[0]
                         )
+                        lurl = lurl.replace("coeur-dalene", "coeur-d'alene")
                         if "(1) </a>" in item:
                             locs.append(lurl)
                         else:
@@ -62,6 +63,7 @@ def fetch_data():
     country = "US"
     logger.info("Pulling Stores")
     for loc in locs:
+        loc = loc.replace("coeur-dalene", "coeur-d'alene")
         try:
             logger.info(loc)
             hours = ""
@@ -126,7 +128,7 @@ def fetch_data():
                     add = add.replace(",", "")
                 else:
                     add = addnew
-            if len(zc) >= 5:
+            if len(zc) >= 1:
                 yield SgRecord(
                     locator_domain=website,
                     page_url=purl,

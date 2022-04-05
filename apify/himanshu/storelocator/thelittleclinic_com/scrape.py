@@ -1,39 +1,12 @@
-import csv
-
 from sglogging import sglog
-
-from sgrequests import SgRequests
-
+from sgrequests import SgRequests, SgRequestError
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 log = sglog.SgLogSetup().get_logger(logger_name="thelittleclinic.com")
-
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-                "page_url",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
 
 
 def fetch_data():
@@ -48,8 +21,6 @@ def fetch_data():
         max_search_results=100,
         max_search_distance_miles=200,
     )
-    adressess = []
-
     for i, zip_code in enumerate(zip_codes):
 
         log.info(
@@ -65,52 +36,75 @@ def fetch_data():
             link,
             headers=headers,
         )
+        if isinstance(r, SgRequestError):
+            continue
         json_data = r.json()
         j = json_data["data"]["clinics"]
 
         for i in j:
-            store = []
-            store.append("https://www.thelittleclinic.com/")
-            store.append(i["name"])
-            store.append(" ".join(i["address"]["addressLines"]))
-            if store[2] in adressess:
-                continue
-            adressess.append(store[2])
-            store.append(i["address"]["cityTown"])
-            store.append(i["address"]["stateProvince"])
-            store.append(i["address"]["postalCode"])
-            store.append("US")
-            store.append(i["id"])
+            locator_domain = "https://www.thelittleclinic.com/"
+            location_name = i["name"]
+            street_address = " ".join(i["address"]["addressLines"])
+            log.info(location_name)
+            city = i["address"]["cityTown"]
+            state = i["address"]["stateProvince"]
+            zip = i["address"]["postalCode"]
+            country_code = "US"
+            store_number = i["id"]
             try:
                 phone = i["phone"]
             except:
                 phone = "<MISSING>"
-            store.append(phone)
             if i["isSchedulerEnabled"]:
-                loc_type = "Scheduling Appointments Available"
+                location_type = "Scheduling Appointments Available"
             else:
-                loc_type = "Scheduling Appointments Currently Unavailable"
-            store.append(loc_type)
-            lat = i["location"]["lat"]
-            lng = i["location"]["lng"]
-            store.append(lat)
-            store.append(lng)
-            zip_codes.found_location_at(lat, lng)
-            store.append("<INACCESSIBLE>")
+                location_type = "Scheduling Appointments Currently Unavailable"
+
+            latitude = i["location"]["lat"]
+            longitude = i["location"]["lng"]
+            zip_codes.found_location_at(latitude, longitude)
+            hours_of_operation = "<INACCESSIBLE>"
 
             id_num = str(i["id"])
-            url = "https://www.thelittleclinic.com/clinic-details/%s/%s" % (
+            page_url = "https://www.thelittleclinic.com/clinic-details/%s/%s" % (
                 id_num[:3],
                 id_num[3:],
             )
-            store.append(url)
-            store = [str(x).strip() if x else "<MISSING>" for x in store]
-            yield store
+            yield SgRecord(
+                locator_domain=locator_domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    log.info("Started")
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(
+            record_id=RecommendedRecordIds.StoreNumberId,
+            duplicate_streak_failure_factor=-1,
+        )
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()

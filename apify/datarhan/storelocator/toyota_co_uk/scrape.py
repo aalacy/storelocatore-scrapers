@@ -10,7 +10,6 @@ def fetch_data():
 
     start_urls = [
         "https://www.toyota.co.uk/api/dealer/drive/-0.12764739999999997/51.507321899999994?count=2000&extraCountries=im|gg|je&isCurrentLocation=false",
-        "https://www.toyota.at/api/dealer/drive/16.37306/48.20833?count=2000&extraCountries=&isCurrentLocation=false",
         "https://nl.toyota.be/api/dealer/drive/4.3547/50.8467?count=2000&extraCountries=&isCurrentLocation=false&services=showroom",
         "https://www.toyota.es/api/dealer/drive/2.163867/41.416735?count=2000&extraCountries=&isCurrentLocation=false",
         "https://www.toyota.com.cy/api/dealer/drive/34.078641056678606/35.36332843131831?count=2000",
@@ -51,9 +50,9 @@ def fetch_data():
                     start_hours = h["hours"][0]["startTime"]
                     end_hours = h["hours"][0]["endTime"]
                     hoo.append(f"{start_day} - {end_day}: {start_hours} - {end_hours}")
-            hoo = " ".join(hoo).replace("SAT - SAT", "SAT").replace("SUN - SUN", "SUN")
             if not hoo:
                 continue
+            hoo = " ".join(hoo).replace("SAT - SAT", "SAT").replace("SUN - SUN", "SUN")
             street_address = (
                 poi["address"]["address1"].strip().split("/İST")[0].split(" Tekirda")[0]
             )
