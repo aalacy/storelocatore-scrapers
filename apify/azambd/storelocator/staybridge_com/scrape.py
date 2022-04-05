@@ -1,4 +1,3 @@
-import re
 from lxml import html
 from xml.etree import ElementTree as ET
 import time
@@ -95,7 +94,6 @@ def fetch_data():
     count = 0
     hours_of_operation = MISSING
     for page_url in page_urls:
-        page_url = "https://www.ihg.com/staybridge/hotels/us/en/baku/baksb/hoteldetail"
         count = count + 1
         log.info(f"{count}. Scrapping {page_url} ...")
         store_number = page_url.split("/hoteldetail")[0].rsplit("/", 1)[1]
