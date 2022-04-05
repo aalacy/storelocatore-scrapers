@@ -64,6 +64,11 @@ def fetch_data():
                 .split('"', 1)[0]
                 .split(",", 1)
             )
+            hours = hours.lower()
+            if hours.find("saturday") == -1:
+                hours = hours + " " + "saturday closed"
+            if hours.find("sunday") == -1:
+                hours = hours + " " + "sunday closed"
             driver.get(link)
             bs = BeautifulSoup(driver.page_source, "html.parser")
             address = bs.find("div", {"class": "address"}).text
