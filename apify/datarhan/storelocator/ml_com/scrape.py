@@ -47,7 +47,6 @@ def fetch_data():
             store_url = "https:" + poi["XmlData"]["parameters"]["Url"]
             if store_url in scraped_urls:
                 continue
-            store_url = "https://www.local.ml.com/ogden/"
             log.info("Pull content => " + store_url)
             scraped_urls.append(store_url)
             location_name = poi["Company"]
