@@ -13,6 +13,31 @@ _headers = {
 locator_domain = "https://www.conforama.it"
 base_url = "https://www.conforama.it/locations"
 
+black_list = [
+    "Affi",
+    "Trezzano sul Naviglio",
+    "Belpasso",
+    "Campogalliano",
+    "Castel Mella",
+    "Cittaducale",
+    "Martignacco",
+    "Melilli",
+    "Mestre",
+    "Riposto",
+    "S. Sperate",
+    "Settimo Torinese",
+    "Tortona",
+    "Trezzano sul Naviglio",
+    "Veggiano",
+    "Vergiate",
+]
+
+
+def _hoo(blocks, name):
+    for loc in blocks:
+        if loc.select_one("div.amlocator-title").text == name:
+            return loc.select_one("div.amlocator-description").text.strip()
+
 
 def fetch_data():
     with SgRequests() as session:
@@ -21,41 +46,30 @@ def fetch_data():
             .text.split("jsonLocations:")[1]
             .split("imageLocations")[0]
             .strip()[:-1]
-        )["items"]
-        for _ in locations:
+        )
+        blocks = bs(locations["block"], "lxml").select(
+            "div.amlocator-store-information"
+        )
+        for _ in locations["items"]:
             info = bs(_["popup_html"], "lxml")
             block = list(info.stripped_strings)[1:]
             street_address = block[0]
-            city = info.h3.text.split("(")[0].strip()
-            if city in [
-                "Affi",
-                "Trezzano sul Naviglio",
-                "Belpasso",
-                "Campogalliano",
-                "Castel Mella",
-                "Cittaducale",
-                "Martignacco",
-                "Melilli",
-                "Mestre",
-                "Riposto",
-                "S. Sperate",
-                "Settimo Torinese",
-                "Tortona",
-                "Trezzano sul Naviglio",
-                "Veggiano",
-                "Vergiate",
-            ]:
+            location_name = info.h3.text.strip()
+            city = location_name.split("(")[0].strip()
+            if city in black_list:
                 city = ""
+
             yield SgRecord(
                 page_url=base_url,
                 store_number=_["id"],
-                location_name=info.h3.text.strip(),
+                location_name=location_name,
                 street_address=street_address,
                 city=city,
                 latitude=_["lat"],
                 longitude=_["lng"],
                 country_code="IT",
                 phone=block[2].replace(":", ""),
+                hours_of_operation=_hoo(blocks, location_name),
                 locator_domain=locator_domain,
             )
 
