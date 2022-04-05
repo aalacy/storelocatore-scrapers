@@ -49,8 +49,6 @@ def _d(loc):
         street_address
     ) = (
         city
-    ) = (
-        state
     ) = zip_postal = phone = location_name = latitude = longitude = store_number = ""
     for _ in loc["fields"]:
         if _["key"] == "logradouro":
