@@ -12,6 +12,7 @@ headers = {
 
 logger = SgLogSetup().get_logger("house_hyatt_com")
 
+
 def fetch_data():
     url = "https://www.hyatt.com/explore-hotels/service/hotels"
     r = session.get(url, headers=headers)
@@ -98,9 +99,12 @@ def fetch_data():
                         hours_of_operation=hours,
                     )
 
+
 def scrape():
     results = fetch_data()
     with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         for rec in results:
             writer.write_row(rec)
+
+
 scrape()
