@@ -33,7 +33,7 @@ def fetch_data():
                 latitude=_["lat"],
                 longitude=_["lng"],
                 country_code=_["country"],
-                phone=_["phone"],
+                phone=_["phone"].split("(")[0].strip(),
                 locator_domain=locator_domain,
                 hours_of_operation="; ".join(hours),
             )
