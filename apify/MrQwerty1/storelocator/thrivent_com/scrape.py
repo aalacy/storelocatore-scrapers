@@ -7,10 +7,16 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from concurrent import futures
 from tenacity import retry, stop_after_attempt
+from sglogging import sglog
+
+
+DOMAIN = "thrivent.com"
+logger = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
 
 
 def get_hoo(page_url):
     r = session.get(page_url)
+    logger.info(f"HOO Page: {page_url}, Response: {r.status_code}")
     tree = html.fromstring(r.text)
     text = "".join(
         tree.xpath("//script[contains(text(), 'window.JSContext =')]/text()")
@@ -28,6 +34,7 @@ def get_hoo(page_url):
 
 def get_states():
     r = session.get("https://local.thrivent.com/directory")
+    logger.info(f"get_states Response: {r.status_code}")
     tree = html.fromstring(r.text)
 
     return tree.xpath("//a[@class='Directory-listLink']/@href")
@@ -58,6 +65,7 @@ def get_urls(states):
 def get_data(url, sgw: SgWriter, retry=0):
     try:
         r = session.get(url)
+        logger.info(f"get_data Page: {url}, Response: {r.status_code}")
         j = r.json()["profile"]
     except:
         if retry < 3:
@@ -126,7 +134,7 @@ def get_data(url, sgw: SgWriter, retry=0):
         location_type=SgRecord.MISSING,
         latitude=latitude,
         longitude=longitude,
-        locator_domain=locator_domain,
+        locator_domain=DOMAIN,
         hours_of_operation=hours_of_operation,
     )
 
@@ -143,7 +151,7 @@ def fetch_data(sgw: SgWriter):
 
 
 if __name__ == "__main__":
-    locator_domain = "https://www.thrivent.com/"
+    logger.info(f"Started Crawling: {DOMAIN}")
     session = SgRequests()
 
     with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
