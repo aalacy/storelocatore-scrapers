@@ -19,6 +19,7 @@ base_url = "https://www.dealz.ie/rest/dealz/V1/locator/?searchCriteria%5Bscope%5
 
 def fetch_records(http):
     locations = http.get(base_url, headers=_headers).json()["locations"]
+
     for _ in locations:
         addr = _["address"]
         hours = []

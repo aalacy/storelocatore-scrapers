@@ -20,7 +20,7 @@ def clean_phone(text):
 
 def fetch_data(sgw: SgWriter):
     api = "https://www.bobbibrowncosmetics.com/rpc/jsonrpc.tmpl"
-    r = session.post(api, headers=headers, params=params, data=data)
+    r = session.post(api, params=params, data=data)
     js = r.json()[0]["result"]["value"]["results"].values()
 
     for j in js:

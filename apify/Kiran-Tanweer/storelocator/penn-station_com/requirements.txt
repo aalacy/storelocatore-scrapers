@@ -4,5 +4,4 @@ sgscrape==0.2.9
 sglogging==0.0.4
 sgvalidator==0.0.71
 sgzip==0.10.15
-urllib3==1.26.2
 sgpostal==0.1.0
