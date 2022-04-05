@@ -57,7 +57,11 @@ def fetch_data():
             for elem in hours:
                 if elem["intervals"]:
                     end = str(elem["intervals"][0]["end"])[:2] + ":00"
-                    start = str(elem["intervals"][0]["start"])[:2] + ":00"
+                    s_time = str(elem["intervals"][0]["start"])
+                    if len(s_time) == 4:
+                        start = s_time[:2] + ":00"
+                    else:
+                        start = s_time[:1] + ":00"
                     hours_of_operation.append(
                         "{} {} - {}".format(elem["day"], start, end)
                     )
