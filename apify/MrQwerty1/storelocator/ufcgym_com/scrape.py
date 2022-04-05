@@ -7,7 +7,7 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 
 
 def fetch_data(sgw: SgWriter):
-    api = "https://www.ufcgym.com/_nuxt/430502678cae5485010c.js"
+    api = "https://www.ufcgym.com/_nuxt/7dfaabb7fa49fb881e0d.js"
     r = session.get(api, headers=headers)
     text = r.text
     text = "[" + text.split("exports=[")[1].split("}]},,")[0].replace("!", "") + "}]"
