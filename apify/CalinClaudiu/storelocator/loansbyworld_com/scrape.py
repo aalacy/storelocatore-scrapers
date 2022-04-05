@@ -5,7 +5,6 @@ from sgscrape.simple_scraper_pipeline import MissingField
 from sgscrape.simple_scraper_pipeline import MultiMappingField
 from sgrequests import SgRequests
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
-from sglogging import sglog
 from bs4 import BeautifulSoup as b4
 
 
