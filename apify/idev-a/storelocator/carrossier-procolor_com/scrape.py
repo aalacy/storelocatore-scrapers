@@ -29,7 +29,6 @@ def fetchConcurrentSingle(_):
     slug = (
         location_name.lower()
         .replace("'", "")
-        .replace("-", "")
         .replace("–", "")
         .replace(".", "")
         .replace("é", "e")

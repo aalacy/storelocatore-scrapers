@@ -33,61 +33,67 @@ def fetch_data():
     # Your scraper here
 
     with SgRequests(dont_retry_status_codes=([404])) as session:
-        api_url = "https://clubcarwash.com/wp-json/wpgmza/v1/marker-listing/base64eJyrVirIKHDOSSwuVrJSCg9w941yjInxTSzKTi3yySwuycxLj4lxSizOTA5JTMpJVdJRKi5JLCpRsjLQUcpJzUsvyVCyMjQAcnITC+IzU4BmGCnVAgDK3RuU"
-        stores_req = session.get(api_url, headers=headers)
-        stores = json.loads(stores_req.text)["meta"]
+        api_urls = [
+            "https://clubcarwash.com/wp-json/wpgmza/v1/marker-listing/base64eJyrVirIKHDOSSwuVrJSCg9w941yjInxTSzKTi3yySwuycxLj4lxSizOTA5JTMpJVdJRKi5JLCpRsjLQUcpJzUsvyVCyMjQAcnITC+IzU4BmGCnVAgDK3RuU",
+            "https://clubcarwash.com/wp-json/wpgmza/v1/marker-listing/base64eJyrVirIKHDOSSwuVrJSCg9w941yjInxTSzKTi3yySwuycxLj4lxSizOTA5JTMpJVdJRKi5JLCpRsjI0MNBRyknNSy-JgHJyEwviM1OAphgp1QIA-Usb9Q",
+        ]
+        for api_url in api_urls:
+            stores_req = session.get(api_url, headers=headers)
+            stores = json.loads(stores_req.text)["meta"]
 
-        for store in stores:
-            page_url = store["link"]
-            locator_domain = website
-            location_name = store["title"]
+            for store in stores:
+                page_url = store["link"]
+                locator_domain = website
+                location_name = store["title"]
 
-            phone = "<MISSING>"
-            raw_address = store["address"]
-            formatted_addr = parser.parse_address_intl(raw_address)
-            street_address = formatted_addr.street_address_1
-            if formatted_addr.street_address_2:
-                street_address = street_address + ", " + formatted_addr.street_address_2
+                phone = "<MISSING>"
+                raw_address = store["address"]
+                formatted_addr = parser.parse_address_intl(raw_address)
+                street_address = formatted_addr.street_address_1
+                if formatted_addr.street_address_2:
+                    street_address = (
+                        street_address + ", " + formatted_addr.street_address_2
+                    )
 
-            city = formatted_addr.city
-            state = formatted_addr.state
-            zip = formatted_addr.postcode
-            country_code = "US"
+                city = formatted_addr.city
+                state = formatted_addr.state
+                zip = formatted_addr.postcode
+                country_code = "US"
 
-            store_number = store["id"]
+                store_number = store["id"]
 
-            location_type = "<MISSING>"
-            hours = store["description"]
-            if "coming" in hours.lower() or "opening" in hours.lower():
-                continue
-            hours_sel = lxml.html.fromstring(hours)
-            hours_info = hours_sel.xpath("//text()")[1:]
-            hours_of_operation = "; ".join(hours_info).replace(" //", ":")
-            latitude = store["lat"]
-            longitude = store["lng"]
+                location_type = "<MISSING>"
+                hours = store["description"]
+                if "coming" in hours.lower() or "opening" in hours.lower():
+                    continue
+                hours_sel = lxml.html.fromstring(hours)
+                hours_info = hours_sel.xpath("//text()")[1:]
+                hours_of_operation = "; ".join(hours_info).replace(" //", ":")
+                latitude = store["lat"]
+                longitude = store["lng"]
 
-            if (
-                page_url
-                == "https://clubcarwash.com/locations/overland-park-mo-w-121st-street/"
-            ):
-                hours_of_operation = "Mon - Sat: 7 AM to 8 PM; Sunday: 8 AM to 8 PM"
-            yield SgRecord(
-                locator_domain=locator_domain,
-                page_url=page_url,
-                location_name=location_name,
-                street_address=street_address,
-                city=city,
-                state=state,
-                zip_postal=zip,
-                country_code=country_code,
-                store_number=store_number,
-                phone=phone,
-                location_type=location_type,
-                latitude=latitude,
-                longitude=longitude,
-                hours_of_operation=hours_of_operation,
-                raw_address=raw_address,
-            )
+                if (
+                    page_url
+                    == "https://clubcarwash.com/locations/overland-park-mo-w-121st-street/"
+                ):
+                    hours_of_operation = "Mon - Sat: 7 AM to 8 PM; Sunday: 8 AM to 8 PM"
+                yield SgRecord(
+                    locator_domain=locator_domain,
+                    page_url=page_url,
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=zip,
+                    country_code=country_code,
+                    store_number=store_number,
+                    phone=phone,
+                    location_type=location_type,
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=hours_of_operation,
+                    raw_address=raw_address,
+                )
 
 
 def scrape():

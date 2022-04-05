@@ -5,6 +5,6 @@ selenium==3.141.0
 lxml==4.6.2
 sgvalidator==0.0.70
 sgscrape==0.2.6
-sgzip==0.10.9
+sgzip==0.10.10
 sglogging==0.0.4
 sgselenium==0.1.4

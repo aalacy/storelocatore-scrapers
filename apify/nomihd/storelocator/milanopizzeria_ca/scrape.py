@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
-from sgrequests import SgRequests
+from sgrequests import SgRequests, SgRequestError
 from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import lxml.html
-from sgscrape import sgpostal as parser
+from sgpostal import sgpostal as parser
 import json
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
 website = "milanopizzeria.ca"
@@ -96,6 +98,8 @@ def fetch_data():
             log.info(store_url)
 
             store_res = session.get(store_url.strip(), headers=headers)
+            if isinstance(store_res, SgRequestError):
+                continue
             store_sel = lxml.html.fromstring(store_res.text)
             if "var locations =" in store_res.text:
                 store_json_str = (
@@ -156,7 +160,9 @@ def fetch_data():
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

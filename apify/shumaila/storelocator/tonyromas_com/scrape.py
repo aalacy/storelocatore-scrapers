@@ -5,6 +5,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgpostal.sgpostal import parse_address_intl
+import re
 
 session = SgRequests()
 headers = {
@@ -16,7 +17,7 @@ MISSING = SgRecord.MISSING
 
 
 def fetch_data():
-
+    pattern = re.compile(r"\s\s+")
     url = "https://tonyromas.com/sitemap.html"
     r = session.get(url, headers=headers)
     soup = BeautifulSoup(r.text, "html.parser")
@@ -24,7 +25,6 @@ def fetch_data():
 
     for div in divlist:
         div = div["href"]
-
         r = session.get(div, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
         linklist = soup.select("a[href*=location]")
@@ -33,6 +33,7 @@ def fetch_data():
             r = session.get(link, headers=headers)
             soup = BeautifulSoup(r.text, "html.parser")
             title = soup.find("div", {"class": "page-title"}).text
+
             address = soup.find("div", {"class": "ad1"}).text.replace("\n", " ").strip()
             phone = (
                 soup.find("div", {"class": "phone"}).text.replace("Phone:", "").strip()
@@ -64,13 +65,27 @@ def fetch_data():
             except:
                 lat = longt = "<MISSING>"
             try:
+
                 if len(address) < 5:
+
                     address = (
                         r.text.split('"Tony Roma')[3].split(", ", 1)[1].split('"', 1)[0]
                     )
+                    if "family-friendly steakhouse" in address:
+                        address = (
+                            r.text.split('"Tony Roma')[3]
+                            .split("[", 1)[1]
+                            .split("]", 1)[0]
+                        )
+                        address = (
+                            " ".join(address[0:]).replace(",", "").replace('"', "")
+                        )
             except:
                 continue
             raw_address = address
+            raw_address = raw_address.replace("\n", " ").strip()
+            raw_address = re.sub(pattern, " ", raw_address).strip()
+
             pa = parse_address_intl(raw_address)
 
             street_address = pa.street_address_1
