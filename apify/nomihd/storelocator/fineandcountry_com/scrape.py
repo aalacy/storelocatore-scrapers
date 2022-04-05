@@ -73,6 +73,22 @@ def fetch_data():
             city = formatted_addr.city
             state = formatted_addr.state
             zip = store_json["addressPostcode"]
+            if zip:
+                if zip == "PO Box 346016":
+                    street_address = "PO Box 346016"
+                    zip = "<MISSING>"
+
+                if zip.replace("/", "").strip().replace(" ", "").strip().isalpha():
+                    zip = "<MISSING>"
+
+                if zip == "WA 6005":
+                    zip = "6005"
+
+                if zip == ".":
+                    zip = "<MISSING>"
+
+                if location_name == "Fine & Country Costa Blanca North":
+                    zip = "03700"
 
             country_code = store_json["country"]
 
@@ -80,6 +96,8 @@ def fetch_data():
 
             location_type = "<MISSING>"
             phone = store_json["rsContactNumber"]
+            if phone:
+                phone = phone.split("/")[0].strip()
 
             hours_of_operation = "<MISSING>"
 

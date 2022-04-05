@@ -4,4 +4,5 @@ dirtyjson==1.0.7
 sglogging==0.0.4
 sgrequests==0.2.9
 sgscrape==0.2.6
-sgzip==0.10.8
+sgzip==0.10.9
+tenacity==7.0.0

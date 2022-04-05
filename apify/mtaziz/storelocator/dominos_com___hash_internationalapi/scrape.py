@@ -133,7 +133,16 @@ def fetch_records_global(idx, url, sgw: SgWriter):
             zc = item["PostalCode"]
         else:
             zc = MISSING
-        zc = zc if zc else MISSING
+
+        if "MISSING" not in zc:
+            j = zc.replace("-", "")
+            if str.isdigit(j) is False:
+                zc = MISSING
+            else:
+                zc = zc
+
+        if zc == "" or zc is None:
+            zc = MISSING
 
         if "StoreCoordinates" in item and "StoreLatitude" in item["StoreCoordinates"]:
             lat = item["StoreCoordinates"]["StoreLatitude"]

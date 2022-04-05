@@ -93,7 +93,7 @@ def ret_record(record):
         pass
 
     try:
-        store_number = str(record["id"])
+        store_number = str(record["storeNumber"].split("-")[0])
     except Exception:
         pass
 
@@ -146,13 +146,6 @@ def ret_record(record):
 
 
 class ExampleSearchIteration(SearchIteration):
-    """
-    Here, you define what happens with each iteration of the search.
-    The `do(...)` method is what you'd do inside of the `for location in search:` loop
-    It provides you with all the data you could get from the search instance, as well as
-    a method to register found locations.
-    """
-
     def __init__(self):
         self.__state = CrawlStateSingleton.get_instance()
 
@@ -228,9 +221,7 @@ class ExampleSearchIteration(SearchIteration):
 if __name__ == "__main__":
     # additionally to 'search_type', 'DynamicSearchMaker' has all options that all `DynamicXSearch` classes have.
     search_maker = DynamicSearchMaker(
-        search_type="DynamicGeoSearch",
-        granularity=Grain_4(),
-        max_search_results=50,
+        search_type="DynamicGeoSearch", granularity=Grain_4()
     )
 
     with SgWriter(
@@ -239,13 +230,12 @@ if __name__ == "__main__":
             duplicate_streak_failure_factor=-1,
         )
     ) as writer:
-        with SgRequests() as http1:
-            search_iter = ExampleSearchIteration()
-            par_search = ParallelDynamicSearch(
-                search_maker=search_maker,
-                search_iteration=search_iter,
-                country_codes=SearchableCountries.ALL,
-            )
+        search_iter = ExampleSearchIteration()
+        par_search = ParallelDynamicSearch(
+            search_maker=search_maker,
+            search_iteration=search_iter,
+            country_codes=SearchableCountries.ALL,
+        )
 
-            for rec in par_search.run():
-                writer.write_row(rec)
+        for rec in par_search.run():
+            writer.write_row(rec)

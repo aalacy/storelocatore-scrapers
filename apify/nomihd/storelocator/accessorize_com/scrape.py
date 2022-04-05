@@ -197,11 +197,14 @@ def fetch_data():
             latitude = "<MISSING>"
             longitude = "<MISSING>"
             phone = "<MISSING>"
+            if street_address:
+                street_address = street_address.replace(", First Floor The", "").strip()
+
             yield SgRecord(
                 locator_domain=locator_domain,
                 page_url=page_url,
                 location_name=location_name,
-                street_address=street_address.replace(", First Floor The", "").strip(),
+                street_address=street_address,
                 city=city,
                 state=state,
                 zip_postal=zip,

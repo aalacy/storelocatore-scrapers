@@ -31,16 +31,16 @@ PAGE_LIMIT = 50
 
 def build_api_endpoint_urls():
     urls = []
-    for offset in range(50, 850, 50):
+    for offset in range(0, 850, 50):
         query_id = "f773d534-29cd-4f85-b013-3077d946aec9"
-        part2 = f"&retrieveFacets=true&facetFilters=%7B%22c_jambaServices%22%3A%5B%5D%2C%22pickupAndDeliveryServices%22%3A%5B%5D%7D&sessionTrackingEnabled=true&sortBys=%5B%5D&referrerPageUrl=https%3A%2F%2Flocations.jamba.com%2Fsearch&source=STANDARD&queryId={query_id}&jsLibVersion=v1.9.2"
+        part2 = f"&referrerPageUrl=https%3A%2F%2Flocations.jamba.com%2Fsearch&source=STANDARD&queryId={query_id}&jsLibVersion=v1.9.2"
         api_endpoint_url = f"https://liveapi.yext.com/v2/accounts/me/answers/vertical/query?experienceKey=jamba-answers&api_key=7425eae4ff5d283ef2a3542425aade29&v=20190101&version=PRODUCTION&locale=en&input=&verticalKey=restaurants&limit={PAGE_LIMIT}&offset={offset}{part2}"
         urls.append(api_endpoint_url)
     return urls
 
 
 @retry(stop=stop_after_attempt(3))
-def fetch_json_data(http, urlnum, url):
+def get_response(http, urlnum, url):
     logger.info(f"[{urlnum}] Pulling the data from: {url}")
     r = http.get(url, headers=HEADERS)
     if r.status_code == 200:
@@ -49,14 +49,50 @@ def fetch_json_data(http, urlnum, url):
     raise Exception(f"{urlnum} : {url} >> Temporary Error: {r.status_code}")
 
 
+def get_hoo_new(urlnum, i100, _):
+    hours_of_operation = ""
+    try:
+        l = [
+            "monday",
+            "tuesday",
+            "wednesday",
+            "thursday",
+            "friday",
+            "saturday",
+            "sunday",
+        ]
+
+        c_store_notification_banner = _["data"].get("c_storeNotificationBanner")
+        if c_store_notification_banner is not None:
+            hours_of_operation = c_store_notification_banner
+        else:
+            data_hours = _["data"]["hours"]
+            days_hours_start_end = []
+            for i in l:
+                data_hours_days = data_hours[i]
+                if data_hours_days:
+                    if "openIntervals" in data_hours_days:
+                        data_hours_days_openintervals = data_hours_days["openIntervals"]
+                        mons = data_hours_days_openintervals[0]["start"]
+                        mone = data_hours_days_openintervals[0]["end"]
+                        daytime = f"{i.capitalize()} {mons} - {mone}"
+                        days_hours_start_end.append(daytime)
+            hours_of_operation = "; ".join(days_hours_start_end)
+    except Exception as e:
+        logger.info(f"Fix {e} - {urlnum} ")
+        hours_of_operation = MISSING
+
+    return hours_of_operation
+
+
 def fetch_records(http: SgRequests):
     try:
         api_endpoint_urls = build_api_endpoint_urls()
         for urlnum, url in enumerate(api_endpoint_urls[0:]):
-            r = fetch_json_data(http, urlnum, url)
+            r = get_response(http, urlnum, url)
             d = json.loads(r.text)
             json_data = d["response"]["results"]
-            for _ in json_data:
+            for idx1, _ in enumerate(json_data):
                 locator_domain = DOMAIN
                 page_url = ""
                 if "c_baseURL" in _["data"]:
@@ -82,32 +118,15 @@ def fetch_records(http: SgRequests):
                 ll = _["data"]["yextDisplayCoordinate"]
                 latitude = ll["latitude"] or MISSING
                 longitude = ll["longitude"] or MISSING
-                hours_of_operation = ""
                 try:
-                    l = [
-                        "monday",
-                        "tuesday",
-                        "wednesday",
-                        "thursday",
-                        "friday",
-                        "saturday",
-                        "sunday",
-                    ]
-                    hoo = ""
-                    for day in l:
-                        hours = _["data"]["hours"]
-                        mons = hours[day]["openIntervals"][0]["start"]
-                        mone = hours[day]["openIntervals"][0]["end"]
-                        daytime = f"{day.capitalize()} {mons} - {mone}"
-                        hoo += daytime + "; "
-                    hours_of_operation = hoo.strip().rstrip(";")
-                except:
-                    hours_of_operation = MISSING
+                    hours_of_operation = get_hoo_new(urlnum, idx1, _)
+                except Exception as e:
+                    logger.info(f" {idx1} | {e} | {page_url} | {_['data']}")
 
                 raw_address = MISSING
                 yield SgRecord(
-                    locator_domain=locator_domain,
                     page_url=page_url,
+                    locator_domain=locator_domain,
                     location_name=location_name,
                     street_address=street_address,
                     city=city,
@@ -123,7 +142,7 @@ def fetch_records(http: SgRequests):
                     raw_address=raw_address,
                 )
     except Exception as e:
-        raise Exception(f" [ {e} ] Please fix it at >>> [{urlnum}] {url}")
+        raise Exception(f" Please fix {e}")
 
 
 def scrape():

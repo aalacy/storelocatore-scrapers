@@ -32,7 +32,7 @@ def get_urls():
 
 
 def get_data(url, sgw: SgWriter):
-    locator_domain = "https://www.anthonys.com"
+    locator_domain = "https://costcutters.com/"
     page_url = "".join(url)
     if page_url.count("/") != 6:
         return

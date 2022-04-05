@@ -1,61 +1,78 @@
-import csv
-import urllib.request, urllib.error, urllib.parse
+import json
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
-headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
-           }
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+}
 
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-        for row in data:
-            writer.writerow(row)
 
 def fetch_data():
-    locs = []
-    url = 'https://stockist.co/api/v1/u3959/locations/all.js?callback=_stockistAllStoresCallback'
-    r = session.get(url, headers=headers)
-    if r.encoding is None: r.encoding = 'utf-8'
-    website = '5starnutritionusa.com'
-    for line in r.iter_lines(decode_unicode=True):
-        if '"id":' in line:
-            items = line.split('"id":')
-            for item in items:
-                if '"name":"' in item:
-                    name = item.split('"name":"')[1].split('"')[0]
-                    store = item.split(',')[0]
-                    loc = '<MISSING>'
-                    typ = '<MISSING>'
-                    lat = item.split('"latitude":"')[1].split('"')[0]
-                    lng = item.split('"longitude":"')[1].split('"')[0]
-                    city = item.split('"city":"')[1].split('"')[0]
-                    add = item.split('"address_line_1":"')[1].split('"')[0]
-                    if '"address_line_2":"' in item:
-                        add = add + ' ' + item.split('"address_line_2":"')[1].split('"')[0]
-                    try:
-                        zc = item.split('"postal_code":"')[1].split('"')[0]
-                    except:
-                        zc = '<MISSING>'
-                    country = 'US'
-                    try:
-                        state = item.split('"state":"')[1].split('"')[0]
-                    except:
-                        state = '<MISSING>'
-                    if zc == '71292':
-                        state = 'LA'
-                    phone = item.split('"phone":"')[1].split('"')[0]
-                    try:
-                        hours = item.split('"description":"')[1].split('"')[0].replace('day\\t','day: ').replace('\\u2013','-').replace('\\n','; ')
-                    except:
-                        hours = '<MISSING>'
-                    if '1800 McFarland Blvd' in add:
-                        zc = '35404'
-                    yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+    url = "https://stockist.co/api/v1/u3959/locations/all.js?callback=_stockistAllStoresCallback"
+
+    loclist = session.get(url, headers=headers).text
+    loclist = loclist.split("_stockistAllStoresCallback(", 1)[1].split(");", 1)[0]
+
+    loclist = json.loads(loclist)
+    for loc in loclist:
+
+        store = loc["id"]
+        title = loc["name"]
+        lat = loc["latitude"]
+        longt = loc["longitude"]
+        street = loc["address_line_1"] + str(loc["address_line_2"])
+        street = street.replace("None", "")
+        city = loc["city"]
+        try:
+            state = loc["state"].strip()
+        except:
+            state = "<MISSING>"
+        try:
+            pcode = loc["postal_code"].strip()
+        except:
+            pcode = "<MISSING>"
+        try:
+            phone = loc["phone"].strip()
+        except:
+            phone = "<MISSING>"
+        try:
+            hours = loc["description"].replace("\t", " ").replace("\n", " ").strip()
+        except:
+            hours = "<MISSING>"
+        ltype = "<MISSING>"
+        if "COMING SOON" in title:
+            ltype = "COMING SOON"
+        yield SgRecord(
+            locator_domain="https://5starnutritionusa.com/",
+            page_url="https://5starnutritionusa.com/pages/store-locator",
+            location_name=title,
+            street_address=street.strip(),
+            city=city.strip(),
+            state=state.strip(),
+            zip_postal=pcode.strip(),
+            country_code="US",
+            store_number=str(store),
+            phone=phone.strip(),
+            location_type=ltype,
+            latitude=str(lat),
+            longitude=str(longt),
+            hours_of_operation=hours,
+        )
+
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.GeoSpatialId)
+    ) as writer:
+
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+
 
 scrape()

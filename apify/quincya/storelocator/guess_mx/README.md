@@ -1,1 +1,1 @@
---ignore StreetAddressHasNumber --ignore GeoConsistencyValidator --ignore CountryValidator (MX locations)
+--ignore StreetAddressHasNumber --ignore StreetAddressHasStateName --ignore GeoConsistencyValidator --ignore CountryValidator (MX locations)

@@ -3,11 +3,14 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgzip.dynamic import DynamicGeoSearch, SearchableCountries, Grain_8
+from sgzip.dynamic import SearchableCountries, Grain_2
+from sgzip.parallel import DynamicSearchMaker, ParallelDynamicSearch, SearchIteration
+from typing import Iterable, Tuple, Callable
 from sglogging import SgLogSetup
 from bs4 import BeautifulSoup as bs
 import dirtyjson as json
 import re
+from tenacity import retry, stop_after_attempt, wait_fixed
 
 logger = SgLogSetup().get_logger("golftec")
 headers = {
@@ -113,75 +116,91 @@ def fetch_jp(http, url):
         )
 
 
-def fetch_records(http, search):
-    # Need to add dedupe. Added it in pipeline.
-    maxZ = search.items_remaining()
+@retry(wait=wait_fixed(1), stop=stop_after_attempt(2))
+def get_locs(http, url):
+    res = http.get(url, headers=headers)
+    return res.json()
 
-    for lat, lng in search:
-        if search.items_remaining() > maxZ:
-            maxZ = search.items_remaining()
-        url = f"https://wcms.golftec.com/loadmarkers_6.php?thelong={lng}&thelat={lat}&georegion=North+America&pagever=prod&maptype=closest10"
-        count = 0
-        while count < 2:
+
+class ExampleSearchIteration(SearchIteration):
+    def do(
+        self,
+        coord: Tuple[float, float],
+        zipcode: str,
+        current_country: str,
+        items_remaining: int,
+        found_location_at: Callable[[float, float], None],
+    ) -> Iterable[SgRecord]:
+        # Need to add dedupe. Added it in pipeline.
+        maxZ = items_remaining
+
+        lat = coord[0]
+        lng = coord[1]
+        with SgRequests(proxy_country="us") as http:
+            if items_remaining > maxZ:
+                maxZ = items_remaining
+            url = f"https://wcms.golftec.com/loadmarkers_6.php?thelong={lng}&thelat={lat}&georegion=North+America&pagever=prod&maptype=closest10"
+
             try:
-                res = http.get(url, headers=headers)
-                locations = res.json()
-            except Exception:
-                http._client().cookies.clear()
-                http._refresh_ip()
-                count += 1
+                locations = get_locs(http, url)
+            except:
+                logger.info(f"[{lat}, {lng}] failed")
+                locations = {}
 
-        if "centers" in locations:
-            search.found_location_at(lat, lng)
-            for _ in locations["centers"]:
-                page_url = f"{locator_domain}{_['link']}"
-                res = http.get(page_url, headers=headers)
-                if res.status_code != 200:
-                    continue
-                soup = bs(res.text, "lxml")
-                street_address = _["street1"]
-                if _["street2"]:
-                    street_address += " " + _["street1"]
-                hours = [
-                    ": ".join(hh.stripped_strings)
-                    for hh in soup.select(
-                        "div.center-details__hours div.seg-center-hours ul li"
+            if "centers" in locations:
+                found_location_at(lat, lng)
+                for _ in locations["centers"]:
+                    page_url = f"{locator_domain}{_['link']}"
+                    res = http.get(page_url, headers=headers)
+                    if res.status_code != 200:
+                        continue
+                    soup = bs(res.text, "lxml")
+                    street_address = _["street1"]
+                    if _["street2"]:
+                        street_address += " " + _["street2"]
+                    if street_address and "coming soon" in street_address.lower():
+                        continue
+                    hours = [
+                        ": ".join(hh.stripped_strings)
+                        for hh in soup.select(
+                            "div.center-details__hours div.seg-center-hours ul li"
+                        )
+                    ]
+                    if not hours:
+                        hours = [
+                            ": ".join(hh.stripped_strings)
+                            for hh in soup.select("div.center-details__hours ul li")
+                        ]
+                    yield SgRecord(
+                        page_url=page_url,
+                        store_number=_["cid"],
+                        location_name=_["name"],
+                        street_address=street_address.replace(
+                            "Inside Golf Town", ""
+                        ).strip(),
+                        city=_["city"],
+                        state=_["state"],
+                        zip_postal=_["zip"],
+                        country_code=_["country"],
+                        phone=_["phone"],
+                        hours_of_operation="; ".join(hours),
+                        locator_domain=locator_domain,
                     )
-                ]
-                yield SgRecord(
-                    page_url=page_url,
-                    store_number=_["cid"],
-                    location_name=_["name"],
-                    street_address=street_address,
-                    city=_["city"],
-                    state=_["state"],
-                    zip_postal=_["zip"],
-                    country_code=_["country"],
-                    phone=_["phone"],
-                    hours_of_operation="; ".join(hours),
-                    locator_domain=locator_domain,
+
+                progress = str(round(100 - (items_remaining / maxZ * 100), 2)) + "%"
+
+                logger.info(
+                    f"[{lat}, {lng}] [{len(locations['centers'])}] | [{progress}]"
                 )
-
-            progress = (
-                str(round(100 - (search.items_remaining() / maxZ * 100), 2)) + "%"
-            )
-
-            logger.info(f"[{lat}, {lng}] [{len(locations)}] | [{progress}]")
 
 
 if __name__ == "__main__":
-    search = DynamicGeoSearch(
-        country_codes=[
-            SearchableCountries.USA,
-            SearchableCountries.CANADA,
-            SearchableCountries.CHINA,
-            SearchableCountries.SINGAPORE,
-        ],
-        granularity=Grain_8(),
+    search_maker = DynamicSearchMaker(
+        search_type="DynamicGeoSearch", granularity=Grain_2()
     )
     with SgWriter(
         SgRecordDeduper(
-            RecommendedRecordIds.PageUrlId, duplicate_streak_failure_factor=150
+            RecommendedRecordIds.PageUrlId, duplicate_streak_failure_factor=1500
         )
     ) as writer:
         with SgRequests(proxy_country="us") as http:
@@ -191,5 +210,16 @@ if __name__ == "__main__":
             for rec in fetch_jp(http, jp_url):
                 writer.write_row(rec)
 
-            for rec in fetch_records(http, search):
+            search_iter = ExampleSearchIteration()
+            par_search = ParallelDynamicSearch(
+                search_maker=search_maker,
+                search_iteration=search_iter,
+                country_codes=[
+                    SearchableCountries.USA,
+                    SearchableCountries.CANADA,
+                    SearchableCountries.SINGAPORE,
+                ],
+            )
+
+            for rec in par_search.run():
                 writer.write_row(rec)

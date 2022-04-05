@@ -78,7 +78,14 @@ def fetch_data():
                 if len("".join(temp).strip()) > 0:
                     raw_address.append("".join(temp).strip())
 
-            raw_address = ", ".join(raw_address).strip()
+            raw_address = (
+                ", ".join(raw_address)
+                .strip()
+                .replace("\n", "")
+                .strip()
+                .replace(",,", ",")
+                .strip()
+            )
 
             formatted_addr = parser.parse_address_intl(raw_address)
             street_address = formatted_addr.street_address_1
@@ -88,7 +95,8 @@ def fetch_data():
             city = formatted_addr.city
             state = formatted_addr.state
             zip = formatted_addr.postcode
-
+            if zip:
+                zip = zip.replace("C.P.", "").replace("CP", "").strip()
             country_code = "MX"
 
             store_number = "<MISSING>"

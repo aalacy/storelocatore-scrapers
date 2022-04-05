@@ -1,70 +1,62 @@
+import json
+from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
-from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
 
 
 def fetch_data(sgw: SgWriter):
-    api = "https://www.sunglasshut.com/AjaxSGHFindPhysicalStoreLocations?latitude=48.83&longitude=2.12&radius=2000"
-    r = session.get(api, cookies=cookies)
-    js = r.json()["locationDetails"]
+    page_url = "https://www.sunglasshut.com/fr/trends/magasins"
+    r = session.get(page_url, headers=headers)
+    tree = html.fromstring(r.text)
+    text = "".join(tree.xpath("//script[contains(text(), 'var actual_JSON =')]/text()"))
+    text = text.split("var actual_JSON =")[1].split("// init()")[0]
+    js = json.loads(text)
 
     for j in js:
-        s = j.get("shippingDetails") or {}
-        location_name = j.get("displayAddress")
-        street_address = j.get("address")
-        city = j.get("city")
-        postal = s.get("zipCode") or j.get("zip")
-        country_code = j.get("countryCode")
-        phone = j.get("phone")
-        latitude = j.get("latitude")
-        longitude = j.get("longitude")
-
-        _tmp = []
-        hours = j.get("hours") or []
-        for h in hours:
-            day = h.get("day")
-            start = h.get("open")
-            end = h.get("close")
-            if not start:
-                _tmp.append(f"{day}: Closed")
-            else:
-                _tmp.append(f"{day}: {start}-{end}")
-        hours_of_operation = ";".join(_tmp)
+        location_name = j.get("MALL")
+        store_number = j.get("SAP")
+        location_type = j.get("Store Type")
+        city = j.get("CITY")
+        state = j.get("STATE")
+        line = j.get("ADDRESS") or ""
+        postal = line.split()[0]
+        street_address = line.replace(postal, "").strip()
 
         row = SgRecord(
+            page_url=page_url,
             location_name=location_name,
             street_address=street_address,
             city=city,
+            state=state,
             zip_postal=postal,
-            country_code=country_code,
-            store_number=SgRecord.MISSING,
-            phone=phone,
-            location_type=SgRecord.MISSING,
-            latitude=latitude,
-            longitude=longitude,
+            store_number=store_number,
+            location_type=location_type,
+            country_code="FR",
             locator_domain=locator_domain,
-            hours_of_operation=hours_of_operation,
         )
 
         sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    session = SgRequests()
-    cookies = {
-        "WC_ACTIVEPOINTER": "-2%2C13801",
-        "WC_USERACTIVITY_1454163400": "1454163400%2C13801%2Cnull%2Cnull%2C1635419463778%2Cnull%2Cnull%2Cnull%2Cnull%2Cnull%2C925451795%2CSP1YIlJUeWHtUKhDq5aD2k1OkrZLCvHeIf7usnxyPviSFS%2BMEYL3om%2FtusJhvGOjMZL6hg4yKYxGxgGgcCWgdzXtC11S3n53rBLvGV5kh6IJzHTv8oB7qg16A9Q44pRkWpgNyQqH3HU0AjilFr8OWT2RLQzqYJ8T9QxqKf2x%2BWeGlsvWvT3FkVOvaIEr6LgzxdYSeTp1BzpEElwvJQWiyH5xnIM3m%2BuiMaY8SPw240qxiyaA546dC5vN4SFEzjbqwEM%2BgbqJmSXNcRgZvjq7%2Bw%3D%3D",
-        "WC_AUTHENTICATION_1454163400": "1454163400%2CVLgN0C5Nv%2FaK4J8B%2B%2Be3yYmE8gAmItbLgWe9Wl4HPbQ%3D",
+    locator_domain = "https://www.sunglasshut.com/fr"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:96.0) Gecko/20100101 Firefox/96.0",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+        "Accept-Language": "ru,en-US;q=0.7,en;q=0.3",
+        "Accept-Encoding": "gzip, deflate, br",
+        "Connection": "keep-alive",
+        "Upgrade-Insecure-Requests": "1",
+        "Sec-Fetch-Dest": "document",
+        "Sec-Fetch-Mode": "navigate",
+        "Sec-Fetch-Site": "cross-site",
+        "Cache-Control": "max-age=0",
     }
-    locator_domain = "https://www.sunglasshut.com/"
-
+    session = SgRequests()
     with SgWriter(
-        SgRecordDeduper(
-            SgRecordID(
-                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.HOURS_OF_OPERATION}
-            )
-        )
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.STORE_NUMBER}))
     ) as writer:
         fetch_data(writer)

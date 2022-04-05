@@ -4,7 +4,6 @@ from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
-from concurrent import futures
 from sgscrape.sgpostal import parse_address, International_Parser
 
 
@@ -13,77 +12,43 @@ def get_international(line):
     street_address = f"{adr.street_address_1} {adr.street_address_2 or ''}".replace(
         "None", ""
     ).strip()
-    city = adr.city
+    city = adr.city or ""
     state = adr.state
     postal = adr.postcode
 
     return street_address, city, state, postal
 
 
-def get_urls():
-    r = session.get("https://www.papajohns.com.tr/subeler/", headers=headers)
+def fetch_data(sgw: SgWriter):
+    api = "https://www.papajohns.com.tr/subeler/"
+    r = session.get(api, headers=headers)
     tree = html.fromstring(r.text)
-
-    return tree.xpath("//a[text()='DETAYLAR']/@href")
-
-
-def get_data(page_url, sgw: SgWriter):
-    r = session.get(page_url, headers=headers)
-    tree = html.fromstring(r.text)
-
-    location_name = "".join(
-        tree.xpath("//h4[@class='h-no-space opensans bold']/text()")
-    ).strip()
-    raw_address = "".join(
-        tree.xpath("//abbr[@title='Adres']/following-sibling::text()[1]")
-    ).strip()
-    street_address, city, state, postal = get_international(raw_address)
-    phone = "".join(
-        tree.xpath("//abbr[@title='Telefon']/following-sibling::text()[1]")
-    ).strip()
-
-    text = "".join(tree.xpath("//a[@itemprop='hasMap']/@href"))
-    try:
-        latitude, longitude = text.split("ll=")[1].split("&")[0].split(",")
-    except:
-        latitude, longitude = SgRecord.MISSING, SgRecord.MISSING
-
-    _tmp = []
-    hours = tree.xpath("//div[@class='col-xs-4 opensans normal']")
-    for h in hours:
-        day = "".join(h.xpath(".//text()")).strip()
-        start = "".join(h.xpath("./following-sibling::div[1]//text()")).strip()
-        end = "".join(h.xpath("./following-sibling::div[2]//text()")).strip()
-        _tmp.append(f"{day}: {start}-{end}")
-
-    hours_of_operation = ";".join(_tmp)
-
-    row = SgRecord(
-        page_url=page_url,
-        location_name=location_name,
-        street_address=street_address,
-        city=city,
-        state=state,
-        zip_postal=postal,
-        country_code="TR",
-        latitude=latitude,
-        longitude=longitude,
-        phone=phone,
-        locator_domain=locator_domain,
-        hours_of_operation=hours_of_operation,
-        raw_address=raw_address,
+    divs = tree.xpath(
+        "//div[@class='col-xs-12 col-sm-6 col-md-4 col-lg-3 dealer-col col-1']"
     )
 
-    sgw.write_row(row)
+    for d in divs:
+        location_name = "".join(d.xpath(".//h4/text()")).strip()
+        page_url = "".join(d.xpath("./a[not(@class)]/@href"))
+        raw_address = "".join(d.xpath("./p/text()")).strip()
+        street_address, city, state, postal = get_international(raw_address)
+        if "/" in city:
+            state = city.split("/")[-1].strip()
+            city = city.split("/")[0].strip()
 
+        row = SgRecord(
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code="TR",
+            locator_domain=locator_domain,
+            raw_address=raw_address,
+        )
 
-def fetch_data(sgw: SgWriter):
-    urls = get_urls()
-
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {executor.submit(get_data, url, sgw): url for url in urls}
-        for future in futures.as_completed(future_to_url):
-            future.result()
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":

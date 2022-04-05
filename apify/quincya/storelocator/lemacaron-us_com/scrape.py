@@ -18,7 +18,7 @@ logger = SgLogSetup().get_logger("lemacaron-us_com")
 def fetch_data(sgw: SgWriter):
 
     base_link = "https://lemacaron-us.com/locations"
-    js_link = "https://lemacaron-us.com/oak/themes/lemac/js/nine.min232.js"
+    js_link = "https://lemacaron-us.com/oak/themes/lemac/js/nine.min356.js"
 
     user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36"
     headers = {"User-Agent": user_agent}

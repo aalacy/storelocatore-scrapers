@@ -37,12 +37,12 @@ def fetch_data():
                 pass
             else:
                 link = "https://www.llbean.com" + alink["href"]
+            title = alink.text
             r = session.get(link, headers=headers)
 
             soup = BeautifulSoup(r.text, "html.parser")
             if "Temporarily Closed" in soup.text or "opening" in soup.text.lower():
                 continue
-            title = soup.find("h1").text
             try:
                 phone = soup.find("address").find("strong", {"class", "tel"}).text
             except:

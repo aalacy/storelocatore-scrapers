@@ -66,6 +66,9 @@ def fetch_data(sgw: SgWriter):
         if hooco.find("http") == -1:
             hooco = f"https://www.selectspecialtyhospitals.com{hooco}"
         hours_of_operation = "<MISSING>"
+        cls = "".join(tree.xpath('//div[contains(text(), "has Closed")]/text()'))
+        if cls:
+            hours_of_operation = "Closed"
         if hooco:
             r = session.get(hooco, headers=headers)
             try:
@@ -75,7 +78,7 @@ def fetch_data(sgw: SgWriter):
             hours_of_operation = (
                 "".join(
                     tree.xpath(
-                        '//p[contains(text(), "Hours:")]/text() | //strong[contains(text(), "hours")]/text()'
+                        '//p[contains(text(), "Hours:")]/text() | //strong[contains(text(), "hours")]/text() | //strong[contains(text(), "Hours:")]/text()'
                     )
                 )
                 .replace("Hours:", "")
@@ -83,6 +86,13 @@ def fetch_data(sgw: SgWriter):
                 .strip()
                 or "<MISSING>"
             )
+            sub_info = (
+                "".join(tree.xpath('//p[contains(text(), "Two visitors")]/text()'))
+                .replace("\n", "")
+                .strip()
+            )
+            if sub_info:
+                hours_of_operation = sub_info.split("from")[1].split("The")[0].strip()
 
         row = SgRecord(
             locator_domain=locator_domain,

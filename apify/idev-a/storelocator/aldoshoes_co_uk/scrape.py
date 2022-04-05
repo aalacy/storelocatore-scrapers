@@ -15,23 +15,6 @@ base_url = "https://aldoshoes.co.uk/apps/store-locator"
 detail_url = "https://stores.boldapps.net/front-end/get_store_info.php?shop=aldouk.myshopify.com&data=detailed&store_id={}"
 
 
-def _p(val):
-    if (
-        val.replace("(", "")
-        .replace(")", "")
-        .replace("+", "")
-        .replace("-", "")
-        .replace(".", " ")
-        .replace("to", "")
-        .replace(" ", "")
-        .strip()
-        .isdigit()
-    ):
-        return val
-    else:
-        return ""
-
-
 def fetch_data():
     with SgRequests() as session:
         locations = session.get(base_url, headers=_headers).text.split(
@@ -54,18 +37,25 @@ def fetch_data():
                 ],
                 "lxml",
             )
+            state = ""
+            if info.select_one(".prov_state"):
+                state = info.select_one(".prov_state").text.strip()
+            hours = []
+            if info.select_one(".hours"):
+                hours = list(info.select_one(".hours").stripped_strings)[1:]
             yield SgRecord(
                 page_url=base_url,
-                location_name=info.select_one(".name").text.strip(),
+                location_name=info.select_one(".name").text.split("-")[0].strip(),
                 street_address=info.select_one(".address").text.strip(),
                 city=info.select_one(".city").text.strip(),
-                state=info.select_one(".prov_state").text.strip(),
+                state=state,
                 zip_postal=info.select_one(".postal_zip").text.strip(),
                 country_code=info.select_one(".country").text.strip(),
                 phone=info.select_one(".phone").text.strip(),
                 latitude=_["lat"],
                 longitude=_["lng"],
                 locator_domain=locator_domain,
+                hours_of_operation="; ".join(hours),
                 raw_address=raw_address,
             )
 

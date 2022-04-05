@@ -23,36 +23,32 @@ def fetch_data():
         loc_response = session.get(store_url)
         loc_dom = etree.HTML(loc_response.text)
 
-        location_name = loc_dom.xpath('//div[@class="locationName"]/p/text()')
-        location_name = location_name[0] if location_name else "<MISSING>"
+        location_name = loc_dom.xpath('//div[@class="locationName"]/p/text()')[0]
         raw_address = loc_dom.xpath('//div[@class="locationAddress"]/p[1]/text()')
         raw_address = [e.strip() for e in raw_address if e.strip()]
         addr = parse_address_intl(" ".join(raw_address))
         street_address = addr.street_address_1
         if addr.street_address_2:
             street_address += " " + addr.street_address_2
-        street_address = street_address if street_address else "<MISSING>"
+        street_address = street_address if street_address else ""
         city = addr.city
         if not city:
             city = location_name.split(",")[0]
-        city = city if city else "<MISSING>"
+        city = city if city else ""
         state = location_name.split(", ")[-1]
         zip_code = addr.postcode
-        zip_code = zip_code if zip_code else "<MISSING>"
+        zip_code = zip_code if zip_code else ""
         if len(zip_code) > 5:
-            zip_code = "<MISSING>"
-        country_code = "<MISSING>"
-        store_number = "<MISSING>"
+            zip_code = ""
         phone = loc_dom.xpath('//a[contains(@href, "tel")]/text()')
-        phone = phone[0] if phone else "<MISSING>"
+        phone = phone[0] if phone and "@" not in phone[0] else ""
         location_type = "<MISSING>"
         if "coming-soon" in store_url:
             location_type = "coming soon"
+        if "COMING SOON" in location_name:
+            location_type = "coming soon"
         latitude = loc_dom.xpath("//@data-lat")[0]
-        latitude = latitude if latitude else "<MISSING>"
         longitude = loc_dom.xpath("//@data-lng")[0]
-        longitude = longitude if longitude else "<MISSING>"
-        hours_of_operation = "<MISSING>"
 
         item = SgRecord(
             locator_domain=domain,
@@ -62,13 +58,13 @@ def fetch_data():
             city=city,
             state=state,
             zip_postal=zip_code,
-            country_code=country_code,
-            store_number=store_number,
+            country_code="",
+            store_number="",
             phone=phone,
             location_type=location_type,
             latitude=latitude,
             longitude=longitude,
-            hours_of_operation=hours_of_operation,
+            hours_of_operation="",
         )
 
         yield item

@@ -1,5 +1,5 @@
 import json
-from sgscrape.sgpostal import International_Parser, parse_address
+from sgpostal.sgpostal import International_Parser, parse_address
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
@@ -11,7 +11,7 @@ def fetch_data(sgw: SgWriter):
 
     locator_domain = "https://www.monetka.ru/"
     api_url = "https://api-maps.yandex.ru/services/geoxml/1.2/geoxml.xml?callback=jsonp1629968688826&origin=jsapi1YMapsML&url=http%3A%2F%2Fwww.monetka.ru%2Fshops_map%2Fymlall%2FKemerovo%3Fv%3D2.2"
-    session = SgRequests()
+    session = SgRequests(verify_ssl=False)
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
@@ -20,11 +20,11 @@ def fetch_data(sgw: SgWriter):
         0
     ]
     js = json.loads(jsblock)
-    s = set()
     for j in js:
+
         j = j.get("GeoObject")
         a = j.get("metaDataProperty").get("ShopData")[0].get("info")[0].get("value")
-        page_url = "https://www.monetka.ru/"
+        page_url = "<MISSING>"
         location_name = j.get("name") or "<MISSING>"
         ad = "".join(a.get("adress"))
         b = parse_address(International_Parser(), ad)
@@ -41,11 +41,7 @@ def fetch_data(sgw: SgWriter):
             "".join(a.get("shedule")).replace("\r\n", " ").replace("\n", " ").strip()
             or "<MISSING>"
         )
-
-        line = latitude, street_address
-        if line in s:
-            continue
-        s.add(line)
+        phone = a.get("phone") or "<MISSING>"
 
         row = SgRecord(
             locator_domain=locator_domain,
@@ -57,7 +53,7 @@ def fetch_data(sgw: SgWriter):
             zip_postal=SgRecord.MISSING,
             country_code=country_code,
             store_number=store_number,
-            phone=SgRecord.MISSING,
+            phone=phone,
             location_type=SgRecord.MISSING,
             latitude=latitude,
             longitude=longitude,

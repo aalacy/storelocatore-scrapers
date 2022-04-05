@@ -40,12 +40,24 @@ def _v(val):
     _city = val.replace("&amp;", "&")
     return (
         _city.replace("&iacute;", "í")
+        .replace("ó", "&oacute;")
+        .replace("Á", "&Aacute;")
+        .replace("ú", "&uacute;")
+        .replace("ñ", "&ntilde;")
+        .replace("á", "&aacute;")
+        .replace("é", "&eacute;")
+        .replace("í", "&iacute;")
+    )
+
+
+def _c(val):
+    return (
+        val.replace("&eacute;", "é")
+        .replace("&aacute;", "á")
         .replace("&oacute;", "ó")
-        .replace("&Aacute;", "Á")
+        .replace("&iacute;", "í")
         .replace("&uacute;", "ú")
         .replace("&ntilde;", "ñ")
-        .replace("&aacute;", "á")
-        .replace("&eacute;", "é")
     )
 
 
@@ -60,17 +72,15 @@ def fetch_data():
             cities = session.get(json_url, headers=header1).json()["data"]
             logger.info(f"[{state['value']}] {len(cities)} cities")
             for city in cities:
-                _city = _v(city["value"])
-                header1["county"] = _city.encode("utf-8")
+                header1["county"] = _v(city["text"])
                 header1["request-type"] = "plans"
-                try:
-                    res = session.get(json_url, headers=header1)
-                    if not res.text:
-                        continue
-                    locations = res.json()["objectResponse"]
-                except:
-                    continue
-                logger.info(f"[{state['value']}] [{_city}] {len(locations)} locations")
+                locations = session.get(json_url, headers=header1).json()[
+                    "objectResponse"
+                ]
+
+                logger.info(
+                    f"[{state['value']}] [{city['text']}] {len(locations)} locations"
+                )
                 for _ in locations:
                     title = list(bs(_["tienda"], "lxml").stripped_strings)
                     addr = list(bs(_["direccion"], "lxml").stripped_strings)
@@ -78,9 +88,9 @@ def fetch_data():
                         page_url=base_url,
                         location_name=title[0],
                         street_address=addr[0],
-                        city=_city,
-                        state=_v(state["value"]),
-                        zip_postal="CP. " + addr[1].split("CP.")[-1],
+                        city=city["text"],
+                        state=_c(state["value"].replace("&amp;", "&")),
+                        zip_postal=addr[1].split("CP.")[-1],
                         country_code="Mexico",
                         locator_domain=locator_domain,
                         hours_of_operation=title[1].replace(",", ";"),
