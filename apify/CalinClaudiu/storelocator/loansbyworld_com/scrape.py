@@ -7,7 +7,6 @@ from sgrequests import SgRequests
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 from sglogging import sglog
 from bs4 import BeautifulSoup as b4
-import json
 
 
 def gimme_hours(soup):
@@ -31,8 +30,6 @@ def gimme_hours(soup):
 
 
 def fetch_data():
-    logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
-
     def search_api(session, long):
         url = "https://www.loansbyworld.com/api/yext/geosearch"
         headers = {}
@@ -52,9 +49,9 @@ def fetch_data():
         #%5Bstate%5D/%5Bcity%5D/%5BpostalCode%5D/%5BstoreId% # noqa
         # https://www.loansbyworld.com/locations/alabama/alabaster/35007/1521 # noqa
         url = str(
-            f"https://www.loansbyworld.com/locations/k['state']['id']/k['address']['city']/k['address']['postalCode']/k['id']"
+            f"https://www.loansbyworld.com/locations/{k['state']['id']}/{k['address']['city']}/{k['address']['postalCode']}/{k['id']}"
         )
-        resp = session.get(url, headers=headers, data=data)
+        resp = session.get(url, headers=headers)
         k["hours"] = gimme_hours(resp.text)
 
     search = DynamicZipSearch(
