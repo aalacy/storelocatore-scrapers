@@ -16,7 +16,7 @@ def fetch_data():
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
     all_codes = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA], expected_search_radius_miles=5
+        country_codes=[SearchableCountries.USA], expected_search_radius_miles=1
     )
     for code in all_codes:
         data = session.get(start_url.format(code), headers=hdr).json()
@@ -28,9 +28,15 @@ def fetch_data():
                 if poi.get("lobbyHours")
                 else ""
             )
+            if hoo:
+                hoo = hoo.replace("*", "")
+                if "Mon: *" in hoo:
+                    hoo = ""
+            page_url = f'https://www.truist.com/{poi["locationType"].lower()}/{poi["locationAddress"]["state"].lower()}/{poi["locationAddress"]["city"].replace(" ", "-").lower()}/{poi["locationAddress"]["zipCode"]}/{poi["locationAddress"]["address1"].lower().replace(" ", "-")}'
+
             item = SgRecord(
                 locator_domain=domain,
-                page_url="https://www.truist.com/locations",
+                page_url=page_url,
                 location_name=poi["locationName"],
                 street_address=poi["locationAddress"]["address1"],
                 city=poi["locationAddress"]["city"],
