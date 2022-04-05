@@ -61,7 +61,7 @@ def fetch_data():
 
                     yield SgRecord(
                         locator_domain=DOMAIN,
-                        page_url=DOMAIN,
+                        page_url="https://www.floridatile.com/store-locator/",
                         location_name=title,
                         street_address=street.strip(),
                         city=city.strip(),

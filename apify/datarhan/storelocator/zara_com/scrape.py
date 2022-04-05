@@ -81,10 +81,20 @@ class ExampleSearchIteration(SearchIteration):
                 current_country, coord[0], coord[1]
             )
             data = session.get(url, headers=hdr)
-            try:
-                return data.json()
-            except Exception:
-                return []
+
+            x = 0
+            while True:
+                x = x + 1
+                if x == 100:
+                    raise Exception
+                if data.status_code == 200:
+                    try:
+                        return data.json()
+                    except Exception:
+                        return []
+
+                else:
+                    data = session.get(url, headers=hdr)
 
         found = 0
         for poi in getPoint(http, hdr):
@@ -101,7 +111,7 @@ if __name__ == "__main__":
 
     with SgWriter(
         deduper=SgRecordDeduper(
-            RecommendedRecordIds.StoreNumberId, duplicate_streak_failure_factor=100
+            RecommendedRecordIds.GeoSpatialId, duplicate_streak_failure_factor=100
         )
     ) as writer:
         with SgRequests(dont_retry_status_codes=[403, 429, 500, 502, 404]) as http:

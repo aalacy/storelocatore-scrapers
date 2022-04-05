@@ -32,6 +32,7 @@ def fetch_data():
             zip_code = poi["zip"]
             store_number = poi["storeNumber"]
             phone = poi["phone"]
+            location_type = ""
             if poi["isClosed"]:
                 location_type = "closed"
             latitude = poi["latitude"]
