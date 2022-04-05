@@ -30,24 +30,23 @@ def gimme_hours(soup):
 
 
 def fetch_data():
-
     def search_api(session, long):
         url = "https://www.loansbyworld.com/api/yext/geosearch"
         headers = {}
 
         headers["Content-Type"] = "application/json"
-        data = str('{"location":"'+f'{long}' + '","radius":1000}')
+        data = str('{"location":"' + f"{long}" + '","radius":1000}')
 
         resp = session.post(url, headers=headers, data=data).json()
-        if resp['error']:
+        if resp["error"]:
             return []
         return resp["data"]
 
     def fetch_sub(session, k):
         headers = {}
         headers[
-        "user-agent"
-    ] = "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.82 Safari/537.36"
+            "user-agent"
+        ] = "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.82 Safari/537.36"
 
         #%5Bstate%5D/%5Bcity%5D/%5BpostalCode%5D/%5BstoreId% # noqa
         # https://www.loansbyworld.com/locations/alabama/alabaster/35007/1521 # noqa
@@ -69,9 +68,9 @@ def fetch_data():
                 try:
                     k = fetch_sub(session, result)
                     try:
-                        k['address']['line2'] = k['address']['line2']
+                        k["address"]["line2"] = k["address"]["line2"]
                     except Exception:
-                        k['address']['line2'] = ''
+                        k["address"]["line2"] = ""
                 except Exception:
                     k = result
                     k["hours"] = ""
@@ -116,7 +115,7 @@ def scrape():
             mapping=[["address", "line1"], ["address", "line2"]],
             multi_mapping_concat_with=", ",
             value_transform=fix_comma,
-            is_required = False,
+            is_required=False,
         ),
         city=MappingField(
             mapping=["address", "city"],
