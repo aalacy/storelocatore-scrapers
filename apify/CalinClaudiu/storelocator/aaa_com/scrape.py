@@ -136,9 +136,10 @@ def nice_hours(operatingHours):
                 + operatingHours["close"]
                 + ";"
             )
+            res = list(res)
             if res[-1] == ";":
                 res.pop(-1)
-            return res
+            return "".join(res)
         else:
             return "<MISSING>"
 
