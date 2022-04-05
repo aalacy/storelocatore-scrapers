@@ -1,9 +1,19 @@
+from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgzip.dynamic import SearchableCountries, DynamicZipSearch
+
+
+def get_coords(page_url):
+    r = session.get(page_url, headers=headers)
+    tree = html.fromstring(r.text)
+    text = "".join(tree.xpath("//a[contains(@href, 'google')]/@href"))
+    if "/@" in text:
+        return text.split("/@")[1].split(",")[:2]
+    return SgRecord.MISSING, SgRecord.MISSING
 
 
 def fetch_data(sgw: SgWriter):
@@ -32,6 +42,11 @@ def fetch_data(sgw: SgWriter):
                 SgRecord.MISSING,
                 SgRecord.MISSING,
             )
+            if latitude == SgRecord.MISSING:
+                try:
+                    latitude, longitude = get_coords(page_url)
+                except:
+                    pass
 
             row = SgRecord(
                 page_url=page_url,
