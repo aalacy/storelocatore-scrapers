@@ -1,5 +1,9 @@
 from bs4 import BeautifulSoup as bs
-from sgselenium import SgChrome
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from sgselenium.sgselenium import SgChrome
+from webdriver_manager.chrome import ChromeDriverManager
 
 from sgscrape import simple_scraper_pipeline as sp
 from sglogging import sglog
@@ -15,20 +19,33 @@ logger = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
 stores_page = "https://www.countryroad.com.au/sitemap#stores"
 
 
-def get_driver(url, driver=None):
+class_name1 = "stores"
+class_name2 = "detail"
+
+
+def fetch_page_from_driver(url, class_name, driver=None):
     if driver is not None:
         driver.quit()
 
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.74 Safari/537.36"
     x = 0
     while True:
         x = x + 1
         try:
-            driver = SgChrome().driver()
+            driver = SgChrome(
+                executable_path=ChromeDriverManager().install(),
+                user_agent=user_agent,
+                is_headless=True,
+            ).driver()
             driver.get(url)
+
+            WebDriverWait(driver, 30).until(
+                EC.presence_of_element_located((By.CLASS_NAME, class_name))
+            )
             break
         except Exception:
             driver.quit()
-            if x == 3:
+            if x == 5:
                 raise Exception(
                     "Make sure this ran with a Proxy, will fail without one"
                 )
@@ -73,7 +90,7 @@ def parse_data(soup, page_url):
 
 def fetch_data():
 
-    htmlsource = get_driver(stores_page, driver=None)
+    htmlsource = fetch_page_from_driver(stores_page, class_name1, driver=None)
 
     soup = bs(htmlsource, "html.parser")
 
@@ -82,7 +99,7 @@ def fetch_data():
     for store in stores:
         page_url = f"https://www.countryroad.com.au{store.select_one('a')['href']}"
         logger.info(f"Crawling: {page_url}")
-        htmldetail = get_driver(page_url)
+        htmldetail = fetch_page_from_driver(page_url, class_name2)
         soup_detail_page = bs(htmldetail, "html.parser")
         i = parse_data(soup_detail_page, page_url)
         yield i
