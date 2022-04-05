@@ -104,7 +104,11 @@ def fetch_data():
         zip_postal = pa.postcode
         zip_postal = zip_postal.strip() if zip_postal else MISSING
         street_address = street_address.replace("Rating Not Currently Available", "")
-        driver.get(page_url)
+        try:
+            driver.get(page_url)
+        except:
+            driver.get(page_url)
+            WebDriverWait(driver, 30)
         soup = BeautifulSoup(driver.page_source, "html.parser")
         try:
             phone = (

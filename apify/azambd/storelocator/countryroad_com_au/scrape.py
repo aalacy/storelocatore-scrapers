@@ -15,6 +15,27 @@ logger = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
 stores_page = "https://www.countryroad.com.au/sitemap#stores"
 
 
+def get_driver(url, driver=None):
+    if driver is not None:
+        driver.quit()
+
+    x = 0
+    while True:
+        x = x + 1
+        try:
+            driver = SgChrome().driver()
+            driver.get(url)
+            break
+        except Exception:
+            driver.quit()
+            if x == 3:
+                raise Exception(
+                    "Make sure this ran with a Proxy, will fail without one"
+                )
+            continue
+    return driver.page_source
+
+
 def parse_data(soup, page_url):
     data = {}
     data["locator_domain"] = DOMAIN
@@ -51,21 +72,20 @@ def parse_data(soup, page_url):
 
 
 def fetch_data():
-    with SgChrome() as driver:
 
-        driver.get(stores_page)
+    htmlsource = get_driver(stores_page, driver=None)
 
-        soup = bs(driver.page_source, "html.parser")
+    soup = bs(htmlsource, "html.parser")
 
-        stores = soup.select("section.stores div.sitemap_catalogue li")
-        logger.info(f"Total Stores: {len(stores)}")
-        for store in stores:
-            page_url = f"https://www.countryroad.com.au{store.select_one('a')['href']}"
-            logger.info(f"Crawling: {page_url}")
-            driver.get(page_url)
-            soup_detail_page = bs(driver.page_source, "html.parser")
-            i = parse_data(soup_detail_page, page_url)
-            yield i
+    stores = soup.select("section.stores div.sitemap_catalogue li")
+    logger.info(f"Total Stores: {len(stores)}")
+    for store in stores:
+        page_url = f"https://www.countryroad.com.au{store.select_one('a')['href']}"
+        logger.info(f"Crawling: {page_url}")
+        htmldetail = get_driver(page_url)
+        soup_detail_page = bs(htmldetail, "html.parser")
+        i = parse_data(soup_detail_page, page_url)
+        yield i
 
 
 def scrape():

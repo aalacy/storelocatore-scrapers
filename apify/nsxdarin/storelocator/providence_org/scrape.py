@@ -21,11 +21,11 @@ def fetch_data():
     website = "providence.org"
     typ = "<MISSING>"
     store = "<MISSING>"
-    for x in range(1, 218):
+    for x in range(1, 300):
         logger.info(x)
         querystring = querystring = {
-            "postal": "M6G",
-            "latlng": "43.6644,-79.4195",
+            "postal": "",
+            "latlng": "45.49,-122.77",
             "page": str(x),
             "radius": 20000,
         }
@@ -46,11 +46,21 @@ def fetch_data():
                             .split('href=\\"')[1]
                             .split("\\")[0]
                         )
-                        csz = item.split("\\u003cdiv\\u003e")[2].split("\\")[0]
-                        city = csz.split(",")[0]
-                        zc = csz.rsplit(" ", 1)[1]
-                        state = csz.split(",")[1].strip().rsplit(" ", 1)[0]
+                        try:
+                            csz = item.split("\\u003cdiv\\u003e")[2].split("\\")[0]
+                            city = csz.split(",")[0]
+                            zc = csz.rsplit(" ", 1)[1]
+                            state = csz.split(",")[1].strip().rsplit(" ", 1)[0]
+                        except:
+                            city = "<MISSING>"
+                            state = "<MISSING>"
+                            zc = "<MISSING>"
                         hours = "<INACCESSIBLE>"
+                        lurl = lurl.replace(
+                            "https://www.providence.orghttps://www.swedish.org/",
+                            "https://www.swedish.org/",
+                        )
+                        lurl = lurl.replace("https://www.providence.orghttps", "https")
                         yield SgRecord(
                             locator_domain=website,
                             page_url=lurl,
@@ -71,7 +81,7 @@ def fetch_data():
 
 def scrape():
     results = fetch_data()
-    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         for rec in results:
             writer.write_row(rec)
 

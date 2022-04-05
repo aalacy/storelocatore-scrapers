@@ -8,13 +8,11 @@ from sglogging import SgLogSetup
 import time
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+import ssl
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 logger = SgLogSetup().get_logger("parkersga")
-
-_headers = {
-    "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
-}
-
 
 days = {
     "Dimanche": "Sun",
@@ -60,6 +58,17 @@ def fetch_data():
             if content[3].strip().isdigit():
                 zip_postal = content[3]
                 state = content[2]
+            hr = driver.find_elements_by_css_selector("div.dmGeoSVMoreInfo")
+            hours = []
+            if hr:
+                temp = hr[0].text.replace("Hours", "").strip().split("|")
+                for hh in temp:
+                    if "Check" in hh:
+                        break
+                    if "EXIT" in hh:
+                        continue
+                    hours.append(hh)
+
             yield SgRecord(
                 page_url=base_url,
                 store_number=link.get_attribute("geoid"),
@@ -73,6 +82,7 @@ def fetch_data():
                 country_code=content[-2],
                 phone=content[-1],
                 locator_domain=locator_domain,
+                hours_of_operation="| ".join(hours),
                 raw_address=raw_address,
             )
 
