@@ -46,7 +46,9 @@ def fetch_data():
             store_sel.xpath('//div[contains(@class,"hero-main")]/div/h1/text()')
         ).strip()
 
-        address = store_sel.xpath('//div[@class="mid"]/div[@class="right"]/p[2]/text()')
+        address = store_sel.xpath(
+            '//div[@class="mid"]/div[contains(@class,"right")]/p[2]/text()'
+        )
         add_list = []
         for add in address:
             if len("".join(add).strip()) > 0:
@@ -62,13 +64,13 @@ def fetch_data():
         store_number = "<MISSING>"
         phone = "".join(
             store_sel.xpath(
-                '//div[@class="mid"]/div[@class="right"]/p/a[contains(@href,"tel:")]/text()'
+                '//div[@class="mid"]/div[contains(@class,"right")]/p/a[contains(@href,"tel:")]/text()'
             )
         ).strip()
 
         location_type = "".join(store.xpath("@data-storetype")).strip()
         hours = store_sel.xpath(
-            '//div[@class="mid"]/div[@class="left"]/p[position()<=2]'
+            '//div[@class="mid"]/div[contains(@class,"left")]/p[position()<=2]'
         )
         hours_list = []
         for hour in hours:

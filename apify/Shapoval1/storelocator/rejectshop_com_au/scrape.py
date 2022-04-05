@@ -5,6 +5,7 @@ from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgpostal.sgpostal import International_Parser, parse_address
 
 
 def fetch_data(sgw: SgWriter):
@@ -24,12 +25,16 @@ def fetch_data(sgw: SgWriter):
         a = j.get("address")
         location_name = j.get("name") or "<MISSING>"
         location_type = j.get("store") or "<MISSING>"
-        street_address = (
+        ad = (
             f"{a.get('address_line_1')} {a.get('address_line_2')}".replace(
                 "None", ""
             ).strip()
             or "<MISSING>"
         )
+        b = parse_address(International_Parser(), ad)
+        street_address = f"{b.street_address_1} {b.street_address_2}".replace(
+            "None", ""
+        ).strip()
         state = a.get("state") or "<MISSING>"
         postal = a.get("postcode") or "<MISSING>"
         country_code = a.get("country")
@@ -65,7 +70,7 @@ def fetch_data(sgw: SgWriter):
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hours_of_operation,
-            raw_address=f"{street_address} {city}, {state} {postal}",
+            raw_address=f"{ad} {city}, {state} {postal}",
         )
 
         sgw.write_row(row)

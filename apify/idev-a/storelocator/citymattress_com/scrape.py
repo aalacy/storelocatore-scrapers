@@ -35,6 +35,7 @@ def fetch_data():
                 for _ in location.select_one(".store-item__hours").text.split("\n")
                 if _.strip() and "appointment" not in _.lower()
             ]
+
             yield SgRecord(
                 page_url=page_url,
                 location_name=location_name,
@@ -51,6 +52,7 @@ def fetch_data():
                 .replace("\xa0", " ")
                 .replace("–", "-")
                 .replace("GRAND OPENING", "")
+                .replace("pmS", "pm S")
                 .strip(),
             )
 

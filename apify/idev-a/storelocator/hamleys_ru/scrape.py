@@ -40,6 +40,7 @@ def fetch_data():
                     country_code="Russia",
                     phone=_["phone"].split("доб")[0],
                     locator_domain=locator_domain,
+                    hours_of_operation=_["workTime"],
                     raw_address=_["address"],
                 )
 

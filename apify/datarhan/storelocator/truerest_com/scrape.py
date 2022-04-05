@@ -30,7 +30,9 @@ def fetch_data():
         }
         all_locations = session.post(start_url, headers=hdr, data=frm).json()
         for i, poi in all_locations.items():
-            page_url = poi["gu"]
+            if poi["ca"]["0"] == "Coming Soon":
+                continue
+            page_url = poi["we"].strip()
             loc_response = session.get(page_url, headers=hdr)
             loc_dom = etree.HTML(loc_response.text)
             if loc_dom.xpath('//h4[contains(text(), "Coming Soon!")]'):
@@ -50,10 +52,8 @@ def fetch_data():
             addr = parse_address_intl(" ".join(raw_address))
             phone = poi_html.xpath('//a[contains(@href, "tel")]/text()')
             phone = phone[0] if phone else ""
-            hoo = loc_dom.xpath(
-                '//div[contains(@class, "store_locator_single_opening_hours")]//text()'
-            )[1:]
-            hoo = " ".join(hoo).split("Opening Hours")[0].strip()
+            hoo = loc_dom.xpath('//table[@class="mabel-bhi-businesshours"]//text()')
+            hoo = " ".join(hoo)
             street_address = addr.street_address_1
             if addr.street_address_2:
                 street_address += " " + addr.street_address_2

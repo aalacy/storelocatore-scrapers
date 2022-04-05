@@ -16,8 +16,8 @@ headers = {
 
 def fetch_data():
     coords = ["21,-155", "60,-150"]
-    for xlat in range(25, 55, 5):
-        for ylng in range(-125, -60, 5):
+    for xlat in range(25, 55, 2):
+        for ylng in range(-125, -60, 2):
             coords.append(str(xlat) + "," + str(ylng))
     for coord in coords:
         latc = coord.split(",")[0]
@@ -47,8 +47,8 @@ def fetch_data():
             loc = "https://order.baskinrobbins.com/store-selection"
             website = "baskinrobbins.com"
             status = item["status"]
-            if "INACTIVE" in status:
-                name = name + " - Temporarily Closed"
+            if "INACTIVE" in status and "TEMP" not in status:
+                name = name + " - Closed"
             try:
                 phone = item["phoneNumber"]
             except:
@@ -132,7 +132,7 @@ def fetch_data():
                 )
             except:
                 hours = "<MISSING>"
-            if add != "" and "INACTIVE" not in status:
+            if add != "" and "BR-3" in store and " - Closed" not in name:
                 yield SgRecord(
                     locator_domain=website,
                     page_url=loc,
@@ -154,7 +154,9 @@ def fetch_data():
 def scrape():
     results = fetch_data()
     with SgWriter(
-        deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
+        deduper=SgRecordDeduper(
+            RecommendedRecordIds.StoreNumberId, duplicate_streak_failure_factor=-1
+        )
     ) as writer:
         for rec in results:
             writer.write_row(rec)

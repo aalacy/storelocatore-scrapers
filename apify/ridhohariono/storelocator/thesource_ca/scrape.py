@@ -5,7 +5,6 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
-from sgscrape.sgpostal import parse_address_intl
 import json
 
 
@@ -18,31 +17,6 @@ HEADERS = {
 }
 MISSING = "<MISSING>"
 log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
-
-
-def getAddress(raw_address):
-    try:
-        if raw_address is not None and raw_address != MISSING:
-            data = parse_address_intl(raw_address)
-            street_address = data.street_address_1
-            if data.street_address_2 is not None:
-                street_address = street_address + " " + data.street_address_2
-            city = data.city
-            state = data.state
-            zip_postal = data.postcode
-            if street_address is None or len(street_address) == 0:
-                street_address = MISSING
-            if city is None or len(city) == 0:
-                city = MISSING
-            if state is None or len(state) == 0:
-                state = MISSING
-            if zip_postal is None or len(zip_postal) == 0:
-                zip_postal = MISSING
-            return street_address, city, state, zip_postal
-    except Exception as e:
-        log.info(f"No valid address {e}")
-        pass
-    return MISSING, MISSING, MISSING, MISSING
 
 
 def pull_content(url, num=0):
@@ -72,8 +46,25 @@ def fetch_data():
         for row in contents:
             info = row.find("div", {"class": "details"})
             location_name = info.find("div", {"class": "itemName"}).text.strip()
-            raw_address = info.find("ul").get_text(strip=True, separator=",")
-            street_address, city, state, zip_postal = getAddress(raw_address)
+            raw_address = (
+                info.find("ul")
+                .get_text(strip=True, separator="@@")
+                .replace("HAPPY VALLEY,", "")
+                .strip()
+            )
+            addr = raw_address.split("@@")
+            if len(addr) == 4:
+                street_address = " ".join((addr[0] + "," + addr[1]).split())
+                city_state = addr[2].split(",")
+                city = city_state[0].replace("(CHARNY)", "").strip()
+                state = city_state[1].strip()
+                zip_postal = addr[3].strip()
+            else:
+                street_address = addr[0].strip()
+                city_state = addr[1].split(",")
+                city = city_state[0].strip()
+                state = city_state[1].strip()
+                zip_postal = addr[2].strip()
             country_code = "CA"
             phone = info.find("a", {"class": "tel-link"}).text.strip()
             location_type = MISSING
@@ -113,6 +104,7 @@ def fetch_data():
                 latitude=latitude,
                 longitude=longitude,
                 hours_of_operation=hours_of_operation,
+                raw_address=raw_address,
             )
             num += 1
         page += 1

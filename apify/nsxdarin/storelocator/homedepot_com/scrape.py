@@ -4,6 +4,7 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
+import time
 
 logger = SgLogSetup().get_logger("homedepot_com")
 
@@ -41,61 +42,80 @@ def fetch_data():
                             if surl not in locs:
                                 locs.append(surl)
     for loc in locs:
-        logger.info("Pulling Location %s..." % loc)
-        website = "homedepot.com"
-        typ = "<MISSING>"
-        hours = ""
-        name = ""
-        add = ""
-        city = ""
-        state = ""
-        zc = ""
-        country = "US"
-        store = ""
-        phone = ""
-        lat = ""
-        lng = ""
-        phone = ""
-        r2 = session.get(loc, headers=headers)
-        for line2 in r2.iter_lines():
-            if "<h1" in line2:
-                name = line2.split("<h1")[1].split('">')[1].split("<")[0]
-            if '"stores":[{' in line2:
-                add = line2.split('"street":"')[1].split('"')[0]
-                city = line2.split('"city":"')[1].split('"')[0]
-                state = line2.split('"state":"')[1].split('"')[0]
-                zc = line2.split('"postalCode":"')[1].split('"')[0]
-                store = line2.split('"storeId":"')[1].split('"')[0]
-                lng = line2.split('"lng":')[1].split("}")[0]
-                lat = line2.split('"lat":')[1].split(",")[0]
-            if '"openingHours":["' in line2:
-                hours = (
-                    line2.split('"openingHours":["')[1]
-                    .split('"],')[0]
-                    .replace('","', "; ")
-                    .replace('"', "")
-                )
-            if phone == "" and 'href="tel:' in line2:
-                phone = line2.split('href="tel:')[1].split('"')[0]
-        if hours == "":
-            hours = "<MISSING>"
-        if "/designcenter" not in loc:
-            yield SgRecord(
-                locator_domain=website,
-                page_url=loc,
-                location_name=name,
-                street_address=add,
-                city=city,
-                state=state,
-                zip_postal=zc,
-                country_code=country,
-                phone=phone,
-                location_type=typ,
-                store_number=store,
-                latitude=lat,
-                longitude=lng,
-                hours_of_operation=hours,
-            )
+        Found = True
+        rcount = 0
+        while Found and rcount <= 3:
+            try:
+                rcount = rcount + 1
+                time.sleep(3)
+                logger.info("Pulling Location %s..." % loc)
+                website = "homedepot.com"
+                typ = "<MISSING>"
+                hours = ""
+                name = ""
+                add = ""
+                city = ""
+                state = ""
+                zc = ""
+                country = "US"
+                store = ""
+                phone = ""
+                lat = ""
+                lng = ""
+                phone = ""
+                r2 = session.get(loc, headers=headers)
+                for line2 in r2.iter_lines():
+                    if "<h1" in line2:
+                        name = line2.split("<h1")[1].split('">')[1].split("<")[0]
+                    if '"stores":[{' in line2:
+                        Found = False
+                        add = line2.split('"street":"')[1].split('"')[0]
+                        city = line2.split('"city":"')[1].split('"')[0]
+                        state = line2.split('"state":"')[1].split('"')[0]
+                        zc = line2.split('"postalCode":"')[1].split('"')[0]
+                        store = line2.split('"storeId":"')[1].split('"')[0]
+                        lng = line2.split('"lng":')[1].split("}")[0]
+                        lat = line2.split('"lat":')[1].split(",")[0]
+                    if '"openingHours":["' in line2:
+                        hours = (
+                            line2.split('"openingHours":["')[1]
+                            .split('"],')[0]
+                            .replace('","', "; ")
+                            .replace('"', "")
+                        )
+                    if phone == "" and 'href="tel:' in line2:
+                        phone = line2.split('href="tel:')[1].split('"')[0]
+                if hours == "":
+                    hours = "<MISSING>"
+                if state == "PR":
+                    country = "Puerto Rico"
+                    state = "<MISSING>"
+                if state == "VI":
+                    country = "US Virgin Islands"
+                    state = "<MISSING>"
+                if state == "GU":
+                    country = "Guam"
+                    state = "<MISSING>"
+                if "/designcenter" not in loc:
+                    yield SgRecord(
+                        locator_domain=website,
+                        page_url=loc,
+                        location_name=name,
+                        street_address=add,
+                        city=city,
+                        state=state,
+                        zip_postal=zc,
+                        country_code=country,
+                        phone=phone,
+                        location_type=typ,
+                        store_number=store,
+                        latitude=lat,
+                        longitude=lng,
+                        hours_of_operation=hours,
+                    )
+            except:
+                pass
+
     website = "homedepot.com"
     typ = "<MISSING>"
     hours = "Mon-Sat 9:00am - 7:00pm; Sun 10:00am - 5:00pm"

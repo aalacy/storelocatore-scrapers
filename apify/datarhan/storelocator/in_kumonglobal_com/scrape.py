@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import json
 from lxml import etree
 
@@ -22,11 +21,21 @@ def fetch_data():
         "x-requested-with": "XMLHttpRequest",
     }
 
+    frm_my = {
+        "store_locatore_search_input": "Kuala Lumpur Kuala Lumpur, Malaysia",
+        "store_locatore_search_lat": "3.139003",
+        "store_locatore_search_lng": "101.686855",
+        "store_locatore_search_radius": "2000",
+        "store_locator_category": "",
+        "action": "make_search_request",
+        "lat": "3.139003",
+        "lng": "101.686855",
+    }
     frm_in = {
         "store_locatore_search_input": "New Delhi, India , India",
         "store_locatore_search_lat": "28.6139391",
         "store_locatore_search_lng": "77.2090212",
-        "store_locatore_search_radius": "500",
+        "store_locatore_search_radius": "20000",
         "store_locator_category": "",
         "action": "make_search_request",
         "lat": "28.6139391",
@@ -37,7 +46,7 @@ def fetch_data():
         "store_locatore_search_input": "Brunei brunei, Brunei Darussalam",
         "store_locatore_search_lat": "4.535277",
         "store_locatore_search_lng": "114.727669",
-        "store_locatore_search_radius": "100",
+        "store_locatore_search_radius": "20000",
         "store_locator_category": "",
         "action": "make_search_request",
         "lat": "4.535277",
@@ -48,7 +57,7 @@ def fetch_data():
         "store_locatore_search_input": "Sangkat Tumnob Teuk, Khan Chamkarmon, Phnom Penh Phnom Penh, Cambodia",
         "store_locatore_search_lat": "11.5510525",
         "store_locatore_search_lng": "104.9273392",
-        "store_locatore_search_radius": "200",
+        "store_locatore_search_radius": "20000",
         "store_locator_category": "",
         "action": "make_search_request",
         "lat": "11.5510525",
@@ -59,7 +68,7 @@ def fetch_data():
         "store_locatore_search_input": "ln. Ahmad Yani No. 37 Utan Kayu Selatan Jakarta INDONESIA Jakarta, Indonesia",
         "store_locatore_search_lat": "-6.2009301",
         "store_locatore_search_lng": "106.8730712",
-        "store_locatore_search_radius": "25",
+        "store_locatore_search_radius": "20000",
         "store_locator_category": "",
         "action": "make_search_request",
         "lat": "-6.2009301",
@@ -70,7 +79,7 @@ def fetch_data():
         "store_locatore_search_input": "19th Floor Philamlife Tower, 8767 Paseo de Roxas, Makati,, 1226 Metro Manila, Philippines Metro Manila, Philippines",
         "store_locatore_search_lat": "14.5572638",
         "store_locatore_search_lng": "121.021859",
-        "store_locatore_search_radius": "200",
+        "store_locatore_search_radius": "20000",
         "store_locator_category": "",
         "action": "make_search_request",
         "lat": "14.5572638",
@@ -81,7 +90,7 @@ def fetch_data():
         "store_locatore_search_input": "Singapore, Singapore",
         "store_locatore_search_lat": "1.352083",
         "store_locatore_search_lng": "103.819836",
-        "store_locatore_search_radius": "200",
+        "store_locatore_search_radius": "20000",
         "store_locator_category": "",
         "action": "make_search_request",
         "lat": "1.352083",
@@ -92,7 +101,7 @@ def fetch_data():
         "store_locatore_search_input": "Thailand , Thailand",
         "store_locatore_search_lat": "15.870032",
         "store_locatore_search_lng": "100.992541",
-        "store_locatore_search_radius": "200",
+        "store_locatore_search_radius": "20000",
         "store_locator_category": "",
         "action": "make_search_request",
         "lat": "15.870032",
@@ -103,7 +112,7 @@ def fetch_data():
         "store_locatore_search_input": "Ho Chi Minh, Viet Nam",
         "store_locatore_search_lat": "10.8230989",
         "store_locatore_search_lng": "106.6296638",
-        "store_locatore_search_radius": "25",
+        "store_locatore_search_radius": "20000",
         "store_locator_category": "",
         "action": "make_search_request",
         "lat": "10.8230989",
@@ -118,6 +127,7 @@ def fetch_data():
         "sg": frm_sg,
         "th": frm_th,
         "vn": frm_vn,
+        "my": frm_my,
     }
     for c, frm in countries.items():
         response = session.post(start_url.format(c), headers=hdr, data=frm)
@@ -147,6 +157,7 @@ def fetch_data():
                 loc_dom.xpath('//li[span[contains(text(), "Phone: ")]]/text()')[-1]
                 .strip()
                 .split("/")[0]
+                .split(",")[0]
             )
             hoo = loc_dom.xpath(
                 '//li[span[strong[contains(text(), "Schedule")]]]//text()'
@@ -156,10 +167,25 @@ def fetch_data():
             hoo = [e.strip() for e in hoo if e.strip()]
             hoo = " ".join(hoo)
             if "Schedule" in hoo:
-                hoo = hoo.split("Schedule")[1]
-            hoo = hoo.split("Parent Orientation")[0]
+                if "Schedule:" in hoo:
+                    hoo = hoo.split("Parent")[0].replace("Kasthuri", "")
+                else:
+                    hoo = hoo.split("Schedule")[1]
+            if "Schedule " in hoo:
+                hoo = hoo.split("Schedule ")[1]
+            hoo = (
+                hoo.split("Parent Orientation")[0]
+                .split(".com ")[-1]
+                .split("*")[0]
+                .strip()
+            )
             if "Please contact the center for more details" in hoo:
                 hoo = ""
+            if not hoo:
+                hoo = loc_dom.xpath(
+                    '//div[@class="store_locator_content"]/ul/li[4]/text()'
+                )
+                hoo = " ".join([e.strip() for e in hoo])
 
             item = SgRecord(
                 locator_domain=domain,
@@ -169,7 +195,7 @@ def fetch_data():
                 city=addr.city,
                 state=addr.state,
                 zip_postal=addr.postcode,
-                country_code=addr.country,
+                country_code=c,
                 store_number="",
                 phone=phone,
                 location_type="",
@@ -186,7 +212,11 @@ def scrape():
     with SgWriter(
         SgRecordDeduper(
             SgRecordID(
-                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+                {
+                    SgRecord.Headers.LOCATION_NAME,
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.PAGE_URL,
+                }
             )
         )
     ) as writer:

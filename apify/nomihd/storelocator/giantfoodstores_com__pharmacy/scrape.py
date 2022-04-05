@@ -96,7 +96,7 @@ class _SearchIteration(SearchIteration):
                     except:
                         pass
 
-                    page_url = "<MISSING>"
+                    page_url = "https://giantfoodstores.com/pharmacy"
                     try:
                         store_number = location_name.split("#")[1].strip()
                     except:

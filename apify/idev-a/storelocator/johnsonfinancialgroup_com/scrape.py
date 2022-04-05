@@ -35,8 +35,8 @@ def fetch_data():
                 "Filters": {
                     "query": "",
                     "branches": "true",
-                    "surchargeFreeAtms": "true",
-                    "driveUpAtms": "true",
+                    "surchargeFreeAtms": "false",
+                    "driveUpAtms": "false",
                 },
                 "Geolocation": {"Lat": 37.09024, "Lng": -95.712891},
             }
@@ -59,7 +59,7 @@ def fetch_data():
                     )
                     hours = [
                         ": ".join(hh.stripped_strings)
-                        for hh in sp1.select("table.hours-table tbody tr")
+                        for hh in sp1.select("table.hours-table")[0].select("tr")
                     ]
                 yield SgRecord(
                     page_url=page_url,

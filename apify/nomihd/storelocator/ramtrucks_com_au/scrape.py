@@ -65,10 +65,57 @@ def fetch_data():
             log.info(page_url)
             store_req = session.get(page_url, headers=headers)
             store_sel = lxml.html.fromstring(store_req.text)
-            location_type = ", ".join(
-                store_sel.xpath('//li[contains(@class,"ldidTabsItem")]//text()')
+
+            typ_list = []
+            sales_addr = ", ".join(
+                store_sel.xpath(
+                    '//div[@data-id="ldidSales"]/div[@class="ldidItemWrapper"][./div[contains(text(),"Address:")]]/div[@class="ldidText"]/text()'
+                )
             ).strip()
-            hours_of_operation = "<MISSING>"
+
+            service_addr = ", ".join(
+                store_sel.xpath(
+                    '//div[@data-id="ldidService"]/div[@class="ldidItemWrapper"][./div[contains(text(),"Address:")]]/div[@class="ldidText"]/text()'
+                )
+            ).strip()
+
+            if len(sales_addr) > 0:
+                typ_list.append("sales")
+            else:
+                sales_addr = service_addr  # when sales is missing
+
+            if sales_addr == service_addr:
+                typ_list.append("service")
+
+            parts_addr = ", ".join(
+                store_sel.xpath(
+                    '//div[@data-id="ldidParts"]/div[@class="ldidItemWrapper"][./div[contains(text(),"Address:")]]/div[@class="ldidText"]/text()'
+                )
+            ).strip()
+
+            if sales_addr == parts_addr:
+                typ_list.append("parts")
+
+            location_type = ", ".join(typ_list).strip()
+
+            hours_of_operation = "; ".join(
+                store_sel.xpath(
+                    '//div[@data-id="ldidSales"]/div[./div[contains(text(),"Hours")]]/div[@class="ldidText"]/text()'
+                )
+            ).strip()
+            if len(hours_of_operation) <= 0:
+                hours_of_operation = "; ".join(
+                    store_sel.xpath(
+                        '//div[@data-id="ldidService"]/div[./div[contains(text(),"Hours")]]/div[@class="ldidText"]/text()'
+                    )
+                ).strip()
+
+            if len(hours_of_operation) <= 0:
+                hours_of_operation = "; ".join(
+                    store_sel.xpath(
+                        '//div[@data-id="ldidParts"]/div[./div[contains(text(),"Hours")]]/div[@class="ldidText"]/text()'
+                    )
+                ).strip()
 
             store_number = page_url.split("=")[1].strip()
 

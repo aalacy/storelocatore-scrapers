@@ -49,8 +49,7 @@ def fetch_data():
             state = pa.state
             state = state.strip() if state else MISSING
 
-            zip_postal = pa.postcode
-            zip_postal = zip_postal.strip() if zip_postal else MISSING
+            zip_postal = MISSING
             country_code = "BR"
             latitude = loc["latitud"]
             longitude = loc["longitud"]
