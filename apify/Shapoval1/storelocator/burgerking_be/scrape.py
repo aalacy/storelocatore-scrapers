@@ -52,7 +52,10 @@ def fetch_data(sgw: SgWriter):
         store_number = j.get("externalId") or "<MISSING>"
         latitude = a.get("latitude") or "<MISSING>"
         longitude = a.get("longitude") or "<MISSING>"
-        phone = j.get("contact").get("phone") or "<MISSING>"
+        try:
+            phone = j.get("contact").get("phone") or "<MISSING>"
+        except:
+            phone = "<MISSING>"
         hours = j.get("businessHours") or "<MISSING>"
         hours_of_operation = "<MISSING>"
         if hours != "<MISSING>":

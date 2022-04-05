@@ -100,7 +100,7 @@ def fetch_data():
     logger.info("Pulling Stores")
     states = []
     for line in r.iter_lines():
-        if '<a href="/findus/list/services/' in line and "United" in line:
+        if '<a href="/findus/list/services/' in line:
             states.append(
                 "https://www.tesla.com" + line.split('href="')[1].split('"')[0]
             )

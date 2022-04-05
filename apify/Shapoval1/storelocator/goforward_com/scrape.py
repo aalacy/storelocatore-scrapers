@@ -28,9 +28,20 @@ def fetch_data(sgw: SgWriter):
         location_name = j.get("name")
         location_type = "<MISSING>"
         a = j.get("address")
-        street_address = a.get("lines")[0]
-        if str(street_address).find(",") != -1:
-            street_address = str(street_address).split(",")[1].strip()
+        ad = " ".join(a.get("lines"))
+        street_address = (
+            ad.replace("Westfield UTC,", "")
+            .replace("Bellevue Square Mall", "")
+            .replace("Brickell City Centre", "")
+            .replace("Cherry Creek North", "")
+            .strip()
+        )
+        street_address = (
+            street_address.replace("Buckhead Village District", "")
+            .replace("Prudential Center Retail", "")
+            .replace("Walt Whitman Shops", "")
+            .strip()
+        )
         state = a.get("state") or "<MISSING>"
         postal = a.get("postCode") or "<MISSING>"
         country_code = "US"
@@ -67,7 +78,7 @@ def fetch_data(sgw: SgWriter):
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hours_of_operation,
-            raw_address=f"{street_address} {city}, {state} {postal}",
+            raw_address=f"{ad} {city}, {state} {postal}",
         )
 
         sgw.write_row(row)

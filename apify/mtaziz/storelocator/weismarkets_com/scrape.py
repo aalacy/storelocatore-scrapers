@@ -71,7 +71,7 @@ def get_page_urls():
     stores_link_xpath = (
         '//*[contains(@data-original-title, "Stores") and contains(@href, "stores#")]'
     )
-    WebDriverWait(driver, 60).until(
+    WebDriverWait(driver, 30).until(
         EC.element_to_be_clickable((By.XPATH, stores_link_xpath))
     )
     driver.find_element_by_xpath(stores_link_xpath).click()

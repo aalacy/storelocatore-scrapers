@@ -56,6 +56,8 @@ def fetch_data(sgw: SgWriter):
             hours_of_operation = hours_of_operation.split("Öffnungszeiten können")[
                 0
             ].strip()
+        if latitude == "<MISSING>" and city == "<MISSING>":
+            continue
 
         row = SgRecord(
             locator_domain=locator_domain,

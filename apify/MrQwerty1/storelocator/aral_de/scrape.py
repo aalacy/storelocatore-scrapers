@@ -10,10 +10,7 @@ def fetch_data(coords, sgw: SgWriter):
     lat, lng = coords
     api = f"https://tankstellenfinder.aral.de/api/v1/locations/nearest_to?lat={lat}&lng={lng}&autoload=true&travel_mode=driving&avoid_tolls=false&avoid_highways=false&show_stations_on_route=true&corridor_radius=5&format=json"
     r = session.get(api, headers=headers)
-    try:
-        js = r.json()
-    except:
-        return
+    js = r.json()
 
     for j in js:
         location_name = j.get("name")
@@ -68,7 +65,7 @@ if __name__ == "__main__":
     locator_domain = "https://www.aral.de/"
     search = DynamicGeoSearch(
         country_codes=SearchableCountries.ALL,
-        expected_search_radius_miles=50,
+        expected_search_radius_miles=40,
     )
     with SgWriter(
         SgRecordDeduper(

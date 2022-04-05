@@ -1,4 +1,3 @@
-from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
@@ -8,78 +7,126 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 def fetch_data(sgw: SgWriter):
 
-    locator_domain = "https://www.anthonyvincenailspa.com"
+    locator_domain = "https://www.anthonyvincenailspa.co"
+    states = [
+        "AK",
+        "AL",
+        "AR",
+        "AZ",
+        "CA",
+        "CO",
+        "CT",
+        "DC",
+        "DE",
+        "FL",
+        "GA",
+        "HI",
+        "IA",
+        "ID",
+        "IL",
+        "IN",
+        "KS",
+        "KY",
+        "LA",
+        "MA",
+        "MD",
+        "ME",
+        "MI",
+        "MN",
+        "MO",
+        "MS",
+        "MT",
+        "NC",
+        "ND",
+        "NE",
+        "NH",
+        "NJ",
+        "NM",
+        "NV",
+        "NY",
+        "OH",
+        "OK",
+        "OR",
+        "PA",
+        "RI",
+        "SC",
+        "SD",
+        "TN",
+        "TX",
+        "UT",
+        "VA",
+        "VT",
+        "WA",
+        "WI",
+        "WV",
+        "WY",
+    ]
+
+    session = SgRequests()
 
     headers = {
         "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0",
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+        "Accept": "application/json, text/plain, */*",
         "Accept-Language": "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3",
+        "x-wix-brand": "wix",
+        "authorization": "wixcode-pub.2d39b62408ccb1d7a597175889997e88bcbbbdd9.eyJpbnN0YW5jZUlkIjoiMmM5YjYzNjAtZTI0NS00ZWFkLWFiNDktYWVkMGFkYzUwMDdmIiwiaHRtbFNpdGVJZCI6IjU5MzY0NTFkLWIyYzktNDVmNC1hYjYxLTYzOThhYjk4YzUxNCIsInVpZCI6bnVsbCwicGVybWlzc2lvbnMiOm51bGwsImlzVGVtcGxhdGUiOmZhbHNlLCJzaWduRGF0ZSI6MTY0NjkyMzk0MDg0MywiYWlkIjoiODM3MzdlMjItZTI5MS00ZTg0LTkxNTctYjgyN2FlOWU0ZGZkIiwiYXBwRGVmSWQiOiJDbG91ZFNpdGVFeHRlbnNpb24iLCJpc0FkbWluIjpmYWxzZSwibWV0YVNpdGVJZCI6IjY5ODJlYjZiLWQyM2YtNDUyMi05YTY1LWU3YTU2ZDU4NzJhNCIsImNhY2hlIjpudWxsLCJleHBpcmF0aW9uRGF0ZSI6bnVsbCwicHJlbWl1bUFzc2V0cyI6IkFkc0ZyZWUsSGFzRUNvbW1lcmNlLFNob3dXaXhXaGlsZUxvYWRpbmcsSGFzRG9tYWluIiwidGVuYW50IjpudWxsLCJzaXRlT3duZXJJZCI6IjY3OGVkMTcxLTA1NDktNDM3OS1hNzBlLWI0ZTdjMWQ5ZTNjOCIsImluc3RhbmNlVHlwZSI6InB1YiIsInNpdGVNZW1iZXJJZCI6bnVsbH0=",
+        "X-Wix-Client-Artifact-Id": "wix-thunderbolt",
+        "commonConfig": "%7B%22brand%22%3A%22wix%22%2C%22BSI%22%3A%22d622e595-93f1-451d-aee5-b9d4e5377c0e%7C4%22%7D",
+        "Origin": "https://www.anthonyvincenailspa.com",
         "Connection": "keep-alive",
-        "Upgrade-Insecure-Requests": "1",
-        "Sec-Fetch-Dest": "document",
-        "Sec-Fetch-Mode": "navigate",
-        "Sec-Fetch-Site": "none",
-        "Sec-Fetch-User": "?1",
+        "Referer": "https://www.anthonyvincenailspa.com/_partials/wix-thunderbolt/dist/clientWorker.72ed8094.bundle.min.js",
+        "Sec-Fetch-Dest": "empty",
+        "Sec-Fetch-Mode": "cors",
+        "Sec-Fetch-Site": "same-origin",
         "TE": "trailers",
     }
-
-    r = session.get("https://www.anthonyvincenailspa.com/locations", headers=headers)
-    tree = html.fromstring(r.text)
-    div = tree.xpath(
-        '//text[@font-family="BaskervilleDisplayPT-Regular,Baskerville Display PT"]'
-    )
-
-    for d in div:
-        state = "".join(d.xpath(".//text()")).replace("\n", "").strip()
-        state = " ".join(state.split())
-
-        headers = {
-            "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0",
-            "Accept": "*/*",
-            "Accept-Language": "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3",
-            "X-XSRF-TOKEN": "1635520207|sdWOI2fCIGJJ",
-            "commonConfig": '{"brand":"wix","bsi":"85a1a8f4-f269-49eb-bcbe-77ed48d1c281|3","consentPolicy":{"essential":true,"functional":true,"analytics":true,"advertising":true,"dataToThirdParty":true},"consentPolicyHeader":{}}',
-            "x-wix-site-revision": "2572",
-            "Content-Type": "application/json",
-            "Origin": "https://www.anthonyvincenailspa.com",
-            "Connection": "keep-alive",
-            "Referer": "https://www.anthonyvincenailspa.com/_partials/wix-thunderbolt/dist/clientWorker.f3a09d43.bundle.min.js",
-            "Sec-Fetch-Dest": "empty",
-            "Sec-Fetch-Mode": "cors",
-            "Sec-Fetch-Site": "same-origin",
-            "TE": "trailers",
+    for s in states:
+        json_data = {
+            "collectionName": "Location",
+            "dataQuery": {
+                "filter": {
+                    "state": {
+                        "$contains": f"{s}",
+                    },
+                },
+                "sort": [],
+                "paging": {
+                    "offset": 0,
+                    "limit": 100,
+                },
+            },
+            "options": {},
+            "include": None,
+            "segment": "LIVE",
+            "appId": "4b69d454-3710-4f4b-bdad-751fdf5bd58c",
         }
 
-        data = (
-            '["Location",{"state":{"$contains":"'
-            + state
-            + '"}},[],0,100,null,null,null]'
-        )
-
         r = session.post(
-            "https://www.anthonyvincenailspa.com/_api/wix-code-public-dispatcher/siteview/wix/data-web.jsw/find.ajax?gridAppId=4b69d454-3710-4f4b-bdad-751fdf5bd58c&instance=wixcode-pub.35f207bd3ef0f582f6c8f35bed1d2a79aa6102f3.eyJpbnN0YW5jZUlkIjoiMmM5YjYzNjAtZTI0NS00ZWFkLWFiNDktYWVkMGFkYzUwMDdmIiwiaHRtbFNpdGVJZCI6IjU5MzY0NTFkLWIyYzktNDVmNC1hYjYxLTYzOThhYjk4YzUxNCIsInVpZCI6bnVsbCwicGVybWlzc2lvbnMiOm51bGwsImlzVGVtcGxhdGUiOmZhbHNlLCJzaWduRGF0ZSI6MTYzNTUyMDIyMzcwNCwiYWlkIjoiMmRiMDk3Y2QtYzg3YS00ZDBmLWFiNmMtZWQ1ZTBmNTVkNjkyIiwiYXBwRGVmSWQiOiJDbG91ZFNpdGVFeHRlbnNpb24iLCJpc0FkbWluIjpmYWxzZSwibWV0YVNpdGVJZCI6IjY5ODJlYjZiLWQyM2YtNDUyMi05YTY1LWU3YTU2ZDU4NzJhNCIsImNhY2hlIjpudWxsLCJleHBpcmF0aW9uRGF0ZSI6bnVsbCwicHJlbWl1bUFzc2V0cyI6IkFkc0ZyZWUsU2hvd1dpeFdoaWxlTG9hZGluZyxIYXNFQ29tbWVyY2UsSGFzRG9tYWluIiwidGVuYW50IjpudWxsLCJzaXRlT3duZXJJZCI6IjY3OGVkMTcxLTA1NDktNDM3OS1hNzBlLWI0ZTdjMWQ5ZTNjOCIsImluc3RhbmNlVHlwZSI6InB1YiIsInNpdGVNZW1iZXJJZCI6bnVsbH0=&viewMode=site",
+            "https://www.anthonyvincenailspa.com/_api/cloud-data/v1/wix-data/collections/query",
             headers=headers,
-            data=data,
+            json=json_data,
         )
         js = r.json()
-        for j in js["result"]["items"]:
+        for j in js["items"]:
+            a = j.get("address")
 
             page_url = "https://www.anthonyvincenailspa.com/locations"
-            location_name = j.get("f")
-            street_address = "".join(j.get("address").get("formatted"))
+            location_name = j.get("f") or "<MISSING>"
+            street_address = "".join(a.get("formatted")) or "<MISSING>"
             if street_address.find(",") != -1:
                 street_address = street_address.split(",")[0].strip()
-            phone = j.get("phoneNumber") or "<MISSING>"
-            if phone == "TBA" or phone == "TBD":
-                phone = "<MISSING>"
-            postal = j.get("zipcode")
+            state = j.get("state") or "<MISSING>"
+            postal = j.get("zipcode") or "<MISSING>"
             country_code = "US"
-            city = j.get("city")
+            city = j.get("city") or "<MISSING>"
             try:
                 latitude = j.get("address").get("location").get("latitude")
                 longitude = j.get("address").get("location").get("longitude")
             except:
                 latitude, longitude = "<MISSING>", "<MISSING>"
+            phone = j.get("phoneNumber")
+            if phone == "TBA" or phone == "TBD":
+                phone = "<MISSING>"
             hours_of_operation = (
                 "".join(j.get("operatingHours"))
                 .replace("\n", " ")
@@ -107,6 +154,7 @@ def fetch_data(sgw: SgWriter):
                 latitude=latitude,
                 longitude=longitude,
                 hours_of_operation=hours_of_operation,
+                raw_address=f"{street_address} {city}, {state} {postal}",
             )
 
             sgw.write_row(row)

@@ -34,7 +34,7 @@ Apify.main(async () => {
         const [streetAddress, city] = splitted;
         const [state, zip] = stateAndZip.split(' ');
 
-        const CITY_REGEX = new RegExp(`\s *${city}\s*`); // eslint-disable-line
+        const CITY_REGEX = new RegExp(`\s*${city}\s*`); // eslint-disable-line
         const cleaned_address = streetAddress.replace(CITY_REGEX, '').trim();
 
         return {

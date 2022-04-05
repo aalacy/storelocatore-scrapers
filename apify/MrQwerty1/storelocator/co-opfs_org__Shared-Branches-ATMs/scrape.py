@@ -12,7 +12,12 @@ logger = sglog.SgLogSetup().get_logger(logger_name="co-opcreditunions.org")
 
 def fetch_data(sgw: SgWriter):
     search = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA], expected_search_radius_miles=8
+        country_codes=[
+            SearchableCountries.USA,
+            SearchableCountries.PUERTO_RICO,
+            SearchableCountries.GERMANY,
+        ],
+        expected_search_radius_miles=6,
     )
     for _zip in search:
         api = f"https://co-opcreditunions.org/wp-content/themes/coop019901/inc/locator/locator-csv.php?loctype=AS&zip={_zip}&maxradius=10&country=&Submit=Search%22"
@@ -37,11 +42,7 @@ def fetch_data(sgw: SgWriter):
                 if len(postal) == 4:
                     postal = f"0{postal}"
 
-                country = j.get("Country") or ""
-                if "STATES" in country:
-                    country_code = "US"
-                else:
-                    country_code = "GB"
+                country = j.get("Country") or search.current_country()
                 phone = j.get("Phone") or ""
                 if "/>" in phone:
                     phone = phone.split("/>")[-1].strip()
@@ -83,7 +84,7 @@ def fetch_data(sgw: SgWriter):
                     city=city,
                     state=state,
                     zip_postal=postal,
-                    country_code=country_code,
+                    country_code=country,
                     location_type=location_type,
                     phone=phone,
                     latitude=latitude,

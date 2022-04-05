@@ -20,6 +20,7 @@ def fetch_data(sgw: SgWriter):
     div = "".join(tree.xpath('//script[contains(text(), "locationList")]/text()'))
     js = json.loads(div)
     for j in js["props"]["pageProps"]["locationLists"]["locationList"]:
+
         slug = j.get("name")
         page_url = f"https://cars.honda.ae/en/our-locations/{slug}/"
         location_name = j.get("Location_Name")
@@ -31,20 +32,15 @@ def fetch_data(sgw: SgWriter):
         city = j.get("emirates")
         r = session.get(page_url, headers=headers)
         tree = html.fromstring(r.text)
-        map_link = "".join(tree.xpath("//iframe/@src"))
+        map_link = "".join(tree.xpath('//script[@type="application/json"]/text()'))
+        s_js = json.loads(map_link)["props"]["pageProps"]["locationDetail"]
+        map_link = s_js.get("Google_Map")
         latitude = map_link.split("!3d")[1].strip().split("!")[0].strip()
         longitude = map_link.split("!2d")[1].strip().split("!")[0].strip()
+        store_number = s_js.get("Location_Id")
         phone_list = tree.xpath('//a[contains(@href, "tel")]/@href')
         phone = "".join(phone_list[0]).replace("tel:", "").strip()
-        hours_of_operation = (
-            " ".join(
-                tree.xpath(
-                    '//div[contains(@class, "LocationDetailTile_locationAddlInfoContainer")]/following::table[1]//tr//td//text()'
-                )
-            )
-            .replace("\n", "")
-            .strip()
-        )
+        hours_of_operation = f"{s_js.get('Opening_Time')} - {s_js.get('Closing_Time')}"
 
         row = SgRecord(
             locator_domain=locator_domain,
@@ -55,7 +51,7 @@ def fetch_data(sgw: SgWriter):
             state=SgRecord.MISSING,
             zip_postal=SgRecord.MISSING,
             country_code=country_code,
-            store_number=SgRecord.MISSING,
+            store_number=store_number,
             phone=phone,
             location_type=location_type,
             latitude=latitude,

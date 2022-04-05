@@ -126,6 +126,7 @@ def get_latlng_for_thurston(http: SgRequests):
             logger.info(f"[{idx}] Pulling the data from: {url_province} ")
             response_dict = get_json_data_from_features_master_page(http, url_province)
             data = response_dict["data"]
+            location_name = ""
             for j in data["props"]["render"]["compProps"].values():
                 skin = j.get("skin") or ""
                 if "WRichTextNewSkin" in skin:
@@ -197,8 +198,8 @@ def get_latlng_for_thurston(http: SgRequests):
 
                 longitude = locations["longitude"]
                 logger.info(f"[{idx}] Longitude: {longitude}")
-                if "Laurier Optical Thurston" in location_name:
-                    return latitude, longitude
+                logger.info(f"Location Name: {location_name}")
+                return latitude, longitude
 
 
 def fetch_records_on(http: SgRequests):

@@ -15,7 +15,7 @@ def fetch_data():
         driver.get(start_url)
         dom = etree.HTML(driver.page_source)
 
-    all_locations = dom.xpath('//div[@class="lista-lojas-individual  sponsor"]')
+    all_locations = dom.xpath('//div[contains(@class, "lista-lojas-individual")]')
     for poi_html in all_locations:
         location_name = poi_html.xpath(".//h2/text()")[0]
         raw_address = poi_html.xpath(

@@ -1,3 +1,4 @@
+import json
 from sglogging import sglog
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
@@ -23,44 +24,60 @@ def fetch_data():
         url = "https://www.carryout.ie/find-your-local-store/"
         r = session.get(url, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
-        loclist = soup.find("div", {"class": "gv-map-entries"}).findAll(
-            "div", {"class": "gv-map-view"}
-        )
+        loclist = soup.findAll("div", {"class": "gv-field-8-9"})
         for loc in loclist:
-            loc = loc.get_text(separator="|", strip=True).replace("|", " ")
-            phone = MISSING
-            loc = loc.split("Store Address:")
-            location_name = loc[0].replace("Store Name:", "")
-            log.info(location_name)
-            raw_address = loc[1].split(" Store Link")[0]
-            pa = parse_address_intl(raw_address)
+            page_url = loc.find("a")["href"]
+            log.info(page_url)
+            r = session.get(page_url, headers=headers)
+            temp = r.text.split('"markers_info":[')[1].split('],"map_id_prefix"')[0]
+            temp = json.loads(temp)
+            store_number = temp["entry_id"]
+            latitude = temp["lat"]
+            longitude = temp["long"]
+            html = BeautifulSoup(temp["content"], "html.parser")
+            location_name = html.find("h4").text
+            temp = html.findAll("p")
+            raw_address = temp[0].text.replace("Address:", "")
+            try:
+                phone = (
+                    temp[1]
+                    .get_text(separator="|", strip=True)
+                    .split("|")[1]
+                    .replace("053-9481660 053-9481665", "053-9481660")
+                )
+            except:
+                phone = MISSING
+            address = raw_address.split(",")[:-1]
+            address = ", ".join(address)
+            pa = parse_address_intl(address)
 
             street_address = pa.street_address_1
             street_address = street_address if street_address else MISSING
 
-            city = pa.city
-            city = city.strip() if city else MISSING
-
             state = pa.state
             state = state.strip() if state else MISSING
-
-            zip_postal = pa.postcode
-            zip_postal = zip_postal.strip() if zip_postal else MISSING
+            try:
+                zip_postal = raw_address.split(",")
+                city = zip_postal[-2]
+                zip_postal = zip_postal[-1]
+            except:
+                zip_postal = MISSING
+                city = MISSING
             country_code = "Ireland"
             yield SgRecord(
                 locator_domain=DOMAIN,
-                page_url=url,
+                page_url=page_url,
                 location_name=location_name,
                 street_address=street_address.strip(),
                 city=city.strip(),
                 state=state.strip(),
                 zip_postal=zip_postal.strip(),
                 country_code=country_code,
-                store_number=MISSING,
+                store_number=store_number,
                 phone=phone,
                 location_type=MISSING,
-                latitude=MISSING,
-                longitude=MISSING,
+                latitude=latitude,
+                longitude=longitude,
                 hours_of_operation=MISSING,
                 raw_address=raw_address,
             )
@@ -68,11 +85,7 @@ def fetch_data():
 
 def scrape():
     with SgWriter(
-        SgRecordDeduper(
-            SgRecordID(
-                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
-            )
-        )
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.LOCATION_NAME}))
     ) as writer:
         for item in fetch_data():
             writer.write_row(item)
