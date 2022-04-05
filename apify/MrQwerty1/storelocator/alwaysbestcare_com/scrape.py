@@ -42,7 +42,7 @@ def fetch_data(sgw: SgWriter):
                 SgRecord.MISSING,
                 SgRecord.MISSING,
             )
-            if latitude == SgRecord.MISSING:
+            if latitude == SgRecord.MISSING or latitude == 0:
                 try:
                     latitude, longitude = get_coords(page_url)
                 except:
