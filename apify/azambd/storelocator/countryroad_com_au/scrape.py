@@ -106,7 +106,7 @@ def fetch_data():
 
 
 def scrape():
-    logger.info(f"Start Crawling {DOMAIN} ...")
+    logger.info(f"Start Crawling {DOMAIN} ..")
     field_defs = sp.SimpleScraperPipeline.field_definitions(
         locator_domain=sp.ConstantField(DOMAIN),
         page_url=sp.MappingField(mapping=["page_url"], part_of_record_identity=True),
