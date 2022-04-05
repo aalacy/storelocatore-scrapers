@@ -402,7 +402,7 @@ def fix_india(x):
             if not inside:
                 copy.append(whatis)
         if len(copy) > 0:
-            return ''.join(copy)
+            return "".join(copy)
         return x
     else:
         return x
