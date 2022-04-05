@@ -54,8 +54,6 @@ def fetch_data():
 
             locator_domain = website
 
-            area = "".join(_area.xpath(".//text()")).strip()
-
             area_info = "".join(_area.xpath("./@onclick")).strip()
             area_type = (
                 area_info.split(");")[0]
