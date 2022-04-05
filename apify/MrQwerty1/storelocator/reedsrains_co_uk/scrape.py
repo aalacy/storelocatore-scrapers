@@ -39,7 +39,7 @@ def get_data(slug, sgw: SgWriter):
         phone = phone.split("(")[0].strip()
 
     try:
-        source = "".join(tree.xpath("//img[@data-src-lg]/@data-src-lg"))
+        source = "".join(tree.xpath("//img[contains(@src, 'center=')]/@src"))
         latitude, longitude = source.split("&center=")[1].split("&")[0].split(",")
     except:
         latitude, longitude = SgRecord.MISSING, SgRecord.MISSING
@@ -74,7 +74,7 @@ def get_data(slug, sgw: SgWriter):
 def fetch_data(sgw: SgWriter):
     urls = get_urls()
 
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
+    with futures.ThreadPoolExecutor(max_workers=3) as executor:
         future_to_url = {executor.submit(get_data, url, sgw): url for url in urls}
         for future in futures.as_completed(future_to_url):
             future.result()

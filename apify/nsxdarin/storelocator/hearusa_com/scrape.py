@@ -32,11 +32,14 @@ def fetch_data():
             + str(clng)
             + "&max_results=25&search_radius=100&filter=28"
         )
-        r = session.get(url, headers=headers)
-        for item in json.loads(r.content):
-            lurl = item["permalink"].replace("\\", "")
-            if lurl not in locs:
-                locs.append(lurl)
+        try:
+            r = session.get(url, headers=headers)
+            for item in json.loads(r.content):
+                lurl = item["permalink"].replace("\\", "")
+                if lurl not in locs:
+                    locs.append(lurl)
+        except:
+            pass
     for loc in locs:
         logger.info("Pulling Location %s..." % loc)
         website = "hearusa.com"

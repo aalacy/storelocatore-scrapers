@@ -29,7 +29,7 @@ def fetch_data():
     # Your scraper here
 
     search_url = "https://www.greeneking-pubs.co.uk/find-us/"
-    with SgRequests() as session:
+    with SgRequests(dont_retry_status_codes=([404])) as session:
         stores_req = session.get(search_url)
         stores_sel = lxml.html.fromstring(stores_req.text)
         stores = stores_sel.xpath('//li/a[@class="pub-list__pub-name"]/@href')
@@ -37,11 +37,13 @@ def fetch_data():
             page_url = "https://www.greeneking-pubs.co.uk" + store_url
             log.info(page_url)
             store_req = session.get(page_url)
-            if (
-                not isinstance(store_req, SgRequestError)
-                and "venueId: '" not in store_req.text
-            ):
+
+            if isinstance(store_req, SgRequestError):
                 continue
+
+            if "venueId: '" not in store_req.text:
+                continue
+
             venueId = (
                 store_req.text.split("venueId: '")[1].strip().split("',")[0].strip()
             )

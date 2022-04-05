@@ -8,11 +8,12 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 def fetch_data(sgw: SgWriter):
     api = "https://www.soma.com/locations/modules/multilocation/?near_location=75022&threshold=4000&geocoder_region=&distance_unit=miles&limit=5000&services__in=&language_code=en-us&published=1&within_business=true"
     r = session.get(api, headers=headers)
-
     js = r.json()["objects"]
 
     for j in js:
-        street_address = j.get("street")
+        adr1 = j.get("street") or ""
+        adr2 = j.get("street2") or ""
+        street_address = f"{adr1} {adr2}".strip()
         city = j.get("city")
         state = j.get("state")
         postal = j.get("postal_code")

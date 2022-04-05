@@ -12,17 +12,15 @@ def fetch_data(sgw: SgWriter):
     divs = tree.xpath("//div[@class='find-shop-item']")
 
     for d in divs:
-        location_name = "".join(
-            d.xpath(".//div[@class='address-blog']/h4/text()")
-        ).strip()
+        location_name = d.xpath(".//div[@class='address-blog']/h4/text()")[0].strip()
         line = d.xpath(".//div[@class='address-blog'][1]/p/text()")
         line = list(filter(None, [l.strip() for l in line]))
 
         phone = line.pop()
-        csz = line.pop().replace(", ", "").split()
-        postal = csz.pop()
-        state = csz.pop()
-        city = " ".join(csz)
+        csz = line.pop().replace(" CA ", ", CA ").split(", ")
+        postal = csz[1].split()[-1]
+        state = csz[1].replace(postal, "").strip()
+        city = csz.pop(0)
         street_address = ", ".join(line)
         hours_of_operation = ";".join(
             d.xpath(".//h4[text()='HOURS']/following-sibling::p/text()")

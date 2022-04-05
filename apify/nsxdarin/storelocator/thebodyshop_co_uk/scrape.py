@@ -1,6 +1,9 @@
-import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 import json
 
 session = SgRequests()
@@ -9,33 +12,6 @@ headers = {
 }
 
 logger = SgLogSetup().get_logger("thebodyshop_co_uk")
-
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
 
 
 def fetch_data():
@@ -47,7 +23,6 @@ def fetch_data():
     country = "GB"
     logger.info("Pulling Stores")
     for line in r.iter_lines():
-        line = str(line.decode("utf-8"))
         if "<loc>https://www.thebodyshop.com/commerce/rest/v2/medias/Store" in line:
             smurl = (
                 "https://www.thebodyshop.com/commerce/rest/v2/medias/Store"
@@ -57,11 +32,7 @@ def fetch_data():
             )
             r2 = session.get(smurl, headers=headers)
             for line2 in r2.iter_lines():
-                line2 = str(line2.decode("utf-8"))
-                if (
-                    "<loc>https://www.thebodyshop.com/en-gb/store-finder/store/"
-                    in line2
-                ):
+                if "<loc>https://www.thebodyshop.com/en-gb/store-details/" in line2:
                     locs.append(line2.split("<loc>")[1].split("<")[0])
     for loc in locs:
         logger.info(loc)
@@ -95,7 +66,13 @@ def fetch_data():
                 if item["closed"] is True:
                     hrs = item["weekDay"] + ": Closed"
                 else:
-                    hrs = item["weekDay"] + ": " + item["opens"] + "-" + item["closes"]
+                    hrs = (
+                        item["weekDay"]
+                        + ": "
+                        + item["openingTime"]["formattedHour"]
+                        + "-"
+                        + item["closingTime"]["formattedHour"]
+                    )
                 if hours == "":
                     hours = hrs
                 else:
@@ -106,29 +83,34 @@ def fetch_data():
                 and "GALWAY" not in city
                 and "COUNTY DUB" not in city
             ):
-                yield [
-                    website,
-                    loc,
-                    name,
-                    add,
-                    city,
-                    state,
-                    zc,
-                    country,
-                    store,
-                    phone,
-                    typ,
-                    lat,
-                    lng,
-                    hours,
-                ]
+                add = add.replace("Quay,", "Quay")
+                add = add.replace("Glasgow Road,", "Glasgow Road")
+                add = add.replace("Quays,", "Quays")
+                yield SgRecord(
+                    locator_domain=website,
+                    page_url=loc,
+                    location_name=name,
+                    street_address=add,
+                    city=city,
+                    state=state,
+                    zip_postal=zc,
+                    country_code=country,
+                    phone=phone,
+                    location_type=typ,
+                    store_number=store,
+                    latitude=lat,
+                    longitude=lng,
+                    hours_of_operation=hours,
+                )
         except:
             pass
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()

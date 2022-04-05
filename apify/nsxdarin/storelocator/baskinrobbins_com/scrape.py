@@ -47,8 +47,8 @@ def fetch_data():
             loc = "https://order.baskinrobbins.com/store-selection"
             website = "baskinrobbins.com"
             status = item["status"]
-            if "INACTIVE" in status:
-                name = name + " - Temporarily Closed"
+            if "INACTIVE" in status and "TEMP" not in status:
+                name = name + " - Closed"
             try:
                 phone = item["phoneNumber"]
             except:
@@ -132,7 +132,7 @@ def fetch_data():
                 )
             except:
                 hours = "<MISSING>"
-            if add != "":
+            if add != "" and "BR-3" in store and " - Closed" not in name:
                 yield SgRecord(
                     locator_domain=website,
                     page_url=loc,

@@ -28,7 +28,7 @@ def fetch_data():
     for lat, lng in all_coords:
         frm = f"s={lat}&n={lat + 0.35}&w={lng}&e={lng + 0.45}&netto=false&city=false&service=false&beverage=false&nonfood=false"
         all_locations = session.post(start_url, data=frm, headers=hdr).json()
-        for poi in all_locations:
+        for poi in all_locations["store_items"]:
             hoo = etree.HTML(poi["store_opening"]).xpath("//text()")
             hoo = " ".join([e.strip() for e in hoo if e.strip()])
 

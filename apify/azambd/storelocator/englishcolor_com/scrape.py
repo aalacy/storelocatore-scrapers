@@ -8,7 +8,7 @@ from sglogging import sglog
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 
 website = "englishcolor.com"
 MISSING = "<MISSING>"
@@ -95,7 +95,7 @@ def getInformationFromGoogle(url):
                 }
             )
 
-    log.debug(f"Found {len(locations)} locations from map")
+    log.info(f"Found {len(locations)} locations from map")
 
     return locations
 
@@ -109,10 +109,12 @@ def fetchStores():
     googleLocations = getInformationFromGoogle(googleUrl)
 
     menuUrls = body.xpath('//ul[contains(@id, "menu-locations")]/li/a/@href')
-    log.debug(f"Total menu locations = {len(menuUrls)}")
+    log.info(f"Total menu locations = {len(menuUrls)}")
     stores = []
 
+    count = 0
     for menuUrl in menuUrls:
+        count = count + 1
         response = request_with_retries(menuUrl)
         body = html.fromstring(response.text, "lxml")
         mainDivs = body.xpath("//div[contains(@class, 'fusion-column-wrapper')]")
@@ -136,6 +138,9 @@ def fetchStores():
 
             address, hoo = allTxt.split("Hours:")
             address = address.replace(phone, "").replace(",,", ",").strip()
+            if address[-1] == ",":
+                address = address[:-1]
+            hoo = hoo.replace(", Directions", "").strip()
 
             cityCount = cityCount + 1
             stores.append(
@@ -150,7 +155,7 @@ def fetchStores():
                     "location_name": title,
                 }
             )
-        log.debug(f"Scrapped {menuUrl} total store = {cityCount}")
+        log.info(f"{count}. Scrapped {menuUrl} total store = {cityCount}")
 
     for storeIndex in range(0, len(stores)):
         store = stores[storeIndex]
@@ -215,14 +220,36 @@ def fetchStores():
                 googleLocations[index]["Found"] = 1
 
             if (
-                "Madison" in location["location_name"]
-                and "MONTGOMERY" in store["title"]
+                "MADISON" in location["location_name"].upper()
+                and "MONTGOMERY" in store["title"].upper()
             ):
                 stores[storeIndex]["location_name"] = location["location_name"]
                 stores[storeIndex]["latitude"] = location["latitude"]
                 stores[storeIndex]["longitude"] = location["longitude"]
                 googleLocations[index]["Found"] = 1
 
+            if (
+                "HOUSTON" in location["location_name"].upper()
+                and "MONTGOMERY" in store["title"].upper()
+            ):
+                log.info(location["latitude"])
+                stores[storeIndex]["location_name"] = location["location_name"]
+                stores[storeIndex]["latitude"] = location["latitude"]
+                stores[storeIndex]["longitude"] = location["longitude"]
+                googleLocations[index]["Found"] = 1
+        if stores[storeIndex]["latitude"] == MISSING:
+            for index in range(0, len(googleLocations)):
+                location = googleLocations[index]
+                if (
+                    "HOUSTON" in location["location_name"].upper()
+                    and "MONTGOMERY" in store["title"].upper()
+                ):
+                    log.info(location["latitude"])
+                    stores[storeIndex]["location_name"] = location["location_name"]
+                    stores[storeIndex]["latitude"] = location["latitude"]
+                    stores[storeIndex]["longitude"] = location["longitude"]
+                    googleLocations[index]["Found"] = 1
+                    break
     return stores
 
 
@@ -264,7 +291,29 @@ def fetchData():
         page_url = store["page_url"]
         location_name = store["location_name"]
         street_address, city, state, zip_postal = getAddress(store["address"])
-        raw_address = f"{street_address}, {city}, {state} {zip_postal}"
+        if state.isnumeric():
+            street_address = store["address"]
+            city = MISSING
+            state = MISSING
+            zip_postal = MISSING
+
+        raw_address = f"{street_address}, {city}, {state} {zip_postal}".replace(
+            MISSING, ""
+        )
+        raw_address = " ".join(raw_address.split())
+        raw_address = raw_address.replace(", ,", ",").replace(",,", ",")
+        if raw_address[len(raw_address) - 1] == ",":
+            raw_address = raw_address[:-1]
+
+        # Known issue, map does not have info
+        if "59 Maple" in str(raw_address):
+            city = "Cartersville"
+            state = "GA"
+            zip_postal = "30120"
+            raw_address = f"{street_address}, {city}, {state} {zip_postal}".replace(
+                MISSING, ""
+            )
+
         country_code = "US"
         phone = store["phone"]
         latitude = store["latitude"]
@@ -296,7 +345,17 @@ def scrape():
     log.info(f"Start scrapping {website} ...")
     start = time.time()
     result = fetchData()
-    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.LATITUDE,
+                    SgRecord.Headers.LONGITUDE,
+                    SgRecord.Headers.RAW_ADDRESS,
+                }
+            )
+        )
+    ) as writer:
         for rec in result:
             writer.write_row(rec)
     end = time.time()
