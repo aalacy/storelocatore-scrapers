@@ -20,9 +20,9 @@ def get_data(api, sgw: SgWriter):
 
     coords = []
     text = "".join(tree.xpath("//script[contains(text(), 'latlng')]/text()"))
-    text = text.split("latlng:")
-    text.pop(0)
-    for t in text:
+    tex = text.split("latlng:")
+    tex.pop(0)
+    for t in tex:
         lat = t.split("b:")[1].split(",")[0].strip()
         lng = t.split("l:")[1].split("}")[0].strip()
         coords.append((lat, lng))
