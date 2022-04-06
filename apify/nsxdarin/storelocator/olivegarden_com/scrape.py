@@ -1,102 +1,126 @@
-import csv
-import urllib.request, urllib.error, urllib.parse
-import requests
-import json
-import datetime
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
-import sgzip
-
-session = SgRequests()
-headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
-           }
-
-search = sgzip.ClosestNSearch() # TODO: OLD VERSION [sgzip==0.0.55]. UPGRADE IF WORKING ON SCRAPER!
-search.initialize(country_codes = ['us', 'ca'])
-
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        writer.writerow(["locator_domain", "page_url", "location_name", "operating_info", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-        for row in data:
-            writer.writerow(row)
-
-def fetch_data():
-    ids = []
-    coord = search.next_coord()
-    locations = []
-    while coord:
-        x = str(coord[0])
-        y = str(coord[1])
-        num = 0
-        url = 'https://www.olivegarden.com/web-api/restaurants'
-        payload = {'geoCode': x + ',' + y,
-                   'resultsPerPage': '10',
-                   'resultsOffset': '0',
-                   'displayDistance': 'true',
-                   'locale': 'en_US'
-                   }
-        r = session.post(url, headers=headers, data=payload)
-        if r.encoding is None: r.encoding = 'utf-8'
-        website = 'olivegarden.com'
-        result_coords = []
-        for line in r.iter_lines(decode_unicode=True):
-            if '"country":"' in line:
-                items = line.split('"country":"')
-                for item in items:
-                    if '"corpNumber":"' in item:
-                        num = num + 1
-                        opinfo = '<MISSING>'
-                        country = item.split('"')[0]
-                        city = item.split('"city":"')[1].split('"')[0]
-                        lat = item.split('"latitude":"')[1].split('"')[0]
-                        store = item.split('"restaurantId":"')[1].split('"')[0]
-                        if '"message":"' in item:
-                            opinfo = item.split('"message":"')[1].split('"')[0]
-                        lng = item.split('"longitude":"')[1].split('"')[0]
-                        result_coords.append((lat, lng))
-                        zc = item.split('"zip":"')[1].split('"')[0]
-                        typ = 'Restaurant'
-                        name = item.split('"restaurantName":"')[1].split('"')[0]
-                        add = item.split('"AddressOne":"')[1].split('"')[0]
-                        add = add + ' ' + item.split('"AddressTwo":"')[1].split('"')[0]
-                        add = add.strip()
-                        state = item.split('"state":"')[1].split('"')[0]
-                        phone = item.split('"phoneNumber":"')[1].split('"')[0]
-                        days = item.split('hourTypeDesc":"Hours of Operations"')
-                        hours = '<MISSING>'
-                        try:
-                            hours = 'Mon: ' + days[1].split('startTime":"')[1].split('"')[0] + '-' + days[1].split('endTime":"')[1].split('"')[0]
-                            hours = hours + '; Tue: ' + days[2].split('startTime":"')[1].split('"')[0] + '-' + days[1].split('endTime":"')[1].split('"')[0]
-                            hours = hours + '; Wed: ' + days[3].split('startTime":"')[1].split('"')[0] + '-' + days[1].split('endTime":"')[1].split('"')[0]
-                            hours = hours + '; Thu: ' + days[4].split('startTime":"')[1].split('"')[0] + '-' + days[1].split('endTime":"')[1].split('"')[0]
-                            hours = hours + '; Fri: ' + days[5].split('startTime":"')[1].split('"')[0] + '-' + days[1].split('endTime":"')[1].split('"')[0]
-                            hours = hours + '; Sat: ' + days[6].split('startTime":"')[1].split('"')[0] + '-' + days[1].split('endTime":"')[1].split('"')[0]
-                            hours = hours + '; Sun: ' + days[7].split('startTime":"')[1].split('"')[0] + '-' + days[1].split('endTime":"')[1].split('"')[0]
-                        except:
-                            hours = '<MISSING>'
-                        if store not in ids:
-                            ids.append(store)
-                            if phone is None or phone == '':
-                                phone = '<MISSING>'
-                            if hours is None or hours == '':
-                                hours = '<MISSING>'
-                            if zc is None or zc == '':
-                                zc = '<MISSING>'
-                            if country == 'GUAM':
-                                country = 'US'
-                                state = 'GU'
-                            locations.append([website, '<MISSING>', name, opinfo, add, city, state, zc, country, store, phone, typ, lat, lng, hours])
-        if len(result_coords) > 0:
-            search.max_count_update(result_coords)
-        else:
-            search.max_distance_update(30.0)
-        coord = search.next_coord()
-    for loc in locations:
-        yield loc
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
+from concurrent import futures
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
+def get_data(coords, sgw: SgWriter):
+    lat, long = coords
+    locator_domain = "https://www.olivegarden.com"
 
-scrape()
+    session = SgRequests()
+
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0",
+        "Accept": "*/*",
+        "Accept-Language": "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3",
+        "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+        "X-Requested-With": "XMLHttpRequest",
+        "Origin": "https://www.olivegarden.com",
+        "Connection": "keep-alive",
+        "Referer": "https://www.olivegarden.com/locations/location-search",
+        "Sec-Fetch-Dest": "empty",
+        "Sec-Fetch-Mode": "cors",
+        "Sec-Fetch-Site": "same-origin",
+        "Cache-Control": "max-age=0",
+    }
+
+    data = {
+        "geoCode": f"{str(lat)},{str(long)}",
+        "resultsPerPage": "10",
+        "resultsOffset": "0",
+        "pdEnabled": "",
+        "reservationEnabled": "",
+        "isToGo": "",
+        "privateDiningEnabled": "",
+        "isNew": "",
+        "displayDistance": "true",
+        "locale": "en_US",
+    }
+
+    r = session.post(
+        "https://www.olivegarden.com/web-api/restaurants", headers=headers, data=data
+    )
+
+    js = r.json()["successResponse"]["locationSearchResult"]["Location"]
+
+    for j in js:
+
+        location_name = j.get("restaurantName") or "<MISSING>"
+        street_address = (
+            f"{j.get('AddressOne')} {j.get('AddressTwo')}".strip() or "<MISSING>"
+        )
+        city = j.get("city") or "<MISSING>"
+        state = j.get("state") or "<MISSING>"
+        postal = j.get("zip") or "<MISSING>"
+        country_code = j.get("country")
+        phone = j.get("phoneNumber") or "<MISSING>"
+        latitude = j.get("latitude") or "<MISSING>"
+        longitude = j.get("longitude") or "<MISSING>"
+        hours_of_operation = "<MISSING>"
+        hours = j.get("weeklyHours")
+        tmp = []
+        store_number = j.get("restaurantNumber") or "<MISSING>"
+        page_url = "https://www.olivegarden.com/locations/location-search"
+        if hours:
+            for h in hours:
+                type_hoo = h.get("hourTypeDesc")
+                if type_hoo != "Hours of Operations":
+                    continue
+                day = (
+                    str(h.get("dayOfWeek"))
+                    .replace("1", "Sunday")
+                    .replace("2", "Monday")
+                    .replace("3", "Tuesday")
+                    .replace("4", "Wednesday")
+                    .replace("5", "Thursday")
+                    .replace("6", "Friday")
+                    .replace("7", "Saturday")
+                )
+                opens = h.get("startTime")
+                closes = h.get("endTime")
+                line = f"{day} {opens} - {closes}"
+                tmp.append(line)
+            hours_of_operation = "; ".join(tmp)
+
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+        )
+
+        sgw.write_row(row)
+
+
+def fetch_data(sgw: SgWriter):
+    coords = DynamicGeoSearch(
+        country_codes=[SearchableCountries.USA, SearchableCountries.CANADA],
+        max_search_distance_miles=30,
+        expected_search_radius_miles=30,
+        max_search_results=None,
+    )
+
+    with futures.ThreadPoolExecutor(max_workers=5) as executor:
+        future_to_url = {executor.submit(get_data, url, sgw): url for url in coords}
+        for future in futures.as_completed(future_to_url):
+            future.result()
+
+
+if __name__ == "__main__":
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+        fetch_data(writer)
