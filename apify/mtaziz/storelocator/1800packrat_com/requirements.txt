@@ -3,5 +3,5 @@ sglogging==0.0.4
 cloudscraper==1.2.60
 lxml==4.6.2
 sgpostal==0.1.0
-sgscrape==0.2.6
+sgscrape==0.2.9
 tenacity==7.0.0
