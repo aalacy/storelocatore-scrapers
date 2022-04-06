@@ -34,7 +34,7 @@ def get_data(coords, sgw: SgWriter):
     )
 
     js = r.json()["features"]
-    print(js)
+
     for j in js:
         a = j.get("properties")
         page_url = "https://www.huntington.com/branchlocator"
