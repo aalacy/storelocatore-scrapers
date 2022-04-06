@@ -6,6 +6,9 @@ from webdriver_manager.chrome import ChromeDriverManager
 from sgscrape import simple_scraper_pipeline as sp
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries, Grain_4
 from sgrequests import SgRequests
+import ssl
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 
 def get_driver(url, class_name, driver=None):
