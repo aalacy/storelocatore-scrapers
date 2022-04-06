@@ -54,24 +54,20 @@ def get_store_urls(url):
         geo = dict()
         urls = []
         urls_latlng = []
+
         tree = html.fromstring(response.text, "lxml")
-        text = (
-            "".join(tree.xpath("//script[contains(text(), 'markers:')]/text()"))
-            .split("markers:")[1]
-            .split("]")[0]
-            .strip()[:-1]
-            + "]"
+        mains = tree.xpath(
+            '//*[contains(@class,"main-section")]/input[contains(@class, "location-google-map-values")]'
         )
-        js = json.loads(text)
-        for j in js:
-            slug = j.get("Link")
+        for m in mains:
+            slug = "".join(m.xpath("./@data-link"))
+            lat = "".join(m.xpath("./@data-lat"))
+            lng = "".join(m.xpath("./@data-lng"))
             url = f"https://www.{DOMAIN}{slug}"
             urls.append(url)
-            lat = j.get("Latitude") or MISSING
-            lng = j.get("Longitude") or MISSING
             geo[slug] = {"lat": lat, "lng": lng}
             logger.info(f"Latitude & Longitude: {geo}")
-            logger.info(f"List of Store URLs: {urls}")
+        logger.info(f"List of Store URLs: {urls}")
 
         for k, v in geo.items():
             url = f"https://www.1800packrat.com{k}"
