@@ -14,7 +14,7 @@ import os
 
 os.environ[
     "PROXY_URL"
-] = "http://groups-RESIDENTIAL,country-uk:{}@proxy.apify.com:8000/"
+] = "http://groups-RESIDENTIAL,country-gb:{}@proxy.apify.com:8000/"
 
 
 def fetch_data(sgw: SgWriter):
@@ -30,9 +30,9 @@ def fetch_data(sgw: SgWriter):
 
     all_scripts = base.find_all("script")
     for script in all_scripts:
-        if '"cinemas"' in str(script):
+        if '"postcode"' in str(script):
             script = str(script)
-    raw_data = script.split('"cinemas":')[1].split("}]")[0] + "}]"
+    raw_data = script.split('"cinemas":')[1].split('}],"curzonHome')[0] + "}]"
 
     stores = json.loads(raw_data)
     locator_domain = "curzon.com"

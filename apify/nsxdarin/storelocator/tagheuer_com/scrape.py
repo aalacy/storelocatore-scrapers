@@ -4,8 +4,8 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
+import time
 
-session = SgRequests()
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
@@ -16,56 +16,160 @@ logger = SgLogSetup().get_logger("tagheuer_com")
 def fetch_data():
     ids = []
     countries = [
+        "ad",
+        "ag",
+        "am",
+        "ao",
+        "aw",
+        "az",
+        "ba",
+        "bb",
+        "bd",
+        "bg",
+        "bh",
+        "bi",
+        "bl",
+        "bm",
+        "bn",
+        "bo",
+        "bs",
+        "by",
+        "bz",
+        "ci",
+        "cl",
+        "cr",
+        "cw",
+        "cy",
+        "do",
+        "ec",
+        "ee",
+        "eg",
+        "et",
+        "fj",
+        "gd",
+        "ge",
+        "gg",
+        "gi",
+        "gp",
+        "gt",
+        "gu",
+        "hn",
+        "hu",
+        "ie",
+        "im",
+        "iq",
+        "is",
+        "je",
+        "jm",
+        "jo",
+        "kh",
+        "kn",
+        "kw",
+        "ky",
+        "kz",
+        "lb",
+        "lc",
+        "li",
+        "lk",
+        "lu",
+        "lv",
+        "ma",
+        "mf",
+        "mg",
+        "mk",
+        "mn",
+        "mo",
+        "mp",
+        "mq",
+        "mt",
+        "mu",
+        "mv",
+        "mz",
+        "nc",
+        "ng",
+        "np",
+        "nz",
+        "om",
+        "pa",
+        "pe",
+        "ph",
+        "pk",
+        "pr",
+        "py",
+        "qa",
+        "re",
+        "ro",
+        "rs",
+        "sc",
+        "si",
+        "sk",
+        "sm",
+        "sv",
+        "sx",
+        "tc",
+        "th",
+        "tn",
+        "ua",
+        "uy",
+        "uz",
+        "ve",
+        "vg",
+        "vi",
+        "ye",
+        "ae",
+        "al",
         "ar",
-        "au",
         "at",
+        "au",
         "be",
         "br",
         "ca",
+        "ch",
         "cn",
         "co",
-        "hr",
         "cz",
+        "de",
         "dk",
+        "dz",
+        "es",
         "fi",
         "fr",
-        "de",
+        "gb",
         "gr",
         "hk",
-        "in",
+        "hr",
         "id",
         "il",
+        "in",
         "it",
         "jp",
-        "my",
+        "kr",
         "mx",
+        "my",
         "nl",
         "no",
         "pl",
         "pt",
         "ru",
         "sa",
-        "sg",
-        "za",
-        "kr",
-        "es",
         "se",
-        "ch",
-        "tw",
+        "sg",
         "tr",
-        "ae",
-        "gb",
+        "tw",
         "us",
+        "za",
     ]
     for cc in countries:
         page = 1
+        session = SgRequests()
+        time.sleep(5)
         url = "https://store.tagheuer.com/" + cc + "?page=" + str(page)
         r = session.get(url, headers=headers)
         website = "tagheuer.com"
         country = cc.upper()
         logger.info("Pulling %s..." % cc)
+        pages = "1"
         for line in r.iter_lines():
-            line = str(line.decode("utf-8"))
             if '<span class="sr-only">Pagination"</span>' in line:
                 pages = (
                     line.split('<span class="sr-only">Pagination"</span>')[1]
@@ -80,11 +184,12 @@ def fetch_data():
             name = ""
             logger.info("%s, Page %s..." % (cc, str(x)))
             purl = "https://store.tagheuer.com/" + cc + "?page=" + str(x)
+            session = SgRequests()
             r2 = session.get(purl, headers=headers)
             lines = r2.iter_lines()
+            time.sleep(5)
             AFound = False
             for line2 in lines:
-                line2 = str(line2.decode("utf-8"))
                 if 'data-lf-url="' in line2:
                     curl = (
                         "https://store.tagheuer.com"
@@ -92,7 +197,6 @@ def fetch_data():
                     )
                 if '<span class="components-outlet-item-search-result-basic' in line2:
                     g = next(lines)
-                    g = str(g.decode("utf-8"))
                     name = (
                         g.strip().replace("\r", "").replace("\t", "").replace("\n", "")
                     )
@@ -119,10 +223,8 @@ def fetch_data():
                 if 'address-basic__line"' in line2:
                     AFound = True
                     g = next(lines)
-                    g = str(g.decode("utf-8"))
                     if ">" in g:
                         g = next(lines)
-                        g = str(g.decode("utf-8"))
                         add = (
                             g.strip()
                             .replace("\r", "")
@@ -134,8 +236,6 @@ def fetch_data():
                 if AFound and "<span" in line2:
                     g = next(lines)
                     h = next(lines)
-                    g = str(g.decode("utf-8"))
-                    h = str(h.decode("utf-8"))
                     city = line2.split(">")[1].split("<")[0].strip()
                     state = g.split(">")[1].split("<")[0].strip()
                     zc = h.split(">")[1].split("<")[0].strip()
@@ -167,8 +267,7 @@ def fetch_data():
                             + phone
                         )
                 if (
-                    '<div class="components-outlet-item-search-result-basic"' in line2
-                    and '<div class="search-full__pan__results-container__results__infos">'
+                    '<div class="search-full__pan__results-container__results__infos">'
                     in line2
                 ):
                     infos.append(

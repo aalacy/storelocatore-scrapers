@@ -50,6 +50,10 @@ def fetch_data():
         )
         hoo = [e.replace("\xa0", "").strip() for e in hoo]
         hours_of_operation = " ".join(hoo)
+        state = poi["location"]["state"]
+        zip_code = poi["location"]["postal_code"]
+        if zip_code == "70460":
+            state = "LA"
 
         item = SgRecord(
             locator_domain=domain,
@@ -57,11 +61,11 @@ def fetch_data():
             location_name=poi["title"],
             street_address=poi["address"].split(",")[0],
             city=poi["location"]["city"],
-            state=poi["location"]["state"],
-            zip_postal=poi["location"]["postal_code"],
+            state=state,
+            zip_postal=zip_code,
             country_code=poi["location"]["country"],
             store_number=SgRecord.MISSING,
-            phone=phone,
+            phone=phone.replace("Ph: ", ""),
             location_type=SgRecord.MISSING,
             latitude=poi["location"]["lat"],
             longitude=poi["location"]["lng"],

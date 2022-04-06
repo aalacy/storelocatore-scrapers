@@ -4,7 +4,7 @@ crawler_subdir_regex='apify(\/[^/]+){3}'
 required_python_files=('Dockerfile' 'requirements.txt' 'scrape.py')
 required_node_files=('Dockerfile' 'scrape.js' 'package.json')
 forbidden_files=('chromedriver' 'geckodriver' 'validate.py' 'data.csv' 'state.json')
-internal_libraries=('sgscrape' 'sgcrawler' 'sgrequests' 'sgselenium' 'sglogging' 'sgzip' 'sggrid')
+internal_libraries=('sgscrape' 'sgcrawler' 'sgrequests' 'sgselenium' 'sglogging' 'sgzip' 'sggrid' 'proxyfier')
 
 function exit_code_of () {
   eval "${1}" 2>1 1>/dev/null
@@ -151,13 +151,22 @@ join_by() {
 	printf %s "$f" "${@/#/$d}"
 }
 
+function piprottest() {
+  lib=$(echo $1 | cut -d'=' -f1)
+  ver=$(echo $1 | cut -d'=' -f3)
+  latest=$(pip install --extra-index-url https://dl.cloudsmith.io/KVaWma76J5VNwrOm/crawl/crawl/python/simple/ ${lib}== 2>&1 | grep versions: | rev | cut -d',' -f1 | rev | sed -r 's/[ \)]//g')
+#  echo "[$1] $lib==$ver ($latest)"
+  [[ "$ver" == "$latest" ]] || echo "${lib}==${ver} is not latest (${latest})"
+}
+
 check_internal_library_versions() {
 	exit_status=0
 	updated_crawler="$(get_updated_crawler)"
 	if ! is_node_scraper "$updated_crawler"; then
 		requirements_path="${updated_crawler}/requirements.txt"
 		internal_library_regex="$(join_by "|" "${internal_libraries[@]}")"
-		outdated_internal_libraries=$(piprot --outdated "$requirements_path" | grep -E "$internal_library_regex" || true)
+		export -f piprottest  # so we can call it in a subshell in xargs
+		outdated_internal_libraries=$(cat "$requirements_path" | grep -E "$internal_library_regex" | xargs -d'\n' -n1 bash -c 'piprottest $@' _ || true)
 		if [ -n "$outdated_internal_libraries" ]; then
 			formatted_outdated_internal_libraries="${outdated_internal_libraries//$'\n'/', '}"
 			echo "FAIL: found outdated SafeGraph libraries in requirements.txt: $formatted_outdated_internal_libraries"
@@ -165,7 +174,6 @@ check_internal_library_versions() {
 		fi
 	fi
 	return $exit_status
-
 }
 
 function grep_and_get_exit_code() {

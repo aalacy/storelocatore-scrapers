@@ -18,14 +18,13 @@ def fetch_data(sgw: SgWriter):
     for j in js:
         street_address = (
             f"{j.get('fran_address') or ''} {j.get('fran_address_2') or ''}".strip()
-            or "<MISSING>"
         )
-        city = j.get("fran_city") or "<MISSING>"
-        state = j.get("fran_state") or "<MISSING>"
-        if len(state) > 2 and state != "<MISSING>":
+        city = j.get("fran_city")
+        state = j.get("fran_state") or SgRecord.MISSING
+        if len(state) > 2 and state != SgRecord.MISSING:
             state = "TX"
-        postal = j.get("fran_zip") or "<MISSING>"
-        if street_address == "<MISSING>" and postal == "<MISSING>":
+        postal = j.get("fran_zip")
+        if street_address == SgRecord.MISSING and postal == SgRecord.MISSING:
             continue
         country_code = "US"
         store_number = j.get("id")
@@ -33,7 +32,7 @@ def fetch_data(sgw: SgWriter):
         location_name = j.get("fran_location_name")
         phone = j.get("fran_phone")
         if "coming" in phone.lower():
-            phone = "<MISSING>"
+            phone = SgRecord.MISSING
         latitude = j.get("fran_latitude")
         longitude = j.get("fran_longitude")
 
@@ -42,9 +41,17 @@ def fetch_data(sgw: SgWriter):
         root = html.fromstring(source)
         hours = root.xpath("//text()")
         for h in hours:
-            if not h.strip() or "COVID" in h or "2021" in h:
+            if (
+                not h.strip()
+                or "COVID" in h
+                or "2021" in h
+                or "July" in h
+                or "4/4" in h
+                or "Holiday" in h
+                or "Thanks" in h
+            ):
                 continue
-            if "*" in h or "Under" in h or "Hours" in h:
+            if "*" in h or "Under" in h or "Hours" in h or h[0].isdigit():
                 break
             _tmp.append(h.strip())
 

@@ -1,72 +1,95 @@
+import json
 from sglogging import sglog
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
-from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgpostal.sgpostal import parse_address_intl
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-session = SgRequests()
+
 website = "zabas_com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
 headers = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36",
-    "Accept": "application/json",
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
 }
 
 DOMAIN = "https://zabas.com/"
-MISSING = "<MISSING>"
+MISSING = SgRecord.MISSING
 
 
 def fetch_data():
     if True:
-        streetlist = []
         url = "https://zabas.com/restaurant-locations/"
         r = session.get(url, headers=headers)
-        soup = BeautifulSoup(r.text, "html.parser")
-        loclist = soup.findAll("div", {"class": "elementor-widget-wrap"})
+        js_url = r.text.split('<script defer src="')[1].split('"></script>')[0]
+        r = session.get(js_url, headers=headers)
+        loclist = r.text.split('"places":')[1].split(',"styles"')[0]
+        loclist = json.loads(loclist)
         for loc in loclist:
-            if "ORDER NOW" in loc.text:
-                address = (
-                    loc.find("p").get_text(separator="|", strip=True).split("|")[:-1]
+            store_number = loc["id"]
+            location_name = loc["title"]
+            log.info(location_name)
+            phone = loc["content"]
+            phone = BeautifulSoup(phone, "html.parser")
+            try:
+                phone = phone.find("a").text.replace("+", "")
+            except:
+                phone = MISSING
+            raw_address = loc["address"]
+            pa = parse_address_intl(raw_address)
+
+            street_address = pa.street_address_1
+            street_address = street_address if street_address else MISSING
+
+            city = pa.city
+            city = city.strip() if city else MISSING
+
+            state = pa.state
+            state = state.strip() if state else MISSING
+
+            zip_postal = pa.postcode
+            zip_postal = zip_postal.strip() if zip_postal else MISSING
+
+            if zip_postal == MISSING:
+                soup = (
+                    BeautifulSoup(loc["content"], "html.parser")
+                    .get_text(separator="|", strip=True)
+                    .replace("|", " ")
                 )
-                phone = address[-1]
-                street_address = address[0]
-                if street_address in streetlist:
-                    continue
-                streetlist.append(street_address)
-                location_name = loc.find("h2").text
-                log.info(location_name)
-                city = "Las Vegas"
-                state = "NV"
-                country_code = "US"
-                zip_postal = "zip_postal"
-                coords = loc.find("a")["href"]
-                zip_postal = coords.rsplit("+")[-1].split("/")[0]
-                if zip_postal.isalpha():
-                    zip_postal = MISSING
-                latitude, longitude = coords.split("@")[1].split(",13z")[0].split(",")
-                yield SgRecord(
-                    locator_domain=DOMAIN,
-                    page_url=url,
-                    location_name=location_name.strip(),
-                    street_address=street_address.strip(),
-                    city=city.strip(),
-                    state=state.strip(),
-                    zip_postal=zip_postal.strip(),
-                    country_code=country_code,
-                    store_number=MISSING,
-                    phone=phone.strip(),
-                    location_type=MISSING,
-                    latitude=latitude,
-                    longitude=longitude,
-                    hours_of_operation=MISSING,
-                )
+                soup = soup.split(state)[1].split()
+                zip_postal = soup[0]
+                phone = soup[1]
+            latitude = loc["location"]["lat"]
+            longitude = loc["location"]["lng"]
+            country_code = loc["location"]["country"]
+            yield SgRecord(
+                locator_domain=DOMAIN,
+                page_url=url,
+                location_name=location_name.strip(),
+                street_address=street_address.strip(),
+                city=city.strip(),
+                state=state.strip(),
+                zip_postal=zip_postal.strip(),
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone.strip(),
+                location_type=MISSING,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=MISSING,
+                raw_address=raw_address,
+            )
 
 
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.StoreNumberId)
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

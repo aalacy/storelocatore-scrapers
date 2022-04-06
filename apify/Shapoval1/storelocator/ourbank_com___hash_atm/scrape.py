@@ -22,6 +22,12 @@ def fetch_data(sgw: SgWriter):
         net_name = j.get("networkName")
         if net_name == "First Security Bank ATMs":
             location_name = "First Security Bank"
+        if net_name != "First Security Bank ATMs":
+            location_name = (
+                location_name.replace("First Security Bank", "")
+                .replace("-", "")
+                .strip()
+            )
         street_address = "".join(j.get("address"))
         if street_address.find("\n") != -1:
             street_address = street_address.split("\n")[1].strip()

@@ -24,11 +24,13 @@ def fetch_data(sgw: SgWriter):
 
     found_poi = []
 
-    max_distance = 150
+    max_results = 10
+    max_distance = 250
 
     search = DynamicZipSearch(
         country_codes=[SearchableCountries.USA],
-        max_radius_miles=max_distance,
+        max_search_distance_miles=max_distance,
+        max_search_results=max_results,
     )
 
     log.info("Running sgzip ..")
@@ -107,9 +109,6 @@ def fetch_data(sgw: SgWriter):
 
             if not phone:
                 phone = base.find(class_="contactInfo").a.text.strip()
-                if phone in found_poi:
-                    continue
-                found_poi.append(phone)
 
             sgw.write_row(
                 SgRecord(

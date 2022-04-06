@@ -1,60 +1,28 @@
-import csv
-from sgrequests import SgRequests
+from sgrequests import SgRequests, SgRequestError
 import json
 from sglogging import sglog
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
 import lxml.html
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "giantfood.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
-session = SgRequests()
+session = SgRequests(proxy_country="us", dont_retry_status_codes=([404]))
 headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
-    "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+    "authority": "giantfood.com",
+    "sec-ch-ua": '" Not A;Brand";v="99", "Chromium";v="96", "Google Chrome";v="96"',
+    "accept": "application/json, text/plain, */*",
+    "sec-ch-ua-mobile": "?0",
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36",
+    "sec-ch-ua-platform": '"Windows"',
+    "sec-fetch-site": "same-origin",
+    "sec-fetch-mode": "cors",
+    "sec-fetch-dest": "empty",
+    "referer": "https://giantfood.com/store-locator",
+    "accept-language": "en-US,en;q=0.9",
 }
-
-
-def write_output(data):
-    with open("data.csv", mode="w", newline="", encoding="utf8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        temp_list = []  # ignoring duplicates
-        for row in data:
-            comp_list = [
-                row[2].strip(),
-                row[3].strip(),
-                row[4].strip(),
-                row[5].strip(),
-                row[6].strip(),
-                row[8].strip(),
-                row[10].strip(),
-            ]
-            if comp_list not in temp_list:
-                temp_list.append(comp_list)
-                writer.writerow(row)
-
-        log.info(f"No of records being processed: {len(temp_list)}")
 
 
 def fetch_data():
@@ -74,7 +42,6 @@ def fetch_data():
     longitude = ""
     hours_of_operation = ""
     store_types = ["GROCERY", "GAS_STATION"]
-    loc_list = []
 
     for s in store_types:
         locations_resp = session.get(
@@ -90,20 +57,20 @@ def fetch_data():
             location_name = loc["name"]
             street_address = loc["address1"]
             if len(loc["address2"]) > 0:
-                street_address = street_address + "\n" + loc["address2"]
+                street_address = street_address + ", " + loc["address2"]
 
             city = loc["city"]
             state = loc["state"]
             zip = loc["zip"]
             store_number = loc["storeNo"]
             location_type = loc["storeType"]
-            if location_type == "":
-                location_type = "<MISSING>"
             latitude = loc["latitude"]
             longitude = loc["longitude"]
 
             store_url = "https://stores.giantfood.com/" + store_number
             store_resp = session.get(store_url, headers=headers)
+            if isinstance(store_resp, SgRequestError):
+                continue
             store_sel = lxml.html.fromstring(store_resp.text)
             country_code = "".join(
                 store_sel.xpath(
@@ -111,8 +78,6 @@ def fetch_data():
                     '//abbr[@itemprop="addressCountry"]/text()'
                 )
             ).strip()
-            if country_code == "":
-                country_code = "<MISSING>"
 
             phone = "".join(
                 store_sel.xpath(
@@ -120,8 +85,6 @@ def fetch_data():
                     '//span[@itemprop="telephone"]/text()'
                 )
             ).strip()
-            if phone == "":
-                phone = "<MISSING>"
             page_url = store_url
             hours_of_operation = " ".join(
                 store_sel.xpath(
@@ -129,35 +92,36 @@ def fetch_data():
                     "//table/tbody/tr/@content"
                 )
             ).strip()
-            if hours_of_operation == "":
-                hours_of_operation = "<MISSING>"
-
-            curr_list = [
-                locator_domain,
-                page_url,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
-
-            loc_list.append(curr_list)
-            # break
-
-    return loc_list
+            yield SgRecord(
+                locator_domain=locator_domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    log.info("Started")
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    log.info(f"No of records being processed: {count}")
     log.info("Finished")
 
 

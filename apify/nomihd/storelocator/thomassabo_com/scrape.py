@@ -7,6 +7,8 @@ from sgscrape.sgwriter import SgWriter
 from bs4 import BeautifulSoup
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.simple_utils import parallelize
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 
 website = "thomassabo.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -27,80 +29,92 @@ headers = {
 }
 
 
-def fetch_data():
-    data = json.loads(
-        session.get(
-            "https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson"
-        ).text,
-        strict=False,
+def fetch_records_for(tup):
+    coords, CurrentCountry, countriesRemaining = tup
+    lat = coords[0]
+    lng = coords[1]
+    log.info(
+        f"pulling info for country: {CurrentCountry} having coordinates as {lat},{lng}"
     )
 
-    for feature in data["features"]:
-        coordinates = feature["geometry"]["coordinates"][0][0]
-        country = feature["properties"]["ISO_A2"]
-        search_url = "https://www.thomassabo.com/on/demandware.store/Sites-TS_US-Site/en_US/Shopfinder-GetStores?searchMode=country&searchPhrase={}&searchDistance={}&lat={}&lng={}&filterBy="
-        for coord in coordinates:
-            lat = coord[1]
-            lng = coord[0]
-            log.info(
-                f"pulling info for country: {country} having coordinates as {lat},{lng}"
-            )
+    search_url = "https://www.thomassabo.com/on/demandware.store/Sites-TS_INT-Site/en/Shopfinder-GetStores?searchMode=radius&searchPhrase={}&searchDistance={}&lat={}&lng={}&filterBy="
 
-            stores_req = session.get(
-                search_url.format(country, 75, lat, lng), headers=headers
-            )
-            stores = json.loads(stores_req.text)
-            for store in stores:
-                page_url = "<MISSING>"
-                locator_domain = website
-                location_name = store["name"]
-                if "address1" in store:
-                    street_address = store["address1"]
-                    if (
-                        "address2" in store
-                        and store["address2"] is not None
-                        and len(store["address2"]) > 0
-                    ):
-                        street_address = street_address + ", " + store["address2"]
-                else:
-                    if "address2" in store:
-                        street_address = store["address2"]
+    stores_req = session.get(search_url.format("", 100000, lat, lng), headers=headers)
+    stores = []
 
-                city = store.get("city", "<MISSING>")
-                state = store.get("stateCode", "<MISSING>")
-                zip = store.get("postalCode", "<MISSING>")
-                country_code = store["countryCode"]
-                store_number = store["ID"]
-                phone = store.get("phone", "<MISSING>")
+    try:
+        stores = json.loads(stores_req.text)
+    except:
+        pass
 
-                location_type = store["category"]["displayValue"]
-                hours_of_operation = ""
-                try:
-                    hours = BeautifulSoup(store["storeHours"], "lxml")
-                    list_hours = list(hours.stripped_strings)
-                    hours_of_operation = " ".join(list_hours).strip()
-                except:
-                    pass
+    return stores
 
-                latitude = store["latitude"]
-                longitude = store["longitude"]
 
-                yield SgRecord(
-                    locator_domain=locator_domain,
-                    page_url=page_url,
-                    location_name=location_name,
-                    street_address=street_address,
-                    city=city,
-                    state=state,
-                    zip_postal=zip,
-                    country_code=country_code,
-                    store_number=store_number,
-                    phone=phone,
-                    location_type=location_type,
-                    latitude=latitude,
-                    longitude=longitude,
-                    hours_of_operation=hours_of_operation,
-                )
+def process_record(raw_results_from_one_coordinate):
+    stores = raw_results_from_one_coordinate
+    for store in stores:
+        page_url = "<MISSING>"
+        locator_domain = website
+        location_name = store.get("name", "<MISSING>")
+        if "address1" in store:
+            street_address = store["address1"]
+            if (
+                "address2" in store
+                and store["address2"] is not None
+                and len(store["address2"]) > 0
+            ):
+                street_address = street_address + ", " + store["address2"]
+        else:
+            if "address2" in store:
+                street_address = store["address2"]
+
+        city = store.get("city", "<MISSING>")
+        state = store.get("stateCode", "<MISSING>")
+        zip = store.get("postalCode", "<MISSING>")
+        country_code = store.get("countryCode", "<MISSING>")
+        store_number = store["ID"]
+        phone = store.get("phone", "<MISSING>")
+
+        location_type = "<MISSING>"
+        try:
+            location_type = store["category"]["displayValue"]
+        except:
+            pass
+        hours_of_operation = ""
+        try:
+            hours = BeautifulSoup(store["storeHours"], "lxml")
+            list_hours = list(hours.stripped_strings)
+            hours_of_operation = " ".join(list_hours).strip().replace("\n", " ").strip()
+        except:
+            pass
+
+        latitude = store.get("latitude", "<MISSING>")
+        try:
+            latitude = str(latitude)
+        except:
+            pass
+        longitude = store.get("longitude", "<MISSING>")
+        try:
+            longitude = str(longitude)
+        except:
+            pass
+
+        yield SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zip,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+        )
 
 
 def scrape():
@@ -108,9 +122,34 @@ def scrape():
     with SgWriter(
         deduper=SgRecordDeduper(record_id=RecommendedRecordIds.StoreNumberId)
     ) as writer:
-        results = fetch_data()
-        for rec in results:
-            writer.write_row(rec)
+        countries = SearchableCountries.ALL
+        totalCountries = len(countries)
+        currentCountryCount = 0
+        for country in countries:
+            try:
+                search = DynamicGeoSearch(
+                    expected_search_radius_miles=100, country_codes=[country.upper()]
+                )
+                results = parallelize(
+                    search_space=[
+                        (
+                            coord,
+                            country.upper(),
+                            str(f"{currentCountryCount}/{totalCountries}"),
+                        )
+                        for coord in search
+                    ],
+                    fetch_results_for_rec=fetch_records_for,
+                    processing_function=process_record,
+                    max_threads=20,  # tweak to see what's fastest
+                )
+                for rec in results:
+                    writer.write_row(rec)
+                currentCountryCount += 1
+            except Exception as e:
+                log.error(f"{country}: not found\n{e}")
+                currentCountryCount += 1
+                pass
 
     log.info("Finished")
 

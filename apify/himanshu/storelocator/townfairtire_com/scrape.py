@@ -1,69 +1,96 @@
-import csv
-from sgrequests import SgRequests
-from bs4 import BeautifulSoup as bs
-import re
 import json
+from sglogging import sglog
+from bs4 import BeautifulSoup
+from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+
+website = "townfairtire_com"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
 
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36",
+}
 
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
-        # Body
-        for row in data:
-            writer.writerow(row)
+DOMAIN = "https://townfairtire.com"
+MISSING = SgRecord.MISSING
+
 
 def fetch_data():
-    base_url = "https://www.townfairtire.com"
+    if True:
+        url = "https://townfairtire.com/store/tires/"
+        r = session.get(url, headers=headers)
+        soup = BeautifulSoup(r.text, "html.parser")
+        loclist = soup.find("div", {"class": "storeLocations"}).findAll("a")
+        for loc in loclist:
+            page_url = DOMAIN + loc["href"]
+            log.info(page_url)
+            r = session.get(page_url, headers=headers)
+            log.info(f"Response Status: {r}")
+            soup = BeautifulSoup(r.text, "html.parser")
 
-    soup = bs(session.get('https://www.townfairtire.com/store/tires/').text,'lxml')
-    
-    for atag in soup.find('div',{'class':"storeLocations"}).find_all('a'):
-        
-        if "Stores:" in  atag.text:
-            continue
-        
-        page_url = base_url+atag['href']
-        
-        soup1 = bs(session.get(base_url+atag['href']).text,'lxml')
-        latitude = json.loads(soup1.find("script",{"type":"application/ld+json"}).text)['geo']['latitude']
-        longitude = json.loads(soup1.find("script",{"type":"application/ld+json"}).text)['geo']['longitude']
+            try:
+                schema = r.text.split('<script type="application/ld+json">', 1)[
+                    1
+                ].split("</script>", 1)[0]
+                schema = schema.replace("\n", "")
+                loc = json.loads(schema)
+            except Exception as e:
+                log.info(f"Error: {e}")
+                continue
 
-        main1 = list(soup1.find('div',{'class':"storeInfo"}).stripped_strings)
-        address = main1[0].strip()
-        ct = main1[1].strip().split(',')
-        city = ct[0].strip()
-        state = ct[1].strip().split(' ')[0].strip()
-        zipp = ct[1].strip().split(' ')[1].strip()
-        phone = soup1.find('div',{"id":"ContentPlaceHolder1_UpdatePanel2"}).find("button").text.strip()
-        hour = list(soup1.find('div',{"class":"storeHours"}).stripped_strings)
-        del hour[0]
-        hour = ' '.join(hour)
-    
-        name = soup1.find('div',{"class":"tireBrand"}).find('h1').text.strip()
-        
-        store = []
-        store.append(base_url)
-        store.append(name if name else "<MISSING>")
-        store.append(address if address else "<MISSING>")
-        store.append(city if city else "<MISSING>")
-        store.append(state if state else "<MISSING>")
-        store.append(zipp if zipp else "<MISSING>")
-        store.append("US")
-        store.append("<MISSING>")
-        store.append(phone.replace("Call ",'') if phone else "<MISSING>")
-        store.append("townfairtire")
-        store.append(latitude if latitude else "<MISSING>")
-        store.append(longitude if longitude else "<MISSING>")
-        store.append(hour if hour else "<MISSING>")
-        store.append(page_url if page_url else "<MISSING>")
-        
-        yield store
-        
+            location_name = loc["name"]
+            address = loc["address"]
+            phone = loc["telephone"]
+            street_address = address["streetAddress"]
+            city = address["addressLocality"]
+            state = address["addressRegion"]
+            zip_postal = address["postalCode"]
+            country_code = address["addressCountry"]
+            coords = loc["geo"]
+            latitude = coords["latitude"]
+            longitude = coords["longitude"]
+            hours_of_operation = (
+                soup.find("div", {"class": "storeHours"})
+                .get_text(separator="|", strip=True)
+                .replace("|", " ")
+                .replace("Store Hours", "")
+            )
+            yield SgRecord(
+                locator_domain=DOMAIN,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address.strip(),
+                city=city.strip(),
+                state=state.strip(),
+                zip_postal=zip_postal.strip(),
+                country_code=country_code,
+                store_number=MISSING,
+                phone=phone.strip(),
+                location_type=MISSING,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation.strip(),
+            )
+
+
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    log.info("Started")
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
 
-scrape()
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
+
+
+if __name__ == "__main__":
+    scrape()

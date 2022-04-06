@@ -1,165 +1,81 @@
-import requests
 from bs4 import BeautifulSoup
-import csv
-import string
-import re, time
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('zoeskitchen_com')
-
-
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
-headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
-           }
-
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
-        # Header
-        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+}
 
 
 def fetch_data():
-    # Your scraper here
+    url = "https://api.zoeskitchen.com/customer-api/customer-stores/summary-by-state"
+    divlist = session.get(url, headers=headers, verify=False).json()
+    for div in divlist:
+        loclist = divlist[div]
+        for loc in loclist:
+            title = loc["name"]
+            store = loc["storeNumber"]
+            street = loc["address"]
+            city = loc["city"]
+            state = loc["state"]
+            pcode = loc["zip"]
+            link = (
+                "https://zoeskitchen.com/locations/store/"
+                + state.lower()
+                + "/"
+                + loc["urlFriendlyName"]
+            )
+            page = session.get(link, headers=headers, verify=False)
+            soup1 = BeautifulSoup(page.text, "html.parser")
+            try:
+                hourlist = soup1.find("table", {"class": "hours"})
+                hourlist = soup1.findAll("tr")
+                hours = ""
+                for hourd in hourlist:
+                    hour = hourd.text
+                    hour = hour.replace("\n", "")
+                    hours = hours + hour + " "
+            except:
+                hours = "<MISSING>"
+            try:
+                phone = soup1.find("a", {"class": "tel"}).text
+            except:
+                phone = "<MISSING>"
+            lat = page.text.split("lat: ", 1)[1].split(",", 1)[0]
+            longt = page.text.split("lng: ", 1)[1].split(" }", 1)[0]
 
-    data = []
-    p = 0
-   
+            hours = hours.rstrip()
 
-    pattern = re.compile(r'\s\s+')
-    flag = True    
-    url = 'https://api.zoeskitchen.com/customer-api/customer-stores/summary-by-state'
-    r = session.get(url, headers=headers, verify=False)
-  
-    soup =str(BeautifulSoup(r.text, "html.parser"))
-    #logger.info(soup)
-    start = soup.find('{',0)+1
-    
-    while True:        
-        start = soup.find('{',start)       
-        if start == -1:
-            break
-        start = start + 1
-        end = soup.find('}',start)       
-        detail = soup[start:end]        
-        mstart = detail.find('storeNumber')
-        mstart = detail.find(':',mstart)
-        mstart = detail.find('"',mstart) + 1
-        mend = detail.find('"',mstart)
-        store = detail[mstart:mend]        
-        mstart = detail.find('name')
-        mstart = detail.find(':',mstart)
-        mstart = detail.find('"',mstart) + 1
-        mend = detail.find('"',mstart)
-        title = detail[mstart:mend]
-        mstart = detail.find('address')
-        mstart = detail.find(':',mstart)
-        mstart = detail.find('"',mstart) + 1
-        mend = detail.find('"',mstart)
-        street = detail[mstart:mend]
-        mstart = detail.find('city')
-        mstart = detail.find(':',mstart)
-        mstart = detail.find('"',mstart) + 1
-        mend = detail.find('"',mstart)
-        city = detail[mstart:mend]
-        mstart = detail.find('state')
-        mstart = detail.find(':',mstart)
-        mstart = detail.find('"',mstart) + 1
-        mend = detail.find('"',mstart)
-        state = detail[mstart:mend]
-        mstart = detail.find('zip')
-        mstart = detail.find(':',mstart)
-        mstart = detail.find('"',mstart) + 1
-        mend = detail.find('"',mstart)
-        pcode = detail[mstart:mend]
-        mstart = detail.find('urlFriendlyName')
-        mstart = detail.find(':',mstart)
-        mstart = detail.find('"',mstart) + 1
-        mend = detail.find('"',mstart)
-        link = 'https://zoeskitchen.com/locations/store/'+state.lower()+"/"+detail[mstart:mend]        
-        page = session.get(link, headers=headers, verify=False)
-        soup1 =BeautifulSoup(page.text, "html.parser")
-        try:
-            hourlist = soup1.find('table',{'class':'hours'})
-            hourlist = soup1.findAll('tr')
-            hours = ''
-            for hourd in hourlist:
-                hour = hourd.text
-                hour = hour.replace('\n','')
-                hours = hours + hour+' '
-
-            
-        except:
-            hours = "<MISSING>"
-        try:
-            phone= soup1.find('a',{'class':'tel'}).text
-        except:
-            phone = "<MISSING>"
-        soup1 = str(soup1)
-        mstart = soup1.find('lat:')
-        if mstart == -1:
-            lat = "<MISSING>"
-        else:
-            mstart = soup1.find(':',mstart) + 1
-            mend = soup1.find(',',mstart)
-            lat = soup1[mstart:mend]
-        mstart = soup1.find('lng:')
-        if mstart == -1:
-            longt = "<MISSING>"
-        else:
-        
-            mstart = soup1.find(':',mstart) + 1
-            mend = soup1.find('}',mstart)
-            longt = soup1[mstart:mend]
-        
-        
-        lat = lat.lstrip()
-        longt = longt.lstrip()
-        hours = hours.rstrip()
-        data.append([
-                        'https://zoeskitchen.com/',
-                        link,                   
-                        title,
-                        street,
-                        city,
-                        state,
-                        pcode,
-                        'US',
-                        store,
-                        phone,
-                        "<MISSING>",
-                        lat,
-                        longt,
-                        hours
-                    ])
-        #logger.info(p,data[p])
-        p += 1
-        
-        start = end
-        
-        
-        
-    
-   
-
-                       
-
-    return data
-
-
+            yield SgRecord(
+                locator_domain="https://zoeskitchen.com/",
+                page_url=link,
+                location_name=title,
+                street_address=street.strip(),
+                city=city.strip(),
+                state=state.strip(),
+                zip_postal=pcode.strip(),
+                country_code="US",
+                store_number=store,
+                phone=phone.strip(),
+                location_type="<MISSING>",
+                latitude=lat,
+                longitude=longt,
+                hours_of_operation=hours,
+            )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+
 
 scrape()
-
