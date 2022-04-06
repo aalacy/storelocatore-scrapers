@@ -40,7 +40,7 @@ def fetch_data(sgw: SgWriter):
     locator_domain = "iguanas.co.uk"
 
     for store in stores:
-        slug = store["fields"]["slug"]
+        slug = store["fields"]["city"] + "/" + store["fields"]["slug"]
         link = "https://www.iguanas.co.uk/restaurants/" + slug
         logger.info(link)
 
