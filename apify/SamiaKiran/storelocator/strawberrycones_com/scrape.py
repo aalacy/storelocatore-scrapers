@@ -65,6 +65,8 @@ def fetch_data():
                         .split("!2m", 1)[0]
                         .split("!3d")
                     )
+                    if "!3m" in latitude:
+                        latitude = latitude.split('!3m')[0]
                     country_code = "Japan"
                     yield SgRecord(
                         locator_domain=DOMAIN,
@@ -81,6 +83,7 @@ def fetch_data():
                         latitude=latitude,
                         longitude=longitude,
                         hours_of_operation=hours_of_operation,
+                        raw_address =raw_address
                     )
 
 
