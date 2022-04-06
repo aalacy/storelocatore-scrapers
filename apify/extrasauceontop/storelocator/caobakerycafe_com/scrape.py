@@ -42,9 +42,7 @@ def get_data():
             url = "https://www.caobakerycafe.com/locations"
             response = scraper.get(url).text
 
-            json_objects = extract_json(
-                response.split('POPMENU_APOLLO_STATE')[1]
-            )[0]
+            json_objects = extract_json(response.split("POPMENU_APOLLO_STATE")[1])[0]
             break
         except Exception:
             session = SgRequests()
@@ -68,11 +66,11 @@ def get_data():
             phone = location["phone"]
             location_type = "<MISSING>"
             country_code = location["country"]
-            
+
             hours = ""
             for part in location["schemaHours"]:
                 hours = hours + part + ", "
-            
+
             hours = hours[:-2]
             if hours == "Su, Mo, Tu, We, Th, Fr, Sa":
                 hours = "24/7"
@@ -93,7 +91,6 @@ def get_data():
                 "hours": hours,
                 "country_code": country_code,
             }
-
 
 
 def scrape():
