@@ -10,22 +10,24 @@ logger = SgLogSetup().get_logger("questdiagonstics.com")
 
 def fetch_data():
     session = SgRequests()
-    response = session.get('https://auchan.ua/graphql/?query=query%20getWarehouses%20{%20getAuchanWarehouses%20{%20warehouses%20{%20code%20city%20city_ru%20hours%20address%20title%20position%20{%20latitude%20longitude%20__typename%20}%20__typename%20}%20__typename%20}%20}%20&operationName=getWarehouses&variables={}')
+    response = session.get(
+        "https://auchan.ua/graphql/?query=query%20getWarehouses%20{%20getAuchanWarehouses%20{%20warehouses%20{%20code%20city%20city_ru%20hours%20address%20title%20position%20{%20latitude%20longitude%20__typename%20}%20__typename%20}%20__typename%20}%20}%20&operationName=getWarehouses&variables={}"
+    )
     result = response.json()
-    locations = result['data']['getAuchanWarehouses']['warehouses']
+    locations = result["data"]["getAuchanWarehouses"]["warehouses"]
 
     for location in locations:
-        locator_domain = 'auchan.ua'
-        page_url = 'https://auchan.ua/map'
-        location_name = location['title']
-        street_address = location['address']
-        city = location['city_ru']
-        state = location['code']
+        locator_domain = "auchan.ua"
+        page_url = "https://auchan.ua/map"
+        location_name = location["title"]
+        street_address = location["address"]
+        city = location["city_ru"]
+        state = location["code"]
 
-        geo = location['position']
-        latitude = geo['latitude']
-        longitude = geo['longitude']
-        phone = '0 800 300 551'
+        geo = location["position"]
+        latitude = geo["latitude"]
+        longitude = geo["longitude"]
+        phone = "0 800 300 551"
 
         yield SgRecord(
             locator_domain=locator_domain,
@@ -34,11 +36,12 @@ def fetch_data():
             street_address=street_address,
             city=city,
             state=state,
-            country_code='ua',
+            country_code="ua",
             latitude=latitude,
             longitude=longitude,
-            phone=phone
+            phone=phone,
         )
+
 
 if __name__ == "__main__":
     data = fetch_data()
