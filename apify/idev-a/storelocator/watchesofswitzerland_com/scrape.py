@@ -47,7 +47,7 @@ def fetch_records(search):
                 yield SgRecord(
                     page_url=locator_domain + "/store/" + _["name"],
                     store_number=_["name"],
-                    location_name=_["sapStoreName"],
+                    location_name=_["displayName"].replace("WOS", "").strip(),
                     street_address=street_address,
                     city=_["address"]["town"],
                     state=_["address"]["region"]["isocodeShort"],
