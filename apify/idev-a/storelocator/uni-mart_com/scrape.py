@@ -65,11 +65,11 @@ def fetch_records(search):
 
 if __name__ == "__main__":
     search = DynamicGeoSearch(
-        country_codes=[SearchableCountries.USA], expected_search_radius_miles=100
+        country_codes=[SearchableCountries.USA], expected_search_radius_miles=200
     )
     with SgWriter(
         SgRecordDeduper(
-            RecommendedRecordIds.StoreNumberId, duplicate_streak_failure_factor=10
+            RecommendedRecordIds.StoreNumberId, duplicate_streak_failure_factor=100
         )
     ) as writer:
         for rec in fetch_records(search):

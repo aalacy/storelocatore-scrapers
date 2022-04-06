@@ -3,6 +3,9 @@ from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger("")
 
 _headers = {
     "Accept": "application/json, text/plain, */*",
@@ -13,42 +16,41 @@ _headers = {
 }
 
 locator_domain = "https://www.burgerking.se"
-base_url = "https://bk-se-ordering-api.azurewebsites.net/cms/sv-SE/restaurants"
+base_url = (
+    "https://bk-se-ordering-api.azurewebsites.net/sv-SE/ordering/menu/restaurants/find"
+)
 payload = {
     "coordinates": {"latitude": 59.330311012767446, "longitude": 18.068330468145753},
-    "radius": 400000,
+    "radius": 1000000,
+    "top": 500,
 }
 
 
 def fetch_data():
     with SgRequests() as session:
-        locations = session.put(base_url, headers=_headers, json=payload).json()["data"]
+        locations = session.put(base_url, headers=_headers, json=payload).json()[
+            "data"
+        ]["list"]
         for _ in locations:
             page_url = f"https://www.burgerking.se/restaurants/{_['slug']}"
             hours = []
-            city = state = zip_postal = ""
-            url = f"https://bk-se-ordering-api.azurewebsites.net/cms/sv-SE/restaurants/{_['slug']}"
+            url = f"https://bk-se-ordering-api.azurewebsites.net/sv-SE/ordering/menu/restaurants/{_['slug']}"
+            logger.info(url)
             res = session.get(url, headers=_headers)
-            if res.status_code == 200:
-                data = res.json()["data"]
-                city = data["storeLocation"]["address"]["city"]
-                state = data["storeLocation"]["address"]["state"]
-                zip_postal = data["storeLocation"]["address"]["postalCode"]
-                for hh in data.get("storeOpeningHours", []):
-                    times = "closed"
-                    if hh["isOpen"]:
-                        times = f"{hh['hoursOfBusiness']['opensAt'].split('T')[-1]}-{hh['hoursOfBusiness']['closesAt'].split('T')[-1]}"
-                    hours.append(f"{hh['dayOfTheWeek']}: {times}")
+            if res.status_code != 200:
+                continue
+            data = res.json()["data"]
+            for hh in data.get("storeOpeningHours", []):
+                times = "closed"
+                if hh["isOpen"]:
+                    times = f"{hh['hoursOfBusiness']['opensAt'].split('T')[-1][:-3]}-{hh['hoursOfBusiness']['closesAt'].split('T')[-1][:-3]}"
+                hours.append(f"{hh['dayOfTheWeek']}: {times}")
             yield SgRecord(
                 page_url=page_url,
-                store_number=_["id"],
                 location_name=_["storeName"],
                 street_address=_["storeAddress"],
-                city=city,
-                state=state,
-                zip_postal=zip_postal,
-                latitude=_["coordinates"]["latitude"],
-                longitude=_["coordinates"]["longitude"],
+                latitude=_["storeLocation"]["coordinates"]["latitude"],
+                longitude=_["storeLocation"]["coordinates"]["longitude"],
                 country_code="Sweden",
                 locator_domain=locator_domain,
                 hours_of_operation="; ".join(hours),
@@ -56,7 +58,7 @@ def fetch_data():
 
 
 if __name__ == "__main__":
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
