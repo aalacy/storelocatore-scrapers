@@ -8,7 +8,6 @@ import cloudscraper
 import os
 from tenacity import retry, stop_after_attempt
 import tenacity
-import json
 import ssl
 import time
 import random
