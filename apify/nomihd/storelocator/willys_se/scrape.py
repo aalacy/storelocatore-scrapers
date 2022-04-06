@@ -63,7 +63,8 @@ def fetch_data():
 
             hours_list = store.get("openingHours", [])
             hours_of_operation = "; ".join(hours_list).strip()
-
+            if hours_of_operation.count("stängd") == 7:
+                continue
             latitude, longitude = (
                 store["geoPoint"]["latitude"],
                 store["geoPoint"]["longitude"],
