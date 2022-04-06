@@ -103,8 +103,10 @@ def get_data(coords, sgw: SgWriter):
         params=params,
         json=json_data,
     )
-
-    js = r.json()["response"]["collection"]
+    try:
+        js = r.json()["response"]["collection"]
+    except:
+        return
 
     for j in js:
 
@@ -170,7 +172,7 @@ def fetch_data(sgw: SgWriter):
         max_search_results=None,
     )
 
-    with futures.ThreadPoolExecutor(max_workers=5) as executor:
+    with futures.ThreadPoolExecutor(max_workers=1) as executor:
         future_to_url = {executor.submit(get_data, url, sgw): url for url in coords}
         for future in futures.as_completed(future_to_url):
             future.result()
