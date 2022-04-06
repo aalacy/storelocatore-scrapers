@@ -42,7 +42,7 @@ def get_data(coords, sgw: SgWriter):
         street_address = a.get("LocStreet") or "<MISSING>"
         city = a.get("LocCity") or "<MISSING>"
         state = a.get("LocState") or "<MISSING>"
-        postal = a.get("LocName") or "<MISSING>"
+        postal = a.get("LocZip") or "<MISSING>"
         country_code = "US"
         phone = a.get("LocPhone") or "<MISSING>"
         latitude = j.get("geometry").get("coordinates")[1]
@@ -97,8 +97,8 @@ def get_data(coords, sgw: SgWriter):
 def fetch_data(sgw: SgWriter):
     coords = DynamicGeoSearch(
         country_codes=[SearchableCountries.USA],
-        max_search_distance_miles=100,
-        expected_search_radius_miles=100,
+        max_search_distance_miles=50,
+        expected_search_radius_miles=50,
         max_search_results=None,
     )
 
