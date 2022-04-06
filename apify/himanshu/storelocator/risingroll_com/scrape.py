@@ -1,5 +1,4 @@
 import json
-from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import RecommendedRecordIds
@@ -15,7 +14,6 @@ driver = SgSelenium().chrome()
 
 def fetch_data():
 
-    pattern = re.compile(r"\s\s+")
     url = "https://www.risingroll.com/locations"
     driver.get(url)
     divlist = driver.page_source.split('<script type="application/ld+json">')[1:]
