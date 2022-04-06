@@ -64,10 +64,15 @@ def fetch_data():
 
                 location_type = "<MISSING>"
                 hours = store["description"]
-                if "coming" in hours.lower() or "opening" in hours.lower():
-                    continue
                 hours_sel = lxml.html.fromstring(hours)
-                hours_info = hours_sel.xpath("//text()")[1:]
+                hours_info = hours_sel.xpath(".//text()")[1:]
+                if (
+                    "coming" in hours.lower()
+                    or "opening" in hours.lower()
+                    or "opens in" in hours.lower()
+                ):
+                    location_type = " ".join(hours_sel.xpath("//text()")).strip()
+
                 hours_of_operation = "; ".join(hours_info).replace(" //", ":")
                 latitude = store["lat"]
                 longitude = store["lng"]
