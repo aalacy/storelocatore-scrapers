@@ -1,3 +1,4 @@
+import re
 from bs4 import BeautifulSoup as bs
 from sgrequests import SgRequests
 from sglogging import sglog
@@ -5,13 +6,11 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
-from sgscrape.sgpostal import parse_address_usa
-import re
+from sgscrape.sgpostal import parse_address_intl
 
-
-DOMAIN = "crayolaexperience.com"
-BASE_URL = "https://www.crayolaexperience.com"
-SITE_MAP = "https://www.crayolaexperience.com/sitemap"
+DOMAIN = "sunset-boulevard.dk"
+BASE_URL = "https://sunset-boulevard.dk"
+LOCATION_URL = "https://sunset-boulevard.dk/restauranter/"
 HEADERS = {
     "Accept": "application/json, text/plain, */*",
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
@@ -25,13 +24,14 @@ session = SgRequests()
 def getAddress(raw_address):
     try:
         if raw_address is not None and raw_address != MISSING:
-            data = parse_address_usa(raw_address)
+            data = parse_address_intl(raw_address)
             street_address = data.street_address_1
             if data.street_address_2 is not None:
                 street_address = street_address + " " + data.street_address_2
             city = data.city
             state = data.state
             zip_postal = data.postcode
+
             if street_address is None or len(street_address) == 0:
                 street_address = MISSING
             if city is None or len(city) == 0:
@@ -55,39 +55,41 @@ def pull_content(url):
 
 def fetch_data():
     log.info("Fetching store_locator data")
-    soup = pull_content(SITE_MAP)
-    contents = soup.find("section", id="content-block").find_all("a", text="Contact Us")
+    soup = pull_content(LOCATION_URL)
+    contents = soup.select("div.map-container div.marker.custom-marker")
     for row in contents:
-        page_url = row["href"]
+        page_url = row.find("a", {"class": "show-restaurant"})["href"]
         store = pull_content(page_url)
-        info = store.find("div", id="MainContent_main_2_contentWrapper")
-        location_name = info.find("h2").text.strip()
-        raw_address = ",".join(
-            info.find("p")
-            .get_text(strip=True, separator=",")
-            .replace("Mailing/GPS Address:,", "")
-            .replace("Address:,", "")
-            .strip()
-            .split(",")[1:]
+        info = (
+            store.select(
+                "div.elementor-widget.elementor-widget-theme-post-title.elementor-page-title.elementor-widget-heading"
+            )[-1]
+            .parent.get_text(strip=True, separator="@@")
+            .split("@@")
         )
+        location_name = info[0].strip()
+        raw_address = ", ".join(info[1:-1]).strip()
         street_address, city, state, zip_postal = getAddress(raw_address)
-        phone_content = store.find("a", {"href": re.compile(r"tel:.*")}, text=True)
-        if not phone_content.text.strip():
-            phone = phone_content.next_sibling
-        else:
-            phone = phone_content.text.strip()
-        country_code = "US"
-        hours_of_operation = re.search(r".*(weekdays.*)", info.text.strip()).group(1)
-        location_type = MISSING
-        store_number = MISSING
+        if zip_postal == MISSING:
+            zip_postal = re.search(r"\d{4,5}", raw_address).group()
+            street_address = street_address.replace(zip_postal, "").strip()
+        country_code = "DK"
         try:
-            map_link = store.find("a", text="Google Directions")["href"]
-            latlong = map_link.split("&ll=")[1].split("&spn")[0].split(",")
-            latitude = latlong[0]
-            longitude = latlong[1]
+            phone = store.find("span", {"itemprop": "telephone"}).text.strip()
         except:
-            latitude = MISSING
-            longitude = MISSING
+            phone = MISSING
+        try:
+            hours_of_operation = (
+                store.find("div", {"class": "rel-open"})
+                .get_text(strip=True, separator=" ")
+                .strip()
+            )
+        except:
+            hours_of_operation = MISSING
+        store_number = MISSING
+        location_type = MISSING
+        latitude = row["data-lat"]
+        longitude = row["data-lng"]
         log.info("Append {} => {}".format(location_name, street_address))
         yield SgRecord(
             locator_domain=DOMAIN,
