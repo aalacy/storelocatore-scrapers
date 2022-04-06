@@ -114,6 +114,9 @@ def fetch_data():
             log.error(f"{count} Error getting {page_url} ... {e}")
             continue
 
+        if "Holiday Inn" in str(location_name):
+            continue
+
         location_type = getJSONObjectVariable(data, "@type")
         if len(location_type) == 0:
             location_type = MISSING
