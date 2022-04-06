@@ -20,7 +20,6 @@ def fetch_data():
     url = "https://locations.popeyes.com/"
     r = session.get(url, headers=headers)
     for line in r.iter_lines():
-        line = str(line.decode("utf-8"))
         if '"Directory-listLink" href="' in line:
             items = line.split('"Directory-listLink" href="')
             for item in items:
@@ -35,7 +34,6 @@ def fetch_data():
         logger.info(state)
         r2 = session.get(state, headers=headers)
         for line2 in r2.iter_lines():
-            line2 = str(line2.decode("utf-8"))
             if '<a class="Directory-listLink" href="' in line2:
                 items = line2.split('<a class="Directory-listLink" href="')
                 for item in items:
@@ -50,7 +48,6 @@ def fetch_data():
         logger.info(city)
         r2 = session.get(city, headers=headers)
         for line2 in r2.iter_lines():
-            line2 = str(line2.decode("utf-8"))
             if '"Teaser"><a href="..' in line2:
                 items = line2.split('"Teaser"><a href="..')
                 for item in items:
@@ -74,7 +71,6 @@ def fetch_data():
         logger.info(loc)
         r2 = session.get(loc, headers=headers)
         for line2 in r2.iter_lines():
-            line2 = str(line2.decode("utf-8"))
             if '<span class="Hero-subtitle Heading--lead">' in line2:
                 name = (
                     line2.split('<span class="Hero-subtitle Heading--lead">')[1]
@@ -122,6 +118,8 @@ def fetch_data():
                             hours = hours + "; " + hrs
         name = name.replace("&amp;", "&")
         add = add.replace("&amp;", "&")
+        if "&" in store:
+            store = store.split("&")[0]
         yield SgRecord(
             locator_domain=website,
             page_url=loc,
