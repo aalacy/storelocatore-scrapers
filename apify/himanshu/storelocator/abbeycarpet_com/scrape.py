@@ -493,6 +493,11 @@ def fetch_data(sgw: SgWriter):
 
 def write_store(sgw, store):
     address = store[2].replace("Floor & Home", "").strip()
+    state = store[4]
+    zip_postal = store[5]
+    if address == "156 Tilco Drive" or zip_postal == "Carolina":
+        state = "NC"
+        zip_postal = "28590"
     logger.info("Append {} => {}".format(store[1], address))
     sgw.write_row(
         SgRecord(
@@ -500,8 +505,8 @@ def write_store(sgw, store):
             location_name=store[1],
             street_address=address,
             city=store[3],
-            state=store[4],
-            zip_postal=store[5],
+            state=state,
+            zip_postal=zip_postal,
             country_code=store[6],
             store_number=store[7],
             phone=store[8],

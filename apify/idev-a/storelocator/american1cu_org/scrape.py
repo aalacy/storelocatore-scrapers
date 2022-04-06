@@ -70,6 +70,7 @@ def fetch_data():
                 phone = list(_p.find_parent().stripped_strings)[1]
 
             coord = _coord(infos, addr)
+
             yield SgRecord(
                 page_url=base_url,
                 location_name=link.select_one("span.cuname").text.strip(),
