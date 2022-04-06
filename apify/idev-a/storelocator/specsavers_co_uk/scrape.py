@@ -3,10 +3,16 @@ from bs4 import BeautifulSoup as bs
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
+from sgselenium import SgChrome
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 import re
 from sglogging import SgLogSetup
+import math
+from concurrent.futures import ThreadPoolExecutor
+import ssl
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 logger = SgLogSetup().get_logger("")
 
@@ -18,19 +24,57 @@ _headers = {
 }
 
 
+max_workers = 1
+
+
+def fetchConcurrentSingle(link):
+    page_url = "https://www.specsavers.co.uk/stores/" + link["href"]
+    logger.info(page_url)
+    res = request_with_retries(page_url)
+    if res.status_code == 200:
+        soup = bs(res.text, "lxml")
+        location_type = "Hearing Centre" if "hearing" in page_url else "Optician"
+        try:
+            addr = list(soup.select_one("div.store p").stripped_strings)
+        except:
+            addr = (
+                soup.select_one("a#contact-info_location-text").text.strip().split(",")
+            )
+        return page_url, res, soup, location_type, addr
+
+
+def fetchConcurrentList(list, occurrence=max_workers):
+    output = []
+    total = len(list)
+    reminder = math.floor(total / 50)
+    if reminder < occurrence:
+        reminder = occurrence
+
+    count = 0
+    with ThreadPoolExecutor(
+        max_workers=occurrence, thread_name_prefix="fetcher"
+    ) as executor:
+        for result in executor.map(fetchConcurrentSingle, list):
+            if result:
+                count = count + 1
+                if count % reminder == 0:
+                    logger.debug(f"Concurrent Operation count = {count}")
+                output.append(result)
+    return output
+
+
+def request_with_retries(url):
+    with SgRequests() as session:
+        return session.get(url, headers=_headers)
+
+
 def fetch_data():
     with SgRequests(proxy_country="us") as session:
         soup = bs(session.get(base_url, headers=_headers).text, "lxml")
         store_links = soup.select("div.item-list ul li a")
-        for link in store_links:
-            page_url = "https://www.specsavers.co.uk/stores/" + link["href"]
-            logger.info(page_url)
-            res = session.get(page_url, headers=_headers)
-            if res.status_code != 200:
-                continue
-            soup = bs(res.text, "lxml")
-            location_type = "Hearing Centre" if "hearing" in page_url else "Optician"
-            addr = list(soup.select_one("div.store p").stripped_strings)
+        for page_url, res, soup, location_type, addr in fetchConcurrentList(
+            store_links
+        ):
             try:
                 detail_url = soup.find(
                     "script", src=re.compile(r"https://knowledgetags.yextpages.net")
@@ -62,39 +106,53 @@ def fetch_data():
                     raw_address=" ".join(addr).replace("\n", "").replace("\r", ""),
                 )
             except:
-                street_address = " ".join(addr[:-3])
-                if street_address.endswith(","):
-                    street_address = street_address[:-1]
-                try:
-                    coord = json.loads(
-                        res.text.split("var position =")[1].split(";")[0]
+                with SgChrome() as driver:
+                    driver.get(page_url)
+                    res = driver.page_source
+                    soup = bs(res, "lxml")
+                    location_type = (
+                        "Hearing Centre" if "hearing" in page_url else "Optician"
                     )
-                except:
-                    coord = {"lat": "", "lng": ""}
-                hours = [
-                    tr["content"]
-                    for tr in soup.select("table.opening--day-and-time tr")
-                ]
-                yield SgRecord(
-                    page_url=page_url,
-                    location_name=soup.select_one(
-                        "h1.store-header--title"
-                    ).text.strip(),
-                    street_address=street_address,
-                    city=addr[-3].replace(",", ""),
-                    state=addr[-2].replace(",", ""),
-                    zip_postal=addr[-1].replace(",", ""),
-                    phone=soup.select_one(
-                        "span.contact--store-telephone--text"
-                    ).text.strip(),
-                    locator_domain=locator_domain,
-                    latitude=coord.get("lat"),
-                    longitude=coord.get("lng"),
-                    hours_of_operation="; ".join(hours),
-                    location_type=location_type,
-                    country_code="UK",
-                    raw_address=" ".join(addr).replace("\n", "").replace("\r", ""),
-                )
+                    addr = list(soup.select_one("div.store p").stripped_strings)
+                    street_address = " ".join(addr[:-3])
+                    if street_address.endswith(","):
+                        street_address = street_address[:-1]
+                    try:
+                        coord = json.loads(
+                            res.text.split("var position =")[1].split(";")[0]
+                        )
+                    except:
+                        coord = {"lat": "", "lng": ""}
+                    hours = [
+                        tr["content"]
+                        for tr in soup.select("table.opening--day-and-time tr")
+                    ]
+                    try:
+                        location_name = soup.select_one(
+                            "h1.store-header--title"
+                        ).text.strip()
+                    except:
+                        location_name = soup.select_one(
+                            "h1.general-information__store-name"
+                        ).text.strip()
+                    yield SgRecord(
+                        page_url=page_url,
+                        location_name=location_name,
+                        street_address=street_address,
+                        city=addr[-3].replace(",", ""),
+                        state=addr[-2].replace(",", ""),
+                        zip_postal=addr[-1].replace(",", ""),
+                        phone=soup.select_one(
+                            "span.contact--store-telephone--text"
+                        ).text.strip(),
+                        locator_domain=locator_domain,
+                        latitude=coord.get("lat"),
+                        longitude=coord.get("lng"),
+                        hours_of_operation="; ".join(hours),
+                        location_type=location_type,
+                        country_code="UK",
+                        raw_address=" ".join(addr).replace("\n", "").replace("\r", ""),
+                    )
 
 
 if __name__ == "__main__":

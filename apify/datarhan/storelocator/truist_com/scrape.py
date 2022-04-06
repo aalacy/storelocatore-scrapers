@@ -10,24 +10,33 @@ from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 def fetch_data():
     session = SgRequests()
 
-    start_url = "https://www.truist.com/truist-api/locator/locations.json?returnBranchATMStatus=Y&maxResults=100&locationType=BOTH&searchRadius=40&address={}"
+    start_url = "https://www.truist.com/truist-api/locator/locations.json?returnBranchATMStatus=Y&maxResults=1000&locationType=BOTH&searchRadius=10&address={}"
     domain = "truist.com"
     hdr = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
     all_codes = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA], expected_search_radius_miles=40
+        country_codes=[SearchableCountries.USA], expected_search_radius_miles=1
     )
     for code in all_codes:
         data = session.get(start_url.format(code), headers=hdr).json()
         if not data.get("location"):
             continue
         for poi in data["location"]:
-            hoo = " ".join(poi["lobbyHours"]) if poi.get("lobbyHours") else ""
+            hoo = (
+                " ".join(" ".join(poi["lobbyHours"]).split())
+                if poi.get("lobbyHours")
+                else ""
+            )
+            if hoo:
+                hoo = hoo.replace("*", "")
+                if "Mon: *" in hoo:
+                    hoo = ""
+            page_url = f'https://www.truist.com/{poi["locationType"].lower()}/{poi["locationAddress"]["state"].lower()}/{poi["locationAddress"]["city"].replace(" ", "-").lower()}/{poi["locationAddress"]["zipCode"]}/{poi["locationAddress"]["address1"].lower().replace(" ", "-")}'
 
             item = SgRecord(
                 locator_domain=domain,
-                page_url="https://www.truist.com/locations",
+                page_url=page_url,
                 location_name=poi["locationName"],
                 street_address=poi["locationAddress"]["address1"],
                 city=poi["locationAddress"]["city"],
@@ -50,7 +59,8 @@ def scrape():
         SgRecordDeduper(
             SgRecordID(
                 {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
-            )
+            ),
+            duplicate_streak_failure_factor=-1,
         )
     ) as writer:
         for item in fetch_data():
