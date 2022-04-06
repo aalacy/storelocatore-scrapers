@@ -116,6 +116,8 @@ def fetch_data():
 
         if "Holiday Inn" in str(location_name):
             continue
+        if "Candlewood" in str(location_name):
+            continue
 
         location_type = getJSONObjectVariable(data, "@type")
         if len(location_type) == 0:
