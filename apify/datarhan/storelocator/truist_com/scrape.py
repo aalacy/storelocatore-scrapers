@@ -16,7 +16,7 @@ def fetch_data():
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
     all_codes = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA], expected_search_radius_miles=5
+        country_codes=[SearchableCountries.USA], expected_search_radius_miles=1
     )
     for code in all_codes:
         data = session.get(start_url.format(code), headers=hdr).json()
