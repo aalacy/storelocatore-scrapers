@@ -9,6 +9,9 @@ import time
 import dirtyjson as json
 from sglogging import SgLogSetup
 from webdriver_manager.chrome import ChromeDriverManager
+import ssl
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 logger = SgLogSetup().get_logger("")
 
