@@ -122,7 +122,6 @@ def fetch_data(sgw: SgWriter):
         add2 = soup.find_all("add2")
         address1 = soup.find_all("add1")
         loc = soup.find_all("marker")
-        hours = soup.find_all("contents")
         name = soup.find_all("title")
         locator_domain = "https://www.bylinebank.com"
         location_type = "ATM"
@@ -145,16 +144,7 @@ def fetch_data(sgw: SgWriter):
             else:
                 country_code = "US"
 
-            soup_hour = BeautifulSoup(hours[i].text, "lxml")
-            if soup_hour.find("table"):
-                h = []
-                for i in soup_hour.find("table"):
-                    h.append(i.text)
-
-                hour = " ".join(h).replace(":", " : ").strip()
-            else:
-                hour = "<MISSING>"
-            hours_of_operation = hour
+            hours_of_operation = "<MISSING>"
             latitude, longitude = "<MISSING>", "<MISSING>"
             try:
                 latitude = loc[i].attrs["lat"]
