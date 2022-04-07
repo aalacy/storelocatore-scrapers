@@ -2,7 +2,6 @@ from sgscrape import simple_scraper_pipeline as sp
 from sglogging import sglog
 from sgrequests import SgRequests
 import ssl
-from sgscrape.pause_resume import CrawlStateSingleton
 import json
 
 try:
@@ -200,7 +199,6 @@ def main_all(session, url):
 
 
 def fetch_data():
-    state = CrawlStateSingleton.get_instance()
     with SgRequests() as session:
 
         for item in main_all(
