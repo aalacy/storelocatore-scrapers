@@ -1,98 +1,106 @@
-import csv
+# -*- coding: utf-8 -*-
+# --extra-index-url https://dl.cloudsmith.io/KVaWma76J5VNwrOm/crawl/crawl/python/simple/
+from lxml import etree
+
 from sgrequests import SgRequests
-from bs4 import BeautifulSoup
-import re
-import json
-import sgzip
-from sglogging import SgLogSetup
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 
-logger = SgLogSetup().get_logger('toyota_com')
-
-
-
-
-session = SgRequests()
-
-def write_output(data):
-    with open('data.csv', mode='w',encoding="utf-8") as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-def minute_to_hours(time):
-    am = "AM"
-    hour = int(time/60)
-    if hour > 12:
-        am = "PM"
-        hour = hour - 12
-    if int(str(time/60).split(".")[1]) == 0:
-        return str(hour) + ":00" + " " + am
-    else:
-        return str(hour) + ":" + str(int(str(time/60).split(".")[1]) * 6) + " "+ am
 
 def fetch_data():
-    zips = sgzip.for_radius(50)
-    return_main_object = []
-    addresses = []
-    for zip_code in zips:
-        headers = {
-            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
-        }
-        base_url = "https://www.toyota.com"
-        # logger.info("https://www.toyota.com/ToyotaSite/rest/dealerRefresh/locateDealers?zipCode=" + str(zip_code))
-        r = session.get("https://www.toyota.com/ToyotaSite/rest/dealerRefresh/locateDealers?zipCode=" + str(zip_code),headers=headers)
-        if "showDealerLocatorDataArea" not in r.json():
+    session = SgRequests()
+
+    start_url = "https://www.toyota.com/service/tcom/dealerRefresh/zipCode/{}"
+    domain = "toyota.com"
+    hdr = {
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
+    }
+    all_codes = DynamicZipSearch(
+        country_codes=[SearchableCountries.USA], expected_search_radius_miles=50
+    )
+    for code in all_codes:
+        data = session.get(start_url.format(code), headers=hdr).json()
+        if not data.get("showDealerLocatorDataArea"):
             continue
-        if "dealerLocator" not in r.json()["showDealerLocatorDataArea"]:
+        if not data["showDealerLocatorDataArea"].get("dealerLocator"):
             continue
-        for store_data in r.json()["showDealerLocatorDataArea"]["dealerLocator"][0]["dealerLocatorDetail"]:
-            name = store_data["dealerParty"]["specifiedOrganization"]["companyName"]["value"]
-            address = store_data["dealerParty"]["specifiedOrganization"]["primaryContact"][0]["postalAddress"]["lineOne"]["value"]
-            if "lineTwo" in store_data["dealerParty"]["specifiedOrganization"]["primaryContact"][0]["postalAddress"]:
-                address = address + " " + store_data["dealerParty"]["specifiedOrganization"]["primaryContact"][0]["postalAddress"]["lineTwo"]["value"]
-            if address in addresses:
-                continue
-            addresses.append(address)
-            city = store_data["dealerParty"]["specifiedOrganization"]["primaryContact"][0]["postalAddress"]["cityName"]["value"]
-            state = store_data["dealerParty"]["specifiedOrganization"]["primaryContact"][0]["postalAddress"]["stateOrProvinceCountrySubDivisionID"]["value"]
-            store_zip = store_data["dealerParty"]["specifiedOrganization"]["primaryContact"][0]["postalAddress"]["postcode"]["value"]
-            store_id = store_data["dealerParty"]["partyID"]["value"]
-            phone = store_data["dealerParty"]["specifiedOrganization"]["primaryContact"][0]["telephoneCommunication"][0]["completeNumber"]["value"]
-            lat = store_data["proximityMeasureGroup"]["geographicalCoordinate"]["latitudeMeasure"]["value"]
-            lng = store_data["proximityMeasureGroup"]["geographicalCoordinate"]["longitudeMeasure"]["value"]
-            hours = ""
-            if "hoursOfOperation" in store_data:
-                store_hours = store_data["hoursOfOperation"][0]["daysOfWeek"]
-                for i in range(len(store_hours)):
-                    if "availabilityEndTimeMeasure" in store_hours[i]:
-                        hours = hours + " " + store_hours[i]["dayOfWeekCode"] + " " + minute_to_hours(int(store_hours[i]["availabilityStartTimeMeasure"]["value"])) + " - " + minute_to_hours(int(store_hours[i]["availabilityEndTimeMeasure"]["value"]))
-                    else:
-                        hours = hours + " " + store_hours[i]["dayOfWeekCode"] + " closed"
-            else:
-                hours = "<MISSING>"
-            store = []
-            store.append("https://www.toyota.com")
-            store.append(name)
-            store.append(address)
-            store.append(city)
-            store.append(state)
-            store.append(store_zip)
-            store.append("US")
-            store.append(store_id)
-            store.append(phone)
-            store.append("<MISSING>")
-            store.append(lat)
-            store.append(lng)
-            store.append(hours)
-            store.append("https://www.toyota.com/dealers/dealer/" + str(store_id))
-            yield store
+        all_locations = data["showDealerLocatorDataArea"]["dealerLocator"][0][
+            "dealerLocatorDetail"
+        ]
+        for poi in all_locations:
+            store_number = poi["dealerParty"]["partyID"]["value"]
+            page_url = f"https://www.toyota.com/dealers/dealer/{store_number}/"
+            hoo_clean = ""
+            if poi.get("hoursOfOperation"):
+                hoo = [
+                    e for e in poi["hoursOfOperation"] if e["hoursTypeCode"] == "Sales"
+                ]
+                if hoo:
+                    hoo_clean = []
+                    for e in hoo[0]["daysOfWeek"]:
+                        day = e["dayOfWeekCode"]
+                        if e.get("availabilityStartTimeMeasure"):
+                            opens = e["availabilityStartTimeMeasure"]["value"] // 60
+                            closes = e["availabilityEndTimeMeasure"]["value"] // 60
+                            hoo_clean.append(f"{day}: {str(opens)} - {str(closes)}")
+                        else:
+                            hoo_clean.append(f"{day}: closed")
+                hoo_clean = " ".join(hoo_clean)
+
+            item = SgRecord(
+                locator_domain=domain,
+                page_url=page_url,
+                location_name=poi["dealerParty"]["specifiedOrganization"][
+                    "companyName"
+                ]["value"],
+                street_address=poi["dealerParty"]["specifiedOrganization"][
+                    "primaryContact"
+                ][0]["postalAddress"]["lineOne"]["value"],
+                city=poi["dealerParty"]["specifiedOrganization"]["primaryContact"][0][
+                    "postalAddress"
+                ]["cityName"]["value"],
+                state=poi["dealerParty"]["specifiedOrganization"]["primaryContact"][0][
+                    "postalAddress"
+                ]["stateOrProvinceCountrySubDivisionID"]["value"],
+                zip_postal=poi["dealerParty"]["specifiedOrganization"][
+                    "primaryContact"
+                ][0]["postalAddress"]["postcode"]["value"],
+                country_code=poi["dealerParty"]["specifiedOrganization"][
+                    "primaryContact"
+                ][0]["postalAddress"]["countryID"],
+                store_number=store_number,
+                phone=poi["dealerParty"]["specifiedOrganization"]["primaryContact"][0][
+                    "telephoneCommunication"
+                ][0]["completeNumber"]["value"],
+                location_type=poi["dealerParty"]["specifiedOrganization"][
+                    "primaryContact"
+                ][0]["departmentName"]["value"],
+                latitude=poi["proximityMeasureGroup"]["geographicalCoordinate"][
+                    "latitudeMeasure"
+                ]["value"],
+                longitude=poi["proximityMeasureGroup"]["geographicalCoordinate"][
+                    "longitudeMeasure"
+                ]["value"],
+                hours_of_operation=hoo_clean,
+            )
+
+            yield item
+
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
-scrape()
+
+if __name__ == "__main__":
+    scrape()
