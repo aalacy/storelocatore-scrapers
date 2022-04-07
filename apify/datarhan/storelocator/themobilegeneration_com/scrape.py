@@ -1,83 +1,81 @@
+import ssl
 from lxml import etree
+from time import sleep
 
-from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
+from sgselenium.sgselenium import SgFirefox
+from selenium.webdriver.firefox.options import Options
+
+options = Options()
+options.set_preference("geo.prompt.testing", True)
+options.set_preference("geo.prompt.testing.allow", True)
+options.set_preference(
+    "geo.provider.network.url",
+    'data:application/json,{"location": {"lat": 51.47, "lng": 0.0}, "accuracy": 100.0}',
+)
+options.add_argument("--headless")
+
+try:
+    _create_unverified_https_context = ssl._create_unverified_context
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context
 
 
 def fetch_data():
-    session = SgRequests()
-
-    start_url = "https://themobilegeneration.com/wp-json/wpgmza/v1/datatables/base64eJy1kruKwzAQRf9lahV5NurCFmk2xJBAIOtlmVgTW0SWzUg2Cyb-vmPHge3SxN1wde9Rczqoi-rDYQig4ZRsd+dNmu6Qb8SfNkTr8zTdmBZ9RuaIF0egIETkCHqmwJHPYwF6LXeJ9Y81QllIJatcU3phfnVgMOLQ9liSvPcEQs6KAacjN6SgYkP8P3hUQHfQomvGHVNOv6Cv6ALd7+rJnk-IXkzIXk7IXk3IXr+f-T3OBmMe9gzOGCsRYMigr7wGKbhaF4lF3AQZS1Gwk7BqidkaGp3e918dKPZ3eE7-AF9yA7Q"
+    start_url = "https://themobilegeneration.com/locations/"
     domain = "themobilegeneration.com"
-    hdr = {
-        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
-    }
-    data = session.get(start_url, headers=hdr).json()
 
-    for poi in data["data"]:
-        page_url = (
-            "https://themobilegeneration.com/locations"
-            + etree.HTML(poi[3]).xpath("//@href")[0]
-        )
-        loc_response = session.get(page_url)
-        loc_dom = etree.HTML(loc_response.text)
+    with SgFirefox(firefox_options=options, is_headless=False) as driver:
+        driver.get(start_url)
+        sleep(15)
+        dom = etree.HTML(driver.page_source)
+        all_locations = dom.xpath("//div[@mapid]")
+        driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+        sleep(15)
+        next_page = driver.find_element_by_xpath('//li[@title="Next page"]/a')
+        while next_page:
+            next_page.click()
+            dom = etree.HTML(driver.page_source)
+            all_locations += dom.xpath("//div[@mapid]")
+            driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+            try:
+                next_page = driver.find_element_by_xpath('//li[@title="Next page"]/a')
+            except Exception:
+                next_page = False
 
-        raw_adr = poi[1].split(", ")
-        zip_code = raw_adr[2].split()[-1]
-        city = raw_adr[1]
-        if len(zip_code) == 2:
-            zip_code = loc_dom.xpath(
-                '//strong[span[contains(text(), "Address")]]/following-sibling::span/text()'
-            )[-1].split()[-1]
-            if len(zip_code) == 3:
-                zip_code = loc_dom.xpath(
-                    '//span[contains(text(), "{}")]/text()'.format(city)
-                )[-1].split()[-1]
-        if poi[2] and "Please" not in poi[2]:
-            poi_html = etree.HTML(poi[2])
-            raw_data = poi_html.xpath("//text()")
-            phone = raw_data[1]
-        else:
-            phone = loc_dom.xpath(
-                '//strong[span[contains(text(), "Phone Number:")]]/following-sibling::span/text()'
-            )[0]
-        geo = (
-            loc_dom.xpath('//iframe[@loading="lazy"]/@src')[0]
-            .split("!2d")[-1]
-            .split("!2m")[0]
-            .split("!3d")
-        )
-        hoo = " ".join(raw_data).split("Hours:")[-1].strip()
-        if loc_dom.xpath('//p[contains(text(), "TEMPORARILY CLOSED")]'):
-            hoo = "TEMPORARILY CLOSED"
-        str_2 = loc_dom.xpath(
-            '//strong[span[contains(text(), "Address:")]]/following-sibling::span/text()'
-        )
-        street_address = raw_adr[0]
-        if len(str_2) == 3:
-            street_address += ", " + str_2[1].strip()
+        for poi_html in all_locations:
+            location_name = poi_html.xpath(".//strong/a/text()")[0]
+            raw_address = poi_html.xpath('.//div[@class="wpgmza-address"]/text()')[
+                0
+            ].split(", ")
+            phone = poi_html.xpath('.//a[contains(@href, "tel")]/text()')[0]
+            hoo = poi_html.xpath('.//p[b[contains(text(), "M-F")]]//text()')
+            hoo = " ".join([e.strip() for e in hoo if e.strip()])
+            geo = poi_html.xpath("@data-latlng")[0].split(", ")
 
-        item = SgRecord(
-            locator_domain=domain,
-            page_url=page_url,
-            location_name=poi[0],
-            street_address=street_address,
-            city=city,
-            state=raw_adr[2].split()[0],
-            zip_postal=zip_code,
-            country_code=raw_adr[-1],
-            store_number="",
-            phone=phone,
-            location_type="",
-            latitude=geo[-1].split("!")[0],
-            longitude=geo[0],
-            hours_of_operation=hoo,
-        )
+            item = SgRecord(
+                locator_domain=domain,
+                page_url="https://themobilegeneration.com/locations/",
+                location_name=location_name,
+                street_address=raw_address[0],
+                city=raw_address[1],
+                state=raw_address[2].split()[0],
+                zip_postal=raw_address[2].split()[-1],
+                country_code=raw_address[3],
+                store_number="",
+                phone=phone,
+                location_type="",
+                latitude=geo[0],
+                longitude=geo[1],
+                hours_of_operation=hoo,
+            )
 
-        yield item
+            yield item
 
 
 def scrape():

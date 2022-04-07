@@ -25,59 +25,60 @@ def fetch_data():
     typ = "<MISSING>"
     website = "harborfreight.com"
     for clat, clng in search:
-        clat = "34"
-        clng = "-118"
-        logger.info(str(clat) + "-" + str(clng))
-        url = (
-            "https://api.harborfreight.com/graphql?operationName=FindStoresNearCoordinates&variables=%7B%22filter%22%3A%7B%22status%22%3A%22OPEN%22%7D%2C%22latitude%22%3A"
-            + str(clat)
-            + "%2C%22longitude%22%3A"
-            + str(clng)
-            + "%2C%22withDistance%22%3Atrue%7D&extensions=%7B%22persistedQuery%22%3A%7B%22sha256Hash%22%3A%22de67488071fd8519ed17e17001d8aaf81efa1521%22%7D%7D"
-        )
-        r = session.get(url, headers=headers)
-        for item in json.loads(r.content)["data"]["findStoresNearCoordinates"][
-            "stores"
-        ]:
-            store = item["store_number"]
-            loc = "https://www.harborfreight.com/storelocator/store?number=" + store
-            name = item["title"]
-            country = "US"
-            add = item["address"]
-            city = item["city"]
-            state = item["state"]
-            zc = item["postcode"]
-            phone = item["telephone"]
-            lat = item["latitude"]
-            lng = item["longitude"]
-            hours = (
-                "Mon-Fri: "
-                + item["store_hours_mf"]
-                + "; Sat: "
-                + item["store_hours_sat"]
-                + "; Sun: "
-                + item["store_hours_sun"]
+        try:
+            logger.info(str(clat) + "-" + str(clng))
+            url = (
+                "https://api.harborfreight.com/graphql?operationName=FindStoresNearCoordinates&variables=%7B%22filter%22%3A%7B%22status%22%3A%22OPEN%22%7D%2C%22latitude%22%3A"
+                + str(clat)
+                + "%2C%22longitude%22%3A"
+                + str(clng)
+                + "%2C%22withDistance%22%3Atrue%7D&extensions=%7B%22persistedQuery%22%3A%7B%22sha256Hash%22%3A%22de67488071fd8519ed17e17001d8aaf81efa1521%22%7D%7D"
             )
-            status = item["status"]
-            if status == "NEW" or status == "OPEN":
-                if add == "":
-                    add = "<MISSING>"
-                yield SgRecord(
-                    locator_domain=website,
-                    page_url=loc,
-                    location_name=name,
-                    street_address=add,
-                    city=city,
-                    state=state,
-                    zip_postal=zc,
-                    country_code=country,
-                    phone=phone,
-                    location_type=typ,
-                    store_number=store,
-                    latitude=lat,
-                    longitude=lng,
-                    hours_of_operation=hours,
+            r = session.get(url, headers=headers)
+            for item in json.loads(r.content)["data"]["findStoresNearCoordinates"][
+                "stores"
+            ]:
+                store = item["store_number"]
+                loc = "https://www.harborfreight.com/storelocator/store?number=" + store
+                name = item["title"]
+                country = "US"
+                add = item["address"]
+                city = item["city"]
+                state = item["state"]
+                zc = item["postcode"]
+                phone = item["telephone"]
+                lat = item["latitude"]
+                lng = item["longitude"]
+                hours = (
+                    "Mon-Fri: "
+                    + item["store_hours_mf"]
+                    + "; Sat: "
+                    + item["store_hours_sat"]
+                    + "; Sun: "
+                    + item["store_hours_sun"]
                 )
+                status = item["status"]
+                if status == "NEW" or status == "OPEN":
+                    if add == "":
+                        add = "<MISSING>"
+                    yield SgRecord(
+                        locator_domain=website,
+                        page_url=loc,
+                        location_name=name,
+                        street_address=add,
+                        city=city,
+                        state=state,
+                        zip_postal=zc,
+                        country_code=country,
+                        phone=phone,
+                        location_type=typ,
+                        store_number=store,
+                        latitude=lat,
+                        longitude=lng,
+                        hours_of_operation=hours,
+                    )
+        except:
+            pass
 
 
 def scrape():

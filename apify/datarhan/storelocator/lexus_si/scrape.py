@@ -26,6 +26,10 @@ def fetch_data():
                 hoo = loc_dom.xpath(
                     '//p[strong[contains(text(), "SALON LEXUS")]]/text()'
                 )
+                if not hoo:
+                    hoo = loc_dom.xpath(
+                        '//h3[label[contains(text(), "Uudet autot")]]/following-sibling::ul//text()'
+                    )
                 hoo = [e.strip() for e in hoo if ": od" in e]
                 hoo = " ".join(hoo) if hoo else ""
                 if not hoo:

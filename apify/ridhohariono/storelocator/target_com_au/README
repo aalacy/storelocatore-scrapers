@@ -1,0 +1,7 @@
+--ignore CountryCodeFillRateChecker (AU)
+
+--ignore StreetAddressHasNumber (Confirmed on website)
+
+--ignore GeoConsistencyValidator (Not US zip)
+
+--ignore CountryValidator (Not us State)

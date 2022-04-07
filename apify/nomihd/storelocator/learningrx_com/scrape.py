@@ -1,128 +1,118 @@
 # -*- coding: utf-8 -*-
-from sgrequests import SgRequests
+from sgrequests import SgRequests, SgRequestError
 from sglogging import sglog
+import json
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-import json
 import lxml.html
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "learningrx.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
 headers = {
-    "authority": "www.learningrx.com",
-    "sec-ch-ua": '" Not A;Brand";v="99", "Chromium";v="90", "Google Chrome";v="90"',
-    "sec-ch-ua-mobile": "?0",
-    "upgrade-insecure-requests": "1",
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.93 Safari/537.36",
-    "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-    "sec-fetch-site": "none",
-    "sec-fetch-mode": "navigate",
-    "sec-fetch-user": "?1",
-    "sec-fetch-dest": "document",
-    "accept-language": "en-US,en;q=0.9,ar;q=0.8",
+    "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36",
+    "Accept": "application/json",
 }
 
 
 def fetch_data():
     # Your scraper here
-    base = "https://www.learningrx.com"
-    api_url = "https://www.learningrx.com/locations/?CallAjax=GetLocations"
-    api_res = session.post(api_url, headers=headers)
+    search_url = "https://code.metalocator.com/index.php?option=com_locator&view=location&tmpl=component&task=load&framed=1&format=json&templ[]=map_address_template&sample_data=undefined&lang=&_opt_out=&Itemid=15430&number={}&id={}&distance=&_urlparams"
+    for index in range(1, 200):
+        log.info(index)
+        store_req = session.get(
+            search_url.format(str(index), str(index)), headers=headers
+        )
+        json_data = json.loads(store_req.text)
+        if len(json_data) > 0:
+            store = json_data[0]
+            if "name" in store:
+                if store["name"] != "" or store["name"] is not None:
+                    location_name = store["name"]
+                    if (
+                        "coming" in location_name.lower()
+                        or "opening" in location_name.lower()
+                    ):
+                        continue
 
-    json_res = json.loads(api_res.text)
-
-    stores_list = json_res
-
-    for store in stores_list:
-
-        page_url = base + store["Path"]
-        log.info(page_url)
-        store_req = session.get(page_url, headers=headers)
-        store_sel = lxml.html.fromstring(store_req.text)
-
-        store_number = store["FranchiseLocationID"]
-        locator_domain = website
-
-        location_name = store["BusinessName"].strip()
-        street_address = store["Address1"].strip()
-        if "Address2" in store and store["Address2"]:
-            street_address = (
-                (street_address + ", " + store["Address2"]).strip(", ").strip()
-            )
-
-        street_address = street_address.replace(
-            ", Mary Savio Medical Plaza, Newtown Square", ""
-        ).strip()
-
-        city = store["City"].strip()
-        state = store["State"].strip()
-
-        zip = store["ZipCode"].strip()
-
-        country_code = store["Country"]
-        phone = store["Phone"]
-        location_type = "<MISSING>"
-
-        hours_list = []
-        hours_of_operation = "<MISSING>"
-        hours = store_sel.xpath('//ul[@class="hours-block"]/li')
-        for hour in hours:
-            day = "".join(hour.xpath('span[@class="interval"]/text()')).strip()
-            time = "".join(hour.xpath("text()")).strip()
-            if len(time) <= 0:
-                time = "".join(hour.xpath('span[@class="cls"]/text()')).strip()
-            hours_list.append(day + ":" + time)
-
-        if len(hours_list) <= 0:
-            if store["LocationHours"]:
-                hours_info = store["LocationHours"].split("][")
-                hours = []
-
-                for hour in hours_info:
-                    json_str = "{" + hour.strip("[] ") + "}"
-                    json_obj = json.loads(json_str)
-                    interval = json_obj["Interval"]
-
-                    if json_obj["Closed"] == "1":
-                        hours.append(f"{interval} : CLOSED")
+                    if "http" not in store["link"]:
+                        page_url = "https:" + store["link"]
                     else:
-                        hours.append(
-                            f"{interval} : {json_obj['OpenTime']} - {json_obj['CloseTime']}"
+                        page_url = store["link"]
+                    locator_domain = website
+
+                    street_address = store["address"]
+                    if store["address2"] is not None:
+                        if len(store["address2"]) > 0:
+                            street_address = street_address + ", " + store["address2"]
+
+                    city = store["city"].strip()
+                    state = store["state"].strip()
+                    zip = store["postalcode"].strip()
+
+                    country_code = store["country"]
+                    store_number = str(store["id"])
+                    phone = store["phone"]
+
+                    log.info(page_url)
+                    hours_of_operation = "<MISSING>"
+                    store_page_req = session.get(page_url, headers=headers)
+                    if not isinstance(store_page_req, SgRequestError):
+                        store_page_sel = lxml.html.fromstring(store_page_req.text)
+                        if phone is None or len(phone) <= 0:
+                            phone = store_page_sel.xpath(
+                                '//a[@class="app-header__utility-bar-phone"]/text()'
+                            )
+                            if len(phone) > 0:
+                                phone = phone[0].strip()
+
+                        hours_of_operation = "; ".join(
+                            list(
+                                filter(
+                                    str,
+                                    (
+                                        [
+                                            x.strip()
+                                            for x in store_page_sel.xpath(
+                                                '//div[@class="detail-list_block"][.//div[contains(text(),"Hours")]]/div[2]/text()'
+                                            )
+                                        ]
+                                    ),
+                                )
+                            )
                         )
 
-                    hours_of_operation = "; ".join(hours)
+                    location_type = "<MISSING>"
 
-        else:
-            hours_of_operation = "; ".join(hours_list).strip()
+                    latitude = store["lat"]
+                    longitude = store["lng"]
 
-        latitude = store["Latitude"]
-        longitude = store["Longitude"]
-
-        raw_address = "<MISSING>"
-        yield SgRecord(
-            locator_domain=locator_domain,
-            page_url=page_url,
-            location_name=location_name,
-            street_address=street_address,
-            city=city,
-            state=state,
-            zip_postal=zip,
-            country_code=country_code,
-            store_number=store_number,
-            phone=phone,
-            location_type=location_type,
-            latitude=latitude,
-            longitude=longitude,
-            hours_of_operation=hours_of_operation,
-            raw_address=raw_address,
-        )
+                    yield SgRecord(
+                        locator_domain=locator_domain,
+                        page_url=page_url,
+                        location_name=location_name,
+                        street_address=street_address,
+                        city=city,
+                        state=state,
+                        zip_postal=zip,
+                        country_code=country_code,
+                        store_number=store_number,
+                        phone=phone,
+                        location_type=location_type,
+                        latitude=latitude,
+                        longitude=longitude,
+                        hours_of_operation=hours_of_operation,
+                    )
 
 
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.StoreNumberId)
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

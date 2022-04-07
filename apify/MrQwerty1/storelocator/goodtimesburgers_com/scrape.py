@@ -17,7 +17,8 @@ def get_coords():
         key = phone.replace("(", "").replace(")", "").replace(" ", "-")
         lat = j.get("latitude")
         lng = j.get("longitude")
-        coords[key] = (lat, lng)
+        url = str(j.get("url")).replace("menu", "locations")
+        coords[key] = (lat, lng, url)
 
     return coords
 
@@ -54,10 +55,17 @@ def fetch_data(sgw: SgWriter):
             .strip()
             .split()
         )
+        if not csz:
+            continue
+
         postal = csz.pop()
         state = csz.pop()
         city = " ".join(csz)
-        latitude, longitude = coords.get(phone) or (SgRecord.MISSING, SgRecord.MISSING)
+        latitude, longitude, page_url = coords.get(phone) or (
+            SgRecord.MISSING,
+            SgRecord.MISSING,
+            SgRecord.MISSING,
+        )
 
         _tmp = []
         hours = d.xpath(
@@ -93,7 +101,6 @@ def fetch_data(sgw: SgWriter):
 
 if __name__ == "__main__":
     locator_domain = "https://goodtimesburgers.com/"
-    page_url = "https://goodtimesburgers.com/find-us/"
     headers = {
         "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:95.0) Gecko/20100101 Firefox/95.0",
         "Accept": "application/json",

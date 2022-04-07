@@ -1,7 +1,11 @@
-import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
 import time
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+import datetime
 
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
@@ -10,36 +14,9 @@ headers = {
 logger = SgLogSetup().get_logger("st-hubert_com")
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
-
-
 def fetch_data():
     locs = []
-    session = SgRequests()
+    session = SgRequests(dont_retry_status_codes=([404]))
     url = "https://api.st-hubert.com/CaraAPI/APIService/getStoreList?from=60.000,-150.000&to=39.000,-50.000&eCommOnly=N"
     r = session.get(url, headers=headers)
     website = "st-hubert.com"
@@ -48,7 +25,7 @@ def fetch_data():
     logger.info("Pulling Stores")
     if r.encoding is None:
         r.encoding = "utf-8"
-    for line in r.iter_lines(decode_unicode=True):
+    for line in r.iter_lines():
         if '"storeNumber":' in line:
             sid = line.split('"storeNumber":')[1].split(",")[0].strip()
             locs.append(
@@ -70,11 +47,28 @@ def fetch_data():
         lng = ""
         hours = ""
         purl = ""
-        session = SgRequests()
+        session = SgRequests(dont_retry_status_codes=([404]))
         r2 = session.get(loc, headers=headers)
+        store_json = r2.json()
+        hours_list = []
+        try:
+            hours_json_list = store_json["response"]["responseContent"]["hours"]
+            for h in hours_json_list:
+                day = datetime.datetime.strptime(h["date"], "%Y-%m-%d").strftime("%A")
+                if h["store"]["available"]:
+                    tim = h["store"]["open"] + " - " + h["store"]["close"]
+                else:
+                    tim = "Closed"
+
+                hours_list.append(day + ":" + tim)
+        except:
+            pass
+
+        hours = "; ".join(hours_list).strip()
+
         if r2.encoding is None:
             r2.encoding = "utf-8"
-        lines = r2.iter_lines(decode_unicode=True)
+        lines = r2.iter_lines()
         for line2 in lines:
             if '"name": "storeUrlSlug_EN",' in line2:
                 g = next(lines)
@@ -103,57 +97,44 @@ def fetch_data():
                 lat = line2.split('"latitude": ')[1].split(",")[0]
             if '"longitude": ' in line2:
                 lng = line2.split('"longitude": ')[1].split(",")[0]
-        r2 = session.get(purl, headers=headers)
-        if r2.encoding is None:
-            r2.encoding = "utf-8"
-        lines = r2.iter_lines(decode_unicode=True)
-        for line2 in lines:
-            if "h00" in line2:
-                if '<p id="storeDetailsHours"' in line2:
-                    hrs = (
-                        line2.split('<p id="storeDetailsHours"')[1]
-                        .split('">')[1]
-                        .split("<")[0]
-                    )
-                else:
-                    hrs = line2.split("<")[0]
-                if hours == "":
-                    hours = hrs
-                else:
-                    hours = hours + "; " + hrs
-        if zc == "":
-            zc = "<MISSING>"
+
         if city == "":
             city = name.rsplit(" ", 1)[1]
         if purl == "":
             purl = "https://www.kelseys.ca/en/locations.html"
-        if phone == "":
-            phone = "<MISSING>"
-        if hours == "":
-            hours = "<MISSING>"
-        hours = hours.replace("h00 ", "h00-").replace("h30 ", "h30-")
         if store != "9999":
-            yield [
-                website,
-                purl,
-                name,
-                add,
-                city,
-                state,
-                zc,
-                country,
-                store,
-                phone,
-                typ,
-                lat,
-                lng,
-                hours,
-            ]
+            yield SgRecord(
+                locator_domain=website,
+                page_url=purl,
+                location_name=name.replace("\\u0027", "'"),
+                street_address=add,
+                city=city.replace("\\u0027", "'"),
+                state=state,
+                zip_postal=zc,
+                country_code=country,
+                store_number=store,
+                phone=phone,
+                location_type=typ,
+                latitude=lat,
+                longitude=lng,
+                hours_of_operation=hours,
+            )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    logger.info("Started")
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.StoreNumberId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    logger.info(f"No of records being processed: {count}")
+    logger.info("Finished")
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()

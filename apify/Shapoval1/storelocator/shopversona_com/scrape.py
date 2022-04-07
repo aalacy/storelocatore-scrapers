@@ -41,7 +41,10 @@ def get_data(url, sgw: SgWriter):
     state = a.get("region") or "<MISSING>"
     postal = a.get("postalCode") or "<MISSING>"
     country_code = a.get("countryCode") or "<MISSING>"
-    phone = j.get("mainPhone").get("display") or "<MISSING>"
+    try:
+        phone = j.get("mainPhone").get("display") or "<MISSING>"
+    except:
+        phone = "<MISSING>"
     latitude = j.get("yextDisplayCoordinate").get("lat")
     longitude = j.get("yextDisplayCoordinate").get("long")
     days = j.get("hours", {}).get("normalHours") or []

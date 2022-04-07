@@ -135,7 +135,7 @@ def fetch_data():
         logger.info(
             f"{round(lat,4)}, {round(lng,4)} | found: {found} | total: {total} | progress: {progress}"
         )
-        all_coordinates.mark_found(coords)
+        [all_coordinates.found_location_at(latitude=_y,longitude=_x) for _y, _x in coords]
 
     logger.info(f"Finished grabbing data!!")  # noqa
     return items

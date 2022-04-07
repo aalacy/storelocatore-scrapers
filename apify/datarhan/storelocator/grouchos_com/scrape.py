@@ -61,7 +61,7 @@ def fetch_data():
                 " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
             )
         else:
-            location_name = loc_dom.xpath('//div[@class="title"]/text()')[0].strip()
+            location_name = loc_dom.xpath("//h1//b/text()")
             street_address = loc_dom.xpath('//span[@class="street-address"]/text()')[0]
             raw_data = loc_dom.xpath('//span[@class="locality"]/text()')[0].split(", ")
             state = raw_data[1].split()[0]

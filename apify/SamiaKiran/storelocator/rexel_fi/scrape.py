@@ -4,10 +4,9 @@ from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-session = SgRequests()
 website = "rexel_fi"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
@@ -38,8 +37,12 @@ def fetch_data():
         coord_list = soup.findAll("div", {"class": "js-singleLocation"})
         for loc in loclist:
             city = strip_accents(loc.find("span", {"class": "contact-item-city"}).text)
-            phone = loc.find("span", {"class": "contact-item-phone"}).text
-            log.info(phone)
+            try:
+                phone = loc.find("span", {"class": "contact-item-phone"}).text
+            except:
+                phone = "ABC"
+            phone = phone.replace("ABC", "")
+            log.info(city)
             for coord in coord_list:
                 if city == coord["data-town"]:
                     coords = coord["data-coordinates"].split(",")
@@ -65,18 +68,11 @@ def fetch_data():
 
 
 def scrape():
-    log.info("Started")
-    count = 0
     with SgWriter(
-        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PhoneNumberId)
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.LATITUDE, SgRecord.Headers.PHONE}))
     ) as writer:
-        results = fetch_data()
-        for rec in results:
-            writer.write_row(rec)
-            count = count + 1
-
-    log.info(f"No of records being processed: {count}")
-    log.info("Finished")
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":
