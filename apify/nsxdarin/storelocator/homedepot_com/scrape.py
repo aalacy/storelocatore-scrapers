@@ -4,7 +4,6 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
-import time
 
 logger = SgLogSetup().get_logger("homedepot_com")
 
@@ -42,15 +41,17 @@ def fetch_data():
                             if surl not in locs:
                                 locs.append(surl)
 
-    print(len(locs))
+    logger.info(len(locs))
 
     for loc in locs:
+        if loc == "https://www.homedepot.com/l/storeDirectory":
+            continue
+
         Found = True
         rcount = 0
         while Found and rcount <= 3:
             try:
                 rcount = rcount + 1
-                # time.sleep(3)
                 logger.info("Pulling Location %s..." % loc)
                 website = "homedepot.com"
                 typ = "<MISSING>"
@@ -116,9 +117,13 @@ def fetch_data():
                         longitude=lng,
                         hours_of_operation=hours,
                     )
-            except:
-                print(loc)
-                raise Exception
+
+            except Exception:
+                if rcount == 3:
+                    raise Exception
+
+                else:
+                    pass
 
     website = "homedepot.com"
     typ = "<MISSING>"
