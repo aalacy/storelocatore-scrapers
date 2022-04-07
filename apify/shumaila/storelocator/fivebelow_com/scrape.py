@@ -6,6 +6,8 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
+import json
+
 
 headers = {
     "authority": "locations.fivebelow.com",
@@ -172,7 +174,7 @@ def fetch_data():
                 country_code=ccode,
                 store_number=str(store),
                 phone=phone.strip(),
-                location_type="<MISSING>",
+                location_type=ltype,
                 latitude=str(lat),
                 longitude=str(longt),
                 hours_of_operation=hours,
