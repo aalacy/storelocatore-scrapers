@@ -17,7 +17,7 @@ def fetch_data(sgw: SgWriter):
     }
     r = session.get(api_url, headers=headers)
     tree = html.fromstring(r.text)
-    div = tree.xpath("//h3/following-sibling::p//a")
+    div = tree.xpath("//h3/following-sibling::*//a")
 
     for d in div:
 
