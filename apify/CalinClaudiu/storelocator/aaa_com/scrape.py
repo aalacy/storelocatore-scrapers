@@ -22,11 +22,19 @@ def fix_record(record):
         record["operatingDays"] = {
             "operatingDay": {"days": "", "open": "", "close": ""}
         }
-
+    record["page_url"] = ""
+    try:
+        record["page_url"] = str(
+            f"https://branches.northeast.aaa.com/{record['addresses']['address']['stateProv']['code']}/{record['addresses']['address']['cityName'].replace(' ','-')}"
+        )
+    except Exception:
+        pass
     return record
 
 
 def fetch_data():
+
+    # possibly new API: https://branches.northeast.aaa.com/api/v1/stores/locations/ # noqa
     logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
     url = "https://tdr.aaa.com/tdrl/search.jsp?searchtype=O&radius=50000&format=json&ident=AAACOM&destination={zipCode}"
     headers = {
@@ -35,9 +43,8 @@ def fetch_data():
     session = SgRequests()
 
     search = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA],
-        max_radius_miles=90,
-        max_search_results=None,
+        country_codes=[SearchableCountries.USA, SearchableCountries.CANADA],
+        expected_search_radius_miles=90,
     )
     identities = set()
     maxZ = search.items_remaining()
@@ -47,7 +54,9 @@ def fetch_data():
             maxZ = search.items_remaining()
         found = 0
 
-        son = session.get(url.format(zipCode=zipcode), headers=headers).json()
+        son = SgRequests.raise_on_err(
+            session.get(url.format(zipCode=zipcode), headers=headers)
+        ).json()
         try:
             results = son["aaa"]["services"]["travelItems"]["travelItem"]
         except Exception:
@@ -119,7 +128,7 @@ def nice_hours(operatingHours):
             )
             > 5
         ):
-            return str(
+            res = str(
                 operatingHours["days"]
                 + ": "
                 + operatingHours["open"]
@@ -127,6 +136,10 @@ def nice_hours(operatingHours):
                 + operatingHours["close"]
                 + ";"
             )
+            res = list(res)
+            if res[-1] == ";":
+                res.pop(-1)
+            return "".join(res)
         else:
             return "<MISSING>"
 
@@ -136,32 +149,35 @@ def scrape():
     field_defs = sp.SimpleScraperPipeline.field_definitions(
         locator_domain=sp.ConstantField(url),
         page_url=sp.MappingField(
-            mapping=["id"],
-            value_transform=lambda x: str(
-                "https://tdr.aaa.com/tdrl/search.jsp?searchtype=O&format=json&ident=AAACOM&destination=null&id="
-                + x
-            ),
+            mapping=["page_url"],
         ),
         location_name=sp.MappingField(
             mapping=["itemName"],
+            part_of_record_identity=True,
         ),
         latitude=sp.MappingField(
             mapping=["position", "latitude"],
+            part_of_record_identity=True,
         ),
         longitude=sp.MappingField(
             mapping=["position", "longitude"],
+            part_of_record_identity=True,
         ),
         street_address=sp.MultiMappingField(
             mapping=["addresses", "address", "addressLine"],
+            part_of_record_identity=True,
         ),
         city=sp.MappingField(
             mapping=["addresses", "address", "cityName"],
+            part_of_record_identity=True,
         ),
         state=sp.MappingField(
             mapping=["addresses", "address", "stateProv", "code"],
+            value_transform=lambda x: x.replace("99", "PR"),
         ),
         zipcode=sp.MappingField(
             mapping=["addresses", "address", "postalCode"],
+            part_of_record_identity=True,
         ),
         country_code=sp.MappingField(
             mapping=["addresses", "address", "countryName", "code"],
@@ -172,6 +188,7 @@ def scrape():
         ),
         store_number=sp.MappingField(
             mapping=["id"],
+            part_of_record_identity=True,
         ),
         hours_of_operation=sp.MappingField(
             mapping=["operatingDays", "operatingDay"],
