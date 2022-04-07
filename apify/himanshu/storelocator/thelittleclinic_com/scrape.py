@@ -1,5 +1,5 @@
 from sglogging import sglog
-from sgrequests import SgRequests
+from sgrequests import SgRequests, SgRequestError
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
@@ -36,6 +36,8 @@ def fetch_data():
             link,
             headers=headers,
         )
+        if isinstance(r, SgRequestError):
+            continue
         json_data = r.json()
         j = json_data["data"]["clinics"]
 
