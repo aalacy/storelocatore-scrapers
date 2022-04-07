@@ -6,8 +6,6 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 import ssl
-import json
-import os
 from lxml import html
 
 try:
@@ -47,7 +45,6 @@ def get_hours(_):
 
 
 def fetch_records():
-    items = []
     total = 0
     s_dedupe = set()
     for latlng in search:
