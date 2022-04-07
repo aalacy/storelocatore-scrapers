@@ -113,7 +113,7 @@ def fetch_data(sgw: SgWriter):
     ]
     for ap in apis:
         search = DynamicGeoSearch(
-            country_codes=ap.get("countries"), expected_search_radius_miles=100
+            country_codes=ap.get("countries"), expected_search_radius_miles=50
         )
 
         for lat, lng in search:
