@@ -20,6 +20,8 @@ def fetch_data():
             street_address = addr["line1"]
             if addr.get("line2"):
                 street_address += " " + addr.get("line2")
+            if "Mock" in street_address:
+                continue
             hours = []
             for hh in _["openingHours"]["weekDayOpeningList"]:
                 if hh["closed"]:
