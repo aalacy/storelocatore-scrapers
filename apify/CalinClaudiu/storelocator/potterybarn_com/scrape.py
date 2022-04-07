@@ -1,16 +1,9 @@
 from sgscrape import simple_scraper_pipeline as sp
 from sglogging import sglog
 from sgrequests import SgRequests
-from bs4 import BeautifulSoup as b4
-from sgzip.dynamic import DynamicGeoSearch
-
-from sgselenium import SgChrome
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.common.keys import Keys
-import time
 import ssl
+from sgscrape.pause_resume import CrawlStateSingleton
+import json
 
 try:
     _create_unverified_https_context = (
@@ -25,124 +18,305 @@ else:
 logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
 
 
-def test_possible(driver, session):
+def fix_record2(rec):
+    country = rec[1]
+    rec = rec[0]
+    k = {}
+    k["host"] = "<MISSING>"
+
     try:
-        driver.get('https://www.potterybarn.com/')
+        k["name"] = rec["storeDisplayName"]
+    except Exception:
+        k["name"] = "<MISSING>"
+
+    k["latitude"] = "<MISSING>"
+
+    k["longitude"] = "<MISSING>"
+
+    try:
+        k["address"] = rec["address"]["addrLine1"]
         try:
-            popup = WebDriverWait(driver, 10).until(  # noqa
-                EC.visibility_of_element_located(
-                    (
-                        By.XPATH,
-                        "/html/body/div[9]/div/a",
-                    )
-                )
-            )  # noqa
-            popup.click()
+            k["address"] = k["address"] + rec["address"]["addrLine2"]
         except Exception:
             pass
-        findbutton = WebDriverWait(driver, 10).until(  # noqa
-            EC.visibility_of_element_located(
-                (
-                    By.XPATH,
-                    "/html/body/div[3]/header/div[1]/div/ul[2]/li[5]/nav/a",
-                )
-            )
-        )  # noqa
-        findbutton.click()
-        time.sleep(15)
-        #searchbar.send_keys("Berlin", Keys.RETURN)
-        time.sleep(5)
-        reqs = list(driver.requests)
-        logzilla.info(f"Length of driver.requests: {len(reqs)}")
-        for r in reqs:
-            x = r.url
-            logzilla.info(x)
-            if "mcd-latam" in x and "near?country" in x:
-                return (True, (x, r.headers, country["page"]))
-        return (False, (None, None))
+    except Exception:
+        k["address"] = "<MISSING>"
+
+    k["state"] = "<MISSING>"
+    k["zip"] = "<MISSING>"
+
+    try:
+        k["city"] = rec["address"]["city"]
+    except Exception:
+        k["city"] = "<MISSING>"
+
+    k["country"] = country
+    k["id"] = "<MISSING>"
+    k["hours"] = "<MISSING>"
+    return k
+
+
+def fix_record(rec, host):
+    k = {}
+    try:
+        k["host"] = host
+    except Exception:
+        k["host"] = "<MISSING>"
+
+    try:
+        k["name"] = rec["storeName"]
+    except Exception:
+        k["name"] = "<MISSING>"
+
+    try:
+        k["latitude"] = rec["latitude"]
+    except Exception:
+        k["latitude"] = "<MISSING>"
+
+    try:
+        k["longitude"] = rec["longitude"]
+    except Exception:
+        k["longitude"] = "<MISSING>"
+
+    try:
+        k["address"] = rec["address"]["addrLine1"]
+        try:
+            k["address"] = k["address"] + rec["address"]["addrLine2"]
+        except Exception:
+            pass
+    except Exception:
+        k["address"] = "<MISSING>"
+
+    try:
+        k["state"] = rec["address"]["stateProvince"]
+    except Exception:
+        k["state"] = "<MISSING>"
+
+    try:
+        k["zip"] = rec["address"]["postalCode"]
+    except Exception:
+        k["zip"] = "<MISSING>"
+
+    try:
+        k["city"] = rec["address"]["city"]
+    except Exception:
+        k["city"] = "<MISSING>"
+
+    try:
+        k["country"] = rec["address"]["countryCode"]
+    except Exception:
+        k["country"] = "<MISSING>"
+
+    try:
+        k["id"] = rec["storeNumber"]
+    except Exception:
+        k["id"] = "<MISSING>"
+
+    try:
+        temphr = []
+        for day in rec["storeHours"]:
+            try:
+                if "rue" in day["closed"]:
+                    temphr.append(str(day["rolledDays"] + ": Closed"))
+            except Exception:
+                pass
+
+            try:
+                temphr.append(str(day["rolledDays"] + ": " + day["rolledHours"]))
+            except Exception:
+                pass
+
+        k["hours"] = "; ".join(temphr)
     except Exception:
         try:
-            driver.get(country["page"])
-            locator = WebDriverWait(driver, 10).until(  # noqa
-                EC.visibility_of_element_located(
-                    (
-                        By.XPATH,
-                        "/html/body/div[1]/div/div/div/nav/div[2]/div[2]/div/a[1]",
-                    )
-                )
-            )  # noqa
-            locator.click()
-            searchbar = WebDriverWait(driver, 10).until(  # noqa
-                EC.visibility_of_element_located(
-                    (
-                        By.XPATH,
-                        "/html/body/div[1]/div/div/div/div[1]/div/div[1]/div[1]/div/div[1]/form/div/div[1]/div[1]/input",
-                    )
-                )
-            )  # noqa
-            time.sleep(3)
-            searchbar.send_keys("Berlin", Keys.RETURN)
-            time.sleep(10)
-            reqs = list(driver.requests)
-            logzilla.info(f"Length of driver.requests: {len(reqs)}")
-            for r in reqs:
-                x = r.url
-                if "mcd-latam" in x and "near?country" in x:
-                    logzilla.info(f" Found API for current country: {x}\n")
-                    return (True, (x, r.headers, country["page"]))
-            return (False, (None, None))
-        except Exception as e:
-            logzilla.info(str(e))
-            return (False, (None, None))
+            temphr = []
+            for day in list(rec["storeHoursMap"]):
+                temphr.append(str(str(day) + ": " + str(rec["storeHoursMap"][day])))
+            k["hours"] = "; ".join(temphr)
+        except Exception:
+            k["hours"] = "<MISSING>"
+
+    try:
+        k["type"] = str(rec["conceptCode"]) + " - " + str(rec["storeType"])
+    except Exception:
+        k["type"] = "<MISSING>"
+    print(k)
+    return k
 
 
-def fetch_for_real(data, session):
-    # data https://mcd-latam-landings-backend-l.gigigoapps.com/restaurants/near?country=BR&lat=52.52000659999999&lng=13.404954&radius=50000&limit=50
-    def fix_data(data):
-        copy = ""
-        country = data.split("country=")[1].split("&", 1)[0]
-        copy = data.split("lat=")[0] + "lat={}&lng={}&radius=50000&limit=50000"
-        return country, copy
-
-    def fetch_point(url, headers, session):
-        headers = {}
-        headers[
-            "user-agent"
-        ] = "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.82 Safari/537.36"
-        locations = None
+def transform_mx(rec):
+    for i in list(rec["StoreDetails"]):
+        k = {}
         try:
-            locations = SgRequests.raise_on_err(
-                session.get(url, headers=headers)
-            ).json()
-        except Exception as e:
-            logzilla.error(f"{e}")
-        if locations:
-            for rec in locations:
-                yield rec
+            k["host"] = "/".join(
+                rec["StoreDetails"][i]["photoDetails"].split("/", 3)[0:3]
+            )
+        except Exception:
+            k["host"] = "<MISSING>"
 
-    country, url = fix_data(data[0])
-    search = DynamicGeoSearch(
-        country_codes=[country.lower()],
-        expected_search_radius_miles=15,
+        try:
+            k["name"] = rec["StoreDetails"][i]["name"]
+        except Exception:
+            k["name"] = "<MISSING>"
+
+        try:
+            k["latitude"] = rec["GeoCoordinates"][i]["lpLatitude"]
+        except Exception:
+            k["latitude"] = "<MISSING>"
+
+        try:
+            k["longitude"] = rec["GeoCoordinates"][i]["lpLongitude"]
+        except Exception:
+            k["longitude"] = "<MISSING>"
+
+        try:
+            k["address"] = rec["StoreDetails"][i]["address1"]
+            try:
+                k["address"] = k["address"] + rec["StoreDetails"][i]["address2"]
+            except Exception:
+                pass
+        except Exception:
+            k["address"] = "<MISSING>"
+
+        try:
+            k["state"] = rec["StoreDetails"][i]["state"]
+        except Exception:
+            k["state"] = "<MISSING>"
+
+        try:
+            k["zip"] = rec["StoreDetails"][i]["postalCode"]
+        except Exception:
+            k["zip"] = "<MISSING>"
+
+        try:
+            k["city"] = rec["StoreDetails"][i]["city"]
+        except Exception:
+            k["city"] = "<MISSING>"
+
+        try:
+            k["country"] = rec["StoreDetails"][i]["country"]
+        except Exception:
+            k["country"] = "<MISSING>"
+
+        try:
+            k["id"] = rec["StoreDetails"][i]["storeId"]
+        except Exception:
+            k["id"] = "<MISSING>"
+
+        try:
+            k["hours"] = rec["StoreDetails"][i]["generalDetails"].split("Horario", 1)[1]
+            try:
+                k["hours"] = k["hours"].split("<", 1)[0]
+            except Exception:
+                pass
+        except Exception:
+            k["hours"] = "<MISSING>"
+
+        try:
+            k["type"] = rec["StoreDetails"][i]["storeType"]
+        except Exception:
+            k["type"] = "<MISSING>"
+
+        yield k
+
+
+def get_mx(session, storeID):
+    url = "https://www.potterybarn.com.mx/getstoredetails"
+
+    headers = {}
+    headers["Content-Type"] = "application/json"
+
+    data = '{"storeId":"' + str(storeID) + '"}'
+
+    data = SgRequests.raise_on_err(session.post(url, headers=headers, data=data)).json()
+    return data["storeDetails"]
+
+
+def main_mx(session, state, url):
+    page = SgRequests.raise_on_err(session.get(url))
+    data = page.text
+    data = (
+        '{"data'
+        + data.split("StoreDataContent", 1)[1]
+        .split("stateList", 1)[0]
+        .rsplit(",", 1)[0]
+        + "}"
     )
-    for coord in search:
-        for item in fetch_point(url.format(*coord), data[1], session):
-            item["host"] = data[2]
-            yield item
+    data = json.loads(data)
+    for i in data["data"]["stores"]:
+        for rec in transform_mx(get_mx(session, i["storeId"])):
+            yield rec
+    state.set_misc_value("mexico", True)
+
+
+def dissect_country(data):
+    for country in list(data["statesAndProvinces"]):
+        for rec in data["statesAndProvinces"][country]:
+            yield (rec, country)
+
+
+def main_all(session, url):
+
+    headers = {}
+    headers[
+        "accept"
+    ] = "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9"
+    headers["accept-encoding"] = "gzip, deflate, br"
+    headers["accept-language"] = "en-US,en;q=0.9,ro;q=0.8,es;q=0.7"
+    headers["cache-control"] = "no-cache"
+    headers["pragma"] = "no-cache"
+    headers["referer"] = "http://www.williams-sonomainc.com/"
+    headers[
+        "sec-ch-ua"
+    ] = '" Not A;Brand";v="99", "Chromium";v="100", "Google Chrome";v="100"'
+    headers["sec-ch-ua-mobile"] = "?0"
+    headers["sec-ch-ua-platform"] = '"Windows"'
+    headers["sec-fetch-dest"] = "document"
+    headers["sec-fetch-mode"] = "navigate"
+    headers["sec-fetch-site"] = "cross-site"
+    headers["sec-fetch-user"] = "?1"
+    headers["upgrade-insecure-requests"] = "1"
+    headers[
+        "user-agent"
+    ] = "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.60 Safari/537.36"
+
+    page = SgRequests.raise_on_err(session.get(url, headers=headers))
+    data = page.text
+
+    data = data.split("__INITIAL_STATE__=", 1)[1]
+    data = data.split("</script>", 1)[0]
+    data = data.rsplit(";(functi", 1)[0]
+    data = json.loads(data)
+    try:
+        host = data["phygital"]["clientApplicationUri"]
+    except Exception:
+        host = ""
+    for country in list(data["phygital"]["storesList"]):
+        for state in list(data["phygital"]["storesList"][country]):
+            for record in data["phygital"]["storesList"][country][state]:
+                yield fix_record(record, host)
+    for country in data["phygital"]["config"]["stores"]["storeLocator"]["countryList"]:
+        for item in dissect_country(country):
+            yield fix_record2(item)
 
 
 def fetch_data():
+    state = CrawlStateSingleton.get_instance()
     with SgRequests() as session:
-        if True:
-            if True:
-                with SgChrome(is_headless = False) as driver:
-                    data = test_possible(driver, session)
-                    logzilla.info(
-                        f'{result}\n{data}\n{country["text"]} - {country["page"]}\n'
-                    )
-                    if result:
-                        for rec in fetch_for_real(data, session):
-                            yield rec
+        xic = state.get_misc_value(
+            "mexico", default_factory=lambda: True
+        )  # SWITCH TO FALSE FOR IT TO WORK
+        if not xic:
+            for item in main_mx(
+                session,
+                state,
+                "https://www.potterybarn.com.mx/tienda/browse/storelocator",
+            ):
+                yield item
+        for item in main_all(
+            session, "https://www.potterybarn.com/stores/?cm_src=OLDLINK"
+        ):
+            yield item
 
     logzilla.info(f"Finished grabbing data!!")  # noqa
 
@@ -154,8 +328,7 @@ def scrape():
         ),
         page_url=sp.MissingField(),
         location_name=sp.MappingField(
-            mapping=["name"],
-            is_required=False,
+            mapping=["name"], is_required=False, part_of_record_identity=True
         ),
         latitude=sp.MappingField(
             mapping=["latitude"],
@@ -168,20 +341,24 @@ def scrape():
             part_of_record_identity=True,
         ),
         street_address=sp.MappingField(
-            mapping=["address"],
+            mapping=["address"], part_of_record_identity=True
         ),
-        city=sp.MappingField(mapping=["city"], is_required=False),
-        state=sp.MappingField(mapping=["neighborhood"], is_required=False),
-        zipcode=sp.MappingField(mapping=["cep"], is_required=False),
-        country_code=sp.MappingField(mapping=["country"], is_required=False),
+        city=sp.MappingField(
+            mapping=["city"], is_required=False, part_of_record_identity=True
+        ),
+        state=sp.MappingField(mapping=["state"], is_required=False),
+        zipcode=sp.MappingField(mapping=["zip"], is_required=False),
+        country_code=sp.MappingField(
+            mapping=["country"], is_required=False, part_of_record_identity=True
+        ),
         phone=sp.MissingField(),
         store_number=sp.MappingField(
-            mapping=["_id"],
+            mapping=["id"],
             is_required=False,
             part_of_record_identity=True,
         ),
-        hours_of_operation=sp.MissingField(),
-        location_type=sp.MappingField(mapping=["active"], is_required=False),
+        hours_of_operation=sp.MappingField(mapping=["hours"], is_required=False),
+        location_type=sp.MappingField(mapping=["type"], is_required=False),
         raw_address=sp.MissingField(),
     )
 
