@@ -4,6 +4,7 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
+from sgpostal.sgpostal import International_Parser, parse_address
 from concurrent import futures
 
 
@@ -30,7 +31,7 @@ def get_data(coords, sgw: SgWriter):
 
     data = {
         "geoCode": f"{str(lat)},{str(long)}",
-        "resultsPerPage": "10",
+        "resultsPerPage": "100",
         "resultsOffset": "0",
         "pdEnabled": "",
         "reservationEnabled": "",
@@ -46,13 +47,19 @@ def get_data(coords, sgw: SgWriter):
     )
 
     js = r.json()["successResponse"]["locationSearchResult"]["Location"]
-
     for j in js:
 
         location_name = j.get("restaurantName") or "<MISSING>"
+        ad = f"{j.get('AddressOne')} {j.get('AddressTwo')}".strip() or "<MISSING>"
+        a = parse_address(International_Parser(), ad)
         street_address = (
-            f"{j.get('AddressOne')} {j.get('AddressTwo')}".strip() or "<MISSING>"
+            f"{a.street_address_1} {a.street_address_2}".replace("None", "").strip()
+            or "<MISSING>"
         )
+        if street_address == "<MISSING>" or street_address.isdigit():
+            street_address = (
+                f"{j.get('AddressOne')} {j.get('AddressTwo')}".strip() or "<MISSING>"
+            )
         city = j.get("city") or "<MISSING>"
         state = j.get("state") or "<MISSING>"
         postal = j.get("zip") or "<MISSING>"
@@ -64,7 +71,6 @@ def get_data(coords, sgw: SgWriter):
         hours = j.get("weeklyHours")
         tmp = []
         store_number = j.get("restaurantNumber") or "<MISSING>"
-        page_url = "https://www.olivegarden.com/locations/location-search"
         if hours:
             for h in hours:
                 type_hoo = h.get("hourTypeDesc")
@@ -85,6 +91,7 @@ def get_data(coords, sgw: SgWriter):
                 line = f"{day} {opens} - {closes}"
                 tmp.append(line)
             hours_of_operation = "; ".join(tmp)
+        page_url = f"https://www.olivegarden.com/locations/{str(state).lower()}/{str(city).replace(' ','-').lower()}/{str(location_name).replace(' ','-').lower()}/{store_number}"
 
         row = SgRecord(
             locator_domain=locator_domain,
@@ -109,12 +116,12 @@ def get_data(coords, sgw: SgWriter):
 def fetch_data(sgw: SgWriter):
     coords = DynamicGeoSearch(
         country_codes=[SearchableCountries.USA, SearchableCountries.CANADA],
-        max_search_distance_miles=30,
-        expected_search_radius_miles=30,
+        max_search_distance_miles=100,
+        expected_search_radius_miles=100,
         max_search_results=None,
     )
 
-    with futures.ThreadPoolExecutor(max_workers=5) as executor:
+    with futures.ThreadPoolExecutor(max_workers=1) as executor:
         future_to_url = {executor.submit(get_data, url, sgw): url for url in coords}
         for future in futures.as_completed(future_to_url):
             future.result()
