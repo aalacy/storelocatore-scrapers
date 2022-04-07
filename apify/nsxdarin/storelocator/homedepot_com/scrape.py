@@ -41,13 +41,16 @@ def fetch_data():
                             surl = "https://www.homedepot.com/" + item.split('"')[0]
                             if surl not in locs:
                                 locs.append(surl)
+    
+    print(len(locs))
+
     for loc in locs:
         Found = True
         rcount = 0
         while Found and rcount <= 3:
             try:
                 rcount = rcount + 1
-                time.sleep(3)
+                # time.sleep(3)
                 logger.info("Pulling Location %s..." % loc)
                 website = "homedepot.com"
                 typ = "<MISSING>"
@@ -114,7 +117,8 @@ def fetch_data():
                         hours_of_operation=hours,
                     )
             except:
-                pass
+                print(loc)
+                raise Exception
 
     website = "homedepot.com"
     typ = "<MISSING>"
