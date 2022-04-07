@@ -38,13 +38,21 @@ def fetch_data():
             street_address = addr.street_address_1
             if addr.street_address_2:
                 street_address += " " + addr.street_address_2
+            zip_postal = addr.postcode
+            if "2740-413" in street_address:
+                street_address = street_address.replace("2740-413", "")
+                zip_postal = "2740-413"
+
+            if "4455-877" in street_address:
+                street_address = street_address.replace("4455-877", "")
+                zip_postal = "4455-877"
+
             yield SgRecord(
                 page_url=page_url,
                 location_name=_.p.text.strip(),
                 street_address=street_address,
                 city=addr.city,
-                state=addr.state,
-                zip_postal=addr.postcode,
+                zip_postal=zip_postal,
                 country_code="Portugal",
                 locator_domain=locator_domain,
                 hours_of_operation=" ".join(hours),
