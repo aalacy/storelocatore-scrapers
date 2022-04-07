@@ -1,3 +1,4 @@
+from re import L
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 from sgscrape.sgrecord import SgRecord
@@ -53,7 +54,10 @@ def fetch_data():
                 if store_data["PHONE1"] != "" and store_data["PHONE1"] != "TBD"
                 else MISSING
             )
-            location_type = "origins"
+            if "Origins" in store_data["DOORNAME"]:
+                location_type = "Origins"
+            else:
+                location_type = MISSING
             latitude = store_data["LATITUDE"]
             longitude = store_data["LONGITUDE"]
             hours_of_operation = (
