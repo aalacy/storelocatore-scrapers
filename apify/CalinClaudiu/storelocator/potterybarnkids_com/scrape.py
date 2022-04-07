@@ -60,7 +60,7 @@ def fix_record(rec, host):
     k = {}
 
     try:
-        k["page_url"] = host+'/'+rec['storeIdentifier']
+        k["page_url"] = host + "/" + rec["storeIdentifier"]
     except Exception:
         k["page_url"] = "<MISSING>"
     try:
@@ -147,6 +147,7 @@ def fix_record(rec, host):
         k["type"] = "<MISSING>"
     return k
 
+
 def dissect_country(data):
     for country in list(data["statesAndProvinces"]):
         for rec in data["statesAndProvinces"][country]:
@@ -201,7 +202,7 @@ def main_all(session, url):
 def fetch_data():
     state = CrawlStateSingleton.get_instance()
     with SgRequests() as session:
-        
+
         for item in main_all(
             session, "https://www.potterybarnkids.com/stores/?cm_src=OLDLINK"
         ):
@@ -215,9 +216,7 @@ def scrape():
         locator_domain=sp.MappingField(
             mapping=["host"],
         ),
-        page_url=sp.MappingField(
-            mapping=["page_url"], is_required=False
-        ),
+        page_url=sp.MappingField(mapping=["page_url"], is_required=False),
         location_name=sp.MappingField(
             mapping=["name"], is_required=False, part_of_record_identity=True
         ),
