@@ -1,3 +1,4 @@
+from bs4 import BeautifulSoup as bs
 from sgrequests import SgRequests
 from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
