@@ -41,7 +41,7 @@ def fetch_data():
                             surl = "https://www.homedepot.com/" + item.split('"')[0]
                             if surl not in locs:
                                 locs.append(surl)
-    
+
     print(len(locs))
 
     for loc in locs:
