@@ -140,7 +140,6 @@ def fix_record(rec, host):
         k["type"] = str(rec["conceptCode"]) + " - " + str(rec["storeType"])
     except Exception:
         k["type"] = "<MISSING>"
-    print(k)
     return k
 
 
