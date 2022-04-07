@@ -1,4 +1,3 @@
-from re import L
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 from sgscrape.sgrecord import SgRecord
