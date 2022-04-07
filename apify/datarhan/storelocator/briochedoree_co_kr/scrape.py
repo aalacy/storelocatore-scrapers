@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import os
 from lxml import etree
 
 from sgscrape.sgrecord import SgRecord
@@ -8,12 +9,16 @@ from sgscrape.sgwriter import SgWriter
 from sgselenium import SgChrome
 from sgpostal.sgpostal import parse_address_intl
 
+os.environ[
+    "PROXY_URL"
+] = "http://groups-RESIDENTIAL,country-kr:{}@proxy.apify.com:8000/"
+
 
 def fetch_data():
     start_url = "http://briochedoree.co.kr/store/"
     domain = "briochedoree.co.kr"
 
-    with SgChrome as driver:
+    with SgChrome() as driver:
         driver.get(start_url)
         dom = etree.HTML(driver.page_source)
 

@@ -29,9 +29,19 @@ def fetch_data():
         max_search_distance_miles=100,
     )
     for lat, lng in all_coords:
-        response = session.get(start_url.format(lat, lng), headers=hdr)
-        data = json.loads(response.text)
-        all_locations += data["stores"]
+        try:
+            response = session.get(start_url.format(lat, lng), headers=hdr)
+            data = json.loads(response.text)
+            all_locations += data["stores"]
+        except:
+            try:
+                session = SgRequests().requests_retry_session(
+                    retries=2, backoff_factor=0.3
+                )
+                data = json.loads(response.text)
+                all_locations += data["stores"]
+            except:
+                continue
     for poi in all_locations:
         store_url = "https://deciem.com/es/find-us"
         location_name = poi["name"]

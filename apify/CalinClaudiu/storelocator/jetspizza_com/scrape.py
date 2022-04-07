@@ -123,7 +123,8 @@ def fetch_data():
         soup = b4(son.text, "lxml")
         links = soup.find("div", {"class": "pge-find-store__entries"})
         for j in links.find_all("a", {"class": "locator-results__store-detail"}):
-            stores.append(j["href"])
+            if "/stores" in j["href"] and "//il" not in j["href"]:
+                stores.append(j["href"])
 
     logzilla.info("Grabbing store data")
 
