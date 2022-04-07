@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import os
+import ssl
 from lxml import etree
 
 from sgscrape.sgrecord import SgRecord
@@ -12,6 +13,13 @@ from sgpostal.sgpostal import parse_address_intl
 os.environ[
     "PROXY_URL"
 ] = "http://groups-RESIDENTIAL,country-kr:{}@proxy.apify.com:8000/"
+
+try:
+    _create_unverified_https_context = ssl._create_unverified_context
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context
 
 
 def fetch_data():
