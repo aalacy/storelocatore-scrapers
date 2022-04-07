@@ -90,7 +90,6 @@ def get_data():
             if path:
                 page_url = web + path
             logger.info(f"[{idx}] Pulling data for {page_url}")
-            coming_soon = _["ComingSoon"]
             add1 = _["Address1"]
             add2 = _["Address2"]
             sta = ""
