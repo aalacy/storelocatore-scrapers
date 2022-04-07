@@ -49,6 +49,7 @@ def fetch_data():
                 if not street_address:
                     continue
                 street_address = street_address[0]
+            street_address = street_address.replace("Offering Online Programs", "")
             city = loc_dom.xpath('//span[@itemprop="addressLocality"]/text()')
             city = city[0] if city else ""
             state = loc_dom.xpath('//span[@itemprop="addressRegion"]/text()')

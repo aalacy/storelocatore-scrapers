@@ -41,8 +41,9 @@ def fetch_data():
         hoo = ""
         if h_response.status_code == 200:
             h_dom = etree.HTML(h_response.text)
-            hoo = h_dom.xpath("//table//text()")
-            hoo = " ".join([e.strip() for e in hoo if e.strip()])
+            if h_dom:
+                hoo = h_dom.xpath("//table//text()")
+                hoo = " ".join([e.strip() for e in hoo if e.strip()])
 
         item = SgRecord(
             locator_domain=domain,
