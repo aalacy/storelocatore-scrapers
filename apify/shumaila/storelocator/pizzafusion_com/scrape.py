@@ -4,7 +4,7 @@ import re
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 import ssl
 
@@ -22,12 +22,52 @@ def fetch_data():
 
     links = []
     cleanr = re.compile("<.*?>")
+    pattern = re.compile(r"\s\s+")
     url = "http://pizzafusion.com/locations/"
     driver.get(url)
     soup = BeautifulSoup(driver.page_source, "html.parser")
     maindiv = soup.find("div", {"id": "usa3"})
     divs = maindiv.findAll("div")
+    intdiv = soup.find("div", {"class": "internal"})
+    imglist = intdiv.select("img[src*=locations]")
+    intdiv = re.sub(cleanr, "\n", str(intdiv))
+    intdiv = re.sub(pattern, "\n", str(intdiv)).strip()
+    intdiv = (
+        intdiv.split("Arabia", 1)[1].split("Dubai,UAE", 1)[0].strip().split("]" + "\n")
+    )
+    k = len(imglist) - len(intdiv) - 2
+    imglist = imglist[k:]
 
+    k = 0
+    for ct in intdiv:
+        hours = ct.split("Hours:", 1)[1].split("Phone", 1)[0].replace("\n", " ").strip()
+        ct = ct.split("[", 1)[0].splitlines()
+
+        title = ct[0]
+        street = ct[1] + " " + ct[2]
+        city, ccode = ct[3].split(", ")
+        phone = ct[-1].replace("Phone: ", "")
+        ltype = "<MISSING>"
+
+        if "-soon" in imglist[k]["src"]:
+            ltype = "Coming Soon"
+        k = k + 1
+        yield SgRecord(
+            locator_domain="http://pizzafusion.com/",
+            page_url="http://pizzafusion.com/locations/",
+            location_name=title,
+            street_address=street.strip(),
+            city=city.strip(),
+            state=SgRecord.MISSING,
+            zip_postal=SgRecord.MISSING,
+            country_code=ccode,
+            store_number=SgRecord.MISSING,
+            phone=phone.strip(),
+            location_type=ltype,
+            latitude=SgRecord.MISSING,
+            longitude=SgRecord.MISSING,
+            hours_of_operation=hours,
+        )
     for div in divs:
         dets = div.findAll("div")
         for linka in dets:
@@ -43,10 +83,10 @@ def fetch_data():
         link = links[n]
         try:
             try:
-                page = session.get(link, headers=headers)
+                driver.get(link)
             except:
                 pass
-            soup = BeautifulSoup(page.text, "html.parser")
+            soup = BeautifulSoup(driver.page_source, "html.parser")
             td = soup.find("td")
             td = str(td)
             td = re.sub(cleanr, " ", td)
@@ -56,10 +96,10 @@ def fetch_data():
             td = td.replace("||", "|")
         except:
             try:
-                page = session.get(link, headers=headers)
+                driver.get(link)
             except:
                 continue
-            soup = BeautifulSoup(page.text, "html.parser")
+            soup = BeautifulSoup(driver.page_source, "html.parser")
             maindiv = soup.find("div", {"id": "117"})
             divs = maindiv.find("div")
             td = divs.find("p")
@@ -178,7 +218,7 @@ def fetch_data():
 def scrape():
 
     with SgWriter(
-        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+        deduper=SgRecordDeduper(SgRecordID({SgRecord.Headers.LOCATION_NAME}))
     ) as writer:
 
         results = fetch_data()

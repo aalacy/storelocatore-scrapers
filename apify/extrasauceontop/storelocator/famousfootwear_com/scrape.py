@@ -1,13 +1,14 @@
 from sgrequests import SgRequests
 from sgscrape import simple_scraper_pipeline as sp
-from sgzip.dynamic import DynamicGeoSearch, SearchableCountries, Grain_2
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries, Grain_8
 
 
 def get_data():
     search = DynamicGeoSearch(
-        country_codes=[SearchableCountries.USA], granularity=Grain_2()
+        country_codes=[SearchableCountries.USA], granularity=Grain_8()
     )
     session = SgRequests()
+    page_urls = []
     for search_lat, search_lon in search:
         url = (
             "https://platform.cloud.coveo.com/rest/search/v2?sitecoreItemUri=sitecore%3A%2F%2Fweb%2F%7BC020E446-D3F3-4E7C-BAF2-EEB5B6D0E0B9%7D%3Flang%3Den%26amp%3Bver%3D1&siteName=Famous%20Footwear&actionsHistory=%5B%5D&referrer=https%3A%2F%2Fwww.famousfootwear.com%2F%3Fpartnerid%3DAdwords%26cpc%3DAdwords%26campaign%3DFF_Brand%2BCore_USA_Exact%26group%3DCore_Exact%26cpckw%3Dfamous%2Bfootwear%26cvosrc%3Dppc.google.famous%2Bfootwear%26matchtype%3De%26gclid%3DCj0KCQjwuMuRBhCJARIsAHXdnqMM0KScIFZq1bvfOSNVSNkUCenn0W3iQlFLjnMaorVWeehvZbyPGCsaAtTqEALw_wcB%26gclsrc%3Daw.ds&analytics=%7B%22clientId%22%3A%227c598e48-42e1-251a-f99f-99acdec5d752%22%2C%22documentLocation%22%3A%22https%3A%2F%2Fwww.famousfootwear.com%2Fstores%3Ficid%3Dftr_store_click_storefinder%22%2C%22documentReferrer%22%3A%22https%3A%2F%2Fwww.famousfootwear.com%2F%3Fpartnerid%3DAdwords%26cpc%3DAdwords%26campaign%3DFF_Brand%2BCore_USA_Exact%26group%3DCore_Exact%26cpckw%3Dfamous%2Bfootwear%26cvosrc%3Dppc.google.famous%2Bfootwear%26matchtype%3De%26gclid%3DCj0KCQjwuMuRBhCJARIsAHXdnqMM0KScIFZq1bvfOSNVSNkUCenn0W3iQlFLjnMaorVWeehvZbyPGCsaAtTqEALw_wcB%26gclsrc%3Daw.ds%22%2C%22pageId%22%3A%22%22%7D&visitorId=7c598e48-42e1-251a-f99f-99acdec5d752&isGuestUser=false&aq=(%24qf(function%3A'dist(%40latitude%2C%20%40longitude%2C%20"
@@ -66,6 +67,10 @@ def get_data():
             )
 
             search.found_location_at(latitude, longitude)
+            if page_url in page_urls:
+                continue
+
+            page_urls.append(page_url)
 
             yield {
                 "locator_domain": locator_domain,

@@ -1,4 +1,5 @@
 import json
+
 from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
@@ -6,11 +7,11 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from concurrent import futures
-from sgscrape.sgpostal import International_Parser, parse_address
+from sgscrape.sgpostal import parse_address, International_Parser
 
 
 def get_urls():
-    r = session.get("https://locator-rbs.co.uk/?")
+    r = session.get("https://www.rbs.co.uk/locator?.html")
     tree = html.fromstring(r.text)
     token = "".join(tree.xpath("//input[@id='csrf-token']/@value"))
 
@@ -24,12 +25,12 @@ def get_urls():
         "searchMiles": "100",
         "offSetMiles": "50",
         "maxMiles": "2000",
-        "listSizeInNumbers": "10000",
+        "listSizeInNumbers": "999",
         "search-type": "1",
     }
 
     r = session.post(
-        "https://locator-rbs.co.uk/content/branchlocator/en/rbs/_jcr_content/content/homepagesearch.search.html",
+        "https://www.rbs.co.uk/content/branchlocator/en/rbs/_jcr_content/content/homepagesearch.search.html",
         data=data,
     )
     tree = html.fromstring(r.text)
@@ -39,8 +40,8 @@ def get_urls():
     )
 
 
-def get_data(slug, sgw: SgWriter):
-    page_url = f"https://locator-rbs.co.uk{slug}"
+def get_data(url, sgw: SgWriter):
+    page_url = f"https://rbs.co.uk{url}"
     r = session.get(page_url)
     tree = html.fromstring(r.text)
 
@@ -56,9 +57,11 @@ def get_data(slug, sgw: SgWriter):
     street_address = f"{adr.street_address_1} {adr.street_address_2 or ''}".replace(
         "None", ""
     ).strip()
+
     city = adr.city
     state = adr.state
     postal = adr.postcode
+    country_code = "GB"
     store_number = page_url.split("/")[-1].split("-")[0]
 
     phone = "".join(tree.xpath("//div[@class='print']//td[./span]/text()")).strip()
@@ -70,6 +73,7 @@ def get_data(slug, sgw: SgWriter):
     js = json.loads(text)
     latitude = js.get("LAT")
     longitude = js.get("LNG")
+    location_type = js.get("TYPE")
 
     _tmp = []
     tr = tree.xpath("//tr[@class='time']")
@@ -82,9 +86,7 @@ def get_data(slug, sgw: SgWriter):
             time = "".join(t.xpath("./td/text()")[1:]).strip()
         _tmp.append(f"{day}: {time}")
 
-    hours_of_operation = ";".join(_tmp) or "<MISSING>"
-    if hours_of_operation.lower().count("closed") >= 7:
-        hours_of_operation = "Closed"
+    hours_of_operation = ";".join(_tmp)
 
     row = SgRecord(
         page_url=page_url,
@@ -93,11 +95,12 @@ def get_data(slug, sgw: SgWriter):
         city=city,
         state=state,
         zip_postal=postal,
-        country_code="GB",
+        country_code=country_code,
         store_number=store_number,
+        phone=phone,
+        location_type=location_type,
         latitude=latitude,
         longitude=longitude,
-        phone=phone,
         locator_domain=locator_domain,
         hours_of_operation=hours_of_operation,
         raw_address=raw_address,
@@ -109,7 +112,7 @@ def get_data(slug, sgw: SgWriter):
 def fetch_data(sgw: SgWriter):
     urls = get_urls()
 
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
+    with futures.ThreadPoolExecutor(max_workers=3) as executor:
         future_to_url = {executor.submit(get_data, url, sgw): url for url in urls}
         for future in futures.as_completed(future_to_url):
             future.result()
@@ -118,5 +121,5 @@ def fetch_data(sgw: SgWriter):
 if __name__ == "__main__":
     locator_domain = "https://holtsmilitarybanking.co.uk/"
     session = SgRequests()
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
         fetch_data(writer)

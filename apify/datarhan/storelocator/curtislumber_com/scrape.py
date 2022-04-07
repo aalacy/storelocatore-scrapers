@@ -1,3 +1,4 @@
+import re
 from lxml import etree
 
 from sgrequests import SgRequests
@@ -18,28 +19,30 @@ def fetch_data():
     response = session.get(start_url, headers=hdr)
     dom = etree.HTML(response.text)
 
-    all_locations = dom.xpath("//header/a/@href")
+    all_locations = dom.xpath("//a[article]/@href")
     for page_url in all_locations:
         loc_response = session.get(page_url)
         loc_dom = etree.HTML(loc_response.text)
 
-        location_name = loc_dom.xpath('//nav[@class="crumbs"]/ul/li/text()')[0]
-        raw_address = loc_dom.xpath('//div[@class="wpsl-location-address"]/span/text()')
-        raw_address = [e.strip() for e in raw_address if e.strip()]
+        location_name = loc_dom.xpath(
+            '//strong[contains(@class, "bread-current")]/text()'
+        )[0]
+        raw_address = loc_dom.xpath(
+            '//div[@class="wpsl-locations-details"]//div[@class="wpsl-location-address"]/span/text()'
+        )
         phone = loc_dom.xpath(
-            '//div[@class="location-info"]//a[contains(@href, "tel")]/text()'
+            '//div[@class="wpsl-contact-details"]//a[contains(@href, "tel")]/text()'
         )[0]
         geo = (
-            loc_dom.xpath(
-                '//div[span[a[contains(text(), "{}")]]]//span[@class="dir-location-directions"]/a/@href'.format(
-                    location_name
-                )
-            )[0]
+            loc_dom.xpath('//a[contains(@href, "maps?daddr")]/@href')[0]
             .split("=")[-1]
             .split(",")
         )
-        hoo = loc_dom.xpath('//div[@class="full hours"]//text()')
+        hoo = loc_dom.xpath(
+            '//section[@class="full-week block-box store hours "]/p//text()'
+        )
         hoo = " ".join([e.strip() for e in hoo if e.strip()])
+        store_number = re.findall(r'id":(.+?)\}', loc_response.text)[0]
 
         item = SgRecord(
             locator_domain=domain,
@@ -49,8 +52,8 @@ def fetch_data():
             city=raw_address[1],
             state=raw_address[2],
             zip_postal=raw_address[3],
-            country_code="",
-            store_number="",
+            country_code=raw_address[4],
+            store_number=store_number,
             phone=phone,
             location_type="",
             latitude=geo[0],

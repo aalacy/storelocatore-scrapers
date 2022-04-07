@@ -1,15 +1,17 @@
 import re
-import csv
 import json
 import threading
 from bs4 import BeautifulSoup
 from sglogging import SgLogSetup
 from urllib.parse import urljoin
 from sgrequests import SgRequests
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 logger = SgLogSetup().get_logger("uhaul_com")
-latlng = []
 thread_local = threading.local()
 
 headers = {
@@ -19,30 +21,14 @@ headers = {
 
 
 def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
 
 
 def get_session(reset=False):
@@ -50,7 +36,7 @@ def get_session(reset=False):
     # give each thread its own session object
     # if using proxy, each thread's session should have a unique IP
     if not hasattr(thread_local, "session") or reset or thread_local.request_count > 10:
-        thread_local.session = SgRequests().requests_retry_session(retries=0)
+        thread_local.session = SgRequests(retries_with_fresh_proxy_ip=4)
         thread_local.request_count = 0
 
     return thread_local.session
@@ -96,11 +82,14 @@ def get_cities_in_state(state_url, retry_count=0):
 
 
 def get_location_urls(city_urls):
+    locations = []
     with ThreadPoolExecutor() as executor:
         logger.info(f"scrape locations with {executor._max_workers} workers")
         futures = [executor.submit(get_locations_in_city, url) for url in city_urls]
         for future in as_completed(futures):
-            yield from future.result()
+            locations.extend(future.result())
+
+    return locations
 
 
 def get_locations_in_city(city_url, retry_count=0):
@@ -250,28 +239,27 @@ def get_location(loc, retry_count=0):
             hours = hours + "; Sat: Closed"
         if "Sun" not in hours:
             hours = hours + "; Sun: Closed"
-        ll = str(lat) + "|" + str(lng)
-        if ll not in latlng:
-            latlng.append(ll)
-            return [
-                locator_domain,
-                page_url,
-                location_name,
-                street_address,
-                city,
-                state,
-                postal,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                lat,
-                lng,
-                hours,
-            ]
+
+        return SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zip,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=location_type,
+            latitude=lat,
+            longitude=lng,
+            hours_of_operation=hours,
+            raw_address=address,
+        )
 
     except Exception as e:
-        if retry_count < 3:
+        if retry_count < 5:
             return get_location(loc, retry_count + 1)
 
         logger.error(e)
