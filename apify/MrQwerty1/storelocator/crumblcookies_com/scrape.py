@@ -6,7 +6,7 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 
 
 def fetch_data(sgw: SgWriter):
-    api = "https://crumblcookies.com/_next/data/oMoph6vq1lN5_-O8x_HJw/en/stores.json"
+    api = "https://crumblcookies.com/_next/data/iOdOKVl83Kyq3BxF70cOQ/en/stores.json"
     r = session.get(api, headers=headers)
     js = r.json()["pageProps"]["stores"]
 
