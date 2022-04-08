@@ -1,5 +1,6 @@
 import re
 import json
+import html
 import unicodedata
 from sglogging import sglog
 from bs4 import BeautifulSoup
@@ -49,14 +50,14 @@ def fetch_data():
             for loc in loclist:
                 loc = loc.text.replace("\n", "")
                 loc = json.loads(loc, strict=False)
-                location_name = strip_accents(loc["name"])
+                location_name = html.unescape(strip_accents(loc["name"]))
                 store_number = MISSING
                 phone = MISSING
                 page_url = "https://pizzerias.tutti-pizza.com" + loc["url"]
                 log.info(page_url)
                 address = loc["address"]
-                street_address = strip_accents(address["streetAddress"])
-                city = strip_accents(address["addressLocality"])
+                street_address = html.unescape(strip_accents(address["streetAddress"]))
+                city = html.unescape(strip_accents(address["addressLocality"]))
                 state = MISSING
                 zip_postal = address["postalCode"]
                 country_code = address["addressCountry"]
