@@ -48,7 +48,11 @@ def build_hours(row):
 
 def fetch_data():
     log.info("Fetching store_locator data")
-    search = DynamicZipSearch(country_codes=[SearchableCountries.USA])
+    search = DynamicZipSearch(
+        country_codes=[SearchableCountries.USA],
+        max_search_distance_miles=10,
+        max_search_results=5,
+    )
     for zipcode in search:
         url = API_URL.format(zipcode)
         log.info("Pull content => " + url)

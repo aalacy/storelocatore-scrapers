@@ -124,7 +124,10 @@ def fetch_data():
             .split("Le magasin ")[0]
         )
         country_code = "FR"
-
+        if "Email" in phone:
+            phone = phone.split("Email")[0]
+        elif "Fax" in phone:
+            phone = phone.split("Fax")[0]
         yield SgRecord(
             locator_domain=DOMAIN,
             page_url=page_url,

@@ -78,7 +78,7 @@ def fetch_data():
                 phone = (
                     "".join(
                         store_sel.xpath(
-                            '//a[./img[contains(@src,"call-phone-02.png")]]/@href'
+                            '//a[./img[contains(@src,"phone01.png")]]/@href'
                         )
                     )
                     .strip()
