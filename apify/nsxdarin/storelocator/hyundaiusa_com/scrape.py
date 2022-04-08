@@ -1,3 +1,4 @@
+import json
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
@@ -85,26 +86,12 @@ def fetch_data():
                         except:
                             lat = "<MISSING>"
                             lng = "<MISSING>"
+                        hour_list = json.loads(
+                            item.split('"operations":')[1].split(',"vendorName"')[0]
+                        )
                         hours = ""
-                        if '"operations":[]' in item:
-                            hours = "<MISSING>"
-                        else:
-                            days = (
-                                item.split('"operations":[')[1]
-                                .split("]")[0]
-                                .split('"name":"')
-                            )
-                            for day in days:
-                                if '"hour":"' in day:
-                                    hrs = (
-                                        day.split('"day":"')[1].split('"')[0]
-                                        + ": "
-                                        + day.split('"hour":"')[1].split('"')[0]
-                                    )
-                                    if hours == "":
-                                        hours = hrs
-                                    else:
-                                        hours = hours + "; " + hrs
+                        for hour in hour_list:
+                            hours = hours + " " + hour["day"] + " " + hour["hour"]
                         yield SgRecord(
                             locator_domain=website,
                             page_url=loc,
@@ -124,12 +111,21 @@ def fetch_data():
 
 
 def scrape():
-    results = fetch_data()
+    logger.info("Started")
+    count = 0
     with SgWriter(
-        deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
+        deduper=SgRecordDeduper(
+            RecommendedRecordIds.StoreNumberId, duplicate_streak_failure_factor=1500
+        )
     ) as writer:
+        results = fetch_data()
         for rec in results:
             writer.write_row(rec)
+            count = count + 1
+
+    logger.info(f"No of records being processed: {count}")
+    logger.info("Finished")
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()

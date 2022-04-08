@@ -1,4 +1,3 @@
-import ssl
 import time
 from lxml import html
 from sgscrape.sgrecord import SgRecord
@@ -12,12 +11,10 @@ from sgselenium import SgChrome
 logger = SgLogSetup().get_logger("bluenile.com")
 
 try:
-    _create_unverified_https_context = ssl._create_unverified_context
     logger.info("_create_unverified_context")
 except AttributeError:
     pass
 else:
-    ssl._create_default_https_context = _create_unverified_https_context
     logger.info("wah wah")
 
 
