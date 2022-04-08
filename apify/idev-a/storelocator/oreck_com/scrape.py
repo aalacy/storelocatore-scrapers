@@ -25,31 +25,40 @@ def fetch_data():
                     day = day.lower()
                     if _.get(day):
                         hours.append(f"{day}: {_[day]}")
-                try:
-                    yield SgRecord(
-                        page_url=base_url,
-                        store_number=_["id"],
-                        location_name=_["n"] if _.get("n") else _["a1"],
-                        street_address=_["a1"],
-                        city=_["c"],
-                        state=_["s"],
-                        zip_postal=_["z"],
-                        country_code="us",
-                        phone=_["p"],
-                        latitude=_["lat"],
-                        longitude=_["lng"],
-                        locator_domain=locator_domain,
-                        hours_of_operation="; ".join(hours),
-                    )
-                except:
-                    import pdb
 
-                    pdb.set_trace()
+                location_type = "Authorized Dealers & Distributors"
+                if _.get("t") == "F":
+                    location_type = "Exclusive Oreck Dealers"
+                elif _.get("t") == "S":
+                    location_type = "Authorized Dealers & Distributors"
+                yield SgRecord(
+                    page_url=base_url,
+                    location_name=_["n"] if _.get("n") else _["a1"],
+                    street_address=_["a1"],
+                    city=_["c"],
+                    state=_["s"],
+                    zip_postal=_["z"],
+                    country_code="us",
+                    phone=_["p"],
+                    location_type=location_type,
+                    latitude=_["lat"],
+                    longitude=_["lng"],
+                    locator_domain=locator_domain,
+                    hours_of_operation="; ".join(hours),
+                )
 
 
 if __name__ == "__main__":
     with SgWriter(
-        SgRecordDeduper(SgRecordID({SgRecord.Headers.STORE_NUMBER}))
+        SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.CITY,
+                    SgRecord.Headers.PHONE,
+                }
+            )
+        )
     ) as writer:
         results = fetch_data()
         for rec in results:
