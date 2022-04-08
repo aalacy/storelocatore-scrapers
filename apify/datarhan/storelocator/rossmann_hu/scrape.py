@@ -19,55 +19,27 @@ def fetch_data():
     }
     response = session.get(start_url, headers=hdr)
     dom = etree.HTML(response.text)
-    geo_data = (
-        dom.xpath('//script[contains(text(), "initMap")]/text()')[0]
-        .split("locations =")[-1]
-        .split("var additionals")[0]
-        .strip()[:-1]
-    )
-    geo_data = json.loads(geo_data)
-    data = (
-        dom.xpath('//script[contains(text(), "initMap")]/text()')[0]
-        .split("additionals =")[-1]
-        .split("var additionalsCities")[0]
-        .strip()[:-1]
-    )
-
-    all_locations = json.loads(data)
-    for poi in all_locations:
-        hoo = []
-        days = [
-            "monday",
-            "tuesday",
-            "wednesday",
-            "thursday",
-            "friday",
-            "saturday",
-            "sunday",
-        ]
-        for day in days:
-            hoo.append(f"{day} {poi[day]}")
-        hoo = " ".join(hoo)
-        for e in geo_data:
-            if e["id"] == poi["id"]:
-                latitude = e["lat"]
-                longitude = e["lng"]
-                break
+    data = dom.xpath('//script[@id="__NEXT_DATA__"]/text()')[0]
+    data = json.loads(data)
+    for poi in data["props"]["pageProps"]["stores"]:
+        hoo = poi["openings"].replace("\n", " ").strip()
+        if hoo.endswith(":"):
+            hoo += " closed"
 
         item = SgRecord(
             locator_domain=domain,
             page_url="https://shop.rossmann.hu/uzletkereso/",
-            location_name="",
+            location_name=poi["name"],
             street_address=poi["street"],
             city=poi["city"],
             state="",
-            zip_postal=poi["zip"],
+            zip_postal=poi["zip_code"],
             country_code="",
             store_number=poi["id"],
             phone="",
             location_type="",
-            latitude=latitude,
-            longitude=longitude,
+            latitude=poi["lat"],
+            longitude=poi["lng"],
             hours_of_operation=hoo,
         )
 

@@ -1,10 +1,15 @@
-import httpx
 from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgpostal import parse_address, International_Parser
+from sgrequests import SgRequests
+from sglogging import sglog
+
+session = SgRequests(proxy_country="gb")
+
+logger = sglog.SgLogSetup().get_logger(logger_name="martinco.com")
 
 
 def get_international(line):
@@ -29,7 +34,8 @@ def fetch_data(sgw: SgWriter):
         "query": 'query ($siteId: [QueryArgument]!, $location: String, $limit: Int, $offset: Int) {\n  branches(siteId: $siteId, location: $location, limit: $limit, offset: $offset) {\n    id\n    ... on branch_branch_Entry {\n      url\n      uri\n      slug\n      title\n      latitude\n      longitude\n      distance\n      parent {\n        id\n        title\n        __typename\n      }\n      spoke\n      branchCard {\n        ... on branchCard_BlockType {\n          id\n          heroImage {\n            title\n            url\n            __typename\n          }\n          __typename\n        }\n        __typename\n      }\n      branchHero {\n        ... on branchHero_BlockType {\n          id\n          button {\n            ... on button_button_BlockType {\n              id\n              buttonText\n              buttonLink\n              __typename\n            }\n            __typename\n          }\n          heroImage {\n            title\n            url\n            __typename\n          }\n          __typename\n        }\n        __typename\n      }\n      branchInfo {\n        ... on branchInfo_BlockType {\n          id\n          email\n          address\n          city\n          telephone\n          reportARepair {\n            ... on reportARepair_button_BlockType {\n              id\n              buttonText\n              buttonLink\n              __typename\n            }\n            __typename\n          }\n          openingHours {\n            monday\n            tuesday\n            wednesday\n            thursday\n            friday\n            saturday\n            __typename\n          }\n          socials {\n            ... on socials_channel_BlockType {\n              id\n              channelType\n              channelUrl\n              __typename\n            }\n            __typename\n          }\n          __typename\n        }\n        __typename\n      }\n      __typename\n    }\n    __typename\n  }\n  branchCount\n  seomatic(uri: "estate-agents-and-letting-agents", asArray: true) {\n    metaTitleContainer\n    metaLinkContainer\n    metaScriptContainer\n    metaJsonLdContainer\n    metaTagContainer\n    __typename\n  }\n}\n',
     }
 
-    r = httpx.post("https://cms.martinco.com/api", headers=headers, json=json_data)
+    r = session.post("https://cms.martinco.com/api", headers=headers, json=json_data)
+    logger.info(f"Response: {r}")
     js = r.json()["data"]["branches"]
     for j in js:
         page_url = j.get("url")
@@ -78,7 +84,8 @@ def fetch_data(sgw: SgWriter):
 
 
 if __name__ == "__main__":
-    locator_domain = "https://www.martinco.com/"
+    logger.info("Started Crawling")
+    locator_domain = "martinco.com"
     headers = {
         "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:97.0) Gecko/20100101 Firefox/97.0",
         "Accept": "*/*",

@@ -39,7 +39,7 @@ def fetch_records():
                 hours.append(f"{ss[0]}: {' '.join(ss[1:])}")
 
             if sp1.summary and "fermé définitivement" in sp1.summary.text:
-                hours = ["permanently closed"]
+                continue
 
             phone = ""
             if sp1.select_one("div#telSurTaxeOrder"):

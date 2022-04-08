@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from lxml import etree
+from urllib.parse import urljoin
 
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
@@ -19,62 +20,70 @@ def fetch_data():
     response = session.get(start_url, headers=hdr)
     dom = etree.HTML(response.text)
 
-    all_states = dom.xpath(
-        '//div[@class="row sqs-row"]/div[@class="col sqs-col-2 span-2"]'
-    )[:3]
-    for state_html in all_states:
-        all_locations = state_html.xpath(".//p/strong")
-        for poi_html in all_locations:
-            if not poi_html.xpath(".//text()"):
-                continue
-            location_name = poi_html.xpath(".//text()")
-            if not location_name:
-                continue
-            if len(location_name) == 2:
-                state = location_name[0]
-                location_name = location_name[-1]
-            else:
-                location_name = location_name[0]
-            raw_data = poi_html.xpath(".//following::text()")
-            clear_data = []
-            for e in raw_data:
-                if not e.strip():
-                    continue
-                clear_data.append(e)
-                if "order online" in e:
-                    break
-            clear_data = [e.strip() for e in clear_data if "now open" not in e][:-1]
-            if "coming soon!" in clear_data:
-                continue
-            if len(clear_data) == 3:
-                location_name = clear_data[0]
-                clear_data = clear_data[1:]
-            city = location_name
-            zip_code = ""
-            if "suite" in clear_data[1]:
-                state = clear_data[2].split(", ")[-1].split()[0]
-                zip_code = clear_data[2].split(", ")[-1].split()[-1]
-                city = clear_data[2].split(", ")[0]
-                clear_data = [", ".join(clear_data[:2])] + [clear_data[3]]
+    all_locations = dom.xpath(
+        '//a[@href="/menu-and-locations"]/following-sibling::span/a/@href'
+    )
+    for url in all_locations:
+        page_url = urljoin(start_url, url)
+        loc_response = session.get(page_url)
+        loc_dom = etree.HTML(loc_response.text)
+        c_soon = loc_dom.xpath('//em[contains(text(), "coming soon")]')
+        if c_soon:
+            continue
 
-            item = SgRecord(
-                locator_domain=domain,
-                page_url=start_url,
-                location_name=location_name,
-                street_address=clear_data[0],
-                city=city,
-                state=state,
-                zip_postal=zip_code,
-                country_code="",
-                store_number="",
-                phone=clear_data[1],
-                location_type="",
-                latitude="",
-                longitude="",
-                hours_of_operation="",
-            )
+        raw_data = loc_dom.xpath(
+            '//p[strong[contains(text(), "LOCATION")]]/following-sibling::p/text()'
+        )[:2]
+        if "suite" in raw_data[1]:
+            raw_data = loc_dom.xpath(
+                '//p[strong[contains(text(), "LOCATION")]]/following-sibling::p/text()'
+            )[:3]
+            raw_data = [", ".join(raw_data[:2])] + raw_data[2:]
+        phone = loc_dom.xpath('//a[contains(@href, "tel")]/text()')
+        if not phone:
+            phone = loc_dom.xpath('//p[contains(text(), "call")]/text()')
+        phone = phone[0].replace("call ", "") if phone else ""
+        location_name = loc_dom.xpath("//h1/text()")[0]
+        hoo = loc_dom.xpath(
+            '//p[strong[contains(text(), "HOURS")]]/following-sibling::p/text()'
+        )
+        hoo = (
+            " ".join(" ".join(hoo).split())
+            .split("dine")[0]
+            .replace("\xa0", "")
+            .split("social hour")[0]
+            .split("From")[0]
+            .split("Follow")[0]
+        )
+        latitude = ""
+        longitude = ""
+        geo = (
+            loc_dom.xpath('//a[contains(text(), "get directions")]/@href')[0]
+            .split("/@")[-1]
+            .split(",")[:2]
+        )
+        if len(geo) > 1:
+            latitude = geo[0]
+            longitude = geo[1]
 
-            yield item
+        item = SgRecord(
+            locator_domain=domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=raw_data[0],
+            city=raw_data[1].split(", ")[0],
+            state=raw_data[1].split(", ")[-1].split()[0],
+            zip_postal=raw_data[1].split(", ")[-1].split()[1],
+            country_code="",
+            store_number="",
+            phone=phone,
+            location_type="",
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hoo,
+        )
+
+        yield item
 
 
 def scrape():

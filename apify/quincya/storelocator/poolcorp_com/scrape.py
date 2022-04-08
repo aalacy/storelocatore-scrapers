@@ -25,7 +25,7 @@ def fetch_data(sgw: SgWriter):
 
     search = DynamicZipSearch(
         country_codes=[SearchableCountries.USA, SearchableCountries.CANADA],
-        max_radius_miles=max_distance,
+        max_search_distance_miles=max_distance,
     )
 
     logger.info("Running sgzip ..")

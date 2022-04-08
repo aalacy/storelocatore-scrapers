@@ -26,7 +26,6 @@ def fetch_data():
     r = session.get(url, headers=headers1)
     soup = BeautifulSoup(r.text, "html.parser")
     statelist = soup.select("a[href*=our-hotels]")
-
     linklist = []
     for state in statelist:
         try:
@@ -70,15 +69,16 @@ def fetch_data():
             except:
                 continue
             title = content["name"]
-
-            street = content["address"]["streetAddress"]
+            street = content["address"]["streetAddress"].replace("\n", " ")
             city = content["address"]["addressLocality"]
-            pcode = content["address"]["postalCode"]
+            pcode = content["address"]["postalCode"].strip().replace("\n", "")
             ccode = content["address"]["addressCountry"]
             phone = content["telephone"]
             lat, longt = content["hasMap"].split("=")[-1].split(",")
             hours = str(content["checkinTime"]) + " - " + str(content["checkoutTime"])
-
+            raw_address = street + " " + city + " " + pcode
+            if pcode == "0":
+                pcode = SgRecord.MISSING
             yield SgRecord(
                 locator_domain="https://www.goldentulip.com/",
                 page_url=link,
@@ -94,6 +94,7 @@ def fetch_data():
                 latitude=str(lat),
                 longitude=str(longt),
                 hours_of_operation=hours,
+                raw_address=raw_address,
             )
 
 

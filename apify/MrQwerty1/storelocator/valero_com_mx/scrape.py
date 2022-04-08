@@ -28,9 +28,16 @@ def fetch_data(sgw: SgWriter):
         for j in jj:
             location_name = j.get("name")
             raw_address = j.get("adress")
-            phone = j.get("phone")
+            phone = j.get("phone") or ""
+            if "/" in phone:
+                phone = phone.split("/")[0].strip()
+            if "–" in phone:
+                phone = phone.split("–")[0].strip()
+            if "." in phone:
+                phone = SgRecord.MISSING
+
             street_address, city, state, postal = get_international(raw_address)
-            postal = postal.replace("C.P.", "").strip()
+            postal = postal.replace("C", "").replace("P", "").replace(".", "").strip()
             ll = j.get("long-lat") or ","
             latitude, longitude = ll.split(",")
 

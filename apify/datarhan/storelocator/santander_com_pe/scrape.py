@@ -29,7 +29,7 @@ def fetch_data():
         item = SgRecord(
             locator_domain=domain,
             page_url=start_url,
-            location_name=poi["Name"],
+            location_name=raw_address[0],
             street_address=raw_address[1],
             city=raw_address[-1].split(", ")[0],
             state=raw_address[-1].split(", ")[-1],

@@ -111,6 +111,11 @@ def fetch_data():
         if raw_address[len(raw_address) - 1] == ",":
             raw_address = raw_address[:-1]
 
+        # temporarily closed checking
+        tcc = get_JSON_object_variable(store, "MessageOpening")
+        if "Fermé" in str(tcc):
+            location_type = "Temporarily closed"
+
         yield SgRecord(
             locator_domain="fnac.com",
             store_number=store_number,

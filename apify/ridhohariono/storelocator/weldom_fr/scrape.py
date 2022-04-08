@@ -131,7 +131,7 @@ def fetch_data():
     driver.implicitly_wait(10)
     search = DynamicGeoSearch(
         country_codes=[SearchableCountries.FRANCE],
-        expected_search_radius_miles=15,
+        expected_search_radius_miles=30,
         max_search_results=5,
     )
     coords = [x for x in search]

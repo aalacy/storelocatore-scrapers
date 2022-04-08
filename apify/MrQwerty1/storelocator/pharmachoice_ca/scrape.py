@@ -5,6 +5,7 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from concurrent import futures
+from sglogging import sglog
 from sgscrape.sgpostal import parse_address, International_Parser
 
 
@@ -22,25 +23,36 @@ def get_international(line):
 
 def get_urls():
     urls = set()
+    data = {
+        "num": "1000",
+        "swLat": "34.18787940403334",
+        "swLng": "-145.30983159207807",
+        "neLat": "59.88394813122903",
+        "neLng": "-45.85505319317005",
+        "action": "w2mb_get_map_markers",
+        "without_listings": "1",
+    }
+    r = session.post("https://www.pharmachoice.com/wp-admin/admin-ajax.php", data=data)
+    js = r.json()["map_markers"]
 
-    for i in range(1, 100):
-        r = session.get(f"https://www.pharmachoice.com/w2mb_listing-sitemap{i}.xml")
-        tree = html.fromstring(r.content)
-        links = tree.xpath("//loc/text()")
-        for link in links:
-            if link.endswith("/locations/"):
-                continue
-            urls.add(link)
-
-        if len(links) < 200:
-            break
+    for j in js:
+        if isinstance(j, list):
+            source = j[-1]
+        else:
+            continue
+        tree = html.fromstring(source)
+        urls.add(tree.xpath("//a[contains(@href, 'locations')]/@href")[0])
 
     return urls
 
 
 def get_data(page_url, sgw: SgWriter):
     r = session.get(page_url)
+    logger.info(f"{page_url}: respone {r.status_code}")
     if r.status_code != 200:
+        return
+    if "pharmachoice.com" not in str(r.url):
+        logger.info(f"{page_url} redirects to {r.url}")
         return
     tree = html.fromstring(r.text)
 
@@ -48,9 +60,14 @@ def get_data(page_url, sgw: SgWriter):
     raw_address = " ".join(
         " ".join(tree.xpath("//div[@class='wpsl-location-address1']/text()")).split()
     )
-    raw_address = raw_address.replace(";", "").replace("&#39", "'")
+    raw_address = raw_address.replace(";", "").replace("&#39", "'").replace("'", ",")
     street_address, city, state, postal = get_international(raw_address)
     phone = "".join(tree.xpath("//span[@class='phoneNumber']/text()")).strip()
+    if "/" in phone:
+        phone = phone.split("/")[0].strip()
+
+    if "TBD" in phone:
+        phone = SgRecord.MISSING
 
     text = "".join(tree.xpath("//a[contains(@href, 'daddr=')]/@href"))
     try:
@@ -70,6 +87,8 @@ def get_data(page_url, sgw: SgWriter):
         _tmp.append(f"{day} {inter}")
 
     hours_of_operation = ";".join(_tmp)
+    if "TBD" in hours_of_operation:
+        hours_of_operation = SgRecord.MISSING
 
     row = SgRecord(
         page_url=page_url,
@@ -91,9 +110,10 @@ def get_data(page_url, sgw: SgWriter):
 
 
 def fetch_data(sgw: SgWriter):
-    urls = list(get_urls())[:20]
+    urls = list(get_urls())
+    logger.info(f"{len(urls)} URLs were found")
 
-    with futures.ThreadPoolExecutor(max_workers=2) as executor:
+    with futures.ThreadPoolExecutor(max_workers=1) as executor:
         future_to_url = {executor.submit(get_data, url, sgw): url for url in urls}
         for future in futures.as_completed(future_to_url):
             future.result()
@@ -101,6 +121,7 @@ def fetch_data(sgw: SgWriter):
 
 if __name__ == "__main__":
     locator_domain = "https://www.pharmachoice.com/"
+    logger = sglog.SgLogSetup().get_logger(logger_name="pharmachoice.com")
     session = SgRequests()
     with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         fetch_data(writer)

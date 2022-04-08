@@ -6,18 +6,34 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 
 
-def fetch_data(sgw: SgWriter):
-    page_url = "https://www.regencyfurniture.com/pages/store-locator"
-    headers = {
-        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0"
-    }
+def get_coords():
+    coords = dict()
+    r = session.get(
+        "https://www.google.com/maps/d/u/0/kml?mid=12L6BcVOeSdbPWxJt_7dUTweRrb4&forcekml=1"
+    )
+    tree = html.fromstring(r.content)
+    markers = tree.xpath("//placemark")
+    for marker in markers:
+        key = "".join(marker.xpath("./description/text()")).lower().strip()
+        if ", " in key:
+            key = key.split(", ")[0].strip()
 
+        line = "".join(marker.xpath(".//coordinates/text()")).strip()
+        lat, lng = line.split(",")[:2]
+        coords[key] = (lng, lat)
+
+    return coords
+
+
+def fetch_data(sgw: SgWriter):
+    coords = get_coords()
+    page_url = "https://www.regencyfurniture.com/pages/store-locator"
     r = session.get(page_url, headers=headers)
     tree = html.fromstring(r.text)
     divs = tree.xpath("//div[@class='row']/div[@class='col-md-6']/p[./strong]")
     hours = tree.xpath("//hr/following-sibling::p/text()")
     hours = list(filter(None, [h.strip() for h in hours]))
-    hours = ";".join(hours) or SgRecord.MISSING
+    hours = ";".join(hours)
 
     for d in divs:
         hours_of_operation = hours
@@ -28,7 +44,7 @@ def fetch_data(sgw: SgWriter):
         line = list(filter(None, [l.strip() for l in line]))
 
         street_address = line.pop(0)
-        if line[-1][0].isdigit():
+        if line[-1][0].isdigit() or line[-1][0] == "(":
             phone = line.pop()
         else:
             phone = SgRecord.MISSING
@@ -39,6 +55,7 @@ def fetch_data(sgw: SgWriter):
         state = line.split()[0]
         postal = line.split()[-1]
         country_code = "US"
+        lat, lng = coords.get(city.lower()) or (SgRecord.MISSING, SgRecord.MISSING)
 
         row = SgRecord(
             page_url=page_url,
@@ -48,11 +65,9 @@ def fetch_data(sgw: SgWriter):
             state=state,
             zip_postal=postal,
             country_code=country_code,
-            store_number=SgRecord.MISSING,
             phone=phone,
-            location_type=SgRecord.MISSING,
-            latitude=SgRecord.MISSING,
-            longitude=SgRecord.MISSING,
+            latitude=lat,
+            longitude=lng,
             locator_domain=locator_domain,
             hours_of_operation=hours_of_operation,
         )
@@ -63,6 +78,9 @@ def fetch_data(sgw: SgWriter):
 if __name__ == "__main__":
     session = SgRequests()
     locator_domain = "https://www.regencyfurniture.com/"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0"
+    }
     with SgWriter(
         SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
     ) as writer:

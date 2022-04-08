@@ -157,19 +157,6 @@ def fetch_data():
             if country_code == "Canada":
                 if state and state != "New Brunswick":
                     state = state.split()[0]
-                _addr = raw_address.split(",")
-                if len(_addr) > 2:
-                    if _addr[-2].strip():
-                        c_z = _addr[-2].strip().split()
-                        try:
-                            state = c_z[0]
-                        except:
-                            import pdb
-
-                            pdb.set_trace()
-                        if len(c_z) > 1:
-                            zipp = " ".join(c_z[1:])
-
                 _cc = []
                 if city and state:
                     for tt in city.split():

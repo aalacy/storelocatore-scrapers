@@ -33,6 +33,9 @@ def fetch_data():
             logger.info(page_url)
             res1 = session.get(page_url, headers=headers)
             sp1 = bs(res1.text, "lxml")
+            small = sp1.select_one("h1.location-title small")
+            if small and "Opening" in small.text:
+                continue
             detail = json.loads(sp1.find("script", type="application/ld+json").string)
 
             street_address = detail["address"]["streetAddress"].replace(

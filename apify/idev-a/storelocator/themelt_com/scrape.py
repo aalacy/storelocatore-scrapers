@@ -5,6 +5,8 @@ from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 import json
 import ssl
+import re
+from bs4 import BeautifulSoup as bs
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
@@ -62,6 +64,7 @@ def fetch_data():
                 street_address = street_address[:-1]
             if not street_address:
                 street_address = _["address"]
+
             yield SgRecord(
                 page_url=base_url,
                 location_name=_["address"],
@@ -70,6 +73,57 @@ def fetch_data():
                 state=_["state"],
                 country_code="US",
                 phone=_p(_.get("phone_number")),
+                locator_domain=locator_domain,
+                hours_of_operation="; ".join(hours),
+            )
+
+        sp1 = bs(driver.page_source, "lxml")
+        div = sp1.select_one(
+            'main div[data-testid="mesh-container-content"]'
+        ).findChildren(recursive=False)[-1]
+        state = ""
+        for pp in div.find_previous_siblings("div"):
+            if not pp.p:
+                continue
+            state = pp.text.strip()
+            break
+        locs = div.select('div[role="row"]')
+        for loc in locs:
+            location_name = loc.p.text.strip()
+            street1 = loc.h5.text.strip()
+            if not street1[0].isdigit():
+                street1 = ""
+            street2 = loc.select("p")[1].text.split(":")[-1].strip()
+            street_address = ""
+            if street1:
+                street_address = street1
+            if street2:
+                street_address += " " + street2
+
+            _hr = loc.find("span", string=re.compile(r"^Hours"))
+            temp = [
+                hh.text.strip()
+                for hh in _hr.find_parent("div").find_next_siblings("div")
+                if hh.text.strip()
+            ]
+            hours = []
+            ii = int(len(temp) / 2)
+            for x in range(0, ii):
+                hours.append(f"{temp[x]}: {temp[x+ii]}")
+
+            _pp = loc.find("span", string=re.compile(r"^Phone"))
+            phone = ""
+            if _pp and _pp.find_parent("div"):
+                phone = _pp.find_parent("div").find_next_sibling().text.strip()
+
+            yield SgRecord(
+                page_url=base_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=location_name,
+                state=state,
+                country_code="US",
+                phone=phone,
                 locator_domain=locator_domain,
                 hours_of_operation="; ".join(hours),
             )
