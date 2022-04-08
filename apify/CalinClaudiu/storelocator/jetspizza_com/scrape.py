@@ -91,7 +91,11 @@ def para(url):
 
     k["StoreNumber"] = soup.body["class"][-1].split("-")[-1]
 
-    k["IsActive"] = "<MISSING>"
+    if "coming soon" in soup.find(class_="store__box-heading").text.lower():
+        k["IsActive"] = "Coming Soon"
+    else:
+        k["IsActive"] = "Open"
+
     k["Country"] = "US"
 
     return k
