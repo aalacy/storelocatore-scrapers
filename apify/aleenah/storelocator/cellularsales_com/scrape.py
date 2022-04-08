@@ -49,7 +49,10 @@ def fetch_data(http: SgRequests, search: DynamicGeoSearch):
         )
         logger.info(url)
         r = http.get(url, headers=headers)
-        allocs = r.json()
+        try:
+            allocs = r.json()
+        except:
+            continue
         if allocs:
             search.found_location_at(lati, longi)
 

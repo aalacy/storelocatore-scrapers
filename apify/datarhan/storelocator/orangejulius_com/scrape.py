@@ -14,7 +14,7 @@ def fetch_data():
     start_url = "https://prod-orangejulius-dairyqueen.dotcmscloud.com/api/vtl/locations?country=us&lat={}&long={}"
 
     all_coordinates = DynamicGeoSearch(
-        country_codes=[SearchableCountries.USA], expected_search_radius_miles=200
+        country_codes=[SearchableCountries.USA], expected_search_radius_miles=10
     )
     for lat, lng in all_coordinates:
         response = session.get(start_url.format(lat, lng))
