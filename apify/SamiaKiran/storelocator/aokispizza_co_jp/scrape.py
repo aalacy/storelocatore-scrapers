@@ -33,13 +33,22 @@ def fetch_data():
             for loc in loclist:
                 location_name = loc.find("th", {"class": "shop_name"}).text
                 log.info(location_name)
-                temp = (
-                    loc.find("td", {"class": "shop_info"})
-                    .get_text(separator="|", strip=True)
-                    .split("|")
+                temp = loc.find("td", {"class": "shop_info"})
+                hours_of_operation = temp.get_text(separator="|", strip=True).replace(
+                    "|", " "
                 )
-                hours_of_operation = temp[-1]
+                try:
+                    hours_of_operation = hours_of_operation.split("11：")[1]
+                except:
+                    hours_of_operation = hours_of_operation.split("11:")[1]
+                hours_of_operation = "11：" + hours_of_operation
+                temp = temp.get_text(separator="|", strip=True).split("|")
+                phone = temp[0].replace("☎", "")
                 raw_address = temp[1] + " " + temp[2]
+
+                if "11" in raw_address:
+                    raw_address = raw_address.split("11")[0]
+
                 pa = parse_address_intl(raw_address)
 
                 street_address = pa.street_address_1
@@ -53,7 +62,7 @@ def fetch_data():
 
                 zip_postal = pa.postcode
                 zip_postal = zip_postal.strip() if zip_postal else MISSING
-                phone = temp[0].replace("☎", "")
+
                 country_code = "JP"
                 yield SgRecord(
                     locator_domain=DOMAIN,
