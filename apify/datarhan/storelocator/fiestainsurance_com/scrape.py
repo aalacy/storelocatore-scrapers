@@ -70,8 +70,6 @@ def fetch_data():
             city = addr.city
         if not city:
             city = raw_data[1].split("-")[-1].split()[0]
-        if not zip_code:
-            print(raw_data)
 
         item = SgRecord(
             locator_domain=domain,
