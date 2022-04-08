@@ -46,7 +46,8 @@ def fetch_records(search):
                     street_address += " " + _["address"]["line2"]
                 yield SgRecord(
                     page_url=locator_domain + "/store/" + _["name"],
-                    location_name=_["name"],
+                    store_number=_["name"],
+                    location_name=_["displayName"].replace("WOS", "").strip(),
                     street_address=street_address,
                     city=_["address"]["town"],
                     state=_["address"]["region"]["isocodeShort"],
