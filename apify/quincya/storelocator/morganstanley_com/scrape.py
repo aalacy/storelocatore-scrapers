@@ -1,3 +1,5 @@
+import ssl
+
 from tenacity import retry, stop_after_attempt
 from sglogging import sglog
 from sgrequests import SgRequests
@@ -12,6 +14,8 @@ from sgselenium.sgselenium import SgChrome
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 
 log = sglog.SgLogSetup().get_logger(logger_name="morganstanley.com")
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 
 @retry(stop=stop_after_attempt(3))
