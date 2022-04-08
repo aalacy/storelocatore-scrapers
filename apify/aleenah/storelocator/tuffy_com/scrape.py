@@ -1,55 +1,24 @@
-from bs4 import BeautifulSoup
-import csv
-import re
 import usaddress
-
+from sglogging import sglog
+from bs4 import BeautifulSoup
 from sgrequests import SgRequests
-
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger("tuffy.com")
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
+website = "tuffy_com"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
 headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.183 Safari/537.36"
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
 }
 
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+DOMAIN = "https://www.tuffy.com"
+MISSING = SgRecord.MISSING
 
 
 def fetch_data():
-    pattern = re.compile(r"\s\s+")
-    data = []
-    titlelist = []
-    p = 0
     states = [
         "AL",
         "AK",
@@ -96,16 +65,12 @@ def fetch_data():
     for statenow in states:
         coordlist = []
         url = "https://www.tuffy.com/location_search?zip_code=" + statenow
-        if statenow == "ID":
-            url = "https://www.tuffy.com/location_search?zip_code=ID&location_destination=/&lat_lng=(44.0682019,%20-114.7420408)"
-        elif statenow == "DE":
-            url = "https://www.tuffy.com/location_search?zip_code=DE&location_destination=/&lat_lng=(37.109542,%20-95.7468942)"
-        logger.info(url)
-        r = session.get(url, headers=headers, verify=False)
-        logger.info(r)
+        r = session.get(url, headers=headers)
+        if r.status_code != 200:
+            continue
+        log.info(url)
         soup = BeautifulSoup(r.text, "html.parser")
         divlist = soup.findAll("div", {"class": "contact-info"})
-
         if len(divlist) == 0:
             continue
         latlnglist = r.text.split("var locations = [", 1)[1].split("];", 1)[0]
@@ -118,83 +83,85 @@ def fetch_data():
 
         for j in range(0, len(divlist)):
             div = divlist[j]
-            title = div.find("h2").text.strip().split("T", 1)[1]
-            title = "T" + title
-
-            address = div.find("address").text
-            address = re.sub(pattern, " ", address).strip()
-
+            location_name = div.find("h2").text.strip().split("T", 1)[1]
+            location_name = "T" + location_name
+            log.info(location_name)
+            address = (
+                div.find("address")
+                .get_text(separator="|", strip=True)
+                .replace("|", " ")
+            )
             try:
                 address = address.split("MANAGER", 1)[0]
             except:
                 pass
+            address = address.replace(",", " ")
             address = usaddress.parse(address)
-
             i = 0
-            street = ""
+            street_address = ""
             city = ""
             state = ""
-            pcode = ""
+            zip_postal = ""
             while i < len(address):
                 temp = address[i]
                 if (
                     temp[1].find("Address") != -1
                     or temp[1].find("Street") != -1
-                    or temp[1].find("Occupancy") != -1
                     or temp[1].find("Recipient") != -1
+                    or temp[1].find("Occupancy") != -1
                     or temp[1].find("BuildingName") != -1
                     or temp[1].find("USPSBoxType") != -1
                     or temp[1].find("USPSBoxID") != -1
                 ):
-                    street = street + " " + temp[0]
+                    street_address = street_address + " " + temp[0]
                 if temp[1].find("PlaceName") != -1:
                     city = city + " " + temp[0]
                 if temp[1].find("StateName") != -1:
                     state = state + " " + temp[0]
                 if temp[1].find("ZipCode") != -1:
-                    pcode = pcode + " " + temp[0]
+                    zip_postal = zip_postal + " " + temp[0]
                 i += 1
-
-            street = street.lstrip().replace(",", "")
-            if street in titlelist:
-                continue
-            titlelist.append(street)
-            city = city.lstrip().replace(",", "")
-            state = state.lstrip().replace(",", "")
-            pcode = pcode.lstrip().replace(",", "")
-
-            phone = div.find("span", {"class": "tel"}).text
-            hours = div.find("div", {"class": "schedule-holder"}).text
-            hours = re.sub(pattern, "\n", hours).strip().replace("\n", " ")
-
-            lat, longt = coordlist[j].split(", ")
-
-            data.append(
-                [
-                    "https://www.tuffy.com/",
-                    url,
-                    title,
-                    street,
-                    city,
-                    state,
-                    pcode,
-                    "US",
-                    "<MISSING>",
-                    phone,
-                    "<MISSING>",
-                    lat,
-                    longt,
-                    hours,
-                ]
+            country_code = "US"
+            phone = (
+                div.find("span", {"class": "tel"})
+                .get_text(separator="|", strip=True)
+                .replace("|", " ")
             )
-            p += 1
-
-    return data
+            hours = (
+                div.find("div", {"class": "schedule-holder"})
+                .get_text(separator="|", strip=True)
+                .replace("|", " ")
+            )
+            latitude, longitude = coordlist[j].split(", ")
+            yield SgRecord(
+                locator_domain=DOMAIN,
+                page_url=url,
+                location_name=location_name,
+                street_address=street_address.strip(),
+                city=city.strip(),
+                state=state.strip(),
+                zip_postal=zip_postal.strip(),
+                country_code=country_code,
+                store_number=MISSING,
+                phone=phone.strip(),
+                location_type=MISSING,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours,
+            )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()
