@@ -5,12 +5,10 @@ from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
-from sgscrape.pause_resume import CrawlStateSingleton
+
 from concurrent import futures
 from sglogging import sglog
-import os
 
-os.environ["PROXY_URL"] = "http://groups-BUYPROXIES94952:{}@proxy.apify.com:8000/"
 
 locator_domain = "acuonline.org"
 log = sglog.SgLogSetup().get_logger(logger_name=locator_domain)
@@ -117,6 +115,7 @@ def get_data(coord, sgw: SgWriter):
                 sgw.write_row(row)
     except Exception as e:
         log.info(f"No JSON: {e}")
+        pass
 
 
 def fetch_data(sgw: SgWriter):
@@ -133,7 +132,6 @@ def fetch_data(sgw: SgWriter):
 
 
 if __name__ == "__main__":
-    CrawlStateSingleton.get_instance().save(override=True)
     session = SgRequests()
     with SgWriter(
         deduper=SgRecordDeduper(
