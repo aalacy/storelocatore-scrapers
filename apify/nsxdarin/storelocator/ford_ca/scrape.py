@@ -14,7 +14,7 @@ headers = {
 }
 
 search = DynamicZipSearch(
-    country_codes=[SearchableCountries.CANADA],
+    country_codes=[SearchableCountries.CANADA], expected_search_radius_miles=50
 )
 
 
@@ -37,6 +37,7 @@ def fetch_data():
                     for item in dealers:
                         lng = item["Longitude"]
                         lat = item["Latitude"]
+                        search.found_location_at(lat, lng)
                         name = item["Name"]
                         logger.info(name)
                         typ = item["dealerType"]

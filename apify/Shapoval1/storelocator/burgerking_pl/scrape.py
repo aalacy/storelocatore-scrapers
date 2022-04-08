@@ -17,7 +17,7 @@ def fetch_data(sgw: SgWriter):
         "Pragma": "no-cache",
         "Cache-Control": "no-cache",
         "Content-Type": "application/json",
-        "Authorization": "Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJ7XCJkZXZpY2VVdWlkXCI6XCJmMzMyYjE1ZS1kZTdjLTQ0ZjItYWJkYS02MzNjZWU1ODQ5NzVcIixcImRldmljZVV1aWRTb3VyY2VcIjpcIkZJTkdFUlBSSU5UXCIsXCJpbXBsVmVyc2lvblwiOlwiMy4wXCIsXCJzb3VyY2VcIjpcIk1PQklMRV9QSF9BTkRST0lEXCIsXCJleHBpcmlhdGlvbkRhdGVcIjoxNjc2NDgwMTg5OTg3LFwiZW5hYmxlZFwiOnRydWUsXCJhY2NvdW50Tm9uTG9ja2VkXCI6dHJ1ZSxcImNyZWRlbnRpYWxzTm9uRXhwaXJlZFwiOnRydWUsXCJhY2NvdW50Tm9uRXhwaXJlZFwiOnRydWV9In0.z4LSQCqR1c358bYaECIZPVX43J8XUDCQEZhRpxgRbh5ZTUbeUtQBsmyxvMVLVpbIeMi8wy7Oxqr9kzSnIrdtrQ",
+        "Authorization": "Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJ7XCJkZXZpY2VVdWlkXCI6XCJGRkZGRkZGRi1GRkZGLUZGRkYtRkZGRi1GRkZGRkZGRkZGRkZcIixcImRldmljZVV1aWRTb3VyY2VcIjpcIkZJTkdFUlBSSU5UXCIsXCJpbXBsVmVyc2lvblwiOlwiMy4wXCIsXCJzb3VyY2VcIjpcIldFQl9LRkNcIixcImV4cGlyaWF0aW9uRGF0ZVwiOjE2NzgwMTI5NjcxMzEsXCJlbmFibGVkXCI6dHJ1ZSxcImFjY291bnROb25Mb2NrZWRcIjp0cnVlLFwiY3JlZGVudGlhbHNOb25FeHBpcmVkXCI6dHJ1ZSxcImFjY291bnROb25FeHBpcmVkXCI6dHJ1ZX0ifQ.XQaoqEQjo4pSYTIvJ-deC9T4TuBEw6tkm9FIXohULlRZO6nVv5Bp5bCtg6IzEyHg-b3nzfh2FJLoDdkBph4kuQ",
         "Source": "WEB",
         "Origin": "https://burgerking.pl",
         "Connection": "keep-alive",
@@ -42,7 +42,7 @@ def fetch_data(sgw: SgWriter):
         )
         state = "<MISSING>"
         postal = j.get("addressPostalCode") or "<MISSING>"
-        country_code = "PL"
+        country_code = "US"
         city = j.get("addressCity") or "<MISSING>"
         store_number = j.get("id") or "<MISSING>"
         latitude = j.get("geoLat") or "<MISSING>"
@@ -55,7 +55,7 @@ def fetch_data(sgw: SgWriter):
             "Pragma": "no-cache",
             "Cache-Control": "no-cache",
             "Content-Type": "application/json",
-            "Authorization": "Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJ7XCJkZXZpY2VVdWlkXCI6XCJGRkZGRkZGRi1GRkZGLUZGRkYtRkZGRi1GRkZGRkZGRkZGRkZcIixcImRldmljZVV1aWRTb3VyY2VcIjpcIkZJTkdFUlBSSU5UXCIsXCJpbXBsVmVyc2lvblwiOlwiMy4wXCIsXCJzb3VyY2VcIjpcIldFQl9LRkNcIixcImV4cGlyaWF0aW9uRGF0ZVwiOjE2NzY3Mzc3NDE5MzYsXCJlbmFibGVkXCI6dHJ1ZSxcImFjY291bnROb25Mb2NrZWRcIjp0cnVlLFwiY3JlZGVudGlhbHNOb25FeHBpcmVkXCI6dHJ1ZSxcImFjY291bnROb25FeHBpcmVkXCI6dHJ1ZX0ifQ.v5xlD4WbU9bYFgcslk-vtApth1tT2h7ScJSAEYtnYjtiHQVF-YDlO9zzJBTp5VCUJg0ChKqJLY5LrjyrKFOqPA",
+            "Authorization": "Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJ7XCJkZXZpY2VVdWlkXCI6XCJGRkZGRkZGRi1GRkZGLUZGRkYtRkZGRi1GRkZGRkZGRkZGRkZcIixcImRldmljZVV1aWRTb3VyY2VcIjpcIkZJTkdFUlBSSU5UXCIsXCJpbXBsVmVyc2lvblwiOlwiMy4wXCIsXCJzb3VyY2VcIjpcIldFQl9LRkNcIixcImV4cGlyaWF0aW9uRGF0ZVwiOjE2NzgwMTI5NjcxMzEsXCJlbmFibGVkXCI6dHJ1ZSxcImFjY291bnROb25Mb2NrZWRcIjp0cnVlLFwiY3JlZGVudGlhbHNOb25FeHBpcmVkXCI6dHJ1ZSxcImFjY291bnROb25FeHBpcmVkXCI6dHJ1ZX0ifQ.XQaoqEQjo4pSYTIvJ-deC9T4TuBEw6tkm9FIXohULlRZO6nVv5Bp5bCtg6IzEyHg-b3nzfh2FJLoDdkBph4kuQ",
             "Source": "WEB",
             "Origin": "https://burgerking.pl",
             "Connection": "keep-alive",

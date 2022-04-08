@@ -35,7 +35,7 @@ def fetch_data():
                 items = line.split("data-lat=")
                 for item in items:
                     if "data-lng=\\" in item:
-                        lat = item.split("\\")[0]
+                        lat = item.split('\\"')[1].split("\\")[0]
                         lng = item.split('data-lng=\\"')[1].split("\\")[0]
                         name = item.split('data-name=\\"')[1].split("\\")[0]
                         add = item.split('data-address=\\"')[1].split("\\")[0]
