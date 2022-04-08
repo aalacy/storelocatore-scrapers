@@ -249,8 +249,8 @@ class CleanRecord:
                 )
 
         return cleanRecord
-    
-     def USA2(badRecord, config, country, locale):
+
+    def USA2(badRecord, config, country, locale):
         cleanRecord = {}
         cleanRecord["locator_domain"] = config.get("Domain")
         try:
@@ -319,11 +319,11 @@ class CleanRecord:
         cleanRecord["page_url"] = None
         try:
             cleanRecord["page_url"] = "https://{}/{}/{}/location/{}.html".format(
-                    cleanRecord["locator_domain"],
-                    country,
-                    locale,
-                    badRecord["properties"]["identifierValue"],
-                )
+                cleanRecord["locator_domain"],
+                country,
+                locale,
+                badRecord["properties"]["identifierValue"],
+            )
             cleanRecord["store_number"] = badRecord["properties"]["identifierValue"]
         except Exception:
             cleanRecord["page_url"] = None
@@ -338,7 +338,9 @@ class CleanRecord:
                 )
             else:
                 try:
-                    cleanRecord["page_url"] = "https://{}/{}/{}/location/{}.html".format(
+                    cleanRecord[
+                        "page_url"
+                    ] = "https://{}/{}/{}/location/{}.html".format(
                         cleanRecord["locator_domain"],
                         country,
                         locale,
@@ -347,7 +349,9 @@ class CleanRecord:
                         ],
                     )
                 except Exception:
-                    cleanRecord["page_url"] = "https://{}/{}/{}/location/{}.html".format(
+                    cleanRecord[
+                        "page_url"
+                    ] = "https://{}/{}/{}/location/{}.html".format(
                         cleanRecord["locator_domain"],
                         country,
                         locale,
@@ -357,8 +361,6 @@ class CleanRecord:
                     )
 
         return cleanRecord
-
-
 
     def DEDUPE(badRecord):
         cleanRecord = {}
