@@ -46,7 +46,7 @@ def fetch_data():
                 if "ONLINE BOOKING" in address[-1]:
                     del address[-1]
                 phone = address[-1].replace("Tlf.", "")
-                raw_address= " ".join(address[:-1])
+                raw_address = " ".join(address[:-1])
                 raw_address = strip_accents(raw_address)
 
                 pa = parse_address_intl(raw_address)
