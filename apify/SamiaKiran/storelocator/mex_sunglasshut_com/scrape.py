@@ -78,7 +78,7 @@ def strip_accents(text):
 def fetch_data():
     if True:
         for temp_state in state_list:
-            with SgChrome() as driver:
+           with SgChrome(executable_path="C:/webdrivers/chromedriver.exe") as driver:
                 url = "https://mex.sunglasshut.com/Encuentra-tu-tienda"
                 driver.get(url)
                 try:
@@ -90,7 +90,7 @@ def fetch_data():
                 state_name.send_keys(temp_state)
                 log.info(f"Fetching locations from {temp_state}")
                 state_name.send_keys(Keys.ENTER)
-                time.sleep(15)
+                time.sleep(30)
                 soup = BeautifulSoup(driver.page_source, "html.parser")
                 loclist = soup.findAll(
                     "li", {"class": "sunglasshutmx-store-locator-0-x-listMarker"}
