@@ -52,7 +52,6 @@ def get_data(coords, sgw: SgWriter):
     for j in js:
 
         location_name = j.get("restaurantName") or "<MISSING>"
-        print(location_name)
         ad = f"{j.get('AddressOne')} {j.get('AddressTwo')}".strip() or "<MISSING>"
         a = parse_address(International_Parser(), ad)
         street_address = (
