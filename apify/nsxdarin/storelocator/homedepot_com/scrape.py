@@ -44,6 +44,8 @@ def fetch_data():
     logger.info(len(locs))
 
     for loc in locs:
+        if "/designcenter" in loc:
+            continue
         if loc == "https://www.homedepot.com/l/storeDirectory":
             continue
 
@@ -100,23 +102,26 @@ def fetch_data():
                 if state == "GU":
                     country = "Guam"
                     state = "<MISSING>"
-                if "/designcenter" not in loc:
-                    yield SgRecord(
-                        locator_domain=website,
-                        page_url=loc,
-                        location_name=name,
-                        street_address=add,
-                        city=city,
-                        state=state,
-                        zip_postal=zc,
-                        country_code=country,
-                        phone=phone,
-                        location_type=typ,
-                        store_number=store,
-                        latitude=lat,
-                        longitude=lng,
-                        hours_of_operation=hours,
-                    )
+
+                if name == "" or name == "<MISSING>":
+                    continue
+
+                yield SgRecord(
+                    locator_domain=website,
+                    page_url=loc,
+                    location_name=name,
+                    street_address=add,
+                    city=city,
+                    state=state,
+                    zip_postal=zc,
+                    country_code=country,
+                    phone=phone,
+                    location_type=typ,
+                    store_number=store,
+                    latitude=lat,
+                    longitude=lng,
+                    hours_of_operation=hours,
+                )
 
             except Exception:
                 if rcount == 3:
@@ -188,10 +193,16 @@ def fetch_data():
 
 
 def scrape():
-    results = fetch_data()
-    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
-        for rec in results:
-            writer.write_row(rec)
+
+    x = 0
+    while x != 3:
+        x = x + 1
+        results = fetch_data()
+        with SgWriter(
+            deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)
+        ) as writer:
+            for rec in results:
+                writer.write_row(rec)
 
 
 scrape()
