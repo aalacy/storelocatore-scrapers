@@ -201,9 +201,7 @@ def main_all(session, url):
 def fetch_data():
     with SgRequests() as session:
 
-        for item in main_all(
-            session, "https://www.pbteen.com/stores/?cm_src=OLDLINK"
-        ):
+        for item in main_all(session, "https://www.pbteen.com/stores/?cm_src=OLDLINK"):
             yield item
 
     logzilla.info(f"Finished grabbing data!!")  # noqa
