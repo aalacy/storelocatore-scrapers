@@ -402,10 +402,10 @@ def fix_india(x):
             if not inside:
                 copy.append(whatis)
         if len(copy) > 0:
-            return copy
-        return x
+            return "".join(copy)
+        return "".join(x)
     else:
-        return x
+        return "".join(x)
 
 
 def scrape():
