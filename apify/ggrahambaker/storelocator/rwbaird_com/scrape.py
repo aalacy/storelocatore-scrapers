@@ -17,7 +17,6 @@ HEADERS = {
     "Accept-Encoding": "gzip, deflate",
     "Content-Type": "application/json",
     "X-Requested-With": "XMLHttpRequest",
-    # "Content-Length": "160",
     "Origin": "http://www.locatebaird.com",
     "DNT": "1",
     "Connection": "keep-alive",
