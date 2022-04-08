@@ -58,8 +58,8 @@ def fetch_data():
     log.info("Fetching store_locator data")
     search = DynamicGeoSearch(
         country_codes=[SearchableCountries.PERU],
-        expected_search_radius_miles=10
-        max_search_results=5
+        expected_search_radius_miles=10,
+        max_search_results=5,
     )
     for lat, long in search:
         url = API_URL.format(lat, long)
