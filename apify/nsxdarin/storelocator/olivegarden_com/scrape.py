@@ -45,11 +45,14 @@ def get_data(coords, sgw: SgWriter):
     r = session.post(
         "https://www.olivegarden.com/web-api/restaurants", headers=headers, data=data
     )
-
-    js = r.json()["successResponse"]["locationSearchResult"]["Location"]
+    try:
+        js = r.json()["successResponse"]["locationSearchResult"]["Location"]
+    except:
+        return
     for j in js:
 
         location_name = j.get("restaurantName") or "<MISSING>"
+        print(location_name)
         ad = f"{j.get('AddressOne')} {j.get('AddressTwo')}".strip() or "<MISSING>"
         a = parse_address(International_Parser(), ad)
         street_address = (
