@@ -13,7 +13,7 @@ def get_urls():
     tree = html.fromstring(r.content)
     links = tree.xpath("//loc/text()")
     for link in links:
-        if link.count("/") == 5:
+        if link.count("/") == 6:
             urls.append(link)
 
     return urls
