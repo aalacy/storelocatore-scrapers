@@ -149,7 +149,7 @@ def fix_record(rec, host):
 
 def dissect_country(data):
     for country in list(data["statesAndProvinces"]):
-        for rec in data["statesAndProvinces"][country]["state"]:
+        for rec in data["statesAndProvinces"][country]["stores"]:
             yield (rec, country)
 
 
