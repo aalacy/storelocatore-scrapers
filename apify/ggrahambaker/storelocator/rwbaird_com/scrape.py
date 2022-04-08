@@ -64,7 +64,10 @@ def fetch_data():
             cookies=COOKIES,
         )
         log.info(f"Searching locations for => {zip_code}")
-        res_json = json.loads(r.content)["Results"]
+        try:
+            res_json = json.loads(r.content)["Results"]
+        except:
+            continue
         if not res_json:
             continue
         log.info(f"Found {len(res_json)} locations on => {zip_code}")
