@@ -315,7 +315,6 @@ class CleanRecord:
         )
         cleanRecord["raw_address"] = ""
         identifier = None
-        identifierValue
         cleanRecord["page_url"] = None
         try:
             cleanRecord["page_url"] = "https://{}/{}/{}/location/{}.html".format(
