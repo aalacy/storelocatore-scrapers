@@ -82,6 +82,10 @@ def get_data(page_url, sgw: SgWriter):
     for h in hours:
         day = "".join(h.xpath(".//text()")).strip()
         inter = "".join(h.xpath("./following-sibling::text()[1]")).strip()
+        if "closed" in inter.lower():
+            inter = "Closed"
+        if ";" in inter:
+            inter = inter.split(";")[0]
         if not inter:
             continue
         _tmp.append(f"{day} {inter}")
