@@ -20,10 +20,21 @@ def fetch_data():
         zip_code = raw_address[2].split()[-1]
         if len(zip_code) == 2:
             zip_code = ""
+        page_url = f"https://themobilegeneration.com{poi['link']}"
+        if not zip_code:
+            loc_response = session.get(page_url)
+            loc_dom = etree.HTML(loc_response.text)
+            zip_code = (
+                loc_dom.xpath('//div[@class="post-excerpt"]/p/text()')[0]
+                .split("Address:")[-1]
+                .split("Phone")[0]
+                .split(", ")[-1]
+                .split()[-1]
+            )
 
         item = SgRecord(
             locator_domain=domain,
-            page_url=f"https://themobilegeneration.com{poi['link']}",
+            page_url=page_url,
             location_name=poi["title"],
             street_address=raw_address[0],
             city=raw_address[1],
