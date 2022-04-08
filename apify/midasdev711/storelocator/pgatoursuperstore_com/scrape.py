@@ -49,6 +49,10 @@ def fetch_data():
         hoo = poi_html.xpath('.//div[@class="hours"]/text()')
         hoo = [e.strip() for e in hoo if e.strip()]
         hours_of_operation = " ".join(hoo)
+        location_type = SgRecord.MISSING
+        if "Temporarily closed" in hours_of_operation:
+            hours_of_operation = hours_of_operation.split("Temporarily closed")[0]
+            location_type = "Temporarily closed"
         if "Coming" in location_name:
             continue
         log.info("Append {} => {}".format(location_name, street_address))
@@ -63,7 +67,7 @@ def fetch_data():
             country_code="US",
             store_number=store_url.split("/")[-1].split(".")[0],
             phone=phone,
-            location_type=SgRecord.MISSING,
+            location_type=location_type,
             latitude=poi["geo"]["latitude"],
             longitude=poi["geo"]["longitude"],
             hours_of_operation=hours_of_operation,

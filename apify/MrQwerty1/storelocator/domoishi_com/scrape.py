@@ -55,54 +55,64 @@ def get_coords():
     markers = tree.xpath("//placemark")
     for marker in markers:
         name = "".join(marker.xpath("./name/text()")).strip()
-        coords[name] = "".join(marker.xpath(".//coordinates/text()")).strip()
+        key = name.lower().replace("domoishi", "").replace("domoish", "").strip()
+        coords[key] = "".join(marker.xpath(".//coordinates/text()")).strip()
 
     return coords
 
 
-def fetch_data(sgw: SgWriter):
-    page_url = "https://domoishi.com/locations/"
-    r = session.get(page_url)
+def get_urls():
+    r = session.get("https://domoishi.com/locations/")
     tree = html.fromstring(r.text)
-    divs = tree.xpath(
-        "//div[contains(@class, 'elementor-column elementor-col-50') and .//h2[contains(text(), 'Domo')]]"
-    )
+
+    return tree.xpath("//div[@class='elementor-image']/a/@href")
+
+
+def fetch_data(sgw: SgWriter):
+    urls = get_urls()
     coords = get_coords()
 
-    for d in divs:
-        location_name = "".join(d.xpath(".//h2/text()")).strip()
-        line = d.xpath(
-            ".//div[contains(@class, 'elementor-widget elementor-widget-text-editor')]//text()"
-        )
-        line = list(filter(None, [l.strip() for l in line]))
-        iscoming = d.xpath(".//span[contains(text(), 'Coming Soon')]")
-        if iscoming or not line:
-            continue
-
-        phone = line.pop().replace("Phone:", "").strip()
-        raw_address = ", ".join(line)
-        street_address, city, state, postal = get_address(raw_address)
-        try:
-            longitude, latitude = coords[location_name].split(",")[:2]
-        except:
-            longitude, latitude = SgRecord.MISSING, SgRecord.MISSING
-
-        row = SgRecord(
-            page_url=page_url,
-            location_name=location_name,
-            street_address=street_address,
-            city=city,
-            state=state,
-            zip_postal=postal,
-            country_code="US",
-            phone=phone,
-            latitude=latitude,
-            longitude=longitude,
-            locator_domain=locator_domain,
-            raw_address=raw_address,
+    for page_url in urls:
+        r = session.get(page_url)
+        tree = html.fromstring(r.text)
+        divs = tree.xpath(
+            "//div[contains(@class, 'elementor-column elementor-col-50') and .//h2]"
         )
 
-        sgw.write_row(row)
+        for d in divs:
+            location_name = "".join(d.xpath(".//h2/text()")).strip()
+            line = d.xpath(
+                ".//div[contains(@class, 'elementor-widget elementor-widget-text-editor')]//text()"
+            )
+            line = list(filter(None, [l.strip() for l in line]))
+            iscoming = d.xpath(".//span[contains(text(), 'Coming Soon')]")
+            if iscoming or not line:
+                continue
+
+            phone = line.pop().replace("Phone:", "").strip()
+            raw_address = ", ".join(line)
+            street_address, city, state, postal = get_address(raw_address)
+            try:
+                longitude, latitude = coords[location_name.lower()].split(",")[:2]
+            except:
+                longitude, latitude = SgRecord.MISSING, SgRecord.MISSING
+
+            row = SgRecord(
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=postal,
+                country_code="US",
+                phone=phone,
+                latitude=latitude,
+                longitude=longitude,
+                locator_domain=locator_domain,
+                raw_address=raw_address,
+            )
+
+            sgw.write_row(row)
 
 
 if __name__ == "__main__":
