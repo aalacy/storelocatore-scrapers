@@ -8,6 +8,9 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.pause_resume import CrawlStateSingleton
 from concurrent import futures
 from sglogging import sglog
+import os
+
+os.environ["PROXY_URL"] = "http://groups-BUYPROXIES94952:{}@proxy.apify.com:8000/"
 
 locator_domain = "acuonline.org"
 log = sglog.SgLogSetup().get_logger(logger_name=locator_domain)
@@ -123,7 +126,7 @@ def fetch_data(sgw: SgWriter):
         granularity=Grain_2(),
     )
 
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
+    with futures.ThreadPoolExecutor(max_workers=8) as executor:
         future_to_url = {executor.submit(get_data, url, sgw): url for url in coords}
         for future in futures.as_completed(future_to_url):
             future.result()
