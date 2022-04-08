@@ -43,6 +43,21 @@ def fetch_data():
             .replace("t;", "t"),
         )[0][2:-1].split(",")
         raw_data = [e.replace("'", "").replace('"', "").strip() for e in raw_data]
+        location_name = raw_data[1]
+        if "#" in location_name:
+            street_address = raw_data[2]
+            state = raw_data[4]
+            zip_code = raw_data[5]
+            latitude = raw_data[7]
+            longitude = raw_data[8]
+        else:
+            street_address = raw_data[3]
+            city = raw_data[2].split("#")[0]
+            state = raw_data[5]
+            zip_code = raw_data[7]
+            phone = raw_data[10]
+            latitude = raw_data[8]
+            longitude = raw_data[9]
         hoo = loc_dom.xpath(
             '//div[@class="text-start pb-5 storeTiming"]//li/span/text()'
         )
@@ -51,17 +66,17 @@ def fetch_data():
         item = SgRecord(
             locator_domain=domain,
             page_url=page_url,
-            location_name=raw_data[1],
-            street_address=raw_data[3],
-            city=raw_data[2].split("#")[0],
-            state=raw_data[5],
-            zip_postal=raw_data[7],
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zip_code,
             country_code="",
             store_number=raw_data[0],
-            phone=raw_data[10],
+            phone=phone,
             location_type="",
-            latitude=raw_data[8],
-            longitude=raw_data[9],
+            latitude=latitude,
+            longitude=longitude,
             hours_of_operation=hoo,
         )
 
