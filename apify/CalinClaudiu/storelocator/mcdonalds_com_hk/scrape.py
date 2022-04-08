@@ -28,6 +28,7 @@ def OneLink():
         record["address"] = parsed.street_address_1
         if parsed.street_address_2:
             record["address"] = record["address"] + " " + parsed.street_address_2
+        record["raw_address"] = record["address"]
         return record
 
     data = getPage()
@@ -60,7 +61,7 @@ def fix_comma(x):
 def scrape():
     field_defs = sp.SimpleScraperPipeline.field_definitions(
         locator_domain=sp.ConstantField("mcdonalds.com.hk"),
-        page_url=sp.MissingField(),
+        page_url=sp.ConstantField("https://www.mcdonalds.com.hk/find-a-restaurant/"),
         location_name=sp.MappingField(
             mapping=["title"],
             is_required=False,
@@ -90,7 +91,7 @@ def scrape():
         store_number=sp.MissingField(),
         hours_of_operation=sp.MissingField(),
         location_type=sp.MappingField(mapping=["tooltips"], is_required=False),
-        raw_address=sp.MissingField(),
+        raw_address=sp.MappingField(mapping=["raw_address"], is_required=False),
     )
 
     pipeline = sp.SimpleScraperPipeline(
