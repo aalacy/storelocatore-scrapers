@@ -1,102 +1,55 @@
-import csv
-
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def chunks(l, n):
-    for i in range(0, len(l), n):
-        yield l[i : i + n]
-
-
-def fetch_data():
-    out = []
-    locator_domain = "https://amazon.com/fresh"
-    page_url = "https://www.amazon.com/fmc/m/20190651?almBrandId=QW1hem9uIEZyZXNo"
-    store_number = "<MISSING>"
-    phone = "<MISSING>"
-    latitude = "<MISSING>"
-    longitude = "<MISSING>"
-    location_type = "<MISSING>"
-    country_code = "US"
-
-    session = SgRequests()
+def fetch_data(sgw: SgWriter):
     r = session.get(page_url)
     tree = html.fromstring(r.text)
-    text = tree.xpath("//p[./a[contains(text(), 'Amazon Fresh store - ')]]//text()")
-    text = list(filter(None, [t.strip() for t in text]))
-    rows = chunks(text, 4)
+    divs = tree.xpath("//div[./a[contains(@href, 'google')]]")
 
-    for r in rows:
-        if len(r) < 4:
-            continue
-        if "coming soon" in r[0].lower():
-            r.append(r.pop(0))
+    for d in divs:
+        lines = d.xpath(".//text()")
+        lines = list(filter(None, [line.strip() for line in lines]))
+        location_name = lines.pop(0)
+        adr = lines[: lines.index("Store hours")]
+        hours_of_operation = ";".join(lines[lines.index("Store hours") + 1 :])
+        csz = adr.pop()
+        street_address = adr.pop()
+        city = csz.split(", ")[0]
+        csz = csz.split(", ")[1]
+        state, postal = csz.split()
 
-        location_name = r[0]
-        hours_of_operation = r[-1].replace("Store hours ", "").replace(":", "")
-        street_address = r[1]
-        r = r[2]
+        text = "".join(d.xpath(".//a/@href"))
+        latitude, longitude = SgRecord.MISSING, SgRecord.MISSING
+        if "/@" in text:
+            latitude, longitude = text.split("/@")[1].split(",")[:2]
 
-        city = r.split(",")[0].strip()
-        r = r.split(",")[1].strip()
-        state = r.split()[0]
-        postal = r.split()[-1]
+        row = SgRecord(
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code="US",
+            latitude=latitude,
+            longitude=longitude,
+            locator_domain=locator_domain,
+            hours_of_operation=hours_of_operation,
+        )
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://amazon.com/fresh"
+    page_url = "https://www.amazon.com/fmc/m/20190651?almBrandId=QW1hem9uIEZyZXNo"
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.LOCATION_NAME}))
+    ) as writer:
+        fetch_data(writer)

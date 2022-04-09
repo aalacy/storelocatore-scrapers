@@ -1,3 +1,4 @@
+import re
 from lxml import etree
 
 from sgrequests import SgRequests
@@ -8,14 +9,16 @@ from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
-    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
+    session = SgRequests()
 
     start_url = "https://mcdonalds.lv/wp-admin/admin-ajax.php"
     domain = "mcdonalds.lv"
     hdr = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
-    frm = {"action": "get_locations", "token": "452806e307"}
+    response = session.get("https://mcdonalds.lv/atrodi/")
+    token = re.findall('ajax_nonce":"(.+?)"', response.text)[0]
+    frm = {"action": "get_locations", "token": token}
     data = session.post(start_url, headers=hdr, data=frm).json()
 
     for poi in data["data"]:

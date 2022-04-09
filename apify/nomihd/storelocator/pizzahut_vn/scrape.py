@@ -34,6 +34,14 @@ def fetch_data():
     # Your scraper here
     id_list = ["1", "2", "3"]
     for ID in id_list:
+        page_url = "<MISSING>"
+        if ID == "1":
+            page_url = "https://pizzahut.vn/StoreLocation?area=south"
+        if ID == "2":
+            page_url = "https://pizzahut.vn/StoreLocation?area=central"
+        if ID == "3":
+            page_url = "https://pizzahut.vn/StoreLocation?area=north"
+
         data = {"Area_ID": ID}
 
         stores_req = session.post(
@@ -76,7 +84,6 @@ def fetch_data():
             phone = store["contact_phone"]
             store_number = "<MISSING>"
 
-            page_url = "<MISSING>"
             location_type = "<MISSING>"
 
             hours_of_operation = "<MISSING>"

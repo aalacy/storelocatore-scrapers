@@ -42,16 +42,20 @@ def fetch_data():
         page_url = base + "".join(store.xpath("./a/@href")).strip()
 
         locator_domain = website
-        location_name = "".join(store.xpath(".//text()")).strip()
 
-        log.info(
-            f"https://restaurants.pizzahut.lu/pages/restaurant.php?attr={location_name}"
-        )
+        slug = page_url.split("/")[-1].strip()
+        log.info(f"https://restaurants.pizzahut.lu/pages/restaurant.php?attr={slug}")
         store_res = session.get(
-            f"https://restaurants.pizzahut.lu/pages/restaurant.php?attr={location_name}",
+            f"https://restaurants.pizzahut.lu/pages/restaurant.php?attr={slug}",
             headers=headers,
         )
         store_sel = lxml.html.fromstring(store_res.text)
+
+        location_name = " ".join(
+            store_sel.xpath(
+                "//table[not(@class)]//div[@id='left_bar_content']/div[1]//text()"
+            )
+        ).strip()
 
         store_info = list(
             filter(
@@ -73,6 +77,8 @@ def fetch_data():
             street_address = street_address + ", " + formatted_addr.street_address_2
 
         city = formatted_addr.city
+        if not city:
+            city = raw_address.split(" ")[-1].strip()
         state = formatted_addr.state
         zip = formatted_addr.postcode
         country_code = "LU"
@@ -102,7 +108,15 @@ def fetch_data():
             .strip()
             .replace(":;", ":")
             .strip()
+            .split("; Holiday hours")[0]
+            .strip()
+            .replace("7/7;", "7/7")
+            .strip()
         )
+        if "Temporarily closed" in hours_of_operation:
+            hours_of_operation = "<MISSING>"
+            location_type = "Temporarily closed"
+
         map_link = store_res.text.split("maps.LatLng(")[1].split(");")[0]
 
         latitude, longitude = map_link.split(",")[0], map_link.split(",")[1]

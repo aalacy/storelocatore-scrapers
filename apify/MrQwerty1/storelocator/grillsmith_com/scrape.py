@@ -1,106 +1,66 @@
-import csv
-import json
-
-from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def get_additional(page_url):
-    r = session.get(page_url)
-    tree = html.fromstring(r.text)
-
-    hours = tree.xpath(
-        "//h2[contains(text(), 'Hours')]/following-sibling::p[not(./a)]//text()"
-    )
-    hours = ";".join(list(filter(None, [h.strip() for h in hours]))) or "<MISSING>"
-    if "temporarily" in hours.lower():
-        hours = "Temporarily Closed"
-
-    lat = "".join(tree.xpath("//div[@data-gmaps-lat]/@data-gmaps-lat")) or "<MISSING>"
-    lng = "".join(tree.xpath("//div[@data-gmaps-lng]/@data-gmaps-lng")) or "<MISSING>"
-
-    return lat, lng, hours
-
-
-def fetch_data():
-    out = []
-    locator_domain = "https://www.grillsmith.com/"
-    api_url = "https://www.grillsmith.com/location/Wesley-Chapel/"
-
-    r = session.get(api_url)
-    tree = html.fromstring(r.text)
-    text = "".join(tree.xpath("//script[contains(text(), 'Organization')]/text()"))
-    js = json.loads(text)["subOrganization"]
+def fetch_data(sgw: SgWriter):
+    api = "https://www.grillsmith.com/graphql"
+    r = session.post(api, headers=headers, json=json_data)
+    js = r.json()["data"]["restaurant"]["locations"]
 
     for j in js:
-        a = j.get("address")
-        street_address = a.get("streetAddress") or "<MISSING>"
-        city = a.get("addressLocality") or "<MISSING>"
-        state = a.get("addressRegion") or "<MISSING>"
-        postal = a.get("postalCode") or "<MISSING>"
+        street_address = j.get("streetAddress") or ""
+        if street_address.endswith(","):
+            street_address = street_address[:-1]
+        city = j.get("city")
+        state = j.get("state")
+        postal = j.get("postalCode")
         country_code = "US"
-        store_number = "<MISSING>"
-        page_url = j.get("url")
+        store_number = j.get("id")
         location_name = j.get("name")
-        phone = j.get("telephone") or "<MISSING>"
-        latitude, longitude, hours_of_operation = get_additional(page_url)
-        location_type = j.get("@type") or "<MISSING>"
+        slug = j.get("slug") or ""
+        slug = slug.replace("grillsmith-", "")
+        page_url = f"https://www.grillsmith.com/{slug}"
+        phone = j.get("displayPhone")
+        latitude = j.get("lat")
+        longitude = j.get("lng")
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
+        hours = j.get("schemaHours") or ["Closed"]
+        hours_of_operation = ";".join(hours)
 
-    return out
+        row = SgRecord(
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            latitude=latitude,
+            longitude=longitude,
+            phone=phone,
+            store_number=store_number,
+            locator_domain=locator_domain,
+            hours_of_operation=hours_of_operation,
+        )
 
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
+    locator_domain = "https://www.grillsmith.com/"
+    headers = {"Referer": "https://www.grillsmith.com/"}
+    json_data = {
+        "operationName": "restaurantWithLocations",
+        "variables": {
+            "restaurantId": 12002,
+        },
+        "extensions": {
+            "operationId": "PopmenuClient/94a9b149c729821816fee7d97a05ecac",
+        },
+    }
     session = SgRequests()
-    scrape()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        fetch_data(writer)

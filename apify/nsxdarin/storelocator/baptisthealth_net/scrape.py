@@ -1,6 +1,9 @@
-import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 session = SgRequests()
 headers = {
@@ -10,36 +13,9 @@ headers = {
 logger = SgLogSetup().get_logger("baptisthealth_net")
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
-
-
 def fetch_data():
     locs = []
-    url = "https://baptisthealth.net/sitemap.xml"
+    url = "https://baptisthealth.net/baptist-sitemap.xml"
     r = session.get(url, headers=headers)
     bad_urls = [
         "https://baptisthealth.net/Locations/Urgent Care",
@@ -56,7 +32,7 @@ def fetch_data():
         "https://baptisthealth.net/Locations/Physician Practices/Cancer",
         "https://baptisthealth.net/Locations/Physician Practices",
         "https://baptisthealth.net/Locations/Hospitals",
-        "ttps://baptisthealth.net/Locations/Endoscopy Centers",
+        "https://baptisthealth.net/Locations/Endoscopy Centers",
         "https://baptisthealth.net/Locations/Emergency Care",
         "https://baptisthealth.net/Locations/Diagnostic Imaging",
     ]
@@ -65,14 +41,14 @@ def fetch_data():
     country = "US"
     logger.info("Pulling Stores")
     for line in r.iter_lines():
-        line = str(line.decode("utf-8"))
         if "<loc>https://baptisthealth.net/locations/" in line:
             items = line.split("<loc>https://baptisthealth.net/locations/")
             for item in items:
                 if "</loc>" in item and "<urlset xmlns" not in item:
                     lurl = "https://baptisthealth.net/locations/" + item.split("<")[0]
-                    if lurl not in bad_urls:
-                        locs.append(lurl)
+                    if lurl.count("/") >= 5:
+                        if lurl not in bad_urls:
+                            locs.append(lurl)
     for loc in locs:
         logger.info(loc)
         name = ""
@@ -86,58 +62,62 @@ def fetch_data():
         lat = "<MISSING>"
         lng = "<MISSING>"
         hours = ""
-        r2 = session.get(loc, headers=headers)
-        for line2 in r2.iter_lines():
-            line2 = str(line2.decode("utf-8"))
-            if '"name": "' in line2 and name == "":
-                name = line2.split('"name": "')[1].split('"')[0]
-            if '"telephone": "' in line2:
-                phone = line2.split('"telephone": "')[1].split('"')[0]
-            if '"streetAddress": "' in line2:
-                add = line2.split('"streetAddress": "')[1].split('"')[0]
-            if '"addressLocality": "' in line2:
-                city = line2.split('"addressLocality": "')[1].split('"')[0]
-            if '"addressRegion": "' in line2:
-                state = line2.split('"addressRegion": "')[1].split('"')[0]
-            if '"postalCode": "' in line2:
-                zc = line2.split('"postalCode": "')[1].split('"')[0]
-            if "day:" in line2 and "Hours Today" not in line2:
-                days = line2.split("<br/>")
-                for day in days:
-                    day = day.replace("\t", "").strip()
-                    if hours == "":
-                        hours = day
-                    else:
-                        hours = hours + "; " + day
-        if hours == "":
-            hours = "<MISSING>"
-        if phone == "":
-            phone = "<MISSING>"
-        if add != "":
-            if "150 Smith Road" in add:
-                state = "<MISSING>"
-            add = add.replace(",", "")
-            yield [
-                website,
-                loc,
-                name,
-                add,
-                city,
-                state,
-                zc,
-                country,
-                store,
-                phone,
-                typ,
-                lat,
-                lng,
-                hours,
-            ]
+        try:
+            r2 = session.get(loc, headers=headers)
+            for line2 in r2.iter_lines():
+                if '"name": "' in line2 and name == "":
+                    name = line2.split('"name": "')[1].split('"')[0]
+                if '"telephone": "' in line2:
+                    phone = line2.split('"telephone": "')[1].split('"')[0]
+                if '"streetAddress": "' in line2:
+                    add = line2.split('"streetAddress": "')[1].split('"')[0]
+                if '"addressLocality": "' in line2:
+                    city = line2.split('"addressLocality": "')[1].split('"')[0]
+                if '"addressRegion": "' in line2:
+                    state = line2.split('"addressRegion": "')[1].split('"')[0]
+                if '"postalCode": "' in line2:
+                    zc = line2.split('"postalCode": "')[1].split('"')[0]
+                if "day:" in line2 and "Hours Today" not in line2:
+                    days = line2.split("<br/>")
+                    for day in days:
+                        day = day.replace("\t", "").strip()
+                        if hours == "":
+                            hours = day
+                        else:
+                            hours = hours + "; " + day
+            if hours == "":
+                hours = "<MISSING>"
+            if phone == "":
+                phone = "<MISSING>"
+            if add != "":
+                if "150 Smith Road" in add:
+                    state = "<MISSING>"
+                add = add.replace(",", "")
+                yield SgRecord(
+                    locator_domain=website,
+                    page_url=loc,
+                    location_name=name,
+                    street_address=add,
+                    city=city,
+                    state=state,
+                    zip_postal=zc,
+                    country_code=country,
+                    phone=phone,
+                    location_type=typ,
+                    store_number=store,
+                    latitude=lat,
+                    longitude=lng,
+                    hours_of_operation=hours,
+                )
+        except:
+            pass
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()

@@ -4,7 +4,9 @@ from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import lxml.html
-from sgscrape import sgpostal as parser
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgpostal import sgpostal as parser
 
 
 website = "uncletetsu-ca.com"
@@ -64,7 +66,12 @@ def fetch_data():
             else:
                 full_address.append(info)
 
-        raw_address = " ".join(full_address)
+        raw_address = (
+            ", ".join(full_address)
+            .strip()
+            .replace("(Beside South Entrance)", "")
+            .strip()
+        )
 
         formatted_addr = parser.parse_address_intl(raw_address)
         street_address = formatted_addr.street_address_1
@@ -83,6 +90,7 @@ def fetch_data():
         if "emporarily Closed" in store_info:
             hours_of_operation = "<MISSING>"
             location_type = "Temporarily Closed"
+            raw_address = raw_address.replace(", emporarily Closed", "").strip()
 
         latitude = "<MISSING>"
         longitude = "<MISSING>"
@@ -109,7 +117,9 @@ def fetch_data():
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(SgRecordID({SgRecord.Headers.RAW_ADDRESS}))
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

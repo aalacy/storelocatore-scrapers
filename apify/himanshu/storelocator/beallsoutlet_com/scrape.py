@@ -1,109 +1,124 @@
-import csv
-from sgrequests import SgRequests
-from bs4 import BeautifulSoup
-import re
 import json
-from sglogging import SgLogSetup
+from lxml import html
+from sgscrape.sgrecord import SgRecord
+from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-logger = SgLogSetup().get_logger('beallsoutlet_com')
 
+def fetch_data(sgw: SgWriter):
 
-
-
-session = SgRequests()
-
-def write_output(data):
-    with open('data.csv', 'w') as output_file:
-        writer = csv.writer(output_file, delimiter=",")
-
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
-
-        # logger.info("data::" + str(data))
-        for i in data or []:
-            writer.writerow(i)
-def fetch_data():
-    # zips = sgzip.for_radius(50)
-    return_main_object = []
-    addresses = []
-
+    locator_domain = "https://beallsoutlet.com/"
+    api_url = "https://stores.beallsoutlet.com/?GA=HP_RibbonFindStore_Ribbon"
+    session = SgRequests()
     headers = {
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3',
-        # 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
-
-
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
+    r = session.get(api_url, headers=headers)
+    tree = html.fromstring(r.text)
+    jsblock1 = (
+        "".join(tree.xpath('//script[contains(text(), "var map_list_data")]/text()'))
+        .split("var map_list_data = ")[1]
+        .split("//-->")[0]
+        .strip()
+    )
+    js = json.loads(jsblock1)
+    for j in js:
+        state = j.get("region")
+        url1 = j.get("url")
+        session = SgRequests()
+        r = session.get(url1, headers=headers)
+        tree = html.fromstring(r.text)
+        jsblock2 = (
+            "".join(
+                tree.xpath('//script[contains(text(), "var map_list_data")]/text()')
+            )
+            .split("var map_list_data = ")[1]
+            .split("//-->")[0]
+            .strip()
+        )
+        js = json.loads(jsblock2)
+        for j in js:
+            page_url = j.get("url")
+            city = j.get("city")
+            session = SgRequests()
+            r = session.get(page_url, headers=headers)
+            tree = html.fromstring(r.text)
+            jsblock3 = (
+                "".join(
+                    tree.xpath('//script[contains(text(), "var map_list_data")]/text()')
+                )
+                .split("var map_list_data = ")[1]
+                .split("//-->")[0]
+                .strip()
+            )
+            js = json.loads(jsblock3)
+            for j in js:
 
-    
+                location_name = j.get("location_name")
+                street_address = f"{j.get('address_1')} {j.get('address_2')}".replace(
+                    "The Crossings at Sahuarita", ""
+                ).strip()
+                postal = j.get("post_code")
+                country_code = "US"
+                store_number = j.get("fid")
+                latitude = j.get("lat")
+                longitude = j.get("lng")
+                phone = j.get("local_phone")
+                try:
+                    hours = (
+                        str(j.get("hours_sets:primary"))
+                        .split('"days":')[1]
+                        .split(',"children"')[0]
+                        .strip()
+                    )
+                except:
+                    hours = "<MISSING>"
+                tmp = []
+                if hours != "<MISSING>":
+                    hJS = eval(hours)
+                    days = [
+                        "Sunday",
+                        "Monday",
+                        "Tuesday",
+                        "Wednesday",
+                        "Thursday",
+                        "Friday",
+                        "Saturday",
+                    ]
+                    for d in days:
+                        day = d
+                        opens = hJS.get(f"{d}")[0].get("open")
+                        closes = hJS.get(f"{d}")[0].get("close")
+                        line = f"{day} {opens} - {closes}"
+                        tmp.append(line)
+                cms = j.get("location_custom_message")
+                hours_of_operation = "; ".join(tmp) or "<MISSING>"
+                if cms == "Coming Soon":
+                    hours_of_operation = "Coming Soon"
 
-    locator_domain = 'https://beallsoutlet.com/'
-    r = session.get('https://stores.beallsoutlet.com/',headers = headers)
-    soup = BeautifulSoup(r.text,'lxml')
-    main = soup.find('div',{'class':'no-results'}).find_all('div',{'class':'map-list-item is-single'})
-    for i in main:
-        link= i.find('a')['href']
-        r1 = session.get(link,headers = headers)
-        soup1 = BeautifulSoup(r1.text,'lxml')
-        main2 = soup1.find_all('div',{'class':'map-list-item-wrap is-single'})
-        for i in main2:
-            link1= i.find('a')['href']
-            r2 = session.get(link1,headers = headers)
-            soup2 = BeautifulSoup(r2.text,'lxml')
-            main3 = soup2.find('div',{'class':'address'})
-            lat_tmp = soup2.find('div',{'class':'directions'}).find('a')['href'].split('location&daddr=')[1]
-            location_name_tmp = soup2.find('h3',{'class':'location-name'})
-            location_name = list(location_name_tmp.stripped_strings)[0]
-            phone = soup2.find('div',{'class':'phone'}).text.strip()
-            country_code = 'US'
+                row = SgRecord(
+                    locator_domain=locator_domain,
+                    page_url=page_url,
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=postal,
+                    country_code=country_code,
+                    store_number=store_number,
+                    phone=phone,
+                    location_type=SgRecord.MISSING,
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=hours_of_operation,
+                )
 
-            lat = lat_tmp.split(',')[0]
-            lng = lat_tmp.split(',')[1]
-            
-
-            st = list(main3.stripped_strings)
-            if (len(st)== 2):
-
-                address = st[0]
-                city = st[1].split(',')[0]          # 
-                state = st[1].split(',')[1].split(' ')[1]
-                zip = st[1].split(',')[1].split(' ')[2]
-                # logger.info(zip)
-                
-            elif (len(st)== 3):
-                address = st[0]
-                city = st[2].split(',')[0]
-                state = st[2].split(',')[1].split(' ')[1]
-                zip = st[2].split(',')[1].split(' ')[2]  
-
-            store = []
-            store.append(locator_domain if locator_domain else '<MISSING>')
-            store.append(location_name if location_name else '<MISSING>')
-            store.append(address if address else '<MISSING>')
-            store.append(city if city else '<MISSING>')
-            store.append(state if state else '<MISSING>')
-            store.append(zip if zip else '<MISSING>')
-            store.append(country_code if country_code else '<MISSING>')
-            store.append( '<MISSING>')
-            store.append(phone if phone else '<MISSING>')
-            store.append('<MISSING>')
-            store.append(lat if lat else '<MISSING>')
-            store.append(lng if lng else '<MISSING>')
-            store.append('<MISSING>')
-            store.append(link1)          
-            return_main_object.append(store)     
-            yield store
-            # exit()
-
-
-
+                sgw.write_row(row)
 
 
-    return return_main_object
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
-# map-list-item-wrap is-single
+if __name__ == "__main__":
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))) as writer:
+        fetch_data(writer)

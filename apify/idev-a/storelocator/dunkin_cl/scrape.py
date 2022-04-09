@@ -3,7 +3,10 @@ from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
-from sgscrape.sgpostal import parse_address_intl
+from sgpostal.sgpostal import parse_address_intl
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+
 
 logger = SgLogSetup().get_logger("dunkin")
 
@@ -23,18 +26,22 @@ def fetch_data():
         for region in regions:
             if not region.get("value"):
                 continue
-            slugs = session.get(
-                f"https://dunkin.cl/wp-admin/admin-ajax.php?action=busca_comunas&region_id={region['value']}",
-                headers=_headers,
-            ).json()["comuna"]
+            res = session.get(
+                f"{base_url}?region={region['value']}", headers=_headers
+            ).text
+            slugs = bs(res, "lxml").select("select#comuna option")
             for slug in slugs:
-                page_url = f"https://dunkin.cl/locales/?region={region['value']}&comuna={slug['term_id']}#"
+                page_url = (
+                    f"{base_url}?region={region['value']}&comuna={slug['value']}#"
+                )
                 logger.info(page_url)
                 locations = bs(
                     session.get(page_url, headers=_headers).text, "lxml"
                 ).select("div.container-mapa div.direccion")
                 for _ in locations:
-                    addr = parse_address_intl(_.p.b.text.strip())
+                    location_name = _.h3.text.strip()
+                    raw_address = _.p.b.text.strip()
+                    addr = parse_address_intl(raw_address)
                     street_address = addr.street_address_1
                     if addr.street_address_2:
                         street_address += " " + addr.street_address_2
@@ -43,7 +50,7 @@ def fetch_data():
                         hours = ""
                     yield SgRecord(
                         page_url=page_url,
-                        location_name=_.h3.text.strip(),
+                        location_name=location_name,
                         street_address=street_address,
                         city=addr.city,
                         state=addr.state,
@@ -53,11 +60,14 @@ def fetch_data():
                         hours_of_operation=hours.split("/")[0]
                         .replace("–", "-")
                         .strip(),
+                        raw_address=raw_address,
                     )
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.RAW_ADDRESS}))
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

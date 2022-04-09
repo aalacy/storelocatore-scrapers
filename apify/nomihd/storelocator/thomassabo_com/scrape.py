@@ -8,7 +8,7 @@ from bs4 import BeautifulSoup
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.simple_utils import parallelize
-from sgzip.dynamic import DynamicGeoSearch
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 
 website = "thomassabo.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -37,11 +37,9 @@ def fetch_records_for(tup):
         f"pulling info for country: {CurrentCountry} having coordinates as {lat},{lng}"
     )
 
-    search_url = "https://www.thomassabo.com/on/demandware.store/Sites-TS_US-Site/en_US/Shopfinder-GetStores?searchMode=country&searchPhrase={}&searchDistance={}&lat={}&lng={}&filterBy="
+    search_url = "https://www.thomassabo.com/on/demandware.store/Sites-TS_INT-Site/en/Shopfinder-GetStores?searchMode=radius&searchPhrase={}&searchDistance={}&lat={}&lng={}&filterBy="
 
-    stores_req = session.get(
-        search_url.format(CurrentCountry, 75, lat, lng), headers=headers
-    )
+    stores_req = session.get(search_url.format("", 100000, lat, lng), headers=headers)
     stores = []
 
     try:
@@ -86,12 +84,20 @@ def process_record(raw_results_from_one_coordinate):
         try:
             hours = BeautifulSoup(store["storeHours"], "lxml")
             list_hours = list(hours.stripped_strings)
-            hours_of_operation = " ".join(list_hours).strip()
+            hours_of_operation = " ".join(list_hours).strip().replace("\n", " ").strip()
         except:
             pass
 
         latitude = store.get("latitude", "<MISSING>")
+        try:
+            latitude = str(latitude)
+        except:
+            pass
         longitude = store.get("longitude", "<MISSING>")
+        try:
+            longitude = str(longitude)
+        except:
+            pass
 
         yield SgRecord(
             locator_domain=locator_domain,
@@ -113,62 +119,22 @@ def process_record(raw_results_from_one_coordinate):
 
 def scrape():
     log.info("Started")
-    count = 0
     with SgWriter(
         deduper=SgRecordDeduper(record_id=RecommendedRecordIds.StoreNumberId)
     ) as writer:
-        countries = [
-            "AU",
-            "AT",
-            "BE",
-            "CA",
-            "CN",
-            "CZ",
-            "DK",
-            "EE",
-            "FI",
-            "FR",
-            "DE",
-            "GB",
-            "HK",
-            "HU",
-            "INT",
-            "IE",
-            "IT",
-            "JP",
-            "LV",
-            "LI",
-            "LT",
-            "LU",
-            "MY",
-            "NL",
-            "NZ",
-            "NO",
-            "PL",
-            "PT",
-            "RU",
-            "SK",
-            "SI",
-            "KR",
-            "ES",
-            "SE",
-            "CH",
-            "TH",
-            "US",
-        ]
-
+        countries = SearchableCountries.ALL
         totalCountries = len(countries)
         currentCountryCount = 0
         for country in countries:
             try:
                 search = DynamicGeoSearch(
-                    expected_search_radius_miles=100, country_codes=[country]
+                    expected_search_radius_miles=100, country_codes=[country.upper()]
                 )
                 results = parallelize(
                     search_space=[
                         (
                             coord,
-                            search.current_country(),
+                            country.upper(),
                             str(f"{currentCountryCount}/{totalCountries}"),
                         )
                         for coord in search
@@ -179,14 +145,12 @@ def scrape():
                 )
                 for rec in results:
                     writer.write_row(rec)
-                    count = count + 1
                 currentCountryCount += 1
             except Exception as e:
                 log.error(f"{country}: not found\n{e}")
                 currentCountryCount += 1
                 pass
 
-    log.info(f"No of records being processed: {count}")
     log.info("Finished")
 
 

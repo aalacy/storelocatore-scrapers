@@ -3,6 +3,8 @@ from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 logger = SgLogSetup().get_logger("aabsny")
 
@@ -12,52 +14,66 @@ _headers = {
 
 
 def _p(val):
-    return (
+    if (
         val.replace("(", "")
         .replace(")", "")
+        .replace("+", "")
         .replace("-", "")
+        .replace(".", " ")
+        .replace("to", "")
         .replace(" ", "")
         .strip()
         .isdigit()
-    )
+    ):
+        return val
+    else:
+        return ""
 
 
 def fetch_data():
     locator_domain = "https://www.aabsny.com/"
-    base_url = "https://www.aabsny.com/"
+    base_url = "https://aabeautysupplies.com/information/information&information_id=22"
     with SgRequests() as session:
         soup = bs(session.get(base_url, headers=_headers).text, "lxml")
-        links = soup.select('div[data-testid="richTextElement"]')
+        links = soup.select("table.MsoNormalTable td")
         logger.info(f"{len(links)} found")
-        for link in links:
-            _text = link.text.strip().lower()
-            if "phone" not in _text:
+        for _ in links:
+            if not _.text.strip():
                 continue
-            if "now open" in _text:
-                continue
-            addr = [
-                aa.strip()
-                for aa in link.stripped_strings
-                if aa.replace("\u200b", "").strip()
-            ]
-            phone = addr[4].split(":")[-1].strip().replace("Phone", "")
-            if not _p(phone):
-                phone = addr[5]
+            addr = list(_.stripped_strings)[2:]
+            if not addr[0].split()[0].strip().isdigit():
+                del addr[0]
+            if "@" in addr[-1]:
+                del addr[-1]
+            phone = _p(addr[-1])
+            if phone:
+                addr = addr[:-2]
             yield SgRecord(
                 page_url=base_url,
-                location_name=addr[0],
-                street_address=addr[2],
-                city=addr[3].split(",")[0].strip(),
-                state=addr[3].split(",")[1].strip().split(" ")[0].strip(),
-                zip_postal=addr[3].split(",")[1].strip().split(" ")[-1].strip(),
+                location_name=_.b.text.strip(),
+                street_address=addr[0].replace("\r\n", ""),
+                city=addr[1].split(",")[0].strip(),
+                state=addr[1].split(",")[1].strip().split(" ")[0].strip(),
+                zip_postal=addr[1].split(",")[1].strip().split(" ")[-1].strip(),
                 country_code="US",
                 phone=phone,
                 locator_domain=locator_domain,
+                raw_address=" ".join(addr).replace("\r\n", ""),
             )
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.CITY,
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.PHONE,
+                }
+            )
+        )
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
