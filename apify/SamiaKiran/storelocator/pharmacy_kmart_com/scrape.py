@@ -28,7 +28,8 @@ def record_initial_requests(http: SgRequests, state: CrawlState) -> bool:
     soup = BeautifulSoup(r.text, "html.parser")
     state_list = soup.findAll("li", {"class": "sbs-state"})
     for state_url in state_list:
-        logger.info(f"Fetching from: {state_url.find('span').text}")
+        temp_state = state_url.find("span").text
+        logger.info(f"Fetching from: {temp_state}")
         state_url = "https://www.kmart.com" + state_url.find("a")["href"]
         r = http.get(state_url, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
@@ -39,12 +40,13 @@ def record_initial_requests(http: SgRequests, state: CrawlState) -> bool:
             loc = "https://www.kmart.com" + loc.find("a")["href"]
             store_url_list.append(loc)
             logger.info(loc)
-            state.push_request(SerializableRequest(url=loc))
+            state.push_request(SerializableRequest(url=loc, json=temp_state))
     return True
 
 
 def fetch_records(http: SgRequests, state: CrawlState) -> Iterable[SgRecord]:
     for next_r in state.request_stack_iter():
+        state = next_r.json
         r = http.get(next_r.url, headers=headers)
         page_url = next_r.url
         logger.info(f"Pulling the data from: {next_r.url}")
@@ -70,9 +72,6 @@ def fetch_records(http: SgRequests, state: CrawlState) -> Iterable[SgRecord]:
 
         city = pa.city
         city = city.strip() if city else MISSING
-
-        state = pa.state
-        state = state.strip() if state else MISSING
 
         zip_postal = pa.postcode
         zip_postal = zip_postal.strip() if zip_postal else MISSING

@@ -15,6 +15,8 @@ def fetch_data():
         "https://kong-proxy-aws.toyota-europe.com/dxp/dealers/api/toyota/ro/ro/drive/26.08333/44.4?count=500&extraCountries=&isCurrentLocation=false",
         "https://kong-proxy-aws.toyota-europe.com/dxp/dealers/api/toyota/ch/de/drive/7.43861/46.95083?count=500&extraCountries=li&isCurrentLocation=false",
         "https://kong-proxy-aws.toyota-europe.com/dxp/dealers/api/toyota/se/sv/drive/13.167381/55.701493?count=500&extraCountries=&limitSearchDistance=0&isCurrentLocation=false&services=",
+        "https://kong-proxy-aws.toyota-europe.com/dxp/dealers/api/toyota/sk/sk/drive/17.135763/48.156086?count=500&extraCountries=&limitSearchDistance=60&isCurrentLocation=false",
+        "https://kong-proxy-aws.toyota-europe.com/dxp/dealers/api/toyota/dk/da/drive/12.079135/55.648779?count=500&extraCountries=&isCurrentLocation=false",
     ]
     domain = "toyota.ro"
     hdr = {

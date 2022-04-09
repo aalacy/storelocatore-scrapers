@@ -36,7 +36,7 @@ def fetch_data():
             stores_sel = lxml.html.fromstring(stores_req.text)
             stores = stores_sel.xpath('//ul[@class="b-storelocator-results_list"]/li')
             for store in stores:
-                page_url = "<MISSING>"
+                page_url = "https://www.clarks.eu/es/en/store-locator"
 
                 locator_domain = website
                 location_name = "".join(
@@ -64,6 +64,9 @@ def fetch_data():
                     .replace("Phone:", "")
                     .strip()
                 )
+                street_address = street_address.split(zip)[0].strip()
+                if len(street_address) > 0 and street_address[-1] == ",":
+                    street_address = "".join(street_address[:-1]).strip()
 
                 country_code = country
                 store_number = "".join(store.xpath(".//a/@data-id")).strip()

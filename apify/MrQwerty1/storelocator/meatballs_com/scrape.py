@@ -18,15 +18,18 @@ def get_coords_from_embed(text):
 
 
 def get_urls():
-    r = session.get("https://www.meatballs.com", headers=headers)
+    urls = []
+    r = session.get(locator_domain, headers=headers)
     tree = html.fromstring(r.text)
+    slugs = tree.xpath("//a[text()='Locations']/following-sibling::ul//a/text()")
+    for s in slugs:
+        slug = s.lower().replace(", ", "-")
+        urls.append(f"https://www.meatballs.com/locations/{slug}/")
 
-    return tree.xpath("//a[text()='Locations']/following-sibling::ul//a/@href")
+    return urls
 
 
 def get_data(page_url, sgw: SgWriter):
-    if "meatballs" not in page_url:
-        return
     r = session.get(page_url, headers=headers)
     tree = html.fromstring(r.text)
 

@@ -1,103 +1,117 @@
-import csv
-import urllib.request, urllib.error, urllib.parse
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+import json
 
-logger = SgLogSetup().get_logger('hearusa_com')
-
-
+logger = SgLogSetup().get_logger("hearusa_com")
 
 session = SgRequests()
-headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
-           }
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+}
 
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-        for row in data:
-            writer.writerow(row)
+search = DynamicGeoSearch(
+    country_codes=[SearchableCountries.USA],
+    max_search_distance_miles=100,
+    max_search_results=25,
+)
+
 
 def fetch_data():
     locs = []
-    urls = ['https://www.hearusa.com/wpsl_stores-sitemap1.xml','https://www.hearusa.com/wpsl_stores-sitemap2.xml','https://www.hearusa.com/wpsl_stores-sitemap3.xml']
-    for url in urls:
-        r = session.get(url, headers=headers)
-        if r.encoding is None: r.encoding = 'utf-8'
-        for line in r.iter_lines(decode_unicode=True):
-            if '<loc>https://www.hearusa.com/locations/' in line:
-                lurl = line.split('<loc>')[1].split('<')[0]
+    for clat, clng in search:
+        logger.info(str(clat) + "," + str(clng))
+        url = (
+            "https://www.hearusa.com/wp-admin/admin-ajax.php?action=store_search&lat="
+            + str(clat)
+            + "&lng="
+            + str(clng)
+            + "&max_results=25&search_radius=100&filter=28"
+        )
+        try:
+            r = session.get(url, headers=headers)
+            for item in json.loads(r.content):
+                lurl = item["permalink"].replace("\\", "")
                 if lurl not in locs:
                     locs.append(lurl)
-    logger.info(('%s Locations Founds...' % str(len(locs))))
+        except:
+            pass
     for loc in locs:
-        #logger.info('Pulling Location %s...' % loc)
-        website = 'hearusa.com'
-        typ = '<MISSING>'
-        hours = ''
-        name = ''
-        city = ''
-        state = ''
-        add = ''
-        zc = ''
-        country = 'US'
-        lat = ''
-        phone = ''
-        lng = ''
+        logger.info("Pulling Location %s..." % loc)
+        website = "hearusa.com"
+        typ = "<MISSING>"
+        hours = ""
+        name = ""
+        city = ""
+        state = ""
+        add = ""
+        zc = ""
+        country = "US"
+        lat = ""
+        phone = ""
+        lng = ""
+        store = "<MISSING>"
         Found = False
-        store = ''
         r2 = session.get(loc, headers=headers)
-        if r2.encoding is None: r2.encoding = 'utf-8'
-        for line2 in r2.iter_lines(decode_unicode=True):
-            if 'enters__header__title">' in line2:
-                name = line2.split('enters__header__title">')[1].split('<')[0]
-            if '<div class="wpsl-location-address">' in line2:
-                addinfo = line2.split('<div class="wpsl-location-address">')[1].split('United States')[0]
-                add = addinfo.split('<span>')[1].split('<')[0].strip()
-                city = addinfo.split('<span>')[2].split(',')[0].strip()
-                state = addinfo.split('<span>')[3].split('<')[0].strip()
-                phone = addinfo.split('<span>')[4].split('<')[0].strip()
-            if '{"store":"' in line2:
-                name = line2.split('{"store":"')[1].split('"')[0]
-                add = line2.split('"address":"')[1].split('"')[0]
-                try:
-                    add = add + ' ' + line2.split('"address2":"')[1].split('"')[0]
-                except:
-                    pass
-                add = add.strip()
-                city = line2.split('"city":"')[1].split('"')[0]
-                state = line2.split('"state":"')[1].split('"')[0]
-                zc = line2.split('"zip":"')[1].split('"')[0]
+        for line2 in r2.iter_lines():
+            if '<h2 class="centers__header__title">' in line2:
+                name = line2.split('<h2 class="centers__header__title">')[1].split("<")[
+                    0
+                ]
+            if '"lat":"' in line2:
                 lat = line2.split('"lat":"')[1].split('"')[0]
                 lng = line2.split('"lng":"')[1].split('"')[0]
-                store = line2.split('"id":')[1].split('}')[0]
-            if 'Customers: ' in line2:
-                phone = line2.split('Customers: ')[1].split('<')[0]
-            if '<p>Hours:</p>' in line2:
+                state = line2.split('"state":"')[1].split('"')[0]
+                zc = line2.split('"zip":"')[1].split('"')[0]
+                city = line2.split('"city":"')[1].split('"')[0]
+                add = line2.split('"address":"')[1].split('"')[0]
+                store = line2.split(',"id":')[1].split("}")[0]
+                try:
+                    add = add + " " + line2.split('"address2":"')[1].split('"')[0]
+                    add = add.strip()
+                except:
+                    add = add.strip()
+            if "Existing Customers:" in line2:
+                phone = line2.split("Existing Customers:")[1].split("<")[0].strip()
+            if '<div class="centers__header__hours">' in line2:
                 Found = True
-            if Found and '</div>' in line2:
+            if Found and "</div>" in line2:
                 Found = False
-            if Found and '<p>' in line2 and '!--' not in line2 and 'Hours:' not in line2:
-                hrs = line2.split('<p>')[1].split('<')[0]
-                if hours == '':
+            if Found and "Hours:</p>" not in line2 and "<p>" in line2:
+                hrs = line2.split("<p>")[1].split("<")[0]
+                if hours == "":
                     hours = hrs
                 else:
-                    hours = hours + '; ' + hrs
-        if phone == '':
-            phone = '<MISSING>'
-        if hours == '':
-            hours = '<MISSING>'
-        if store == '':
-            store = '<MISSING>'
-        if zc == '':
-            zc = '<MISSING>'
-        if lat == '':
-            lat = '<MISSING>'
-            lng = '<MISSING>'
-        yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+                    hours = hours + "; " + hrs
+        yield SgRecord(
+            locator_domain=website,
+            page_url=loc,
+            location_name=name,
+            street_address=add,
+            city=city,
+            state=state,
+            zip_postal=zc,
+            country_code=country,
+            phone=phone,
+            location_type=typ,
+            store_number=store,
+            latitude=lat,
+            longitude=lng,
+            hours_of_operation=hours,
+        )
+
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(
+        deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
+    ) as writer:
+        for rec in results:
+            writer.write_row(rec)
+
 
 scrape()

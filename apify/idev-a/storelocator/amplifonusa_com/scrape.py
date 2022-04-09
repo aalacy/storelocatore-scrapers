@@ -5,7 +5,7 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sglogging import SgLogSetup
 import json
-from sgzip.dynamic import DynamicGeoSearch, SearchableCountries, Grain_2
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries, Grain_4
 
 _headers = {
     "accept": "application/json, text/javascript, */*; q=0.01",
@@ -99,7 +99,7 @@ if __name__ == "__main__":
         )
     ) as writer:
         search = DynamicGeoSearch(
-            country_codes=[SearchableCountries.USA], granularity=Grain_2()
+            country_codes=[SearchableCountries.USA], granularity=Grain_4()
         )
         results = fetch_data(search)
         for rec in results:

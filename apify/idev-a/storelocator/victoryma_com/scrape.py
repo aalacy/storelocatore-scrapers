@@ -5,6 +5,7 @@ from bs4 import BeautifulSoup as bs
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sglogging import SgLogSetup
+import re
 
 logger = SgLogSetup().get_logger("")
 
@@ -27,14 +28,34 @@ def fetch_data():
                 street_address = _["address"]
                 if _["address2"]:
                     street_address += " " + _["address2"]
-                hours = [
-                    ": ".join(hh.stripped_strings)
-                    for hh in bs(_["hours"], "lxml").select("table tr")
-                ]
+                logger.info(_["url"])
+                hours = []
+                if _["url"]:
+                    sp1 = bs(session.get(_["url"], headers=_headers).text, "lxml")
+                    _hr = sp1.find("span", string=re.compile(r"^HOURS$"))
+                    if _hr:
+                        days = list(
+                            _hr.find_parent("h2")
+                            .find_next_sibling()
+                            .select_one("div.col-4")
+                            .stripped_strings
+                        )
+                        times = list(
+                            _hr.find_parent("h2")
+                            .find_next_sibling()
+                            .select_one("div.col-8")
+                            .stripped_strings
+                        )
+                        for x in range(len(days)):
+                            hours.append(f"{days[x]}: {times[x]}")
+
+                hours_of_operation = "; ".join(hours)
+                if hours_of_operation:
+                    hours_of_operation = hours_of_operation.split("(")[0]
                 yield SgRecord(
                     page_url=_["url"],
                     store_number=_["id"],
-                    location_name=_["store"],
+                    location_name=_["store"].replace("&#8211;", "-"),
                     street_address=street_address,
                     city=_["city"].replace(",", ""),
                     state=_["state"],
@@ -44,7 +65,7 @@ def fetch_data():
                     country_code=_["country"],
                     phone=_["phone"],
                     locator_domain=locator_domain,
-                    hours_of_operation="; ".join(hours),
+                    hours_of_operation=hours_of_operation,
                 )
 
 

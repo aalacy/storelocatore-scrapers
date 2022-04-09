@@ -101,6 +101,8 @@ def fetch_data(sgw: SgWriter):
         state = a.state or "<MISSING>"
         postal = a.postcode or "<MISSING>"
         country_code = "US"
+        if not postal.isdigit():
+            country_code = "CA"
         city = a.city or "<MISSING>"
         if ad.find(", ON") != -1:
             state = ad.split(",")[-1].split()[0].strip()
