@@ -15,33 +15,38 @@ def fetch_data(sgw: SgWriter):
     }
     r = session.get(api_url, headers=headers)
     tree = html.fromstring(r.text)
-    div = tree.xpath("//table//tr[./td]")
+    div = tree.xpath('//div[./div/div/div/h2/a[contains(@href, "tel")]]')
     for d in div:
 
         page_url = "https://www.goldennozzlecarwash.com/locations/"
-        location_type = "".join(d.xpath("./td[1]/text()"))
-        street_address = "".join(d.xpath("./td[3]/a/text()"))
-        state = "".join(d.xpath('./preceding::h3[contains(text(), "(")][1]/text()'))
+        street_address = " ".join(d.xpath("./div[2]//text()")).replace("\n", "").strip()
+        street_address = " ".join(street_address.split())
+        state = "".join(d.xpath('./preceding::h1[contains(text(), "(")][1]/text()'))
         if state.find("(") != -1:
             state = state.split("(")[0].strip()
         country_code = "US"
-        city = "".join(d.xpath("./td[2]/text()"))
-        phone = "".join(d.xpath("./td[4]/text()")).strip() or "<MISSING>"
+        city = "".join(d.xpath(".//h1//text()"))
+        phone = "".join(d.xpath("./div[3]//text()")).replace("\n", "").strip()
+        info = d.xpath(".//*//text()")
+        info = list(filter(None, [a.strip() for a in info]))
+        location_name = f"Golden Nozzle {city}"
+        tmp = []
+        for i in info:
+            if "PM" in i:
+                tmp.append(i)
         hours_of_operation = (
-            " ".join(d.xpath("./td[5]//address/text()")).replace("\n", "").strip()
-            or "<MISSING>"
+            "; ".join(tmp)
+            .replace("; Open 8AM-5PM every day.", "")
+            .replace("; 8AM-7PM Every day", "")
+            .strip()
         )
-        if hours_of_operation.find(")") != -1:
-            hours_of_operation = " ".join(hours_of_operation.split(")")[1:]).strip()
-        if hours_of_operation.find("(until further notice :") != -1:
-            hours_of_operation = hours_of_operation.split("(until further notice :")[
-                1
-            ].strip()
+        if hours_of_operation.find("; Mon") != -1:
+            hours_of_operation = hours_of_operation.split("; Mon")[0].strip()
 
         row = SgRecord(
             locator_domain=locator_domain,
             page_url=page_url,
-            location_name=SgRecord.MISSING,
+            location_name=location_name,
             street_address=street_address,
             city=city,
             state=state,
@@ -49,7 +54,7 @@ def fetch_data(sgw: SgWriter):
             country_code=country_code,
             store_number=SgRecord.MISSING,
             phone=phone,
-            location_type=location_type,
+            location_type=SgRecord.MISSING,
             latitude=SgRecord.MISSING,
             longitude=SgRecord.MISSING,
             hours_of_operation=hours_of_operation,

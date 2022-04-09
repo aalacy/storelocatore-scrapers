@@ -92,8 +92,9 @@ def fetch_data(sgw: SgWriter):
             street_address = street_address.split(city)[0].strip()
         if street_address.endswith(","):
             street_address = street_address[:-1]
-        state = j.get("state")
-        postal = j.get("zipCode")
+        state = j.get("state") or ""
+        postal = j.get("zipCode") or ""
+        raw_address = f"{street_address} {city} {state} {postal}"
         country = j.get("country")
         phone = j.get("phoneNumber") or ""
         phone = clean_phone(phone)
@@ -117,6 +118,7 @@ def fetch_data(sgw: SgWriter):
             store_number=store_number,
             locator_domain=locator_domain,
             hours_of_operation=hours_of_operation,
+            raw_address=raw_address,
         )
 
         sgw.write_row(row)
