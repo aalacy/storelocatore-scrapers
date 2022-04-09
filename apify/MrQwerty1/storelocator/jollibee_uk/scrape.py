@@ -24,7 +24,16 @@ def get_data(slug, sgw: SgWriter):
     line = tree.xpath(
         "//div[@class='row sqs-row' and ./div[@class='col sqs-col-3 span-3']]/div[1]//p//text()"
     )
-    phone = line.pop()
+    if not line:
+        line = tree.xpath(
+            "//div[@class='col sqs-col-6 span-6']//div[@class='sqs-block-content']/p/text()"
+        )
+    line = list(filter(None, [li.strip() for li in line]))
+
+    check = line[-1]
+    phone = SgRecord.MISSING
+    if check[0].isdigit() and check[-1].isdigit():
+        phone = line.pop()
     postal = line.pop()
     city = line.pop()
     state = SgRecord.MISSING
@@ -73,7 +82,7 @@ def get_data(slug, sgw: SgWriter):
 def fetch_data(sgw: SgWriter):
     urls = get_urls()
 
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
+    with futures.ThreadPoolExecutor(max_workers=3) as executor:
         future_to_url = {executor.submit(get_data, url, sgw): url for url in urls}
         for future in futures.as_completed(future_to_url):
             future.result()

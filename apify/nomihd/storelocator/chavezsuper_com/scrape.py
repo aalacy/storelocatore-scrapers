@@ -29,7 +29,6 @@ headers = {
 def fetch_data():
     # Your scraper here
 
-    search_url = "https://chavezsuper.com/locations"
     with SgRequests() as session:
         search_res = session.get(
             "https://chavezsuper.com/manage/web/api/locations", headers=headers
@@ -37,7 +36,6 @@ def fetch_data():
         stores = json.loads(search_res.text)
         for store in stores:
 
-            page_url = search_url
             locator_domain = website
 
             location_name = store["location_name"]
@@ -51,6 +49,7 @@ def fetch_data():
             country_code = "US"
 
             store_number = store["store_number"]
+            page_url = "https://chavezsuper.com/store/" + str(store_number)
 
             phone = store["phone"]
 

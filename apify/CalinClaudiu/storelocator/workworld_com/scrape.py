@@ -21,6 +21,8 @@ def fetch_data():
 
     all_locations = json.loads(data)
     for poi in all_locations:
+        if "Whistle Workwear" in poi["name"]:
+            continue
         street_address = poi["address_line_1"]
         if poi["address_line_2"]:
             street_address += ", " + poi["address_line_2"]

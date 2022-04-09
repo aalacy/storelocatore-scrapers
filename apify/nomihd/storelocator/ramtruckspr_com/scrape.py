@@ -41,7 +41,7 @@ def fetch_data():
 
     search_url = "https://www.ramtruckspr.com/en/concesionarios.html"
 
-    with SgRequests() as session:
+    with SgRequests(verify_ssl=False) as session:
         search_res = session.get(search_url, headers=headers)
         search_sel = lxml.html.fromstring(search_res.text)
 

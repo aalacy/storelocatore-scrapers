@@ -57,6 +57,12 @@ def fetch_data(sgw: SgWriter):
                 postal = "<MISSING>"
             country_code = page_url.split(".com/")[1].split("_")[0].upper().strip()
             city = b.get("city") or "<MISSING>"
+            if city == "Kuwat City":
+                city = "Kuwait City"
+            if street_address.find(f" {city}") != -1:
+                street_address = (
+                    street_address.split(f" {city}")[0].replace(",", "").strip()
+                )
             phone = b.get("telephone") or "<MISSING>"
             if phone == "n/a":
                 phone = "<MISSING>"
@@ -109,7 +115,7 @@ def fetch_data(sgw: SgWriter):
             location_type = a.get("type") or "<MISSING>"
             street_address = a.get("address").get("address_line")
             city = a.get("address").get("city").get("name")
-            postal = a.get("address").get("postal_code")
+            postal = "".join(a.get("address").get("postal_code"))
             location_name = (
                 a.get("address")
                 .get("name")
@@ -165,6 +171,8 @@ def fetch_data(sgw: SgWriter):
             longitude = j.get("position").get("longitude")
             page_url = f"https://www.nespresso.com/{c.lower()}/en/store-locator"
             country_code = c
+            if postal.find(" ") != -1 and country_code == "CH":
+                postal = postal.split()[0].strip()
 
             row = SgRecord(
                 locator_domain=locator_domain,

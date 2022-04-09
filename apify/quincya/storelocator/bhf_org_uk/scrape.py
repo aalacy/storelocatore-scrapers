@@ -6,7 +6,7 @@ from sgpostal.sgpostal import parse_address_intl
 
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
@@ -50,6 +50,10 @@ def fetch_data(sgw: SgWriter):
             found.append(link)
 
             location_name = item.a.text.replace("\n", " ").replace("  ", " ").strip()
+            if "book bank" in location_name.split("-")[0].lower():
+                location_name = "BHF Book Bank"
+            if "clothing bank" in location_name.split("-")[0].lower():
+                location_name = "BHF Clothing Bank"
 
             raw_address = item.p.text.replace("\n", " ").replace("  ", " ").strip()
             if "May 2018." in raw_address:
@@ -87,6 +91,12 @@ def fetch_data(sgw: SgWriter):
 
             if "Due To Open" in street_address:
                 continue
+
+            if city:
+                if len(city) < 3:
+                    city = ""
+                if "Welwyn Garden City" in city:
+                    city = "Welwyn Garden City"
 
             country_code = "GB"
             store_number = "<MISSING>"
@@ -179,5 +189,15 @@ def fetch_data(sgw: SgWriter):
             )
 
 
-with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+with SgWriter(
+    SgRecordDeduper(
+        SgRecordID(
+            {
+                SgRecord.Headers.LOCATION_NAME,
+                SgRecord.Headers.STREET_ADDRESS,
+                SgRecord.Headers.CITY,
+            }
+        )
+    )
+) as writer:
     fetch_data(writer)

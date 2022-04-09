@@ -55,6 +55,7 @@ def fetch_data(sgw: SgWriter):
                 .replace("r%C3%A9union", "Réunion")
                 .title()
             )
+            country_code = urllib.parse.unquote(country_code)
             store_number = store["storeId"]
             location_type = store["itemSubtitle"]
             try:
@@ -120,12 +121,12 @@ def fetch_data(sgw: SgWriter):
                         ].strip()
 
             if country_code in ["United States", "Canada"]:
-                raw_address = (
+                n_raw_address = (
                     base.find(class_="storelocator-bread-subtitle")["streetaddress"]
                     .strip()
                     .split(",")
                 )
-                state = raw_address[-1].strip()
+                state = n_raw_address[-1].strip()
                 if not state:
                     raw_state = (
                         base.find(class_="storelocator-bread-subtitle")
@@ -135,6 +136,15 @@ def fetch_data(sgw: SgWriter):
                     state = raw_state[
                         raw_state.rfind(",") + 1 : raw_state.rfind(" ")
                     ].strip()
+
+            if state:
+                if state == "Kong":
+                    state = "Hong Kong"
+
+            if zip_code:
+                zip_code = (
+                    zip_code.replace("DOME", "").replace("GOVERNORATE", "").strip()
+                )
 
             if country_code == "United States":
                 states = ["Tx", "Pa", "Ny", "Fl", "Ct", "Co", "Va"]

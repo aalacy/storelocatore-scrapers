@@ -44,9 +44,8 @@ def fetch_data(sgw: SgWriter):
             session = SgRequests()
             r = session.get(page_url, headers=headers)
             tree = html.fromstring(r.text)
-            jsblock = "".join(
-                tree.xpath('//script[@type="application/ld+json"]/text()')
-            )
+            jsblock = "".join(tree.xpath('//script[contains(text(), "geo")]/text()'))
+
             js = json.loads(jsblock)
             a = js.get("address")
             location_name = js.get("name")
@@ -75,6 +74,16 @@ def fetch_data(sgw: SgWriter):
             hours_of_operation = "<MISSING>"
             if hours != "<MISSING>":
                 hours_of_operation = get_hours(hours)
+            if latitude == "0" or latitude == "0.0":
+                latitude, longitude = "<MISSING>", "<MISSING>"
+            if state == "-":
+                state = "<MISSING>"
+            if postal == "0":
+                postal = "<MISSING>"
+            if postal[0] == postal[1] == postal[2] == "0":
+                postal = "<MISSING>"
+            if phone[0] == phone[1] == phone[2] == "0":
+                phone = "<MISSING>"
 
             row = SgRecord(
                 locator_domain=locator_domain,
@@ -99,6 +108,8 @@ def fetch_data(sgw: SgWriter):
 if __name__ == "__main__":
     session = SgRequests()
     with SgWriter(
-        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
+        SgRecordDeduper(
+            SgRecordID({SgRecord.Headers.STREET_ADDRESS, SgRecord.Headers.STORE_NUMBER})
+        )
     ) as writer:
         fetch_data(writer)

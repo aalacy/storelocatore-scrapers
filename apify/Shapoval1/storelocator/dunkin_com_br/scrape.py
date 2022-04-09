@@ -28,8 +28,6 @@ def fetch_data(sgw: SgWriter):
         postal = a.postcode or "<MISSING>"
         country_code = "BR"
         city = a.city or "<MISSING>"
-        if "Asa Norte" in ad:
-            city = "Asa Norte"
         if city.find("/") != -1:
             city = city.split("/")[0].strip()
         if "Brasília" in ad:
@@ -43,6 +41,9 @@ def fetch_data(sgw: SgWriter):
             .replace(",", "")
             .strip()
         )
+        if "Asa Norte" in ad:
+            city = "Brasília"
+            street_address = ad.split(",")[0].strip()
 
         row = SgRecord(
             locator_domain=locator_domain,

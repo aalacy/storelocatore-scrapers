@@ -60,6 +60,10 @@ def get_data(url, sgw: SgWriter):
     hours_of_operation = " ".join(hours_of_operation.split())
     latitude = "".join(tree.xpath('//input[@name="store-lat"]/@value')) or "<MISSING>"
     longitude = "".join(tree.xpath('//input[@name="store-lon"]/@value')) or "<MISSING>"
+    try:
+        store_number = "".join(page_url).split("-")[-1].strip()
+    except:
+        store_number = "<MISSING>"
 
     row = SgRecord(
         locator_domain=locator_domain,
@@ -70,7 +74,7 @@ def get_data(url, sgw: SgWriter):
         state=state,
         zip_postal=postal,
         country_code=country_code,
-        store_number=SgRecord.MISSING,
+        store_number=store_number,
         phone=phone,
         location_type=SgRecord.MISSING,
         latitude=latitude,

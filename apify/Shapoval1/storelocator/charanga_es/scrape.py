@@ -26,8 +26,6 @@ def fetch_data(sgw: SgWriter):
             .replace("\n", "")
             .strip()
         )
-        if location_name.find("El Corte") == -1:
-            continue
         ad = d.xpath('.//div[@class="velo-add-address"]/text()')
         ad = list(filter(None, [a.strip() for a in ad]))
         adr = " ".join(ad)
