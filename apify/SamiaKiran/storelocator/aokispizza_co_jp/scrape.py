@@ -1,4 +1,3 @@
-import unicodedata
 from sglogging import sglog
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
@@ -9,45 +8,46 @@ from sgpostal.sgpostal import parse_address_intl
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
-website = "okplus_dk"
+website = "aokispizza_co_jp"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36"
 }
 
-DOMAIN = "https://okplus.dk"
+DOMAIN = "https://www.aokispizza.co.jp"
 MISSING = SgRecord.MISSING
-
-
-def strip_accents(text):
-
-    text = unicodedata.normalize("NFD", text).encode("ascii", "ignore").decode("utf-8")
-
-    return str(text)
 
 
 def fetch_data():
     if True:
-        url = "https://okplus.dk/butikker/jylland/"
+        url = "https://www.aokispizza.co.jp/page/shop/index.html"
         r = session.get(url, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
-        linklist = soup.find("div", {"class": "cat-list"}).findAll("li")
+        linklist = soup.find("div", {"id": "submenu"}).findAll("li")
         for link in linklist:
-            locator_url = link.find("a")["href"]
-            r = session.get(locator_url, headers=headers)
+            url = "https://www.aokispizza.co.jp/page/shop/" + link.find("a")["href"]
+            r = session.get(url, headers=headers)
             soup = BeautifulSoup(r.text, "html.parser")
-            loclist = soup.findAll("div", {"class": "acf-map-listing-item-inner"})
+            loclist = soup.find("table").findAll("tr")
             for loc in loclist:
-                loc = loc.findAll("p")
-                location_name = strip_accents(loc[0].text)
+                location_name = loc.find("th", {"class": "shop_name"}).text
                 log.info(location_name)
-                address = loc[1].get_text(separator="|", strip=True).split("|")
-                if "ONLINE BOOKING" in address[-1]:
-                    del address[-1]
-                phone = address[-1].replace("Tlf.", "")
-                raw_address = " ".join(address[:-1])
-                raw_address = strip_accents(raw_address)
+                temp = loc.find("td", {"class": "shop_info"})
+                hours_of_operation = temp.get_text(separator="|", strip=True).replace(
+                    "|", " "
+                )
+                try:
+                    hours_of_operation = hours_of_operation.split("11：")[1]
+                except:
+                    hours_of_operation = hours_of_operation.split("11:")[1]
+                hours_of_operation = "11：" + hours_of_operation
+                temp = temp.get_text(separator="|", strip=True).split("|")
+                phone = temp[0].replace("☎", "")
+                raw_address = temp[1] + " " + temp[2]
+
+                if "11" in raw_address:
+                    raw_address = raw_address.split("11")[0]
 
                 pa = parse_address_intl(raw_address)
 
@@ -63,13 +63,10 @@ def fetch_data():
                 zip_postal = pa.postcode
                 zip_postal = zip_postal.strip() if zip_postal else MISSING
 
-                coords = loc[-1].find("a")["href"].split("@")[1].split(",")
-                latitude = coords[0]
-                longitude = coords[1]
-                country_code = "DK"
+                country_code = "JP"
                 yield SgRecord(
                     locator_domain=DOMAIN,
-                    page_url=locator_url,
+                    page_url=url,
                     location_name=location_name,
                     street_address=street_address.strip(),
                     city=city.strip(),
@@ -79,9 +76,9 @@ def fetch_data():
                     store_number=MISSING,
                     phone=phone.strip(),
                     location_type=MISSING,
-                    latitude=latitude,
-                    longitude=longitude,
-                    hours_of_operation=MISSING,
+                    latitude=MISSING,
+                    longitude=MISSING,
+                    hours_of_operation=hours_of_operation,
                     raw_address=raw_address,
                 )
 
