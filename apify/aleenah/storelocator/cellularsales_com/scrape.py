@@ -48,8 +48,9 @@ def fetch_data(http: SgRequests, search: DynamicGeoSearch):
             + "&max_results=25&search_radius=500&autoload=1"
         )
         logger.info(url)
-        r = http.get(url, headers=headers)
         try:
+            r = http.get(url, headers=headers)
+
             allocs = r.json()
         except:
             continue
