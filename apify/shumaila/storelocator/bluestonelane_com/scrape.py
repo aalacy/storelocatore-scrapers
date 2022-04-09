@@ -60,9 +60,12 @@ def fetch_data():
             hourslist = hourslist + "}]"
             hourslist = json.loads(hourslist)
             hours = ""
-            for hr in hourslist:
-                day = hr["dayOfWeek"]
 
+            for hr in hourslist:
+                try:
+                    day = hr["dayOfWeek"]
+                except:
+                    continue
                 try:
                     opens = hr["opens"]
                 except:

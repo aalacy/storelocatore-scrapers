@@ -36,6 +36,9 @@ def fetch_data():
             street_address += ", " + addr.street_address_2
         hoo = loc_dom.xpath('//ul[@class="si-hours"]//text()')
         hoo = " ".join([e.strip() for e in hoo if e.strip()])
+        country_code = ""
+        if "Botswana" in page_url:
+            country_code = "Botswana"
 
         item = SgRecord(
             locator_domain=domain,
@@ -45,7 +48,7 @@ def fetch_data():
             city=addr.city,
             state=addr.state,
             zip_postal=addr.postcode,
-            country_code=addr.country,
+            country_code=country_code,
             store_number=poi["Id"],
             phone=poi["TelephoneNumber"],
             location_type=poi["Type"],

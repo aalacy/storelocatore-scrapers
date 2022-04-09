@@ -1,53 +1,67 @@
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
-from bs4 import BeautifulSoup as bs
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.sgpostal import parse_address_intl
+import dirtyjson as json
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger("")
 
 _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
 }
 
 locator_domain = "https://docmj.com"
-base_url = "https://docmj.com/contact-us/?sfw=pass1633564410"
+base_url = "https://docmj.com/states/florida/"
 
 
 def fetch_data():
     with SgRequests() as session:
-        soup = bs(session.get(base_url, headers=_headers).text, "lxml")
-        locations = soup.select("div#main-content div.et_pb_text_inner")[2:]
-        for _ in locations:
-            if not _.p:
-                continue
-            raw_address = " ".join(list(_.select("p")[-1].stripped_strings)).replace(
-                "\n", " "
-            )
-            addr = parse_address_intl(raw_address)
-            street_address = addr.street_address_1
-            if addr.street_address_2:
-                street_address += " " + addr.street_address_2
-            try:
-                coord = _.a["href"].split("/@")[1].split("/data")[0].split(",")
-            except:
+        states = json.loads(
+            session.get(base_url, headers=_headers)
+            .text.split("var serviceAreasLocations =")[1]
+            .split(";</script>")[0]
+            .strip()
+        )
+        for state in states:
+            for _ in state["cities"]:
+                page_url = _["city_page_permalink"]
+                logger.info(page_url)
                 try:
-                    coord = _.a["href"].split("!3d")[1].split("!4d")
+                    info = json.loads(
+                        session.get(page_url, headers=_headers)
+                        .text.split("var locationDetails =")[1]
+                        .split("</script>")[0]
+                        .strip()[:-1]
+                    )["locations"][0]
+                    raw_address = info["location_map"]["address"]
+                    addr = raw_address.split(",")
+                    street_address = ", ".join(addr[:-2])
+                    zip_postal = addr[-1].strip().split()[-1]
+                    if not zip_postal.replace("-", "").isdigit():
+                        zip_postal = ""
                 except:
-                    coord = ["", ""]
-            yield SgRecord(
-                page_url=base_url,
-                location_name=_.a.text.strip(),
-                street_address=street_address,
-                city=addr.city,
-                state=addr.state,
-                zip_postal=addr.postcode,
-                country_code="US",
-                latitude=coord[0],
-                longitude=coord[1],
-                locator_domain=locator_domain,
-                raw_address=raw_address,
-            )
+                    raw_address = street_address = zip_postal = ""
+                location_name = _["city_name"].replace("&#8211;", "-").strip()
+                yield SgRecord(
+                    page_url=page_url,
+                    store_number=_["locations"][0]["location_unique_id"],
+                    location_name=location_name.split("(")[0],
+                    street_address=street_address,
+                    city=location_name.split("(")[0]
+                    .split("-")[0]
+                    .replace("II", "")
+                    .replace("Orlando I", "Orlando")
+                    .strip(),
+                    state=state["state_name"],
+                    zip_postal=zip_postal,
+                    country_code="US",
+                    latitude=_["locations"][0]["lat"],
+                    longitude=_["locations"][0]["lng"],
+                    locator_domain=locator_domain,
+                    raw_address=raw_address,
+                )
 
 
 if __name__ == "__main__":
@@ -55,9 +69,7 @@ if __name__ == "__main__":
         SgRecordDeduper(
             SgRecordID(
                 {
-                    SgRecord.Headers.LATITUDE,
-                    SgRecord.Headers.STREET_ADDRESS,
-                    SgRecord.Headers.LONGITUDE,
+                    SgRecord.Headers.STORE_NUMBER,
                 }
             )
         )

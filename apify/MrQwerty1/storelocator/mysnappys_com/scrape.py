@@ -1,44 +1,12 @@
-import csv
-
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
-    locator_domain = "http://www.mysnappys.com/"
-    page_url = "http://www.mysnappys.com/locations"
-
-    session = SgRequests()
+def fetch_data(sgw: SgWriter):
     r = session.get(page_url)
     tree = html.fromstring(r.text)
     divs = tree.xpath("//div[@data-testid='mesh-container-content']/div[./h6 and .//a]")
@@ -60,46 +28,50 @@ def fetch_data():
         postal = csz.split()[-1]
         state = csz.split()[-2]
         city = csz.replace(postal, "").replace(state, "").strip()
-        country_code = "US"
         if "#" in location_name:
             store_number = location_name.split("#")[-1].strip()
         else:
-            store_number = "<MISSING>"
+            store_number = SgRecord.MISSING
 
+        location_type = SgRecord.MISSING
+        if "coming" in location_name.lower():
+            location_type = "Coming Soon"
         text = "".join(d.xpath(".//a[contains(@href, 'maps')]/@href")).replace(
             "%20", ""
         )
-        latitude, longitude = eval(text.split("=")[-1])
-        location_type = "<MISSING>"
+        try:
+            latitude, longitude = eval(text.split("=")[-1])
+        except:
+            latitude, longitude = SgRecord.MISSING, SgRecord.MISSING
         hours_of_operation = (
             "".join(line[index:]).split("Hours:")[-1].replace("pm", "pm;").strip()
         )
+        if hours_of_operation.endswith(";"):
+            hours_of_operation = hours_of_operation[:-1]
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
+        row = SgRecord(
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code="US",
+            phone=phone,
+            store_number=store_number,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            locator_domain=locator_domain,
+            hours_of_operation=hours_of_operation,
+        )
 
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "http://www.mysnappys.com/"
+    page_url = "http://www.mysnappys.com/locations"
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PhoneNumberId)) as writer:
+        fetch_data(writer)

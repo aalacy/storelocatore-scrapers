@@ -32,7 +32,6 @@ def getAddress(raw_address):
             city = data.city
             state = data.state
             zip_postal = data.postcode
-
             if street_address is None or len(street_address) == 0:
                 street_address = MISSING
             if city is None or len(city) == 0:
@@ -68,6 +67,8 @@ def fetch_data():
         street_address, city, state, zip_postal = getAddress(raw_address)
         state = row["state"].upper()
         country_code = "US"
+        if state in ["PUERTO RICO", "PR", "PUERTO"]:
+            country_code = "PR"
         store_number = row["id"]
         phone = row["phone"]
         location_type = MISSING

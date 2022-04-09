@@ -8,6 +8,10 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 import json
 import re
 import ssl
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
+from webdriver_manager.chrome import ChromeDriverManager
+from tenacity import retry, stop_after_attempt, wait_fixed
 
 try:
     _create_unverified_https_context = (
@@ -20,75 +24,101 @@ else:
 
 logger = SgLogSetup().get_logger("thenomadhotel")
 
-_headers = {
-    "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
-}
-
 locator_domain = "https://thenomadhotel.com/"
 base_url = "https://www.thenomadhotel.com"
 url1 = "https://www.thenomadhotel.com/contact/"
 
 
-def fetch_data(
-    user_agent="Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
-):
-    with SgChrome() as driver:
-        driver.get(url1)
-        all_locs = bs(driver.page_source, "lxml").select("div#all section.contact-info")
-        driver.get(base_url)
-        soup = bs(driver.page_source, "lxml")
-        links = soup.select("div.nav-bar.js-sticky nav.nav a.nav-item.nav-link")
-        logger.info(f"{len(links)} found")
-        for link in links:
-            page_url = link["href"]
-            logger.info(page_url)
-            driver.get(page_url)
-            sp1 = bs(driver.page_source, "lxml")
-            try:
-                ss = json.loads(
-                    sp1.find("script", string=re.compile(r"latitude")).string
+def get_driver():
+    return SgChrome(
+        executable_path=ChromeDriverManager().install(),
+        user_agent="Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0",
+        is_headless=True,
+    ).driver()
+
+
+@retry(wait=wait_fixed(2), stop=stop_after_attempt(2))
+def get_url(driver=None, url=None):
+    if not driver:
+        driver = get_driver()
+    try:
+        driver.get(url)
+        WebDriverWait(driver, 20).until(EC.url_contains("z/data="))
+    except:
+        driver = get_driver()
+        raise Exception
+
+
+def fetch_data():
+    driver = get_driver()
+    driver.get(url1)
+    all_locs = bs(driver.page_source, "lxml").select("div#all section.contact-info")
+
+    driver.get(base_url)
+    soup = bs(driver.page_source, "lxml")
+    links = soup.select("div.nav-bar.js-sticky nav.nav a.nav-item.nav-link")
+    logger.info(f"{len(links)} found")
+    for link in links:
+        page_url = link["href"]
+        logger.info(page_url)
+        driver.get(page_url)
+        sp1 = bs(driver.page_source, "lxml")
+        try:
+            ss = json.loads(sp1.find("script", string=re.compile(r"latitude")).string)
+            hours = f"{','.join(ss['openingHoursSpecification']['dayOfWeek'])}: {ss['openingHoursSpecification']['opens']}-{ss['openingHoursSpecification']['closes']}"
+            yield SgRecord(
+                page_url=page_url,
+                location_name=ss["name"],
+                street_address=ss["address"]["streetAddress"].replace("South", ""),
+                city=ss["address"]["addressLocality"],
+                state=ss["address"]["addressRegion"],
+                zip_postal=ss["address"]["postalCode"],
+                country_code=ss["address"]["addressCountry"],
+                phone=ss["telephone"],
+                locator_domain=locator_domain,
+                latitude=ss["geo"]["latitude"],
+                longitude=ss["geo"]["longitude"],
+                hours_of_operation=hours,
+            )
+        except:
+            for loc in all_locs:
+                addr = list(
+                    loc.select_one("div.col-md-4")
+                    .findChildren(recursive=False)[0]
+                    .stripped_strings
                 )
-                hours = f"{','.join(ss['openingHoursSpecification']['dayOfWeek'])}: {ss['openingHoursSpecification']['opens']}-{ss['openingHoursSpecification']['closes']}"
-                yield SgRecord(
-                    page_url=page_url,
-                    location_name=ss["name"],
-                    street_address=sp1.address.text.strip(),
-                    city=ss["address"]["addressLocality"],
-                    state=ss["address"]["addressRegion"],
-                    zip_postal=ss["address"]["postalCode"],
-                    country_code=ss["address"]["addressCountry"],
-                    phone=ss["telephone"],
-                    locator_domain=locator_domain,
-                    latitude=ss["geo"]["latitude"],
-                    longitude=ss["geo"]["longitude"],
-                    hours_of_operation=hours,
-                )
-            except:
-                for loc in all_locs:
-                    addr = list(
-                        loc.select_one("div.col-md-4")
-                        .findChildren(recursive=False)[0]
-                        .stripped_strings
-                    )
-                    if link.text.strip() in addr[1]:
-                        yield SgRecord(
-                            page_url=page_url,
-                            location_name=loc.h2.text.strip(),
-                            street_address=addr[0],
-                            city=link.text.strip(),
-                            state=addr[1].split(",")[1].strip().split(" ")[0].strip(),
-                            zip_postal=addr[1]
-                            .split(",")[1]
-                            .strip()
-                            .split(" ")[-1]
-                            .strip(),
-                            country_code="US",
-                            phone=sp1.select_one(
-                                "div.detail_content div a"
-                            ).text.strip(),
-                            locator_domain=locator_domain,
+                if link.text.strip() in addr[1]:
+                    map_url = loc.select_one("div.col-md-4").a["href"]
+                    try:
+                        get_url(driver, map_url)
+                        coord = (
+                            driver.current_url.split("/@")[1]
+                            .split("/data")[0]
+                            .split(",")
                         )
-                        break
+                    except:
+                        import pdb
+
+                        pdb.set_trace()
+                        coord = ["", ""]
+                    yield SgRecord(
+                        page_url=page_url,
+                        location_name=loc.h2.text.strip(),
+                        street_address=addr[0],
+                        city=link.text.strip(),
+                        state=addr[1].split(",")[1].strip().split(" ")[0].strip(),
+                        zip_postal=addr[1].split(",")[1].strip().split(" ")[-1].strip(),
+                        country_code="US",
+                        latitude=coord[0],
+                        longitude=coord[1],
+                        phone=sp1.select_one("div.detail_content div a").text.strip(),
+                        locator_domain=locator_domain,
+                        raw_address=" ".join(addr),
+                    )
+                    break
+
+    if driver:
+        driver.close()
 
 
 if __name__ == "__main__":

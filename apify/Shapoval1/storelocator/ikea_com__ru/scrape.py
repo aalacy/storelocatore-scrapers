@@ -1,103 +1,42 @@
 from lxml import html
-from sgpostal.sgpostal import International_Parser, parse_address
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgpostal.sgpostal import International_Parser, parse_address
 
 
 def fetch_data(sgw: SgWriter):
 
-    locator_domain = "https://www.ikea.com/ru/ru/"
-    api_url = "https://www.ikea.com/ru/ru/stores/"
+    locator_domain = "https://www.ikea.com/"
+    page_url = "https://www.ikea.com/ru/ru/stores/"
+    session = SgRequests()
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
-    r = session.get(api_url, headers=headers)
+    r = session.get(page_url, headers=headers)
     tree = html.fromstring(r.text)
-    div = tree.xpath('//a[@class="pub__btn pub__btn--small pub__btn--secondary"]')
+    div = tree.xpath('//p[./strong[contains(text(), "ИКЕА")]]')
     for d in div:
 
-        page_url = "".join(d.xpath(".//@href"))
-
-        r = session.get(page_url, headers=headers)
-        tree = html.fromstring(r.text)
-
-        ad = (
-            " ".join(
-                tree.xpath(
-                    '//strong[contains(text(), "Адрес магазина:")]/following-sibling::text() | //strong[contains(text(), "Адрес:")]/following-sibling::text() | //p[./strong[contains(text(), "Адрес:")]]/following-sibling::p[1]//text()'
-                )
-            )
-            .replace("\n", "")
-            .strip()
-        )
-        if page_url == "https://www.ikea.com/ru/ru/stores/tyumen/":
-            ad = (
-                " ".join(
-                    tree.xpath(
-                        '//strong[contains(text(), "Адрес студии:")]/following-sibling::text()'
-                    )
-                )
-                .replace("\n", "")
-                .strip()
-            )
-        location_name = "".join(tree.xpath("//h1/text()"))
+        info = d.xpath("./text()")
+        info = list(filter(None, [a.strip() for a in info]))
+        ad = " ".join(info).split(":")[1].split("Забрать")[0].strip()
+        location_name = "".join(d.xpath(".//strong//text()"))
         a = parse_address(International_Parser(), ad)
-        street_address = f"{a.street_address_1} {a.street_address_2}".replace(
-            "None", ""
-        ).strip()
+        street_address = (
+            f"{a.street_address_1} {a.street_address_2}".replace("None", "").strip()
+            or "<MISSING>"
+        )
         state = a.state or "<MISSING>"
         postal = a.postcode or "<MISSING>"
         country_code = "RU"
         city = a.city or "<MISSING>"
-        map_link = "".join(tree.xpath("//iframe/@src"))
-        latitude = map_link.split("!3d")[1].strip().split("!")[0].strip()
-        longitude = map_link.split("!2d")[1].strip().split("!")[0].strip()
-        hours_of_operation = (
-            " ".join(
-                tree.xpath(
-                    '//strong[contains(text(), "Время работы магазина:")]/following-sibling::text()'
-                )
-            )
-            .replace("\n", "")
-            .strip()
-            or "<MISSING>"
-        )
-        if hours_of_operation == "<MISSING>":
-            hours_of_operation = (
-                " ".join(
-                    tree.xpath(
-                        '//strong[contains(text(), "Время работы магазина")]/following-sibling::text()'
-                    )
-                )
-                .replace("\n", "")
-                .strip()
-                or "<MISSING>"
-            )
-        if hours_of_operation == "<MISSING>":
-            hours_of_operation = (
-                " ".join(
-                    tree.xpath(
-                        '//strong[contains(text(), "Время работы")]/following-sibling::text()'
-                    )
-                )
-                .replace("\n", "")
-                .strip()
-                or "<MISSING>"
-            )
-        if hours_of_operation == "<MISSING>":
-            hours_of_operation = (
-                " ".join(
-                    tree.xpath(
-                        '//p[./strong[contains(text(), "Время работы")]]/following-sibling::p[1]/text()'
-                    )
-                )
-                .replace("\n", "")
-                .strip()
-                or "<MISSING>"
-            )
+        hours_of_operation = "<MISSING>"
+        if location_name.find("Закрыт") != -1:
+            hours_of_operation = "Temporarily Closed"
+
         row = SgRecord(
             locator_domain=locator_domain,
             page_url=page_url,
@@ -110,9 +49,10 @@ def fetch_data(sgw: SgWriter):
             store_number=SgRecord.MISSING,
             phone=SgRecord.MISSING,
             location_type=SgRecord.MISSING,
-            latitude=latitude,
-            longitude=longitude,
+            latitude=SgRecord.MISSING,
+            longitude=SgRecord.MISSING,
             hours_of_operation=hours_of_operation,
+            raw_address=ad,
         )
 
         sgw.write_row(row)
@@ -121,6 +61,6 @@ def fetch_data(sgw: SgWriter):
 if __name__ == "__main__":
     session = SgRequests()
     with SgWriter(
-        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.RAW_ADDRESS}))
     ) as writer:
         fetch_data(writer)

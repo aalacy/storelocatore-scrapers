@@ -3,7 +3,6 @@
 | SN | contitent | country_name | country_code |
 | --------- | --------- | ------------ | ------------ |
 | 1 | NA | United States of America | US |
-| 2 | NA | Canada | CA |
 
 
 
