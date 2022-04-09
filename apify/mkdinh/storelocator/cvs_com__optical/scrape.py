@@ -153,6 +153,7 @@ def scrape():
             if result:
                 yield result
 
+
 if __name__ == "__main__":
     data = scrape()
     write_output(data)
