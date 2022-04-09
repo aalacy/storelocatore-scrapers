@@ -4,7 +4,7 @@ from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sglogging import SgLogSetup
 from sgrequests.sgrequests import SgRequests
-from sgzip.dynamic import DynamicGeoSearch, Grain_4
+from sgzip.dynamic import DynamicGeoSearch, Grain_2
 import dirtyjson as json
 from bs4 import BeautifulSoup as bs
 
@@ -37,9 +37,6 @@ def fetch_records(http, search, country_sessions):
         except:
             continue
         logger.info(f"[{search.current_country()}] [{lat, lng}] {len(locations)}")
-        if locations:
-            search.found_location_at(lat, lng)
-
         for _ in locations:
             hours = []
             if _["OpeningTimes"]:
@@ -58,7 +55,9 @@ def fetch_records(http, search, country_sessions):
                     city = _["PostalCode"]
                     zip_postal = _["Locality"]
 
+            search.found_location_at(_["Latitude"], _["Longitude"])
             yield SgRecord(
+                store_number=_["EntityID"],
                 location_name=_["ShownStoreName"],
                 street_address=_["AddressLine"],
                 city=city,
@@ -115,7 +114,7 @@ if __name__ == "__main__":
         countries.append("lv")
 
         search = DynamicGeoSearch(
-            country_codes=list(set(countries)), granularity=Grain_4()
+            country_codes=list(set(countries)), granularity=Grain_2()
         )
         with SgWriter(
             deduper=SgRecordDeduper(

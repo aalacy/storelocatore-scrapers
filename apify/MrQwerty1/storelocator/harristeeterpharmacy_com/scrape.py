@@ -24,7 +24,7 @@ def get_response(api_url):
 
 def fetch_data(sgw: SgWriter):
     search = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA], expected_search_radius_miles=40
+        country_codes=[SearchableCountries.USA], expected_search_radius_miles=10
     )
 
     for _zip in search:
@@ -59,6 +59,7 @@ def fetch_data(sgw: SgWriter):
             postal = a.get("postalCode")
             country = a.get("countryCode")
 
+            location_type = j.get("banner")
             phone = p.get("phoneNumber")
             loc = j.get("location") or {}
             latitude = loc.get("lat")
@@ -82,6 +83,7 @@ def fetch_data(sgw: SgWriter):
                 zip_postal=postal,
                 country_code=country,
                 store_number=store_number,
+                location_type=location_type,
                 phone=phone,
                 latitude=latitude,
                 longitude=longitude,

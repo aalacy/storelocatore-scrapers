@@ -24,11 +24,10 @@ def fetch_records(http):
             continue
         logger.info(page_url)
         sp1 = bs(http.get(page_url, headers=_headers).text, "lxml")
-        if (
-            sp1.select_one("div.wrapper")
-            and "Coming Soon" in sp1.select_one("div.wrapper").text
-        ):
-            continue
+        if sp1.select_one("div.wrapper"):
+            txt = sp1.select_one("div.wrapper").text.lower()
+            if "coming soon" in txt or "em breve mais uma" in txt:
+                continue
         bar = sp1.select_one("div.promo-bar")
         if (
             bar

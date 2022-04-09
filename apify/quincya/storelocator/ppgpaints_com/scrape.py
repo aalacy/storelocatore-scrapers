@@ -18,7 +18,11 @@ def fetch_data(sgw: SgWriter):
     locator_domain = "ppgpaints.com"
 
     search = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA, SearchableCountries.CANADA],
+        country_codes=[
+            SearchableCountries.USA,
+            SearchableCountries.CANADA,
+            SearchableCountries.PUERTO_RICO,
+        ],
         max_search_distance_miles=50,
         expected_search_radius_miles=50,
         max_search_results=10,
@@ -55,10 +59,12 @@ def fetch_data(sgw: SgWriter):
             ).strip()
             city = loc["City"]
             state = loc["State"]
-            if state == "VI":
-                continue
             zip_code = loc["PostalCode"]
             country_code = "US"
+            if state == "PR":
+                country_code = "PR"
+            if state == "VI":
+                country_code = "VI"
             store_number = location_name.split()[-1]
             if not store_number.isdigit():
                 store_number = "<MISSING>"

@@ -207,99 +207,115 @@ def fetch_details(item_num, data_dict, sgw: SgWriter):
     else:
         store_res = get_purl_response(page_url)
         store_sel = html.fromstring(store_res.text)
-        json_list = store_sel.xpath('//script[@type="application/ld+json"]/text()')
-        for js in json_list:
-            if "address" in js:
-                try:
-                    store_json = json.loads(js)
-                except:
-                    return
-                location_name = get_locname(data_dict, store_json)
-                ln1 = location_name.split(" ")[0]
-                if ln1 == "at":
-                    location_name = "Circle K " + location_name
+        json_list = store_sel.xpath(
+            '//script[contains(@type, "application/ld+json") and contains(text(), "gasStation")]/text()'
+        )
+        if not json_list:
+            rec = SgRecord(
+                locator_domain=locator_domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_postal,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+                raw_address="<MISSING>",
+            )
+            sgw.write_row(rec)
+        else:
+            js1 = "".join(json_list)
+            js2 = " ".join(js1.split())
+            js3 = js2.replace("}, ]", "}]")
+            store_json = json.loads(js3)
+            location_name = get_locname(data_dict, store_json)
+            ln1 = location_name.split(" ")[0]
+            if ln1 == "at":
+                location_name = "Circle K " + location_name
 
-                phone = store_json["telephone"]
-                street_address = get_sta(store_json)
-                city = (
-                    store_json["address"]["addressLocality"]
-                    .replace("&#039;", "'")
-                    .strip()
-                )
-                if not city and data_dict["city"]:
-                    city = data_dict["city"]
-                if not city and not data_dict["city"]:
-                    city = ""
+            phone = store_json["telephone"]
+            street_address = get_sta(store_json)
+            city = (
+                store_json["address"]["addressLocality"].replace("&#039;", "'").strip()
+            )
+            if not city and data_dict["city"]:
+                city = data_dict["city"]
+            if not city and not data_dict["city"]:
+                city = ""
 
+            state = ""
+            zip_postal = store_json["address"]["postalCode"].strip()
+            country_code = data_dict["country"]
+            if not country_code:
+                country_code = page_url.split("https://www.circlek.com/store-locator/")[
+                    -1
+                ].split("/")[0]
+
+            # Latitude
+            latitude = store_json["geo"]["latitude"].replace(",", ".")
+            if not latitude and data_dict["latitude"]:
+                latitude = data_dict["latitude"]
+            if not latitude and not data_dict["latitude"]:
+                latitude = ""
+            if "0.0000000" in latitude:
+                latitude = ""
+
+            # Longitude
+            longitude = store_json["geo"]["longitude"].replace(",", ".")
+            if not longitude and data_dict["longitude"]:
+                longitude = data_dict["longitude"]
+
+            if not longitude and not data_dict["longitude"]:
+                longitude = ""
+            if "0.0000000" in longitude:
+                longitude = ""
+
+            logger.info(f"Latitude: {latitude} | Longitude: {longitude} | {page_url} ")
+            rawadd = ""
+
+            raw_address = get_rawadd(store_sel)
+            logger.info(f"Length of raw address: {len(raw_address)}")
+
+            # If comma or comma with space found then replaced with <MISSING>
+            if raw_address == "," or raw_address.strip() == ",":
+                rawadd = MISSING
+            else:
+                rawadd = raw_address
+            formatted_addr = parse_address_intl(raw_address)
+            state = formatted_addr.state
+            if state:
+                state = state.replace("Mills", "").replace("Est", "").strip()
+            if country_code.lower()[:2] == "ca" and state == "CA":
                 state = ""
-                zip_postal = store_json["address"]["postalCode"].strip()
-                country_code = data_dict["country"]
-                if not country_code:
-                    country_code = page_url.split(
-                        "https://www.circlek.com/store-locator/"
-                    )[-1].split("/")[0]
-
-                # Latitude
-                latitude = store_json["geo"]["latitude"].replace(",", ".")
-                if not latitude and data_dict["latitude"]:
-                    latitude = data_dict["latitude"]
-                if not latitude and not data_dict["latitude"]:
-                    latitude = ""
-                if "0.0000000" in latitude:
-                    latitude = ""
-
-                # Longitude
-                longitude = store_json["geo"]["longitude"].replace(",", ".")
-                if not longitude and data_dict["longitude"]:
-                    longitude = data_dict["longitude"]
-
-                if not longitude and not data_dict["longitude"]:
-                    longitude = ""
-                if "0.0000000" in longitude:
-                    longitude = ""
-
-                logger.info(
-                    f"Latitude: {latitude} | Longitude: {longitude} | {page_url} "
-                )
-                rawadd = ""
-
-                raw_address = get_rawadd(store_sel)
-                logger.info(f"Length of raw address: {len(raw_address)}")
-
-                # If comma or comma with space found then replaced with <MISSING>
-                if raw_address == "," or raw_address.strip() == ",":
-                    rawadd = MISSING
-                else:
-                    rawadd = raw_address
-                formatted_addr = parse_address_intl(raw_address)
-                state = formatted_addr.state
-                if state:
-                    state = state.replace("Mills", "").replace("Est", "").strip()
-                if country_code.lower()[:2] == "ca" and state == "CA":
-                    state = ""
-                if state == "ON":
-                    country_code = "Canada"
-                if state is not None:
-                    state = state.replace("franchise", "")
-                hours_of_operation = get_hoo(store_sel)
-                rec = SgRecord(
-                    locator_domain=locator_domain,
-                    page_url=page_url,
-                    location_name=location_name,
-                    street_address=street_address,
-                    city=city,
-                    state=state,
-                    zip_postal=zip_postal,
-                    country_code=country_code,
-                    store_number=store_number,
-                    phone=phone,
-                    location_type=location_type,
-                    latitude=latitude,
-                    longitude=longitude,
-                    hours_of_operation=hours_of_operation,
-                    raw_address=rawadd,
-                )
-                sgw.write_row(rec)
+            if state == "ON":
+                country_code = "Canada"
+            if state is not None:
+                state = state.replace("franchise", "")
+            hours_of_operation = get_hoo(store_sel)
+            rec = SgRecord(
+                locator_domain=locator_domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_postal,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+                raw_address=rawadd,
+            )
+            sgw.write_row(rec)
 
 
 def fetch_data(sgw: SgWriter):
@@ -315,7 +331,7 @@ def fetch_data(sgw: SgWriter):
     # to be made to get all the stores.
     # Start Page Number: 0
     # End Page Number: 980
-
+    # PROD
     START_PAGENUM = 0
     END_PAGENUM = 340
 

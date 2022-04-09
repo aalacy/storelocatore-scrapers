@@ -88,7 +88,9 @@ def fetch_data(sgw: SgWriter):
 
         for store in stores:
             try:
-                street_address = store["streetAddress"].split("(")[0].strip()
+                street_address = (
+                    store["streetAddress"].split("(")[0].split(", Montr")[0].strip()
+                )
             except:
                 continue
             city = store["city"]
@@ -108,6 +110,8 @@ def fetch_data(sgw: SgWriter):
             if "V5H 4M5" in street_address:
                 zip_code = "V5H 4M5"
                 street_address = street_address.split(",")[0].strip()
+            if "H4B 1V8" in store["streetAddress"]:
+                zip_code = "H4B 1V8"
             phone = "<MISSING>"
             hours_of_operation = "<MISSING>"
 

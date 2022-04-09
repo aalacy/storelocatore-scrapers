@@ -52,9 +52,12 @@ def fetch_data():
                 location_name = "".join(
                     store.xpath("div[@class='office-card tile']/h3/text()")
                 ).strip()
-                raw_address = ", ".join(
-                    store.xpath('.//p[@class="office--address"]/text()')
-                ).strip()
+                raw_address = (
+                    ", ".join(store.xpath('.//p[@class="office--address"]/text()'))
+                    .strip()
+                    .replace(" , ", ", ")
+                    .strip()
+                )
 
                 formatted_addr = parser.parse_address_intl(raw_address)
                 street_address = formatted_addr.street_address_1
@@ -74,7 +77,7 @@ def fetch_data():
                 store_number = "<MISSING>"
                 phone = store.xpath(".//p[@class='offices--phone-number']/text()")
                 if len(phone) > 0:
-                    phone = phone[0]
+                    phone = phone[0].replace("Main:", "").strip()
                 else:
                     phone = "<MISSING>"
 

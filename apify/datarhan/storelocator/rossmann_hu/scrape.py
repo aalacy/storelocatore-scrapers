@@ -22,6 +22,9 @@ def fetch_data():
     data = dom.xpath('//script[@id="__NEXT_DATA__"]/text()')[0]
     data = json.loads(data)
     for poi in data["props"]["pageProps"]["stores"]:
+        hoo = poi["openings"].replace("\n", " ").strip()
+        if hoo.endswith(":"):
+            hoo += " closed"
 
         item = SgRecord(
             locator_domain=domain,
@@ -37,7 +40,7 @@ def fetch_data():
             location_type="",
             latitude=poi["lat"],
             longitude=poi["lng"],
-            hours_of_operation=poi["openings"].replace("\n", " "),
+            hours_of_operation=hoo,
         )
 
         yield item
