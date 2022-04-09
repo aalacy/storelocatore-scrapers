@@ -34,34 +34,6 @@ def fetch_data():
     )
     data = json.loads(data)
     for r in data["regiones"]:
-        frm = f'action=obtener_locales&nonce={nonce}&supermercados%5B%5D=lider&supermercados%5B%5D=express&supermercados%5B%5D=acuenta&supermercados%5B%5D=ekono&supermercados%5B%5D=mayorista&region={r["id"]}&comuna=00000'
-        response = session.post(url, data=frm, headers=hdr)
-        dom = etree.HTML(response.text)
-        all_locations = dom.xpath('//div[@class="local"]')
-        for poi_html in all_locations:
-            location_type = poi_html.xpath('.//div[@class="info"]/span/text()')[0]
-            location_name = poi_html.xpath('.//div[@class="info"]/h3/text()')[0]
-            street_address = poi_html.xpath('.//div[@class="info"]/p/text()')[0]
-
-            item = SgRecord(
-                locator_domain=domain,
-                page_url=start_url,
-                location_name=location_name,
-                street_address=street_address,
-                city="",
-                state=r["name"],
-                zip_postal="",
-                country_code="CL",
-                store_number="",
-                phone="",
-                location_type=location_type,
-                latitude="",
-                longitude="",
-                hours_of_operation="",
-            )
-
-            yield item
-
         for c in r["comunas"]:
             frm = f'action=obtener_locales&nonce={nonce}&supermercados%5B%5D=lider&supermercados%5B%5D=express&supermercados%5B%5D=acuenta&supermercados%5B%5D=ekono&supermercados%5B%5D=mayorista&region={r["id"]}&comuna={c["id"]}'
             response = session.post(url, data=frm, headers=hdr)
@@ -90,6 +62,33 @@ def fetch_data():
                 )
 
                 yield item
+
+        frm = f'action=obtener_locales&nonce={nonce}&supermercados%5B%5D=lider&supermercados%5B%5D=express&supermercados%5B%5D=acuenta&supermercados%5B%5D=ekono&supermercados%5B%5D=mayorista&region={r["id"]}&comuna=00000'
+        response = session.post(url, data=frm, headers=hdr)
+        dom = etree.HTML(response.text)
+        all_locations = dom.xpath('//div[@class="local"]')
+        for poi_html in all_locations:
+            location_type = poi_html.xpath('.//div[@class="info"]/span/text()')[0]
+            street_address = poi_html.xpath('.//div[@class="info"]/p/text()')[0]
+
+            item = SgRecord(
+                locator_domain=domain,
+                page_url=start_url,
+                location_name=location_type,
+                street_address=street_address,
+                city="",
+                state=r["name"],
+                zip_postal="",
+                country_code="CL",
+                store_number="",
+                phone="",
+                location_type=location_type,
+                latitude="",
+                longitude="",
+                hours_of_operation="",
+            )
+
+            yield item
 
 
 def scrape():
