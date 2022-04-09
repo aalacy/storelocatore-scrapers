@@ -44,7 +44,9 @@ def fetch_data():
             log.info(page_url)
             r = session.get(page_url, headers=headers)
             soup = BeautifulSoup(r.text, "html.parser")
-            phone = soup.select_one("a[href*=tel]").text
+            phone = soup.select_one("a[href*=tel]").text.replace(
+                "CONTACT RECRUTEMENT elodie@melda.fr", ""
+            )
             temp = soup.findAll("div", {"class": "blockCoordonneesRestau"})
             address = (
                 temp[0]
@@ -68,6 +70,14 @@ def fetch_data():
 
             zip_postal = pa.postcode
             zip_postal = zip_postal.strip() if zip_postal else MISSING
+
+            temp_zip = raw_address.split()
+            if zip_postal == MISSING:
+                zip_postal = temp_zip[-3] + " " + temp_zip[-2]
+            elif len(zip_postal) < 5:
+                zip_postal = temp_zip[-3] + " " + temp_zip[-2]
+            if "Le" in zip_postal:
+                zip_postal = temp_zip[-4] + " " + temp_zip[-3]
 
             hours_of_operation = (
                 temp[1]
