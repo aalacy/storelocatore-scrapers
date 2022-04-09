@@ -4,7 +4,8 @@ from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
-from sgpostal.sgpostal import parse_address_intl
+
+# from sgpostal.sgpostal import parse_address_intl
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
@@ -44,9 +45,7 @@ def fetch_data():
             log.info(page_url)
             r = session.get(page_url, headers=headers)
             soup = BeautifulSoup(r.text, "html.parser")
-            phone = soup.select_one("a[href*=tel]").text.replace(
-                "CONTACT RECRUTEMENT elodie@melda.fr", ""
-            )
+            phone = soup.select_one("a[href*=tel]").text
             temp = soup.findAll("div", {"class": "blockCoordonneesRestau"})
             address = (
                 temp[0]
@@ -55,8 +54,6 @@ def fetch_data():
                 .split("T.")
             )
             raw_address = strip_accents(address[0])
-            phone = address[1]
-
             pa = parse_address_intl(raw_address)
 
             street_address = pa.street_address_1
