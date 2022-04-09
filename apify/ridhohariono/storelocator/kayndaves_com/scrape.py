@@ -36,7 +36,7 @@ def get_latlong(url):
 def fetch_data():
     log.info("Fetching store_locator data")
     soup = pull_content(BASE_URL)
-    contents = soup.select("div#Containerc1dmp div._2Hij5")[-2:]
+    contents = soup.select("div#Containerc1dmp div._2Hij5")[-3:-1]
     for row in contents:
         location_name = row.find("h6").text.replace("\u200b", "").strip()
         addr = row.find("a", {"href": re.compile(r"\/maps\/place.*")})
@@ -61,7 +61,12 @@ def fetch_data():
             hours_of_operation = MISSING
         else:
             location_type = MISSING
-            hours_of_operation = re.sub(r"- HOURS -|>>>.*", "", hoo).strip(",")
+            hours_of_operation = (
+                re.sub(r"- HOURS -|>>>.*|- TEMPORARY HOURS -,?", "", hoo)
+                .strip(",")
+                .replace("  ==  ", ",")
+                .strip()
+            )
         store_number = MISSING
         latitude, longitude = get_latlong(addr["href"])
         log.info("Append {} => {}".format(location_name, street_address))

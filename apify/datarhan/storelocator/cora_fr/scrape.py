@@ -11,7 +11,7 @@ from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
-    session = SgRequests()
+    session = SgRequests(proxy_country="fr")
 
     start_url = "https://www.cora.fr/infos-et-services/les-magasins-cora/liste-des-magasins-cora-en-france"
     domain = "cora.fr"
