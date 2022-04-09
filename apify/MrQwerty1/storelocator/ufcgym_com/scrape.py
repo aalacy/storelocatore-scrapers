@@ -7,7 +7,7 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 
 
 def fetch_data(sgw: SgWriter):
-    api = "https://www.ufcgym.com/_nuxt/0efe457f852183df66d4.js"
+    api = "https://www.ufcgym.com/_nuxt/7dfaabb7fa49fb881e0d.js"
     r = session.get(api, headers=headers)
     text = r.text
     text = "[" + text.split("exports=[")[1].split("}]},,")[0].replace("!", "") + "}]"
@@ -26,6 +26,7 @@ def fetch_data(sgw: SgWriter):
         slug = j.get("code")
         page_url = f"https://www.ufcgym.com/locations/{slug}"
         phone = j.get("phone")
+        location_type = j.get("type")
 
         p = j.get("position") or {}
         latitude = p.get("lat")
@@ -60,6 +61,7 @@ def fetch_data(sgw: SgWriter):
             country_code=country_code,
             latitude=latitude,
             longitude=longitude,
+            location_type=location_type,
             phone=phone,
             store_number=store_number,
             locator_domain=locator_domain,

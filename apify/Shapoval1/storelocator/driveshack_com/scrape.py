@@ -1,105 +1,70 @@
-import csv
+from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
+def fetch_data(sgw: SgWriter):
 
     locator_domain = "https://www.driveshack.com"
-    api_url = "https://www.driveshack.com/page-data/locations/page-data.json"
+    api_url = "https://author-prod.driveshack.com/wp-json/wp/v2/cpt_location/"
     session = SgRequests()
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
     r = session.get(api_url, headers=headers)
-    js = r.json()["result"]["data"]["allContentfulDriveShackLocations"]["edges"]
+    js = r.json()
     for j in js:
-        a = j.get("node")
-        slug = a.get("slug")
 
-        session = SgRequests()
-        r = session.get(
-            f"https://www.driveshack.com/page-data/locations/{slug}/page-data.json",
-            headers=headers,
+        page_url = j.get("link")
+        location_name = j.get("title").get("rendered") or "<MISSING>"
+        location_type = j.get("type") or "<MISSING>"
+        ad = j.get("acf").get("hero_group").get("address")
+        a = html.fromstring(ad)
+
+        street_address = "".join(a.xpath("//p/text()[1]")).replace("\n", "").strip()
+        adr = "".join(a.xpath("//p/text()[2]")).replace("\n", "").strip()
+        state = adr.split(",")[1].split()[0].strip()
+        postal = adr.split(",")[1].split()[1].strip()
+        country_code = "US"
+        city = adr.split(",")[0].strip()
+        store_number = j.get("id") or "<MISSING>"
+        latitude = j.get("acf").get("coordinates_group").get("latitude")
+        longitude = j.get("acf").get("coordinates_group").get("longitude")
+        phone = j.get("acf").get("hero_group").get("phone_number") or "<MISSING>"
+        hours = j.get("acf").get("hero_group").get("hours").get("copy")
+        hours_of_operation = "<MISSING>"
+        if hours:
+            h = html.fromstring(hours)
+            hours_of_operation = (
+                " ".join(h.xpath("//*//text()")).replace("\n", "").strip()
+            )
+            hours_of_operation = " ".join(hours_of_operation.split())
+
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+            raw_address=f"{street_address} {adr}",
         )
-        js = r.json()["result"]["data"]["contentfulDriveShackLocations"]
 
-        page_url = f"{locator_domain}/{slug}"
-        location_type = "<MISSING>"
-        street_address = js.get("address1")
-        phone = "<MISSING>"
-        state = js.get("state")
-        postal = js.get("zipCode")
-        country_code = "USA"
-        city = js.get("city")
-        store_number = "<MISSING>"
-        latitude = js.get("locationCoordinates").get("lat")
-        longitude = js.get("locationCoordinates").get("lon")
-        location_name = js.get("locationName")
-        hours = js.get("hoursOfOperation").get("tableData")
-        tmp = []
-        for h in hours[1:]:
-            day = h[0]
-            time = h[1]
-            line = f"{day} {time}"
-            tmp.append(line)
-
-        hours_of_operation = "; ".join(tmp) or "<MISSING>"
-
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))) as writer:
+        fetch_data(writer)

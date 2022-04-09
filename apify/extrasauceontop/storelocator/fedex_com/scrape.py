@@ -1,9 +1,13 @@
 from sgrequests import SgRequests
 from sgscrape import simple_scraper_pipeline as sp
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries, Grain_4
+import os
+from sglogging import sglog
 
 
 def get_data():
+    log = sglog.SgLogSetup().get_logger(logger_name="fedex")
+    proxy_url = os.getenv("PROXY_URL")
     search = DynamicGeoSearch(
         country_codes=[SearchableCountries.USA],
         granularity=Grain_4(),
@@ -25,7 +29,22 @@ def get_data():
             + str(search_lon)
             + "&staffed=on&fdxType=5644121&fdxType=5644112&fdxType=5644117&fdxType=5644122&fdxType=5644123&fdxType=5644127&l=en"
         )
-        response = session.get(url, headers=headers).json()
+
+        x = 0
+        while True:
+            x = x + 1
+            if x == 10:
+                raise Exception
+
+            response_obj = session.get(url, headers=headers)
+
+            if response_obj.status_code != 200:
+                log.info(response_obj.status_code)
+                session = session.set_proxy_url(proxy_url)
+
+            else:
+                response = response_obj.json()
+                break
 
         for location in response["response"]["entities"]:
             locator_domain = "local.fedex.com"

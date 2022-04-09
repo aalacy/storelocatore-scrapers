@@ -2,7 +2,6 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from bs4 import BeautifulSoup as bs
 from sgrequests import SgRequests
-from urllib.parse import urljoin
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sglogging import SgLogSetup
@@ -12,21 +11,32 @@ logger = SgLogSetup().get_logger("kfcturkiye")
 _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
 }
+header1 = {
+    "accept": "application/json, text/javascript, */*; q=0.01",
+    "accept-language": "en-US,en;q=0.9",
+    "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
+    "origin": "https://kfcturkiye.com",
+    "referer": "https://kfcturkiye.com/restoranlar",
+    "x-requested-with": "XMLHttpRequest",
+    "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
+}
 
-base_url = "https://kfcturkiye.com/restoranlar"
-locator_domain = "https://kfcturkiye.com"
+base_url = "https://kfcturkiye.com/sitemap"
+locator_domain = "https://kfcturkiye.com/"
 
 
 def fetch_data():
     with SgRequests() as session:
-        soup = bs(session.get(base_url, headers=_headers).text, "lxml")
-        links = soup.select("div.restaurants-item")
-        logger.info(f"{len(links)} found")
-
+        links = bs(session.get(base_url, headers=_headers).text, "lxml").select("loc")
         for link in links:
-            page_url = urljoin(locator_domain, link.a["href"])
+            page_url = link.text.strip()
+            if "/restoran/" not in page_url:
+                continue
             logger.info(page_url)
-            sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
+            res = session.get(page_url, headers=_headers)
+            if len(res.url.__str__().split("/")) < 5:
+                continue
+            sp1 = bs(res.text, "lxml")
             raw_address = (
                 sp1.select_one("div.restaurant-detail-area p")
                 .text.replace("/", ",")
@@ -34,8 +44,9 @@ def fetch_data():
             )
             addr = raw_address.split(",")
             hours = [
-                hh.text.strip()
+                hh.text.replace("/", "").strip()
                 for hh in sp1.select("div.working-hours-info div.hours-item")
+                if ":" in hh.text
             ]
             city = addr[-2]
             street_address = ", ".join(addr[:-2])

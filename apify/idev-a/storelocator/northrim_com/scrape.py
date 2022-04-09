@@ -23,7 +23,7 @@ page_url = "https://northrim.com/About-Northrim/Contact-Us/Locations"
 
 search = DynamicGeoSearch(
     country_codes=[SearchableCountries.USA],
-    max_radius_miles=500,
+    max_search_distance_miles=500,
     max_search_results=500,
 )
 
