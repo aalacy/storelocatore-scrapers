@@ -1,5 +1,3 @@
-import os
-
 from sglogging import SgLogSetup
 
 from sgscrape.sgwriter import SgWriter
@@ -9,7 +7,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 from sgrequests import SgRequests
 
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries, Grain_4
 
 log = SgLogSetup().get_logger("meijer.com")
 
@@ -19,12 +17,6 @@ def fetch_data(sgw: SgWriter):
     headers = {"User-Agent": user_agent}
 
     session = SgRequests()
-    proxy_password = os.environ["PROXY_PASSWORD"]
-    proxy_url = "http://groups-RESIDENTIAL,country-US:{}@proxy.apify.com:8000/".format(
-        proxy_password
-    )
-    proxies = {"http": proxy_url, "https": proxy_url}
-    session.proxies = proxies
 
     max_distance = 100
 
@@ -33,6 +25,7 @@ def fetch_data(sgw: SgWriter):
         max_search_distance_miles=max_distance,
         expected_search_radius_miles=max_distance,
         max_search_results=10,
+        granularity=Grain_4(),
     )
 
     locator_domain = "meijer.com"
@@ -48,7 +41,6 @@ def fetch_data(sgw: SgWriter):
             stores = session.get(base_link, headers=headers).json()["pointsOfService"]
         except:
             session = SgRequests()
-            session.proxies = proxies
             stores = session.get(base_link, headers=headers).json()["pointsOfService"]
 
         for store in stores:
