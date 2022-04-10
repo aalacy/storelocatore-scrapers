@@ -94,7 +94,7 @@ def get_data(coord, sgw: SgWriter):
                     hours_of_operation = "Closed"
                 if hours_of_operation.find("<MISSING>") != -1:
                     hours_of_operation = "<MISSING>"
-
+                search.found_location_at(float(latitude), float(longitude))
                 row = SgRecord(
                     page_url=page_url,
                     location_name=location_name,
@@ -121,11 +121,12 @@ def get_data(coord, sgw: SgWriter):
 def fetch_data(sgw: SgWriter):
     coords = DynamicGeoSearch(
         country_codes=[SearchableCountries.USA],
+        expected_search_radius_miles=0.5,
         max_search_results=100,
         granularity=Grain_2(),
     )
 
-    with futures.ThreadPoolExecutor(max_workers=8) as executor:
+    with futures.ThreadPoolExecutor(max_workers=10) as executor:
         future_to_url = {executor.submit(get_data, url, sgw): url for url in coords}
         for future in futures.as_completed(future_to_url):
             future.result()
