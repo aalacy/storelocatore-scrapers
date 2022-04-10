@@ -22,7 +22,13 @@ def fix_record(record):
         record["operatingDays"] = {
             "operatingDay": {"days": "", "open": "", "close": ""}
         }
-
+    record["page_url"] = ""
+    try:
+        record["page_url"] = str(
+            f"https://www.aaa.com/office/detail/{record['addresses']['address']['cityName'].replace(' ','%20')}-{record['addresses']['address']['stateProv']['code']}-{record['itemName'].replace(' ','%20')}-{record['id']}"
+        )
+    except Exception:
+        pass
     return record
 
 
@@ -122,7 +128,7 @@ def nice_hours(operatingHours):
             )
             > 5
         ):
-            return str(
+            res = str(
                 operatingHours["days"]
                 + ": "
                 + operatingHours["open"]
@@ -130,6 +136,10 @@ def nice_hours(operatingHours):
                 + operatingHours["close"]
                 + ";"
             )
+            res = list(res)
+            if res[-1] == ";":
+                res.pop(-1)
+            return "".join(res)
         else:
             return "<MISSING>"
 
@@ -139,11 +149,7 @@ def scrape():
     field_defs = sp.SimpleScraperPipeline.field_definitions(
         locator_domain=sp.ConstantField(url),
         page_url=sp.MappingField(
-            mapping=["id"],
-            value_transform=lambda x: str(
-                "https://tdr.aaa.com/tdrl/search.jsp?searchtype=O&format=json&ident=AAACOM&destination=null&id="
-                + x
-            ),
+            mapping=["page_url"],
         ),
         location_name=sp.MappingField(
             mapping=["itemName"],
@@ -155,18 +161,23 @@ def scrape():
         ),
         longitude=sp.MappingField(
             mapping=["position", "longitude"],
+            part_of_record_identity=True,
         ),
         street_address=sp.MultiMappingField(
             mapping=["addresses", "address", "addressLine"],
+            part_of_record_identity=True,
         ),
         city=sp.MappingField(
             mapping=["addresses", "address", "cityName"],
+            part_of_record_identity=True,
         ),
         state=sp.MappingField(
             mapping=["addresses", "address", "stateProv", "code"],
+            value_transform=lambda x: x.replace("99", "PR"),
         ),
         zipcode=sp.MappingField(
             mapping=["addresses", "address", "postalCode"],
+            part_of_record_identity=True,
         ),
         country_code=sp.MappingField(
             mapping=["addresses", "address", "countryName", "code"],
