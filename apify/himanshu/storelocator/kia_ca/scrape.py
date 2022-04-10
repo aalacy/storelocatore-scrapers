@@ -1,144 +1,74 @@
-import csv
-import re
-
-from bs4 import BeautifulSoup
-
+# -*- coding: utf-8 -*-
+# --extra-index-url https://dl.cloudsmith.io/KVaWma76J5VNwrOm/crawl/crawl/python/simple/
 from sgrequests import SgRequests
-
-session = SgRequests()
-
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-                "page_url",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 
 
 def fetch_data():
+    session = SgRequests()
 
-    addressess = []
-    base_url = "https://www.kia.ca/"
-    ca_state = {
-        "Newfoundland and Labrador": "nl",
-        "Prince Edward Island": "pe",
-        "Nova Scotia": "ns",
-        "New Brunswick": "nb",
-        "Quebec": "qc",
-        "Ontario": "on",
-        "Manitoba": "mb",
-        "Saskatchewan": "sk",
-        "Alberta": "ab",
-        "British Columbia": "bc",
-        "Yukon": "yt",
-        "Northwest Territories": "nt",
-        "Nunavut": "nu",
+    start_url = "https://www.kia.ca/content/marketing/ca/en/shopping-tools/find-a-dealer/jcr:content/root/container/container/section_container_1235319178/find_a_dealer.dealership.json?_postalCode={}"
+    domain = "kia.ca"
+    hdr = {
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
-    city_list = session.get(
-        "https://www.kia.ca/api/finddealer/getCities?searchText=&prov=ON&lang=0"
-    ).json()
-    for cty in city_list:
-
-        url = (
-            "https://www.kia.ca/api/finddealer/getdealers?lang=en&province="
-            + str(ca_state[cty.split(",")[-1].strip()])
-            + "&city="
-            + str(cty.split(",")[0].strip().replace(" ", "+"))
-            + "&pc=&dealername=&isEv=0&isPremium=0&dealercode="
+    all_codes = DynamicZipSearch(
+        country_codes=[SearchableCountries.CANADA], expected_search_radius_miles=50
+    )
+    for code in all_codes:
+        all_locations = session.get(
+            start_url.format(code.replace(" ", "")), headers=hdr
         )
-
-        if cty.split(",")[0].strip().replace(" ", "+") == "Notre-Dames+des+Pins":
-            url = "https://www.kia.ca/api/finddealer/getdealers?lang=en&province=qc&city=Notre-Dames+des+Pins%2C+Beauce&pc=&dealername=&isEv=0&isPremium=0&dealercode="
-
-        json_data = session.get(url).json()["DealersInfo"][0]
-
-        location_name = json_data["DealerName"]
-        street_address = (
-            (json_data["Address1"] + str(json_data["Address2"]))
-            .replace("None", "")
-            .strip()
-        )
-        city = json_data["City"]
-        state = json_data["Province"]
-        zipp = json_data["PostalCode"]
-        store_number = json_data["Id"]
-        phone = json_data["Phone"]
-        lat = json_data["Lat"]
-        lng = json_data["Lng"]
-        page_url = json_data["Website"]
-
-        sales_hours = ""
-
-        try:
-            for hr in json_data["WorkingHours"]["DealerTiming"]:
-                sales_hours += " " + hr["Day"] + " " + hr["SalesHours"] + " "
-            hours = sales_hours.strip()
-        except:
-            hours = "<MISSING>"
-
-        if page_url == "http://www.kiamegantic.com/fr":
-            page_url = "https://www.audetkiamegantic.com/eng/"
-            soup = BeautifulSoup(session.get(page_url).text, "lxml")
-            hours = re.sub(
-                r"\s+",
-                " ",
-                " ".join(
-                    list(
-                        soup.find(
-                            "div", {"id": "map_open_hours"}
-                        ).ul.li.div.stripped_strings
-                    )
-                ),
-            )
-        store = []
-        store.append(base_url)
-        store.append(location_name)
-        store.append(street_address)
-        store.append(city)
-        store.append(state)
-        store.append(zipp)
-        store.append("CA")
-        store.append(store_number)
-        store.append(phone)
-        store.append("<MISSING>")
-        store.append(lat)
-        store.append(lng)
-        store.append(hours)
-        store.append(page_url)
-
-        store = [str(x).strip() if x else "<MISSING>" for x in store]
-        if store[2] in addressess:
+        if all_locations.status_code != 200:
             continue
-        addressess.append(store[2])
-        yield store
+        all_locations = all_locations.json()
+        for poi in all_locations:
+            mon = f"Monday {poi['dealership']['openingHours']['mondayOpen'].split(':00.000')[0]} - {poi['dealership']['openingHours']['mondayClose'].split(':00.000')[0]}"
+            tue = f"Tuesday {poi['dealership']['openingHours']['tuesdayOpen'].split(':00.000')[0]} - {poi['dealership']['openingHours']['tuesdayClose'].split(':00.000')[0]}"
+            wed = f"Wednesday {poi['dealership']['openingHours']['wednesdayOpen'].split(':00.000')[0]} - {poi['dealership']['openingHours']['wednesdayClose'].split(':00.000')[0]}"
+            thu = f"Thursday {poi['dealership']['openingHours']['thursdayOpen'].split(':00.000')[0]} - {poi['dealership']['openingHours']['thursdayClose'].split(':00.000')[0]}"
+            fri = f"Friday {poi['dealership']['openingHours']['fridayOpen'].split(':00.000')[0]} - {poi['dealership']['openingHours']['fridayClose'].split(':00.000')[0]}"
+            if poi["dealership"]["openingHours"].get("saturdayOpen"):
+                sat = f"Saturdayb {poi['dealership']['openingHours']['saturdayOpen'].split(':00.000')[0]} - {poi['dealership']['openingHours']['saturdayClose'].split(':00.000')[0]}"
+            else:
+                sat = ""
+            hoo = f"{mon} {tue} {wed} {thu}, {fri} {sat}".strip()
+
+            item = SgRecord(
+                locator_domain=domain,
+                page_url="https://www.kia.ca/en/shopping-tools/find-a-dealer",
+                location_name=poi["dealership"]["name"],
+                street_address=f"{poi['dealership']['dealershipAddress']['streetNumber']} {poi['dealership']['dealershipAddress']['street']}",
+                city=poi["dealership"]["dealershipAddress"]["city"],
+                state=poi["dealership"]["dealershipAddress"]["province"],
+                zip_postal=poi["dealership"]["dealershipAddress"]["postalCode"],
+                country_code=poi["dealership"]["dealershipAddress"].get("country"),
+                store_number=poi["dealership"]["code"],
+                phone=poi["dealership"]["phone"],
+                location_type="",
+                latitude=poi["dealership"]["latitude"],
+                longitude=poi["dealership"]["longitude"],
+                hours_of_operation=hoo,
+            )
+
+            yield item
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()

@@ -1,39 +1,12 @@
-import csv
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
+def fetch_data(sgw: SgWriter):
 
     locator_domain = "https://pacini.com/"
     api_url = "https://pacini.com/en/restaurants/"
@@ -74,12 +47,11 @@ def fetch_data():
             postal = " ".join(ad.split(",")[1].split()[1:]).strip()
         if ad.count(",") == 2:
             street_address = (
-                ad.split(",")[0] + " ".join(ad.split(",")[1].split()[:-1]).strip()
+                ad.split(",")[0] + " " + " ".join(ad.split(",")[1].split()[:-1]).strip()
             )
             city = ad.split(",")[1].split()[-1]
             state = ad.split(",")[2].split()[0]
             postal = " ".join(ad.split(",")[2].split()[1:]).strip()
-        location_type = "<MISSING>"
         phone = (
             "".join(
                 tree.xpath(
@@ -93,55 +65,54 @@ def fetch_data():
             phone.replace("RESERVATION", "")
             .replace("ONLINE", "")
             .replace("Online Reservation", "")
+            .replace("Online reservation", "")
             .replace("Book online", "")
             .replace("9733450 359-9733", "9733")
             or "<MISSING>"
         )
         country_code = "CA"
-        store_number = "<MISSING>"
         map_link = "".join(tree.xpath('//iframe[@loading="lazy"]/@src'))
         latitude = map_link.split("!3d")[1].strip().split("!")[0].strip()
         longitude = map_link.split("!2d")[1].strip().split("!")[0].strip()
         hours_of_operation = (
             " ".join(
                 tree.xpath(
-                    '//div[./i[@class="far fa-clock"]]/following-sibling::div//p/text()'
+                    '//div[./i[@class="far fa-clock"]]/following-sibling::div[1]/div//text()'
                 )
             )
             .replace("\n", "")
             .strip()
             or "<MISSING>"
         )
+        hours_of_operation = " ".join(hours_of_operation.split())
         tmpclz = " ".join(tree.xpath('//div[@class="wpb_wrapper"]/p/text()')).replace(
             "\n", ""
         )
         if tmpclz.find("temporarily close") != -1:
             hours_of_operation = "temporarily close"
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
 
-    return out
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=SgRecord.MISSING,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+            raw_address=f"{street_address} {city}, {state} {postal}",
+        )
 
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))) as writer:
+        fetch_data(writer)

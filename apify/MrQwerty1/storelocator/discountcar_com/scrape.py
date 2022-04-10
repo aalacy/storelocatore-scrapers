@@ -1,123 +1,72 @@
-import csv
+import pycountry
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
-    s = set()
-    url = "https://www.discountcar.com/"
-    api_url = "https://www.discountcar.com/WebAPI2/api/v2/Location/GetAllLocations"
-
-    session = SgRequests()
-    data = {"latitude": 55.1810118, "longitude": -118.7940446, "radius": 5000}
-    r = session.post(api_url, data=data)
-    js = r.json()["body"]
+def fetch_data(sgw: SgWriter):
+    api = "https://prd.location.enterprise.com/enterprise-sls/search/location/enterprise/web/spatial/33.6166689358116/-90.88632923713895?rows=15000&cor=US&radius=50000"
+    r = session.get(api, headers=headers)
+    js = r.json()["locationsResult"]
 
     for j in js:
-        locator_domain = url
-        location_name = j.get("name")
-        street_address = j.get("address") or "<MISSING>"
-        city = j.get("city") or "<MISSING>"
-        state = j.get("province") or "<MISSING>"
-        postal = j.get("postalZipCode") or "<MISSING>"
-        country_code = j.get("country") or "<MISSING>"
-        if country_code == "Canada":
-            country_code = "CA"
+        location_name = j.get("locationNameTranslation")
+        location_type = j.get("locationType")
+        latitude = j.get("latitude")
+        longitude = j.get("longitude")
+        phone = j.get("phoneNumber")
+        store_number = j.get("groupBranchNumber")
+        line = j.get("addressLines") or []
+        street_address = ", ".join(line)
+        city = j.get("city")
+        state = j.get("state")
+        postal = j.get("postalCode")
+        country = j.get("countryCode") or ""
+        country_name = (
+            pycountry.countries.get(alpha_2=country)
+            .name.replace("é", "e")
+            .replace(" ", "-")
+        )
+        if "Viet" in country_name:
+            country_name = "Vietnam"
+
+        if country == "US":
+            page_url = f"https://www.enterprise.com/en/car-rental/locations/{country}/{state}/-{store_number}.html".lower()
+        elif country == "GB":
+            page_url = f"https://www.enterprise.com/en/car-rental/locations/uk/-{store_number}.html".lower()
         else:
-            country_code = "US"
+            page_url = f"https://www.enterprise.com/en/car-rental/locations/{country_name}/-{store_number}.html".lower().replace(
+                "virgin-islands,-british", "tortola"
+            )
 
-        store_number = j.get("locationID") or "<MISSING>"
-        page_url = f"https://www.discountcar.com/locations/-/{store_number}"
-        phone = j.get("phoneNumber") or "<MISSING>"
-        if len(phone) < 10:
-            phone = "<MISSING>"
-        latitude = j.get("latitude") or "<MISSING>"
-        longitude = j.get("longitude") or "<MISSING>"
-        location_type = "<MISSING>"
+        row = SgRecord(
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country,
+            phone=phone,
+            store_number=store_number,
+            latitude=latitude,
+            longitude=longitude,
+            locator_domain=locator_domain,
+            location_type=location_type,
+        )
 
-        _tmp = []
-        days = [
-            "monday",
-            "tuesday",
-            "wednesday",
-            "thursday",
-            "friday",
-            "saturday",
-            "sunday",
-        ]
-        hours = j.get("openHours") or {}
-        for d in days:
-            start = hours.get(f"{d[:3]}OpenTime")
-            end = hours.get(f"{d[:3]}CloseTime")
-            if start == "00:00":
-                _tmp.append(f"{d.capitalize()}: Closed")
-            else:
-                _tmp.append(f"{d.capitalize()}: {start} - {end}")
-
-        hours_of_operation = ";".join(_tmp) or "<MISSING>"
-
-        if hours_of_operation.count("Closed") == 7:
-            hours_of_operation = "Closed"
-
-        line = (street_address, city, state)
-        if line in s:
-            continue
-
-        s.add(line)
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://www.enterprise.com"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:94.0) Gecko/20100101 Firefox/94.0",
+        "Accept": "application/json, text/javascript, */*; q=0.01",
+    }
+
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+        fetch_data(writer)

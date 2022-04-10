@@ -57,12 +57,14 @@ def fetch_data():
         location_type = "<MISSING>"
         locator_domain = website
         raw_address = store["address"]
-        formatted_addr = parser.parse_address_intl(raw_address)
+        formatted_addr = parser.parse_address_intl(
+            raw_address.rsplit("/", 1)[0].strip()
+        )
         street_address = formatted_addr.street_address_1
         if formatted_addr.street_address_2:
             street_address = street_address + ", " + formatted_addr.street_address_2
 
-        city = formatted_addr.city
+        city = raw_address.split("/")[-1].strip()
         state = store["townName"]
         zip = formatted_addr.postcode
 

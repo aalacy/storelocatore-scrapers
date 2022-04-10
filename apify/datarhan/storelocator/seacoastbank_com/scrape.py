@@ -10,7 +10,7 @@ from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
-    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
+    session = SgRequests()
     domain = "seacoastbank.com"
     start_url = "https://www.seacoastbank.com/locations"
 
@@ -34,15 +34,11 @@ def fetch_data():
         street_address = poi["streetAddress"]
         street_address = street_address if street_address else "<MISSING>"
         city = poi["city"]
-        city = city if city else "<MISSING>"
         state = poi["state"]
-        state = state if state else "<MISSING>"
         zip_code = poi["zip"]
-        zip_code = zip_code if zip_code else "<MISSING>"
-        country_code = "<MISSING>"
-        store_number = "<MISSING>"
         phone = poi["phone"]
-        phone = phone if phone else "<MISSING>"
+        if not phone:
+            continue
         location_type = poi["type"]
         if location_type == "atm":
             continue
@@ -69,8 +65,8 @@ def fetch_data():
             city=city,
             state=state,
             zip_postal=zip_code,
-            country_code=country_code,
-            store_number=store_number,
+            country_code="",
+            store_number="",
             phone=phone,
             location_type=location_type,
             latitude=latitude,
