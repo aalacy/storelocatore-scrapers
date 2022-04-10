@@ -62,12 +62,14 @@ def fetch_data():
                 .replace("|", " ")
                 .replace("Store opening times:", "")
             )
-            latitude, longitude = (
+            longitude, latitude = (
                 soup.select_one("iframe[src*=maps]")["src"]
                 .split("!2d", 1)[1]
                 .split("!2m", 1)[0]
                 .split("!3d")
             )
+            if "!3m" in latitude:
+                latitude = latitude.split("!3m")[0]
             country_code = "NZ"
             yield SgRecord(
                 locator_domain=DOMAIN,
