@@ -60,7 +60,8 @@ def parse_hours(element):
         return MISSING
     days = [val.text for val in element.find_all("p", text=re.compile(r"day.*"))]
     hours = [
-        val.text for val in element.find_all("h5", text=re.compile(r"\d{1,2}\s+am|pm"))
+        val.text
+        for val in element.find_all("h5", text=re.compile(r"\d{1,2}\s+am|pm|Closed"))
     ]
     hoo = []
     for i in range(len(days)):
@@ -115,10 +116,7 @@ def fetch_data():
         raw_address = ", ".join(raw_address[:-1]).strip()
         street_address, city, state, zip_postal = getAddress(raw_address)
         country_code = "US"
-        store_number = re.search(
-            r"\?store_id=(\d+)",
-            soup.find("a", {"href": re.compile(r"\?store_id=\d+")})["href"],
-        ).group(1)
+        store_number = MISSING
         hours_of_operation = parse_hours(soup.find("div", {"class": "location-hours"}))
         latitude, longitude = get_latlong(soup)
         location_type = MISSING
