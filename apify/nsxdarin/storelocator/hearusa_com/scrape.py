@@ -1,4 +1,4 @@
-from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries, Grain_8
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
 from sgscrape.sgwriter import SgWriter
@@ -9,7 +9,7 @@ import json
 
 logger = SgLogSetup().get_logger("hearusa_com")
 
-session = SgRequests()
+session = SgRequests(verify_ssl=False)
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
@@ -18,6 +18,7 @@ search = DynamicGeoSearch(
     country_codes=[SearchableCountries.USA],
     max_search_distance_miles=100,
     max_search_results=25,
+    granularity=Grain_8(),
 )
 
 
@@ -62,6 +63,7 @@ def fetch_data():
                 name = line2.split('<h2 class="centers__header__title">')[1].split("<")[
                     0
                 ]
+                print(name)
             if '"lat":"' in line2:
                 lat = line2.split('"lat":"')[1].split('"')[0]
                 lng = line2.split('"lng":"')[1].split('"')[0]
@@ -87,6 +89,9 @@ def fetch_data():
                     hours = hrs
                 else:
                     hours = hours + "; " + hrs
+
+        if lat != "" and lng != "":
+            search.found_location_at(lat, lng)
         yield SgRecord(
             locator_domain=website,
             page_url=loc,
