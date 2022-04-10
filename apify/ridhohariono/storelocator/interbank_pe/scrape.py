@@ -12,6 +12,7 @@ DOMAIN = "interbank.pe"
 BASE_URL = "https://interbank.pe"
 LOCATION_URL = "https://interbank.pe/puntos-de-atencion"
 API_URL = "https://interbank.pe/puntos-de-atencion?p_p_id=pe_com_ibk_halcon_attentionpoints_internal_portlet_AttentionPointsWebPortlet&p_p_lifecycle=2&p_p_state=normal&p_p_mode=view&p_p_resource_id=%2FattentionpointsFilterMVCResourceCommand&p_p_cacheability=cacheLevelPage&_pe_com_ibk_halcon_attentionpoints_internal_portlet_AttentionPointsWebPortlet_cmd=filter&lat={}&lng={}"
+
 HEADERS = {
     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.146 Safari/537.36",
@@ -57,8 +58,8 @@ def fetch_data():
     log.info("Fetching store_locator data")
     search = DynamicGeoSearch(
         country_codes=[SearchableCountries.PERU],
-        expected_search_radius_miles=20,
-        max_search_results=50,
+        expected_search_radius_miles=10,
+        max_search_results=5,
     )
     for lat, long in search:
         url = API_URL.format(lat, long)
