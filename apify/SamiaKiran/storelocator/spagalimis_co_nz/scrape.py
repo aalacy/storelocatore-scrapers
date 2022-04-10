@@ -34,9 +34,7 @@ def fetch_data():
             soup = BeautifulSoup(r.text, "html.parser")
             coords = soup.find("iframe")["src"]
             zip_postal = coords.split("!5")[0].split("+")[-1]
-            longitude, latitude = (
-                coords.split("!2d", 1)[1].split("!3m", 1)[0].split("!3d")
-            )
+            longitude,latitude = coords.split("!2d", 1)[1].split("!3m", 1)[0].split("!3d")
             phone = soup.select_one("a[href*=tel]").text
             temp = soup.findAll("div", {"class": "wpb_text_column wpb_content_element"})
             address = temp[-2]
@@ -62,9 +60,7 @@ def fetch_data():
                 .replace("|", " ")
                 .replace("Store opening times:", "")
             )
-
-            if "!3m" in latitude:
-                latitude = latitude.split("!3m")[0]
+            
             country_code = "NZ"
             yield SgRecord(
                 locator_domain=DOMAIN,
