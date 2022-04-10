@@ -25,7 +25,7 @@ def fetch_data(sgw: SgWriter):
         "Sec-Fetch-Dest": "empty",
         "Sec-Fetch-Mode": "cors",
         "Sec-Fetch-Site": "cross-site",
-        "Authorization": "Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJ7XCJkZXZpY2VVdWlkXCI6XCJhNDg5ZDRjZi00YTI3LTRjNTItOTg5YS0xZTIxZWM0YWRjZTFcIixcImRldmljZVV1aWRTb3VyY2VcIjpcIkZJTkdFUlBSSU5UXCIsXCJpbXBsVmVyc2lvblwiOlwiMy4wXCIsXCJzb3VyY2VcIjpcIk1PQklMRV9QSF9BTkRST0lEXCIsXCJleHBpcmlhdGlvbkRhdGVcIjoxNjY0NDU5NzEyMTM1LFwiZW5hYmxlZFwiOnRydWUsXCJhY2NvdW50Tm9uTG9ja2VkXCI6dHJ1ZSxcImNyZWRlbnRpYWxzTm9uRXhwaXJlZFwiOnRydWUsXCJhY2NvdW50Tm9uRXhwaXJlZFwiOnRydWV9In0.H4I9bjaZZGAlXQ9RMtFrD0iMZ1Oo2DUznRQg8_NsY7q6xtQPTwRE4qZA6lLmS0LAJD-B3CNlDRiz8iCdgfFIPQ",
+        "Authorization": "Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJ7XCJkZXZpY2VVdWlkXCI6XCJhNDg5ZDRjZi00YTI3LTRjNTItOTg5YS0xZTIxZWM0YWRjZTFcIixcImRldmljZVV1aWRTb3VyY2VcIjpcIkZJTkdFUlBSSU5UXCIsXCJpbXBsVmVyc2lvblwiOlwiMy4wXCIsXCJzb3VyY2VcIjpcIk1PQklMRV9QSF9BTkRST0lEXCIsXCJleHBpcmlhdGlvbkRhdGVcIjoxNjc4Mzc2MTEyMTI4LFwiZW5hYmxlZFwiOnRydWUsXCJjcmVkZW50aWFsc05vbkV4cGlyZWRcIjp0cnVlLFwiYWNjb3VudE5vbkV4cGlyZWRcIjp0cnVlLFwiYWNjb3VudE5vbkxvY2tlZFwiOnRydWV9In0.RerRSu4hTj9uyJYgTs9UDWI9gZvEA59QlT1PNPfrTWIP-eTPCydmriaR3rqennFboc2Zfu-CbC7ZneOVjTY_DQ",
         "Referer": "https://burgerking.cz/",
         "Connection": "keep-alive",
     }
