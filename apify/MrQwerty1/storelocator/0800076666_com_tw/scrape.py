@@ -59,7 +59,7 @@ def fetch_data(sgw: SgWriter):
 
 if __name__ == "__main__":
     locator_domain = "http://www.0800076666.com.tw/"
-    page_url = f"http://www.0800076666.com.tw/Stores/StoresLocation"
+    page_url = "http://www.0800076666.com.tw/Stores/StoresLocation"
     headers = {
         "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:99.0) Gecko/20100101 Firefox/99.0",
         "Accept": "*/*",
