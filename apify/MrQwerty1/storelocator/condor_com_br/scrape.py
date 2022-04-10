@@ -29,7 +29,20 @@ def fetch_data(sgw: SgWriter):
         street_address = street_address.replace(":", "")
         city = j.get("cidade")
         state = j.get("region")
-        postal = j.get("ZipCode")
+        line = tree.xpath("//text()")
+        line = list(filter(None, [li.replace("\xa0", "").strip() for li in line]))
+
+        postal = SgRecord.MISSING
+        for li in line:
+            if "CEP" in li and li[-1].isdigit():
+                postal = li.split("CEP")[-1].replace(":", "").replace(".", "").strip()
+                break
+            if "CEP" in li:
+                postal = (
+                    line[line.index(li) + 1].replace(":", "").replace(".", "").strip()
+                )
+                break
+
         country_code = "BR"
         store_number = j.get("cod_loja")
         location_name = j.get("title1")

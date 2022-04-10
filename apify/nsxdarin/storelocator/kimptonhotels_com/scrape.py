@@ -4,6 +4,7 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
+import time
 
 logger = SgLogSetup().get_logger("kimptonhotels_com")
 
@@ -30,6 +31,7 @@ def fetch_data():
             if lurl not in locs:
                 locs.append(lurl.replace("localhost:4503", ""))
     for loc in locs:
+        time.sleep(10)
         logger.info(loc)
         r2 = session.get(loc, headers=headers)
         website = "kimptonhotels.com"
