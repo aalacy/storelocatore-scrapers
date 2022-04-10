@@ -166,7 +166,7 @@ check_internal_library_versions() {
 		requirements_path="${updated_crawler}/requirements.txt"
 		internal_library_regex="$(join_by "|" "${internal_libraries[@]}")"
 		export -f piprottest  # so we can call it in a subshell in xargs
-		outdated_internal_libraries=$(cat "$requirements_path" | grep -E "$internal_library_regex" | xargs -d'\n' -n1 bash -c 'piprottest $@' _ || true)
+		outdated_internal_libraries=$(cat "$requirements_path" | sed 's/\r//g' | grep -E "$internal_library_regex" | xargs -d'\n' -n1 bash -c 'piprottest $@' _ || true)
 		if [ -n "$outdated_internal_libraries" ]; then
 			formatted_outdated_internal_libraries="${outdated_internal_libraries//$'\n'/', '}"
 			echo "FAIL: found outdated SafeGraph libraries in requirements.txt: $formatted_outdated_internal_libraries"

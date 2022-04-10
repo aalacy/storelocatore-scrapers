@@ -105,13 +105,23 @@ def get_data():
                     location_type = location["service_type"]
                     latitude = location["lat"]
                     longitude = location["lng"]
-                    hours = (
-                        location["details"]
-                        .replace(" \r\n", ", ")
-                        .replace("\n", ", ")
-                        .replace("\r", "")
-                    )
-                    hours = hours.split(", ,")[0]
+                    if "coming soon" in location["details"].lower():
+                        hours = "Coming Soon"
+                    else:
+                        hours = (
+                            location["details"]
+                            .replace(" \r\n", ", ")
+                            .replace("\n", ", ")
+                            .replace("\r", "")
+                        )
+                        hours = hours.split(", ,")[0]
+
+                        hours = (
+                            hours.replace("<p>", "")
+                            .replace("<br />", " ")
+                            .split("<span")[0]
+                            .strip()
+                        )
                     search.found_location_at(latitude, longitude)
 
                     yield {
