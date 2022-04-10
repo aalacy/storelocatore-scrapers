@@ -94,7 +94,7 @@ def get_data(coord, sgw: SgWriter):
                     hours_of_operation = "Closed"
                 if hours_of_operation.find("<MISSING>") != -1:
                     hours_of_operation = "<MISSING>"
-                search.found_location_at(float(latitude), float(longitude))
+                coord.found_location_at(float(latitude), float(longitude))
                 row = SgRecord(
                     page_url=page_url,
                     location_name=location_name,
