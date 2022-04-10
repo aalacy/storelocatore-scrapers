@@ -25,7 +25,7 @@ def fetch_data(sgw: SgWriter):
     found_poi = []
 
     max_results = 10
-    max_distance = 250
+    max_distance = 200
 
     search = DynamicZipSearch(
         country_codes=[SearchableCountries.USA],
@@ -37,16 +37,19 @@ def fetch_data(sgw: SgWriter):
     log.info("Running sgzip ..")
     for postcode in search:
         base_link = (
-            "https://yourpie.com/locations/?proximity=%s&units=Miles&origin=%s"
-            % (max_distance, postcode)
+            "https://yourpie.com/locations/?proximity=250&units=Miles&origin=%s"
+            % (postcode)
         )
         req = session.get(base_link, headers=headers)
         base = BeautifulSoup(req.text, "lxml")
 
         try:
-            items = base.find(class_="locationInfo").find_all("li")
+            if "no results found" in base.h2.text.lower():
+                continue
         except:
-            continue
+            pass
+
+        items = base.find(class_="locationInfo").find_all("li")
         for item in items:
             locator_domain = "yourpie.com"
 
@@ -60,8 +63,7 @@ def fetch_data(sgw: SgWriter):
             store_number = "<MISSING>"
             latitude = item["data-lat"]
             longitude = item["data-lng"]
-
-            search.found_location_at(float(latitude), float(longitude))
+            search.found_location_at(latitude, longitude)
 
             if "COMING SOON" in item.text.upper():
                 continue
