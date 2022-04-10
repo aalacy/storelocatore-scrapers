@@ -70,6 +70,8 @@ def fetch_data():
 
                 street_address = store_json["address"]["streetAddress"]
                 city = store_json["address"]["addressLocality"]
+                if city:
+                    city = city.split("(")[0].strip()
                 state = "<MISSING>"
                 zip = store_json["address"]["postalCode"]
 

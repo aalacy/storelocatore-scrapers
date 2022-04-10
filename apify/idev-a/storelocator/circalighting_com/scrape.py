@@ -7,6 +7,9 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 import dirtyjson as json
 from webdriver_manager.chrome import ChromeDriverManager
+import ssl
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 logger = SgLogSetup().get_logger("circalighting")
 

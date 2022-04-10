@@ -1,127 +1,94 @@
-import re
-import csv
-import json
-from lxml import etree
-
+from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from concurrent import futures
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    # Your scraper here
-    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
-
-    items = []
-    scraped_items = []
-
-    start_url = "https://palmbeachtan.com/locations/srj/{}/"
-    domain = re.findall("://(.+?)/", start_url)[0].replace("www.", "")
-    hdr = {
-        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
+def get_urls():
+    session = SgRequests()
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:85.0) Gecko/20100101 Firefox/85.0",
     }
+    r = session.get("https://palmbeachtan.com/sitemap-locations.xml", headers=headers)
+    tree = html.fromstring(r.content)
+    return tree.xpath("//url/loc/text()")
 
-    all_locations = []
-    all_codes = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA], max_radius_miles=50
+
+def get_data(url, sgw: SgWriter):
+    locator_domain = "https://palmbeachtan.com/"
+    page_url = "".join(url)
+    if page_url.count("/") != 6:
+        return
+    session = SgRequests()
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:85.0) Gecko/20100101 Firefox/85.0",
+    }
+    r = session.get(page_url, headers=headers)
+
+    tree = html.fromstring(r.text)
+
+    street_address = (
+        "".join(tree.xpath('//*[@itemprop="streetAddress"]/text()')) or "<MISSING>"
     )
-    for code in all_codes:
-        response = session.get(start_url.format(code), headers=hdr)
-        if "/html" in response.text:
-            continue
-        all_locations += json.loads(response.text)
-
-    for poi in all_locations:
-        store_url = f'https://palmbeachtan.com/locations/{poi["salon_state"]}/{poi["salon_url"]}'
-        if store_url in scraped_items:
-            continue
-        loc_response = session.get(store_url, headers=hdr)
-        loc_dom = etree.HTML(loc_response.text)
-
-        location_name = poi["salon_name"]
-        location_name = (
-            location_name.replace(" - NOW HIRING!", "")
-            if location_name
-            else "<MISSING>"
+    city = "".join(tree.xpath('//*[@itemprop="addressLocality"]/text()')) or "<MISSING>"
+    state = "".join(tree.xpath('//*[@itemprop="addressRegion"]/text()')) or "<MISSING>"
+    postal = "".join(tree.xpath('//*[@itemprop="postalCode"]/text()')) or "<MISSING>"
+    country_code = "US"
+    location_name = (
+        "".join(
+            tree.xpath('//div[@class="location-info"]/preceding-sibling::h1/text()')
         )
-        street_address = poi["salon_address"]
-        street_address = street_address if street_address else "<MISSING>"
-        city = poi["salon_city"]
-        city = city if city else "<MISSING>"
-        state = poi["salon_state"]
-        state = state if state else "<MISSING>"
-        zip_code = poi["salon_zip"]
-        zip_code = zip_code if zip_code else "<MISSING>"
-        country_code = "US"
-        country_code = country_code if country_code else "<MISSING>"
-        store_number = poi["id"]
-        phone = loc_dom.xpath('//data[@itemprop="telephone"]/text()')
-        phone = phone[0] if phone else "<MISSING>"
-        location_type = "<MISSING>"
-        latitude = loc_dom.xpath("//@data-lat")[0]
-        longitude = loc_dom.xpath("//@data-lng")[0]
-        hoo = hoo = loc_dom.xpath('//aside[@class="hours"]//text()')
-        hoo = [e.strip() for e in hoo if e.strip()]
-        hours_of_operation = (
-            " ".join(hoo[1:]).replace("Careers»", "").strip() if hoo else "<MISSING>"
+        .replace("\n", "")
+        .strip()
+        or "<MISSING>"
+    )
+    phone = "".join(tree.xpath('//*[@itemprop="telephone"]/text()')) or "<MISSING>"
+    hours_of_operation = (
+        " ".join(
+            tree.xpath('//h3[text()="Hours:"]/following-sibling::div[1]/div//text()')
         )
+        .replace("\n", "")
+        .strip()
+        or "<MISSING>"
+    )
+    hours_of_operation = " ".join(hours_of_operation.split())
+    store_number = "<MISSING>"
+    location_type = "<MISSING>"
+    latitude = "".join(tree.xpath("//*/@data-lat"))
+    longitude = "".join(tree.xpath("//*/@data-lng"))
 
-        item = [
-            domain,
-            store_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip_code,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        if store_url not in scraped_items:
-            scraped_items.append(store_url)
-            items.append(item)
+    row = SgRecord(
+        locator_domain=locator_domain,
+        page_url=page_url,
+        location_name=location_name,
+        street_address=street_address,
+        city=city,
+        state=state,
+        zip_postal=postal,
+        country_code=country_code,
+        store_number=store_number,
+        phone=phone,
+        location_type=location_type,
+        latitude=latitude,
+        longitude=longitude,
+        hours_of_operation=hours_of_operation,
+    )
 
-    return items
+    sgw.write_row(row)
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
+def fetch_data(sgw: SgWriter):
+    urls = get_urls()
+    with futures.ThreadPoolExecutor(max_workers=10) as executor:
+        future_to_url = {executor.submit(get_data, url, sgw): url for url in urls}
+        for future in futures.as_completed(future_to_url):
+            future.result()
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))) as writer:
+        fetch_data(writer)

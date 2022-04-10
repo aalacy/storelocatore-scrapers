@@ -139,14 +139,14 @@ def _p(val):
         return ""
 
 
-max_workers = 1
+max_workers = 32
 
 
 def fetchConcurrentSingle(link):
     page_url = locator_domain + link.a["href"]
     logger.info(page_url)
     response = request_with_retries(page_url)
-    if response.status == 200:
+    if response.status_code == 200:
         return page_url, bs(response.text, "lxml")
 
     return None
@@ -194,12 +194,15 @@ def fetch_data():
         logger.info(f"{len(links)} found")
         for link in links:
             city_url = locator_domain + link["href"]
-            logger.info(city_url)
             page = 1
             while True:
                 with SgRequests(proxy_country="us") as http:
+                    logger.info(f"{city_url}?page={page}")
+                    res_city = http.get(f"{city_url}?page={page}", headers=_headers)
+                    if res_city.status_code != 200:
+                        break
                     locations = bs(
-                        http.get(f"{city_url}?page={page}", headers=_headers).text,
+                        res_city.text,
                         "lxml",
                     ).select("div.supermarketListElement")
                     logger.info(f"page {page}, {len(locations)}")

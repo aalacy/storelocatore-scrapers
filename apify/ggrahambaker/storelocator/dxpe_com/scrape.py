@@ -1,47 +1,18 @@
 import re
-import csv
 import json
 from lxml import etree
-
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
 def fetch_data():
-    # Your scraper here
+
     session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
 
-    items = []
     scraped_items = []
 
     start_url = "https://www.dxpe.com/program/www/index.php/main/submitForm"
@@ -51,7 +22,7 @@ def fetch_data():
     }
     all_codes = DynamicZipSearch(
         country_codes=[SearchableCountries.CANADA, SearchableCountries.USA],
-        max_radius_miles=500,
+        max_search_distance_miles=500,
     )
 
     all_locations = []
@@ -68,7 +39,6 @@ def fetch_data():
         response = session.post(start_url, data=frm, headers=hdr)
         data = json.loads(response.text)
         all_locations += data["locations"]
-
     for poi in all_locations:
         store_url = "https://www.dxpe.com/locations/"
         location_name = poi["locationName"]
@@ -100,34 +70,37 @@ def fetch_data():
         longitude = poi["lng"]
         longitude = longitude if longitude else "<MISSING>"
         hours_of_operation = "<MISSING>"
+        if store_number in scraped_items:
+            continue
+        scraped_items.append(store_number)
 
-        item = [
-            domain,
-            store_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip_code,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        if store_number not in scraped_items:
-            scraped_items.append(store_number)
-            items.append(item)
-
-    return items
+        yield SgRecord(
+            locator_domain=domain,
+            page_url=store_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city.strip(),
+            state=state.strip(),
+            zip_postal=zip_code,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone.strip(),
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+        )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.StoreNumberId)
+    ) as writer:
+
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
 
 
-if __name__ == "__main__":
-    scrape()
+scrape()

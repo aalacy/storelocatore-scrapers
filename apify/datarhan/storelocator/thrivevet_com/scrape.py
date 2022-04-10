@@ -9,7 +9,7 @@ from sgscrape.sgwriter import SgWriter
 def fetch_data():
     session = SgRequests()
     start_url = (
-        "https://api.thrivepetcare.com/location/v1/locations?radius=500&postalcode={}"
+        "https://api.thrivepetcare.com/location/v1.1/locations?radius=500&address={}"
     )
     domain = "thrivepetcare.com"
     hdr = {
@@ -25,7 +25,7 @@ def fetch_data():
             if not location_name:
                 location_name = poi["name"]
             street_address = poi["addressLine1"].strip()
-            if poi["addressLine2"].strip():
+            if poi["addressLine2"]:
                 street_address += " " + poi["addressLine2"].strip()
             city = poi["city"]
             state = poi["state"]

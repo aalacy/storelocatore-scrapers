@@ -96,11 +96,14 @@ def fetch_data():
             except Exception as e:
                 log.info(f"loclist Error: {e}")
                 response = get_response(country_code, link)
-                loclist = (
-                    response.text.split('data-locations="')[1]
-                    .split("data-icon=")[0]
-                    .replace('}]"', "}]")
-                )
+                try:
+                    loclist = (
+                        response.text.split('data-locations="')[1]
+                        .split("data-icon=")[0]
+                        .replace('}]"', "}]")
+                    )
+                except:
+                    continue
 
             loclist = BeautifulSoup(loclist, "html.parser")
             try:
@@ -150,7 +153,7 @@ def fetch_data():
                     log.info(f"Phone Error: {e}")
                     phone = MISSING
 
-                hours_of_operation = (
+                hours_of_operation = strip_accents(
                     soup.find(
                         "div",
                         {
@@ -164,6 +167,18 @@ def fetch_data():
                     hours_of_operation
                     == "Montag: - Dienstag: - Mittwoch: - Donnerstag: - Freitag: - Samstag: - Sonntag: -"
                 ):
+                    hours_of_operation = MISSING
+                elif (
+                    hours_of_operation
+                    == "maandag: - dinsdag: - woensdag: - donderdag: - vrijdag: - zaterdag: - zondag: -"
+                ):
+                    hours_of_operation = MISSING
+                elif (
+                    hours_of_operation
+                    == "Lundi: - Mardi: - Mercredi: - Jeudi: - Vendredi: - Samedi: - Dimanche: -"
+                ):
+                    hours_of_operation = MISSING
+                elif "Jueves: - Viernes: -" in hours_of_operation:
                     hours_of_operation = MISSING
                 if city is MISSING:
                     city = raw_address.split()[-1]
