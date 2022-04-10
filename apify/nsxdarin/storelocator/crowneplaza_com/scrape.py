@@ -87,90 +87,93 @@ def fetch_data():
 
     logger.info(len(locs))
     for loc in locs:
-        logger.info(loc)
-        r2 = session.get(loc, headers=headers)
-        website = "crowneplaza.com"
-        name = ""
-        city = ""
-        state = ""
-        country = ""
-        add = ""
-        zc = ""
-        typ = "Hotel"
-        phone = ""
-        hours = "<MISSING>"
-        lat = ""
-        lng = ""
-        store = loc.split("/hoteldetail")[0].rsplit("/", 1)[1]
-        for line2 in r2.iter_lines():
-            if 'property="og:title" content="' in line2 and name == "":
-                name = line2.split('property="og:title" content="')[1].split('"')[0]
-            if '"name" : "' in line2 and name == "":
-                name = line2.split('"name" : "')[1].split('"')[0]
-            if "|</a>" in line2:
-                rawadd = (
-                    line2.split("|</a>")[0]
-                    .strip()
-                    .replace("\t", "")
-                    .replace(" |", "|")
-                    .replace("| ", "|")
+        try:
+            logger.info(loc)
+            r2 = session.get(loc, headers=headers)
+            website = "crowneplaza.com"
+            name = ""
+            city = ""
+            state = ""
+            country = ""
+            add = ""
+            zc = ""
+            typ = "Hotel"
+            phone = ""
+            hours = "<MISSING>"
+            lat = ""
+            lng = ""
+            store = loc.split("/hoteldetail")[0].rsplit("/", 1)[1]
+            for line2 in r2.iter_lines():
+                if 'property="og:title" content="' in line2 and name == "":
+                    name = line2.split('property="og:title" content="')[1].split('"')[0]
+                if '"name" : "' in line2 and name == "":
+                    name = line2.split('"name" : "')[1].split('"')[0]
+                if "|</a>" in line2:
+                    rawadd = (
+                        line2.split("|</a>")[0]
+                        .strip()
+                        .replace("\t", "")
+                        .replace(" |", "|")
+                        .replace("| ", "|")
+                    )
+                    rawadd = rawadd.replace("  ", " ")
+                if 'place:location:latitude"' in line2:
+                    lat = (
+                        line2.split('place:location:latitude"')[1]
+                        .split('content="')[1]
+                        .split('"')[0]
+                    )
+                if 'place:location:longitude"' in line2:
+                    lng = (
+                        line2.split('place:location:longitude"')[1]
+                        .split('content="')[1]
+                        .split('"')[0]
+                    )
+                if '<a href="tel:' in line2:
+                    phone = line2.split('<a href="tel:')[1].split('"')[0]
+            if "null" in phone:
+                phone = "<MISSING>"
+            if state == "":
+                state = "<MISSING>"
+            if rawadd.count("|") == 2:
+                add = rawadd.split("|")[0].split(",")[0].strip()
+                city = rawadd.split("|")[0].rsplit(",", 1)[1].strip()
+                state = "<MISSING>"
+                zc = rawadd.split("|")[1].strip()
+                country = rawadd.split("|")[2].strip()
+            if rawadd.count("|") == 3:
+                add = rawadd.split("|")[0].split(",")[0].strip()
+                city = rawadd.split("|")[0].rsplit(",", 1)[1].strip()
+                state = rawadd.split("|")[1].strip()
+                zc = rawadd.split("|")[2].strip()
+                country = rawadd.split("|")[3].strip()
+            state = state.replace("&nbsp;", "")
+            city = city.replace("&nbsp;", "")
+            if zc == "":
+                zc = "<MISSING>"
+            if "PO Box" in city:
+                add = add + " " + city
+                add = add.strip()
+                city = "<MISSING>"
+            if " Hotels" not in name and name != "":
+                yield SgRecord(
+                    locator_domain=website,
+                    page_url=loc,
+                    location_name=name,
+                    street_address=add,
+                    city=city,
+                    state=state,
+                    zip_postal=zc,
+                    country_code=country,
+                    phone=phone,
+                    location_type=typ,
+                    store_number=store,
+                    latitude=lat,
+                    longitude=lng,
+                    hours_of_operation=hours,
                 )
-                rawadd = rawadd.replace("  ", " ")
-            if 'place:location:latitude"' in line2:
-                lat = (
-                    line2.split('place:location:latitude"')[1]
-                    .split('content="')[1]
-                    .split('"')[0]
-                )
-            if 'place:location:longitude"' in line2:
-                lng = (
-                    line2.split('place:location:longitude"')[1]
-                    .split('content="')[1]
-                    .split('"')[0]
-                )
-            if '<a href="tel:' in line2:
-                phone = line2.split('<a href="tel:')[1].split('"')[0]
-        if "null" in phone:
-            phone = "<MISSING>"
-        if state == "":
-            state = "<MISSING>"
-        if rawadd.count("|") == 2:
-            add = rawadd.split("|")[0].split(",")[0].strip()
-            city = rawadd.split("|")[0].rsplit(",", 1)[1].strip()
-            state = "<MISSING>"
-            zc = rawadd.split("|")[1].strip()
-            country = rawadd.split("|")[2].strip()
-        if rawadd.count("|") == 3:
-            add = rawadd.split("|")[0].split(",")[0].strip()
-            city = rawadd.split("|")[0].rsplit(",", 1)[1].strip()
-            state = rawadd.split("|")[1].strip()
-            zc = rawadd.split("|")[2].strip()
-            country = rawadd.split("|")[3].strip()
-        state = state.replace("&nbsp;", "")
-        city = city.replace("&nbsp;", "")
-        if zc == "":
-            zc = "<MISSING>"
-        if "PO Box" in city:
-            add = add + " " + city
-            add = add.strip()
-            city = "<MISSING>"
-        if " Hotels" not in name and name != "":
-            yield SgRecord(
-                locator_domain=website,
-                page_url=loc,
-                location_name=name,
-                street_address=add,
-                city=city,
-                state=state,
-                zip_postal=zc,
-                country_code=country,
-                phone=phone,
-                location_type=typ,
-                store_number=store,
-                latitude=lat,
-                longitude=lng,
-                hours_of_operation=hours,
-            )
+        except:
+            pass
 
 
 def scrape():
