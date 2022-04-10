@@ -63,7 +63,6 @@ def fetch_data():
                 name = line2.split('<h2 class="centers__header__title">')[1].split("<")[
                     0
                 ]
-                print(name)
             if '"lat":"' in line2:
                 lat = line2.split('"lat":"')[1].split('"')[0]
                 lng = line2.split('"lng":"')[1].split('"')[0]
