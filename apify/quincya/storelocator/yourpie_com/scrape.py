@@ -1,3 +1,4 @@
+import os
 import re
 
 from bs4 import BeautifulSoup
@@ -21,6 +22,12 @@ def fetch_data(sgw: SgWriter):
     headers = {"User-Agent": user_agent}
 
     session = SgRequests()
+    proxy_password = os.environ["PROXY_PASSWORD"]
+    proxy_url = "http://groups-RESIDENTIAL,country-US:{}@proxy.apify.com:8000/".format(
+        proxy_password
+    )
+    proxies = {"http": proxy_url, "https": proxy_url}
+    session.proxies = proxies
 
     found_poi = []
 
@@ -30,6 +37,7 @@ def fetch_data(sgw: SgWriter):
     search = DynamicZipSearch(
         country_codes=[SearchableCountries.USA],
         max_search_distance_miles=max_distance,
+        expected_search_radius_miles=max_distance,
         max_search_results=max_results,
     )
 
