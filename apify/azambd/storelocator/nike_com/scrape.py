@@ -240,6 +240,8 @@ def fetch_data(driver):
             city = "Toco"
         if city == "598-8509":
             city = "泉佐野市"
+        if "6Th Of October Cairo" in str(city):
+            city = "6Th Of October"
 
         location_name = update_location_name(location_name)
 
