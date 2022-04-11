@@ -55,11 +55,21 @@ def fetch_data(sgw: SgWriter):
             .strip()
             or "<MISSING>"
         )
+        location_name = (
+            "".join(
+                tree.xpath(
+                    f'//td[contains(text(), "{street_address}")]/preceding-sibling::td[last()]//text()'
+                )
+            )
+            .replace("\n", "")
+            .strip()
+            or "<MISSING>"
+        )
 
         row = SgRecord(
             locator_domain=locator_domain,
             page_url=page_url,
-            location_name=SgRecord.MISSING,
+            location_name=location_name,
             street_address=street_address,
             city=city,
             state=state,
