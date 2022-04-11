@@ -250,6 +250,117 @@ class CleanRecord:
 
         return cleanRecord
 
+    def USA2(badRecord, config, country, locale):
+        cleanRecord = {}
+        cleanRecord["locator_domain"] = config.get("Domain")
+        try:
+            cleanRecord["location_name"] = badRecord["properties"]["name"]
+        except Exception:
+            cleanRecord["location_name"] = None
+        cleanRecord["latitude"] = badRecord["geometry"]["coordinates"][1]
+        cleanRecord["longitude"] = badRecord["geometry"]["coordinates"][0]
+        cleanRecord["street_address1"] = badRecord["properties"]["addressLine1"]
+        if not cleanRecord["location_name"]:
+            try:
+                cleanRecord["location_name"] = badRecord["properties"]["addressLine2"]
+            except Exception:
+                cleanRecord["street_address2"] = ""
+        else:
+            try:
+                badRecord["properties"]["addressLine2"] = badRecord["properties"][
+                    "addressLine2"
+                ]
+                cleanRecord["street_address2"] = badRecord["properties"]["addressLine2"]
+            except Exception:
+                cleanRecord["street_address2"] = ""
+        cleanRecord["street_address3"] = ""
+        cleanRecord["street_address4"] = ""
+        try:
+            cleanRecord["city"] = badRecord["properties"]["addressLine3"]
+        except Exception:
+            cleanRecord["city"] = ""
+        try:
+            cleanRecord["state"] = badRecord["properties"]["subDivision"]
+        except Exception:
+            cleanRecord["state"] = ""
+        try:
+            cleanRecord["zipcode"] = badRecord["properties"]["postcode"]
+        except Exception:
+            cleanRecord["zipcode"] = ""
+        try:
+            cleanRecord["country_code"] = badRecord["properties"]["addressLine4"]
+        except Exception:
+            cleanRecord["country_code"] = ""
+        try:
+            cleanRecord["phone"] = badRecord["properties"]["telephone"]
+        except Exception:
+            cleanRecord["phone"] = ""
+        cleanRecord["store_number"] = badRecord["properties"]["id"]
+        try:
+            cleanRecord["hours_of_operation"] = (
+                str(list(badRecord["properties"]["restauranthours"].items()))
+                .replace("'", "")
+                .replace("(", "")
+                .replace(")", "")
+                .replace("[", "")
+                .replace("]", "")
+                .replace("hours", "")
+            )
+        except Exception:
+            cleanRecord["hours_of_operation"] = ""
+        cleanRecord["location_type"] = (
+            badRecord["properties"]["filterType"]
+            if "OPEN" in badRecord["properties"]["openstatus"]
+            else badRecord["properties"]["openstatus"]
+        )
+        cleanRecord["raw_address"] = ""
+        identifier = None
+        cleanRecord["page_url"] = None
+        try:
+            cleanRecord["page_url"] = "https://{}/{}/{}/location/{}.html".format(
+                cleanRecord["locator_domain"],
+                country,
+                locale,
+                badRecord["properties"]["identifierValue"],
+            )
+            cleanRecord["store_number"] = badRecord["properties"]["identifierValue"]
+        except Exception:
+            cleanRecord["page_url"] = None
+
+        if not cleanRecord["page_url"]:
+            for dent in badRecord["properties"]["identifiers"]["storeIdentifier"]:
+                if dent["identifierType"] == "NSN":
+                    identifier = dent["identifierValue"]
+            if identifier:
+                cleanRecord["page_url"] = "https://{}/{}/{}/location/{}.html".format(
+                    cleanRecord["locator_domain"], country, locale, identifier
+                )
+            else:
+                try:
+                    cleanRecord[
+                        "page_url"
+                    ] = "https://{}/{}/{}/location/{}.html".format(
+                        cleanRecord["locator_domain"],
+                        country,
+                        locale,
+                        badRecord["properties"]["identifiers"]["storeIdentifier"][1][
+                            "identifierValue"
+                        ],
+                    )
+                except Exception:
+                    cleanRecord[
+                        "page_url"
+                    ] = "https://{}/{}/{}/location/{}.html".format(
+                        cleanRecord["locator_domain"],
+                        country,
+                        locale,
+                        badRecord["properties"]["identifiers"]["storeIdentifier"][0][
+                            "identifierValue"
+                        ],
+                    )
+
+        return cleanRecord
+
     def DEDUPE(badRecord):
         cleanRecord = {}
         cleanRecord["locator_domain"] = badRecord["locator_domain"]
