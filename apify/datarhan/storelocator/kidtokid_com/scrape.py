@@ -27,6 +27,8 @@ def fetch_data():
         page_url = urljoin(start_url, url)
         loc_response = session.get(page_url)
         loc_dom = etree.HTML(loc_response.text)
+        if loc_dom.xpath('//div[contains(text(), "coming soon")]'):
+            continue
 
         location_name = " ".join(
             loc_dom.xpath(
