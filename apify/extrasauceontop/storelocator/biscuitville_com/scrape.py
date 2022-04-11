@@ -6,6 +6,9 @@ from webdriver_manager.chrome import ChromeDriverManager
 from sgscrape import simple_scraper_pipeline as sp
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries, Grain_4
 from sgrequests import SgRequests
+import ssl
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 
 def get_driver(url, class_name, driver=None):
@@ -102,13 +105,23 @@ def get_data():
                     location_type = location["service_type"]
                     latitude = location["lat"]
                     longitude = location["lng"]
-                    hours = (
-                        location["details"]
-                        .replace(" \r\n", ", ")
-                        .replace("\n", ", ")
-                        .replace("\r", "")
-                    )
-                    hours = hours.split(", ,")[0]
+                    if "coming soon" in location["details"].lower():
+                        hours = "Coming Soon"
+                    else:
+                        hours = (
+                            location["details"]
+                            .replace(" \r\n", ", ")
+                            .replace("\n", ", ")
+                            .replace("\r", "")
+                        )
+                        hours = hours.split(", ,")[0]
+
+                        hours = (
+                            hours.replace("<p>", "")
+                            .replace("<br />", " ")
+                            .split("<span")[0]
+                            .strip()
+                        )
                     search.found_location_at(latitude, longitude)
 
                     yield {

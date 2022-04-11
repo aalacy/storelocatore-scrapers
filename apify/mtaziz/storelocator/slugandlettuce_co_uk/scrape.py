@@ -105,13 +105,17 @@ def fetch_records(postcode, sgw: SgWriter):
             ra3 = [" ".join(i.split()) for i in ra2]
             ra4 = [i for i in ra3 if i]
             ra5 = ", ".join(ra4)
+            city = ""
+            city = _["TownCity"]
+            if " - " in city:
+                city = city.split(" - ")[0].rstrip()
 
             item = SgRecord(
                 locator_domain=DOMAIN,
                 page_url=page_url,
                 location_name=_["UnitName"] or MISSING,
                 street_address=sta,
-                city=_["TownCity"] or MISSING,
+                city=city,
                 state=_["County"] or MISSING,
                 zip_postal=_["PostCode"] or MISSING,
                 country_code="GB",
