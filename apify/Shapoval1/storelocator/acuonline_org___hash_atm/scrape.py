@@ -5,9 +5,10 @@ from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
-from sgscrape.pause_resume import CrawlStateSingleton
+
 from concurrent import futures
 from sglogging import sglog
+
 
 locator_domain = "acuonline.org"
 log = sglog.SgLogSetup().get_logger(logger_name=locator_domain)
@@ -55,7 +56,7 @@ def get_data(coord, sgw: SgWriter):
         js = r.json()["Features"]
 
         if js:
-            log.info(f"From {lat,lng} stores = {len(js)}")
+            log.info(f"From {lat,lng} stores found = {len(js)}")
             for j in js:
                 a = j.get("Properties")
                 page_url = "https://www.acuonline.org/home/resources/locations"
@@ -113,12 +114,14 @@ def get_data(coord, sgw: SgWriter):
 
                 sgw.write_row(row)
     except Exception as e:
-        log.info(f"No JSON: {e}")
+        log.info(f"Err: {e}")
+        pass
 
 
 def fetch_data(sgw: SgWriter):
     coords = DynamicGeoSearch(
         country_codes=[SearchableCountries.USA],
+        expected_search_radius_miles=0.5,
         max_search_results=100,
         granularity=Grain_2(),
     )
@@ -130,7 +133,6 @@ def fetch_data(sgw: SgWriter):
 
 
 if __name__ == "__main__":
-    CrawlStateSingleton.get_instance().save(override=True)
     session = SgRequests()
     with SgWriter(
         deduper=SgRecordDeduper(

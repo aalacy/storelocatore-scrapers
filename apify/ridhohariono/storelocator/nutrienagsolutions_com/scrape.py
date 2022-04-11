@@ -29,24 +29,45 @@ def fetch_data():
     soup = pull_content(LOCATION_URL)
     contents = soup.select("ul.locations li")
     for row in contents:
-        location_name = row["data-title"].strip()
-        street_address = row["data-address"].replace("\n", ",").strip()
+        location_name = row["data-title"].replace('"', "").strip()
+        street_address = row["data-address"].replace("\n", ",").replace('"', "").strip()
         city = row["data-city"]
         state = row["data-state"]
-        zip_postal = row["data-zipcode"]
-        if len(zip_postal) < 5:
-            zip_postal = "0" + zip_postal
         try:
-            phone = row["data-phone"]
+            zip_postal = row["data-zipcode"]
+        except:
+            zip_postal = MISSING
+        try:
+            phone = row["data-phone"].replace('"', "").strip()
         except:
             phone = MISSING
-        hours_of_operation = MISSING
         location_type = row["data-type"]
         country_code = "US"
+        if len(zip_postal.split(" ")) > 1 or "Humboldt" in city:
+            country_code = "CA"
+
+        # Fix Broken HTML Structure
+        if "RetailBranch" in city and len(zip_postal) == 2:
+            city = state
+            state = zip_postal
+            zip_postal = MISSING
+            location_type = "RetailBranch"
+            street_address = row["data-type"]
+            if phone == state:
+                phone = MISSING
+            if row["data-latitude"] == "CAN":
+                country_code = "CA"
+            else:
+                country_code = "US"
+
+        hours_of_operation = MISSING
         store_number = MISSING
         try:
             latitude = row["data-latitude"]
             longitude = row["data-longitude"]
+            if "USA" in latitude or "CAN" in latitude:
+                latitude = MISSING
+                longitude = MISSING
         except:
             latitude = MISSING
             longitude = MISSING

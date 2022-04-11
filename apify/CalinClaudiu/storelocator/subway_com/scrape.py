@@ -1,7 +1,7 @@
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-from sgscrape.pause_resume import SerializableRequest, CrawlStateSingleton
+from sgscrape.pause_resume import CrawlStateSingleton
 from sgrequests.sgrequests import SgRequests
 from sgzip.dynamic import SearchableCountries, Grain_8
 from sgzip.dynamic import DynamicGeoSearch
@@ -400,11 +400,17 @@ def dattafetch(search, http1):
 
 if __name__ == "__main__":
     state = CrawlStateSingleton.get_instance()
+    tocopy = SearchableCountries.ALL
+    tocrawl = []
+    for country in tocopy:
+        if any(country == c for c in ["cn", "kz", "ir", "sa"]):
+            continue
+        tocrawl.append(country)
     # additionally to 'search_type', 'DynamicSearchMaker' has all options that all `DynamicXSearch` classes have.
     search = DynamicGeoSearch(
-        country_codes=SearchableCountries.ALL,
+        country_codes=tocrawl,
         granularity=Grain_8(),
-        expected_search_radius_miles=100,
+        expected_search_radius_miles=8,
     )
     with SgWriter(
         deduper=SgRecordDeduper(
@@ -418,14 +424,5 @@ if __name__ == "__main__":
         )
     ) as writer:
         with SgRequests() as http1:
-            init = state.get_misc_value(
-                "init", default_factory=lambda: grab_initial(http1, state)
-            )
-            for link in init:
-                state.push_request(
-                    SerializableRequest(url=link["link"].replace("../", ""))
-                )
-            for rec in fetch_main(state, http1):
-                writer.write_row(rec)
             for rec in dattafetch(search, http1):
                 writer.write_row(rec)
