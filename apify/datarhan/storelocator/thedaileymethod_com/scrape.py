@@ -24,6 +24,10 @@ def fetch_data():
         state = poi_html.xpath("@state")[0]
         zip_code = poi_html.xpath("@postal")[0]
         phone = poi_html.xpath("@phone")[0]
+        if not phone and "thedaileymethod" in page_url:
+            loc_response = session.get(page_url)
+            loc_dom = etree.HTML(loc_response.text)
+            phone = loc_dom.xpath('//a[@class="mobile-phone"]/@href')[0].split(":")[-1]
         country = poi_html.xpath("@country")[0]
         latitude = poi_html.xpath("@lat")[0]
         longitude = poi_html.xpath("@lng")[0]
