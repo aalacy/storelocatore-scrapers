@@ -77,6 +77,11 @@ def fetch_data():
         log.info(f"Location Name: {location_name}")
         store_number = grid["retailerStoreId"]
         street_address = grid["addressLine1"]
+        if grid["addressLine2"]:
+            street_address += " " + grid["addressLine2"]
+        if grid["addressLine3"]:
+            street_address += " " + grid["addressLine3"]
+
         city = grid["city"]
         state = grid["countyProvinceState"]
         zip_postal = grid["postCode"]
@@ -88,6 +93,7 @@ def fetch_data():
         location_type = "<MISSING>"
         page_url = "https://www.portersliquor.com.au/sm/delivery/rsid/2043/store"
         country_code = "AU"
+        raw_address = f"{street_address}, {city}, {state} {zip_postal}"
 
         yield {
             "locator_domain": DOMAIN,
@@ -104,6 +110,7 @@ def fetch_data():
             "location_type": location_type,
             "hours": hours_of_operation,
             "country_code": country_code,
+            "raw_address": raw_address,
         }
 
 
@@ -134,6 +141,7 @@ def scrape():
         ),
         hours_of_operation=sp.MappingField(mapping=["hours"], is_required=False),
         location_type=sp.MappingField(mapping=["location_type"], is_required=False),
+        raw_address=sp.MappingField(mapping=["raw_address"], is_required=False),
     )
 
     pipeline = sp.SimpleScraperPipeline(
