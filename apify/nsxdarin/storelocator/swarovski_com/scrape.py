@@ -25,12 +25,12 @@ def fetch_data():
                     time.sleep(1)
                     Found = False
                     count = count + 1
-                    logger.info(str(x) + "-" + str(y))
+                    logger.info(str(y) + "-" + str(x))
                     url = (
                         "https://www.swarovski.com/en-AA/store-finder/list/?allBaseStores=true&geoPoint.latitude="
-                        + str(x)
-                        + "&geoPoint.longitude="
                         + str(y)
+                        + "&geoPoint.longitude="
+                        + str(x)
                         + "&radius=500"
                     )
                     try:
