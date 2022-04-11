@@ -96,11 +96,14 @@ def fetch_data():
             except Exception as e:
                 log.info(f"loclist Error: {e}")
                 response = get_response(country_code, link)
-                loclist = (
-                    response.text.split('data-locations="')[1]
-                    .split("data-icon=")[0]
-                    .replace('}]"', "}]")
-                )
+                try:
+                    loclist = (
+                        response.text.split('data-locations="')[1]
+                        .split("data-icon=")[0]
+                        .replace('}]"', "}]")
+                    )
+                except:
+                    continue
 
             loclist = BeautifulSoup(loclist, "html.parser")
             try:

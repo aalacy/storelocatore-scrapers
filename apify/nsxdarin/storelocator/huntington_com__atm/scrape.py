@@ -42,7 +42,7 @@ def get_data(coords, sgw: SgWriter):
         street_address = a.get("LocStreet") or "<MISSING>"
         city = a.get("LocCity") or "<MISSING>"
         state = a.get("LocState") or "<MISSING>"
-        postal = a.get("LocName") or "<MISSING>"
+        postal = a.get("LocZip") or "<MISSING>"
         country_code = "US"
         phone = a.get("LocPhone") or "<MISSING>"
         latitude = j.get("geometry").get("coordinates")[1]
@@ -97,12 +97,12 @@ def get_data(coords, sgw: SgWriter):
 def fetch_data(sgw: SgWriter):
     coords = DynamicGeoSearch(
         country_codes=[SearchableCountries.USA],
-        max_search_distance_miles=100,
-        expected_search_radius_miles=100,
+        max_search_distance_miles=1,
+        expected_search_radius_miles=1,
         max_search_results=None,
     )
 
-    with futures.ThreadPoolExecutor(max_workers=5) as executor:
+    with futures.ThreadPoolExecutor(max_workers=2) as executor:
         future_to_url = {executor.submit(get_data, url, sgw): url for url in coords}
         for future in futures.as_completed(future_to_url):
             future.result()
@@ -110,5 +110,5 @@ def fetch_data(sgw: SgWriter):
 
 if __name__ == "__main__":
     session = SgRequests()
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
         fetch_data(writer)
