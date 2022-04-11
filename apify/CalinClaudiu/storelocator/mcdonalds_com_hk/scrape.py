@@ -21,6 +21,7 @@ def OneLink():
 
     def record_cleaner(record):
         parsed = parse_address_intl(record["address"])
+        record["raw_address"] = record["address"]
         record["country"] = parsed.country if parsed.country else "<MISSING>"
         record["state"] = parsed.state if parsed.state else "<MISSING>"
         record["city"] = parsed.city if parsed.city else "<MISSING>"
@@ -28,7 +29,6 @@ def OneLink():
         record["address"] = parsed.street_address_1
         if parsed.street_address_2:
             record["address"] = record["address"] + " " + parsed.street_address_2
-        record["raw_address"] = record["address"]
         return record
 
     data = getPage()

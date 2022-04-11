@@ -56,7 +56,7 @@ def get_data(coord, sgw: SgWriter):
         js = r.json()["Features"]
 
         if js:
-            log.info(f"From {lat,lng} stores = {len(js)}")
+            log.info(f"From {lat,lng} stores found = {len(js)}")
             for j in js:
                 a = j.get("Properties")
                 page_url = "https://www.acuonline.org/home/resources/locations"
@@ -114,18 +114,19 @@ def get_data(coord, sgw: SgWriter):
 
                 sgw.write_row(row)
     except Exception as e:
-        log.info(f"No JSON: {e}")
+        log.info(f"Err: {e}")
         pass
 
 
 def fetch_data(sgw: SgWriter):
     coords = DynamicGeoSearch(
         country_codes=[SearchableCountries.USA],
+        expected_search_radius_miles=0.5,
         max_search_results=100,
         granularity=Grain_2(),
     )
 
-    with futures.ThreadPoolExecutor(max_workers=8) as executor:
+    with futures.ThreadPoolExecutor(max_workers=10) as executor:
         future_to_url = {executor.submit(get_data, url, sgw): url for url in coords}
         for future in futures.as_completed(future_to_url):
             future.result()

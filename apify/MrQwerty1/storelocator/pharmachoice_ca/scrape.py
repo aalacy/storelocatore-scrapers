@@ -18,6 +18,9 @@ def get_international(line):
     state = adr.state or SgRecord.MISSING
     postal = adr.postcode or SgRecord.MISSING
 
+    if (len(postal) < 6 or postal == SgRecord.MISSING) and line:
+        postal = " ".join(line.split()[-2:])
+
     return street, city, state, postal
 
 
@@ -60,7 +63,9 @@ def get_data(page_url, sgw: SgWriter):
     raw_address = " ".join(
         " ".join(tree.xpath("//div[@class='wpsl-location-address1']/text()")).split()
     )
-    raw_address = raw_address.replace(";", "").replace("&#39", "'").replace("'", ",")
+    raw_address = (
+        raw_address.replace(";", "").replace("&#39", "'").replace("'", ",").strip()
+    )
     street_address, city, state, postal = get_international(raw_address)
     phone = "".join(tree.xpath("//span[@class='phoneNumber']/text()")).strip()
     if "/" in phone:
@@ -82,6 +87,10 @@ def get_data(page_url, sgw: SgWriter):
     for h in hours:
         day = "".join(h.xpath(".//text()")).strip()
         inter = "".join(h.xpath("./following-sibling::text()[1]")).strip()
+        if "closed" in inter.lower():
+            inter = "Closed"
+        if ";" in inter:
+            inter = inter.split(";")[0]
         if not inter:
             continue
         _tmp.append(f"{day} {inter}")
