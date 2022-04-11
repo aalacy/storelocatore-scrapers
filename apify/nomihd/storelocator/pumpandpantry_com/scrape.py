@@ -56,6 +56,10 @@ def fetch_data():
             hours = store_sel.xpath(
                 '//div[./h3[contains(text(),"HOURS")]]/div/b//text()'
             )
+            if len(hours) <= 0:
+                hours = store_sel.xpath(
+                    '//div[./h3[contains(text(),"HOURS")]]/div//text()'
+                )
 
         zip = stores[key]["zp"]
 

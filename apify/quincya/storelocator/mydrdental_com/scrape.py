@@ -46,30 +46,42 @@ def fetch_data(sgw: SgWriter):
 
         country_code = "US"
         phone = list(item.stripped_strings)[-1]
+        if not phone[-1:].isdigit():
+            phone = list(item.stripped_strings)[-2]
         link = item.a["href"]
         store_number = "<MISSING>"
         location_type = "<MISSING>"
 
-        req = session.get(link, headers=headers)
+        try:
+            req = session.get(link, headers=headers)
+            new_base = BeautifulSoup(req.text, "lxml")
+            got_page = True
+        except:
+            got_page = False
 
-        new_base = BeautifulSoup(req.text, "lxml")
-        gps_link = new_base.find("a", attrs={"class": "directions"})["href"]
-        latitude = gps_link[gps_link.find("=") + 1 : gps_link.find(",")].strip()
-        longitude = gps_link[gps_link.find(",") + 1 :].strip()
+        if got_page:
+            gps_link = new_base.find("a", attrs={"class": "directions"})["href"]
+            latitude = gps_link[gps_link.find("=") + 1 : gps_link.find(",")].strip()
+            longitude = gps_link[gps_link.find(",") + 1 :].strip()
 
-        raw_hours = list(
-            new_base.find("span", class_="elementor-icon-list-text")
-            .find_next("section")
-            .stripped_strings
-        )
-        days = raw_hours[:7]
-        hours = raw_hours[7:]
+            raw_hours = list(
+                new_base.find("span", class_="elementor-icon-list-text")
+                .find_next("section")
+                .stripped_strings
+            )
+            days = raw_hours[:7]
+            hours = raw_hours[7:]
 
-        hours_of_operation = ""
-        for i, day in enumerate(days):
-            hours_of_operation = (
-                hours_of_operation + " " + day + " " + hours[i]
-            ).strip()
+            hours_of_operation = ""
+            for i, day in enumerate(days):
+                hours_of_operation = (
+                    hours_of_operation + " " + day + " " + hours[i]
+                ).strip()
+        else:
+            latitude = ""
+            longitude = ""
+            hours_of_operation = ""
+            link = base_link
 
         sgw.write_row(
             SgRecord(

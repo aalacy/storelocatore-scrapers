@@ -71,11 +71,14 @@ def fetch_data():
             if street_address.startswith(","):
                 street_address = street_address[1:]
 
+            city = addr.city
+            if not city and "Grays" in raw_address:
+                city = "Grays"
             yield SgRecord(
                 page_url=base_url,
                 location_name=store["location_name"],
                 street_address=street_address,
-                city=addr.city,
+                city=city,
                 state=addr.state,
                 latitude=store["position"]["latitude"],
                 longitude=store["position"]["longitude"],

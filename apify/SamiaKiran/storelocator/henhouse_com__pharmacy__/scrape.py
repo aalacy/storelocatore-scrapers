@@ -69,8 +69,8 @@ def fetch_data():
                 loc[1]
                 .find("p")
                 .get_text(separator="|", strip=True)
-                .split("|")[0]
-                .replace("Store:", "")
+                .split("|")[1]
+                .replace("Pharmacy:", "")
             )
             hours_of_operation = (
                 loc[2].find("p").get_text(separator="|", strip=True).replace("|", " ")

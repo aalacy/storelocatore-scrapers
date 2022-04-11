@@ -1,77 +1,73 @@
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
-from bs4 import BeautifulSoup as bs
-from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sglogging import SgLogSetup
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries, Grain_8
 
-logger = SgLogSetup().get_logger("takebackday")
+logger = SgLogSetup().get_logger("")
 
 _headers = {
+    "accept": "application/json, text/plain, */*",
+    "accept-encoding": "gzip, deflate, br",
+    "accept-language": "en-US,en;q=0.9",
+    "content-type": "application/x-www-form-urlencoded",
+    "origin": "https://findtreatment.samhsa.gov",
+    "referer": "https://findtreatment.samhsa.gov/locator",
+    "x-requested-with": "XMLHttpRequest",
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
 }
 
-locator_domain = "https://takebackday.dea.gov/"
-base_url = "https://apps2.deadiversion.usdoj.gov/pubdispsearch/spring/main"
+locator_domain = "https://www.dea.gov"
+base_url = "https://findtreatment.samhsa.gov/locator/listing"
 
 
-def fetch_data(search):
+def fetch_data():
+    page = 1
     with SgRequests() as session:
-        for zip in search:
-            rr = session.get(base_url, headers=_headers)
-            execution = rr.url.query.decode().split("execution=")[-1]
+        while True:
             data = {
-                "searchForm": "searchForm",
-                "searchForm:zipCodeInput": zip,
-                "searchForm:cityInput": "",
-                "searchForm:stateInput_focus": "",
-                "searchForm:stateInput_input": "",
-                "searchForm:radiusInput": "50",
-                "searchForm:submitSearchButton": "",
-                "javax.faces.ViewState": execution,
+                "sType": "SA",
+                "sAddr": "19.639994,-155.9969261",
+                "pageSize": "100",
+                "page": page,
+                "sort": "0",
             }
-            res = session.post(
-                base_url + f"?execution={execution}", headers=_headers, data=data
-            )
-            if res.status_code != 200:
-                continue
-            soup = bs(res.text, "lxml")
-            if "An unexpected error" in soup.text:
-                continue
-            locations = soup.select("table tbody tr")
-            logger.info(f"[{zip}] {len(locations)} found")
+            locations = session.post(base_url, headers=_headers, data=data).json()[
+                "rows"
+            ]
+            if not locations:
+                break
+            page += 1
+            logger.info(f"page {page} {len(locations)}")
             for _ in locations:
-                td = _.select("td")
-                if len(td) == 1:
-                    continue
-                addr = [dd.text.strip() for dd in td[1:4]]
-                street_address = addr[0]
-                if addr[1]:
-                    street_address += " " + addr[1]
+                street_address = _["street1"]
+                if _["street2"]:
+                    street_address += " " + _["street2"]
+                phone = _["phone"]
+                if phone:
+                    phone = phone.split("x")[0]
+                page_url = _["website"]
+                if page_url == "http://" or page_url == "https://":
+                    page_url = ""
                 yield SgRecord(
-                    location_name=list(td[0].stripped_strings)[-1],
+                    page_url=page_url,
+                    location_name="Drug Disposal Site at "
+                    + (_["name1"] + " " + _.get("name2")).upper().strip(),
                     street_address=street_address,
-                    city=addr[-1].split(",")[0].strip(),
-                    state=addr[-1].split(",")[-1].strip().split()[0].strip(),
-                    zip_postal=addr[-1].split(",")[-1].strip().split()[-1].strip(),
+                    city=_["city"],
+                    state=_["state"],
+                    zip_postal=_["zip"],
+                    latitude=_["latitude"],
+                    longitude=_["longitude"],
                     country_code="US",
+                    phone=phone,
                     locator_domain=locator_domain,
-                    raw_address=" ".join(addr),
                 )
 
 
 if __name__ == "__main__":
-    with SgWriter(
-        SgRecordDeduper(
-            SgRecordID({SgRecord.Headers.RAW_ADDRESS}),
-            duplicate_streak_failure_factor=100,
-        )
-    ) as writer:
-        search = DynamicZipSearch(
-            country_codes=[SearchableCountries.USA], granularity=Grain_8()
-        )
-        results = fetch_data(search)
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
+        results = fetch_data()
         for rec in results:
             writer.write_row(rec)

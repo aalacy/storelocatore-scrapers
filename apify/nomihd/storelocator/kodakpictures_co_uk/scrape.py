@@ -59,6 +59,8 @@ def fetch_data():
             zip = "".join(store.xpath("./@postal")).strip()
 
             country_code = "".join(store.xpath("./@country")).strip()
+            if "H.SHACKLETON LTD" == country_code:
+                country_code = "United Kingdom"
 
             hours_of_operation = "".join(store.xpath("./@hours1")).strip()
 

@@ -4,52 +4,59 @@ from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
+
+
+def remove_comma(text):
+    text = text.strip()
+    if text.endswith(","):
+        return text[:-1]
+    return text
 
 
 def fetch_data(sgw: SgWriter):
     r = session.get(page_url, headers=headers)
     tree = html.fromstring(r.text)
-    divs = tree.xpath("//div[./p[contains(text(), '☎')]]|//div[./h3/strong]")
+    divs = tree.xpath(
+        "//div[@class='row sqs-row' and count(./div[@class='col sqs-col-6 span-6'])=2]"
+    )
 
-    js = tree.xpath("//div[@data-block-json]/@data-block-json")
-    js_list = []
-    for j in js:
+    for d in divs:
+        location_name = "".join(d.xpath(".//h3[1]//text()"))
+        js = d.xpath(".//div[@data-block-json]/@data-block-json")[0]
         try:
-            j = json.loads(j)["location"]
+            j = json.loads(js)["location"]
+            latitude = j.get("markerLat")
+            longitude = j.get("markerLng")
         except:
-            continue
-        js_list.append(j)
+            if "thumbnailUrl" in js:
+                latitude, longitude = js.split("center=")[-1].split("&")[0].split(",")
+            else:
+                latitude, longitude = SgRecord.MISSING, SgRecord.MISSING
 
-    for d, j in zip(divs, js_list):
-        try:
-            location_name = d.xpath(".//h3//text()")[0].strip()
-            street_address = "".join(
-                d.xpath(".//h3/following-sibling::p[1]/text()")
-            ).strip()
-        except:
-            location_name = d.xpath(".//p/strong/text()")[0].strip()
-            street_address = d.xpath(".//p[./strong]/text()")[0].strip()
-
-        line = j.get("addressLine2").replace(",", "")
+        location_type = SgRecord.MISSING
+        if "coming soon" in location_name.lower():
+            location_type = "Coming Soon"
+        street_address = remove_comma(
+            "".join(d.xpath(".//h3[1]/following-sibling::p[1]/text()"))
+        )
+        line = "".join(d.xpath(".//h3[1]/following-sibling::p[2]/text()"))
         postal = line.split()[-1]
         state = line.split()[-2]
-        city = line.replace(postal, "").replace(state, "").strip()
-        phone = (
-            "".join(d.xpath(".//*[contains(text(), '☎')]//text()"))
-            .replace("☎", "")
-            .strip()
-        )
-        if "jason" in phone:
-            phone = phone.split("jason")[0].strip()
-        if " - " in phone:
-            phone = phone.split(" - ")[0].strip()
-        latitude = j.get("markerLat")
-        longitude = j.get("markerLng")
+        city = remove_comma(line.replace(postal, "").replace(state, "").strip())
+        try:
+            phone = (
+                d.xpath(".//a[contains(@href, 'tel:')]/text()")[0]
+                .replace("\xa0", " ")
+                .strip()
+            )
+        except IndexError:
+            phone = SgRecord.MISSING
+
         hours_of_operation = " ".join(
             ";".join(
                 d.xpath(
-                    ".//p[./strong[contains(text(), 'Hours')]]/following-sibling::p/text()"
+                    ".//strong[contains(text(), 'Hours')]/following-sibling::text()"
                 )
             ).split()
         )
@@ -62,6 +69,7 @@ def fetch_data(sgw: SgWriter):
             state=state,
             zip_postal=postal,
             country_code="US",
+            location_type=location_type,
             phone=phone,
             latitude=latitude,
             longitude=longitude,
@@ -79,5 +87,7 @@ if __name__ == "__main__":
         "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0"
     }
     session = SgRequests()
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.LOCATION_NAME}))
+    ) as writer:
         fetch_data(writer)

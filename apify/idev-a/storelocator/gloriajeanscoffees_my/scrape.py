@@ -2,7 +2,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 import dirtyjson as json
 
@@ -37,7 +37,7 @@ def fetch_data():
             else:
                 s_idx -= 1
                 city = " ".join(c_z)
-                zip_postal = addr[-2]
+                zip_postal = addr[-2].split()[0]
             if city == "Wilayah Persekutuan" and "Kuala Lumpur" in raw_address:
                 city = "Kuala Lumpur"
             street_address = ", ".join(addr[:s_idx])
@@ -61,7 +61,9 @@ def fetch_data():
 
 
 if __name__ == "__main__":
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.RAW_ADDRESS}))
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

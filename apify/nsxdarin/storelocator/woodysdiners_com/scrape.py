@@ -1,3 +1,7 @@
+from sgrequests import SgRequests
+
+from bs4 import BeautifulSoup
+
 from sgselenium import SgChrome
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
@@ -13,17 +17,54 @@ user_agent = (
 
 
 def fetch_data():
-    website = "woodysdiners.com"
-    typ = "Restaurant"
-    country = "US"
-    loc = "<MISSING>"
-    store = "<MISSING>"
+
     url = "https://www.woodysdiners.com/locations"
+    loc = "https://www.woodysdiners.com/locations"
+
+    headers = {"User-Agent": user_agent}
+
+    session = SgRequests()
+    req = session.get(url, headers=headers)
+    base = BeautifulSoup(req.text, "lxml")
+
+    raw_data = base.find(id="navbar-wrap").p.text.split("\n")
+    website = "woodysdiners.com"
+    typ = ""
+    country = "US"
+    store = "<MISSING>"
+    add = "21450 Yorba Linda Blvd."
+    city = "Yorba Linda"
+    state = "CA"
+    zc = "92887"
+    phone = raw_data[-2]
+    hours = raw_data[-1]
+    lat = "33.8773284"
+    lng = "-117.7550664"
+    name = "Woody's Yorba Linda"
+
+    if "21450 Yorba" in raw_data[1]:
+        yield SgRecord(
+            locator_domain=website,
+            page_url=loc,
+            location_name=name,
+            street_address=add,
+            city=city,
+            state=state,
+            zip_postal=zc,
+            country_code=country,
+            phone=phone,
+            location_type=typ,
+            store_number=store,
+            latitude=lat,
+            longitude=lng,
+            hours_of_operation=hours,
+        )
+
     with SgChrome(user_agent=user_agent) as driver:
         driver.get(url)
         driver.implicitly_wait(30)
         website = "woodysdiners.com"
-        typ = "Restaurant"
+        typ = ""
         country = "US"
         store = "<MISSING>"
         text = driver.page_source
@@ -49,27 +90,30 @@ def fetch_data():
                 except:
                     hours = "<MISSING>"
                 hours = hours.replace('"', "")
-                yield SgRecord(
-                    locator_domain=website,
-                    page_url=loc,
-                    location_name=name,
-                    street_address=add,
-                    city=city,
-                    state=state,
-                    zip_postal=zc,
-                    country_code=country,
-                    phone=phone,
-                    location_type=typ,
-                    store_number=store,
-                    latitude=lat,
-                    longitude=lng,
-                    hours_of_operation=hours,
-                )
+                if "21450 Yorba Linda Blvd" not in add:
+                    yield SgRecord(
+                        locator_domain=website,
+                        page_url=loc,
+                        location_name=name,
+                        street_address=add,
+                        city=city,
+                        state=state,
+                        zip_postal=zc,
+                        country_code=country,
+                        phone=phone,
+                        location_type=typ,
+                        store_number=store,
+                        latitude=lat,
+                        longitude=lng,
+                        hours_of_operation=hours,
+                    )
 
 
 def scrape():
     results = fetch_data()
-    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(RecommendedRecordIds.PhoneNumberId)
+    ) as writer:
         for rec in results:
             writer.write_row(rec)
 
