@@ -6,6 +6,8 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
+import json
+
 
 headers = {
     "authority": "locations.fivebelow.com",
@@ -39,6 +41,7 @@ def fetch_data():
             + str(zip_code)
             + "&l=en"
         )
+
         try:
             headers["path"] = url.replace("https://locations.fivebelow.com", "")
             loclist = session.get(url, headers=headers).json()["response"]["entities"]
@@ -50,8 +53,10 @@ def fetch_data():
                     "entities"
                 ]
             except:
+
                 continue
         for loc in loclist:
+
             loc = loc["profile"]
 
             city = loc["address"]["city"]
@@ -66,7 +71,6 @@ def fetch_data():
                 + str(loc["address"]["line3"])
             )
             street = street.replace("None", "")
-            link = loc["c_pagesURL"]
 
             try:
                 lat = loc["geocodedCoordinate"]["lat"]
@@ -84,6 +88,7 @@ def fetch_data():
                 store = "<MISSING>"
             link = loc["c_pagesURL"]
             title = loc["c_aboutSectionTitle"]
+
             hours = ""
             try:
                 hourslist = loc["hours"]["normalHours"]
@@ -118,6 +123,46 @@ def fetch_data():
                 hours = "<MISSING>"
             if len(hours) < 3:
                 hours = "<MISSING>"
+            ltype = "<MISSING>"
+            if "opening" in loc["additionalHoursText"].lower():
+                ltype = "Opening Soon"
+            else:
+                if "<MISSING>" in hours:
+
+                    r = session.get(link, headers=headers)
+
+                    try:
+                        hourslist = r.text.split('"normalHours":', 1)[1].split(
+                            ']},"', 1
+                        )[0]
+                        hourslist = hourslist + "]"
+                        hourslist = json.loads(hourslist)
+
+                        hours = ""
+                        for hr in hourslist:
+                            day = hr["day"]
+                            start = (
+                                hr["intervals"]["start"][0:2]
+                                + ":"
+                                + hr["intervals"]["start"][2:]
+                            )
+                            endstr = hr["intervals"]["end"]
+                            close = int(endstr[0:2])
+                            if close > 12:
+                                close = close - 12
+                            hours = (
+                                hours
+                                + day
+                                + " "
+                                + start
+                                + " am - "
+                                + str(close)
+                                + ":"
+                                + endstr[2:]
+                                + " pm "
+                            )
+                    except:
+                        hours = "<MISSING>"
             yield SgRecord(
                 locator_domain="https://fivebelow.com/",
                 page_url=link,
@@ -129,7 +174,7 @@ def fetch_data():
                 country_code=ccode,
                 store_number=str(store),
                 phone=phone.strip(),
-                location_type="<MISSING>",
+                location_type=ltype,
                 latitude=str(lat),
                 longitude=str(longt),
                 hours_of_operation=hours,

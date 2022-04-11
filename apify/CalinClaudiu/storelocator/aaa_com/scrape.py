@@ -25,7 +25,7 @@ def fix_record(record):
     record["page_url"] = ""
     try:
         record["page_url"] = str(
-            f"https://branches.northeast.aaa.com/{record['addresses']['address']['stateProv']['code']}/{record['addresses']['address']['cityName'].replace(' ','-')}"
+            f"https://www.aaa.com/office/detail/{record['addresses']['address']['cityName'].replace(' ','%20')}-{record['addresses']['address']['stateProv']['code']}-{record['itemName'].replace(' ','%20')}-{record['id']}"
         )
     except Exception:
         pass
@@ -136,9 +136,10 @@ def nice_hours(operatingHours):
                 + operatingHours["close"]
                 + ";"
             )
+            res = list(res)
             if res[-1] == ";":
                 res.pop(-1)
-            return res
+            return "".join(res)
         else:
             return "<MISSING>"
 
