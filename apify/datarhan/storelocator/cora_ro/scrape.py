@@ -13,9 +13,7 @@ def fetch_data():
 
     start_url = "https://www.cora.ro/contact-us"
     domain = "cora.ro"
-    hdr = {
-        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
-    }
+
     frm = {
         "form_key": "ITW3NmxCtezwd3PF",
         "isAjax": "1",
