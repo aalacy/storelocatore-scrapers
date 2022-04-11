@@ -50,52 +50,32 @@ def fetch_data(sgw: SgWriter):
                     final_links.append(new_link)
                     link_num = link_num + 1
         logger.info("Expected: " + str(state_count) + " / Found: " + str(link_num))
-        if state_count - link_num > 2:
-            logger.info("RECHECK!")
-            session = SgRequests()
-            time.sleep(5)
-            logger.info("Processing: " + main_link)
-            req = session.get(main_link, headers=headers)
-            base = BeautifulSoup(req.text, "lxml")
-            state_count = int(base.find(class_="h2").text.split()[0])
-            next_items = base.find(class_="border-container-top").find_all(
-                class_="ga-link"
-            )
-            link_num = 0
-            for next_item in next_items:
-                link = next_item["href"]
-                next_req = session.get(link, headers=headers)
-                next_base = BeautifulSoup(next_req.text, "lxml")
+        for i in range(5):
+            if state_count - link_num > 10:
+                logger.info("DIFF TOO BIG..RECHECK!")
+                session = SgRequests()
+                time.sleep(10)
+                logger.info("Processing: " + main_link)
+                req = session.get(main_link, headers=headers)
+                base = BeautifulSoup(req.text, "lxml")
+                state_count = int(base.find(class_="h2").text.split()[0])
+                next_items = base.find(class_="border-container-top").find_all(
+                    class_="ga-link"
+                )
+                link_num = 0
+                for next_item in next_items:
+                    link = next_item["href"]
+                    next_req = session.get(link, headers=headers)
+                    next_base = BeautifulSoup(next_req.text, "lxml")
 
-                other_links = next_base.find_all(class_="location-name ga-link")
-                for other_link in other_links:
-                    new_link = other_link["href"]
-                    if new_link not in final_links:
-                        final_links.append(new_link)
-                        link_num = link_num + 1
-        if state_count - link_num > 50:
-            logger.info("DIFF TOO BIG..RECHECK!")
-            session = SgRequests()
-            time.sleep(10)
-            logger.info("Processing: " + main_link)
-            req = session.get(main_link, headers=headers)
-            base = BeautifulSoup(req.text, "lxml")
-            state_count = int(base.find(class_="h2").text.split()[0])
-            next_items = base.find(class_="border-container-top").find_all(
-                class_="ga-link"
-            )
-            link_num = 0
-            for next_item in next_items:
-                link = next_item["href"]
-                next_req = session.get(link, headers=headers)
-                next_base = BeautifulSoup(next_req.text, "lxml")
-
-                other_links = next_base.find_all(class_="location-name ga-link")
-                for other_link in other_links:
-                    new_link = other_link["href"]
-                    if new_link not in final_links:
-                        final_links.append(new_link)
-                        link_num = link_num + 1
+                    other_links = next_base.find_all(class_="location-name ga-link")
+                    for other_link in other_links:
+                        new_link = other_link["href"]
+                        if new_link not in final_links:
+                            final_links.append(new_link)
+                            link_num = link_num + 1
+            else:
+                break
 
     logger.info("Processing %s links ..." % (len(final_links)))
     for final_link in final_links:
