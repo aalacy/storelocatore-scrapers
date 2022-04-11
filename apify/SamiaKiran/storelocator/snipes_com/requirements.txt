@@ -2,6 +2,6 @@
 sgpostal==0.1.0
 sglogging==0.0.4
 sgrequests==0.2.10
-sgscrape==0.2.6
+sgscrape==0.2.9
 beautifulsoup4==4.10.0
 tenacity==7.0.0
