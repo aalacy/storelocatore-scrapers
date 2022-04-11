@@ -1,6 +1,9 @@
 from bs4 import BeautifulSoup
-import csv
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
 headers = {
@@ -8,140 +11,86 @@ headers = {
 }
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
 def fetch_data():
-    data = []
-    url = "https://www.bankwithunited.com/find-a-location"
-    r = session.get(url, headers=headers, verify=False)
+
+    url = "https://www.bankwithunited.com/find-a-location.html"
+    r = session.get(url, headers=headers)
+
     soup = BeautifulSoup(r.text, "html.parser")
-    branchlist = soup.findAll("div", {"class": "location-content"})
-    divlist = soup.findAll("div", {"class": "views-col"})
-    geolist = soup.findAll("div", {"class": "geolocation-location"})
-
-    p = 0
-
-    for i in range(0, len(branchlist)):
-        title = (
-            branchlist[i]
-            .find("div", {"class": "views-field-field-branch-name"})
-            .text.strip()
+    divlist = soup.findAll("div", {"class": "cmp-locationfinder__item"})
+    for div in divlist:
+        title = div.find("div", {"class": "cmp-locationfinder__item-title"}).text
+        llist = div.find("ul", {"class": "cmp-locationfinder__item-amenities"}).findAll(
+            "li"
         )
-        street = (
-            branchlist[i]
-            .find("div", {"class": "views-field-field-address-address-line1"})
-            .text.strip()
-        )
-
-        city = (
-            branchlist[i]
-            .find("span", {"class": "views-field views-field-field-address-locality"})
-            .text.strip()
-        )
-        state = (
-            branchlist[i]
-            .find("span", {"class": "views-field-field-address-administrative-area"})
-            .text.strip()
-        )
-        pcode = (
-            branchlist[i]
-            .find("span", {"class": "views-field-field-address-postal-code"})
-            .text.strip()
-        )
-        phone = (
-            branchlist[i]
-            .find("div", {"class": "views-field-field-phone-number"})
-            .text.strip()
-        )
-        if "ATM" in title or phone == "":
-            ltype = "ATM"
-            phone = "<MISSING>"
+        ltype = ""
+        for l in llist:
+            ltype = ltype + l.text + " | "
+        if len(ltype) < 2:
+            ltype = "<MISSING>"
         else:
-            ltype = "Branch"
-        hours = "<MISSING>"
-        try:
-            lat = geolist[i + 1]["data-lat"]
-            longt = geolist[i + 1]["data-lng"]
-        except:
-            lat = longt = "<MISSING>"
-        for div in divlist:
-            street1 = div.find(
-                "div", {"class": "views-field-field-address-address-line1"}
-            ).text.strip()
-            if street1 == street:
-                ltype = div.find(
-                    "div", {"class": "views-field-field-amenities"}
-                ).text.strip()
-                hours = (
-                    div.find(
-                        "div", {"class": "views-field-field-location-service-hours"}
-                    )
-                    .text.replace("\n", " ")
-                    .strip()
-                )
-                try:
-                    title = (
-                        div.find("div", {"class": "views-field-title"}).text.strip()
-                        + " - "
-                        + title
-                    )
-                except:
-                    pass
-        data.append(
-            [
-                "https://www.bankwithunited.com/",
-                "https://www.bankwithunited.com/find-a-location",
-                title,
-                street,
-                city,
-                state,
-                pcode,
-                "US",
-                "<MISSING>",
-                phone,
-                ltype,
-                lat,
-                longt,
-                hours,
-            ]
+            ltype = ltype[0 : len(ltype) - 2]
+        lat = div.find("div", {"class": "cmp-locationfinder__item-address"})[
+            "data-cmp-item-latitude"
+        ]
+        longt = div.find("div", {"class": "cmp-locationfinder__item-address"})[
+            "data-cmp-item-longitude"
+        ]
+        address = (
+            str(div.find("div", {"class": "cmp-locationfinder__item-address"}))
+            .split(">", 1)[1]
+            .split("</div", 1)[0]
+            .split("<br/>")
         )
-
-        p += 1
-    return data
+        street = address[0].replace("\\n", "").lstrip()
+        city, state, pcode = address[1].replace("\n", "").lstrip().split(", ")
+        if len(state) < 2:
+            state = "<MISSING>"
+        try:
+            phone = div.find("div", {"class": "cmp-locationfinder__item-phone"}).text
+        except:
+            phone = "<MISSING>"
+        try:
+            hours = (
+                div.find("div", {"class": "cmp-locationfinder__item-service-hours"})
+                .text.replace("Lobby Hours: ", "")
+                .replace("Lobby Hours: ", "")
+            )
+        except:
+            hours = "<MISSING>"
+        try:
+            hours = hours.split("Drive", 1)[0]
+        except:
+            pass
+        if "Seasonal" in hours:
+            hours = "<MISSING>"
+        yield SgRecord(
+            locator_domain="https://www.bankwithunited.com/",
+            page_url="https://www.bankwithunited.com/find-a-location.html",
+            location_name=title,
+            street_address=street.strip(),
+            city=city.strip(),
+            state=state.strip(),
+            zip_postal=pcode.strip(),
+            country_code="US",
+            store_number=SgRecord.MISSING,
+            phone=phone.strip(),
+            location_type=ltype,
+            latitude=str(lat),
+            longitude=str(longt),
+            hours_of_operation=hours,
+        )
 
 
 def scrape():
 
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        deduper=SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
+    ) as writer:
+
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()
