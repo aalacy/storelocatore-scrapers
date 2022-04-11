@@ -54,7 +54,7 @@ def fetch_data():
                             loc = "<MISSING>"
                         store = item.split('"dealerCd":"')[1].split('"')[0]
                         name = item.split('"dealerNm":"')[1].split('"')[0]
-                        logger.info(logger)
+                        logger.info(name)
                         add = (
                             item.split('"address1":"')[1].split('"')[0]
                             + " "
