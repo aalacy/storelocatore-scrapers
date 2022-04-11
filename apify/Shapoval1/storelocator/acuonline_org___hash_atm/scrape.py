@@ -56,7 +56,7 @@ def get_data(coord, sgw: SgWriter):
         js = r.json()["Features"]
 
         if js:
-            log.info(f"From {lat,lng} stores = {len(js)}")
+            log.info(f"From {lat,lng} stores found = {len(js)}")
             for j in js:
                 a = j.get("Properties")
                 page_url = "https://www.acuonline.org/home/resources/locations"
@@ -94,7 +94,7 @@ def get_data(coord, sgw: SgWriter):
                     hours_of_operation = "Closed"
                 if hours_of_operation.find("<MISSING>") != -1:
                     hours_of_operation = "<MISSING>"
-                coord.found_location_at(float(latitude), float(longitude))
+
                 row = SgRecord(
                     page_url=page_url,
                     location_name=location_name,
@@ -114,7 +114,7 @@ def get_data(coord, sgw: SgWriter):
 
                 sgw.write_row(row)
     except Exception as e:
-        log.info(f"No JSON: {e}")
+        log.info(f"Err: {e}")
         pass
 
 
