@@ -15,8 +15,9 @@ def fetch_data(sgw: SgWriter):
     js = json.loads(text)["Stores"]
 
     for j in js:
-        location_name = j.get("Name")
-        page_url = f"https://www.tkmaxx.com.au/store-locator/{location_name}"
+        location_name = j.get("Name") or ""
+        slug = location_name.replace(" ", "-").replace(",-", ",")
+        page_url = f"https://www.tkmaxx.com.au/store-locator/{slug}"
         street_address = j.get("Address")
         city = j.get("City")
         state = j.get("State")
@@ -28,11 +29,13 @@ def fetch_data(sgw: SgWriter):
         longitude = j.get("Longitude")
         store_number = j.get("StoreID")
 
-        text = j.get("Hours")
+        text = j.get("Hours") or "<html>"
         root = html.fromstring(text)
         hours = root.xpath("//text()")
         hours = list(filter(None, [h.strip() for h in hours]))
         hours_of_operation = ";".join(hours)
+        if "stay" in hours_of_operation.lower() or not hours_of_operation:
+            hours_of_operation = "Coming Soon"
 
         row = SgRecord(
             page_url=page_url,

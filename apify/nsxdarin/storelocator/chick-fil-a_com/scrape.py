@@ -53,6 +53,8 @@ def get_data(zips, sgw: SgWriter):
         if str(street_address).find("4531 Weitzel St Timnath CO80547") != -1:
             street_address = str(street_address).split(f"{city}")[0].strip()
         country_code = a.get("address").get("countryCode")
+        if country_code == "CA":
+            page_url = "https://www.chick-fil-a.com/locations"
         try:
             phone = a.get("mainPhone").get("display")
         except:
@@ -91,7 +93,7 @@ def get_data(zips, sgw: SgWriter):
         status = a.get("c_status")
         if status == "FUTURE":
             hours_of_operation = "Coming Soon"
-        if status == "TEMPORARY_CLOSE":
+        if status == "TEMPORARY_CLOSE" and location_name != "Northpark Mall (IA)":
             hours_of_operation = "TEMPORARY CLOSE"
 
         row = SgRecord(
