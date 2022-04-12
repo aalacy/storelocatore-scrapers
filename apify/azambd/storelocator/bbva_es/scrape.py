@@ -74,8 +74,13 @@ def parse_json(location, page_url):
     data["locator_domain"] = "bbva.es"
     data["store_number"] = location["id"].strip()
     data["page_url"] = page_url
-    data["location_name"] = location["bank"]["name"].strip()
-    data["location_type"] = location["address"]["type"]["name"]
+    data["location_name"] = (
+        "Oficinas y Cajeros BBVA en "
+        + (location["address"]["city"]).capitalize()
+        + " — "
+        + (location["address"]["name"]).capitalize()
+    )
+    data["location_type"] = "Oficinas y Cajeros BBVA"
     data["street_address"] = location["address"]["name"].strip()
     data["city"] = location["address"]["city"]
     data["state"] = location["address"]["geographicGroup"][-2]["name"].strip()
@@ -155,7 +160,7 @@ def scrape():
         scraper_name="Crawler",
         data_fetcher=fetch_data,
         field_definitions=field_defs,
-        log_stats_interval=1,
+        log_stats_interval=15,
     )
 
     pipeline.run()

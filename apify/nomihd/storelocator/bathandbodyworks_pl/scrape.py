@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from sgrequests import SgRequests
+from sgselenium import SgChrome
 from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
@@ -9,9 +9,6 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "www.bathandbodyworks.pl"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
-headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.114 Safari/537.36",
-}
 
 
 def fetch_data():
@@ -19,9 +16,9 @@ def fetch_data():
 
     search_url = "https://www.bathandbodyworks.com/europe/global-locations-poland.html"
 
-    with SgRequests() as session:
-        search_res = session.get(search_url, headers=headers)
-        search_sel = lxml.html.fromstring(search_res.text)
+    with SgChrome() as driver:
+        driver.get(search_url)
+        search_sel = lxml.html.fromstring(driver.page_source)
 
         stores = search_sel.xpath('//div[@class="store-location"]')
 
