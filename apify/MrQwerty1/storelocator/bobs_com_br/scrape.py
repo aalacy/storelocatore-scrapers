@@ -22,13 +22,17 @@ def fetch_data(sgw: SgWriter):
         longitude = t.split("lng: '")[1].split("'")[0]
         source = t.split('bindPopup("')[1].split('", {')[0]
         root = html.fromstring(source)
-        location_type = "".join(
-            root.xpath("//div[@class='marker_popup_content']/text()")
-        ).strip()
+        location_type = root.xpath("//div[@class='marker_popup_content']/text()")[
+            0
+        ].strip()
         location_name = "".join(
             root.xpath(".//span[@class='marker_popup_content_title']/text()")
         ).strip()
-        street_address = "".join(root.xpath(".//a/text()")).replace("None", "").strip()
+        street_address = (
+            "".join(root.xpath("//div[@class='marker_popup_content']/text()")[1:])
+            .replace("None", "")
+            .strip()
+        )
         if street_address.endswith(","):
             street_address = street_address[:-1]
         if street_address.startswith(","):

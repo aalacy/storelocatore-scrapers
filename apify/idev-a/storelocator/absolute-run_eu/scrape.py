@@ -56,10 +56,24 @@ def fetch_data():
                 continue
 
             hours = []
-            phone = ""
+            location_name = phone = ""
             addr = []
             is_done = False
-            if sp1.select("footer div.textwidget"):
+
+            if sp1.select("div#text-2 div.textwidget p"):
+                location_name = sp1.select_one("div#text-2 h2").text.strip()
+                addr = list(
+                    sp1.select("div#text-2 div.textwidget p")[1].stripped_strings
+                )
+                if "tel" in sp1.select("div#text-2 div.textwidget p")[2].text:
+                    phone = list(sp1.select("div#text-2 div.textwidget p")[2])[0].split(
+                        ":"
+                    )[-1]
+                hours = [
+                    ": ".join(tr.stripped_strings)
+                    for tr in sp1.select("table.op-table tr")[1:]
+                ]
+            elif sp1.select("footer div.textwidget"):
                 addr = list(sp1.select_one("footer div.textwidget p").stripped_strings)[
                     1:
                 ]
@@ -67,12 +81,11 @@ def fetch_data():
                     phone = sp1.select("footer div.textwidget p")[1].a.text
                 hours = sp1.select("footer div.textwidget")[1].p.stripped_strings
             elif sp1.select_one(
-                "div.mod_article div.container div.row div.ce_text.first.col-lg-6"
+                "div.mod_article div.container div.row div.ce_text.col-lg-6"
             ):
-                phone = location_name = ""
-                hours = []
+                # https://www.ausdauer-shop.de/
                 for ch in sp1.select_one(
-                    "div.mod_article div.container div.row div.ce_text.first.col-lg-6"
+                    "div.mod_article div.container div.row div.ce_text.col-lg-6"
                 ).findChildren(recursive=False):
                     if not ch.text.strip():
                         continue

@@ -43,6 +43,13 @@ def fetch_data():
             hours = [
                 ": ".join(hh.stripped_strings) for hh in soup.select("div.hours ul li")
             ]
+            location_type = ""
+            lt = soup.select_one("p.notes")
+            if lt:
+                if "Temporarily Closed" in lt.text:
+                    location_type = "Temporarily Closed"
+                elif "Permanently Closed" in lt.text:
+                    location_type = "Permanently Closed"
             yield SgRecord(
                 page_url=page_url,
                 store_number=store[3],
@@ -60,6 +67,7 @@ def fetch_data():
                 .replace("\t", "")
                 .replace("\n", " ")
                 .replace("\r", ""),
+                location_type=location_type,
                 raw_address=" ".join(addr),
             )
 

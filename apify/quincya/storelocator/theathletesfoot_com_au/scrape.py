@@ -29,8 +29,23 @@ def fetch_data(sgw: SgWriter):
 
         link = item["url_key"]
         location_name = item["name"]
-        street_address = item["street"]
         city = item["city"]
+        raw_address = item["street"].replace("  ", ", ")
+        if "," in raw_address:
+            street_address = raw_address.split(",")[-1].strip()
+        else:
+            street_address = raw_address
+
+        street_address = (
+            street_address.replace("Shop 30 Kingaroy Shopping World", "")
+            .replace("Shop 5/109", "")
+            .replace("Batemans Bay Village", "")
+            .strip()
+        )
+
+        if "Shopping" in street_address or street_address == city:
+            street_address = raw_address.split(",")[-2].strip()
+
         state = item["state"]
         zip_code = item["postcode"]
         country_code = item["country"]
@@ -66,6 +81,7 @@ def fetch_data(sgw: SgWriter):
                 latitude=latitude,
                 longitude=longitude,
                 hours_of_operation=hours_of_operation,
+                raw_address=raw_address,
             )
         )
 

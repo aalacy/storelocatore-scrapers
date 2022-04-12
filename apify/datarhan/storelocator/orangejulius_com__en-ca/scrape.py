@@ -18,7 +18,7 @@ def fetch_data():
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
     all_coords = DynamicGeoSearch(
-        country_codes=[SearchableCountries.CANADA], expected_search_radius_miles=100
+        country_codes=[SearchableCountries.CANADA], expected_search_radius_miles=50
     )
     for lat, lng in all_coords:
         response = session.get(start_url.format(lat, lng), headers=hdr)
@@ -26,17 +26,14 @@ def fetch_data():
         all_locations = data["locations"]
 
         for poi in all_locations:
-            if poi["tempClosed"] or poi["comingSoon"]:
+            if poi["comingSoon"]:
                 continue
             store_url = "https://www.dairyqueen.com/en-ca" + poi["url"]
             loc_response = session.get(store_url)
             if loc_response.status_code != 200:
                 continue
             loc_dom = etree.HTML(loc_response.text)
-            location_name = poi["title"]
-            location_name = (
-                location_name.split(":")[-1].strip() if location_name else ""
-            )
+            location_name = loc_dom.xpath('//div[@class="callout"]/text()')[0]
             street_address = poi["address3"]
             city = poi["city"]
             state = poi["stateProvince"]
