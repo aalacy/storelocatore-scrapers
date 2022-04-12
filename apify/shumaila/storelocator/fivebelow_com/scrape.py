@@ -31,6 +31,7 @@ headers = {
 
 def fetch_data():
     session = SgRequests()
+    checklist = []
     mylist = static_zipcode_list(radius=10, country_code=SearchableCountries.USA)
     for zip_code in mylist:
 
@@ -121,12 +122,15 @@ def fetch_data():
             except:
 
                 hours = "<MISSING>"
+            if street in checklist:
+                continue
+            checklist.append(street)
             if len(hours) < 3:
                 hours = "<MISSING>"
             ltype = "<MISSING>"
-            if "opening" in loc["additionalHoursText"].lower():
-                ltype = "Opening Soon"
-            else:
+            if "10804 Kings Road" in street:
+                ltype = "Coming Soon"
+            if True:
                 if "<MISSING>" in hours:
 
                     r = session.get(link, headers=headers)
@@ -163,6 +167,18 @@ def fetch_data():
                             )
                     except:
                         hours = "<MISSING>"
+            if (
+                "MONDAY  Closed TUESDAY  Closed WEDNESDAY  Closed THURSDAY  Closed FRIDAY  Closed SATURDAY  Closed SUNDAY  Closed"
+                in hours
+            ):
+                continue
+            street = (
+                street.replace(", " + city, "")
+                .replace(", " + state, "")
+                .replace(" " + pcode, "")
+                .strip()
+            )
+            street = street.replace("," + state, "")
             yield SgRecord(
                 locator_domain="https://fivebelow.com/",
                 page_url=link,

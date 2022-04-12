@@ -1,121 +1,135 @@
-from sgrequests import SgRequests
-from bs4 import BeautifulSoup
-import csv
-import time
-from random import randint
-import re
 import json
+import re
 
-from sgselenium import SgSelenium
+from bs4 import BeautifulSoup
+from sgrequests import SgRequests
 
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import TimeoutException
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-from sglogging import sglog
 
-log = sglog.SgLogSetup().get_logger(logger_name="wegmans.com")
+def fetch_data(sgw: SgWriter):
 
-def write_output(data):
-	with open('data.csv', mode='w', encoding="utf-8") as output_file:
-		writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+    base_link = "https://www.wegmans.com/stores/"
 
-		# Header
-		writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-		# Body
-		for row in data:
-			writer.writerow(row)
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36"
+    headers = {"User-Agent": user_agent}
 
-def fetch_data():
+    session = SgRequests()
+    req = session.get(base_link, headers=headers)
+    base = BeautifulSoup(req.text, "lxml")
 
-	driver = SgSelenium().chrome()
-	
-	base_link = "https://www.wegmans.com/stores/"
+    items = base.find(id="wegmans-maincontent").find_all(
+        "a", href=re.compile("/stores/")
+    )
+    locator_domain = "wegmans.com"
 
-	user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36'
-	HEADERS = {'User-Agent' : user_agent}
+    for i, item in enumerate(items):
+        link = "https://www.wegmans.com" + item["href"]
+        if "comhttps" in link:
+            link = item["href"]
+        location_name = item.text.strip()
 
-	session = SgRequests()
-	req = session.get(base_link, headers = HEADERS)
-	base = BeautifulSoup(req.text,"lxml")
+        req = session.get(link, headers=headers)
+        base = BeautifulSoup(req.text, "lxml")
 
-	data = []
+        store_js = base.find(class_="yoast-schema-graph").text
+        store = json.loads(store_js)
+        try:
+            raw_data = store["@graph"][1]["description"]
+            if "Store Opening" in raw_data:
+                continue
+        except:
+            continue
 
-	items = base.find(id="wegmans-maincontent").find_all("a", href=re.compile("/stores/")) 
-	locator_domain = "wegmans.com"
+        raw_address = raw_data.split("•")[0].strip().split(",")
+        city = raw_address[-2].strip()
+        state = raw_address[-1].strip().split()[0].strip()
+        if "New" in state:
+            state = "NY"
+        if "North" in state:
+            state = "NC"
+        zip_code = raw_address[-1].strip().split()[-1].replace(".", "").strip()
 
-	for i, item in enumerate(items):
-		log.info("Link %s of %s" %(i+1,len(items)))
-		link = "https://www.wegmans.com" + item['href']
-		if "comhttps" in link:
-			link = item['href']
-		location_name = item.text.strip()
+        if "•" in raw_data:
+            street_address = " ".join(raw_address[:-2]).strip()
+            phone = raw_data.split("•")[1].strip()
+            if len(phone) > 15:
+                phone = re.findall(r"[0-9]{3}-[0-9]{3}-[0-9]{4}", raw_data)[0]
+        else:
+            try:
+                street_address = (
+                    raw_data[raw_data.rfind("at") + 3 : raw_data.rfind(city)]
+                    .replace(",", "")
+                    .strip()
+                )
+                phone = re.findall(r"[0-9]{3}-[0-9]{3}-[0-9]{4}", raw_data)[0]
+            except:
+                phone = ""
+        try:
+            if not phone:
+                phone = base.find(class_="phone").text.strip()
+        except:
+            phone = ""
 
-		req = session.get(link, headers = HEADERS)
-		base = BeautifulSoup(req.text,"lxml")
-		
-		store_js = base.find(class_="yoast-schema-graph").text
-		store = json.loads(store_js)
-		try:
-			raw_data = store['@graph'][1]['description']
-			if "Store Opening" in raw_data:
-				continue
-		except:
-			continue
-			
-		raw_address = raw_data.split("•")[0].strip().split(",")
-		city = raw_address[-2].strip()
-		state = raw_address[-1].strip().split()[0].strip()
-		if "New" in state:
-			state = "NY"
-		if "North" in state:
-			state = "NC"
-		zip_code = raw_address[-1].strip().split()[-1].replace(".","").strip()
+        if "11051 Ligon Mill" in city:
+            street_address = "11051 Ligon Mill Rd."
+            city = "Wake Forest"
 
-		if "•" in raw_data:
-			street_address = " ".join(raw_address[:-2]).strip()
-			phone = raw_data.split("•")[1].strip()
-			if len(phone) > 15:
-				phone = re.findall(r'[0-9]{3}-[0-9]{3}-[0-9]{4}', raw_data)[0]
-		else:
-			try:
-				street_address = raw_data[raw_data.rfind("at")+3:raw_data.rfind(city)].replace(",","").strip()
-				phone = re.findall(r'[0-9]{3}-[0-9]{3}-[0-9]{4}', raw_data)[0]
-			except:
-				phone = "<MISSING>"
+        if not street_address:
+            continue
 
-		country_code = "US"
-		store_number = base.find(id="store-number").text
-		
-		types = base.find_all(class_="directions-subhead")
-		location_type = ""
-		for raw_type in types:
-			location_type = (location_type + ", " + raw_type.text).strip()
-		location_type = location_type[2:].strip().replace("\n","")
-		location_type = (re.sub(' +', ' ', location_type)).strip()
+        if "Chapel Hill" in street_address:
+            street_address = street_address.replace("Chapel Hill", "").strip()
+            city = "Chapel Hill"
+            state = "NC"
+            zip_code = "27514"
 
-		hours_of_operation = base.find(class_="row map-content").find_all(class_="row")[2].text.strip()
-		if "To comply" in hours_of_operation:
-			hours_of_operation = hours_of_operation[:hours_of_operation.find("To comply")].strip()
-		try:
-			driver.get(link)
-			element = WebDriverWait(driver, 20).until(EC.presence_of_element_located(
-				(By.CLASS_NAME, "google-map-store-pin")))
-			time.sleep(randint(1,2))
-			raw_gps = driver.find_element_by_xpath("//*[(@title='Open this area in Google Maps (opens a new window)')]").get_attribute("href")
-			latitude = raw_gps[raw_gps.find("=")+1:raw_gps.find(",")].strip()
-			longitude = raw_gps[raw_gps.find(",")+1:raw_gps.find("&")].strip()
-		except:
-			latitude = "<MISSING>"
-			longitude = "<MISSING>"
+        if "Fairport-Marsh Roads" in street_address:
+            street_address = "851 Fairport Road"
 
-		data.append([locator_domain, link, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
+        country_code = "US"
+        store_number = base.find(id="store-number").text
 
-	return data
+        types = base.find_all(class_="directions-subhead")
+        location_type = ""
+        for raw_type in types:
+            location_type = (location_type + ", " + raw_type.text).strip()
+        location_type = location_type[2:].strip().replace("\n", "")
+        location_type = (re.sub(" +", " ", location_type)).strip()
 
-def scrape():
-	data = fetch_data()
-	write_output(data)
+        hours_of_operation = (
+            base.find(class_="row map-content").find_all(class_="row")[2].text.strip()
+        )
+        if "To comply" in hours_of_operation:
+            hours_of_operation = hours_of_operation[
+                : hours_of_operation.find("To comply")
+            ].strip()
 
-scrape()
+        latitude = "<MISSING>"
+        longitude = "<MISSING>"
+
+        sgw.write_row(
+            SgRecord(
+                locator_domain=locator_domain,
+                page_url=link,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_code,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
+        )
+
+
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+    fetch_data(writer)
