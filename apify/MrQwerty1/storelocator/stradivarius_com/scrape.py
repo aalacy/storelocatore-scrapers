@@ -89,6 +89,8 @@ def fetch_data(sgw: SgWriter):
             page_url = f"https://www.stradivarius.com/{cc.lower()}/store-locator/{city.lower()}/-s{store_number}.html"
             try:
                 phone = j["phones"][0]
+                if "/" in phone:
+                    phone = phone.split("/")[0].strip()
             except:
                 phone = SgRecord.MISSING
             if phone.strip() == "-":
