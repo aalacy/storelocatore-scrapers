@@ -35,8 +35,7 @@ def fetch_data(sgw: SgWriter):
 
         t = " - ".join(_tmp)
         if not t:
-            city = location_name
-            street_address, postal = SgRecord.MISSING, SgRecord.MISSING
+            continue
         else:
             postal = t.split(":")[-1].strip()
             city = location_name.split(" - ")[0].strip()
