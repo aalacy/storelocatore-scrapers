@@ -5,6 +5,7 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from concurrent import futures
+from sglogging import sglog
 
 
 def get_urls():
@@ -39,6 +40,7 @@ def get_data(page_url, sgw: SgWriter):
         "//p[@id='ctl00_wpMngr_BranchDetail_BranchDetails_brAddress']/text()"
     )
     line = list(filter(None, [l.strip() for l in line]))
+    logger.info(f'{page_url}: {line}')
 
     street_address = line.pop(0)
     csz = line.pop()
@@ -95,6 +97,8 @@ def fetch_data(sgw: SgWriter):
 
 if __name__ == "__main__":
     locator_domain = "https://www.schwab.com/"
+    logger = sglog.SgLogSetup().get_logger(logger_name="schwab.com")
+
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0"
     }
