@@ -11,7 +11,7 @@ from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 
 
 def fetch_data():
-    session = SgRequests(proxy_country="us")
+    session = SgRequests(proxy_country="us", verify_ssl=False)
     domain = "countryfinancial.com"
     start_url = "https://www.countryfinancial.com/services/forms?configNodePath=%2Fcontent%2Fcfin%2Fen%2Fjcr%3Acontent%2FrepLocator&cfLang=en&repSearchType=queryByLocation&latitude=&longitude=&repSearchValue={}"
     scraped_urls = []
@@ -19,14 +19,10 @@ def fetch_data():
     all_codes = DynamicZipSearch(
         country_codes=[SearchableCountries.USA], expected_search_radius_miles=200
     )
-    import requests
-
-    session = requests.Session()
-    proxies = {"https": "127.0.0.1:24000", "http": "127.0.0.1:24000"}
     for code in all_codes:
         try:
             response = session.get(
-                start_url.format(code), proxies=proxies, verify=False
+                start_url.format(code),
             )
         except Exception:
             continue
