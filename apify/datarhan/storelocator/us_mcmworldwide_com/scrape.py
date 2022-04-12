@@ -20,7 +20,7 @@ def fetch_data():
     }
 
     all_coordinates = DynamicGeoSearch(
-        country_codes=[SearchableCountries.USA], expected_search_radius_miles=200
+        country_codes=[SearchableCountries.USA], expected_search_radius_miles=500
     )
     for lat, lng in all_coordinates:
         response = session.get(start_url.format(lat, lng), headers=hdr)
@@ -47,18 +47,21 @@ def fetch_data():
             state = addr.state
             if state and len(state) > 2:
                 continue
+            if country_code and country_code != "United States":
+                continue
             zip_code = addr.postcode
             store_number = poi_html.xpath("@data-store-id")[0]
             phone = poi_html.xpath('.//a[@class="store-phone"]/text()')
             phone = phone[0].replace(" ", "").strip() if phone else ""
             latitude = poi_html.xpath("@data-lat")[0]
             longitude = poi_html.xpath("@data-long")[0]
-            hoo = poi_html.xpath('.//div[@class="store-hours"]//text()')
-            hoo = [e.strip() for e in hoo if e.strip()][:2]
-            hours_of_operation = " ".join(hoo) if hoo else ""
             page_url = "https://us.mcmworldwide.com/en_US/stores/{}/{}".format(
                 location_name.lower().replace(" ", "-"), store_number
             )
+            loc_response = session.get(page_url)
+            loc_dom = etree.HTML(loc_response.text)
+            hoo = loc_dom.xpath('//p[@class="store-hours"]/following-sibling::p/text()')
+            hoo = " ".join([e.strip() for e in hoo if e.strip()])
 
             item = SgRecord(
                 locator_domain=domain,
@@ -74,7 +77,7 @@ def fetch_data():
                 location_type="",
                 latitude=latitude,
                 longitude=longitude,
-                hours_of_operation=hours_of_operation,
+                hours_of_operation=hoo,
                 raw_address=" ".join(raw_address),
             )
 
