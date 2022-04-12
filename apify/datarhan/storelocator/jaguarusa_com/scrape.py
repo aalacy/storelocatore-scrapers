@@ -1,32 +1,15 @@
-import csv
-import json
-import sgzip
-import urllib.parse
 from lxml import etree
-from sgzip import SearchableCountries
 
 from sgrequests import SgRequests
-
-
-def write_output(data):
-    with open('data.csv', mode='w', encoding='utf-8') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
-        # Header
-        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-        # Body
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
-    # Your scraper here
     session = SgRequests()
-
-    items = []
-    scraped_items = []
-
-    DOMAIN = 'jaguarusa.com'
+    domain = 'jaguarusa.com'
 
     states = [
         "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DC", "DE", "FL", "GA", 
@@ -45,60 +28,52 @@ def fetch_data():
 
         all_poi_html = dom.xpath('//div[@class="infoCardDealer infoCard"]')
         for poi_html in all_poi_html:
-            store_url = poi_html.xpath('.//li[@class="websiteLink"]/a/@href')
-            store_url = store_url[0] if store_url else '<MISSING>'
             location_name = poi_html.xpath('.//span[@class="dealerNameText fontBodyCopyLarge"]/text()')
-            location_name = location_name[0] if location_name else '<MISSING>'
+            location_name = location_name[0] if location_name else ''
             street_address_raw = poi_html.xpath('.//span[@class="addressText"]/text()')[0]
             street_address = street_address_raw.split(',')[0]
-            street_address = street_address if street_address else '<MISSING>'
+            street_address = street_address if street_address else ''
             city = street_address_raw.split(',')[1].strip()
-            city = city if city else '<MISSING>'
             state = street_address_raw.split(',')[2].strip()
-            state = state if state else '<MISSING>'
             zip_code = street_address_raw.split(',')[3].strip()
-            zip_code = zip_code if zip_code else '<MISSING>'
-            country_code = ''
-            country_code = country_code if country_code else '<MISSING>'
             store_number = poi_html.xpath('@data-ci-code')[0]
-            store_number = store_number if store_number else '<MISSING>'
             phone = poi_html.xpath('.//a[@class="itemMobileInner"]/text()')
-            phone = phone[0] if phone else '<MISSING>'
-            location_type = ''
-            location_type = location_type if location_type else '<MISSING>'
+            phone = phone[0] if phone else ''
             latitude = poi_html.xpath('@data-lat')[0]
-            latitude = latitude if latitude else '<MISSING>'
+            latitude = latitude if latitude else ''
             longitude = poi_html.xpath('@data-lng')[0]
-            longitude = longitude if longitude else '<MISSING>'
-            hours_of_operation = '<MISSING>'
+            longitude = longitude if longitude else ''
             
-            item = [
-                DOMAIN,
-                store_url,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip_code,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation
-            ]
+            item = SgRecord(
+                locator_domain=domain,
+                page_url=start_url.format(code),
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_code,
+                country_code="",
+                store_number=store_number,
+                phone=phone,
+                location_type="",
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation="",
+            )
 
-            if store_number not in scraped_items:
-                scraped_items.append(store_number)
-                items.append(item)
-        
-    return items
+            yield item
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":
