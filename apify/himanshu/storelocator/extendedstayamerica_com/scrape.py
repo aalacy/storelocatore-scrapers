@@ -1,7 +1,6 @@
 import json
 from bs4 import BeautifulSoup
 from lxml import html
-
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
@@ -28,6 +27,7 @@ def fetch_data():
     json_data = json.loads(jd)
 
     for value in json_data:
+
         a = value["address"]
 
         location_name = value["title"]
@@ -43,25 +43,15 @@ def fetch_data():
         longitude = value["longitude"]
         hours_of_operation = "Open 24 hours a day, seven days a week"
         page_url = "https://www.extendedstayamerica.com" + value["urlMap"]
-
-        session = SgRequests()
         r = session.get(page_url, headers=headers)
         tree = html.fromstring(r.text)
-        if tree.xpath(
-            '//h3[contains(text(), "We are sorry, but the property you are looking for is no longer available")]'
-        ):
-            continue
+        js_block = "".join(
+            tree.xpath('//script[contains(text(), "streetAddress")]/text()')
+        )
         try:
-            phone = (
-                "".join(
-                    tree.xpath("//script[contains(text(), " "telephone" ")]/text()")
-                )
-                .split('"telephone": "')[1]
-                .split('"')[0]
-                .strip()
-            )
-        except Exception:
-            phone = tree.xpath('//a[contains(@href, "tel")]/text()')[1].strip()
+            phone = js_block.split('"telephone": "')[1].split('"')[0].strip()
+        except:
+            phone = "<MISSING>"
 
         item = SgRecord(
             locator_domain="extendedstayamerica.com",
