@@ -32,31 +32,20 @@ def fetch_data():
         data = json.loads(response.text)
 
         for n, poi in data.items():
-            store_url = poi["gu"]
-            location_name = poi["na"]
-            street_address = poi["st"]
-            city = poi["ct"]
-            state = poi["rg"]
-            zip_code = poi["zp"]
-            store_number = poi["ID"]
-            phone = poi["te"]
-            latitude = poi["lat"]
-            longitude = poi["lng"]
-
             item = SgRecord(
                 locator_domain=domain,
-                page_url=store_url,
-                location_name=location_name,
-                street_address=street_address,
-                city=city,
-                state=state,
-                zip_postal=zip_code,
+                page_url=poi["gu"],
+                location_name=poi["na"],
+                street_address=poi["st"],
+                city=poi["ct"],
+                state=poi["rg"],
+                zip_postal=poi["zp"],
                 country_code="",
-                store_number=store_number,
-                phone=phone,
+                store_number=poi["ID"],
+                phone=poi.get("te"),
                 location_type="",
-                latitude=latitude,
-                longitude=longitude,
+                latitude=poi["lat"],
+                longitude=poi["lng"],
                 hours_of_operation="",
             )
 
