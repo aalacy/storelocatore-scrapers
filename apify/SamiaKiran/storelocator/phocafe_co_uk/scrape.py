@@ -28,6 +28,7 @@ def fetch_data():
             "section", {"class": "all-locations-container u__wrapper"}
         ).findAll("li")
         for loc in loclist:
+            location_type = MISSING
             page_url = loc.find("a")["href"]
             log.info(page_url)
             r = session.get(page_url, headers=headers)
@@ -39,7 +40,10 @@ def fetch_data():
             coords = soup.find("div", {"id": "js__location-single-map"})
             latitude = coords["data-lat"]
             longitude = coords["data-long"]
-            phone = temp[0].select_one("a[href*=tel]").text
+            try:
+                phone = temp[0].select_one("a[href*=tel]").text
+            except:
+                phone = MISSING
             raw_address = (
                 temp[0]
                 .findAll("p")[-1]
@@ -62,6 +66,11 @@ def fetch_data():
             hours_of_operation = (
                 temp[1].get_text(separator="|", strip=True).replace("|", " ")
             )
+            if "Please note" in hours_of_operation:
+                hours_of_operation = hours_of_operation.split("Please")[0]
+            if "currently closed" in hours_of_operation:
+                hours_of_operation = MISSING
+                location_type = "Temporarily Closed"
             country_code = "GB"
 
             yield SgRecord(
@@ -75,7 +84,7 @@ def fetch_data():
                 country_code=country_code,
                 store_number=MISSING,
                 phone=phone.strip(),
-                location_type=MISSING,
+                location_type=location_type,
                 latitude=latitude,
                 longitude=longitude,
                 hours_of_operation=hours_of_operation.strip(),

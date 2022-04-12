@@ -70,6 +70,8 @@ def fetch_data():
     data = get_json(soup)
     for row in data:
         page_url = BASE_URL + row["url"]
+        if "indianaonline" in page_url or "columbusonline" in page_url:
+            continue
         content = pull_content(page_url)
         location_name = row["store_name"]
         street_address = row["address"]
@@ -80,17 +82,25 @@ def fetch_data():
         phone = (
             content.find("div", {"id": "location-phone-section"})
             .text.replace("Phone", "")
+            .replace("Online Sales", "")
+            .replace("\n", "")
             .strip()
         )
         country_code = "US"
         location_type = "appliancefactory"
         latitude = row["latitude"]
         longitude = row["longitude"]
+        try:
+            hoo_content = content.find("div", {"id": "location-hours-section"}).find(
+                "table"
+            )
+        except:
+            hoo_content = content.find("div", {"class": "location-hours"})
         hours_of_operation = (
-            content.find("div", {"id": "location-hours-section"})
-            .find("table")
-            .get_text(strip=True, separator=",")
+            hoo_content.get_text(strip=True, separator=",")
             .replace("day,", "day: ")
+            .replace("Today's Hours:", "")
+            .strip()
         )
         log.info("Append {} => {}".format(location_name, street_address))
         yield SgRecord(

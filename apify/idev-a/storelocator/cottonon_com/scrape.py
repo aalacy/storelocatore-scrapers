@@ -61,8 +61,12 @@ def fetch_data(search, http):
                 hours.append(f"{hh.select('div')[0].text.strip()} {time}")
             coord = _.select_one("a.view-map-link")["href"].split("?q=")[1].split(",")
             location_type = _.select_one("div.store-brand").text.strip()
+            phone = _.select_one("div.store-phone a").text.strip()
+            if phone in ["NA", "TBA", "TBD"]:
+                phone = ""
+            page_url = f"https://cottonon.com/US/store-finder/store-details//?StoreID={_['data-id']}"
             yield SgRecord(
-                page_url=base_url,
+                page_url=page_url,
                 store_number=_["data-id"],
                 location_name=_.h2.text.strip(),
                 street_address=_.select_one("div.store-address1").text.strip(),
@@ -71,10 +75,10 @@ def fetch_data(search, http):
                 longitude=coord[1],
                 zip_postal=_.select_one("div.store-postalCode").text.strip(),
                 country_code=_.select_one("div.store-countryCodeValue").text.strip(),
-                phone=_.select_one("div.store-phone a").text.strip(),
+                phone=phone,
                 locator_domain=locator_domain,
                 location_type=location_type,
-                hours_of_operation="; ".join(hours),
+                hours_of_operation="; ".join(hours).replace("(Today)", ""),
             )
 
 

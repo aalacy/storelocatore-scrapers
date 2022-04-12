@@ -46,8 +46,11 @@ def fetch_data(sgw: SgWriter):
                     + city_link["href"]
                     + "?t=&page=%s&filters=filter-_-Branch" % (num)
                 )
-                req = session.get(base_link, headers=headers)
-                base = BeautifulSoup(req.text, "lxml")
+                try:
+                    req = session.get(base_link, headers=headers)
+                    base = BeautifulSoup(req.text, "lxml")
+                except:
+                    continue
                 try:
                     items = base.find_all(class_="tetris-results-item")
                     all_scripts = base.find_all("script")

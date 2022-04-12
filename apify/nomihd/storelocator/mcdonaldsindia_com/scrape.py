@@ -116,6 +116,11 @@ def fetch_data():
                                 zip = "<MISSING>"
                     except:
                         pass
+
+                if city and "-413001" in city:
+                    city = "<MISSING>"
+                    zip = "413001"
+
                 country_code = "IN"
 
                 store_number = "<MISSING>"

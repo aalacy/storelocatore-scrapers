@@ -1,6 +1,5 @@
---extra-index-url https://dl.cloudsmith.io/snjnnLURl1gQtgOE/crawl/sgzip/python/simple/
-sgzip==0.6.2
-lxml==4.3.4
-sgrequests==0.1.12
-phonenumbers==8.10.13
+--extra-index-url https://dl.cloudsmith.io/KVaWma76J5VNwrOm/crawl/crawl/python/simple/
+sgzip==0.10.15
+sgscrape==0.2.9
+sgrequests==0.2.9
 sglogging==0.0.4

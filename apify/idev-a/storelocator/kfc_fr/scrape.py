@@ -1,7 +1,7 @@
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
-from sgscrape.sgpostal import parse_address_intl
+from sgpostal.sgpostal import parse_address_intl
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
@@ -20,7 +20,7 @@ def fetch_data():
         locations = session.get(base_url, headers=_headers).json()
         for _ in locations:
             page_url = "https://www.kfc.fr/nos-restaurants/" + _["url"]
-            addr = parse_address_intl(_["address"])
+            addr = parse_address_intl(_["address"] + ", France")
             street_address = addr.street_address_1
             if addr.street_address_2:
                 street_address += " " + addr.street_address_2
@@ -41,6 +41,7 @@ def fetch_data():
                 phone=_["phone"],
                 locator_domain=locator_domain,
                 hours_of_operation="; ".join(hours),
+                raw_address=_["address"],
             )
 
 

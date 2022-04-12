@@ -6,6 +6,7 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 import json
 from sglogging import SgLogSetup
+import re
 
 logger = SgLogSetup().get_logger("americancarcenter")
 
@@ -17,48 +18,17 @@ locator_domain = "https://www.americancarcenter.com"
 base_url = "https://www.americancarcenter.com/locations-at-american-car-center"
 
 
-def _fetch(soup, store_number, page_url, hours=[]):
-    sp1 = bs(
-        soup.select_one("a.header-contact__link.js-location")["data-content"],
-        "lxml",
+def _d(sp1, name):
+    locs = sp1.find_all(
+        "script",
+        string=re.compile(
+            r"window.inlineJS.push\(function\(\) \{ Moff\.modules\.get\('DataLayer'\)\.pushData\('DealerObject"
+        ),
     )
-    markers = sp1.img["data-src"].split("&markers=size:small|")[1:]
-    locations = sp1.select("div.get-direction__dealer")
-    for x, _ in enumerate(locations):
-        raw_address = (
-            _.select_one("div.get-direction__dealer-name")
-            .find_next_sibling()
-            .text.strip()
-        )
-        addr = raw_address.split(",")
-        try:
-            phone = (
-                _.select_one("div.get-direction__dealer-name")
-                .find_next_sibling()
-                .find_next_sibling()
-                .text.strip()
-            )
-        except:
-            phone = ""
-        marker = markers[x].split("%2C")
-        if store_number == _["data-id"]:
-            return SgRecord(
-                page_url=page_url,
-                store_number=_["data-id"],
-                location_name=_.select_one(
-                    "div.get-direction__dealer-name"
-                ).text.strip(),
-                street_address=addr[0],
-                city=addr[1].strip(),
-                state=addr[-1].split()[0].strip(),
-                zip_postal=addr[-1].strip().split()[-1].strip(),
-                country_code="US",
-                phone=phone,
-                latitude=marker[0],
-                longitude=marker[1],
-                locator_domain=locator_domain,
-                hours_of_operation="; ".join(hours),
-            )
+    for loc in locs:
+        _ = json.loads('{"id"' + loc.string.split('{"id"')[1].split("});")[0] + "}")
+        if _["name"] == name:
+            return _
 
 
 def fetch_data():
@@ -67,10 +37,6 @@ def fetch_data():
         locations = soup.select("main.js-layout-main-block div.container p a")
         for loc in locations:
             page_url = locator_domain + loc["href"].replace(" ", "-")
-            try:
-                store_number = page_url.split("location-")[1].split("-")[0]
-            except:
-                store_number = page_url.split("dealerId=")[1].split("&")[0]
             logger.info(page_url)
             res = session.get(page_url, headers=_headers)
             hours = []
@@ -80,30 +46,29 @@ def fetch_data():
                     " ".join(hh.stripped_strings)
                     for hh in sp1.select("div.widget-paragraph table tr")
                 ]
+                ss = _d(
+                    sp1, sp1.select("div.widget-paragraph p strong")[1].text.strip()
+                )
                 try:
-                    ss = json.loads(
-                        sp1.find_all("script", type="application/ld+json")[-1].string
-                    )["offers"][0]["seller"]
-                    addr = ss["address"]
                     yield SgRecord(
                         page_url=page_url,
-                        store_number=store_number,
+                        store_number=ss["id"],
                         location_name=ss["name"],
-                        street_address=addr["streetAddress"],
-                        city=addr["addressLocality"],
-                        state=addr["addressRegion"],
-                        zip_postal=addr["postalCode"],
+                        street_address=ss["address"],
+                        city=ss["city"],
+                        state=ss["state"],
+                        zip_postal=ss["zip"],
                         country_code="US",
-                        phone=ss["telephone"],
-                        latitude=ss["geo"]["latitude"],
-                        longitude=ss["geo"]["longitude"],
+                        phone=ss["phone"] if ss["phone"] else ss["phone2"],
+                        latitude=ss["lat"],
+                        longitude=ss["lng"],
                         locator_domain=locator_domain,
                         hours_of_operation="; ".join(hours),
                     )
                 except:
-                    yield _fetch(soup, store_number, page_url, hours)
-            else:
-                yield _fetch(soup, store_number, page_url)
+                    import pdb
+
+                    pdb.set_trace()
 
 
 if __name__ == "__main__":

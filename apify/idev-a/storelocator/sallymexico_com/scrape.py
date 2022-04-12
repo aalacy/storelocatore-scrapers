@@ -4,6 +4,7 @@ from sgselenium import SgChrome
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 import json
+from sgpostal.sgpostal import parse_address_intl
 import ssl
 
 try:
@@ -17,31 +18,33 @@ else:
 
 locator_domain = "https://www.sallymexico.com"
 base_url = "https://www.sallymexico.com/stores"
-json_url = r"/api/dataentities/WH/scroll"
-asset_url = r"sallybeautymx.vtexassets.com/_v/public/assets/v1/published/bundle/public/react/asset.min.js\?v=1\&files=vtex.sticky-layout"
+json_url = r"https://www.sallymexico.com/api/dataentities/WH/scroll"
+asset_url = r"https://e.clarity.ms/collect"
 
 
 def fetch_data():
-    with SgChrome() as driver:
+    with SgChrome(
+        user_agent="Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0"
+    ) as driver:
         driver.get(base_url)
         rr = driver.wait_for_request(json_url, timeout=15)
-        ra = driver.wait_for_request(asset_url, timeout=15)
-        _hr = (
-            ra.response.body.decode()
-            .split('"description-store-horario"},')[1]
-            .split("),t.Rappi")[0]
-            .split(',i.a.createElement("br",null),')
-        )
-        hours = []
-        hours.append(_hr[0].strip()[1:-1].strip())
-        hours.append(_hr[1].strip()[1:-1].strip())
+        hours = [
+            "lunes a sábado 9am a 8pm",
+            "Domingo 9am a 5pm",
+        ]
         locations = json.loads(rr.response.body)
         for _ in locations:
+            street_address = _["address"]
+            if _["city"] in street_address or _["stateCode"] in street_address:
+                addr = parse_address_intl(_["address"] + ", Mexico")
+                street_address = addr.street_address_1
+                if addr.street_address_2:
+                    street_address += " " + addr.street_address_2
             yield SgRecord(
                 page_url=base_url,
                 store_number=_["id"],
                 location_name=_["name"],
-                street_address=_["address"].replace("\n", " "),
+                street_address=street_address.replace("\n", " "),
                 city=_["city"],
                 state=_["stateCode"],
                 zip_postal=_["postalCode"],

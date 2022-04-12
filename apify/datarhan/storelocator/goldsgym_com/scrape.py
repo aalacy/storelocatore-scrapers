@@ -18,6 +18,8 @@ def fetch_data():
         data = json.loads(response.text)
 
         for poi in data["gyms"]:
+            if poi["gym_status"] == "presale":
+                continue
             store_url = poi["siteurl"]
             location_name = poi["gym_name"]
             street_address = poi["address"]

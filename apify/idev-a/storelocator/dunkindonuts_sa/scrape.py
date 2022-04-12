@@ -39,16 +39,16 @@ def _d(link, session):
     except:
         pass
     try:
-        addr = list(sp1.select_one("div.AddressArea").stripped_strings)[1]
+        addr = list(sp1.select_one("div.AddressArea").stripped_strings)[1].replace(
+            "\n", ""
+        )
     except:
         addr = ""
     try:
-        coord = (
-            sp1.select_one("div.MapInfo a")["href"]
-            .split("/@")[1]
-            .split("/data")[0]
-            .split(",")
-        )
+        coord = res.text.split("new google.maps.LatLng(")[1].split(");")[0].split(",")
+        if "." not in coord[0]:
+            coord[0] = coord[0][:2] + "." + coord[0][2:]
+            coord[1] = coord[1][:2] + "." + coord[1][2:]
     except:
         coord = ["", ""]
     return SgRecord(

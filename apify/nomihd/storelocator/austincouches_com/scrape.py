@@ -4,8 +4,9 @@ from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import lxml.html
-from sgscrape import sgpostal as parser
-from bs4 import BeautifulSoup as BS
+from sgpostal import sgpostal as parser
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "austincouches.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -28,30 +29,29 @@ headers = {
 
 def fetch_data():
     # Your scraper here
-    search_url = "https://austincouches.com/"
+    search_url = "https://couchpotatoes.com/pages/locations"
     stores_req = session.get(search_url, headers=headers)
     stores_sel = lxml.html.fromstring(stores_req.text)
-    stores = stores_sel.xpath('//ul[@aria-label="Locations"]/li/a/@href')
+    stores = stores_sel.xpath(
+        '//div[@class="shg-c-lg-4 shg-c-md-4 shg-c-sm-4 shg-c-xs-12"]'
+    )
 
-    for store_url in stores:
+    for store in stores:
 
-        if store_url == "/":
-            continue
-
-        page_url = "https://austincouches.com" + store_url
-        log.info(page_url)
-        store_req = session.get(page_url)
-        store_sel = lxml.html.fromstring(store_req.text)
-        soup = BS(store_req.text, "lxml")
+        page_url = search_url
         locator_domain = website
 
-        raw_info = raw_info = list(
-            soup.find_all("div", {"class": "page-content rte"})[0].stripped_strings
-        )
+        raw_address = ", ".join(
+            store.xpath(
+                './/div[@class="shg-rich-text shg-theme-text-content"]/p[1]/text()'
+            )
+        ).strip()
+        location_name = "".join(
+            store.xpath(
+                './/div[@class="shg-rich-text shg-theme-text-content"]/p[1]//strong/text()'
+            )
+        ).strip()
 
-        location_name = "".join(raw_info[0]).strip()
-
-        raw_address = "".join(raw_info[1]).strip()
         formatted_addr = parser.parse_address_usa(raw_address)
         street_address = formatted_addr.street_address_1
         if formatted_addr.street_address_2:
@@ -65,20 +65,25 @@ def fetch_data():
 
         store_number = "<MISSING>"
 
-        phone = "".join(raw_info[-1]).strip()
-
-        location_type = "<MISSING>"
-        hours_of_operation = "; ".join(raw_info[2:-1]).strip()
-
-        latitude = ""
-        longitude = ""
-        map_link = "".join(
-            store_sel.xpath('//iframe[contains(@src,"maps/embed?")]/@src')
+        phone = "".join(
+            store.xpath(
+                './/div[@class="shg-rich-text shg-theme-text-content"]/p[3]//text()'
+            )
         ).strip()
 
-        if len(map_link) > 0:
-            latitude = map_link.split("!3d")[1].strip().split("!")[0].strip()
-            longitude = map_link.split("!2d")[1].strip().split("!")[0].strip()
+        location_type = "<MISSING>"
+        hours_of_operation = "; ".join(
+            store.xpath(
+                './/div[@class="shg-rich-text shg-theme-text-content"]/p[2]/text()'
+            )
+        ).strip()
+
+        latitude = "".join(
+            store.xpath(".//div[@class='shg-map-container']/@data-latitude")
+        ).strip()
+        longitude = "".join(
+            store.xpath(".//div[@class='shg-map-container']/@data-longitude")
+        ).strip()
 
         yield SgRecord(
             locator_domain=locator_domain,
@@ -95,13 +100,16 @@ def fetch_data():
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hours_of_operation,
+            raw_address=raw_address,
         )
 
 
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(SgRecordID({SgRecord.Headers.RAW_ADDRESS}))
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

@@ -45,7 +45,9 @@ def fetch_data():
         search_res = session.get(search_url, headers=headers)
         search_sel = lxml.html.fromstring(search_res.text)
 
-        stores = search_sel.xpath('//div[@id="locations"]//ul[@class="List"]')
+        stores = search_sel.xpath(
+            '//div[@id="locations"]//div[contains(@id,"panel-categories")]'
+        )
 
         for _, store in enumerate(stores, 1):
 

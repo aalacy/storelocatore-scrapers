@@ -1,119 +1,112 @@
-from sgscrape import simple_scraper_pipeline as sp
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
-import us
+from urllib.parse import urljoin
 
-logger = SgLogSetup().get_logger("rallys")
+logger = SgLogSetup().get_logger("")
 
-headers = {
-    "accept": "application/json",
-    "accept-encoding": "gzip, deflate, br",
-    "accept-language": "en-US,en;q=0.9,ko;q=0.8",
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36",
+_headers = {
+    "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
 }
 
 locator_domain = "https://www.rallys.com/"
+base_url = "https://locations.rallys.com/"
+start_url = "https://locations.rallys.com/index.html"
+
+
+def _d(_, page_url):
+    if not _:
+        return None
+    latitude, longitude = _.select_one('meta[name="geo.position"]')["content"].split(
+        ";"
+    )
+    street_address = _.select_one("span.Address-field.Address-line1").text.strip()
+    if _.select_one("span.Address-field.Address-line2"):
+        street_address += (
+            " " + _.select_one("span.Address-field.Address-line2").text.strip()
+        )
+    city = state = zip_postal = ""
+    if _.select_one("span.Address-field.Address-city"):
+        city = _.select_one("span.Address-field.Address-city").text.strip()
+    if _.select_one("abbr.Address-region"):
+        state = _.select_one("abbr.Address-region").text.strip()
+    if _.select_one("span.Address-postalCode"):
+        zip_postal = _.select_one("span.Address-postalCode").text.strip()
+    hours = []
+    for hh in _.select("table.c-hours-details tbody tr"):
+        td = hh.select("td")
+        hours.append(f"{td[0].text.strip()}: {' '.join(td[1].stripped_strings)}")
+
+    return SgRecord(
+        page_url=page_url,
+        location_name=_.h1.text.strip(),
+        street_address=street_address,
+        city=city,
+        state=state,
+        zip_postal=zip_postal,
+        latitude=latitude,
+        longitude=longitude,
+        country_code="US",
+        locator_domain=locator_domain,
+        hours_of_operation="; ".join(hours),
+        raw_address=" ".join(_.select_one("div.Address").stripped_strings),
+    )
+
+
+def _g(session, url):
+    res = session.get(url, headers=_headers)
+    if res.status_code != 200:
+        return None
+    return bs(res.text, "lxml")
 
 
 def fetch_data():
-    # Need to add dedupe. Added it in pipeline.
-    session = SgRequests(proxy_rotation_failure_threshold=20)
-    total = 0
-    for state in us.states.STATES:
-        logger.info(("Pulling Geo Code %s..." % state.name))
-        url = f"https://locations.rallys.com/search?region={state.abbr}&country=US&qp={state.name},%20United%20States&l=en"
-        locations = session.get(url, headers=headers, timeout=15).json()
-        total += len(locations)
-        if "response" in locations:
-            for _ in locations["response"]["entities"]:
-                store = _["profile"]
-                try:
-                    if "displayCoordinate" in store:
-                        store["lat"] = store["displayCoordinate"]["lat"]
-                        store["lng"] = store["displayCoordinate"]["long"]
-                    if "geocodedCoordinate" in store:
-                        store["lat"] = store["geocodedCoordinate"]["lat"]
-                        store["lng"] = store["geocodedCoordinate"]["long"]
-                    elif "cityCoordinate" in store:
-                        store["lat"] = store["cityCoordinate"]["lat"]
-                        store["lng"] = store["cityCoordinate"]["long"]
-                except:
-                    import pdb
-
-                    pdb.set_trace()
-                store["street"] = store["address"]["line1"]
-                if store["address"]["line2"]:
-                    store["street"] += " " + store["address"]["line2"]
-                if store["address"]["line3"]:
-                    store["street"] += " " + store["address"]["line3"]
-                store["city"] = store["address"]["city"]
-                store["state"] = store["address"]["region"]
-                store["zip_postal"] = store["address"]["postalCode"]
-                store["country"] = store["address"]["countryCode"]
-                store["phone"] = store["mainPhone"]["display"]
-                hours = []
-                for hh in store["hours"]["normalHours"]:
-                    time = "closed"
-                    if not hh["isClosed"]:
-                        time = (
-                            f"{hh['intervals'][0]['start']}-{hh['intervals'][0]['end']}"
-                        )
-                    hours.append(f"{hh['day']}: {time}")
-                store["hours"] = "; ".join(hours) or "<MISSING>"
-                yield store
-            logger.info(f"[{state.abbr}] found: {len(locations)} | total: {total}")
-
-
-def scrape():
-    field_defs = sp.SimpleScraperPipeline.field_definitions(
-        locator_domain=sp.ConstantField(locator_domain),
-        page_url=sp.MappingField(
-            mapping=["websiteUrl"],
-            part_of_record_identity=True,
-        ),
-        location_name=sp.MappingField(
-            mapping=["c_storeName"],
-        ),
-        latitude=sp.MappingField(
-            mapping=["lat"],
-        ),
-        longitude=sp.MappingField(
-            mapping=["lng"],
-        ),
-        street_address=sp.MappingField(
-            mapping=["street"],
-        ),
-        city=sp.MappingField(
-            mapping=["city"],
-        ),
-        state=sp.MappingField(
-            mapping=["state"],
-        ),
-        zipcode=sp.MappingField(
-            mapping=["zip_postal"],
-        ),
-        country_code=sp.MappingField(
-            mapping=["country"],
-        ),
-        phone=sp.MappingField(
-            mapping=["phone"],
-            part_of_record_identity=True,
-        ),
-        hours_of_operation=sp.MappingField(mapping=["hours"]),
-        store_number=sp.MissingField(),
-        location_type=sp.MissingField(),
-        raw_address=sp.MissingField(),
-    )
-
-    pipeline = sp.SimpleScraperPipeline(
-        scraper_name="pipeline",
-        data_fetcher=fetch_data,
-        field_definitions=field_defs,
-        log_stats_interval=5,
-    )
-
-    pipeline.run()
+    with SgRequests() as session:
+        states = bs(session.get(start_url, headers=_headers).text, "lxml").select(
+            "div.Main-content a"
+        )
+        for state in states:
+            state_url = base_url + state["href"]
+            logger.info(state_url)
+            sp1 = _g(session, state_url)
+            if not sp1:
+                continue
+            cities = sp1.select("li.Directory-listItem a")
+            if cities:
+                for city in cities:
+                    city_url = urljoin(base_url, city["href"])
+                    logger.info(f"[{state.text}] {city_url}")
+                    sp2 = _g(session, city_url)
+                    if not sp2:
+                        continue
+                    locations = sp2.select("li.Directory-listTeaser")
+                    if locations:
+                        for loc in locations:
+                            page_url = urljoin(base_url, loc.a["href"])
+                            logger.info(f"[{city.text.strip()}] {page_url}")
+                            sp3 = _g(session, page_url)
+                            yield _d(sp3, page_url)
+                    else:
+                        yield _d(sp2, city_url)
+            else:
+                locs = sp1.select("li.Directory-listTeaser")
+                if locs:
+                    for loc1 in locs:
+                        page_url1 = urljoin(base_url, loc1.a["href"])
+                        logger.info(f"[{city.text.strip()}] {page_url1}")
+                        sp2 = _g(session, page_url1)
+                        yield _d(sp2, page_url1)
+                else:
+                    yield _d(sp1, city_url)
 
 
 if __name__ == "__main__":
-    scrape()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        results = fetch_data()
+        for rec in results:
+            if rec:
+                writer.write_row(rec)

@@ -20,6 +20,8 @@ def fetch_data():
         "https://locations.chuckecheese.com/pr/caguas/plaza-centro-mall-30-ave.-rafael-j.-cordero",
         "https://locations.chuckecheese.com/pr/carolina/monte-real-plaza-carr.-3-km-15.2-b.o.-canovanillas",
         "https://locations.chuckecheese.com/ca/on/mississauga/2945-argentia-road",
+        "https://locations.chuckecheese.com/ca/ab/edmonton/14245-137th-avenue-nw",
+        "https://locations.chuckecheese.com/ca/ab/edmonton/9863-19th-avenue-nw",
         "https://locations.chuckecheese.com/ca/on/mississauga/4141-dixie-rd.",
     ]
     cities = []
@@ -75,6 +77,7 @@ def fetch_data():
                             "https://locations.chuckecheese.com/" + item.split('"')[0]
                         )
                         locs.append(purl)
+
     for loc in locs:
         logger.info(loc)
         loc = loc.replace("&amp;", "&").replace("&#39;", "'")

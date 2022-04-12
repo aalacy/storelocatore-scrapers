@@ -62,9 +62,9 @@ def fetch_records(http: SgRequests) -> Iterable[SgRecord]:
             add = lr.xpath(
                 './/div[contains(@class, "locator-restaurant__address")]/p/text()'
             )
-            logger.info(f"[{idx}] raw address: {add}")
+            logger.info(f"[{idx}] Raw Address: {add}")
             add_parts = get_clean_data(add)
-            logger.info(f"[{idx}] clean address: {add_parts}")
+            logger.info(f"[{idx}] Clean Address: {add_parts}")
             add_part2 = add_parts[1:]
             raw_add = ", ".join(add_part2)
             pai = parse_address_intl(raw_add)
@@ -120,6 +120,7 @@ def fetch_records(http: SgRequests) -> Iterable[SgRecord]:
                 hours_of_operation = MISSING
 
             if country_code == "FR":
+                # hours of operation need to clean for the stores in France
                 hours_of_operation = (
                     hours_of_operation.split("Zone de Livraison")[0]
                     .rstrip(" ")
@@ -134,7 +135,7 @@ def fetch_records(http: SgRequests) -> Iterable[SgRecord]:
             else:
                 raw_address = MISSING
             logger.info(f"[{idx}] raw_address: {raw_address}")
-            yield SgRecord(
+            rec = SgRecord(
                 locator_domain=locator_domain,
                 page_url=page_url,
                 location_name=location_name,
@@ -151,11 +152,12 @@ def fetch_records(http: SgRequests) -> Iterable[SgRecord]:
                 hours_of_operation=hours_of_operation,
                 raw_address=raw_address,
             )
+            yield rec
 
 
 def scrape():
     count = 0
-    logger.info("Started")
+    logger.info("Scrape Started")
     with SgWriter(
         SgRecordDeduper(
             SgRecordID({SgRecord.Headers.STREET_ADDRESS, SgRecord.Headers.PAGE_URL})
@@ -167,7 +169,7 @@ def scrape():
                 count = count + 1
 
     logger.info(f"No of records being processed: {count}")
-    logger.info("Finished")
+    logger.info("Scrape Finished!")
 
 
 if __name__ == "__main__":

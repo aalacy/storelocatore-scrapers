@@ -4,6 +4,8 @@ from sgrequests import SgRequests
 import json
 from sglogging import SgLogSetup
 from bs4 import BeautifulSoup as bs
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 logger = SgLogSetup().get_logger("rw-co")
 
@@ -28,7 +30,10 @@ def fetch_data():
             page_url = base_url + _["properties"]["slug"]
             logger.info(page_url)
             sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
-            ss = json.loads(sp1.find("script", type="application/ld+json").string)
+            try:
+                ss = json.loads(sp1.find("script", type="application/ld+json").string)
+            except:
+                continue
             hours = [
                 f"{hh['dayOfWeek']}: {hh['opens']}-{hh['closes']}"
                 for hh in ss["openingHoursSpecification"]
@@ -53,7 +58,7 @@ def fetch_data():
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

@@ -8,3 +8,4 @@ beautifulsoup4==4.10.0
 pikepdf==3.1.0
 tabula==1.0.5
 sgpostal==0.1.0
+tenacity==7.0.0

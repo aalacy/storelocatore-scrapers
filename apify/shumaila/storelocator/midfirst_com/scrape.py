@@ -14,6 +14,13 @@ session = SgRequests()
 
 
 def fetch_data():
+    mylist = static_coordinate_list(10, SearchableCountries.USA)
+    mylist = mylist + [
+        ("35.4923225", "-97.5656498"),
+        ("35.46438", "-97.58406"),
+        ("33.4528335", "-112.0738079"),
+    ]
+
     driver = SgSelenium().chrome()
     addresses = []
     base_url = "https://www.midfirst.com"
@@ -60,7 +67,6 @@ def fetch_data():
         "x-requested-with": "XMLHttpRequest",
     }
 
-    mylist = static_coordinate_list(10, SearchableCountries.USA)
     MAX_RESULTS = 25
     MAX_DISTANCE = 150
 
