@@ -28,6 +28,9 @@ def write_output(data):
 
 def fetch_location(page_url, session):
     response = session.get(page_url)
+    if response.status_code != 200:
+        return None
+
     soup = BeautifulSoup(response.text)
     locator_domain = "cvs.com"
 
@@ -146,7 +149,9 @@ def scrape():
         locations = soup.find_all("div", class_="location-city")
         for location in locations:
             url = location.find("a")["href"].strip()
-            yield fetch_location(url, session)
+            result = fetch_location(url, session)
+            if result:
+                yield result
 
 
 if __name__ == "__main__":
