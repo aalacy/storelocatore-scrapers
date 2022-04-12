@@ -1,164 +1,180 @@
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from sgselenium.sgselenium import SgChrome
+from webdriver_manager.chrome import ChromeDriverManager
+from sgscrape import simple_scraper_pipeline as sp
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries, Grain_4
 from sgrequests import SgRequests
-from sgselenium import SgChrome
-import json
-import pandas as pd
-from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
+import ssl
 
-search = DynamicGeoSearch(country_codes=[SearchableCountries.USA], max_radius_miles=100)
-
-locator_domains = []
-page_urls = []
-location_names = []
-street_addresses = []
-citys = []
-states = []
-zips = []
-country_codes = []
-store_numbers = []
-phones = []
-location_types = []
-latitudes = []
-longitudes = []
-hours_of_operations = []
+ssl._create_default_https_context = ssl._create_unverified_context
 
 
-def extract_json(html_string):
-    json_objects = []
-    count = 0
+def get_driver(url, class_name, driver=None):
+    if driver is not None:
+        driver.quit()
 
-    brace_count = 0
-    for element in html_string:
+    user_agent = (
+        "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0"
+    )
+    x = 0
+    while True:
+        x = x + 1
+        try:
+            driver = SgChrome(
+                executable_path=ChromeDriverManager().install(),
+                user_agent=user_agent,
+                is_headless=True,
+            ).driver()
+            driver.get(url)
 
-        if element == "{":
-            brace_count = brace_count + 1
-            if brace_count == 1:
-                start = count
-
-        elif element == "}":
-            brace_count = brace_count - 1
-            if brace_count == 0:
-                end = count
-                try:
-                    json_objects.append(json.loads(html_string[start : end + 1]))
-                except Exception:
-                    pass
-        count = count + 1
-
-    return json_objects
-
-
-data_url = "https://www.biscuitville.com"
-
-driver = SgChrome(is_headless=True).driver()
-driver.get(data_url)
-
-s = SgRequests()
-headers = driver.requests[3].headers
-response = s.get(data_url, headers=headers, allow_redirects=True).text
-
-json_objects = extract_json(response)
-
-for item in json_objects:
-    if "nonce" in item.keys():
-        nonce = item["nonce"]
-
-base_url = "https://biscuitville.com/wp-admin/admin-ajax.php"
-
-for search_lat, search_lng in search:
-    params = {
-        "action": "get_dl_locations",
-        "all": "false",
-        "radius": "100",
-        "lat": search_lat,
-        "lng": search_lng,
-        "current_location": "N",
-        "nonce": nonce,
-    }
-
-    data = s.post(base_url, data=params, headers=headers).json()
-
-    with open("file.txt", "w", encoding="utf-8") as output:
-        json.dump(data, output, indent=4)
-
-    data_states = data["locations"].keys()
-    for data_state in data_states:
-        if data_state == "SOON":
-            continue
-        data_states_dict = data["locations"][data_state]
-        data_cities = data_states_dict.keys()
-        for data_city in data_cities:
-            for location in data_states_dict[data_city]:
-                locator_domain = "biscuitville.com"
-                page_url = location["location_url"]
-                location_name = location["name"]
-                address = location["address"]
-                city = location["city"]
-                state = location["state"]
-                zipp = location["zip"]
-                country_code = "US"
-                store_number = location["id"]
-                phone = location["phone"]
-                location_type = location["service_type"]
-                latitude = location["lat"]
-                longitude = location["lng"]
-                hours = (
-                    location["details"]
-                    .replace(" \r\n", ", ")
-                    .replace("\n", ", ")
-                    .replace("\r", "")
+            WebDriverWait(driver, 20).until(
+                EC.presence_of_element_located((By.CLASS_NAME, class_name))
+            )
+            break
+        except Exception:
+            driver.quit()
+            if x == 10:
+                raise Exception(
+                    "Make sure this ran with a Proxy, will fail without one"
                 )
-                hours = hours.split(", ,")[0]
+            continue
+    return driver
 
-                locator_domains.append(locator_domain)
-                page_urls.append(page_url)
-                location_names.append(location_name)
-                street_addresses.append(address)
-                citys.append(city)
-                states.append(state)
-                zips.append(zipp)
-                country_codes.append(country_code)
-                phones.append(phone)
-                location_types.append(location_type)
-                latitudes.append(latitude)
-                longitudes.append(longitude)
-                store_numbers.append(store_number)
-                hours_of_operations.append(hours)
 
-                search.found_location_at(latitude, longitude)
+def get_data():
+    search = DynamicGeoSearch(
+        country_codes=[SearchableCountries.USA], granularity=Grain_4()
+    )
+    url = "https://biscuitville.com/"
+    class_name = "location-address2"
 
-df = pd.DataFrame(
-    {
-        "locator_domain": locator_domains,
-        "page_url": page_urls,
-        "location_name": location_names,
-        "street_address": street_addresses,
-        "city": citys,
-        "state": states,
-        "zip": zips,
-        "store_number": store_numbers,
-        "phone": phones,
-        "latitude": latitudes,
-        "longitude": longitudes,
-        "country_code": country_codes,
-        "location_type": location_types,
-        "hours_of_operation": hours_of_operations,
+    driver = get_driver(url, class_name)
+    response = driver.page_source
+    headers = {
+        "user-agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0"
     }
-)
+    nonce = response.split('"nonce":')[1].split("}")[0].replace('"', "")
 
-df = df.fillna("<MISSING>")
-df = df.replace(r"^\s*$", "<MISSING>", regex=True)
+    base_url = "https://biscuitville.com/wp-admin/admin-ajax.php"
+    s = SgRequests()
+    for search_lat, search_lng in search:
 
-df["dupecheck"] = (
-    df["location_name"]
-    + df["street_address"]
-    + df["city"]
-    + df["state"]
-    + df["location_type"]
-)
+        x = 0
+        while True:
+            x = x + 1
+            if x == 10:
+                raise Exception
+            try:
+                params = {
+                    "action": "get_dl_locations",
+                    "all": "false",
+                    "radius": "100",
+                    "lat": str(search_lat),
+                    "lng": str(search_lng),
+                    "current_location": "N",
+                    "nonce": nonce,
+                }
+                data_stuff = s.post(base_url, data=params, headers=headers)
+                data = data_stuff.json()
+                break
+            except Exception:
+                driver = get_driver(url, class_name, driver=driver)
+                response = driver.page_source
+                nonce = response.split('"nonce":')[1].split("}")[0].replace('"', "")
 
-df = df.drop_duplicates(subset=["dupecheck"])
-df = df.drop(columns=["dupecheck"])
-df = df.replace(r"^\s*$", "<MISSING>", regex=True)
-df = df.fillna("<MISSING>")
+        data_states = data["locations"].keys()
+        for data_state in data_states:
+            if data_state == "SOON":
+                continue
+            data_states_dict = data["locations"][data_state]
+            data_cities = data_states_dict.keys()
+            for data_city in data_cities:
+                for location in data_states_dict[data_city]:
+                    locator_domain = "biscuitville.com"
+                    page_url = location["location_url"]
+                    location_name = location["name"]
+                    address = location["address"]
+                    city = location["city"]
+                    state = location["state"]
+                    zipp = location["zip"]
+                    country_code = "US"
+                    store_number = location["id"]
+                    phone = location["phone"]
+                    location_type = location["service_type"]
+                    latitude = location["lat"]
+                    longitude = location["lng"]
+                    if "coming soon" in location["details"].lower():
+                        hours = "Coming Soon"
+                    else:
+                        hours = (
+                            location["details"]
+                            .replace(" \r\n", ", ")
+                            .replace("\n", ", ")
+                            .replace("\r", "")
+                        )
+                        hours = hours.split(", ,")[0]
 
-df.to_csv("data.csv", index=False)
+                        hours = (
+                            hours.replace("<p>", "")
+                            .replace("<br />", " ")
+                            .split("<span")[0]
+                            .strip()
+                        )
+                    search.found_location_at(latitude, longitude)
+
+                    yield {
+                        "locator_domain": locator_domain,
+                        "page_url": page_url,
+                        "location_name": location_name,
+                        "latitude": latitude,
+                        "longitude": longitude,
+                        "city": city,
+                        "store_number": store_number,
+                        "street_address": address,
+                        "state": state,
+                        "zip": zipp,
+                        "phone": phone,
+                        "location_type": location_type,
+                        "hours": hours,
+                        "country_code": country_code,
+                    }
+
+
+def scrape():
+    field_defs = sp.SimpleScraperPipeline.field_definitions(
+        locator_domain=sp.MappingField(mapping=["locator_domain"]),
+        page_url=sp.MappingField(mapping=["page_url"], part_of_record_identity=True),
+        location_name=sp.MappingField(
+            mapping=["location_name"], part_of_record_identity=True
+        ),
+        latitude=sp.MappingField(mapping=["latitude"], part_of_record_identity=True),
+        longitude=sp.MappingField(mapping=["longitude"], part_of_record_identity=True),
+        street_address=sp.MultiMappingField(
+            mapping=["street_address"], is_required=False
+        ),
+        city=sp.MappingField(
+            mapping=["city"],
+        ),
+        state=sp.MappingField(mapping=["state"], is_required=False),
+        zipcode=sp.MultiMappingField(mapping=["zip"], is_required=False),
+        country_code=sp.MappingField(mapping=["country_code"]),
+        phone=sp.MappingField(mapping=["phone"], is_required=False),
+        store_number=sp.MappingField(
+            mapping=["store_number"], part_of_record_identity=True
+        ),
+        hours_of_operation=sp.MappingField(mapping=["hours"], is_required=False),
+        location_type=sp.MappingField(mapping=["location_type"], is_required=False),
+    )
+
+    pipeline = sp.SimpleScraperPipeline(
+        scraper_name="Crawler",
+        data_fetcher=get_data,
+        field_definitions=field_defs,
+        log_stats_interval=15,
+    )
+    pipeline.run()
+
+
+scrape()

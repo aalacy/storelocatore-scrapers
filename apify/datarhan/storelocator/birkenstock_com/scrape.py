@@ -63,6 +63,11 @@ def fetch_data():
                     hours = hoo_data[7:]
                     hoo = list(map(lambda d, h: d + " " + h, days, hours))
                     hoo = " ".join(hoo)
+                state = poi["state"]
+                zip_code = poi["postalCode"]
+                if len(zip_code) == 2:
+                    zip_code = poi["state"]
+                    state = poi["postalCode"]
 
                 item = SgRecord(
                     locator_domain=domain,
@@ -70,8 +75,8 @@ def fetch_data():
                     location_name=poi["name"],
                     street_address=street_address,
                     city=poi["city"],
-                    state=poi["state"],
-                    zip_postal=poi["postalCode"],
+                    state=state,
+                    zip_postal=zip_code,
                     country_code=poi["countryCode"],
                     store_number=poi["id"],
                     phone=poi["phone"],
