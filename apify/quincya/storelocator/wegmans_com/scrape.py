@@ -22,11 +22,10 @@ def fetch_data(sgw: SgWriter):
     session = SgRequests()
 
     proxy_password = os.environ["PROXY_PASSWORD"]
-    proxy_url = "http://groups-RESIDENTIAL,country-US:{}@proxy.apify.com:8000/".format(proxy_password)
-    proxies = {
-        'http': proxy_url,
-        'https': proxy_url
-    }
+    proxy_url = "http://groups-RESIDENTIAL,country-US:{}@proxy.apify.com:8000/".format(
+        proxy_password
+    )
+    proxies = {"http": proxy_url, "https": proxy_url}
     session.proxies = proxies
 
     req = session.get(base_link, headers=headers)
