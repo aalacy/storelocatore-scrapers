@@ -34,7 +34,7 @@ def fetch_data():
         for loc in loclist:
             page_url = loc["link"]
             location_name = html.unescape(strip_accents(loc["title"]))
-            log.info(page_url)
+            log.info(location_name)
             url = page_url + "/contact"
             r = session.get(url, headers=headers)
             schema = r.text.split('<script type="application/ld+json">')[1].split(
