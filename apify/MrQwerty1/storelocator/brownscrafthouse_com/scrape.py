@@ -1,109 +1,76 @@
-import csv
-
+import json
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from concurrent import futures
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
-    locator_domain = "https://www.brownscrafthouse.com/"
-    page_url = "https://www.brownscrafthouse.com/"
-
-    session = SgRequests()
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0"
-    }
-    r = session.get(page_url, headers=headers)
+def get_urls():
+    r = session.get(locator_domain, headers=headers)
     tree = html.fromstring(r.text)
-    divs = tree.xpath(
-        "//div[@class='row sqs-row' and ./div[@class='col sqs-col-6 span-6'] and .//h3]"
+
+    return tree.xpath(
+        "//h1[contains(text(), 'LOCATION')]/following-sibling::h3/a/@href"
     )
 
-    for d in divs:
-        location_name = d.xpath(".//h3//text()")[0].strip()
-        if "-" in location_name:
-            city = location_name.split("-")[1].split(",")[0].strip()
-            state = location_name.split("-")[1].split(",")[1].strip()
-        else:
-            city = location_name.split(",")[0].strip()
-            state = location_name.split(",")[1].strip()
 
-        line = d.xpath(".//p//text()")
-        line = list(filter(None, [l.strip() for l in line]))
-        street_address = line.pop(0)
-        if "," in street_address:
-            street_address = street_address.split(",")[0].strip()
+def get_data(slug, sgw: SgWriter):
+    page_url = f"https://www.brownscrafthouse.com{slug}"
+    r = session.get(page_url, headers=headers)
+    tree = html.fromstring(r.text)
+    text = "".join(tree.xpath("//div[@data-block-json]/@data-block-json"))
+    j = json.loads(text)["location"]
 
-        phone = line.pop(0)
-        postal = "<MISSING>"
-        country_code = "CA"
-        store_number = "<MISSING>"
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
-        location_type = "<MISSING>"
+    location_name = tree.xpath("//h1/text()")[0].strip()
+    street_address = j.get("addressLine1") or ""
+    csz = j.get("addressLine2") or ""
+    city, state, postal = csz.split(", ")
+    country_code = "CA"
+    phone = tree.xpath("//h2//text()")[-1].strip()
+    latitude = j.get("markerLat")
+    longitude = j.get("markerLng")
 
-        _tmp = []
-        for l in line:
-            if "open" in l or "work" in l or "Apply" in l or "Brunch" in l:
-                continue
-            _tmp.append(" ".join(l.split()))
+    hours = tree.xpath("//h3[contains(text(), 'Hours')]/following-sibling::p//text()")
+    hours = list(filter(None, [h.strip() for h in hours]))
+    hours_of_operation = ";".join(hours)
+    if ";Brunch" in hours_of_operation:
+        hours_of_operation = hours_of_operation.split(";Brunch")[0]
 
-        hours_of_operation = ";".join(_tmp).replace("pm ", "pm;") or "<MISSING>"
+    row = SgRecord(
+        page_url=page_url,
+        location_name=location_name,
+        street_address=street_address,
+        city=city,
+        state=state,
+        zip_postal=postal,
+        country_code=country_code,
+        latitude=latitude,
+        longitude=longitude,
+        phone=phone,
+        locator_domain=locator_domain,
+        hours_of_operation=hours_of_operation,
+    )
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
-
-    return out
+    sgw.write_row(row)
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
+def fetch_data(sgw: SgWriter):
+    urls = get_urls()
+
+    with futures.ThreadPoolExecutor(max_workers=3) as executor:
+        future_to_url = {executor.submit(get_data, url, sgw): url for url in urls}
+        for future in futures.as_completed(future_to_url):
+            future.result()
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://www.brownscrafthouse.com/"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0"
+    }
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        fetch_data(writer)

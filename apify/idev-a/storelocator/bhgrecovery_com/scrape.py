@@ -17,8 +17,7 @@ _headers = {
 }
 
 
-session = SgRequests().requests_retry_session()
-max_workers = 8
+max_workers = 32
 
 
 def fetchConcurrentSingle(link):
@@ -47,12 +46,13 @@ def fetchConcurrentList(list, occurrence=max_workers):
 
 
 def request_with_retries(url):
-    return session.get(url, headers=_headers)
+    with SgRequests() as session:
+        return session.get(url, headers=_headers)
 
 
 def fetch_data():
     locator_domain = "https://bhgrecovery.com/"
-    base_url = "https://www.bhgrecovery.com/locations?lat=36.9138353&lon=-76.2826675&searched=23505"
+    base_url = "https://www.bhgrecovery.com/locations"
     with SgRequests() as session:
         links = json.loads(
             session.get(base_url, headers=_headers)
@@ -67,6 +67,14 @@ def fetch_data():
             ss = json.loads(
                 sp1.find("script", type="application/ld+json").string.strip()
             )
+            addr = []
+            for pp in sp1.select("div.hubdb-post-hero-copy p")[1:]:
+                if pp.a:
+                    break
+                if not pp.text.strip():
+                    continue
+                addr.append(pp.text.strip())
+
             _hr = sp1.find("h5", string=re.compile(r"Hours of Operation"))
             hours = []
             if _hr:
@@ -78,7 +86,7 @@ def fetch_data():
                 page_url=page_url,
                 location_name=ss["name"].replace("&#8211;", "-").replace("–", "-"),
                 street_address=ss["address"]["streetAddress"],
-                city=ss["address"]["addressLocality"],
+                city=addr[-1].split(",")[0],
                 state=ss["address"]["addressRegion"],
                 zip_postal=ss["address"]["postalCode"],
                 country_code="US",
@@ -87,6 +95,7 @@ def fetch_data():
                 latitude=ss["geo"]["latitude"],
                 longitude=ss["geo"]["longitude"],
                 hours_of_operation="; ".join(hours).replace("–", "-"),
+                raw_address=" ".join(addr),
             )
 
 

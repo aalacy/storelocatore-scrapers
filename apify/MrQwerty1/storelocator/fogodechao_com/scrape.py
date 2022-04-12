@@ -1,49 +1,25 @@
-import csv
 import json
-
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgpostal import parse_address, International_Parser
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def get_street(line):
+    adr = parse_address(International_Parser(), line)
+    adr1 = adr.street_address_1 or ""
+    adr2 = adr.street_address_2 or ""
+    street = f"{adr1} {adr2}".strip()
 
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
+    return street
 
 
 def get_hours(page_url):
-    session = SgRequests()
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:84.0) Gecko/20100101 Firefox/84.0"
-    }
     r = session.get(page_url, headers=headers)
     tree = html.fromstring(r.text)
-    check = tree.xpath("//h5[text()='Coming Soon!']")
-    if check or tree.xpath("//p[contains(text(), 'coming soon')]"):
-        return "Coming Soon"
 
     hours = ";".join(
         tree.xpath(
@@ -62,72 +38,63 @@ def get_hours(page_url):
     if lunch:
         out = f"{hours};Lunch: {lunch}"
     else:
-        out = hours or "<MISSING>"
+        out = hours
 
     return out
 
 
-def fetch_data():
-    out = []
-    locator_domain = "https://fogodechao.com/"
-    api_url = "https://fogodechao.com/locations/"
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:84.0) Gecko/20100101 Firefox/84.0"
-    }
-
-    session = SgRequests()
-    r = session.get(api_url, headers=headers)
+def fetch_data(sgw: SgWriter):
+    api = "https://fogodechao.com/locations/"
+    r = session.get(api, headers=headers)
     tree = html.fromstring(r.text)
-    text = "".join(tree.xpath("//script[contains(text(), 'locationsData ')]/text()"))
-    text = text.split("locationsData = ")[1][:-1]
-    js = json.loads(text).values()
+    text = "".join(tree.xpath("//script[contains(text(), 'locationsData =')]/text()"))
+    text = text.split("locationsData =")[1].strip()[:-1]
+    js = json.loads(text)
 
-    for j in js:
-        street_address = j.get("address1") or "<MISSING>"
-        cs = j.get("city_state")
-        if not cs:
+    for store_number, j in js.items():
+        location_name = j.get("title") or ""
+        if "COMING" in location_name or "OPENS" in location_name:
             continue
-        city = cs.split(",")[0].strip()
-        state = cs.split(",")[-1].strip()
-        postal = j.get("address2").split()[-1]
-        if len(state) > 2:
-            continue
-        country_code = "US"
-        store_number = "<MISSING>"
-        page_url = f'https://fogodechao.com{j.get("url")}'
-        location_name = j.get("title")
-        phone = j.get("phone") or "<MISSING>"
-        latitude = j.get("lat") or "<MISSING>"
-        longitude = j.get("lng") or "<MISSING>"
-        location_type = "<MISSING>"
 
+        street_address = j.get("address1") or ""
+        st = j.get("city_state") or ""
+        city, state = st.split(", ")[:2]
+        postal = str(j.get("address2")).split()[-1].replace(".", "")
+        country_code = j.get("region") or ""
+        country_code = country_code.replace("-Canada", "").strip()
+        if country_code != "US":
+            street_address = get_street(street_address)
+        slug = j.get("url")
+        page_url = f"https://fogodechao.com{slug}"
+        phone = j.get("phone")
+        latitude = j.get("lat")
+        longitude = j.get("lng")
         hours_of_operation = get_hours(page_url)
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
+        row = SgRecord(
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            latitude=latitude,
+            longitude=longitude,
+            phone=phone,
+            store_number=store_number,
+            locator_domain=locator_domain,
+            hours_of_operation=hours_of_operation,
+        )
 
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://fogodechao.com/"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:97.0) Gecko/20100101 Firefox/97.0",
+    }
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        fetch_data(writer)

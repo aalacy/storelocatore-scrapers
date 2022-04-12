@@ -1,0 +1,14 @@
+--ignore StreetAddressHasNumber (Confirmed scrape correctly)
+Found 3 concerning rows. Examples:
+                    street_address              REASON  rowNumber
+20                L'Auberge Casino  ADDR_HAS_NO_NUMBER         20
+45   1200 S. Clearview Pkwy. #1200  ADDR_HAS_NO_NUMBER         45
+122      1100 Stennis Space Center  ADDR_HAS_NO_NUMBER        122
+
+
+
+--ignore GeoConsistencyValidator (Confirmed scrape correctly)
+Found 2 concerning rows. Examples:
+       zip state                REASON  rowNumber
+106  33613    LA  ZIPCODE_NOT_IN_STATE        106
+118  39261    MS  ZIPCODE_NOT_IN_STATE        118
