@@ -1,151 +1,114 @@
-import csv
-from bs4 import BeautifulSoup
-import re
-import requests
-import json
-import sgzip
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('honda_com')
+from sgscrape.sgrecord import SgRecord
+from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries
+from concurrent import futures
 
 
+def get_data(zips, sgw: SgWriter):
+
+    locator_domain = "https://honda.com/"
+
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0",
+        "Accept": "application/json, text/javascript, */*; q=0.01",
+        "Accept-Language": "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3",
+        "X-Requested-With": "XMLHttpRequest",
+        "Connection": "keep-alive",
+        "Referer": "https://owners.honda.com/service-maintenance/dealer-search",
+        "Sec-Fetch-Dest": "empty",
+        "Sec-Fetch-Mode": "cors",
+        "Sec-Fetch-Site": "same-origin",
+    }
+
+    params = {
+        "zip": f"{zips}",
+        "searchRadius": "",
+        "filters": "",
+    }
+
+    r = session.get(
+        "https://owners.honda.com/service-maintenance/dealer-search",
+        headers=headers,
+        params=params,
+    )
+    try:
+        js = r.json()["Dealers"]
+    except:
+        return
+
+    for j in js:
+
+        page_url = "https://mcdonalds.es/restaurantes"
+        a = j.get("Address")
+        location_name = j.get("Name") or "<MISSING>"
+        street_address = (
+            f"{a.get('AddressLine1')} {a.get('AddressLine2') or ''}".replace(
+                "None", ""
+            ).strip()
+        )
+        city = a.get("City")
+        state = a.get("State")
+        postal = a.get("Zip")
+        country_code = "US"
+        phone = j.get("Phone") or "<MISSING>"
+        latitude = a.get("Latitude") or "<MISSING>"
+        longitude = a.get("Longitude") or "<MISSING>"
+        dep = j.get("Departments")
+        types = []
+        for d in dep:
+            t = d.get("Type")
+            types.append(t)
+        location_type = ", ".join(types)
+        hours_of_operation = "<MISSING>"
+        store_number = j.get("DealerId")
+        hours = j.get("Departments")[0].get("OperationHours")
+        tmp = []
+        if hours:
+            for h in hours:
+                day = h.get("Day")
+                times = h.get("Hours")
+                line = f"{day} {times}"
+                tmp.append(line)
+            hours_of_operation = "; ".join(tmp)
+
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+        )
+
+        sgw.write_row(row)
 
 
+def fetch_data(sgw: SgWriter):
+    coords = DynamicZipSearch(
+        country_codes=[SearchableCountries.USA],
+        max_search_distance_miles=200,
+        expected_search_radius_miles=50,
+        max_search_results=None,
+    )
 
-def write_output(data):
-    with open('data.csv', mode='w', encoding="utf-8") as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
-def minute_to_hours(time):
-    am = "AM"
-    hour = int(time / 60)
-    if hour > 12:
-        am = "PM"
-        hour = hour - 12
-    if int(str(time / 60).split(".")[1]) == 0:
-        return str(hour) + ":00" + " " + am
-    else:
-        return str(hour) + ":" + str(int(str(time / 60).split(".")[1]) * 6) + " " + am
-def fetch_data():
-    # zips = sgzip.coords_for_radius(50)
-    locator_domain = "https://www.drmartens.com"
-    location_name = ""
-    street_address = "<MISSING>"
-    city = "<MISSING>"
-    state = "<MISSING>"
-    zipp = "<MISSING>"
-    country_code = "US"
-    store_number = "<MISSING>"
-    phone = "<MISSING>"
-    location_type = "drmartens"
-    latitude = "<MISSING>"
-    longitude = "<MISSING>"
-    raw_address = ""
-    hours_of_operation = "<MISSING>"
-    st =  "<MISSING>"
+    with futures.ThreadPoolExecutor(max_workers=5) as executor:
+        future_to_url = {executor.submit(get_data, url, sgw): url for url in coords}
+        for future in futures.as_completed(future_to_url):
+            future.result()
 
 
-    return_main_object = []
-    addresses = []
-    search = sgzip.ClosestNSearch() # TODO: OLD VERSION [sgzip==0.0.55]. UPGRADE IF WORKING ON SCRAPER!
-    search.initialize()
-    MAX_RESULTS = 70
-    MAX_DISTANCE = 35
-    current_results_len = 0     # need to update with no of count.
-    zip_code = search.next_zip()  
-   
-    address=[]
-    while zip_code:
-        # if len(list_of_urls)==5:
-
-        k={}
-        #logger.info(zip_code)
-        logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
-        result_coords = []
-        get_url='https://owners.honda.com/service-maintenance/dealer-search?zip='+str(zip_code)+'&searchRadius='+str(MAX_DISTANCE)
-
-        headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
-        "content-type": "application/json;charset=UTF-8",
-        'X-Requested-With':"XMLHttpRequest"    
-        }
-        try:
-            k = requests.get(get_url,headers=headers).json()
-        except:
-            pass
-        name =''
-        if k != None and k !=[] and  "Dealers" in k:
-            current_results_len = len(k['Dealers'])
-            for i in k['Dealers']:
-                h1= i['Departments']
-                time =''
-                for h in h1:
-                    t=''
-                    type1 = h['Type']
-                    for q in h['OperationHours']:
-                        t= t+' '+q['Day']+ ' '+q['Hours']
-                    time = time +' ' +type1 + ' '+t
-                if "Name" in i:
-                    name  = i['Name']
-                if "Address" in i:
-                    st = i['Address']['AddressLine1']
-                    state = i['Address']['State']
-                    city = i['Address']['City'].strip()
-                    zipp = i['Address']['Zip']
-                    latitude = str(i['Address']['Latitude'])
-                    longitude = str(i['Address']['Longitude'])
-                if "Phone" in i:
-                    phone = i['Phone']
-                if " Sales " == time:
-                    time = time.replace(" Sales ","<MISSING>")
-                if "Url" in i:
-                    page_url = i['Url']
-                tem_var =[]
-                tem_var.append("https://www.honda.com/")
-                tem_var.append(name if name else "<MISSING>" )
-                tem_var.append(st)
-                tem_var.append(city)
-                tem_var.append(state)
-                tem_var.append(zipp)
-                tem_var.append("US")
-                tem_var.append("<MISSING>")
-                tem_var.append(phone)
-                tem_var.append("<MISSING>")
-                tem_var.append(latitude)
-                tem_var.append(longitude)
-                tem_var.append(time.replace(" Parts  Sales ","<MISSING>").replace(' Service  ','') if time.replace(" Parts  Sales ","<MISSING>").replace(' Service  ','') else "<MISSING>" )
-                tem_var.append(page_url)
-                #logger.info(tem_var)
-                if tem_var[2] in addresses:
-                    continue
-                addresses.append(tem_var[2])
-                yield tem_var
-    
-      
-        if current_results_len < MAX_RESULTS:
-            # logger.info("max distance update")
-            search.max_distance_update(MAX_DISTANCE)
-        elif current_results_len == MAX_RESULTS:
-            # logger.info("max count update")
-            search.max_count_update(result_coords)
-        else:
-            raise Exception("expected at most " + str(MAX_RESULTS) + " results")
-        zip_code = search.next_zip()
-
-    # data = _send_multiple_rq(list_of_urls)
-   
-def scrape():
-    data = fetch_data()
-    write_output(data)
-scrape()
-
-
-
+if __name__ == "__main__":
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+        fetch_data(writer)
