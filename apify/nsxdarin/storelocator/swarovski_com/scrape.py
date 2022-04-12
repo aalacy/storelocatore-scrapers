@@ -5,6 +5,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 import json
+import time
 
 session = SgRequests()
 headers = {
@@ -21,15 +22,16 @@ def fetch_data():
             count = 0
             while Found and count <= 3:
                 try:
+                    time.sleep(1)
                     Found = False
                     count = count + 1
-                    logger.info(str(x) + "-" + str(y))
+                    logger.info(str(y) + "-" + str(x))
                     url = (
                         "https://www.swarovski.com/en-AA/store-finder/list/?allBaseStores=true&geoPoint.latitude="
-                        + str(x)
-                        + "&geoPoint.longitude="
                         + str(y)
-                        + "&radius=2000"
+                        + "&geoPoint.longitude="
+                        + str(x)
+                        + "&radius=500"
                     )
                     try:
                         r = session.get(url, headers=headers)

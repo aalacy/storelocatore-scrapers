@@ -44,6 +44,10 @@ def get_store_data(session, store_sel, page_url):
     city = raw_address[-1].rsplit(" ", 1)[-1].strip()
     state = "<MISSING>"
     zip = raw_address[-1].rsplit(" ", 1)[0].strip()
+    if zip:
+        if zip.split(" ")[-1].strip().isalpha():
+            city = zip.split(" ")[-1].strip() + " " + city
+            zip = " ".join(zip.split(" ")[:-1]).strip()
 
     country_code = "SE"
 

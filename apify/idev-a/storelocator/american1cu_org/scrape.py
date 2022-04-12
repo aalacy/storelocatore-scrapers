@@ -32,6 +32,15 @@ def _coord(infos, addr):
     return coord
 
 
+def _hoo(_hr):
+    if _hr:
+        if _hr.find_parent().find_next_sibling("blockquote"):
+            return _hr.find_parent().find_next_sibling("blockquote").stripped_strings
+        else:
+            list(_hr.find_parent().stripped_strings)[1:]
+    return []
+
+
 def fetch_data():
     with SgRequests() as session:
         res = session.get(base_url, headers=_headers).text
@@ -43,17 +52,14 @@ def fetch_data():
             hours = []
             _hr = link.find("strong", string=re.compile(r"Lobby Hours"))
             if _hr:
-                hours = (
-                    _hr.find_parent().find_next_sibling("blockquote").stripped_strings
-                )
+                hours = _hoo(_hr)
             else:
                 _hr = link.find("strong", string=re.compile(r"Branch Hours"))
                 if _hr:
-                    hours = (
-                        _hr.find_parent()
-                        .find_next_sibling("blockquote")
-                        .stripped_strings
-                    )
+                    hours = _hoo(_hr)
+                else:
+                    _hr = link.find("strong", string=re.compile(r"^Hours"))
+                    hours = _hoo(_hr)
             addr = list(link.select("p")[1].stripped_strings)
             if "temporarily closed" in addr[0].lower():
                 hours = ["Temporarily Closed"]
@@ -64,6 +70,7 @@ def fetch_data():
                 phone = list(_p.find_parent().stripped_strings)[1]
 
             coord = _coord(infos, addr)
+
             yield SgRecord(
                 page_url=base_url,
                 location_name=link.select_one("span.cuname").text.strip(),

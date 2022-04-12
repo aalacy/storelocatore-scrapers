@@ -1,54 +1,31 @@
-import csv
-from sgrequests import SgRequests
-from sglogging import sglog
 from bs4 import BeautifulSoup
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 
+from sgrequests import SgRequests
+
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+
+from sglogging import sglog
+
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 
 session = SgRequests()
 log = sglog.SgLogSetup().get_logger(logger_name="gabesstores_com")
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-                "page_url",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
+def fetch_data(sgw: SgWriter):
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36",
+        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36",
     }
     base_url = "https://www.gabesstores.com"
-    addresses = []
     url_list = []
     zipcodes = DynamicZipSearch(
         country_codes=[SearchableCountries.USA],
-        max_radius_miles=100,
-        max_search_results=100,
+        max_search_distance_miles=100,
+        expected_search_radius_miles=100,
+        max_search_results=50,
     )
     for zipcode in zipcodes:
 
@@ -61,7 +38,7 @@ def fetch_data():
         country_code = "US"
         store_number = ""
         phone = ""
-        location_type = "Gabe's"
+        location_type = ""
         latitude = ""
         longitude = ""
         location_url = (
@@ -84,6 +61,7 @@ def fetch_data():
                 phone = "<MISSING>"
             latitude = i["yextDisplayCoordinate"]["latitude"]
             longitude = i["yextDisplayCoordinate"]["longitude"]
+            zipcodes.found_location_at(latitude, longitude)
             time = ""
             if "landingPageUrl" in i:
                 page_url = i["landingPageUrl"]
@@ -106,32 +84,27 @@ def fetch_data():
                     continue
             else:
                 page_url = "<MISSING>"
-            store_number = "<MISSING>"
-            store = [
-                locator_domain,
-                location_name,
-                street_address,
-                city,
-                state,
-                zipp,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                time,
-                page_url,
-            ]
-            if str(store[2]) + str(store[-3]) not in addresses:
-                addresses.append(str(store[2]) + str(store[-3]))
-                store = [x if x else "<MISSING>" for x in store]
-                yield store
+            store_number = i["meta"]["id"]
+
+            sgw.write_row(
+                SgRecord(
+                    locator_domain=locator_domain,
+                    page_url=page_url,
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=zipp,
+                    country_code=country_code,
+                    store_number=store_number,
+                    phone=phone,
+                    location_type=location_type,
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=time,
+                )
+            )
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+    fetch_data(writer)

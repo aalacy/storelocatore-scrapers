@@ -2,7 +2,6 @@ import re
 import threading
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import SgRecordID
@@ -15,52 +14,50 @@ headers = {
 local = threading.local()
 
 
-def get_cities_from_states():
-    response = get_session().get(
-        "https://stores.finishline.com/index.html", headers=headers
-    )
+def get_cities_from_states(locations_url, base_url):
+    response = get_session().get(locations_url, headers=headers)
     soup = bs(response.text, "html.parser")
     links = soup.find_all("a", class_="c-directory-list-content-item-link")
-    return [f'https://stores.finishline.com/{link["href"]}' for link in links]
+    return [f'{base_url}/{link["href"]}' for link in links]
 
 
-def get_locations_from_cities(urls):
+def get_locations_from_cities(urls, base_url):
     locations = []
-    with ThreadPoolExecutor() as executor:
-        futures = [executor.submit(get_locations, url, locations) for url in urls]
-        for future in as_completed(futures):
-            pass
+    for url in urls:
+        get_locations(url, locations, base_url)
 
     return locations
 
 
-def get_locations(url, locations):
+def get_locations(url, locations, base_url):
     response = get_session().get(url, headers=headers)
     soup = bs(response.text, "html.parser")
     links = soup.find_all("a", class_="c-directory-list-content-item-link")
     items = soup.find_all("div", class_="c-location-grid-item")
-    is_detail = soup.find("h1", class_="nap-title")
+    is_detail = soup.find("h1", class_="nap-title") or soup.find(
+        "h1", class_="location-header-title"
+    )
 
-    if len(links):
+    if is_detail:
+        locations.append(get_location(soup, url, True))
+    elif len(links):
         for link in links:
             cleaned_url = re.sub(r"\.\.\/", "", link["href"])
-            complete_url = f"https://stores.finishline.com/{cleaned_url}"
-            get_locations(complete_url, locations)
+            complete_url = f"{base_url}/{cleaned_url}"
+            get_locations(complete_url, locations, base_url)
     elif len(items):
         items = soup.find_all("div", class_="c-location-grid-item")
         for item in items:
             details = item.find("a", string="Store Details")
             if details:
                 cleaned_url = re.sub(r"\.\.\/", "", details["href"])
-                complete_url = f"https://stores.finishline.com/{cleaned_url}"
+                complete_url = f"{base_url}/{cleaned_url}"
                 response = get_session().get(complete_url, headers=headers)
                 soup = bs(response.text, "html.parser")
                 locations.append(get_location(soup, complete_url, True))
             else:
                 pass
                 locations.append(get_location(item, url, False))
-    elif is_detail:
-        locations.append(get_location(soup, url, True))
 
 
 def get_location(item, page_url, is_details):
@@ -75,8 +72,9 @@ def get_location(item, page_url, is_details):
     phone = item.find("a", class_="c-phone-main-number-link").text
 
     if is_details:
-        hours = item.find(
-            "div", class_="nap-hours col-lg-3 col-md-4 col-sm-6 hidden-xs"
+        hours = (
+            item.find("div", class_="nap-hours col-lg-3 col-md-4 col-sm-6 hidden-xs")
+            or item.find("table", class_="c-location-hours-details")
         ).find_all("tr", class_="c-location-hours-details-row")
     else:
         hours = item.find(
@@ -84,6 +82,13 @@ def get_location(item, page_url, is_details):
         ).find_all("div", class_="c-location-hours-today-details-row")
 
     hours_of_operation = ", ".join(hour.attrs["content"] for hour in hours)
+
+    if is_details:
+        latitude = item.find("meta", itemprop="latitude").attrs["content"]
+        longitude = item.find("meta", itemprop="longitude").attrs["content"]
+    else:
+        latitude = None
+        longitude = None
 
     return SgRecord(
         locator_domain="jdsports.com",
@@ -96,6 +101,8 @@ def get_location(item, page_url, is_details):
         country_code=country_code,
         phone=phone,
         hours_of_operation=hours_of_operation,
+        latitude=latitude,
+        longitude=longitude,
     )
 
 
@@ -107,9 +114,15 @@ def get_session(refresh=False):
 
 
 def fetch_data():
-    cities = get_cities_from_states()
-    locations = get_locations_from_cities(cities)
-    return locations
+    sites = [
+        ["https://stores.jdsports.com/", "https://stores.jdsports.com"],
+        ["https://stores.finishline.com/index.html", "https://stores.finishline.com"],
+    ]
+
+    for locations_url, base_url in sites:
+        cities = get_cities_from_states(locations_url, base_url)
+        locations = get_locations_from_cities(cities, base_url)
+        yield from locations
 
 
 def scrape():

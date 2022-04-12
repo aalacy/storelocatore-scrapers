@@ -2,4 +2,4 @@
 sgscrape==0.2.9
 lxml==4.6.2
 sgzip==0.10.15
-sgrequests==0.2.9
+sgrequests==0.2.10
