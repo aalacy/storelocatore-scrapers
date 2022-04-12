@@ -24,7 +24,7 @@ def fetch_data():
     stores_req = session.get(search_url, headers=headers)
     stores_sel = lxml.html.fromstring(stores_req.text)
     stores = stores_sel.xpath(
-        '//div[./button[contains(text(),"LOCATIONS")]]/ul/li/a/@href'
+        '//div[./button[contains(text(),"Locations")]]/ul/li/a/@href'
     )
     store_header = {
         "authority": "api.momentfeed.com",

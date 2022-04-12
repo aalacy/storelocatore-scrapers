@@ -82,7 +82,7 @@ def _time(h, val):
     return f"{h}:{val}"
 
 
-max_workers = 16
+max_workers = 64
 
 
 def fetchSingleStoreIndex(store_index, domain):
@@ -207,6 +207,7 @@ def _d(loc, domain, country):
 def fetch_data():
     with SgRequests(proxy_country="us") as session:
         for country, base_url in urls.items():
+            logger.info(f"[{country}] {base_url}")
             domain = "/".join(base_url.split("/")[:-1])
             store_indices = json.loads(
                 bs(session.get(base_url, headers=_headers).text, "lxml")

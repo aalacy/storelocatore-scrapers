@@ -27,11 +27,10 @@ def fetch_data():
     for poi in all_locations:
         poi = json.loads(poi)
         addr = parse_address_intl(poi["address"])
-        street_address = addr.street_address_1
-        if street_address and addr.street_address_2:
-            street_address += ", " + addr.street_address_2
+        if len(poi["address"].split(",")) == 5:
+            street_address = " ".join(poi["address"].split(",")[:2])
         else:
-            street_address = addr.street_address_2
+            street_address = poi["address"].split(",")[0]
 
         loc_response = session.get(poi["link"])
         loc_dom = etree.HTML(loc_response.text)
