@@ -4,6 +4,7 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
+import json
 
 logger = SgLogSetup().get_logger("texasroadhouse_com")
 
@@ -14,95 +15,37 @@ headers = {
 
 
 def fetch_data():
-    url = "https://www.texasroadhouse.com/sitemap.xml"
-    locs = []
-    r = session.get(url, headers=headers)
-    for line in r.iter_lines():
-        if "<loc>https://togo.texasroadhouse.com/location/" in line:
-            items = line.split("<loc>https://togo.texasroadhouse.com/location/")
-            for item in items:
-                if 'version="1.0"' not in item:
-                    lurl = (
-                        "https://www.texasroadhouse.com/locations/" + item.split("<")[0]
-                    )
-                    lurl = lurl.replace("/menu", "")
-                    locs.append(lurl)
-    for loc in locs:
-        try:
-            r2 = session.get(loc, headers=headers)
-            logger.info(loc)
-            name = ""
-            add = ""
-            website = "texasroadhouse.com"
-            country = "<MISSING>"
-            add = ""
-            store = "<MISSING>"
-            city = ""
-            typ = "<MISSING>"
-            state = "<MISSING>"
-            zc = ""
-            lat = "<MISSING>"
-            lng = "<MISSING>"
-            phone = ""
-            hours = ""
-            lines = r2.iter_lines()
-            for line2 in lines:
-                if '"og:title" content="' in line2:
-                    name = line2.split('"og:title" content="')[1].split('"')[0]
-                    name = name.split("|")[0].strip()
-                    state = name[-2:]
-                if '<p class="store-address">' in line2:
-                    add = next(lines).split(",")[0].strip().replace("\t", "")
-                if 'href="https://google.com/maps/place/' in line2:
-                    csz = (
-                        line2.split('href="https://google.com/maps/place/')[1]
-                        .split('"')[0]
-                        .replace("%2C", ",")
-                        .replace("%20", " ")
-                    )
-                    city = csz.split(",")[0].strip()
-                    zc = csz.rsplit(" ", 1)[1]
-                if 'store-telephone">' in line2:
-                    phone = (
-                        next(lines)
-                        .split("</svg>")[1]
-                        .strip()
-                        .replace("\r", "")
-                        .replace("\t", "")
-                        .replace("\n", "")
-                    )
-                if "day :" in line2:
-                    hrs = (
-                        line2.strip()
-                        .replace("\r", "")
-                        .replace("\t", "")
-                        .replace("\n", "")
-                    )
-                    hrs = hrs.replace("<strong>", "").replace("</strong>", "").strip()
-                    if hours == "":
-                        hours = hrs
-                    else:
-                        hours = hours + "; " + hrs
-            if phone == "":
-                phone = "<MISSING>"
-            if hours == "":
-                hours = "<MISSING>"
-            cname = (
-                name.replace("-W,", ",")
-                .replace("-E,", ",")
-                .replace("-S,", ",")
-                .replace("-N,", ",")
+    website = "texasroadhouse.com"
+    typ = "<MISSING>"
+    for x in range(-170, 170):
+        for y in range(-70, 70):
+            url = (
+                "https://www.texasroadhouse.com/restaurants/near?lat="
+                + str(x)
+                + "&long="
+                + str(y)
+                + "&radius=100000&limit=20"
             )
-            cname = cname.replace("-NE,", ",")
-            cname = cname.replace("-NW,", ",")
-            cname = cname.replace("-SE,", ",")
-            cname = cname.replace("-SW,", ",")
-            city = cname.split(",")[0]
-            if add != "" and city != "<MISSING>":
-                name = name.replace("\\u0027", "'")
-                add = add.replace("\\u0027", "'")
-                name = name.replace("\\/", "/")
-                add = add.replace("\\/", "/")
+            r = session.get(url, headers=headers)
+            for item in json.loads(r.content)["restaurants"]:
+                city = item["city"]
+                state = item["state"]
+                if state == "":
+                    state = "<MISSING>"
+                lat = item["latitude"]
+                lng = item["longitude"]
+                loc = "https://togo.texasroadhouse.com/location/" + item["slug"]
+                add = item["streetaddress"]
+                country = item["country"]
+                phone = item["telephone"]
+                store = item["extref"]
+                if phone == "":
+                    phone = "<MISSING>"
+                zc = item["zip"]
+                if zc == "":
+                    zc = "<MISSING>"
+                name = item["storename"]
+                hours = "<MISSING>"
                 yield SgRecord(
                     locator_domain=website,
                     page_url=loc,
@@ -119,8 +62,6 @@ def fetch_data():
                     longitude=lng,
                     hours_of_operation=hours,
                 )
-        except:
-            pass
 
 
 def scrape():
