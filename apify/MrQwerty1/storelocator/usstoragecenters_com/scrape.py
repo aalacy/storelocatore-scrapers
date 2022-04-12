@@ -7,7 +7,7 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from concurrent import futures
 
 
-def get_hours(slug):
+def get_hours(slug, coords=False):
     url = f"https://www.usstoragecenters.com{slug}"
     r = session.get(url, headers=headers)
     tree = html.fromstring(r.text)
@@ -18,6 +18,14 @@ def get_hours(slug):
         day = "".join(l.xpath("./span[1]//text()")).strip()
         time = "".join(l.xpath("./span[2]//text()")).strip()
         _tmp.append(f"{day}: {time}")
+
+    if coords:
+        text = "".join(tree.xpath("//img[contains(@src, 'google')]/@src"))
+        try:
+            lat, lng = text.split("center=")[1].split("&")[0].split(",")
+        except:
+            lat, lng = SgRecord.MISSING, SgRecord.MISSING
+        return ";".join(_tmp), (lat, lng)
 
     return ";".join(_tmp)
 
@@ -49,6 +57,7 @@ def fetch_data(sgw: SgWriter):
         slug = j.get("url")
         page_url = f"https://www.usstoragecenters.com{slug}"
         location_name = j.get("sanitizedHeader") or "US Storage Centers"
+        location_name = location_name.replace("&amp;", "&")
         try:
             phone = j["phone"]["label"]["value"]
         except TypeError:
@@ -67,7 +76,10 @@ def fetch_data(sgw: SgWriter):
                 '"', ""
             ).replace("W", "").replace("°", ".")
 
-        hours_of_operation = hours.get(slug)
+        if not latitude:
+            hours_of_operation, (latitude, longitude) = get_hours(slug, coords=True)
+        else:
+            hours_of_operation = hours.get(slug)
 
         row = SgRecord(
             page_url=page_url,

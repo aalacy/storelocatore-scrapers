@@ -64,6 +64,7 @@ def fetch_data():
                 street_address = street_address[:-1]
             if not street_address:
                 street_address = _["address"]
+
             yield SgRecord(
                 page_url=base_url,
                 location_name=_["address"],
@@ -103,7 +104,7 @@ def fetch_data():
             temp = [
                 hh.text.strip()
                 for hh in _hr.find_parent("div").find_next_siblings("div")
-                if hh.text.strip()
+                if hh.text.strip() and hh.text.strip() != "\u200b"
             ]
             hours = []
             ii = int(len(temp) / 2)

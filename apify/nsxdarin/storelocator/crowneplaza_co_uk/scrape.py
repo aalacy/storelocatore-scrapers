@@ -52,11 +52,12 @@ def fetch_data():
                 lat = line2.split('location:latitude"  content="')[1].split('"')[0]
             if 'location:longitude" content="' in line2:
                 lng = line2.split('location:longitude" content="')[1].split('"')[0]
-            if "|  United Kingdom |" in line2:
-                add = line2.split("|")[0].strip().replace("\t", "").split(",")[0]
-                city = line2.split("|")[0].split(",")[1].strip().replace("\t", "")
-                state = "<MISSING>"
-                zc = line2.split("|")[1].strip().replace("\t", "")
+            if '"streetAddress": "' in line2:
+                add = line2.split('"streetAddress": "')[1].split('"')[0]
+            if '"addressLocality": "' in line2:
+                city = line2.split('"addressLocality": "')[1].split('"')[0]
+            if '"postalCode": "' in line2:
+                zc = line2.split('"postalCode": "')[1].split('"')[0]
             if '<a href="tel:' in line2:
                 phone = line2.split('<a href="tel:')[1].split('"')[0]
         if GB is True:

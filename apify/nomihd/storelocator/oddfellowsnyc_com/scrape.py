@@ -5,7 +5,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import lxml.html
 import re
-from sgscrape import sgpostal as parser
+from sgpostal import sgpostal as parser
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
@@ -120,6 +120,7 @@ def fetch_data():
             .strip()
             .split(", charleston@")[0]
             .strip()
+            .replace("StreetBrooklyn", "Street, Brooklyn")
         )
         formatted_addr = parser.parse_address_intl(raw_address)
         street_address = formatted_addr.street_address_1
@@ -157,8 +158,22 @@ def fetch_data():
                 ],
             )
         )
-
+        if "HOURS" in "".join(hours).strip():
+            hours = list(
+                filter(
+                    str,
+                    [
+                        x.strip()
+                        for x in store.xpath(
+                            "div[@class='shops-contact']//p[./strong[contains(text(),'HOURS')]]/following-sibling::p/text()"
+                        )
+                    ],
+                )
+            )
         hours_of_operation = "; ".join(hours).replace("; :", ":").strip()
+        if "843.203.6139;" in hours_of_operation:
+            hours_of_operation = hours_of_operation.replace("843.203.6139;", "").strip()
+            phone = "843.203.6139"
 
         map_link = "".join(
             store.xpath('div[@class="shops-contact"]//a[contains(@href,"maps")]/@href')
