@@ -1,6 +1,8 @@
 import json
 import re
 
+import os
+
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 
@@ -18,6 +20,15 @@ def fetch_data(sgw: SgWriter):
     headers = {"User-Agent": user_agent}
 
     session = SgRequests()
+
+    proxy_password = os.environ["PROXY_PASSWORD"]
+    proxy_url = "http://groups-RESIDENTIAL,country-US:{}@proxy.apify.com:8000/".format(proxy_password)
+    proxies = {
+        'http': proxy_url,
+        'https': proxy_url
+    }
+    session.proxies = proxies
+
     req = session.get(base_link, headers=headers)
     base = BeautifulSoup(req.text, "lxml")
 
