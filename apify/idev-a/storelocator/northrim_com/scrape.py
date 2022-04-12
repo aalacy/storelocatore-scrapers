@@ -3,7 +3,7 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgrequests import SgRequests
-from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
+from sgzip.dynamic import DynamicGeoSearch
 from sglogging import SgLogSetup
 from bs4 import BeautifulSoup as bs
 
