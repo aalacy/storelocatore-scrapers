@@ -87,6 +87,9 @@ def fetch_data(sgw: SgWriter):
             state = "NC"
             zip_code = "27514"
 
+        if "Fairport-Marsh Roads" in street_address:
+            street_address = "851 Fairport Road"
+
         country_code = "US"
         store_number = base.find(id="store-number").text
 
