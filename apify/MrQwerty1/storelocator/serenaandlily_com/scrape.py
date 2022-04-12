@@ -30,18 +30,18 @@ def fetch_data(sgw: SgWriter):
         line = list(filter(None, [l.replace("\ufeff", "").strip() for l in line]))
 
         cnt = 0
-        csz = ""
+        t = ""
         for li in line:
             if ", " in li:
-                csz = li
+                t = li
             if "@" in li:
                 break
             cnt += 1
 
         line = line[:cnt]
-        line.pop(line.index(csz))
+        line.pop(line.index(t))
         phone = line.pop()
-        csz = csz.split(", ")
+        csz = t.split(", ")
         city = csz.pop(0)
         state, postal = csz.pop().split()
         street_address = line.pop(0)
