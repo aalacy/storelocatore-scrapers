@@ -1,4 +1,5 @@
 import json
+import html
 import unicodedata
 from sglogging import sglog
 from sgrequests import SgRequests
@@ -32,7 +33,7 @@ def fetch_data():
         loclist = session.get(url, headers=headers).json()["locations"]
         for loc in loclist:
             page_url = loc["link"]
-            location_name = strip_accents(loc["title"])
+            location_name = html.unescape(strip_accents(loc["title"]))
             log.info(page_url)
             url = page_url + "/contact"
             r = session.get(url, headers=headers)
@@ -57,7 +58,7 @@ def fetch_data():
                 hours_of_operation = (
                     hours_of_operation
                     + " "
-                    + hour["dayOfWeek"]
+                    + hour["dayOfWeek"].replace("http://schema.org/", "")
                     + " "
                     + hour["opens"]
                     + "-"
