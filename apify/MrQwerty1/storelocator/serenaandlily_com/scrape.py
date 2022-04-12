@@ -7,38 +7,50 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 
 
 def fetch_data(sgw: SgWriter):
-    page_url = "https://www.serenaandlily.com/stores.html"
-    r = session.get(page_url, headers=headers)
+    api = "https://www.serenaandlily.com/stores.html"
+    r = session.get(api, headers=headers)
     tree = html.fromstring(r.text)
 
     divs = tree.xpath(
         "//div[contains(@class, '-region col-sm-6') and .//*[text()='BOOK US']]"
     )
     for d in divs:
-        line = d.xpath(".//text()")
-        line = list(filter(None, [l.strip() for l in line]))
-        line.pop(0)
+        slug = "".join(d.xpath(".//a[contains(@href, '/stores')]/@href"))
+        if slug:
+            page_url = f"https://www.serenaandlily.com{slug}"
+        else:
+            page_url = api
+
+        location_name = d.xpath(
+            ".//div[count(./p)=1 and not(.//a[contains(text(), 'VISIT')])]/p//text()"
+        )[0].strip()
+        if "opening" in location_name.lower():
+            continue
+        line = d.xpath(".//div[count(./p)>1]//text()")
+        line = list(filter(None, [l.replace("\ufeff", "").strip() for l in line]))
 
         cnt = 0
+        csz = ""
         for li in line:
+            if ", " in li:
+                csz = li
             if "@" in li:
                 break
             cnt += 1
 
         line = line[:cnt]
-        location_name = line.pop(0)
-        if "opening" in location_name.lower():
-            continue
+        line.pop(line.index(csz))
         phone = line.pop()
-        csz = line.pop().split(", ")
+        csz = csz.split(", ")
         city = csz.pop(0)
         state, postal = csz.pop().split()
-        street_address = ", ".join(line)
+        street_address = line.pop(0)
         if location_name in street_address:
             street_address = street_address.replace(f"{location_name}, ", "")
-        if ", AT" in street_address:
-            street_address = street_address.split(", AT")[0]
+        if "AT " in line[0]:
+            line.pop(0)
 
+        hours_of_operation = ";".join(line)
         text = "".join(d.xpath(".//a[contains(@href, 'google')]/@href"))
         try:
             latitude, longitude = text.split("/@")[1].split(",")[:2]
@@ -57,6 +69,7 @@ def fetch_data(sgw: SgWriter):
             latitude=latitude,
             longitude=longitude,
             locator_domain=locator_domain,
+            hours_of_operation=hours_of_operation,
         )
 
         sgw.write_row(row)
