@@ -35,9 +35,12 @@ def fetch_data():
                     f"{base_url}?region={region['value']}&comuna={slug['value']}#"
                 )
                 logger.info(page_url)
-                locations = bs(
-                    session.get(page_url, headers=_headers).text, "lxml"
-                ).select("div.container-mapa div.direccion")
+                res1 = session.get(page_url, headers=_headers)
+                if res1.status_code != 200:
+                    continue
+                locations = bs(res1.text, "lxml").select(
+                    "div.container-mapa div.direccion"
+                )
                 for _ in locations:
                     location_name = _.h3.text.strip()
                     raw_address = _.p.b.text.strip()
