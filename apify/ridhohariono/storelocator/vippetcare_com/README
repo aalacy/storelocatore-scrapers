@@ -1,0 +1,12 @@
+--ignore StreetAddressHasNumber  (Confirmed scrape correctly)
+Found 2 concerning rows. Examples:
+                         street_address              REASON  rowNumber
+511        20020 Ashbrook Commons Plaza  ADDR_HAS_NO_NUMBER        511
+606  7625 Lake Raystown Shopping Center  ADDR_HAS_NO_NUMBER        606
+
+
+--ignore GeoConsistencyValidator  (Confirmed scrape correctly)
+Found 2 concerning rows. Examples:
+        zip state                REASON  rowNumber
+37    49549    MI  ZIPCODE_NOT_IN_STATE         37
+1029  12114    NY  ZIPCODE_NOT_IN_STATE       1029
