@@ -61,6 +61,8 @@ def fetch_data():
                             "https://www.swedish.org/",
                         )
                         lurl = lurl.replace("https://www.providence.orghttps", "https")
+                        if "," in phone:
+                            phone = phone.split(",")[0].strip()
                         yield SgRecord(
                             locator_domain=website,
                             page_url=lurl,
