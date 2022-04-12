@@ -24,6 +24,7 @@ locator_domain = "https://northrim.com/"
 base_url = "https://northrim.locatorsearch.com/GetItems.aspx"
 page_url = "https://northrim.com/About-Northrim/Contact-Us/Locations"
 
+
 def _p(val):
     return (
         val.replace("(", "")
@@ -37,7 +38,7 @@ def _p(val):
 
 def fetch_records(search):
     # Need to add dedupe. Added it in pipeline.
-    with SgRequests() as session: 
+    with SgRequests() as session:
         maxZ = search.items_remaining()
         total = 0
         for lat, lng in search:
@@ -85,8 +86,8 @@ def fetch_records(search):
                     street_address=_.select_one("add1").text,
                     city=c_s[0].strip(),
                     state=s_z[0].strip(),
-                    zip_postal=s_z[1].strip() if len(s_z) > 1 else '',
-                    country_code='US',
+                    zip_postal=s_z[1].strip() if len(s_z) > 1 else "",
+                    country_code="US",
                     phone=addr2[-1] if _p(addr2[-1]) else "<MISSING>",
                     latitude=_["lat"],
                     longitude=_["lng"],
@@ -95,15 +96,19 @@ def fetch_records(search):
                     hours_of_operation="; ".join(hours),
                 )
 
-            progress = str(round(100 - (search.items_remaining() / maxZ * 100), 2)) + "%"
+            progress = (
+                str(round(100 - (search.items_remaining() / maxZ * 100), 2)) + "%"
+            )
 
-            logger.info(f"found: {len(locations)} | total: {total} | progress: {progress}")
+            logger.info(
+                f"found: {len(locations)} | total: {total} | progress: {progress}"
+            )
 
 
 if __name__ == "__main__":
     with SgRequests() as http:
         search = DynamicGeoSearch(
-            country_codes=['us'], expected_search_radius_miles=100
+            country_codes=["us"], expected_search_radius_miles=100
         )
         with SgWriter(
             SgRecordDeduper(
