@@ -18,8 +18,10 @@ def fetch_data(sgw: SgWriter):
 
     for postcode in search:
         p = {"search": postcode}
-
-        locs = json.loads(s.post(api, data=p).text)["data"]["visibleLocations"]
+        try:
+            locs = json.loads(s.post(api, data=p).text)["data"]["visibleLocations"]
+        except:
+            continue
         for loc in locs:
             st = locs[loc]
             if st["wait_time"] == "Coming Soon":
