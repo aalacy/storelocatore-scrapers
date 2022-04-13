@@ -25,41 +25,45 @@ def fetch_data():
     for coord in search:
         website = "littlecaesars.com"
         url = "https://api.cloud.littlecaesars.com/bff/api/stores?zip=" + coord
-        r = session.get(url, headers=headers, verify=False)
-        for item in json.loads(r.content)["stores"]:
-            name = "Little Caesar's"
-            city = item["address"]["city"]
-            state = item["address"]["state"]
-            country = "US"
-            add = item["address"]["street"] + " " + item["address"]["street2"]
-            add = add.strip()
-            zc = item["address"]["zip"]
-            lat = item["latitude"]
-            lng = item["longitude"]
-            phone = item["phone"]
-            store = item["storeId"]
-            typ = item["storeType"]
-            purl = "https://order.littlecaesars.com/en-us/stores/" + str(store)
-            try:
-                hours = item["storeOpenTime"] + "-" + item["storeCloseTime"]
-            except:
-                hours = "<MISSING>"
-            yield SgRecord(
-                locator_domain=website,
-                page_url=purl,
-                location_name=name,
-                street_address=add,
-                city=city,
-                state=state,
-                zip_postal=zc,
-                country_code=country,
-                phone=phone,
-                location_type=typ,
-                store_number=store,
-                latitude=lat,
-                longitude=lng,
-                hours_of_operation=hours,
-            )
+        r = session.get(url, headers=headers)
+        try:
+            for item in json.loads(r.content)["stores"]:
+                name = "Little Caesar's"
+                city = item["address"]["city"]
+                state = item["address"]["state"]
+                country = "US"
+                add = item["address"]["street"] + " " + item["address"]["street2"]
+                add = add.strip()
+                zc = item["address"]["zip"]
+                lat = item["latitude"]
+                lng = item["longitude"]
+                phone = item["phone"]
+                store = item["storeId"]
+                typ = item["storeType"]
+                lnum = item["locationNumber"]
+                purl = "https://littlecaesars.com/en-us/store/" + str(lnum)
+                try:
+                    hours = item["storeOpenTime"] + "-" + item["storeCloseTime"]
+                except:
+                    hours = "<MISSING>"
+                yield SgRecord(
+                    locator_domain=website,
+                    page_url=purl,
+                    location_name=name,
+                    street_address=add,
+                    city=city,
+                    state=state,
+                    zip_postal=zc,
+                    country_code=country,
+                    phone=phone,
+                    location_type=typ,
+                    store_number=store,
+                    latitude=lat,
+                    longitude=lng,
+                    hours_of_operation=hours,
+                )
+        except:
+            pass
 
 
 def scrape():

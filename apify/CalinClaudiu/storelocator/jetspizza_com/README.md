@@ -1,6 +1,6 @@
 # How to write a Python3 scraper for SafeGraph (Simple)
 
-validate.py data.csv --ignore StreetAddressHasNumber
+validate.py data.csv --ignore StateLevelCountValidator
 
 Address scraped correctly, checked myself.
 

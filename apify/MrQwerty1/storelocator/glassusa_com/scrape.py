@@ -1,3 +1,4 @@
+import json
 from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
@@ -10,6 +11,22 @@ def get_states(url):
     r = session.get(url, headers=headers)
     tree = html.fromstring(r.text)
     return tree.xpath("//a[@class='state-li']/@href")
+
+
+def get_address(page_url):
+    r = session.get(page_url)
+    tree = html.fromstring(r.text)
+    try:
+        text = "".join(tree.xpath("//script[contains(text(), 'areaServed')]/text()"))
+        j = json.loads(text)["provider"]["address"]
+    except:
+        j = {}
+    street = j.get("streetAddress")
+    city = j.get("addressLocality")
+    state = j.get("addressRegion")
+    postal = j.get("postalCode")
+
+    return street, city, state, postal
 
 
 def generate_pin_dict(text):
@@ -54,10 +71,7 @@ def fetch_data(sgw: SgWriter):
                 state = line.split()[0]
                 postal = line.split()[1]
             elif not line:
-                street_address = SgRecord.MISSING
-                city = SgRecord.MISSING
-                state = SgRecord.MISSING
-                postal = SgRecord.MISSING
+                street_address, city, state, postal = get_address(page_url)
             else:
                 line = line.pop()
                 street_address = SgRecord.MISSING

@@ -4,6 +4,8 @@ from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import lxml.html
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "brassicas.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -16,18 +18,19 @@ headers = {
 def fetch_data():
     # Your scraper here
 
-    search_url = "https://brassicas.com/"
+    search_url = "https://brassicas.com/locations/"
     search_res = session.get(search_url, headers=headers)
     search_sel = lxml.html.fromstring(search_res.text)
 
-    stores_list = search_sel.xpath('//div[contains(@class,"locations")]//li/a/@href')
+    stores_list = search_sel.xpath('//div[@class="tile"]//a/@href')
 
-    for store in stores_list:
-
-        page_url = store
+    for store_url in stores_list:
+        if "/locations/" not in store_url:
+            continue
+        page_url = store_url
         locator_domain = website
-        log.info(store)
-        page_res = session.get(store, headers=headers)
+        log.info(store_url)
+        page_res = session.get(store_url, headers=headers)
         page_sel = lxml.html.fromstring(page_res.text)
 
         location_name = "".join(page_sel.xpath("//h1/text()")).strip()
@@ -38,8 +41,11 @@ def fetch_data():
                 page_sel.xpath('//div[@class="copy"]/p//text()'),
             )
         )
-
         details_info = details_info[1:]
+        try:
+            details_info.remove("\xa0")
+        except:
+            pass
 
         street_address = details_info[0].strip()
 
@@ -96,7 +102,9 @@ def fetch_data():
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

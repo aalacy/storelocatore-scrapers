@@ -15,11 +15,11 @@ def fetch_data():
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
     all_coords = DynamicGeoSearch(
-        country_codes=[SearchableCountries.USA], expected_search_radius_miles=10
+        country_codes=[SearchableCountries.USA], expected_search_radius_miles=3
     )
     for lat, lng in all_coords:
         all_locations = session.get(
-            start_url.format(lat, lng, lat - 0.05, lng - 0.13), headers=hdr
+            start_url.format(lat, lng, lat - 0.10, lng - 0.13), headers=hdr
         ).json()
         for poi in all_locations:
             street_address = poi["Address1"]
@@ -31,7 +31,7 @@ def fetch_data():
 
             item = SgRecord(
                 locator_domain=domain,
-                page_url=start_url,
+                page_url="https://lazparking.com/",
                 location_name=poi["Name"],
                 street_address=street_address,
                 city=poi["City"].split(",")[0],
@@ -50,7 +50,11 @@ def fetch_data():
 
 
 def scrape():
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+    with SgWriter(
+        SgRecordDeduper(
+            RecommendedRecordIds.StoreNumberId, duplicate_streak_failure_factor=-1
+        )
+    ) as writer:
         for item in fetch_data():
             writer.write_row(item)
 

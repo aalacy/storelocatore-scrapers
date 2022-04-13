@@ -1,128 +1,157 @@
-import json
-import time
+import ssl
 from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
-from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgpostal.sgpostal import International_Parser, parse_address
-from sgselenium.sgselenium import SgFirefox
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgselenium import SgChrome
 
 
-def get_hours(hours) -> str:
-    tmp = []
+def get_tree(url):
+    r = session.get(url)
+    return html.fromstring(r.text)
+
+
+def get_rendered_tree(url):
+    with SgChrome() as fox:
+        fox.get(url)
+        source = fox.page_source
+
+    return html.fromstring(source)
+
+
+def get_urls():
+    tree = get_tree("https://houseofair.com/locations/")
+    return tree.xpath("//h3[@class='topspace0']/a/@href")
+
+
+def get_coords_from_embed(text):
+    try:
+        latitude = text.split("!3d")[1].strip().split("!")[0].strip()
+        longitude = text.split("!2d")[1].strip().split("!")[0].strip()
+    except IndexError:
+        latitude, longitude = SgRecord.MISSING, SgRecord.MISSING
+
+    return latitude, longitude
+
+
+def get_hoo(url):
+    tree = get_tree(url)
+    hours = tree.xpath(
+        "//h2[contains(text(), 'Hours') or contains(text(), 'HOURS')]/following-sibling::ul[1]/li/text()"
+    )
+    hours = list(filter(None, [h.replace(" CT", "").strip() for h in hours]))
+
+    ss = dict()
     for h in hours:
-        days = h.get("dayOfWeek")
-        if type(days) == list:
-            days = " ".join(days)
-        opens = h.get("opens")
-        closes = h.get("closes")
-        line = f"{days} {opens} - {closes}"
-        tmp.append(line)
+        day = h.split(":")[0].strip()
+        inter = ":".join(h.split(":")[1:])
+        if day in ss:
+            new_end = inter.split("-")[-1].strip()
+            ss[day] = "-".join(ss[day].split("-")[:-1]) + f"- {new_end}"
+        else:
+            ss[day] = inter
 
-    return ";".join(tmp)
+    _tmp = []
+    for k, v in ss.items():
+        _tmp.append(f"{k}: {v}")
+
+    return ";".join(_tmp)
+
+
+def get_poland(page_url, sgw: SgWriter):
+    tree = get_tree(page_url)
+    text = "".join(tree.xpath("//iframe/@src"))
+    latitude, longitude = get_coords_from_embed(text)
+    lines = tree.xpath(
+        "//div[./img[contains(@src, 'web_blue')]]/following-sibling::div//text()"
+    )
+    lines = list(filter(None, [line.strip() for line in lines]))
+    street_address = lines.pop(0).replace(",", "")
+    postal, city = lines.pop(0).split(", ")[0].split()
+    location_name = f"{city}, Poland"
+    phone = "".join(set(tree.xpath("//a[contains(@href, 'tel:')]/text()"))).strip()
+    hours = tree.xpath(
+        "//div[contains(text(), 'ADRES')]/following-sibling::div//text()"
+    )
+    hours = list(filter(None, [h.strip() for h in hours]))
+    hours_of_operation = ";".join(hours[hours.index("Godziny otwarcia") + 1 :])
+
+    row = SgRecord(
+        page_url=page_url,
+        location_name=location_name,
+        street_address=street_address,
+        city=city,
+        zip_postal=postal,
+        country_code="PL",
+        phone=phone,
+        latitude=latitude,
+        longitude=longitude,
+        locator_domain=locator_domain,
+        hours_of_operation=hours_of_operation,
+    )
+
+    sgw.write_row(row)
 
 
 def fetch_data(sgw: SgWriter):
-    locator_domain = "https://houseofair.com/"
-    api_url = "https://houseofair.com/"
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
-    }
-    r = session.get(api_url, headers=headers)
-    tree = html.fromstring(r.text)
-    div = tree.xpath("//h3/a")
-    for d in div:
+    urls = get_urls()
 
-        page_url = "".join(d.xpath(".//@href"))
-        if page_url.find("https://www.houseofair.pl") != -1:
+    for page_url in urls:
+        if page_url.startswith("/"):
+            page_url = f"https://houseofair.com{page_url}"
+
+        if ".pl" in page_url:
             page_url = "http://www.houseofair.pl/kontakt"
+            get_poland(page_url, sgw)
+            continue
 
-        location_name = "".join(d.xpath(".//text()")).strip()
-        street_address = "".join(d.xpath(".//following::p[1]/text()[1]")).strip()
-        ad = "".join(d.xpath(".//following::p[1]/text()[2]")).replace("\n", "").strip()
-
-        a = parse_address(International_Parser(), ad)
-        state = a.state or "<MISSING>"
-        postal = a.postcode or "<MISSING>"
-        country_code = a.country or "USA"
-        city = a.city or "<MISSING>"
-        with SgFirefox() as driver:
-            time.sleep(5)
-            driver.get(page_url)
-            time.sleep(5)
-            a = driver.page_source
-            tree1 = html.fromstring(a)
-
-            js_block = (
-                "".join(
-                    tree1.xpath('//script[@type="application/ld+json"]/text()')
-                ).split("}}]}}")[0]
-                + "}}]}}"
+        tree = get_rendered_tree(page_url)
+        _id = "".join(
+            tree.xpath(
+                "//strong[contains(text(), 'Address')]/following-sibling::a/@data-target"
             )
-            map_link = "".join(tree1.xpath("//iframe/@src"))
-            try:
-                latitude = map_link.split("!3d")[1].strip().split("!")[0].strip()
-                longitude = map_link.split("!2d")[1].strip().split("!")[0].strip()
-            except:
-                latitude, longitude = "<MISSING>", "<MISSING>"
-            if latitude == "<MISSING>":
-                driver.switch_to.frame(0)
-                ll = driver.find_element_by_xpath(
-                    '//div[@class="google-maps-link"]/a'
-                ).get_attribute("href")
-                latitude = ll.split("ll=")[1].split(",")[0].strip()
-                longitude = ll.split("ll=")[1].split(",")[1].split("&")[0].strip()
-                driver.switch_to.default_content()
-
-            phone_list = tree1.xpath('//a[contains(@href, "tel")][1]//text()')
-            phone_list = list(filter(None, [a.strip() for a in phone_list]))
-            phone = (
-                "".join(phone_list[0]).replace("Phone:", "").replace("\n", "").strip()
+        ).replace("#", "")
+        lines = tree.xpath(
+            "//strong[contains(text(), 'Address')]/following-sibling::a/text()"
+        )
+        street_address = lines.pop(0)
+        city, sz = lines.pop(0).split(", ")
+        state, postal = sz.split()
+        location_name = f"{city}, {state}"
+        phone = "".join(
+            tree.xpath(
+                "//strong[contains(text(), 'Phone')]/following-sibling::a/text()"
             )
-            hours_of_operation = (
-                " ".join(
-                    tree1.xpath(
-                        '//h3[contains(text(), "Park Access Hours")]/following-sibling::ul/li//text() | //h2[contains(text(), "Hours of Operation")]/following::ul[1]/li//text() | //div[@class="hours-right"]/p/text()'
-                    )
-                )
-                .replace("\n", "")
-                .strip()
-                or "<MISSING>"
-            )
-            if "Phone" in hours_of_operation:
-                hours_of_operation = hours_of_operation.split("Phone")[0].strip()
+        )
+        text = "".join(tree.xpath(f"//div[@id='{_id}']//iframe/@src"))
+        latitude, longitude = get_coords_from_embed(text)
 
-            hours_of_operation = " ".join(hours_of_operation.split())
-            if hours_of_operation == "<MISSING>" and js_block:
-                js = json.loads(js_block)
-                hours = js.get("openingHoursSpecification")
-                hours_of_operation = get_hours(hours)
+        url = "".join(set(tree.xpath("//a[@title='About']/@href")))
+        hours_of_operation = get_hoo(url)
 
-            row = SgRecord(
-                locator_domain=locator_domain,
-                page_url=page_url,
-                location_name=location_name,
-                street_address=street_address,
-                city=city,
-                state=state,
-                zip_postal=postal,
-                country_code=country_code,
-                store_number=SgRecord.MISSING,
-                phone=phone,
-                location_type=SgRecord.MISSING,
-                latitude=latitude,
-                longitude=longitude,
-                hours_of_operation=hours_of_operation,
-            )
+        row = SgRecord(
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code="US",
+            phone=phone,
+            latitude=latitude,
+            longitude=longitude,
+            locator_domain=locator_domain,
+            hours_of_operation=hours_of_operation,
+        )
 
-            sgw.write_row(row)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
+    ssl._create_default_https_context = ssl._create_unverified_context
+    locator_domain = "https://houseofair.com/"
     session = SgRequests()
-    with SgWriter(
-        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
-    ) as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         fetch_data(writer)

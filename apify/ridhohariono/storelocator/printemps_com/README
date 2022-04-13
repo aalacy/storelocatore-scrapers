@@ -1,0 +1,19 @@
+--ignore StreetAddressHasNumber  (Confirmed scrape correctly)
+Found 7 concerning rows. Examples:
+                         street_address              REASON  rowNumber
+7     CC Grand Var - Av de l'université  ADDR_HAS_NO_NUMBER          7
+11  CC La Valentine - Ch de la Sablière  ADDR_HAS_NO_NUMBER         11
+12      Terrasses Port - 9 quai Lazaret  ADDR_HAS_NO_NUMBER         12
+14                 Av Charles de Gaulle  ADDR_HAS_NO_NUMBER         14
+17     Rue de Bordeaux / Bld Heurteloup  ADDR_HAS_NO_NUMBER         17
+
+
+
+--ignore CountryValidator (NOT US PHONE)
+Found 20 concerning rows. Examples:
+       state          phone    zip            REASON  rowNumber
+0  <MISSING>  1 42 82 50 00  75009  INVALID_US_PHONE          0
+1  <MISSING>  1 44 64 60 50  75020  INVALID_US_PHONE          1
+2  <MISSING>  1 76 77 41 00  75001  INVALID_US_PHONE          2
+3  <MISSING>  2 90 92 55 00  35200  INVALID_US_PHONE          3
+4  <MISSING>  2 98 44 65 65  29200  INVALID_US_PHONE          4

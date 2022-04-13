@@ -1,132 +1,111 @@
-import csv
-
-from concurrent import futures
+import usaddress
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def get_address(line):
+    tag = {
+        "Recipient": "recipient",
+        "AddressNumber": "address1",
+        "AddressNumberPrefix": "address1",
+        "AddressNumberSuffix": "address1",
+        "StreetName": "address1",
+        "StreetNamePreDirectional": "address1",
+        "StreetNamePreModifier": "address1",
+        "StreetNamePreType": "address1",
+        "StreetNamePostDirectional": "address1",
+        "StreetNamePostModifier": "address1",
+        "StreetNamePostType": "address1",
+        "CornerOf": "address1",
+        "IntersectionSeparator": "address1",
+        "LandmarkName": "address1",
+        "USPSBoxGroupID": "address1",
+        "USPSBoxGroupType": "address1",
+        "USPSBoxID": "address1",
+        "USPSBoxType": "address1",
+        "OccupancyType": "address2",
+        "OccupancyIdentifier": "address2",
+        "SubaddressIdentifier": "address2",
+        "SubaddressType": "address2",
+        "PlaceName": "city",
+        "StateName": "state",
+        "ZipCode": "postal",
+    }
 
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
+    a = usaddress.tag(line, tag_mapping=tag)[0]
+    adr1 = a.get("address1") or ""
+    adr2 = a.get("address2") or ""
+    street_address = f"{adr1} {adr2}".strip()
+    city = a.get("city")
+    state = a.get("state")
+    postal = a.get("postal")
 
-        for row in data:
-            writer.writerow(row)
+    return street_address, city, state, postal
 
 
-def get_urls():
-    session = SgRequests()
-    r = session.get("https://www.eatpdq.com/Widgets/LocationSearchResult.ashx")
-    tree = html.fromstring(r.content)
-
-    return tree.xpath("//marker/@href")
-
-
-def get_data(page_url):
-    locator_domain = "https://www.eatpdq.com/"
-
-    session = SgRequests()
-    r = session.get(page_url)
+def get_additional(url):
+    r = session.get(url, headers=headers)
     tree = html.fromstring(r.text)
-
-    location_name = "".join(tree.xpath("//div[@class='name']/h1/text()")).strip()
-    line = tree.xpath("//div[@class='address']/text()")
-    line = list(filter(None, [l.strip() for l in line]))
-    street_address = line[0]
-    line = line[-1]
-    city = line.split(",")[0].strip()
-    line = line.split(",")[1].strip()
-    state = line.split()[0].strip()
-    postal = line.split()[1].strip()
-    country_code = "US"
-    store_number = "<MISSING>"
-    phone = "".join(tree.xpath("//tel/a/text()")).strip() or "<MISSING>"
-    _map = "".join(
-        tree.xpath(
-            "//div[@class='address']/a[contains(@href, 'google.com/maps/')]/@href"
-        )
+    phone = "".join(
+        tree.xpath("//div[@class='phone']//a[contains(@href, 'tel:')]/text()")
+    ).strip()
+    hoo = (
+        "".join(tree.xpath("//div[@class='hours']//h2/text()"))
+        .strip()
+        .replace("\n", ";")
     )
-    if _map:
-        line = _map.split("@")[-1]
-        latitude = line.split(",")[0] or "<MISSING>"
-        longitude = line.split(",")[1] or "<MISSING>"
-    else:
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
+    if "EVENT" in hoo:
+        hoo = SgRecord.MISSING
+    return phone, hoo
 
-    location_type = "<MISSING>"
-    hours = "".join(tree.xpath("//div[@class='hours']//h2/text()")).strip()
 
-    if hours and hours.find("OPEN") == -1:
-        hours_of_operation = f"Mon-Sun: {hours}"
-    elif hours == "":
-        hours_of_operation = (
-            "".join(tree.xpath("//div[@class='hours']//p//text()"))
-            .replace("\n\n", ";")
-            .replace("\n", " ")
-            .strip()
+def fetch_data(sgw: SgWriter):
+    api = "https://www.eatpdq.com/Widgets/LocationSearchResult.ashx"
+    r = session.get(api, headers=headers)
+    tree = html.fromstring(r.content)
+    markers = tree.xpath("//marker")
+
+    for m in markers:
+        location_name = "".join(m.xpath("./@name"))
+        page_url = "".join(m.xpath("./@href"))
+        if "coming" in page_url or "coming" in location_name.lower():
+            continue
+        raw_address = "".join(m.xpath("./@addresstext"))
+        latitude = "".join(m.xpath("./@lat")).replace(",", ".")
+        longitude = "".join(m.xpath("./@lng")).replace(",", ".")
+
+        street_address, city, state, postal = get_address(raw_address)
+        country_code = "US"
+        phone, hours_of_operation = get_additional(page_url)
+
+        row = SgRecord(
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            latitude=latitude,
+            longitude=longitude,
+            phone=phone,
+            locator_domain=locator_domain,
+            hours_of_operation=hours_of_operation,
+            raw_address=raw_address,
         )
-    else:
-        hours_of_operation = "<MISSING>"
 
-    row = [
-        locator_domain,
-        page_url,
-        location_name,
-        street_address,
-        city,
-        state,
-        postal,
-        country_code,
-        store_number,
-        phone,
-        location_type,
-        latitude,
-        longitude,
-        hours_of_operation,
-    ]
-
-    return row
-
-
-def fetch_data():
-    out = []
-    urls = get_urls()
-
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {executor.submit(get_data, url): url for url in urls}
-        for future in futures.as_completed(future_to_url):
-            row = future.result()
-            if row:
-                out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://www.eatpdq.com/"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:97.0) Gecko/20100101 Firefox/97.0",
+    }
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        fetch_data(writer)

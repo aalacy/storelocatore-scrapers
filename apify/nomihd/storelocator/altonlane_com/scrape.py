@@ -3,71 +3,57 @@ from sgrequests import SgRequests
 from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-import lxml.html
+import json
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "altonlane.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
 headers = {
-    "authority": "altonlane.com",
-    "cache-control": "max-age=0",
-    "sec-ch-ua": '" Not;A Brand";v="99", "Google Chrome";v="91", "Chromium";v="91"',
-    "sec-ch-ua-mobile": "?0",
-    "upgrade-insecure-requests": "1",
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.77 Safari/537.36",
-    "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-    "sec-fetch-site": "cross-site",
-    "sec-fetch-mode": "navigate",
-    "sec-fetch-user": "?1",
-    "sec-fetch-dest": "document",
-    "accept-language": "en-US,en-GB;q=0.9,en;q=0.8",
+    "Accept": "application/json, text/javascript, */*; q=0.01",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.114 Safari/537.36",
 }
 
 
 def fetch_data():
     # Your scraper here
-    search_url = "https://altonlane.com/pages/shopping-reimagined"
-    stores_req = session.get(search_url, headers=headers)
-    stores_sel = lxml.html.fromstring(stores_req.text)
-    stores = stores_sel.xpath('//div[@class="Showroom__grid__description"]')
 
-    for store in stores:
+    api_url = "https://www.altonlane.com/b2c/services/StoreLocator.Service.ss?c=3556903&latitude=40.75368539999999&locationtype=1&longitude=-73.9991637&n=3&page=all&radius=100000&sort=distance"
+    api_res = session.get(api_url, headers=headers)
+    stores_list = json.loads(api_res.text)
 
-        page_url = search_url
-        locator_domain = website
+    for store in stores_list:
 
-        location_name = "".join(
-            store.xpath('.//h3[@class="Showroom__grid__item__title"]/text()')
-        ).strip()
-
-        address = store.xpath('.//p[@class="Showroom__grid__item__address"]/text()')
-        street_address = ""
-        city = ""
-        state = ""
-        zip = ""
-        if len(address) > 1:
-            street_address = "".join(address[:-2]).strip().replace("\n", "").strip()
-            city = address[-2].strip().split(",")[0].strip()
-            state = address[-2].strip().split(",")[-1].strip().split(" ")[0].strip()
-            zip = address[-2].strip().split(",")[-1].strip().split(" ")[-1].strip()
-
-        country_code = "US"
-
-        store_number = "<MISSING>"
-
-        phone = address[-1].strip()
-        location_type = "<MISSING>"
-        hours_of_operation = (
-            "; ".join(store.xpath('.//p[@class="Showroom__grid__item__hours"]/text()'))
-            .strip()
-            .replace(",", ":")
-            .strip()
-            .replace("\n", "")
-            .strip()
+        page_url = (
+            f'https://www.altonlane.com/stores/details/{store["internalid"].strip()}'
         )
+        log.info(page_url)
+        locator_domain = website
+        location_name = store["name"].strip()
 
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
+        street_address = store["address1"].strip()
+        if (
+            "address2" in street_address
+            and store["address2"] is not None
+            and len(store["address2"]) > 0
+        ):
+            street_address = street_address + ", " + store["address2"]
+
+        city = store["city"].strip()
+        state = store["state"].strip()
+        zip = store["zip"].strip()
+
+        country_code = store["country"].strip()
+
+        store_number = store["internalid"].strip()
+        phone = store["phone"].strip()
+
+        location_type = "<MISSING>"
+        hours_of_operation = "<MISSING>"
+
+        latitude = store["location"]["latitude"]
+        longitude = store["location"]["longitude"]
 
         yield SgRecord(
             locator_domain=locator_domain,
@@ -90,7 +76,9 @@ def fetch_data():
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.StoreNumberId)
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

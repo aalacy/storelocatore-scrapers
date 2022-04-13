@@ -86,6 +86,7 @@ def fetch_data():
                 lat = "<MISSING>"
                 lng = "<MISSING>"
         add = add.strip()
+        name = "JOURNEYS #" + store
         yield SgRecord(
             locator_domain=website,
             page_url=purl,

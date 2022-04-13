@@ -26,21 +26,35 @@ def fetch_data():
         for _ in locations:
             loc = _["location"]
             country_code = loc["extra_fields"]["category_slug"].replace("-", " ")
+            page_url = loc["extra_fields"]["sl_url"].replace(
+                "awww.aqua-tots.com", "www.aqua-tots.com"
+            )
             if country_code and country_code not in ["united states", "canada"]:
                 continue
             if "Bangkok" == loc["state"]:
                 continue
-            page_url = loc["extra_fields"]["sl_url"]
             logger.info(page_url)
-            res1 = session.get(page_url, headers=_headers)
-            if res1.status_code != 200:
+            hours = []
+            if page_url:
+                res1 = session.get(page_url, headers=_headers)
+                if res1.status_code == 200:
+                    sp1 = bs(res1.text, "lxml")
+                    hours = [
+                        ": ".join(hh.stripped_strings)
+                        for hh in sp1.select("div#hours div.row")
+                    ]
+
+            is_coming_soon = False
+            for cat in _["categories"]:
+                if cat["name"] == "Coming Soon":
+                    is_coming_soon = True
+                    break
+
+            if is_coming_soon:
                 continue
-            sp1 = bs(res1.text, "lxml")
-            hours = [
-                ": ".join(hh.stripped_strings) for hh in sp1.select("div#hours div.row")
-            ]
+
             yield SgRecord(
-                page_url=page_url,
+                page_url=page_url or base_url,
                 store_number=_["id"],
                 location_name=_["title"],
                 street_address=_["address"],

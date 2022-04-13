@@ -15,7 +15,7 @@ logger = SgLogSetup().get_logger("dominospizza_az")
 
 
 def fetch_data():
-    url = "https://dominospizza.az/api/dominos/stores/public"
+    url = "https://server.dominospizza.az/api/dominos/stores/public"
     r = session.get(url, headers=headers)
     website = "dominospizza.az"
     typ = "<MISSING>"

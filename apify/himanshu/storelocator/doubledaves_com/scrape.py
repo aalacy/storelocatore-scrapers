@@ -1,45 +1,55 @@
 from sglogging import sglog
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup as bs
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
+DOMAIN = "doubledaves.com"
+BASE_URL = "https://www.doubledaves.com"
+HEADERS = {
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.63 Safari/537.36",
+}
 session = SgRequests()
 website = "doubledaves_com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
-headers = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36",
-    "Accept": "application/json",
-}
 
-DOMAIN = "https://doubledaves.com/"
 MISSING = "<MISSING>"
+
+
+def pull_content(url):
+    log.info("Pull content => " + url)
+    req = session.get(url, headers=HEADERS)
+    if req.status_code == 404:
+        return False
+    soup = bs(req.content, "lxml")
+    return soup
 
 
 def fetch_data():
     addressess = []
-    base_url = "https://www.doubledaves.com"
-    r = session.get(base_url)
-    soup = BeautifulSoup(r.text, "lxml")
+    soup = pull_content(BASE_URL)
     main = soup.find("div", {"class": "dropdown location-dropdown"}).find_all("a")
     del main[-1]
     for atag in main:
-        r1 = session.get(base_url + atag["href"])
-        soup1 = BeautifulSoup(r1.text, "lxml")
-        main1 = soup1.find("div", {"class": "location-grid"}).find_all(
-            "a", text="Website"
-        )
-
+        url = BASE_URL + atag["href"]
+        soup1 = pull_content(url)
+        try:
+            main1 = soup1.find("div", {"class": "location-grid"}).find_all(
+                "a", text="Website"
+            )
+        except:
+            continue
         for weblink in main1:
-            r2 = session.get(base_url + weblink["href"])
-            page_url = base_url + weblink["href"]
+            page_url = BASE_URL + weblink["href"]
+            r2 = session.get(page_url)
             log.info(page_url)
             if "Coming soon" in r2.text:
                 continue
-            soup2 = BeautifulSoup(r2.text, "lxml")
+            soup2 = bs(r2.text, "lxml")
             temp = r2.text.split(weblink["href"])[-1].split("locations.push(store);")[0]
             store_number = temp.split("store['id'] = ")[1].split(";")[0]
             latitude = temp.split("store['latitude'] = ")[1].split(";")[0]
@@ -88,6 +98,7 @@ def fetch_data():
             hour = hour.replace("Dough Slingin' Hours = ", "").replace("::", " ")
             country_code = "US"
             phone = phone.replace("DAVE", "").replace("- ", "")
+            log.info("Append {} => {}".format(location_name, street_address))
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url=page_url,

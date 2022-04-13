@@ -31,7 +31,6 @@ def fetch_data():
         except:
             continue
         for loc in loclist:
-
             title = "Sephora " + loc["displayName"]
             street = loc["address"]["address1"] + " " + str(loc["address"]["address2"])
             city = loc["address"]["city"]
@@ -43,24 +42,31 @@ def fetch_data():
             longt = loc["longitude"]
             store = loc["storeId"]
             link = "https://www.sephora.com" + loc["targetUrl"]
-            hourslist = loc["storeHours"]
-            hours = ""
-            for day in daylist:
 
-                hours = hours + day + "day " + hourslist[day + "dayHours"] + " "
-            if len(hours) < 3:
+            hours = ""
+            try:
+                hourslist = loc["storeHours"]
+                for day in daylist:
+
+                    hours = hours + day + "day " + hourslist[day + "dayHours"] + " "
+                if len(hours) < 3:
+                    hours = "<MISSING>"
+                if len(phone) < 3:
+                    phone = "<MISSING>"
+                hours = (
+                    hours.replace("day", "day ")
+                    .replace("PM", "PM ")
+                    .replace("AM", "AM ")
+                    .replace("osed", "osed ")
+                    .strip()
+                )
+            except:
+                hours = "Opening Soon"
+            if ("AM " and "PM ") not in hours and "Opening Soon" not in hours:
                 hours = "<MISSING>"
-            if len(phone) < 3:
-                phone = "<MISSING>"
-            hours = (
-                hours.replace("day", "day ")
-                .replace("PM", "PM ")
-                .replace("AM", "AM ")
-                .replace("osed", "osed ")
-                .strip()
-            )
-            if ("AM " and "PM ") not in hours:
-                hours = "<MISSING>"
+            if (" sunday " not in hours) and ("<MISSING>" not in hours):
+                hours = hours + " sunday Closed "
+            hours = hours.replace("sunday sunday Closed ", "sunday Closed ")
             yield SgRecord(
                 locator_domain="https://www.sephora.com/",
                 page_url=link,

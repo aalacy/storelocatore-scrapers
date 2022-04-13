@@ -53,7 +53,7 @@ def fetch_data():
             .strip()
         )
 
-        cities = home_sel.xpath('//select[@id="gender"]/option[position()>1]/@value')
+        cities = home_sel.xpath('//select[@id="gender"]/option[position()>2]/@value')
         for cty in cities:
             data = {"tag": cty, "section": "locales", "session_token": token}
 

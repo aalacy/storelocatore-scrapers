@@ -33,7 +33,7 @@ def fetch_data():
             for loc in loclist:
                 store_number = loc["data-glossary-view"]
                 link = (
-                    "https://www.footlocker.com.ae/en/store-detail/"
+                    "https://www.footlocker.ae/en/store-detail/"
                     + store_number
                     + "/glossary?_wrapper_format=drupal_ajax"
                 )
@@ -50,10 +50,15 @@ def fetch_data():
                     "div", {"class": "field--name-field-store-phone"}
                 ).text
                 raw_address = (
-                    soup.find("div", {"class": "views-field-field-store-address"})
+                    soup.find("div", {"class": "field-content"})
                     .get_text(separator="|", strip=True)
                     .replace("|", " ")
+                    .replace(phone, "")
                 )
+                if "+966" in raw_address:
+                    raw_address = raw_address.split("+966")[0]
+                if "/" in phone:
+                    phone = phone.split("/")[0]
                 pa = parse_address_intl(raw_address)
 
                 street_address = pa.street_address_1

@@ -18,7 +18,6 @@ def fetch_data():
     typ = "Restaurant"
     hours = "<MISSING>"
     for line in lines:
-        line = str(line.decode("utf-8"))
         if '{"name": "' in line:
             line = line.replace('"categories": [{"name":', "")
             items = line.split('"name": "')
@@ -73,7 +72,7 @@ def fetch_data():
                         hours = "Sunday - Thursday: 11:30 AM - 9:00 PM; Friday - Saturday: 11:30 AM - 10:00 PM"
                     if "Orlando" in city:
                         hours = "SUN - SAT: 11:00 AM - 11:00 PM"
-                    if "Beijing" in city:
+                    if "beijing" in purl:
                         phone = "010-13651001283"
                         hours = "<MISSING>"
                     if "Coming" not in name:

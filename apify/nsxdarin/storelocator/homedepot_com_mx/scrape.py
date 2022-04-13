@@ -24,7 +24,6 @@ def fetch_data():
     country = "MX"
     logger.info("Pulling Stores")
     for line in r.iter_lines():
-        line = str(line.decode("utf-8"))
         if "formCitiesObject:" in line:
             items = line.split("formCitiesObject:{")[1].split("}};")[0].split(':"')
             for item in items:
@@ -67,7 +66,6 @@ def fetch_data():
         loc = "<MISSING>"
         alltext = ""
         for line2 in r2.iter_lines():
-            line2 = str(line2.decode("utf-8"))
             alltext = alltext + line2.replace("\r", "").replace("\n", "")
         if '<span class="col">' in alltext:
             items = alltext.split('<span class="col">')
@@ -99,21 +97,12 @@ def fetch_data():
                     lat = item.split("&daddr=")[1].split("+")[0]
                     lng = item.split("&daddr=")[1].split("+")[1].split('"')[0]
                     hours = (
-                        item.split(
-                            '<td headers="PhysicalStores_tableCell_result2" class=dotted_bottom_border>'
-                        )[1]
-                        .split("</td>")[0]
+                        item.split('<span id="StoreHoursStatusData')[1]
+                        .split(">")[1]
+                        .split("</span")[0]
                         .strip()
                         .replace("\t", "")
-                        .replace("pmD", "pm; D")
-                    )
-                    hours = (
-                        hours.replace("Sábado", "Sat")
-                        .replace("Lunes", "Mon")
-                        .replace("Domingo", "Sun")
-                    )
-                    hours = hours.replace("Mon a Sat", "Mon-Sat").replace(
-                        "Mon a Sun", "Mon-Sun"
+                        .replace("0pm", "0pm; ")
                     )
                     hours = hours.replace(" de ", ": ").replace("am a ", "am - ")
                     hours = hours.replace("<br/>", "; ")

@@ -53,7 +53,7 @@ def parse_data(entity, page_url):
         latitude = _["geocodedCoordinate"]["lat"]
         longitude = _["geocodedCoordinate"]["long"]
     hours = []
-    for hh in _["hours"]["normalHours"]:
+    for hh in _.get("hours", {}).get("normalHours", []):
         times = "closed"
         if not hh["isClosed"]:
             times = f"{hh['intervals'][0]['start']}-{hh['intervals'][0]['end']}"
