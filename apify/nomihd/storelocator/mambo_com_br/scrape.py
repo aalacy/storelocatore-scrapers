@@ -35,7 +35,6 @@ def get_latlng(map_link):
 
 def fetch_data():
     # Your scraper here
-    base = "https://www.mambo.com.br"
     search_url = "https://www.mambo.com.br/file/v776154062911976682/widget/MBNossasLojas/js/mb-nossas-lojas.min.js?bust=22.1.4"
 
     with SgRequests() as session:
