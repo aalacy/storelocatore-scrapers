@@ -9,8 +9,7 @@ from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
-    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
-
+    session = SgRequests()
     start_url = "https://maxemhealthurgentcare.com/locations-2/"
     domain = "maxemhealthurgentcare.com"
     hdr = {
@@ -64,7 +63,7 @@ def fetch_data():
             state=state,
             zip_postal=zip_code,
             country_code=poi["location"]["country"],
-            store_number=SgRecord.MISSING,
+            store_number="",
             phone=phone.replace("Ph: ", ""),
             location_type=SgRecord.MISSING,
             latitude=poi["location"]["lat"],
