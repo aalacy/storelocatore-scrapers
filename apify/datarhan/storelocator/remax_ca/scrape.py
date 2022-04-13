@@ -32,9 +32,7 @@ def fetch_data():
             state = poi["state"]
             zip_code = poi["postalCode"]
             country_code = poi["country"]
-            store_number = "<MISSING>"
             phone = poi.get("telephone")
-            location_type = "<MISSING>"
             latitude = poi["latitude"]
             longitude = poi["longitude"]
 
@@ -47,9 +45,9 @@ def fetch_data():
                 state=state,
                 zip_postal=zip_code,
                 country_code=country_code,
-                store_number=store_number,
+                store_number="",
                 phone=phone,
-                location_type=location_type,
+                location_type="",
                 latitude=latitude,
                 longitude=longitude,
                 hours_of_operation="",
