@@ -123,7 +123,6 @@ def fetch_data():
             ).group(1)
         except:
             store_number = MISSING
-        print(store_number)
         hours_of_operation = parse_hours(soup.find("div", {"class": "location-hours"}))
         latitude, longitude = get_latlong(soup)
         location_type = MISSING
