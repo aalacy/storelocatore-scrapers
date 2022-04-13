@@ -59,7 +59,9 @@ def get_data(store_number, sgw: SgWriter):
     country_code = "BR"
     name = a.get("neighborhood") or ""
     location_name = f"Loja {name}".strip()
-    phone = j.get("phone")
+    phone = j.get("phone") or ""
+    if "undefine" in phone:
+        phone = SgRecord.MISSING
     latitude = j.get("latitude")
     longitude = j.get("longitude")
 
