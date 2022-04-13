@@ -254,7 +254,7 @@ class CleanRecord:
         cleanRecord = {}
         cleanRecord["locator_domain"] = config.get("Domain")
         try:
-            cleanRecord["location_name"] = badRecord["properties"]["name"]
+            cleanRecord["location_name"] = badRecord["properties"]["longDescription"]
         except Exception:
             cleanRecord["location_name"] = None
         cleanRecord["latitude"] = badRecord["geometry"]["coordinates"][1]
@@ -329,8 +329,12 @@ class CleanRecord:
 
         if not cleanRecord["page_url"]:
             for dent in badRecord["properties"]["identifiers"]["storeIdentifier"]:
-                if dent["identifierType"] == "NSN":
+                if any(dent["identifierType"] == z for z in ["NSN", "NATLSTRNUMBER"]):
                     identifier = dent["identifierValue"]
+                    cleanRecord["store_number"] = dent[
+                        "identifierValue"
+                    ]  # Unexpected change to store_number
+
             if identifier:
                 cleanRecord["page_url"] = "https://{}/{}/{}/location/{}.html".format(
                     cleanRecord["locator_domain"], country, locale, identifier
@@ -358,7 +362,7 @@ class CleanRecord:
                             "identifierValue"
                         ],
                     )
-
+        cleanRecord["page_url"].replace("/gb//gb/", "/gb/")
         return cleanRecord
 
     def DEDUPE(badRecord):
@@ -775,7 +779,7 @@ class CrawlMethod(CleanRecord):
         def getAllData(headers, country, locale, Point):
             if self._config.get("apiCountry"):
                 country = self._config.get("apiCountry")
-            api = "https://www.mcdonalds.com/googleappsv2/geolocation?latitude={}&longitude={}&radius=1000&maxResults=25000&country={}&language={}"
+            api = "https://www.mcdonalds.com/googleappsv2/geolocation?latitude={}&longitude={}&radius=1000&maxResults=200&country={}&language={}"
             api = api.format(Point[0], Point[1], country, locale)
             return self._session.get(api, headers=headers).json()
 
