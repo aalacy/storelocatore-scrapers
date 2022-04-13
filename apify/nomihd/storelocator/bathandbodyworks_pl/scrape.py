@@ -6,6 +6,9 @@ from sgscrape.sgwriter import SgWriter
 import lxml.html
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+import ssl
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 website = "www.bathandbodyworks.pl"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
