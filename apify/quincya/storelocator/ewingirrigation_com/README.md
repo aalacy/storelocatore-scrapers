@@ -1,2 +1,1 @@
---ignore StreetAddressHasNumber (Confirmed scraped correctly)
---ignore GeoConsistencyValidator (Scraped what is on website)
+--ignore CentroidValidator --ignore StreetAddressHasNumber (Confirmed scraped correctly)
