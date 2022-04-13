@@ -184,7 +184,16 @@ def clean_record(k):
         k["main"]["name"] = k["main"]["name"]
     except Exception:
         k["main"]["name"] = "<MISSING>"
-
+    try:
+        k["sub"]["publisher"] = k["sub"]["publisher"]
+    except Exception:
+        k["sub"]["publisher"] = {}
+        k["sub"]["publisher"]["brand"] = {}
+        try:
+            k["sub"]["publisher"]["brand"]["name"] = k["main"]["brand"]
+            # will need to decode this^ cis  = Country Inn
+        except Exception:
+            pass
     return k
 
 
@@ -320,12 +329,13 @@ def initial(driver, url, state):
                     )
 
 
-def record_initial_requests(driver, state):
+def record_initial_requests(state):
     for url in [
         "https://www.radissonhotels.com/en-us/destination",
-        # "https://www.radissonhotelsamericas.com/en-us/destination", # noqa
+        "https://www.radissonhotelsamericas.com/en-us/destination",
     ]:
-        initial(driver, url, state)
+        with SgChrome() as driver:
+            initial(driver, url, state)
 
 
 def data_fetcher(session, state):
@@ -343,10 +353,7 @@ def data_fetcher(session, state):
 
 def fetch_data():
     state = CrawlStateSingleton.get_instance()
-    with SgChrome() as driver:
-        state.get_misc_value(
-            "init", default_factory=lambda: record_initial_requests(driver, state)
-        )
+    state.get_misc_value("init", default_factory=lambda: record_initial_requests(state))
 
     with SgRequests() as session:
         for item in data_fetcher(session, state):
@@ -357,6 +364,48 @@ def fix_phone(x):
     if len(x) < 3:
         return "<MISSING>"
     return x
+
+
+def old_brands(x):
+    brands = {
+        "ry": "noClue",
+        "pii": "Park Inn by Radisson",
+        "rdb": "Radisson Blu",
+        "rdr": "Radisson RED",
+        "art": "art'otel",
+        "rad": "Radisson",
+        "ri": "Radisson Individuals",
+        "prz": "prizeotel",
+        "pph": "Park Plaza",
+        "cis": "Country Inn & Suites",
+        "rco": "Radisson Collection",
+    }
+
+    try:
+        return brands[x]
+    except Exception:
+        return x
+
+
+def fix_india(x):
+    if x.count("<") == x.count(">"):
+        x = list(x)
+        inside = False
+        copy = []
+        while x:
+            whatis = x.pop(0)
+            if whatis == "<":
+                inside = True
+            if whatis == ">":
+                inside = False
+                continue
+            if not inside:
+                copy.append(whatis)
+        if len(copy) > 0:
+            return "".join(copy)
+        return "".join(x)
+    else:
+        return "".join(x)
 
 
 def scrape():
@@ -404,6 +453,7 @@ def scrape():
         country_code=sp.MappingField(
             mapping=["sub", "mainEntity", "address", "addressCountry"],
             is_required=False,
+            value_transform=fix_india,
         ),
         phone=sp.MappingField(
             mapping=["sub", "mainEntity", "telephone", 0],
@@ -417,7 +467,8 @@ def scrape():
         ),
         hours_of_operation=sp.MissingField(),
         location_type=sp.MappingField(
-            mapping=["@type"],
+            mapping=["main", "brand"],
+            value_transform=old_brands,
             is_required=False,
         ),
     )

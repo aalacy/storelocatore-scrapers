@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-# --extra-index-url https://dl.cloudsmith.io/KVaWma76J5VNwrOm/crawl/crawl/python/simple/
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
@@ -34,7 +33,7 @@ def fetch_data():
             location_type="",
             latitude=poi["lat"],
             longitude=poi["lng"],
-            hours_of_operation=poi["hours"],
+            hours_of_operation=" ".join(poi["hours"].split()),
         )
 
         yield item
