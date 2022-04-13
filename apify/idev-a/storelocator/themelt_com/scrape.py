@@ -1,25 +1,24 @@
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgselenium import SgChrome
-import json
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+import json
 import ssl
+import re
 from bs4 import BeautifulSoup as bs
 
-try:
-    _create_unverified_https_context = (
-        ssl._create_unverified_context
-    )  # Legacy Python that doesn't verify HTTPS certificates by default
-except AttributeError:
-    pass
-else:
-    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
+ssl._create_default_https_context = ssl._create_unverified_context
+
+locator_domain = "https://www.themelt.com"
+base_url = "https://www.themelt.com/locations"
+json_url = "https://www.themelt.com/_api/cloud-data/v1/wix-data/collections/query"
 
 
 def _p(val):
     if (
-        val.replace("(", "")
+        val
+        and val.replace("(", "")
         .replace(")", "")
         .replace("+", "")
         .replace("-", "")
@@ -35,14 +34,11 @@ def _p(val):
 
 
 def fetch_data():
-    locator_domain = "https://www.themelt.com/"
-    base_url = "https://www.themelt.com/locations"
-    json_url = "/_api/wix-code-public-dispatcher/siteview/wix/data-web.jsw"
     with SgChrome() as driver:
         driver.get(base_url)
-        rr = driver.wait_for_request(json_url)
+        rr = driver.wait_for_request(json_url, 30)
         locations = json.loads(rr.response.body)
-        for _ in locations["result"]["items"]:
+        for _ in locations["items"]:
             hours = []
             if _["days_01"]:
                 hours.append(f"{_['days_01']}: {_['hours_01']}")
@@ -56,6 +52,19 @@ def fetch_data():
                 street_address = cross_street
             if cross_street.split(" ")[0].strip().isdigit():
                 street_address = cross_street
+            street_address = (
+                street_address.split("(")[0]
+                .split("Between")[0]
+                .replace("Westfield Oakridge Mall,", "")
+                .replace("Taste Food Hall:", "")
+                .replace("at Second St.", "")
+                .strip()
+            )
+            if street_address.endswith(","):
+                street_address = street_address[:-1]
+            if not street_address:
+                street_address = _["address"]
+
             yield SgRecord(
                 page_url=base_url,
                 location_name=_["address"],
@@ -63,27 +72,56 @@ def fetch_data():
                 city=_["city"],
                 state=_["state"],
                 country_code="US",
-                phone=_p(_["phone_number"]),
+                phone=_p(_.get("phone_number")),
                 locator_domain=locator_domain,
                 hours_of_operation="; ".join(hours),
             )
 
-        south_california = bs(driver.page_source, "lxml").select(
-            'div._1Bme7 div[role="gridcell"] > div > div[data-testid="inline-content"] > div[data-testid="mesh-container-content"]'
-        )[-3:]
-        for _ in south_california:
-            p = _.select("p")
+        sp1 = bs(driver.page_source, "lxml")
+        div = sp1.select_one(
+            'main div[data-testid="mesh-container-content"]'
+        ).findChildren(recursive=False)[-1]
+        state = ""
+        for pp in div.find_previous_siblings("div"):
+            if not pp.p:
+                continue
+            state = pp.text.strip()
+            break
+        locs = div.select('div[role="row"]')
+        for loc in locs:
+            location_name = loc.p.text.strip()
+            street1 = loc.h5.text.strip()
+            if not street1[0].isdigit():
+                street1 = ""
+            street2 = loc.select("p")[1].text.split(":")[-1].strip()
+            street_address = ""
+            if street1:
+                street_address = street1
+            if street2:
+                street_address += " " + street2
+
+            _hr = loc.find("span", string=re.compile(r"^Hours"))
+            temp = [
+                hh.text.strip()
+                for hh in _hr.find_parent("div").find_next_siblings("div")
+                if hh.text.strip() and hh.text.strip() != "\u200b"
+            ]
             hours = []
-            temp = list(_.findChildren("div", recursive=False)[4].stripped_strings)[1:]
-            for x in range(0, len(temp), 2):
-                hours.append(f"{temp[x]} {temp[x+1]}")
-            phone = _.findChildren("div", recursive=False)[5].p.text.strip()
+            ii = int(len(temp) / 2)
+            for x in range(0, ii):
+                hours.append(f"{temp[x]}: {temp[x+ii]}")
+
+            _pp = loc.find("span", string=re.compile(r"^Phone"))
+            phone = ""
+            if _pp and _pp.find_parent("div"):
+                phone = _pp.find_parent("div").find_next_sibling().text.strip()
+
             yield SgRecord(
                 page_url=base_url,
-                location_name=_.h5.text.strip(),
+                location_name=location_name,
                 street_address=street_address,
-                city=p[0].text.strip(),
-                state="ca",
+                city=location_name,
+                state=state,
                 country_code="US",
                 phone=phone,
                 locator_domain=locator_domain,

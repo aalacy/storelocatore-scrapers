@@ -5,7 +5,7 @@ from time import sleep
 from urllib.parse import urljoin
 
 from sgselenium import SgChrome
-from sgscrape.sgpostal import parse_address_intl
+from sgpostal.sgpostal import parse_address_intl
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
@@ -41,9 +41,8 @@ def fetch_data():
             loc_dom = etree.HTML(driver.page_source)
             geo = (
                 loc_dom.xpath('//a[@class="navigate-link"]/@href')[0]
-                .split("ll=")[-1]
-                .split("&")[0]
-                .split(",")
+                .split("/@")[-1]
+                .split(",")[:2]
             )
             driver.switch_to.default_content()
             loc_dom = etree.HTML(driver.page_source)

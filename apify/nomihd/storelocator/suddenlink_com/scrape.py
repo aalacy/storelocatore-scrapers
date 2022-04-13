@@ -4,11 +4,12 @@ from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import lxml.html
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
 website = "suddenlink.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
-session = SgRequests()
 headers = {
     "authority": "suddenlink.com",
     "sec-ch-ua": '" Not A;Brand";v="99", "Chromium";v="90", "Google Chrome";v="90"',
@@ -28,108 +29,109 @@ def fetch_data():
     # Your scraper here
     base = "https://suddenlink.com/"
     search_url = "https://www.suddenlink.com/stores/"
-    search_res = session.get(search_url, headers=headers)
+    with SgRequests(dont_retry_status_codes=([404])) as session:
+        search_res = session.get(search_url, headers=headers)
 
-    search_sel = lxml.html.fromstring(search_res.text)
+        search_sel = lxml.html.fromstring(search_res.text)
 
-    store_list = list(search_sel.xpath('//li[contains(@class,"list")]//a/@href'))
+        store_list = list(search_sel.xpath('//li[contains(@class,"list")]//a/@href'))
 
-    for store in store_list:
+        for store in store_list:
 
-        page_url = base + "stores/" + store
-        locator_domain = website
-        log.info(page_url)
-        store_res = session.get(page_url, headers=headers)
-        store_sel = lxml.html.fromstring(store_res.text)
+            page_url = base + "stores/" + store
+            locator_domain = website
+            log.info(page_url)
+            store_res = session.get(page_url, headers=headers)
+            store_sel = lxml.html.fromstring(store_res.text)
 
-        locations = store_sel.xpath('//li[contains(@class,"list")]//a/@href')
+            locations = store_sel.xpath('//li[contains(@class,"list")]//a/@href')
 
-        if not locations:
-            # append dummy location
-            locations.append("dummy_location")
+            if not locations:
+                # append dummy location
+                locations.append("dummy_location")
 
-        for location in locations:
-            if location != "dummy_location":
-                # send new request and update the selector
-                page_url = base + "stores/" + location  # update page_url
-                log.info(page_url)
-                store_res = session.get(page_url, headers=headers)
-                store_sel = lxml.html.fromstring(store_res.text)  # update page_url
+            for location in locations:
+                if location != "dummy_location":
+                    # send new request and update the selector
+                    page_url = base + "stores/" + location  # update page_url
+                    log.info(page_url)
+                    store_res = session.get(page_url, headers=headers)
+                    store_sel = lxml.html.fromstring(store_res.text)  # update page_url
 
-            location_name = "".join(
-                store_sel.xpath('//*[contains(@id,"location-name")]/@content')
-            ).strip()
+                location_name = "".join(
+                    store_sel.xpath('//*[contains(@id,"location-name")]/@content')
+                ).strip()
 
-            street_address = "".join(
-                store_sel.xpath('//*[contains(@itemprop,"streetAddress")]/@content')
-            )
-
-            city = "".join(
-                store_sel.xpath(
-                    '//*[contains(@itemprop,"address")]//*[contains(@class,"city")]//text()'
+                street_address = "".join(
+                    store_sel.xpath('//*[contains(@itemprop,"streetAddress")]/@content')
                 )
-            )
-            state = "".join(
-                store_sel.xpath(
-                    '//*[contains(@itemprop,"address")]//*[contains(@class,"state")]//text()'
+
+                city = "".join(
+                    store_sel.xpath(
+                        '//*[contains(@itemprop,"address")]//*[contains(@class,"city")]//text()'
+                    )
                 )
-            )
-            zip = "".join(
-                store_sel.xpath(
-                    '//*[contains(@itemprop,"address")]//*[contains(@class,"postal-code")]//text()'
+                state = "".join(
+                    store_sel.xpath(
+                        '//*[contains(@itemprop,"address")]//*[contains(@class,"state")]//text()'
+                    )
                 )
-            )
-
-            country_code = "".join(
-                store_sel.xpath(
-                    '//*[contains(@itemprop,"address")]//*[contains(@class,"country")]//text()'
+                zip = "".join(
+                    store_sel.xpath(
+                        '//*[contains(@itemprop,"address")]//*[contains(@class,"postal-code")]//text()'
+                    )
                 )
-            )
 
-            store_number = "<MISSING>"
+                country_code = "".join(
+                    store_sel.xpath(
+                        '//*[contains(@itemprop,"address")]//*[contains(@class,"country")]//text()'
+                    )
+                )
 
-            phone = "".join(
-                store_sel.xpath('//*[contains(@itemprop,"telephone")]//text()')
-            ).strip()
+                store_number = "<MISSING>"
 
-            location_type = "<MISSING>"
+                phone = "(844) 874-7558"
 
-            hours_of_operation = "; ".join(
-                store_sel.xpath('//*[contains(@itemprop,"openingHours")]/@content')
-            )
+                location_type = "<MISSING>"
 
-            latitude = store_sel.xpath('//*[contains(@itemprop,"latitude")]/@content')[
-                0
-            ].strip()
-            longitude = store_sel.xpath(
-                '//*[contains(@itemprop,"longitude")]/@content'
-            )[0].strip()
+                hours_of_operation = "; ".join(
+                    store_sel.xpath('//*[contains(@itemprop,"openingHours")]/@content')
+                )
 
-            raw_address = "<MISSING>"
+                latitude = store_sel.xpath(
+                    '//*[contains(@itemprop,"latitude")]/@content'
+                )[0].strip()
+                longitude = store_sel.xpath(
+                    '//*[contains(@itemprop,"longitude")]/@content'
+                )[0].strip()
 
-            yield SgRecord(
-                locator_domain=locator_domain,
-                page_url=page_url,
-                location_name=location_name,
-                street_address=street_address,
-                city=city,
-                state=state,
-                zip_postal=zip,
-                country_code=country_code,
-                store_number=store_number,
-                phone=phone,
-                location_type=location_type,
-                latitude=latitude,
-                longitude=longitude,
-                hours_of_operation=hours_of_operation,
-                raw_address=raw_address,
-            )
+                raw_address = "<MISSING>"
+
+                yield SgRecord(
+                    locator_domain=locator_domain,
+                    page_url=page_url,
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=zip,
+                    country_code=country_code,
+                    store_number=store_number,
+                    phone=phone,
+                    location_type=location_type,
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=hours_of_operation,
+                    raw_address=raw_address,
+                )
 
 
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

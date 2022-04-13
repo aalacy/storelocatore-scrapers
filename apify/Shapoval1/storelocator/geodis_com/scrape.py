@@ -4,11 +4,11 @@ from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.sgpostal import International_Parser, parse_address
+from sgpostal.sgpostal import International_Parser, parse_address
 
 
 def fetch_data(sgw: SgWriter):
-
+    locator_domain = "https://geodis.com/"
     session = SgRequests()
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:88.0) Gecko/20100101 Firefox/88.0",
@@ -312,6 +312,8 @@ def fetch_data(sgw: SgWriter):
             state = a.state or "<MISSING>"
             postal = a.postcode or "<MISSING>"
             city = a.city or "<MISSING>"
+        if street_address.find("Dove Close") != -1:
+            street_address = street_address + " - " + "Fradley Park"
 
         if postal == "Province" or postal == "Cali":
             postal = "<MISSING>"
@@ -340,8 +342,9 @@ def fetch_data(sgw: SgWriter):
 
 if __name__ == "__main__":
     session = SgRequests()
-    locator_domain = "https://geodis.com/"
     with SgWriter(
-        SgRecordDeduper(SgRecordID({SgRecord.Headers.STORE_NUMBER}))
+        SgRecordDeduper(
+            SgRecordID({SgRecord.Headers.LATITUDE, SgRecord.Headers.STREET_ADDRESS})
+        )
     ) as writer:
         fetch_data(writer)

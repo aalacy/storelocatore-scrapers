@@ -19,7 +19,7 @@ def fetch_data():
     country = "US"
     typ = "<MISSING>"
     store = "<MISSING>"
-    for x in range(1, 20):
+    for x in range(1, 75):
         logger.info("Page " + str(x))
         url = (
             "https://www.providence.org/locations?postal=99501&lookup=&lookupvalue=&page="
@@ -43,7 +43,7 @@ def fetch_data():
                         )
                     if lurl not in locs:
                         locs.append(lurl)
-    for x in range(1, 201):
+    for x in range(1, 501):
         logger.info("Page " + str(x))
         url = (
             "https://www.providence.org/locations?postal=90210&lookup=&lookupvalue=&page="

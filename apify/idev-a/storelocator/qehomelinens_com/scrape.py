@@ -1,6 +1,8 @@
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
@@ -22,6 +24,8 @@ def fetch_data():
             )
             locations = session.get(url, headers=_headers).json()
             for _ in locations:
+                if not _["url_name"]:
+                    continue
                 page_url = f"https://www.qehomelinens.com/store/{_['url_name']}/"
                 location_type = ""
                 if "Due to lockdown, we'll be closed starting" in _["store_note"]:
@@ -56,7 +60,7 @@ def fetch_data():
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

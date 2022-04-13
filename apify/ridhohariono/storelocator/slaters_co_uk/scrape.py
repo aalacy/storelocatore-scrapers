@@ -82,6 +82,8 @@ def fetch_data():
         location_name = info.find("h1", {"class": "store-name"}).text
         raw_address = info.find("p", {"class": "address"}).text.strip()
         street_address, city, state, zip_postal = getAddress(raw_address)
+        if zip_postal == MISSING and len(raw_address.split(",")) == 3:
+            zip_postal = raw_address.split(",")[-1]
         store_number = MISSING
         phone = info.find("a", {"class": "phone"}).text.strip()
         country_code = "UK"

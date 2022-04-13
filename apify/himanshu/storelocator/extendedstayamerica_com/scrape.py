@@ -1,50 +1,19 @@
-import csv
-from sgrequests import SgRequests
+import json
 from bs4 import BeautifulSoup
 from lxml import html
-
-
-session = SgRequests()
-session.max_redirects = 1000
-import json
-
-
-# +1.912.692.0076
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-                "page_url",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+from sgrequests import SgRequests
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
+    session = SgRequests()
+    session.max_redirects = 1000
     headers = {
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/34.0.1847.131 Safari/537.36"
     }
-    addresses = []
-    base_url = "https://www.extendedstayamerica.com"
     session = SgRequests()
     r = session.get("https://www.extendedstayamerica.com/hotels", headers=headers)
     soup = BeautifulSoup(r.text, "html.parser")
@@ -58,6 +27,7 @@ def fetch_data():
     json_data = json.loads(jd)
 
     for value in json_data:
+
         a = value["address"]
 
         location_name = value["title"]
@@ -73,47 +43,47 @@ def fetch_data():
         longitude = value["longitude"]
         hours_of_operation = "Open 24 hours a day, seven days a week"
         page_url = "https://www.extendedstayamerica.com" + value["urlMap"]
-
-        session = SgRequests()
         r = session.get(page_url, headers=headers)
         tree = html.fromstring(r.text)
+        js_block = "".join(
+            tree.xpath('//script[contains(text(), "streetAddress")]/text()')
+        )
         try:
-            phone = (
-                "".join(
-                    tree.xpath("//script[contains(text(), " "telephone" ")]/text()")
-                )
-                .split('"telephone": "')[1]
-                .split('"')[0]
-                .strip()
-            )
+            phone = js_block.split('"telephone": "')[1].split('"')[0].strip()
         except:
             phone = "<MISSING>"
 
-        store = []
-        store.append(base_url)
-        store.append(location_name)
-        store.append(street_address)
-        store.append(city)
-        store.append(state)
-        store.append(zipp)
-        store.append(country_code)
-        store.append(store_number)
-        store.append(phone)
-        store.append(location_type)
-        store.append(latitude)
-        store.append(longitude)
-        store.append(hours_of_operation)
-        store.append(page_url)
-        store = [str(x).strip() if x else "<MISSING>" for x in store]
-        if store[2] in addresses:
-            continue
-        addresses.append(store[2])
-        yield store
+        item = SgRecord(
+            locator_domain="extendedstayamerica.com",
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zipp,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+        )
+
+        yield item
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()

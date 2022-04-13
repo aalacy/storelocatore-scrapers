@@ -1,2 +1,0 @@
---ignore StreetAddressHasNumber (Confirmed on website)
---ignore CountValidator --ignore StateLevelCountValidator (Validation expected 626 POI, but got 483 affter filtering Satellites)
