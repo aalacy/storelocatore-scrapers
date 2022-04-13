@@ -33,6 +33,8 @@ def fetch_data(sgw: SgWriter):
             state = j.get("state") or ""
             postal = j.get("postal") or ""
             street_address = j.get("address") or ""
+            if not street_address:
+                street_address = j.get("building_name") or ""
 
             raw_address = " ".join(f"{street_address} {city} {state} {postal}".split())
             if cc in ("th", "tw", "hk"):
