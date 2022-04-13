@@ -12,69 +12,90 @@ _headers = {
 }
 
 locator_domain = "https://www.porcelanosa-usa.com"
-base_url = "https://www.porcelanosa-usa.com/us-locations/"
+urls = [
+    "https://www.porcelanosa-usa.com/us-locations/",
+    "https://www.porcelanosa-usa.com/locations/country/ca/",
+]
 
 
 def fetch_data():
     with SgRequests() as session:
-        soup = bs(session.get(base_url, headers=_headers).text, "lxml")
-        locations = soup.select("article.locationItem")
-        for _ in locations:
-            block = list(_.ul.stripped_strings)
-            _addr = []
-            for aa in block:
-                if "Phone" in aa:
-                    break
-                _addr.append(aa.replace("\n", ""))
-            raw_address = " ".join(
-                [aa for aa in " ".join(_addr).split(" ") if aa.strip()]
-            )
-            addr = parse_address_intl(raw_address)
-            street_address = addr.street_address_1
-            if addr.street_address_2:
-                street_address += " " + addr.street_address_2
-            country_code = "US"
-            if len(addr.postcode) > 5:
-                country_code = "CA"
-            state = addr.state
-            if not state:
-                state = _.h4.text.split(",")[-1].strip()
-            phone = ""
-            if _.select_one("li a"):
-                phone = _.select_one("li a").text.strip()
-            hr = _.find("strong", string=re.compile(r"Store Hours"))
-            hours = []
-            if hr:
-                for hh in hr.find_parent().find_next_siblings():
-                    if not hh.text.strip():
-                        continue
-                    temp = []
-                    for tt in hh.stripped_strings:
-                        if "Warehouse" in tt or "Showroom" in tt or "OPEN" in tt:
+        for base_url in urls:
+            soup = bs(session.get(base_url, headers=_headers).text, "lxml")
+            locations = soup.select("article.locationItem")
+            for _ in locations:
+                block = list(_.ul.stripped_strings)
+                _addr = []
+                for aa in block:
+                    if "Phone" in aa:
+                        break
+                    _addr.append(aa.replace("\n", ""))
+                raw_address = " ".join(
+                    [aa for aa in " ".join(_addr).split(" ") if aa.strip()]
+                )
+                addr = parse_address_intl(raw_address)
+                street_address = addr.street_address_1
+                if addr.street_address_2:
+                    street_address += " " + addr.street_address_2
+                country_code = "US"
+                if len(addr.postcode) > 5:
+                    country_code = "CA"
+                city = addr.city
+                location_name = _.h4.text.strip()
+                if "Brooklyn" in raw_address:
+                    city = "Brooklyn"
+                else:
+                    if city == "Park":
+                        city = ""
+                state = addr.state
+                if not state and country_code == "CA":
+                    state = location_name.split(",")[-1].strip()
+                phone = ""
+                if _.select_one("li a"):
+                    phone = _.select_one("li a").text.strip()
+                hr = _.find("strong", string=re.compile(r"Store Hours"))
+                hours = []
+                if hr:
+                    for hh in hr.find_parent().find_next_siblings():
+                        if not hh.text.strip():
                             continue
-                        if "Appointments" in tt:
+                        temp = []
+                        is_break = False
+                        for tt in hh.stripped_strings:
+                            if (
+                                "warehouse" in tt.lower()
+                                or "showroom" in tt.lower()
+                                or "open" in tt.lower()
+                            ):
+                                is_break = True
+                            if "Appointments" in tt:
+                                break
+                            temp.append(tt)
+                        if is_break:
                             break
-                        temp.append(tt)
-                    hours.append(" ".join(temp))
+                        hours.append(" ".join(temp))
 
-            hours_of_operation = "; ".join(hours)
-            if hours_of_operation == "By appointment only":
-                hours_of_operation = ""
+                hours_of_operation = "; ".join(hours).strip()
+                if hours_of_operation == "By appointment only":
+                    hours_of_operation = ""
 
-            yield SgRecord(
-                page_url=base_url,
-                store_number=_["id"].split("-")[-1],
-                location_name=_.h4.text.strip(),
-                street_address=street_address,
-                city=addr.city,
-                state=state,
-                zip_postal=addr.postcode,
-                country_code=country_code,
-                phone=phone,
-                locator_domain=locator_domain,
-                hours_of_operation=hours_of_operation,
-                raw_address=raw_address,
-            )
+                if hours_of_operation.startswith(";"):
+                    hours_of_operation = hours_of_operation[1:]
+
+                yield SgRecord(
+                    page_url=base_url,
+                    store_number=_["id"].split("-")[-1],
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=addr.postcode,
+                    country_code=country_code,
+                    phone=phone,
+                    locator_domain=locator_domain,
+                    hours_of_operation=hours_of_operation,
+                    raw_address=raw_address,
+                )
 
 
 if __name__ == "__main__":

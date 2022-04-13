@@ -6,6 +6,8 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sglogging import SgLogSetup
 import re
+import math
+from concurrent.futures import ThreadPoolExecutor
 
 logger = SgLogSetup().get_logger("bmstores")
 
@@ -18,6 +20,40 @@ headers = {
     "x-requested-with": "XMLHttpRequest",
 }
 
+max_workers = 64
+
+
+def fetchConcurrentSingle(store):
+    page_url = base_url + store["properties"]["link"]
+    logger.info(page_url)
+    response = request_with_retries(page_url)
+    return page_url, bs(response.text, "lxml"), store
+
+
+def fetchConcurrentList(list, occurrence=max_workers):
+    output = []
+    total = len(list)
+    reminder = math.floor(total / 50)
+    if reminder < occurrence:
+        reminder = occurrence
+
+    count = 0
+    with ThreadPoolExecutor(
+        max_workers=occurrence, thread_name_prefix="fetcher"
+    ) as executor:
+        for result in executor.map(fetchConcurrentSingle, list):
+            if result:
+                count = count + 1
+                if count % reminder == 0:
+                    logger.debug(f"Concurrent Operation count = {count}")
+                output.append(result)
+    return output
+
+
+def request_with_retries(url):
+    with SgRequests() as session:
+        return session.get(url, headers=headers)
+
 
 def fetch_data():
     with SgRequests() as session:
@@ -25,10 +61,7 @@ def fetch_data():
             "https://www.bmstores.co.uk/hpcstores/StoresGeoJson&start=1&maxrows=700",
             headers=headers,
         ).json()["features"]
-        for store in store_list:
-            page_url = base_url + store["properties"]["link"]
-            logger.info(page_url)
-            soup = bs(session.get(page_url).text, "lxml")
+        for page_url, soup, store in fetchConcurrentList(store_list):
             street_address = soup.select_one("span[itemprop='streetAddress']").text
             city = soup.select_one("span[itemprop='addressLocality']").string
             state = soup.select_one("span[itemprop='addressRegion']").string
@@ -49,13 +82,11 @@ def fetch_data():
                 hours.append(f"{div[0].text.strip()}: {div[1].text.strip()}")
 
             if not hours:
-                note = (
-                    soup.find("h4", string=re.compile(r"Store Notes"))
-                    .find_next_sibling()
-                    .text
-                )
-                if "Unfortunately" in note and "CLOSED" in note:
-                    hours = ["closed"]
+                note = soup.find("h4", string=re.compile(r"Store Notes"))
+                if note:
+                    note = note.find_next_sibling().text.strip()
+                    if "Unfortunately" in note and "CLOSED" in note:
+                        hours = ["closed"]
 
             street_address = street_address.replace("\n", " ").strip()
             location_name = ""

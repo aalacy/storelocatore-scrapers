@@ -7,7 +7,6 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 
 logger = SgLogSetup().get_logger("t-mobile_com")
-
 search = DynamicGeoSearch(
     country_codes=[SearchableCountries.USA],
     max_search_distance_miles=50,
@@ -17,11 +16,15 @@ search = DynamicGeoSearch(
 session = SgRequests()
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36",
-    "authority": "www.t-mobile.com",
-    "accept": "application/json, text/plain, */*",
-    "clientapplicationid": "OCNATIVEAPP",
-    "loginin": "mytest016@outlook.com",
-    "locale": "en_US",
+    "authority": "onmyj41p3c.execute-api.us-west-2.amazonaws.com",
+    "method": "GET",
+    "accept": "application/json",
+    "cache-control": "no-cache",
+    "pragma": "no-cache",
+    "referer": "https://www.t-mobile.com/",
+    "origin": "https://www.t-mobile.com",
+    "scheme": "https",
+    "accept-encoding": "gzip, deflate, br",
 }
 
 
@@ -82,52 +85,49 @@ def fetch_data():
             + str(llat)
             + "&longitude="
             + str(llng)
-            + "&count=50&radius=100&ignoreLoadingBar=false"
+            + "&count=50&radius=100"
         )
-        try:
-            stores = session.get(url, headers=headers).json()
-            website = "t-mobile.com"
-            if "code" not in stores:
-                for store in stores:
-                    if "name" in store:
-                        name = store["name"]
-                    else:
-                        name = "<MISSING>"
-                    store = store["id"]
-                    typ = compute_location_type(store)
-                    if "url" in store:
-                        loc = store["url"]
-                    else:
-                        loc = "<MISSING>"
-                    phone = handle_missing(store["telephone"])
-                    location = store["location"]
-                    address = location["address"]
-                    add = handle_missing(address["streetAddress"])
-                    city = handle_missing(address["addressLocality"])
-                    state = handle_missing(address["addressRegion"])
-                    zc = handle_missing(address["postalCode"])
-                    country = "US"
-                    lat = location["latitude"]
-                    lng = location["longitude"]
-                    hours = parse_hours(store)
-                    yield SgRecord(
-                        locator_domain=website,
-                        page_url=loc,
-                        location_name=name,
-                        street_address=add,
-                        city=city,
-                        state=state,
-                        zip_postal=zc,
-                        country_code=country,
-                        phone=phone,
-                        location_type=typ,
-                        store_number=store,
-                        latitude=lat,
-                        longitude=lng,
-                        hours_of_operation=hours,
-                    )
-        except:
-            pass
+        stores = session.get(url, headers=headers).json()
+        website = "t-mobile.com"
+        if "code" not in stores:
+            for store in stores:
+                if "name" in store:
+                    name = store["name"]
+                else:
+                    name = "<MISSING>"
+                store = store["id"]
+                typ = compute_location_type(store)
+                if "url" in store:
+                    loc = store["url"]
+                else:
+                    loc = "<MISSING>"
+                phone = handle_missing(store["telephone"])
+                location = store["location"]
+                address = location["address"]
+                add = handle_missing(address["streetAddress"])
+                city = handle_missing(address["addressLocality"])
+                state = handle_missing(address["addressRegion"])
+                zc = handle_missing(address["postalCode"])
+                country = "US"
+                lat = location["latitude"]
+                lng = location["longitude"]
+                hours = parse_hours(store)
+                yield SgRecord(
+                    locator_domain=website,
+                    page_url=loc,
+                    location_name=name,
+                    street_address=add,
+                    city=city,
+                    state=state,
+                    zip_postal=zc,
+                    country_code=country,
+                    phone=phone,
+                    location_type=typ,
+                    store_number=store,
+                    latitude=lat,
+                    longitude=lng,
+                    hours_of_operation=hours,
+                )
 
 
 def scrape():

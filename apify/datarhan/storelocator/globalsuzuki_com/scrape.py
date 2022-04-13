@@ -24,7 +24,6 @@ def fetch_data():
         "Bhutan",
         "Cambodia",
         "Egypt",
-        "Republic of Djibouti",
         "Seychelles",
         "Democratic Republic of Timor-Leste",
         "Fiji",
