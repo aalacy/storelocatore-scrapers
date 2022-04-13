@@ -59,7 +59,7 @@ def fetch_data():
                         lat = item.split('"latitude":"')[1].split('"')[0]
                         lng = item.split('"longitude":"')[1].split('"')[0]
                         purl = item.split('"website":"')[1].split('"')[0]
-                        hours = line.split('"store_hours":"')[1].split('"')[0]
+                        hours = item.split('"store_hours":"')[1].split('"')[0]
                         hours = hours.replace("1,", "Mon: ").replace(";2,", "; Tue: ")
                         hours = hours.replace(";2,", "; Tue: ")
                         hours = hours.replace(";3,", "; Wed: ")
@@ -68,6 +68,22 @@ def fetch_data():
                         hours = hours.replace(";6,", "; Sat: ")
                         hours = hours.replace(";7,", "; Sun: ")
                         hours = hours.replace(",", "-")
+                        hours = hours.replace("1000", "10:00")
+                        hours = hours.replace("1100", "11:00")
+                        hours = hours.replace("1200", "12:00")
+                        hours = hours.replace("1300", "1:00")
+                        hours = hours.replace("1400", "2:00")
+                        hours = hours.replace("1500", "3:00")
+                        hours = hours.replace("1600", "4:00")
+                        hours = hours.replace("1700", "5:00")
+                        hours = hours.replace("1800", "6:00")
+                        hours = hours.replace("1900", "7:00")
+                        hours = hours.replace("2000", "8:00")
+                        hours = hours.replace("2100", "9:00")
+                        hours = hours.replace("2200", "10:00")
+                        hours = hours.replace("700", "7:00")
+                        hours = hours.replace("800", "8:00")
+                        hours = hours.replace("900", "9:00")
                         if hours == "":
                             hours = "<MISSING>"
                         if phone == "":

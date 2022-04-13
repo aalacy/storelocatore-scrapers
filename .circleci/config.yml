@@ -39,7 +39,7 @@ jobs:
       tag: <<parameters.python-version>>
     parameters:
       cache-prefix:
-        default: 'v7'
+        default: 'v8'
         description: Cache prefix (increment to clear)
         type: string
       python-version:

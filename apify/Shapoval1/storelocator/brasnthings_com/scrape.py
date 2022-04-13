@@ -32,6 +32,8 @@ def fetch_data(sgw: SgWriter):
             state = j.get("region") or "<MISSING>"
             postal = j.get("postcode") or "<MISSING>"
             country_code = j.get("country") or "<MISSING>"
+            if state == "CA":
+                country_code = "US"
             city = j.get("city") or "<MISSING>"
             store_number = j.get("stockist_id") or "<MISSING>"
             page_url = (
@@ -73,6 +75,8 @@ def fetch_data(sgw: SgWriter):
             ).strip()
             if hours_of_operation.count("<MISSING>") == 7:
                 hours_of_operation = "<MISSING>"
+            if hours_of_operation.count("<MISSING>") > 2:
+                hours_of_operation = "<MISSING>"
 
             row = SgRecord(
                 locator_domain=locator_domain,
@@ -89,6 +93,9 @@ def fetch_data(sgw: SgWriter):
                 latitude=latitude,
                 longitude=longitude,
                 hours_of_operation=hours_of_operation,
+                raw_address=f"{ad} {city}, {state} {postal}".replace(
+                    "<MISSING>", ""
+                ).strip(),
             )
 
             sgw.write_row(row)

@@ -65,7 +65,7 @@ def fetch_with_retry(url, retry=0):
 
 
 def fetch_data():
-    coords = static_coordinate_list(50, country_code=SearchableCountries.CANADA)
+    coords = static_coordinate_list(10, country_code=SearchableCountries.CANADA)
 
     for lat, lng in coords:
         url = f"https://www.pearlevision.ca/webapp/wcs/stores/servlet/AjaxStoreLocatorResultsView?resultSize=5000&latitude={lat}&longitude={lng}"

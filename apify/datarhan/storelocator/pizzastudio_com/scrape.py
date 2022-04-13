@@ -22,6 +22,8 @@ def fetch_data():
         store_url = "https://pizzastudio.com/locations/" + poi["locationurl"]
         location_name = poi["locationname"].replace("&acirc;", "â")
         street_address = poi.get("address1")
+        if not street_address and location_name == "St. John":
+            street_address = "11 E Point Way"
         city = poi["city"]
         state = poi["stateabbrev"]
         if "," in city:
