@@ -8,37 +8,20 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from concurrent import futures
 
 
-def get_tree(url):
-    r = session.get(url, headers=headers)
-    if r.status_code != 200:
-        return html.fromstring("<html>")
-    return html.fromstring(r.content)
-
-
 def get_urls():
-    urls = set()
-    root = get_tree("https://locations.unclejulios.com/sitemap.xml")
-    states = root.xpath("//loc/text()")
-    for state in states:
-        tree = get_tree(state.strip())
-        links = tree.xpath("//loc/text()")
-        for link in links:
-            slug = link.split("/")[-2]
-            if "-" not in slug or "dining" in slug:
-                continue
-            if link.count("/") == 6:
-                urls.add(link.strip())
+    r = session.get("https://www.bricomarche.com/magasins", headers=headers)
+    tree = html.fromstring(r.text)
 
-    return urls
+    return tree.xpath("//a[@class='GeolocResultItem-seeStore']/@href")
 
 
-def get_data(page_url, sgw: SgWriter):
-    tree = get_tree(page_url)
+def get_data(slug, sgw: SgWriter):
+    page_url = f"https://www.bricomarche.com{slug}"
+    r = session.get(page_url, headers=headers)
+    tree = html.fromstring(r.text)
     text = "".join(
         tree.xpath("//script[contains(text(), 'LocalBusiness')]/text()")
     ).strip()
-    if not text:
-        return
     j = json.loads(text)
 
     location_name = j.get("name")
@@ -49,14 +32,19 @@ def get_data(page_url, sgw: SgWriter):
     postal = a.get("postalCode")
     country_code = a.get("addressCountry")
     phone = j.get("telephone")
-    store_number = j.get("branchCode")
+    store_number = page_url.split("/")[-1]
 
     g = j.get("geo")
     latitude = g.get("latitude")
     longitude = g.get("longitude")
 
-    hours = j.get("openingHours") or []
-    hours_of_operation = ";".join(hours)
+    _tmp = []
+    hours = tree.xpath("//div[contains(@class, 'StoreDetails-schedule ')]")
+    for h in hours:
+        day = "".join(h.xpath("./span//text()")).strip()
+        inter = "".join(h.xpath("./div//text()")).strip()
+        _tmp.append(f"{day}: {inter}")
+    hours_of_operation = ";".join(_tmp)
 
     row = SgRecord(
         page_url=page_url,
@@ -87,10 +75,10 @@ def fetch_data(sgw: SgWriter):
 
 
 if __name__ == "__main__":
-    locator_domain = "https://unclejulios.com/"
+    locator_domain = "https://www.bricomarche.com/"
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0"
     }
-    session = SgRequests(verify_ssl=False)
+    session = SgRequests()
     with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         fetch_data(writer)
