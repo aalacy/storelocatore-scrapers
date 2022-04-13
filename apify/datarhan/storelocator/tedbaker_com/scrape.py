@@ -45,6 +45,7 @@ def fetch_data():
             street_address = addr.street_address_1
             if addr.street_address_2:
                 street_address += ", " + addr.street_address_2
+            state = ""
             zip_code = poi_html.xpath("@data-store-zipcode")[0]
             latitude = poi_html.xpath("@data-store-latitude")[0]
             longitude = poi_html.xpath("@data-store-longitude")[0]
@@ -58,6 +59,31 @@ def fetch_data():
             sun = poi_html.xpath("@data-store-open-sunday")[0]
             hoo = f"Monday: {mon}, Tuesday: {tue}, Wednesday: {wed}, Thursday {thu}, Friday {fri}, Satarday {sat}, Sunday {sun}"
             hoo = " ".join(hoo.split())
+            if "/row/" in locator_url:
+                country_code = "UK"
+            if "/us/" in locator_url:
+                country_code = "USA"
+            if "/au/" in locator_url:
+                country_code = "AU"
+            if "/ca/" in locator_url:
+                country_code = "CA"
+            if "/es/" in locator_url:
+                country_code = "ES"
+            if "/fr/" in locator_url:
+                country_code = "FR"
+            if zip_code and country_code == "USA":
+                state = zip_code.split()[0]
+                zip_code = zip_code.split()[-1]
+            if zip_code and country_code == "CA":
+                if len(zip_code) > 7:
+                    state = zip_code.split()[0]
+                    zip_code = " ".join(zip_code.split()[1:])
+            if state and len(state) > 2:
+                state = state[:2]
+            if country_code == "USA" and len(zip_code) > 5:
+                zip_code = zip_code[:5]
+            if phone and len(phone) < 4:
+                phone = ""
 
             item = SgRecord(
                 locator_domain=domain,
@@ -65,9 +91,9 @@ def fetch_data():
                 location_name=location_name,
                 street_address=street_address,
                 city=addr.city,
-                state="",
+                state=state,
                 zip_postal=zip_code,
-                country_code=e["name"],
+                country_code=country_code,
                 store_number="",
                 phone=phone,
                 location_type="",
