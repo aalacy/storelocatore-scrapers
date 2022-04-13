@@ -3,8 +3,8 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sglogging import SgLogSetup
-from sgrequests.sgrequests import SgRequests
-from bs4 import BeautifulSoup as bs
+from sgrequests import SgRequests
+import dirtyjson as json
 
 logger = SgLogSetup().get_logger("waterfields")
 
@@ -13,27 +13,37 @@ _headers = {
 }
 
 locator_domain = "https://www.waterfields-bakers.co.uk"
-base_url = "https://www.waterfields-bakers.co.uk/ajax/StoresLocator.asp?latitude=53.494655&longitude=-2.489626"
+base_url = "https://stockist.co/api/v1/u11217/locations/all.js?callback=_stockistAllStoresCallback"
 
 
 def fetch_records(http):
-    locations = bs(http.get(base_url, headers=_headers).text, "lxml").select("marker")
+    locations = json.loads(
+        http.get(base_url, headers=_headers)
+        .text.split("_stockistAllStoresCallback(")[1]
+        .strip()[:-1]
+    )
     for _ in locations:
-        street_address = _["address"]
-        if _.get("address2"):
-            street_address += " " + _["address2"]
+        street_address = _["address_line_1"]
+        if _.get("address_line_2"):
+            street_address += " " + _["address_line_2"]
+        hours = []
+        for hh in _.get("custom_fields", []):
+            hours.append(f"{hh['name']}: {hh['value']}")
+
         yield SgRecord(
             page_url="https://www.waterfields-bakers.co.uk/branchfinder",
+            store_number=_["id"],
             location_name=_["name"],
             street_address=street_address,
             city=_["city"],
-            zip_postal=_["postcode"],
-            country_code="UK",
+            state=_["state"],
+            zip_postal=_["postal_code"],
+            country_code=_["country"],
             phone=_["phone"],
-            latitude=_["lat"],
-            longitude=_["lng"],
+            latitude=_["latitude"],
+            longitude=_["longitude"],
             locator_domain=locator_domain,
-            hours_of_operation=_["openingtimes"].replace("\r\n", "; "),
+            hours_of_operation="; ".join(hours),
         )
 
 

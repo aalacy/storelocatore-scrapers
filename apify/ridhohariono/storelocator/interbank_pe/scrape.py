@@ -15,7 +15,12 @@ API_URL = "https://interbank.pe/puntos-de-atencion?p_p_id=pe_com_ibk_halcon_atte
 
 HEADERS = {
     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+    "accept-encoding": "gzip, deflate, br",
+    "accept-language": "en-US,en;q=0.9",
+    "content-type": "application/json; charset=UTF-8",
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.146 Safari/537.36",
+    "Referer": LOCATION_URL,
+    "sec-fetch-mode": "cors",
 }
 log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
 MISSING = "<MISSING>"
@@ -58,8 +63,8 @@ def fetch_data():
     log.info("Fetching store_locator data")
     search = DynamicGeoSearch(
         country_codes=[SearchableCountries.PERU],
-        expected_search_radius_miles=10,
-        max_search_results=5,
+        expected_search_radius_miles=5,
+        max_search_results=2,
     )
     for lat, long in search:
         url = API_URL.format(lat, long)
