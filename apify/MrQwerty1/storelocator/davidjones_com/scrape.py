@@ -71,6 +71,8 @@ def fetch_data():
             for store in re.findall('"/stores/([A-Za-z-0-9]*)"', pull_str)
         ]
         stores.append("https://www.davidjones.com/newmarket")
+        stores.append("https://www.davidjones.com/sunshine")
+        stores.append("https://www.davidjones.com/wollongong-central")
         for store in stores:
             logger.info(f"Crawling: {store}")
             driver.get(store)
