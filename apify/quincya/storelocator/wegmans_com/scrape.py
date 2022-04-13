@@ -1,8 +1,6 @@
 import json
 import re
 
-import os
-
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 
@@ -21,13 +19,6 @@ def fetch_data(sgw: SgWriter):
 
     session = SgRequests()
 
-    proxy_password = os.environ["PROXY_PASSWORD"]
-    proxy_url = "http://groups-RESIDENTIAL,country-US:{}@proxy.apify.com:8000/".format(
-        proxy_password
-    )
-    proxies = {"http": proxy_url, "https": proxy_url}
-    session.proxies = proxies
-
     req = session.get(base_link, headers=headers)
     base = BeautifulSoup(req.text, "lxml")
 
@@ -45,7 +36,7 @@ def fetch_data(sgw: SgWriter):
         req = session.get(link, headers=headers)
         base = BeautifulSoup(req.text, "lxml")
 
-        store_js = base.find(class_="yoast-schema-graph").text
+        store_js = base.find(class_="yoast-schema-graph").contents[0]
         store = json.loads(store_js)
         try:
             raw_data = store["@graph"][1]["description"]
