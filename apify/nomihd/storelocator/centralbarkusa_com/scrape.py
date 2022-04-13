@@ -29,7 +29,6 @@ def fetch_data():
     for store in stores_list:
 
         page_url = "".join(store.xpath('.//h2[@class="name-line"]/a/@href')).strip()
-
         locator_domain = website
         location_name = "".join(
             store.xpath('.//h2[@class="name-line"]/a/text()')
@@ -74,11 +73,20 @@ def fetch_data():
             hours_list = []
             for hour in hours:
                 day = "".join(hour.xpath("span[1]/text()")).strip()
-                time = "".join(hour.xpath("span[2]/text()")).strip()
+                time = (
+                    "".join(hour.xpath("span[2]/text()")).strip().split("(")[0].strip()
+                )
                 if len(day) > 0 and len(time) > 0:
                     hours_list.append(day + ":" + time)
 
-            hours_of_operation = "; ".join(hours_list).strip()
+            hours_of_operation = (
+                "; ".join(hours_list)
+                .strip()
+                .split("Sleepovers ")[0]
+                .strip()
+                .split("for Stay-n-Play")[0]
+                .strip()
+            )
             lat_lng = (
                 store_page_res.text.split("var myLatLng = { ")[1].split("};")[0].strip()
             )
@@ -86,7 +94,7 @@ def fetch_data():
             latitude = lat_lng.split(",")[0].replace("lat:", "").strip()
             longitude = lat_lng.split(",")[1].replace("lng:", "").strip()
         else:
-            page_url = "<MISSING>"
+            page_url = search_url
             hours_of_operation = "<MISSING>"
             latitude = "<MISSING>"
             longitude = "<MISSING>"

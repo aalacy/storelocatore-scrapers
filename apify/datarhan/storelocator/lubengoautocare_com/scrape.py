@@ -17,14 +17,14 @@ def fetch_data():
     frm = {"action": "get_all_stores", "lat": "", "lng": ""}
     data = session.post(start_url, headers=hdr, data=frm).json()
     for i, poi in data.items():
+        location_name = poi["na"]
+        if "coming soon" in location_name.lower():
+            continue
         page_url = poi["gu"]
         loc_response = session.get(page_url)
         loc_dom = etree.HTML(loc_response.text)
         hoo = loc_dom.xpath('//div[@class="store_locator_single_opening_hours"]/text()')
         hoo = ", ".join([e.strip() for e in hoo if e.strip()])
-        location_name = poi["na"]
-        if "COMING SOON" in location_name:
-            continue
 
         item = SgRecord(
             locator_domain=domain,
@@ -36,7 +36,7 @@ def fetch_data():
             zip_postal=poi["zp"],
             country_code="",
             store_number=poi["ID"],
-            phone=poi["te"],
+            phone=poi.get("te"),
             location_type="",
             latitude=poi["lat"],
             longitude=poi["lng"],

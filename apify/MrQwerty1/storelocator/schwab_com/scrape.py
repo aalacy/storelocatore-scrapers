@@ -5,6 +5,7 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from concurrent import futures
+from sglogging import sglog
 
 
 def get_urls():
@@ -27,7 +28,9 @@ def get_urls():
 
 def get_data(page_url, sgw: SgWriter):
     r = session.get(page_url, headers=headers)
-    if r.status_code == 404:
+    logger.info(f"{page_url}: {r.status_code}")
+
+    if r.status_code != 200:
         return
     tree = html.fromstring(r.text)
     location_name = "".join(
@@ -39,6 +42,10 @@ def get_data(page_url, sgw: SgWriter):
         "//p[@id='ctl00_wpMngr_BranchDetail_BranchDetails_brAddress']/text()"
     )
     line = list(filter(None, [l.strip() for l in line]))
+    if not line:
+        logger.info(f"{page_url} is broken")
+        return
+
     street_address = line.pop(0)
     csz = line.pop()
     city = csz.split(",")[0].strip()
@@ -55,6 +62,13 @@ def get_data(page_url, sgw: SgWriter):
         _tmp.append(" ".join(t.xpath("./td/text()")).strip())
 
     hours_of_operation = ";".join(_tmp)
+    isclosed = tree.xpath("//p[contains(text(), 'temporarily closed')]")
+    if isclosed:
+        hours_of_operation = "Temporarily Closed"
+
+    iscoming = tree.xpath("//p[contains(text(), 'Coming soon')]")
+    if iscoming:
+        hours_of_operation = "Coming Soon"
 
     row = SgRecord(
         page_url=page_url,
@@ -87,6 +101,8 @@ def fetch_data(sgw: SgWriter):
 
 if __name__ == "__main__":
     locator_domain = "https://www.schwab.com/"
+    logger = sglog.SgLogSetup().get_logger(logger_name="schwab.com")
+
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0"
     }

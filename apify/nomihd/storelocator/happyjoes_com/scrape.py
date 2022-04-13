@@ -6,6 +6,7 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 import json
+from sgpostal import sgpostal as parser
 
 website = "happyjoes.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -42,9 +43,33 @@ def fetch_data():
             if len(store["address_line_2"]) > 0:
                 street_address = street_address + ", " + store["address_line_2"]
 
+            if street_address:
+                street_address = (
+                    street_address.replace("Southridge Plaza ", "")
+                    .strip()
+                    .replace("Dubuque, IA 52001", "")
+                    .strip()
+                    .replace(" Muscatine", "")
+                    .strip()
+                )
+
+            raw_address = street_address
             city = store["city"]
+            if city:
+                raw_address = raw_address + ", " + city
+
             state = store["state"]
+            if state:
+                raw_address = raw_address + ", " + state
+
             zip = store["postcode"]
+            if zip:
+                raw_address = raw_address + ", " + zip
+
+            formatted_addr = parser.parse_address_intl(raw_address)
+            city = formatted_addr.city
+            if not city:
+                city = location_name.split(" ")[0].strip()
 
             country_code = store["country"]
 
@@ -81,6 +106,7 @@ def fetch_data():
                 latitude=latitude,
                 longitude=longitude,
                 hours_of_operation=hours_of_operation,
+                raw_address=raw_address,
             )
 
 

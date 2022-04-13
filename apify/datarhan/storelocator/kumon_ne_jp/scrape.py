@@ -51,7 +51,10 @@ def fetch_data():
                     "code": "",
                     "search_zip": "",
                 }
-                data = session.post(post_url, data=frm).json()
+                data = session.post(post_url, data=frm)
+                if data.status_code != 200:
+                    continue
+                data = data.json()
                 for poi in data["classroomList"]:
                     page_url = f"https://www.kumon.ne.jp/enter/search/classroom/{poi['cid']}/index.html".lower()
                     if page_url in scraped_urls:

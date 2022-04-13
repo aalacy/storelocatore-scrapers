@@ -8,34 +8,28 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 def fetch_data(sgw: SgWriter):
 
-    locator_domain = "https://www.wendyspanama.com/"
-    api_url = "https://www.wendyspanama.com/content/8-restaurantes"
-    session = SgRequests()
+    locator_domain = "https://wendyspanama.com/"
+    page_url = "https://wendyspanama.com/restaurantes.jsp"
+    session = SgRequests(verify_ssl=False)
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
-    r = session.get(api_url, headers=headers)
+    r = session.get(page_url, headers=headers)
     tree = html.fromstring(r.text)
-    div = tree.xpath('//div[./div[@class="tooltip-wrap"]]')
+    div = tree.xpath('//div[@class="col-md-4 col-sm-12"]')
     for d in div:
 
-        page_url = "https://www.wendyspanama.com/content/8-restaurantes"
-        location_name = "".join(d.xpath("./h3/text()"))
-        street_address = (
-            "".join(d.xpath('.//div[@class="tooltip-content"]/p[1]/text()'))
-            .replace("\n", "")
-            .strip()
+        location_name = "".join(d.xpath(".//h2//text()"))
+        street_address = "".join(
+            d.xpath('.//p[contains(text(), "Horario")]/preceding-sibling::p[1]/text()')
         )
-        country_code = "Panama"
+        country_code = "PA"
         hours_of_operation = (
-            " ".join(
-                d.xpath(
-                    './/div[@class="tooltip-content"]/p[contains(text(), "PM")]/text()'
-                )
-            )
+            " ".join(d.xpath('.//p[contains(text(), "PM")]/text()'))
             .replace("\n", "")
             .strip()
         )
+        hours_of_operation = " ".join(hours_of_operation.split())
 
         row = SgRecord(
             locator_domain=locator_domain,
@@ -52,7 +46,6 @@ def fetch_data(sgw: SgWriter):
             latitude=SgRecord.MISSING,
             longitude=SgRecord.MISSING,
             hours_of_operation=hours_of_operation,
-            raw_address=street_address,
         )
 
         sgw.write_row(row)

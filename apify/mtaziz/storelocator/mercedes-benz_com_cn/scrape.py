@@ -8,7 +8,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from tenacity import retry, stop_after_attempt
 import tenacity
 from lxml import html
-
+import re
 
 logger = SgLogSetup().get_logger("mercedes-benz_com_cn")
 LOCATION_DEALER_URL = "https://www.mercedes-amg.com/en/vehicles/dealer.html"
@@ -153,6 +153,20 @@ def determine_hours(k, brand, which):
     return hours
 
 
+def remove_inner_info_of_paren(pareninfo):
+    j = ""
+    found_extra = re.findall(r"\(([^)]+)", pareninfo)
+    if len(found_extra) > 1:
+        temp = pareninfo.replace("(" + found_extra[0] + ")", "")
+        j = temp.replace("(" + found_extra[1] + ")", "")
+        j = j.strip().lstrip(",").strip()
+    else:
+        j = pareninfo.replace("(" + found_extra[0] + ")", "")
+        j = j.strip().lstrip(",").strip()
+    j = " ".join(j.split())
+    return j
+
+
 def fix_comma(x):
     h = []
     try:
@@ -226,6 +240,18 @@ def fetch_records(idx, store_url_tuple, headers_apikey, sgw: SgWriter):
             l = l1 + ", " + l2
             l = fix_comma(l)
             street_address = l or MISSING
+
+            # Clean Street Address
+            if "(" in street_address and ")" in street_address:
+                street_address = remove_inner_info_of_paren(street_address)
+
+            if (
+                "Address of Parts Mgr. : No.977, Tongguan Road, Wangcheng District, Changsha, Hunan Province"
+                in street_address
+            ):
+                street_address = "14th floor of China National Petroleum Mansion, No.106, second part of Furong road, Changsha, Hunan"
+            street_address = " ".join(street_address.split())
+
             city = d["address"]["city"] or MISSING
 
             # State
@@ -343,7 +369,7 @@ def get_count_api_endpoint_url_based_on_dealer_not_jp_de_cn(headers_ak):
     s = set()
     for idx, cc in enumerate(all_countries[0:]):
         if cc in cn_china:
-            logger.info(f"Pulling the data for {cc}")
+            logger.info(f"Pulling the data for {cc}")  # noqa
             api_results_list_url = f"https://api.corpinter.net/dlc/dms/v2/dealers/search?marketCode={cc}&fields="
             logger.info("")
             r1 = get_response(idx, api_results_list_url, headers_ak)
@@ -373,9 +399,11 @@ def fetch_data(sgw: SgWriter):
         api_endpoint_urls,
         store_count_by_country,
     ) = get_count_api_endpoint_url_based_on_dealer_not_jp_de_cn(headers_with_apikey)
-    logger.info(f"<<<===== Total Store Count: {len(api_endpoint_urls)}=====>>>")
+    logger.info(f"<<<===== Total Store Count: {len(api_endpoint_urls)}=====>>>")  # noqa
     store_count_by_country = sorted(store_count_by_country)
-    logger.info(f"<<<===== (Country, Store Count):\n{store_count_by_country}\n=====>>>")
+    logger.info(
+        f"<<<===== (Country, Store Count):\n{store_count_by_country}\n=====>>>"
+    )  # noqa
 
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
         tasks = []
@@ -389,7 +417,7 @@ def fetch_data(sgw: SgWriter):
 
 
 def scrape():
-    logger.info("Started")
+    logger.info("Started")  # noqa
     with SgWriter(
         SgRecordDeduper(
             SgRecordID(
