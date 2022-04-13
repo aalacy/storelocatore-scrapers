@@ -52,10 +52,6 @@ def get_data():
         "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/94.0.4606.71 Safari/537.36",
     }
 
-    hours_headers = {
-        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.75 Safari/537.36"
-    }
-
     search = DynamicGeoSearch(country_codes=[SearchableCountries.USA])
 
     for search_lat, search_lon in search:
@@ -64,9 +60,9 @@ def get_data():
             x = x + 1
             url = (
                 "https://www.multicare.org/find-a-location/?query=&searchloc=&coordinates="
-                + "47.61"
+                + str(search_lat)
                 + "%2C"
-                + "-122.34"
+                + str(search_lon)
                 + "&locationType=&sortBy=&radius=&page_num="
                 + str(x)
             )
