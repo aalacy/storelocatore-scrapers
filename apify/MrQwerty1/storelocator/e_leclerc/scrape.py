@@ -87,12 +87,12 @@ def fetch_data(sgw: SgWriter):
 
 if __name__ == "__main__":
     session = SgRequests()
-    locator_domain = "e.leclerc"
+    locator_domain = "https://www.e.leclerc/"
     headers = {
         "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:95.0) Gecko/20100101 Firefox/95.0",
         "Accept": "*/*",
-        "Referer": f"https://www.{locator_domain}/",
-        "Origin": f"https://www.{locator_domain}",
+        "Referer": locator_domain,
+        "Origin": locator_domain,
         "Sec-Fetch-Dest": "empty",
         "Sec-Fetch-Mode": "cors",
         "Sec-Fetch-Site": "cross-site",
