@@ -116,7 +116,14 @@ def fetch_data():
         raw_address = ", ".join(raw_address[:-1]).strip()
         street_address, city, state, zip_postal = getAddress(raw_address)
         country_code = "US"
-        store_number = MISSING
+        try:
+            store_number = re.search(
+                r"\?store_id=(\d+)",
+                soup.find("a", {"href": re.compile(r"\?store_id=\d+")})["href"],
+            ).group(1)
+        except:
+            store_number = MISSING
+        print(store_number)
         hours_of_operation = parse_hours(soup.find("div", {"class": "location-hours"}))
         latitude, longitude = get_latlong(soup)
         location_type = MISSING
