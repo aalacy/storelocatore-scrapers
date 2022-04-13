@@ -32,8 +32,6 @@ def fetch_data():
             state = re.sub(r"\d+\s+-\s+", "", state, re.IGNORECASE)
             state = re.sub("_", " ", state)
 
-        print(state)
-
         geo = location["position"]
         latitude = geo["latitude"]
         longitude = geo["longitude"]
