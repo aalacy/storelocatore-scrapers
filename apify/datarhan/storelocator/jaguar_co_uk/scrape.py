@@ -23,7 +23,7 @@ def fetch_data():
         loc_response = session.get(store_url, headers=hdr)
         loc_dom = etree.HTML(loc_response.text)
 
-        location_name = loc_dom.xpath('//h1/span/text()')
+        location_name = loc_dom.xpath("//h1/span/text()")
         location_name = location_name[0] if location_name else ""
         if "PAGE NOT FOUND" in location_name:
             continue
