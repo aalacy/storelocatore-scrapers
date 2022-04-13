@@ -17,14 +17,11 @@ def fetch_data():
     scraped_urls = []
 
     all_codes = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA], expected_search_radius_miles=200
+        country_codes=[SearchableCountries.USA], expected_search_radius_miles=50
     )
     for code in all_codes:
-        try:
-            response = session.get(
-                start_url.format(code),
-            )
-        except Exception:
+        response = session.get(start_url.format(code))
+        if response.status_code != 200:
             continue
         dom = etree.HTML(response.text)
 
