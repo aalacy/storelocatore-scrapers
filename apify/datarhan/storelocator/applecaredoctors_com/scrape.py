@@ -9,7 +9,7 @@ from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
-    session = SgRequests()
+    session = SgRequests(proxy_country="us")
     start_url = "https://applecareurgentcare.com/urgent-care-locations/"
     domain = "applecareurgentcare.com"
     hdr = {
@@ -61,6 +61,8 @@ def fetch_data():
             street_address = " ".join(raw_address[0].split())
             city = raw_address[1]
             state = raw_address[2].split()[0]
+            if len(state) > 2:
+                state = raw_address[1]
             zip_code = raw_address[2].split()[-1]
             country_code = ""
             phone = loc_dom.xpath('//h3[contains(text(), "Ph.:")]/text()')

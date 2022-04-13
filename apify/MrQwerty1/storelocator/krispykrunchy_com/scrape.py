@@ -1,118 +1,74 @@
-import csv
-
-from concurrent import futures
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
-from sgzip.static import static_coordinate_list, SearchableCountries
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgzip.dynamic import SearchableCountries, DynamicGeoSearch
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def fetch_data(sgw: SgWriter):
+    search = DynamicGeoSearch(
+        country_codes=[SearchableCountries.USA], expected_search_radius_miles=30
+    )
+    for lat, lng in search:
+        api = f"https://krispykrunchy.com/wp-admin/admin-ajax.php?action=store_search&lat={lat}&lng={lng}&max_results=100&search_radius=50&autoload=1"
+        r = session.get(api, headers=headers)
+        js = r.json()
 
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
+        for j in js:
+            page_url = j.get("permalink")
+            location_name = j.get("store") or ""
+            location_name = (
+                location_name.replace("&#8217;", "'")
+                .replace("&#038;", "&")
+                .replace("&#8211;", "-")
+                .strip()
+            )
+            street_address = f"{j.get('address')} {j.get('address2') or ''}".strip()
 
-        for row in data:
-            writer.writerow(row)
+            city = j.get("city")
+            state = j.get("state")
+            postal = j.get("zip") or ""
+            if postal:
+                if postal[0].isalpha():
+                    postal = SgRecord.MISSING
+            country_code = "US"
+            store_number = j.get("id")
+            phone = j.get("phone") or ""
+            if "," in phone:
+                phone = phone.split(",")[0].strip()
+            latitude = j.get("lat")
+            longitude = j.get("lng")
+            hours_of_operation = j.get("hours")
 
+            row = SgRecord(
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=postal,
+                country_code=country_code,
+                latitude=latitude,
+                longitude=longitude,
+                phone=phone,
+                store_number=store_number,
+                locator_domain=locator_domain,
+                hours_of_operation=hours_of_operation,
+            )
 
-def get_data(coord):
-    rows = []
-    lat, lon = coord
-    locator_domain = "https://krispykrunchy.com/"
-    api_url = f"https://krispykrunchy.com/wp-admin/admin-ajax.php?action=store_search&lat={lat}&lng={lon}&max_results=100&search_radius=50&autoload=1"
-
-    session = SgRequests()
-    r = session.get(api_url)
-    js = r.json()
-
-    for j in js:
-        page_url = j.get("permalink") or "<MISSING>"
-        location_name = (
-            j.get("store")
-            .replace("&#8217;", "'")
-            .replace("&#038;", "&")
-            .replace("&#8211;", "-")
-            .strip()
-        )
-        street_address = (
-            f"{j.get('address')} {j.get('address2') or ''}".strip() or "<MISSING>"
-        )
-        city = j.get("city") or "<MISSING>"
-        state = j.get("state") or "<MISSING>"
-        if len(state) > 2 and state != "<MISSING>":
-            continue
-        postal = j.get("zip") or "<MISSING>"
-        country_code = "US"
-        store_number = j.get("id") or "<MISSING>"
-        phone = j.get("phone") or "<MISSING>"
-        latitude = j.get("lat") or "<MISSING>"
-        longitude = j.get("lng") or "<MISSING>"
-        location_type = "<MISSING>"
-        hours_of_operation = "<MISSING>"
-
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-
-        rows.append(row)
-
-    return rows
-
-
-def fetch_data():
-    out = []
-    s = set()
-    coords = static_coordinate_list(radius=50, country_code=SearchableCountries.USA)
-
-    with futures.ThreadPoolExecutor(max_workers=2) as executor:
-        future_to_url = {executor.submit(get_data, coord): coord for coord in coords}
-        for future in futures.as_completed(future_to_url):
-            rows = future.result()
-            for row in rows:
-                _id = tuple(row[2:6])
-                if _id not in s:
-                    s.add(_id)
-                    out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+            sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://krispykrunchy.com/"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:97.0) Gecko/20100101 Firefox/97.0",
+    }
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(
+            RecommendedRecordIds.StoreNumberId, duplicate_streak_failure_factor=-1
+        )
+    ) as writer:
+        fetch_data(writer)
