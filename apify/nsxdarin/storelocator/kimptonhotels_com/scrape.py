@@ -31,7 +31,7 @@ def fetch_data():
             if lurl not in locs:
                 locs.append(lurl.replace("localhost:4503", ""))
     for loc in locs:
-        time.sleep(10)
+        time.sleep(30)
         logger.info(loc)
         r2 = session.get(loc, headers=headers)
         website = "kimptonhotels.com"
