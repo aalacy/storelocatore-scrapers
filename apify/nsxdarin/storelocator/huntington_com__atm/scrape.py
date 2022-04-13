@@ -32,8 +32,10 @@ def get_data(coords, sgw: SgWriter):
         headers=headers,
         data=data,
     )
-
-    js = r.json()["features"]
+    try:
+        js = r.json()["features"]
+    except:
+        return
 
     for j in js:
         a = j.get("properties")
@@ -97,12 +99,12 @@ def get_data(coords, sgw: SgWriter):
 def fetch_data(sgw: SgWriter):
     coords = DynamicGeoSearch(
         country_codes=[SearchableCountries.USA],
-        max_search_distance_miles=50,
-        expected_search_radius_miles=50,
+        max_search_distance_miles=5,
+        expected_search_radius_miles=5,
         max_search_results=None,
     )
 
-    with futures.ThreadPoolExecutor(max_workers=5) as executor:
+    with futures.ThreadPoolExecutor(max_workers=2) as executor:
         future_to_url = {executor.submit(get_data, url, sgw): url for url in coords}
         for future in futures.as_completed(future_to_url):
             future.result()
@@ -110,5 +112,5 @@ def fetch_data(sgw: SgWriter):
 
 if __name__ == "__main__":
     session = SgRequests()
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
         fetch_data(writer)
