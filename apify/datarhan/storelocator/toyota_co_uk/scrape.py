@@ -9,15 +9,10 @@ def fetch_data():
     session = SgRequests()
 
     start_urls = [
-        "https://www.toyota.co.uk/api/dealer/drive/-0.12764739999999997/51.507321899999994?count=2000&extraCountries=im|gg|je&isCurrentLocation=false",
         "https://nl.toyota.be/api/dealer/drive/4.3547/50.8467?count=2000&extraCountries=&isCurrentLocation=false&services=showroom",
-        "https://www.toyota.es/api/dealer/drive/2.163867/41.416735?count=2000&extraCountries=&isCurrentLocation=false",
         "https://www.toyota.com.cy/api/dealer/drive/34.078641056678606/35.36332843131831?count=2000",
         "https://www.toyota.cz/api/dealer/drive/34.078641056678606/35.36332843131831?count=2000",
         "https://www.toyota.ee/api/dealer/drive/25.7615268448868/58.7783968568071?count=2000&extraCountries=&isCurrentLocation=false",
-        "https://www.toyota.fi/api/dealer/drive/22.75/60.5?count=2000&extraCountries=&isCurrentLocation=false",
-        "https://www.toyota.fr/api/dealer/drive/2.86867370889921/42.7408489339116?count=2000&extraCountries=ad",
-        "https://www.toyota.de/api/dealer/drive/10.0183432948567/51.1334813439932?count=1000&extraCountries=&isCurrentLocation=false",
         "https://www.toyota.hu/api/dealer/drive/19.042863/47.511472?count=2000&extraCountries=&isCurrentLocation=false",
         "https://www.toyota.ie/api/dealer/drive/19.042863/47.511472?count=2000&extraCountries=&isCurrentLocation=false",
         "https://www.toyota.it/api/dealer/drive/19.042863/47.511472?count=2000&extraCountries=&isCurrentLocation=false",
