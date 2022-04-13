@@ -8,7 +8,7 @@ from concurrent import futures
 
 
 def get_data(zips, sgw: SgWriter):
-
+    session = SgRequests(verify_ssl=False)
     locator_domain = "https://honda.com/"
 
     headers = {
@@ -41,7 +41,7 @@ def get_data(zips, sgw: SgWriter):
 
     for j in js:
 
-        page_url = "https://mcdonalds.es/restaurantes"
+        page_url = "https://owners.honda.com/"
         a = j.get("Address")
         location_name = j.get("Name") or "<MISSING>"
         street_address = (
@@ -102,7 +102,7 @@ def fetch_data(sgw: SgWriter):
         max_search_results=None,
     )
 
-    with futures.ThreadPoolExecutor(max_workers=5) as executor:
+    with futures.ThreadPoolExecutor(max_workers=1) as executor:
         future_to_url = {executor.submit(get_data, url, sgw): url for url in coords}
         for future in futures.as_completed(future_to_url):
             future.result()
