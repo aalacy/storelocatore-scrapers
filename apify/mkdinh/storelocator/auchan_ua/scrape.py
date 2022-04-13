@@ -1,3 +1,4 @@
+import re
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
@@ -22,7 +23,14 @@ def fetch_data():
         location_name = location["title"]
         street_address = location["address"]
         city = location["city_ru"]
+
         state = location["code"]
+        if re.search(r"Auchan Pick(-|\s)UP Point", state, re.IGNORECASE):
+            state = None
+
+        if state:
+            state = re.sub(r"\d+\s+-\s+", "", state, re.IGNORECASE)
+            state = re.sub("_", " ", state)
 
         geo = location["position"]
         latitude = geo["latitude"]

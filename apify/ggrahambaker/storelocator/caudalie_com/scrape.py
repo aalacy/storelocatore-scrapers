@@ -211,6 +211,9 @@ def fetch_data():
                 if location_type == "0":
                     location_type = ""
 
+                if street_address and street_address.isdigit():
+                    street_address = raw_address.split(",")[0]
+
                 yield SgRecord(
                     page_url="https://us.caudalie.com/store-locator",
                     store_number=_["id"],
