@@ -19,7 +19,7 @@ def fetch_data():
     with SgRequests() as session:
         soup = bs(session.get(base_url, headers=_headers).text, "lxml")
         locations = json.loads(soup.find("script", type="application/ld+json").string)[
-            "location"
+            "department"
         ]
         for _ in locations:
             addr = _["address"]
