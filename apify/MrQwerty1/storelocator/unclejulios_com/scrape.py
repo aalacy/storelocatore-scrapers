@@ -10,6 +10,8 @@ from concurrent import futures
 
 def get_tree(url):
     r = session.get(url, headers=headers)
+    if r.status_code != 200:
+        return html.fromstring("<html>")
     return html.fromstring(r.content)
 
 
@@ -35,6 +37,8 @@ def get_data(page_url, sgw: SgWriter):
     text = "".join(
         tree.xpath("//script[contains(text(), 'LocalBusiness')]/text()")
     ).strip()
+    if not text:
+        return
     j = json.loads(text)
 
     location_name = j.get("name")

@@ -5,6 +5,7 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from concurrent import futures
+from sglogging import sglog
 
 
 def get_urls():
@@ -27,7 +28,9 @@ def get_urls():
 
 def get_data(page_url, sgw: SgWriter):
     r = session.get(page_url, headers=headers)
-    if r.status_code == 404:
+    logger.info(f"{page_url}: {r.status_code}")
+
+    if r.status_code != 200:
         return
     tree = html.fromstring(r.text)
     location_name = "".join(
@@ -95,6 +98,8 @@ def fetch_data(sgw: SgWriter):
 
 if __name__ == "__main__":
     locator_domain = "https://www.schwab.com/"
+    logger = sglog.SgLogSetup().get_logger(logger_name="schwab.com")
+
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0"
     }
