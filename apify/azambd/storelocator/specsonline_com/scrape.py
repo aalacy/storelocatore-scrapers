@@ -42,7 +42,7 @@ def parse_json(location, page_url, soup):
         data["state"] = "<MISSING>"
 
     data["country_code"] = "US"
-    data["zip_postal"] = re.findall("\d{5}", location["address"])[0]
+    data["zip_postal"] = re.findall(r"\d{5}", location["address"])[0]
     data["phone"] = soup.select_one("span.fa.fa-phone").next_element.strip()
     data["latitude"] = location["latitude"]
     data["longitude"] = location["longitude"]
