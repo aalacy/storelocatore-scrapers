@@ -30,6 +30,8 @@ def fetch_data(sgw: SgWriter):
         zip_code = store["zip"]
         if city == "Foothill Ranch":
             state = "CA"
+        if "2470 Tuscany" in street_address:
+            zip_code = "92881"
         country_code = "US"
         store_number = store["id"]
         phone = store["phone"]

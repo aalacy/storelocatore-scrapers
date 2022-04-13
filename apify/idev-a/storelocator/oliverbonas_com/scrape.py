@@ -24,8 +24,10 @@ def fetch_data():
                 day = datetime.strptime(key, "%Y-%m-%d").strftime("%A")
                 if hh["status"] == 2:
                     times = "close"
-                else:
+                elif hh.get("open"):
                     times = f"{hh['open']} - {hh['close']}"
+                else:
+                    times = "-"
                 temp[day] = times
             for day in days:
                 hours.append(f"{day}: {temp.get(day)}")

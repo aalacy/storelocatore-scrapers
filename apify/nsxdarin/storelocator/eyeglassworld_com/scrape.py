@@ -1,3 +1,6 @@
+import json
+
+from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
 from sgscrape.sgwriter import SgWriter
@@ -17,6 +20,7 @@ def fetch_data():
     locs = []
     url = "https://www.eyeglassworld.com/store/store_sitemap.xml"
     r = session.get(url, headers=headers)
+
     website = "eyeglassworld.com"
     typ = "<MISSING>"
     country = "US"
@@ -31,63 +35,85 @@ def fetch_data():
         city = ""
         state = ""
         zc = ""
-        store = "<MISSING>"
+        store_num = "<MISSING>"
         phone = ""
         lat = "<MISSING>"
         lng = "<MISSING>"
         hours = ""
-        HFound = False
+
+        r2 = session.get(loc, headers=headers)
         try:
-            r2 = session.get(loc, headers=headers)
-            for line2 in r2.iter_lines():
-                if '"name" : "' in line2:
-                    name = line2.split('"name" : "')[1].split('"')[0]
-                if '"streetAddress" : "' in line2:
-                    add = line2.split('"streetAddress" : "')[1].split('"')[0]
-                if '"addressLocality"  :  "' in line2:
-                    city = line2.split('"addressLocality"  :  "')[1].split('"')[0]
-                if '"addressRegion" : "' in line2:
-                    state = line2.split('"addressRegion" : "')[1].split('"')[0]
-                if '"postalCode" : "' in line2:
-                    zc = line2.split('"postalCode" : "')[1].split('"')[0]
-                if '"telephone" : "' in line2:
-                    phone = line2.split('"telephone" : "')[1].split('"')[0]
-                if '"openingHours" : [' in line2:
-                    HFound = True
-                if HFound and "]" in line2:
-                    HFound = False
-                if HFound and '"' in line2 and "[" not in line2:
-                    hrs = line2.split('"')[1]
-                    if hours == "":
-                        hours = hrs
-                    else:
-                        hours = hours + "; " + hrs
-            if phone == "":
-                phone = "<MISSING>"
-            if hours == "":
-                hours = "Temporarily Closed"
-            add = (
-                add.replace("Suite", " Suite").replace("  ", " ").replace("&amp;", "&")
-            )
-            if add != "":
-                yield SgRecord(
-                    locator_domain=website,
-                    page_url=loc,
-                    location_name=name,
-                    street_address=add,
-                    city=city,
-                    state=state,
-                    zip_postal=zc,
-                    country_code=country,
-                    phone=phone,
-                    location_type=typ,
-                    store_number=store,
-                    latitude=lat,
-                    longitude=lng,
-                    hours_of_operation=hours,
-                )
+            base = BeautifulSoup(r2.text, "lxml")
         except:
-            pass
+            continue
+
+        try:
+            name = base.find(id="location-name").text.replace("amp;", "")
+            got_name = True
+        except:
+            got_name = False
+
+        if got_name:
+            add = base.find(attrs={"itemprop": "streetAddress"})["content"]
+            city = base.find(class_="Address-field Address-city").text
+            state = base.find(attrs={"itemprop": "addressRegion"}).text
+            zc = base.find(attrs={"itemprop": "postalCode"}).text
+            phone = base.find(class_="Text Phone-text Phone-number").text
+            hours = " ".join(
+                list(base.find(class_="c-hours-details").stripped_strings)[2:]
+            )
+        else:
+            name = base.h1.text.replace("\xa0\n", " ").strip()
+
+            try:
+                script = (
+                    base.find_all("script", attrs={"type": "application/ld+json"})[-1]
+                    .contents[0]
+                    .strip()
+                    .replace('pm",', 'pm"')
+                )
+                store = json.loads(script)
+            except:
+                script = (
+                    base.find_all("script", attrs={"type": "application/ld+json"})[-1]
+                    .contents[0]
+                    .strip()
+                )
+                store = json.loads(script)
+
+            add = store["address"]["streetAddress"]
+            city = store["address"]["addressLocality"]
+            state = store["address"]["addressRegion"]
+            zc = store["address"]["postalCode"]
+
+            phone = base.find(class_="store-contact").text.strip()
+            hours = " ".join(
+                list(base.find_all(class_="store-hours")[-1].stripped_strings)
+            )
+
+        add = (
+            add.replace("Suite", " Suite")
+            .replace("  ", " ")
+            .replace("&amp;", "&")
+            .replace("&Amp;", "&")
+        )
+
+        yield SgRecord(
+            locator_domain=website,
+            page_url=loc,
+            location_name=name,
+            street_address=add,
+            city=city,
+            state=state,
+            zip_postal=zc,
+            country_code=country,
+            phone=phone,
+            location_type=typ,
+            store_number=store_num,
+            latitude=lat,
+            longitude=lng,
+            hours_of_operation=hours,
+        )
 
 
 def scrape():
