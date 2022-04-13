@@ -16,13 +16,18 @@ def get_pages():
     slug = get_slug()
     api = f"https://www.decathlon.sg/_next/data/{slug}/s/our-stores.json"
     r = session.get(api, headers=headers)
-    js = r.json()["pageProps"]["dehydratedState"]["queries"][0]["state"]["data"][0][
-        "fields"
-    ]["floor"][0]["fields"]["storeList"]
+    js = r.json()["pageProps"]["dehydratedState"]["queries"][0]["state"]["data"]
+
     for j in js:
-        _id = j["fields"]["storeId"]
-        link = j["fields"]["ctaLink"]
-        pages[_id] = link
+        key = j["fields"]["name"]
+        if key != "Our Stores":
+            continue
+
+        ji = j["fields"]["floor"][0]["fields"]["storeList"]
+        for i in ji:
+            _id = i["fields"]["storeId"]
+            link = i["fields"]["ctaLink"]
+            pages[_id] = link
 
     return pages
 
