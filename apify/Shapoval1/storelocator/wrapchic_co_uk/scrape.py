@@ -74,6 +74,7 @@ def fetch_data(sgw: SgWriter):
                 or "Friday" in i
                 or "Saturday" in i
                 or "Sunday" in i
+                or "Every day" in i
             ):
                 tmp.append(i)
             hours_of_operation = "; ".join(tmp).strip() or "<MISSING>"
