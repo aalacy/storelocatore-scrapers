@@ -16,7 +16,7 @@ def fetch_data(sgw: SgWriter):
     }
     r = session.get(api_url, headers=headers)
     tree = html.fromstring(r.text)
-    div = tree.xpath('//div[./p[@style="font-size:19px"]]')
+    div = tree.xpath('//div[./p[@style="font-size:19px;"]]')
     for d in div:
 
         page_url = "https://www.wendys.com.do/donde-esta-wendy-s"
@@ -27,12 +27,14 @@ def fetch_data(sgw: SgWriter):
         hours_of_operation = (
             " ".join(
                 d.xpath(
-                    './/p[.//span[text()="Menú Regular"]]/following-sibling::p[./span[@style="font-family:futura-lt-w01-book,sans-serif"]]//text()'
+                    './/p[.//span[text()="Menú Regular"]]/following-sibling::p[./span[@style="font-family:futura-lt-w01-book,sans-serif;"]]//text()'
                 )
             )
             .replace("\n", "")
             .strip()
         )
+        if hours_of_operation.find("Delivery") != -1:
+            hours_of_operation = hours_of_operation.split("Delivery")[0].strip()
 
         row = SgRecord(
             locator_domain=locator_domain,

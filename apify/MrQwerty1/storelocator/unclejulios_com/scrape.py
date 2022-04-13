@@ -1,126 +1,96 @@
-import csv
 import json
-
-from concurrent import futures
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from concurrent import futures
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
+def get_tree(url):
+    r = session.get(url, headers=headers)
+    if r.status_code != 200:
+        return html.fromstring("<html>")
+    return html.fromstring(r.content)
 
 
 def get_urls():
-    session = SgRequests()
-    r = session.get("https://unclejulios.com/locations/")
-    tree = html.fromstring(r.text)
+    urls = set()
+    root = get_tree("https://locations.unclejulios.com/sitemap.xml")
+    states = root.xpath("//loc/text()")
+    for state in states:
+        tree = get_tree(state.strip())
+        links = tree.xpath("//loc/text()")
+        for link in links:
+            slug = link.split("/")[-2]
+            if "-" not in slug or "dining" in slug:
+                continue
+            if link.count("/") == 6:
+                urls.add(link.strip())
 
-    return set(tree.xpath("//a[@class='restaurants__sublink']/@href"))
+    return urls
 
 
-def get_data(page_url):
-    locator_domain = "https://unclejulios.com/"
-
-    session = SgRequests()
-    r = session.get(page_url)
-    tree = html.fromstring(r.text)
+def get_data(page_url, sgw: SgWriter):
+    tree = get_tree(page_url)
     text = "".join(
-        tree.xpath("//script[contains(text(), 'http://schema.org')]/text()")
+        tree.xpath("//script[contains(text(), 'LocalBusiness')]/text()")
     ).strip()
+    if not text:
+        return
     j = json.loads(text)
 
     location_name = j.get("name")
     a = j.get("address")
-    street_address = a.get("streetAddress") or "<MISSING>"
-    city = a.get("addressLocality") or "<MISSING>"
-    state = a.get("addressRegion") or "<MISSING>"
-    postal = a.get("postalCode") or "<MISSING>"
-    country_code = a.get("addressCountry") or "<MISSING>"
-    store_number = "<MISSING>"
-    phone = j.get("telephone") or "<MISSING>"
+    street_address = a.get("streetAddress")
+    city = a.get("addressLocality")
+    state = a.get("addressRegion")
+    postal = a.get("postalCode")
+    country_code = a.get("addressCountry")
+    phone = j.get("telephone")
+    store_number = j.get("branchCode")
 
     g = j.get("geo")
-    latitude = g.get("latitude") or "<MISSING>"
-    longitude = g.get("longitude") or "<MISSING>"
-    location_type = "<MISSING>"
+    latitude = g.get("latitude")
+    longitude = g.get("longitude")
 
-    _tmp = []
-    hours = j.get("openingHoursSpecification")
+    hours = j.get("openingHours") or []
+    hours_of_operation = ";".join(hours)
 
-    for h in hours:
-        day = h.get("dayOfWeek")
-        if type(day) == list:
-            day = f"{day[0]} - {day[-1]}"
+    row = SgRecord(
+        page_url=page_url,
+        location_name=location_name,
+        street_address=street_address,
+        city=city,
+        state=state,
+        zip_postal=postal,
+        country_code=country_code,
+        store_number=store_number,
+        latitude=latitude,
+        longitude=longitude,
+        phone=phone,
+        locator_domain=locator_domain,
+        hours_of_operation=hours_of_operation,
+    )
 
-        start = h.get("opens")
-        close = h.get("closes")
-        _tmp.append(f"{day}: {start} - {close}")
-
-    hours_of_operation = ";".join(_tmp) or "<MISSING>"
-
-    row = [
-        locator_domain,
-        page_url,
-        location_name,
-        street_address,
-        city,
-        state,
-        postal,
-        country_code,
-        store_number,
-        phone,
-        location_type,
-        latitude,
-        longitude,
-        hours_of_operation,
-    ]
-
-    return row
+    sgw.write_row(row)
 
 
-def fetch_data():
-    out = []
+def fetch_data(sgw: SgWriter):
     urls = get_urls()
 
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {executor.submit(get_data, url): url for url in urls}
+    with futures.ThreadPoolExecutor(max_workers=3) as executor:
+        future_to_url = {executor.submit(get_data, url, sgw): url for url in urls}
         for future in futures.as_completed(future_to_url):
-            row = future.result()
-            if row:
-                out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+            future.result()
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://unclejulios.com/"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0"
+    }
+    session = SgRequests(verify_ssl=False)
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        fetch_data(writer)

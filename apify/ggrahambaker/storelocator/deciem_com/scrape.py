@@ -1,46 +1,17 @@
 import re
-import csv
 import json
-
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
 def fetch_data():
-    # Your scraper here
+
     session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
 
-    items = []
     scraped_items = []
 
     start_url = "https://deciem.com/on/demandware.store/Sites-deciem-global-Site/en_ES/Stores-FindStores?lat={}&long={}&radius=100&distanceUnit=mi"
@@ -48,73 +19,90 @@ def fetch_data():
     hdr = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
-    all_locations = []
+
     all_coords = DynamicGeoSearch(
         country_codes=[
             SearchableCountries.USA,
             SearchableCountries.BRITAIN,
             SearchableCountries.CANADA,
         ],
-        max_radius_miles=100,
+        max_search_distance_miles=100,
     )
     for lat, lng in all_coords:
-        response = session.get(start_url.format(lat, lng), headers=hdr)
-        data = json.loads(response.text)
-        all_locations += data["stores"]
+        all_locations = []
+        try:
+            response = session.get(start_url.format(lat, lng), headers=hdr)
+            all_locations = json.loads(response.text)["stores"]
+        except:
+            try:
+                session = SgRequests().requests_retry_session(
+                    retries=2, backoff_factor=0.3
+                )
+                all_locations = json.loads(response.text)["stores"]
+            except:
+                continue
+        for poi in all_locations:
+            store_url = "https://deciem.com/es/find-us"
 
-    for poi in all_locations:
-        store_url = "https://deciem.com/es/find-us"
-        location_name = poi["name"]
-        location_name = location_name if location_name else "<MISSING>"
-        street_address = poi["address1"]
-        if poi["address2"]:
-            street_address += " " + poi["address2"]
-        street_address = street_address if street_address else "<MISSING>"
-        city = poi["city"]
-        city = city if city else "<MISSING>"
-        state = poi.get("stateCode")
-        state = state if state else "<MISSING>"
-        zip_code = poi["postalCode"]
-        zip_code = zip_code if zip_code else "<MISSING>"
-        country_code = poi["countryCode"]
-        country_code = country_code if country_code else "<MISSING>"
-        if country_code not in ["CA", "GB", "US"]:
-            continue
-        store_number = "<MISSING>"
-        phone = "<MISSING>"
-        location_type = poi["owner"]
-        latitude = poi["latitude"]
-        longitude = poi["longitude"]
-        hours_of_operation = "<MISSING>"
+            location_name = poi["name"]
+            location_name = location_name if location_name else "<MISSING>"
+            street_address = poi["address1"]
+            if poi["address2"]:
+                street_address += " " + poi["address2"]
+            street_address = street_address if street_address else "<MISSING>"
+            city = poi["city"]
+            city = city if city else "<MISSING>"
+            state = poi.get("stateCode")
+            state = state if state else "<MISSING>"
+            zip_code = poi["postalCode"]
+            zip_code = zip_code if zip_code else "<MISSING>"
+            country_code = poi["countryCode"]
+            country_code = country_code if country_code else "<MISSING>"
+            if country_code not in ["CA", "GB", "US"]:
+                continue
+            store_number = "<MISSING>"
+            try:
+                phone = poi["phone"].strip()
+            except:
 
-        item = [
-            domain,
-            store_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip_code,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        check = f"{location_name} {street_address}"
-        if check not in scraped_items:
-            scraped_items.append(check)
-            items.append(item)
-
-    return items
+                phone = "<MISSING>"
+            location_type = poi["owner"]
+            latitude = poi["latitude"]
+            longitude = poi["longitude"]
+            try:
+                hours_of_operation = poi["storeHours"].replace("\n", " ").strip()
+            except:
+                hours_of_operation = "<MISSING>"
+            check = f"{location_name} {street_address}"
+            if check not in scraped_items:
+                scraped_items.append(check)
+                yield SgRecord(
+                    locator_domain=domain,
+                    page_url=store_url,
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city.strip(),
+                    state=state.strip(),
+                    zip_postal=zip_code,
+                    country_code=country_code,
+                    store_number=store_number,
+                    phone=phone.strip(),
+                    location_type=location_type,
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=hours_of_operation,
+                )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
 
 
-if __name__ == "__main__":
-    scrape()
+scrape()

@@ -1,75 +1,59 @@
-import csv
+# -*- coding: utf-8 -*-
+# --extra-index-url https://dl.cloudsmith.io/KVaWma76J5VNwrOm/crawl/crawl/python/simple/
+from lxml import etree
+
 from sgrequests import SgRequests
-from bs4 import BeautifulSoup
-import re
-import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('harmonsgrocery_com')
-
-
-
-
-
-session = SgRequests()
-
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
-        # Body
-        for row in data:
-            writer.writerow(row)
-
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
+    session = SgRequests()
+
+    start_url = "https://www.harmonsgrocery.com/wp/wp-admin/admin-ajax.php?action=get_ajax_posts&nextNonce=f9813ac444"
+    domain = "harmonsgrocery.com"
+    hdr = {
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
 
-    base_url = "http://harmonsgrocery.com/"
-    r = session.get("https://www.harmonsgrocery.com/wp-admin/admin-ajax.php?action=get_ajax_posts&nextNonce=34695cf658", headers=headers).json()
-    for data in r:
-        location_name = data['name']
-        street_address = data['address'].split("<br />")[0].split("<p>")[1]
-        city = data['address'].split("<br />")[1].split("</p>")[0].split(",")[0].strip()
-        state = data['address'].split("<br />")[1].split("</p>")[0].split(",")[1].split(" ")[1]
-        zipp = data['address'].split("<br />")[1].split("</p>")[0].split(",")[1].split(" ")[2]
-        phone = data['address'].split("<p>")[2].replace("</p>",'').strip()
-        hours_of_operation = " ".join(list(BeautifulSoup(data['address'], "lxml").find_all("p")[-1].stripped_strings))
-        latitude = data['latitude']
-        longitude = data['longitude']
-        
-        store =[]
-        store.append(base_url)
-        store.append(location_name)
-        store.append(street_address)
-        store.append(city)
-        store.append(state)
-        store.append(zipp)
-        store.append("US")
-        store.append("<MISSING>")
-        store.append(phone)
-        store.append("<MISSING>")
-        store.append(latitude)
-        store.append(longitude)
-        store.append(hours_of_operation)
-        store.append(" https://www.harmonsgrocery.com/locations")
-        # logger.info("data====="+str(store))
-        # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
+    all_locations = session.get(start_url, headers=hdr).json()
+    for poi in all_locations:
+        raw_data = etree.HTML(poi["address"]).xpath("//text()")
+        raw_data = [e.strip() for e in raw_data if e.strip()]
 
-        yield store
+        item = SgRecord(
+            locator_domain=domain,
+            page_url="https://www.harmonsgrocery.com/locations",
+            location_name=poi["name"],
+            street_address=raw_data[0],
+            city=raw_data[1].split(", ")[0],
+            state=raw_data[1].split(", ")[-1].split()[0],
+            zip_postal=raw_data[1].split(", ")[-1].split()[-1],
+            country_code="",
+            store_number=poi["pharmacy"],
+            phone=raw_data[2],
+            location_type="",
+            latitude=poi["latitude"],
+            longitude=poi["longitude"],
+            hours_of_operation=" ".join(raw_data[3:]),
+        )
 
-    
+        yield item
+
+
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
-scrape()
-
-
+if __name__ == "__main__":
+    scrape()

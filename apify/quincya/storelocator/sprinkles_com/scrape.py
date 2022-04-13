@@ -6,7 +6,7 @@ from sgrequests import SgRequests
 
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 logger = SgLogSetup().get_logger("sprinkles_com")
@@ -32,6 +32,10 @@ def fetch_data(sgw: SgWriter):
         logger.info(location_name)
 
         raw_address = list(item.p.stripped_strings)
+        if raw_address[0] == "Houston, TX":
+            continue
+        if "coming soon" in str(raw_address).lower():
+            continue
         street_address = " ".join(raw_address[:-2]).strip()
         try:
             city_line = raw_address[-2].strip().split(",")
@@ -44,6 +48,9 @@ def fetch_data(sgw: SgWriter):
         if "Las Vegas," in street_address:
             street_address = ""
             city_line = raw_address[0].strip().split(",")
+        if "Amherst" in str(city_line):
+            street_address = raw_address[-2].strip()
+            city_line = raw_address[-1].strip().split(",")
         city = city_line[0].strip()
         state = city_line[-1].strip().split()[0].strip()
         zip_code = city_line[-1].strip().split()[1].strip()
@@ -53,31 +60,36 @@ def fetch_data(sgw: SgWriter):
         phone = item.find(class_="tel").text.strip()
         latitude = "<MISSING>"
         longitude = "<MISSING>"
+        hours_of_operation = ""
 
         page_link = "https://sprinkles.com" + item.a["href"]
         page_req = session.get(page_link, headers=headers)
-        page = BeautifulSoup(page_req.text, "lxml")
 
-        if "open for delivery only" in page.text:
-            location_type = "Delivery Only"
+        if page_req.status_code != 404:
+            page = BeautifulSoup(page_req.text, "lxml")
 
-        hours_of_operation = ""
-        raw_hours = page.find(class_="addr-hours")
-        raw_hours = raw_hours.find_all("p")
-
-        for hour in raw_hours:
-            if "hours" in hour.text.lower():
-                hours_of_operation = (
-                    " ".join(list(hour.stripped_strings))
-                    .split("hours:")[1]
-                    .split("The hours above")[0]
-                    .replace("The SIMON Fashion Valley Mall ATM is open", "")
-                    .replace("Hollywood & Highland ATM is open", "")
-                    .strip()
+            try:
+                location_type = ",".join(
+                    list(page.find(class_="order-buttons").stripped_strings)
                 )
+            except:
+                location_type = ""
 
-        if not hours_of_operation:
-            hours_of_operation = "<MISSING>"
+            raw_hours = page.find(class_="addr-hours")
+            raw_hours = raw_hours.find_all("p")
+
+            for hour in raw_hours:
+                if "hours" in hour.text.lower():
+                    hours_of_operation = (
+                        " ".join(list(hour.stripped_strings))
+                        .split("hours:")[1]
+                        .split("The hours above")[0]
+                        .replace("The SIMON Fashion Valley Mall ATM is open", "")
+                        .replace("Hollywood & Highland ATM is open", "")
+                        .strip()
+                    )
+        else:
+            page_link = base_link
 
         sgw.write_row(
             SgRecord(
@@ -99,5 +111,5 @@ def fetch_data(sgw: SgWriter):
         )
 
 
-with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.LOCATION_NAME}))) as writer:
     fetch_data(writer)

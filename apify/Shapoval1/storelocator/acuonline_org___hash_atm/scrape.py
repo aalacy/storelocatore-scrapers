@@ -1,23 +1,25 @@
-import time
 import json
-from concurrent import futures
-
-from sgzip.dynamic import SearchableCountries, DynamicZipSearch
-from sgrequests import SgRequests
-from sglogging import sglog
-from sgscrape.sgwriter import SgWriter
+from sgzip.dynamic import SearchableCountries, DynamicGeoSearch, Grain_2
 from sgscrape.sgrecord import SgRecord
+from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
-from sgscrape.pause_resume import CrawlStateSingleton
 
-website = "https://www.acuonline.org"
-store_url = "https://locationapi.wave2.io/api/client/getlocations"
-MISSING = SgRecord.MISSING
-max_workers = 2
+from concurrent import futures
+from sglogging import sglog
+import time
+from tenacity import retry, stop_after_attempt
+import tenacity
+import random
+
+locator_domain = "acuonline.org"
+log = sglog.SgLogSetup().get_logger(logger_name=locator_domain)
+
+api_url = "https://locationapi.wave2.io/api/client/getlocations"
 
 headers = {
-    "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0",
+    "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.75 Safari/537.36",
     "Accept": "*/*",
     "Accept-Language": "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3",
     "Content-Type": "application/json; charset=UTF-8",
@@ -30,15 +32,25 @@ headers = {
     "TE": "trailers",
 }
 
-session = SgRequests()
-log = sglog.SgLogSetup().get_logger(logger_name=website)
+
+@retry(stop=stop_after_attempt(10), wait=tenacity.wait_fixed(5))
+def get_response(data):
+    with SgRequests() as http:
+        response = http.post(api_url, headers=headers, data=json.dumps(data))
+        time.sleep(random.randint(3, 7))
+        if response.status_code == 200:
+            log.info(f"HTTP STATUS Return: {response.status_code}")
+            return response
+        raise Exception(f"HTTP Error Code: {response.status_code}")
 
 
-def request_with_retries(zip_code):
+def get_data(coord, sgw: SgWriter):
+    lat, lng = coord
+
     data = {
-        "Latitude": "",
-        "Longitude": "",
-        "Address": zip_code,
+        "Latitude": f"{lat}",
+        "Longitude": f"{lng}",
+        "Address": "",
         "City": "",
         "State": "",
         "Zipcode": "",
@@ -47,131 +59,86 @@ def request_with_retries(zip_code):
         "ActionOverwrite": "",
         "Filters": "FCS,FIITM,FIATM,ATMSF,ATMDP,ESC,",
     }
-    try:
-        response = session.post(store_url, headers=headers, data=json.dumps(data))
-        stores = json.loads(response.text)["Features"]
-        log.debug(f"From {zip_code} stores = {len(stores)}")
-        return stores
-    except Exception as e:
-        log.error(f"can't able to get data from {zip_code}: {e}")
-        return []
+
+    r = get_response(data)
+    js = r.json()["Features"]
+    log.info(f"From {lat,lng} stores found = {len(js)}")
+    if js:
+        for j in js:
+            a = j.get("Properties")
+            page_url = "https://www.acuonline.org/home/resources/locations"
+            street_address = "".join(a.get("Address")).capitalize() or "<MISSING>"
+            city = a.get("City") or "<MISSING>"
+            state = a.get("State") or "<MISSING>"
+            postal = a.get("Postalcode") or "<MISSING>"
+            country_code = a.get("Country") or "<MISSING>"
+            phone = a.get("Phone") or "<MISSING>"
+            latitude = a.get("Latitude") or "<MISSING>"
+            store_number = a.get("LocationId") or "<MISSING>"
+            longitude = a.get("Longitude") or "<MISSING>"
+            location_type = j.get("LocationFeatures").get("LocationType")
+            location_name = a.get("LocationName")
+            days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+            tmp = []
+            for d in days:
+                day = d
+                try:
+                    opens = a.get(f"{d}Open")
+                    closes = a.get(f"{d}Close")
+                    line = f"{day} {opens} - {closes}"
+                    if opens == closes:
+                        line = "<MISSING>"
+                except:
+                    line = "<MISSING>"
+                tmp.append(line)
+            hours_of_operation = "; ".join(tmp)
+            if hours_of_operation.count("<MISSING>") == 7:
+                hours_of_operation = "<MISSING>"
+            hours_of_operation = hours_of_operation.replace(
+                "Closed -", "Closed"
+            ).strip()
+            if hours_of_operation.count("Closed") == 7:
+                hours_of_operation = "Closed"
+            if hours_of_operation.find("<MISSING>") != -1:
+                hours_of_operation = "<MISSING>"
+
+            row = SgRecord(
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=postal,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                locator_domain=locator_domain,
+                hours_of_operation=hours_of_operation,
+            )
+
+            sgw.write_row(row)
 
 
-def get_var_name(value):
-    try:
-        return int(value)
-    except ValueError:
-        pass
-    return value
-
-
-def get_json_object(Object, varNames, noVal=MISSING):
-    value = noVal
-    for varName in varNames.split("."):
-        varName = get_var_name(varName)
-        try:
-            value = Object[varName]
-            Object = Object[varName]
-        except Exception:
-            return noVal
-        if value is None:
-            return noVal
-    return value
-
-
-def get_hoo(store):
-    days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
-    hoo = []
-
-    for day in days:
-        opens = get_json_object(store, f"{day}Open")
-        closes = get_json_object(store, f"{day}Close")
-        if len(opens) == 0:
-            opens = MISSING
-        if len(closes) == 0:
-            closes = MISSING
-        if opens == MISSING and closes == MISSING:
-            continue
-        if closes == MISSING:
-            hoo.append(f"{day}: {opens}")
-        elif opens == MISSING:
-            hoo.append(f"{day}: {closes}")
-        else:
-            hoo.append(f"{day}: {opens} - {closes}")
-
-    hoo = "; ".join(hoo)
-    return hoo
-
-
-def fetch_data():
-    zip_codes = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA], max_search_distance_miles=10
+def fetch_data(sgw: SgWriter):
+    coords = DynamicGeoSearch(
+        country_codes=[SearchableCountries.USA],
+        max_search_results=100,
+        granularity=Grain_2(),
     )
 
-    with futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
-        executors = {
-            executor.submit(request_with_retries, zip_code): zip_code
-            for zip_code in zip_codes
-        }
-
-        for future in futures.as_completed(executors):
-            stores = future.result()
-            for store in stores:
-                properties = get_json_object(store, "Properties")
-
-                location_name = get_json_object(properties, "LocationName")
-                store_number = get_json_object(properties, "LocationId")
-                page_url = "https://www.acuonline.org/home/resources/locations"
-                street_address = get_json_object(properties, "Address")
-                location_type = get_json_object(store, "LocationFeatures.LocationType")
-                city = get_json_object(properties, "City")
-                zip_postal = get_json_object(properties, "Postalcode")
-                state = get_json_object(properties, "State")
-                country_code = get_json_object(properties, "Country", "US")
-                phone = get_json_object(properties, "Phone")
-                latitude = get_json_object(properties, "Latitude")
-                longitude = get_json_object(properties, "Longitude")
-                hours_of_operation = get_hoo(properties)
-                raw_address = f"{street_address}, {city}, {state} {zip_postal}".replace(
-                    MISSING, ""
-                )
-                raw_address = " ".join(raw_address.split())
-                raw_address = raw_address.replace(", ,", ",").replace(",,", ",")
-                if raw_address[len(raw_address) - 1] == ",":
-                    raw_address = raw_address[:-1]
-
-                yield SgRecord(
-                    locator_domain=website,
-                    store_number=store_number,
-                    page_url=page_url,
-                    location_name=location_name,
-                    location_type=location_type,
-                    street_address=street_address,
-                    city=city,
-                    zip_postal=zip_postal,
-                    state=state,
-                    country_code=country_code,
-                    phone=phone,
-                    latitude=latitude,
-                    longitude=longitude,
-                    hours_of_operation=hours_of_operation,
-                    raw_address=raw_address,
-                )
-    return []
-
-
-def scrape():
-    CrawlStateSingleton.get_instance().save(override=True)
-    log.info(f"Start scrapping {website} ...")
-    start = time.time()
-    with SgWriter(
-        deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
-    ) as writer:
-        for rec in fetch_data():
-            writer.write_row(rec)
-    end = time.time()
-    log.info(f"Scrape took {end-start} seconds.")
+    with futures.ThreadPoolExecutor(max_workers=4) as executor:
+        future_to_url = {executor.submit(get_data, url, sgw): url for url in coords}
+        for future in futures.as_completed(future_to_url):
+            future.result()
 
 
 if __name__ == "__main__":
-    scrape()
+    with SgWriter(
+        deduper=SgRecordDeduper(
+            RecommendedRecordIds.StoreNumberId, duplicate_streak_failure_factor=-1
+        )
+    ) as writer:
+        fetch_data(writer)

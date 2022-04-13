@@ -1,0 +1,7 @@
+--ignore CountryCodeFillRateChecker (Not US/CA)
+
+
+--ignore LatLngDuplicationValidator (Same latlong with different location_name)
+Found 1 <lat, lng> pair(s) that belong to multiple addresses. Examples:
+       latitude      longitude                                     street_address  num_addrs
+7  17.428718000  120.472791000  {Brgy. Margaay,  Narvacan, Brgy. Banaur,  San ...          2

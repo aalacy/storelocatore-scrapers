@@ -1,107 +1,68 @@
-import csv
-
-from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def fetch_data(sgw: SgWriter):
+    for i in range(1, 20):
+        api = f"https://chickene.com/wp-json/wp/v2/store_location?per_page=100&page={i}"
+        r = session.get(api, headers=headers)
+        js = r.json()
 
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
+        for j in js:
+            location_name = j["title"]["rendered"]
+            location_name = location_name.replace("&#8211;", "–")
+            store_number = j["id"]
+            acf = j.get("acf") or {}
 
-        for row in data:
-            writer.writerow(row)
+            phone = acf.get("phone_number")
+            a = acf.get("address") or {}
+            raw_address = a.get("address") or ""
+            if ", USA" in raw_address:
+                raw_address = raw_address.replace(", USA", "")
+            line = raw_address.split(",")
+            state = line.pop().strip()
+            city = line.pop().strip()
+            street_address = ",".join(line)
+            postal = a.get("post_code") or ""
+            if postal.isalpha():
+                postal = SgRecord.MISSING
 
+            latitude = a.get("lat")
+            longitude = a.get("lng")
 
-def fetch_data():
-    out = []
-    url = "https://chickene.com/"
-    api_url = "https://app.mapply.net/front-end/frontend_json.php?action=load_initial_stores&api_key=mapply.e859d8e82b437f770d4dfa10b9751a14"
+            row = SgRecord(
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=postal,
+                country_code="US",
+                store_number=store_number,
+                phone=phone,
+                latitude=latitude,
+                longitude=longitude,
+                locator_domain=locator_domain,
+                raw_address=raw_address,
+            )
 
-    session = SgRequests()
-    r = session.get(api_url)
-    js = r.json()["initial_stores"]
+            sgw.write_row(row)
 
-    for j in js:
-        locator_domain = url
-        text = j.get("5") or "<html></html>"
-        tree = html.fromstring(text)
-        location_name = (
-            "".join(tree.xpath("//span[@class='name']/text()")).strip() or "<MISSING>"
-        )
-        street_address = (
-            "".join(tree.xpath("//span[@class='address']/text()")).strip()
-            or "<MISSING>"
-        )
-        city = (
-            "".join(tree.xpath("//span[@class='city']/text()")).strip() or "<MISSING>"
-        )
-        state = (
-            "".join(tree.xpath("//span[@class='prov_state']/text()")).strip()
-            or "<MISSING>"
-        )
-        postal = (
-            "".join(tree.xpath("//span[@class='postal_zip']/text()")).strip()
-            or "<MISSING>"
-        )
-        if not postal[0].isdigit():
-            postal = "<MISSING>"
-        country_code = "US"
-        store_number = j.get("store_id") or "<MISSING>"
-        page_url = "https://chickene.com/locations/"
-        phone = (
-            "".join(tree.xpath("//span[@class='phone']/text()")).strip() or "<MISSING>"
-        )
-        latitude = j.get("lat") or "<MISSING>"
-        longitude = j.get("lng") or "<MISSING>"
-        location_type = "<MISSING>"
-        hours_of_operation = "<MISSING>"
-
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        if len(js) < 100:
+            break
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://chickene.com/"
+    page_url = "https://chickene.com/locations/"
+
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:95.0) Gecko/20100101 Firefox/95.0",
+        "Accept": "*/*",
+    }
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+        fetch_data(writer)

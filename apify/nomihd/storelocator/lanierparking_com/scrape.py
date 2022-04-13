@@ -8,7 +8,7 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.pause_resume import CrawlStateSingleton
-from sgzip.dynamic import Grain_8, SearchableCountries
+from sgzip.dynamic import SearchableCountries, Grain_8
 from sgzip.parallel import DynamicSearchMaker, ParallelDynamicSearch, SearchIteration
 import lxml.html
 
@@ -82,17 +82,19 @@ class _SearchIteration(SearchIteration):
                 locator_domain = website
 
                 street_address = store_json["Address"].split("(")[0].strip()
-                if "," == street_address[-1]:
-                    street_address = "".join(street_address[:-1]).strip()
+                if street_address:
+                    if "," == street_address[-1]:
+                        street_address = "".join(street_address[:-1]).strip()
 
                 city = store_json["City"]
                 state = store_json["State"]
                 zip = store_json["ZIP"]
 
-                if street_address == "6200 HOLLYWOOD BLVD HOLLYWOOD , CA":
-                    street_address = "6200 HOLLYWOOD BLVD"
-                    city = "HOLLYWOOD"
-                    state = "CA"
+                if street_address:
+                    if street_address == "6200 HOLLYWOOD BLVD HOLLYWOOD , CA":
+                        street_address = "6200 HOLLYWOOD BLVD"
+                        city = "HOLLYWOOD"
+                        state = "CA"
 
                 country_code = "US"
 
@@ -145,7 +147,8 @@ class _SearchIteration(SearchIteration):
                     hours_of_operation=hours_of_operation,
                 )
         except:
-            pass
+            raise
+            # pass
 
 
 def scrape():

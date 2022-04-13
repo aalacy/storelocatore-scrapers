@@ -1,66 +1,153 @@
-import csv
+from bs4 import BeautifulSoup as bs
 from sgrequests import SgRequests
-from bs4 import BeautifulSoup
+from sglogging import sglog
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgpostal import parse_address_intl
 import re
 import json
-import sgzip
 
+
+DOMAIN = "cobsbread.com"
+BASE_URL = "https://cobsbread.com"
+LOCATION_URL = "https://www.cobsbread.com/local-bakery/"
+HEADERS = {
+    "Accept": "application/json, text/plain, */*",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
+}
+log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
 
 session = SgRequests()
 
-def write_output(data):
-    with open('data.csv', mode='w',encoding="utf-8") as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+MISSING = SgRecord.MISSING
 
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-        # Body
-        for row in data:
-            writer.writerow(row)
+
+def getAddress(raw_address):
+    try:
+        if raw_address is not None and raw_address != MISSING:
+            data = parse_address_intl(raw_address)
+            street_address = data.street_address_1
+            if data.street_address_2 is not None:
+                street_address = street_address + " " + data.street_address_2
+            city = data.city
+            state = data.state
+            zip_postal = data.postcode
+            if street_address is None or len(street_address) == 0:
+                street_address = MISSING
+            if city is None or len(city) == 0:
+                city = MISSING
+            if state is None or len(state) == 0:
+                state = MISSING
+            if zip_postal is None or len(zip_postal) == 0:
+                zip_postal = MISSING
+            return street_address, city, state, zip_postal
+    except Exception as e:
+        log.info(f"No valid address {e}")
+        pass
+    return MISSING, MISSING, MISSING, MISSING
+
+
+def pull_content(url):
+    log.info("Pull content => " + url)
+    soup = bs(session.get(url, headers=HEADERS).content, "lxml")
+    return soup
+
 
 def fetch_data():
-    headers = {
-    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
-    }
-    base_url = "https://www.cobsbread.com"
-    r = session.get("https://www.cobsbread.com/local-bakery/",headers=headers)
-    soup = BeautifulSoup(r.text,"lxml")
-    return_main_object = []
-    for script in soup.find_all("script"):
-        if "var bakeries = " in script.text:
-            location_list = json.loads(script.text.split("var bakeries = ")[1].split("}],")[0] + "}]")
-            for store_data in location_list:
-                location_request = session.get(store_data["link"],headers=headers)
-                location_soup = BeautifulSoup(location_request.text,"lxml")
-                address = list(location_soup.find("p",{'class':"trailer--none"}).stripped_strings)
-                if len(address) < 3:
-                    continue
-                phone = location_soup.find("a",{'class':"single-bakery__phone"}).text.strip()
-                hours = " ".join(list(location_soup.find("div",{'class':"bakery-hours"}).stripped_strings))
-                store = []
-                store.append("https://www.cobsbread.com")
-                store.append(store_data["title"])
-                store.append(address[0])
-                store.append(address[1].split(",")[0])
-                store.append(address[1].split(",")[1])
-                store.append(address[2])
-                store.append("US" if len(address[2]) == 5 else "CA")
-                if store[-1] == "CA":
-                    if len(store[-2]) == 6:
-                        store[-2] = store[-2][0:3] + " " + store[-2][3:]
-                if len(store[-2]) == 4:
-                    store[-1] == "US"
-                store.append("<MISSING>")
-                store.append(phone.replace("\u202c","") if phone != "" else "<MISSING>")
-                store.append("cobs bread")
-                store.append(store_data["map_data"]["lat"] if store_data["map_data"] != "" else "<MISSING>")
-                store.append(store_data["map_data"]["lng"] if store_data["map_data"] != "" else "<MISSING>")
-                store.append(hours)
-                return_main_object.append(store)
-    return return_main_object
+    log.info("Fetching store_locator data")
+    soup = pull_content(LOCATION_URL)
+    stores = json.loads(
+        re.search(
+            r"var bakeries = (\[.*\]),?.*",
+            soup.find("script", text=re.compile(r"var bakeries.*")).string,
+        ).group(1)
+    )
+    days = [
+        "monday",
+        "tuesday",
+        "wednesday",
+        "thursday",
+        "friday",
+        "saturday",
+        "sunday",
+    ]
+    for row in stores:
+        page_url = row["link"]
+        content = pull_content(page_url)
+        location_name = row["title"].replace("&#8211;", "").strip()
+        if "Permanently Closed" in location_name:
+            continue
+        raw_address = (
+            content.find("p", {"class": "trailer--none"})
+            .get_text(strip=True, separator=", ")
+            .replace(",,", ",")
+        )
+        street_address, city, state, zip_postal = getAddress(raw_address)
+        if zip_postal == MISSING:
+            zip_postal = raw_address.split(",")[-1].strip()
+        if "USA" in raw_address or zip_postal.isnumeric():
+            if len(zip_postal) == 4:
+                zip_postal = "0" + zip_postal
+            country_code = "US"
+        else:
+            country_code = "CA"
+        store_number = MISSING
+        if row["store_status"]:
+            location_type = row["store_status"]
+        else:
+            location_type = MISSING
+        try:
+            phone = (
+                content.find("a", {"class": "single-bakery__phone"})
+                .text.replace("\u202c", " ")
+                .strip()
+            )
+        except:
+            phone = MISSING
+        hoo = ""
+        for day in days:
+            if "day" in row[day]:
+                hoo += row[day] + ", "
+            else:
+                hoo += day.title() + ": " + row[day] + ", "
+        hours_of_operation = hoo.strip().rstrip(",")
+        if "Coming Soon" in location_type or "Coming Soon" in location_name:
+            location_type = "Coming Soon"
+            hours_of_operation = MISSING
+        latitude = row["map_data"]["lat"]
+        longitude = row["map_data"]["lng"]
+        log.info("Append {} => {}".format(location_name, street_address))
+        yield SgRecord(
+            locator_domain=DOMAIN,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zip_postal,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+            raw_address=raw_address,
+        )
+
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    log.info("start {} Scraper".format(DOMAIN))
+    count = 0
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
+
 
 scrape()

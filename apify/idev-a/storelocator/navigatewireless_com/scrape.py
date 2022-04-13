@@ -1,11 +1,22 @@
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
+from sgselenium import SgChrome
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-import re
+import dirtyjson as json
+import ssl
+
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
 logger = SgLogSetup().get_logger("navigatewireless")
 
@@ -14,53 +25,40 @@ _headers = {
 }
 
 locator_domain = "https://www.navigatewireless.com"
-base_url = "https://www.navigatewireless.com/pages/store-locations"
+base_url = "https://stores.uscellular.com/navigate-wireless/find-a-store"
+json_url = "currentPageId="
 
 
 def fetch_data():
     with SgRequests() as session:
-        soup = bs(session.get(base_url, headers=_headers).text, "lxml")
-        links = soup.select("table td")
-        logger.info(f"{len(links)} found")
-        for link in links:
-            page_url = link.a["href"]
-            logger.info(page_url)
-            sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
-            addr = list(link.select("p")[-1].stripped_strings)
-            hours = []
-            _hr = sp1.find("", string=re.compile(r"^Hours"))
-            if _hr:
-                hours = list(_hr.find_parent().stripped_strings)[1:]
-
-            coord = (
-                sp1.iframe["src"]
-                .split("!2d")[1]
-                .split("!3m")[0]
-                .split("!2m")[0]
-                .split("!3d")
-            )
-            phone = ""
-            if link.select_one("p span"):
-                phone = link.select_one("p span").text.strip()
-            zip_postal = addr[1].split(",")[1].strip().split(" ")[-1].strip()
-            if not zip_postal.replace("-", "").strip().isdigit() and len(addr) == 3:
-                zip_postal = addr[-1]
-            yield SgRecord(
-                page_url=page_url,
-                location_name=link.h2.text.strip(),
-                street_address=addr[0],
-                city=addr[1].split(",")[0].strip(),
-                state=addr[1].split(",")[1].strip().split(" ")[0].strip(),
-                zip_postal=zip_postal,
-                country_code="US",
-                phone=phone,
-                locator_domain=locator_domain,
-                latitude=coord[1],
-                longitude=coord[0],
-                hours_of_operation="; ".join(hours)
-                .replace("\xa0", " ")
-                .replace("–", "-"),
-            )
+        with SgChrome() as driver:
+            driver.get(base_url)
+            rr = driver.wait_for_request(json_url, timeout=20)
+            locations = json.loads(rr.response.body)["locations"]
+            for _ in locations:
+                page_url = "https://stores.uscellular.com" + _["storeDetailsUrl"]
+                logger.info(page_url)
+                sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
+                hours = []
+                days = sp1.select("div.hours div.day")
+                timings = sp1.select("div.hours div.timings")
+                for x in range(len(days)):
+                    hours.append(f"{days[x].text.strip()}: {timings[x].text.strip()}")
+                yield SgRecord(
+                    page_url=page_url,
+                    store_number=_["locationId"],
+                    location_name=_["heading"],
+                    street_address=_["streetAddress"],
+                    city=_["city"],
+                    state=_["state"],
+                    zip_postal=_["zipCode"],
+                    country_code="US",
+                    phone=_["phoneNumber"],
+                    locator_domain=locator_domain,
+                    latitude=_["latitude"],
+                    longitude=_["longitude"],
+                    hours_of_operation="; ".join(hours),
+                )
 
 
 if __name__ == "__main__":

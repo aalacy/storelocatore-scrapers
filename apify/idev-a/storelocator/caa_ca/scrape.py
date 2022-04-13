@@ -35,8 +35,10 @@ def fetch_data():
                 hours = list(_hr.find_parent().find_next_sibling().stripped_strings)
             yield SgRecord(
                 page_url=base_url,
-                location_name=_.h2.text.replace("Corbett Centre", "").strip(),
-                street_address=" ".join(addr[:-2]),
+                location_name=_.h2.text.strip(),
+                street_address=" ".join(addr[:-2])
+                .replace("Corbett Centre", "")
+                .strip(),
                 city=addr[-2].split(",")[0].strip(),
                 state=addr[-2].split(",")[1].strip(),
                 zip_postal=addr[-1],
@@ -44,7 +46,7 @@ def fetch_data():
                 phone=phone,
                 locator_domain=locator_domain,
                 hours_of_operation="; ".join(hours),
-                raw_address=" ".join(addr),
+                raw_address=" ".join(addr).replace("Corbett Centre", "").strip(),
             )
 
 

@@ -15,11 +15,13 @@ def fetch_data(sgw: SgWriter):
     }
     r = session.get(api_url, headers=headers)
     js = r.json()
+
     for j in js["stateStores"].keys():
         key = j
         for l in js["stateStores"][f"{key}"]:
+            slug = l.get("storeId")
             city = l.get("city") or "<MISSING>"
-            page_url = "https://www.sams.com.mx/clubes"
+            page_url = f"https://www.sams.com.mx/clubes/{slug}"
             location_name = l.get("name") or "<MISSING>"
             street_address = "".join(l.get("address1")).strip()
             if street_address.find("(") != -1:
