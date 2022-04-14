@@ -7,7 +7,7 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 
 DOMAIN = "bellaitalia.co.uk"
 BASE_URL = "https://www.bellaitalia.co.uk"
-API_STORES = "https://api.bigtablegroup.com/pagedata/?brandKey=bellaitalia&path=/spaces/com0r9vws8o2/entries?access_token=f99c643342fea1841fda74418f0263d3af7b096dc78413cb9747c6bf5221beaf%26select=fields.storeId,fields.title,fields.slug,fields.city,fields.description,fields.addressLocation,fields.addressLine1,fields.addressLine2,fields.addressCity,fields.county,fields.postCode,fields.phoneNumber,fields.email,fields.hours,fields.alternativeHours%26content_type=restaurant%26include=1"
+API_STORES = "https://api.bigtablegroup.com/pagedata/?brandKey=bella&path=/spaces/com0r9vws8o2/entries?access_token=f99c643342fea1841fda74418f0263d3af7b096dc78413cb9747c6bf5221beaf%26select=fields.storeId,fields.title,fields.slug,fields.city,fields.description,fields.addressLocation,fields.addressLine1,fields.addressLine2,fields.addressCity,fields.county,fields.postCode,fields.phoneNumber,fields.email,fields.hours,fields.alternativeHours%26content_type=restaurant%26include=1"
 HEADERS = {
     "Accept": "application/json, text/plain, */*",
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
@@ -15,6 +15,8 @@ HEADERS = {
 log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
 
 session = SgRequests()
+
+MISSING = SgRecord.MISSING
 
 
 def handle_missing(field):
@@ -59,7 +61,7 @@ def get_hours(id, includes):
                     + row["fields"]["sundayClose"],
                 ]
             )
-    return "<MISSING>" if not hoo else ", ".join(hoo[0])
+    return MISSING if not hoo else ", ".join(hoo[0])
 
 
 def fetch_data():
@@ -93,7 +95,7 @@ def fetch_data():
                 row["fields"]["hours"]["sys"]["id"], store_details["includes"]
             )
         else:
-            hours_of_operation = "<MISSING>"
+            hours_of_operation = MISSING
         latitude = row["fields"]["addressLocation"]["lat"]
         longitude = row["fields"]["addressLocation"]["lon"]
         log.info("Append {} => {}".format(location_name, street_address))

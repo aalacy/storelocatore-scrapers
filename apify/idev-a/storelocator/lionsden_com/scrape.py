@@ -59,7 +59,7 @@ def fetch_data():
                 elif first_loc["id"] == _["id"]:
                     should_break = True
                 block = _hoo(blocks, _["id"])
-                page_url = block.select_one("a.amlocator-link")["href"]
+                page_url = f"https://www.lionsden.com/storelocator/store-{_['id']}/"
                 hours = []
                 for hh in block.select(
                     "div.amlocator-schedule-table div.amlocator-row"
