@@ -51,9 +51,11 @@ def fetch_data(sgw: SgWriter):
 
             a = j.get("locationAddress") or {}
             street_address = a.get("locationStreet")
-            city = a.get("locationCity")
+            city = a.get("locationCity") or ""
             state = a.get("locationRegion")
-            postal = a.get("locationPostcode")
+            postal = a.get("locationPostcode") or ""
+            if city.isdigit() and postal.isalpha():
+                postal, city = city, postal
 
             g = a.get("locationCoordinates") or {}
             latitude = g.get("latitude")

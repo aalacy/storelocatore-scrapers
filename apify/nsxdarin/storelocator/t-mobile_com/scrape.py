@@ -17,14 +17,6 @@ session = SgRequests()
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36",
     "authority": "onmyj41p3c.execute-api.us-west-2.amazonaws.com",
-    "method": "GET",
-    "accept": "application/json",
-    "cache-control": "no-cache",
-    "pragma": "no-cache",
-    "referer": "https://www.t-mobile.com/",
-    "origin": "https://www.t-mobile.com",
-    "scheme": "https",
-    "accept-encoding": "gzip, deflate, br",
 }
 
 
@@ -95,8 +87,8 @@ def fetch_data():
                     name = store["name"]
                 else:
                     name = "<MISSING>"
-                store = store["id"]
                 typ = compute_location_type(store)
+                storeid = store["id"]
                 if "url" in store:
                     loc = store["url"]
                 else:
@@ -123,7 +115,7 @@ def fetch_data():
                     country_code=country,
                     phone=phone,
                     location_type=typ,
-                    store_number=store,
+                    store_number=storeid,
                     latitude=lat,
                     longitude=lng,
                     hours_of_operation=hours,

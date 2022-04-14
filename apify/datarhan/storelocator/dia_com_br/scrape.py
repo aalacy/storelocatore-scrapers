@@ -19,14 +19,6 @@ def fetch_data():
         page_url = "https://www.dia.com.br/lojas/" + poi["slug"]
         loc_response = session.get(page_url)
         loc_dom = etree.HTML(loc_response.text)
-        phone = loc_dom.xpath('//li[contains(@class, "footer-module--phone")]/text()')[
-            0
-        ]
-        hoo = (
-            loc_dom.xpath('//p[contains(text(), "Nosso horário de")]/text()')[-1]
-            .split("atendimento é")[-1][:-1]
-            .strip()
-        )
         latitude = poi["lat"]
         if latitude == 0:
             latitude = ""
@@ -35,6 +27,14 @@ def fetch_data():
             longitude = ""
         poi_data = loc_dom.xpath('//script[contains(text(), "address")]/text()')[0]
         poi_data = json.loads(poi_data)
+        hoo = []
+        for e in poi_data["openingHoursSpecification"]:
+            if type(e["dayOfWeek"]) == list:
+                for day in e["dayOfWeek"]:
+                    hoo.append(f'{day}: {e["opens"]} - {e["closes"]}')
+            else:
+                hoo.append(f'{e["dayOfWeek"]}: {e["opens"]} - {e["closes"]}')
+        hoo = " ".join(hoo)
 
         item = SgRecord(
             locator_domain=domain,
@@ -46,8 +46,8 @@ def fetch_data():
             zip_postal=poi["cep"],
             country_code="BR",
             store_number=poi["storeNumber"],
-            phone=phone,
-            location_type="",
+            phone="",
+            location_type=poi_data["@type"],
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hoo,
