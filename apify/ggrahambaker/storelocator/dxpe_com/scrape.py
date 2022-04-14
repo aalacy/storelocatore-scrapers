@@ -7,14 +7,14 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
+
 session = SgRequests()
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
 
-def fetch_data():
 
-    
+def fetch_data():
 
     scraped_items = []
 
@@ -24,11 +24,10 @@ def fetch_data():
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
     all_codes = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA,SearchableCountries.CANADA],
+        country_codes=[SearchableCountries.USA, SearchableCountries.CANADA],
         max_search_distance_miles=1000,
     )
 
-   
     for code in all_codes:
         all_locations = []
         frm = {"category": "", "address": code}
@@ -42,10 +41,9 @@ def fetch_data():
         }
         try:
             response = session.post(start_url, data=frm, headers=hdr)
-            all_locations= json.loads(response.text)["locations"]
+            all_locations = json.loads(response.text)["locations"]
         except:
             continue
-       
         for poi in all_locations:
             store_url = "https://www.dxpe.com/locations/"
             location_name = poi["locationName"]
@@ -56,7 +54,9 @@ def fetch_data():
             )
             street_address = poi["address"]
             street_address = (
-                street_address.strip().replace("\n", "") if street_address else "<MISSING>"
+                street_address.strip().replace("\n", "")
+                if street_address
+                else "<MISSING>"
             )
             if len(street_address.strip()) <= 1:
                 continue
