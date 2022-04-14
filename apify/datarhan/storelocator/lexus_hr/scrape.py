@@ -9,14 +9,20 @@ def fetch_data():
     session = SgRequests()
 
     start_urls = {
-        "Croatia": "https://kong-proxy-aws.toyota-europe.com/dxp/dealers/api/lexus/hr/hr/drive/16.059354/45.732163?count=10&extraCountries=UK&limitSearchDistance=0&isCurrentLocation=false&services=",
-        "Bulgaria": "https://kong-proxy-aws.toyota-europe.com/dxp/dealers/api/lexus/bg/bg/drive/23.350282/42.652363?count=10&extraCountries=UK&limitSearchDistance=0&isCurrentLocation=false&services=",
-        "Switzerland": "https://kong-proxy-aws.toyota-europe.com/dxp/dealers/api/lexus/ch/de/drive/8.53989/47.378084?count=10&extraCountries=&isCurrentLocation=false",
+        "Croatia": "https://kong-proxy-aws.toyota-europe.com/dxp/dealers/api/lexus/hr/hr/drive/16.059354/45.732163?count=500&extraCountries=UK&limitSearchDistance=0&isCurrentLocation=false&services=",
+        "Bulgaria": "https://kong-proxy-aws.toyota-europe.com/dxp/dealers/api/lexus/bg/bg/drive/23.350282/42.652363?count=500&extraCountries=UK&limitSearchDistance=0&isCurrentLocation=false&services=",
+        "Switzerland": "https://kong-proxy-aws.toyota-europe.com/dxp/dealers/api/lexus/ch/de/drive/8.53989/47.378084?count=500&extraCountries=&isCurrentLocation=false",
+        "Spain": "https://kong-proxy-aws.toyota-europe.com/dxp/dealers/api/lexus/es/es/drive/-3.703583/40.416705?count=500&extraCountries=&isCurrentLocation=false",
+        "France": "https://kong-proxy-aws.toyota-europe.com/dxp/dealers/api/lexus/fr/fr/drive/0.428551/44.064432?count=500&extraCountries=AD|MC&isCurrentLocation=false",
+        "Estonia": "https://kong-proxy-aws.toyota-europe.com/dxp/dealers/api/lexus/ee/et/drive/24.745369/59.437216?count=500&extraCountries=&isCurrentLocation=false",
     }
     page_url = {
         "hr": "https://www.lexus.hr/contact/dealers",
         "bg": "https://www.lexus.bg/contact/dealers",
         "ch": "https://de.lexus.ch/#/publish/my_lexus_my_dealers",
+        "es": "https://www.lexusauto.es/#/publish/my_lexus_my_dealers",
+        "fr": "https://www.lexus.fr/#/publish/my_lexus_my_dealers",
+        "ee": "https://ee.lexus.ee/#/publish/my_lexus_my_dealers",
     }
 
     domain = "lexus.hr"

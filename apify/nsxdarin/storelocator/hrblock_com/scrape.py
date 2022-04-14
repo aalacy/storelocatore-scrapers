@@ -47,75 +47,80 @@ def fetch_data():
                     if lurl not in alllocs:
                         alllocs.append(lurl)
                         logger.info("Pulling Location %s..." % lurl)
-                        r4 = session.get(lurl, headers=headers)
-                        lines = r4.iter_lines()
-                        website = "hrblock.com"
-                        typ = "Location"
-                        name = "H&R Block"
-                        store = lurl.rsplit("/", 1)[1]
-                        hours = "<MISSING>"
-                        add = ""
-                        city = ""
-                        country = "US"
-                        state = ""
-                        zc = ""
-                        phone = ""
-                        lat = ""
-                        lng = ""
-                        for line4 in lines:
-                            if '<span itemprop="streetAddress">' in line4:
-                                if add == "":
-                                    add = line4.split(
-                                        '<span itemprop="streetAddress">'
-                                    )[1].split("<")[0]
-                                else:
-                                    add = (
-                                        add
-                                        + " "
-                                        + line4.split(
+                        try:
+                            r4 = session.get(lurl, headers=headers)
+                            lines = r4.iter_lines()
+                            website = "hrblock.com"
+                            typ = "Location"
+                            name = "H&R Block"
+                            store = lurl.rsplit("/", 1)[1]
+                            hours = "<MISSING>"
+                            add = ""
+                            city = ""
+                            country = "US"
+                            state = ""
+                            zc = ""
+                            phone = ""
+                            lat = ""
+                            lng = ""
+                            for line4 in lines:
+                                if '<span itemprop="streetAddress">' in line4:
+                                    if add == "":
+                                        add = line4.split(
                                             '<span itemprop="streetAddress">'
                                         )[1].split("<")[0]
-                                    )
-                            if '<span itemprop="addressLocality">' in line4:
-                                city = line4.split('<span itemprop="addressLocality">')[
-                                    1
-                                ].split("<")[0]
-                            if '<span itemprop="addressRegion">' in line4:
-                                state = line4.split('<span itemprop="addressRegion">')[
-                                    1
-                                ].split("<")[0]
-                            if '<span itemprop="postalCode">' in line4:
-                                zc = line4.split('<span itemprop="postalCode">')[
-                                    1
-                                ].split("<")[0]
-                            if '<a href="tel:' in line4:
-                                phone = line4.split('<a href="tel:')[1].split('"')[0]
-                            if 'itemprop="latitude"' in line4:
-                                lat = line4.split('content="')[1].split('"')[0]
-                            if 'itemprop="longitude"' in line4:
-                                lng = line4.split('content="')[1].split('"')[0]
-                        if lat == "":
-                            lat = "<MISSING>"
-                        if lng == "":
-                            lng = "<MISSING>"
-                        if add != "":
-                            city = city.replace(",", "")
-                            yield SgRecord(
-                                locator_domain=website,
-                                page_url=lurl,
-                                location_name=name,
-                                street_address=add,
-                                city=city,
-                                state=state,
-                                zip_postal=zc,
-                                country_code=country,
-                                phone=phone,
-                                location_type=typ,
-                                store_number=store,
-                                latitude=lat,
-                                longitude=lng,
-                                hours_of_operation=hours,
-                            )
+                                    else:
+                                        add = (
+                                            add
+                                            + " "
+                                            + line4.split(
+                                                '<span itemprop="streetAddress">'
+                                            )[1].split("<")[0]
+                                        )
+                                if '<span itemprop="addressLocality">' in line4:
+                                    city = line4.split(
+                                        '<span itemprop="addressLocality">'
+                                    )[1].split("<")[0]
+                                if '<span itemprop="addressRegion">' in line4:
+                                    state = line4.split(
+                                        '<span itemprop="addressRegion">'
+                                    )[1].split("<")[0]
+                                if '<span itemprop="postalCode">' in line4:
+                                    zc = line4.split('<span itemprop="postalCode">')[
+                                        1
+                                    ].split("<")[0]
+                                if '<a href="tel:' in line4:
+                                    phone = line4.split('<a href="tel:')[1].split('"')[
+                                        0
+                                    ]
+                                if 'itemprop="latitude"' in line4:
+                                    lat = line4.split('content="')[1].split('"')[0]
+                                if 'itemprop="longitude"' in line4:
+                                    lng = line4.split('content="')[1].split('"')[0]
+                            if lat == "":
+                                lat = "<MISSING>"
+                            if lng == "":
+                                lng = "<MISSING>"
+                            if add != "":
+                                city = city.replace(",", "")
+                                yield SgRecord(
+                                    locator_domain=website,
+                                    page_url=lurl,
+                                    location_name=name,
+                                    street_address=add,
+                                    city=city,
+                                    state=state,
+                                    zip_postal=zc,
+                                    country_code=country,
+                                    phone=phone,
+                                    location_type=typ,
+                                    store_number=store,
+                                    latitude=lat,
+                                    longitude=lng,
+                                    hours_of_operation=hours,
+                                )
+                        except:
+                            pass
 
 
 def scrape():
