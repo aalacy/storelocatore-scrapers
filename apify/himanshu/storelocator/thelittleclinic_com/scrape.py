@@ -1,12 +1,18 @@
+import json
+import ssl
+from bs4 import BeautifulSoup
 from sglogging import sglog
-from sgrequests import SgRequests, SgRequestError
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
+from sgselenium.sgselenium import SgChrome
+
 log = sglog.SgLogSetup().get_logger(logger_name="thelittleclinic.com")
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 
 def fetch_data():
@@ -14,59 +20,54 @@ def fetch_data():
     user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
     headers = {"User-Agent": user_agent}
 
-    session = SgRequests()
+    driver = SgChrome(user_agent=user_agent).driver()
 
     zip_codes = DynamicZipSearch(
         country_codes=[SearchableCountries.USA],
         max_search_results=100,
-        max_search_distance_miles=200,
+        max_search_distance_miles=500,
+        expected_search_radius_miles=500,
     )
-    for i, zip_code in enumerate(zip_codes):
+    for zip_code in zip_codes:
 
         log.info(
             "Searching: %s | Items remaining: %s"
             % (zip_code, zip_codes.items_remaining())
         )
-
         link = (
-            "https://www.thelittleclinic.com/appointment-management/v1/clinics?filter.businessName=tlc&filter.freeFormAddress=%s&filter.maxResults=100&page.size=500"
+            "https://www.kroger.com/appointment-management/v1/clinics?filter.businessName=tlc&filter.reasonId=29&filter.freeFormAddress=%s&filter.maxResults=100&page.size=100"
             % zip_code
         )
-        r = session.get(
-            link,
-            headers=headers,
-        )
-        if isinstance(r, SgRequestError):
-            continue
-        json_data = r.json()
+
+        driver.get(link)
+        soup = BeautifulSoup(driver.page_source, "lxml")
+        json_data = json.loads(soup.text)
         j = json_data["data"]["clinics"]
 
         for i in j:
             locator_domain = "https://www.thelittleclinic.com/"
-            location_name = i["name"]
+            location_name = "The Little Clinic"
             street_address = " ".join(i["address"]["addressLines"])
-            log.info(location_name)
             city = i["address"]["cityTown"]
             state = i["address"]["stateProvince"]
             zip = i["address"]["postalCode"]
             country_code = "US"
             store_number = i["id"]
+            if store_number == "540FC003":
+                continue
             try:
                 phone = i["phone"]
             except:
                 phone = "<MISSING>"
-            if i["isSchedulerEnabled"]:
-                location_type = "Scheduling Appointments Available"
-            else:
-                location_type = "Scheduling Appointments Currently Unavailable"
+            location_type = ""
 
             latitude = i["location"]["lat"]
             longitude = i["location"]["lng"]
             zip_codes.found_location_at(latitude, longitude)
-            hours_of_operation = "<INACCESSIBLE>"
+            hours_of_operation = ""
 
             id_num = str(i["id"])
-            page_url = "https://www.thelittleclinic.com/clinic-details/%s/%s" % (
+            page_url = "https://www.kroger.com/health-services/clinic/details/%s/%s" % (
                 id_num[:3],
                 id_num[3:],
             )
@@ -86,6 +87,8 @@ def fetch_data():
                 longitude=longitude,
                 hours_of_operation=hours_of_operation,
             )
+
+    driver.close()
 
 
 def scrape():
