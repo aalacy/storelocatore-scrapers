@@ -34,7 +34,7 @@ def _d(_, current_country):
         for x in range(len(days)):
             hours.append(f"{days[x]}: {times[x]}")
     return SgRecord(
-        page_url="",
+        page_url=base_url,
         store_number=_["id"],
         location_name=_["name"],
         street_address=street_address,

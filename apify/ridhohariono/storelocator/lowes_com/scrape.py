@@ -45,11 +45,13 @@ def get_hoo(store):
 def fetch_records(zc, sgw: SgWriter):
     with SgRequests() as session:
         api_url = f"https://www.lowes.com/store/api/search?maxResults=&responseGroup=large&searchTerm={zc}"
+        logger.info(f"Pulling data from {api_url}")
         rapi = session.get(api_url, headers=headers_cus)
         if rapi.status_code == 200:
+            logger.info(f"[HTTP STATUS] << {rapi.status_code} OK!! >> ")
             api_js = rapi.json()
             stores = api_js["stores"]
-            logger.info(f"Store Count: [{len(stores)}] Pulling data for {zc}")  # noqa
+            logger.info(f"Store Count: [{len(stores)}] || << Pulling data for {zc} >>")
             for idx, i in enumerate(stores[0:]):
                 store = i["store"]
                 city_f = store["city"] or ""
@@ -88,9 +90,11 @@ def fetch_records(zc, sgw: SgWriter):
 
 def fetch_data(sgw: SgWriter):
     logger.info("Started")
+
+    # NOTE: Radius 1000 miles for testing purpose on apify
     search = DynamicZipSearch(
         country_codes=[SearchableCountries.USA],
-        expected_search_radius_miles=50,
+        expected_search_radius_miles=1000,
         granularity=Grain_8(),
         use_state=False,
     )

@@ -21,7 +21,7 @@ search = DynamicZipSearch(
 
 
 def fetch_data():
-    website = "walmart.com/auto"
+    website = "walmart.com/fuel"
     for code in search:
         logger.info(("Pulling Zip Code %s..." % code))
         url = (
@@ -34,10 +34,10 @@ def fetch_data():
             if int(r2["payload"]["nbrOfStores"]) > 0:
                 for store in r2["payload"]["storesData"]["stores"]:
                     if store["geoPoint"] and "GAS" in str(store):
+                        typ = "GAS" + str(store).split("'name': 'GAS")[1].split("'")[0]
                         loc = store["detailsPageURL"]
                         snum = store["id"]
                         name = store["displayName"]
-                        typ = "Walmart Fuel"
                         add = store["address"]["address"]
                         city = store["address"]["city"]
                         state = store["address"]["state"]
