@@ -325,6 +325,23 @@ class CleanRecord:
             if "OPEN" in badRecord["properties"]["openstatus"]
             else badRecord["properties"]["openstatus"]
         )
+        if (
+            cleanRecord["hours_of_operation"] == ""
+            or not cleanRecord["hours_of_operation"]
+        ):
+            try:
+                cleanRecord["hours_of_operation"] = (
+                    str(list(badRecord["properties"]["drivethruhours"].items()))
+                    .replace("'", "")
+                    .replace("(", "")
+                    .replace(")", "")
+                    .replace("[", "")
+                    .replace("]", "")
+                    .replace("hours", "")
+                )
+            except Exception:
+                cleanRecord["hours_of_operation"] = ""
+
         cleanRecord["raw_address"] = ""
         identifier = None
         cleanRecord["page_url"] = None
