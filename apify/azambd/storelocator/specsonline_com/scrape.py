@@ -66,15 +66,16 @@ def parse_json(location, page_url, soup):
 def fetch_data():
 
     response = session.get(store_sitemap, headers=headers)
+    logger.info(f"{store_sitemap} Response: {response} ")
     soup = bs(response.text, "lxml")
     stores = [location.text for location in soup.select("loc")]
     logger.info(f"Total Stores: {len(stores)}")
 
     for store in stores:
         page_url = store
-        logger.info(f"Crawling: {page_url}")
         response_detail = session.get(page_url, headers=headers)
-        soup2 = bs(response_detail.text, "lxml")
+        logger.info(f"{page_url} Response: {response_detail} ")
+        soup2 = bs(response_detail.text, "html.parser")
         mapinfo = json.loads(
             re.findall("maplistFrontScriptParams = ({.*})", str(soup2))[0]
         )
