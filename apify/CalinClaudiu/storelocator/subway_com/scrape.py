@@ -3,7 +3,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.pause_resume import CrawlStateSingleton
 from sgrequests import SgRequests
-from sgzip.dynamic import SearchableCountries, Grain_8
+from sgzip.dynamic import Grain_8
 from sgzip.dynamic import DynamicGeoSearch
 from sglogging import sglog
 from sgscrape.sgrecord_id import SgRecordID
