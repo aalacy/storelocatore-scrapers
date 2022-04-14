@@ -35,9 +35,9 @@ def fetch_data():
         location_name = "".join(
             store.xpath('.//h3[@class="shop-title"]/text()')
         ).strip()
-
         raw_address = store.xpath('.//div[@class="shop-info-address-line"]/text()')
-
+        if not raw_address:
+            continue
         if "Location Closed" in "".join(raw_address).strip():
             continue
 
