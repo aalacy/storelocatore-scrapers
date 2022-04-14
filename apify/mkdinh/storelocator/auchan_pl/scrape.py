@@ -26,7 +26,7 @@ def get_locations(session):
     session.execute_script("open('https://www.auchan.pl/pl/znajdz-sklep')")
     sleep(10)
     session.refresh()
-    sleep(10)
+    sleep(180)
     soup = BeautifulSoup(session.page_source, "html.parser")
     logger.info(session.page_source)
 
