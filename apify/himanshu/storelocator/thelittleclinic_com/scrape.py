@@ -18,7 +18,6 @@ ssl._create_default_https_context = ssl._create_unverified_context
 def fetch_data():
 
     user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
-    headers = {"User-Agent": user_agent}
 
     driver = SgChrome(user_agent=user_agent).driver()
 
