@@ -21,7 +21,7 @@ def fetch_data():
         )
         for _ in locations:
             addr = list(_.p.stripped_strings)
-            street_address=" ".join(addr[:-1])
+            street_address = " ".join(addr[:-1])
             if street_address.endswith(","):
                 street_address = street_address[:-1]
             coord = (
@@ -33,7 +33,7 @@ def fetch_data():
             )
             hours = []
             for hh in list(_.h2.find_next_sibling().stripped_strings):
-                if '*' in hh:
+                if "*" in hh:
                     continue
                 hours.append(hh)
             yield SgRecord(
