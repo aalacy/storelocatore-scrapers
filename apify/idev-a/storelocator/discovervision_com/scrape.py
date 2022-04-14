@@ -4,7 +4,6 @@ from bs4 import BeautifulSoup as bs
 from sgrequests import SgRequests
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-import dirtyjson as json
 
 _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
@@ -17,29 +16,42 @@ locator_domain = "https://www.discovervision.com/"
 
 def fetch_data():
     with SgRequests() as session:
-        soup = bs(session.get(base_url, headers=_headers).text, "lxml")
-        locations = json.loads(soup.find("script", type="application/ld+json").string)[
-            "department"
-        ]
+        locations = bs(session.get(base_url, headers=_headers).text, "lxml").select(
+            "div.cpt-location-info"
+        )
         for _ in locations:
-            addr = _["address"]
-            street_address = addr["streetAddress"].strip()
+            addr = list(_.p.stripped_strings)
+            street_address=" ".join(addr[:-1])
             if street_address.endswith(","):
-                street_address = street_address[:-1].strip()
-            coord = _["hasMap"].split("/@")[1].split("/data")[0].split(",")
+                street_address = street_address[:-1]
+            coord = (
+                _.iframe["src"]
+                .split("!2d")[1]
+                .split("!2m")[0]
+                .split("!3m")[0]
+                .split("!3d")
+            )
+            hours = []
+            for hh in list(_.h2.find_next_sibling().stripped_strings):
+                if '*' in hh:
+                    continue
+                hours.append(hh)
             yield SgRecord(
-                page_url=_["url"],
-                location_name=_["name"],
+                page_url=_.find_previous_sibling()["href"],
+                location_name=_.find_previous_sibling().text.strip(),
                 street_address=street_address,
-                city=addr["addressLocality"],
-                state=addr["addressRegion"],
-                zip_postal=addr["postalCode"],
+                city=addr[-1].split(",")[0].strip(),
+                state=addr[-1].split(",")[1].strip().split()[0].strip(),
+                zip_postal=addr[-1].split(",")[1].strip().split()[-1].strip(),
                 latitude=coord[0],
                 longitude=coord[1],
                 country_code="US",
-                phone=_["telephone"],
+                phone=list(_.select_one("ul.location-phone-list li").stripped_strings)[
+                    -1
+                ],
                 locator_domain=locator_domain,
-                hours_of_operation="; ".join(_["openingHours"]),
+                hours_of_operation="; ".join(hours),
+                raw_address=" ".join(addr),
             )
 
 
