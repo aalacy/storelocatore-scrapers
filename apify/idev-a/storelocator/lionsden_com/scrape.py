@@ -59,7 +59,7 @@ def fetch_data():
                 elif first_loc["id"] == _["id"]:
                     should_break = True
                 block = _hoo(blocks, _["id"])
-                page_url = f"https://www.lionsden.com/storelocator/store-{_['id']}/"
+                page_url = block.select_one("a.amlocator-link")["href"]
                 hours = []
                 for hh in block.select(
                     "div.amlocator-schedule-table div.amlocator-row"
@@ -81,7 +81,7 @@ def fetch_data():
 
                 yield SgRecord(
                     page_url=page_url,
-                    store_number=_["id"],
+                    store_number=page_url.split("/")[-2].split("-")[-1].strip(),
                     location_name=block.select_one("div.amlocator-title").text.strip(),
                     street_address=street_address,
                     city=addr.city,
