@@ -31,7 +31,7 @@ def fetch_data():
 
         location_name = "".join(store.xpath("div[1]//h2/strong/text()")).strip()
 
-        raw_info = store.xpath("div[3]//div[@class='fusion-text'][4]/p/text()")
+        raw_info = store.xpath("div[3]//div[@class='fusion-text'][3]/p/text()")
 
         raw_list = []
         for index in range(0, len(raw_info)):
