@@ -12,6 +12,33 @@ from sglogging import sglog
 logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
 
 
+def format_hours(hours_json):
+    DAYS = [
+        "monday",
+        "tuesday",
+        "wednesday",
+        "thursday",
+        "friday",
+        "saturday",
+        "sunday",
+    ]
+    formatted = []
+    day_index = (DAYS.index(hours_json[2]["dayName"].lower()) - 2) % 7
+    for schedule in hours_json:
+        day = DAYS[day_index].capitalize()
+        day_index = (day_index + 1) % 7
+        hours = schedule["hours"]
+        formatted.append(f"{day}: {hours}")
+    return ", ".join(formatted)
+
+
+def clean(x):
+    if not x or x.lower() in ["none", "na"]:
+        return SgRecord.MISSING
+    else:
+        return x
+
+
 def fix_comma(x):
     x = x.replace("None", "")
     h = []
@@ -25,29 +52,29 @@ def fix_comma(x):
 
 
 def ret_record(record):
-    page_url = "<MISSING>"
-    location_name = "<MISSING>"
+    page_url = SgRecord.MISSING
+    location_name = SgRecord.MISSING
 
-    street_address = "<MISSING>"
+    street_address = SgRecord.MISSING
 
-    city = "<MISSING>"
+    city = SgRecord.MISSING
 
-    state = "<MISSING>"
+    state = SgRecord.MISSING
 
-    zip_postal = "<MISSING>"
+    zip_postal = SgRecord.MISSING
 
-    country_code = "<MISSING>"
+    country_code = SgRecord.MISSING
 
-    store_number = "<MISSING>"
+    store_number = SgRecord.MISSING
 
-    phone = "<MISSING>"
+    phone = SgRecord.MISSING
 
-    location_type = "<MISSING>"
+    location_type = SgRecord.MISSING
 
-    latitude = "<MISSING>"
+    latitude = SgRecord.MISSING
 
-    longitude = "<MISSING>"
-    hours_of_operation = "<MISSING>"
+    longitude = SgRecord.MISSING
+    hours_of_operation = SgRecord.MISSING
 
     try:
         page_url = "https://www.starbucks.com/store-locator/store/{}/{}".format(
@@ -120,11 +147,11 @@ def ret_record(record):
         pass
 
     try:
-        hours_of_operation = str(record["schedule"])
+        hours_of_operation = format_hours(record["schedule"])
     except Exception:
         pass
 
-    raw_address = "<MISSING>"
+    raw_address = SgRecord.MISSING
 
     return SgRecord(
         page_url=page_url,
@@ -132,10 +159,10 @@ def ret_record(record):
         street_address=street_address,
         city=city,
         state=state,
-        zip_postal=zip_postal,
+        zip_postal=clean(zip_postal),
         country_code=country_code,
         store_number=store_number,
-        phone=phone,
+        phone=clean(phone),
         location_type=location_type,
         latitude=latitude,
         longitude=longitude,
