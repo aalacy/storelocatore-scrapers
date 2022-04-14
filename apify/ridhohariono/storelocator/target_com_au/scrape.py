@@ -8,6 +8,7 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 
 DOMAIN = "target.com.au"
 LOCATION_URL = "https://www.target.com.au/store-finder"
+SITEMAP_URL = "https://www.target.com.au/stores-sitemap.xml"
 BASE_URL = "https://www.target.com.au"
 HEADERS = {
     "Accept": "application/json, text/plain, */*",
@@ -32,65 +33,59 @@ def pull_content(url, num=0):
 
 def fetch_data():
     log.info("Fetching store_locator data")
-    soup = pull_content(LOCATION_URL)
-    states = soup.select("ul.store-states a")
-    for row in states:
-        stores = pull_content(BASE_URL + row["href"]).select(
-            "td[headers='store-opening'] a"
+    soup = pull_content(SITEMAP_URL)
+    stores = soup.select("loc")
+    for store_link in stores:
+        page_url = store_link.text.strip()
+        store = pull_content(page_url)
+        location_name = (
+            store.find("h4", {"class": "store-heading"})
+            .text.replace("Target –", "")
+            .strip()
         )
-        for store_link in stores:
-            page_url = BASE_URL + store_link["href"]
-            store = pull_content(page_url)
-            location_name = (
-                store.find("h4", {"class": "store-heading"})
-                .text.replace("Target –", "")
-                .strip()
-            )
-            try:
-                store.find("span", {"itemprop": "streetAddress"}).find(
-                    "strong"
-                ).decompose()
-            except:
-                pass
-            street_address = (
-                store.find("span", {"itemprop": "streetAddress"})
-                .get_text(strip=True, separator=",")
-                .strip()
-                .rstrip(",")
-            )
-            city = store.find("span", {"itemprop": "addressLocality"}).text.strip()
-            state = store.find("span", {"itemprop": "addressRegion"}).text.strip()
-            zip_postal = store.find("span", {"itemprop": "postalCode"}).text.strip()
-            country_code = "AU"
-            phone = store.find("span", {"itemprop": "telephone"}).text.strip()
-            location_type = MISSING
-            hours_of_operation = (
-                store.find("dl", {"class": "this-week"})
-                .get_text(strip=True, separator=",")
-                .replace("day,", "day: ")
-                .strip()
-            )
-            store_number = store_link["href"].split("/")[-1]
-            latlong = store.find("div", {"class": "imap store-map"})
-            latitude = latlong["data-lat"]
-            longitude = latlong["data-lng"]
-            log.info("Append {} => {}".format(location_name, street_address))
-            yield SgRecord(
-                locator_domain=DOMAIN,
-                page_url=page_url,
-                location_name=location_name,
-                street_address=street_address,
-                city=city,
-                state=state,
-                zip_postal=zip_postal,
-                country_code=country_code,
-                store_number=store_number,
-                phone=phone,
-                location_type=location_type,
-                latitude=latitude,
-                longitude=longitude,
-                hours_of_operation=hours_of_operation,
-            )
+        try:
+            store.find("span", {"itemprop": "streetAddress"}).find("strong").decompose()
+        except:
+            pass
+        street_address = (
+            store.find("span", {"itemprop": "streetAddress"})
+            .get_text(strip=True, separator=",")
+            .strip()
+            .rstrip(",")
+        )
+        city = store.find("span", {"itemprop": "addressLocality"}).text.strip()
+        state = store.find("span", {"itemprop": "addressRegion"}).text.strip()
+        zip_postal = store.find("span", {"itemprop": "postalCode"}).text.strip()
+        country_code = "AU"
+        phone = store.find("span", {"itemprop": "telephone"}).text.strip()
+        location_type = MISSING
+        hours_of_operation = (
+            store.find("dl", {"class": "this-week"})
+            .get_text(strip=True, separator=",")
+            .replace("day,", "day: ")
+            .strip()
+        )
+        store_number = page_url.split("/")[-1]
+        latlong = store.find("div", {"class": "imap store-map"})
+        latitude = latlong["data-lat"]
+        longitude = latlong["data-lng"]
+        log.info("Append {} => {}".format(location_name, street_address))
+        yield SgRecord(
+            locator_domain=DOMAIN,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zip_postal,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+        )
 
 
 def scrape():
