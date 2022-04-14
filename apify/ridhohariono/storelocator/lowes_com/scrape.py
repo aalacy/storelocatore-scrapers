@@ -90,9 +90,11 @@ def fetch_records(zc, sgw: SgWriter):
 
 def fetch_data(sgw: SgWriter):
     logger.info("Started")
+
+    # NOTE: Radius 1000 miles for testing purpose on apify
     search = DynamicZipSearch(
         country_codes=[SearchableCountries.USA],
-        expected_search_radius_miles=200,
+        expected_search_radius_miles=1000,
         granularity=Grain_8(),
         use_state=False,
     )
