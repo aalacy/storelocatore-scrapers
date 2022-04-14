@@ -18,36 +18,36 @@ headers = {
 MISSING = SgRecord.MISSING
 
 
-
 def fetch_data():
-   
-    cleanr = re.compile(r'<[^>]+>')
+
+    cleanr = re.compile(r"<[^>]+>")
     base_url = "https://www.fredericmalle.com"
     url = "https://www.fredericmalle.com/about#/stores/"
-    r = session.get(url, headers=headers)   
+    r = session.get(url, headers=headers)
     soup = BeautifulSoup(r.text, "html.parser")
-    loclist = soup.find_all("div", {"class":"stores__location-wrapper"})
+    loclist = soup.find_all("div", {"class": "stores__location-wrapper"})
     for loc in loclist:
-        title = loc.find('div',{'class':"stores__location-name"}).text
-        address = str(loc.findAll('div',{'class':"stores__location-address"})[-1])
-       
-        if len(address) <  3:
-            address = str(loc.find('div',{'class':"stores__content-content"}))
-        address = re.sub(cleanr,' ' ,address).replace('\n',' ').strip()
+        title = loc.find("div", {"class": "stores__location-name"}).text
+        address = str(loc.findAll("div", {"class": "stores__location-address"})[-1])
+
+        if len(address) < 3:
+            address = str(loc.find("div", {"class": "stores__content-content"}))
+        address = re.sub(cleanr, " ", address).replace("\n", " ").strip()
         try:
-            phone = loc.find('div',{'class':"stores__location-phone"}).text
+            phone = loc.find("div", {"class": "stores__location-phone"}).text
         except:
-            phone = '<MISSING>'
+            phone = "<MISSING>"
         try:
-            hours = loc.find('div',{'class':"stores__location-hours"}).text
+            hours = loc.find("div", {"class": "stores__location-hours"}).text
         except:
-            hours = '<MISSING>'
+            hours = "<MISSING>"
         try:
-            lat,longt = div.find('a')['href'].split('@',1)[1].split('data',1)[0].split(',',1)
-            longt = longt.split(',',1)[0]
+            lat, longt = (
+                div.find("a")["href"].split("@", 1)[1].split("data", 1)[0].split(",", 1)
+            )
+            longt = longt.split(",", 1)[0]
         except:
-            lat = longt ='<MISSING>'
-       
+            lat = longt = "<MISSING>"
         pa = parse_address_intl(address)
 
         street_address = pa.street_address_1
@@ -64,24 +64,24 @@ def fetch_data():
 
         ccode = pa.postcode
         ccode = ccode.strip() if ccode else MISSING
-    
+
         yield SgRecord(
-                    locator_domain=base_url,
-                    page_url=url,
-                    location_name=title,
-                    street_address=street.strip(),
-                    city=city.strip(),
-                    state=state.strip(),
-                    zip_postal=pcode.strip(),
-                    country_code=ccode,
-                    store_number=SgRecord.MISSING,
-                    phone=phone.strip(),
-                    location_type=SgRecord.MISSING,
-                    latitude=str(lat),
-                    longitude=str(longt),
-                    hours_of_operation=hours,
-                    raw_address = address,
-                )
+            locator_domain=base_url,
+            page_url=url,
+            location_name=title,
+            street_address=street.strip(),
+            city=city.strip(),
+            state=state.strip(),
+            zip_postal=pcode.strip(),
+            country_code=ccode,
+            store_number=SgRecord.MISSING,
+            phone=phone.strip(),
+            location_type=SgRecord.MISSING,
+            latitude=str(lat),
+            longitude=str(longt),
+            hours_of_operation=hours,
+            raw_address=address,
+        )
 
 
 def scrape():
@@ -94,5 +94,3 @@ def scrape():
 
 
 scrape()
-
-   
