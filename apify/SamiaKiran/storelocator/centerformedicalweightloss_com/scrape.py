@@ -41,9 +41,6 @@ headers = {
 
 def fetch_data():
     url = "https://centerformedicalweightloss.com/find_a_center.aspx"
-    r = session.get(url, headers=headers)
-    soup = BeautifulSoup(r.text, "html.parser")
-    __VIEWSTATE = soup.find("input", {"name": "__VIEWSTATE"})["value"]
     zips = DynamicZipSearch(
         country_codes=[SearchableCountries.USA], expected_search_radius_miles=50
     )
