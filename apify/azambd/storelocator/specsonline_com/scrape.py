@@ -1,6 +1,6 @@
 import re
 import json
-from sgrequests import SgRequests, SgRequestError
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 from sgscrape import simple_scraper_pipeline as sp
 from sglogging import sglog
