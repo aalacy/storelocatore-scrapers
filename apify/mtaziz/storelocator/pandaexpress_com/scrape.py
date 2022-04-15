@@ -160,7 +160,7 @@ def fetch_data(sgw: SgWriter):
     logger.info("Started")
     search_us = DynamicGeoSearch(
         country_codes=[SearchableCountries.USA],
-        expected_search_radius_miles=20,
+        expected_search_radius_miles=10,
         granularity=Grain_8(),
         use_state=False,
     )
