@@ -35,8 +35,8 @@ def fetch_data(sgw: SgWriter):
             link = (
                 item.text.replace(",", "")
                 .replace("-&", "")
-                .replace("-n-w", "-nw")
-                .replace("-nwashington", "-n-washington")
+                .replace("-dr-n-w", "-dr-nw")
+                .replace("912-n-w", "912-nw")
                 .replace("--", "-")
                 .split("-suite")[0]
                 .split("-#")[0]
