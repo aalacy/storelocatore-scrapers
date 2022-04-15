@@ -89,6 +89,7 @@ def fetch_data():
         addr = _["address"]
         yield SgRecord(
             page_url=page_url,
+            store_number=sp1.select_one("main.store-detail-page")["data-shop-number"],
             location_name=_["name"],
             street_address=addr["streetAddress"],
             city=addr["addressLocality"],
