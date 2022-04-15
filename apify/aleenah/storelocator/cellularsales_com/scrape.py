@@ -18,7 +18,6 @@ def write_output(data):
 
 
 def fetch_data(http: SgRequests, search: DynamicGeoSearch):
-    # Your scraper here
 
     headers = {
         "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
@@ -33,6 +32,7 @@ def fetch_data(http: SgRequests, search: DynamicGeoSearch):
         "upgrade-insecure-requests": "1",
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.107 Safari/537.36",
     }
+    checklist = []
     state = CrawlStateSingleton.get_instance()
     for lati, longi in search:
         rec_count = state.get_misc_value(
@@ -56,13 +56,14 @@ def fetch_data(http: SgRequests, search: DynamicGeoSearch):
             continue
         if allocs:
             search.found_location_at(lati, longi)
-
         for al in allocs:
+            if al["id"] in checklist:
+                continue
+            checklist.append(al["id"])
 
             zip = al["zip"].split("-")[0].strip()
             if len(zip) == 4:
                 zip = "0" + zip
-
             try:
                 tim = (
                     al["hours"]
@@ -77,7 +78,7 @@ def fetch_data(http: SgRequests, search: DynamicGeoSearch):
                 )
             except:
                 tim = "<MISSING>"
-
+            logger.info(al)
             yield SgRecord(
                 locator_domain="https://www.cellularsales.com",
                 page_url=al["permalink"],
