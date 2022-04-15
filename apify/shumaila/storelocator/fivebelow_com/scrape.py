@@ -128,8 +128,10 @@ def fetch_data():
             if len(hours) < 3:
                 hours = "<MISSING>"
             ltype = "<MISSING>"
+            if "opening" in loc["additionalHoursText"].lower():
+                ltype = "Opening Soon"
             if "10804 Kings Road" in street:
-                ltype = "Coming Soon"
+                ltype = "Opening Soon"
             if True:
                 if "<MISSING>" in hours:
 
@@ -179,10 +181,13 @@ def fetch_data():
                 .strip()
             )
             street = street.replace("," + state, "")
+            title = title.replace("five below", "").strip()
+            if len(title) < 3:
+                title = street
             yield SgRecord(
                 locator_domain="https://fivebelow.com/",
                 page_url=link,
-                location_name=title.replace("five below ", "").strip(),
+                location_name=title.strip(),
                 street_address=street.strip(),
                 city=city.strip(),
                 state=state.strip(),

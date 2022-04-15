@@ -8,7 +8,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sglogging import SgLogSetup
 
-logger = SgLogSetup().get_logger("auchan.lu")
+logger = SgLogSetup().get_logger("auchan.pl")
 
 
 def get_location_type(types):
@@ -23,9 +23,12 @@ def get_location_type(types):
 
 def get_locations(session):
     session.get("https://www.auchan.pl/pl/znajdz-sklep")
-    session.refresh()
+    session.execute_script("open('https://www.auchan.pl/pl/znajdz-sklep')")
     sleep(10)
+    session.refresh()
+    sleep(180)
     soup = BeautifulSoup(session.page_source, "html.parser")
+    logger.info(session.page_source)
 
     return [
         f"https://www.auchan.pl{item['href']}"
