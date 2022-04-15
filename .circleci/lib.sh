@@ -177,9 +177,9 @@ check_internal_library_versions() {
 }
 
 function grep_and_get_exit_code() {
-  export what="${1}"
-  export how="${2}"
-  exit_code_of 'echo "${what}" | grep -F "${how}"'
+  export where="${1}"
+  export what="${2}"
+  exit_code_of 'echo "${where}" | grep -F "${what}"'
 }
 
 check_how_records_are_written_to_file() {
@@ -209,6 +209,22 @@ check_how_records_are_written_to_file() {
       fi
     elif [ "$using_ssp" -ne 0 ] && [ "$using_sgcrawler" -ne 0 ]; then
       echo "FAIL: The script should use either SgWriter, SimpleScraperPipeline or SgCrawler to write to file"
+      exit_status=1
+    fi
+  fi
+  return $exit_status
+}
+
+function check_sgrequests_uses_prod_proxies() {
+  exit_status=0
+  updated_crawler="$(get_updated_crawler)"
+  if ! is_node_scraper "$updated_crawler"; then
+    script_path="${updated_crawler}/scrape.py"
+    script_src="$(cat "$script_path")"
+    using_test_proxies_1="$(grep_and_get_exit_code "$script_src" "TEST_PROXY_ESCALATION_ORDER")"
+
+    if [ "$using_test_proxies_1" -eq 0 ]; then
+      echo "FAIL: ProxySettings.TEST_PROXY_ESCALATION_ORDER detected; please do not set proxy_escalation_order in SgRequests"
       exit_status=1
     fi
   fi
