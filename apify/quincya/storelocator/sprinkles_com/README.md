@@ -1,2 +1,2 @@
 --ignore StreetAddressHasNumber (Las Vegas street name missing)
---ignore CountValidator --ignore StateLevelCountValidator (Site has 36 POI, validation expected 24)
+--ignore CountValidator --ignore StateLevelCountValidator (Site has 46 POI, validation expected 24)

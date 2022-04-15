@@ -5,6 +5,8 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import lxml.html
 import json
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
 website = "junglejims.ca"
@@ -24,11 +26,11 @@ def fetch_data():
 
     store_ids = dict()
 
-    stores = search_sel.xpath('//ul[@class="multi-column-dropdown"]/li')
+    stores = search_sel.xpath("//a[@data-location-id]")
     for store in stores:
-        key = "".join(store.xpath("./a/text()")).strip()  # restautrant name as key
+        key = "".join(store.xpath("text()")).strip()  # restautrant name as key
         store_ids[key] = "".join(
-            store.xpath("./a/@data-location-id")
+            store.xpath("@data-location-id")
         )  # resturant_id as value
 
     restaurant_list = search_sel.xpath('//div[@class="address-marker"]')
@@ -38,16 +40,15 @@ def fetch_data():
         page_url = search_url
         locator_domain = website
 
-        location_name = "".join(restaurant.xpath(".//h4/text()")).strip()
+        location_name = "".join(restaurant.xpath(".//h2/text()")).strip()
 
         street_address = " ".join(restaurant.xpath(".//address/text()")).strip()
 
-        city = location_name
-        state = "<MISSING>"
+        city = location_name.split(",")[0].strip().split("(")[0].strip()
+        state = location_name.split(",")[-1].strip()
         zip = "<MISSING>"
 
-        country = "CA"
-        country_code = country
+        country_code = "CA"
 
         store_number = store_ids[location_name]
 
@@ -88,7 +89,9 @@ def fetch_data():
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.StoreNumberId)
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

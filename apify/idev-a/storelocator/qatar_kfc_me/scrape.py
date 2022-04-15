@@ -2,7 +2,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from bs4 import BeautifulSoup as bs
 from sgrequests import SgRequests
-from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 import math
 from concurrent.futures import ThreadPoolExecutor
@@ -94,9 +94,9 @@ def fetch_data():
                     if _p(hours[-1]):
                         phone = hours[-1]
                         del hours[-1]
-
                 yield SgRecord(
                     page_url=page_url,
+                    store_number=_.select_one(".store-sel-btn")["data-location"],
                     location_name=_.select_one(".store-name").text.strip(),
                     street_address=_.select_one(".store-address").text.strip(),
                     city=city["CityName"],
@@ -109,18 +109,7 @@ def fetch_data():
 
 
 if __name__ == "__main__":
-    with SgWriter(
-        SgRecordDeduper(
-            SgRecordID(
-                {
-                    SgRecord.Headers.PHONE,
-                    SgRecord.Headers.CITY,
-                    SgRecord.Headers.STREET_ADDRESS,
-                    SgRecord.Headers.PAGE_URL,
-                }
-            )
-        )
-    ) as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

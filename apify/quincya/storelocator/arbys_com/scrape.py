@@ -1,50 +1,25 @@
-import csv
 import json
+import time
 
 from bs4 import BeautifulSoup
 
 from sglogging import SgLogSetup
 
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+
 from sgrequests import SgRequests
 
-logger = SgLogSetup().get_logger("arbys.com")
+logger = SgLogSetup().get_logger("arbys_com")
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def fetch_data(sgw: SgWriter):
 
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+    base_link = "https://locations.arbys.com/"
 
-
-def fetch_data():
-
-    base_link = "https://locations.arbys.com/?_ga=2.162119932.1183880869.1626249434-1748791237.1623814424"
-
-    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36"
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
     headers = {"User-Agent": user_agent}
 
     session = SgRequests()
@@ -57,11 +32,12 @@ def fetch_data():
     for main_item in main_items:
         main_link = main_item["href"]
 
-        state_count = []
         logger.info("Processing: " + main_link)
         req = session.get(main_link, headers=headers)
         base = BeautifulSoup(req.text, "lxml")
+        state_count = int(base.find(class_="h2").text.split()[0])
         next_items = base.find(class_="border-container-top").find_all(class_="ga-link")
+        link_num = 0
         for next_item in next_items:
             link = next_item["href"]
             next_req = session.get(link, headers=headers)
@@ -69,10 +45,37 @@ def fetch_data():
 
             other_links = next_base.find_all(class_="location-name ga-link")
             for other_link in other_links:
-                link = other_link["href"]
-                final_links.append(link)
-                state_count.append(state_count)
-        logger.info(len(state_count))
+                new_link = other_link["href"]
+                if new_link not in final_links:
+                    final_links.append(new_link)
+                    link_num = link_num + 1
+        logger.info("Expected: " + str(state_count) + " / Found: " + str(link_num))
+        for i in range(5):
+            if state_count - link_num > 10:
+                logger.info("DIFF TOO BIG..RECHECK!")
+                session = SgRequests()
+                time.sleep(10)
+                logger.info("Processing: " + main_link)
+                req = session.get(main_link, headers=headers)
+                base = BeautifulSoup(req.text, "lxml")
+                state_count = int(base.find(class_="h2").text.split()[0])
+                next_items = base.find(class_="border-container-top").find_all(
+                    class_="ga-link"
+                )
+                link_num = 0
+                for next_item in next_items:
+                    link = next_item["href"]
+                    next_req = session.get(link, headers=headers)
+                    next_base = BeautifulSoup(next_req.text, "lxml")
+
+                    other_links = next_base.find_all(class_="location-name ga-link")
+                    for other_link in other_links:
+                        new_link = other_link["href"]
+                        if new_link not in final_links:
+                            final_links.append(new_link)
+                            link_num = link_num + 1
+            else:
+                break
 
     logger.info("Processing %s links ..." % (len(final_links)))
     for final_link in final_links:
@@ -90,7 +93,7 @@ def fetch_data():
             location_name = item.find(class_="h2").text.strip()
         except:
             location_name = store["name"]
-        street_address = store["address"]["streetAddress"].strip()
+        street_address = store["address"]["streetAddress"].split("Eatonton,")[0].strip()
         city = store["address"]["addressLocality"]
         state = store["address"]["addressRegion"]
         zip_code = store["address"]["postalCode"]
@@ -108,9 +111,12 @@ def fetch_data():
             phone = "<MISSING>"
         if not location_name:
             location_name = "<MISSING>"
-        store_number = (
-            item.find(class_="store-id").text.replace("Store ID:", "").strip()
-        )
+        try:
+            store_number = (
+                item.find(class_="store-id").text.replace("Store ID:", "").strip()
+            )
+        except:
+            store_number = ""
         latitude = store["geo"]["latitude"]
         longitude = store["geo"]["longitude"]
 
@@ -121,27 +127,25 @@ def fetch_data():
         except:
             hours_of_operation = "<MISSING>"
 
-        yield [
-            locator_domain,
-            final_link,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip_code,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
+        sgw.write_row(
+            SgRecord(
+                locator_domain=locator_domain,
+                page_url=final_link,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_code,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
+        )
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    fetch_data(writer)

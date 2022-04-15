@@ -48,6 +48,8 @@ def fetch_data():
 
         city = store["cityname"]
         state = store["statename"]
+        if state is None or len(state) <= 0:
+            continue
         zip = store["zipcode"]
 
         country_code = store["countryname"]

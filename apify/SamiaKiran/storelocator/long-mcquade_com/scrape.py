@@ -1,19 +1,33 @@
 import unicodedata
+from sglogging import sglog
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-website = "long-mcquade_com"
-log = SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
+website = "long-mcquade_com/"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
 headers = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36",
-    "Accept": "application/json",
+    "authority": "www.long-mcquade.com",
+    "sec-ch-ua": '" Not;A Brand";v="99", "Google Chrome";v="97", "Chromium";v="97"',
+    "accept": "application/json, text/javascript, */*; q=0.01",
+    "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
+    "x-requested-with": "XMLHttpRequest",
+    "sec-ch-ua-mobile": "?0",
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.71 Safari/537.36",
+    "sec-ch-ua-platform": '"Windows"',
+    "origin": "https://www.long-mcquade.com",
+    "sec-fetch-site": "same-origin",
+    "sec-fetch-mode": "cors",
+    "sec-fetch-dest": "empty",
+    "referer": "https://www.long-mcquade.com/locations/alberta/",
+    "accept-language": "en-US,en;q=0.9",
 }
 DOMAIN = "https://long-mcquade.com/"
-MISSING = "<MISSING>"
+MISSING = SgRecord.MISSING
 
 
 def strip_accents(text):
@@ -92,7 +106,9 @@ def fetch_data():
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

@@ -1,118 +1,95 @@
+import ssl
+from lxml import etree
+from urllib.parse import urljoin
+from time import sleep
+
 from sgrequests import SgRequests
-from bs4 import BeautifulSoup
-import csv
-import re
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
+from sgselenium.sgselenium import SgChrome
 
-BASE_URL = 'https://www.softsurroundings.com'
-MISSING = '<MISSING>'
-INACCESSIBLE = '<INACCESSIBLE>'
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
-        # Header
-        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-def remove_non_ascii_characters(string):
-    return ''.join([i if ord(i) < 128 else '' for i in string]).strip()
-
-def parse_address(address):
-    zipcode = re.findall(r' \d{5}', address)[0]
-    address = address.replace(zipcode, '')
-    city, state = address.split(',')
-    return [
-        remove_non_ascii_characters(item)
-        for item in [city, state, zipcode]
-    ]
 
 def fetch_data():
-
-    data = []
-
-    base_link = 'https://www.softsurroundings.com/stores/all/'
-
-    user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36'
-    HEADERS = {'User-Agent' : user_agent}
-
     session = SgRequests()
-    req = session.get(base_link, headers = HEADERS)
-    base = BeautifulSoup(req.text,"lxml")
 
-    store_urls = [
-        "https://www.softsurroundings.com" + a_tag['href']
-        for a_tag in base.find(id="storeResults").find_all(class_="button thin")
-    ]
+    start_url = "https://www.softsurroundings.com/stores/all/"
+    domain = "softsurroundings.com"
+    hdr = {
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
+    }
+    response = session.get(start_url, headers=hdr)
+    dom = etree.HTML(response.text)
 
-    for store_url in store_urls:
-        if "///" in store_url:
-            continue
-            
-        req = session.get(store_url, headers = HEADERS)
-        base = BeautifulSoup(req.text,"lxml")
+    all_locations = dom.xpath('//a[contains(text(), "visit store page")]/@href')
+    with SgChrome() as driver:
+        for url in all_locations:
+            page_url = urljoin(start_url, url)
+            driver.get(page_url)
+            sleep(10)
+            loc_dom = etree.HTML(driver.page_source)
 
-        location_name = base.h2.text.strip()
+            location_name = loc_dom.xpath('//h2[@class="sans storeName"]/text()')[0]
+            raw_data = loc_dom.xpath('//ul[@class="storeList"]/li/text()')
+            phone = loc_dom.xpath('//li[img[@class="phoneicon"]]/text()')
+            phone = phone[0] if phone else ""
+            store_number = loc_dom.xpath('//input[@id="storeId"]/@value')[0]
+            geo = (
+                loc_dom.xpath('//a[contains(@href, "maps/@")]/@href')[0]
+                .split("/@")[-1]
+                .split(",")[:2]
+            )
+            hoo = loc_dom.xpath(
+                '//h4[contains(text(), "Store Hours:")]/following-sibling::p[1]//text()'
+            )
+            hoo = (
+                " ".join([e.strip() for e in hoo if e.strip()])
+                .replace("\xa0", " ")
+                .split("order. ")[-1]
+                .strip()
+            )
 
-        address = list(base.find(class_='storeList').stripped_strings)
-        street_address = address[0]
-        city, state, zipcode = parse_address(address[1])
-        state = re.findall(r'[A-Z]{2}', state)[0]
-        phone = address[2]
-        store_number = base.find(id='storeId')['value']
+            item = SgRecord(
+                locator_domain=domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=raw_data[0],
+                city=raw_data[1].split(", ")[0],
+                state=raw_data[1].split(", ")[-1].split()[0],
+                zip_postal=raw_data[1].split(", ")[-1].split()[1],
+                country_code="",
+                store_number=store_number,
+                phone=phone,
+                location_type="",
+                latitude=geo[0],
+                longitude=geo[1],
+                hours_of_operation=hoo,
+            )
 
-        hours_of_operation = " ".join(list(base.find(style="line-height:2.0em;margin-bottom:0.5em;").stripped_strings)).replace("\xa0"," ") \
-            .replace("Now Open", '').replace("Now open", '') \
-            .replace("!", '').replace("Store Hours:","").strip()
+            yield item
 
-        try:
-            hours_of_operation = hours_of_operation.split("order.")[1].strip()
-        except:
-            pass
-
-        if not hours_of_operation:
-            hours_of_operation = " ".join(list(base.find(class_="MsoNormal").stripped_strings)).replace("\xa0"," ") \
-                .replace("Now Open", '').replace("Now open", '') \
-                .replace("!", '').replace("Store Hours:","").strip()
-
-        if 'Opening' in hours_of_operation: continue
-
-        # Maps
-        map_link = base.find(class_='storeList').a["href"]
-        req = session.get(map_link, headers = HEADERS)
-        maps = BeautifulSoup(req.text,"lxml")
-
-        try:
-            raw_gps = maps.find('meta', attrs={'itemprop': "image"})['content']
-            lat = raw_gps[raw_gps.find("=")+1:raw_gps.find("%")].strip()
-            lon = raw_gps[raw_gps.find("-"):raw_gps.find("&")].strip()
-        except:
-            lat = "<MISSING>"
-            lon = "<MISSING>"
-
-        data.append([
-            BASE_URL,
-            store_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zipcode,
-            'US',
-            store_number,
-            phone,
-            MISSING,
-            lat,
-            lon,
-            hours_of_operation
-        ])
-
-    return data
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
-scrape()
+
+if __name__ == "__main__":
+    scrape()

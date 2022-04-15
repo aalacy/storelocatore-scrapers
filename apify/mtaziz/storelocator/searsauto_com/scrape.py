@@ -52,7 +52,7 @@ def fetch_data():
     unique_rows = []
     search = DynamicZipSearch(
         country_codes=[SearchableCountries.USA],
-        max_radius_miles=MAX_DISTANCE,
+        max_search_distance_miles=MAX_DISTANCE,
         max_search_results=MAX_RESULTS,
     )
     maxZ = search.items_remaining()

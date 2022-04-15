@@ -1,111 +1,73 @@
-import csv
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
-    locator_domain = "https://brownsshoefitcompany.com/"
-    api_url = "https://brownsshoefitco.locally.com/stores/conversion_data?has_data=true&company_id=12247&inline=1&only_retailer_id=12247&only_store_id=false"
-
-    session = SgRequests()
-    r = session.get(api_url)
+def fetch_data(sgw: SgWriter):
+    api = "https://brownsshoefitco.locally.com/stores/conversion_data"
+    r = session.get(api, params=params, headers=headers)
     js = r.json()["markers"]
 
     for j in js:
-        location_name = j.get("name") or "<MISSING>"
-        street_address = j.get("address") or "<MISSING>"
-        city = j.get("city") or "<MISSING>"
-        state = j.get("state") or "<MISSING>"
-        postal = j.get("zip") or "<MISSING>"
-        country_code = j.get("country") or "<MISSING>"
-        store_number = j.get("id") or "<MISSING>"
+        location_name = j.get("name")
+        street_address = j.get("address")
+        city = j.get("city")
+        state = j.get("state")
+        postal = j.get("zip")
+        store_number = j.get("id")
         page_url = f'https://stores.brownsshoefitcompany.com/{j.get("slug")}'
-        phone = j.get("phone") or "<MISSING>"
-        latitude = j.get("lat") or "<MISSING>"
-        longitude = j.get("lng") or "<MISSING>"
-        location_type = "<MISSING>"
+        phone = j.get("phone")
+        latitude = j.get("lat")
+        longitude = j.get("lng")
 
         _tmp = []
-        days = [
-            "monday",
-            "tuesday",
-            "wednesday",
-            "thursday",
-            "friday",
-            "saturday",
-            "sunday",
-        ]
-        for d in days:
-            part = d[:3]
-            start = str(j.get(f"{part}_time_open"))
-            close = str(j.get(f"{part}_time_close"))
-            if start == "0":
-                _tmp.append(f"{d.capitalize()}: Closed")
-            else:
-                if len(start) == 3:
-                    start = f"0{start}"
-                if start == "15":
-                    start = "1200"
-                start = start[:2] + ":" + start[2:]
-                close = close[:2] + ":" + close[2:]
-                _tmp.append(f"{d.capitalize()}: {start} - {close}")
+        days = j.get("display_dow") or {}
+        for d in days.values():
+            day = d.get("label")
+            inter = d.get("bil_hrs")
+            _tmp.append(f"{day}: {inter}")
 
-        hours_of_operation = ";".join(_tmp) or "<MISSING>"
+        hours_of_operation = ";".join(_tmp)
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
+        row = SgRecord(
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code="US",
+            phone=phone,
+            store_number=store_number,
+            latitude=latitude,
+            longitude=longitude,
+            locator_domain=locator_domain,
+            hours_of_operation=hours_of_operation,
+        )
 
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://brownsshoefitcompany.com/"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:94.0) Gecko/20100101 Firefox/94.0",
+        "Accept": "application/json, text/javascript, */*; q=0.01",
+    }
+
+    params = (
+        ("has_data", "true"),
+        ("company_id", "12247"),
+        ("inline", "1"),
+        ("map_center_lat", "39.65780487864641"),
+        ("map_center_lng", "-96.3291944123471"),
+        ("map_distance_diag", "507.1332170273249"),
+        ("sort_by", "proximity"),
+        ("no_variants", "0"),
+        ("only_retailer_id", "12247"),
+    )
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+        fetch_data(writer)

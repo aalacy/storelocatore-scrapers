@@ -1,124 +1,87 @@
-import csv
 from time import sleep
 from lxml import etree
+from urllib.parse import urljoin
+from selenium.webdriver.common.keys import Keys
 
 from sgrequests import SgRequests
-from sgselenium import SgChrome
-
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries
+from sgselenium.sgselenium import SgFirefox
 
 
 def fetch_data():
-    # Your scraper here
-    session = SgRequests().requests_retry_session(retries=0, backoff_factor=0.3)
-
-    items = []
-
-    DOMAIN = "allenedmonds.com"
+    session = SgRequests()
+    domain = "allenedmonds.com"
     start_url = "https://www.allenedmonds.com/stores"
 
-    with SgChrome() as driver:
-        driver.get(start_url)
-        sleep(2)
-        driver.find_element_by_id("dwfrm_storelocator_maxdistance").click()
-        sleep(2)
-        driver.find_element_by_xpath('//option[@label="USA"]').click()
-        sleep(2)
-        driver.find_element_by_id("dwfrm_storelocator_postalCode").send_keys("10001")
-        sleep(2)
-        driver.find_element_by_name("dwfrm_storelocator_findbyzip").click()
-        sleep(2)
-        dom = etree.HTML(driver.page_source)
+    all_codes = DynamicZipSearch(
+        country_codes=[SearchableCountries.USA], expected_search_radius_miles=100
+    )
+    with SgFirefox() as driver:
+        for code in all_codes:
+            driver.get(start_url)
+            sleep(5)
+            driver.find_element_by_name("zip").send_keys(code)
+            sleep(2)
+            driver.find_element_by_name("zip").send_keys(Keys.ENTER)
+            sleep(3)
+            dom = etree.HTML(driver.page_source)
 
-    all_locations = dom.xpath('//a[@class="store-link"]/@href')
-    for store_url in all_locations:
-        loc_response = session.get(store_url)
-        loc_dom = etree.HTML(loc_response.text)
+            all_locations = dom.xpath(
+                '//a[span[contains(text(), "Store Details")]]/@href'
+            )
+            for page_url in all_locations:
+                if "/stores/null" in page_url:
+                    continue
+                page_url = urljoin(start_url, page_url)
+                loc_response = session.get(page_url)
+                loc_dom = etree.HTML(loc_response.text)
 
-        location_name = loc_dom.xpath('//div[@id="primary"]/h1/text()')
-        location_name = location_name[0] if location_name else "<MISSING>"
-        street_address = loc_dom.xpath('//span[@itemprop="streetAddress"]/text()')
-        street_address = street_address[0] if street_address else "<MISSING>"
-        city = loc_dom.xpath('//span[@itemprop="addressLocality"]/text()')
-        city = city[0] if city else "<MISSING>"
-        state = loc_dom.xpath('//span[@itemprop="addressRegion"]/text()')
-        state = state[0] if state else "<MISSING>"
-        zip_code = loc_dom.xpath('//span[@itemprop="postalCode"]/text()')
-        zip_code = zip_code[0] if zip_code else "<MISSING>"
-        country_code = loc_dom.xpath('//span[@itemprop="addressCountry"]/text()')
-        country_code = country_code[0] if country_code else "<MISSING>"
-        if country_code == "Italy":
-            continue
-        store_number = loc_dom.xpath('//input[@name="storeid"]/@value')
-        store_number = store_number[0] if store_number else "<MISSING>"
-        phone = loc_dom.xpath('//span[@itemprop="telephone"]/text()')
-        phone = phone[0] if phone else "<MISSING>"
-        location_type = loc_dom.xpath("//div/@itemtype")[0].split("/")[-1]
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
-        hours_of_operation = loc_dom.xpath(
-            '//h2[contains(text(), "Hours:")]/following-sibling::p[2]//text()'
-        )
-        hours_of_operation = [
-            elem.strip() for elem in hours_of_operation if elem.strip()
-        ]
-        hours_of_operation = (
-            " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
-        )
+                location_name = loc_dom.xpath("//h1/text()")[0]
+                raw_address = loc_dom.xpath(
+                    '//div[@class="StoreListResult_address"]/span/text()'
+                )
+                if len(raw_address) > 2:
+                    raw_address = [" ".join(raw_address[:2])] + raw_address[2:]
+                phone = loc_dom.xpath('//a[contains(@href, "tel")]/text()')[0]
+                hoo = loc_dom.xpath(
+                    '//strong[contains(text(), "Store Hours")]/following-sibling::ul[1]//text()'
+                )
+                hoo = " ".join([e.strip() for e in hoo if e.strip()])
 
-        item = [
-            DOMAIN,
-            store_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip_code,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
+                item = SgRecord(
+                    locator_domain=domain,
+                    page_url=page_url,
+                    location_name=location_name,
+                    street_address=raw_address[0],
+                    city=raw_address[1].split(", ")[0],
+                    state=raw_address[1].split(", ")[-1].split()[0],
+                    zip_postal=raw_address[1].split(", ")[-1].split()[-1],
+                    country_code="",
+                    store_number=page_url.split("/")[-2],
+                    phone=phone,
+                    location_type="",
+                    latitude="",
+                    longitude="",
+                    hours_of_operation=hoo,
+                )
 
-        items.append(item)
-
-    return items
+                yield item
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":

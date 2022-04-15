@@ -1,105 +1,96 @@
-import csv
+from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgpostal.sgpostal import International_Parser, parse_address
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def fetch_data(sgw: SgWriter):
 
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
-
-    locator_domain = "https://www.frankandoak.com"
-    api_url = "https://api.frankandoak.com/v3/cms/api/collections/get/retailLocations/?token=41a3f635cc5bfdfc22a744e3215215&fieldsFilter[]&countryAvailability=USA&lang=en"
+    locator_domain = "https://www.frankandoak.com/"
+    api_url = "https://www.frankandoak.com/pages/stores"
     session = SgRequests()
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0",
-        "Accept": "application/json",
-        "Accept-Language": "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3",
-        "Content-Type": "application/json",
-        "Authorization": "Bearer xgqj2svoTVR7DNcy5PjHjNNLYoacUWf3gQFo2fI2",
-        "Origin": "https://www.frankandoak.com",
-        "Connection": "keep-alive",
-        "TE": "Trailers",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
-    data = '{"filter":{"active":true},"language":"en"}'
-    r = session.post(api_url, headers=headers, data=data)
-    js = r.json()["entries"]
+    r = session.get(api_url, headers=headers)
+    tree = html.fromstring(r.text)
+    div = tree.xpath('//div[contains(@class, "store-col")]')
+    for d in div:
 
-    for j in js:
-        page_url = f"https://www.frankandoak.com/stores/{j.get('url')}"
-        location_name = j.get("name")
-        location_type = j.get("storeType")
-        street_address = j.get("address")
-        phone = j.get("phone")
-        state = j.get("province")
-        postal = j.get("zip")
-        country_code = j.get("country")
-        city = j.get("city")
-        store_number = "<MISSING>"
-        latitude = j.get("lat")
-        longitude = j.get("lng")
-        days = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]
-        tmp = []
-        for d in days:
-            day = d
-            time = j.get("hours").get(f"{d}")
-            line = f"{day} {time}"
-            tmp.append(line)
-        hours_of_operation = "; ".join(tmp)
-        if hours_of_operation.count("closed") == 7:
-            hours_of_operation = "Closed"
+        page_url = "https://www.frankandoak.com/pages/stores"
+        location_name = "".join(d.xpath(".//h3//text()"))
+        if not location_name:
+            continue
+        ad = "".join(
+            d.xpath(
+                './/i[contains(@class, "pfa-map-marker")]/following-sibling::span/text()'
+            )
+        )
+        a = parse_address(International_Parser(), ad)
+        street_address = f"{a.street_address_1} {a.street_address_2}".replace(
+            "None", ""
+        ).strip()
+        state = a.state or "<MISSING>"
+        postal = a.postcode or "<MISSING>"
+        if postal.isdigit():
+            country_code = "US"
+        else:
+            country_code = "Canada"
+        city = a.city or "<MISSING>"
+        text = "".join(d.xpath('.//li[contains(@data-href, "maps")]/@data-href'))
+        try:
+            if text.find("ll=") != -1:
+                latitude = text.split("ll=")[1].split(",")[0]
+                longitude = text.split("ll=")[1].split(",")[1].split("&")[0]
+            else:
+                latitude = text.split("@")[1].split(",")[0]
+                longitude = text.split("@")[1].split(",")[1]
+        except IndexError:
+            latitude, longitude = "<MISSING>", "<MISSING>"
+        phone = (
+            "".join(
+                d.xpath(
+                    './/i[contains(@class, "pfa-phone")]/following-sibling::span/text()'
+                )
+            )
+            or "<MISSING>"
+        )
+        hours_of_operation = (
+            " ".join(d.xpath('.//div[./p[contains(@class, "p2--tier-2")]]//text()'))
+            .replace("\n", "")
+            .strip()
+        )
+        hours_of_operation = " ".join(hours_of_operation.split())
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=SgRecord.MISSING,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+            raw_address=ad,
+        )
 
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID({SgRecord.Headers.RAW_ADDRESS, SgRecord.Headers.LOCATION_NAME})
+        )
+    ) as writer:
+        fetch_data(writer)

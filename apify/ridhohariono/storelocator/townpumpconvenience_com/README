@@ -1,0 +1,14 @@
+--ignore CountryValidator (Confirmed on webstie)
+Found 1 concerning rows. Examples:
+    state          phone        zip            REASON  rowNumber
+134    MT  406-232-30000  <MISSING>  INVALID_US_PHONE        134
+
+
+--ignore LatLngDuplicationValidator  (Confirmed on webstie)
+Found 5 <lat, lng> pair(s) that belong to multiple addresses. Examples:
+     latitude   longitude                                     street_address  num_addrs
+28   45.75456  -108.59611           {3150 King Ave W Ste A, 3150 King Ave W}          2
+32   45.77164  -111.18445        {206B W Jefferson Ave, 206 W Jefferson Ave}          2
+59   45.96979  -112.50739   {3700 Harrison Ave Ste B, 3700 Harrison Ave # 1}          2
+78   46.12767  -112.92375             {6940 Mt Hwy 1 Ste B, 6940 Mt-1 Ste A}          2
+168  47.68452  -104.17722  {3150 S Central Ave, 3150 S Central Suite Unit B}          2
