@@ -19,11 +19,6 @@ def fetch_data(sgw: SgWriter):
         line = t.xpath(".//span//text()")
         line = list(filter(None, [l.strip() for l in line]))
         street_address = line[line.index("Heartland Co-op") + 1]
-        line = line[-1]
-        city = line.split(",")[0].strip()
-        line = line.split(",")[1].strip()
-        state = line.split()[0].strip()
-        postal = line.split()[1].strip()
         slug = t.xpath(".//a/@href")
         if slug:
             page_url = f"https://heartlandcoop.com{slug[0]}"
@@ -37,11 +32,24 @@ def fetch_data(sgw: SgWriter):
                     p = t.xpath("./p")[1]
                     location_name = "".join(p.xpath(".//text()")).strip()
             page_url = SgRecord.MISSING
-        phone = (
-            t.xpath(".//*[contains(text(), 'Local Phone:')]/text()")[0]
-            .replace("Local Phone:", "")
-            .strip()
-        )
+
+        try:
+            line = line[-1]
+            city = line.split(",")[0].strip()
+            line = line.split(",")[1].strip()
+            state = line.split()[0].strip()
+            postal = line.split()[1].strip()
+        except:
+            state, postal = SgRecord.MISSING, SgRecord.MISSING
+            city = location_name
+        try:
+            phone = (
+                t.xpath(".//*[contains(text(), 'Local Phone:')]/text()")[0]
+                .replace("Local Phone:", "")
+                .strip()
+            )
+        except:
+            phone = SgRecord.MISSING
 
         row = SgRecord(
             page_url=page_url,
