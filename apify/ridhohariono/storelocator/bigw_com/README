@@ -1,0 +1,22 @@
+--ignore CountryCodeFillRateChecker (AU)
+
+--ignore StreetAddressHasNumber (Confirmed on website)
+
+--ignore GeoConsistencyValidator (Not US State)
+Found 17 concerning rows. Examples:
+      zip state                REASON  rowNumber
+116  6105    WA  ZIPCODE_NOT_IN_STATE        116
+123  6069    WA  ZIPCODE_NOT_IN_STATE        123
+125  6155    WA  ZIPCODE_NOT_IN_STATE        125
+126  6164    WA  ZIPCODE_NOT_IN_STATE        126
+132  6056    WA  ZIPCODE_NOT_IN_STATE        132
+
+
+--ignore CountryValidator (NOT US ZIP)
+Found 19 concerning rows. Examples:
+    state         phone   zip                  REASON  rowNumber
+76     NT  08 8995 9300   810  INVALID_CA_POSTAL_CODE         76
+116    WA  08 6318 9906  6105          INVALID_US_ZIP        116
+123    WA  08 9297 7100  6069          INVALID_US_ZIP        123
+125    WA  08 6318 9910  6155          INVALID_US_ZIP        125
+126    WA  08 6595 2402  6164          INVALID_US_ZIP        126

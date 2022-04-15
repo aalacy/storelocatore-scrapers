@@ -61,9 +61,8 @@ def fetch_data():
             phone = phone[0] if phone else "<MISSING>"
         else:
             phone = phone if phone else "<MISSING>"
-        location_type = "<MISSING>"
         if phone == "<MISSING>":
-            location_type = "coming soon"
+            continue
         hoo = poi_html.xpath(
             './/following-sibling::div[descendant::*[contains(text(), "HOURS:")]]//text()'
         )
@@ -81,7 +80,7 @@ def fetch_data():
             country_code=country_code,
             store_number=SgRecord.MISSING,
             phone=phone,
-            location_type=location_type,
+            location_type="",
             latitude=SgRecord.MISSING,
             longitude=SgRecord.MISSING,
             hours_of_operation=hours_of_operation,

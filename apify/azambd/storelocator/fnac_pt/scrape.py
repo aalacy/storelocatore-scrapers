@@ -13,6 +13,12 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 
+import os
+
+os.environ[
+    "PROXY_URL"
+] = "http://groups-RESIDENTIAL,country-pt:{}@proxy.apify.com:8000/"
+
 website = "https://www.fnac.pt"
 store_url = "https://www.fnac.pt/localize-loja-fnac/w-4"
 MISSING = SgRecord.MISSING
@@ -21,8 +27,6 @@ log = sglog.SgLogSetup().get_logger(logger_name=website)
 
 
 ssl._create_default_https_context = ssl._create_unverified_context
-
-user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.45 Safari/537.36"
 
 
 def driver_sleep(driver, time=2):
@@ -39,7 +43,7 @@ def random_sleep(driver, start=5, limit=3):
 
 
 def fetch_stores():
-    with SgChrome(user_agent=user_agent) as driver:
+    with SgChrome() as driver:
         driver.get(store_url)
         random_sleep(driver, 20)
         return json.loads(driver.page_source.split("fnacStoreData =")[1].split(";")[0])[

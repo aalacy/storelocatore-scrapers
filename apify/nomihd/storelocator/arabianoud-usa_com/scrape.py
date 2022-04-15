@@ -134,6 +134,8 @@ def fetch_data():
                 .strip()
                 .replace("Opening hours :;", "")
                 .strip()
+                .replace("Welcome to our Arabian Oud Outlet;", "")
+                .strip()
             )
             if len(hours_of_operation) > 0 and hours_of_operation[0] == ":":
                 hours_of_operation = "".join(hours_of_operation[1:]).strip()
@@ -144,6 +146,13 @@ def fetch_data():
                 and hours_of_operation[1] == ";"
             ):
                 hours_of_operation = "".join(hours_of_operation[2:]).strip()
+
+            if len(hours_of_operation) > 0 and hours_of_operation[0] == ";":
+                hours_of_operation = "".join(hours_of_operation[1:]).strip()
+
+            if "opening soon" in hours_of_operation.lower():
+                hours_of_operation = "<MISSING>"
+                location_type = "Coming Soon"
 
             store_number = store["id"]
 

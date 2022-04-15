@@ -86,8 +86,6 @@ def fetch_data():
             state = "<MISSING>"
             zc = "<MISSING>"
             hours = "Sun-Wed: 10AM - 10PM; Thur-Sat: 10AM - MIDNIGHT"
-        if "-Sat:" in line:
-            hours = line.split("<span>")[1].split("<")[0]
         if Found and '<a href="https://www.williams-sonoma.com/stores/' in line:
             loc = line.split('href="')[1].split('"')[0]
         if Found and "</div>" in line:
@@ -181,6 +179,18 @@ def fetch_data():
     website = "williams-sonoma.com"
     country = "US"
     logger.info("Pulling Stores")
+    surls = []
+    surl = "https://www.williams-sonoma.com/customer-service/store-locator.html"
+    r2 = session.get(surl, headers=headers)
+    for line2 in r2.iter_lines():
+        if '{"storeNumber":' in line2:
+            items = line2.split('{"storeNumber":')
+            for item in items:
+                if '"storeIdentifier":"' in item:
+                    sid = item.split(",")[0]
+                    sstub = item.split('"storeIdentifier":"')[1].split('"')[0]
+                    sweb = "https://www.williams-sonoma.com/stores/us-" + sstub
+                    surls.append(sid + "|" + sweb)
     for line in r.iter_lines():
         if '{"properties":' in line:
             items = line.split('{"properties":')
@@ -245,22 +255,26 @@ def fetch_data():
                         add = add.split("Williams")[0].strip()
                     if "WILLIAMS" in add:
                         add = add.split("WILLIAMS")[0].strip()
-                    yield SgRecord(
-                        locator_domain=website,
-                        page_url=loc,
-                        location_name=name,
-                        street_address=add,
-                        city=city,
-                        state=state,
-                        zip_postal=zc,
-                        country_code=country,
-                        phone=phone,
-                        location_type=typ,
-                        store_number=store,
-                        latitude=lat,
-                        longitude=lng,
-                        hours_of_operation=hours,
-                    )
+                    for sitem in surls:
+                        if sitem.split("|")[0] == store:
+                            loc = sitem.split("|")[1]
+                    if "customer-service/store-locator.html" not in loc:
+                        yield SgRecord(
+                            locator_domain=website,
+                            page_url=loc,
+                            location_name=name,
+                            street_address=add,
+                            city=city,
+                            state=state,
+                            zip_postal=zc,
+                            country_code=country,
+                            phone=phone,
+                            location_type=typ,
+                            store_number=store,
+                            latitude=lat,
+                            longitude=lng,
+                            hours_of_operation=hours,
+                        )
 
 
 def scrape():

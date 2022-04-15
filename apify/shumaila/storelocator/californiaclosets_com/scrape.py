@@ -26,14 +26,22 @@ def fetch_data():
         city = loc["address"]["addressLocality"]
         state = loc["address"]["addressRegion"]
         pcode = loc["address"]["postalCode"]
-        ccode = loc["address"]["addressCountry"]
+        try:
+            ccode = loc["address"]["addressCountry"]
+        except:
+            if pcode.strip().isdigit():
+                ccode = "US"
+            else:
+                ccode = "CA"
         ltype = loc["image"]
         if len(phone) < 3:
             ltype = "Coming Soon"
         else:
             ltype = "<MISSING>"
-        r = session.get(link, headers=headers)
+        lat = longt = hours = "<MISSING>"
         try:
+            r = session.get(link, headers=headers)
+            soup = BeautifulSoup(r.text, "html.parser")
             if len(pcode) < 3:
                 try:
                     pcode = (
@@ -43,81 +51,108 @@ def fetch_data():
                         .strip()
                     )
                 except:
-                    pcode = (
-                        r.text.split('"postalCode":"', 1)[1].split('"', 1)[0].strip()
-                    )
+                    try:
+                        pcode = (
+                            r.text.split('"postalCode":"', 1)[1]
+                            .split('"', 1)[0]
+                            .strip()
+                        )
+                    except:
+                        pcode = soup.find(
+                            "span", {"class": "c-address-postal-code"}
+                        ).text
             try:
                 lat = r.text.split('"latitude":', 1)[1].split(",", 1)[0]
                 longt = r.text.split('"longitude":', 1)[1].split("}", 1)[0]
             except:
-                lat = r.text.split('latitude" content="', 1)[1].split('"', 1)[0]
-                longt = r.text.split('longitude" content="', 1)[1].split('"', 1)[0]
+                try:
+                    lat = r.text.split('latitude" content="', 1)[1].split('"', 1)[0]
+                    longt = r.text.split('longitude" content="', 1)[1].split('"', 1)[0]
+                except:
+                    try:
+                        lat, longt = (
+                            r.text.split('data-coordinates="', 1)[1]
+                            .split('"', 1)[0]
+                            .split(",", 1)
+                        )
+                    except:
+
+                        lat = longt = "<MISSING>"
             soup = BeautifulSoup(r.text, "html.parser")
             try:
-                hours = (
-                    soup.find("table", {"class": "hours"})
-                    .text.replace("Day of the WeekHours", "")
-                    .replace("PM", "PM ")
-                    .replace("day", "day ")
-                    .replace("losed", "losed ")
-                    .strip()
-                )
-            except:
+                try:
+                    hours = (
+                        soup.find("table", {"class": "hours"})
+                        .text.replace("Day of the WeekHours", "")
+                        .replace("PM", "PM ")
+                        .replace("day", "day ")
+                        .replace("losed", "losed ")
+                        .strip()
+                    )
+                except:
 
-                hours = (
-                    soup.find("div", {"class": "hours"})
-                    .text.replace("SHOWROOM HOURS", "")
-                    .replace("\n", " ")
-                    .strip()
-                )
+                    hours = (
+                        soup.find("div", {"class": "hours"})
+                        .text.replace("SHOWROOM HOURS", "")
+                        .replace("\n", " ")
+                        .strip()
+                    )
+                    try:
+                        hours = hours.split("Mon", 1)[1]
+                        hours = "Mon" + hours
+                    except:
+                        pass
+                    try:
+                        hours = hours.split("More", 1)[0]
+                    except:
+                        pass
+            except:
+                hours = "<MISSING>"
+            try:
+                if "Canada" in ccode:
+                    ccode = "CA"
+                elif "USA" in ccode:
+                    ccode = "US"
+                elif "Mexico" in ccode or "Santiago" in ccode or "Garcia" in ccode:
+                    ccode = "MX"
+                elif "Domingo" in ccode:
+                    ccode = "DO"
+                elif "San Juan" in ccode:
+                    ccode = "PR"
+                else:
+                    if pcode.isdigit():
+                        ccode = "US"
+                    elif len(pcode) > 5:
+                        ccode = "CA"
+                    else:
+                        ccode = soup.find("span", {"itemprop": "addressCountry"}).text
+            except:
                 try:
-                    hours = hours.split("Mon", 1)[1]
-                    hours = "Mon" + hours
+                    ccode = (
+                        r.text.split('"streetAddress":"' + street, 1)[1]
+                        .split('"addressCountry":"', 1)[1]
+                        .split('"', 1)[0]
+                    )
                 except:
-                    pass
-                try:
-                    hours = hours.split("More", 1)[0]
-                except:
-                    pass
-        except:
-            lat = longt = hours = "<MISSING>"
-        try:
+                    try:
+                        ccode = soup.find("span", {"itemprop": "addressCountry"}).text
+                    except:
+                        if pcode.strip().isdigit():
+                            ccode = "US"
+                        else:
+                            ccode = "CA"
             if "Canada" in ccode:
                 ccode = "CA"
-            elif "USA" in ccode:
-                ccode = "US"
-            elif "Mexico" in ccode or "Santiago" in ccode or "Garcia" in ccode:
-                ccode = "MX"
-            elif "Domingo" in ccode:
-                ccode = "DO"
-            elif "San Juan" in ccode:
-                ccode = "PR"
-            else:
-                if pcode.isdigit():
-                    ccode = "US"
-                elif len(pcode) > 5:
-                    ccode = "CA"
-                else:
-                    ccode = soup.find("span", {"itemprop": "addressCountry"}).text
-        except:
             try:
-                ccode = (
-                    r.text.split('"streetAddress":"' + street, 1)[1]
-                    .split('"addressCountry":"', 1)[1]
-                    .split('"', 1)[0]
-                )
+                phone = phone.split("<", 1)[0]
             except:
-                ccode = soup.find("span", {"itemprop": "addressCountry"}).text
-        if "Canada" in ccode:
-            ccode = "CA"
-        try:
-            phone = phone.split("<", 1)[0]
-        except:
-            pass
-        if "22000 Willamette Dr" in street:
-            street = street + " Suite 103"
-        try:
-            hours = hours.split("MORE", 1)[0]
+                pass
+            if "22000 Willamette Dr" in street:
+                street = street + " Suite 103"
+            try:
+                hours = hours.split("MORE", 1)[0]
+            except:
+                pass
         except:
             pass
         yield SgRecord(
@@ -135,8 +170,8 @@ def fetch_data():
             store_number=SgRecord.MISSING,
             phone=phone.strip(),
             location_type=ltype,
-            latitude=str(lat),
-            longitude=str(longt),
+            latitude=str(lat).replace('"', ""),
+            longitude=str(longt).replace('"', ""),
             hours_of_operation=hours,
         )
 

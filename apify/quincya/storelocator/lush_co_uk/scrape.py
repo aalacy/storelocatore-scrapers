@@ -19,10 +19,12 @@ def fetch_data(sgw: SgWriter):
 
     locs = [
         "UK",
+        "UAE",
         "Australia",
-        "Hong Kong",
+        "hong kong",
         "japan",
         "new zealand",
+        "Bahrain",
         "singapore",
         "malaysia",
         "saudi arabia",
@@ -30,7 +32,7 @@ def fetch_data(sgw: SgWriter):
         "south korea",
     ]
     for loc in locs:
-        off = 0
+        off = -9
         for i in range(60):
             off = off + 9
             json = {

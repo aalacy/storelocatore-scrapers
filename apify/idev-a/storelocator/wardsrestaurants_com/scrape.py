@@ -21,7 +21,7 @@ def fetch_data():
                 street_address += " " + _["address2"]
             yield SgRecord(
                 page_url="https://wardsrestaurants.com/locations/",
-                location_name=_["name"].replace("&#8217;", "'"),
+                location_name=_["name"].replace("&#8217;", "'").replace("&#039;", "'"),
                 street_address=street_address,
                 city=_["city"],
                 state=_["state"],

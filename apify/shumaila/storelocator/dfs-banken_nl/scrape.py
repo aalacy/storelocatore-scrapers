@@ -1,5 +1,3 @@
-from bs4 import BeautifulSoup
-import re
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
@@ -7,81 +5,64 @@ from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
+headers = {
+    "User-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.90 Safari/537.36",
+}
 
 
 def fetch_data():
 
-    headers = {
-        "User-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.90 Safari/537.36",
-    }
-    cleanr = re.compile(r"<[^>]+>")
-    pattern = re.compile(r"\s\s+")
-    base_url = "https://www.dfs-banken.nl/"
-    r = session.get("https://www.dfs-banken.nl/content/winkel", headers=headers)
-    soup = BeautifulSoup(r.text, "html.parser")
-    divlist = soup.find("main", {"id": "storeDetailsPage"}).findAll("section")
-    for div in divlist:
-        title = div.find("h1").text.strip()
-        raw_address = div.find("p")
-        raw_address = re.sub(cleanr, "\n", str(raw_address))
-        raw_address = re.sub(pattern, "\n", str(raw_address))
-        raw_address1 = raw_address.replace("\n", " ").strip()
-        raw_address = raw_address.strip().splitlines()
-        city = raw_address[-1]
-        pcode = raw_address[1].replace(",", "")
-        street = raw_address[0]
+    daylist = ["mon", "tues", "wednes", "thurs", "fri", "satur", "sun"]
+    url = "https://www.dfs-banken.nl/wcs/resources/store/10701/stores?langId=31"
+    loclist = session.get(url, headers=headers).json()["stores"]
+    for loc in loclist:
 
-        try:
-            temp = " "
-            if len(city.split(",")) == 2:
-                pcode = city.split(",", 1)[0]
-                city = city.split(",", 1)[1]
-            elif len(city.split(",")) == 3:
-                pcode = city.split(",")[0]
-                temp = city.split(",")[1]
-                city = city.split(",")[2]
-            street = " ".join(raw_address[0 : len(raw_address) - 1]) + " " + temp
-        except:
-            pass
-        phone = div.find("p", {"class": "phoneDetails"}).text.split(" ", 1)[1]
-        hours = div.find("ol").text
-        hours = re.sub(pattern, " ", str(hours)).strip()
-        longt, lat = (
-            div.find("iframe")["src"]
-            .split("!2d", 1)[1]
-            .split("!2m", 1)[0]
-            .split("!3d", 1)
-        )
-        try:
-            lat = lat.split("!", 1)[0]
-        except:
-            pass
-        try:
-            store = (
-                div.find("a", {"class": "apptBtn"})["href"]
-                .split("location/", 1)[1]
-                .split("/", 1)[0]
+        store = loc["storeNumber"]
+        street = loc["address"]["line1"] + " " + str(loc["address"]["line2"])
+        street = street.replace(" None", "")
+        city = loc["address"]["city"]
+        ccode = loc["address"]["countryCode"]
+        pcode = loc["address"]["postalCode"]
+        lat = loc["yextRoutableCoordinate"]["latitude"]
+        longt = loc["yextRoutableCoordinate"]["longitude"]
+        phone = loc["mainPhone"]
+        link = "https://www.dfs-banken.nl/store-directory/" + loc["seoToken"]
+        title = loc["storeName"]
+        hourslist = loc["hours"]
+        hours = ""
+        for day in daylist:
+            day = day + "day"
+            hr = hourslist[day]
+            openstr = hr["openIntervals"][0]["start"] + " AM - "
+            closestr = hr["openIntervals"][0]["end"]
+            close = int(closestr.split(":", 1)[0])
+            if close > 12:
+                close = close - 12
+            hours = (
+                hours
+                + day
+                + " "
+                + openstr
+                + str(close)
+                + ":"
+                + closestr.split(":", 1)[1]
+                + " PM "
             )
-        except:
-            store = "<MISSING>"
-        state = "<MISSING>"
-        hours = hours.encode("ascii", "ignore").decode("ascii")
         yield SgRecord(
-            locator_domain=base_url,
-            page_url="https://www.dfs-banken.nl/content/winkel",
+            locator_domain="https://www.dfs-banken.nl/",
+            page_url=link,
             location_name=title,
-            street_address=street.replace("Ekkersrijt Ekkersrijt", "Ekkersrijt"),
+            street_address=street.strip(),
             city=city.strip(),
-            state=state.strip(),
+            state="<MISSING>",
             zip_postal=pcode,
-            country_code="NL",
+            country_code=ccode,
             store_number=str(store),
             phone=phone.strip(),
             location_type=SgRecord.MISSING,
             latitude=str(lat),
             longitude=str(longt),
             hours_of_operation=hours.replace(" â€¦", "").strip(),
-            raw_address=raw_address1,
         )
 
 

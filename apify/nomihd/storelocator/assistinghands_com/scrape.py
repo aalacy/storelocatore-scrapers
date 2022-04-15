@@ -83,6 +83,9 @@ def fetch_data():
             if not zip:
                 zip = "32819"
 
+            if street_address and street_address == "#210 Mn-7":
+                street_address = "15612 MN-7, #210"
+
             store_number = store["id"]
 
             location_type = "<MISSING>"

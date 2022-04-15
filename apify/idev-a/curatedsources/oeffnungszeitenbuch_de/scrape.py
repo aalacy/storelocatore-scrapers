@@ -77,18 +77,20 @@ def consumer(resp_generator, writer):
             ]
             rawa = [addr[8], addr[9], addr[10]]
             rawa = " ".join(rawa)
-            parsed = parse_address_intl(rawa)
-            realadd = parsed.street_address_1 if parsed.street_address_1 else ""
-            realadd = (
-                realadd + parsed.street_address_2 if parsed.street_address_2 else ""
-            )
+            parsed = parse_address_intl(rawa + ", Germany")
+            street_address = ""
+            city = parsed.city
+            zip_postal = parsed.postcode
+            if zip_postal:
+                street_address = rawa.split(zip_postal)[0].strip()
+            location_name = response["link"] if response["link"] else addr[0]
             writer.write_row(
                 SgRecord(
                     page_url=response["page_url"],
-                    location_name=response["link"] if response["link"] else addr[0],
-                    street_address=realadd if realadd else SgRecord.MISSING,
-                    city=parsed.city if parsed.city else SgRecord.MISSING,
-                    zip_postal=parsed.postcode if parsed.postcode else SgRecord.MISSING,
+                    location_name=location_name.split(":")[-1],
+                    street_address=street_address,
+                    city=city,
+                    zip_postal=zip_postal,
                     country_code="DE",
                     phone=SgRecord.MISSING,
                     locator_domain=locator_domain,

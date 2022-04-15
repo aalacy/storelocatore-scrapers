@@ -49,6 +49,8 @@ def write(data: dict, sgw: SgWriter):
 
 def get_data(slug, sgw: SgWriter):
     page_url = f"https://www.rightathomecanada.com{slug}"
+    if "-kent" in page_url:
+        return
     r = session.get(page_url)
     tree = html.fromstring(r.text)
 
@@ -123,6 +125,8 @@ def get_data(slug, sgw: SgWriter):
                     data["location_name"] = record.pop(0)
                 raw_address = " ".join(record)
                 street_address, city, state, postal = get_international(raw_address)
+                if state in postal:
+                    postal = postal.replace(state, "").strip()
                 data["street_address"] = street_address
                 data["city"] = city
                 data["state"] = state

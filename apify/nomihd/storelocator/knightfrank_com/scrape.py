@@ -58,7 +58,10 @@ def fetch_data():
                 temp_address = store.xpath("text()")
                 add_list = []
                 for temp in temp_address:
-                    if len("".join(temp).strip()) > 0:
+                    if (
+                        len("".join(temp).strip()) > 0
+                        and "".join(temp).strip() not in add_list
+                    ):
                         add_list.append("".join(temp).strip())
 
                 raw_address = ", ".join(add_list).strip()
@@ -71,6 +74,9 @@ def fetch_data():
 
                 city = formatted_addr.city
                 state = formatted_addr.state
+                if state:
+                    state = state.replace("Region", "").strip()
+
                 zip = formatted_addr.postcode
 
                 country_code = country_url.split("?country=")[1].strip()
@@ -85,6 +91,12 @@ def fetch_data():
                 hours_of_operation = "<MISSING>"
 
                 latitude, longitude = "<MISSING>", "<MISSING>"
+
+                if location_name == "Esher":
+                    zip = "KT10 9RL"
+
+                if location_name == "International Occupier Services - USA":
+                    zip = "W1U 8EW"
 
                 if "/contact/" in link:
                     page_url = link
@@ -134,12 +146,47 @@ def fetch_data():
                             if len("".join(hour).strip()) > 0:
                                 hours_list.append("".join(hour).strip())
 
-                        hours_of_operation = (
-                            "; ".join(hours_list).strip().replace("\n", "").strip()
+                        hours_temp = (
+                            "; ".join(hours_list)
+                            .strip()
+                            .replace("\r\n", "")
+                            .strip()
+                            .replace("\n", "")
+                            .strip()
+                            .replace("\t", "")
+                            .strip()
+                            .replace("day", "day:")
+                            .strip()
+                            .replace("::", ":")
+                            .strip()
+                            .split("; Bank Holiday")[0]
+                            .strip()
                         )
+                        temp_hours = hours_temp.split(";")
+                        hours_list = []
+                        if len(temp_hours) > 1:
+                            for t in temp_hours:
+                                day = t.split("day:")[0].strip() + "day:"
+                                tim = t.split("day:")[1].strip()
+                                hours_list.append(day + tim)
+
+                        hours_of_operation = "; ".join(hours_list).strip()
+
                     except SgRequestError as e:
                         log.error(e.status_code)
 
+                if (
+                    len(
+                        "".join(raw_address)
+                        .strip()
+                        .encode("ascii", "replace")
+                        .decode("utf-8")
+                        .replace("?", "")
+                        .strip()
+                    )
+                    <= 0
+                ):
+                    raw_address = "<MISSING>"
                 yield SgRecord(
                     locator_domain=locator_domain,
                     page_url=page_url,

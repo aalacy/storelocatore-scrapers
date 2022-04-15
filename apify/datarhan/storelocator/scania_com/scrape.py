@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import demjson
+
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
@@ -267,9 +269,12 @@ def fetch_data():
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
     for country_code in all_iso:
-        data = session.get(start_url.format(country_code), headers=hdr).json()
-
+        data = session.get(start_url.format(country_code), headers=hdr)
+        data = demjson.decode(data.text)
+        if not data.get("dealers"):
+            continue
         for poi in data["dealers"]:
+            page_url = f'https://www.scania.com/us/en/home/admin/misc/dealer/dealer-details.html?dealer={poi["scaniaId"]}'
             hoo = []
             if poi.get("openingHours"):
                 for e in poi["openingHours"]:
@@ -299,7 +304,7 @@ def fetch_data():
 
             item = SgRecord(
                 locator_domain=domain,
-                page_url="https://www.scania.com/us/en/home/dealer-locator.html",
+                page_url=page_url,
                 location_name=poi["organizationName"]["legalName"]["value"],
                 street_address=poi["visitingAddress"]["postalAddress"][
                     "physicalAddress"
@@ -329,7 +334,11 @@ def scrape():
     with SgWriter(
         SgRecordDeduper(
             SgRecordID(
-                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+                {
+                    SgRecord.Headers.LOCATION_NAME,
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.STORE_NUMBER,
+                }
             )
         )
     ) as writer:

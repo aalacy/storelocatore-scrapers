@@ -1,4 +1,5 @@
 import re
+import json
 
 from bs4 import BeautifulSoup
 
@@ -22,8 +23,7 @@ def fetch_data(sgw: SgWriter):
 
     base = BeautifulSoup(req.text, "lxml")
 
-    content = base.find(class_="pm-map-wrap pm-location-search-list")
-    items = content.find_all("section")
+    items = base.find_all("script", attrs={"type": "application/ld+json"})
 
     js = base.find(id="popmenu-apollo-state").contents[0]
     lats = re.findall(r'lat":[0-9]{2}\.[0-9]+', str(js))
@@ -34,40 +34,32 @@ def fetch_data(sgw: SgWriter):
         lngs.pop(0)
 
     for i, item in enumerate(items):
+        store = json.loads(item.contents[0])
+
         locator_domain = "localiyours.com"
-        location_name = item.h4.text
 
-        raw_data = list(item.a.stripped_strings)
-
-        street_address = " ".join(raw_data[:-1]).split("1st Floor")[0].strip()
-        city = raw_data[-1][: raw_data[-1].find(",")].strip()
-        state = raw_data[-1][
-            raw_data[-1].find(",") + 1 : raw_data[-1].rfind(" ")
-        ].strip()
-        zip_code = (
-            raw_data[-1].replace("</a>", "")[raw_data[-1].rfind(" ") + 1 :].strip()
-        )
-        country_code = "US"
-        store_number = "<MISSING>"
-        phone = item.findAll("p")[1].text.strip()
-        location_type = "<MISSING>"
-
-        hours_of_operation = (
-            (
-                item.find("div", attrs={"class": "hours"})
-                .text.replace("\xa0", " ")
-                .replace("pmF", "pm F")
-                .replace("pmS", "pm S")
-            )
-            .split("Open for")[0]
+        street_address = (
+            store["address"]["streetAddress"]
+            .replace("\n", " ")
+            .split("The Academy")[0]
             .strip()
         )
-        hours_of_operation = re.sub(" +", " ", hours_of_operation)
+        city = store["address"]["addressLocality"]
+        state = store["address"]["addressRegion"]
+        zip_code = store["address"]["postalCode"]
+        country_code = "US"
+
+        store_number = "<MISSING>"
+        location_type = "<MISSING>"
+        phone = store["telephone"]
+
+        hours_of_operation = " ".join(store["openingHours"])
+
+        link = store["hasMenu"]
+        location_name = link.split("/")[-1].replace("-", " ").title()
 
         latitude = lats[i].split(":")[1]
         longitude = lngs[i].split(":")[1]
-
-        link = base_link + item.find("a", string="More Info")["href"]
 
         sgw.write_row(
             SgRecord(

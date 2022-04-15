@@ -11,10 +11,13 @@ from sgscrape.sgwriter import SgWriter
 def fetch_data():
     session = SgRequests()
 
-    start_url = "https://clubdia.dia.es/ES/tiendas.v1505.json.gz"
+    start_url = "https://www.dia.es/clubdia/ES/tiendas.v{}.json.gz"
     domain = "dia.es"
 
-    response = session.get(start_url)
+    for i in range(1584, 2000):
+        response = session.get(start_url.format(str(i)))
+        if response.status_code == 200:
+            break
     all_locations = json.loads(gzip.decompress(response.content))
 
     for poi in all_locations:
@@ -46,7 +49,7 @@ def fetch_data():
             country_code="ES",
             store_number=store_number,
             phone=data["telefono"],
-            location_type=data["tipoTiendaDescripcion"],
+            location_type=data["tipoTienda"],
             latitude=poi["posicionX"],
             longitude=poi["posicionY"],
             hours_of_operation=hoo,
@@ -59,7 +62,11 @@ def scrape():
     with SgWriter(
         SgRecordDeduper(
             SgRecordID(
-                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+                {
+                    SgRecord.Headers.LOCATION_NAME,
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.STORE_NUMBER,
+                }
             )
         )
     ) as writer:

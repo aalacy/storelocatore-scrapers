@@ -16,6 +16,7 @@ headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36"
 }
 
+
 DOMAIN = "https://globus.ch"
 MISSING = SgRecord.MISSING
 
@@ -40,7 +41,9 @@ def fetch_data():
             log.info(page_url)
             r = session.get(page_url, headers=headers)
             loc = r.text.split('"address":')[1].split(',"distance":')[0]
-            location_name = loc.split('"name":"')[1].split('"')[0]
+            location_name = strip_accents(
+                r.text.split('"item":{"@id":"#","name":"')[2].split('"')[0]
+            )
             street_address = loc.split('"street":"')[1].split('"')[0]
             city = strip_accents(loc.split('"city":"')[1].split('"')[0])
             zip_postal = loc.split('"zip":"')[1].split('"')[0]

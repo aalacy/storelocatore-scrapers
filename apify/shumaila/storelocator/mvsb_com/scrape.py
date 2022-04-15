@@ -7,14 +7,14 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
-website = "rexel_fi"
+website = "mvsb_com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
 }
 
-DOMAIN = "https://rexel.fi/"
+DOMAIN = "https://www.mvsb.com"
 MISSING = SgRecord.MISSING
 
 
@@ -25,7 +25,7 @@ def fetch_data():
     divlist = str(soup.find("div", {"class": "accordion-locations"}))
     divlist = divlist.split("<h3")[1:]
     for div in divlist:
-        if "(Coming Soon)" in div:
+        if "Coming" in div:
             continue
         div = "<h3" + div
         div = BeautifulSoup(div, "html.parser")
@@ -54,6 +54,11 @@ def fetch_data():
                 street_address = street.split("(Walk", 1)[0]
             except:
                 pass
+            if "P.O. Box" in street_address:
+                street_address = street_address.split("P.O. Box")[0]
+            elif "(" in street_address:
+                street_address = street_address.split("(")[0]
+            street_address = street_address.replace(",", "")
             country_code = "US"
             yield SgRecord(
                 locator_domain=DOMAIN,

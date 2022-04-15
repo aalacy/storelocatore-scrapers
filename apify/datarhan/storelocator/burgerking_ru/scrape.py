@@ -52,7 +52,7 @@ def fetch_data():
             street_address=street_address,
             city=addr.city,
             state=addr.state,
-            zip_postal=addr.postcode,
+            zip_postal="",
             country_code=SgRecord.MISSING,
             store_number=poi["id"],
             phone=poi["phone"],

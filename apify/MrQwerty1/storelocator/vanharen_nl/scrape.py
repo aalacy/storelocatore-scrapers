@@ -34,6 +34,8 @@ def fetch_data(sgw: SgWriter):
             city = "Amsterdam"
         if "Rotterdam" in city:
             city = "Rotterdam"
+        if "-" in city and "´s" not in city:
+            city = city.split("-")[0].strip()
         location_name = f"VANHAREN {city}"
         reg = a.get("region") or {}
         state = reg.get("state")

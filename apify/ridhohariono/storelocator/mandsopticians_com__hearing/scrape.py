@@ -7,6 +7,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgpostal import parse_address_intl
 import re
+import json
 
 
 DOMAIN = "mandsopticians.com"
@@ -57,12 +58,10 @@ def fetch_data():
     log.info("Fetching store_locator data")
     soup = pull_content(LOCATION_URL)
     contents = soup.select("div.amlocator-store-desc")
-    latlong_content = soup.find(
-        "script", string=re.compile(r"const\s+locations.*")
-    ).string
-    latlong = re.findall(
-        r'"lat":"(-?[\d]*\.[\d]*)","lng":"(-?[\d]*\.[\d]*)"', latlong_content
-    )
+    script_content = soup.find(
+        "script", string=re.compile(r'\{"items":.*')
+    ).string.strip()
+    json_info = json.loads(re.search(r'\{"items":(\[.*\])', script_content).group(1))
     num = 0
     for row in contents:
         is_hearing = row.find("a", text="Book a hearing test")
@@ -76,10 +75,13 @@ def fetch_data():
             )["href"]
         )
         location_name = row.find("div", {"class": "amlocator-title"}).text.strip()
+        if "COMING SOON" in location_name:
+            continue
         raw_address = (
             row.find("div", {"class": "address"}).text.replace("\n", "").strip()
         )
-        street_address, city, state, zip_postal = getAddress(raw_address)
+        street_address, city, state, _ = getAddress(raw_address)
+        zip_postal = json_info[num]["zip"]
         if "Da9 9Sd" in street_address:
             city = "Greenhithe"
             zip_postal = "DA9 9SD"
@@ -96,15 +98,10 @@ def fetch_data():
             .replace("day,", "day: ")
             .strip()
         )
-        location_type = "HEARING"
-        store_number = (
-            row.find("div", {"class": "store-button"})
-            .find("a")["href"]
-            .split("store_id=")[1]
-            .split("&type")[0]
-        )
-        latitude = latlong[num][0]
-        longitude = latlong[num][1]
+        location_type = "HEARING TEST"
+        store_number = json_info[num]["id"]
+        latitude = json_info[num]["lat"]
+        longitude = json_info[num]["lng"]
         log.info("Append {} => {}".format(location_name, street_address))
         yield SgRecord(
             locator_domain=DOMAIN,

@@ -43,13 +43,9 @@ def fetch_data():
 
             zip_postal = pa.postcode
             zip_postal = zip_postal.strip() if zip_postal else MISSING
-            phone = (
-                temp[1]
-                .get_text(separator="|", strip=True)
-                .replace("|", "")
-                .replace("(Platform 1 & 2)", "")
-            )
-
+            phone = temp[1].get_text(separator="|", strip=True).replace("|", "")
+            if "(" in phone:
+                phone = phone.split("(")[0]
             country_code = "UK"
             yield SgRecord(
                 locator_domain=DOMAIN,

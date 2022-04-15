@@ -1,126 +1,132 @@
-import re
-import json
-from bs4 import BeautifulSoup as bs
 from sgrequests import SgRequests
-from sglogging import sglog
+from sgzip.dynamic import DynamicZipSearch
+from sgzip.dynamic import SearchableCountries, Grain_8
+from sglogging import SgLogSetup
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.sgrecord_id import RecommendedRecordIds
-from sgscrape.sgpostal import parse_address_usa
+from concurrent.futures import ThreadPoolExecutor, as_completed
+import ssl
 
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
+
+
+logger = SgLogSetup().get_logger("lowes_com")
 DOMAIN = "lowes.com"
-SITE_MAP = "https://www.lowes.com/content/lowes/desktop/en_us/stores.xml"
-HEADERS = {
-    "Accept": "*/*",
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.82 Safari/537.36",
+MAX_WORKERS = 10
+
+headers_cus = {
+    "accept": "application/json, text/plain, */*",
+    "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.102 Safari/537.36",
+    "x-component-location": "store-locator",
+    "x-sec-clge-req-type": "ajax",
 }
-log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
-
-session = SgRequests(verify_ssl=False)
 
 
-MISSING = "<MISSING>"
+def get_hoo(store):
+    hoo = ""
+    hours = store["storeHours"]
+    hours_detail = []
+    for i in hours:
+        openclose = i["day"]["day"] + " " + i["day"]["open"] + " - " + i["day"]["close"]
+        hours_detail.append(openclose)
+    hoo = "; ".join(hours_detail)
+    return hoo
 
 
-def getAddress(raw_address):
-    try:
-        if raw_address is not None and raw_address != MISSING:
-            data = parse_address_usa(raw_address)
-            street_address = data.street_address_1
-            if data.street_address_2 is not None:
-                street_address = street_address + " " + data.street_address_2
-            city = data.city
-            state = data.state
-            zip_postal = data.postcode
-            if street_address is None or len(street_address) == 0:
-                street_address = MISSING
-            if city is None or len(city) == 0:
-                city = MISSING
-            if state is None or len(state) == 0:
-                state = MISSING
-            if zip_postal is None or len(zip_postal) == 0:
-                zip_postal = MISSING
-            return street_address, city, state, zip_postal
-    except Exception as e:
-        log.info(f"No valid address {e}")
-        pass
-    return MISSING, MISSING, MISSING, MISSING
+def fetch_records(zc, sgw: SgWriter):
+    with SgRequests() as session:
+        api_url = f"https://www.lowes.com/store/api/search?maxResults=&responseGroup=large&searchTerm={zc}"
+        logger.info(f"Pulling data from {api_url}")
+        rapi = session.get(api_url, headers=headers_cus)
+        if rapi.status_code == 200:
+            logger.info(f"[HTTP STATUS] << {rapi.status_code} OK!! >> ")
+            api_js = rapi.json()
+            stores = api_js["stores"]
+            logger.info(f"Store Count: [{len(stores)}] || << Pulling data for {zc} >>")
+            for idx, i in enumerate(stores[0:]):
+                store = i["store"]
+                city_f = store["city"] or ""
+                if city_f:
+                    city_f = city_f.lower().replace(" ", "-")
+                state_f = store["state"] or ""
+                sn_f = store["id"] or ""
+                purl = ""
+                if city_f and state_f and sn_f:
+                    purl = f"https://www.lowes.com/store/{state_f}-{city_f}/{sn_f}"
+                else:
+                    purl = ""
+
+                item = SgRecord(
+                    locator_domain=DOMAIN,
+                    page_url=purl,
+                    location_name=store["store_name"] or "",
+                    street_address=store["address"] or "",
+                    city=store["city"] or "",
+                    state=store["state"] or "",
+                    zip_postal=store["zip"] or "",
+                    country_code=store["country"] or "",
+                    store_number=store["id"] or "",
+                    phone=store["phone"] or "",
+                    location_type=store["storeFeature"] or "",
+                    latitude=store["lat"] or "",
+                    longitude=store["long"] or "",
+                    hours_of_operation=get_hoo(store),
+                    raw_address="",
+                )
+
+                sgw.write_row(item)
+        else:
+            return
 
 
-def pull_content(url):
-    log.info("Pull content => " + url)
-    HEADERS["Referer"] = url
-    try:
-        soup = bs(session.get(url, headers=HEADERS).content, "lxml")
-    except:
-        log.info("[RETRY] Pull content => " + url)
-        pull_content(url)
-    return soup
+def fetch_data(sgw: SgWriter):
+    logger.info("Started")
 
-
-def fetch_data():
-    log.info("Fetching store_locator data")
-    page_urls = pull_content(SITE_MAP).find_all("loc")
-    for row in page_urls:
-        page_url = row.text.strip()
-        store = pull_content(page_url)
-        info = json.loads(
-            re.search(
-                r"window\['__PRELOADED_STATE__'\]\s+=\s+(.*)",
-                store.find(
-                    "script", string=re.compile(r"window\['__PRELOADED_STATE__'\].*")
-                ).string,
-            ).group(1)
-        )["storeDetails"]
-        location_name = store.find("h1", id="storeHeader").text.strip()
-        raw_address = store.find("div", {"class": "location"}).get_text(
-            strip=True, separator=","
-        )
-        street_address, city, state, zip_postal = getAddress(raw_address)
-        phone = store.find("span", {"data-id": "sc-main-phone"}).text.strip()
-        country_code = info["country"]
-        store_number = page_url.split("/")[-1]
-        hours_of_operation = (
-            store.find("div", id="hours-content")
-            .get_text(strip=True, separator=",")
-            .replace("day,", "day: ")
-            .replace(",-,", " - ")
-            .strip()
-        )
-        latitude = info["lat"]
-        longitude = info["long"]
-        location_type = MISSING
-        log.info("Append {} => {}".format(location_name, street_address))
-        yield SgRecord(
-            locator_domain=DOMAIN,
-            page_url=page_url,
-            location_name=location_name,
-            street_address=street_address,
-            city=city,
-            state=state,
-            zip_postal=zip_postal,
-            country_code=country_code,
-            store_number=store_number,
-            phone=phone,
-            location_type=location_type,
-            latitude=latitude,
-            longitude=longitude,
-            hours_of_operation=hours_of_operation,
-            raw_address=raw_address,
-        )
+    # NOTE: Radius 1000 miles for testing purpose on apify
+    search = DynamicZipSearch(
+        country_codes=[SearchableCountries.USA],
+        expected_search_radius_miles=1000,
+        granularity=Grain_8(),
+        use_state=False,
+    )
+    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
+        tasks = []
+        task_global = [
+            executor.submit(fetch_records, zipcode, sgw) for zipcode in search
+        ]
+        tasks.extend(task_global)
+        for future in as_completed(tasks):
+            record = future.result()
+            if record is not None or record:
+                future.result()
 
 
 def scrape():
-    log.info("start {} Scraper".format(DOMAIN))
-    count = 0
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumAndPageUrlId)) as writer:
-        results = fetch_data()
-        for rec in results:
-            writer.write_row(rec)
-            count = count + 1
-    log.info(f"No of records being processed: {count}")
-    log.info("Finished")
+    logger.info("Scrape Started")
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.STORE_NUMBER,
+                    SgRecord.Headers.LATITUDE,
+                    SgRecord.Headers.LONGITUDE,
+                    SgRecord.Headers.STREET_ADDRESS,
+                }
+            )
+        )
+    ) as writer:
+        fetch_data(writer)
+    logger.info("Finished")  # noqa
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()

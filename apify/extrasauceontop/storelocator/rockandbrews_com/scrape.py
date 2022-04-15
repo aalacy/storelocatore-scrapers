@@ -91,22 +91,27 @@ def get_data():
             latitude = "<MISSING>"
             longitude = "<MISSING>"
 
-            hour = (
-                (
-                    grid.find("div", attrs={"class": "hours"})
-                    .text.split(" Happy")[0]
-                    .split(" Kitchen")[0]
-                )
-                .replace("Â ", " ")
-                .replace("Open early for Playoff Baseball!", "")
-            )
-
-            hour = "".join(c for c in hour if ord(c) < 128)
-
             page_url = (
                 "https://www.rockandbrews.com"
                 + grid.find("a", attrs={"class": "details-button"})["href"]
             )
+
+            days = grid.find_all("span", attrs={"class": "hours-day"})
+            hour_parts = grid.find_all("span", attrs={"class": "hours-time"})
+
+            count = 0
+            if "temporarily closed" in grid.text.strip().lower():
+                hours = "Temporarily Closed"
+            else:
+                hours = ""
+                for day_bit in days:
+                    day = day_bit.text.strip()
+                    hour_part = hour_parts[count].text.strip().replace(" ", "")
+                    hours = hours + day + " " + hour_part + ", "
+
+                    count = count + 1
+
+                hours = hours[:-2]
 
             try:
                 driver.get(page_url)
@@ -144,7 +149,7 @@ def get_data():
                 "zip": zipp,
                 "phone": phone,
                 "location_type": location_type,
-                "hours": hour,
+                "hours": hours,
                 "country_code": country_code,
             }
 
