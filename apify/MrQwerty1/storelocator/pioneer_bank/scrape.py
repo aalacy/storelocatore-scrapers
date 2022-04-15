@@ -24,7 +24,6 @@ def fetch_data(sgw: SgWriter):
         text = "".join(d.xpath("./@data-coords"))
         latitude, longitude = text.split(",")
 
-        _tmp = []
         hours = d.xpath(
             ".//span[@property='postalCode'][last()]/following-sibling::text()"
         )[0]
