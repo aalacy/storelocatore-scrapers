@@ -81,9 +81,14 @@ def get_data():
             continue
 
         locator_domain = "https://www.unitedsupermarkets.com/"
-        
+
         try:
-            page_url = "https://www.unitedsupermarkets.com/rs/store-locator/" + location["AddressSEO"] + "/" + str(location["StoreID"])
+            page_url = (
+                "https://www.unitedsupermarkets.com/rs/store-locator/"
+                + location["AddressSEO"]
+                + "/"
+                + str(location["StoreID"])
+            )
         except Exception:
             continue
 
@@ -98,10 +103,10 @@ def get_data():
 
         try:
             address = location["Address1"] + " " + location["Address2"]
-        
+
         except Exception:
             address = location["Address1"]
-        
+
         address = address.strip()
         state = location["State"]
         zipp = location["Zipcode"]
@@ -115,14 +120,21 @@ def get_data():
 
         phone = "<MISSING>"
         hours = "<MISSING>"
-        
+
         for department in location_json["DepartmentStores"]:
             if "pharmacy" not in department["DepartmentName"].lower():
                 continue
 
             phone = department["DepartmentPhone"]
             try:
-                hours = "Monday-Friday: " + department["DepartmentMFHours"] + " Saturday: " + str(department["DepartmentSatHours"]) + " Sunday: " + str(department["DepartmentSunHours"])
+                hours = (
+                    "Monday-Friday: "
+                    + department["DepartmentMFHours"]
+                    + " Saturday: "
+                    + str(department["DepartmentSatHours"])
+                    + " Sunday: "
+                    + str(department["DepartmentSunHours"])
+                )
             except Exception:
                 pass
 
