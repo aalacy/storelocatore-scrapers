@@ -10,7 +10,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "pizzahut.com.hk"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
-session = SgRequests()
+session = SgRequests(verify_ssl=False, proxy_country="hk")
 headers = {
     "authority": "www.pizzahut.com.hk",
     "sec-ch-ua": '" Not A;Brand";v="99", "Chromium";v="90", "Google Chrome";v="90"',
@@ -93,7 +93,9 @@ def fetch_data():
                 location.xpath('.//div[@class="store_item"]//td/text()')
             ).strip()
             store_number = "<MISSING>"
-            hours_of_operation = "<MISSING>"
+            hours_of_operation = (
+                "Monday to Thursday: 11:00 - 22:30, Friday to Sunday: 11:00 - 23:00"
+            )
 
             latitude, longitude = "<MISSING>", "<MISSING>"
 

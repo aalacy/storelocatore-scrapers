@@ -16,9 +16,10 @@ def fetch_data(sgw: SgWriter):
     }
     r = session.get(page_url, headers=headers)
     tree = html.fromstring(r.text)
-    div = tree.xpath("//div[./div/h3]")[1:]
+    div = tree.xpath('//div[@class="_1ncY2"]')
 
     for d in div:
+
         info = d.xpath(".//span/text()")
         info = list(filter(None, [a.strip() for a in info]))
         for i in info:
@@ -26,14 +27,24 @@ def fetch_data(sgw: SgWriter):
                 info.remove(i)
 
         location_name = "".join(info[0])
-        street_address = "".join(info[1]).replace(",", "").strip()
-        ad = "".join(info[2]).strip()
+        try:
+            street_address = "".join(info[1]).replace(",", "").strip()
+        except:
+            street_address = "<MISSING>"
+        try:
+            ad = "".join(info[2]).strip()
+        except:
+            ad = "<MISSING>"
         phone_list = d.xpath('.//a[contains(@href, "tel")]/@href')
 
         phone = "".join(phone_list[-1]).replace("tel:", "").strip()
-        state = ad.split(",")[1].strip()
         country_code = "Canada"
-        city = ad.split(",")[0].strip()
+        try:
+            state = ad.split(",")[1].strip()
+            city = ad.split(",")[0].strip()
+        except:
+            state, city = "<MISSING>", "<MISSING>"
+
         text = "".join(d.xpath('.//a[contains(@href, "/maps")]/@href'))
         try:
             if text.find("ll=") != -1:
@@ -59,6 +70,41 @@ def fetch_data(sgw: SgWriter):
         )
         if tmpclz:
             hours_of_operation = "TEMPORARILY CLOSED"
+        hours_of_operation = hours_of_operation.replace(
+            "URBAN EATERY LOWEST LEVEL", ""
+        ).strip()
+
+        if phone == "416-703-1980":
+            street_address = "".join(
+                tree.xpath('//span[text()="416-703-1980"]//following::h3[3]//text()')
+            )
+            ad = "".join(
+                tree.xpath('//span[text()="416-703-1980"]//following::h3[4]//text()')
+            )
+            state = ad.split(",")[1].strip()
+            city = ad.split(",")[0].strip()
+            hours_of_operation = " ".join(
+                tree.xpath(
+                    '//span[text()="416-703-1980"]//following::div[./h3][1]//h3[.//span[contains(text(), "PM")]]//text()'
+                )
+            )
+            text = "".join(
+                tree.xpath(
+                    '//span[text()="416-703-1980"]//following::h3[.//a[contains(@href, "maps")]][1]//a/@href'
+                )
+            )
+            try:
+                if text.find("ll=") != -1:
+                    latitude = text.split("ll=")[1].split(",")[0]
+                    longitude = text.split("ll=")[1].split(",")[1].split("&")[0]
+                else:
+                    latitude = text.split("@")[1].split(",")[0]
+                    longitude = text.split("@")[1].split(",")[1]
+            except IndexError:
+                latitude, longitude = "<MISSING>", "<MISSING>"
+            location_name = "".join(
+                tree.xpath('//span[text()="416-703-1980"]//following::h3[1]//text()')
+            )
 
         row = SgRecord(
             locator_domain=locator_domain,

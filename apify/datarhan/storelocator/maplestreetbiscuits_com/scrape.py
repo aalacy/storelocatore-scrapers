@@ -18,15 +18,20 @@ def fetch_data():
     }
     response = session.get(start_url, headers=hdr)
     dom = etree.HTML(response.text)
-    all_states = dom.xpath('//p/a[@data-brz-link-type="external"]/@href')
+    all_states = dom.xpath('//a[@class="brz-a brz-container-link"]/@href')
     for url in all_states:
         url = urljoin(start_url, url)
         response = session.get(url)
         dom = etree.HTML(response.text)
-        all_locations = dom.xpath(
-            '//div[@id]/a[@data-custom-id and span and @data-brz-link-type="external"]/@href'
+        all_urls = dom.xpath(
+            '//div[@id]/a[@data-brz-link-type="external" and span]/@href'
         )
-        all_locations = [e for e in all_locations if len(e.split("/")) == 5]
+        all_locations = []
+        for url in all_urls:
+            if url == "https://www.maplestreetbiscuits.com/":
+                break
+            all_locations.append(url)
+
         for page_url in all_locations:
             if not page_url:
                 continue
@@ -50,19 +55,31 @@ def fetch_data():
             if loc_response.status_code != 200:
                 continue
             loc_dom = etree.HTML(loc_response.text)
-
-            raw_data = loc_dom.xpath("//h2/span/text()")
+            raw_data = loc_dom.xpath(
+                '//div[p[span[contains(text(), "WELCOME TO")]]]/p//text()'
+            )
+            if len(raw_data) == 1:
+                raw_data = loc_dom.xpath(
+                    '//div[div[div[p[span[contains(text(), "WELCOME TO ")]]]]]/following-sibling::div[1]//text()'
+                )
+                raw_data = ["-"] + raw_data
+            if not raw_data:
+                raw_data = loc_dom.xpath(
+                    '//h1[span[contains(text(), "WELCOME TO")]]/following-sibling::h1/span/text()'
+                )
             raw_data = [e.strip() for e in raw_data if e.strip()]
-            location_name = raw_data[0].replace("WELCOME TO ", "")
-            if "STORE HOURS" in raw_data[0] or "STORE HOURS" in raw_data[1]:
-                location_name = page_url.split("/")[-1].replace("-", " ").capitalize()
+            location_name = page_url.split("/")[-2].replace("-", " ").capitalize()
+            if not raw_data:
                 street_address = "<INACCESSIBLE>"
                 city = "<INACCESSIBLE>"
                 state = "<INACCESSIBLE>"
                 zip_code = "<INACCESSIBLE>"
                 phone = "<INACCESSIBLE>"
             else:
-                raw_address = raw_data[1:3]
+                if len(raw_data) > 3:
+                    raw_address = raw_data[1:3]
+                else:
+                    raw_address = raw_data[:2]
                 if "Suit" in raw_data[2]:
                     raw_address = raw_data[1:4]
                     raw_address = [", ".join(raw_address[:2])] + raw_address[2:]
@@ -75,8 +92,16 @@ def fetch_data():
                     phone = [e.strip() for e in raw_data if "(" in e]
                 phone = phone[0] if phone else ""
 
-            hoo = loc_dom.xpath('//strong[contains(text(), "am to ")]/text()')
-            hoo = " ".join(hoo)
+            hoo = loc_dom.xpath('//*[contains(text(), "am to ")]/text()')
+            if not hoo:
+                hoo = loc_dom.xpath('//strong[contains(text(), "AM ")]/text()')
+            if not hoo:
+                hoo = loc_dom.xpath('//*[contains(text(), "am –")]/text()')
+            if not hoo:
+                hoo = loc_dom.xpath(
+                    '//p[strong[contains(text(), "SUN – SAT")]]//text()'
+                )
+            hoo = " ".join(hoo).split("My")[0]
 
             item = SgRecord(
                 locator_domain=domain,

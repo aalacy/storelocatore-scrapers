@@ -34,6 +34,8 @@ def get_data(page_url, sgw: SgWriter):
     location_name = "".join(tree.xpath("//h1/text()")).strip()
     line = tree.xpath("//div[@class='col-12 col-lg-6 store-page__details']//text()")
     line = list(filter(None, [" ".join(l.split()).strip() for l in line]))
+    if "coming soon" in line[0].lower():
+        return
 
     text = "".join(tree.xpath("//span[@class='store-details']/a/@href"))
     latitude, longitude = SgRecord.MISSING, SgRecord.MISSING

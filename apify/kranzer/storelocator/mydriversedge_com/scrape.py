@@ -1,3 +1,4 @@
+import html
 from sglogging import sglog
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
@@ -23,7 +24,7 @@ def fetch_data():
         url = "https://www.mydriversedge.com/wp-admin/admin-ajax.php?action=store_search&lat=32.776664&lng=-96.796988&max_results=25&search_radius=50&autoload=1"
         loclist = session.get(url, headers=headers).json()
         for loc in loclist:
-            location_name = loc["store"]
+            location_name = html.unescape(loc["store"])
             page_url = loc["permalink"]
             r = session.get(page_url, headers=headers)
             soup = BeautifulSoup(r.text, "html.parser")
@@ -35,6 +36,8 @@ def fetch_data():
             log.info(page_url)
             store_number = loc["id"]
             phone = loc["phone"]
+            if not phone:
+                phone = soup.find("a", {"class": "store-phone"}).text
             street_address = loc["address"]
             city = loc["city"]
             state = loc["state"]

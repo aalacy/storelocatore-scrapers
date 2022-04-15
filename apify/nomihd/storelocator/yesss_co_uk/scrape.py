@@ -76,12 +76,13 @@ def fetch_data():
                 opens = hour_info["opens"]
                 closes = hour_info["closes"]
                 weekdays = hour_info["dayOfWeek"]
-                for day in weekdays:
-                    if opens != closes:
+                if weekdays is not None:
+                    for day in weekdays:
+                        if opens != closes:
 
-                        hour_list.append(f"{day}: {opens}-{closes}")
-                    else:
-                        hour_list.append(f"{day}: Closed")
+                            hour_list.append(f"{day}: {opens}-{closes}")
+                        else:
+                            hour_list.append(f"{day}: Closed")
 
             hours_of_operation = "; ".join(hour_list).replace(":;", ":")
             store_number = store["id"]

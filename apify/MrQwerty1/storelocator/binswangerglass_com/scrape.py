@@ -6,9 +6,15 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 
+from sglogging import sglog
+
+log = sglog.SgLogSetup().get_logger(logger_name="binswangerglass.com")
+
 
 def get_additional(page_url):
     r = session.get(page_url)
+    log.info(f"Crawling: {page_url}, Status: {r.status_code}")
+
     if r.status_code == 404:
         return "", ("", "")
 
@@ -42,6 +48,7 @@ def fetch_data(sgw: SgWriter):
             api = f"https://www.binswangerglass.com/branch/page/{i}/"
 
         r = session.get(api)
+        log.info(f"Crawling: {api}, Status: {r.status_code}")
         tree = html.fromstring(r.text)
 
         divs = tree.xpath("//div[contains(@class, 'branch-locations')]")

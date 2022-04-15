@@ -5,6 +5,7 @@ from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgpostal.sgpostal import International_Parser, parse_address
 
 
 def fetch_data(sgw: SgWriter):
@@ -60,11 +61,16 @@ def fetch_data(sgw: SgWriter):
         for j in js:
             page_url = f"https://magnit.ru{j.get('href')}"
             location_type = j.get("type")
-            street_address = " ".join("".join(j.get("address")).split(",")[1:]).strip()
-            country_code = "RU"
-            city = "".join(j.get("address")).split(",")[0].strip()
-            if street_address.find(f"{city}") != -1:
-                street_address = street_address.replace(f"{city}", "").strip()
+            ad = j.get("address")
+            a = parse_address(International_Parser(), ad)
+            street_address = (
+                f"{a.street_address_1} {a.street_address_2}".replace("None", "").strip()
+                or "<MISSING>"
+            )
+            state = a.state or "<MISSING>"
+            postal = a.postcode or "<MISSING>"
+            country_code = "city"
+            city = a.city or "<MISSING>"
             latitude = j.get("lat")
             longitude = j.get("lng")
             hours_of_operation = j.get("time")
@@ -75,8 +81,8 @@ def fetch_data(sgw: SgWriter):
                 location_name=SgRecord.MISSING,
                 street_address=street_address,
                 city=city,
-                state=SgRecord.MISSING,
-                zip_postal=SgRecord.MISSING,
+                state=state,
+                zip_postal=postal,
                 country_code=country_code,
                 store_number=store_number,
                 phone=SgRecord.MISSING,
@@ -84,6 +90,7 @@ def fetch_data(sgw: SgWriter):
                 latitude=latitude,
                 longitude=longitude,
                 hours_of_operation=hours_of_operation,
+                raw_address=ad,
             )
 
             sgw.write_row(row)

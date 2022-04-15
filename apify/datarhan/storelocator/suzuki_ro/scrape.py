@@ -8,6 +8,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
 from sgselenium.sgselenium import SgChrome
+from sgpostal.sgpostal import parse_address_intl
 
 try:
     _create_unverified_https_context = ssl._create_unverified_context
@@ -20,7 +21,7 @@ else:
 @tenacity.retry(wait=tenacity.wait_fixed(3))
 def get_with_retry(driver, url):
     driver.get(url)
-    driver.implicitly_wait(30)
+    sleep(30)
     return driver.page_source
 
 
@@ -34,36 +35,31 @@ def fetch_data():
         all_locations = dom.xpath("//a[h2]")
         for poi_html in all_locations:
             page_url = poi_html.xpath("@href")[0]
-
             response = get_with_retry(driver, page_url)
             loc_dom = etree.HTML(response)
-            location_name = loc_dom.xpath("//h3/text()")[0]
-            street_address = loc_dom.xpath(
-                '//div[img[@alt="showroom_location"]]/following-sibling::div[1]/p/text()'
-            )[0]
-            city = poi_html.xpath(".//following-sibling::h3/text()")[0].split(", ")[0]
-            phone = loc_dom.xpath(
-                '//div[img[@alt="phone"]]/following-sibling::div[1]/p/text()'
-            )[0]
-            hoo = loc_dom.xpath(
-                '//div[img[@alt="schedule"]]/following-sibling::div[1]/p/text()'
-            )[0]
+            location_name = poi_html.xpath(".//h2/text()")[0]
+            raw_data = loc_dom.xpath('//div[@class="global__map-showroom"]//p/text()')
+            addr = parse_address_intl(raw_data[0])
+            street_address = addr.street_address_1
+            if addr.street_address_2:
+                street_address += ", " + addr.street_address_2
 
             item = SgRecord(
                 locator_domain=domain,
                 page_url=page_url,
                 location_name=location_name,
                 street_address=street_address,
-                city=city,
+                city=addr.city,
                 state="",
-                zip_postal="",
+                zip_postal=addr.postcode,
                 country_code="RO",
                 store_number="",
-                phone=phone,
+                phone=raw_data[1].split("/")[0],
                 location_type="",
                 latitude="",
                 longitude="",
-                hours_of_operation=hoo,
+                hours_of_operation=raw_data[2],
+                raw_address=raw_data[0],
             )
 
             yield item

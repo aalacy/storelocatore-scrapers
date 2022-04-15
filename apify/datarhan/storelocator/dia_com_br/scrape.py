@@ -16,38 +16,38 @@ def fetch_data():
     data = session.get(start_url).json()
 
     for poi in data["result"]["data"]["lojas"]["nodes"]:
-        page_url = "https://www.dia.com.br/lojas/" + poi["Slug"]
+        page_url = "https://www.dia.com.br/lojas/" + poi["slug"]
         loc_response = session.get(page_url)
         loc_dom = etree.HTML(loc_response.text)
-        phone = loc_dom.xpath('//li[contains(@class, "footer-module--phone")]/text()')[
-            0
-        ]
-        hoo = (
-            loc_dom.xpath('//p[contains(text(), "Nosso horário de")]/text()')[-1]
-            .split("atendimento é")[-1][:-1]
-            .strip()
-        )
-        latitude = poi["Endereco"]["Lat"]
+        latitude = poi["lat"]
         if latitude == 0:
             latitude = ""
-        longitude = poi["Endereco"]["Lng"]
+        longitude = poi["lng"]
         if longitude == 0:
             longitude = ""
         poi_data = loc_dom.xpath('//script[contains(text(), "address")]/text()')[0]
         poi_data = json.loads(poi_data)
+        hoo = []
+        for e in poi_data["openingHoursSpecification"]:
+            if type(e["dayOfWeek"]) == list:
+                for day in e["dayOfWeek"]:
+                    hoo.append(f'{day}: {e["opens"]} - {e["closes"]}')
+            else:
+                hoo.append(f'{e["dayOfWeek"]}: {e["opens"]} - {e["closes"]}')
+        hoo = " ".join(hoo)
 
         item = SgRecord(
             locator_domain=domain,
             page_url=page_url,
-            location_name=poi["Nome"],
-            street_address=poi["Endereco"]["Logradouro"],
-            city=poi["Endereco"]["Municipio"],
-            state=poi["Endereco"]["Estado"],
-            zip_postal=poi_data["address"]["postalCode"],
+            location_name=poi["name"],
+            street_address=poi["address"],
+            city=poi["city"],
+            state=poi["district"],
+            zip_postal=poi["cep"],
             country_code="BR",
-            store_number=poi["Numero"],
-            phone=phone,
-            location_type="",
+            store_number=poi["storeNumber"],
+            phone="",
+            location_type=poi_data["@type"],
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hoo,

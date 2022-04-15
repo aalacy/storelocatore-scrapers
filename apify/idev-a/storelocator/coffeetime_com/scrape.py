@@ -4,6 +4,7 @@ from sgrequests import SgRequests
 from sglogging import SgLogSetup
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 
 logger = SgLogSetup().get_logger("coffeetime")
 
@@ -12,45 +13,42 @@ _headers = {
 }
 
 locator_domain = "http://www.coffeetime.com"
-base_url = "https://api.momentfeed.com/v1/analytics/api/llp.json?auth_token=YDGUJSNDOUAFKPRL&center=43.696891,-79.371536&coordinates=43.06810520271273,-78.26878331445297,44.31915170663851,-80.47428868554653&multi_account=false&page={}&pageSize=300"
+base_url = "https://api.momentfeed.com/v1/analytics/api/llp.json?auth_token=YDGUJSNDOUAFKPRL&center={},{}&coordinates={},{},{},{}&multi_account=false&page=1&pageSize=300"
 days = ["", "Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"]
 
 
-def _p(val):
-    return (
-        val.replace("(", "")
-        .replace(")", "")
-        .replace("+", "")
-        .replace("-", "")
-        .replace(".", " ")
-        .replace("to", "")
-        .replace(" ", "")
-        .strip()
-        .isdigit()
-    )
-
-
-def fetch_data():
-    with SgRequests() as session:
-        page = 1
-        while True:
-            links = session.get(base_url.format(page), headers=_headers).json()
-            if not links:
-                break
-            page += 1
+def fetch_data(search):
+    for lat, lng in search:
+        x1 = lat - 0.62878579728
+        x2 = lng + 0.62226070663
+        y1 = lat + 1.10275268555
+        y2 = lng - 1.10275268555
+        with SgRequests() as session:
+            links = session.get(
+                base_url.format(lat, lng, x1, y1, x2, y2), headers=_headers
+            ).json()
             logger.info(f"{len(links)} found")
 
+            logger.info(f"[{lat, lng}] {len(links)}")
             for _ in links:
                 page_url = "https://locations.coffeetime.com" + _["llp_url"]
                 if _["open_or_closed"] == "coming soon":
                     continue
+                temp = {}
                 hours = []
                 for hh in _["store_info"]["hours"].split(";"):
                     if not hh:
                         continue
                     time1 = hh.split(",")[1][:2] + ":" + hh.split(",")[1][2:]
                     time2 = hh.split(",")[2][:2] + ":" + hh.split(",")[2][2:]
-                    hours.append(f"{days[int(hh.split(',')[0])]}: {time1}-{time2}")
+                    temp[days[int(hh.split(",")[0])]] = f"{time1}-{time2}"
+                for day in days:
+                    if not day:
+                        continue
+                    if temp.get(day):
+                        hours.append(f"{day}: {temp[day]}")
+                    else:
+                        hours.append(f"{day}: closed")
 
                 if not hours:
                     hours = ["Mon-Sun: Closed"]
@@ -61,6 +59,8 @@ def fetch_data():
                     if nn["name"] == "StoreName":
                         location_name = nn["data"]
                         break
+
+                search.found_location_at(info["latitude"], info["longitude"])
                 yield SgRecord(
                     page_url=page_url,
                     location_name=location_name,
@@ -78,7 +78,14 @@ def fetch_data():
 
 
 if __name__ == "__main__":
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
-        results = fetch_data()
+    with SgWriter(
+        SgRecordDeduper(
+            RecommendedRecordIds.PageUrlId, duplicate_streak_failure_factor=10
+        )
+    ) as writer:
+        search = DynamicGeoSearch(
+            country_codes=[SearchableCountries.CANADA], expected_search_radius_miles=500
+        )
+        results = fetch_data(search)
         for rec in results:
             writer.write_row(rec)
