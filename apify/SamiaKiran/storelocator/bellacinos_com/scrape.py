@@ -81,7 +81,6 @@ def fetch_data():
                 .replace(";", " ")
             )
         hours_of_operation = hours_of_operation.replace("Closed-", "Closed")
-        print(hours_of_operation)
         yield SgRecord(
             locator_domain=DOMAIN,
             page_url=url,
