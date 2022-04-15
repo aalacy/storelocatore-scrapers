@@ -46,7 +46,7 @@ def fetch_data():
             state=SgRecord.MISSING,
             zip_postal=SgRecord.MISSING,
             country_code="RO",
-            store_number=SgRecord.MISSING,
+            store_number=str(store),
             phone=phone.strip(),
             location_type=SgRecord.MISSING,
             latitude=str(lat),
