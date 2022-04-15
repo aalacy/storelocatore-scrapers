@@ -51,7 +51,7 @@ def fetch_data(sgw: SgWriter):
                 link = link.replace("6410-county", "travel-center-6410-county")
             final_links.append(link)
 
-    logger.info("Processing " + str(len(final_links)) + " links ..")
+    logger.info("Processing " + str(len(final_links)) + " links ...")
     for final_link in final_links:
         final_link = final_link.replace("--", "-")
         req = session.get(final_link, headers=headers)
