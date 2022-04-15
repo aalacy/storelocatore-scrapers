@@ -9,7 +9,7 @@ from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
-    session = SgRequests()
+    session = SgRequests(proxy_country="us")
     start_url = "https://applecareurgentcare.com/urgent-care-locations/"
     domain = "applecareurgentcare.com"
     hdr = {
