@@ -54,13 +54,21 @@ def fetch_data():
         for line in r.iter_lines():
             if 'itemprop="name">Caf' in line:
                 Cafe = True
-            if '"main store Caf' in line and Cafe is True:
-                days = (
-                    line.split('"main store Caf"')[1]
-                    .split("data-days='[")[1]
-                    .split("]' data-utc")[0]
-                    .split('"day":"')
-                )
+            if "main store Caf" in line and Cafe is True:
+                try:
+                    days = (
+                        line.split("main store Caf")[2]
+                        .split("data-days='[")[1]
+                        .split("]' data-utc")[0]
+                        .split('"day":"')
+                    )
+                except:
+                    days = (
+                        line.split("main store Caf")[1]
+                        .split("data-days='[")[1]
+                        .split("]' data-utc")[0]
+                        .split('"day":"')
+                    )
                 for day in days:
                     if '"intervals"' in day:
                         if '"isClosed":false' not in day:
@@ -82,7 +90,7 @@ def fetch_data():
                 store = line.split('"storeID":"')[1].split('"')[0]
             if 'data-feature="Caf' in line:
                 phone = (
-                    line.split('data-feature="Caf"')[1]
+                    line.split('data-feature="Caf')[1]
                     .split('Phone-display">')[1]
                     .split("<")[0]
                     .strip()

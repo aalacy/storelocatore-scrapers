@@ -65,9 +65,9 @@ def fetch_data():
             driver.get("https://www.beterhoren.nl" + url["href"])
             locations += [
                 loc.a["href"]
-                for loc in bs(driver.page_source, "lxml")
-                .select_one("div.richtext-container ul")
-                .select("li")
+                for loc in bs(driver.page_source, "lxml").select(
+                    "div.richtext-container li"
+                )
                 if loc.a
             ]
 

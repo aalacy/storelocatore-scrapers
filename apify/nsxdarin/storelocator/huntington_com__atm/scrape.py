@@ -32,8 +32,10 @@ def get_data(coords, sgw: SgWriter):
         headers=headers,
         data=data,
     )
-
-    js = r.json()["features"]
+    try:
+        js = r.json()["features"]
+    except:
+        return
 
     for j in js:
         a = j.get("properties")
@@ -97,8 +99,8 @@ def get_data(coords, sgw: SgWriter):
 def fetch_data(sgw: SgWriter):
     coords = DynamicGeoSearch(
         country_codes=[SearchableCountries.USA],
-        max_search_distance_miles=1,
-        expected_search_radius_miles=1,
+        max_search_distance_miles=5,
+        expected_search_radius_miles=5,
         max_search_results=None,
     )
 
