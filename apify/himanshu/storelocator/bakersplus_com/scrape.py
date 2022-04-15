@@ -1,9 +1,14 @@
 import json
 import ssl
+import time
 
 from bs4 import BeautifulSoup
 
 from sglogging import sglog
+
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as ec
+from selenium.webdriver.support.ui import WebDriverWait
 
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
@@ -34,17 +39,30 @@ def fetch_data(sgw: SgWriter):
         page_url = url.text
 
         log.info(page_url)
-        driver.get(page_url)
-        location_soup = BeautifulSoup(driver.page_source, "lxml")
+        for i in range(6):
+            driver.get(page_url)
+            WebDriverWait(driver, 50).until(
+                ec.presence_of_element_located((By.TAG_NAME, "h1"))
+            )
+            time.sleep(2)
+            location_soup = BeautifulSoup(driver.page_source, "lxml")
+            script = location_soup.find(
+                "script", attrs={"type": "application/ld+json"}
+            ).contents[0]
 
-        data = json.loads(
-            str(location_soup.find("script", {"type": "application/ld+json"}))
-            .split(">")[1]
-            .split("<")[0]
-        )
-        location_name = location_soup.find(
-            "h1", {"data-qa": "storeDetailsHeader"}
-        ).text.strip()
+            location_name = ""
+            try:
+                data = json.loads(script)
+                street_address = data["address"]
+
+                location_name = location_soup.find(
+                    "h1", {"data-qa": "storeDetailsHeader"}
+                ).text.strip()
+
+                if location_name:
+                    break
+            except:
+                log.info("Retrying ..")
 
         try:
             street_address = data["address"]["streetAddress"]
