@@ -53,12 +53,15 @@ def fetch_data():
         country_code = addr.find("abbr", {"itemprop": "addressCountry"}).text.strip()
         phone = store.find("div", id="phone-main").text.strip()
         store_number = store.find("div", id="js-ceccookie")["data-storeid"]
-        hours_of_operation = (
-            store.find("table", {"class": "c-hours-details"})
-            .find("tbody")
-            .get_text(strip=True, separator=" ")
-            .strip()
-        )
+        try:
+            hours_of_operation = (
+                store.find("table", {"class": "c-hours-details"})
+                .find("tbody")
+                .get_text(strip=True, separator=" ")
+                .strip()
+            )
+        except:
+            hours_of_operation = MISSING
         latitude = store.find("meta", {"itemprop": "latitude"})["content"]
         longitude = store.find("meta", {"itemprop": "longitude"})["content"]
         location_type = MISSING

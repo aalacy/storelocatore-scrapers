@@ -43,7 +43,10 @@ def fetch_data():
             if "Opening Soon!" in r.text:
                 continue
             soup = BeautifulSoup(r.text, "html.parser")
-            location_name = soup.find("h1").text.replace("\n", "")
+            try:
+                location_name = soup.find("h1").text.replace("\n", "")
+            except:
+                continue
             try:
                 raw_address = (
                     soup.find("div", {"itemprop": "address"})

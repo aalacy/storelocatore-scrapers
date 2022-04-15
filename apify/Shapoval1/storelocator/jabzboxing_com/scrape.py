@@ -1,9 +1,11 @@
+import json
 from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgpostal.sgpostal import USA_Best_Parser, parse_address
 
 
 def fetch_data(sgw: SgWriter):
@@ -16,58 +18,58 @@ def fetch_data(sgw: SgWriter):
     }
     r = session.get(api_url, headers=headers)
     tree = html.fromstring(r.text)
-    div = tree.xpath("//a[contains(@href, '/locations/')]")
-    for d in div:
+    div = (
+        "".join(
+            tree.xpath(
+                '//script[contains(text(), "var et_link_options_data =")]/text()'
+            )
+        )
+        .split("var et_link_options_data =")[1]
+        .split(";")[0]
+        .replace("\\", "")
+        .strip()
+    )
+    js = json.loads(div)
 
-        page_url = "".join(d.xpath(".//@href"))
-        cms = "".join(d.xpath('.//preceding::h3[text()="COMING SOON"][1]//text()'))
+    for j in js:
+
+        page_url = "".join(j.get("url"))
+        if page_url.find("locations") == -1:
+            continue
         r = session.get(page_url, headers=headers)
         tree = html.fromstring(r.text)
 
-        location_name = (
-            "".join(
-                tree.xpath(
-                    '//h4[@class="title"]//text() | //h1[@class="f-med large_dark"]/text()'
-                )
-            )
+        location_name = "".join(tree.xpath("//title/text()")) or "<MISSING>"
+
+        ad = (
+            " ".join(tree.xpath('//h4[@class="f-30 m-text"]/a/text()'))
             .replace("\n", "")
             .strip()
         )
-
-        if location_name.find("(") != -1:
-            location_name = location_name.split("(")[0].strip()
-
+        a = parse_address(USA_Best_Parser(), ad)
         street_address = (
-            "".join(tree.xpath('//h4[@class="f-30 m-text"]/a/text()[1]')).strip()
+            f"{a.street_address_1} {a.street_address_2}".replace("None", "").strip()
             or "<MISSING>"
         )
-        ad = "".join(tree.xpath('//h4[@class="f-30 m-text"]/a/text()[2]')).strip()
+        state = a.state or "<MISSING>"
+        postal = a.postcode or "<MISSING>"
+        city = a.city or "<MISSING>"
         phone = "".join(tree.xpath('//a[contains(@href, "tel")]/text()')) or "<MISSING>"
-
-        state = ad.split(",")[1].split()[0].strip()
-        try:
-            postal = ad.split(",")[1].split()[1].strip()
-        except:
-            postal = "<MISSING>"
         country_code = "US"
-        city = ad.split(",")[0].strip()
         hours_of_operation = "<MISSING>"
-        ll = (
-            "".join(
-                tree.xpath(
-                    '//script[contains(text(), "center: new google.maps.LatLng")]/text()'
-                )
+        map_link = "".join(tree.xpath("//iframe/@src"))
+        try:
+            latitude = map_link.split("!3d")[1].strip().split("!")[0].strip()
+            longitude = map_link.split("!2d")[1].strip().split("!")[0].strip()
+        except:
+            latitude, longitude = "<MISSING>", "<MISSING>"
+        cms = "".join(
+            tree.xpath(
+                '//p[contains(text(), "Coming soon")]/text() | //p[contains(text(), "Grand Opening")]/text()'
             )
-            or "<MISSING>"
         )
-
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
-        if ll != "<MISSING>":
-            latitude = ll.split("LatLng(")[1].split(",")[0]
-            longitude = ll.split("LatLng(")[1].split(",")[1].split(")")[0]
-        if cms == "COMING SOON":
-            hours_of_operation = "COMING SOON"
+        if cms:
+            hours_of_operation = "Coming soon"
 
         row = SgRecord(
             locator_domain=locator_domain,
@@ -91,5 +93,5 @@ def fetch_data(sgw: SgWriter):
 
 if __name__ == "__main__":
     session = SgRequests()
-    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.LATITUDE}))) as writer:
+    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))) as writer:
         fetch_data(writer)
