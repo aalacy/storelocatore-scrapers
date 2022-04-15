@@ -2,6 +2,5 @@
 beautifulsoup4==4.11.1
 sglogging==0.0.4
 sgscrape==0.2.9
-sgselenium==0.1.5
-sgvalidator==0.0.71
+sgselenium==0.1.6
 webdriver_manager==3.5.2
