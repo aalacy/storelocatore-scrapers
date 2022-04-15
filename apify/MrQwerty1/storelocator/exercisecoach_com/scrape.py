@@ -56,7 +56,6 @@ def fetch_data(sgw: SgWriter):
         postal = sz.replace(state, "").replace(".", "").strip()
         country_code = "US"
         latitude, longitude = get_coords(page_url)
-        print(page_url, ":", (latitude, longitude))
 
         row = SgRecord(
             page_url=page_url,
