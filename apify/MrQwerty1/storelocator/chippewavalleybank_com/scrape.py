@@ -1,47 +1,12 @@
-import csv
-
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
-    locator_domain = "https://chippewavalleybank.com/"
-    page_url = "https://chippewavalleybank.com/Locations-Hours-ATMs"
-
-    session = SgRequests()
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0"
-    }
+def fetch_data(sgw: SgWriter):
     r = session.get(page_url, headers=headers)
     tree = html.fromstring(r.text)
     divs = tree.xpath(
@@ -50,8 +15,9 @@ def fetch_data():
 
     for d in divs:
         location_name = "".join(d.xpath(".//h3/strong/text()")).strip()
-        line = d.xpath(".//p[./img]/following-sibling::p[1]//text()")
+        line = d.xpath(".//h4[1]/preceding-sibling::p//text()")
         line = list(filter(None, [l.strip() for l in line]))
+        line = line[:-2]
         street_address = ", ".join(line[:-1])
         line = line[-1]
         city = line.split(",")[0].strip()
@@ -59,54 +25,45 @@ def fetch_data():
         state = line.split()[0]
         postal = line.split()[1]
         country_code = "US"
-        store_number = "<MISSING>"
         phone = (
             d.xpath(".//p[contains(text(), 'Toll')]/text()")[0].split("Toll")[0].strip()
-            or "<MISSING>"
         )
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
-        location_type = "<MISSING>"
+
         hours_of_operation = "".join(
-            d.xpath(
-                ".//h4[contains(text(), 'Lobby Hours:')]/following-sibling::p[1]/text()"
-            )
+            d.xpath(".//h4[contains(text(), 'Lobby')]/following-sibling::p[1]/text()")
         )
         if not hours_of_operation:
-            hours_of_operation = (
-                " ".join(
-                    d.xpath(
-                        ".//h4[contains(text(), 'Drive-Up Hours')]/following-sibling::p/text()"
-                    )
+            hours_of_operation = " ".join(
+                d.xpath(
+                    ".//h4[contains(text(), 'Drive-Up')]/following-sibling::p/text()"
                 )
-                or "<MISSING>"
             )
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
+        row = SgRecord(
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            phone=phone,
+            locator_domain=locator_domain,
+            hours_of_operation=hours_of_operation,
+        )
 
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://chippewavalleybank.com/"
+    page_url = "https://chippewavalleybank.com/Locations-Hours-ATMs"
+
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:97.0) Gecko/20100101 Firefox/97.0",
+    }
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
+    ) as writer:
+        fetch_data(writer)
