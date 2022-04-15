@@ -1,11 +1,14 @@
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.by import By  # noqa
+from selenium.webdriver.support.ui import WebDriverWait  # noqa
+from selenium.webdriver.support import expected_conditions as EC  # noqa
 from webdriver_manager.chrome import ChromeDriverManager
 from bs4 import BeautifulSoup as bs
 from sgscrape import simple_scraper_pipeline as sp
-from selenium import webdriver
+from selenium import webdriver  # noqa
 import undetected_chromedriver as uc
+import ssl
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 
 def get_driver(url, class_name, driver=None):
