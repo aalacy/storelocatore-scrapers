@@ -38,11 +38,16 @@ def fetch_data():
             .split(",", 1)
         )
         phone = soup.find("a", {"class": "link--phone"}).text
-        hourlist = div.find("table", {"class": "store-timetable-table"}).findAll("tr")
-        hours = ""
-        for hr in hourlist:
-            hr = hr.findAll("td")
-            hours = hours + hr[0] + " " + hr[2] + " "
+        try:
+            hourlist = div.find("table", {"class": "store-timetable-table"}).findAll(
+                "tr"
+            )
+            hours = ""
+            for hr in hourlist:
+                hr = hr.findAll("td")
+                hours = hours + hr[0] + " " + hr[2] + " "
+        except:
+            hours = "<MISSING>"
         ltype = "Match"
         if "Smatch" in title:
             ltype = "Smatch"
