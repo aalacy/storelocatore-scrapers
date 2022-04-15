@@ -3,4 +3,3 @@ sgscrape==0.2.9
 sgzip==0.10.15
 sgrequests==0.3.3
 sglogging==0.0.4
-lxml==4.6.2

@@ -3,11 +3,9 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
-from sgscrape.pause_resume import CrawlStateSingleton
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries, Grain_8
 from sglogging import SgLogSetup
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from lxml import html
 import json
 import ssl
 
@@ -112,8 +110,6 @@ def fetch_records(coord, search, current_country, sgw: SgWriter):
                         lat = _["latitude"]
                         lng = _["longitude"]
                         search.found_location_at(float(lat), float(lng))
-                        # calendars = _["calendars"]["calendar"][0]["ranges"]
-                        sn = _["extref"]
                         hours = get_hours_new(_, api_endpoint_url)
                         #
                         state = _["state"]
