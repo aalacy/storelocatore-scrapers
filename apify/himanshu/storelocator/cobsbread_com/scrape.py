@@ -87,7 +87,9 @@ def fetch_data():
         street_address, city, state, zip_postal = getAddress(raw_address)
         if zip_postal == MISSING:
             zip_postal = raw_address.split(",")[-1].strip()
-        if "USA" in raw_address:
+        if "USA" in raw_address or zip_postal.isnumeric():
+            if len(zip_postal) == 4:
+                zip_postal = "0" + zip_postal
             country_code = "US"
         else:
             country_code = "CA"
