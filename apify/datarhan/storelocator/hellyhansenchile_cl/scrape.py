@@ -30,7 +30,19 @@ def fetch_data():
             phone = poi_html.xpath(".//following-sibling::strong[1]/text()")[0]
             phone = phone.split(":")[-1] if "Fono" in phone else ""
             hoo = poi_html.xpath(".//following-sibling::strong[2]/text()")
-            hoo = hoo[0].split("Horario:")[-1] if hoo and "Horario" in hoo[0] else ""
+            hoo = (
+                " ".join(hoo).split("Horario:")[-1]
+                if hoo and "Horario" in hoo[0]
+                else ""
+            )
+            if not hoo:
+                hoo = poi_html.xpath(".//following-sibling::strong[1]/text()")
+                hoo = (
+                    " ".join(hoo).split("Horario:")[-1]
+                    if hoo and "Horario" in hoo[0]
+                    else ""
+                )
+            hoo = hoo.replace("(", "").replace(")", "").split("*")[0]
 
             item = SgRecord(
                 locator_domain=domain,
