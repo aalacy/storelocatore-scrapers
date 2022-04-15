@@ -31,11 +31,15 @@ def fetch_data():
         for link in range(int(page_limit)):
             url = "https://www.barnardos.org.uk/shops/our-shops?page=" + str(link)
             log.info(f"Fetching locations from Page No {link}")
-            main_r = session.get(url, headers=headers, timeout=180)
+            main_r = session.get(url, headers=headers)
             soup = BeautifulSoup(main_r.text, "html.parser")
             loclist = soup.find("ul", {"class": "teaser-list__teasers"}).findAll("li")
             for loc in loclist:
-                location_type = loc.find("span", {"class": "teaser__type"}).text
+                try:
+                    location_type = loc.find("span", {"class": "teaser__topic"}).text
+                except:
+                    if "Superstore" in loc.text:
+                        location_type = "Superstore"
                 page_url = "https://www.barnardos.org.uk" + loc.find("a")["href"]
                 log.info(page_url)
                 r = session.get(page_url, headers=headers)
@@ -59,14 +63,19 @@ def fetch_data():
                     hours_of_operation = MISSING
                 location_name = soup.find("h1", {"class": "title"}).text
                 pa = parse_address_intl(raw_address)
+
                 street_address = pa.street_address_1
                 street_address = street_address if street_address else MISSING
+
                 city = pa.city
                 city = city.strip() if city else MISSING
+
                 state = pa.state
                 state = state.strip() if state else MISSING
+
                 zip_postal = pa.postcode
                 zip_postal = zip_postal.strip() if zip_postal else MISSING
+
                 country_code = "UK"
                 yield SgRecord(
                     locator_domain=DOMAIN,
