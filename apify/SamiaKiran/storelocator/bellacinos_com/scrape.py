@@ -19,15 +19,6 @@ MISSING = SgRecord.MISSING
 
 
 def fetch_data():
-    daylist = {
-        "1": "Monday",
-        "2": "Tuesday",
-        "3": "Wednesday",
-        "4": "Thursday",
-        "5": "Friday",
-        "6": "Saturday",
-        "7": "Sunday",
-    }
     url = "https://api.momentfeed.com/v1/analytics/api/llp.json?auth_token=BAVYISWKYNNQTIXK&center=31.8039734986,-98.8223185136653&coordinates=10.74167474861858,-141.02202554491512,37.493303137349145,-106.62261148241522&multi_account=false&page=1&pageSize=60"
     r = session.get(url, headers=headers)
     loclist = json.loads(r.text)
@@ -68,27 +59,29 @@ def fetch_data():
         store_number = loc["store_info"]["corporate_id"]
         latitude = loc["store_info"]["latitude"]
         longitude = loc["store_info"]["longitude"]
-        hour_list = loc["store_info"]["store_hours"]
-        if not hour_list:
+        hours_of_operation = str(loc["store_info"]["store_hours"])
+        if not hours_of_operation:
             hours_of_operation = MISSING
         else:
-            hour_list = hour_list.split(";")
-            hour_list = hour_list[:-1]
-            if len(hour_list) < 7:
-                if "1," not in hour_list[0]:
-                    hour_list.insert(0, "1,Closed,")
-                elif "7," not in hour_list[5]:
-                    hour_list.append("7,Closed,")
-            hours_of_operation = ""
-            for hour in hour_list:
-                hour = hour.split(",")
-                day = daylist[hour[0]]
-                open_time = hour[1]
-                close_time = hour[2]
-                hours_of_operation = (
-                    hours_of_operation + day + " " + open_time + "-" + close_time + " "
-                )
+            if "1," not in hours_of_operation:
+                hours_of_operation = "1,Closed;" + hours_of_operation
+            if "6," not in hours_of_operation:
+                hours_of_operation = hours_of_operation + "6,Closed;"
+            if "7," not in hours_of_operation:
+                hours_of_operation = hours_of_operation + "7,Closed;"
+            hours_of_operation = (
+                hours_of_operation.replace("1,", " Mon ")
+                .replace("2,", "Tue ")
+                .replace("3,", "Wed ")
+                .replace("4,", "Thu ")
+                .replace("5,", "Fri ")
+                .replace("6,", "Sat ")
+                .replace("7,", "Sun ")
+                .replace(",", "-")
+                .replace(";", " ")
+            )
         hours_of_operation = hours_of_operation.replace("Closed-", "Closed")
+        print(hours_of_operation)
         yield SgRecord(
             locator_domain=DOMAIN,
             page_url=url,
