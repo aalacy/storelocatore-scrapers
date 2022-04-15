@@ -34,8 +34,13 @@ def parse_json(location, page_url, soup):
     data["store_number"] = location["cssClass"]
     data["page_url"] = page_url
     data["location_type"] = "Store"
+    if "Coming soon" in str(data["location_name"]):
+        data["location_type"] = "Coming soon"
+
     data["street_address"] = location["address"].split("<br")[0].replace("<p>", "")
-    data["city"] = location["address"].split("\n")[1].split(",")[0]
+    data["city"] = (location["address"].split("\n")[1].split(",")[0]).replace(
+        "</p>", ""
+    )
     try:
         data["state"] = re.findall("[A-Z]{2}", location["address"])[0]
     except:
@@ -59,6 +64,11 @@ def parse_json(location, page_url, soup):
             data["country_code"],
         ]
     )
+    data["raw_address"] = data["raw_address"].replace(MISSING, "")
+    data["raw_address"] = " ".join(data["raw_address"].split())
+    data["raw_address"] = data["raw_address"].replace(", ,", ",").replace(",,", ",")
+    if data["raw_address"][len(data["raw_address"]) - 1] == ",":
+        data["raw_address"] = data["raw_address"][:-1]
 
     return data
 
