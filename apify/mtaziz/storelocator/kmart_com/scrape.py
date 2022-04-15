@@ -1,176 +1,164 @@
-from bs4 import BeautifulSoup
 from sglogging import SgLogSetup
 from sgrequests import SgRequests
-from sgselenium import SgChrome
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support import expected_conditions as EC
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 from lxml import html
-import csv
-import time
+
 
 logger = SgLogSetup().get_logger("kmart_com")
-
-session = SgRequests()
 DOMAIN = "https://www.kmart.com/"
+LOCATION_URL = url = "https://www.kmart.com/stores.html"
+MISSING = SgRecord.MISSING
+headers = {
+    "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.77 Safari/537.36"
+}
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
-def special_cookie():
-    with SgChrome() as driver:
-        url_cookie = "https://www.kmart.com/stores.html"
-        headers = {}
-        headers["cookie"] = ""
-        headers[
-            "user-agent"
-        ] = "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36"
-        driver.get(url_cookie)
-        xapth_cookie_acceptance = '//*[@id="onetrust-accept-btn-handler"]'
-        try:
-            accept = WebDriverWait(driver, 50).until(
-                EC.visibility_of_element_located((By.XPATH, xapth_cookie_acceptance))
+def get_store_urls():
+    with SgRequests() as session:
+        store_urls = []
+        state_codes = []
+        r_base = session.get(LOCATION_URL, headers=headers)
+        r_base_data = html.fromstring(r_base.text, "lxml")
+        logger.info("crawling from base url:%s" % url)
+        state_urls = r_base_data.xpath('//li[contains(@class, "state")]/a/@href')
+        logger.info(f"Number of States to be Crawled: {len(state_urls)}")
+        state_urls = ["https://www.kmart.com" + state_slug for state_slug in state_urls]
+        for statenum, state_url in enumerate(state_urls[0:]):
+            logger.info(f"[{statenum}] State URL: {state_url}")
+            r_state = session.get(state_url, headers=headers)
+            sel_state = html.fromstring(r_state.text, "lxml")
+            store_slugs = sel_state.xpath(
+                '//li[contains(@class, "details__list")]/a/@href'
             )
-            driver.execute_script("arguments[0].click();", accept)
-            logger.info("cookie accepted")
+            logger.info(f"{state_url}: {store_slugs}")
+            state_code_list = sel_state.xpath(
+                '//li[contains(@class, "details__list")]/a/span[1]/text()'
+            )
+            state_code_list = [i.split(",")[-1] for i in state_code_list]
+            if store_slugs:
+                store_urls.extend(store_slugs)
+                state_codes.extend(state_code_list)
 
-        except Exception:
-            headers["cookie"] = ""
-        time.sleep(20)
-        logger.info("First webdriverwait:%s" % headers["cookie"])
-        for r in driver.requests:
-            if "/stores.html" in r.path:
-                logger.info("Found Path URL: /stores.html")
-                try:
-                    headers["cookie"] = r.headers["cookie"]
-                except Exception:
-                    try:
-                        headers["cookie"] = r.response.headers["cookie"]
-                    except Exception:
-                        headers["cookie"] = headers["cookie"]
-        logger.info("Headers: %s\n" % headers)
-        return headers
+        store_urls = ["https://www.kmart.com" + store_slug for store_slug in store_urls]
+        logger.info(f"Total number of stores found: {len(store_urls)}")
+        return (state_codes, store_urls)
 
 
-def get_hoo(res):
-    data_raw = html.fromstring(res.text, "lxml")
-    hoo_obj = data_raw.xpath(
-        '//table[contains(@itemprop, "department")=False]//tr[@itemprop="openingHoursSpecification"]'
-    )
-    hoo_data = [" ".join(th.xpath("./td/text()")) for th in hoo_obj]
-    hoo_clean = "; ".join(hoo_data)
-    if hoo_clean:
-        return hoo_clean
-    else:
-        return "<MISSING>"
-
-
-def fetch_data():
-    # Your scraper here
-    data = []
-
-    headers = special_cookie()
-    logger.info(f"Headers:{headers}")
-    url = "https://www.kmart.com/stores.html/"
-    r_base = session.get(url, headers=headers)
-    r_base_data = html.fromstring(r_base.text, "lxml")
-    logger.info("crawling from base url:%s" % url)
-    state_list = r_base_data.xpath('//*[@id="stateList"]/li/ul/li/a/@href')
-    p = 0
-    for statenow in state_list:
-        statenow = "https://www.kmart.com" + statenow
-        r_state = session.get(statenow, headers=headers)
-        r_state_data = html.fromstring(r_state.text, "lxml")
-        try:
-            link_list = r_state_data.xpath('//*[@id="cityList"]/div/ul/li/a/@href')
-        except:
-            continue
-        for url_store in link_list:
-            url_store = "https://www.kmart.com" + url_store
-            logger.info("Pulling the data from: %s" % url_store)
-            r = session.get(url_store, headers=headers)
+def fetch_records():
+    state_codes, store_urls_from_all_states = get_store_urls()
+    with SgRequests() as session:
+        for idx, purl in enumerate(store_urls_from_all_states[0:]):
+            r = session.get(purl)
+            sel = html.fromstring(r.text, "lxml")
             locator_domain = DOMAIN
-            page_url = url_store or "<MISSING>"
-            soup = BeautifulSoup(r.text, "html.parser")
-            title = soup.find("small", {"itemprop": "name"}).text
-            title = (
-                title.replace("Kmart", "Kmart ").replace("#", " # ").replace("  ", " ")
+            page_url = purl
+            st = sel.xpath(
+                '//p[contains(@class, "location__details--address")]/span/text()'
             )
-            title = title.replace("\xa0", "").replace("\t", "").replace("\n", "")
-            location_name = title or "<MISSING>"
-            street_address = (
-                r.text.split("address", 1)[1].split('"', 1)[1].split('"', 1)[0]
+            st = st[0:2]
+            street_address = st[0] if st[0] else MISSING
+            logger.info(f"[{idx}] Street Address: {street_address}")
+
+            city = sel.xpath('//h1[contains(@class, "store__title")]/@data-city')
+            city = "".join(city)
+            city = city if city else MISSING
+            logger.info(f"[{idx}] City: {city}")
+
+            state = state_codes[idx]
+            state = state if state else MISSING
+            logger.info(f"[{idx}] State: {state}")
+
+            zc = st[1].split(",")[-1].strip()
+            zip_postal = zc if zc else MISSING
+            logger.info(f"[{idx}] Zip Code: {zip_postal}")
+
+            country_code = "US"
+            store_number = sel.xpath(
+                '//h1[contains(@class, "store__title")]/@data-unit-number'
             )
-            city = r.text.split("city", 1)[1].split('"', 1)[1].split('"', 1)[0]
-            state = r.text.split("state = ", 1)[1].split('"', 1)[1].split('"', 1)[0]
-            zip = r.text.split("zip = ", 1)[1].split('"', 1)[1].split('"', 1)[0]
-            country_code = "US" or "<MISSING>"
-            store_number = (
-                r.text.split("unitNumber", 1)[1].split("= ", 1)[1].split(",", 1)[0]
+            store_number = "".join(store_number)
+
+            phone = sel.xpath(
+                '//div[h3[contains(text(), "Store Location")]]/strong/text()'
             )
-            store_number = store_number.replace('"', "") or "<MISSING>"
-            phone = r.text.split("phone", 1)[1].split('"', 1)[1].split('"', 1)[0]
-            location_type = "<MISSING>"
-            latitude = r.text.split("lat = ", 1)[1].split(",", 1)[0]
-            longitude = r.text.split("lon = ", 1)[1].split(",", 1)[0]
-            hours_of_operation = get_hoo(r)
-            data.append(
-                [
-                    locator_domain,
-                    page_url,
-                    location_name,
-                    street_address,
-                    city,
-                    state,
-                    zip,
-                    country_code,
-                    store_number,
-                    phone,
-                    location_type,
-                    latitude,
-                    longitude,
-                    hours_of_operation,
-                ]
+            phone = [i for i in phone]
+            phone = phone[0]
+            phone = phone if phone else MISSING
+            logger.info(f"[{idx}]  Phone: {phone}")
+
+            location_type = MISSING
+
+            location_name = f"Kmart {city} #{store_number}"
+            logger.info(f"[{idx}] location_name: {location_name}")
+
+            lat = sel.xpath(
+                '//div[contains(@class, "store-map")]/div[contains(@class, "store-location")]/@data-latitude'
             )
-            p += 1
-    return data
+            lat = lat[0]
+            latitude = lat if lat else MISSING
+            logger.info(f"[{idx}] latitude: {latitude}")
+
+            lng = sel.xpath(
+                '//div[contains(@class, "store-map")]/div[contains(@class, "store-location")]/@data-longitude'
+            )
+            lng = lng[0]
+            longitude = lng if lng else MISSING
+            logger.info(f"[{idx}] longitude: {longitude}")
+
+            hoos1 = sel.xpath('//div[h3[contains(text(), "Store Hours")]]/div/ul')
+            for hoo in hoos1[0:1]:
+                days = hoo.xpath('./li/span[contains(@class, "day")]/text()')
+                timings = hoo.xpath('./li/span[contains(@class, "timing")]/text()')
+            hours_of_operation = []
+            for daynum, timing in enumerate(timings):
+                dt = days[daynum] + " " + timing
+                hours_of_operation.append(dt)
+            hours_of_operation = "; ".join(hours_of_operation)
+            logger.info(f"Hours of operation: {hours_of_operation}")
+
+            raw_address = ""
+            raw_address = raw_address if raw_address else MISSING
+            yield SgRecord(
+                locator_domain=locator_domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_postal,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+                raw_address=raw_address,
+            )
 
 
 def scrape():
-    logger.info("Scraping Started")
-    data = fetch_data()
-    logger.info(
-        f"[Scraping Finished | Total Stores Count:{len(data)}| Writing it in CSV]"
-    )
-    write_output(data)
+    logger.info("Started")
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.STORE_NUMBER,
+                }
+            )
+        )
+    ) as writer:
+        results = fetch_records()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    logger.info(f"No of records being processed: {count}")
+    logger.info("Finished")
 
 
 if __name__ == "__main__":

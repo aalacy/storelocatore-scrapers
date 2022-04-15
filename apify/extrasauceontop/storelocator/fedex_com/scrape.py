@@ -1,126 +1,192 @@
 from sgrequests import SgRequests
-from bs4 import BeautifulSoup as bs
-import pandas as pd
-from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
+from sgscrape import simple_scraper_pipeline as sp
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries, Grain_4
+import os
+from sglogging import sglog
 
-locator_domains = []
-page_urls = []
-location_names = []
-street_addresses = []
-citys = []
-states = []
-zips = []
-country_codes = []
-store_numbers = []
-phones = []
-location_types = []
-latitudes = []
-longitudes = []
-hours_of_operations = []
 
-session = SgRequests()
-
-search = DynamicGeoSearch(
-    country_codes=[SearchableCountries.USA], max_search_results=75
-)
-
-for search_lat, search_lon in search:
-    data_url = (
-        "https://local.fedex.com/search-results/"
-        + str(search_lat)
-        + ","
-        + str(search_lon)
-        + "/?ajax=true&group_filters[]=office_group&filters[]=fedex&show=50"
+def get_data():
+    log = sglog.SgLogSetup().get_logger(logger_name="fedex")
+    proxy_url = os.getenv("PROXY_URL")
+    search = DynamicGeoSearch(
+        country_codes=[SearchableCountries.USA],
+        granularity=Grain_4(),
     )
-    data_response = session.get(data_url).json()
 
-    for location in data_response["results"]:
-        locator_domain = "fedex.com"
+    session = SgRequests()
+    headers = {"accept": "application/json"}
+    visited = []
 
-        try:
-            page_url = "https://local.fedex.com/" + location["location_url"]
-        except Exception:
-            page_url = "<MISSING>"
+    for search_lat, search_lon in search:
+        url = (
+            "https://local.fedex.com/en/search?q="
+            + str(search_lat)
+            + "%2C"
+            + str(search_lon)
+            + "&qp="
+            + str(search_lat)
+            + "%2C"
+            + str(search_lon)
+            + "&staffed=on&fdxType=5644121&fdxType=5644112&fdxType=5644117&fdxType=5644122&fdxType=5644123&fdxType=5644127&l=en"
+        )
 
-        location_name = location["e_disp_nm"]
-        address = location["address"]
-        city = location["city"]
-        state = location["state"]
-        zipp = location["postalcode"]
-        country_code = location["country_cd"]
-        latitude = location["latitude"]
-        longitude = location["longitude"]
-        search.found_location_at(latitude, longitude)
-        if country_code != "US":
-            continue
-        store_number = location["locid"]
-        if store_number in store_numbers:
-            continue
+        x = 0
+        while True:
+            x = x + 1
+            if x == 10:
+                raise Exception
 
-        phone = location["stor_phone_digit"]
+            response_obj = session.get(url, headers=headers)
 
-        location_type = location["location_type"]
-        if location_type == "fedex":
-            location_type = "Ship Center"
-        else:
-            location_type = "Office Store"
+            if response_obj.status_code != 200:
+                log.info(response_obj.status_code)
+                session = session.set_proxy_url(proxy_url)
 
-        hours_data = session.get(page_url).text
-        hours_soup = bs(hours_data, "html.parser")
-        hours_parts = hours_soup.find_all("meta", attrs={"itemprop": "openingHours"})
-        hours = ""
-        for part in hours_parts:
-            hours = hours + part["content"] + ", "
-        hours = hours[:-2]
+            else:
+                response = response_obj.json()
+                break
 
-        locator_domains.append(locator_domain)
-        page_urls.append(page_url)
-        location_names.append(location_name)
-        street_addresses.append(address)
-        citys.append(city)
-        states.append(state)
-        zips.append(zipp)
-        country_codes.append(country_code)
-        store_numbers.append(store_number)
-        phones.append(phone)
-        location_types.append(location_type)
-        latitudes.append(latitude)
-        longitudes.append(longitude)
-        hours_of_operations.append(hours)
+        for location in response["response"]["entities"]:
+            locator_domain = "local.fedex.com"
 
-df = pd.DataFrame(
-    {
-        "locator_domain": locator_domains,
-        "page_url": page_urls,
-        "location_name": location_names,
-        "street_address": street_addresses,
-        "city": citys,
-        "state": states,
-        "zip": zips,
-        "store_number": store_numbers,
-        "phone": phones,
-        "latitude": latitudes,
-        "longitude": longitudes,
-        "hours_of_operation": hours_of_operations,
-        "country_code": country_codes,
-        "location_type": location_types,
-    }
-)
+            if location["url"] != "":
+                page_url = "https://local.fedex.com/" + location["url"]
+            else:
+                page_url = "<MISSING>"
 
-df = df.fillna("<MISSING>")
-df = df.replace(r"^\s*$", "<MISSING>", regex=True)
+            location_name = location["profile"]["name"]
 
-df["dupecheck"] = (
-    df["location_name"]
-    + df["street_address"]
-    + df["city"]
-    + df["state"]
-    + df["location_type"]
-)
+            try:
+                latitude = location["profile"]["geocodedCoordinate"]["lat"]
+                longitude = location["profile"]["geocodedCoordinate"]["long"]
+            except Exception:
+                try:
+                    latitude = location["profile"]["displayCoordinate"]["lat"]
+                    longitude = location["profile"]["displayCoordinate"]["long"]
+                except Exception:
+                    latitude = "<MISSING>"
+                    longitude = "<MISSING>"
 
-df = df.drop_duplicates(subset=["dupecheck"])
-df = df.drop(columns=["dupecheck"])
-df = df.replace(r"^\s*$", "<MISSING>", regex=True)
-df = df.fillna("<MISSING>")
+            city = location["profile"]["address"]["city"]
+            store_number = location["profile"]["meta"]["id"]
+            address = (
+                (
+                    location["profile"]["address"]["line1"]
+                    + " "
+                    + str(location["profile"]["address"]["line2"])
+                    + " "
+                    + str(location["profile"]["address"]["line3"])
+                )
+                .replace("None", "")
+                .strip()
+            )
+            state = location["profile"]["address"]["region"]
+            zipp = location["profile"]["address"]["postalCode"]
 
-df.to_csv("data.csv", index=False)
+            try:
+                phone = location["profile"]["mainPhone"]["number"].replace("+", "")
+            except Exception:
+                phone = "<MISSING>"
+
+            location_type = location["profile"]["name"]
+            country_code = location["profile"]["address"]["countryCode"]
+
+            try:
+                hours = ""
+                for hours_day in location["profile"]["hours"]["normalHours"]:
+                    day = hours_day["day"]
+                    try:
+                        start = str(hours_day["intervals"][0]["start"])
+                        end = str(hours_day["intervals"][0]["end"])
+                    except Exception:
+                        hours = hours + day + " " + "closed"
+                    if start == "0":
+                        start = "0:00"
+                    else:
+                        start = start[:-2] + ":" + start[-2:]
+
+                    if end == "0":
+                        end = "0:00"
+                    else:
+                        end = end[:-2] + ":" + end[-2:]
+
+                    hours = hours + day + " " + start + "-" + end + ", "
+
+                hours = hours[:-2]
+
+            except Exception:
+                hours = "<MISSING>"
+
+            try:
+                search.found_location_at(latitude, longitude)
+            except Exception:
+                pass
+
+            if country_code != "US":
+                continue
+
+            if (
+                location_name == "FedEx Office Print & Ship Center - Closed"
+                or location_name == "FedEx Drop Box"
+            ):
+                continue
+
+            location_data = [location_name, latitude, longitude]
+            if location_data in visited:
+                continue
+            else:
+                visited.append(location_data)
+            yield {
+                "locator_domain": locator_domain,
+                "page_url": page_url,
+                "location_name": location_name,
+                "latitude": latitude,
+                "longitude": longitude,
+                "city": city,
+                "store_number": store_number,
+                "street_address": address,
+                "state": state,
+                "zip": zipp,
+                "phone": phone,
+                "location_type": location_type,
+                "hours": hours,
+                "country_code": country_code,
+            }
+
+
+def scrape():
+    field_defs = sp.SimpleScraperPipeline.field_definitions(
+        locator_domain=sp.MappingField(mapping=["locator_domain"]),
+        page_url=sp.MappingField(mapping=["page_url"], part_of_record_identity=True),
+        location_name=sp.MappingField(
+            mapping=["location_name"], part_of_record_identity=True
+        ),
+        latitude=sp.MappingField(mapping=["latitude"], part_of_record_identity=True),
+        longitude=sp.MappingField(mapping=["longitude"], part_of_record_identity=True),
+        street_address=sp.MultiMappingField(
+            mapping=["street_address"], is_required=False
+        ),
+        city=sp.MappingField(
+            mapping=["city"],
+        ),
+        state=sp.MappingField(mapping=["state"], is_required=False),
+        zipcode=sp.MultiMappingField(mapping=["zip"], is_required=False),
+        country_code=sp.MappingField(mapping=["country_code"]),
+        phone=sp.MappingField(mapping=["phone"], is_required=False),
+        store_number=sp.MappingField(
+            mapping=["store_number"], part_of_record_identity=True
+        ),
+        hours_of_operation=sp.MappingField(mapping=["hours"], is_required=False),
+        location_type=sp.MappingField(mapping=["location_type"], is_required=False),
+    )
+
+    pipeline = sp.SimpleScraperPipeline(
+        scraper_name="Crawler",
+        data_fetcher=get_data,
+        field_definitions=field_defs,
+        log_stats_interval=15,
+    )
+    pipeline.run()
+
+
+scrape()

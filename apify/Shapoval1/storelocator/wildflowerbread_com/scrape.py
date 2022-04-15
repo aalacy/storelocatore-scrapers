@@ -1,112 +1,77 @@
-import csv
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgpostal.sgpostal import USA_Best_Parser, parse_address
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def fetch_data(sgw: SgWriter):
 
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
-    locator_domain = "https://wildflowerbread.com"
+    locator_domain = "https://wildflowerbread.com/"
     api_url = "https://wildflowerbread.com/locations/"
-
     session = SgRequests()
-    r = session.get(api_url)
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
+    }
+    r = session.get(api_url, headers=headers)
     tree = html.fromstring(r.text)
-    block = tree.xpath('//div[@class="eight columns locations"]/div[@class="row"]')
-    for b in block:
+    div = tree.xpath("//div[@data-lat]")
+    for d in div:
 
-        street_address = "".join(
-            b.xpath('.//span[2][@itemprop="streetAddress"]/text()')
+        page_url = "".join(d.xpath('.//a[text()="View Details"]/@href'))
+        location_name = "".join(d.xpath('.//h2[@class="h3"]/text()'))
+        ad = (
+            "".join(d.xpath(".//p[./a]/a[1]/text()"))
+            .replace("\n", "")
+            .replace(", USA", "")
+            .strip()
         )
-        city = "".join(b.xpath('.//span[@itemprop="addressLocality"]/text()'))
-        postal = "".join(b.xpath('.//span[@itemprop="postalCode"]/text()'))
-        state = "".join(b.xpath('.//span[@itemprop="addressRegion"]/text()'))
+        a = parse_address(USA_Best_Parser(), ad)
+        street_address = (
+            f"{a.street_address_1} {a.street_address_2}".replace("None", "").strip()
+            or "<MISSING>"
+        )
+        state = a.state or "<MISSING>"
+        postal = a.postcode or "<MISSING>"
         country_code = "US"
-        store_number = "<MISSING>"
-        location_name = "".join(b.xpath('.//span[@itemprop="name"]/a/text()'))
-        if location_name.find("Airport") != -1:
-            street_address = "".join(
-                b.xpath('.//span[1][@itemprop="streetAddress"]/text()')
-            )
-        slug = "".join(b.xpath('.//span[@itemprop="name"]/a/@href'))
-        page_url = f"{locator_domain}{slug}"
-        phone = "".join(b.xpath('.//a[@itemprop="telephone"]/text()'))
-        latln = "".join(b.xpath('.//p[@class="view-more inline"]/a/@href')).split(
-            "%40"
-        )[1:]
-        latln = "".join(latln).replace("%2C", ",")
-        if city == "Phoenix":
-            session = SgRequests()
-            r = session.get(page_url)
-            block = r.text.split("var latlng = new google.maps.LatLng(")[1].split(");")[
-                0
-            ]
-            latln = block
-        latitude = latln.split(",")[0]
-        longitude = latln.split(",")[1]
-        location_type = "<MISSING>"
-        hours_of_operation = "".join(
-            b.xpath('.//span[1][@itemprop="streetAddress"]/text()')
-        ).replace("Open ", "")
-        if location_name.find("Airport") != -1:
-            hours_of_operation = "<MISSING>"
-        if location_name.find("Closed") != -1:
-            hours_of_operation = "Temporarily closed"
-            location_name = location_name.split("-")[1].split("-")[0].strip()
+        city = a.city or "<MISSING>"
+        store_number = "".join(d.xpath(".//@data-id"))
+        latitude = "".join(d.xpath(".//@data-lat"))
+        longitude = "".join(d.xpath(".//@data-lng"))
+        phone = "".join(d.xpath('.//a[contains(@href, "tel")]/text()')) or "<MISSING>"
+        hours_of_operation = (
+            " ".join(d.xpath('.//a[text()="View Details"]/following::p[1]//text()'))
+            .replace("\n", "")
+            .strip()
+        )
+        hours_of_operation = " ".join(hours_of_operation.split()).strip()
+        if hours_of_operation.find("Dine-in") != -1:
+            hours_of_operation = hours_of_operation.split("Dine-in")[0].strip()
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+            raw_address=ad,
+        )
 
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))) as writer:
+        fetch_data(writer)

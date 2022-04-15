@@ -2,53 +2,51 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+import json
+import re
 
 _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
 }
+locator_domain = "https://www.nptpool.com"
+base_url = "https://www.nptpool.com/showrooms/"
 
 
 def fetch_data():
-    locator_domain = "https://www.mastertile.net/"
-    base_url = "https://www.mastertile.net/"
     with SgRequests() as session:
-        soup = bs(session.get(base_url, headers=_headers).text, "lxml")
-        links = soup.select("ul#menu-main > li")[-1].select("ul li a")
-        for link in links:
-            if link["href"] == "#" or "contact" in link["href"]:
-                continue
-            sp1 = bs(session.get(link["href"], headers=_headers).text, "lxml")
-            try:
-                block = list(
-                    sp1.select_one("div#location-content-details").stripped_strings
-                )
-                coord = (
-                    sp1.select_one("div#location-map iframe")["src"]
-                    .split("!2d")[1]
-                    .split("!2m")[0]
-                    .split("!3d")
-                )
-                yield SgRecord(
-                    page_url=link["href"],
-                    location_name=link.text,
-                    street_address=block[0],
-                    city=block[1].split(",")[0].strip(),
-                    state=block[1].split(",")[1].strip().split(" ")[0].strip(),
-                    latitude=coord[1],
-                    longitude=coord[0],
-                    zip_postal=block[1].split(",")[1].strip().split(" ")[-1].strip(),
-                    phone=block[2].replace("Phone", ""),
-                    country_code="US",
-                    locator_domain=locator_domain,
-                )
-            except:
-                import pdb
-
-                pdb.set_trace()
+        res = session.get(base_url, headers=_headers).text
+        sp1 = bs(res, "lxml")
+        locations = json.loads(
+            res.split("var locations =")[1].split("var states")[0].strip()[:-1]
+        )
+        for _ in locations:
+            modal = sp1.select_one(f"div#locationModal{_['id']}")
+            _hr = modal.find("h5", string=re.compile(r"^Business Hours"))
+            hours = []
+            if _hr:
+                hours = _hr.find_next_sibling("p").stripped_strings
+            yield SgRecord(
+                page_url=base_url,
+                store_number=_["id"],
+                location_name=_["name"],
+                street_address=_["address"],
+                city=_["city"],
+                state=_["state"],
+                latitude=_["latitude"],
+                longitude=_["longitude"],
+                zip_postal=_["zip"],
+                phone=_["phone"],
+                country_code=_["country"],
+                locator_domain=locator_domain,
+                raw_address=_["full_address"],
+                hours_of_operation="; ".join(hours),
+            )
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

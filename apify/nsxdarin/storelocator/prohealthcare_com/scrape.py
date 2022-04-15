@@ -1,64 +1,44 @@
-import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+import json
 
 session = SgRequests()
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36",
-    "authorization": "Bearer 90dd1fcea0074e7eb4b11e3753a0a334",
+    "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
+    "CSRF-Token": "undefined",
+    "X-Requested-With": "XMLHttpRequest",
+    "Referer": "https://www.prohealthcare.com/content/prohealth/en/provider-lookup/serp.html?isAcceptingNewPatients=true&search=10002&latitude=40.7135097&longitude=-73.9859414&network=ProHEALTHCare",
 }
 
 logger = SgLogSetup().get_logger("prohealthcare_com")
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
-
-
 def fetch_data():
     infos = []
-    for lat in range(35, 45):
-        for lng in range(-70, -80, -1):
-            logger.info(str(lat) + "," + str(lng))
-            url = (
-                "https://www.prohealthcare.com/bin/optumcare/findlocations?businessName=&fullName=&search=&latitude="
-                + str(lat)
-                + "&longitude="
-                + str(lng)
-                + "&radius=100mi&network=ProHEALTHCare&isAcceptingNewPatients=true"
-            )
-            r = session.get(url, headers=headers)
+    for clat in range(35, 45):
+        for clng in range(-70, -80, -1):
+            logger.info(str(clat) + "," + str(clng))
+            url = "https://www.prohealthcare.com/bin/optumcare/findlocations"
+            payload = {
+                "latitude": str(clat),
+                "longitude": str(clng),
+                "search": "",
+                "network": "ProHEALTHCare",
+                "radius": "100mi",
+            }
+            r = session.post(url, headers=headers, data=json.dumps(payload))
             website = "prohealthcare.com"
             typ = "<MISSING>"
             country = "US"
-            loc = "<MISSING>"
+            loc = "https://www.prohealthcare.com/bin/optumcare/findlocations"
             store = "<MISSING>"
             hours = "<MISSING>"
             for line in r.iter_lines():
-                line = str(line.decode("utf-8"))
                 if '"individualProviderId":"' in line:
                     items = line.split('"individualProviderId":"')
                     for item in items:
@@ -116,27 +96,29 @@ def fetch_data():
                                 infos.append(addinfo)
                                 if "100-33 4th Ave" in add:
                                     phone = "347-909-7044"
-                                yield [
-                                    website,
-                                    loc,
-                                    name,
-                                    add,
-                                    city,
-                                    state,
-                                    zc,
-                                    country,
-                                    store,
-                                    phone,
-                                    typ,
-                                    lat,
-                                    lng,
-                                    hours,
-                                ]
+                                yield SgRecord(
+                                    locator_domain=website,
+                                    page_url=loc,
+                                    location_name=name,
+                                    street_address=add,
+                                    city=city,
+                                    state=state,
+                                    zip_postal=zc,
+                                    country_code=country,
+                                    phone=phone,
+                                    location_type=typ,
+                                    store_number=store,
+                                    latitude=lat,
+                                    longitude=lng,
+                                    hours_of_operation=hours,
+                                )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()
