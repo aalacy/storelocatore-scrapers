@@ -35,8 +35,8 @@ def fetch_data(sgw: SgWriter):
             link = (
                 item.text.replace(",", "")
                 .replace("-&", "")
-                .replace("-n-w", "-nw")
-                .replace("-nwashington", "-n-washington")
+                .replace("-dr-n-w", "-dr-nw")
+                .replace("912-n-w", "912-nw")
                 .replace("--", "-")
                 .split("-suite")[0]
                 .split("-#")[0]
@@ -51,7 +51,7 @@ def fetch_data(sgw: SgWriter):
                 link = link.replace("6410-county", "travel-center-6410-county")
             final_links.append(link)
 
-    logger.info("Processing " + str(len(final_links)) + " links ..")
+    logger.info("Processing " + str(len(final_links)) + " links ...")
     for final_link in final_links:
         final_link = final_link.replace("--", "-")
         req = session.get(final_link, headers=headers)
