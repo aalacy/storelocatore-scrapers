@@ -43,7 +43,7 @@ def fetch_data():
             hours = "<MISSING>"
         try:
             lat, longt = (
-                div.find("a")["href"].split("@", 1)[1].split("data", 1)[0].split(",", 1)
+                loc.find("a")["href"].split("@", 1)[1].split("data", 1)[0].split(",", 1)
             )
             longt = longt.split(",", 1)[0]
         except:
