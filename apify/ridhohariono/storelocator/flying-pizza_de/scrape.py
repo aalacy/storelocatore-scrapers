@@ -1,3 +1,4 @@
+import re
 from bs4 import BeautifulSoup as bs
 from sgrequests import SgRequests
 from sglogging import sglog
@@ -70,7 +71,10 @@ def fetch_data():
             .get_text(strip=True, separator="@@")
             .split("@@")
         )
-        hours_of_operation = " ".join(hoo[:-1]).strip()
+        hours_of_operation = re.sub(
+            r"\d{1,2}.\d{1,2}.\s?\(\D+\).*", "", " ".join(hoo[:-1]).strip()
+        ).strip()
+        print(hours_of_operation)
         location_type = MISSING
         store_number = row["data-id"]
         latitude = MISSING
