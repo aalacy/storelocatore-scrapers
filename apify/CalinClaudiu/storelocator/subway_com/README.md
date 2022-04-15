@@ -1,0 +1,60 @@
+# Crawl pulls these counries:
+
+```Python
+ tocrawl = [
+        "au",
+        "be",
+        "bg",
+        "ca",
+        "hr",
+        "cy",
+        "cz",
+        "dk",
+        "ee",
+        "fi",
+        "fr",
+        "ge",
+        "de",
+        "gr",
+        "hu",
+        "ie",
+        "im",
+        "is",
+        "it",
+        "li",
+        "lu",
+        "lv",
+        "lt",
+        "mt",
+        "nl",
+        "no",
+        "pl",
+        "pt",
+        "ro",
+        "sk",
+        "si",
+        "se",
+        "es",
+        "se",
+        "ch",
+        "us",
+        "gb",
+    ]
+```
+
+#Does not pull these countries:
+
+
+```
+['ad', 'ae', 'af', 'al', 'am', 'ao', 'ar', 'as', 'at',  'aw', 'ax', 'az', 'bb', 'bd',  'bf',  'bh', 'bi',
+ 'bj', 'bm', 'bn', 'bo', 'br', 'bs', 'bt', 'bw', 'by', 'bz',  'cf',  'ck', 'cl', 'cm', 'co', 'cr', 'cu', 'cx',
+    'dj',  'dm', 'do', 'dz', 'ec',  'eg', 'er',  'et',  'fj', 'fk', 'fm', 'fo', 
+ 'ga', 'gb', 'gd',  'gf', 'gg', 'gh', 'gi', 'gl', 'gm', 'gn', 'gp', 'gq',  'gt', 'gu', 'gw', 'gy', 'hk', 'hn',
+  'ht',  'id',  'il',  'in', 'iq',   'je', 'jm', 'jo', 'jp', 'ke', 'kg', 'kh', 'ki', 'km',
+ 'kr', 'kw', 'ky', 'la', 'lb',  'lk', 'lr', 'ls',    'ly', 'ma', 'mc', 'md', 'me', 'mg', 'mh', 'mk',
+ 'ml', 'mn', 'mo', 'mp', 'mq', 'mr', 'ms',  'mu', 'mv', 'mw', 'mx', 'my', 'mz', 'na', 'nc', 'ne', 'nf', 'ng', 'ni',
+   'np', 'nr', 'nu', 'nz', 'om', 'pa', 'pe', 'pf', 'pg', 'ph', 'pk',  'pm', 'pr',  'pw', 'py', 'qa',
+ 're',  'rs', 'ru', 'rw', 'sb', 'sc', 'sd',  'sg',  'sj',  'sl', 'sm', 'sn', 'so', 'sr', 'sv', 'sy',
+ 'sz', 'td', 'tg', 'th', 'tj', 'tm', 'tn', 'to', 'tr', 'tv', 'tw', 'ua', 'ug',  'uy', 'uz', 'va', 've', 'vi', 'vn',
+ 'vu', 'wf', 'xg', 'xw', 'ye', 'yt', 'za', 'zm', 'zw']
+ ```

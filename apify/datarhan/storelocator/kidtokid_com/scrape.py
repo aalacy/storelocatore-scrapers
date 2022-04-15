@@ -1,4 +1,5 @@
-import json
+from lxml import etree
+from urllib.parse import urljoin
 
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
@@ -8,67 +9,62 @@ from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
-    # Your scraper here
     session = SgRequests()
     domain = "kidtokid.com"
-    start_url = "https://kidtokid.com/global/gen/model/search?include_classes=sitefile,address&take=6000&class_string=location"
+    start_url = "https://kidtokid.com/stores/"
 
     response = session.get(start_url)
-    data = json.loads(response.text)
+    dom = etree.HTML(response.text)
+    all_locations = dom.xpath('//a[span[contains(text(), "View Location")]]/@href')
+    all_states = dom.xpath('//a[contains(@href, "search-results")]/@href')
+    for url in all_states:
+        url = urljoin(start_url, url)
+        response = session.get(url)
+        dom = etree.HTML(response.text)
+        all_locations += dom.xpath('//a[span[contains(text(), "View Location")]]/@href')
 
-    for poi in data["data"]["models"]:
-        store_url = "https://kidtokid.com/location/{}".format(poi["url"])
-        location_name = poi["name"]
-        location_name = location_name if location_name else "<MISSING>"
-        street_address = poi["address"]["street_1"]
-        street_address = street_address if street_address else "<MISSING>"
-        city = poi["address"]["city"]
-        city = city if city else "<MISSING>"
-        state = poi["address"]["state"]
-        state = state if state else "<MISSING>"
-        zip_code = poi["address"]["zipcode"]
-        zip_code = zip_code if zip_code else "<MISSING>"
-        country_code = poi["address"]["country"]
-        store_number = poi["location_id"]
-        phone = poi["phone"]
-        phone = phone if phone else "<MISSING>"
-        location_type = "<MISSING>"
-        latitude = poi["address"]["latitude"]
-        latitude = latitude if latitude else "<MISSING>"
-        longitude = poi["address"]["longitude"]
-        longitude = longitude if longitude else "<MISSING>"
-        hours_of_operation = (
-            poi["c_store-hours"].replace("\n", " ").replace("\t", " ").strip()
-        )
-        if not hours_of_operation:
-            hours_of_operation = (
-                poi["hours_of_operation"].replace("\n", " ").replace("\t", " ")
-            )
-        hours_of_operation = hours_of_operation.split("for high")[0].strip()
-        hours_of_operation = (
-            hours_of_operation.split("or anytime")[0].strip().split("Buying")[0].strip()
-        )
-        hours_of_operation = hours_of_operation.split("Face masks")[0].strip()
-        if hours_of_operation.endswith(","):
-            hours_of_operation = hours_of_operation[:-1]
-        if not hours_of_operation:
+    for url in list(set(all_locations)):
+        page_url = urljoin(start_url, url)
+        loc_response = session.get(page_url)
+        loc_dom = etree.HTML(loc_response.text)
+        if loc_dom.xpath('//div[contains(text(), "coming soon")]'):
             continue
+
+        location_name = " ".join(
+            loc_dom.xpath(
+                '//div[@class="elementor-column-wrap elementor-element-populated"]//h1/text()'
+            )
+        )
+        raw_address = loc_dom.xpath(
+            '//div[div[h2[contains(text(), "Contact Us")]]]/following-sibling::div//p/text()'
+        )
+        if not raw_address:
+            continue
+        country_code = "US"
+        zip_code = " ".join(raw_address[1].split(", ")[-1].split()[1:])
+        if len(zip_code.split()) == 2:
+            country_code = "CA"
+        phone = loc_dom.xpath('//a[contains(@href, "tel")]/span/text()')[0]
+        hoo = loc_dom.xpath(
+            '//div[div[h2[contains(text(), "Store Hours")]]]/following-sibling::div//text()'
+        )
+        hoo = " ".join([e.strip() for e in hoo if e.strip()])
 
         item = SgRecord(
             locator_domain=domain,
-            page_url=store_url,
+            page_url=page_url,
             location_name=location_name,
-            street_address=street_address,
-            city=city,
-            state=state,
+            street_address=raw_address[0],
+            city=raw_address[1].split(", ")[0],
+            state=raw_address[1].split(", ")[-1].split()[0],
             zip_postal=zip_code,
             country_code=country_code,
-            store_number=store_number,
+            store_number="",
             phone=phone,
-            location_type=location_type,
-            latitude=latitude,
-            longitude=longitude,
-            hours_of_operation=hours_of_operation,
+            location_type="",
+            latitude="",
+            longitude="",
+            hours_of_operation=hoo,
         )
 
         yield item

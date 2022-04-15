@@ -9,14 +9,15 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 def fetch_data(sgw: SgWriter):
 
     locator_domain = "https://www.selectspecialtyhospitals.com/"
-    api_url = "https://www.selectspecialtyhospitals.com//sxa/search/results/?s={A9835FD2-AE76-4383-876E-44128806F6A6}|{A9835FD2-AE76-4383-876E-44128806F6A6}&itemid={9DE36713-213C-446D-A694-DEC9AC996203}&sig=&autoFireSearch=true&v={E695F09C-8569-4B59-8EA8-F89CEF8FE995}&p=1000"
+    api_url = "https://www.selectspecialtyhospitals.com//sxa/search/results/?s={A9835FD2-AE76-4383-876E-44128806F6A6}|{A9835FD2-AE76-4383-876E-44128806F6A6}&itemid={9DE36713-213C-446D-A694-DEC9AC996203}&sig=&autoFireSearch=true&v=%7BE695F09C-8569-4B59-8EA8-F89CEF8FE995%7D&p=1000"
     session = SgRequests()
 
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
+
     r = session.get(api_url, headers=headers)
-    js = r.json()["Results"]
+    js = r.json()["Results"][87:]
 
     for j in js:
         cont = j.get("Html")
@@ -57,17 +58,33 @@ def fetch_data(sgw: SgWriter):
 
         session = SgRequests()
         r = session.get(page_url, headers=headers)
-        tree = html.fromstring(r.text)
-        hooco = "".join(tree.xpath('//div[@class="field-businesshours"]/p/a/@href'))
-        hours_of_operation = "<MISSING>"
-        if hooco:
-            session = SgRequests()
-            r = session.get(hooco, headers=headers)
+        try:
             tree = html.fromstring(r.text)
+        except AttributeError:
+            continue
+        hours_of_operation = (
+            "".join(tree.xpath('//div[@class="field-businesshours"]//text()'))
+            .replace("\n", "")
+            .strip()
+        )
+        if (
+            hours_of_operation.find("View COVID-19 hours") != -1
+            or hours_of_operation.find("New COVID pandemic visitor hours") != -1
+        ):
+            hoo_url = "".join(
+                tree.xpath('//div[@class="field-businesshours"]//a/@href')
+            )
+            if hoo_url.find("http") == -1:
+                hoo_url = f"https://www.selectspecialtyhospitals.com{hoo_url}"
+            r = session.get(hoo_url, headers=headers)
+            try:
+                tree = html.fromstring(r.text)
+            except AttributeError:
+                continue
             hours_of_operation = (
                 "".join(
                     tree.xpath(
-                        '//p[contains(text(), "Hours:")]/text() | //strong[contains(text(), "hours")]/text()'
+                        '//p[contains(text(), "Hours:")]/text() | //strong[contains(text(), "hours")]/text() | //strong[contains(text(), "Hours:")]/text()'
                     )
                 )
                 .replace("Hours:", "")
@@ -75,6 +92,15 @@ def fetch_data(sgw: SgWriter):
                 .strip()
                 or "<MISSING>"
             )
+            sub_info = (
+                "".join(tree.xpath('//p[contains(text(), "Two visitors")]/text()'))
+                .replace("\n", "")
+                .strip()
+            )
+            if sub_info:
+                hours_of_operation = sub_info.split("from")[1].split("The")[0].strip()
+        if hours_of_operation.find(". Visitors") != -1:
+            hours_of_operation = hours_of_operation.split(". Visitors")[0].strip()
 
         row = SgRecord(
             locator_domain=locator_domain,
@@ -97,7 +123,6 @@ def fetch_data(sgw: SgWriter):
 
 
 if __name__ == "__main__":
-    session = SgRequests()
     with SgWriter(
         SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
     ) as writer:

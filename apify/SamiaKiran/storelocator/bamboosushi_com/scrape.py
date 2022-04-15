@@ -1,114 +1,98 @@
-from sglogging import SgLogSetup
+import re
+import json
+import usaddress
+from sglogging import sglog
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
-from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
-
-DOMAIN = "https://bamboosushi.com/"
 website = "bamboosushi_com"
-log = SgLogSetup().get_logger(logger_name=website)
-MISSING = "<MISSING>"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
 
 headers = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36",
-    "Accept": "application/json",
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
 }
+
+DOMAIN = "https://bamboosushi.com/"
+MISSING = SgRecord.MISSING
 
 
 def fetch_data():
 
-    url = "https://bamboosushi.com/restaurants"
+    url = "https://bamboosushi.com/locations"
     r = session.get(url, headers=headers)
     soup = BeautifulSoup(r.text, "html.parser")
-    loclist = soup.find("div", {"class": "locations-listing"}).findAll(
-        "a", {"class": "location-single"}
-    )
-
-    for idx, loc in enumerate(loclist):
-        locator_domain = DOMAIN
-        page_url = loc["href"]
-        log.info(
-            f"{idx} out of {len(loclist)} Stores][Pulling the data from: {page_url} "
-        )
-
-        # Response from page URL
+    loclist = soup.findAll("a", string=re.compile("More Information"))
+    for loc in loclist:
+        page_url = DOMAIN + loc["href"]
+        log.info(page_url)
         r = session.get(page_url, headers=headers)
-        soup = BeautifulSoup(r.text, "html.parser")
-
-        # Address
-        address = (
-            soup.find("div", {"class": "location-addr"})
-            .get_text(separator="|", strip=True)
-            .split("|")
+        loc = json.loads(
+            r.text.split('<script id="__NEXT_DATA__" type="application/json">')[
+                1
+            ].split("</script>")[0]
         )
-
-        # Location Name
-        location_name = " ".join(address[0].strip().split())
-        location_name = location_name if location_name else MISSING
-        log.info(f"[Location Name: {location_name}]")
-
-        # Street Address
-        street_address = address[1].strip()
-        street_address = street_address if street_address else MISSING
-        log.info(f"[Street Address: {street_address}]")
-
-        # City
-        address2 = address[2].split(",")
-        city = address2[0].strip()
-        city = city if city else MISSING
-        log.info(f"[City: {city}]")
-
-        # State
-        address3 = address2[1].split()
-        state = address3[0].strip()
-        state = state if state else MISSING
-        log.info(f"[State: {state}]")
-
-        # Zip
-        zip_postal = address3[1].strip()
-        zip_postal = zip_postal if zip_postal else MISSING
-        log.info(f"[Zip: {zip_postal}]")
-
-        # Country Code
+        temp = loc["props"]["pageProps"]["fields"]
+        location_name = temp["title"]
+        hours = temp["hours"]["fields"]
+        try:
+            mo = "Mon " + hours["mondayOpen"] + "-" + hours["mondayClose"]
+        except:
+            mo = "Mon Closed"
+        try:
+            tu = " Tue " + hours["tuesdayOpen"] + "-" + hours["tuesdayClose"]
+        except:
+            tu = " Tue Closed"
+        try:
+            we = " Wed " + hours["wednesdayOpen"] + "-" + hours["wednesdayClose"]
+        except:
+            we = " Wed Closed"
+        try:
+            th = " Thu " + hours["thursdayOpen"] + "-" + hours["thursdayOpen"]
+        except:
+            th = " Thu Closed"
+        try:
+            fr = " Fri " + hours["fridayOpen"] + "-" + hours["fridayOpen"]
+        except:
+            fr = " Fri Closed"
+        sa = " Sat " + hours["saturdayOpen"] + "-" + hours["saturdayOpen"]
+        su = " Sun " + hours["sundayOpen"] + "-" + hours["sundayOpen"]
+        hours_of_operation = mo + tu + we + th + fr + sa + su
+        phone = temp["phone"]
+        address = temp["address"].replace("\n", " ")
+        address = address.replace(",", " ")
+        address = usaddress.parse(address)
+        i = 0
+        street_address = ""
+        city = ""
+        state = ""
+        zip_postal = ""
+        while i < len(address):
+            temp = address[i]
+            if (
+                temp[1].find("Address") != -1
+                or temp[1].find("Street") != -1
+                or temp[1].find("Recipient") != -1
+                or temp[1].find("Occupancy") != -1
+                or temp[1].find("BuildingName") != -1
+                or temp[1].find("USPSBoxType") != -1
+                or temp[1].find("USPSBoxID") != -1
+            ):
+                street_address = street_address + " " + temp[0]
+            if temp[1].find("PlaceName") != -1:
+                city = city + " " + temp[0]
+            if temp[1].find("StateName") != -1:
+                state = state + " " + temp[0]
+            if temp[1].find("ZipCode") != -1:
+                zip_postal = zip_postal + " " + temp[0]
+            i += 1
         country_code = "US"
-
-        # Store Number
-        store_number = loc["restaurant_id"].strip()
-        store_number = store_number if store_number else MISSING
-        log.info(f"[Store Number: {store_number}]")
-
-        # Phone
-        phone = (soup.find("div", {"class": "location-phone"}).text).strip()
-        phone = phone if phone else MISSING
-
-        # Location Type
-        location_type = MISSING
-
-        # Latitude
-        latitude = MISSING
-
-        # Longitude
-        longitude = MISSING
-
-        # Hours of operation
-        hoo = (
-            soup.find("div", {"class": "location-hours"})
-            .get_text(separator="|", strip=True)
-            .replace("|", " ")
-            .strip("-")
-        )
-        hours_of_operation = hoo if hoo else MISSING
-        log.info(f"[Hours of Operation: {hours_of_operation}]")
-
-        # Raw Address
-        raw_address = ", ".join(address[1:])
-        raw_address = raw_address if raw_address else MISSING
-        log.info(f"[Raw Address: {raw_address}]")
-
         yield SgRecord(
-            locator_domain=locator_domain,
+            locator_domain=DOMAIN,
             page_url=page_url,
             location_name=location_name,
             street_address=street_address,
@@ -116,20 +100,21 @@ def fetch_data():
             state=state,
             zip_postal=zip_postal,
             country_code=country_code,
-            store_number=store_number,
+            store_number=MISSING,
             phone=phone,
-            location_type=location_type,
-            latitude=latitude,
-            longitude=longitude,
+            location_type=MISSING,
+            latitude=MISSING,
+            longitude=MISSING,
             hours_of_operation=hours_of_operation,
-            raw_address=raw_address,
         )
 
 
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

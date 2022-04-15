@@ -28,7 +28,9 @@ def fetch_data():
     for i in str:
         newurl = i["href"]
         log.info(f"Fetching locations for state {i.text}")
-        page = session.get(newurl, headers=headers, timeout=180)
+        page = session.get(newurl, headers=headers)
+        if page.status_code != 200:
+            continue
         soup = BeautifulSoup(page.content, "html.parser")
         store = soup.find_all("a", class_="store-details-link")
         for j in store:
@@ -36,7 +38,9 @@ def fetch_data():
             log.info(page_url)
             if "closed" in page_url.lower():
                 continue
-            page = session.get(page_url, headers=headers, timeout=180)
+            page = session.get(page_url, headers=headers)
+            if page.status_code != 200:
+                continue
             soup = BeautifulSoup(page.content, "html.parser")
             div = soup.find("div", class_="store-page-details")
             try:
@@ -88,7 +92,7 @@ def fetch_data():
                 .find("img")
                 .get("src"),
             )[0]
-            country_code = "US"
+            country_code = "CA"
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url=page_url,

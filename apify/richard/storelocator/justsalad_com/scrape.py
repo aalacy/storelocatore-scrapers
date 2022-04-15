@@ -1,174 +1,119 @@
 from sgrequests import SgRequests
 from geopy.geocoders import Nominatim
-import csv
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 geolocator = Nominatim(user_agent="justsalad_com_scraper")
 
 URL = "https://justsalad.com"
 
-def write_output(data):
-    with open('data.csv', mode='w', encoding="utf-8") as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
-        # Header
-        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-        # Body
-        for row in data:
-            writer.writerow(row)
-
 
 def fetch_data():
     # store data
-    locations_ids = []
-    locations_titles = []
-    street_addresses = []
-    cities = []
-    states = []
-    zip_codes = []
-    latitude_list = []
-    longitude_list = []
-    phone_numbers = []
-    hours = []
-    countries = []
-    location_types = []
-    locations_links = []
-    data = []
-
-    user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36'
-    HEADERS = {'User-Agent' : user_agent}
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
+    HEADERS = {"User-Agent": user_agent}
 
     session = SgRequests()
 
-    stores = session.get('https://justsalad-admin.azurewebsites.net/v1/justsaladstores', headers=HEADERS).json()['features']
+    stores = session.get(
+        "https://justsalad-admin.azurewebsites.net/v1/justsaladstores", headers=HEADERS
+    ).json()["features"]
 
     for store in stores:
 
-        latlon = store['geometry']
+        latlon = store["geometry"]
 
         # Lat
-        lat = latlon['coordinates'][1]
+        lat = latlon["coordinates"][1]
 
         # Long
-        lon = latlon['coordinates'][0]
+        lon = latlon["coordinates"][0]
 
         # Get loc info
         location = geolocator.reverse(f"{lat}, {lon}").raw
 
         # Country
-        country = location['address']['country_code'].upper()
+        country = location["address"]["country_code"].upper()
 
         if country != "US":
             continue
 
-        if not store['properties']['locationID'][0].isalpha():
-            store = store['properties']
+        if not store["properties"]["locationID"][0].isalpha():
+            store = store["properties"]
 
             # Name
-            location_title = store['locationName'].encode("ascii", "replace").decode().replace("?","'")
-
-            # Store ID
-            location_id = store['locationID']
-
-            # location_link = "https://www.orderjustsalad.com/view/menu/" + store['OJSID']
-            location_link = '<MISSING>'
-
-            # Type
-            location_type = '<MISSING>'
-
-            # Street
-            street_address = store['locationAddress'].replace("<br>","").replace("  "," ")
-
-            # Phone
-            phone = store['locationPhone']
-
-            # city
-            try:
-                city = location['address']['city'] if 'city' in location['address'].keys() else location['address']['town']
-            except:
-                city = location['address']['city'] if 'city' in location['address'].keys() else location['address']['county']
-
-            # zip
-            zipcode = location['address']['postcode']
-
-            # State
-            state = location['address']['state']
-
-            # Hour
-            hour = ' '.join([store['hours1'], store['hours2'], store['hours3']])
-
-            if hour.strip() == '':
-                hour = '<MISSING>'
-
-            # Store data
-            locations_links.append(location_link)
-            locations_ids.append(location_id)
-            locations_titles.append(location_title)
-            street_addresses.append(street_address)
-            states.append(state)
-            zip_codes.append(zipcode)
-            hours.append(hour)
-            latitude_list.append(lat)
-            longitude_list.append(lon)
-            phone_numbers.append(phone)
-            cities.append(city)
-            countries.append(country)
-            location_types.append(location_type)
-
-    for (   
-            locations_link,
-            locations_title,
-            street_address,
-            city,
-            state,
-            zipcode,
-            phone_number,
-            latitude,
-            longitude,
-            hour,
-            location_id,
-            country,
-            location_type,
-    ) in zip(
-        locations_links,
-        locations_titles,
-        street_addresses,
-        cities,
-        states,
-        zip_codes,
-        phone_numbers,
-        latitude_list,
-        longitude_list,
-        hours,
-        locations_ids,
-        countries,
-        location_types,
-    ):
-        if country == "<MISSING>":
-            pass
-        else:
-            data.append(
-                [
-                    URL,
-                    locations_link,
-                    locations_title,
-                    street_address,
-                    city,
-                    state,
-                    zipcode,
-                    country,
-                    location_id,
-                    phone_number,
-                    location_type,
-                    latitude,
-                    longitude,
-                    hour,
-                ]
+            location_title = (
+                store["locationName"]
+                .encode("ascii", "replace")
+                .decode()
+                .replace("?", "'")
             )
 
-    return data
+            # Store ID
+            location_id = store["locationID"]
+
+            location_link = "https://justsalad.com/locations"
+
+            # Type
+            location_type = "<MISSING>"
+
+            # Street
+            street_address = (
+                store["locationAddress"].replace("<br>", "").replace("  ", " ")
+            )
+
+            # Phone
+            phone = store["locationPhone"]
+
+            # city
+            city = "<MISSING>"
+            if "city" in location["address"].keys():
+                city = location["address"]["city"]
+            elif "town" in location["address"].keys():
+                city = location["address"]["town"]
+            elif "county" in location["address"].keys():
+                city = location["address"]["county"]
+
+            # zip
+            zipcode = location["address"]["postcode"]
+
+            # State
+            state = location["address"]["state"]
+
+            # Hour
+            hour = " ".join([store["hours1"], store["hours2"], store["hours3"]])
+
+            # Store data
+            yield SgRecord(
+                locator_domain="justsalad.com",
+                page_url=location_link,
+                location_name=location_title,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zipcode,
+                country_code=country,
+                store_number=location_id,
+                phone=phone,
+                location_type=location_type,
+                latitude=lat,
+                longitude=lon,
+                hours_of_operation=hour,
+            )
+
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.StoreNumberId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
 
-scrape()
+
+if __name__ == "__main__":
+    scrape()

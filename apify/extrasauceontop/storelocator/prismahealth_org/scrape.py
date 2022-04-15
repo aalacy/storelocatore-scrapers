@@ -1,215 +1,154 @@
-from sgselenium import SgChrome
-from sgrequests import SgRequests
-import pandas as pd
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries
+from sgselenium.sgselenium import SgChrome
+from webdriver_manager.chrome import ChromeDriverManager
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries, Grain_8
+from sgscrape import simple_scraper_pipeline as sp
+import json
+from bs4 import BeautifulSoup as bs
+import ssl
 
-search = DynamicZipSearch(
-    country_codes=[SearchableCountries.USA],
-    max_radius_miles=100,
-    max_search_results=100,
-)
-
-initial_search_url = "https://prismahealth.org/api/search/search?pageSize=100&pageNumber=1&searchType=location"
-
-locator_domains = []
-page_urls = []
-location_names = []
-street_addresses = []
-citys = []
-states = []
-zips = []
-country_codes = []
-store_numbers = []
-phones = []
-location_types = []
-latitudes = []
-longitudes = []
-hours_of_operations = []
-unique_names = []
+ssl._create_default_https_context = ssl._create_unverified_context
 
 
-def parsedata(response_json, data_url):
-    locations = response_json["Items"]
-    for location in locations:
-        locator_domain = "prismahealth.org"
-        page_url = data_url
-        location_name = location["Title"]
+def get_driver(url, driver=None):
+    if driver is not None:
+        driver.quit()
 
-        address = location["Address"][0] + " " + location["Address"][1]
-
-        city = location["Address"][2].split(",")[0]
-        state = location["Address"][2].split(" ")[-2]
-        zipp = location["Address"][2].split(" ")[-1]
-
-        country_code = "US"
-        store_number = location["Id"].split(";")[0]
-
-        phone = location["Phone"]
-        location_type = "<MISSING>"
-        latitude = location["Coordinate"]["Latitude"]
-        longitude = location["Coordinate"]["Longitude"]
-
-        hours = "<MISSING>"
-
-        locator_domains.append(locator_domain)
-        page_urls.append(page_url)
-
-        location_names.append(location_name)
-        if location_name not in location_names:
-            unique_names.append(location_name)
-        street_addresses.append(address)
-        citys.append(city)
-        states.append(state)
-        zips.append(zipp)
-        country_codes.append(country_code)
-        store_numbers.append(store_number)
-        phones.append(phone)
-        location_types.append(location_type)
-        latitudes.append(latitude)
-        longitudes.append(longitude)
-        hours_of_operations.append(hours)
-
-        search.found_location_at(latitude, longitude)
-
-
-base_url = "https://prismahealth.org"
-
-s = SgRequests()
-
-driver = SgChrome().driver()
-driver.get(base_url)
-
-incap_str = "/_Incapsula_Resource?SWJIYLWA=719d34d31c8e3a6e6fffd425f7e032f3"
-incap_url = base_url + incap_str
-
-s.get(incap_url)
-
-for request in driver.requests:
-    initial_search_url = "https://prismahealth.org/api/search/search?pageSize=100&pageNumber=1&searchType=location"
-
-    headers = request.headers
-    if headers["Host"] == "prismahealth.org":
+    user_agent = (
+        "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0"
+    )
+    x = 0
+    while True:
+        x = x + 1
         try:
-            response = s.get(initial_search_url, headers=headers)
-            response_text = response.text
-            response_json = response.json()
-            total_results = int(response_json["NumOfResults"])
+            driver = SgChrome(
+                executable_path=ChromeDriverManager().install(),
+                user_agent=user_agent,
+                is_headless=True,
+            ).driver()
+            driver.get(url)
 
             break
-
         except Exception:
+            driver.quit()
+            if x == 10:
+                raise Exception(
+                    "Make sure this ran with a Proxy, will fail without one"
+                )
             continue
 
+    return driver
 
-def reset_sessions(zipcode):
-    base_url = "https://prismahealth.org"
-    s = SgRequests()
 
-    driver = SgChrome().driver()
-    driver.get(base_url)
+def get_data():
+    search = DynamicZipSearch(
+        country_codes=[SearchableCountries.USA], granularity=Grain_8()
+    )
 
-    incap_str = "/_Incapsula_Resource?SWJIYLWA=719d34d31c8e3a6e6fffd425f7e032f3"
-    incap_url = base_url + incap_str
-
-    s.get(incap_url)
-
-    for request in driver.requests:
+    start = 0
+    for zip_code in search:
         data_url = (
             "https://prismahealth.org/api/search/search?pageSize=100&pageNumber=1&searchType=location&zip="
-            + zipcode
-            + "&radius=100"
-        )
-
-        headers = request.headers
-        if headers["Host"] == "prismahealth.org":
-            try:
-                response = s.get(data_url, headers=headers)
-                response_json = response.json()
-                break
-
-            except Exception:
-                continue
-
-            parsedata(response_json, data_url)
-
-    return [s, driver]
-
-
-x = 0
-
-for zipcode in search:
-
-    x = x + 1
-    success = 0
-    count = 0
-
-    for request in driver.requests:
-        data_url = (
-            "https://prismahealth.org/api/search/search?pageSize=100&pageNumber=1&searchType=location&zip="
-            + zipcode
+            + zip_code
             + "&radius=1000"
         )
 
-        headers = request.headers
+        if start == 0:
 
-        if headers["Host"] == "prismahealth.org":
-            count = count + 1
+            driver = get_driver(data_url)
+            source = driver.page_source
+            soup = bs(source, "html.parser")
+            text = soup.text.strip()
+            response_json = json.loads(text)
+            start = 1
 
+        else:
             try:
-                response = s.get(data_url, headers=headers)
-                response_json = response.json()
-
-                success = 1
+                driver.get(data_url)
+                source = driver.page_source
+                soup = bs(source, "html.parser")
+                text = soup.text.strip()
+                response_json = json.loads(text)
 
             except Exception:
-                if count == 5:
-                    break
-                continue
+                driver = get_driver(data_url)
+                source = driver.page_source
+                soup = bs(source, "html.parser")
+                text = soup.text.strip()
+                response_json = json.loads(text)
 
-            parsedata(response_json, data_url)
-            break
+        locations = response_json["Items"]
 
-    if success == 0:
-        new_sessions = reset_sessions(zipcode)
-        s = new_sessions[0]
-        driver = new_sessions[1]
+        for location in locations:
+            locator_domain = "prismahealth.org"
+            page_url = data_url
+            location_name = location["Title"]
 
-    if len(unique_names) == total_results:
-        break
+            address = location["Address"][0] + " " + location["Address"][1]
 
-df = pd.DataFrame(
-    {
-        "locator_domain": locator_domains,
-        "page_url": page_urls,
-        "location_name": location_names,
-        "street_address": street_addresses,
-        "city": citys,
-        "state": states,
-        "zip": zips,
-        "store_number": store_numbers,
-        "phone": phones,
-        "latitude": latitudes,
-        "longitude": longitudes,
-        "hours_of_operation": hours_of_operations,
-        "country_code": country_codes,
-        "location_type": location_types,
-    }
-)
+            city = location["Address"][2].split(",")[0]
+            state = location["Address"][2].split(" ")[-2]
+            zipp = location["Address"][2].split(" ")[-1]
+            country_code = "US"
+            store_number = location["Id"].split(";")[0]
 
-df = df.fillna("<MISSING>")
-df = df.replace(r"^\s*$", "<MISSING>", regex=True)
+            phone = location["Phone"]
+            location_type = "<MISSING>"
+            latitude = location["Coordinate"]["Latitude"]
+            longitude = location["Coordinate"]["Longitude"]
+            search.found_location_at(latitude, longitude)
+            hours = "<MISSING>"
 
-df["dupecheck"] = (
-    df["location_name"]
-    + df["street_address"]
-    + df["city"]
-    + df["state"]
-    + df["location_type"]
-)
+            yield {
+                "locator_domain": locator_domain,
+                "page_url": page_url,
+                "location_name": location_name,
+                "latitude": latitude,
+                "longitude": longitude,
+                "city": city,
+                "store_number": store_number,
+                "street_address": address,
+                "state": state,
+                "zip": zipp,
+                "phone": phone,
+                "location_type": location_type,
+                "hours": hours,
+                "country_code": country_code,
+            }
 
-df = df.drop_duplicates(subset=["dupecheck"])
-df = df.drop(columns=["dupecheck"])
-df = df.replace(r"^\s*$", "<MISSING>", regex=True)
-df = df.fillna("<MISSING>")
 
-df.to_csv("data.csv", index=False)
+def scrape():
+    field_defs = sp.SimpleScraperPipeline.field_definitions(
+        locator_domain=sp.MappingField(mapping=["locator_domain"]),
+        page_url=sp.MappingField(mapping=["page_url"], part_of_record_identity=True),
+        location_name=sp.MappingField(
+            mapping=["location_name"], part_of_record_identity=True
+        ),
+        latitude=sp.MappingField(mapping=["latitude"], part_of_record_identity=True),
+        longitude=sp.MappingField(mapping=["longitude"], part_of_record_identity=True),
+        street_address=sp.MultiMappingField(
+            mapping=["street_address"], is_required=False
+        ),
+        city=sp.MappingField(
+            mapping=["city"],
+        ),
+        state=sp.MappingField(mapping=["state"], is_required=False),
+        zipcode=sp.MultiMappingField(mapping=["zip"], is_required=False),
+        country_code=sp.MappingField(mapping=["country_code"]),
+        phone=sp.MappingField(mapping=["phone"], is_required=False),
+        store_number=sp.MappingField(
+            mapping=["store_number"], part_of_record_identity=True
+        ),
+        hours_of_operation=sp.MappingField(mapping=["hours"], is_required=False),
+        location_type=sp.MappingField(mapping=["location_type"], is_required=False),
+    )
+
+    pipeline = sp.SimpleScraperPipeline(
+        scraper_name="Crawler",
+        data_fetcher=get_data,
+        field_definitions=field_defs,
+        log_stats_interval=15,
+    )
+    pipeline.run()
+
+
+scrape()

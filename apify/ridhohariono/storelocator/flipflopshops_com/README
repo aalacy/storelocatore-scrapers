@@ -1,0 +1,14 @@
+--ignore GeoConsistencyValidator (Confirmed scrape correctly)
+Found 3 concerning rows. Examples:
+      zip    state                REASON  rowNumber
+9   33246       FL  ZIPCODE_NOT_IN_STATE          9
+35  00000  Curacao  ZIPCODE_NOT_IN_STATE         35
+36  00000  Bonaire  ZIPCODE_NOT_IN_STATE         36
+
+--ignore CountryValidator (Not us state)
+
+Found 3 concerning rows. Examples:
+      state                        phone    zip            REASON  rowNumber
+16       FL  Please enter a valid number  32413  INVALID_US_PHONE         16
+35  Curacao                 +59995119896  00000  INVALID_US_STATE         35
+36  Bonaire                  +5997172606  00000  INVALID_US_STATE         36

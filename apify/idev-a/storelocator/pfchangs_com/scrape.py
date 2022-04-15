@@ -4,6 +4,8 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 import json
 from urllib.parse import urljoin
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 from sglogging import SgLogSetup
 
@@ -51,7 +53,7 @@ def parse_data(entity, page_url):
         latitude = _["geocodedCoordinate"]["lat"]
         longitude = _["geocodedCoordinate"]["long"]
     hours = []
-    for hh in _["hours"]["normalHours"]:
+    for hh in _.get("hours", {}).get("normalHours", []):
         times = "closed"
         if not hh["isClosed"]:
             times = f"{hh['intervals'][0]['start']}-{hh['intervals'][0]['end']}"
@@ -64,30 +66,25 @@ def parse_data(entity, page_url):
     elif "c_geomodifier" in _:
         location_name = _["c_geomodifier"]
     elif "geomodifier" in _:
-        location_name = _["c_geomodifier"]
+        location_name = _["geomodifier"]
     else:
         location_name = _["address"]["line1"]
 
-    try:
-        return SgRecord(
-            page_url=page_url,
-            location_name=location_name,
-            street_address=street_address,
-            city=_["address"]["city"],
-            state=_["address"]["region"],
-            zip_postal=_["address"]["postalCode"],
-            latitude=latitude,
-            longitude=longitude,
-            phone=_.get("mainPhone", {}).get("display", ""),
-            country_code=_["address"]["countryCode"],
-            locator_domain=locator_domain,
-            location_type=location_type,
-            hours_of_operation="; ".join(hours),
-        )
-    except:
-        import pdb
-
-        pdb.set_trace()
+    return SgRecord(
+        page_url=page_url,
+        location_name=location_name,
+        street_address=street_address,
+        city=_["address"]["city"],
+        state=_["address"]["region"],
+        zip_postal=_["address"]["postalCode"],
+        latitude=latitude,
+        longitude=longitude,
+        phone=_.get("mainPhone", {}).get("display", ""),
+        country_code=_["address"]["countryCode"],
+        locator_domain=locator_domain,
+        location_type=location_type,
+        hours_of_operation="; ".join(hours),
+    )
 
 
 def fetch_data():
@@ -152,7 +149,7 @@ def fetch_data():
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

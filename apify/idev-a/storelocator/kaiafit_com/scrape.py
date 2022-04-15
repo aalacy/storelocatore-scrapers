@@ -1,54 +1,50 @@
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
-import json
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from bs4 import BeautifulSoup as bs
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger("")
 
 _headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.182 Safari/537.36",
 }
-
-
-def _valid(val):
-    return (
-        val.strip()
-        .replace("–", "-")
-        .replace("-", "-")
-        .encode("unicode-escape")
-        .decode("utf8")
-        .replace("\\xa", "")
-        .replace("\\xa0", "")
-        .replace("\\xa0\\xa", "")
-        .replace("\\xae", "")
-    )
+locator_domain = "https://www.kaiafit.com/"
+base_url = "https://www.kaiafit.com/locations/find-a-kaia-location"
 
 
 def fetch_data():
     with SgRequests() as session:
-        locator_domain = "https://www.kaiafit.com/"
-        base_url = "https://www.kaiafit.com/locations/find-a-kaia-location"
-        res = session.get(base_url, headers=_headers).text
-        locations = json.loads(
-            res.split("locations: ")[1].strip().split("startLat:lat")[0].strip()[:-1]
+        locations = bs(session.get(base_url, headers=_headers).text, "lxml").select(
+            "div.location__item"
         )
         for _ in locations:
+            page_url = _.a["href"]
+            logger.info(page_url)
+            res = session.get(page_url, headers=_headers).text
+            sp1 = bs(res, "lxml")
+            addr = list(sp1.select_one("span.location_address").stripped_strings)
+            coord = res.split("L.latLng(")[1].split(")")[0].split(",")
             yield SgRecord(
-                page_url=_["studioLink"],
-                store_number=_["studioId"],
-                location_name=_["studioName"],
-                street_address=f"{_['studioAddress']} {_['studioAddress2']}".strip(),
-                city=_["studioCity"],
-                state=_["studioState"],
-                zip_postal=_["studioZip"],
-                country_code=_["studioCountry"],
-                phone=_["studioPhone"].replace("(9FIT)", ""),
-                latitude=_["studioLat"],
-                longitude=_["studioLong"],
+                page_url=page_url,
+                location_name=_.strong.text.strip(),
+                street_address=" ".join(addr[:-1]),
+                city=addr[-1].split(",")[0].strip(),
+                state=addr[-1].split(",")[1].strip().split()[0].strip(),
+                zip_postal=addr[-1].split(",")[1].strip().split()[-1].strip(),
+                country_code="USA",
+                phone=_.select("p")[-1].text.replace("(9FIT)", "").strip(),
+                latitude=coord[0][1:-1],
+                longitude=coord[1].strip()[1:-1],
                 locator_domain=locator_domain,
+                raw_address=" ".join(addr),
             )
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

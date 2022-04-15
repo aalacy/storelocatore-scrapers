@@ -4,7 +4,9 @@ from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import lxml.html
-
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+import json
 
 website = "fuelbodylab.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -24,20 +26,6 @@ headers = {
 }
 
 
-def split_fulladdress(address_info):
-    street_address = " ".join(address_info[0:-1]).strip(" ,.")
-
-    city_state_zip = (
-        address_info[-1].replace(",", " ").replace(".", " ").replace("  ", " ").strip()
-    )
-
-    city = " ".join(city_state_zip.split(" ")[:-2]).strip()
-    state = city_state_zip.split(" ")[-2].strip()
-    zip = city_state_zip.split(" ")[-1].strip()
-    country_code = "US"
-    return street_address, city, state, zip, country_code
-
-
 def fetch_data():
     # Your scraper here
     search_url = "https://www.fuelbodylab.com/contact"
@@ -45,41 +33,51 @@ def fetch_data():
 
     search_sel = lxml.html.fromstring(search_res.text)
 
-    store_list = list(search_sel.xpath("//*[./h1 and ./h2]"))
+    store_list = search_sel.xpath(
+        "//div[@class='col sqs-col-4 span-4']/div[@class='sqs-block html-block sqs-block-html']/div[@class='sqs-block-content']"
+    )
+    json_list = search_sel.xpath(
+        "//div[@class='col sqs-col-4 span-4']/div[@class='sqs-block map-block sqs-block-map']"
+    )
 
-    for store in store_list:
+    for index, store in enumerate(store_list):
 
         page_url = search_url
         locator_domain = website
 
-        location_name = "".join(store.xpath("./h1/text()")).strip()
+        location_name = "".join(store.xpath("./p/strong/text()")).strip()
 
-        full_address = list(
+        add_and_phone = list(
             filter(
                 str,
-                [x.strip() for x in store.xpath("./h2//text()")],
+                [x.strip() for x in store.xpath("./p/text()")],
             )
         )
 
-        street_address, city, state, zip, country_code = split_fulladdress(
-            full_address[:-1]
-        )
-
-        city = "<MISSING>"
-        state = "<MISSING>"
-        zip = "<MISSING>"
+        street_address = add_and_phone[0]
+        store_json = json.loads(
+            "".join(json_list[index].xpath("@data-block-json"))
+            .strip()
+            .replace("&#123;", "{")
+            .replace("{&quot;", '"')
+            .replace("&#125;", "}")
+            .strip()
+        )["location"]
+        city_state_zip = store_json["addressLine2"].replace("DC,", "DC").strip()
+        city = city_state_zip.split(",")[0].strip()
+        state = city_state_zip.split(",")[-1].strip().split(" ")[0].strip()
+        zip = city_state_zip.split(",")[-1].strip().split(" ")[-1].strip()
+        country_code = "US"
 
         store_number = "<MISSING>"
-        phone = full_address[-1].strip()
+        phone = add_and_phone[-1].strip()
 
         location_type = "<MISSING>"
 
         hours_of_operation = "<MISSING>"
 
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
-
-        raw_address = "<MISSING>"
+        latitude = store_json["markerLat"]
+        longitude = store_json["markerLng"]
 
         yield SgRecord(
             locator_domain=locator_domain,
@@ -96,14 +94,24 @@ def fetch_data():
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hours_of_operation,
-            raw_address=raw_address,
         )
 
 
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.CITY,
+                    SgRecord.Headers.STATE,
+                    SgRecord.Headers.ZIP,
+                }
+            )
+        )
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

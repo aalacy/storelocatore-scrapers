@@ -1,7 +1,6 @@
-beautifulsoup4==4.7.1
-fuzzywuzzy==0.18.0
-usaddress==0.5.10
-python-Levenshtein==0.12.2
+--extra-index-url https://dl.cloudsmith.io/KVaWma76J5VNwrOm/crawl/crawl/python/simple/
+httpx==0.19.0
 sglogging==0.0.4
-sgrequests==0.1.12
-sgscrape==0.0.23
+usaddress==0.5.10
+sgscrape==0.2.4
+sgrequests==0.2.9
