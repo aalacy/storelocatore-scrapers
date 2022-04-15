@@ -7,7 +7,6 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 
 logger = SgLogSetup().get_logger("t-mobile_com")
-
 search = DynamicGeoSearch(
     country_codes=[SearchableCountries.USA],
     max_search_distance_miles=50,
@@ -17,11 +16,7 @@ search = DynamicGeoSearch(
 session = SgRequests()
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36",
-    "authority": "www.t-mobile.com",
-    "accept": "application/json, text/plain, */*",
-    "clientapplicationid": "OCNATIVEAPP",
-    "loginin": "mytest016@outlook.com",
-    "locale": "en_US",
+    "authority": "onmyj41p3c.execute-api.us-west-2.amazonaws.com",
 }
 
 
@@ -77,14 +72,14 @@ def handle_missing(x):
 
 def fetch_data():
     for llat, llng in search:
-        url = (
-            "https://onmyj41p3c.execute-api.us-west-2.amazonaws.com/prod/v2.1/getStoresByCoordinates?latitude="
-            + str(llat)
-            + "&longitude="
-            + str(llng)
-            + "&count=50&radius=100&ignoreLoadingBar=false"
-        )
         try:
+            url = (
+                "https://onmyj41p3c.execute-api.us-west-2.amazonaws.com/prod/v2.1/getStoresByCoordinates?latitude="
+                + str(llat)
+                + "&longitude="
+                + str(llng)
+                + "&count=50&radius=100"
+            )
             stores = session.get(url, headers=headers).json()
             website = "t-mobile.com"
             if "code" not in stores:
@@ -93,8 +88,8 @@ def fetch_data():
                         name = store["name"]
                     else:
                         name = "<MISSING>"
-                    store = store["id"]
                     typ = compute_location_type(store)
+                    storeid = store["id"]
                     if "url" in store:
                         loc = store["url"]
                     else:
@@ -121,7 +116,7 @@ def fetch_data():
                         country_code=country,
                         phone=phone,
                         location_type=typ,
-                        store_number=store,
+                        store_number=storeid,
                         latitude=lat,
                         longitude=lng,
                         hours_of_operation=hours,

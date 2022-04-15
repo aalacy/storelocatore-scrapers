@@ -1,3 +1,4 @@
+import usaddress
 from sglogging import sglog
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
@@ -51,19 +52,45 @@ def fetch_data():
                 continue
             soup = BeautifulSoup(r.text, "html.parser")
             location_name = soup.find("h1", {"class": "PageHeaderTitle"}).text
-            address = (
+            temp = (
                 soup.find("div", {"class": "HTMLContent"})
                 .find("p")
                 .get_text(separator="|", strip=True)
-                .split("|")
+                .replace("|", " ")
+                .split("Phone:")
             )
-            phone = address[2].replace("Phone:", "")
-            street_address = address[0]
-            address = address[1].replace("NY", "NY ").split(",")
-            city = address[0]
-            address = address[1].split()
-            state = address[0]
-            zip_postal = address[1]
+            try:
+                phone = temp[-1].replace("Phone:", "")
+            except:
+                phone = MISSING
+            address = temp[0]
+            address = address.replace(",", " ").replace("NY14052", "NY 14052")
+            address = usaddress.parse(address)
+            i = 0
+            street_address = ""
+            city = ""
+            state = ""
+            zip_postal = ""
+            while i < len(address):
+                temp = address[i]
+                if (
+                    temp[1].find("Address") != -1
+                    or temp[1].find("Street") != -1
+                    or temp[1].find("Recipient") != -1
+                    or temp[1].find("Occupancy") != -1
+                    or temp[1].find("BuildingName") != -1
+                    or temp[1].find("USPSBoxType") != -1
+                    or temp[1].find("USPSBoxID") != -1
+                ):
+                    street_address = street_address + " " + temp[0]
+                if temp[1].find("PlaceName") != -1:
+                    city = city + " " + temp[0]
+                if temp[1].find("StateName") != -1:
+                    state = state + " " + temp[0]
+                if temp[1].find("ZipCode") != -1:
+                    zip_postal = zip_postal + " " + temp[0]
+                i += 1
+
             country_code = "US"
             yield SgRecord(
                 locator_domain=DOMAIN,

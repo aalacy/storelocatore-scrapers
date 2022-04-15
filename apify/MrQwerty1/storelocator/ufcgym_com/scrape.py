@@ -1,4 +1,5 @@
 import json5
+from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
@@ -6,12 +7,26 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 
 
+def get_js():
+    r = session.get("https://www.ufcgym.com/locations/list/", headers=headers)
+    tree = html.fromstring(r.text)
+    scripts = tree.xpath("//script[contains(@src, '_nuxt')]/@src")
+
+    for s in scripts:
+        r = session.get(f"https://www.ufcgym.com{s}")
+        text = r.text
+        if "exports=[" not in text:
+            continue
+
+        text = (
+            "[" + text.split("exports=[")[1].split("}]},,")[0].replace("!", "") + "}]"
+        )
+        js = json5.loads(text)
+        return js
+
+
 def fetch_data(sgw: SgWriter):
-    api = "https://www.ufcgym.com/_nuxt/430502678cae5485010c.js"
-    r = session.get(api, headers=headers)
-    text = r.text
-    text = "[" + text.split("exports=[")[1].split("}]},,")[0].replace("!", "") + "}]"
-    js = json5.loads(text)
+    js = get_js()
 
     for j in js:
         street_address = j.get("street")

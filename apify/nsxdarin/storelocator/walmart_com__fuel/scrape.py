@@ -1,211 +1,84 @@
-from sgscrape import simple_scraper_pipeline as sp
 from sgrequests import SgRequests
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 from sglogging import SgLogSetup
-from urllib3 import exceptions as urllibException
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 logger = SgLogSetup().get_logger("walmart_com/fuel")
 
+session = SgRequests()
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
 
 search = DynamicZipSearch(
     country_codes=[SearchableCountries.USA],
-    expected_search_radius_miles=None,
-    max_search_results=50,
+    max_search_distance_miles=50,
+    max_search_results=None,
 )
 
 
-def api_get(start_url, headers, timeout, attempts, maxRetries):
-    error = False
-    session = SgRequests()
-    try:
-        results = session.get(start_url, headers=headers, timeout=timeout)
-
-    except urllibException.SSLError as urlException:
-        if "BAD_RECORD_MAC" in str(urlException):
-            attempts += 1
-            error = True
-        else:
-            raise urllibException
-
-    if error:
-        if attempts < maxRetries:
-            results = api_get(start_url, headers, timeout, attempts, maxRetries)
-        else:
-            TooManyRetries = (
-                "Retried "
-                + str(maxRetries)
-                + " times, got either SSLError or ProxyError"
-            )
-            raise TooManyRetries
-    else:
-        return results
-
-
 def fetch_data():
-    session = SgRequests(proxy_rotation_failure_threshold=20)
-    maxZ = search.items_remaining()
-    total = 0
+    website = "walmart.com/fuel"
     for code in search:
-        if search.items_remaining() > maxZ:
-            maxZ = search.items_remaining()
-        found = 0
-        logger.info(("Pulling Zip Code %s..." % code))
-        url = (
-            "https://www.walmart.com/store/finder/electrode/api/stores?singleLineAddr="
-            + code
-            + "&distance=50"
-        )
         try:
-            r2 = session.get(url, headers=headers, timeout=15).json()
+            logger.info(("Pulling Zip Code %s..." % code))
+            url = (
+                "https://www.walmart.com/store/finder/electrode/api/stores?singleLineAddr="
+                + code
+                + "&distance=50"
+            )
+            r2 = session.get(url, headers=headers).json()
+            if r2["payload"]["nbrOfStores"]:
+                if int(r2["payload"]["nbrOfStores"]) > 0:
+                    for store in r2["payload"]["storesData"]["stores"]:
+                        if store["geoPoint"] and "GAS" in str(store):
+                            typ = (
+                                "GAS"
+                                + str(store).split("'name': 'GAS")[1].split("'")[0]
+                            )
+                            loc = store["detailsPageURL"]
+                            snum = store["id"]
+                            name = store["displayName"]
+                            add = store["address"]["address"]
+                            city = store["address"]["city"]
+                            state = store["address"]["state"]
+                            zc = store["address"]["postalCode"]
+                            phone = store["phone"]
+                            country = "US"
+                            lat = store["geoPoint"]["latitude"]
+                            lng = store["geoPoint"]["longitude"]
+                            hours = "<MISSING>"
+                            yield SgRecord(
+                                locator_domain=website,
+                                page_url=loc,
+                                location_name=name,
+                                street_address=add,
+                                city=city,
+                                state=state,
+                                zip_postal=zc,
+                                country_code=country,
+                                phone=phone,
+                                location_type=typ,
+                                store_number=snum,
+                                latitude=lat,
+                                longitude=lng,
+                                hours_of_operation=hours,
+                            )
         except:
-            r2 = api_get(url, headers, 15, 0, 15).json()
-        if r2["payload"]["nbrOfStores"]:
-            if int(r2["payload"]["nbrOfStores"]) > 0:
-                for store in r2["payload"]["storesData"]["stores"]:
-                    if store["geoPoint"] and "GAS" in str(store):
-                        if store["geoPoint"]["latitude"]:
-                            if store["geoPoint"]["longitude"]:
-                                search.found_location_at(
-                                    store["geoPoint"]["latitude"],
-                                    store["geoPoint"]["longitude"],
-                                )
-                    yield store
-        progress = str(round(100 - (search.items_remaining() / maxZ * 100), 2)) + "%"
-        total += found
-        logger.info(f"{code} | found: {found} | total: {total} | progress: {progress}")
-
-
-def human_hours(k):
-    AllTheHours = k
-    for hrSet in AllTheHours:
-        if (
-            hrSet["id"] == 851
-            or hrSet["id"] == 17
-            or "GAS" in hrSet["name"]
-            or "FUEL" in hrSet["name"]
-        ):
-            k = hrSet["operationalHours"]
-            if not k["open24Hours"]:
-                unwanted = ["open24", "todayHr", "tomorrowHr"]
-                h = []
-                for day in list(k):
-                    if not any(i in day for i in unwanted):
-                        if k[day]:
-                            if "temporaryHour" not in day:
-                                if k[day]["closed"]:
-                                    h.append(str(day).capitalize() + ": Closed")
-                                else:
-                                    if k[day]["openFullDay"]:
-                                        h.append(str(day).capitalize() + ": 24Hours")
-                                    else:
-                                        h.append(
-                                            str(day).capitalize()
-                                            + ": "
-                                            + str(k[day]["startHr"])
-                                            + "-"
-                                            + str(k[day]["endHr"])
-                                        )
-                            else:
-                                if k[day]:
-                                    h.append("Temporary hours: " + str(k[day].items()))
-                        else:
-                            h.append(str(day).capitalize() + ": <MISSING>")
-                return (
-                    "; ".join(h)
-                    .replace("Montofrihrs", "Mon-Fri")
-                    .replace("hrs:", ":")
-                    .replace("; Temporaryhours: <MISSING>", "")
-                )
-            else:
-                return "24/7"
-
-
-def add_walmart(x):
-    return x if "Walmart" in x else "Walmart " + x
-
-
-def test_fuel(x):
-    result = []
-    x = x.keys()
-    for i in x:
-        if "FUEL" in i:
-            result.append(str(i))
-    for i in x:
-        if "GAS" in i:
-            result.append(str(i))
-
-    return ", ".join(result)
+            pass
 
 
 def scrape():
-    url = "https://www.walmart.com/vision"
-    field_defs = sp.SimpleScraperPipeline.field_definitions(
-        locator_domain=sp.ConstantField(url),
-        page_url=sp.MappingField(
-            mapping=["detailsPageURL"],
-            part_of_record_identity=True,
-        ),
-        location_name=sp.MappingField(
-            mapping=["storeType", "name"],
-            value_transform=add_walmart,
-        ),
-        latitude=sp.MappingField(
-            mapping=["geoPoint", "latitude"],
-            part_of_record_identity=True,
-        ),
-        longitude=sp.MappingField(
-            mapping=["geoPoint", "longitude"],
-            part_of_record_identity=True,
-        ),
-        street_address=sp.MappingField(
-            mapping=["address", "address"],
-            part_of_record_identity=True,
-        ),
-        city=sp.MappingField(
-            mapping=["address", "city"],
-        ),
-        state=sp.MappingField(
-            mapping=["address", "state"],
-        ),
-        zipcode=sp.MappingField(
-            mapping=["address", "postalCode"],
-        ),
-        country_code=sp.MappingField(
-            mapping=["address", "country"],
-        ),
-        phone=sp.MappingField(
-            mapping=["phone"],
-            part_of_record_identity=True,
-        ),
-        store_number=sp.MappingField(
-            mapping=["id"],
-            part_of_record_identity=True,
-        ),
-        hours_of_operation=sp.MappingField(
-            mapping=["featuredServices"],
-            raw_value_transform=human_hours,
-            is_required=False,
-        ),
-        location_type=sp.MappingField(
-            mapping=["servicesMap"],
-            raw_value_transform=test_fuel,
-            part_of_record_identity=True,
-        ),
-        raw_address=sp.MissingField(),
-    )
+    results = fetch_data()
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        for rec in results:
+            writer.write_row(rec)
 
-    pipeline = sp.SimpleScraperPipeline(
-        scraper_name="pipeline",
-        data_fetcher=fetch_data,
-        field_definitions=field_defs,
-        log_stats_interval=5,
-    )
 
-    pipeline.run()
-
+scrape()
 
 if __name__ == "__main__":
     scrape()

@@ -7,10 +7,13 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sglogging import SgLogSetup
 
 headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
 }
+
+logger = SgLogSetup().get_logger("jdsports_co_ul")
 
 
 class ScrapableSite:
@@ -23,22 +26,31 @@ class ScrapableSite:
 
     def get_session(self, refresh):
         if not self.session or refresh:
-            if refresh:
-                self.session.close()
             self.session = SgChrome(is_headless=True).driver()
-            self.session.set_page_load_timeout(600)
+            self.session.set_page_load_timeout(30)
 
         return self.session
 
     def get_locations(self, retry=0):
-        session = self.get_session(retry)
-        session.get(self.stores_url)
-        soup = bs(session.page_source, "html.parser")
+        try:
+            session = self.get_session(retry)
+            session.get(self.stores_url)
+            soup = bs(session.page_source, "html.parser")
 
-        return [
-            f'https://www.{self.locator_domain}{a["href"]}'
-            for a in soup.select(self.store_css_selector)
-        ]
+            locations = [
+                f'https://www.{self.locator_domain}{a["href"]}'
+                for a in soup.select(self.store_css_selector)
+            ]
+
+            if not len(locations):
+                raise Exception(f"Unable to fetch locations for {self.country_code}")
+
+            return locations
+        except Exception as e:
+            if retry < 3:
+                return self.get_locations(retry + 1)
+
+            raise e
 
     def get_data(self, url, retry=0):
         try:
@@ -85,34 +97,40 @@ def format_hours(hours):
 
 
 def fetch_data():
+    pois = []
+
     for site in sites:
+        count = 0
         locations = site.get_locations()
         for location in locations:
             data = site.get_data(location)
 
-            yield SgRecord(
-                page_url=data.get("url"),
-                location_name=data.get("name"),
-                street_address=data["address"]["streetAddress"],
-                city=data["address"]["addressLocality"],
-                state=data["address"]["addressRegion"],
-                country_code=site.country_code,
-                zip_postal=data["address"]["postalCode"],
-                store_number=re.sub(
-                    f"https://www.{site.locator_domain}/", "", data["@id"]
-                ),
-                phone=data["telephone"],
-                latitude=data["geo"]["latitude"],
-                longitude=data["geo"]["longitude"],
-                locator_domain=site.locator_domain,
-                hours_of_operation=format_hours(data["openingHoursSpecification"]),
+            count += 1
+            pois.append(
+                SgRecord(
+                    page_url=data.get("url"),
+                    location_name=data.get("name"),
+                    street_address=data["address"]["streetAddress"],
+                    city=data["address"]["addressLocality"],
+                    state=data["address"]["addressRegion"],
+                    country_code=site.country_code,
+                    zip_postal=data["address"]["postalCode"],
+                    store_number=re.sub(
+                        f"https://www.{site.locator_domain}/", "", data["@id"]
+                    ),
+                    phone=data["telephone"],
+                    latitude=data["geo"]["latitude"],
+                    longitude=data["geo"]["longitude"],
+                    locator_domain=site.locator_domain,
+                    hours_of_operation=format_hours(data["openingHoursSpecification"]),
+                )
             )
 
-        site.session.close()
+    return pois
 
 
 def scrape():
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
         for row in fetch_data():
             writer.write_row(row)
 

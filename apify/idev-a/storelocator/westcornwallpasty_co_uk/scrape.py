@@ -25,7 +25,7 @@ def fetch_data():
             yield SgRecord(
                 page_url="https://westcornwallpasty.co.uk/find-us",
                 store_number=_["id"],
-                location_name=_["title"]["rendered"],
+                location_name=_["title"]["rendered"].replace("&#8211;", "-"),
                 street_address=street_address,
                 city=addr["city"],
                 zip_postal=addr["postcode"],
