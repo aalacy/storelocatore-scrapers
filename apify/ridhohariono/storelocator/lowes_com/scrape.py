@@ -52,8 +52,6 @@ def get_hoo(store):
 def fetch_records(zc, sgw: SgWriter, session: SgRequests, headers: dict):
     api_url = f"https://www.lowes.com/store/api/search?maxResults=&responseGroup=large&searchTerm={zc}"
     rapi = session.get(api_url, headers=headers)
-    # logger.info(headers)
-    # logger.info(f"{api_url} >> {rapi}")
     if rapi.status_code == 200:
         api_js = rapi.json()
         stores = api_js["stores"]
