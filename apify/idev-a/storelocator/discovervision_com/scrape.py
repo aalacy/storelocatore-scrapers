@@ -12,6 +12,7 @@ _headers = {
 
 base_url = "https://www.discovervision.com/locations/"
 locator_domain = "https://www.discovervision.com/"
+days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 
 
 def fetch_data():
@@ -33,9 +34,9 @@ def fetch_data():
             )
             hours = []
             for hh in list(_.h2.find_next_sibling().stripped_strings):
-                if "*" in hh:
+                if "*" in hh and hh.replace("*", "")[:3] not in days:
                     continue
-                hours.append(hh)
+                hours.append(hh.replace("*", ""))
             yield SgRecord(
                 page_url=_.find_previous_sibling()["href"],
                 location_name=_.find_previous_sibling().text.strip(),
@@ -43,8 +44,8 @@ def fetch_data():
                 city=addr[-1].split(",")[0].strip(),
                 state=addr[-1].split(",")[1].strip().split()[0].strip(),
                 zip_postal=addr[-1].split(",")[1].strip().split()[-1].strip(),
-                latitude=coord[0],
-                longitude=coord[1],
+                latitude=coord[1],
+                longitude=coord[0],
                 country_code="US",
                 phone=list(_.select_one("ul.location-phone-list li").stripped_strings)[
                     -1

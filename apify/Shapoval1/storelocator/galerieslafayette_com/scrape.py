@@ -6,17 +6,22 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgpostal.sgpostal import International_Parser, parse_address
+from sglogging import sglog
+
+session = SgRequests()
+log = sglog.SgLogSetup().get_logger(logger_name="galerieslafayette.com")
 
 
 def fetch_data(sgw: SgWriter):
 
     locator_domain = "https://www.galerieslafayette.com/"
     api_url = "https://www.galerieslafayette.com/m/nos-magasins"
-    session = SgRequests(verify_ssl=False)
+
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
     r = session.get(api_url, headers=headers)
+    log.info(f"{api_url} Response: {r}")
     tree = html.fromstring(r.text)
     div = (
         "".join(tree.xpath('//script[contains(text(), "stores")]/text()'))
@@ -25,7 +30,7 @@ def fetch_data(sgw: SgWriter):
         .strip()
     )
     js = json.loads(div)
-
+    log.info(f"Size of first JS: {len(js)}")
     for j in js:
         page_slug = j.get("url")
         page_url = f"https://www.galerieslafayette.com{page_slug}"
@@ -75,6 +80,7 @@ def fetch_data(sgw: SgWriter):
         r = session.post(
             "https://www.galerieslafayette.com/api", headers=headers, json=json_data
         )
+        log.info(f"POST Response: {r}")
         js = r.json()["data"]["getPage"]["components"]
         for j in js:
             name = j.get("name")
@@ -123,7 +129,6 @@ def fetch_data(sgw: SgWriter):
 
 
 if __name__ == "__main__":
-    session = SgRequests()
     with SgWriter(
         SgRecordDeduper(SgRecordID({SgRecord.Headers.RAW_ADDRESS}))
     ) as writer:

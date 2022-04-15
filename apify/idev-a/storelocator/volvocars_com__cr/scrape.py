@@ -1,7 +1,7 @@
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sglogging import SgLogSetup
 
@@ -16,40 +16,12 @@ base_url = "https://www.volvocars.com/data/retailer?countryCode={}&languageCode=
 
 country_codes = [
     "CR",
-    "DO",
-    "EC",
-    "PE",
-    "AO",
-    "EG",
-    "JO",
-    "KW",
-    "MU",
-    "BH",
-    "MA",
-    "OM",
-    "QA",
-    "AE",
-    "ZM",
-    "ZW",
-    "NZ",
-    "VN",
-    "CY",
-    "EE",
-    "LV",
-    "IT",
-    "MK",
-    "MT",
-    "ME",
-    "AL",
-    "RS",
-    "BA",
-    "AZ",
-    "LB",
-    "GE",
-    "IS",
-    "SA",
-    "NA",
 ]
+
+
+urls = {
+    "do": "https://www.volvocars.com/do/services/design-and-buy/find-a-dealer",
+}
 
 
 def fetch_data():
@@ -104,7 +76,18 @@ def fetch_data():
 
 
 if __name__ == "__main__":
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.LOCATION_NAME,
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.CITY,
+                    SgRecord.Headers.PHONE,
+                }
+            )
+        )
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
