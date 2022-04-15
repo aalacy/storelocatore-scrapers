@@ -33,46 +33,66 @@ def fetch_data():
         tree = html.fromstring(r1.text)
         text = "".join(tree.xpath("//script[contains(text(), 'places')]/text()"))
         text = text.split('"places":[')[-1].split("}}")[0] + "}}}"
-        address_json = json.loads(text)
-        location_name = address_json["title"]
-        store_number = address_json["id"]
-        latitude = address_json["location"]["lat"]
-        longitude = address_json["location"]["lng"]
         try:
-            phone = address_json["content"]
+            address_json = json.loads(text)
+            got_page = True
         except:
-            phone = MISSING
-        if "Directions" in phone:
-            phone = MISSING
-        address = address_json["address"]
-        address = address.replace(",", " ").replace("USA", "")
-        address = usaddress.parse(address)
-        i = 0
-        street_address = ""
-        city = ""
-        state = ""
-        zip_postal = ""
-        while i < len(address):
-            temp = address[i]
-            if (
-                temp[1].find("Address") != -1
-                or temp[1].find("Street") != -1
-                or temp[1].find("Recipient") != -1
-                or temp[1].find("Occupancy") != -1
-                or temp[1].find("BuildingName") != -1
-                or temp[1].find("USPSBoxType") != -1
-                or temp[1].find("USPSBoxID") != -1
-            ):
-                street_address = street_address + " " + temp[0]
-            if temp[1].find("PlaceName") != -1:
-                city = city + " " + temp[0]
-            if temp[1].find("StateName") != -1:
-                state = state + " " + temp[0]
-            if temp[1].find("ZipCode") != -1:
-                zip_postal = zip_postal + " " + temp[0]
-            i += 1
-        if not zip_postal:
-            zip_postal = r1.text.split('"postal_code":"')[1].split('"')[0]
+            got_page = False
+        if got_page:
+            location_name = address_json["title"]
+            store_number = address_json["id"]
+            latitude = address_json["location"]["lat"]
+            longitude = address_json["location"]["lng"]
+            try:
+                phone = address_json["content"]
+            except:
+                phone = MISSING
+            if "Directions" in phone:
+                phone = MISSING
+            address = address_json["address"]
+            address = address.replace(",", " ").replace("USA", "")
+            address = usaddress.parse(address)
+            i = 0
+            street_address = ""
+            city = ""
+            state = ""
+            zip_postal = ""
+            while i < len(address):
+                temp = address[i]
+                if (
+                    temp[1].find("Address") != -1
+                    or temp[1].find("Street") != -1
+                    or temp[1].find("Recipient") != -1
+                    or temp[1].find("Occupancy") != -1
+                    or temp[1].find("BuildingName") != -1
+                    or temp[1].find("USPSBoxType") != -1
+                    or temp[1].find("USPSBoxID") != -1
+                ):
+                    street_address = street_address + " " + temp[0]
+                if temp[1].find("PlaceName") != -1:
+                    city = city + " " + temp[0]
+                if temp[1].find("StateName") != -1:
+                    state = state + " " + temp[0]
+                if temp[1].find("ZipCode") != -1:
+                    zip_postal = zip_postal + " " + temp[0]
+                i += 1
+            if not zip_postal:
+                zip_postal = r1.text.split('"postal_code":"')[1].split('"')[0]
+        else:
+            base = BeautifulSoup(r1.text, "lxml")
+            raw_data = list(
+                base.find("h3", string="Contact").find_previous("div").stripped_strings
+            )[1:]
+            location_name = raw_data[0]
+            street_address = raw_data[1]
+            city_line = raw_data[2].strip().split(",")
+            city = city_line[0].strip()
+            state = city_line[-1].strip().split()[0].strip()
+            zip_postal = city_line[-1].strip().split()[1].strip()
+            phone = raw_data[4]
+            store_number = ""
+            latitude = ""
+            longitude = ""
         country_code = "US"
         yield SgRecord(
             locator_domain=DOMAIN,

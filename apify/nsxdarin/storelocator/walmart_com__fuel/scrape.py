@@ -23,46 +23,52 @@ search = DynamicZipSearch(
 def fetch_data():
     website = "walmart.com/fuel"
     for code in search:
-        logger.info(("Pulling Zip Code %s..." % code))
-        url = (
-            "https://www.walmart.com/store/finder/electrode/api/stores?singleLineAddr="
-            + code
-            + "&distance=50"
-        )
-        r2 = session.get(url, headers=headers).json()
-        if r2["payload"]["nbrOfStores"]:
-            if int(r2["payload"]["nbrOfStores"]) > 0:
-                for store in r2["payload"]["storesData"]["stores"]:
-                    if store["geoPoint"] and "GAS" in str(store):
-                        loc = store["detailsPageURL"]
-                        snum = store["id"]
-                        name = store["displayName"]
-                        typ = store["name"]
-                        add = store["address"]["address"]
-                        city = store["address"]["city"]
-                        state = store["address"]["state"]
-                        zc = store["address"]["postalCode"]
-                        phone = store["phone"]
-                        country = "US"
-                        lat = store["geoPoint"]["latitude"]
-                        lng = store["geoPoint"]["longitude"]
-                        hours = "<MISSING>"
-                        yield SgRecord(
-                            locator_domain=website,
-                            page_url=loc,
-                            location_name=name,
-                            street_address=add,
-                            city=city,
-                            state=state,
-                            zip_postal=zc,
-                            country_code=country,
-                            phone=phone,
-                            location_type=typ,
-                            store_number=snum,
-                            latitude=lat,
-                            longitude=lng,
-                            hours_of_operation=hours,
-                        )
+        try:
+            logger.info(("Pulling Zip Code %s..." % code))
+            url = (
+                "https://www.walmart.com/store/finder/electrode/api/stores?singleLineAddr="
+                + code
+                + "&distance=50"
+            )
+            r2 = session.get(url, headers=headers).json()
+            if r2["payload"]["nbrOfStores"]:
+                if int(r2["payload"]["nbrOfStores"]) > 0:
+                    for store in r2["payload"]["storesData"]["stores"]:
+                        if store["geoPoint"] and "GAS" in str(store):
+                            typ = (
+                                "GAS"
+                                + str(store).split("'name': 'GAS")[1].split("'")[0]
+                            )
+                            loc = store["detailsPageURL"]
+                            snum = store["id"]
+                            name = store["displayName"]
+                            add = store["address"]["address"]
+                            city = store["address"]["city"]
+                            state = store["address"]["state"]
+                            zc = store["address"]["postalCode"]
+                            phone = store["phone"]
+                            country = "US"
+                            lat = store["geoPoint"]["latitude"]
+                            lng = store["geoPoint"]["longitude"]
+                            hours = "<MISSING>"
+                            yield SgRecord(
+                                locator_domain=website,
+                                page_url=loc,
+                                location_name=name,
+                                street_address=add,
+                                city=city,
+                                state=state,
+                                zip_postal=zc,
+                                country_code=country,
+                                phone=phone,
+                                location_type=typ,
+                                store_number=snum,
+                                latitude=lat,
+                                longitude=lng,
+                                hours_of_operation=hours,
+                            )
+        except:
+            pass
 
 
 def scrape():
