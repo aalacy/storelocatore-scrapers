@@ -28,7 +28,9 @@ def get_urls():
 
 def get_data(page_url, sgw: SgWriter):
     r = session.get(page_url, headers=headers)
-    if r.status_code == 404:
+    logger.info(f"{page_url}: {r.status_code}")
+
+    if r.status_code != 200:
         return
     tree = html.fromstring(r.text)
     location_name = "".join(
@@ -40,7 +42,9 @@ def get_data(page_url, sgw: SgWriter):
         "//p[@id='ctl00_wpMngr_BranchDetail_BranchDetails_brAddress']/text()"
     )
     line = list(filter(None, [l.strip() for l in line]))
-    logger.info(f"{page_url}: {line}")
+    if not line:
+        logger.info(f"{page_url} is broken")
+        return
 
     street_address = line.pop(0)
     csz = line.pop()

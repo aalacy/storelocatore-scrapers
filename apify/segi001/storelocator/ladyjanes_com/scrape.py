@@ -18,8 +18,10 @@ def fetch_data(sgw: SgWriter):
 
     for postcode in search:
         p = {"search": postcode}
-
-        locs = json.loads(s.post(api, data=p).text)["data"]["visibleLocations"]
+        try:
+            locs = json.loads(s.post(api, data=p).text)["data"]["visibleLocations"]
+        except:
+            continue
         for loc in locs:
             st = locs[loc]
             if st["wait_time"] == "Coming Soon":
@@ -62,6 +64,9 @@ def fetch_data(sgw: SgWriter):
 if __name__ == "__main__":
     session = SgRequests()
     with SgWriter(
-        SgRecordDeduper(SgRecordID({SgRecord.Headers.STORE_NUMBER}))
+        SgRecordDeduper(
+            SgRecordID({SgRecord.Headers.STORE_NUMBER}),
+            duplicate_streak_failure_factor=-1,
+        )
     ) as writer:
         fetch_data(writer)
