@@ -52,6 +52,13 @@ def pull_content(url):
     return soup
 
 
+def get_latlong(url):
+    longlat = re.search(r"!2d(-[\d]*\.[\d]*)\!3d(-?[\d]*\.[\d]*)", url)
+    if not longlat:
+        return MISSING, MISSING
+    return longlat.group(2), longlat.group(1)
+
+
 def fetch_data():
     log.info("Fetching store_locator data")
     soup = pull_content(LOCATION_URL)
@@ -74,8 +81,8 @@ def fetch_data():
         hours_of_operation = hoo.strip().rstrip(",")
         location_type = MISSING
         store_number = re.sub(r"\D+", "", row.find("a")["href"])
-        latitude = MISSING
-        longitude = MISSING
+        map_link = store.find("iframe", {"src": re.compile(r"maps\/embed.*")})["src"]
+        latitude, longitude = get_latlong(map_link)
         log.info("Append {} => {}".format(location_name, street_address))
         yield SgRecord(
             locator_domain=DOMAIN,
