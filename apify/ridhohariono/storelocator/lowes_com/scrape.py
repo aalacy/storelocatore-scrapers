@@ -96,7 +96,7 @@ def fetch_data(sgw: SgWriter):
     # NOTE: Radius 1000 miles for testing purpose on apify
     search = DynamicZipSearch(
         country_codes=[SearchableCountries.USA],
-        expected_search_radius_miles=1000,
+        expected_search_radius_miles=200,
         granularity=Grain_8(),
         use_state=False,
     )
