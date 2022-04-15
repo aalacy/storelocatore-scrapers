@@ -3,7 +3,7 @@ import re
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgpostal.sgpostal import parse_address_intl
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
@@ -43,7 +43,7 @@ def fetch_data():
             hours = "<MISSING>"
         try:
             lat, longt = (
-                loc.find("a")["href"].split("@", 1)[1].split("data", 1)[0].split(",", 1)
+                div.find("a")["href"].split("@", 1)[1].split("data", 1)[0].split(",", 1)
             )
             longt = longt.split(",", 1)[0]
         except:
@@ -86,7 +86,7 @@ def fetch_data():
 
 def scrape():
     with SgWriter(
-        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.GeoSpatialId)
+        deduper=SgRecordDeduper(SgRecordID({SgRecord.Headers.LOCATION_NAME}))
     ) as writer:
         results = fetch_data()
         for rec in results:
