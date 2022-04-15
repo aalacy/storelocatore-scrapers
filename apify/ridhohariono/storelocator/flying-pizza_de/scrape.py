@@ -74,7 +74,6 @@ def fetch_data():
         hours_of_operation = re.sub(
             r"\d{1,2}.\d{1,2}.\s?\(\D+\).*", "", " ".join(hoo[:-1]).strip()
         ).strip()
-        print(hours_of_operation)
         location_type = MISSING
         store_number = row["data-id"]
         latitude = MISSING
