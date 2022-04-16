@@ -1,113 +1,78 @@
-import re
-import csv
-import json
 from lxml import etree
+from urllib.parse import urljoin
+from time import sleep
 
 from sgrequests import SgRequests
-
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
+from sgselenium.sgselenium import SgFirefox
 
 
 def fetch_data():
-    # Your scraper here
     session = SgRequests()
-
-    items = []
-
-    DOMAIN = "warbyparker.com"
+    domain = "warbyparker.com"
     start_url = "https://www.warbyparker.com/retail"
 
-    response = session.get(start_url)
-    dom = etree.HTML(response.text)
-    data = dom.xpath('//script[contains(text(), "WarbyParker")]/text()')[0]
-    data = re.findall("WarbyParker = (.+);", data)[0]
-    data = json.loads(data)
+    with SgFirefox() as driver:
+        driver.get(start_url)
+        sleep(10)
+        dom = etree.HTML(driver.page_source)
 
-    for poi in data["api"]["prefetched"]["/api/v2/retail/locations"]["locations"]:
-        store_url = "https://www.warbyparker.com/retail/{}/{}".format(
-            poi["city_slug"], poi["location_slug"]
+    all_locations = dom.xpath("//h1/a/@href")
+    for url in all_locations:
+        store_url = urljoin(start_url, url)
+        poi_url = "https://www.warbyparker.com/api/v2/retail/locations" + url.replace(
+            "/retail", ""
         )
-        location_name = poi["name"]
-        street_address = poi["address"]["street_address"]
-        city = poi["address"]["locality"]
-        city = city if city else "<MISSING>"
-        state = poi["address"]["region_code"]
-        state = state if state else "<MISSING>"
-        zip_code = poi["address"]["postal_code"]
-        zip_code = zip_code if zip_code else "<MISSING>"
-        country_code = poi["address"]["country_code"]
-        country_code = country_code if country_code else "<MISSING>"
-        store_number = "<MISSING>"
-        phone = poi["cms_content"]["phone"]
-        phone = phone if phone else "<MISSING>"
-        location_type = "<MISSING>"
-        latitude = poi["cms_content"]["map_details"]["latitude"]
-        longitude = poi["cms_content"]["map_details"]["longitude"]
-        hours_of_operation = []
+        poi = session.get(poi_url)
+        if poi.status_code != 200:
+            continue
+        poi = poi.json()
+        hoo = []
         for day, hours in poi["schedules"][0]["hours"].items():
-            if not hours.get("open"):
-                hours_of_operation.append(f"{day} closed")
+            if hours.get("open"):
+                hoo.append(f'{day}: {hours["open"]} - {hours["close"]}')
             else:
-                opens = hours["open"]
-                closes = hours["close"]
-                hours_of_operation.append(f"{day} {opens} - {closes}")
-        hours_of_operation = (
-            " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
+                hoo.append(f"{day}: closed")
+        hoo = " ".join(hoo)
+        phone = poi["cms_content"]["phone"]
+        if not phone:
+            loc_response = session.get(store_url)
+            loc_dom = etree.HTML(loc_response.text)
+            phone = loc_dom.xpath('//a[contains(@href, "tel")]/@href')[0].split(":")[-1]
+
+        item = SgRecord(
+            locator_domain=domain,
+            page_url=store_url,
+            location_name=poi["name"],
+            street_address=poi["address"]["street_address"],
+            city=poi["address"]["locality"],
+            state=poi["address"]["region_code"],
+            zip_postal=poi["address"]["postal_code"],
+            country_code=poi["address"]["country_code"],
+            store_number="",
+            phone=phone,
+            location_type="",
+            latitude=poi["cms_content"]["map_details"]["latitude"],
+            longitude=poi["cms_content"]["map_details"]["longitude"],
+            hours_of_operation=hoo,
         )
 
-        item = [
-            DOMAIN,
-            store_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip_code,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-
-        items.append(item)
-
-    return items
+        yield item
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":

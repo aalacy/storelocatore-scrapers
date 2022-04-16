@@ -19,9 +19,7 @@ def fetch_data():
     cities = []
     url = "https://bananarepublic.gapcanada.ca/stores/"
     r = session.get(url, headers=headers)
-    if r.encoding is None:
-        r.encoding = "utf-8"
-    for line in r.iter_lines(decode_unicode=True):
+    for line in r.iter_lines():
         if 'class="ga-link" data-ga="Maplist, Region ' in line:
             stub = line.split('href="')[1].split('"')[0]
             lurl = "https://bananarepublic.gapcanada.ca/" + stub
@@ -31,9 +29,7 @@ def fetch_data():
         if "/" in state:
             logger.info(("Pulling Province %s..." % state))
             r2 = session.get(state, headers=headers)
-            if r2.encoding is None:
-                r2.encoding = "utf-8"
-            for line2 in r2.iter_lines(decode_unicode=True):
+            for line2 in r2.iter_lines():
                 if 'data-city-item="' in line2:
                     lurl = (
                         "https://bananarepublic.gapcanada.ca/"
@@ -44,9 +40,7 @@ def fetch_data():
     for city in cities:
         logger.info(("Pulling City %s..." % city))
         r2 = session.get(city, headers=headers)
-        if r2.encoding is None:
-            r2.encoding = "utf-8"
-        for line2 in r2.iter_lines(decode_unicode=True):
+        for line2 in r2.iter_lines():
             if '<a class="view-store ga-link"' in line2:
                 lurl = (
                     "https://bananarepublic.gapcanada.ca/"
@@ -72,16 +66,22 @@ def fetch_data():
         lat = ""
         lng = ""
         r2 = session.get(loc, headers=headers)
-        if r2.encoding is None:
-            r2.encoding = "utf-8"
-        lines = r2.iter_lines(decode_unicode=True)
+        lines = r2.iter_lines()
         for line2 in lines:
             if 'class="daypart" data-daypart="' in line2:
                 day = line2.split('data-daypart="')[1].split('"')[0]
-                next(lines)
-                next(lines)
-                next(lines)
-                hrs = day + ": " + next(lines).split(">")[1].split("<")[0]
+            if '<span class="time-open">' in line2:
+                hrs = (
+                    day
+                    + ": "
+                    + line2.split('<span class="time-open">')[1].split("<")[0]
+                )
+            if '<span class="time-close">' in line2:
+                hrs = (
+                    hrs
+                    + "-"
+                    + line2.split('<span class="time-close">')[1].split("<")[0]
+                )
                 if hours == "":
                     hours = hrs
                 else:
@@ -113,6 +113,16 @@ def fetch_data():
             name = "Banana Republic Outlet"
         else:
             name = "Banana Republic"
+        if "halifax-s-c-8519" in loc:
+            city = "Halifax"
+            state = "NS"
+            zc = "B3L 4N9"
+            phone = "(902) 454-8071"
+            hours = "Mon-Sat: 9:30am - 9:00pm; Sun: 12:00pm - 5:00pm"
+            lat = "44.6493029"
+            lng = "-63.618185"
+            store = "8519"
+            add = "7001 Mumford Road"
         yield SgRecord(
             locator_domain=website,
             page_url=loc,

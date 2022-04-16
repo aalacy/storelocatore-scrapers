@@ -1,249 +1,135 @@
-import requests
 from bs4 import BeautifulSoup
-import csv
-import string
-import re, time
-from sglogging import SgLogSetup
+from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgpostal.sgpostal import parse_address_intl
+import re
 
-logger = SgLogSetup().get_logger('tonyromas_com')
-
-
-
-
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
-        # Header
-        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-        # Body
-        for row in data:
-            writer.writerow(row)
+session = SgRequests()
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+}
 
 
-data = []
-endprint = []
-total = 0
-url = 'https://locations.tonyromas.com/'
+MISSING = SgRecord.MISSING
+
 
 def fetch_data():
-    temp1 =loadmain("https://locations.tonyromas.com/united-states")
-    temp2 =loadmain("https://locations.tonyromas.com/canada")
+    pattern = re.compile(r"\s\s+")
+    url = "https://tonyromas.com/sitemap.html"
+    r = session.get(url, headers=headers)
+    soup = BeautifulSoup(r.text, "html.parser")
+    divlist = soup.select("a[href*=locations-]")
 
-    logger.info(temp1)
-    logger.info(temp2)
-    logger.info(endprint)
-    return data
-    # Your scraper here
+    for div in divlist:
+        div = div["href"]
+        r = session.get(div, headers=headers)
+        soup = BeautifulSoup(r.text, "html.parser")
+        linklist = soup.select("a[href*=location]")
+        for link in linklist:
+            link = link["href"]
+            r = session.get(link, headers=headers)
+            soup = BeautifulSoup(r.text, "html.parser")
+            title = soup.find("div", {"class": "page-title"}).text
 
+            address = soup.find("div", {"class": "ad1"}).text.replace("\n", " ").strip()
+            phone = (
+                soup.find("div", {"class": "phone"}).text.replace("Phone:", "").strip()
+            )
+            hours = (
+                soup.find("div", {"class": "hours"})
+                .text.replace("\n", " ")
+                .replace("day", "day ")
+                .replace("CLOSED", "CLOSED ")
+                .replace("PM", "PM ")
+                .replace("pm", "pm ")
+                .strip()
+            )
+            if len(hours) < 4:
+                hours = "<MISSING>"
+            if len(phone) < 4:
+                phone = "<MISSING>"
+            ltype = "<MISSING>"
+            if "coming-soon" in link:
+                ltype = "Coming Soon"
+            coordlink = soup.find("iframe")["src"]
+            r = session.get(coordlink, headers=headers)
+            try:
+                lat, longt = (
+                    r.text.split('",null,[null,null,', 1)[1]
+                    .split("]", 1)[0]
+                    .split(",", 1)
+                )
+            except:
+                lat = longt = "<MISSING>"
+            try:
 
+                if len(address) < 5:
 
+                    address = (
+                        r.text.split('"Tony Roma')[3].split(", ", 1)[1].split('"', 1)[0]
+                    )
+                    if "family-friendly steakhouse" in address:
+                        address = (
+                            r.text.split('"Tony Roma')[3]
+                            .split("[", 1)[1]
+                            .split("]", 1)[0]
+                        )
+                        address = (
+                            " ".join(address[0:]).replace(",", "").replace('"', "")
+                        )
+            except:
+                continue
+            raw_address = address
+            raw_address = raw_address.replace("\n", " ").strip()
+            raw_address = re.sub(pattern, " ", raw_address).strip()
 
-def loadmain(mainlink):
-    b = 1
-    s = 1
-    c = 1
-    missing = 0
+            pa = parse_address_intl(raw_address)
 
-    page = requests.get(mainlink)
-    soup = BeautifulSoup(page.text, "html.parser")
-    state_list = soup.findAll('a', {'class': 'Directory-listLink'})
+            street_address = pa.street_address_1
+            street = street_address if street_address else MISSING
 
+            city = pa.city
+            city = city.strip() if city else MISSING
 
+            state = pa.state
+            state = state.strip() if state else MISSING
 
-    for states in state_list:
-        if states['href'].find('/') == 0:
-            states = "https://locations.tonyromas.com" + states['href']
-        else:
-            states = "https://locations.tonyromas.com/" + states['href']
-        #logger.info("loop1")
-        logger.info(states)
-        page = requests.get(states)
-        c = 1
-        soup = BeautifulSoup(page.text, "html.parser")
-        repo_list = soup.findAll('a', {'class': 'Directory-listLink'})
-        if len(repo_list) == 0:
-            repo_list = soup.findAll('a', {'class': 'Teaser-titleLink Link--body'})
+            zip_postal = pa.postcode
+            pcode = zip_postal.strip() if zip_postal else MISSING
 
-        if len(repo_list) == 0:
-            data = extractinfo(states, soup)
-            b += 1
+            ccode = pa.country
+            ccode = ccode.strip() if ccode else MISSING
 
-        else:
-            for cities in repo_list:
-                cities = cities['href']
-                cities = cities.replace("..", "")
-                if cities.find('/') == 0:
-                    cities = "https://locations.tonyromas.com" + cities
-                else:
-                    cities = "https://locations.tonyromas.com/" + cities
-                logger.info(cities)
-
-                page = requests.get(cities)
-
-                soup = BeautifulSoup(page.text, "html.parser")
-                try:
-                    geo = soup.find('span', {'class': 'coordinates'})
-                    coord = geo.findAll('meta')
-                    logger.info("loop2")
-                    #logger.info("state = ", s, " cities = ", c, " branch= ", b)
-                    data = extractinfo(cities, soup)
-                    b += 1
-                except:
-
-                    branches = soup.findAll('a', {'class': 'Teaser-titleLink Link--body'})
-
-                    if len(branches) > 0:
-                        logger.info("loop3")
-
-                        for branch in branches:
-                            #branch = branch.find('a', {'class': 'Teaser-titleLink Link--body'})
-                            blink = branch['href']
-
-                            blink = blink.replace("..", "")
-                            blink = blink.replace("//","/")
-                            blink = "https://locations.tonyromas.com" + blink
-                            logger.info(blink)
-                            page = requests.get(blink)
-                            soup = BeautifulSoup(page.text, "html.parser")
-                            try:
-                                logger.info("loop4")
-                                geo = soup.find('span', {'class': 'coordinates'})
-                                coord = geo.findAll('meta')
-                                nut = str(soup)
-                                if nut.find("404 page not found.") == -1:
-                                    logger.info("ENTER")
-                                    data = extractinfo(blink, soup)
-                                    b += 1
-                                else:
-                                    logger.info("404 page not found.")
-                                    logger.info(cities)
-                                    missing += 1
-                            except:
-                                logger.info("loop5")
-                                inter = soup.findAll('a', {'class': 'Teaser-titleLink Link--body'})
-                                #logger.info("brancccccccccccccccccccccccch")
-                                for binter in inter:
-                                    blink = binter['href']
-                                    blink = blink.replace("../", "")
-                                    if blink.find('/') == 0:
-                                        blink = "https://locations.tonyromas.com" + blink
-                                    else:
-                                        blink = "https://locations.tonyromas.com/" + blink
-
-                                    logger.info(blink)
-                                    page = requests.get(blink)
-                                    soup = BeautifulSoup(page.text, "html.parser")
-                                    temp = str(soup)
-                                    if tem.find("404 page not found.") == -1:
-                                        data = extractinfo(blink,soup)
-                                        b += 1
-                                    else:
-                                        logger.info("404 page not found.")
-                                        missing += 1
-
-                    else:
-                        logger.info("404 page not found.")
-                        missing += 1
-
-
-
-                c += 1
-
-            temp = b - 1
-            endprint.append([states, temp])
-            s += 1
-
-
-
-
-    prstr = "total Branches = " + str(temp)
-    return prstr
-
-
-
-def extractinfo(link, soup):
-
-    geo = soup.find('span', {'class': 'coordinates'})
-    coord = geo.findAll('meta')
-    lat = coord[0]['content']
-    longt = coord[1]['content']
-    hdetail = soup.find('span', {'class': 'LocationName'})
-    title = hdetail.text
-    hdetail = soup.find('address', {'class': 'c-address'})
-    address = hdetail.findAll('meta')
-    city = address[0]['content']
-    street = address[1]['content']
-    address = hdetail.findAll('abbr')
-    state = address[0].text
-    ccode = address[1].text
-    address = hdetail.find('span', {'class': 'c-address-postal-code'})
-    pcode = address.text
-    address = soup.find('span', {'id': 'telephone'})
-    phone = address.text
-    try:
-        table = soup.find('table', {'class': 'c-location-hours-details'})
-        trows = table.findAll('tr')
-        hours = ""
-        for row in trows:
-            hours = hours + "|" + row.text
-        start = hours.find("WeekHours")
-        start = hours.find("|", start) + 1
-        hours = hours[start:len(hours)]
-    except:
-        hours = "<MISSING>"
-    hdetail = str(soup)
-    start = hdetail.find('"id"')
-    start = hdetail.find(':', start) + 1
-    end = hdetail.find(',', start)
-    store = hdetail[start:end]
-
-    soup = str(soup)
-    ltype = ""
-    start = soup.find("ATM")
-    if start == -1:
-        ltype = "Branch"
-    else:
-        ltype = "Branch | ATM"
-
-
-    logger.info(title)
-    logger.info(store)
-    #logger.info(ltype)
-    logger.info(street)
-    logger.info(city)
-    logger.info(state)
-    logger.info(pcode)
-    logger.info(ccode)
-    logger.info(phone)
-    logger.info(lat)
-    logger.info(longt)
-    logger.info(hours)
-    logger.info('..................')
-
-
-
-    data.append([
-        url,
-        link,
-        title,
-        street,
-        city,
-        state,
-        pcode,
-        ccode,
-        store,
-        phone,
-        "<MISSING>",
-        lat,
-        longt,
-        hours
-    ])
-    return data
+            yield SgRecord(
+                locator_domain="https://tonyromas.com/",
+                page_url=link,
+                location_name=title,
+                street_address=street.strip(),
+                city=city.strip(),
+                state=state.strip(),
+                zip_postal=pcode.strip(),
+                country_code=ccode,
+                store_number=SgRecord.MISSING,
+                phone=phone.strip(),
+                location_type=ltype,
+                latitude=str(lat),
+                longitude=str(longt),
+                hours_of_operation=hours,
+                raw_address=raw_address,
+            )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+
 
 scrape()

@@ -1,134 +1,94 @@
-import re
-import csv
-import json
 from lxml import etree
-
+from sglogging import sglog
+from bs4 import BeautifulSoup
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
+session = SgRequests()
+website = "vasafitness_com"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+}
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+DOMAIN = "https://vasafitness.com/"
+MISSING = SgRecord.MISSING
 
 
 def fetch_data():
-    # Your scraper here
-    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
-
-    items = []
-
     start_url = "https://vasafitness.com/locations/"
-    domain = re.findall(r"://(.+?)/", start_url)[0].replace("www.", "")
-    hdr = {
-        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
-    }
-    response = session.get(start_url, headers=hdr)
+    response = session.get(start_url, headers=headers)
     dom = etree.HTML(response.text)
-
     all_locations = []
     all_states = dom.xpath('//div[@class="list-item"]/a/@href')
     for state_url in all_states:
         response = session.get(state_url)
         dom = etree.HTML(response.text)
         all_locations += dom.xpath('//a[contains(text(), "View Location")]/@href')
-
-    for store_url in all_locations:
-        loc_response = session.get(store_url)
-        loc_dom = etree.HTML(loc_response.text)
-        poi = loc_dom.xpath('//script[contains(text(), "streetAddress")]/text()')
-
-        location_name = loc_dom.xpath('//h1[@class="text-uppercase"]/text()')
-        location_name = location_name[0] if location_name else "<MISSING>"
-        latitude = loc_dom.xpath("//@data-latt")[0]
-        longitude = loc_dom.xpath("//@data-lngg")[0]
-        hoo = loc_dom.xpath(
-            '//h3[contains(text(), "Gym Hours")]/following-sibling::div[@class="hours"]//text()'
-        )
-        if not hoo:
-            continue
-        hours_of_operation = " ".join(hoo)
-        if poi:
-            poi = json.loads(poi[0].split("<script")[0])
-            street_address = poi["address"]["streetAddress"]
-            street_address = street_address if street_address else "<MISSING>"
-            city = poi["address"]["addressLocality"]
-            city = city if city else "<MISSING>"
-            state = poi["address"]["addressRegion"]
-            state = state if state else "<MISSING>"
-            zip_code = poi["address"]["postalCode"]
-            zip_code = zip_code if zip_code else "<MISSING>"
-            country_code = poi["address"]["addressCountry"]
-            country_code = country_code if country_code else "<MISSING>"
-            store_number = "<MISSING>"
-            phone = poi["contactPoint"]["telephone"]
-            phone = phone if phone else "<MISSING>"
-            location_type = poi["@type"]
-        else:
-            raw_address = (
-                loc_dom.xpath('//div[@class="loc-address"]/text()')[0]
-                .strip()
-                .split(", ")
+    for page_url in all_locations:
+        log.info(page_url)
+        loc_response = session.get(page_url)
+        soup = BeautifulSoup(loc_response.text, "html.parser")
+        location_name = soup.find("h1").text
+        try:
+            phone = soup.select_one("a[href*=tel]").text
+        except:
+            phone = MISSING
+        address = soup.find("div", {"class": "loc-address"}).text.split(",")
+        street_address = address[0]
+        city = address[1]
+        address = address[2].split()
+        state = address[0]
+        zip_postal = address[1]
+        country_code = "USA"
+        latitude = MISSING
+        longitude = MISSING
+        try:
+            hours_of_operation = (
+                soup.find("div", {"class": "hours"})
+                .get_text(separator="|", strip=True)
+                .replace("|", " ")
             )
-            street_address = raw_address[0]
-            city = raw_address[1]
-            state = raw_address[-1].split()[0]
-            zip_code = raw_address[-1].split()[-1]
-            country_code = "<MISSING>"
-            store_number = "<MISSING>"
-            phone = loc_dom.xpath('//a[contains(@href, "tel")]/text()')
-            phone = phone[-1].strip() if phone else "<MISSING>"
-            location_type = "<MISSING>"
-
-        item = [
-            domain,
-            store_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip_code,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-
-        items.append(item)
-
-    return items
+        except:
+            hours_of_operation = MISSING
+        coords = soup.find("div", {"class": "marker"})
+        latitude = coords["data-latt"]
+        longitude = coords["data-lngg"]
+        country_code = "US"
+        yield SgRecord(
+            locator_domain=DOMAIN,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address.strip(),
+            city=city.strip(),
+            state=state.strip(),
+            zip_postal=zip_postal.strip(),
+            country_code=country_code,
+            store_number=MISSING,
+            phone=phone.strip(),
+            location_type=MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation.strip(),
+        )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    log.info("Started")
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
 
 
 if __name__ == "__main__":

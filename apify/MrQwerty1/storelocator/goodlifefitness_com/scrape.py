@@ -1,135 +1,86 @@
-import csv
-
-from concurrent import futures
-from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgzip.dynamic import SearchableCountries, DynamicGeoSearch
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def fetch_data(lat, lng, sgw: SgWriter):
+    lat, lng = str(lat).replace(".", "_"), str(lng).replace(".", "_")
+    url = f"https://www.goodlifefitness.com/content/goodlife/en/clubs/jcr:content/root/responsivegrid/responsivegrid_1015243366/findaclub.ClubByMapBounds.{lat}.{lng}.undef.undef.2022127.json"
+    r = session.get(url)
+    js = r.json()["map"]["response"]
 
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
+    for j in js:
+        location_name = j.get("ClubName")
+        a = j.get("Address") or {}
+        street_address = a.get("Address1")
+        city = a.get("City")
+        state = a.get("Province")
+        postal = a.get("PostalCode")
+        country_code = a.get("Country")
+        phone = j.get("Phone")
+        c = j.get("Coordinate") or {}
+        latitude = c.get("Latitude")
+        longitude = c.get("Longitude")
+        page_url = j.get("pagePath")
+        store_number = j.get("ClubNumber")
 
-        for row in data:
-            writer.writerow(row)
+        _tmp = []
+        days = [
+            "monday",
+            "tuesday",
+            "wednesday",
+            "thursday",
+            "friday",
+            "saturday",
+            "sunday",
+        ]
+        hours = j.get("OperatingHours") or []
 
-
-def get_urls():
-    session = SgRequests()
-    r = session.get("https://www.goodlifefitness.com/sitemap.xml")
-    tree = html.fromstring(r.content)
-    return tree.xpath("//loc[contains(text(), 'clubs/club.')]/text()")
-
-
-def get_data(page_url):
-    session = SgRequests()
-    _id = page_url.split(".")[-2]
-    r = session.get(
-        f"https://www.goodlifefitness.com/content/experience-fragments/goodlife/header/master/jcr:content"
-        f"/root/responsivegrid/header.GetClubsWithDetails.{_id}.false.true.20201022.json"
-    )
-
-    # non-exist pages return 204 status code
-    if r.status_code != 200:
-        return
-
-    j = r.json()["map"]["response"][0]
-    locator_domain = "https://www.goodlifefitness.com/"
-    location_name = j.get("ClubName") or "<MISSING>"
-    street_address = j.get("Address1") or "<MISSING>"
-    city = j.get("City") or "<MISSING>"
-    state = j.get("Province") or "<MISSING>"
-    postal = j.get("PostalCode")
-    country_code = "CA"
-    store_number = _id
-    phone = j.get("Phone") or "<MISSING>"
-    location_type = "<MISSING>"
-    latitude = j.get("Lat") or "<MISSING>"
-    longitude = j.get("Long") or "<MISSING>"
-
-    _tmp = []
-    days = [
-        "sunday",
-        "monday",
-        "tuesday",
-        "wednesday",
-        "thursday",
-        "friday",
-        "saturday",
-    ]
-    hours = j.get("OperatingHours") or []
-
-    for h in hours:
-        day = days[h.get("Day")]
-        start = h.get("StartTime").split("T")[1][:-3]
-        end = h.get("EndTime").split("T")[1][:-3]
-        if start.find("00:00") == -1:
+        for h in hours:
+            day = days[h.get("Day") - 1]
+            start = h.get("StartTime").split("T")[1][:-3]
+            end = h.get("EndTime").split("T")[1][:-3]
             _tmp.append(f"{day.capitalize()}: {start} - {end}")
-        else:
-            _tmp.append(f"{day.capitalize()}: Closed")
 
-    hours_of_operation = ";".join(_tmp) or "<MISSING>"
-    if not j.get("IsOpen"):
-        hours_of_operation = "Closed"
+        hours_of_operation = ";".join(_tmp)
+        if j.get("Is247"):
+            hours_of_operation = "Mon - Sun: 24h"
+        if not j.get("IsOpen"):
+            hours_of_operation = "Closed"
 
-    row = [
-        locator_domain,
-        page_url,
-        location_name,
-        street_address,
-        city,
-        state,
-        postal,
-        country_code,
-        store_number,
-        phone,
-        location_type,
-        latitude,
-        longitude,
-        hours_of_operation,
-    ]
+        row = SgRecord(
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=store_number,
+            latitude=latitude,
+            longitude=longitude,
+            phone=phone,
+            locator_domain=locator_domain,
+            hours_of_operation=hours_of_operation,
+        )
 
-    return row
-
-
-def fetch_data():
-    out = []
-    urls = get_urls()
-
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {executor.submit(get_data, url): url for url in urls}
-        for future in futures.as_completed(future_to_url):
-            row = future.result()
-            if row:
-                out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://www.goodlifefitness.com/"
+    session = SgRequests()
+
+    with SgWriter(
+        SgRecordDeduper(
+            RecommendedRecordIds.PageUrlId, duplicate_streak_failure_factor=-1
+        )
+    ) as writer:
+        search = DynamicGeoSearch(
+            country_codes=[SearchableCountries.CANADA], expected_search_radius_miles=10
+        )
+        for la, ln in search:
+            fetch_data(la, ln, writer)

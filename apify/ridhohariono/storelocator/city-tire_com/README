@@ -1,0 +1,5 @@
+--ignore LatLngDuplicationValidator (Confirmed scrape correctly)
+
+Same Latitude and longitude
+https://www.city-tire.com/Contact/Find-Us/Mode/7/124-Main-St---Keene-NH-03431/details
+https://www.city-tire.com/Contact/Find-Us/Mode/3/292-College-St--Amherst-MA-01002/details

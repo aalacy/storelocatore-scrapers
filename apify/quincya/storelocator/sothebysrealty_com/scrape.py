@@ -8,7 +8,7 @@ from sgrequests import SgRequests
 
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 log = sglog.SgLogSetup().get_logger(logger_name="sothebysrealty.com")
@@ -89,7 +89,7 @@ def fetch_data(sgw: SgWriter):
             req = session.get(base_link, headers=headers)
             base = BeautifulSoup(req.text, "lxml")
 
-            items = base.find_all(class_="Entities-card__container")
+            items = base.find_all("li", {"id": re.compile(r"Entity_180.+")})
 
             for item in items:
                 try:
@@ -133,18 +133,6 @@ def fetch_data(sgw: SgWriter):
 
                 if req.status_code == 200:
                     page_base = BeautifulSoup(req.text, "lxml")
-
-                    street_address = " ".join(
-                        list(
-                            page_base.find(
-                                class_="OfficeHero__content-item OfficeHero__content-item--address h6 u-mercury-italic u-color-grey"
-                            ).stripped_strings
-                        )[:-2]
-                    ).replace("  ", " ")
-
-                    if street_address[-1:] == ",":
-                        street_address = street_address[:-1]
-
                     try:
                         map_str = page_base.find(
                             class_="OfficeHero__content-item OfficeHero__content-item--directions"
@@ -191,5 +179,14 @@ def fetch_data(sgw: SgWriter):
                 page_next = False
 
 
-with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+with SgWriter(
+    SgRecordDeduper(
+        SgRecordID(
+            {
+                SgRecord.Headers.LOCATION_NAME,
+                SgRecord.Headers.STREET_ADDRESS,
+            }
+        )
+    )
+) as writer:
     fetch_data(writer)
