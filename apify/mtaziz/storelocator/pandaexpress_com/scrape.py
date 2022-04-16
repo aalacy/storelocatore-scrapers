@@ -6,8 +6,11 @@ from sgscrape.sgwriter import SgWriter
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries, Grain_8
 from sglogging import SgLogSetup
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from tenacity import retry, stop_after_attempt
+import tenacity
 import json
 import ssl
+import datetime
 
 try:
     _create_unverified_https_context = (
@@ -82,85 +85,100 @@ def get_hours_new(_, api_url):
     return hours_of_operation
 
 
+@retry(stop=stop_after_attempt(5), wait=tenacity.wait_fixed(5))
+def get_response(coord, url):
+    with SgRequests() as http:
+        response = http.get(url, headers=hdr_noncookies)
+        if response.status_code == 200:
+            logger.info(f"[{coord}] [HTTP {response.status_code} OK!]")  # noqa
+            return response
+        raise Exception(f"<< Please Fix StoreUrlError {url} | {response.status_code}>>")
+
+
 def fetch_records(coord, search, current_country, sgw: SgWriter):
     lat_search, lng_search = coord
-    # nomnom_calendars_from=20220414&nomnom_calendars_to=20220425
-    api_endpoint_url = f"https://nomnom-prod-api.pandaexpress.com/restaurants/near?lat={lat_search}&long={lng_search}&radius=20000&limit=100&nomnom=calendars&nomnom_calendars_from=20220414&nomnom_calendars_to=20220425&nomnom_exclude_extref=99997,99996,99987,99988,99989,99994,11111,8888,99998,99999,0000"
-    logger.info(f"pulling from: {api_endpoint_url}")
-    with SgRequests() as http:
+    # Example in the API URL: nomnom_calendars_from=20220414&nomnom_calendars_to=20220425.
+    # Without calendars date, the hours of operation data won't be
+    # returned by response from API call.
+    now = datetime.datetime.now()
+    # Date format has to be matched with 20220414
+    calendars_from = now.strftime("%Y%m%d")
 
-        try:
-            r = http.get(api_endpoint_url, headers=hdr_noncookies)
-            logger.info(f"[HTTP {r.status_code} OK!]")
-            text = r.text
-            logger.info(f"length: {len(text)}")
-            if not text:
-                logger.info("Response returns empty")
+    # Have to take current date then add 11 days.
+    calendar_end_to_11days = now + datetime.timedelta(days=11)
+    calendars_to = calendar_end_to_11days.strftime("%Y%m%d")
+    api_endpoint_url = f"https://nomnom-prod-api.pandaexpress.com/restaurants/near?lat={lat_search}&long={lng_search}&radius=20000&limit=100&nomnom=calendars&nomnom_calendars_from={calendars_from}&nomnom_calendars_to={calendars_to}&nomnom_exclude_extref=99997,99996,99987,99988,99989,99994,11111,8888,99998,99999,0000"
+    logger.info(f"pulling from: {api_endpoint_url}")
+    try:
+        r = get_response(coord, api_endpoint_url)
+        text = r.text
+        if not text:
+            logger.info("Response returns empty")
+            return
+        else:
+            js = json.loads(text)
+            logger.info("[JSON LOADED]")
+            rest = js["restaurants"]
+            logger.info(f"[FOUND {len(rest)}]")
+            if not rest:
+                logger.info("Data is empty!")
                 return
             else:
-                js = json.loads(text)
-                logger.info("Json loaded")
-                rest = js["restaurants"]
-                logger.info(f"[FOUND {len(rest)}]")
-                if not rest:
-                    logger.info("rest is empty!")
-                    return
-                else:
-                    for _ in rest:
-                        lat = _["latitude"]
-                        lng = _["longitude"]
-                        search.found_location_at(float(lat), float(lng))
-                        hours = get_hours_new(_, api_endpoint_url)
-                        #
-                        state = _["state"]
-                        city = _["city"]
-                        sta = _["streetaddress"]
+                for _ in rest:
+                    lat = _["latitude"]
+                    lng = _["longitude"]
+                    search.found_location_at(float(lat), float(lng))
+                    hours = get_hours_new(_, api_endpoint_url)
+                    #
+                    state = _["state"]
+                    city = _["city"]
+                    sta = _["streetaddress"]
 
-                        pstate = ""
-                        pcity = ""
-                        psta = ""
+                    pstate = ""
+                    pcity = ""
+                    psta = ""
 
-                        # Example page url containing comma
-                        # https://www.pandaexpress.com/locations/hi/jbphh/810-williamette-st,-bldg-1786-space-42
+                    # Example page url containing comma
+                    # https://www.pandaexpress.com/locations/hi/jbphh/810-williamette-st,-bldg-1786-space-42
 
-                        pcity = city.replace(" ", "-").replace(".", "").replace("#", "")
-                        pstate = state
-                        locator_url = "https://www.pandaexpress.com/locations/"
-                        psta = (
-                            sta.replace("#", "")
-                            .replace(".", "")
-                            .replace(" ", "-")
-                            .replace(",", "")
-                        )
-                        pgurl = locator_url + pstate + "/" + pcity + "/" + psta
-                        pgurl = pgurl.lower()
-                        item = SgRecord(
-                            locator_domain="pandaexpress.com",
-                            page_url=pgurl,
-                            location_name=_["name"],
-                            street_address=sta,
-                            city=city,
-                            state=state,
-                            zip_postal=_["zip"],
-                            country_code=_["country"],
-                            store_number=_["extref"],
-                            phone=_["telephone"],
-                            location_type="Restaurant",
-                            latitude=_["latitude"],
-                            longitude=_["longitude"],
-                            hours_of_operation=hours,
-                            raw_address="",
-                        )
-                        sgw.write_row(item)
-        except Exception as e:
-            logger.info(f"Fix <{e}> at {api_endpoint_url}")
+                    pcity = city.replace(" ", "-").replace(".", "").replace("#", "")
+                    pstate = state
+                    locator_url = "https://www.pandaexpress.com/locations/"
+                    psta = (
+                        sta.replace("#", "")
+                        .replace(".", "")
+                        .replace(" ", "-")
+                        .replace(",", "")
+                    )
+                    pgurl = locator_url + pstate + "/" + pcity + "/" + psta
+                    pgurl = pgurl.lower()
+                    item = SgRecord(
+                        locator_domain="pandaexpress.com",
+                        page_url=pgurl,
+                        location_name=_["name"],
+                        street_address=sta,
+                        city=city,
+                        state=state,
+                        zip_postal=_["zip"],
+                        country_code=_["country"],
+                        store_number=_["extref"],
+                        phone=_["telephone"],
+                        location_type="Restaurant",
+                        latitude=_["latitude"],
+                        longitude=_["longitude"],
+                        hours_of_operation=hours,
+                        raw_address="",
+                    )
+                    sgw.write_row(item)
+    except Exception as e:
+        logger.info(f"Fix <{e}> at {api_endpoint_url}")
 
 
 def fetch_data(sgw: SgWriter):
     logger.info("Started")
     search_us = DynamicGeoSearch(
         country_codes=[SearchableCountries.USA],
-        expected_search_radius_miles=10,
+        expected_search_radius_miles=2000,
         granularity=Grain_8(),
         use_state=False,
     )
