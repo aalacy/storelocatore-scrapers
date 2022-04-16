@@ -36,6 +36,27 @@ def get_response(idx, url):
         raise Exception(f"[{idx}] | {url} >> HTTP Error Code: {response.status_code}")
 
 
+def get_hours(raw_hours):
+    temp_open_close = []
+    hours_of_operation = ""
+    tmp_js = json.loads(raw_hours.get("hours_sets:primary")).get("days", {})
+    for day in tmp_js.keys():
+        octime = tmp_js[day]
+        if isinstance(octime, list):
+            start = octime[0]["open"]
+            close = octime[0]["close"]
+            temp_open_close.append(f"{day} {start} - {close}")
+        elif isinstance(octime, str):
+            temp_open_close.append(f"{day} {octime}")
+        else:
+            temp_open_close.append(f"{day} {octime}")
+    if temp_open_close:
+        hours_of_operation = "; ".join(temp_open_close)
+    else:
+        hours_of_operation = MISSING
+    return hours_of_operation
+
+
 def fetch_data(sgw: SgWriter):
     for idx, api_url in enumerate(API_ENDPOINT_URLS):
         r = get_response(idx, api_url)
@@ -48,7 +69,27 @@ def fetch_data(sgw: SgWriter):
         js = json.loads(line)
         js_markers = r.json()["markers"]
         for idx1, j in enumerate(js):
-            page_url = j.get("url")
+            page_url = ""
+            store_url = j.get("url")
+            country_code = j.get("country") or MISSING
+            if country_code == "US" or country_code == "PR":
+                page_url = store_url.replace(
+                    "https://restaurants.ihop.com/",
+                    "https://restaurants.ihop.com/en-us/",
+                )
+
+            if country_code == "CA":
+                page_url = store_url.replace(
+                    "https://restaurants.ihop.com/",
+                    "https://restaurants.ihop.com/en-ca/",
+                )
+
+            if country_code == "PA":
+                page_url = store_url
+
+            if not store_url:
+                page_url = MISSING
+
             location_name = j.get("location_name") or MISSING
             logger.info(f"[{idx1}] Location Name: {location_name}")
             street_address = (
@@ -57,7 +98,7 @@ def fetch_data(sgw: SgWriter):
             city = j.get("city") or MISSING
             state = j.get("region") or MISSING
             postal = j.get("post_code") or MISSING
-            country_code = j.get("country") or MISSING
+
             if "MX" in str(country_code):
                 continue
             store_number = j.get("fid") or MISSING
@@ -65,21 +106,7 @@ def fetch_data(sgw: SgWriter):
             latitude = js_markers[idx].get("lat") or MISSING
             longitude = js_markers[idx].get("lng") or MISSING
             location_type = j.get("location_type") or MISSING
-            _tmp = []
-            tmp_js = json.loads(j.get("hours_sets:primary")).get("days", {})
-            for day in tmp_js.keys():
-                line = tmp_js[day]
-                if len(line) == 1:
-                    start = line[0]["open"]
-                    close = line[0]["close"]
-                    _tmp.append(f"{day} {start} - {close}")
-                else:
-                    _tmp.append(f"{day} Closed")
-            if _tmp:
-                hours_of_operation = "; ".join(_tmp)
-            else:
-                hours_of_operation = MISSING
-
+            hoo = get_hours(j)
             row = SgRecord(
                 page_url=page_url,
                 location_name=location_name,
@@ -94,7 +121,7 @@ def fetch_data(sgw: SgWriter):
                 latitude=latitude,
                 longitude=longitude,
                 locator_domain=DOMAIN,
-                hours_of_operation=hours_of_operation,
+                hours_of_operation=hoo,
                 raw_address=MISSING,
             )
 

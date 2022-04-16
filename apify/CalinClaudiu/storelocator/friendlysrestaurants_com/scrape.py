@@ -24,16 +24,16 @@ def fetch_data():
     for start_url in start_urls:
         all_locations = session.get(start_url, headers=hdr).json()
         for poi in all_locations:
-            page_url = "https://locations.friendlysrestaurants.com/" + poi["llp_url"]
+            page_url = "https://locations.friendlysrestaurants.com" + poi["llp_url"]
             poi = poi["store_info"]
             hoo = ""
             if page_url.strip():
                 with SgFirefox() as driver:
                     driver.get(page_url)
-                    sleep(5)
+                    sleep(15)
                     loc_dom = etree.HTML(driver.page_source)
-                hoo = loc_dom.xpath('//dl[@itemprop="openingHours"]/@content')
-                hoo = hoo[0] if hoo else ""
+                hoo = loc_dom.xpath('//dl[@itemprop="openingHours"]//text()')
+                hoo = " ".join([e.strip() for e in hoo if e.strip()])
 
             item = SgRecord(
                 locator_domain=domain,

@@ -42,52 +42,55 @@ def get_data():
             url = "https://www.caobakerycafe.com/locations"
             response = scraper.get(url).text
 
-            json_objects = extract_json(
-                response.split('<script id="POPMENU_REQUIRED_CHUNKS"></script>')[1]
-            )
+            json_objects = extract_json(response.split("POPMENU_APOLLO_STATE")[1])[0]
             break
         except Exception:
             session = SgRequests()
             scraper = cloudscraper.create_scraper(sess=session)
             continue
 
-    for location in json_objects[:-1]:
-        locator_domain = "www.caobakerycafe.com"
-        page_url = url
-        location_name = location["address"]["addressLocality"]
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
-        city = location_name
-        store_number = "<MISSING>"
-        address = location["address"]["streetAddress"]
-        state = location["address"]["addressRegion"]
-        zipp = location["address"]["postalCode"]
-        phone = location["telephone"]
-        location_type = "<MISSING>"
-        country_code = "US"
+    for key in json_objects.keys():
+        if "RestaurantLocation:" in key:
+            location = json_objects[key]
 
-        hours = ""
-        for part in location["openingHours"]:
-            hours = hours + part + ", "
+            locator_domain = "caobakerycafe.com"
+            page_url = "https://www.caobakerycafe.com/locations"
+            location_name = location["name"]
+            latitude = location["lat"]
+            longitude = location["lng"]
+            city = location["city"]
+            state = location["state"]
+            zipp = location["postalCode"]
+            address = location["streetAddress"]
+            store_number = location["id"]
+            phone = location["phone"]
+            location_type = "<MISSING>"
+            country_code = location["country"]
 
-        hours = hours[:-2]
+            hours = ""
+            for part in location["schemaHours"]:
+                hours = hours + part + ", "
 
-        yield {
-            "locator_domain": locator_domain,
-            "page_url": page_url,
-            "location_name": location_name,
-            "latitude": latitude,
-            "longitude": longitude,
-            "city": city,
-            "store_number": store_number,
-            "street_address": address,
-            "state": state,
-            "zip": zipp,
-            "phone": phone,
-            "location_type": location_type,
-            "hours": hours,
-            "country_code": country_code,
-        }
+            hours = hours[:-2]
+            if hours == "Su, Mo, Tu, We, Th, Fr, Sa":
+                hours = "24/7"
+
+            yield {
+                "locator_domain": locator_domain,
+                "page_url": page_url,
+                "location_name": location_name,
+                "latitude": latitude,
+                "longitude": longitude,
+                "city": city,
+                "store_number": store_number,
+                "street_address": address,
+                "state": state,
+                "zip": zipp,
+                "phone": phone,
+                "location_type": location_type,
+                "hours": hours,
+                "country_code": country_code,
+            }
 
 
 def scrape():

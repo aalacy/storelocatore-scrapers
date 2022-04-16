@@ -10,7 +10,7 @@ from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 def fetch_data():
     session = SgRequests()
 
-    start_url = "https://www.truist.com/truist-api/locator/locations.json?returnBranchATMStatus=Y&maxResults=1000&locationType=BOTH&searchRadius=10&address={}"
+    start_url = "https://www.truist.com/truist-api/locator/locations.json?returnBranchATMStatus=Y&maxResults=100&locationType=BOTH&searchRadius=5&address={}"
     domain = "truist.com"
     hdr = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
@@ -32,18 +32,19 @@ def fetch_data():
                 hoo = hoo.replace("*", "")
                 if "Mon: *" in hoo:
                     hoo = ""
-            page_url = f'https://www.truist.com/{poi["locationType"].lower()}/{poi["locationAddress"]["state"].lower()}/{poi["locationAddress"]["city"].replace(" ", "-").lower()}/{poi["locationAddress"]["zipCode"]}/{poi["locationAddress"]["address1"].lower().replace(" ", "-")}'
+            street_address = poi["locationAddress"]["address1"]
+            page_url = f'https://www.truist.com/{poi["locationType"].lower()}/{poi["locationAddress"]["state"].lower()}/{poi["locationAddress"]["city"].replace(" ", "-").lower()}/{poi["locationAddress"]["zipCode"].split("-")[0]}/{street_address.lower().replace(" ", "-")}'
 
             item = SgRecord(
                 locator_domain=domain,
                 page_url=page_url,
                 location_name=poi["locationName"],
-                street_address=poi["locationAddress"]["address1"],
+                street_address=street_address,
                 city=poi["locationAddress"]["city"],
                 state=poi["locationAddress"]["state"],
                 zip_postal=poi["locationAddress"]["zipCode"],
                 country_code="",
-                store_number=poi.get("branchId"),
+                store_number=poi.get("locationKey"),
                 phone=poi["phone"],
                 location_type=poi["locationType"],
                 latitude=poi["locationAddress"]["lat"],
@@ -57,9 +58,7 @@ def fetch_data():
 def scrape():
     with SgWriter(
         SgRecordDeduper(
-            SgRecordID(
-                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
-            ),
+            SgRecordID({SgRecord.Headers.PAGE_URL, SgRecord.Headers.STREET_ADDRESS}),
             duplicate_streak_failure_factor=-1,
         )
     ) as writer:

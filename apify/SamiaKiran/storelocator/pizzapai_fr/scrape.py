@@ -51,6 +51,7 @@ def fetch_data():
             zip_postal = zip_postal.strip() if zip_postal else MISSING
             latitude = loc["latitude"]
             longitude = loc["longitude"]
+            city = city.replace("Henin-Beaumont", "")
             country_code = "FR"
             yield SgRecord(
                 locator_domain=DOMAIN,

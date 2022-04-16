@@ -20,7 +20,6 @@ def fetch_data(sgw: SgWriter):
             "lng": "0",
             "distance": "0",
             "input": "",
-            "country": cc,
             "catFilter": "",
             "byname": "",
         }
@@ -106,5 +105,5 @@ if __name__ == "__main__":
         "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:98.0) Gecko/20100101 Firefox/98.0",
     }
     session = SgRequests()
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PhoneNumberId)) as writer:
         fetch_data(writer)
