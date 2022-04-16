@@ -47,7 +47,7 @@ def fetch_data():
                 if country_code not in raw_address:
                     raw_address += ", " + country_code
                 addr = parse_address_intl(raw_address)
-                street_address = addr.street_address_1
+                street_address = addr.street_address_1 or ""
                 if addr.street_address_2:
                     street_address += " " + addr.street_address_2
                 city = addr.city
