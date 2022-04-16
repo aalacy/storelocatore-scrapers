@@ -75,14 +75,16 @@ def fetch_data():
         info = (content[0].get_text(strip=True, separator="@").strip()).split("@")
         raw_address = ", ".join(info[:2])
         street_address, city, state, zip_postal = getAddress(raw_address)
-        if "Open by appointment only" in info[2]:
+        if len(info) < 3 or "Open by appointment only" in info[2]:
             phone = MISSING
         else:
             phone = info[2]
         if len(content[1].text) < 5:
             hours_of_operation = MISSING
         else:
-            hours_of_operation = content[1].text.replace("\n", "").strip()
+            hours_of_operation = re.sub(
+                r"Or by appointment.*" r"", "", content[1].text.replace("\n", " ")
+            ).strip()
         store_number = MISSING
         country_code = "US"
         location_type = "urbanzen"

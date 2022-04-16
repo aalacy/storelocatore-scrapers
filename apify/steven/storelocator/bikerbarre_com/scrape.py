@@ -1,78 +1,59 @@
-import pandas as pd
-from bs4 import BeautifulSoup as bs
-import requests as r
+from bs4 import BeautifulSoup
 import re
-import os
+from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-# Location URL
-location_url = 'https://bikerbarre.com/'
+session = SgRequests()
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+}
 
-# output path of CSV
-output_path = os.path.dirname(os.path.realpath(__file__))
 
-# file name of CSV output
-file_name = 'data.csv'
+def fetch_data():
+    url = "https://bikerbarre.com/"
+    r = session.get(url, headers=headers)
+    soup = BeautifulSoup(r.text, "html.parser")
+    location_data = soup.find_all("div", {"class": "col-md-3 locations"})[0].find_all(
+        "div"
+    )
 
-# Function pull webpage content
-def pull_content(url):
-    soup = bs(r.get(url).content,'html.parser')
-    return soup
-
-def pull_info(content):
-
-    location_data = content.find_all('div',{'class':'col-md-3 locations'})[0].find_all('div')
-
-    store_data = []
     for store in location_data:
-        store_name = store.p.text.split('\n')[0]
-        street_add = re.findall('\t\t\t\t\t\t\t\t(.*)<br/>\n\t',str(store))[0]
-        city = re.findall('<br/>\n\t\t\t\t\t\t\t\t(.*), ',str(store))[0]
-        state = re.findall(', ([A-Za-z]{2}) ',str(store))[0]
-        zip = re.findall(', [A-Za-z]{2} (\d{4,5})',str(store))[0]
-        phone = ''.join([x for x in store.a['href'] if x.isnumeric()])
+        store_name = store.p.text.split("\n")[0]
+        street_add = re.findall("\t\t\t\t\t\t\t\t(.*)<br/>\n\t", str(store))[0]
+        city = re.findall("<br/>\n\t\t\t\t\t\t\t\t(.*), ", str(store))[0]
+        state = re.findall(", ([A-Za-z]{2}) ", str(store))[0]
+        zip = re.findall(", [A-Za-z]{2} (\\d{4,5})", str(store))[0]
+        phone = "<MISSING>"
 
-        temp_data = [
-            location_url,
-            store_name,
-            street_add,
-            city,
-            state,
-            zip,
-            'US',
-            '<MISSING>',
-            phone,
-            '<MISSING>',
-            '<MISSING>',
-            '<MISSING>',
-            '<INACCESSIBLE>'
-        ]
+        yield SgRecord(
+            locator_domain=url,
+            page_url="<MISSING>",
+            location_name=store_name,
+            street_address=street_add,
+            city=city.strip(),
+            state=state.strip(),
+            zip_postal=zip.strip(),
+            country_code="US",
+            store_number=SgRecord.MISSING,
+            phone=phone.strip(),
+            location_type=SgRecord.MISSING,
+            latitude=SgRecord.MISSING,
+            longitude="<MISSING>",
+            hours_of_operation="<INACCESSIBLE>",
+        )
 
-        store_data = store_data + [temp_data]
 
-    final_columns = [
-        'locator_domain',
-        'location_name',
-        'street_address',
-        'city',
-        'state',
-        'zip',
-        'country_code',
-        'store_number',
-        'phone',
-        'location_type',
-        'latitude',
-        'longitude',
-        'hours_of_operation']
+def scrape():
 
-    final_df = pd.DataFrame(store_data,columns=final_columns)
+    with SgWriter(
+        deduper=SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
 
-    return final_df
 
-# Pull URL Content
-content = pull_content(location_url)
-
-# Pull all stores and info
-final_df = pull_info(content)
-
-# write to csv
-final_df.to_csv(output_path + '/' + file_name,index=False)
+scrape()

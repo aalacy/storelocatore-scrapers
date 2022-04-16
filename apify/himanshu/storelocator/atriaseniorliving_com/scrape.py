@@ -1,113 +1,144 @@
-import csv
-from sgrequests import SgRequests
-from bs4 import BeautifulSoup
-import re
 import json
-from sglogging import SgLogSetup
+from lxml import html
+from sgscrape.sgrecord import SgRecord
+from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-logger = SgLogSetup().get_logger('atriaseniorliving_com')
 
+def fetch_data(sgw: SgWriter):
 
-session = SgRequests()
-
-def write_output(data):
-    with open('data.csv', mode='w',newline="") as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-def fetch_data():
-    # addresses = []
-    country_code = "US"
-    headers = {
-            'accept':'*/*',
-            'content-type':'application/x-www-form-urlencoded; charset=UTF-8',
-            'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.132 Safari/537.36'
-        }
     locator_domain = "https://www.atriaseniorliving.com/"
+    api_url = "https://www.atriaseniorliving.com/retirement-communities/search-state/"
+    session = SgRequests()
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
+    }
+    r = session.get(api_url, headers=headers)
+    tree = html.fromstring(r.text)
+    div = tree.xpath('//ul[@id="subpages"]/li/a')
+    for d in div:
+        state_url = "".join(d.xpath(".//@href"))
+        r = session.get(state_url, headers=headers)
+        tree = html.fromstring(r.text)
+        js_block = (
+            "".join(tree.xpath('//script[contains(text(), "CommunityList")]/text()'))
+            .split("CommunityList = ")[1]
+            .split(";")[0]
+            .strip()
+        )
+        js = json.loads(js_block)
+        for j in js["communities"]:
 
-    ############################ US location ###############################
+            page_url = j.get("url")
+            location_name = j.get("name")
+            street_address = f"{j.get('address_1')} {j.get('address_2') or ''}".strip()
+            state = j.get("state")
+            postal = j.get("zip_code")
+            country_code = "US"
+            city = j.get("city")
+            store_number = j.get("community_number")
+            latitude = j.get("latitude")
+            longitude = j.get("longitude")
+            phone = j.get("phone")
 
-    r= session.get("https://www.atriaseniorliving.com/retirement-communities/search-state/",headers=headers)
-    soup = BeautifulSoup(r.text,"lxml")
-    for state_link in soup.find("ul",{"id":"subpages"}).find_all("li"):
-        # state_link_url = state_link.a["href"]
-        # logger.info("state === ",str(state_link.a.text))
-        r1 = session.get(state_link.a["href"],headers=headers)
-        soup1 = BeautifulSoup(r1.text,"lxml")
-        script = json.loads(soup1.find("script",text=re.compile("var CommunityList =")).text.split("var CommunityList = ")[1].split("};")[0]+"}")
-        for x in script["communities"]:
-            store_number = x["community_number"]
-            location_name = x["name"]
-            if "address_2" in x:
-                street_address = x["address_1"]+" "+x["address_2"]
-            else:
-                street_address = x["address_1"]
-            city = x["city"]
-            state = x["state"]
-            zipp = x["zip_code"]
-            phone= x["phone"]
-            latitude = x["latitude"]
-            longitude = x["longitude"]
-            services =  " , ".join(x["levels_of_service"])
-            location_type = "<MISSING>"
-            page_url = x["url"]
-            hours_of_operation = "<MISSING>"
-            store = [locator_domain, location_name, street_address, city, state, zipp, country_code,store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
-            # if str(str(store[1])+str(store[2])) not in addresses :
-            #     addresses.append(str(store[1])+str(store[2]))
+            row = SgRecord(
+                locator_domain=locator_domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=postal,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=SgRecord.MISSING,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=SgRecord.MISSING,
+                raw_address=f"{street_address} {city}, {state} {postal}",
+            )
 
-            store = [str(x).strip() if x else "<MISSING>" for x in store]
+            sgw.write_row(row)
 
-            #logger.info("data = " + str(store))
-            #logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-            yield store
+    api_url = "https://www.atriaretirement.ca/page-sitemap.xml"
+    session = SgRequests(verify_ssl=False)
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
+    }
+    r = session.get(api_url, headers=headers)
+    tree = html.fromstring(r.content)
+    div = tree.xpath('//url/loc[contains(text(), "retirement-communities")]')
+    for d in div:
+        page_url = "".join(d.xpath(".//text()"))
+        if page_url.count("/") != 5:
+            continue
+        r = session.get(page_url, headers=headers)
+        tree = html.fromstring(r.text)
 
-    ############################ CA location ###############################
+        location_name = (
+            "".join(tree.xpath('//h1[@itemprop="name"]/text()')) or "<MISSING>"
+        )
+        street_address = (
+            "".join(tree.xpath('//span[@itemprop="streetAddress"]/text()'))
+            or "<MISSING>"
+        )
+        state = (
+            "".join(tree.xpath('//span[@itemprop="addressRegion"]/text()'))
+            or "<MISSING>"
+        )
+        postal = (
+            "".join(tree.xpath('//span[@itemprop="postalCode"]/text()')) or "<MISSING>"
+        )
+        country_code = "CA"
+        city = (
+            "".join(tree.xpath('//span[@itemprop="addressLocality"]/text()'))
+            or "<MISSING>"
+        )
+        store_number = "".join(
+            tree.xpath('//meta[@itemprop="community-number"]/@content')
+        )
+        latitude = (
+            "".join(tree.xpath('//script[contains(text(), "LatLng(")]/text()'))
+            .split("LatLng(")[1]
+            .split(",")[0]
+            .strip()
+        )
+        longitude = (
+            "".join(tree.xpath('//script[contains(text(), "LatLng(")]/text()'))
+            .split("LatLng(")[1]
+            .split(",")[1]
+            .split(")")[0]
+            .strip()
+        )
+        phone = (
+            "".join(tree.xpath('//span[@itemprop="telephone"]//text()')) or "<MISSING>"
+        )
 
-    r= session.get("https://atriaretirementcanada-atria.icims.com/",headers = headers)
-    soup= BeautifulSoup(r.text,"lxml")
-    for state_url in soup.find("div",class_="row provinces").find_all("a"):
-        state_id = state_url["href"].split("=")[-1].strip()
-        r1 = session.get("https://www.atriaretirement.ca/wp-content/themes/aslblanktheme/script-getstatelocations.php?state="+str(state_id),headers=headers).json()
-        for loc in r1["communities"]:
-            store_number  = loc["community_number"]
-            location_name = loc["name"]
-            if "address_2" in loc :
-                street_address = loc["address_1"]+ " "+loc["address_2"] 
-            else:
-                street_address = loc["address_1"]
-            city = loc["city"]
-            state = loc["province"]
-            zipp = loc["postal_code"]
-            country_code = "CA"
-            phone = loc["phone"]
-            location_type = "<MISSING>"
-            latitude =loc["latitude"]
-            longitude = loc["longitude"]
-            hours_of_operation = "<MISSING>"
-            page_url = loc["url"]
-            store = [locator_domain, location_name, street_address, city, state, zipp, country_code,store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
-            # if str(str(store[1])+str(store[2])) not in addresses :
-            #     addresses.append(str(store[1])+str(store[2]))
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=SgRecord.MISSING,
+            raw_address=f"{street_address} {city}, {state} {postal}",
+        )
 
-            store = [str(x).strip() if x else "<MISSING>" for x in store]
-
-            # logger.info("data = " + str(store))
-            # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-            yield store
-        
-    
-   
-   
+        sgw.write_row(row)
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-scrape()
+if __name__ == "__main__":
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))) as writer:
+        fetch_data(writer)

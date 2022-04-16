@@ -128,9 +128,13 @@ def fetch_data():
 
                 store_number = d["ID"]
                 store_number = store_number if store_number else MISSING
-
+                phone = ""
                 if "phone" in d:
-                    phone = d["phone"].strip()
+                    p = d["phone"].strip()
+                    p = " ".join(p.split())
+                    p1 = p.split("/")[0].strip()
+                    phone = p1.split(",")[0].strip()
+
                 else:
                     phone = MISSING
 

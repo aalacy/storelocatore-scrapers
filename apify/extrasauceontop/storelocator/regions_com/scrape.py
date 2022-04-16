@@ -1,10 +1,11 @@
 import re
 import json
 from sgrequests import SgRequests
-import pandas as pd
 from bs4 import BeautifulSoup as bs
-from sgzip.static import static_zipcode_list, SearchableCountries
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries, Grain_1_KM
 from sgscrape import simple_scraper_pipeline as sp
+from sglogging import sglog
+import html
 
 
 def extract_json(html_string):
@@ -39,24 +40,12 @@ def extract_json(html_string):
 
 
 def get_data():
-
-    session = SgRequests()
-    search = static_zipcode_list(country_code=SearchableCountries.USA, radius=30)
-
-    locator_domains = []
+    log = sglog.SgLogSetup().get_logger(logger_name="regions")
     page_urls = []
-    location_names = []
-    street_addresses = []
-    citys = []
-    states = []
-    zips = []
-    country_codes = []
-    store_numbers = []
-    phones = []
-    location_types = []
-    latitudes = []
-    longitudes = []
-    hours_of_operations = []
+    session = SgRequests()
+    search = DynamicZipSearch(
+        country_codes=[SearchableCountries.USA], granularity=Grain_1_KM()
+    )
 
     for search_code in search:
         url = (
@@ -66,18 +55,34 @@ def get_data():
         )
         response = session.get(url).text
 
-        json_objects = extract_json(response)
-        for location in json_objects:
-            if "title" not in location.keys():
+        first_objects = extract_json(response)
+        soup = bs(response, "html.parser")
+        grids = soup.find_all("li", attrs={"class": "locator-result__list-item"})
+
+        x = 0
+        for location in first_objects:
+
+            try:
+                if location["type"] == "atm":
+                    continue
+            except Exception:
                 continue
 
             locator_domain = "regions.com"
-            location_name = location["title"]
+            a_tag = grids[x].find("a")
+            try:
+                page_url = "regions.com" + a_tag["href"]
+            except Exception:
+                page_url = "<MISSING>"
+
+            location_name = html.unescape(location["title"])
+            latitude = location["lat"]
+            longitude = location["lng"]
+
             address = location["address"].split("<br />")[0]
             if bool(re.search("[a-zA-Z]", address)) is False:
                 address = "<MISSING>"
-
-            city = location["address"].split("<br />")[1].split(",")[0]
+            city = html.unescape(location["address"].split("<br />")[1].split(",")[0])
 
             state_parts = (
                 location["address"].split("<br />")[1].split(",")[1].split(" ")
@@ -92,125 +97,74 @@ def get_data():
             country_code = "US"
             store_number = location["itemId"]
             location_type = location["type"]
-            latitude = location["lat"]
-            longitude = location["lng"]
 
-            locator_domains.append(locator_domain)
-            location_names.append(location_name)
-            street_addresses.append(address)
-            citys.append(city)
-            states.append(state)
-            zips.append(zipp)
-            country_codes.append(country_code)
-            location_types.append(location_type)
-            latitudes.append(latitude)
-            longitudes.append(longitude)
-            store_numbers.append(store_number)
-
-        soup = bs(response, "html.parser")
-
-        grids = soup.find_all("li", attrs={"class": "locator-result__list-item"})
-
-        for grid in grids:
-            a_tag = grid.find("a")
-            try:
-                page_url = "regions.com" + a_tag["href"]
-            except Exception:
-                page_url = "<MISSING>"
-            page_urls.append(page_url)
-
-    df = pd.DataFrame(
-        {
-            "locator_domain": locator_domains,
-            "page_url": page_urls,
-            "location_name": location_names,
-            "street_address": street_addresses,
-            "city": citys,
-            "state": states,
-            "zip": zips,
-            "store_number": store_numbers,
-            "latitude": latitudes,
-            "longitude": longitudes,
-            "country_code": country_codes,
-            "location_type": location_types,
-        }
-    )
-
-    df["dupecheck"] = (
-        df["location_name"]
-        + df["street_address"]
-        + df["city"]
-        + df["state"]
-        + df["location_type"]
-    )
-
-    df = df.drop_duplicates(subset=["dupecheck"])
-    df = df.drop(columns=["dupecheck"])
-
-    for row in df.iterrows():
-        hours = "<MISSING>"
-        phone = "<MISSING>"
-        if row[1]["location_type"] == "branch" and row[1]["page_url"] != "<MISSING>":
-            response = session.get("https://" + row[1]["page_url"]).text
-            json_objects = extract_json(response)
-
-            for item in json_objects:
-                if "name" not in item.keys():
+            if page_url != "<MISSING>":
+                page_url = page_url.lower()
+                if page_url in page_urls or "-atm-" in page_url:
                     continue
-                else:
-                    try:
-                        phone = item["telephone"].replace("+", "")
-                    except Exception:
-                        pass
 
-                    hours = ""
-                    try:
-                        for part in item["openingHoursSpecification"]["dayOfWeek"]:
-                            for day in part["dayOfWeek"]:
-                                if part["opens"] == part["closes"]:
-                                    hours = hours + day + " closed, "
-                                else:
-                                    hours = (
-                                        hours
-                                        + day
-                                        + " "
-                                        + part["opens"]
-                                        + " - "
-                                        + part["closes"]
-                                        + ", "
-                                    )
+                response = session.get("https://" + page_url).text
+                json_objects = extract_json(response)
+                for item in json_objects:
+                    if "name" not in item.keys():
+                        continue
+                    else:
+                        try:
+                            phone = item["telephone"].replace("+", "")
+                        except Exception:
+                            phone = "<MISSING>"
+                            pass
 
-                    except Exception:
-                        pass
+                        hours = ""
+                        try:
+                            for part in item["openingHoursSpecification"]["dayOfWeek"]:
+                                for day in part["dayOfWeek"]:
+                                    if part["opens"] == part["closes"]:
+                                        hours = hours + day + " closed, "
+                                    else:
+                                        hours = (
+                                            hours
+                                            + day
+                                            + " "
+                                            + part["opens"]
+                                            + " - "
+                                            + part["closes"]
+                                            + ", "
+                                        )
+                            hours = hours[:-2]
+                        except Exception:
+                            hours = "<MISSING>"
+                            pass
 
-                    break
+                page_urls.append(page_url)
 
-        if hours != "<MISSING>":
-            hours = hours[:-2]
-        hours_of_operations.append(hours)
-        phones.append(phone)
+            else:
+                phone = "<MISSING>"
+                hours = "<MISSING>"
 
-    df["phone"] = phones
-    df["hours_of_operation"] = hours_of_operations
+            if "locator/branch/bank-branch-oxmoor-valley-birmingham" in page_url:
+                log.info(search_code)
+                log.info(page_url)
+                log.info(address)
+                log.info("")
 
-    for row in df.iterrows():
-
-        yield {
-            "locator_domain": row[1]["locator_domain"],
-            "page_url": row[1]["page_url"],
-            "location_name": row[1]["location_name"],
-            "latitude": row[1]["latitude"],
-            "longitude": row[1]["longitude"],
-            "city": row[1]["city"],
-            "store_number": row[1]["store_number"],
-            "street_address": row[1]["street_address"],
-            "state": row[1]["state"],
-            "zip": row[1]["zip"],
-            "phone": row[1]["phone"],
-            "location_type": row[1]["location_type"],
-            "hours": row[1]["hours_of_operation"],
-            "country_code": row[1]["country_code"],
-        }
+            x = x + 1
+            yield {
+                "locator_domain": locator_domain,
+                "page_url": page_url,
+                "location_name": location_name,
+                "latitude": latitude,
+                "longitude": longitude,
+                "city": city,
+                "store_number": store_number,
+                "street_address": address,
+                "state": state,
+                "zip": zipp,
+                "phone": phone,
+                "location_type": location_type,
+                "hours": hours,
+                "country_code": country_code,
+            }
 
 
 def scrape():

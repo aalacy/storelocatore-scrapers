@@ -1,46 +1,14 @@
 import re
-import csv
 from lxml import etree
 from urllib.parse import urljoin
-
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    # Your scraper here
-    session = SgRequests()
-
-    items = []
+def fetch_data(sgw: SgWriter):
 
     start_url = "https://www.adventhealth.com/find-a-location"
     domain = re.findall("://(.+?)/", start_url)[0].replace("www.", "")
@@ -50,6 +18,7 @@ def fetch_data():
 
     all_locations = dom.xpath('//li[@class="facility-search-block__item"]')
     next_page = dom.xpath('//a[@rel="next"]/@href')
+
     while next_page:
         response = session.get(urljoin(start_url, next_page[0]))
         dom = etree.HTML(response.text)
@@ -61,6 +30,8 @@ def fetch_data():
         if not store_url:
             store_url = poi_html.xpath('.//a[contains(text(), "View Website")]/@href')
         store_url = urljoin(start_url, store_url[0]) if store_url else "<MISSING>"
+        if store_url == "<MISSING>":
+            store_url = "https://www.adventhealth.com/find-a-location"
         if "adventhealth.com" in store_url:
             loc_response = session.get(store_url)
             loc_dom = etree.HTML(loc_response.text)
@@ -90,10 +61,8 @@ def fetch_data():
             zip_code = zip_code[0] if zip_code else "<MISSING>"
             country_code = re.findall('country":"(.+?)",', loc_response.text)
             country_code = country_code[0] if country_code else "<MISSING>"
-            store_number = "<MISSING>"
             phone = loc_dom.xpath('//a[@class="telephone"]/text()')
             phone = phone[0].strip() if phone and phone[0].strip() else "<MISSING>"
-            location_type = "<MISSING>"
             latitude = loc_dom.xpath("//@data-lat")
             latitude = latitude[0] if latitude else "<MISSING>"
             longitude = loc_dom.xpath("//@data-lng")
@@ -103,6 +72,8 @@ def fetch_data():
             )
             hoo = [e.strip() for e in hoo if e.strip()]
             hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
+            if hours_of_operation == "Please call for hours.":
+                hours_of_operation = "<MISSING>"
         else:
             location_name = poi_html.xpath(".//h3/a/text()")
             if not location_name:
@@ -120,40 +91,39 @@ def fetch_data():
             zip_code = zip_code[0] if zip_code else "<MISSING>"
             country_code = re.findall('country":"(.+?)",', loc_response.text)
             country_code = country_code[0] if country_code else "<MISSING>"
-            store_number = "<MISSING>"
             phone = poi_html.xpath('.//a[@class="telephone"]/text()')
             phone = phone[0].strip() if phone and phone[0].strip() else "<MISSING>"
-            location_type = "<MISSING>"
             latitude = "<MISSING>"
             longitude = "<MISSING>"
             hours_of_operation = "<MISSING>"
 
-        item = [
-            domain,
-            store_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip_code,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
+        row = SgRecord(
+            locator_domain=domain,
+            page_url=store_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zip_code,
+            country_code=country_code,
+            store_number=SgRecord.MISSING,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+        )
 
-        items.append(item)
-
-    return items
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.STREET_ADDRESS, SgRecord.Headers.LOCATION_NAME}
+            )
+        )
+    ) as writer:
+        fetch_data(writer)
