@@ -32,7 +32,10 @@ def fetch_data():
             for day in days:
                 hours.append(f"{day}: {temp.get(day)}")
 
-            if "We’re keeping this store closed" in _["store_name"]:
+            if (
+                "We’re keeping this store closed" in _["store_name"]
+                or "currently closed" in _["store_name"]
+            ):
                 hours = ["temporarily_closed"]
             street_address = _["address"].split("London")[0].strip()
             if street_address.endswith(","):
