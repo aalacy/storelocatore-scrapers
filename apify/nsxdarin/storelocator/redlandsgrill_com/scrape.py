@@ -52,7 +52,7 @@ def fetch_data():
             location_name=location_name,
             street_address=raw_address[0],
             city=raw_address[1].split(", ")[0],
-            state=' '.join(raw_address[1].split(", ")[1].split()[:-1]),
+            state=" ".join(raw_address[1].split(", ")[1].split()[:-1]),
             zip_postal=raw_address[1].split(", ")[1].split()[-1],
             country_code="",
             store_number="",
