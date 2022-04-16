@@ -1,9 +1,10 @@
+import unicodedata
 from sglogging import sglog
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
@@ -16,6 +17,13 @@ headers = {
 
 DOMAIN = "https://rachellebery.ca/"
 MISSING = SgRecord.MISSING
+
+
+def strip_accents(text):
+
+    text = unicodedata.normalize("NFD", text).encode("ascii", "ignore").decode("utf-8")
+
+    return str(text)
 
 
 def fetch_data():
@@ -39,9 +47,25 @@ def fetch_data():
                 street_address = loc.find(
                     "span", {"class": "location_address_address_1"}
                 ).text
-            city = loc.find("span", {"class": "city"}).text
-            state = loc.find("span", {"class": "province"}).text
-            zip_postal = loc.find("span", {"class": "postal_code"}).text
+            try:
+                city = loc.find("span", {"class": "city"}).text
+            except:
+                city = (
+                    r.text.split('"city":"')[1]
+                    .split('"')[0]
+                    .replace("\\u00e9al", "")
+                    .replace("Montr", "Montreal")
+                )
+            try:
+                state = loc.find("span", {"class": "province"}).text
+            except:
+                state = r.text.split('"province":"')[1].split('"')[0]
+            try:
+                zip_postal = loc.find("span", {"class": "postal_code"}).text
+            except:
+                zip_postal = r.text.split('"postal_code":"')[1].split('"')[0]
+            street_address = strip_accents(street_address)
+            city = strip_accents(city)
             phone = loc.find("span", {"class": "phone"}).text
             hours_of_operation = (
                 str(loc["data-hours"])
@@ -50,6 +74,7 @@ def fetch_data():
                 .replace(",", " ")
                 .replace('":"', " ")
                 .replace('"', "")
+                .replace("\\u2013", "")
             )
             latitude = loc["data-lat"]
             longitude = loc["data-lng"]
@@ -60,7 +85,7 @@ def fetch_data():
                 location_name=location_name,
                 street_address=street_address.strip(),
                 city=city.strip(),
-                state=state.strip(),
+                state=state.upper().strip(),
                 zip_postal=zip_postal.strip(),
                 country_code=country_code,
                 store_number=MISSING,
@@ -76,7 +101,7 @@ def scrape():
     log.info("Started")
     count = 0
     with SgWriter(
-        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.GeoSpatialId)
+        deduper=SgRecordDeduper(record_id=SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
     ) as writer:
         results = fetch_data()
         for rec in results:

@@ -1,40 +1,13 @@
-import csv
 import usaddress
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
+def fetch_data(sgw: SgWriter):
 
     locator_domain = "https://www.cnbb.bank"
     api_url = "https://www.cnbb.bank/About-CNB/Locations"
@@ -89,7 +62,7 @@ def fetch_data():
 
             location_name = "".join(b.xpath(".//a/text()"))
             ad = b.xpath(
-                './/following-sibling::div[1]//h4[text()="Address:"]/following-sibling::p[1]/text()'
+                './/following-sibling::div[1]//h4[text()="Address:"]/following-sibling::p[1]//text()'
             )
             ad = list(filter(None, [a.strip() for a in ad]))
             ad = " ".join(ad).replace("In the Market House Plaza", "").strip()
@@ -104,10 +77,8 @@ def fetch_data():
             state = a.get("state") or "<MISSING>"
             postal = a.get("postal") or "<MISSING>"
             country_code = "US"
-            city = a.get("city").replace("Second Floor", "").strip() or "<MISSING>"
-            store_number = "<MISSING>"
-            latitude = "<MISSING>"
-            longitude = "<MISSING>"
+            city = a.get("city") or "<MISSING>"
+            city = str(city).replace("Second Floor", "").strip()
             phone = b.xpath(
                 './/following-sibling::div[1]//h4[text()="Phone:"]/following-sibling::p[1]/text()'
             )
@@ -124,31 +95,30 @@ def fetch_data():
             )
             hours_of_operation = " ".join(hours_of_operation) or "<MISSING>"
 
-            row = [
-                locator_domain,
-                page_url,
-                location_name,
-                street_address,
-                city,
-                state,
-                postal,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
-            out.append(row)
+            row = SgRecord(
+                locator_domain=locator_domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=postal,
+                country_code=country_code,
+                store_number=SgRecord.MISSING,
+                phone=phone,
+                location_type=location_type,
+                latitude=SgRecord.MISSING,
+                longitude=SgRecord.MISSING,
+                hours_of_operation=hours_of_operation,
+                raw_address=ad,
+            )
 
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+            sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.RAW_ADDRESS}))
+    ) as writer:
+        fetch_data(writer)

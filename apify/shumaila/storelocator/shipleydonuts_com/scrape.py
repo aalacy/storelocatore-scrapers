@@ -1,74 +1,74 @@
-import re
-from lxml import etree
-
+import json
 from sgrequests import SgRequests
-from sgscrape.sgrecord import SgRecord
-from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+
+session = SgRequests()
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+}
 
 
 def fetch_data():
-    session = SgRequests()
 
-    start_url = "https://shipleydonuts.com/stores-html-sitemap/"
-    domain = "shipleydonuts.com"
-    hdr = {
-        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
-    }
-    response = session.get(start_url, headers=hdr)
-    dom = etree.HTML(response.text)
+    daylist = ["mon", "tues", "wednes", "thurs", "fri", "satur", "sun"]
+    url = "https://shipleydonuts.com/locations/"
+    r = session.get(url, headers=headers)
+    loclist = r.text.split("locations_meta = ", 1)[1].split("];", 1)[0]
+    loclist = loclist + "]"
+    loclist = json.loads(loclist)
+    for loc in loclist:
 
-    all_locations = dom.xpath('//a[contains(@href, "/stores/")]/@href')
-    for page_url in all_locations:
-        loc_response = session.get(page_url, headers=hdr)
-        if loc_response.status_code != 200:
-            continue
-        loc_dom = etree.HTML(loc_response.text)
-
-        location_name = loc_dom.xpath(
-            '//div[@class="wpsl-locations-details"]//strong/text()'
-        )[0]
-        raw_address = loc_dom.xpath('//div[@class="wpsl-location-address"]/span/text()')
-        if len(raw_address) == 6:
-            raw_address = [", ".join(raw_address[:2])] + raw_address[2:]
-        phone = loc_dom.xpath('//a[contains(@href, "tel")]/text()')[0]
-        latitude = re.findall('lat":"(.+?)",', loc_response.text)[0]
-        longitude = re.findall('lng":"(.+?)","id"', loc_response.text)[0]
-        hoo = loc_dom.xpath('//table[@class="wpsl-opening-hours"]//text()')
-        hoo = " ".join(hoo)
-
-        item = SgRecord(
-            locator_domain=domain,
-            page_url=page_url,
-            location_name=location_name,
-            street_address=raw_address[0],
-            city=raw_address[1],
-            state=raw_address[2],
-            zip_postal=raw_address[3],
-            country_code=raw_address[-1],
-            store_number=str(loc_response.url.raw[-1]).split("/")[-2],
-            phone=phone,
-            location_type="",
-            latitude=latitude,
-            longitude=longitude,
-            hours_of_operation=hoo,
+        store = loc["address"]["store_number"]
+        lat = loc["map_pin"]["lat"]
+        longt = loc["map_pin"]["lng"]
+        state = loc["map_pin"]["state_short"]
+        try:
+            city = loc["map_pin"]["city"]
+        except:
+            city = "<MISSING>"
+        pcode = loc["map_pin"]["post_code"]
+        store = loc["address"]["store_number"]
+        street = (
+            loc["address"]["address_line_1"]
+            + " "
+            + str(loc["address"]["address_line_2"])
         )
-
-        yield item
+        phone = loc["branch_information"]["phone_number"]
+        link = loc["single_page"]
+        hourlist = loc["opening_hours"]
+        hours = ""
+        for day in daylist:
+            hours = hours + day + "day " + hourlist[day + "day_opening_hours"] + " "
+        yield SgRecord(
+            locator_domain="https://shipleydonuts.com",
+            page_url=link,
+            location_name="Shipley Do-Nuts",
+            street_address=street.strip(),
+            city=city.strip(),
+            state=state.strip(),
+            zip_postal=pcode.strip(),
+            country_code="US",
+            store_number=str(store),
+            phone=phone.strip(),
+            location_type=SgRecord.MISSING,
+            latitude=str(lat),
+            longitude=str(longt),
+            hours_of_operation=hours,
+        )
 
 
 def scrape():
+
     with SgWriter(
-        SgRecordDeduper(
-            SgRecordID(
-                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
-            )
-        )
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
     ) as writer:
-        for item in fetch_data():
-            writer.write_row(item)
+
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
 
 
-if __name__ == "__main__":
-    scrape()
+scrape()

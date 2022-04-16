@@ -1,20 +1,21 @@
 import json
 import unicodedata
-from bs4 import BeautifulSoup
+from sglogging import sglog
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "marie-claire_com"
-log = SgLogSetup().get_logger(logger_name=website)
+log = sglog.SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
 headers = {
     "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36",
     "Accept": "application/json",
 }
 DOMAIN = "https://marie-claire.com/"
-MISSING = "<MISSING>"
+MISSING = SgRecord.MISSING
 
 
 def strip_accents(text):
@@ -26,72 +27,43 @@ def strip_accents(text):
 
 def fetch_data():
     if True:
-        linklist = []
-        url = "https://www.marie-claire.com/fr/boutiques"
+        url = "https://stockist.co/api/v1/u8717/locations/all.js?callback=_stockistAllStoresCallback"
         r = session.get(url, headers=headers)
-        soup = BeautifulSoup(r.text, "html.parser")
-        loclist = soup.find("div", {"class": "store-list"}).findAll(
-            "div", {"class": "store-item"}
-        )
+        loclist = r.text.split("stockistAllStoresCallback(")[1].split("}]);")[0]
+        loclist = loclist + "}]"
+        loclist = json.loads(loclist)
         for loc in loclist:
-            page_url = loc.find("a")["href"]
-            if page_url in linklist:
-                continue
-            linklist.append(page_url)
-            log.info(page_url)
-            r = session.get(page_url, headers=headers)
-            temp = r.text.split('<script type="application/ld+json">')[3].split(
-                "</script>"
-            )[0]
-            temp = json.loads(temp, strict=False)
-            hour_list = temp["openingHoursSpecification"]
+            location_name = loc["name"]
+            log.info(location_name)
+            store_number = loc["id"]
+            latitude = loc["latitude"]
+            longitude = loc["longitude"]
+            try:
+                street_address = loc["address_line_1"] + " " + loc["address_line_2"]
+            except:
+                street_address = loc["address_line_1"]
+            city = loc["city"]
+            state = loc["state"]
+            zip_postal = loc["postal_code"]
+            country_code = loc["country"]
+            phone = loc["phone"]
+            street_address = strip_accents(street_address)
+            city = strip_accents(city)
+            state = strip_accents(state)
+            zip_postal = strip_accents(zip_postal)
+            hour_list = loc["custom_fields"]
             hours_of_operation = ""
             for hour in hour_list:
                 hours_of_operation = (
                     hours_of_operation
                     + " "
-                    + hour["dayOfWeek"].rsplit("/")[-1]
+                    + hour["name"].rsplit("/")[-1]
                     + " "
-                    + hour["opens"]
-                    + " - "
-                    + hour["closes"]
+                    + hour["value"]
                 )
-            address = temp["address"]
-
-            street_address = address["streetAddress"]
-            street_address = strip_accents(street_address)
-
-            city = address["addressLocality"]
-            city = strip_accents(city)
-
-            state = address["addressRegion"]
-            state = strip_accents(state)
-
-            zip_postal = address["postalCode"]
-            zip_postal = strip_accents(zip_postal)
-
-            country_code = "CA"
-            phone = temp["telephone"]
-            phone = phone.replace("\t", " ")
-            coords = temp["geo"]
-            latitude = coords["latitude"]
-            longitude = coords["longitude"]
-            location_name = temp["name"]
-            location_name = (
-                unicodedata.normalize("NFD", location_name)
-                .encode("ascii", "ignore")
-                .decode("utf-8")
-            )
-            soup = BeautifulSoup(r.text, "html.parser")
-            store_number = (
-                soup.find("h1", {"class": "page-title"})
-                .text.rsplit("-")[-1]
-                .replace("\t", "")
-                .strip()
-            )
             yield SgRecord(
                 locator_domain=DOMAIN,
-                page_url=page_url,
+                page_url="https://www.marie-claire.com/pages/boutiques",
                 location_name=location_name,
                 street_address=street_address,
                 city=city,
@@ -110,7 +82,9 @@ def fetch_data():
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.StoreNumberId)
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

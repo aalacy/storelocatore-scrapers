@@ -1,4 +1,7 @@
-from sgscrape import simple_scraper_pipeline as sp
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgrequests import SgRequests
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 from sglogging import SgLogSetup
@@ -11,144 +14,86 @@ headers = {
 }
 
 locator_domain = "https://www.officemax.com/"
+base_url = 'https://storelocator.officedepot.com/ajax?&xml_request=<request><appkey>AC2AD3C2-C08F-11E1-8600-DCAD4D48D7F4</appkey><formdata id="locatorsearch"><dataview>store_default</dataview><limit>500</limit><geolocs><geoloc><addressline>'
 
-search = DynamicZipSearch(
-    country_codes=[SearchableCountries.USA],
-    max_radius_miles=None,
-    max_search_results=None,
-)
+days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 
 
-def fetch_data():
+def fetch_data(search):
     # Need to add dedupe. Added it in pipeline.
-    session = SgRequests(proxy_rotation_failure_threshold=20)
-    maxZ = search.items_remaining()
-    total = 0
-    MAX_DISTANCE = 250
-    for zip_code in search:
-        if search.items_remaining() > maxZ:
-            maxZ = search.items_remaining()
-        logger.info(("Pulling Geo Code %s..." % zip_code))
-        url = (
-            'https://storelocator.officedepot.com/ajax?&xml_request=<request><appkey>AC2AD3C2-C08F-11E1-8600-DCAD4D48D7F4</appkey><formdata id="locatorsearch"><dataview>store_default</dataview><limit>500</limit><geolocs><geoloc><addressline>'
-            + str(zip_code)
-            + "</addressline></geoloc></geolocs><searchradius>"
-            + str(MAX_DISTANCE)
-            + "</searchradius>"
-        )
-        locations = bs(
-            session.get(url, headers=headers, timeout=15).text, "lxml"
-        ).find_all("poi")
-        total += len(locations)
-        for _ in locations:
-            store = {}
-            store["location_name"] = _.find("seoid").text
-            store["street_address"] = _.find("address1").text
-            store["city"] = _.find("city").text
-            store["state"] = _.find("state").text
-            store["zip_postal"] = _.find("postalcode").text
-            store["country_code"] = _.find("country").text
-            store["phone"] = _.find("phone").text or "<MISSING>"
-            store["store_number"] = _.find("clientkey").text
-            store["location_type"] = _.find("icon").text
-            store["latitude"] = _.find("latitude").text
-            store["longitude"] = _.find("longitude").text
-            search.found_location_at(
-                store["latitude"],
-                store["longitude"],
+    with SgRequests(verify_ssl=False) as session:
+        maxZ = search.items_remaining()
+        total = 0
+        MAX_DISTANCE = 250
+        for zip_code in search:
+            if search.items_remaining() > maxZ:
+                maxZ = search.items_remaining()
+            logger.info(("Pulling Geo Code %s..." % zip_code))
+            url = (
+                base_url
+                + str(zip_code)
+                + "</addressline></geoloc></geolocs><searchradius>"
+                + str(MAX_DISTANCE)
+                + "</searchradius>"
             )
-            store["hours_of_operation"] = (
-                "mon:"
-                + " "
-                + str(_.find("mon").text)
-                + "; tues:"
-                + " "
-                + str(_.find("tues").text)
-                + "; wed:"
-                + " "
-                + str(_.find("wed").text)
-                + "; thur:"
-                + " "
-                + str(_.find("thur").text)
-                + "; fri:"
-                + " "
-                + str(_.find("fri").text)
-                + "; sat:"
-                + " "
-                + str(_.find("sat").text)
-                + "; sun:"
-                + " "
-                + str(_.find("sun").text)
+            locations = bs(session.get(url, headers=headers).text, "lxml").find_all(
+                "poi"
             )
-            store["page_url"] = (
-                "https://www.officedepot.com/storelocator/"
-                + str(store["state"].lower())
-                + "/"
-                + str(store["city"].replace(" ", "-").lower())
-                + "/office-depot-"
-                + str(store["store_number"])
-                + "/"
+            total += len(locations)
+            for _ in locations:
+                search.found_location_at(
+                    _.find("latitude").text,
+                    _.find("longitude").text,
+                )
+                hours = []
+                for day in days:
+                    day = day.lower()
+                    if _.find(day):
+                        hours.append(f"{day}: {_.find(day).text.strip()}")
+                page_url = (
+                    "https://www.officedepot.com/storelocator/"
+                    + str(_.find("state").text.strip().lower())
+                    + "/"
+                    + str(_.find("city").text.strip().replace(" ", "-").lower())
+                    + "/office-depot-"
+                    + str(_.find("clientkey").text.strip())
+                    + "/"
+                )
+                yield SgRecord(
+                    page_url=page_url,
+                    location_name=_.find("seoid").text.strip(),
+                    street_address=_.find("address1").text.strip(),
+                    city=_.find("city").text.strip(),
+                    state=_.find("state").text.strip(),
+                    zip_postal=_.find("postalcode").text.strip(),
+                    country_code=_.find("country").text.strip(),
+                    phone=_.find("phone").text.strip(),
+                    store_number=_.find("clientkey").text.strip(),
+                    location_type=_.find("icon").text.strip(),
+                    latitude=_.find("latitude").text.strip(),
+                    longitude=_.find("longitude").text.strip(),
+                    hours_of_operation="; ".join(hours),
+                    locator_domain=locator_domain,
+                )
+            progress = (
+                str(round(100 - (search.items_remaining() / maxZ * 100), 2)) + "%"
             )
-            yield store
-        progress = str(round(100 - (search.items_remaining() / maxZ * 100), 2)) + "%"
 
-        logger.info(f"found: {len(locations)} | total: {total} | progress: {progress}")
-
-
-def scrape():
-    field_defs = sp.SimpleScraperPipeline.field_definitions(
-        locator_domain=sp.ConstantField(locator_domain),
-        page_url=sp.MappingField(
-            mapping=["page_url"],
-            part_of_record_identity=True,
-        ),
-        location_name=sp.MappingField(
-            mapping=["location_name"],
-        ),
-        latitude=sp.MappingField(
-            mapping=["latitude"],
-        ),
-        longitude=sp.MappingField(
-            mapping=["longitude"],
-        ),
-        street_address=sp.MappingField(
-            mapping=["street_address"],
-        ),
-        city=sp.MappingField(
-            mapping=["city"],
-        ),
-        state=sp.MappingField(
-            mapping=["state"],
-        ),
-        zipcode=sp.MappingField(
-            mapping=["zip_postal"],
-        ),
-        country_code=sp.MappingField(
-            mapping=["country_code"],
-        ),
-        phone=sp.MappingField(
-            mapping=["phone"],
-            part_of_record_identity=True,
-        ),
-        hours_of_operation=sp.MappingField(mapping=["hours_of_operation"]),
-        location_type=sp.MappingField(
-            mapping=["location_type"],
-        ),
-        store_number=sp.MappingField(
-            mapping=["store_number"],
-        ),
-        raw_address=sp.MissingField(),
-    )
-
-    pipeline = sp.SimpleScraperPipeline(
-        scraper_name="pipeline",
-        data_fetcher=fetch_data,
-        field_definitions=field_defs,
-        log_stats_interval=5,
-    )
-
-    pipeline.run()
+            logger.info(
+                f"found: {len(locations)} | total: {total} | progress: {progress}"
+            )
 
 
 if __name__ == "__main__":
-    scrape()
+    with SgWriter(
+        SgRecordDeduper(
+            RecommendedRecordIds.StoreNumberId, duplicate_streak_failure_factor=100
+        )
+    ) as writer:
+        search = DynamicZipSearch(
+            country_codes=[SearchableCountries.USA],
+            expected_search_radius_miles=100,
+        )
+        results = fetch_data(search)
+        for rec in results:
+            writer.write_row(rec)

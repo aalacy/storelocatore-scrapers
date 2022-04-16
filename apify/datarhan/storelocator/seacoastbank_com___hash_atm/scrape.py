@@ -10,7 +10,7 @@ from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
-    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
+    session = SgRequests()
     domain = "seacoastbank.com"
     start_url = "https://www.seacoastbank.com/locations"
 

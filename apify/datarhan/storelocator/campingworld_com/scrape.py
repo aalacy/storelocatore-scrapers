@@ -1,129 +1,66 @@
-import csv
 from urllib.parse import urljoin
+from lxml import etree
 
 from sgrequests import SgRequests
-from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
-
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
-    # Your scraper here
-    session = SgRequests().requests_retry_session(retries=0, backoff_factor=0.3)
+    session = SgRequests()
+    domain = "campingworld.com"
+    start_url = "https://rv.campingworld.com/state-directory"
 
-    items = []
-    scraped_items = []
+    response = session.get(start_url)
+    dom = etree.HTML(response.text)
+    all_locations = dom.xpath('//a[@class="location_name"]/@href')
 
-    DOMAIN = "campingworld.com"
-    start_url = "https://rv.campingworld.com/dealersinradius?miles=400&lat={}&lon={}&locationsearch=true"
+    for url in all_locations:
+        page_url = urljoin(start_url, url.strip())
+        loc_response = session.get(page_url)
+        loc_dom = etree.HTML(loc_response.text)
 
-    all_locations = []
-    all_coords = DynamicGeoSearch(
-        country_codes=[SearchableCountries.USA], max_radius_miles=250
-    )
-    for lat, lng in all_coords:
-        response = session.get(start_url.format(lat, lng))
-        all_codes = response.text[1:-1]
+        location_name = loc_dom.xpath("//h1/text()")[0]
+        raw_address = loc_dom.xpath('//div[@class="col address"]/a/p/text()')
+        raw_address = [e.strip() for e in raw_address]
+        phone = loc_dom.xpath('//a[@class="phone-number"]/text()')[0]
+        hoo = loc_dom.xpath(
+            '//div[div[h2[contains(text(), "RV Sales")]]]/div[@class="row hours-row"]//text()'
+        )
+        hoo = " ".join([e.strip() for e in hoo if e.strip()])
 
-        headers = {
-            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
-            "x-requested-with": "XMLHttpRequest",
-            "cookie": f"liveagent_oref=https://www.campingworld.com/; liveagent_vc=4; cw_searchLat={lat}; cw_searchLon={lng}; cw_searchDealers={all_codes}",
-        }
+        item = SgRecord(
+            locator_domain=domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=raw_address[0],
+            city=raw_address[1].split(", ")[0],
+            state=raw_address[1].split(", ")[1].split()[0],
+            zip_postal=raw_address[1].split(", ")[1].split()[1],
+            country_code="",
+            store_number="",
+            phone=phone,
+            location_type="",
+            latitude="",
+            longitude="",
+            hours_of_operation=hoo,
+        )
 
-        url = "https://rv.campingworld.com/api/locationcards"
-        params = {
-            "limit": "1000",
-            "glcodes": all_codes,
-            "lat": lat,
-            "lon": lng,
-            "locationsearch": "true",
-            "service": "true",
-        }
-        data = session.get(url, params=params, headers=headers).json()
-        all_locations += data["locations"]
-
-    for poi in all_locations:
-        base_url = "https://rv.ganderoutdoors.com/dealer/"
-        store_url = urljoin(base_url, poi["dealer_url"])
-        location_name = poi["marketingname"]
-        location_name = location_name if location_name else "<MISSING>"
-        if "camping world" not in location_name.lower():
-            continue
-        street_address = poi["billing_street"]
-        city = poi["billing_city"]
-        state = poi["statecode"]
-        zip_code = poi["billing_zip"]
-        country_code = "<MISSING>"
-        store_number = "<MISSING>"
-        phone = poi["phonenumber"]
-        phone = phone if phone else "<MISSING>"
-        location_type = "<MISSING>"
-        latitude = poi["lat"]
-        longitude = poi["lon"]
-        mf_open = poi["store_hours_mf_open"]
-        mf_close = poi["store_hours_mf_closed"]
-        sat_open = poi["store_hours_sat_open"]
-        sat_close = poi["store_hours_sat_closed"]
-        sun_open = poi["store_hours_sun_open"]
-        sun_close = poi["store_hours_sun_closed"]
-        hours_of_operation = f"Mon-Fri: {mf_open} - {mf_close} Sat: {sat_open} - {sat_close} Sun: {sun_open} - {sun_close}"
-
-        item = [
-            DOMAIN,
-            store_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip_code,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-
-        if store_url not in scraped_items:
-            scraped_items.append(store_url)
-            items.append(item)
-
-    return items
+        yield item
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":

@@ -1,43 +1,14 @@
-import csv
-import json
-import re
-
 from bs4 import BeautifulSoup
+
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 from sgrequests import SgRequests
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
+def fetch_data(sgw: SgWriter):
 
     session = SgRequests()
 
@@ -47,120 +18,70 @@ def fetch_data():
     headers = {"User-Agent": user_agent}
 
     req = session.get(base_link, headers=headers)
-    base = BeautifulSoup(req.text, "lxml")
+    base = str(BeautifulSoup(req.text, "lxml"))
 
-    data = []
     locator_domain = "lolelife.com"
 
-    all_scripts = base.find_all("script")
-    for script in all_scripts:
-        if "stores:{CA" in str(script):
-            script = str(script)
-            break
+    items = base.split('png",')[1].split(',"Search')[0].split(",")
 
-    js = script.split("stores:")[1].split("}],EU")[0] + "}]}"
-    js = (js.replace("{", '"{"').replace(",", '","').replace('"["', "["))[1:]
-    js = (
-        (re.sub(r"(\D:)", r'\1"', js))
-        .strip()
-        .replace(':"', '":"')
-        .replace('"""', '"')
-        .replace('""', '"')
-        .replace('"["', "[")
-        .replace('}]",', '"}],')
-        .replace('day","', "day")
-        .replace(' AM","', " AM")
-        .replace(' PM","', " PM")
-        .replace(':30","', ":30")
-        .replace(':00","', ":00")
-        .replace('24 hours","', "24 hours")
-        .replace("Mcountry", 'M" ,"country')
-        .replace("hourscountry", 'hours" ,"country')
-        .replace('}","{', "},{")
-        .replace("},{", '"},{')
-        .replace('""', '"')
-        .replace('FLOOR","', "FLOOR")
-        .replace('PRINCIPALE","', "PRINCIPALE")
-        .replace('"," Unit', " Unit")
-        .replace('"," UNIT', " UNIT")
-        .replace('"," ca","longi', ', ca","longi')
-        .replace('"," CA","', ', CA","')
-        .replace('stone"," co', "stone, co")
-        .replace('stone"," CO', "stone, CO")
-        .replace('"," ut ', ", ut ")
-    )
-    store_data = json.loads(js)
+    for item in items:
+        link = "https://www.lolelife.com/store-locator/" + item.replace('"', "")
+        api_link = (
+            "https://www.lolelife.com/maps.googleapis/maps/api/place/details/json?key=AIzaSyA11_18TL_SMVLQj5cWoS9neD0iVxP2NMQ&place_id="
+            + item.replace('"', "")
+        )
 
-    for country in store_data:
-        stores = store_data[country]
-        for store in stores:
-            location_name = store["name_store"].replace("dk", "Lole")
-            street_address = store["address"]
-            city = "<MISSING>"
-            state = "<MISSING>"
+        store = session.get(api_link, headers=headers).json()["result"]
+        raw_address = BeautifulSoup(store["adr_address"], "lxml")
 
-            if "Toronto" in location_name:
-                city = "Toronto"
-            if "Northville" in location_name:
-                city = "Northville"
-            if "Lolë" in location_name and "Livia" not in location_name:
-                city = (
-                    " ".join(location_name.split("Lolë")[1:])
-                    .replace("M&V", "")
-                    .replace("M&V", "")
-                    .replace("17th Ave", "")
-                    .replace("Ste-Catherine", "")
-                    .strip()
-                )
+        location_name = store["name"]
+        street_address = raw_address.find(class_="street-address").text
+        city = raw_address.find(class_="locality").text
+        state = raw_address.find(class_="region").text
+        zip_code = raw_address.find(class_="postal-code").text
+        country_code = raw_address.find(class_="country-name").text
+        store_number = ""
+        location_type = "<MISSING>"
+        try:
+            phone = store["international_phone_number"]
+        except:
+            phone = ""
+        try:
+            hours_of_operation = " ".join(store["opening_hours"]["weekday_text"])
+        except:
+            hours_of_operation = ""
 
-            if "Keystone, CO" in city:
-                city = "Keystone"
-                state = "CO"
+        latitude = store["geometry"]["location"]["lat"]
+        longitude = store["geometry"]["location"]["lng"]
 
-            if "Tahoe, CA" in city:
-                city = "Tahoe"
-                state = "CA"
+        if "Beaver Creek" in city:
+            location_name = "Lolë Beaver Creek"
 
-            zip_code = store["postalcode"].replace("TOE 1E0", "T0E 1E0")
-            if len(zip_code) < 3:
-                zip_code = "<MISSING>"
-            store_number = store["id"]
-            location_type = "<MISSING>"
-            phone = store["phone"]
-            if len(phone) < 5:
-                phone = "<MISSING>"
+        if "3720 N" in location_name:
+            location_name = "Lolë Canyon"
 
-            hours_of_operation = store["weekday"]
-            if len(hours_of_operation) < 20:
-                hours_of_operation = "<MISSING>"
+        if "3001 N" in location_name:
+            location_name = "Lolë Lake Tahoe"
 
-            latitude = store["latitude"]
-            longitude = store["longitude"]
-
-            data.append(
-                [
-                    locator_domain,
-                    "https://www.lolelife.com/store-locator",
-                    location_name,
-                    street_address,
-                    city,
-                    state,
-                    zip_code,
-                    country,
-                    store_number,
-                    phone,
-                    location_type,
-                    latitude,
-                    longitude,
-                    hours_of_operation,
-                ]
+        sgw.write_row(
+            SgRecord(
+                locator_domain=locator_domain,
+                page_url=link,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_code,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
             )
-    return data
+        )
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    fetch_data(writer)

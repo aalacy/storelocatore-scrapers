@@ -1,59 +1,67 @@
-import csv
-import os
-from sgselenium import SgSelenium
+from sglogging import sglog
+from bs4 import BeautifulSoup
+from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+session = SgRequests()
+website = "leevers_com"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+}
 
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
-        # Body
-        for row in data:
-            writer.writerow(row)
+DOMAIN = "https://www.leevers.com/"
+MISSING = SgRecord.MISSING
 
-def addy_ext(addy):
-    address = addy.split(',')
-    city = address[0]
-    state_zip = address[1].strip().split(' ')
-    state = state_zip[0]
-    zip_code = state_zip[1]
-    return city, state, zip_code
 
 def fetch_data():
-    locator_domain = 'http://leevers.com/'
+    if True:
+        r = session.get(DOMAIN, headers=headers)
+        loclist = r.text.split("Save-A-Lot")[1:-1]
+        for loc in loclist:
+            location_name = "Save-A-Lot"
+            loc = (
+                BeautifulSoup(loc, "html.parser")
+                .get_text(separator="|", strip=True)
+                .split("|")
+            )
+            street_address = loc[0]
+            log.info(street_address)
+            address = loc[1].split(",")
+            city = address[0]
+            address = address[1].split()
+            state = address[0]
+            zip_postal = address[1]
+            phone = loc[2].replace("PH:", "")
+            country_code = "US"
+            yield SgRecord(
+                locator_domain=DOMAIN,
+                page_url=DOMAIN,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_postal,
+                country_code=country_code,
+                store_number=MISSING,
+                phone=phone,
+                location_type=MISSING,
+                latitude=MISSING,
+                longitude=MISSING,
+                hours_of_operation=MISSING,
+            )
 
-    driver = SgSelenium().chrome()
-    driver.get(locator_domain)
-
-    locs = driver.find_element_by_css_selector('section#locate').find_elements_by_css_selector('div')
-    all_store_data = []
-    for loc in locs:
-        ps = loc.find_elements_by_css_selector('p')
-
-        location_name = ps[0].text
-        street_address = ps[1].text
-        city, state, zip_code = addy_ext(ps[2].text)
-        phone_number = ps[3].text.replace('PH:', '').strip()
-
-        country_code = 'US'
-
-        location_type = '<MISSING>'
-        page_url = '<MISSING>'
-        hours = '<MISSING>'
-        longit = '<MISSING>'
-        lat = '<MISSING>'
-        store_number = '<MISSING>'
-
-        store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
-                      store_number, phone_number, location_type, lat, longit, hours, page_url]
-        all_store_data.append(store_data)
-
-    driver.quit()
-    return all_store_data
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
-scrape()
+
+if __name__ == "__main__":
+    scrape()

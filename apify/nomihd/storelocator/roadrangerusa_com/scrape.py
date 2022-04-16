@@ -6,7 +6,6 @@ from sgscrape.sgwriter import SgWriter
 import lxml.html
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-import us
 
 website = "roadrangerusa.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -27,9 +26,15 @@ def fetch_data():
             page_url = search_url
 
             locator_domain = website
-            location_name = "".join(
-                store.xpath('.//h4[@class="store-location-teaser__address"]/text()')
-            ).strip()
+            location_name = (
+                "".join(
+                    store.xpath('.//h4[@class="store-location-teaser__address"]/text()')
+                )
+                .strip()
+                .replace("20 Frontage Rd.", "20 Frontage Rd,")
+                .strip()
+            )
+
             address = "".join(location_name).split("(")[0]
             if len(address.split(",")) == 3:
                 street_address = address.split(",")[0].strip()
@@ -48,16 +53,30 @@ def fetch_data():
                     city = "Monahans"
 
             zip = "<MISSING>"
-            country_code = "<MISSING>"
-            if us.states.lookup(state):
-                country_code = "US"
+            if len(state.split(" ")) > 1:
+                zip = state.split(" ")[-1].strip()
+                state = state.split(" ")[0].strip()
+
+            country_code = "US"
 
             store_number = "<MISSING>"
             phone = "".join(store.xpath('.//a[contains(@href,"tel:")]/text()')).strip()
             location_type = "<MISSING>"
-            hours_of_operation = "<MISSING>"
+            hours_of_operation = (
+                "".join(store.xpath('.//div[@class="location_hours"]/text()'))
+                .strip()
+                .replace("STORE HOURS:", "")
+                .strip()
+                .replace("LIMITED HOURS:", "")
+                .strip()
+            )
             latitude = (
-                "".join(store.xpath('.//span[@class="coordinates"]/text()'))
+                "".join(
+                    store.xpath(
+                        './/div[./span[@class="fa-solid fa-map-location-dot"]]/text()'
+                    )
+                )
+                .strip()
                 .strip()
                 .replace("Coordinates:", "")
                 .strip()
@@ -65,7 +84,12 @@ def fetch_data():
                 .strip()
             )
             longitude = (
-                "".join(store.xpath('.//span[@class="coordinates"]/text()'))
+                "".join(
+                    store.xpath(
+                        './/div[./span[@class="fa-solid fa-map-location-dot"]]/text()'
+                    )
+                )
+                .strip()
                 .strip()
                 .replace("Coordinates:", "")
                 .strip()
