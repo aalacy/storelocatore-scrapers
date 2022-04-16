@@ -111,7 +111,6 @@ def fetch_data():
             except Exception as e:
                 log.info(f"loclist JSON Error: {e}")
                 continue
-
             for loc in loclist:
                 store_number = loc["id"]
                 page_url = "https://www.snipes.com/storedetails?sid=" + store_number
@@ -152,13 +151,10 @@ def fetch_data():
                 except Exception as e:
                     log.info(f"Phone Error: {e}")
                     phone = MISSING
-
                 hours_of_operation = strip_accents(
                     soup.find(
                         "div",
-                        {
-                            "class": "b-store-locator-store-hours b-store-map-view-section"
-                        },
+                        {"class": "b-store-locator-store-hours"},
                     )
                     .get_text(separator="|", strip=True)
                     .replace("|", " ")
@@ -168,21 +164,25 @@ def fetch_data():
                     == "Montag: - Dienstag: - Mittwoch: - Donnerstag: - Freitag: - Samstag: - Sonntag: -"
                 ):
                     hours_of_operation = MISSING
+
                 elif (
                     hours_of_operation
                     == "maandag: - dinsdag: - woensdag: - donderdag: - vrijdag: - zaterdag: - zondag: -"
-                ):
-                    hours_of_operation = MISSING
-                elif (
-                    hours_of_operation
+                    or hours_of_operation
                     == "Lundi: - Mardi: - Mercredi: - Jeudi: - Vendredi: - Samedi: - Dimanche: -"
                 ):
-                    hours_of_operation = MISSING
-                elif "Jueves: - Viernes: -" in hours_of_operation:
-                    hours_of_operation = MISSING
+                    r = session.get(page_url, headers=headers)
+                    soup = BeautifulSoup(r.text, "html.parser")
+                    hours_of_operation = strip_accents(
+                        soup.find(
+                            "div",
+                            {"class": "b-store-locator-store-hours"},
+                        )
+                        .get_text(separator="|", strip=True)
+                        .replace("|", " ")
+                    )
                 if city is MISSING:
                     city = raw_address.split()[-1]
-
                 yield SgRecord(
                     locator_domain=DOMAIN,
                     page_url=page_url,
