@@ -77,9 +77,7 @@ def fetch_data(sgw: SgWriter):
             },
         }
 
-        r = session.post(
-            "https://www.galerieslafayette.com/api", headers=headers, json=json_data
-        )
+        r = session.post("https://www.galerieslafayette.com/api", json=json_data)
         log.info(f"POST Response: {r}")
         js = r.json()["data"]["getPage"]["components"]
         for j in js:
