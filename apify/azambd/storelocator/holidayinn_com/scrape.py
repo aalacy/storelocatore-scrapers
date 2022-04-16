@@ -109,16 +109,19 @@ def fetch_data():
                 '//script[contains(@type, "application/ld+json")]/text()'
             )[1]
             data = json.loads(jsonData)
-            location_name = getJSONObjectVariable(data, "name")
-            location_name = location_name.replace("&amp;", "&").replace("&#39;", "'")
+            location_type = getJSONObjectVariable(data, "@type")
+            if location_type == "Brand":
+                jsonData = body.xpath(
+                    '//script[contains(@type, "application/ld+json")]/text()'
+                )[2]
+                data = json.loads(jsonData)
+                location_type = getJSONObjectVariable(data, "@type")
         except Exception as e:
             log.error(f"{count} Error getting {page_url} ... {e}")
             continue
 
-        location_type = getJSONObjectVariable(data, "@type")
-        if len(location_type) == 0:
-            location_type = MISSING
-
+        location_name = getJSONObjectVariable(data, "name")
+        location_name = location_name.replace("&amp;", "&").replace("&#39;", "'")
         street_address = getJSONObjectVariable(data, "address.streetAddress")
         street_address = street_address.replace("&#39;", "'")
         city = getJSONObjectVariable(data, "address.addressLocality")

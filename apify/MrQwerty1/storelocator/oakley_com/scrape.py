@@ -135,6 +135,7 @@ def fetch_data(sgw: SgWriter):
                 phone = j.get("phone")
                 latitude = j.get("lat")
                 longitude = j.get("lng")
+                location_type = j.get("typeName")
                 hours = j.get("hoursMap") or {}
                 hours_of_operation = ";".join(hours.values())
 
@@ -148,6 +149,7 @@ def fetch_data(sgw: SgWriter):
                     country_code=country_code,
                     latitude=latitude,
                     longitude=longitude,
+                    location_type=location_type,
                     phone=phone,
                     store_number=store_number,
                     locator_domain=locator_domain,

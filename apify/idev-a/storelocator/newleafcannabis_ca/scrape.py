@@ -33,18 +33,14 @@ states = {
     "X": "NU/NT",
     "Y": "YT",
 }
-locator_domain = "https://www.newleafcannabis.ca/"
+locator_domain = "https://cannacabana.com"
 base_url = "https://cannacabana.com/a/stores/"
 
 
-def _pp(locs, name):
+def _loc(locs, name):
     for loc in locs:
         if name.split("(")[0].strip() == list(loc.h3.stripped_strings)[0]:
-            return (
-                loc.find("i", {"class", re.compile(r"bi-telephone")})
-                .find_next_sibling()
-                .text.strip()
-            )
+            return loc
 
 
 def fetch_data():
@@ -63,24 +59,44 @@ def fetch_data():
             if addr.get("street2"):
                 street_address += " " + addr["street2"]
 
+            zip_postal = addr["zip"]
+            if zip_postal and zip_postal.split()[0] == "ON":
+                zip_postal = " ".join(zip_postal.split()[1:])
+            hours = []
+            temp = ", ".join(bs(_.get("hours"), "lxml").stripped_strings).split(",")
+            for hh in temp:
+                if hh.strip() and (
+                    hh.strip().startswith("Temporary")
+                    or hh.strip().startswith("Special")
+                    or "/" in hh.strip().split()[0]
+                ):
+                    break
+                hours.append(hh.split("Temporary")[0].strip())
+
+            loc = _loc(locs, _["title"])
+            phone = (
+                loc.find("i", {"class", re.compile(r"bi-telephone")})
+                .find_next_sibling()
+                .text.strip()
+            )
             yield SgRecord(
-                page_url=_["shop_url"],
+                page_url=locator_domain + loc.select_one("a.btn--solo-orange")["href"],
                 location_name=_["title"],
                 street_address=street_address,
                 city=addr["city"],
                 state=addr["province"],
                 latitude=addr["latitude"],
                 longitude=addr["longitude"],
-                zip_postal=addr["zip"],
+                zip_postal=zip_postal,
                 country_code=addr["country"],
-                phone=_pp(locs, _["title"]),
+                phone=phone,
                 locator_domain=locator_domain,
-                hours_of_operation=_.get("hours"),
+                hours_of_operation=", ".join(hours).replace("|", ";"),
             )
 
 
 if __name__ == "__main__":
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

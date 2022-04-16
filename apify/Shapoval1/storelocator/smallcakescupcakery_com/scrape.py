@@ -44,6 +44,8 @@ def fetch_data(sgw: SgWriter):
         if "Dubai" in ad:
             country_code = "Dubai"
         city = a.city or "<MISSING>"
+        if city == "<MISSING>" and ad.find("Dubai") != -1:
+            city = "Dubai"
         phone = (
             "".join(d.xpath(".//span[last()]//text()"))
             .replace("Visit Website", "")

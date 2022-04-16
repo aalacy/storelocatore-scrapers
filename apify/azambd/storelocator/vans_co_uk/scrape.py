@@ -39,8 +39,33 @@ def parse_json(store):
         page_url = MISSING
     data["page_url"] = page_url
     data["location_name"] = store["name"]
-    data["location_type"] = "Store"
-    data["street_address"] = store["address1"]
+    data["location_type"] = MISSING
+    type_check = store["name"].lower()
+    if "store" in str(type_check):
+        data["location_type"] = "store"
+    if "outlet" in str(type_check):
+        data["location_type"] = "outlet"
+
+    street_address = store["address1"]
+    data["street_address"] = (
+        street_address.replace("Partner Operated Store -", "")
+        .replace("McArthurGlen Designer Outlet,", "")
+        .replace("McArthurGlen Designer Outlet", "")
+        .replace("The Style Outlet,", "")
+        .replace("Livingston Deisnger Outlet", "")
+        .replace("Outlet Franciacorta Village,", "")
+        .replace("Clarks Village Outlet Shopping,", "")
+        .replace("The Style Outlets Vicolungo,", "")
+        .replace("The Style Outlets ", "")
+        .replace("La Reggia Designer Outlet,", "")
+        .replace("Mallorca Fashion Outlet,", "")
+        .replace("C.C  Cuore Adriatico -", "")
+        .replace("62012 Civitanova Marche MC, Italia", "")
+        .replace("C.C.  Campania - Autostrada A1 -", "")
+        .replace("- Località Aurno", "")
+        .replace("C.C Centro Sicilia -", "")
+        .replace(", 95045 Misterbianco", "")
+    )
     data["city"] = store["city"]
     state = store["province"]
     if str(state) == "None":
@@ -154,7 +179,7 @@ def scrape():
             mapping=["store_number"], part_of_record_identity=True
         ),
         hours_of_operation=sp.MappingField(mapping=["hours_of_operation"]),
-        location_type=sp.MappingField(mapping=["location_type"]),
+        location_type=sp.MappingField(mapping=["location_type"], is_required=False),
     )
 
     pipeline = sp.SimpleScraperPipeline(

@@ -15,7 +15,7 @@ session = SgRequests()
 def fetch_data():
     coords = DynamicGeoSearch(
         country_codes=[SearchableCountries.USA],
-        expected_search_radius_miles=25,
+        expected_search_radius_miles=5,
     )
 
     headers = {
@@ -29,7 +29,7 @@ def fetch_data():
             + str(lat)
             + "&lng="
             + str(lng)
-            + "&max_results=25&search_radius=25&search=&statistics="
+            + "&max_results=250&search_radius=10&search=&statistics="
         )
         try:
             r_locations = session.get(location_url, headers=headers)
@@ -54,7 +54,7 @@ def fetch_data():
             + str(lat)
             + "&lng="
             + str(lng)
-            + "&max_results=25&search_radius=25&search=&statistics="
+            + "&max_results=250&search_radius=10&search=&statistics="
         )
 
         for location in json_data:
@@ -94,9 +94,7 @@ def fetch_data():
 def scrape():
     with SgWriter(
         SgRecordDeduper(
-            SgRecordID(
-                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
-            )
+            SgRecordID({SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STORE_NUMBER})
         )
     ) as writer:
         for item in fetch_data():

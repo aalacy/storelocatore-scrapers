@@ -250,7 +250,7 @@ def main_mx(session, state, url):
 
 def dissect_country(data):
     for country in list(data["statesAndProvinces"]):
-        for rec in data["statesAndProvinces"][country]:
+        for rec in data["statesAndProvinces"][country]["stores"]:
             yield (rec, country)
 
 
@@ -303,7 +303,7 @@ def fetch_data():
     state = CrawlStateSingleton.get_instance()
     with SgRequests() as session:
         xic = state.get_misc_value(
-            "mexico", default_factory=lambda: True
+            "mexico", default_factory=lambda: False
         )  # SWITCH TO FALSE FOR IT TO WORK
         if not xic:
             for item in main_mx(
