@@ -1,0 +1,6 @@
+--ignore CountryCodeFillRateChecker (Colombia)
+
+--ignore LatLngDuplicationValidator
+Found 1 <lat, lng> pair(s) that belong to multiple addresses. Examples:
+    latitude  longitude                                     street_address  num_addrs
+201  6.20208  -75.57799  {CALLE 15 37 F 38, Carrera 49 n 7sur 50 univer...          2

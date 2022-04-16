@@ -49,10 +49,16 @@ def fetch_data():
         location_name = store["D"]
 
         raw_address = store["DIR"]
-        formatted_addr = parser.parse_address_intl(raw_address)
-        street_address = formatted_addr.street_address_1
-        if formatted_addr.street_address_2:
-            street_address = street_address + ", " + formatted_addr.street_address_2
+        if not raw_address:
+            street_address = "<MISSING>"
+        else:
+            formatted_addr = parser.parse_address_intl(raw_address)
+            street_address = formatted_addr.street_address_1
+            if formatted_addr.street_address_2:
+                street_address = street_address + ", " + formatted_addr.street_address_2
+
+        if street_address and street_address.isdigit():
+            street_address = raw_address
 
         city = store["NCIU"]
         state = store["NDEP"]

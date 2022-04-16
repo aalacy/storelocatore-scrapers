@@ -1,106 +1,64 @@
-from sgscrape.simple_scraper_pipeline import SimpleScraperPipeline
-from sgscrape.simple_scraper_pipeline import ConstantField
-from sgscrape.simple_scraper_pipeline import MappingField
-from sglogging import sglog
-from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
+# -*- coding: utf-8 -*-
+import json
 
 from sgrequests import SgRequests
-
-from bs4 import BeautifulSoup as b4
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
-    logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
-    headers = {
-        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
-    }
     session = SgRequests()
 
-    ident = set()
-    search = DynamicGeoSearch(
-        country_codes=[SearchableCountries.AUSTRALIA],
-        max_radius_miles=500,
-        max_search_results=100,
-    )
-    for lat, lng in search:
-        son = session.get(
-            "https://www.workworld.com/wp-admin/admin-ajax.php?action=store_search&lat="
-            + str(lat)
-            + "&lng="
-            + str(lng)
-            + "&max_results=100&search_radius=500&autoload=1",
-            headers=headers,
-        ).json()
-        for i in son:
-            if (str(i["id"]) + str(i["permalink"])) not in ident:
-                ident.add(str(i["id"]) + str(i["permalink"]))
-                yield i
+    start_url = "https://stockist.co/api/v1/u9787/locations/all.js?callback=_stockistAllStoresCallback"
+    domain = "workworld.com"
+    hdr = {
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
+    }
+    response = session.get(start_url, headers=hdr)
+    data = response.text.split("Callback(")[-1][:-2]
 
-    logzilla.info(f"Finished grabbing data!!")  # noqa
+    all_locations = json.loads(data)
+    for poi in all_locations:
+        if "Whistle Workwear" in poi["name"]:
+            continue
+        street_address = poi["address_line_1"]
+        if poi["address_line_2"]:
+            street_address += ", " + poi["address_line_2"]
 
+        item = SgRecord(
+            locator_domain=domain,
+            page_url="https://www.workworld.com/password",
+            location_name=poi["name"],
+            street_address=street_address,
+            city=poi["city"],
+            state=poi["state"],
+            zip_postal=poi["postal_code"],
+            country_code=poi["country"],
+            store_number=poi["id"],
+            phone=poi["phone"],
+            location_type="",
+            latitude=poi["latitude"],
+            longitude=poi["longitude"],
+            hours_of_operation=" ".join(
+                poi["description"].replace("Store Hours", "").split()
+            ),
+        )
 
-def nice_hours(x):
-
-    soup = b4(x, "lxml")
-
-    h = list(soup.stripped_strings)
-
-    if len(h) == 1:
-        return "<MISSING>"
-    x = ""
-    if len(h) % 2 == 0:
-        while len(h) > 0:
-            x = x + h[0]
-            x = x + ": "
-            try:
-                h.pop(0)
-                x = x + h[0]
-                x = x + "; "
-            except Exception:
-                continue
-
-    return x
+        yield item
 
 
 def scrape():
-    url = "https://www.workworld.com/"
-    field_defs = SimpleScraperPipeline.field_definitions(
-        locator_domain=ConstantField(url),
-        page_url=MappingField(mapping=["permalink"]),
-        location_name=MappingField(
-            mapping=["store"],
-            value_transform=lambda x: x.replace("&#8217;", "'").replace("&#8211;", "-"),
-        ),
-        latitude=MappingField(
-            mapping=["lat"],
-        ),
-        longitude=MappingField(
-            mapping=["lng"],
-        ),
-        street_address=MappingField(mapping=["address"]),
-        city=MappingField(mapping=["city"]),
-        state=MappingField(mapping=["state"]),
-        zipcode=MappingField(mapping=["zip"]),
-        country_code=MappingField(mapping=["country"]),
-        phone=MappingField(mapping=["phone"], is_required=False),
-        store_number=MappingField(mapping=["id"]),
-        hours_of_operation=MappingField(mapping=["hours"], value_transform=nice_hours),
-        location_type=MappingField(
-            mapping=["store"],
-            value_transform=lambda x: "Coming Soon"
-            if any(i in x for i in ["OON", "oon"])
-            else "<MISSING>",
-        ),
-    )
-
-    pipeline = SimpleScraperPipeline(
-        scraper_name="pipeline",
-        data_fetcher=fetch_data,
-        field_definitions=field_defs,
-        log_stats_interval=5,
-    )
-
-    pipeline.run()
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":

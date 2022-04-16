@@ -18,6 +18,8 @@ def fetch_data():
         data = json.loads(response.text)
 
         for poi in data["gyms"]:
+            if poi["gym_status"] == "presale":
+                continue
             store_url = poi["siteurl"]
             location_name = poi["gym_name"]
             street_address = poi["address"]
@@ -41,10 +43,12 @@ def fetch_data():
                     close_h = hours["close"]["date"].split()[-1].split(".")[0]
                     hours_of_operation.append("{} {} - {}".format(day, open_h, close_h))
             hours_of_operation = (
-                ", ".join(hours_of_operation).replace("00:00:00 - 00:00:00", "closed")
+                ", ".join(hours_of_operation).replace("00:00:00 - 00:00:00", "24h")
                 if hours_of_operation
                 else "<MISSING>"
             )
+            if "Tu - closed, We - closed" in hours_of_operation:
+                continue
 
             item = SgRecord(
                 locator_domain=domain,

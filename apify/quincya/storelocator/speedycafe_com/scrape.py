@@ -7,7 +7,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 from sgrequests import SgRequests
 from sglogging import sglog
-from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries, Grain_4
 
 log = sglog.SgLogSetup().get_logger(logger_name="speedycafe.com")
 
@@ -41,13 +41,13 @@ def fetch_data(sgw: SgWriter):
 
     session = SgRequests()
 
-    max_results = 90
     max_distance = 200
+    max_results = 90
 
     search = DynamicGeoSearch(
         country_codes=[SearchableCountries.USA],
-        max_radius_miles=max_distance,
-        max_search_results=max_results,
+        expected_search_radius_miles=max_distance,
+        granularity=Grain_4(),
     )
 
     for lat, lng in search:

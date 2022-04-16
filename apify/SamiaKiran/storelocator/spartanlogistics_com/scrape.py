@@ -1,9 +1,11 @@
 from sglogging import sglog
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
-from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-from sgscrape.sgpostal import parse_address_intl
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgpostal.sgpostal import parse_address_intl
 
 session = SgRequests()
 website = "spartanlogistics_com"
@@ -15,7 +17,7 @@ headers = {
 }
 
 DOMAIN = "https://spartanlogistics.com/"
-MISSING = "<MISSING>"
+MISSING = SgRecord.MISSING
 
 
 def fetch_data():
@@ -28,10 +30,12 @@ def fetch_data():
             temp = loc.find("th").find("a")
             location_name = temp.text
             page_url = "https://www.spartanlogistics.com" + temp["href"]
-            # Find the raw address
-            address_raw = loc.find("td", {"data-label": "Warehouse Address"}).text
+            log.info(page_url)
+            try:
+                address_raw = loc.find("td", {"data-label": "Warehouse Address"}).text
+            except:
+                address_raw = loc.findAll("td")[2].text
 
-            # Parse the address
             pa = parse_address_intl(address_raw)
 
             street_address = pa.street_address_1
@@ -48,8 +52,10 @@ def fetch_data():
 
             country_code = "US"
             store_number = MISSING
-            phone = loc.find("td", {"data-label": "Phone Number"}).text
-
+            try:
+                phone = loc.find("td", {"data-label": "Phone Number"}).text
+            except:
+                phone = loc.findAll("td")[3].text
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url=page_url,
@@ -71,7 +77,9 @@ def fetch_data():
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
