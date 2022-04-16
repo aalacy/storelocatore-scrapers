@@ -10,7 +10,10 @@ from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 
 def fetch_data():
 
-    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
+    session = SgRequests()
+    hdr = {
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+    }
 
     scraped_items = []
 
@@ -35,9 +38,8 @@ def fetch_data():
             all_locations = json.loads(response.text)["stores"]
         except:
             try:
-                session = SgRequests().requests_retry_session(
-                    retries=2, backoff_factor=0.3
-                )
+                session = SgRequests()
+                response = session.get(start_url.format(lat, lng), headers=hdr)
                 all_locations = json.loads(response.text)["stores"]
             except:
                 continue
