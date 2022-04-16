@@ -4,7 +4,7 @@ from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
@@ -85,7 +85,7 @@ def fetch_data():
                 location_name=location_name,
                 street_address=street_address.strip(),
                 city=city.strip(),
-                state=state.strip(),
+                state=state.upper().strip(),
                 zip_postal=zip_postal.strip(),
                 country_code=country_code,
                 store_number=MISSING,
@@ -101,7 +101,7 @@ def scrape():
     log.info("Started")
     count = 0
     with SgWriter(
-        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.GeoSpatialId)
+        deduper=SgRecordDeduper(record_id=SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
     ) as writer:
         results = fetch_data()
         for rec in results:

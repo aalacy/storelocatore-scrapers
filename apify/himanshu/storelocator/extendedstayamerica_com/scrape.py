@@ -9,12 +9,11 @@ from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
-    session = SgRequests()
-    session.max_redirects = 1000
+
     headers = {
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/34.0.1847.131 Safari/537.36"
     }
-    session = SgRequests()
+    session = SgRequests(verify_ssl=False)
     r = session.get("https://www.extendedstayamerica.com/hotels", headers=headers)
     soup = BeautifulSoup(r.text, "html.parser")
     jd = (
@@ -43,8 +42,11 @@ def fetch_data():
         longitude = value["longitude"]
         hours_of_operation = "Open 24 hours a day, seven days a week"
         page_url = "https://www.extendedstayamerica.com" + value["urlMap"]
-        r = session.get(page_url, headers=headers)
-        tree = html.fromstring(r.text)
+        try:
+            r = session.get(page_url, headers=headers)
+            tree = html.fromstring(r.text)
+        except:
+            return
         js_block = "".join(
             tree.xpath('//script[contains(text(), "streetAddress")]/text()')
         )

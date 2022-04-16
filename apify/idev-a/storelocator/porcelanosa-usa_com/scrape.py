@@ -51,8 +51,8 @@ def fetch_data():
                 if not state and country_code == "CA":
                     state = location_name.split(",")[-1].strip()
                 phone = ""
-                if _.select_one("li a"):
-                    phone = _.select_one("li a").text.strip()
+                if _.find("a", href=re.compile(r"tel:")):
+                    phone = _.find("a", href=re.compile(r"tel:")).text.strip()
                 hr = _.find("strong", string=re.compile(r"Store Hours"))
                 hours = []
                 if hr:
@@ -77,6 +77,8 @@ def fetch_data():
 
                 hours_of_operation = "; ".join(hours).strip()
                 if hours_of_operation == "By appointment only":
+                    hours_of_operation = ""
+                if "www.tftnm.com" in hours_of_operation:
                     hours_of_operation = ""
 
                 if hours_of_operation.startswith(";"):
