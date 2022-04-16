@@ -17,7 +17,7 @@ def fetch_data():
     scraped_urls = []
 
     all_codes = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA], expected_search_radius_miles=50
+        country_codes=[SearchableCountries.USA], expected_search_radius_miles=5
     )
     for code in all_codes:
         response = session.get(start_url.format(code))
