@@ -30,6 +30,7 @@ def fetch_data():
         a = value["address"]
 
         location_name = value["title"]
+        print(location_name)
         street_address = a["street"]
         city = a["city"]
         state = a["region"]
@@ -42,11 +43,8 @@ def fetch_data():
         longitude = value["longitude"]
         hours_of_operation = "Open 24 hours a day, seven days a week"
         page_url = "https://www.extendedstayamerica.com" + value["urlMap"]
-        try:
-            r = session.get(page_url, headers=headers)
-            tree = html.fromstring(r.text)
-        except:
-            return
+        r = session.get(page_url, headers=headers)
+        tree = html.fromstring(r.text)
         js_block = "".join(
             tree.xpath('//script[contains(text(), "streetAddress")]/text()')
         )
@@ -76,13 +74,7 @@ def fetch_data():
 
 
 def scrape():
-    with SgWriter(
-        SgRecordDeduper(
-            SgRecordID(
-                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
-            )
-        )
-    ) as writer:
+    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))) as writer:
         for item in fetch_data():
             writer.write_row(item)
 
