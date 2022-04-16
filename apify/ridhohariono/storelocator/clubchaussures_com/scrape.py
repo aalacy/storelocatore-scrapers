@@ -42,7 +42,7 @@ def pull_content(url):
 
 def fetch_data():
     log.info("Fetching store_locator data")
-    driver = SgSelenium().chrome()
+    driver = SgSelenium(is_headless=False).chrome()
     driver.get(LOCATION_URL)
     driver.implicitly_wait(10)
     soup = bs(driver.page_source, "lxml")
@@ -52,7 +52,7 @@ def fetch_data():
     )
     data = json.loads(
         re.search(
-            r'AmLocation\.Amastyload\(\{"totalRecords":31,"items":(.*)\}\);',
+            r'AmLocation\.Amastyload\(\{"totalRecords":\d{2,3},"items":(.*)\}\);',
             contents.string,
         ).group(1)
     )
