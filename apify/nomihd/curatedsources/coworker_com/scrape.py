@@ -52,9 +52,6 @@ def fetch_cities():
 
 def fetch_pages(city_url):
     body = request_with_retries(city_url)
-    urls = body.xpath(
-        '//div[contains(@class,"search-space-main-outer")]/a[@target="_blank"]/@href'
-    )
     city_id = body.xpath('//input[@id="city_id"]/@value')[0]
     country_id = body.xpath('//input[@id="country_id"]/@value')[0]
     all_stores = []
