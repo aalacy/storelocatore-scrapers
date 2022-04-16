@@ -30,7 +30,6 @@ def fetch_data():
         a = value["address"]
 
         location_name = value["title"]
-        print(location_name)
         street_address = a["street"]
         city = a["city"]
         state = a["region"]
