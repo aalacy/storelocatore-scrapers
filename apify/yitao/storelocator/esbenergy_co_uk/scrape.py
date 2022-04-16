@@ -13,7 +13,7 @@ from sgscrape.sgwriter import SgWriter
 import time
 
 LOCATOR_DOMAIN = "https://www.esbenergy.co.uk/"
-PAGE_URL = "https://myevaccount.esbenergy.co.uk/stationFacade/findStationsByIds"
+PAGE_URL = "https://myevaccount.esbenergy.co.uk/findCharger?"
 UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.71 Safari/537.36"
 HEADERS = {
     "User-Agent": UA,
@@ -92,7 +92,10 @@ def _fetch_phone_number(http: SgRequests) -> str:
 
     response = http.get(url=LOCATOR_DOMAIN, headers={"User-Agent": UA})
     dom = etree.HTML(response.text)
-    phone_txt = dom.xpath(f"//a[contains(@href, '{PHONE_PREFIX}')]/@href")[0]
+    try:
+        phone_txt = dom.xpath(f"//a[contains(@href, '{PHONE_PREFIX}')]/@href")[0]
+    except:
+        phone_txt = ""
 
     return "".join(phone_txt[len(PHONE_PREFIX) :].split())
 

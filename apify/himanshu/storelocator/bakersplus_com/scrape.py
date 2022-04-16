@@ -1,66 +1,68 @@
-import csv
 import json
+import ssl
+import time
 
 from bs4 import BeautifulSoup
 
-from sgrequests import SgRequests
+from sglogging import sglog
 
-session = SgRequests()
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as ec
+from selenium.webdriver.support.ui import WebDriverWait
 
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-def write_output(data):
-    with open("data.csv", mode="w", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-                "page_url",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
+from sgselenium.sgselenium import SgChrome
+
+log = sglog.SgLogSetup().get_logger("bakersplus.com")
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 
-def fetch_data():
+def fetch_data(sgw: SgWriter):
     base_url = "https://www.bakersplus.com/"
-    headers = {
-        "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-        "cache-control": "max-age=0",
-        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.105 Safari/537.36",
-    }
-    soup = BeautifulSoup(
-        session.get(
-            "https://www.bakersplus.com/storelocator-sitemap.xml", headers=headers
-        ).text,
-        "lxml",
+
+    base_link = "https://www.bakersplus.com/storelocator-sitemap.xml"
+    user_agent = (
+        "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0"
     )
+
+    driver = SgChrome(user_agent=user_agent).driver()
+
+    driver.get(base_link)
+    soup = BeautifulSoup(driver.page_source, "lxml")
+
     for url in soup.find_all("loc")[:-1]:
         page_url = url.text
-        location_soup = BeautifulSoup(
-            session.get(page_url, headers=headers).text, "lxml"
-        )
-        data = json.loads(
-            str(location_soup.find("script", {"type": "application/ld+json"}))
-            .split(">")[1]
-            .split("<")[0]
-        )
-        location_name = location_soup.find(
-            "h1", {"data-qa": "storeDetailsHeader"}
-        ).text.strip()
+
+        log.info(page_url)
+        for i in range(6):
+            driver.get(page_url)
+            WebDriverWait(driver, 50).until(
+                ec.presence_of_element_located((By.TAG_NAME, "h1"))
+            )
+            time.sleep(2)
+            location_soup = BeautifulSoup(driver.page_source, "lxml")
+            script = location_soup.find(
+                "script", attrs={"type": "application/ld+json"}
+            ).contents[0]
+
+            location_name = ""
+            try:
+                data = json.loads(script)
+                street_address = data["address"]
+
+                location_name = location_soup.find(
+                    "h1", {"data-qa": "storeDetailsHeader"}
+                ).text.strip()
+
+                if location_name:
+                    break
+            except:
+                log.info("Retrying ..")
 
         try:
             street_address = data["address"]["streetAddress"]
@@ -86,28 +88,28 @@ def fetch_data():
         lat = data["geo"]["latitude"]
         lng = data["geo"]["longitude"]
         hours = " ".join(data["openingHours"])
-        store = []
-        store.append(base_url)
-        store.append(location_name)
-        store.append(street_address)
-        store.append(city)
-        store.append(state)
-        store.append(zipp)
-        store.append(country_code)
-        store.append(store_number)
-        store.append(phone)
-        store.append("<MISSING>")
-        store.append(lat)
-        store.append(lng)
-        store.append(hours)
-        store.append(page_url)
-        store = [str(x).strip() if x else "<MISSING>" for x in store]
-        yield store
+
+        sgw.write_row(
+            SgRecord(
+                locator_domain=base_url,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zipp,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type="",
+                latitude=lat,
+                longitude=lng,
+                hours_of_operation=hours,
+            )
+        )
+
+    driver.close()
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    fetch_data(writer)
