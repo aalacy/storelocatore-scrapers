@@ -71,10 +71,17 @@ def fetch_records():
                         sta = add2
                     else:
                         sta = ""
+                    locname = ""
+                    locname = _["store"]
+                    locname = (
+                        locname.replace("&#8217;", "'")
+                        .replace("&#038;", "&")
+                        .replace("&#8211;", "-")
+                    )
                     item = SgRecord(
                         locator_domain="badgercoin.com",
-                        page_url="",
-                        location_name=_["store"],
+                        page_url="https://www.badgercoin.com/find-a-location/",
+                        location_name=locname,
                         street_address=sta,
                         city=_["city"],
                         state=_["state"],
