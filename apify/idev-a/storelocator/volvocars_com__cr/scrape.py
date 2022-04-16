@@ -3,76 +3,63 @@ from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger("volvocars")
+from bs4 import BeautifulSoup as bs
+import json
+from sgpostal.sgpostal import parse_address_intl
 
 _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
 }
 
 locator_domain = "https://www.volvocars.com/cr"
-base_url = "https://www.volvocars.com/data/retailer?countryCode={}&languageCode=EN&northToSouthSearch=False&serviceType=Service&isOxp=True&sc_site=uk"
-
-country_codes = [
-    "CR",
-]
-
-
-urls = {
-    "do": "https://www.volvocars.com/do/services/design-and-buy/find-a-dealer",
-}
+base_url = "https://www.volvocars.com/cr/v/legal/contact-us"
 
 
 def fetch_data():
     with SgRequests() as session:
-        for code in country_codes:
-            locations = session.get(base_url.format(code), headers=_headers).json()
-            logger.info(f"[{code}] {len(locations)}")
-            for _ in locations:
-                street_address = _["AddressLine1"]
-                hours = []
-                for hr in _["Services"]:
-                    if hr["ServiceType"] == "new_car_sales" and hr["OpeningHours"]:
-                        hours.append(hr["OpeningHours"])
+        locations = []
+        for ss in bs(session.get(base_url, headers=_headers).text, "lxml").find_all(
+            "script", type="application/json"
+        ):
+            if "sitecore" in json.loads(ss.text):
+                locations = bs(
+                    json.loads(ss.text)["sitecore"]["route"]["placeholders"][
+                        "article-section"
+                    ][0]["fields"]["body"]["value"],
+                    "lxml",
+                ).select("p")[3:-1]
+                break
+        for _ in locations:
+            block = list(_.stripped_strings)
+            _addr = []
+            phone = ""
+            for x, bb in enumerate(block):
+                if "Direcci" in bb:
+                    new_b = block[x + 1 :]
+                    for y, cc in enumerate(new_b):
+                        if "Tel" in cc:
+                            phone = new_b[y + 1]
+                            break
+                        _addr.append(cc)
+                    break
 
-                hours_of_operation = (
-                    "; ".join(hours)
-                    .replace("Sales:", "")
-                    .replace('"', "")
-                    .replace("<br>", " ")
-                )
-                if hours_of_operation == ".":
-                    hours_of_operation = ""
-                phone = _["Phone"]
-                if phone:
-                    phone = (
-                        phone.split(";")[0]
-                        .replace("(Após-Venda)", "")
-                        .split(",")[0]
-                        .replace("Växel:", "")
-                        .split("/ +")[0]
-                        .split("/+")[0]
-                        .split("or")[0]
-                        .strip()
-                    )
-                    if "@" in phone:
-                        phone = ""
-                yield SgRecord(
-                    store_number=_["DealerId"],
-                    location_name=_["Name"],
-                    street_address=street_address,
-                    city=_["City"],
-                    state=_["District"],
-                    zip_postal=_["ZipCode"],
-                    latitude=_["GeoCode"]["Latitude"],
-                    longitude=_["GeoCode"]["Longitude"],
-                    country_code=_["Country"],
-                    phone=phone,
-                    locator_domain=locator_domain,
-                    location_type=_["ServiceType"],
-                    hours_of_operation=hours_of_operation,
-                )
+            raw_address = " ".join(_addr)
+            addr = parse_address_intl(raw_address)
+            street_address = addr.street_address_1
+            if addr.street_address_2:
+                street_address += " " + addr.street_address_2
+            yield SgRecord(
+                page_url=base_url,
+                location_name=_.strong.text.strip(),
+                street_address=street_address,
+                city=addr.city,
+                state=addr.state,
+                zip_postal=addr.postcode,
+                country_code="CR",
+                phone=phone,
+                locator_domain=locator_domain,
+                raw_address=raw_address,
+            )
 
 
 if __name__ == "__main__":
