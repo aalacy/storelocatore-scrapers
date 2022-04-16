@@ -49,10 +49,13 @@ def fetch_data(sgw: SgWriter):
             street_address = " ".join(raw_address[:2]).strip()
             phone = raw_address[2]
             hours_of_operation = " ".join(raw_address[3:])
-        street_address = street_address.replace("Indian Mound Mall", "").strip()
+        street_address = (
+            street_address.replace("Indian Mound Mall", "").split("Wal-")[0].strip()
+        )
         hours_of_operation = hours_of_operation.split("DINING")[0].strip()
-        map_link = item.find("a", string="View Map")["href"]
+        map_link = ""
         try:
+            map_link = item.find("a", string="View Map")["href"]
             geo = map_link.split("@")[1].split("/")[0].split(",")
             latitude = geo[0]
             longitude = geo[1]
@@ -77,6 +80,8 @@ def fetch_data(sgw: SgWriter):
         if "BEECHCROFT" in location_name.upper():
             city = "Columbus"
             state = "OH"
+        if not city:
+            city = location_name.title()
 
         city = city.replace("+", " ")
 
