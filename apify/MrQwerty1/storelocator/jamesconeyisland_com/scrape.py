@@ -71,7 +71,7 @@ def fetch_data(sgw: SgWriter):
         country_code = "US"
         phone = "".join(d.xpath(".//a[contains(@href, 'tel:')]/text()")).strip()
         key = location_name.lower()
-        latitude, longitude = coords.get(key)
+        latitude, longitude = coords.get(key) or (SgRecord.MISSING, SgRecord.MISSING)
 
         _tmp = []
         hours = d.xpath(".//p/strong")
