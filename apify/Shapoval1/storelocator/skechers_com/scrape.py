@@ -121,6 +121,12 @@ def fetch_data(sgw: SgWriter):
                 latitude=latitude,
                 longitude=longitude,
                 hours_of_operation=hours_of_operation,
+                raw_address=f"{j.get('address1')} {j.get('address2')} {j.get('city')}, {j.get('state')} {j.get('postalcode')}".replace(
+                    "\n", ""
+                )
+                .replace("None", "")
+                .replace("<MISSING>", "")
+                .strip(),
             )
 
             sgw.write_row(row)

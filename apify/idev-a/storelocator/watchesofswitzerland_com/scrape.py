@@ -3,7 +3,7 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgrequests import SgRequests
-from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries, Grain_8
 from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger("watchesofswitzerland")
@@ -44,8 +44,15 @@ def fetch_records(search):
                 street_address = _["address"]["line1"]
                 if _["address"]["line2"]:
                     street_address += " " + _["address"]["line2"]
+                location_type = (
+                    _["googleMapPinUrl"]
+                    .split("/")[-1]
+                    .split(".")[0]
+                    .split("_")[0]
+                    .split("-")[0]
+                )
                 yield SgRecord(
-                    page_url=locator_domain + "/store/" + _["name"],
+                    page_url=f"{locator_domain}/store/{_['name']}",
                     store_number=_["name"],
                     location_name=_["displayName"].replace("WOS", "").strip(),
                     street_address=street_address,
@@ -57,7 +64,7 @@ def fetch_records(search):
                     latitude=_["geoPoint"]["latitude"],
                     longitude=_["geoPoint"]["longitude"],
                     locator_domain=locator_domain,
-                    location_type=_["baseStoreName"],
+                    location_type=location_type,
                     hours_of_operation="; ".join(hours),
                 )
             progress = (
@@ -72,11 +79,11 @@ def fetch_records(search):
 if __name__ == "__main__":
     with SgRequests() as http:
         search = DynamicGeoSearch(
-            country_codes=[SearchableCountries.USA], expected_search_radius_miles=100
+            country_codes=[SearchableCountries.USA], granularity=Grain_8()
         )
         with SgWriter(
             SgRecordDeduper(
-                RecommendedRecordIds.PageUrlId, duplicate_streak_failure_factor=10
+                RecommendedRecordIds.PageUrlId, duplicate_streak_failure_factor=100
             )
         ) as writer:
             for rec in fetch_records(search):
