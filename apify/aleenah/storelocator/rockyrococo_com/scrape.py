@@ -34,7 +34,7 @@ MISSING = SgRecord.MISSING
 
 def fetch_data():
     states = ["MN", "WI"]
-    with SgChrome(executable_path="C:/webdrivers/chromedriver.exe") as driver:
+    with SgChrome() as driver:
         url = "https://rockyrococo.com/locations"
         driver.get(url)
         time.sleep(10)
