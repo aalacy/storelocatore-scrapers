@@ -1,3 +1,6 @@
-bs4==0.0.1
-sgrequests
-sgvalidator
+usaddress==0.5.10
+sgvalidator==0.0.71
+sgrequests==0.3.4
+sgscrape==0.2.9
+sglogging==0.0.4
+beautifulsoup4==4.11.1
