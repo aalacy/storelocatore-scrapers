@@ -2,6 +2,32 @@ from bs4 import BeautifulSoup as bs
 from sgrequests import SgRequests
 from sgscrape import simple_scraper_pipeline as sp
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
+import json
+
+
+def extract_json(html_string):
+    json_objects = []
+    count = 0
+
+    brace_count = 0
+    for element in html_string:
+
+        if element == "{":
+            brace_count = brace_count + 1
+            if brace_count == 1:
+                start = count
+
+        elif element == "}":
+            brace_count = brace_count - 1
+            if brace_count == 0:
+                end = count
+                try:
+                    json_objects.append(json.loads(html_string[start : end + 1]))
+                except Exception:
+                    pass
+        count = count + 1
+
+    return json_objects
 
 
 def get_data():
@@ -64,28 +90,60 @@ def get_data():
                 address_parts = grid.find(
                     "div", attrs={"class": "details"}
                 ).text.strip()
-                city = address_parts.split(", ")[0].split(" ")[-1]
-                address = "".join(
-                    part for part in address_parts.split(", ")[0].split(" ")[:-1]
-                )
-                state = address_parts.split(", ")[1].split(" ")[0]
-                try:
-                    zipp = address_parts.split(", ")[1].split(" ")[1]
-                except Exception:
-                    zipp = "<MISSING>"
+
+                if len(address_parts.split(", ")) == 2:
+                    city = address_parts.split(", ")[0].split(" ")[-1]
+                    address = "".join(
+                        part + " "
+                        for part in address_parts.split(", ")[0].split(" ")[:-1]
+                    )
+                    state = address_parts.split(", ")[-1].split(" ")[0]
+                    try:
+                        zipp = address_parts.split(", ")[-1].split(" ")[1]
+                    except Exception:
+                        zipp = "<MISSING>"
+
+                elif len(address_parts.split(", ")) > 2:
+                    city = address_parts.split(", ")[-2].split(" ")[-1]
+
+                    address = ""
+
+                    for part in address_parts.split(", ")[:-1]:
+                        address = address + part + ", "
+
+                    address = address[:-2]
+
+                    address = "".join(part + " " for part in address.split(" ")[:-1])
+
+                    state = address_parts.split(", ")[-1].split(" ")[0]
+                    try:
+                        zipp = address_parts.split(", ")[-1].split(" ")[1]
+                    except Exception:
+                        zipp = "<MISSING>"
+
+                else:
+                    raise Exception
+                address = address.strip()
+
                 store_number = grid["data-mcid"]
                 try:
-                    phone = (
+                    phone_part = (
                         grid.find("div", attrs={"class": "contact"})
                         .find("a")["href"]
                         .replace("tel:", "")
                     )
+
+                    phone = ""
+                    for character in phone_part:
+                        if character.isdigit() is True:
+                            phone = phone + character
+
                 except Exception:
                     phone = "<MISSING>"
                 location_type = grid.find("b").text.strip()
                 country_code = "US"
 
-                hours = "<LATER>"
+                hours = "<INACCESSIBLE>"
 
                 yield {
                     "locator_domain": locator_domain,

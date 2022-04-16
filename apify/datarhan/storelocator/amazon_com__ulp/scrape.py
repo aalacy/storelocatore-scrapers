@@ -41,12 +41,15 @@ def fetch_data():
             SearchableCountries.MEXICO,
             SearchableCountries.UNITED_ARAB_EMIRATES,
         ],
-        expected_search_radius_miles=10,
+        expected_search_radius_miles=5,
     )
     for lat, lng in all_coords:
         c_iso = all_coords.current_country()
         url = start_url.format(domains[c_iso], lng, lat, c_iso, c_iso)
-        data = session.get(url).json()
+        data = session.get(url)
+        if data.status_code != 200:
+            continue
+        data = data.json()
 
         for poi in data["locationList"]:
             street_address = poi["addressLine1"]

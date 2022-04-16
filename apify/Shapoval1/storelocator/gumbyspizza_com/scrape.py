@@ -58,6 +58,7 @@ def fetch_data(sgw: SgWriter):
             state = location_name.split(",")[-1].strip()
         if location_name.find("Madison") != -1:
             city = "Madison"
+
         map_link = "".join(tree.xpath("//iframe/@src"))
         try:
             latitude = map_link.split("!3d")[1].strip().split("!")[0].strip()
@@ -111,6 +112,30 @@ def fetch_data(sgw: SgWriter):
             map_link = "".join(tree.xpath("//iframe/@src"))
             latitude = map_link.split("!3d")[1].strip().split("!")[0].strip()
             longitude = map_link.split("!2d")[1].strip().split("!")[0].strip()
+
+        if street_address == "<MISSING>":
+            ad = (
+                " ".join(
+                    tree.xpath(
+                        '//span[text()="at"]/following-sibling::span//text() | //h1/following-sibling::text()[1]'
+                    )
+                )
+                .replace("\n", "")
+                .strip()
+            )
+            ad = " ".join(ad.split())
+            if ad.find("| Wings,") != -1:
+                ad = ad.split("| Wings,")[1].strip()
+            street_address = ad.split(",")[0].strip()
+            city = ad.split(",")[1].strip()
+            state = ad.split(",")[2].split()[0].strip()
+            postal = ad.split(",")[2].split()[1].strip()
+            phone = (
+                " ".join(tree.xpath("//h1/following-sibling::text()[2]"))
+                .replace("\n", "")
+                .strip()
+                or "<MISSING>"
+            )
 
         row = SgRecord(
             locator_domain=locator_domain,
