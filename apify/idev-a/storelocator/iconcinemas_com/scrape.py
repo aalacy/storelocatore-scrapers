@@ -28,12 +28,12 @@ def get_driver():
 
 def _d(driver, loc):
     logger.info(loc.find_element_by_css_selector("span").text)
+    coming_soon = bs(driver.page_source, "lxml").select_one("div#cs")
+    if coming_soon and "coming soon" in coming_soon.text.lower():
+        return None
     button = loc.find_element_by_css_selector('div[role="button"]')
     driver.execute_script("arguments[0].click();", button)
     time.sleep(1)
-    coming_soon = bs(driver.page_source, "lxml").select_one("div#cs")
-    if coming_soon and "coming soon" in coming_soon.text:
-        return None
     info_btn = driver.find_element_by_xpath("//a[contains(text(),'THEATRE INFO')]")
     driver.execute_script("arguments[0].click();", info_btn)
     rr = driver.wait_for_request(info_url)
@@ -48,7 +48,9 @@ def _d(driver, loc):
             .split(",")
         )
     except:
-        coord = ["", ""]
+        return None
+    if coord[0] == "" and coord[1] == "":
+        return None
     return SgRecord(
         page_url=base_url,
         location_name=info[0],

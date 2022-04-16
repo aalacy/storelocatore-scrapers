@@ -18,7 +18,7 @@ headers = {
 
 def fetch_data():
     # Your scraper here
-    search_url = "https://cdn.shopify.com/s/files/1/0069/3442/9751/t/7/assets/sca.storelocatordata.json"
+    search_url = "https://cdn.shopify.com/s/files/1/0069/3442/9751/t/11/assets/sca.storelocatordata.json"
     stores_req = session.get(search_url, headers=headers)
     stores = json.loads(stores_req.text)
     for store in stores:

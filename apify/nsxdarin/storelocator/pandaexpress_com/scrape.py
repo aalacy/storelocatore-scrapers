@@ -16,7 +16,28 @@ logger = SgLogSetup().get_logger("pandaexpress_com")
 def fetch_data():
     url = "https://www.pandaexpress.com/locations"
     states = []
-    cities = []
+    cities = [
+        "https://www.pandaexpress.com/locations/wi/milwaukee",
+        "https://www.pandaexpress.com/locations/tx/hurst",
+        "https://www.pandaexpress.com/locations/sc/charleston",
+        "https://www.pandaexpress.com/locations/sc/myrtle-beach",
+        "https://www.pandaexpress.com/locations/mi/lansing",
+        "https://www.pandaexpress.com/locations/mi/rochester",
+        "https://www.pandaexpress.com/locations/md/frederick",
+        "https://www.pandaexpress.com/locations/in/lafayette",
+        "https://www.pandaexpress.com/locations/il/peoria",
+        "https://www.pandaexpress.com/locations/ia/des-moines",
+        "https://www.pandaexpress.com/locations/hi/kailua",
+        "https://www.pandaexpress.com/locations/fl/panama-city",
+        "https://www.pandaexpress.com/locations/ca/covina",
+        "https://www.pandaexpress.com/locations/ca/highland",
+        "https://www.pandaexpress.com/locations/ca/hollywood",
+        "https://www.pandaexpress.com/locations/ca/monterey",
+        "https://www.pandaexpress.com/locations/ca/walnut",
+        "https://www.pandaexpress.com/locations/ca/woodland",
+        "https://www.pandaexpress.com/locations/az/prescott",
+        "https://www.pandaexpress.com/locations/ar/benton",
+    ]
     locs = ["https://www.pandaexpress.com/locations/ar/benton/20810-i-30-north"]
     r = session.get(url, headers=headers)
     for line in r.iter_lines():
@@ -29,23 +50,22 @@ def fetch_data():
                     )
                     states.append(lurl)
     for state in states:
-        if "/locations/ga" in state:
-            logger.info(state)
-            r2 = session.get(state, headers=headers)
-            for line2 in r2.iter_lines():
-                if '<a class="record" href="/locations/' in line2:
-                    items = line2.split('<a class="record" href="/locations/')
-                    for item in items:
-                        if 'data-ga-event="locationClick"' in item:
-                            lurl = (
-                                "https://www.pandaexpress.com/locations/"
-                                + item.split('"')[0]
-                            )
-                            lurl = lurl.replace("coeur-dalene", "coeur-d'alene")
-                            if "(1) </a>" in item:
-                                locs.append(lurl)
-                            else:
-                                cities.append(lurl)
+        logger.info(state)
+        r2 = session.get(state, headers=headers)
+        for line2 in r2.iter_lines():
+            if '<a class="record" href="/locations/' in line2:
+                items = line2.split('<a class="record" href="/locations/')
+                for item in items:
+                    if 'data-ga-event="locationClick"' in item:
+                        lurl = (
+                            "https://www.pandaexpress.com/locations/"
+                            + item.split('"')[0]
+                        )
+                        lurl = lurl.replace("coeur-dalene", "coeur-d'alene")
+                        if "(1) </a>" in item and lurl not in cities:
+                            locs.append(lurl)
+                        else:
+                            cities.append(lurl)
     for city in cities:
         logger.info(city)
         r2 = session.get(city, headers=headers)
@@ -130,23 +150,24 @@ def fetch_data():
                 else:
                     add = addnew
             if len(zc) >= 1:
-                yield SgRecord(
-                    locator_domain=website,
-                    page_url=purl,
-                    location_name=name,
-                    street_address=add,
-                    city=city,
-                    state=state,
-                    zip_postal=zc,
-                    country_code=country,
-                    phone=phone,
-                    location_type=typ,
-                    store_number=store,
-                    latitude=lat,
-                    longitude=lng,
-                    raw_address=rawadd,
-                    hours_of_operation=hours,
-                )
+                if purl not in cities:
+                    yield SgRecord(
+                        locator_domain=website,
+                        page_url=purl,
+                        location_name=name,
+                        street_address=add,
+                        city=city,
+                        state=state,
+                        zip_postal=zc,
+                        country_code=country,
+                        phone=phone,
+                        location_type=typ,
+                        store_number=store,
+                        latitude=lat,
+                        longitude=lng,
+                        raw_address=rawadd,
+                        hours_of_operation=hours,
+                    )
         except:
             pass
 

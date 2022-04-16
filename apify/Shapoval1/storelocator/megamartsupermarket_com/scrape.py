@@ -11,7 +11,7 @@ def fetch_data(sgw: SgWriter):
 
     locator_domain = "https://megamartsupermarket.com/"
     api_url = "https://megamartsupermarket.com/sucursales/"
-    session = SgRequests()
+    session = SgRequests(verify_ssl=False)
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
@@ -37,6 +37,7 @@ def fetch_data(sgw: SgWriter):
         country_code = "US"
         city = a.city or "<MISSING>"
         text = "".join(d.xpath('.//a[./span[text()="Ver Mapa"]]/@href'))
+
         try:
             if text.find("ll=") != -1:
                 latitude = text.split("ll=")[1].split(",")[0]
@@ -46,6 +47,12 @@ def fetch_data(sgw: SgWriter):
                 longitude = text.split("@")[1].split(",")[1]
         except IndexError:
             latitude, longitude = "<MISSING>", "<MISSING>"
+        if latitude == "<MISSING>":
+            try:
+                latitude = text.split("%40")[1].split("%2C")[0].strip()
+                longitude = text.split("%40")[1].split("%2C")[1].split("%")[0].strip()
+            except IndexError:
+                latitude, longitude = "<MISSING>", "<MISSING>"
         phone = (
             "".join(d.xpath(".//h3/following-sibling::div[2]//text()"))
             .replace("\n", "")

@@ -86,6 +86,12 @@ def fetch_data(sgw: SgWriter):
         except:
             latitude, longitude = "", ""
 
+        try:
+            phone = tree.xpath('.//strong[text()="Phone:"]/following-sibling::text()')[
+                0
+            ].strip()
+        except:
+            phone = MISSING
         hours_of_operation = (
             " ".join(d.xpath('.//strong[text()="Hours: "]/following-sibling::text()'))
             .replace("\n", "")
@@ -130,7 +136,7 @@ def fetch_data(sgw: SgWriter):
             zip_postal=zip_postal,
             country_code=country_code,
             store_number=SgRecord.MISSING,
-            phone=SgRecord.MISSING,
+            phone=phone,
             location_type=location_type,
             latitude=latitude,
             longitude=longitude,

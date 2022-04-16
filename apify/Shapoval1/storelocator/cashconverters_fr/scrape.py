@@ -17,7 +17,7 @@ def fetch_data(sgw: SgWriter):
     }
     r = session.get(api_url, headers=headers)
     tree = html.fromstring(r.text)
-    div = tree.xpath("//h3/following-sibling::p//a")
+    div = tree.xpath("//h3/following-sibling::*//a")
 
     for d in div:
 
@@ -26,6 +26,11 @@ def fetch_data(sgw: SgWriter):
             page_url.find("maps") != -1
             or page_url.find("google") != -1
             or page_url == "#"
+        ):
+            continue
+        if (
+            page_url.find("occasion") != -1
+            or page_url.find("franchise.cashconverters") != -1
         ):
             continue
         location_name = "".join(d.xpath(".//text()")).strip()

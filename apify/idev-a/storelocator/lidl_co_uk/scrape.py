@@ -4,7 +4,7 @@ from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sglogging import SgLogSetup
 from sgrequests.sgrequests import SgRequests
-from sgzip.dynamic import DynamicGeoSearch, Grain_4
+from sgzip.dynamic import DynamicGeoSearch, Grain_2
 import dirtyjson as json
 from bs4 import BeautifulSoup as bs
 
@@ -114,7 +114,7 @@ if __name__ == "__main__":
         countries.append("lv")
 
         search = DynamicGeoSearch(
-            country_codes=list(set(countries)), granularity=Grain_4()
+            country_codes=list(set(countries)), granularity=Grain_2()
         )
         with SgWriter(
             deduper=SgRecordDeduper(

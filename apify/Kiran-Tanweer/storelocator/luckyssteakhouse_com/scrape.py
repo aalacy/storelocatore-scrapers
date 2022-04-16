@@ -76,7 +76,7 @@ def fetch_data():
 
             yield SgRecord(
                 locator_domain=DOMAIN,
-                page_url="https://someburros.com/locations/",
+                page_url=loc,
                 location_name=title,
                 street_address=street.strip(),
                 city=city.strip(),

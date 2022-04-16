@@ -20,7 +20,7 @@ locator_domain = "https://www.wolseley.co.uk/"
 
 
 def request_with_retries(url):
-    with SgRequests() as session:
+    with SgRequests(proxy_country="us") as session:
         return session.get(url, headers=_headers)
 
 

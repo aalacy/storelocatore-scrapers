@@ -63,20 +63,21 @@ def fetch_data():
                 .replace("&#x96;", "-")
                 .replace("&#xc4;", "Ä")
             )
-            city = (
-                poi["city"]
-                .replace("&#xe9;", "é")
-                .replace("&#xe8;", "è")
-                .replace("&#xe1;", "á")
-                .replace("&#xdf;", "ß")
-                .replace("&#xdc;", "Ü")
-                .replace("&#xfc;", "ü")
-                .replace("&#xd6;", "Ö")
-                .replace("&#xf6;", "ö")
-                .replace("&#xe4;", "ä")
-                .replace("&#x96;", "-")
-                .replace("&#xc4;", "Ä")
-            )
+            city = poi["city"]
+            if city:
+                city = (
+                    city.replace("&#xe9;", "é")
+                    .replace("&#xe8;", "è")
+                    .replace("&#xe1;", "á")
+                    .replace("&#xdf;", "ß")
+                    .replace("&#xdc;", "Ü")
+                    .replace("&#xfc;", "ü")
+                    .replace("&#xd6;", "Ö")
+                    .replace("&#xf6;", "ö")
+                    .replace("&#xe4;", "ä")
+                    .replace("&#x96;", "-")
+                    .replace("&#xc4;", "Ä")
+                )
             state = poi["state"]
             if not state:
                 state = poi["province"]

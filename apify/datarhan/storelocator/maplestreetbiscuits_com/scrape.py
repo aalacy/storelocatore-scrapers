@@ -18,15 +18,20 @@ def fetch_data():
     }
     response = session.get(start_url, headers=hdr)
     dom = etree.HTML(response.text)
-    all_states = dom.xpath('//p/a[@data-brz-link-type="external"]/@href')
+    all_states = dom.xpath('//a[@class="brz-a brz-container-link"]/@href')
     for url in all_states:
         url = urljoin(start_url, url)
         response = session.get(url)
         dom = etree.HTML(response.text)
-        all_locations = dom.xpath(
-            '//div[@id]/a[@data-custom-id and span and @data-brz-link-type="external"]/@href'
+        all_urls = dom.xpath(
+            '//div[@id]/a[@data-brz-link-type="external" and span]/@href'
         )
-        all_locations = [e for e in all_locations if len(e.split("/")) == 5]
+        all_locations = []
+        for url in all_urls:
+            if url == "https://www.maplestreetbiscuits.com/":
+                break
+            all_locations.append(url)
+
         for page_url in all_locations:
             if not page_url:
                 continue

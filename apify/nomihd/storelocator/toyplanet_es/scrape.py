@@ -76,19 +76,25 @@ def fetch_data():
                 zip = raw_address.rsplit(" ", 1)[-1].strip()
                 country_code = "ES"
                 raw_address = street_address + " " + zip
-                phone = (
-                    "".join(store.xpath('.//a[@class="storelocator-phone"]/text()'))
-                    .strip()
-                    .replace("+", "")
-                    .strip()
-                )
+                phone = store.xpath('.//a[@class="storelocator-phone"]/text()')
+                if len(phone) > 0:
+                    phone = "".join(phone[0]).strip().replace("+", "").strip()
+                else:
+                    phone = "<MISSING>"
                 location_type = "<MISSING>"
 
-                hours_of_operation = "".join(
-                    store.xpath(
-                        './/div[@class="store-hours"]//p[@class="hours-container"]/text()'
+                hours_of_operation = (
+                    "".join(
+                        store.xpath(
+                            './/div[@class="store-hours"]//p[@class="hours-container"]/text()'
+                        )
                     )
-                ).strip()
+                    .strip()
+                    .replace("\n", ";")
+                    .strip()
+                    .split("FESTIVOS")[0]
+                    .strip()
+                )
 
                 latitude, longitude = "<MISSING>", "<MISSING>"
 
