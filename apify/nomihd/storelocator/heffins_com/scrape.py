@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from sgrequests import SgRequests
+from sgrequests import SgRequests, SgRequestError
 from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
@@ -62,11 +62,14 @@ def fetch_data():
                     page_url = "https://www.heffins.com" + page_url
                     log.info(page_url)
                     store_req = session.get(page_url, headers=headers)
-                    store_sel = lxml.html.fromstring(store_req.text)
-                    map_link = "".join(
-                        store_sel.xpath('//iframe[contains(@src,"maps/embed")]/@src')
-                    ).strip()
-                    latitude, longitude = get_latlng(map_link)
+                    if isinstance(store_req, SgRequestError):
+                        store_sel = lxml.html.fromstring(store_req.text)
+                        map_link = "".join(
+                            store_sel.xpath(
+                                '//iframe[contains(@src,"maps/embed")]/@src'
+                            )
+                        ).strip()
+                        latitude, longitude = get_latlng(map_link)
 
             if not page_url:
                 page_url = search_url
