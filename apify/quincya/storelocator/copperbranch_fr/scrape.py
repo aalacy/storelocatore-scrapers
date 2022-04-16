@@ -21,7 +21,7 @@ def fetch_data(sgw: SgWriter):
 
     locator_domain = "https://copperbranch.fr"
 
-    items = base.find_all(class_="elementor-section-wrap")[1].find_all("h2")
+    items = base.find_all("h2")
 
     for i in items:
 
@@ -51,6 +51,7 @@ def fetch_data(sgw: SgWriter):
         street_address = (
             street_address.replace("Shopping Coeur Alsace,", "")
             .replace("CC La Part Dieu,", "")
+            .replace("Adresse :", "")
             .strip()
         )
         if street_address[-1:] == ",":
@@ -59,13 +60,21 @@ def fetch_data(sgw: SgWriter):
         state = ""
         zip_code = city_line[0]
         country_code = "France"
-        if "BRUXELL" in city:
-            country_code = "Belgium"
+        if "UTRECHT" in location_name:
+            country_code = "Netherlands"
         store_number = item.div["data-id"]
         location_type = "<MISSING>"
         hours_of_operation = ""
         latitude = ""
         longitude = ""
+
+        if "Steenweg 37" in street_address:
+            street_address = "Steenweg 37"
+            city = ""
+            state = ""
+            zip_code = ""
+            phone = ""
+            hours_of_operation = " ".join(list(item.find_all("p")[-1].stripped_strings))
 
         sgw.write_row(
             SgRecord(

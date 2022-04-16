@@ -40,12 +40,25 @@ def fetch_data():
                 country_code = "US"
                 if len(addr.postcode) > 5:
                     country_code = "CA"
+                city = addr.city
+                location_name = _.h4.text.strip()
+                if "Brooklyn" in raw_address:
+                    city = "Brooklyn"
+                else:
+                    if city == "Park":
+                        city = ""
                 state = addr.state
-                if not state:
-                    state = _.h4.text.split(",")[-1].strip()
+                if not state and country_code == "CA":
+                    state = location_name.split(",")[-1].strip()
                 phone = ""
-                if _.select_one("li a"):
-                    phone = _.select_one("li a").text.strip()
+                if _.find("a", href=re.compile(r"tel:")):
+                    phone = _.find("a", href=re.compile(r"tel:")).text.strip()
+                if not phone and _.find("li", string=re.compile(r"Phone")):
+                    phone = (
+                        _.find("li", string=re.compile(r"Phone"))
+                        .text.replace("Phone", "")
+                        .replace(":", "")
+                    )
                 hr = _.find("strong", string=re.compile(r"Store Hours"))
                 hours = []
                 if hr:
@@ -71,6 +84,8 @@ def fetch_data():
                 hours_of_operation = "; ".join(hours).strip()
                 if hours_of_operation == "By appointment only":
                     hours_of_operation = ""
+                if "www.tftnm.com" in hours_of_operation:
+                    hours_of_operation = ""
 
                 if hours_of_operation.startswith(";"):
                     hours_of_operation = hours_of_operation[1:]
@@ -78,9 +93,9 @@ def fetch_data():
                 yield SgRecord(
                     page_url=base_url,
                     store_number=_["id"].split("-")[-1],
-                    location_name=_.h4.text.strip(),
+                    location_name=location_name,
                     street_address=street_address,
-                    city=addr.city,
+                    city=city,
                     state=state,
                     zip_postal=addr.postcode,
                     country_code=country_code,
