@@ -68,7 +68,7 @@ def fetch_data():
                     .replace("|", " ")
                 )
                 raw_address = re.sub(pattern, "\n", raw_address).replace("\n", " ")
-                phone = soup.select_one("a[href*=tel]").text
+                phone = soup.find("div", {"class": "welcome-inner"}).find("li").text
                 hours_of_operation = (
                     soup.find("div", {"class": "opening-times"})
                     .get_text(separator="|", strip=True)
