@@ -27,7 +27,7 @@ def fetch_data(sgw: SgWriter):
     for j in js:
         ids = j.get("id")
         city = j.get("name")
-        session = SgRequests()
+
         r = session.get(
             f"https://www.okmarket.ru/ajax/map_filter/search/?lang=ru&city_id={ids}&type=shop",
             headers=headers,
@@ -46,7 +46,10 @@ def fetch_data(sgw: SgWriter):
             country_code = "RU"
             latitude = j.get("coords").get("latitude")
             longitude = j.get("coords").get("longitude")
-            phone = j.get("phone")[0].get("label")
+            try:
+                phone = j.get("phone")[0].get("label")
+            except:
+                phone = "<MISSING>"
             hours_of_operation = j.get("time").get("label")
 
             row = SgRecord(

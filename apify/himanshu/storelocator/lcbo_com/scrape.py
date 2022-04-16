@@ -1,293 +1,133 @@
-import csv
-import time
+from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
-from bs4 import BeautifulSoup
-import json
-from sglogging import SgLogSetup
-from sgzip.static import static_zipcode_list, SearchableCountries
-
-logger = SgLogSetup().get_logger("lcbo_com")
-
-
-session = SgRequests()
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
+from sgpostal.sgpostal import International_Parser, parse_address
+from concurrent import futures
 
 
-def write_output(data):
-    with open("data.csv", newline="", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def get_data(coords, sgw: SgWriter):
+    lat, long = coords
+    locator_domain = "https://www.lcbo.com/"
 
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-                "page_url",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+    session = SgRequests()
 
-
-def fetch_data():
-    addresses = []
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36",
-        "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0",
+        "Accept": "*/*",
+        "Accept-Language": "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3",
+        "X-NewRelic-ID": "VwQHU1dQCRAJU1NUAgMEUFQ=",
+        "newrelic": "eyJ2IjpbMCwxXSwiZCI6eyJ0eSI6IkJyb3dzZXIiLCJhYyI6IjMyMDIxMzEiLCJhcCI6IjEwMjgwMDg2OTIiLCJpZCI6ImE0NmRjNDg4NTQ1Y2Q1MjAiLCJ0ciI6IjNjOWNhNWQzY2U1MWE2Y2NhOWY1ZWIwMWFmYjU2MGMwIiwidGkiOjE2NDk4NDU3NjM0OTAsInRrIjoiMTMyMjg0MCJ9fQ==",
+        "traceparent": "00-3c9ca5d3ce51a6cca9f5eb01afb560c0-a46dc488545cd520-01",
+        "tracestate": "1322840@nr=0-1-3202131-1028008692-a46dc488545cd520----1649845763490",
+        "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+        "X-Requested-With": "XMLHttpRequest",
+        "Origin": "https://www.lcbo.com",
+        "Connection": "keep-alive",
+        "Referer": "https://www.lcbo.com/en/stores/",
+        "Sec-Fetch-Dest": "empty",
+        "Sec-Fetch-Mode": "cors",
+        "Sec-Fetch-Site": "same-origin",
     }
-    base_url = "https://www.lcbo.com"
 
-    search = static_zipcode_list(country_code=SearchableCountries.CANADA, radius=5)
+    data = {
+        "lat": f"{lat}",
+        "lng": f"{long}",
+    }
 
-    x = len(search)
-    for zip_code in search:
+    r = session.post(
+        "https://www.lcbo.com/en/amlocator/index/ajax/", headers=headers, data=data
+    )
 
-        logger.info(f"{zip_code} | remaining: {x}")
-        x = x - 1
+    js = r.json()["items"]
 
-        data = {"citypostalcode": zip_code}
-        location_url = "https://www.lcbo.com/webapp/wcs/stores/servlet/AjaxStoreLocatorResultsView?catalogId=10051&langId=-1&storeId=10203&orderId="
+    for j in js:
 
-        while True:
-            try:
-                r = session.post(location_url, headers=headers, data=data)
-                break
-            except:
-                time.sleep(10)
-                continue
+        info = j.get("popup_html")
+        a = html.fromstring(info)
+        page_url = "".join(a.xpath('//h3[@class="amlocator-name"]/a/@href'))
+        location_name = (
+            "".join(a.xpath('//h3[@class="amlocator-name"]//text()'))
+            .replace("\n", "")
+            .strip()
+        )
+        ad = (
+            " ".join(a.xpath('//div[@class="amlocator-info-popup"]//text()'))
+            .replace("Address 2", "")
+            .replace("address 2", "")
+            .replace(":", "")
+            .replace("\n", "")
+            .strip()
+        )
+        ad = " ".join(ad.split())
+        b = parse_address(International_Parser(), ad)
+        street_address = (
+            f"{b.street_address_1} {b.street_address_2}".replace("None", "").strip()
+            or "<MISSING>"
+        )
+        state = b.state or "<MISSING>"
+        postal = b.postcode or "<MISSING>"
+        country_code = "CA"
+        city = b.city or "<MISSING>"
+        phone = (
+            "".join(a.xpath('//div[@class="amlocator-phone-number"]//text()'))
+            or "<MISSING>"
+        )
+        latitude = j.get("lat")
+        longitude = j.get("lng")
+        store_number = j.get("stloc")
+        r = session.get(page_url, headers=headers)
+        tree = html.fromstring(r.text)
+        hours_of_operation = (
+            " ".join(tree.xpath('//div[@class="amlocator-week"]//div//div//text()'))
+            .replace("\n", "")
+            .strip()
+        )
+        hours_of_operation = " ".join(hours_of_operation.split()) or "<MISSING>"
 
-        soup = BeautifulSoup(r.text, "html.parser")
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+            raw_address=ad,
+        )
 
-        for script in soup.find_all(
-            "div", attrs={"class": "row store-row store-hidden"}
-        ):
-
-            locator_domain = base_url
-            location_name = ""
-            street_address = ""
-            city = ""
-            state = ""
-            zipp = ""
-            country_code = "US"
-            store_number = ""
-            phone = ""
-            location_type = ""
-            latitude = ""
-            longitude = ""
-            page_url = ""
-            hours_of_operation = ""
-
-            # do your logic here
-
-            store_number = script["data-store-num"]
-            street_address = script["data-address"]
-            city = script["data-city"]
-            latitude = script["data-lat"]
-            longitude = script["data-long"]
-            location_name = script.find("div", {"class": "store-name"}).text.strip()
-            phone = script.find("div", {"class": "store-phone"}).text.strip()
-            zipp = script.find("div", {"class": "store-postal"}).text.strip()
-            hours_json_str = (
-                "[{"
-                + script.find("button", {"class": "md-mt-10 storehourslink"})["onclick"]
-                .split("[{")[1]
-                .split("}]")[0]
-                + "}]"
-            )
-            hours_json = json.loads(hours_json_str)
-
-            if zipp.isdigit():
-                country_code = "US"
-            else:
-                zipp = zipp[:3] + " " + zipp[3:]
-                country_code = "CA"
-
-            hours_of_operation = ""
-            index = 1
-            for hours_day in hours_json:
-                hours_of_operation += hours_day[str(index)][0] + " "
-                index += 1
-
-            store = [
-                locator_domain,
-                location_name,
-                street_address,
-                city,
-                state,
-                zipp,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-                page_url,
-            ]
-
-            if store_number not in addresses:
-                addresses.append(str(store[7]))
-                store = [str(x).strip() if x else "<MISSING>" for x in store]
-                yield store
-
-        for script in soup.find_all("div", attrs={"class": "row store-row"}):
-            locator_domain = base_url
-            location_name = ""
-            street_address = ""
-            city = ""
-            state = ""
-            zipp = ""
-            country_code = "US"
-            store_number = ""
-            phone = ""
-            location_type = ""
-            latitude = ""
-            longitude = ""
-            page_url = ""
-            hours_of_operation = ""
-
-            # do your logic here
-
-            store_number = script["data-store-num"]
-            street_address = script["data-address"]
-            city = script["data-city"]
-            latitude = script["data-lat"]
-            longitude = script["data-long"]
-            location_name = script.find("div", {"class": "store-name"}).text.strip()
-            phone = script.find("div", {"class": "store-phone"}).text.strip()
-            zipp = script.find("div", {"class": "store-postal"}).text.strip()
-            hours_json_str = (
-                "[{"
-                + script.find("button", {"class": "md-mt-10 storehourslink"})["onclick"]
-                .split("[{")[1]
-                .split("}]")[0]
-                + "}]"
-            )
-            hours_json = json.loads(hours_json_str)
-
-            if zipp.isdigit():
-                country_code = "US"
-            else:
-                zipp = zipp[:3] + " " + zipp[3:]
-                country_code = "CA"
-
-            hours_of_operation = ""
-            index = 1
-            for hours_day in hours_json:
-                hours_of_operation += hours_day[str(index)][0] + " "
-                index += 1
-
-            store = [
-                locator_domain,
-                location_name,
-                street_address,
-                city,
-                state,
-                zipp,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-                page_url,
-            ]
-
-            if str(store_number) not in addresses:
-                addresses.append(str(store[7]))
-                store = [str(x).strip() if x else "<MISSING>" for x in store]
-                yield store
-
-        for script in soup.find_all(
-            "div", attrs={"class": "row store-row pilot-store"}
-        ):
-
-            locator_domain = base_url
-            location_name = ""
-            street_address = ""
-            city = ""
-            state = ""
-            zipp = ""
-            country_code = "US"
-            store_number = ""
-            phone = ""
-            location_type = ""
-            latitude = ""
-            longitude = ""
-            page_url = ""
-            hours_of_operation = ""
-
-            # do your logic here
-
-            store_number = script["data-store-num"]
-            street_address = script["data-address"]
-            city = script["data-city"]
-            latitude = script["data-lat"]
-            longitude = script["data-long"]
-            location_name = script.find("div", {"class": "store-name"}).text.strip()
-            phone = script.find("div", {"class": "store-phone"}).text.strip()
-            zipp = script.find("div", {"class": "store-postal"}).text.strip()
-            hours_json_str = (
-                "[{"
-                + script.find("button", {"class": "md-mt-10 storehourslink"})["onclick"]
-                .split("[{")[1]
-                .split("}]")[0]
-                + "}]"
-            )
-            hours_json = json.loads(hours_json_str)
-
-            if zipp.isdigit():
-                country_code = "US"
-            else:
-                zipp = zipp[:3] + " " + zipp[3:]
-                country_code = "CA"
-
-            hours_of_operation = ""
-            index = 1
-            for hours_day in hours_json:
-                hours_of_operation += hours_day[str(index)][0] + " "
-                index += 1
-
-            store = [
-                locator_domain,
-                location_name,
-                street_address,
-                city,
-                state,
-                zipp,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-                page_url,
-            ]
-
-            if store_number not in addresses:
-                addresses.append(str(store[7]))
-                store = [str(x).strip() if x else "<MISSING>" for x in store]
-                yield store
+        sgw.write_row(row)
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
+def fetch_data(sgw: SgWriter):
+    coords = DynamicGeoSearch(
+        country_codes=[SearchableCountries.CANADA],
+        max_search_distance_miles=10,
+        max_search_results=None,
+    )
+
+    with futures.ThreadPoolExecutor(max_workers=1) as executor:
+        future_to_url = {executor.submit(get_data, url, sgw): url for url in coords}
+        for future in futures.as_completed(future_to_url):
+            future.result()
 
 
-scrape()
+if __name__ == "__main__":
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID({SgRecord.Headers.STORE_NUMBER}),
+            duplicate_streak_failure_factor=-1,
+        )
+    ) as writer:
+        fetch_data(writer)

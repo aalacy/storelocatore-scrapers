@@ -60,7 +60,15 @@ def fetch_data():
             store_info = list(
                 filter(str, [x.strip() for x in store.xpath(".//text()")])
             )
-            raw_address = " ".join(store_info[1:-3]).strip()
+            add_list = []
+            for index in range(1, len(store_info)):
+                if "Telefono" in store_info[index]:
+                    phone = "".join(store_info[index]).replace("Telefono:", "").strip()
+                else:
+                    if "Trova il negozio su" not in store_info[index]:
+                        add_list.append(store_info[index])
+
+            raw_address = " ".join(add_list).strip()
 
             formatted_addr = parser.parse_address_intl(raw_address)
             street_address = formatted_addr.street_address_1
@@ -75,7 +83,6 @@ def fetch_data():
             country_code = "IT"
 
             store_number = "<MISSING>"
-            phone = store_info[-3].replace("Telefono:", "").strip()
             location_type = "<MISSING>"
 
             hours_of_operation = "<MISSING>"

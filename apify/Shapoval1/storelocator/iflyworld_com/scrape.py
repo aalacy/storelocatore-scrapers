@@ -1,143 +1,106 @@
-import csv
-from bs4 import BeautifulSoup
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgselenium.sgselenium import SgFirefox
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
+def fetch_data(sgw: SgWriter):
 
     locator_domain = "https://www.iflyworld.com"
-
-    api_url = "https://www.iflyworld.com/find-a-location/"
     session = SgRequests()
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0",
+        "Accept": "application/json, text/plain, */*",
+        "Accept-Language": "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3",
+        "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+        "Origin": "https://www.iflyworld.com",
+        "Connection": "keep-alive",
+        "Referer": "https://www.iflyworld.com/",
+        "Sec-Fetch-Dest": "empty",
+        "Sec-Fetch-Mode": "cors",
+        "Sec-Fetch-Site": "same-site",
     }
-    r = session.get(api_url, headers=headers)
-    tree = html.fromstring(r.text)
-    block = tree.xpath('//div[@class="wrap usa masonry"]/ul/li/a[@class="loc"]')
-    for b in block:
-        slug = "".join(b.xpath(".//@href"))
+
+    params = {
+        "controller": "tunnel",
+        "method": "get_tunnels",
+    }
+
+    data = {
+        "controller": "tunnel",
+        "method": "get_tunnels",
+        "uri": "https://api2-cache.iflyworld.com/api.php?controller=tunnel&method=get_tunnels",
+        "language": "en-US",
+        "token": "",
+    }
+
+    r = session.post(
+        "https://api2-cache.iflyworld.com/api.php",
+        headers=headers,
+        params=params,
+        data=data,
+    )
+    js = r.json()
+    for j in js:
+
+        location_name = j.get("name")
+        street_address = j.get("address") or "<MISSING>"
+        state = j.get("state") or "<MISSING>"
+        postal = j.get("zip_code") or "<MISSING>"
+        country_code = j.get("country") or "<MISSING>"
+        if country_code != "US":
+            continue
+        slug = j.get("slug")
         page_url = f"https://www.iflyworld.com{slug}"
-        session = SgRequests()
-        headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
-        }
-        r = session.get(page_url, headers=headers)
-        tree = html.fromstring(r.text)
-        location_name = "".join(tree.xpath('//h2[@class="vig col"]/text()'))
-        location_type = "<MISSING>"
-        street_address = "".join(
-            tree.xpath('//div[@class="sub-info contact"]/a[1]/text()[1]')
-        ).strip()
-        adr = "".join(
-            tree.xpath('//div[@class="sub-info contact"]/a[1]/text()[2]')
-        ).strip()
-        phone = "".join(
-            tree.xpath(
-                '//div[@class="sub-info contact"]/a[contains(@href, "tel")]/text()'
-            )
-        ).strip()
+        city = j.get("city") or "<MISSING>"
+        latitude = j.get("latitude") or "<MISSING>"
+        longitude = j.get("longitude") or "<MISSING>"
+        phone = j.get("phone") or "<MISSING>"
+        with SgFirefox() as driver:
 
-        state = adr.split(",")[1].split()[0].strip() or "<MISSING>"
-        postal = adr.split(",")[1].split()[-1].strip() or "<MISSING>"
-        if postal.find("-") != -1:
-            postal = postal.split("-")[0].strip()
-        country_code = "US"
-        city = adr.split(",")[0].strip() or "<MISSING>"
-        store_number = "<MISSING>"
-        hours_of_operation = (
-            " ".join(
-                tree.xpath(
-                    '//h6[contains(text(), "HOURS")]/following-sibling::p/text()'
+            driver.get(page_url)
+            a = driver.page_source
+            tree = html.fromstring(a)
+
+            hours_of_operation = (
+                " ".join(
+                    tree.xpath(
+                        '//table[@class="location-hours"]//tr//td//text() | //h6[text()="HOURS"]/following-sibling::p/text()'
+                    )
                 )
+                .replace("\n", "")
+                .strip()
             )
-            .replace("\n", "")
-            .strip()
-        )
-        if hours_of_operation.find("coming soon") != -1:
-            hours_of_operation = "Coming Soon"
-        if hours_of_operation.find("will be closed") != -1:
-            hours_of_operation = hours_of_operation.split(".")[1].strip()
-        if hours_of_operation.find("will be closing") != -1:
-            hours_of_operation = hours_of_operation.split(".")[1].strip()
-        if hours_of_operation.find("April 1, 2021.") != -1:
-            hours_of_operation = hours_of_operation.split("April 1, 2021.")[1].strip()
-        if hours_of_operation.find("will be opening") != -1:
-            hours_of_operation = "temporarily closed"
-        if hours_of_operation.find("Currently taking limited") != -1:
-            hours_of_operation = "<MISSING>"
-        if hours_of_operation.find("President's Day:") != -1:
-            hours_of_operation = hours_of_operation.split("President's Day:")[0].strip()
-        if hours_of_operation.find("Spring Break") != -1:
-            hours_of_operation = hours_of_operation.split(")")[1].strip()
+            hours_of_operation = (
+                " ".join(hours_of_operation.split()).replace("TBD", "").strip()
+                or "<MISSING>"
+            )
 
-        ll = "".join(tree.xpath('//a[contains(@title, "Open in Google Maps")]/@href'))
-        req = session.get(ll, headers=headers)
-        maps = BeautifulSoup(req.text, "lxml")
+            row = SgRecord(
+                locator_domain=locator_domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=postal,
+                country_code=country_code,
+                store_number=SgRecord.MISSING,
+                phone=phone,
+                location_type=SgRecord.MISSING,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+                raw_address=f"{street_address} {city}, {state} {postal}",
+            )
 
-        try:
-            raw_gps = maps.find("meta", attrs={"itemprop": "image"})["content"]
-            latitude = raw_gps[raw_gps.find("=") + 1 : raw_gps.find("%")].strip()
-            longitude = raw_gps[raw_gps.find("-") : raw_gps.find("&")].strip()
-        except:
-            latitude = "<MISSING>"
-            longitude = "<MISSING>"
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+            sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))) as writer:
+        fetch_data(writer)
