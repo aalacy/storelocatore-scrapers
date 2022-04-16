@@ -3,7 +3,7 @@ import re
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgpostal.sgpostal import parse_address_intl
-from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
@@ -21,33 +21,28 @@ MISSING = SgRecord.MISSING
 def fetch_data():
 
     cleanr = re.compile(r"<[^>]+>")
-    base_url = "https://www.fredericmalle.com"
-    url = "https://www.fredericmalle.com/about#/stores/"
+    url = "https://www.supermarchesmatch.fr/search-magasin.php?all=1"
     r = session.get(url, headers=headers)
     soup = BeautifulSoup(r.text, "html.parser")
-    loclist = soup.find_all("div", {"class": "stores__location-wrapper"})
+    loclist = soup.find_all("div", {"class": "mgsbloc"})
     for loc in loclist:
-        title = loc.find("div", {"class": "stores__location-name"}).text
-        address = str(loc.findAll("div", {"class": "stores__location-address"})[-1])
+        title = loc.find("h3").text
+        link = loc["onclick"].split("'", 1)[1].split("'", 1)[0]
+        store = link.split(".fr/", 1)[1].split("-", 1)[0]
 
-        if len(address) < 3:
-            address = str(loc.find("div", {"class": "stores__content-content"}))
-        address = re.sub(cleanr, " ", address).replace("\n", " ").strip()
+        address = str(loc.find("div", {"class": "zoneText"}))
+        address = re.sub(cleanr, " ", address).strip().split("\n", 1)[0]
+
+        r = session.get(link, headers=headers)
+        soup = BeautifulSoup(r.text, "html.parser")
         try:
-            phone = loc.find("div", {"class": "stores__location-phone"}).text
-        except:
-            phone = "<MISSING>"
-        try:
-            hours = loc.find("div", {"class": "stores__location-hours"}).text
+            hours = (
+                soup.find("li", {"class": "prefooter-listItemHoraires"})
+                .text.replace("\n", " ")
+                .strip()
+            )
         except:
             hours = "<MISSING>"
-        try:
-            lat, longt = (
-                loc.find("a")["href"].split("@", 1)[1].split("data", 1)[0].split(",", 1)
-            )
-            longt = longt.split(",", 1)[0]
-        except:
-            lat = longt = "<MISSING>"
         pa = parse_address_intl(address)
 
         street_address = pa.street_address_1
@@ -62,11 +57,11 @@ def fetch_data():
         zip_postal = pa.postcode
         pcode = zip_postal.strip() if zip_postal else MISSING
 
-        ccode = pa.postcode
+        ccode = pa.country
         ccode = ccode.strip() if ccode else MISSING
 
         yield SgRecord(
-            locator_domain=base_url,
+            locator_domain="https://www.supermarchesmatch.fr/",
             page_url=url,
             location_name=title,
             street_address=street.strip(),
@@ -74,11 +69,11 @@ def fetch_data():
             state=state.strip(),
             zip_postal=pcode.strip(),
             country_code=ccode,
-            store_number=SgRecord.MISSING,
-            phone=phone.strip(),
+            store_number=str(store),
+            phone=SgRecord.MISSING,
             location_type=SgRecord.MISSING,
-            latitude=str(lat),
-            longitude=str(longt),
+            latitude=SgRecord.MISSING,
+            longitude=SgRecord.MISSING,
             hours_of_operation=hours,
             raw_address=address,
         )
@@ -86,7 +81,7 @@ def fetch_data():
 
 def scrape():
     with SgWriter(
-        deduper=SgRecordDeduper(SgRecordID({SgRecord.Headers.LOCATION_NAME}))
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
     ) as writer:
         results = fetch_data()
         for rec in results:
