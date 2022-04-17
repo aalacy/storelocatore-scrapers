@@ -35,16 +35,51 @@ def fetch_data():
                     f"{base_url}?region={region['value']}&comuna={slug['value']}#"
                 )
                 logger.info(page_url)
-                locations = bs(
-                    session.get(page_url, headers=_headers).text, "lxml"
-                ).select("div.container-mapa div.direccion")
+                res1 = session.get(page_url, headers=_headers)
+                if res1.status_code != 200:
+                    continue
+                locations = bs(res1.text, "lxml").select(
+                    "div.container-mapa div.direccion"
+                )
                 for _ in locations:
                     location_name = _.h3.text.strip()
                     raw_address = _.p.b.text.strip()
-                    addr = parse_address_intl(raw_address)
+                    addr = parse_address_intl(raw_address + ", Chile")
                     street_address = addr.street_address_1
                     if addr.street_address_2:
                         street_address += " " + addr.street_address_2
+
+                    city = addr.city or ""
+                    state = addr.state
+                    if (
+                        not city
+                        and "Mall" not in location_name
+                        and "Plaza" not in location_name
+                        and "Center" not in location_name
+                        and "Portal" not in location_name
+                        and "Aeropuerto" not in location_name
+                        and "Shop" not in location_name
+                        and "Espacio" not in location_name
+                        and "Estado" not in location_name
+                    ):
+                        city = location_name
+                    if (
+                        city.replace("-", "").isdigit()
+                        or city == "C16"
+                        or city == "A"
+                        or city == "Cenit"
+                        or city == "Alameda 711"
+                        or city == "B-2083"
+                        or city == "C-21"
+                        or city == "C-365"
+                    ):
+                        city = ""
+
+                    if city and "Los Ríos" in city:
+                        state = "Los Ríos"
+                    street_address = street_address.replace("Chile", "").strip()
+                    if street_address.isdigit():
+                        street_address = raw_address.split(",")[0]
                     hours = _.select("p")[1].b.text.strip()
                     if "Centro Comercial" in hours:
                         hours = ""
@@ -52,8 +87,8 @@ def fetch_data():
                         page_url=page_url,
                         location_name=location_name,
                         street_address=street_address,
-                        city=addr.city,
-                        state=addr.state,
+                        city=city.replace("Jumbo", "").replace("Los Ríos", "").strip(),
+                        state=state,
                         zip_postal=addr.postcode,
                         country_code="Chile",
                         locator_domain=locator_domain,

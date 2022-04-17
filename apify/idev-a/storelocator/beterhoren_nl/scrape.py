@@ -65,9 +65,9 @@ def fetch_data():
             driver.get("https://www.beterhoren.nl" + url["href"])
             locations += [
                 loc.a["href"]
-                for loc in bs(driver.page_source, "lxml")
-                .select_one("div.richtext-container ul")
-                .select("li")
+                for loc in bs(driver.page_source, "lxml").select(
+                    "div.richtext-container li"
+                )
                 if loc.a
             ]
 
@@ -89,6 +89,7 @@ def fetch_data():
         addr = _["address"]
         yield SgRecord(
             page_url=page_url,
+            store_number=sp1.select_one("main.store-detail-page")["data-shop-number"],
             location_name=_["name"],
             street_address=addr["streetAddress"],
             city=addr["addressLocality"],

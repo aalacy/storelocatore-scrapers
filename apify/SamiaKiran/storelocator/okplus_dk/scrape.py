@@ -43,8 +43,11 @@ def fetch_data():
                 location_name = strip_accents(loc[0].text)
                 log.info(location_name)
                 address = loc[1].get_text(separator="|", strip=True).split("|")
-                phone = address[1].replace("Tlf.", "")
-                raw_address = strip_accents(address[0])
+                if "ONLINE BOOKING" in address[-1]:
+                    del address[-1]
+                phone = address[-1].replace("Tlf.", "")
+                raw_address = " ".join(address[:-1])
+                raw_address = strip_accents(raw_address)
 
                 pa = parse_address_intl(raw_address)
 

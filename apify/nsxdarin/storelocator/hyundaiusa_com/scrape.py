@@ -1,3 +1,4 @@
+import json
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
@@ -40,8 +41,6 @@ def fetch_data():
             + "&maxdealers=45"
         )
         r = session.get(url, headers=headers)
-        if r.encoding is None:
-            r.encoding = "utf-8"
         for line in r.iter_lines():
             if '{"cobaltDealerURL":"' in line:
                 items = line.split('{"cobaltDealerURL":"')
@@ -55,6 +54,7 @@ def fetch_data():
                             loc = "<MISSING>"
                         store = item.split('"dealerCd":"')[1].split('"')[0]
                         name = item.split('"dealerNm":"')[1].split('"')[0]
+                        logger.info(name)
                         add = (
                             item.split('"address1":"')[1].split('"')[0]
                             + " "
@@ -85,26 +85,12 @@ def fetch_data():
                         except:
                             lat = "<MISSING>"
                             lng = "<MISSING>"
+                        hour_list = json.loads(
+                            item.split('"operations":')[1].split(',"vendorName"')[0]
+                        )
                         hours = ""
-                        if '"operations":[]' in item:
-                            hours = "<MISSING>"
-                        else:
-                            days = (
-                                item.split('"operations":[')[1]
-                                .split("]")[0]
-                                .split('"name":"')
-                            )
-                            for day in days:
-                                if '"hour":"' in day:
-                                    hrs = (
-                                        day.split('"day":"')[1].split('"')[0]
-                                        + ": "
-                                        + day.split('"hour":"')[1].split('"')[0]
-                                    )
-                                    if hours == "":
-                                        hours = hrs
-                                    else:
-                                        hours = hours + "; " + hrs
+                        for hour in hour_list:
+                            hours = hours + " " + hour["day"] + " " + hour["hour"]
                         yield SgRecord(
                             locator_domain=website,
                             page_url=loc,
@@ -128,7 +114,7 @@ def scrape():
     count = 0
     with SgWriter(
         deduper=SgRecordDeduper(
-            RecommendedRecordIds.StoreNumberId, duplicate_streak_failure_factor=1500
+            RecommendedRecordIds.StoreNumberId, duplicate_streak_failure_factor=-1
         )
     ) as writer:
         results = fetch_data()

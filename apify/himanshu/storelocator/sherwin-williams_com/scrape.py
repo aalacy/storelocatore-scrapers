@@ -1,12 +1,11 @@
-import csv
 import json
-
 from bs4 import BeautifulSoup
-
 from sglogging import SgLogSetup
-
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
-
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 
 logger = SgLogSetup().get_logger("sherwin-williams_com")
@@ -14,41 +13,7 @@ logger = SgLogSetup().get_logger("sherwin-williams_com")
 session = SgRequests()
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-                "page_url",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
-def clean(x):
-    return x.replace("&#039;", "'").replace("amp;", "")
-
-
-def fetch_data():
+def fetch_data(sgw: SgWriter):
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36"
     }
@@ -70,7 +35,6 @@ def fetch_data():
                 .replace('"', "")
                 .replace(":", "")
             )
-    addresses = []
     max_results = 25
     max_distance = 75
     r_headers = {
@@ -114,26 +78,14 @@ def fetch_data():
             for store_data in data:
                 lat = store_data["latitude"]
                 lng = store_data["longitude"]
-                search.found_location_at(lat, lng)
-                store = []
-                store.append("https://www.sherwin-williams.com")
-                store.append(clean(store_data["name"]))
-                store.append(clean(store_data["address"]))
-                if store[-1] in addresses:
-                    continue
-                addresses.append(store[-1])
-                store.append(clean(store_data["city"]))
-                store.append(store_data["state"])
-                store_data["zipcode"] = store_data["zipcode"].replace(
-                    "                                   ", ""
-                )
-                if store_data["zipcode"].replace(" ", "").replace("-", "").isdigit():
-                    store.append(store_data["zipcode"].replace(" ", ""))
-                    store.append("US")
-                else:
-                    ca_zip = store_data["zipcode"].replace(" ", "")
-                    store.append(ca_zip[:3] + " " + ca_zip[3:])
-                    store.append("CA")
+                locator_domain = "https://www.sherwin-williams.com"
+                location_name = store_data["name"] or "<MISSING>"
+                street_address = store_data["address"] or "<MISSING>"
+                city = store_data["city"] or "<MISSING>"
+                state = store_data["state"] or "<MISSING>"
+                postal = store_data["zipcode"] or "<MISSING>"
+                country_code = "CA"
+
                 store_num = store_data["url"].split("storeNumber=")[1].split("&")[0]
                 if store_num in [
                     "190520",
@@ -144,17 +96,8 @@ def fetch_data():
                     "621001",
                 ]:
                     continue
-                store.append(store_num)
-                store.append(
-                    store_data["phone"].replace("  ", "")
-                    if "phone" in store_data
-                    and store_data["phone"] != ""
-                    and store_data["phone"] is not None
-                    else "<MISSING>"
-                )
-                store.append(loc_type)
-                store.append(lat)
-                store.append(lng)
+                phone = store_data["phone"] or "<MISSING>"
+
                 link = "https://www.sherwin-williams.com" + store_data["url"]
                 location_request = session.get(
                     link,
@@ -180,14 +123,28 @@ def fetch_data():
                     )
                 except:
                     pass
-                store.append(hours if hours != "" else "<MISSING>")
-                store.append(link)
-                yield store
+
+                row = SgRecord(
+                    locator_domain=locator_domain,
+                    page_url=link,
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=postal,
+                    country_code=country_code,
+                    store_number=SgRecord.MISSING,
+                    phone=phone,
+                    location_type=loc_type,
+                    latitude=lat,
+                    longitude=lng,
+                    hours_of_operation=hours,
+                )
+
+                sgw.write_row(row)
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+if __name__ == "__main__":
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))) as writer:
+        fetch_data(writer)
