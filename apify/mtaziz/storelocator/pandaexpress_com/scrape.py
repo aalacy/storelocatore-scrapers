@@ -1,211 +1,297 @@
 from sgrequests import SgRequests
+from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
-from sgscrape.sgwriter import SgWriter
-from sgzip.dynamic import DynamicGeoSearch, SearchableCountries, Grain_8
-from sglogging import SgLogSetup
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from tenacity import retry, stop_after_attempt
+from lxml import html
 import tenacity
-import json
-import ssl
-import datetime
-
-try:
-    _create_unverified_https_context = (
-        ssl._create_unverified_context
-    )  # Legacy Python that doesn't verify HTTPS certificates by default
-except AttributeError:
-    pass
-else:
-    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
 
-LOCATOR_URL = "https://www.pandaexpress.com/location"
-MISSING = SgRecord.MISSING
 logger = SgLogSetup().get_logger("pandaexpress_com")
-MAX_WORKERS = 10
-
-hdr_noncookies = {
+headers = {
     "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.102 Safari/537.36",
     "accept": "application/json, text/plain, */*",
     "content-type": "application/json",
-    "referer": "https://www.pandaexpress.com/",
 }
 
-
-def get_hours(_, api_url):
-    sn = _["extref"]
-    hoo = []
-    hours_of_operation = ""
-    try:
-        calendars = _["calendars"]["calendar"][0]["ranges"]
-        for cal in calendars:
-            s = cal["start"].split(" ")[-1]
-            c = cal["end"].split(" ")[-1]
-            wd = cal["weekday"]
-            wdsc = wd + " " + s + " - " + c
-            hoo.append(wdsc)
-        hours_of_operation = "; ".join(hoo)
-    except Exception as e:
-        hours_of_operation = ""
-        logger.info(
-            f"Fix HoursOfOperation << {e} >> | [StoreNumber:{sn}] | at {api_url}"
-        )
-
-    return hours_of_operation
+MAX_WORKERS = 10
 
 
-def get_hours_new(_, api_url):
-    sn = _["extref"]
-    hoo = []
-    hours_of_operation = ""
-    try:
-        calendars = _["calendars"]
-        if calendars:
-            for i in calendars["calendar"]:
-                if i["type"] == "business":
-                    for j in i["ranges"]:
-                        s = j["start"].split(" ")[-1]
-                        c = j["end"].split(" ")[-1]
-                        wd = j["weekday"]
-                        wdsc = wd + " " + s + " - " + c
-                        hoo.append(wdsc)
-                    hours_of_operation = "; ".join(hoo)
+def get_store_urls():
+    url = "https://www.pandaexpress.com/locations"
+    states = []
+    cities = [
+        "https://www.pandaexpress.com/locations/wi/milwaukee",
+        "https://www.pandaexpress.com/locations/tx/hurst",
+        "https://www.pandaexpress.com/locations/sc/charleston",
+        "https://www.pandaexpress.com/locations/sc/myrtle-beach",
+        "https://www.pandaexpress.com/locations/mi/lansing",
+        "https://www.pandaexpress.com/locations/mi/rochester",
+        "https://www.pandaexpress.com/locations/md/frederick",
+        "https://www.pandaexpress.com/locations/in/lafayette",
+        "https://www.pandaexpress.com/locations/il/peoria",
+        "https://www.pandaexpress.com/locations/ia/des-moines",
+        "https://www.pandaexpress.com/locations/hi/kailua",
+        "https://www.pandaexpress.com/locations/fl/panama-city",
+        "https://www.pandaexpress.com/locations/ca/covina",
+        "https://www.pandaexpress.com/locations/ca/highland",
+        "https://www.pandaexpress.com/locations/ca/hollywood",
+        "https://www.pandaexpress.com/locations/ca/monterey",
+        "https://www.pandaexpress.com/locations/ca/walnut",
+        "https://www.pandaexpress.com/locations/ca/woodland",
+        "https://www.pandaexpress.com/locations/az/prescott",
+        "https://www.pandaexpress.com/locations/ar/benton",
+    ]
+    locs = ["https://www.pandaexpress.com/locations/ar/benton/20810-i-30-north"]
+    with SgRequests() as session:
+        r = session.get(url, headers=headers)
+        for line in r.iter_lines():
+            if '<a class="record" href="/locations/' in line:
+                items = line.split('<a class="record" href="/locations/')
+                for item in items:
+                    if 'data-ga-event="locationClick' in item:
+                        lurl = (
+                            "https://www.pandaexpress.com/locations/"
+                            + item.split('"')[0]
+                        )
+                        states.append(lurl)
+        logger.info(f"#OFSTATE: {len(states)}")
+        for sidx, state in enumerate(states[0:]):
+            logger.info(f"[{sidx}, {state} ]")
+            r2 = session.get(state, headers=headers)
+            for line2 in r2.iter_lines():
+                if '<a class="record" href="/locations/' in line2:
+                    items = line2.split('<a class="record" href="/locations/')
+                    for item in items:
+                        if 'data-ga-event="locationClick"' in item:
+                            lurl = (
+                                "https://www.pandaexpress.com/locations/"
+                                + item.split('"')[0]
+                            )
+                            lurl = lurl.replace("coeur-dalene", "coeur-d'alene")
+                            if "(1) </a>" in item and lurl not in cities:
+                                locs.append(lurl)
+                            else:
+                                cities.append(lurl)
+        logger.info(f"[#CITIES: {len(cities)}]")
+        for cidx, city in enumerate(cities[0:]):
+            logger.info(f"[{cidx}, {city} ]")
+            r3 = session.get(city, headers=headers)
+            for line2 in r3.iter_lines():
+                if '<a href="/locations/' in line2:
+                    items = line2.split('<a href="/locations/')
+                    for item in items:
+                        if 'data-ga-event="storeDetailsClick"' in item:
+                            lurl = (
+                                "https://www.pandaexpress.com/locations/"
+                                + item.split('"')[0]
+                            )
+                            locs.append(lurl)
 
-        else:
-            hours_of_operation = ""
-    except Exception as e:
-        hours_of_operation = ""
-        logger.info(
-            f"Fix HoursOfOperation << {e} >> | [StoreNumber:{sn}] | at {api_url}"
-        )
-
-    return hours_of_operation
+    return locs
 
 
-@retry(stop=stop_after_attempt(5), wait=tenacity.wait_fixed(5))
-def get_response(coord, url):
+@tenacity.retry(
+    reraise=True,
+    stop=tenacity.stop_after_attempt(2),
+    wait=tenacity.wait_random(min=0, max=5),
+)
+def get_response(url):
     with SgRequests() as http:
-        response = http.get(url, headers=hdr_noncookies)
-        if response.status_code == 200:
-            logger.info(f"[{coord}] [HTTP {response.status_code} OK!]")  # noqa
-            return response
-        raise Exception(f"<< Please Fix StoreUrlError {url} | {response.status_code}>>")
+        r = http.get(url, headers=headers)
+        logger.info(f"GetResponse: {url}")
+        if r.status_code == 200:
+            logger.info(f"[GetResponseHTTP {r.status_code} OK!]")
+            return r
+        raise Exception(f"{url} >> TemporaryError: HTTPSTATUS: {r.status_code}")
 
 
-def fetch_records(coord, search, current_country, sgw: SgWriter):
-    lat_search, lng_search = coord
-    # Example in the API URL: nomnom_calendars_from=20220414&nomnom_calendars_to=20220425.
-    # Without calendars date, the hours of operation data won't be
-    # returned by response from API call.
-    now = datetime.datetime.now()
-    # Date format has to be matched with 20220414
-    calendars_from = now.strftime("%Y%m%d")
+def get_store_number(url):
+    with SgRequests() as http:
+        r = http.get(url, headers=headers)
+        if r.status_code == 200:
+            logger.info(f"[API HTTP {r.status_code} OK!]")
+            return r
+        raise Exception(f"{url} >> FIX STORENUMBERERROR: {r.status_code}")
 
-    # Have to take current date then add 11 days.
-    calendar_end_to_11days = now + datetime.timedelta(days=11)
-    calendars_to = calendar_end_to_11days.strftime("%Y%m%d")
-    api_endpoint_url = f"https://nomnom-prod-api.pandaexpress.com/restaurants/near?lat={lat_search}&long={lng_search}&radius=20000&limit=100&nomnom=calendars&nomnom_calendars_from={calendars_from}&nomnom_calendars_to={calendars_to}&nomnom_exclude_extref=99997,99996,99987,99988,99989,99994,11111,8888,99998,99999,0000"
-    logger.info(f"pulling from: {api_endpoint_url}")
+
+def fetch_records(lid, loc, sgw: SgWriter):
     try:
-        r = get_response(coord, api_endpoint_url)
-        text = r.text
-        if not text:
-            logger.info("Response returns empty")
+        loc = loc.replace("coeur-dalene", "coeur-d'alene")
+        logger.info(f"[{lid}] [PULLINGFROM] {loc}")
+        try:
+            r2 = get_response(loc)
+        except:
             return
-        else:
-            js = json.loads(text)
-            logger.info("[JSON LOADED]")
-            rest = js["restaurants"]
-            logger.info(f"[FOUND {len(rest)}]")
-            if not rest:
-                logger.info("Data is empty!")
-                return
+        if r2 is not None:
+
+            # Get store number and latitude and longitude data from API response.
+            # This part is special, it took me a lot of effort to get this API endpoint.
+            sel20 = html.fromstring(r2.text)
+            typ = "<MISSING>"
+            hours = ""
+            add = ""
+            store_number = ""
+            latitude = ""
+            longitude = ""
+            country = "US"
+            phone = ""
+            phone1 = ""
+            phone2 = ""
+
+            slug20 = sel20.xpath("//@data-productlink")
+            if slug20:
+                slug = slug20[0].split("/")[2]
+                if slug:
+                    logger.info(f"[SLUG {slug} ]")
+                    api_endpoint_url = f"https://nomnom-prod-api.pandaexpress.com/restaurants/byslug/{slug}"
+                    r21 = get_store_number(api_endpoint_url)
+                    js21 = r21.json()
+                    store_number = js21["extref"]
+                    latitude = js21["latitude"]
+                    longitude = js21["longitude"]
+                    country = js21["country"]
+                    phone1 = js21["telephone"]
+                else:
+                    storeid = "".join(
+                        sel20.xpath('//a[contains(@href, "storeid=")]/@href')
+                    )
+                    if storeid:
+                        # Please on the source page for each store, it does not contain,
+                        # storeid data, which leads to use alternative solution
+                        # Example URL containing store id https://orders.pandaexpress.com/mp/pub/start?storeid=2010
+                        store_number = storeid.split("storeid=")[-1]
+                    else:
+                        store_number = ""
             else:
-                for _ in rest:
-                    lat = _["latitude"]
-                    lng = _["longitude"]
-                    search.found_location_at(float(lat), float(lng))
-                    hours = get_hours_new(_, api_endpoint_url)
-                    #
-                    state = _["state"]
-                    city = _["city"]
-                    sta = _["streetaddress"]
+                storeid = "".join(sel20.xpath('//a[contains(@href, "storeid=")]/@href'))
+                if storeid:
+                    # Please on the source page for each store, it does not contain,
+                    # storeid data, which leads to use alternative solution
+                    # Example URL containing store id https://orders.pandaexpress.com/mp/pub/start?storeid=2010
+                    store_number = storeid.split("storeid=")[-1]
+                else:
+                    store_number = ""
 
-                    pstate = ""
-                    pcity = ""
-                    psta = ""
+            for line2 in r2.iter_lines():
+                if '<div class="phone"><a href="tel:' in line2:
+                    phone2 = line2.split('<div class="phone"><a href="tel:')[1].split(
+                        '"'
+                    )[0]
 
-                    # Example page url containing comma
-                    # https://www.pandaexpress.com/locations/hi/jbphh/810-williamette-st,-bldg-1786-space-42
-
-                    pcity = city.replace(" ", "-").replace(".", "").replace("#", "")
-                    pstate = state
-                    locator_url = "https://www.pandaexpress.com/locations/"
-                    psta = (
-                        sta.replace("#", "")
-                        .replace(".", "")
-                        .replace(" ", "-")
-                        .replace(",", "")
+                if '<link rel="canonical" href="' in line2:
+                    purl = line2.split('<link rel="canonical" href="')[1].split('"')[0]
+                if '<div class="name"><h2>' in line2:
+                    name = (
+                        line2.split('<div class="name"><h2>')[1]
+                        .split("<")[0]
+                        .replace("&amp;", "&")
                     )
-                    pgurl = locator_url + pstate + "/" + pcity + "/" + psta
-                    pgurl = pgurl.lower()
-                    item = SgRecord(
-                        locator_domain="pandaexpress.com",
-                        page_url=pgurl,
-                        location_name=_["name"],
-                        street_address=sta,
-                        city=city,
-                        state=state,
-                        zip_postal=_["zip"],
-                        country_code=_["country"],
-                        store_number=_["extref"],
-                        phone=_["telephone"],
-                        location_type="Restaurant",
-                        latitude=_["latitude"],
-                        longitude=_["longitude"],
-                        hours_of_operation=hours,
-                        raw_address="",
+                if '<div class="address">' in line2 and add == "":
+                    address = line2.split('<div class="address">')[1].split("</div>")[0]
+                    add = address.split("<br>")[0].strip()
+                    city = address.split("<br>")[1].strip().split(",")[0]
+                    state = (
+                        address.split("<br>")[1]
+                        .strip()
+                        .split(",")[1]
+                        .strip()
+                        .rsplit(" ", 1)[0]
                     )
-                    sgw.write_row(item)
+                    zc = address.strip().rsplit(" ", 1)[1]
+                    rawadd = address.replace("<br>", ", ").replace("  ", " ")
+                try:
+                    if '<div class="day_name">' in line2:
+                        days = line2.split('<div class="day_name">')
+                        for day in days:
+                            if '<div class="day_hours">' in day:
+                                hrs = (
+                                    day.split("<")[0]
+                                    + ": "
+                                    + day.split('<div class="day_hours">')[1].split(
+                                        "<"
+                                    )[0]
+                                )
+                                if hours == "":
+                                    hours = hrs
+                                else:
+                                    hours = hours + "; " + hrs
+                except:
+                    hours = "<MISSING>"
+            if hours == "":
+                hours = "<MISSING>"
+            if (
+                "," in add
+                and "Km " not in add
+                and "Lot " not in add
+                and "Int. " not in add
+                and "Pr2" not in add
+                and "Pr-3" not in add
+                and "Suite" not in add
+            ):
+                addnew = add.split(",")[1].strip()
+                if len(addnew) <= 2:
+                    add = add.replace(",", "")
+                else:
+                    add = addnew
+            if phone1:
+                phone = phone1
+            if phone2:
+                phone = phone2
+            if len(zc) >= 1:
+                item = SgRecord(
+                    locator_domain="pandaexpress.com",
+                    page_url=purl,
+                    location_name=name,
+                    street_address=add,
+                    city=city,
+                    state=state,
+                    zip_postal=zc,
+                    country_code=country,
+                    phone=phone,
+                    location_type=typ,
+                    store_number=store_number,
+                    latitude=latitude,
+                    longitude=longitude,
+                    raw_address=rawadd,
+                    hours_of_operation=hours,
+                )
+                sgw.write_row(item)
     except Exception as e:
-        logger.info(f"Fix <{e}> at {api_endpoint_url}")
+        logger.info(f"[PLEASE FIX FETCHRECORDSERROR << {e} >> | {loc} | {lid}]")
+        return
 
 
 def fetch_data(sgw: SgWriter):
-    logger.info("Started")
-    search_us = DynamicGeoSearch(
-        country_codes=[SearchableCountries.USA],
-        expected_search_radius_miles=20,
-        granularity=Grain_8(),
-        use_state=False,
-    )
-    country_us = search_us.current_country().upper()
+    logger.info("Scrape Started")
+    store_urls_thrd = get_store_urls()
+    logger.info("Store URLs Scraped!")
+    # This store count may not be actual as some of the store urls
+    # might not be working, so we will ignore those.
+
+    logger.info(f"Total Stores: {len(store_urls_thrd)}")
+
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
         tasks = []
-        task_us = [
-            executor.submit(fetch_records, latlng, search_us, country_us, sgw)
-            for latlng in search_us
+        # UPPER LIMIT OF STORES_URLS_THRD NEEDS TO BE UPDATED ON PROD
+
+        store_data = [
+            executor.submit(fetch_records, storenum, url, sgw)
+            for storenum, url in enumerate(store_urls_thrd[0:])
         ]
-        tasks.extend(task_us)
+        tasks.extend(store_data)
         for future in as_completed(tasks):
-            if future.result() is not None:
+            record = future.result()
+            if record is not None or record:
                 future.result()
 
 
 def scrape():
     with SgWriter(
         SgRecordDeduper(
-            SgRecordID(
-                {
-                    SgRecord.Headers.STORE_NUMBER,
-                    SgRecord.Headers.LATITUDE,
-                    SgRecord.Headers.LONGITUDE,
-                }
-            ),
-            duplicate_streak_failure_factor=-1,
+            SgRecordID({SgRecord.Headers.PAGE_URL, SgRecord.Headers.STORE_NUMBER})
         )
     ) as writer:
         fetch_data(writer)
