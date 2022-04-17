@@ -24,21 +24,29 @@ def fetch_data():
         url = "http://captsub.com/locations/"
         r = session.get(url, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
-        loclist = str(soup.find("div", {"class": "entry-content"})).split("<h4>")[1:]
+        loclist = str(soup.find("div", {"class": "entry-content"})).split(
+            '<h4 style="text-align: left;">'
+        )[1:]
         for loc in loclist:
             temp = BeautifulSoup(loc, "html.parser")
             loc = temp.get_text(separator="|", strip=True).split("|")
+            if "Get Directions" in loc[-1]:
+                del loc[-1]
             location_name = loc[0]
             log.info(location_name)
-            raw_address = html.unescape(loc[1])
+            raw_address = html.unescape(" ".join(loc[1:]))
             try:
                 latitude, longitude = (
                     temp.find("a")["href"].split("!3d")[1].split("!4d")
                 )
             except:
-                coords = temp.find("a")["href"].split("@")[1].split(",")
-                latitude = coords[0]
-                longitude = coords[1]
+                try:
+                    coords = temp.find("a")["href"].split("@")[1].split(",")
+                    latitude = coords[0]
+                    longitude = coords[1]
+                except:
+                    latitude = MISSING
+                    longitude = MISSING
             pa = parse_address_intl(raw_address)
 
             street_address = pa.street_address_1
