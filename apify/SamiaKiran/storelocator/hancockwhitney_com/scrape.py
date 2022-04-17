@@ -1,6 +1,5 @@
 import json
 from typing import Iterable
-from bs4 import BeautifulSoup
 from sglogging import sglog
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
