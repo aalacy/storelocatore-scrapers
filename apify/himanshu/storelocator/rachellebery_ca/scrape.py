@@ -4,7 +4,7 @@ from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
@@ -37,6 +37,8 @@ def fetch_data():
             page_url = temp.find("a")["href"]
             log.info(page_url)
             location_name = temp.get_text(separator="|", strip=True).replace("|", "")
+            if "IGA" in location_name:
+                continue
             try:
                 street_address = (
                     loc.find("span", {"class": "location_address_address_1"}).text
@@ -66,6 +68,9 @@ def fetch_data():
                 zip_postal = r.text.split('"postal_code":"')[1].split('"')[0]
             street_address = strip_accents(street_address)
             city = strip_accents(city)
+            if "5805" in location_name:
+                street_address = location_name
+                location_name = "Rachelle-Béry boutiques santé"
             phone = loc.find("span", {"class": "phone"}).text
             hours_of_operation = (
                 str(loc["data-hours"])
@@ -81,11 +86,11 @@ def fetch_data():
             country_code = "CA"
             yield SgRecord(
                 locator_domain=DOMAIN,
-                page_url=url,
+                page_url=page_url,
                 location_name=location_name,
                 street_address=street_address.strip(),
                 city=city.strip(),
-                state=state.strip(),
+                state=state.upper().strip(),
                 zip_postal=zip_postal.strip(),
                 country_code=country_code,
                 store_number=MISSING,
@@ -101,7 +106,7 @@ def scrape():
     log.info("Started")
     count = 0
     with SgWriter(
-        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.GeoSpatialId)
+        deduper=SgRecordDeduper(record_id=SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
     ) as writer:
         results = fetch_data()
         for rec in results:
