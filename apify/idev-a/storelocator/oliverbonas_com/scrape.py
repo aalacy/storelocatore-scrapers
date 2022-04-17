@@ -40,6 +40,8 @@ def fetch_data():
             street_address = _["address"].split("London")[0].strip()
             if street_address.endswith(","):
                 street_address = street_address[:-1]
+            if street_address == "Unit 41":
+                street_address = _["address"]
             yield SgRecord(
                 page_url=locator_domain + "/us" + _["url"],
                 store_number=_["id"],

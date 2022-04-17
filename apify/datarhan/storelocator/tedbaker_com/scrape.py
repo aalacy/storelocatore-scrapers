@@ -39,7 +39,7 @@ def fetch_data():
         dom = etree.HTML(response.text)
         all_locations = dom.xpath('//div[@class="item store-coord"]')
         for poi_html in all_locations:
-            location_name = poi_html.xpath("@data-store-name")[0]
+            location_name = poi_html.xpath("@data-store-name")[0].replace(",", "")
             raw_address = poi_html.xpath("@data-store-address")[0]
             addr = parse_address_intl(raw_address)
             street_address = addr.street_address_1
@@ -50,6 +50,11 @@ def fetch_data():
             latitude = poi_html.xpath("@data-store-latitude")[0]
             longitude = poi_html.xpath("@data-store-longitude")[0]
             phone = poi_html.xpath("@data-store-phone")[0].split(":")[-1]
+            if "x" in phone:
+                phone = ""
+            if phone == "/":
+                phone = ""
+            phone = phone.replace("Tel", "").replace(",", "")
             mon = poi_html.xpath("@data-store-open-monday")[0]
             tue = poi_html.xpath("@data-store-open-tuesday")[0]
             wed = poi_html.xpath("@data-store-open-wed")[0]
@@ -60,7 +65,7 @@ def fetch_data():
             hoo = f"Monday: {mon}, Tuesday: {tue}, Wednesday: {wed}, Thursday {thu}, Friday {fri}, Satarday {sat}, Sunday {sun}"
             hoo = " ".join(hoo.split())
             if "/row/" in locator_url:
-                country_code = "UK"
+                country_code = addr.country
             if "/us/" in locator_url:
                 country_code = "USA"
             if "/au/" in locator_url:
