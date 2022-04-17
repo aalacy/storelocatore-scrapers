@@ -33,7 +33,7 @@ def fetch_data():
         loclist = session.get(url, headers=headers).json()["locations"]
         for loc in loclist:
             page_url = loc["link"]
-            location_name = html.escape(strip_accents(loc["title"]))
+            location_name = html.unescape(loc["title"])
             log.info(location_name)
             url = page_url + "/contact"
             r = session.get(url, headers=headers)
@@ -46,10 +46,10 @@ def fetch_data():
             address = loc["address"]
             phone = loc["telephone"]
             street_address = strip_accents(address["streetAddress"])
-            if street_address == "Hoofdkanaal WZ 10":
-                location_name = "Kwalitaria 't Middelpunt, EMMER-COMPASCUUM"
-            elif street_address == "Westeinde 5":
-                location_name = "Kwalitaria 't Witte Peerd, NIEUWLEUSEN"
+            if "Hoofdkanaal WZ 10" in street_address:
+                location_name = "Kwalitaria Middelpunt, EMMER-COMPASCUUM"
+            elif "Westeinde 5" in street_address:
+                location_name = "Kwalitaria Witte Peerd, NIEUWLEUSEN"
             city = strip_accents(address["addressLocality"])
             state = MISSING
             zip_postal = address["postalCode"]
