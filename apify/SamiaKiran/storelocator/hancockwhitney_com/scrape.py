@@ -50,8 +50,8 @@ def fetch_records(http: SgRequests, state: CrawlState) -> Iterable[SgRecord]:
     for next_r in state.request_stack_iter():
         r = http.get(next_r.url, headers=headers)
         page_url = next_r.url
-        if 'financial' in str(page_url):
-            location_type = 'Financial Center, ATM'
+        if "financial" in str(page_url):
+            location_type = "Financial Center, ATM"
         else:
             location_type = "ATM"
 
@@ -72,7 +72,10 @@ def fetch_records(http: SgRequests, state: CrawlState) -> Iterable[SgRecord]:
         latitude = loc["geo"]["latitude"]
         longitude = loc["geo"]["longitude"]
         hours_of_operation = loc["openingHours"]
-        if "Su closed Mo closed Tu closed We closed Th closed Fr closed Sa closed" in hours_of_operation:
+        if (
+            "Su closed Mo closed Tu closed We closed Th closed Fr closed Sa closed"
+            in hours_of_operation
+        ):
             hours_of_operation = MISSING
         store_number = r.text.split('"lid":')[1].split(",")[0]
         raw_address = MISSING
