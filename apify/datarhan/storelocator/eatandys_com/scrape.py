@@ -43,7 +43,7 @@ def fetch_data():
         }
         loc_response = session.get(loc_url, headers=headers)
         data = json.loads(loc_response.text)
-        if type(data) == dict and data['message'] == 'No matching locations found':
+        if type(data) == dict and data["message"] == "No matching locations found":
             continue
         location_name = data[0]["store_info"]["name"]
         phone = data[0]["store_info"]["phone"]
