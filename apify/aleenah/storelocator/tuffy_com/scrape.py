@@ -24,12 +24,9 @@ def fetch_data():
     zips = DynamicZipSearch(country_codes=[SearchableCountries.USA])
     for zip_code in zips:
         log.info(f"{zip_code} | remaining: {zips.items_remaining()}")
-        url = (
-            "https://www.tuffy.com/location_search?zip_code={}"
-        ).format(zip_code)
+        url = ("https://www.tuffy.com/location_search?zip_code={}").format(zip_code)
         r = session.get(url, headers=headers)
         if r.status_code != 200:
-            print(url)
             continue
         soup = BeautifulSoup(r.text, "html.parser")
         divlist = soup.findAll("div", {"class": "contact-info"})
@@ -56,7 +53,7 @@ def fetch_data():
                 address = address.split("MANAGER", 1)[0]
             except:
                 pass
-            address = address.replace(",", " ").replace("\n", ' ')
+            address = address.replace(",", " ").replace("\n", " ")
             address = usaddress.parse(address)
             i = 0
             street_address = ""
