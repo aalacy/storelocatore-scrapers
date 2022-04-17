@@ -49,6 +49,7 @@ def record_initial_requests(http: SgRequests, state: CrawlState) -> bool:
 def fetch_records(http: SgRequests, state: CrawlState) -> Iterable[SgRecord]:
     for next_r in state.request_stack_iter():
         r = http.get(next_r.url, headers=headers)
+        soup = BeautifulSoup(r.text, "html.parser")
         logger.info(f"Pulling the data from: {next_r.url}")
         page_url = next_r.url
         schema = r.text.split('<script type="application/ld+json">')[1].split(
@@ -67,8 +68,13 @@ def fetch_records(http: SgRequests, state: CrawlState) -> Iterable[SgRecord]:
         latitude = loc["geo"]["latitude"]
         longitude = loc["geo"]["longitude"]
         hours_of_operation = loc["openingHours"]
-        store_number = MISSING
-        location_type = MISSING
+        if (
+            hours_of_operation
+            == "Su closed Mo closed Tu closed We closed Th closed Fr closed Sa closed"
+        ):
+            hours_of_operation = MISSING
+        store_number = r.text.split('"lid":')[1].split(",")[0]
+        location_type = soup.find("span", {"class": "location-type"})["data-type"]
         raw_address = MISSING
         yield SgRecord(
             locator_domain=DOMAIN,

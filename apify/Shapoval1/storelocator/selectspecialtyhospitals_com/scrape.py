@@ -17,7 +17,7 @@ def fetch_data(sgw: SgWriter):
     }
 
     r = session.get(api_url, headers=headers)
-    js = r.json()["Results"]
+    js = r.json()["Results"][87:]
 
     for j in js:
         cont = j.get("Html")
@@ -62,15 +62,21 @@ def fetch_data(sgw: SgWriter):
             tree = html.fromstring(r.text)
         except AttributeError:
             continue
-        hooco = "".join(tree.xpath('//div[@class="field-businesshours"]/p/a/@href'))
-        if hooco.find("http") == -1:
-            hooco = f"https://www.selectspecialtyhospitals.com{hooco}"
-        hours_of_operation = "<MISSING>"
-        cls = "".join(tree.xpath('//div[contains(text(), "has Closed")]/text()'))
-        if cls:
-            hours_of_operation = "Closed"
-        if hooco:
-            r = session.get(hooco, headers=headers)
+        hours_of_operation = (
+            "".join(tree.xpath('//div[@class="field-businesshours"]//text()'))
+            .replace("\n", "")
+            .strip()
+        )
+        if (
+            hours_of_operation.find("View COVID-19 hours") != -1
+            or hours_of_operation.find("New COVID pandemic visitor hours") != -1
+        ):
+            hoo_url = "".join(
+                tree.xpath('//div[@class="field-businesshours"]//a/@href')
+            )
+            if hoo_url.find("http") == -1:
+                hoo_url = f"https://www.selectspecialtyhospitals.com{hoo_url}"
+            r = session.get(hoo_url, headers=headers)
             try:
                 tree = html.fromstring(r.text)
             except AttributeError:
@@ -93,6 +99,8 @@ def fetch_data(sgw: SgWriter):
             )
             if sub_info:
                 hours_of_operation = sub_info.split("from")[1].split("The")[0].strip()
+        if hours_of_operation.find(". Visitors") != -1:
+            hours_of_operation = hours_of_operation.split(". Visitors")[0].strip()
 
         row = SgRecord(
             locator_domain=locator_domain,

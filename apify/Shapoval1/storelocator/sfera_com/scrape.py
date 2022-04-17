@@ -6,6 +6,7 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgpostal.sgpostal import International_Parser, parse_address
+import re
 
 
 def fetch_data(sgw: SgWriter):
@@ -109,6 +110,16 @@ def fetch_data(sgw: SgWriter):
                     or "<MISSING>"
                 )
                 hours_of_operation = " ".join(hours_of_operation.split())
+
+                if city == "<MISSING>":
+                    city = ""
+                    city_parts = ad.split(" - ")[-2].split(" ")
+
+                    for part in city_parts:
+                        if bool(re.search(r"\d", part)) is False:
+                            city = city + part + " "
+
+                city = city.strip()
 
                 row = SgRecord(
                     locator_domain=locator_domain,
