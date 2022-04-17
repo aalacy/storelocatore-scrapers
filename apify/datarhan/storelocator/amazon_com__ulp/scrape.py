@@ -41,7 +41,7 @@ def fetch_data():
             SearchableCountries.MEXICO,
             SearchableCountries.UNITED_ARAB_EMIRATES,
         ],
-        expected_search_radius_miles=10,
+        expected_search_radius_miles=5,
     )
     for lat, lng in all_coords:
         c_iso = all_coords.current_country()
