@@ -1,5 +1,6 @@
 import json
 from typing import Iterable
+from bs4 import BeautifulSoup
 from sglogging import sglog
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
@@ -49,12 +50,11 @@ def fetch_records(http: SgRequests, state: CrawlState) -> Iterable[SgRecord]:
     for next_r in state.request_stack_iter():
         r = http.get(next_r.url, headers=headers)
         page_url = next_r.url
-        if "financial" in str(page_url):
-            location_type = "Financial Center, ATM"
+        if 'financial' in str(page_url):
+            location_type = 'Financial Center, ATM'
         else:
             location_type = "ATM"
 
-        soup = BeautifulSoup(r.text, "html.parser")
         logger.info(f"Pulling the data from: {next_r.url}")
         schema = r.text.split('<script type="application/ld+json">')[1].split(
             "</script>", 1
@@ -72,10 +72,7 @@ def fetch_records(http: SgRequests, state: CrawlState) -> Iterable[SgRecord]:
         latitude = loc["geo"]["latitude"]
         longitude = loc["geo"]["longitude"]
         hours_of_operation = loc["openingHours"]
-        if (
-            "Su closed Mo closed Tu closed We closed Th closed Fr closed Sa closed"
-            in hours_of_operation
-        ):
+        if "Su closed Mo closed Tu closed We closed Th closed Fr closed Sa closed" in hours_of_operation:
             hours_of_operation = MISSING
         store_number = r.text.split('"lid":')[1].split(",")[0]
         raw_address = MISSING
