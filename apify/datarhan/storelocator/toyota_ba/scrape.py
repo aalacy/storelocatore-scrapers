@@ -47,7 +47,6 @@ def fetch_data():
             latitude = ""
             longitude = ""
             if page_url:
-                print(location_name, page_url)
                 loc_response = session.get(page_url, headers=hdr)
                 loc_dom = etree.HTML(loc_response.text)
                 latitude = loc_dom.xpath("//@data-lat")
