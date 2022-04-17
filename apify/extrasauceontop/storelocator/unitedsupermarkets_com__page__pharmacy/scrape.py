@@ -5,6 +5,9 @@ from sgselenium.sgselenium import SgChrome
 from webdriver_manager.chrome import ChromeDriverManager
 import json
 from sgscrape import simple_scraper_pipeline as sp
+import ssl
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 
 def extract_json(html_string):
