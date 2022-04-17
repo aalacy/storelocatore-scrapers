@@ -10,7 +10,7 @@ from sgselenium.sgselenium import SgFirefox
 def fetch_data(sgw: SgWriter):
 
     locator_domain = "https://www.iflyworld.com"
-    session = SgRequests()
+
     headers = {
         "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0",
         "Accept": "application/json, text/plain, */*",
@@ -51,53 +51,57 @@ def fetch_data(sgw: SgWriter):
         state = j.get("state") or "<MISSING>"
         postal = j.get("zip_code") or "<MISSING>"
         country_code = j.get("country") or "<MISSING>"
-        if country_code != "US":
-            continue
-        slug = j.get("slug")
-        page_url = f"https://www.iflyworld.com{slug}"
+        page_url = "".join(j.get("slug"))
+        if page_url.find("http") == -1:
+            page_url = f"https://www.iflyworld.com{page_url}"
+
         city = j.get("city") or "<MISSING>"
         latitude = j.get("latitude") or "<MISSING>"
         longitude = j.get("longitude") or "<MISSING>"
         phone = j.get("phone") or "<MISSING>"
-        with SgFirefox() as driver:
+        hours_of_operation = "<MISSING>"
+        if country_code == "US":
+            with SgFirefox() as driver:
 
-            driver.get(page_url)
-            a = driver.page_source
-            tree = html.fromstring(a)
+                driver.get(page_url)
+                a = driver.page_source
+                tree = html.fromstring(a)
 
-            hours_of_operation = (
-                " ".join(
-                    tree.xpath(
-                        '//table[@class="location-hours"]//tr//td//text() | //h6[text()="HOURS"]/following-sibling::p/text()'
+                hours_of_operation = (
+                    " ".join(
+                        tree.xpath(
+                            '//table[@class="location-hours"]//tr//td//text() | //h6[text()="HOURS"]/following-sibling::p/text()'
+                        )
                     )
+                    .replace("\n", "")
+                    .strip()
                 )
-                .replace("\n", "")
-                .strip()
-            )
-            hours_of_operation = (
-                " ".join(hours_of_operation.split()).replace("TBD", "").strip()
-                or "<MISSING>"
-            )
+                hours_of_operation = (
+                    " ".join(hours_of_operation.split()).replace("TBD", "").strip()
+                    or "<MISSING>"
+                )
+        if hours_of_operation.find("coming soon") != -1:
+            hours_of_operation = "Coming soon"
 
-            row = SgRecord(
-                locator_domain=locator_domain,
-                page_url=page_url,
-                location_name=location_name,
-                street_address=street_address,
-                city=city,
-                state=state,
-                zip_postal=postal,
-                country_code=country_code,
-                store_number=SgRecord.MISSING,
-                phone=phone,
-                location_type=SgRecord.MISSING,
-                latitude=latitude,
-                longitude=longitude,
-                hours_of_operation=hours_of_operation,
-                raw_address=f"{street_address} {city}, {state} {postal}",
-            )
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=SgRecord.MISSING,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+            raw_address=f"{street_address} {city}, {state} {postal}",
+        )
 
-            sgw.write_row(row)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
