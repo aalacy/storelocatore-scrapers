@@ -19,27 +19,9 @@ headers = {
 MAX_WORKERS = 10
 
 
-def get_states():
+def get_store_urls():
     url = "https://www.pandaexpress.com/locations"
     states = []
-    with SgRequests() as session:
-        r = session.get(url, headers=headers)
-        for line in r.iter_lines():
-            if '<a class="record" href="/locations/' in line:
-                items = line.split('<a class="record" href="/locations/')
-                for item in items:
-                    if 'data-ga-event="locationClick' in item:
-                        lurl = (
-                            "https://www.pandaexpress.com/locations/"
-                            + item.split('"')[0]
-                        )
-                        states.append(lurl)
-        logger.info(f"#OFSTATE: {len(states)}")
-    return states
-
-
-def get_locs_cities():
-    states = get_states()
     cities = [
         "https://www.pandaexpress.com/locations/wi/milwaukee",
         "https://www.pandaexpress.com/locations/tx/hurst",
@@ -64,9 +46,18 @@ def get_locs_cities():
     ]
     locs = ["https://www.pandaexpress.com/locations/ar/benton/20810-i-30-north"]
     with SgRequests() as session:
+        r = session.get(url, headers=headers)
+        for line in r.iter_lines():
+            if '<a class="record" href="/locations/' in line:
+                items = line.split('<a class="record" href="/locations/')
+                for item in items:
+                    if 'data-ga-event="locationClick' in item:
+                        lurl = (
+                            "https://www.pandaexpress.com/locations/"
+                            + item.split('"')[0]
+                        )
+                        states.append(lurl)
         logger.info(f"#OFSTATE: {len(states)}")
-
-        # UPPER LIMIT OF STATES NEEDS TO BE UPDATED ON PROD
         for sidx, state in enumerate(states[0:]):
             logger.info(f"[{sidx}, {state} ]")
             r2 = session.get(state, headers=headers)
@@ -84,40 +75,22 @@ def get_locs_cities():
                                 locs.append(lurl)
                             else:
                                 cities.append(lurl)
-    return locs, cities
+        logger.info(f"[#CITIES: {len(cities)}]")
+        for cidx, city in enumerate(cities[0:]):
+            logger.info(f"[{cidx}, {city} ]")
+            r3 = session.get(city, headers=headers)
+            for line2 in r3.iter_lines():
+                if '<a href="/locations/' in line2:
+                    items = line2.split('<a href="/locations/')
+                    for item in items:
+                        if 'data-ga-event="storeDetailsClick"' in item:
+                            lurl = (
+                                "https://www.pandaexpress.com/locations/"
+                                + item.split('"')[0]
+                            )
+                            locs.append(lurl)
 
-
-def get_loc_single(cidx, city, session: SgRequests):
-    logger.info(f"[{cidx}, {city} ]")
-    r3 = session.get(city, headers=headers)
-    for line2 in r3.iter_lines():
-        if '<a href="/locations/' in line2:
-            items = line2.split('<a href="/locations/')
-            for item in items:
-                if 'data-ga-event="storeDetailsClick"' in item:
-                    lurl = (
-                        "https://www.pandaexpress.com/locations/" + item.split('"')[0]
-                    )
-                    return lurl
-
-
-def fetch_store_url():
-    locs2, cities = get_locs_cities()
-    logger.info(f"[#CITIES: {len(cities)}]")
-    with SgRequests() as session:
-        with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
-            tasks = []
-            # UPPER LIMIT OF CITIES NEEDS TO BE UPDATED ON PROD
-            store_data = [
-                executor.submit(get_loc_single, storenum, city, session)
-                for storenum, city in enumerate(cities[0:])
-            ]
-            tasks.extend(store_data)
-            for future in as_completed(tasks):
-                record = future.result()
-                if record is not None or record:
-                    locs2.append(record)
-    return locs2
+    return locs
 
 
 @tenacity.retry(
@@ -293,7 +266,7 @@ def fetch_records(lid, loc, sgw: SgWriter):
 
 def fetch_data(sgw: SgWriter):
     logger.info("Scrape Started")
-    store_urls_thrd = fetch_store_url()
+    store_urls_thrd = get_store_urls()
     logger.info("Store URLs Scraped!")
     # This store count may not be actual as some of the store urls
     # might not be working, so we will ignore those.
