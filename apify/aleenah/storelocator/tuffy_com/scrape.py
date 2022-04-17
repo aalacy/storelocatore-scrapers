@@ -6,6 +6,7 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 
 session = SgRequests()
 website = "tuffy_com"
@@ -19,56 +20,17 @@ MISSING = SgRecord.MISSING
 
 
 def fetch_data():
-    states = [
-        "AL",
-        "AK",
-        "AZ",
-        "AR",
-        "CT",
-        "DC",
-        "DE",
-        "FL",
-        "GA",
-        "HI",
-        "ID",
-        "IL",
-        "IN",
-        "IA",
-        "KS",
-        "KY",
-        "ME",
-        "MD",
-        "MI",
-        "MN",
-        "MS",
-        "MO",
-        "NE",
-        "NH",
-        "NJ",
-        "NM",
-        "NY",
-        "NC",
-        "ND",
-        "OH",
-        "OK",
-        "PA",
-        "SC",
-        "SD",
-        "TN",
-        "TX",
-        "UT",
-        "VT",
-        "VA",
-        "WV",
-        "WI",
-    ]
-    for statenow in states:
-        coordlist = []
-        url = "https://www.tuffy.com/location_search?zip_code=" + statenow
+    coordlist = []
+    zips = DynamicZipSearch(country_codes=[SearchableCountries.USA])
+    for zip_code in zips:
+        log.info(f"{zip_code} | remaining: {zips.items_remaining()}")
+        url = (
+            "https://www.tuffy.com/location_search?zip_code={}"
+        ).format(zip_code)
         r = session.get(url, headers=headers)
         if r.status_code != 200:
+            print(url)
             continue
-        log.info(url)
         soup = BeautifulSoup(r.text, "html.parser")
         divlist = soup.findAll("div", {"class": "contact-info"})
         if len(divlist) == 0:
@@ -80,7 +42,6 @@ def fetch_data():
                 coordlist.append(temp)
             except:
                 break
-
         for j in range(0, len(divlist)):
             div = divlist[j]
             location_name = div.find("h2").text.strip().split("T", 1)[1]
@@ -95,7 +56,7 @@ def fetch_data():
                 address = address.split("MANAGER", 1)[0]
             except:
                 pass
-            address = address.replace(",", " ")
+            address = address.replace(",", " ").replace("\n", ' ')
             address = usaddress.parse(address)
             i = 0
             street_address = ""
