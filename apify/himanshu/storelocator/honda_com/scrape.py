@@ -64,15 +64,32 @@ def get_data(zips, sgw: SgWriter):
         location_type = ", ".join(types)
         hours_of_operation = "<MISSING>"
         store_number = j.get("DealerId")
-        hours = j.get("Departments")[0].get("OperationHours")
+        hours = j.get("Departments")
+
         tmp = []
         if hours:
             for h in hours:
-                day = h.get("Day")
-                times = h.get("Hours")
-                line = f"{day} {times}"
-                tmp.append(line)
-            hours_of_operation = "; ".join(tmp)
+                typ = h.get("Type")
+                operation_hours = h.get("OperationHours")
+                tmp.append(typ)
+                for i in operation_hours:
+                    day = i.get("Day")
+                    times = i.get("Hours")
+                    line = f"{day} {times}"
+                    tmp.append(line)
+                hours_of_operation = (
+                    "; ".join(tmp)
+                    .replace("Service;", "Service")
+                    .replace("Parts;", "Parts")
+                    .replace("Sales;", "Sales")
+                    .strip()
+                )
+        if (
+            hours_of_operation == "Sales"
+            or hours_of_operation == "Service"
+            or hours_of_operation == "Parts"
+        ):
+            hours_of_operation = "<MISSING>"
 
         row = SgRecord(
             locator_domain=locator_domain,
