@@ -53,6 +53,12 @@ def fetch_data():
                 phone = ""
                 if _.find("a", href=re.compile(r"tel:")):
                     phone = _.find("a", href=re.compile(r"tel:")).text.strip()
+                if not phone and _.find("li", string=re.compile(r"Phone")):
+                    phone = (
+                        _.find("li", string=re.compile(r"Phone"))
+                        .text.replace("Phone", "")
+                        .replace(":", "")
+                    )
                 hr = _.find("strong", string=re.compile(r"Store Hours"))
                 hours = []
                 if hr:

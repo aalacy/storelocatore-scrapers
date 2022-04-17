@@ -62,6 +62,7 @@ def fetch_data(sgw: SgWriter):
         country_code = "France"
         if "UTRECHT" in location_name:
             country_code = "Netherlands"
+            city = "UTRECHT".title()
         store_number = item.div["data-id"]
         location_type = "<MISSING>"
         hours_of_operation = ""
@@ -70,7 +71,6 @@ def fetch_data(sgw: SgWriter):
 
         if "Steenweg 37" in street_address:
             street_address = "Steenweg 37"
-            city = ""
             state = ""
             zip_code = ""
             phone = ""
