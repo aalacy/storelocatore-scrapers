@@ -7,7 +7,6 @@ from sgscrape.sgrecord_id import SgRecordID
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from lxml import html
 import tenacity
-from tenacity import retry, stop_after_attempt
 
 
 logger = SgLogSetup().get_logger("pandaexpress_com")
