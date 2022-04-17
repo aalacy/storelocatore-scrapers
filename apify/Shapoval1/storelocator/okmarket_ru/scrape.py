@@ -1,3 +1,5 @@
+import os
+import ssl
 import json
 from lxml import html
 from sgscrape.sgrecord import SgRecord
@@ -7,11 +9,22 @@ from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
+os.environ[
+    "PROXY_URL"
+] = "http://groups-RESIDENTIAL,country-ru:{}@proxy.apify.com:8000/"
+
+try:
+    _create_unverified_https_context = ssl._create_unverified_context
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context
+
+
 def fetch_data(sgw: SgWriter):
 
     locator_domain = "https://www.okmarket.ru"
     api_url = "https://www.okmarket.ru/stores/"
-    session = SgRequests()
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
