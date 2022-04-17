@@ -18,6 +18,7 @@ def fetch_data(sgw: SgWriter):
     headers = {"User-Agent": user_agent}
 
     session = SgRequests()
+
     req = session.get(base_link, headers=headers)
     base = BeautifulSoup(req.text, "lxml")
 
@@ -35,13 +36,17 @@ def fetch_data(sgw: SgWriter):
         req = session.get(link, headers=headers)
         base = BeautifulSoup(req.text, "lxml")
 
-        store_js = base.find(class_="yoast-schema-graph").text
+        store_js = base.find(class_="yoast-schema-graph").contents[0]
         store = json.loads(store_js)
         try:
             raw_data = store["@graph"][1]["description"]
-            if "Store Opening" in raw_data:
-                continue
         except:
+            try:
+                raw_data = store["@graph"][2]["description"]
+            except:
+                continue
+
+        if "Grand Opening" in raw_data:
             continue
 
         raw_address = raw_data.split("•")[0].strip().split(",")
@@ -55,9 +60,12 @@ def fetch_data(sgw: SgWriter):
 
         if "•" in raw_data:
             street_address = " ".join(raw_address[:-2]).strip()
-            phone = raw_data.split("•")[1].strip()
-            if len(phone) > 15:
-                phone = re.findall(r"[0-9]{3}-[0-9]{3}-[0-9]{4}", raw_data)[0]
+            try:
+                phone = raw_data.split("•")[1].strip()
+                if len(phone) > 15:
+                    phone = re.findall(r"[0-9]{3}-[0-9]{3}-[0-9]{4}", raw_data)[0]
+            except:
+                phone = ""
         else:
             try:
                 street_address = (

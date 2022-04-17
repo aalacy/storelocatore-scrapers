@@ -8,7 +8,7 @@ from concurrent import futures
 
 
 def get_data(zips, sgw: SgWriter):
-
+    session = SgRequests(verify_ssl=False)
     locator_domain = "https://honda.com/"
 
     headers = {
@@ -41,7 +41,7 @@ def get_data(zips, sgw: SgWriter):
 
     for j in js:
 
-        page_url = "https://mcdonalds.es/restaurantes"
+        page_url = "https://owners.honda.com/"
         a = j.get("Address")
         location_name = j.get("Name") or "<MISSING>"
         street_address = (
@@ -64,15 +64,32 @@ def get_data(zips, sgw: SgWriter):
         location_type = ", ".join(types)
         hours_of_operation = "<MISSING>"
         store_number = j.get("DealerId")
-        hours = j.get("Departments")[0].get("OperationHours")
+        hours = j.get("Departments")
+
         tmp = []
         if hours:
             for h in hours:
-                day = h.get("Day")
-                times = h.get("Hours")
-                line = f"{day} {times}"
-                tmp.append(line)
-            hours_of_operation = "; ".join(tmp)
+                typ = h.get("Type")
+                operation_hours = h.get("OperationHours")
+                tmp.append(typ)
+                for i in operation_hours:
+                    day = i.get("Day")
+                    times = i.get("Hours")
+                    line = f"{day} {times}"
+                    tmp.append(line)
+                hours_of_operation = (
+                    "; ".join(tmp)
+                    .replace("Service;", "Service")
+                    .replace("Parts;", "Parts")
+                    .replace("Sales;", "Sales")
+                    .strip()
+                )
+        if (
+            hours_of_operation == "Sales"
+            or hours_of_operation == "Service"
+            or hours_of_operation == "Parts"
+        ):
+            hours_of_operation = "<MISSING>"
 
         row = SgRecord(
             locator_domain=locator_domain,
@@ -102,7 +119,7 @@ def fetch_data(sgw: SgWriter):
         max_search_results=None,
     )
 
-    with futures.ThreadPoolExecutor(max_workers=5) as executor:
+    with futures.ThreadPoolExecutor(max_workers=1) as executor:
         future_to_url = {executor.submit(get_data, url, sgw): url for url in coords}
         for future in futures.as_completed(future_to_url):
             future.result()
