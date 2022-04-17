@@ -26,31 +26,31 @@ def fetch_data():
         loc_response = session.get(page_url)
         loc_dom = etree.HTML(loc_response.text)
 
-        poi = loc_dom.xpath('//@data-stores-model')[0]
+        poi = loc_dom.xpath("//@data-stores-model")[0]
         poi = json.loads(poi)
-        poi = poi['stores'][0]
-        street_address = poi['address1']
-        if poi['address2']:
-            street_address += ' ' + poi['address2']
+        poi = poi["stores"][0]
+        street_address = poi["address1"]
+        if poi["address2"]:
+            street_address += " " + poi["address2"]
         hoo = []
-        for e in poi['openingHours']:
+        for e in poi["openingHours"]:
             hoo.append(f'{e["displayName"]}: {e["startTime"]} - {e["endTime"]}')
-        hoo = ' '.join(hoo)
+        hoo = " ".join(hoo)
 
         item = SgRecord(
             locator_domain=domain,
             page_url=page_url,
-            location_name=poi['name'],
+            location_name=poi["name"],
             street_address=street_address,
-            city=poi['city'],
+            city=poi["city"],
             state="",
-            zip_postal=poi['postalCode'],
+            zip_postal=poi["postalCode"],
             country_code="UK",
-            store_number=poi['ID'],
-            phone=poi['phone'],
+            store_number=poi["ID"],
+            phone=poi["phone"],
             location_type="",
-            latitude=poi['latitude'],
-            longitude=poi['longitude'],
+            latitude=poi["latitude"],
+            longitude=poi["longitude"],
             hours_of_operation=hoo,
         )
 
