@@ -22,7 +22,7 @@ def fetch_data(sgw: SgWriter):
 
         postal, city = line.pop().split()
         phone = "".join(d.xpath(".//a[contains(@href, 'tel:')]/text()")).strip()
-        hours = d.xpath(".//li/text()")
+        hours = d.xpath(".//p[./a]/following-sibling::p/text()")
         hours = list(filter(None, [h.strip() for h in hours]))
         hours_of_operation = ";".join(hours)
 

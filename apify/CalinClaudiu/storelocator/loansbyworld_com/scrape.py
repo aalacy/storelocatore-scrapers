@@ -148,6 +148,7 @@ def scrape():
         data_fetcher=fetch_data,
         field_definitions=field_defs,
         log_stats_interval=15,
+        duplicate_streak_failure_factor=-1,
     )
 
     pipeline.run()

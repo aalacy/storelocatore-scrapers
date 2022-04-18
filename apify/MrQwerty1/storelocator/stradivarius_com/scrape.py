@@ -81,13 +81,19 @@ def fetch_data(sgw: SgWriter):
             street_address = ", ".join(j.get("addressLines") or [])
             city = j.get("city") or ""
             state = j.get("state")
-            postal = j.get("zipCode")
+            postal = j.get("zipCode") or ""
+            if str(postal) == "0":
+                postal = SgRecord.MISSING
             store_number = j.get("id")
             location_name = j.get("name")
             page_url = f"https://www.stradivarius.com/{cc.lower()}/store-locator/{city.lower()}/-s{store_number}.html"
             try:
                 phone = j["phones"][0]
+                if "/" in phone:
+                    phone = phone.split("/")[0].strip()
             except:
+                phone = SgRecord.MISSING
+            if phone.strip() == "-":
                 phone = SgRecord.MISSING
             latitude = j.get("latitude")
             longitude = j.get("longitude")

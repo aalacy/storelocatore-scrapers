@@ -20,7 +20,7 @@ def clean_phone(text):
 
 def fetch_data(sgw: SgWriter):
     api = "https://www.bobbibrowncosmetics.com/rpc/jsonrpc.tmpl"
-    r = session.post(api, params=params, data=data)
+    r = session.post(api, headers=headers, params=params, data=data)
     js = r.json()[0]["result"]["value"]["results"].values()
 
     for j in js:
@@ -76,7 +76,7 @@ if __name__ == "__main__":
     params = (("dbgmethod", "locator.doorsandevents"),)
 
     data = {
-        "JSONRPC": '[{"method":"locator.doorsandevents","id":3,"params":[{"fields":"DOOR_ID, DOORNAME, EVENT_NAME, EVENT_START_DATE, EVENT_END_DATE, EVENT_IMAGE, EVENT_FEATURES, EVENT_TIMES, SERVICES, STORE_HOURS, ADDRESS, ADDRESS2, STATE_OR_PROVINCE, CITY, REGION, COUNTRY, ZIP_OR_POSTAL, PHONE1, STORE_TYPE, LONGITUDE, LATITUDE","radius":"6000","country":"United Kingdom","region_id":"0,47,27","latitude":51.5072178,"longitude":-0.1275862,"uom":"mile","_TOKEN":"97c4d4b5d9b8803ccf9440fe781206a3aabff824,26fb46c93f3cc9fb25d01b63333e968ee603ceda,1642674820"}]}]'
+        "JSONRPC": '[{"method":"locator.doorsandevents","id":2,"params":[{"fields":"DOOR_ID, DOORNAME, EVENT_NAME, EVENT_START_DATE, EVENT_END_DATE, EVENT_IMAGE, EVENT_FEATURES, EVENT_TIMES, SERVICES, STORE_HOURS, ADDRESS, ADDRESS2, STATE_OR_PROVINCE, CITY, REGION, COUNTRY, ZIP_OR_POSTAL, PHONE1, STORE_TYPE, LONGITUDE, LATITUDE","radius":"","country":"United States","region_id":"0,47,27","latitude":33.0218117,"longitude":-97.12516989999999,"uom":"mile","_TOKEN":"b6a2036fda64fc609a1f77f72fcef03bdccde0f9,df93f53a98d3eac0d569475de97dc8d9e8fd3543,1650031353"}]}]',
     }
     session = SgRequests()
     with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:

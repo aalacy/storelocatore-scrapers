@@ -403,9 +403,9 @@ def fix_india(x):
                 copy.append(whatis)
         if len(copy) > 0:
             return "".join(copy)
-        return x
+        return "".join(x)
     else:
-        return x
+        return "".join(x)
 
 
 def scrape():
