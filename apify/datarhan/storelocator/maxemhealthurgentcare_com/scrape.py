@@ -53,6 +53,7 @@ def fetch_data():
             phone = loc_dom.xpath("//h1/following-sibling::p[1]/span/text()")[2].split(
                 ":"
             )[-1]
+        phone = phone.split("PH:")[-1].split("FAX")[0]
         hoo = loc_dom.xpath(
             '//h3[contains(text(), "Hours of Operation")]/following-sibling::p//text()'
         )

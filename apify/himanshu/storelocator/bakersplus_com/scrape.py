@@ -26,9 +26,7 @@ def fetch_data(sgw: SgWriter):
     base_url = "https://www.bakersplus.com/"
 
     base_link = "https://www.bakersplus.com/storelocator-sitemap.xml"
-    user_agent = (
-        "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0"
-    )
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
 
     driver = SgChrome(user_agent=user_agent).driver()
 
@@ -37,21 +35,21 @@ def fetch_data(sgw: SgWriter):
 
     for url in soup.find_all("loc")[:-1]:
         page_url = url.text
-
-        log.info(page_url)
         for i in range(6):
+            log.info(page_url)
             driver.get(page_url)
+            time.sleep(2)
             WebDriverWait(driver, 50).until(
                 ec.presence_of_element_located((By.TAG_NAME, "h1"))
             )
             time.sleep(2)
             location_soup = BeautifulSoup(driver.page_source, "lxml")
-            script = location_soup.find(
-                "script", attrs={"type": "application/ld+json"}
-            ).contents[0]
 
             location_name = ""
             try:
+                script = location_soup.find(
+                    "script", attrs={"type": "application/ld+json"}
+                ).contents[0]
                 data = json.loads(script)
                 street_address = data["address"]
 
@@ -60,6 +58,7 @@ def fetch_data(sgw: SgWriter):
                 ).text.strip()
 
                 if location_name:
+                    log.info(location_name)
                     break
             except:
                 log.info("Retrying ..")
