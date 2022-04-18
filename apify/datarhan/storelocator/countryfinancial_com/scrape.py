@@ -28,13 +28,10 @@ def fetch_data():
             dom = etree.HTML(response.text)
             all_locations = dom.xpath('//p[@class="repaddress"]/a/@href')
             for page_url in all_locations:
-                print(page_url)
                 loc_response = session.get(page_url, headers=hdr)
                 loc_dom = etree.HTML(loc_response.text)
                 while not loc_dom:
-                    loc_response = session.get(
-                        page_url, headers=hdr, proxies=proxies, verify=False
-                    )
+                    loc_response = session.get(page_url, headers=hdr)
                     loc_dom = etree.HTML(loc_response.text)
                 poi = loc_dom.xpath('//script[contains(text(), "address")]/text()')[1]
                 poi = demjson.decode(poi.replace("\n", ""))[0]
