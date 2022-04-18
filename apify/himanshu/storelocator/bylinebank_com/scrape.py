@@ -71,7 +71,23 @@ def fetch_data(sgw: SgWriter):
         )
         if hours_of_operation.find("am") == -1:
             hours_of_operation = "<MISSING>"
-
+        if hours_of_operation == "<MISSING>":
+            hours_of_operation = (
+                " ".join(
+                    tree.xpath(
+                        '//h4[text()="Drive-Thru Hours"]/following-sibling::table//tr//td//text()'
+                    )
+                )
+                .replace("\n", "")
+                .strip()
+            )
+        hours_of_operation = (
+            " ".join(hours_of_operation.split())
+            .replace("Sat - Sun -", "")
+            .replace("Sun -", "")
+            .strip()
+            or "<MISSING>"
+        )
         row = SgRecord(
             locator_domain=locator_domain,
             page_url=page_url,
@@ -100,8 +116,8 @@ def fetch_data(sgw: SgWriter):
 
     search = DynamicGeoSearch(
         country_codes=[SearchableCountries.USA],
-        max_search_distance_miles=10,
-        expected_search_radius_miles=10,
+        max_search_distance_miles=70,
+        expected_search_radius_miles=70,
         max_search_results=None,
     )
 
@@ -137,13 +153,19 @@ def fetch_data(sgw: SgWriter):
                 phone = "<MISSING>"
 
             location_name = name[i].text.replace("<br>", "").strip()
+            if location_name.find("href") != -1:
+                try:
+                    location_name = location_name.split(">")[1].split("<")[0].strip()
+                except:
+                    location_name = location_name.split("<")[0].strip()
             page_url = "https://www.bylinebank.com/locator/"
 
             if len(zip1) == 3 or len(zip1) == 7:
                 country_code = "CA"
             else:
                 country_code = "US"
-
+            if zip1.find("<br>") != -1:
+                zip1 = zip1.split("<br>")[0].strip()
             hours_of_operation = "<MISSING>"
             latitude, longitude = "<MISSING>", "<MISSING>"
             try:
@@ -152,6 +174,9 @@ def fetch_data(sgw: SgWriter):
             except:
                 pass
             result_coords.append((latitude, longitude))
+            raw_ad = f"{street_address} {city}, {state} {zip1}"
+            if raw_ad.find("<") != -1:
+                raw_ad = raw_ad.split("<")[0].strip()
 
             row = SgRecord(
                 locator_domain=locator_domain,
@@ -168,7 +193,7 @@ def fetch_data(sgw: SgWriter):
                 latitude=latitude,
                 longitude=longitude,
                 hours_of_operation=hours_of_operation,
-                raw_address=f"{street_address} {city}, {state} {zip1}",
+                raw_address=raw_ad,
             )
 
             sgw.write_row(row)
