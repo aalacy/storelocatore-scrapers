@@ -14,8 +14,8 @@ Apify.main(async () => {
       launchOptions: {
         headless: true,
         useChrome: true,
-        stealth: true
-      }
+        stealth: true,
+      },
     },
     maxRequestRetries: 1,
     handlePageTimeoutSecs: 10 * 60,
