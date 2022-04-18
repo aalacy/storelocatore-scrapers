@@ -27,6 +27,8 @@ def fetchConcurrentSingle(store):
     page_url = base_url + store["properties"]["link"]
     logger.info(page_url)
     response = request_with_retries(page_url)
+    logger.info(f"status:{response.status_code}")
+    logger.info(f"req.text len:{len(response.text)}")
     return page_url, bs(response.text, "lxml"), store
 
 
