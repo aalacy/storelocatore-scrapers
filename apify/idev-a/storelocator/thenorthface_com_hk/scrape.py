@@ -37,7 +37,7 @@ def fetch_data():
         soup = bs(session.get(base_url, headers=_headers).text, "lxml")
         countries = soup.select("div.store-list-item")
         for country in countries:
-            country_code = country.h6.text.strip()
+            country_code = list(country.h6.stripped_strings)[0]
             locations = country.select("li")
             for _ in locations:
                 strongs = _.select("strong")
@@ -47,7 +47,7 @@ def fetch_data():
                 if country_code not in raw_address:
                     raw_address += ", " + country_code
                 addr = parse_address_intl(raw_address)
-                street_address = addr.street_address_1
+                street_address = addr.street_address_1 or ""
                 if addr.street_address_2:
                     street_address += " " + addr.street_address_2
                 city = addr.city
@@ -70,14 +70,16 @@ def fetch_data():
                     zip_postal = ""
                 phone = ""
                 if len(strongs) > 2:
-                    phone = strongs[-1].text.strip()
+                    phone = strongs[-1].text.replace("TEL:", "").strip()
                 yield SgRecord(
                     page_url=base_url,
                     location_name=strongs[0]
                     .text.replace("\n", "")
                     .replace("\r", "")
                     .strip(),
-                    street_address=street_address,
+                    street_address=street_address.replace(
+                        "** Outdoor Training Station6", ""
+                    ),
                     city=city,
                     state=state,
                     zip_postal=zip_postal,
