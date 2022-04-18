@@ -23,23 +23,29 @@ def fetch_data():
             .strip()[:-2]
         )["features"]
         for _ in locations:
-            raw_address = (
-                _["DIRECCION"]
-                .replace("De México", "Mexico")
-                .replace("de México", "Mexico")
-            )
+            raw_address = _["DIRECCION"]
             addr = parse_address_intl(raw_address)
-            street_address = addr.street_address_1
+            city = addr.city
+            if "CDMX" in raw_address:
+                city = "CDMX"
+            state = addr.state
+            if "estado de méxico" in raw_address.lower():
+                state = "Estado De México"
+            street_address = addr.street_address_1 or ""
             if addr.street_address_2:
                 street_address += " " + addr.street_address_2
+            street_address = street_address.replace("Estado De México", "").strip()
             if street_address.isdigit():
-                street_address = raw_address.split(",")[0]
+                street_address = raw_address.split(",")[0].strip()
+                if city:
+                    street_address = street_address.split(city)[0].strip()
+
             yield SgRecord(
                 page_url="https://www.thenorthface.com.mx/tiendas",
                 location_name=_["TIENDA"],
                 street_address=street_address,
-                city=addr.city,
-                state=addr.state,
+                city=city,
+                state=state,
                 zip_postal=addr.postcode,
                 latitude=_["lat"],
                 longitude=_["lng"],

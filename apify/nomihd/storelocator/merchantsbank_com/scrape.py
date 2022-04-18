@@ -47,14 +47,11 @@ def fetch_data():
             store_info = list(
                 filter(
                     str,
-                    [
-                        x.strip()
-                        for x in store.xpath('.//div[@class="address"]//text()')
-                    ],
+                    [x.strip() for x in store.xpath('.//div[@class="address"]/text()')],
                 )
             )
 
-            raw_address = " ".join(store_info).strip()
+            raw_address = ", ".join(store_info).strip()
 
             formatted_addr = parser.parse_address_usa(raw_address)
             street_address = formatted_addr.street_address_1
