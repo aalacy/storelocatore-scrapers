@@ -114,6 +114,6 @@ if __name__ == "__main__":
         "Sec-Fetch-Mode": "cors",
         "Sec-Fetch-Site": "same-origin",
     }
-    session = SgRequests()
+    session = SgRequests(proxy_country="co")
     with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
         fetch_data(writer)
