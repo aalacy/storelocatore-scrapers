@@ -64,7 +64,6 @@ def fetch_data(sgw: SgWriter):
             store_number = j.get("placeId")
 
             a = get_additional(store_number)
-            print(store_number, ":", a)
             street_address = a.get("street")
             csz = a.get("csz")
             city, state, postal = get_international(csz)
