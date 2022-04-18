@@ -52,7 +52,7 @@ def fetch_data():
     )
     data = json.loads(
         re.search(
-            r'AmLocation\.Amastyload\(\{"totalRecords":31,"items":(.*)\}\);',
+            r'AmLocation\.Amastyload\(\{"totalRecords":\d{2,3},"items":(.*)\}\);',
             contents.string,
         ).group(1)
     )
