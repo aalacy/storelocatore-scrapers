@@ -22,7 +22,6 @@ def fetch_data():
     country = "GB"
     logger.info("Pulling Stores")
     for line in r.iter_lines():
-        line = str(line.decode("utf-8"))
         if (
             'href="https://www.ihg.com/crowneplaza/hotels/gb/en/' in line
             and "hoteldetail" in line
@@ -43,7 +42,6 @@ def fetch_data():
         hours = "<MISSING>"
         r2 = session.get(loc, headers=headers)
         for line2 in r2.iter_lines():
-            line2 = str(line2.decode("utf-8"))
             if 'id="currencycode" value="GBP"' in line2:
                 GB = True
             if '"og:title" content="' in line2:
