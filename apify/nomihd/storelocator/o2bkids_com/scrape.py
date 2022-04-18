@@ -4,7 +4,6 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sglogging import sglog
 import lxml.html
-import us
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
@@ -18,14 +17,14 @@ headers = {
 
 def fetch_data():
     # Your scraper here
-    search_url = "https://www.o2bkids.com/company-overview/find-a-location/"
+    search_url = "https://o2bkids.com/find-a-location/"
     with SgRequests(verify_ssl=False) as session:
         stores_req = session.get(search_url, headers=headers)
         stores_sel = lxml.html.fromstring(stores_req.text)
-        stores = stores_sel.xpath('//div[@class="locations"]/ul/li')
+        stores = stores_sel.xpath('//div[@class="location-content"]/ul/li')
         for store in stores:
-            if "coming soon" not in "".join(store.xpath("h2/a/text()")).strip().lower():
-                page_url = "".join(store.xpath("h2/a/@href")).strip()
+            if "coming soon" not in "".join(store.xpath("a/text()")).strip().lower():
+                page_url = "".join(store.xpath("a/@href")).strip()
                 locator_domain = website
                 log.info(page_url)
                 store_req = session.get(page_url, headers=headers)
@@ -88,9 +87,18 @@ def fetch_data():
 
                 if len(add_list) > 1:
                     street_address = ", ".join(add_list[:-1]).strip()
-                    city = add_list[-1].split(",")[0].strip()
-                    state = add_list[-1].split(",")[-1].strip().split(" ")[0].strip()
-                    zip = add_list[-1].split(",")[-1].strip().split(" ")[-1].strip()
+                    if "." in add_list[-1] and "St." not in add_list[-1]:
+                        city = add_list[-1].split(".")[0].strip()
+                        state = (
+                            add_list[-1].split(".")[-1].strip().split(" ")[0].strip()
+                        )
+                        zip = add_list[-1].split(".")[-1].strip().split(" ")[-1].strip()
+                    else:
+                        city = add_list[-1].split(",")[0].strip()
+                        state = (
+                            add_list[-1].split(",")[-1].strip().split(" ")[0].strip()
+                        )
+                        zip = add_list[-1].split(",")[-1].strip().split(" ")[-1].strip()
 
                 else:
                     temp_address = "".join(address).strip()
@@ -99,10 +107,7 @@ def fetch_data():
                     state = temp_address.rsplit(",")[-1].strip().split(" ")[0].strip()
                     zip = temp_address.rsplit(",")[-1].strip().split(" ")[-1].strip()
 
-                country_code = "<MISSING>"
-                if us.states.lookup(state):
-                    country_code = "US"
-
+                country_code = "US"
                 store_number = "<MISSING>"
 
                 location_type = "<MISSING>"
