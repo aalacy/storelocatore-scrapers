@@ -1,81 +1,59 @@
-import re
 import demjson
 from lxml import etree
+from urllib.parse import urljoin
 
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 
 
 def fetch_data():
     session = SgRequests(proxy_country="us", verify_ssl=False)
     domain = "countryfinancial.com"
-    start_url = "https://www.countryfinancial.com/services/forms?configNodePath=%2Fcontent%2Fcfin%2Fen%2Fjcr%3Acontent%2FrepLocator&cfLang=en&repSearchType=queryByLocation&latitude=&longitude=&repSearchValue={}"
-    scraped_urls = []
-
-    all_codes = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA], expected_search_radius_miles=1
-    )
-    for code in all_codes:
-        response = session.get(start_url.format(code))
-        if response.status_code != 200:
-            continue
+    start_url = "https://www.countryfinancial.com/services/reps.html"
+    hdr = {
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
+    }
+    response = session.get(start_url, headers=hdr)
+    dom = etree.HTML(response.text)
+    all_states = dom.xpath('//ul[@class="plain column-list-two"]/li/a/@href')
+    for url in all_states:
+        response = session.get(urljoin(start_url, url), headers=hdr)
         dom = etree.HTML(response.text)
+        all_cities = dom.xpath("//div[h1]/ul/li/a/@href")
+        for url in all_cities:
+            response = session.get(urljoin(start_url, url), headers=hdr)
+            dom = etree.HTML(response.text)
+            all_locations = dom.xpath('//p[@class="repaddress"]/a/@href')
+            for page_url in all_locations:
+                loc_response = session.get(page_url, headers=hdr)
+                loc_dom = etree.HTML(loc_response.text)
+                while not loc_dom:
+                    loc_response = session.get(page_url, headers=hdr)
+                    loc_dom = etree.HTML(loc_response.text)
+                poi = loc_dom.xpath('//script[contains(text(), "address")]/text()')[1]
+                poi = demjson.decode(poi.replace("\n", ""))[0]
 
-        all_poi_html = dom.xpath('//div[@itemtype="//schema.org/Organization"]')
-        for poi_html in all_poi_html:
-            store_url = poi_html.xpath('.//a[@itemprop="url"]/@href')[0]
-            if store_url in scraped_urls:
-                continue
-            loc_response = session.get(store_url)
-            scraped_urls.append(store_url)
-            loc_dom = etree.HTML(loc_response.text)
-            poi = loc_dom.xpath('//script[contains(text(), "PostalAddress")]/text()')
-            if not poi:
-                continue
-            poi = demjson.decode(poi[0].replace("\n", ""))
+                item = SgRecord(
+                    locator_domain=domain,
+                    page_url=page_url,
+                    location_name=poi["name"],
+                    street_address=poi["address"]["streetAddress"],
+                    city=poi["address"]["addressLocality"],
+                    state=poi["address"]["addressRegion"],
+                    zip_postal=poi["address"]["postalCode"],
+                    country_code="",
+                    store_number="",
+                    phone=poi["contactPoint"][0]["telephone"],
+                    location_type=poi["@type"],
+                    latitude=poi["geo"]["latitude"],
+                    longitude=poi["geo"]["longitude"],
+                    hours_of_operation="",
+                )
 
-            data = loc_dom.xpath('//script[contains(text(), "JSContext")]/text()')[0]
-            data = re.findall("JSContext =(.+);", data)[0]
-            data = demjson.decode(data)
-
-            location_name = poi[0]["name"].replace("&#39;", "'")
-            street_address = data["profile"]["address"]["street"]
-            suit = data["profile"]["address"].get("suite")
-            if suit:
-                street_address += " " + suit
-            city = poi[0]["address"]["addressLocality"]
-            city = city.replace("&#39;", "'") if city else ""
-            state = poi[0]["address"]["addressRegion"]
-            zip_code = poi[0]["address"]["postalCode"]
-            phone = poi[0]["contactPoint"][0]["telephone"]
-            location_type = poi[0]["@type"]
-            latitude = data["profile"]["latlng"]
-            latitude = latitude[0] if latitude else ""
-            longitude = data["profile"]["latlng"]
-            longitude = longitude[1] if longitude else ""
-
-            item = SgRecord(
-                locator_domain=domain,
-                page_url=store_url,
-                location_name=location_name,
-                street_address=street_address,
-                city=city,
-                state=state,
-                zip_postal=zip_code,
-                country_code="",
-                store_number="",
-                phone=phone,
-                location_type=location_type,
-                latitude=latitude,
-                longitude=longitude,
-                hours_of_operation="",
-            )
-
-            yield item
+                yield item
 
 
 def scrape():
@@ -83,7 +61,8 @@ def scrape():
         SgRecordDeduper(
             SgRecordID(
                 {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
-            )
+            ),
+            duplicate_streak_failure_factor=-1,
         )
     ) as writer:
         for item in fetch_data():
