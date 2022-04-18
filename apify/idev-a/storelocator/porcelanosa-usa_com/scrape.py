@@ -26,7 +26,11 @@ def fetch_data():
             for _ in locations:
                 block = list(_.ul.stripped_strings)
                 _addr = []
+                location_type = "store"
                 for aa in block:
+                    if "Dealer" in aa:
+                        location_type = aa
+                        continue
                     if "Phone" in aa:
                         break
                     _addr.append(aa.replace("\n", ""))
@@ -53,6 +57,12 @@ def fetch_data():
                 phone = ""
                 if _.find("a", href=re.compile(r"tel:")):
                     phone = _.find("a", href=re.compile(r"tel:")).text.strip()
+                if not phone and _.find("li", string=re.compile(r"Phone")):
+                    phone = (
+                        _.find("li", string=re.compile(r"Phone"))
+                        .text.replace("Phone", "")
+                        .replace(":", "")
+                    )
                 hr = _.find("strong", string=re.compile(r"Store Hours"))
                 hours = []
                 if hr:
@@ -91,6 +101,7 @@ def fetch_data():
                     street_address=street_address,
                     city=city,
                     state=state,
+                    location_type=location_type,
                     zip_postal=addr.postcode,
                     country_code=country_code,
                     phone=phone,
