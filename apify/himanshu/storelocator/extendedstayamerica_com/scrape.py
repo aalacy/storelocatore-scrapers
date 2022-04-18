@@ -1,3 +1,4 @@
+import time
 import json
 from bs4 import BeautifulSoup
 from lxml import html
@@ -42,8 +43,18 @@ def fetch_data():
         longitude = value["longitude"]
         hours_of_operation = "Open 24 hours a day, seven days a week"
         page_url = "https://www.extendedstayamerica.com" + value["urlMap"]
-        r = session.get(page_url, headers=headers)
-        tree = html.fromstring(r.text)
+
+        try:
+            r = session.get(page_url, headers=headers)
+            tree = html.fromstring(r.text)
+        except:
+            try:
+                time.sleep(5)
+                r = session.get(page_url, headers=headers)
+                tree = html.fromstring(r.text)
+            except:
+                continue
+
         js_block = "".join(
             tree.xpath('//script[contains(text(), "streetAddress")]/text()')
         )
