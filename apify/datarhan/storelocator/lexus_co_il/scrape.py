@@ -38,13 +38,16 @@ def fetch_data():
         phone = [e.split(":")[-1].strip() for e in raw_data if "טלפון" in e][0]
         hoo = [e for e in raw_data if "0 - " in e]
         hoo = " ".join([e for e in hoo]).split("04-")[0].strip()
+        city = addr.city
+        if not city:
+            city = raw_address.split(",")[1]
 
         item = SgRecord(
             locator_domain=domain,
             page_url=start_url,
             location_name=location_name,
             street_address=street_address,
-            city=addr.city,
+            city=city,
             state="",
             zip_postal=addr.postcode,
             country_code="IL",

@@ -53,7 +53,12 @@ def fetch_data():
                     )
                 ).strip()
 
-                store_number = "<MISSING>"
+                try:
+                    store_number = (
+                        store_res.text.split('"ID":"')[1].strip().split('"')[0].strip()
+                    )
+                except:
+                    store_number = "<MISSING>"
 
                 location_type = "<MISSING>"
 
@@ -83,6 +88,18 @@ def fetch_data():
                     .strip()
                 )
 
+                if len(street_address) <= 0:
+                    street_address = location_name.replace(".  Copy", "").strip()
+                    city_state_zip = (
+                        "".join(store_sel.xpath('//h1[@class="entry-title"]/text()'))
+                        .strip()
+                        .split("in")[1]
+                        .strip()
+                    )
+                    city = city_state_zip.split(",")[0].strip()
+                    state = city_state_zip.split(",")[1].strip().split(" ")[0].strip()
+                    zip = city_state_zip.split(",")[1].strip().split(" ")[-1].strip()
+
                 country_code = "US"
 
                 phone = raw_info[-1].strip().replace("Phone Number:", "").strip()
@@ -95,10 +112,19 @@ def fetch_data():
 
                 hours_of_operation = "; ".join(hours_list).strip()
 
-                latitude, longitude = (
-                    store_res.text.split('"lat":"')[1].strip().split('",')[0].strip(),
-                    store_res.text.split('"lng":"')[1].strip().split('"}')[0].strip(),
-                )
+                try:
+                    latitude, longitude = (
+                        store_res.text.split('"lat":"')[1]
+                        .strip()
+                        .split('",')[0]
+                        .strip(),
+                        store_res.text.split('"lng":"')[1]
+                        .strip()
+                        .split('"}')[0]
+                        .strip(),
+                    )
+                except:
+                    latitude, longitude = "<MISSING>", "<MISSING>"
 
                 yield SgRecord(
                     locator_domain=locator_domain,

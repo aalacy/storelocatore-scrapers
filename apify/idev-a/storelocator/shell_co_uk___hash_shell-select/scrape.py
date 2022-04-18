@@ -16,6 +16,7 @@ locator_domain = "https://shell.co.uk/#shell-select"
 json_url = "https://shellgsllocator.geoapp.me/api/v1/locations/within_bounds?sw%5B%5D={}&sw%5B%5D={}&ne%5B%5D={}&ne%5B%5D={}&with_all%5Bamenities%5D%5B%5D=selectshop&autoload=true&travel_mode=driving&avoid_tolls=false&avoid_highways=false&avoid_ferries=false&corridor_radius=50&driving_distances=false&format=json"
 base_url = "https://shellgsllocator.geoapp.me/api/v1/locations/within_bounds?sw%5B%5D=-80&sw%5B%5D=-179&ne%5B%5D=80&ne%5B%5D=179&with_all%5Bamenities%5D%5B%5D=selectshop&autoload=true&travel_mode=driving&avoid_tolls=false&avoid_highways=false&avoid_ferries=false&corridor_radius=5&driving_distances=false&format=json"
 detail_url = "https://shellgsllocator.geoapp.me/api/v1/locations/{}?origin%5Blat%5D={}&origin%5Blng%5D={}&autoload=true&travel_mode=driving&avoid_tolls=false&avoid_highways=false&avoid_ferries=false&corridor_radius=5&unit_system=1&driving_distances=false&format=json"
+locator = "https://www.shell.co.uk/motorist/shell-station-locator.html#iframe=Lz9sb2NhbGU9ZW5fR0IjL0A1NC41MzYsLTguNDc0NzQsNno"
 
 
 @retry(wait=wait_fixed(2), stop=stop_after_attempt(3))
@@ -62,15 +63,18 @@ def fetch_boundings(boundings, writer):
                                 hours.append(
                                     f"{' - '.join(hh['days'])}: {', '.join(times)}"
                                 )
-                        page_url = info["website_url"]
+                        page_url = info["website_url"] or locator
                     except:
                         pass
+                    addr = street_address.split(",")
+                    if "Intersection entre" in addr[0]:
+                        del addr[0]
                     writer.write_row(
                         SgRecord(
                             page_url=page_url,
                             store_number=_["id"],
                             location_name=_["name"],
-                            street_address=street_address,
+                            street_address=", ".join(addr),
                             city=_["city"],
                             state=_.get("state"),
                             zip_postal=zip_postal,

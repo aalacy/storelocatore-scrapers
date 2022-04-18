@@ -37,7 +37,7 @@ def fetch_data():
             longitude = loc_dom.xpath('//meta[@itemprop="longitude"]/@content')[0]
             hoo = loc_dom.xpath('//table[@class="c-hours-details"]//text()')
             hoo = [elem.strip() for elem in hoo if elem.strip()]
-            hours_of_operation = " ".join(hoo) if hoo else ""
+            hours_of_operation = " ".join(hoo).split("Hours")[-1] if hoo else ""
 
             item = SgRecord(
                 locator_domain=domain,

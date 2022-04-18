@@ -22,7 +22,7 @@ def fetch_data():
         search_res = session.get(search_url, headers=headers)
         search_sel = lxml.html.fromstring(search_res.text)
 
-        regions = search_sel.xpath('//ul[@class="location-list"]/li/a')
+        regions = search_sel.xpath('//li[@class="listing-card"]/a')
 
         for region in regions:
 
@@ -31,7 +31,7 @@ def fetch_data():
             region_sel = lxml.html.fromstring(region_res.text)
 
             locator_domain = website
-            cities = region_sel.xpath('//ul[@class="location-list"]/li/a')
+            cities = region_sel.xpath('//li[@class="listing-card"]/a')
 
             for city in cities:
                 city_url = "".join(city.xpath(".//@href")).strip()
@@ -45,64 +45,57 @@ def fetch_data():
 
                 city_sel = lxml.html.fromstring(city_res.text)
 
-                stores = city_sel.xpath(
-                    '//div[@class="itemlist"]/div[@class="address-phone"]'
-                )
+                stores = city_sel.xpath('//li[@class="listing-card"]')
                 for store in stores:
-                    page_url = "".join(store.xpath(".//@href")).strip()
+                    page_url = "".join(
+                        store.xpath(".//a[contains(text(),'More Info')]/@href")
+                    ).strip()
                     log.info(page_url)
 
                     store_res = session.get(page_url, headers=headers)
                     store_sel = lxml.html.fromstring(store_res.text)
 
-                    location_name = "".join(store.xpath("./a/span[1]//text()")).strip()
+                    location_name = "".join(
+                        store.xpath(".//div[@class='locationInfo']/h2/text()")
+                    ).strip()
                     if len(location_name) <= 0:
                         location_name = "The Cheesecake Factory"
 
-                    street_address = " ".join(
+                    street_address = "".join(
                         store.xpath('.//*[@itemprop="streetAddress"]//text()')
                     ).strip()
 
-                    city = " ".join(
-                        store.xpath('.//*[@itemprop="addressLocality"]//text()')
+                    city = "".join(
+                        store.xpath('.//*[@itemprop="addressLocality"]/text()')
                     ).strip()
-                    state = " ".join(
+                    state = "".join(
                         store.xpath('.//*[@itemprop="addressRegion"]//text()')
                     ).strip()
-                    zip = " ".join(
+                    zip = "".join(
                         store.xpath('.//*[@itemprop="postalCode"]//text()')
                     ).strip()
-                    country_code = " ".join(
-                        store.xpath('.//*[@itemprop="addressCountry"]//text()')
+                    country_code = "".join(
+                        store_sel.xpath(
+                            '//meta[@property="restaurant:contact_info:country_name"]/@content'
+                        )
                     ).strip()
 
                     store_number = "<MISSING>"
 
-                    phone = " ".join(
-                        store.xpath('.//*[@itemprop="telephone"]//text()')
+                    phone = "".join(
+                        store_sel.xpath('//div[@class="phone"]//text()')
                     ).strip()
 
                     location_type = "<MISSING>"
 
-                    hours = list(
-                        filter(
-                            str,
-                            [
-                                x.strip()
-                                for x in store_sel.xpath(
-                                    '//div[@class="time-table-wrap"]//table[@class="time-table"]//td//text()'
-                                )
-                            ],
-                        )
-                    )
-                    hours_of_operation = (
-                        "; ".join(hours)
-                        .replace("Thu;", "Thu:")
-                        .replace("Fri;", "Fri:")
-                        .replace("Sat;", "Sat:")
-                        .replace("Sun;", "Sun:")
-                        .strip()
-                    )
+                    hours = store_sel.xpath('//div[@class="regular-hours"]//ul/li')
+                    hours_list = []
+                    for hour in hours:
+                        day = "".join(hour.xpath("span[1]/text()")).strip()
+                        time = "".join(hour.xpath("span[2]/text()")).strip()
+                        hours_list.append(day + time)
+
+                    hours_of_operation = "; ".join(hours_list).strip()
 
                     latitude, longitude = (
                         store_res.text.split('"latitude":')[1].split(",")[0].strip(),

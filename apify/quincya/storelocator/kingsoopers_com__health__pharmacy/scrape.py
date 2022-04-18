@@ -19,10 +19,7 @@ def fetch_data(sgw: SgWriter):
 
     base_link = "https://www.kingsoopers.com/storelocator-sitemap.xml"
 
-    user_agent = (
-        "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0"
-    )
-
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
     headers = {"User-Agent": user_agent}
 
     session = SgRequests()
@@ -36,7 +33,7 @@ def fetch_data(sgw: SgWriter):
 
     for item in items:
         link = item.text
-        if "stores/details" in link:
+        if "stores/search" not in link:
             log.info(link)
             try:
                 req = session.get(link, headers=headers)

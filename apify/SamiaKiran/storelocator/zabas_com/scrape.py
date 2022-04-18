@@ -34,7 +34,10 @@ def fetch_data():
             log.info(location_name)
             phone = loc["content"]
             phone = BeautifulSoup(phone, "html.parser")
-            phone = phone.find("a").text.replace("+", "")
+            try:
+                phone = phone.find("a").text.replace("+", "")
+            except:
+                phone = MISSING
             raw_address = loc["address"]
             pa = parse_address_intl(raw_address)
 
@@ -50,6 +53,15 @@ def fetch_data():
             zip_postal = pa.postcode
             zip_postal = zip_postal.strip() if zip_postal else MISSING
 
+            if zip_postal == MISSING:
+                soup = (
+                    BeautifulSoup(loc["content"], "html.parser")
+                    .get_text(separator="|", strip=True)
+                    .replace("|", " ")
+                )
+                soup = soup.split(state)[1].split()
+                zip_postal = soup[0]
+                phone = soup[1]
             latitude = loc["location"]["lat"]
             longitude = loc["location"]["lng"]
             country_code = loc["location"]["country"]
