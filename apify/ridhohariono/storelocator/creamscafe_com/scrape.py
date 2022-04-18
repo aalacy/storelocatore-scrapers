@@ -92,13 +92,16 @@ def fetch_data():
             for hours in hoo_content:
                 hoo += hours.text.strip() + ","
         else:
-            hoo = re.sub(
-                r"Opening Times.*:,|Hot Section.*|\(.*\)",
-                "",
-                info.find(
-                    "strong", text=re.compile(r"Opening Times.*")
-                ).parent.get_text(strip=True, separator=","),
-            )
+            try:
+                hoo = re.sub(
+                    r"Opening Times.*:,|Hot Section.*|\(.*\)",
+                    "",
+                    info.find(
+                        "strong", text=re.compile(r"Opening Times.*")
+                    ).parent.get_text(strip=True, separator=","),
+                )
+            except:
+                hoo = ""
         hours_of_operation = (
             re.sub(r"Opening Times.*:,|Hot Section.*|\(.*\)", "", hoo)
             .rstrip(",")

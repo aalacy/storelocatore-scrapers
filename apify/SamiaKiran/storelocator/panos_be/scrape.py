@@ -64,10 +64,10 @@ def fetch_data():
                 day = hour["day"]
                 time = hour["time"]
                 hours_of_operation = hours_of_operation + " " + day + " " + time
-
+            page_url = loc["url"]
             yield SgRecord(
                 locator_domain=DOMAIN,
-                page_url="https://www.panos.be/nl/onze-winkels",
+                page_url=page_url,
                 location_name=location_name,
                 street_address=street_address,
                 city=city,

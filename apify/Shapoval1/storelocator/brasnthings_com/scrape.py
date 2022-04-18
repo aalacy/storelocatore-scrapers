@@ -35,6 +35,8 @@ def fetch_data(sgw: SgWriter):
             if state == "CA":
                 country_code = "US"
             city = j.get("city") or "<MISSING>"
+            if str(city).find(",") != -1:
+                city = str(city).split(",")[0].strip()
             store_number = j.get("stockist_id") or "<MISSING>"
             page_url = (
                 f"https://www.brasnthings.com/stores/store/index/id/{store_number}"
@@ -93,6 +95,9 @@ def fetch_data(sgw: SgWriter):
                 latitude=latitude,
                 longitude=longitude,
                 hours_of_operation=hours_of_operation,
+                raw_address=f"{ad} {city}, {state} {postal}".replace(
+                    "<MISSING>", ""
+                ).strip(),
             )
 
             sgw.write_row(row)

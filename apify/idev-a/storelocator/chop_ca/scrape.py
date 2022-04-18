@@ -25,12 +25,17 @@ def fetch_data():
             logger.info(page_url)
             res = session.get(page_url, headers=_headers).text
             soup1 = bs(res, "lxml")
-            phone = link.select_one("span.phone-text-hide").text.strip()
+            phone = ""
+            if link.select_one("span.phone-text-hide"):
+                phone = link.select_one("span.phone-text-hide").text.strip()
             hours = []
-            days = soup1.select("div.hours-wrapper")[-1].select("span.day")
-            times = soup1.select("div.hours-wrapper")[-1].select("span.hours")
-            for x in range(len(days)):
-                hours.append(f"{days[x].text.strip()} {times[x].text.strip()}")
+            try:
+                days = soup1.select("div.hours-wrapper")[-1].select("span.day")
+                times = soup1.select("div.hours-wrapper")[-1].select("span.hours")
+                for x in range(len(days)):
+                    hours.append(f"{days[x].text.strip()} {times[x].text.strip()}")
+            except:
+                hours = ["temporarily closed"]
 
             script = json.loads(
                 res.split("jQuery.extend(Drupal.settings,")[1]
@@ -40,6 +45,9 @@ def fetch_data():
             raw_address = " ".join(list(soup1.select_one("div.adr").stripped_strings))
             yield SgRecord(
                 page_url=page_url,
+                store_number=soup1.select_one(
+                    "li.location-block__location div.location-block__icons a"
+                )["data-location-id"],
                 location_name=soup1.select_one("span.loc-name").text.strip(),
                 street_address=" ".join(
                     list(soup1.select_one("div.street-address").stripped_strings)
