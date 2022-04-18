@@ -24,8 +24,8 @@ def fetch_data():
     zip_codes = DynamicZipSearch(
         country_codes=[SearchableCountries.USA],
         max_search_results=100,
-        max_search_distance_miles=500,
-        expected_search_radius_miles=500,
+        max_search_distance_miles=100,
+        expected_search_radius_miles=100,
     )
     for zip_code in zip_codes:
 
@@ -52,7 +52,7 @@ def fetch_data():
             zip = i["address"]["postalCode"]
             country_code = "US"
             store_number = i["id"]
-            if store_number == "540FC003":
+            if store_number in ["540FC003", "01800038"]:
                 continue
             try:
                 phone = i["phone"]
