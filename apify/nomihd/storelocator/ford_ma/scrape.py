@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from sgselenium import SgChrome
+from sgrequests import SgRequests
 from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
@@ -8,16 +8,25 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 import time
 import json
-import ssl
-
-ssl._create_default_https_context = ssl._create_unverified_context
 
 website = "ford.ma"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 
-user_agent = (
-    "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0"
-)
+headers = {
+    "authority": "en.fordegypt.com",
+    "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+    "accept-language": "en-US,en-GB;q=0.9,en;q=0.8",
+    "cache-control": "max-age=0",
+    "sec-ch-ua": '" Not A;Brand";v="99", "Chromium";v="100", "Google Chrome";v="100"',
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": '"Windows"',
+    "sec-fetch-dest": "document",
+    "sec-fetch-mode": "navigate",
+    "sec-fetch-site": "none",
+    "sec-fetch-user": "?1",
+    "upgrade-insecure-requests": "1",
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.88 Safari/537.36",
+}
 
 
 def fetch_data():
@@ -27,138 +36,136 @@ def fetch_data():
         "https://en.fordegypt.com/branchlocator",
         "https://fr.ford.ma/localisateurconcession",
     ]
+    session = SgRequests()
+    for search_url in search_urls:
+        stores_req = session.get(search_url, headers=headers)
+        log.info(search_url)
+        time.sleep(5)
+        search_sel = lxml.html.fromstring(stores_req.text)
+        stores = search_sel.xpath("//li[@data-branch and article]")
+        locator_domain = search_url.split("//")[1].split("/")[0]
+        country_code = (
+            locator_domain.replace("www", "")
+            .replace(".", "")
+            .replace("com", "")
+            .replace("ford", "")
+            .replace("en", "")
+            .replace("fr", "")
+            .strip()
+            .upper()
+        )
+        base = "https://" + locator_domain
 
-    with SgChrome(user_agent=user_agent) as driver:
-        for search_url in search_urls:
-            log.info(search_url)
+        for no, store in enumerate(stores, 1):
 
-            driver.get(search_url)
-            time.sleep(5)
-            search_sel = lxml.html.fromstring(driver.page_source)
-            stores = search_sel.xpath("//li[@data-branch and article]")
-            locator_domain = search_url.split("//")[1].split("/")[0]
-            country_code = (
-                locator_domain.replace("www", "")
-                .replace(".", "")
-                .replace("com", "")
-                .replace("ford", "")
-                .replace("en", "")
-                .replace("fr", "")
-                .strip()
-                .upper()
+            location_type = "<MISSING>"
+
+            page_url = base + "".join(store.xpath(".//h2/a/@href"))
+            log.info(page_url)
+
+            store_req = session.get(page_url, headers=headers)
+            store_sel = lxml.html.fromstring(store_req.text)
+
+            store_json = json.loads(
+                "".join(
+                    store_sel.xpath('//script[@type="application/ld+json"]/text()')
+                ).strip()
             )
-            base = "https://" + locator_domain
+            location_name = "".join(store.xpath(".//h2/a//text()")).strip()
+            if not location_name or "Service Center" in location_name:
+                continue
 
-            for no, store in enumerate(stores, 1):
+            street_address = store_json["address"]["streetAddress"]
+            city = store_json["address"]["addressLocality"]
+            if city:
+                city = city.split("(")[0].strip()
+            state = "<MISSING>"
+            zip = store_json["address"]["postalCode"]
 
-                location_type = "<MISSING>"
-
-                page_url = base + "".join(store.xpath(".//h2/a/@href"))
-                log.info(page_url)
-
-                driver.get(page_url)
-                store_sel = lxml.html.fromstring(driver.page_source)
-
-                store_json = json.loads(
-                    "".join(
-                        store_sel.xpath('//script[@type="application/ld+json"]/text()')
-                    ).strip()
-                )
-                location_name = "".join(store.xpath(".//h2/a//text()")).strip()
-                if not location_name or "Service Center" in location_name:
-                    continue
-
-                street_address = store_json["address"]["streetAddress"]
-                city = store_json["address"]["addressLocality"]
-                if city:
-                    city = city.split("(")[0].strip()
-                state = "<MISSING>"
-                zip = store_json["address"]["postalCode"]
-
-                phone = (
-                    "".join(
-                        store_sel.xpath(
-                            '//h3[.//span[contains(text(),"Sales")]]/following-sibling::div[1]//a[contains(@href,"tel:")]//text()'
-                        )
+            phone = (
+                "".join(
+                    store_sel.xpath(
+                        '//h3[.//span[contains(text(),"Sales")]]/following-sibling::div[1]//a[contains(@href,"tel:")]//text()'
                     )
-                    .replace("Telephone", "")
-                    .replace(":", "")
-                    .strip()
                 )
-                if len(phone) <= 0:
-                    phone = "".join(
-                        store_sel.xpath(
-                            '//h3[.//span[contains(text(),"Ventes")]]/following-sibling::div[1]//a[contains(@href,"tel:")]//text()'
-                        )
-                    ).strip()
-                    if ":" in phone:
-                        phone = phone.split(":")[1].strip()
+                .replace("Telephone", "")
+                .replace(":", "")
+                .strip()
+            )
+            if len(phone) <= 0:
+                phone = "".join(
+                    store_sel.xpath(
+                        '//h3[.//span[contains(text(),"Ventes")]]/following-sibling::div[1]//a[contains(@href,"tel:")]//text()'
+                    )
+                ).strip()
+                if ":" in phone:
+                    phone = phone.split(":")[1].strip()
 
+            hours = list(
+                filter(
+                    str,
+                    [
+                        x.strip()
+                        for x in store_sel.xpath(
+                            '//h3[.//span[contains(text(),"Sales")]]/following-sibling::div[1]/div/p//text()'
+                        )
+                    ],
+                )
+            )
+            if len(hours) <= 0:
                 hours = list(
                     filter(
                         str,
                         [
                             x.strip()
                             for x in store_sel.xpath(
-                                '//h3[.//span[contains(text(),"Sales")]]/following-sibling::div[1]/div/p//text()'
+                                '//h3[.//span[contains(text(),"Ventes")]]/following-sibling::div[1]/div/p//text()'
                             )
                         ],
                     )
                 )
-                if len(hours) <= 0:
-                    hours = list(
-                        filter(
-                            str,
-                            [
-                                x.strip()
-                                for x in store_sel.xpath(
-                                    '//h3[.//span[contains(text(),"Ventes")]]/following-sibling::div[1]/div/p//text()'
-                                )
-                            ],
-                        )
-                    )
 
-                hours_of_operation = (
-                    "; ".join(hours)
-                    .strip()
-                    .replace(":;", ":")
-                    .strip()
-                    .replace("Vendredi;", "Vendredi:")
-                    .replace("Matin;", "Matin:")
-                    .strip()
-                )
+            hours_of_operation = (
+                "; ".join(hours)
+                .strip()
+                .replace(":;", ":")
+                .strip()
+                .replace("Vendredi;", "Vendredi:")
+                .replace("Matin;", "Matin:")
+                .strip()
+            )
 
-                store_number = page_url.split("/")[-1]
+            store_number = page_url.split("/")[-1]
 
-                latlng_info = (
-                    driver.page_source.split("var branchMarkers =")[1]
-                    .split('"branchId":')[0]
-                    .strip()
-                )
+            latlng_info = (
+                store_req.text.split("var branchMarkers =")[1]
+                .split('"branchId":')[0]
+                .strip()
+            )
 
-                latitude, longitude = (
-                    latlng_info.split('"latitude":')[1].split(",")[0].strip('" '),
-                    latlng_info.split('"longitude":')[1].split(",")[0].strip('" '),
-                )
+            latitude, longitude = (
+                latlng_info.split('"latitude":')[1].split(",")[0].strip('" '),
+                latlng_info.split('"longitude":')[1].split(",")[0].strip('" '),
+            )
 
-                if latitude == longitude:
-                    latitude = longitude = "<MISSING>"
-                yield SgRecord(
-                    locator_domain=locator_domain,
-                    page_url=page_url,
-                    location_name=location_name,
-                    street_address=street_address,
-                    city=city,
-                    state=state,
-                    zip_postal=zip,
-                    country_code=country_code,
-                    store_number=store_number,
-                    phone=phone,
-                    location_type=location_type,
-                    latitude=latitude,
-                    longitude=longitude,
-                    hours_of_operation=hours_of_operation,
-                )
+            if latitude == longitude:
+                latitude = longitude = "<MISSING>"
+            yield SgRecord(
+                locator_domain=locator_domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
 
 
 def scrape():
