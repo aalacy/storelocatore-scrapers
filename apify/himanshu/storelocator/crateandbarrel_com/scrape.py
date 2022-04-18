@@ -1,110 +1,86 @@
+import json
 from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries
-from concurrent import futures
-
-
-def get_data(zips, sgw: SgWriter):
-
-    locator_domain = "https://www.crateandbarrel.com"
-
-    session = SgRequests()
-    headers = {
-        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0",
-        "Accept": "*/*",
-        "Accept-Language": "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3",
-        "Content-Type": "application/json",
-        "x-requested-with": "XMLHttpRequest",
-        "Sec-Fetch-Dest": "empty",
-        "Sec-Fetch-Mode": "cors",
-        "Sec-Fetch-Site": "same-origin",
-        "Referer": "https://www.crateandbarrel.com/stores/",
-        "Proxy-Authorization": "Basic YWNjZXNzX3Rva2VuOjFoMmpscmczNHZrZ3NsYjhob29xZG8zZmpmYWRjaTIyZDRpamc4ZzN1MDAyYzFicWpjNms=",
-        "Connection": "keep-alive",
-    }
-
-    params = {
-        "searchKeyword": f"{zips}",
-    }
-
-    r = session.get(
-        "https://www.crateandbarrel.com/stores/locator", headers=headers, params=params
-    )
-    js = r.json()["storeList"]
-
-    for s in js:
-
-        slug = s.get("storeUrl")
-        page_url = f"https://www.crateandbarrel.com{slug}"
-        location_name = s.get("storeName")
-        store_number = s.get("storeNumber")
-        street_address = f"{s.get('address1')} {s.get('address2')}".strip()
-        city = s.get("city")
-        state = s.get("state")
-        postal = s.get("zip")
-        location_type = "Store"
-        if s.get("distributionCenter"):
-            location_type = "Distribution Center"
-        elif s.get("outlet"):
-            location_type = "Outlet"
-        elif s.get("corporate"):
-            location_type = "Corporate"
-        if location_type not in ["Store", "Outlet"]:
-            continue
-        country_code = s.get("country")
-        phone = (
-            f"({s.get('phoneAreaCode')}) {s.get('phonePrefix')}-{s.get('phoneSuffix')}"
-        )
-        latitude = s.get("storeLat")
-        longitude = s.get("storeLong")
-        hours = s.get("hoursStr")
-        hours_of_operation = "<MISSING>"
-        if hours:
-            a = html.fromstring(hours)
-            hours_of_operation = (
-                " ".join(a.xpath("//*//text()")).replace("\n", "").strip()
-            )
-            hours_of_operation = " ".join(hours_of_operation.split())
-
-        row = SgRecord(
-            locator_domain=locator_domain,
-            page_url=page_url,
-            location_name=location_name,
-            street_address=street_address,
-            city=city,
-            state=state,
-            zip_postal=postal,
-            country_code=country_code,
-            store_number=store_number,
-            phone=phone,
-            location_type=location_type,
-            latitude=latitude,
-            longitude=longitude,
-            hours_of_operation=hours_of_operation,
-        )
-
-        sgw.write_row(row)
 
 
 def fetch_data(sgw: SgWriter):
-    coords = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA, SearchableCountries.CANADA],
-        max_search_distance_miles=10,
-        expected_search_radius_miles=10,
-        max_search_results=None,
-    )
 
-    with futures.ThreadPoolExecutor(max_workers=5) as executor:
-        future_to_url = {executor.submit(get_data, url, sgw): url for url in coords}
-        for future in futures.as_completed(future_to_url):
-            future.result()
+    locator_domain = "https://www.crateandbarrel.com/"
+    api_url = "https://www.crateandbarrel.com/stores/list-state/retail-stores"
+    session = SgRequests()
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
+    }
+    r = session.get(api_url, headers=headers)
+    tree = html.fromstring(r.text)
+    div = tree.xpath('//div[@class="dd"]/ul/li//a')
+    for d in div:
+
+        location_type = "".join(d.xpath(".//text()"))
+        location_type_url = "".join(d.xpath(".//@href"))
+        r = session.get(location_type_url, headers=headers)
+        tree = html.fromstring(r.text)
+        div = tree.xpath('//div[@class="state-list"]//ul//li//a')
+        for d in div:
+
+            state = "".join(d.xpath(".//text()"))
+            state_url_slug = "".join(d.xpath(".//@href"))
+            state_url = f"https://www.crateandbarrel.com{state_url_slug}"
+            r = session.get(state_url, headers=headers)
+            tree = html.fromstring(r.text)
+            div = tree.xpath(
+                '//div[@class="responsive-stores stores-search-results list-state content-layout"]/script/text()'
+            )
+            for d in div:
+
+                js = json.loads(str(d))
+                location_name = js.get("name") or "<MISSING>"
+                a = js.get("address")
+                street_address = a.get("streetAddress") or "<MISSING>"
+                postal = a.get("postalCode") or "<MISSING>"
+                country_code = a.get("addressCountry") or "<MISSING>"
+                city = a.get("addressLocality") or "<MISSING>"
+                try:
+                    latitude = js.get("geo").get("latitude")
+                    longitude = js.get("geo").get("longitude")
+                except:
+                    latitude, longitude = "<MISSING>", "<MISSING>"
+                phone = js.get("telephone") or "<MISSING>"
+                hours_of_operation = " ".join(js.get("openingHours"))
+                page_url_slug = "".join(
+                    tree.xpath(f'//a[./h2[text()="{location_name}"]]/@href')
+                )
+                page_url = f"https://www.crateandbarrel.com{page_url_slug}"
+                try:
+                    store_number = page_url.split("/str")[1].strip()
+                except:
+                    store_number = "<MISSING>"
+
+                row = SgRecord(
+                    locator_domain=locator_domain,
+                    page_url=page_url,
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=postal,
+                    country_code=country_code,
+                    store_number=store_number,
+                    phone=phone,
+                    location_type=location_type,
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=hours_of_operation,
+                )
+
+                sgw.write_row(row)
 
 
 if __name__ == "__main__":
     session = SgRequests()
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))) as writer:
         fetch_data(writer)

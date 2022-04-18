@@ -68,7 +68,9 @@ def get_data(page_url, sgw: SgWriter):
 
     location_name = " - ".join(tree.xpath("//h1/text()")).strip()
     _tmp = []
-    line = tree.xpath("//a[@class='storeAddress']/p/text()")
+    line = tree.xpath(
+        "//a[@class='storeAddress']//text()|//div[./div/h2[contains(text(), 'Contact')]]/following-sibling::div[1]//p/text()"
+    )
     line = list(filter(None, [li.strip() for li in line]))
     for li in line:
         if "Text" in li:
@@ -82,11 +84,24 @@ def get_data(page_url, sgw: SgWriter):
     country_code = "US"
     phone = "".join(tree.xpath("//a[contains(@href, 'tel:')]//text()")).strip()
 
+    _tmp = []
     hours = tree.xpath(
         "//div[./div/h2[contains(text(), 'Store Hours')]]/following-sibling::div//text()"
     )
     hours = list(filter(None, [h.strip() for h in hours]))
-    hours_of_operation = ";".join(hours)
+    for h in hours:
+        if "Memorial" in h:
+            continue
+        _tmp.append(h)
+
+    hours_of_operation = ";".join(_tmp)
+    if "soon" in hours_of_operation:
+        logger.info(f"{page_url}: COMING SOON")
+        return
+
+    if tree.xpath("//div[contains(text(), 'coming soon')]"):
+        logger.info(f"{page_url}: COMING SOON")
+        return
 
     row = SgRecord(
         page_url=page_url,
@@ -108,7 +123,7 @@ def get_data(page_url, sgw: SgWriter):
 def fetch_data(sgw: SgWriter):
     urls = get_urls()
 
-    with futures.ThreadPoolExecutor(max_workers=3) as executor:
+    with futures.ThreadPoolExecutor(max_workers=1) as executor:
         future_to_url = {executor.submit(get_data, url, sgw): url for url in urls}
         for future in futures.as_completed(future_to_url):
             future.result()
