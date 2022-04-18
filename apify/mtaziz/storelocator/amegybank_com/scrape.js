@@ -30,7 +30,7 @@ Apify.main(async () => {
             },
             body,
           }
-        );
+        ); // eslint-disable-line
         return await response.json();
       }, JSON.stringify(getRequestData()));
 
