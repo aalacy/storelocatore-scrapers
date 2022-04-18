@@ -1,164 +1,182 @@
-# -*- coding: utf-8 -*-
-from sglogging import sglog
-from sgscrape.sgrecord import SgRecord
-from sgscrape.sgwriter import SgWriter
-from sgpostal import sgpostal as parser
-import lxml.html
-from sgscrape.sgrecord_id import RecommendedRecordIds
-from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgselenium import SgChrome
-import ssl
+from sgpostal.sgpostal import parse_address_intl
+from lxml import html
 import time
+import json
+from sgrequests import SgRequests
+from sglogging import sglog
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.pause_resume import CrawlStateSingleton
 
-ssl._create_default_https_context = ssl._create_unverified_context
+website = "https://www.coworker.com"
+MISSING = SgRecord.MISSING
 
-website = "coworker.com"
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+}
+
+headers_post = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36",
+    "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
+}
+
+session = SgRequests()
+
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 
-user_agent = (
-    "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0"
-)
+
+def request_with_retries(url):
+    response = session.get(url, headers=headers)
+    return html.fromstring(response.text, "lxml")
+
+
+def request_post_pages(city_id, country_id, page_num):
+    response = session.post(
+        f"{website}/ajax/spaces",
+        headers=headers_post,
+        data=f"city_id={city_id}&country_id={country_id}&page_num={page_num}",
+    )
+    response = json.loads(response.text)
+    return response["numSpaces"], response["mapSpaces"]
+
+
+def fetch_cities():
+    body = request_with_retries(f"{website}/office-space/cities")
+    city_urls = body.xpath('//a[contains(@href, "/office-space/")]/@href')[1:-1]
+    for index in range(len(city_urls)):
+        city_urls[index] = city_urls[index].replace("office-space", "search")
+    return city_urls
+
+
+def fetch_pages(city_url):
+    body = request_with_retries(city_url)
+    city_id = body.xpath('//input[@id="city_id"]/@value')[0]
+    country_id = body.xpath('//input[@id="country_id"]/@value')[0]
+    all_stores = []
+    page = 0
+    while True:
+        page = page + 1
+        total_stores, stores = request_post_pages(city_id, country_id, page)
+        for store in stores:
+            page_url = store["profile_url_full"]
+            location = store["location"]
+
+            raw_address = (location["address_1"] + " " + location["address_2"]).strip()
+            if location["city_name"]:
+                raw_address = raw_address + ", " + location["city_name"]
+            if location["state_code"]:
+                raw_address = raw_address + ", " + location["state_code"]
+
+            all_stores.append(
+                {
+                    "store_number": store["id"],
+                    "location_name": store["name"],
+                    "page_url": page_url,
+                    "raw_address": raw_address,
+                    "country_code": location["country_code"],
+                    "latitude": location["lat"],
+                    "longitude": location["lng"],
+                }
+            )
+        if total_stores < page * 10:
+            break
+    return all_stores
+
+
+def stringify_nodes(body, xpath):
+    nodes = body.xpath(xpath)
+    values = []
+    for node in nodes:
+        for text in node.itertext():
+            text = text.strip()
+            if text:
+                values.append(text)
+
+    if len(values) == 0:
+        return MISSING
+    return " ".join((" ".join(values)).split())
+
+
+def get_hours_of_operation(url):
+    try:
+        body = request_with_retries(url)
+        return stringify_nodes(body, '//div[contains(@class, "space-member-times")]')
+    except Exception as e:
+        log.info(f"HOO error: {e}")
+        return MISSING
+
+
+def get_address(raw_address):
+    try:
+        if raw_address is not None and raw_address != MISSING:
+            data = parse_address_intl(raw_address)
+            street_address = data.street_address_1
+            if data.street_address_2 is not None:
+                street_address = street_address + " " + data.street_address_2
+            city = data.city
+            state = data.state
+            zip_postal = data.postcode
+
+            if street_address is None or len(street_address) == 0:
+                street_address = MISSING
+            if city is None or len(city) == 0:
+                city = MISSING
+            if state is None or len(state) == 0:
+                state = MISSING
+            if zip_postal is None or len(zip_postal) == 0:
+                zip_postal = MISSING
+            return street_address, city, state, zip_postal
+    except Exception as e:
+        log.info(f"{raw_address} :Raw Address Error: {e}")
+        pass
+    return MISSING, MISSING, MISSING, MISSING
 
 
 def fetch_data():
-    # Your scraper here
+    city_urls = fetch_cities()
+    log.info(f"Total cities = {len(city_urls)}")
+    city_count = 0
+    page_count = 0
 
-    search_url = "https://www.coworker.com/office-space/cities"
+    for city_url in city_urls:
+        city_count = city_count + 1
+        stores = fetch_pages(city_url)
+        log.info(f"{city_count}. From {city_url} page urls = {len(stores)}")
+        for store in stores:
+            page_count = page_count + 1
+            log.info(f"  {page_count}. scrapping {store['location_name']}")
+            hours_of_operation = get_hours_of_operation(store["page_url"])
+            street_address, city, state, zip_postal = get_address(store["raw_address"])
 
-    with SgChrome(user_agent=user_agent) as driver:
-        driver.get(search_url)
-        time.sleep(10)
-        search_sel = lxml.html.fromstring(driver.page_source)
-
-        cities = search_sel.xpath(
-            '//div[@class="col-xs-12 pade_none around_city_con"]//ul/li/a'
-        )
-
-        for no, _city in enumerate(cities, 1):
-
-            locator_domain = website
-
-            city_url = "".join(_city.xpath("./@href")).strip()
-            city = "".join(_city.xpath(".//text()")).strip()
-
-            is_city_req_timeout = True
-            while is_city_req_timeout is True:
-                try:
-                    log.info(city_url)
-                    driver.get(city_url)
-                    is_city_req_timeout = False
-                except:
-                    pass
-
-            city_sel = lxml.html.fromstring(driver.page_source)
-
-            stores = city_sel.xpath('//div[@class="item"]//a')
-
-            for n, store in enumerate(stores, 1):
-
-                page_url = "".join(store.xpath("./@href"))
-
-                is_timeout = True
-                while is_timeout is True:
-                    try:
-                        log.info(page_url)
-                        driver.get(page_url)
-                        is_timeout = False
-                    except:
-                        pass
-                store_sel = lxml.html.fromstring(driver.page_source)
-
-                location_name = " ".join(store.xpath(".//h4//text()")).strip()
-
-                location_type = "<MISSING>"
-
-                store_info = list(
-                    filter(
-                        str,
-                        [
-                            x.strip()
-                            for x in store_sel.xpath(
-                                '//div[@id="location"]//h2/span//text()'
-                            )
-                        ],
-                    )
-                )
-
-                raw_address = ", ".join(store_info)
-
-                formatted_addr = parser.parse_address_intl(raw_address)
-                street_address = formatted_addr.street_address_1
-                if street_address:
-                    if formatted_addr.street_address_2:
-                        street_address = (
-                            street_address + ", " + formatted_addr.street_address_2
-                        )
-                else:
-                    if formatted_addr.street_address_2:
-                        street_address = formatted_addr.street_address_2
-
-                city = page_url.split("/")[-2]
-                state = formatted_addr.state
-
-                zip = formatted_addr.postcode
-
-                country_code = page_url.split("/")[-3]
-                phone = "<MISSING>"
-
-                hours = store_sel.xpath('//h4[text()="Opening Hours"]/../div')
-                hours_list = []
-                for hour in hours:
-                    day = "".join(hour.xpath("span/text()")).strip()
-                    tim = "".join(hour.xpath("text()")).strip()
-                    hours_list.append(day + ":" + tim)
-
-                hours_of_operation = (
-                    "; ".join(hours_list)
-                    .strip()
-                    .replace("day; ", "day: ")
-                    .replace("Show More", "")
-                    .strip("; ")
-                )
-
-                store_number = "<MISSING>"
-
-                latitude, longitude = "<MISSING>", "<MISSING>"
-
-                yield SgRecord(
-                    locator_domain=locator_domain,
-                    page_url=page_url,
-                    location_name=location_name,
-                    street_address=street_address,
-                    city=city,
-                    state=state,
-                    zip_postal=zip,
-                    country_code=country_code,
-                    store_number=store_number,
-                    phone=phone,
-                    location_type=location_type,
-                    latitude=latitude,
-                    longitude=longitude,
-                    hours_of_operation=hours_of_operation,
-                    raw_address=raw_address,
-                )
+            yield SgRecord(
+                locator_domain=website,
+                location_type=MISSING,
+                store_number=store["store_number"],
+                page_url=store["page_url"],
+                location_name=store["location_name"],
+                country_code=store["country_code"],
+                latitude=store["latitude"],
+                longitude=store["longitude"],
+                raw_address=store["raw_address"],
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_postal,
+                hours_of_operation=hours_of_operation,
+            )
 
 
 def scrape():
-    log.info("Started")
-    count = 0
-    with SgWriter(
-        deduper=SgRecordDeduper(
-            record_id=RecommendedRecordIds.PageUrlId,
-            duplicate_streak_failure_factor=-1,
-        )
-    ) as writer:
-        results = fetch_data()
-        for rec in results:
+    log.info(f"Start scrapping {website} ...")
+    CrawlStateSingleton.get_instance().save(override=True)
+    start = time.time()
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        for rec in fetch_data():
             writer.write_row(rec)
-            count = count + 1
-
-    log.info(f"No of records being processed: {count}")
-    log.info("Finished")
+    end = time.time()
+    log.info(f"Scrape took {end-start} seconds.")
 
 
 if __name__ == "__main__":
