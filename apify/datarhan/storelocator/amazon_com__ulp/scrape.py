@@ -50,7 +50,8 @@ def fetch_data():
         if data.status_code != 200:
             continue
         data = data.json()
-
+        if not data["locationList"]:
+            continue
         for poi in data["locationList"]:
             street_address = poi["addressLine1"]
             if poi["addressLine2"]:
