@@ -31,9 +31,7 @@ def get_data():
         if location_name == "name":
             continue
         address = location.split("class=address>")[1].split("<")[0]
-        city = (
-            location.split("class=city>")[1].split("<")[0].strip().replace(",", "")
-        )
+        city = location.split("class=city>")[1].split("<")[0].strip().replace(",", "")
         state = location.split("state>")[1].split(" <")[0]
         zipp = location.split("class=zip>")[1].split("<")[0]
         country_code = "US"
