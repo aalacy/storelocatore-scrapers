@@ -9,7 +9,7 @@ def fetch_data(sgw: SgWriter):
 
     locator_domain = "https://www.games-workshop.com/"
     api_url = "https://www.games-workshop.com/en-GB/store/fragments/resultsJSON.jsp?latitude=51.5072178&radius=100&longitude=-0.1275862"
-    session = SgRequests()
+
     r = session.get(api_url)
     js = r.json()["locations"]
     for j in js:
