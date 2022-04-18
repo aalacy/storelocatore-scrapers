@@ -1,45 +1,28 @@
-import csv
-from sgrequests import SgRequests
+from sgrequests import SgRequests, SgRequestError
 import json
 from sglogging import sglog
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
 import lxml.html
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "giantfoodstores.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
-session = SgRequests()
+session = SgRequests(proxy_country="us", dont_retry_status_codes=([404]))
 headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+    "authority": "giantfoodstores.com",
+    "sec-ch-ua": '" Not A;Brand";v="99", "Chromium";v="96", "Google Chrome";v="96"',
+    "accept": "application/json, text/plain, */*",
+    "sec-ch-ua-mobile": "?0",
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.93 Safari/537.36",
+    "sec-ch-ua-platform": '"Windows"',
+    "sec-fetch-site": "same-origin",
+    "sec-fetch-mode": "cors",
+    "sec-fetch-dest": "empty",
+    "referer": "https://giantfoodstores.com/store-locator",
+    "accept-language": "en-US,en-GB;q=0.9,en;q=0.8",
 }
-
-
-def write_output(data):
-    with open("data.csv", mode="w", newline="", encoding="utf8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
 
 
 def get_hours_of_operation(hours_of_operation_list):
@@ -146,22 +129,22 @@ def set_gas_station_variables(store_sel, page_url, location_name, store_number):
     if hours_of_operation == "":
         hours_of_operation = "<MISSING>"
 
-    return [
-        locator_domain,
-        page_url,
-        location_name,
-        street_address,
-        city,
-        state,
-        zip,
-        country_code,
-        store_number,
-        phone,
-        location_type,
-        latitude,
-        longitude,
-        hours_of_operation,
-    ]
+    return SgRecord(
+        locator_domain=locator_domain,
+        page_url=page_url,
+        location_name=location_name,
+        street_address=street_address,
+        city=city,
+        state=state,
+        zip_postal=zip,
+        country_code=country_code,
+        store_number=store_number,
+        phone=phone,
+        location_type=location_type,
+        latitude=latitude,
+        longitude=longitude,
+        hours_of_operation=hours_of_operation,
+    )
 
 
 def fetch_data():
@@ -181,8 +164,6 @@ def fetch_data():
     longitude = ""
     hours_of_operation = ""
     store_types = ["GROCERY", "GAS_STATION"]
-    loc_list = []
-
     for s in store_types:
         locations_resp = session.get(
             "https://giantfoodstores.com/apis/store-locator/locator/v1/stores/GNTC?storeType="
@@ -210,7 +191,10 @@ def fetch_data():
             longitude = l["longitude"]
 
             store_url = "https://stores.giantfoodstores.com/" + store_number
+            log.info(store_url)
             store_resp = session.get(store_url, headers=headers)
+            if isinstance(store_resp, SgRequestError):
+                continue
             store_sel = lxml.html.fromstring(store_resp.text)
             country_code = "".join(
                 store_sel.xpath(
@@ -238,41 +222,46 @@ def fetch_data():
             if hours_of_operation == "":
                 hours_of_operation = "<MISSING>"
 
-            curr_list = [
-                locator_domain,
-                page_url,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
-
-            loc_list.append(curr_list)
+            yield SgRecord(
+                locator_domain=locator_domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
             GasStation = store_sel.xpath('//div[@class="GasStation"]')
             if len(GasStation) > 0:
-                curr_list = set_gas_station_variables(
+                curr_sgrecord = set_gas_station_variables(
                     store_sel, page_url, location_name, store_number
                 )
-                loc_list.append(curr_list)
+                yield curr_sgrecord
             # break
-
-    log.info(f"No of records being processed: {len(loc_list)}")
-
-    return loc_list
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
-    log.info(f"Finished")
+    log.info("Started")
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(
+            SgRecordID({SgRecord.Headers.STORE_NUMBER, SgRecord.Headers.LOCATION_TYPE})
+        )
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
 
 
 if __name__ == "__main__":
