@@ -68,7 +68,9 @@ def get_data(page_url, sgw: SgWriter):
 
     location_name = " - ".join(tree.xpath("//h1/text()")).strip()
     _tmp = []
-    line = tree.xpath("//a[@class='storeAddress']/p/text()")
+    line = tree.xpath(
+        "//a[@class='storeAddress']//text()|//div[./div/h2[contains(text(), 'Contact')]]/following-sibling::div[1]//p/text()"
+    )
     line = list(filter(None, [li.strip() for li in line]))
     for li in line:
         if "Text" in li:
