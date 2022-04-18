@@ -1,9 +1,9 @@
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-from sgscrape.pause_resume import SerializableRequest, CrawlStateSingleton
-from sgrequests.sgrequests import SgRequests
-from sgzip.dynamic import SearchableCountries, Grain_8
+from sgscrape.pause_resume import CrawlStateSingleton
+from sgrequests import SgRequests
+from sgzip.dynamic import Grain_8
 from sgzip.dynamic import DynamicGeoSearch
 from sglogging import sglog
 from sgscrape.sgrecord_id import SgRecordID
@@ -399,12 +399,55 @@ def dattafetch(search, http1):
 
 
 if __name__ == "__main__":
+
     state = CrawlStateSingleton.get_instance()
+
+    tocrawl = [
+        "au",
+        "be",
+        "bg",
+        "ca",
+        "hr",
+        "cy",
+        "cz",
+        "dk",
+        "ee",
+        "fi",
+        "fr",
+        "ge",
+        "de",
+        "gr",
+        "hu",
+        "ie",
+        "im",
+        "is",
+        "it",
+        "li",
+        "lu",
+        "lv",
+        "lt",
+        "mt",
+        "nl",
+        "no",
+        "pl",
+        "pt",
+        "ro",
+        "sk",
+        "si",
+        "se",
+        "es",
+        "se",
+        "ch",
+        "us",
+        "gb",
+    ]
+    # Also reflected in readme.md
+
     # additionally to 'search_type', 'DynamicSearchMaker' has all options that all `DynamicXSearch` classes have.
     search = DynamicGeoSearch(
-        country_codes=SearchableCountries.ALL,
+        country_codes=tocrawl,
         granularity=Grain_8(),
-        expected_search_radius_miles=100,
+        expected_search_radius_miles=8,
     )
     with SgWriter(
         deduper=SgRecordDeduper(
@@ -418,14 +461,5 @@ if __name__ == "__main__":
         )
     ) as writer:
         with SgRequests() as http1:
-            init = state.get_misc_value(
-                "init", default_factory=lambda: grab_initial(http1, state)
-            )
-            for link in init:
-                state.push_request(
-                    SerializableRequest(url=link["link"].replace("../", ""))
-                )
-            for rec in fetch_main(state, http1):
-                writer.write_row(rec)
             for rec in dattafetch(search, http1):
                 writer.write_row(rec)

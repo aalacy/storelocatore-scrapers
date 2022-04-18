@@ -86,7 +86,7 @@ if __name__ == "__main__":
         )
     ) as writer:
         search = DynamicGeoSearch(
-            country_codes=SearchableCountries.ALL, expected_search_radius_miles=500
+            country_codes=SearchableCountries.ALL, expected_search_radius_miles=200
         )
         results = fetch_records(search)
         for rec in results:

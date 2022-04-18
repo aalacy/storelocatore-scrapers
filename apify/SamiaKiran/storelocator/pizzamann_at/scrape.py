@@ -54,6 +54,10 @@ def fetch_data():
 
             zip_postal = pa.postcode
             zip_postal = zip_postal.strip() if zip_postal else MISSING
+
+            if city == MISSING:
+                city = location_name.split()[-1]
+
             hours_of_operation = ""
             for idx, hour in enumerate(hour_list):
                 day = daylist[int(hour)]

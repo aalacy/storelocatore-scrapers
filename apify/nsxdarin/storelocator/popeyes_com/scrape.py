@@ -120,6 +120,8 @@ def fetch_data():
         add = add.replace("&amp;", "&")
         if "&" in store:
             store = store.split("&")[0]
+        if "?" in store:
+            store = store.split("?")[0]
         yield SgRecord(
             locator_domain=website,
             page_url=loc,
