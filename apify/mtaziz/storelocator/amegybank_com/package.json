@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "You can start writing your scraper in scrape.js between `// Begin scraper` and `// End scraper` comments.",
   "main": "scrape.js",
+  "type":"module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
