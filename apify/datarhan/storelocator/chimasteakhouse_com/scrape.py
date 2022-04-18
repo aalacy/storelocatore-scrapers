@@ -46,13 +46,13 @@ def fetch_data():
         )
         if not hoo:
             hoo = loc_dom.xpath('//div[@class="hours-of-operation"]//text()')
-        hoo = " ".join(hoo)
+        hoo = " ".join(hoo).split("Happy Hour:")[0]
 
         with SgFirefox() as driver:
             driver.get(page_url)
             sleep(10)
             driver.switch_to.frame(
-                driver.find_element_by_xpath('//iframe[contains(@src, "maps")]')
+                driver.find_element_by_xpath('//iframe[contains(@data-src, "maps")]')
             )
             loc_dom = etree.HTML(driver.page_source)
             geo = (

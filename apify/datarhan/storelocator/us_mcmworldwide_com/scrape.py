@@ -61,6 +61,8 @@ def fetch_data():
             loc_response = session.get(page_url)
             loc_dom = etree.HTML(loc_response.text)
             hoo = loc_dom.xpath('//p[@class="store-hours"]/following-sibling::p/text()')
+            if not hoo:
+                hoo = loc_dom.xpath('//p[@class="store-hours"]/text()')
             hoo = " ".join([e.strip() for e in hoo if e.strip()])
 
             item = SgRecord(
