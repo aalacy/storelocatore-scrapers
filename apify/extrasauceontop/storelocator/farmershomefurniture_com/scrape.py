@@ -1,6 +1,5 @@
 from sgrequests import SgRequests
 from sgscrape import simple_scraper_pipeline as sp
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries, Grain_8
 from bs4 import BeautifulSoup as bs
 import cloudscraper
 
@@ -108,7 +107,6 @@ def scrape():
         data_fetcher=get_data,
         field_definitions=field_defs,
         log_stats_interval=15,
-        duplicate_streak_failure_factor=100,
     )
     pipeline.run()
 
