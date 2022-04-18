@@ -24,7 +24,7 @@ def fetch_data():
         ]
         for loc in locations:
             _ = loc["_source"]
-            if 'Coming Soon' in _['telephone']:
+            if "Coming Soon" in _["telephone"]:
                 continue
             street_address = _["street"]
             if _["street_line_2"]:
