@@ -18,6 +18,9 @@ def get_international(line):
     state = adr.state or SgRecord.MISSING
     postal = adr.postcode or SgRecord.MISSING
 
+    if (len(postal) < 6 or postal == SgRecord.MISSING) and line:
+        postal = " ".join(line.split()[-2:])
+
     return street, city, state, postal
 
 
@@ -60,7 +63,9 @@ def get_data(page_url, sgw: SgWriter):
     raw_address = " ".join(
         " ".join(tree.xpath("//div[@class='wpsl-location-address1']/text()")).split()
     )
-    raw_address = raw_address.replace(";", "").replace("&#39", "'").replace("'", ",")
+    raw_address = (
+        raw_address.replace(";", "").replace("&#39", "'").replace("'", ",").strip()
+    )
     street_address, city, state, postal = get_international(raw_address)
     phone = "".join(tree.xpath("//span[@class='phoneNumber']/text()")).strip()
     if "/" in phone:

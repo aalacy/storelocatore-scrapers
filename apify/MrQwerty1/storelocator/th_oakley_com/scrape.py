@@ -29,12 +29,17 @@ def fetch_data(sgw: SgWriter):
 
         for j in js:
             country_code = cc.upper()
-            street_address = j.get("address") or ""
-            if cc in ("th", "tw", "hk"):
-                street_address = get_street(street_address)
             city = j.get("city") or ""
             state = j.get("state") or ""
             postal = j.get("postal") or ""
+            street_address = j.get("address") or ""
+            if not street_address:
+                street_address = j.get("building_name") or ""
+
+            raw_address = " ".join(f"{street_address} {city} {state} {postal}".split())
+            if cc in ("th", "tw", "hk"):
+                street_address = get_street(street_address)
+
             store_number = uuid.uuid4().hex
             location_name = j.get("name")
             phone = j.get("phone") or ""
@@ -59,6 +64,7 @@ def fetch_data(sgw: SgWriter):
                 longitude=longitude,
                 phone=phone,
                 store_number=store_number,
+                raw_address=raw_address,
                 locator_domain=locator_domain,
             )
 

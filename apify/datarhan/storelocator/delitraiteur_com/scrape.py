@@ -10,7 +10,6 @@ from sgscrape.sgwriter import SgWriter
 
 def fetch_data():
     session = SgRequests()
-
     start_url = "https://delitraiteur.com/wp-admin/admin-ajax.php?lang=fr&action=store_search&lat=50.85034&lng=4.35171&max_results=100&search_radius=200&autoload=1"
     domain = "delitraiteur.com"
     hdr = {
@@ -24,18 +23,25 @@ def fetch_data():
             street_address += " " + poi["address2"]
         hoo = etree.HTML(poi["hours"]).xpath("//text()")
         hoo = " ".join(hoo)
+        page_url = poi["permalink"]
+        loc_response = session.get(page_url)
+        loc_dom = etree.HTML(loc_response.text)
+        phone = loc_dom.xpath(
+            '//div[div[h2[contains(text(), "Téléphone")]]]/following-sibling::div[1]//p/text()'
+        )[0]
+        location_name = loc_dom.xpath("//h1/text()")[0]
 
         item = SgRecord(
             locator_domain=domain,
-            page_url=poi["permalink"],
-            location_name=poi["store"],
+            page_url=page_url,
+            location_name=location_name,
             street_address=street_address,
             city=poi["city"],
             state=poi["state"],
             zip_postal=poi["zip"],
             country_code=poi["country"],
             store_number=poi["id"],
-            phone=poi["phone"],
+            phone=phone,
             location_type="",
             latitude=poi["lat"],
             longitude=poi["lng"],

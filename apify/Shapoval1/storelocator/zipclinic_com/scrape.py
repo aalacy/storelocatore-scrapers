@@ -50,6 +50,8 @@ def fetch_data(sgw: SgWriter):
             hours_of_operation = hours_of_operation.split("Hours:")[1].strip()
         if hours_of_operation.find("Open") != -1:
             hours_of_operation = hours_of_operation.split("Open")[1].strip()
+        if hours_of_operation.find(f"{phone}") != -1:
+            hours_of_operation = hours_of_operation.split(f"{phone}")[1].strip()
 
         row = SgRecord(
             locator_domain=locator_domain,

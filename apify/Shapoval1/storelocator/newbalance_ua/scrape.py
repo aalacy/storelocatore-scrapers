@@ -48,11 +48,14 @@ def fetch_data(sgw: SgWriter):
             js_block = js_block.split("}},24")[0].strip()
         js = eval(js_block)
         for j in js:
+            slug_title = j.get("title")
             locations = j.get("storesList")
             for s in locations:
 
                 page_url = f"https://newbalance.ua/stores?city={c}"
                 location_name = "New Balance Concept Shop"
+                if slug_title == "Outlet-формат":
+                    location_name = "New Balance Outlet"
                 street_address = "".join(s.get("adressName"))
                 if (
                     street_address.find("ТРЦ") != -1

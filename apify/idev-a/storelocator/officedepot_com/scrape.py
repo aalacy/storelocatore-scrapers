@@ -91,7 +91,6 @@ if __name__ == "__main__":
     ) as writer:
         search = DynamicZipSearch(
             country_codes=[SearchableCountries.USA],
-            expected_search_radius_miles=100,
         )
         results = fetch_data(search)
         for rec in results:

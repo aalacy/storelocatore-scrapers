@@ -114,7 +114,7 @@ def fetch_data(sgw: SgWriter):
         country_codes=[
             SearchableCountries.USA,
         ],
-        expected_search_radius_miles=8,
+        expected_search_radius_miles=6,
     )
     for _zip in search:
         api = f"https://co-opcreditunions.org/wp-content/themes/coop019901/inc/locator/locator-csv.php?loctype=AS&zip={_zip}&maxradius=10&country=&Submit=Search%22"
