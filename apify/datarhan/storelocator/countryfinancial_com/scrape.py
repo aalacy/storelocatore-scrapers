@@ -16,30 +16,20 @@ def fetch_data():
     hdr = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
-    import requests
-
-    session = requests.Session()
-    proxies = {"https": "127.0.0.1:24000", "http": "127.0.0.1:24000"}
-    response = session.get(start_url, headers=hdr, proxies=proxies, verify=False)
+    response = session.get(start_url, headers=hdr)
     dom = etree.HTML(response.text)
     all_states = dom.xpath('//ul[@class="plain column-list-two"]/li/a/@href')
     for url in all_states:
-        response = session.get(
-            urljoin(start_url, url), headers=hdr, proxies=proxies, verify=False
-        )
+        response = session.get(urljoin(start_url, url), headers=hdr)
         dom = etree.HTML(response.text)
         all_cities = dom.xpath("//div[h1]/ul/li/a/@href")
         for url in all_cities:
-            response = session.get(
-                urljoin(start_url, url), headers=hdr, proxies=proxies, verify=False
-            )
+            response = session.get(urljoin(start_url, url), headers=hdr)
             dom = etree.HTML(response.text)
             all_locations = dom.xpath('//p[@class="repaddress"]/a/@href')
             for page_url in all_locations:
                 print(page_url)
-                loc_response = session.get(
-                    page_url, headers=hdr, proxies=proxies, verify=False
-                )
+                loc_response = session.get(page_url, headers=hdr)
                 loc_dom = etree.HTML(loc_response.text)
                 while not loc_dom:
                     loc_response = session.get(
