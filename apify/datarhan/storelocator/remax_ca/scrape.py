@@ -34,8 +34,8 @@ def fetch_data():
             zip_code = poi["postalCode"]
             country_code = poi["country"]
             phone = poi.get("telephone")
-            latitude = poi["latitude"]
-            longitude = poi["longitude"]
+            latitude = poi.get("latitude")
+            longitude = poi.get("longitude")
 
             item = SgRecord(
                 locator_domain=domain,
