@@ -32,8 +32,10 @@ def fetch_data(sgw: SgWriter):
         store_number = j.get("storeCode")
         location_name = j.get("storeName")
         phone = j.get("phone")
-        latitude = j.get("latitude")
-        longitude = j.get("longtitude")
+        latitude = j.get("latitude") or ""
+        longitude = j.get("longtitude") or ""
+        latitude = latitude.replace(",", ".", 1).replace(",", "")
+        longitude = longitude.replace(",", ".", 1).replace(",", "")
         source = j.get("description") or "<html>"
         tree = html.fromstring(source)
         hours_of_operation = ";".join(tree.xpath("//p/text()"))
