@@ -1,8 +1,10 @@
 from bs4 import BeautifulSoup
-import csv
-import json
-
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+import json
 
 session = SgRequests()
 headers = {
@@ -10,52 +12,24 @@ headers = {
 }
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
 def fetch_data():
-    data = []
     url = "https://www.mightyfineburgers.com/"
-    r = session.get(url, headers=headers, verify=False)
+    r = session.get(url, headers=headers)
     soup = BeautifulSoup(r.text, "html.parser")
     divlist = soup.findAll("a", {"class": "image-slide-anchor"})
-    p = 0
+
     for div in divlist:
 
         try:
-            link = "https://www.mightyfineburgers.com" + div["href"]
+            if "https:" not in div["href"]:
+                link = "https://www.mightyfineburgers.com" + div["href"]
+            else:
+                link = div["href"]
         except:
             continue
         if "feedback" in link:
             continue
-        r = session.get(link, headers=headers, verify=False)
+        r = session.get(link, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
         content = r.text.split('data-block-json="', 1)[1].split(';"', 1)[0]
         content = (
@@ -78,33 +52,33 @@ def fetch_data():
         phone = "(" + phone
         if "1335 E Whitestone" in street:
             street = street + "  Suite 100"
-        data.append(
-            [
-                "https://www.mightyfineburgers.com/",
-                link,
-                title.strip(),
-                street.strip(),
-                city.replace(",", "").strip(),
-                state.replace(",", "").strip(),
-                pcode.replace(",", "").strip(),
-                "US",
-                "<MISSING>",
-                phone.replace("\xa0", ""),
-                "<MISSING>",
-                lat,
-                longt,
-                hours,
-            ]
+        yield SgRecord(
+            locator_domain="https://www.mightyfineburgers.com",
+            page_url=link,
+            location_name=title,
+            street_address=street.strip(),
+            city=city.strip(),
+            state=state.strip(),
+            zip_postal=pcode.strip(),
+            country_code="US",
+            store_number=SgRecord.MISSING,
+            phone=phone.replace("\xa0", "").strip(),
+            location_type=SgRecord.MISSING,
+            latitude=str(lat),
+            longitude=str(longt),
+            hours_of_operation=hours,
         )
-
-        p += 1
-    return data
 
 
 def scrape():
 
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()

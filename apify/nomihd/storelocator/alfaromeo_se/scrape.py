@@ -94,6 +94,15 @@ class _SearchIteration(SearchIteration):
                     locator_domain = website
                     location_name = store["name"]
                     raw_address = store["address"]
+                    if raw_address:
+                        raw_address = (
+                            raw_address.replace("\\r\\n", ", ")
+                            .replace("\r\n", ", ")
+                            .replace("\n", "")
+                            .replace("\r", "")
+                            .strip()
+                        )
+
                     formatted_addr = parser.parse_address_intl(raw_address)
                     street_address = formatted_addr.street_address_1
                     if street_address:
@@ -196,7 +205,7 @@ def scrape():
             RecommendedRecordIds.StoreNumberId, duplicate_streak_failure_factor=-1
         )
     ) as writer:
-        with SgRequests(dont_retry_status_codes=([404]), proxy_country="us") as http:
+        with SgRequests(dont_retry_status_codes=([404])) as http:
             search_iter = _SearchIteration(http=http)
             par_search = ParallelDynamicSearch(
                 search_maker=search_maker,

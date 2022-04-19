@@ -40,6 +40,8 @@ def get_data(slug, sgw: SgWriter):
     hours_of_operation = "".join(
         b.xpath(".//span[@itemprop='openingHours']/text()")
     ).strip()
+    if "Bank" in hours_of_operation:
+        hours_of_operation = hours_of_operation.split("Bank")[0].strip()
 
     row = SgRecord(
         page_url=page_url,
@@ -64,7 +66,7 @@ def get_data(slug, sgw: SgWriter):
 def fetch_data(sgw: SgWriter):
     urls = get_urls()
 
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
+    with futures.ThreadPoolExecutor(max_workers=3) as executor:
         future_to_url = {executor.submit(get_data, url, sgw): url for url in urls}
         for future in futures.as_completed(future_to_url):
             future.result()

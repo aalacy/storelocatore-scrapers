@@ -5,7 +5,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
-from sgscrape.sgpostal import parse_address_intl
+from sgscrape.sgpostal import parse_address_usa
 import re
 import json
 
@@ -28,7 +28,7 @@ MISSING = "<MISSING>"
 def getAddress(raw_address):
     try:
         if raw_address is not None and raw_address != MISSING:
-            data = parse_address_intl(raw_address)
+            data = parse_address_usa(raw_address)
             street_address = data.street_address_1
             if data.street_address_2 is not None:
                 street_address = street_address + " " + data.street_address_2
@@ -88,9 +88,25 @@ def fetch_data():
             req = session.get(page_url)
             store = bs(req.content, "lxml")
             location_name = val_city.text.strip()
-            raw_address = val_city["value"].split("++")[0]
-            street_address, city, state, zip_postal = getAddress(raw_address)
-            phone = val_city["value"].split("++")[1]
+            try:
+                content = json.loads(
+                    store.find("script", {"type": "application/ld+json"}).string
+                )
+                street_address = content["address"]["streetAddress"]
+                city = content["address"]["addressLocality"]
+                state = content["address"]["addressRegion"]
+                zip_postal = content["address"]["postalCode"]
+                latitude = content["geo"]["latitude"]
+                longitude = content["geo"]["longitude"]
+                phone = content["telephone"]
+            except:
+                raw_address = val_city["value"].split("++")[0]
+                if "1115 HWY7 West" in raw_address:
+                    raw_address = "1115 Hwy 7 West, Hutchinson, MN"
+                street_address, city, state, zip_postal = getAddress(raw_address)
+                phone = val_city["value"].split("++")[1]
+                latitude = MISSING
+                longitude = MISSING
             curr_link = str(req.url)
             if (
                 "jimmyspizzaannandale" in curr_link
@@ -98,11 +114,12 @@ def fetch_data():
                 or "jimmyspizzahawley" in curr_link
                 or "immyspizzalitchfield" in curr_link
             ):
-                hoo_content = json.loads(
+                content = json.loads(
                     store.find("script", {"type": "application/ld+json"}).string
                 )
+
                 hours = ""
-                for hday in hoo_content["openingHoursSpecification"]:
+                for hday in content["openingHoursSpecification"]:
                     day = hday["dayOfWeek"] + ": "
                     hour = hday["opens"] + " - " + hday["closes"]
                     hours += day + hour + ","
@@ -159,8 +176,6 @@ def fetch_data():
             )
             country_code = "US"
             store_number = MISSING
-            latitude = MISSING
-            longitude = MISSING
             location_type = MISSING
             log.info("Append {} => {}".format(location_name, street_address))
             yield SgRecord(
@@ -178,7 +193,6 @@ def fetch_data():
                 latitude=latitude,
                 longitude=longitude,
                 hours_of_operation=hours_of_operation,
-                raw_address=raw_address,
             )
 
 
