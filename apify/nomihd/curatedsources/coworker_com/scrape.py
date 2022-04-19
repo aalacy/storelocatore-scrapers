@@ -23,8 +23,105 @@ headers_post = {
 }
 
 session = SgRequests()
-
 log = sglog.SgLogSetup().get_logger(logger_name=website)
+
+states = {
+    "alabama": "al",
+    "ala": "al",
+    "alaska": "ak",
+    "alas": "ak",
+    "arizona": "az",
+    "ariz": "az",
+    "arkansas": "ar",
+    "ark": "ar",
+    "california": "ca",
+    "calif": "ca",
+    "cal": "ca",
+    "colorado": "co",
+    "colo": "co",
+    "col": "co",
+    "connecticut": "ct",
+    "conn": "ct",
+    "delaware": "de",
+    "del": "de",
+    "district of columbia": "dc",
+    "florida": "fl",
+    "fla": "fl",
+    "flor": "fl",
+    "georgia": "ga",
+    "ga": "ga",
+    "hawaii": "hi",
+    "idaho": "id",
+    "ida": "id",
+    "illinois": "il",
+    "ill": "il",
+    "indiana": "in",
+    "ind": "in",
+    "iowa": "ia",
+    "kansas": "ks",
+    "kans": "ks",
+    "kan": "ks",
+    "kentucky": "ky",
+    "ken": "ky",
+    "kent": "ky",
+    "louisiana": "la",
+    "maine": "me",
+    "maryland": "md",
+    "massachusetts": "ma",
+    "mass": "ma",
+    "michigan": "mi",
+    "mich": "mi",
+    "minnesota": "mn",
+    "minn": "mn",
+    "mississippi": "ms",
+    "miss": "ms",
+    "missouri": "mo",
+    "montana": "mt",
+    "mont": "mt",
+    "nebraska": "ne",
+    "nebr": "ne",
+    "neb": "ne",
+    "nevada": "nv",
+    "nev": "nv",
+    "new-hampshire": "nh",
+    "new-jersey": "nj",
+    "new-mexico": "nm",
+    "n mex": "nm",
+    "new m": "nm",
+    "new-york": "ny",
+    "north-carolina": "nc",
+    "north-dakota": "nd",
+    "n dak": "nd",
+    "ohio": "oh",
+    "oklahoma": "ok",
+    "okla": "ok",
+    "oregon": "or",
+    "oreg": "or",
+    "ore": "or",
+    "pennsylvania": "pa",
+    "penn": "pa",
+    "rhode-island": "ri",
+    "south-carolina": "sc",
+    "south-dakota": "sd",
+    "s dak": "sd",
+    "tennessee": "tn",
+    "tenn": "tn",
+    "texas": "tx",
+    "tex": "tx",
+    "utah": "ut",
+    "vermont": "vt",
+    "virginia": "va",
+    "washington": "wa",
+    "wash": "wa",
+    "west virginia": "wv",
+    "w va": "wv",
+    "wisconsin": "wi",
+    "wis": "wi",
+    "wisc": "wi",
+    "wyoming": "wy",
+    "wyo": "wy",
+    "washington-dc": "dc",
+}
 
 
 def request_with_retries(url):
@@ -45,8 +142,17 @@ def request_post_pages(city_id, country_id, page_num):
 def fetch_cities():
     body = request_with_retries(f"{website}/office-space/cities")
     city_urls = body.xpath('//a[contains(@href, "/office-space/")]/@href')[1:-1]
+    state_keys = states.keys()
+
     for index in range(len(city_urls)):
         city_urls[index] = city_urls[index].replace("office-space", "search")
+
+        if "united-states" in city_urls[index]:
+            parts = city_urls[index].split("/")
+            if parts[5] in state_keys:
+                city_urls[index] = city_urls[index].replace(
+                    f"/{parts[5]}/", f"/{states[parts[5]]}/"
+                )
     return city_urls
 
 
@@ -104,7 +210,7 @@ def get_hours_of_operation(url):
         body = request_with_retries(url)
         return stringify_nodes(body, '//div[contains(@class, "space-member-times")]')
     except Exception as e:
-        log.info(f"HOO error: {e}")
+        log.error(f"{url} can't get hoo e={e}")
         return MISSING
 
 
@@ -129,7 +235,7 @@ def get_address(raw_address):
                 zip_postal = MISSING
             return street_address, city, state, zip_postal
     except Exception as e:
-        log.info(f"{raw_address} :Raw Address Error: {e}")
+        log.info(f"Address Error: {e}")
         pass
     return MISSING, MISSING, MISSING, MISSING
 
@@ -142,8 +248,13 @@ def fetch_data():
 
     for city_url in city_urls:
         city_count = city_count + 1
-        stores = fetch_pages(city_url)
-        log.info(f"{city_count}. From {city_url} page urls = {len(stores)}")
+        try:
+            stores = fetch_pages(city_url)
+            log.info(f"{city_count}. From {city_url} page urls = {len(stores)}")
+        except Exception as e:
+            log.error(f"{city_count}. Can't find {city_url} e={e}")
+            continue
+
         for store in stores:
             page_count = page_count + 1
             log.info(f"  {page_count}. scrapping {store['location_name']}")
