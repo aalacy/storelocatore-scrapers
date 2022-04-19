@@ -11,7 +11,7 @@ def fetch_data(sgw: SgWriter):
 
     locator_domain = "http://gumbyspizza.com"
     api_url = "http://gumbyspizza.com/locations"
-    session = SgRequests()
+
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
@@ -23,7 +23,7 @@ def fetch_data(sgw: SgWriter):
         page_url = f"http://gumbyspizza.com{''.join(d.xpath('.//@href'))}"
         if page_url == "http://gumbyspizza.com/college-station":
             page_url = "https://www.gumbyspizzaaggieland.com/store-info/"
-        session = SgRequests()
+
         r = session.get(page_url, headers=headers)
         tree = html.fromstring(r.text)
 
