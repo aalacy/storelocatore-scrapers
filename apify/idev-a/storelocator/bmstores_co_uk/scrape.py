@@ -101,8 +101,10 @@ def fetch_data():
                 or "markerHomestore" in store["properties"]["svg"]
             ):
                 location_name = "B&M Home Store"
-            
-            logger.info(f"Everything went well, got SgRecord \n{page_url}\n{location_name}\n{street_address}")
+
+            logger.info(
+                f"Everything went well, got SgRecord \n{page_url}\n{location_name}\n{street_address}"
+            )
             yield SgRecord(
                 page_url=page_url,
                 location_name=location_name,
