@@ -76,6 +76,8 @@ def fetch_data():
                 country_code = "ES"
             if "/fr/" in locator_url:
                 country_code = "FR"
+            if "/de/" in locator_url:
+                country_code = "DE"
             if zip_code and country_code == "USA":
                 state = zip_code.split()[0]
                 zip_code = zip_code.split()[-1]
