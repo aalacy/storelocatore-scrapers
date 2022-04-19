@@ -1,114 +1,128 @@
-from bs4 import BeautifulSoup
-import re
+from sglogging import SgLogSetup
 from sgrequests import SgRequests
-from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgpostal.sgpostal import parse_address_intl
 
-session = SgRequests()
+logger = SgLogSetup().get_logger(logger_name="anthropologie_com")
+
+locator_domain_url = "https://www.anthropologie.com"
 headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+    "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.90 Safari/537.36",
 }
-
 
 MISSING = SgRecord.MISSING
 
 
+def get_hoo(hours):
+    dates_map = {
+        "1": "Sunday",
+        "2": "Monday",
+        "3": "Tuesday",
+        "4": "Wednesday",
+        "5": "Thursday",
+        "6": "Friday",
+        "7": "Saturday",
+    }
+    hoo = []
+    for key, value in hours.items():
+        v = dates_map[key] + " " + value["open"] + " - " + value["close"]
+        hoo.append(v)
+    hoo = "; ".join(hoo)
+    if hoo:
+        return hoo
+    else:
+        return MISSING
+
+
 def fetch_data():
-    pattern = re.compile(r"\s\s+")
-    url = "https://tonyromas.com/locations/"
-    r = session.get(url, headers=headers)
-    soup = BeautifulSoup(r.text, "html.parser")
-    divlist = soup.find("div", {"id": "locations-directory"}).findAll("a")
+    with SgRequests() as session:
+        url_api = "https://www.anthropologie.com/api/misl/v1/stores/search?brandId=54%7C04&distance=25&urbn_key=937e0cfc7d4749d6bb1ad0ac64fce4d5"
+        data = session.get(url_api, headers=headers).json()
+        for idx, d in enumerate(data["results"]):
+            country_code = d["country"]
+            locator_domain = locator_domain_url
 
-    for div in divlist:
-
-        url = "https://tonyromas.com/wp-admin/admin-ajax.php"
-        dataobj = {
-            "the_location": div.text,
-            "search_distance": "100",
-            "current_lat": "",
-            "current_lng": "",
-            "current_page": "1",
-            "action": "locationsubmit",
-        }
-        r = session.post(url, headers=headers, data=dataobj).json()
-        coordlist = r["newresults"]
-
-        coordlist = BeautifulSoup(coordlist, "html.parser").findAll(
-            "div", {"class": "a-location-data"}
-        )
-        loclist = r["newresults2"]
-        loclist = BeautifulSoup(loclist, "html.parser").findAll(
-            "div", {"class": "a-result"}
-        )
-
-        for i in range(0, len(loclist)):
-
-            lat = coordlist[i]["data-lat"]
-            longt = coordlist[i]["data-lng"]
-            title = loclist[i].find("div", {"class": "title"}).text
-            address = str(loclist[i].find("div", {"class": "address"}))
-            phone = loclist[i].find("div", {"class": "phone"}).text
             try:
-                hours = loclist[i].find("div", {"class": "hours"}).text
+                location_name = d["addresses"]["marketing"]["name"]
             except:
-                hours = "<MISSING>"
-            link = loclist[i].find("a", {"class": "visit"})["href"]
-
-            ltype = "<MISSING>"
-            if "COMING SOON" in title:
-                ltype = "COMING SOON"
-            raw_address = address
-            raw_address = raw_address.replace("\n", " ").strip()
-            raw_address = re.sub(pattern, " ", raw_address).strip()
-
-            pa = parse_address_intl(raw_address)
-
-            street_address = pa.street_address_1
-            street = street_address if street_address else MISSING
-
-            city = pa.city
-            city = city.strip() if city else MISSING
-
-            state = pa.state
-            state = state.strip() if state else MISSING
-
-            zip_postal = pa.postcode
-            pcode = zip_postal.strip() if zip_postal else MISSING
-
-            ccode = pa.country
-            ccode = ccode.strip() if ccode else MISSING
-
+                location_name = d["storeName"]
+            page_url = ""
+            if "slug" in d:
+                slug = d["slug"]
+                if slug:
+                    page_url = f"https://www.anthropologie.com/stores/{slug}"
+                else:
+                    page_url = MISSING
+            else:
+                page_url = MISSING
+            street_address = d["addressLineOne"] if d["addressLineOne"] else MISSING
+            city = d["city"] if d["city"] else MISSING
+            state = d["state"] if d["state"] else MISSING
+            zipcode = d["zip"] if d["zip"] else MISSING
+            country_code = d["country"] if d["country"] else MISSING
+            store_number = d["storeNumber"] if d["storeNumber"] else MISSING
+            try:
+                phone = d["addresses"]["marketing"]["phoneNumber"]
+            except KeyError:
+                phone = MISSING
+            try:
+                location_type = d["storeType"]
+            except KeyError:
+                location_type = MISSING
+            try:
+                latitude = d["loc"][1]
+            except:
+                latitude = MISSING
+            try:
+                longitude = d["loc"][0]
+            except:
+                longitude = MISSING
+            hours_of_operation = get_hoo(d["hours"])
+            if (
+                page_url == "https://www.anthropologie.com/stores"
+                and street_address == MISSING
+            ):
+                continue
+            else:
+                if page_url == "https://www.anthropologie.com/stores":
+                    page_url = MISSING
+            raw_address = MISSING
+            if "close" in location_name.lower() or "<MISSING>" in page_url:
+                continue
             yield SgRecord(
-                locator_domain="https://tonyromas.com/",
-                page_url=link,
-                location_name=title,
-                street_address=street.strip(),
-                city=city.strip(),
-                state=state.strip(),
-                zip_postal=pcode.strip(),
-                country_code=ccode,
-                store_number=SgRecord.MISSING,
-                phone=phone.strip(),
-                location_type=ltype,
-                latitude=str(lat),
-                longitude=str(longt),
-                hours_of_operation=hours,
-                raw_address=raw_address.replace("\n", " ").strip(),
+                locator_domain=locator_domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zipcode,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+                raw_address=raw_address,
             )
 
 
 def scrape():
-
+    logger.info("Started")
+    count = 0
     with SgWriter(
-        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+        deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
     ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
+            count = count + 1
+    logger.info(f"No of records being processed: {count}")
+    logger.info("Finished")
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()
