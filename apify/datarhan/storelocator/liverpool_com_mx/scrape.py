@@ -2,7 +2,7 @@
 import json
 from lxml import etree
 
-from sgrequests import SgRequests, ProxySettings
+from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
