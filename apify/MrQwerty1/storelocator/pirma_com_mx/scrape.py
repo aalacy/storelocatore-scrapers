@@ -17,6 +17,8 @@ def fetch_data(sgw: SgWriter):
         location_name = "".join(d.xpath("./td[2]/text()")).strip()
         street_address = "".join(d.xpath("./td[3]/text()")).strip()
         city = "".join(d.xpath("./td[4]/text()")).strip()
+        if "," in city:
+            city = city.split(",")[0].strip()
         postal = "".join(d.xpath("./td[5]/text()")).strip()
         phone = "".join(d.xpath("./td[6]/text()")).strip()
         state = "".join(d.xpath("./td[8]/text()")).strip()
