@@ -8,10 +8,13 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 
+session = SgRequests()
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+}
+
 
 def fetch_data():
-
-    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
 
     scraped_items = []
 

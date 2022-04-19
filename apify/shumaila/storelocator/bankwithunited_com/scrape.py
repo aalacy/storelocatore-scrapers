@@ -46,6 +46,8 @@ def fetch_data():
         city, state, pcode = address[1].replace("\n", "").lstrip().split(", ")
         if len(state) < 2:
             state = "<MISSING>"
+        state = state.replace("Washington ", "").strip()
+
         try:
             phone = div.find("div", {"class": "cmp-locationfinder__item-phone"}).text
         except:
@@ -54,7 +56,7 @@ def fetch_data():
             hours = (
                 div.find("div", {"class": "cmp-locationfinder__item-service-hours"})
                 .text.replace("Lobby Hours: ", "")
-                .replace("Lobby Hours: ", "")
+                .replace("Lobby Hours:", "")
             )
         except:
             hours = "<MISSING>"
