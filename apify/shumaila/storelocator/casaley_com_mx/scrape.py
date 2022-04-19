@@ -2,7 +2,7 @@ from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 import re
 from sgpostal.sgpostal import parse_address_intl
@@ -36,15 +36,23 @@ def fetch_data():
                     title = loc.splitlines()[0]
                 except:
                     continue
+                if len(title) < 4:
+                    title = loc.splitlines()[0] + " " + loc.splitlines()[1]
+                    title = title.replace("P LAZ", "PLAZ").strip()
                 ltype = ltype["alt"].replace("logo ", "")
                 flag = 0
                 store = ""
                 try:
-                    store = title.split("(", 1)[1].split(")", 1)[0]
+                    store = title.split("(", 1)[1].split(")", 1)[0].strip()
                     flag = 1
                 except:
                     if loc.splitlines()[1].replace("(", "").replace(")", "").isdigit():
-                        store = loc.splitlines()[1].replace("(", "").replace(")", "")
+                        store = (
+                            loc.splitlines()[1]
+                            .replace("(", "")
+                            .replace(")", "")
+                            .strip()
+                        )
                         flag = 2
                     else:
                         "<MISSING>"
@@ -128,7 +136,8 @@ def fetch_data():
 
                 zip_postal = pa.postcode
                 pcode = zip_postal.strip() if zip_postal else MISSING
-
+                if len(store) < 2:
+                    store = "<MISSING>"
                 yield SgRecord(
                     locator_domain="https://www.casaley.com.mx/",
                     page_url=url,
@@ -151,7 +160,7 @@ def fetch_data():
 def scrape():
 
     with SgWriter(
-        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.StoreNumberId)
+        deduper=SgRecordDeduper(SgRecordID({SgRecord.Headers.LOCATION_NAME}))
     ) as writer:
 
         results = fetch_data()
