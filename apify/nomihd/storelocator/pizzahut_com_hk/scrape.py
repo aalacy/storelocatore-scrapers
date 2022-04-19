@@ -10,7 +10,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "pizzahut.com.hk"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
-session = SgRequests(verify_ssl=False)
+session = SgRequests(verify_ssl=False, proxy_country="hk")
 headers = {
     "authority": "www.pizzahut.com.hk",
     "sec-ch-ua": '" Not A;Brand";v="99", "Chromium";v="90", "Google Chrome";v="90"',

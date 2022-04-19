@@ -3,62 +3,66 @@ from sgrequests import SgRequests
 from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
+import json
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-import json
-import lxml.html
 
 website = "fiat.com.mx"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 headers = {
-    "Connection": "keep-alive",
-    "Cache-Control": "max-age=0",
-    "sec-ch-ua": '"Google Chrome";v="95", "Chromium";v="95", ";Not A Brand";v="99"',
-    "sec-ch-ua-mobile": "?0",
-    "sec-ch-ua-platform": '"Windows"',
-    "Upgrade-Insecure-Requests": "1",
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36",
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-    "Sec-Fetch-Site": "same-origin",
-    "Sec-Fetch-Mode": "navigate",
-    "Sec-Fetch-User": "?1",
-    "Sec-Fetch-Dest": "document",
-    "Accept-Language": "en-US,en-GB;q=0.9,en;q=0.8",
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36",
 }
 
 
 def fetch_data():
     # Your scraper here
-    search_url = (
-        "https://www.fiat.com.mx/distribuidores/quintana-roo/chetumal-automotores"
-    )
-    with SgRequests(verify_ssl=False) as session:
-        search_res = session.get(search_url, headers=headers)
-        stores_sel = lxml.html.fromstring(search_res.text)
-        stores = json.loads(
-            "".join(stores_sel.xpath('//div[@id="js-dealer__map"]/@data-items')).strip()
-        )
+
+    api_url = "https://www.fiat.com.mx/hostb/fiat_mx/JSONConversion/fiat/fiat-distribuidor.json"
+
+    with SgRequests() as session:
+        api_res = session.get(api_url, headers=headers)
+
+        json_res = json.loads(api_res.text)
+
+        stores = json_res["sales"]
+
         for store in stores:
-            page_url = store["permalink"]
+
             locator_domain = website
-            location_name = store["title"]
 
-            street_address = store["address"]
-            city = "<MISSING>"
-            if "-" in location_name:
-                city = location_name.split("-")[0].strip()
+            page_url = store["website"]
+            if not page_url:
+                page_url = "https://www.fiat.com.mx/distribuidores.html"
 
-            state = store["state"]
-            zip = "<MISSING>"
+            location_name = store["dealerName"].strip()
+
+            location_type = "<MISSING>"
+
+            street_address = store["dealerAddress1"]
+
+            city = store["dealerCity"]
+
+            state = store["dealerState"]
+
+            zip = store["dealerZipCode"]
 
             country_code = "MX"
 
-            phone = store["tel"].split("/")[0].strip().lower().split("y")[0].strip()
-            store_number = store["uid"]
-            location_type = "<MISSING>"
+            phone = store["phoneNumber"]
+            if phone:
+                phone = phone.lower().split("y")[0].strip().split("/")[0].strip()
 
-            hours_of_operation = "<MISSING>"
-            latitude, longitude = store["lt"], store["lg"]
+            hours_of_operation = store["openingDaysHours"]["Open"]
+
+            store_number = store["dealerCode"]
+
+            latitude, longitude = (
+                store["dealerShowroomLatitude"],
+                store["dealerShowroomLongitude"],
+            )
+            if latitude == longitude:
+                latitude = longitude = "<MISSING>"
+
             yield SgRecord(
                 locator_domain=locator_domain,
                 page_url=page_url,
