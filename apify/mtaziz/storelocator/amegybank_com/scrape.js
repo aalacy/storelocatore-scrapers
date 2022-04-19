@@ -21,7 +21,8 @@ Apify.main(async () => {
     handlePageTimeoutSecs: 10 * 60,
     async handlePageFunction({ page }) {
       const data = await page.evaluate(async (body) => {
-        const response = await fetch( // eslint-disable-line
+        const response = await fetch(
+          // eslint-disable-line
           'https://www.amegybank.com/locationservices/searchwithfilter',
           {
             method: 'POST',
