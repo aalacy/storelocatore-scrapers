@@ -25,7 +25,8 @@ def fetch_data():
         location_name = loc_dom.xpath("//h1/text()")[0]
         raw_address = loc_dom.xpath('//div[@class="col address"]/a/p/text()')
         raw_address = [e.strip() for e in raw_address]
-        phone = loc_dom.xpath('//a[@class="phone-number"]/text()')[0]
+        phone = loc_dom.xpath('//a[@class="phone-number"]/text()')
+        phone = phone[0] if phone else ""
         hoo = loc_dom.xpath(
             '//div[div[h2[contains(text(), "RV Sales")]]]/div[@class="row hours-row"]//text()'
         )
