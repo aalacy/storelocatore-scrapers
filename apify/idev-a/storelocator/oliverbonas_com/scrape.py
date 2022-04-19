@@ -40,13 +40,28 @@ def fetch_data():
             street_address = _["address"].split("London")[0].strip()
             if street_address.endswith(","):
                 street_address = street_address[:-1]
+            if street_address == "Unit 41":
+                street_address = _["address"]
+            state = _.get("state")
+            if state in [
+                "London",
+                "Aberdeen City",
+                "Belfast",
+                "Ilkley",
+                "Oxford",
+                "Manchester",
+                "Birmingham",
+                "Reigate",
+                "Luton",
+            ]:
+                state = ""
             yield SgRecord(
                 page_url=locator_domain + "/us" + _["url"],
                 store_number=_["id"],
                 location_name=_["store_name"].split("-")[0].strip(),
                 street_address=street_address,
                 city=_["city"],
-                state=_.get("state"),
+                state=state,
                 zip_postal=_["postcode"],
                 latitude=_["latitude"],
                 longitude=_["longitude"],

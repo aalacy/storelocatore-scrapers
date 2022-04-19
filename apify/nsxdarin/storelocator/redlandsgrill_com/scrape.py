@@ -1,75 +1,86 @@
-import csv
+# -*- coding: utf-8 -*-
+from lxml import etree
+
 from sgrequests import SgRequests
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
 
-session = SgRequests()
-headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
-           }
-
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-        for row in data:
-            writer.writerow(row)
 
 def fetch_data():
-    locs = []
-    url = 'https://redlandsgrill.com/locations/'
-    r = session.get(url, headers=headers)
-    website = 'redlandsgrill.com'
-    typ = '<MISSING>'
-    store = '<MISSING>'
-    country = 'US'
-    loc = 'redlandsgrill.com/locations/'
-    for line in r.iter_lines():
-        line = str(line.decode('utf-8'))
-        if 'pm<' in line and '<div class="socialMediaLinks">' not in line:
-            hrs = line.split('<')[0]
-            if hours == '':
-                hours = hrs
-            else:
-                hours = hours + '; ' + hrs
-        if 'pm<' in line and '<div class="socialMediaLinks">' in line:
-            hrs = line.split('<')[0]
-            if hours == '':
-                hours = hrs
-            else:
-                hours = hours + '; ' + hrs
-            if '<div class="socialMediaLinks">' in line and name != '':
-                if 'Cincinnati' in name:
-                    hours = 'Mon-Sun 11:30am-11pm'
-                if 'Peachtree' in name:
-                    hours = 'Sun-Thurs: 11am-9pm; Fri-Sat: 11am-10pm'
-                yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
-            if '<h4>Redlands Grill' not in line:
-                name = ''
-        if '<h4>Redlands Grill | ' in line:
-            name = line.split('<h4>')[1].split('<')[0]
-            hours = ''
-        if '<address>' in line:
-            if 'Hours of Operation<br /><p>' in line and 'Hours of Operation<br /><p><!' not in line:
-                hrs = line.split('Hours of Operation<br /><p>')[1].split('<')[0]
-                if hours == '':
-                    hours = hrs
-                else:
-                    hours = hours + '; ' + hrs
-            addinfo = line.split('<address>')[1].split('</a>')[0]
-            phone = line.split('<a href="tel:')[1].split('"')[0]
-            if addinfo.count('<br />') == 2:
-                add = addinfo.split('<br />')[0] + ' ' + addinfo.split('<br />')[1]
-                city = addinfo.split('<br />')[2].split(',')[0]
-                state = addinfo.split('<br />')[2].split(',')[1].strip().rsplit(' ',1)[0]
-                zc = addinfo.rsplit(' ',1)[1]
-            else:
-                add = addinfo.split('<br />')[0]
-                city = addinfo.split('<br />')[1].split(',')[0]
-                state = addinfo.split('<br />')[1].split(',')[1].strip().rsplit(' ',1)[0]
-                zc = addinfo.rsplit(' ',1)[1]
-        if '/@' in line:
-            lat = line.split('/@')[1].split(',')[0]
-            lng = line.split('/@')[1].split(',')[1]
-def scrape():
-    data = fetch_data()
-    write_output(data)
+    session = SgRequests()
 
-scrape()
+    start_url = "https://redlandsgrill.com/locations/"
+    domain = "redlandsgrill.com"
+    hdr = {
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
+    }
+    response = session.get(start_url, headers=hdr)
+    dom = etree.HTML(response.text)
+
+    all_locations = dom.xpath('//div[@class="restaurantCard"]')
+    for poi_html in all_locations:
+        location_name = poi_html.xpath(".//h4/text()")[0]
+        raw_address = poi_html.xpath(".//address/text()")
+        if len(raw_address) > 2:
+            raw_address = [" ".join(raw_address[:2])] + raw_address[2:]
+        phone = poi_html.xpath('.//a[contains(@href, "tel")]/text()')[0]
+        geo = poi_html.xpath('.//a[contains(@href, "ultipro.com")]/@href')
+        if geo:
+            geo = geo[0].split("=")[-2].split("%7C")[0].split("%2C")
+        if not geo:
+            geo = poi_html.xpath('.//a[contains(@href, "/@")]/@href')
+            if geo:
+                geo = geo[0].split("@")[-1].split(",")[:2][::-1]
+        if not geo:
+            geo = poi_html.xpath('.//a[contains(@href, "maps")]/@href')
+            if geo:
+                if "&ll=" in geo[0]:
+                    geo = geo[0].split("&ll=")[-1].split("&")[0].split(",")
+                else:
+                    geo = geo[0].split("sll=")[-1].split("&")[0].split(",")[::-1]
+            else:
+                geo = ["", ""]
+        if len(geo) == 1:
+            geo = ["", ""]
+        hoo = poi_html.xpath('.//div[@class="details hours"]/p/text()')
+        hoo = [e.strip() for e in hoo if e.strip() and "Open" not in e]
+        hoo = (
+            " ".join(hoo).split("phone. ")[-1].split("Available ")[-1].split("Take")[0]
+        )
+
+        item = SgRecord(
+            locator_domain=domain,
+            page_url=start_url,
+            location_name=location_name,
+            street_address=raw_address[0].split("Fritz Farm,")[-1],
+            city=raw_address[1].split(", ")[0],
+            state=" ".join(raw_address[1].split(", ")[1].split()[:-1]),
+            zip_postal=raw_address[1].split(", ")[1].split()[-1],
+            country_code="",
+            store_number="",
+            phone=phone,
+            location_type="",
+            latitude=geo[1],
+            longitude=geo[0],
+            hours_of_operation=hoo,
+        )
+
+        yield item
+
+
+def scrape():
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
+
+
+if __name__ == "__main__":
+    scrape()

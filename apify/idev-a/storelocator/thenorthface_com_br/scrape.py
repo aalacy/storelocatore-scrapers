@@ -11,7 +11,7 @@ _headers = {
 locator_domain = "https://www.thenorthface.com.br"
 urls = {
     "store": "https://www.thenorthface.com.br/api/dataentities/SL/search?_fields=id,nome,endereco,numero,complemento,bairro,cidade,estado,cep,email,telefone,celular,lat,lng,horario,tipo&an=thenorthface",
-    "outlet": "https://www.thenorthface.com.br/api/dataentities/LM/search?_fields=id,nome,endereco,numero,complemento,bairro,cidade,estado,cep,email,telefone,celular,lat,lng,horario,tipo&an=thenorthface",
+    "dealer": "https://www.thenorthface.com.br/api/dataentities/LM/search?_fields=id,nome,endereco,numero,complemento,bairro,cidade,estado,cep,email,telefone,celular,lat,lng,horario,tipo&an=thenorthface",
 }
 
 
