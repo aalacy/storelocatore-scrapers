@@ -70,18 +70,26 @@ def fetch_data():
             continue
         location_name = info[0].strip()
         if len(info) > 5:
-            raw_address = ", ".join(info[1:-3]).strip()
+            raw_address = ", ".join(info[1:-3]).replace("Award Winning!,", "").strip()
             phone = "".join(info[3:-1]).strip()
         else:
-            raw_address = ", ".join(info[1:-2]).strip()
+            raw_address = ", ".join(info[1:-2]).replace("Award Winning!,", "").strip()
             phone = info[-2].strip()
         street_address, city, _, zip_postal = getAddress(raw_address)
+        if city == MISSING or city == "Red":
+            addr_split = raw_address.split(",")
+            if len(addr_split) > 2:
+                city = addr_split[-1]
+        city = city.replace("International Airport", "").replace("44", "").strip()
+        if zip_postal == MISSING:
+            zip_postal = raw_address.split(",")[-2].strip()
+            if len(zip_postal) > 8:
+                zip_postal = MISSING
         if len(zip_postal) == 3:
             zip_postal = info[1].split(",")[1].strip()
         state = row.parent.parent.parent.find_previous("h2").text.strip()
         country_code = "CA"
-        if len(phone) == 3:
-            phone = row.find_all("td")[3].get_text(strip=True)
+        phone = phone.replace("Belleville", "").strip()
         hours_of_operation = MISSING
         location_type = MISSING
         store_number = MISSING

@@ -60,7 +60,7 @@ def fetch_data():
             address = r.text.split('"address":')[1].split("},", 1)[0] + "}"
             address = json.loads(address)
             street_address = strip_accents(address["streetAddress"])
-            city = strip_accents(address["addressLocality"])
+            city = strip_accents(address["addressLocality"]).replace("'s-", "")
             state = MISSING
             zip_postal = address["postalCode"]
             country_code = "NL"
@@ -72,7 +72,14 @@ def fetch_data():
             time_list = hour_list[1].findAll("p")
             hours_of_operation = ""
             for day, time in zip(day_list, time_list):
-                hours_of_operation = hours_of_operation + " " + day.text + time.text
+                hours_of_operation = (
+                    hours_of_operation
+                    + " "
+                    + day.get_text(separator="|", strip=True).replace("|", " ")
+                    + " "
+                    + time.get_text(separator="|", strip=True).replace("|", " ")
+                )
+            hours_of_operation = hours_of_operation.replace("\n", " ")
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url=page_url,

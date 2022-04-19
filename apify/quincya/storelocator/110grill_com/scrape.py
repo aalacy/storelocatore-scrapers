@@ -43,6 +43,11 @@ def fetch_data(sgw: SgWriter):
             longitude = store["lng"]
             link = locator_domain + store["slug"]
             hours_of_operation = " ".join(store["schemaHours"])
+            days = ["Su ", "Mo ", "Tu ", "We ", "Th ", "Fr ", "Sa "]
+            for day in days:
+                if day not in hours_of_operation:
+                    hours_of_operation = hours_of_operation + " " + day + "Closed"
+            hours_of_operation = hours_of_operation.strip()
 
             sgw.write_row(
                 SgRecord(

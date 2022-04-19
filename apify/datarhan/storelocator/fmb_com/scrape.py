@@ -1,102 +1,88 @@
 import json
-import csv
 from lxml import etree
-from urllib.parse import urljoin
 
-from sgrequests import SgRequests
-
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
+from sgselenium.sgselenium import SgFirefox
 
 
 def fetch_data():
-    # Your scraper here
-    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
+    domain = "fmb.com"
+    start_url = "https://www.fmb.com/locations"
 
-    items = []
+    with SgFirefox() as driver:
+        driver.get(start_url)
+        dom = etree.HTML(driver.page_source)
 
-    DOMAIN = "fmb.com"
-    start_url = "https://fmb.com/api/sitecore/Maps/GetMapPoints"
-
-    formdata = {"itemId": "{1E8E6B51-E5BA-4D7A-B8A1-38ADEE35E492}"}
-    response = session.post(start_url, data=formdata)
-    data = json.loads(response.text)
-
-    for poi in data:
-        store_url = urljoin(start_url, poi["Url"])
-        loc_response = session.get(store_url)
-        loc_dom = etree.HTML(loc_response.text)
-
-        location_name = poi["Name"]
-        raw_address = poi["Address"].split("\r\n")
-        street_address = raw_address[0]
-        city = raw_address[-1].split(", ")[0]
-        state = raw_address[-1].split(", ")[-1].split()[0]
-        zip_code = raw_address[-1].split(", ")[-1].split()[-1]
-        latitude = poi["Location"].split(", ")[0]
-        longitude = poi["Location"].split(", ")[-1]
-        country_code = "<MISSING>"
-        store_number = "<MISSING>"
-        phone = loc_dom.xpath('//span[@itemprop="telephone"]/text()')
-        phone = phone[0].strip() if phone else "<MISSING>"
-        location_type = "<MISSING>"
-        hours_of_operation = loc_dom.xpath('//meta[@itemprop="openingHours"]/@content')
-        hours_of_operation = (
-            " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
+        data = (
+            dom.xpath('//script[contains(text(), "CONFIGURATION")]/text()')[0]
+            .split("CONFIGURATION =")[-1]
+            .split(";\n        \n\n        function")[0]
+        )
+        data = json.loads(
+            data.replace("weekdayHoursOpen1", '"weekdayHoursOpen1"')
+            .replace("weekdayHoursClose1", '"weekdayHoursClose1"')
+            .replace("fridayHoursOpen1", '"fridayHoursOpen1"')
+            .replace("fridayHoursClose1", '"fridayHoursClose1"')
+            .replace("hours1", '"hours1"')
+            .replace("hours2", '"hours2"')
+            .replace("hours3", '"hours3"')
+            .replace("county1", '"county1"')
+            .replace("county2", '"county2"')
+            .replace("county3", '"county1"')
+            .replace("hours4", '"hours4"')
+            .replace("hours5", '"hours5"')
+            .replace("weekdayHoursClose2", '"weekdayHoursClose2"')
+            .replace("weekdayHoursOpen2", '"weekdayHoursOpen2"')
+            .replace("fridayHoursOpen2", '"fridayHoursOpen2"')
+            .replace("fridayHoursClose2", '"fridayHoursClose2"')
         )
 
-        item = [
-            DOMAIN,
-            store_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip_code,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
+        for poi in data["locations"]:
+            page_url = "https://www.fmb.com/locations/" + poi["url"]
+            driver.get(page_url)
+            loc_dom = etree.HTML(driver.page_source)
+            phone = loc_dom.xpath(
+                '//div[contains(text(), "get in touch")]/following-sibling::div//span/text()'
+            )[0].split()[0]
+            hoo = " ".join(
+                loc_dom.xpath(
+                    '//div[contains(text(), " hours ")]/following-sibling::p/text()'
+                )[0].split()
+            )
 
-        items.append(item)
+            item = SgRecord(
+                locator_domain=domain,
+                page_url=page_url,
+                location_name=poi["title"],
+                street_address=poi["address1"],
+                city=poi["address2"].split(", ")[0],
+                state=poi["address2"].split(", ")[1].split()[0],
+                zip_postal=poi["address2"].split(", ")[1].split()[1],
+                country_code="",
+                store_number="",
+                phone=phone,
+                location_type="",
+                latitude=poi["coords"]["lat"],
+                longitude=poi["coords"]["lng"],
+                hours_of_operation=hoo,
+            )
 
-    return items
+            yield item
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":

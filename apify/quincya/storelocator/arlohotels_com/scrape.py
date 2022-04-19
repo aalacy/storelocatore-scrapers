@@ -27,13 +27,23 @@ def fetch_data(sgw: SgWriter):
         base = BeautifulSoup(req.text, "lxml")
 
         raw_address = list(base.find(class_="footer-widget").stripped_strings)
-        street_address = raw_address[1]
-        city_line = raw_address[2].replace(" NY", ", NY").strip().split(",")
-        city = city_line[0].strip()
-        state = city_line[-1].strip().split()[0].strip()
-        zip_code = city_line[-1].strip().split()[1].strip()
+        phone = ""
+        try:
+            street_address = raw_address[1]
+            city_line = raw_address[2].replace(" NY", ", NY").strip().split(",")
+            city = city_line[0].strip()
+            state = city_line[-1].strip().split()[0].strip()
+            zip_code = city_line[-1].strip().split()[1].strip()
+            phone = raw_address[-1]
+        except:
+            raw_address = (
+                base.find(class_="dwd_map_pin").find_next("td").text.split(",")
+            )
+            street_address = raw_address[0]
+            city = raw_address[1]
+            state = raw_address[2].split()[0].strip()
+            zip_code = raw_address[2].split()[1].strip()
         country_code = "US"
-        phone = raw_address[-1]
         store_number = ""
         location_type = ""
         hours_of_operation = ""

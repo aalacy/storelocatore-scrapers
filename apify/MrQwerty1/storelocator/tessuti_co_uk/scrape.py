@@ -1,4 +1,5 @@
 import json
+import ssl
 from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgselenium import SgChrome
@@ -15,8 +16,6 @@ def get_urls(driver):
 
 
 def get_data(slug, driver):
-    locator_domain = "https://www.tessuti.co.uk/"
-
     page_url = f"https://www.tessuti.co.uk{slug}"
     driver.get(page_url)
     tree = html.fromstring(driver.page_source)
@@ -82,6 +81,8 @@ def fetch_data():
 
 
 if __name__ == "__main__":
+    locator_domain = "https://www.tessuti.co.uk/"
+    ssl._create_default_https_context = ssl._create_unverified_context
     with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         data = fetch_data()
         for row in data:

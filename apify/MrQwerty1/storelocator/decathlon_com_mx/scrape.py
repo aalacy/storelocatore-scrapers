@@ -84,6 +84,7 @@ def fetch_data(sgw: SgWriter):
         api = param.pop(0)
         locator_domain = param.pop(0)
         country_code = param.pop(0)
+        session = SgRequests(proxy_country=country_code.lower())
         r = session.get(api)
         tree = html.fromstring(r.text)
         text = "".join(
@@ -150,6 +151,5 @@ def fetch_data(sgw: SgWriter):
 
 
 if __name__ == "__main__":
-    session = SgRequests()
     with SgWriter(SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
         fetch_data(writer)

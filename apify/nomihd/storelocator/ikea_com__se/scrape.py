@@ -32,7 +32,7 @@ headers = {
 
 def fetch_data():
     # Your scraper here
-    search_url = "https://ww8.ikea.com/ext/iplugins/v2/sv_SE/data/store-selector-lsp-list/data.json"
+    search_url = "https://www.ikea.com/global/assets/variera/swe-digital-products/store-selector-lsp-list/data.json"
     search_res = session.get(search_url, headers=headers)
 
     stores = json.loads(search_res.text)
