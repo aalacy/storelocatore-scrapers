@@ -39,7 +39,9 @@ def fetch_data():
             "content-type": "application/json",
             "partner-platform": "Web",
         }
-        response = session.post("https://prod-api.dairyqueen.com/graphql/", json=frm, headers=hdr)
+        response = session.post(
+            "https://prod-api.dairyqueen.com/graphql/", json=frm, headers=hdr
+        )
         data = json.loads(response.text)
         if not data["data"]["nearbyStores"]:
             continue
@@ -48,11 +50,11 @@ def fetch_data():
         for poi in all_locations:
             poi = poi["store"]
             hoo = []
-            if poi['minisite']:
-                if poi['minisite']['hours']:
-                    for e in poi['minisite']['hours'][0]['ranges']:
+            if poi["minisite"]:
+                if poi["minisite"]["hours"]:
+                    for e in poi["minisite"]["hours"][0]["ranges"]:
                         hoo.append(f'{e["weekday"]}: {e["start"]} - {e["end"]}')
-            hoo = ' '.join(hoo)
+            hoo = " ".join(hoo)
 
             item = SgRecord(
                 locator_domain=domain,
