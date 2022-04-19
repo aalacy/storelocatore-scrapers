@@ -18,7 +18,7 @@ def fetch_data():
     soup = BeautifulSoup(r.text, "lxml")
     main = soup.find_all("div", {"class": "location-info"})
     for dt in main:
-        hour = re.sub(r'\n', ', ', dt.find('p').getText().strip())
+        hour = re.sub(r"\n", ", ", dt.find("p").getText().strip())
 
         r = session.get(
             dt.find("a", {"class": "more-btn"})["href"] + "?req=more-info",
