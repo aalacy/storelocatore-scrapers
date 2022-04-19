@@ -46,6 +46,8 @@ def fetch_data():
         if type(data) == dict and data["message"] == "No matching locations found":
             continue
         location_name = data[0]["store_info"]["name"]
+        if "Coming Soon" in location_name:
+            continue
         phone = data[0]["store_info"]["phone"]
         latitude = data[0]["store_info"]["latitude"]
         longitude = data[0]["store_info"]["longitude"]
