@@ -63,9 +63,9 @@ def fetch_data(sgw: SgWriter):
         zip_code = base.find(itemprop="postalCode").text.strip()
 
         try:
-            city = base.find(class_="c-address-city").text.strip()
-        except:
             city = base.find(class_="Address-field Address-city").text.strip()
+        except:
+            city = ""
         country_code = "US"
 
         try:
