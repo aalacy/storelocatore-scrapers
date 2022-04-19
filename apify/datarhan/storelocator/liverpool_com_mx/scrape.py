@@ -2,18 +2,18 @@
 import json
 from lxml import etree
 
-from sgrequests import SgRequests
+from sgrequests import SgRequests, ProxySettings
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
 from sglogging import sglog
 
+session = SgRequests()
 logger = sglog.SgLogSetup().get_logger(logger_name="liverpool.com.mx")
 
 
 def fetch_data():
-    session = SgRequests()
 
     start_url = "https://www.liverpool.com.mx/tienda/browse/storelocator"
     domain = "liverpool.com.mx"
@@ -32,7 +32,7 @@ def fetch_data():
         frm = {"storeId": store_number}
         post_url = "https://www.liverpool.com.mx/getstoredetails"
         response2 = session.post(post_url, data=frm, headers=hdr)
-        logger.info(f"{store_number} Response: {response}")
+        logger.info(f"{store_number} Response: {response2}")
         poi_data = response2.json()
         street_address = poi_data["storeDetails"]["StoreDetails"]["1"]["address1"]
         if poi_data["storeDetails"]["StoreDetails"]["1"]["address2"]:
