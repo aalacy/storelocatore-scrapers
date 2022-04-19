@@ -4,8 +4,10 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 import bs4
 from sglogging import SgLogSetup
-from sgscrape.sgpostal import parse_address_intl
+from sgpostal.sgpostal import parse_address_intl
 import re
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 logger = SgLogSetup().get_logger("metromattress")
 
@@ -51,6 +53,9 @@ def fetch_data():
                     temp.append(hh.text.strip())
             for x in range(0, len(temp), 2):
                 hours.append(f"{temp[x]} {temp[x+1]}")
+            phone = ""
+            if _.select_one("li.phone"):
+                phone = _.select_one("li.phone").a.text.strip()
             yield SgRecord(
                 page_url=page_url,
                 store_number=_["id"].split("-")[-1],
@@ -60,7 +65,7 @@ def fetch_data():
                 state=addr.state,
                 zip_postal=addr.postcode,
                 country_code="US",
-                phone=_.select_one("li.phone").a.text.strip(),
+                phone=phone,
                 locator_domain=locator_domain,
                 latitude=coord[0],
                 longitude=coord[1],
@@ -69,7 +74,7 @@ def fetch_data():
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

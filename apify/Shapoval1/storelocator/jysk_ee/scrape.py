@@ -50,6 +50,15 @@ def fetch_data(sgw: SgWriter):
         if hours_of_operation.find("I-VII ---") != -1:
             hours_of_operation = "<MISSING>"
         ad = f"{street_address} {city}, {state} {postal}"
+        if (
+            hours_of_operation.find("Galvenā noliktava") != -1
+            and hours_of_operation.find("Birojs") != -1
+        ):
+            hours_of_operation = (
+                hours_of_operation.split("Galvenā noliktava")[1]
+                .split("Birojs")[0]
+                .strip()
+            )
 
         row = SgRecord(
             locator_domain=locator_domain,

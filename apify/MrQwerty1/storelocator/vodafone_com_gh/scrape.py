@@ -11,20 +11,19 @@ def fetch_data(sgw: SgWriter):
     r = session.get(page_url)
     tree = html.fromstring(r.text)
 
-    divs = tree.xpath(
-        "//table[@class='table--contextual table-ws2']//tr[not(./td/strong)]"
-    )
+    divs = tree.xpath("//table/tbody/tr")
     for d in divs:
         location_name = "".join(d.xpath("./td[1]//text()")).strip()
         street_address = "".join(d.xpath("./td[2]//text()")).strip()
-        state = "".join(d.xpath("./td[3]//text()")).strip()
+        hours_of_operation = "".join(d.xpath("./td[4]//text()")).strip()
 
         row = SgRecord(
             page_url=page_url,
             location_name=location_name,
             street_address=street_address,
-            state=state,
+            state=SgRecord.MISSING,
             country_code="GH",
+            hours_of_operation=hours_of_operation,
             locator_domain=locator_domain,
         )
 

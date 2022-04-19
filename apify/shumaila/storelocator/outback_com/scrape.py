@@ -32,8 +32,10 @@ def fetch_data():
         for loc in loclist:
             loc = re.sub(pattern, "\n", loc.text).strip()
             title = loc.split("\n", 1)[0]
+
             address = loc.split("Address", 1)[1].split("WiFi", 1)[0].strip()
             phone = address.split("\n")[-1]
+
             address = address.replace(phone, "")
             raw_address = address.replace("\n", " ").strip()
             hours = "<MISSING>"
@@ -53,6 +55,7 @@ def fetch_data():
             pcode = zip_postal.strip() if zip_postal else MISSING
             if "Address" in title:
                 title = raw_address
+            pcode = pcode.replace("CEP ", "").replace("-DONG", "").replace("-GA", "")
             yield SgRecord(
                 locator_domain="https://www.outback.com/",
                 page_url="<MISSING>",
@@ -141,7 +144,10 @@ def fetch_data():
                 except:
                     continue
                 pcode = soup.find("span", {"class": "c-address-postal-code"}).text
-                phone = soup.find("div", {"id": "phone-main"}).text
+                try:
+                    phone = soup.find("div", {"id": "phone-main"}).text
+                except:
+                    phone = "<MISSING>"
                 hours = soup.find("table", {"class": "c-hours-details"}).text.replace(
                     "PM", "PM "
                 )

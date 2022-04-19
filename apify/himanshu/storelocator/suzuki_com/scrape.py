@@ -1,119 +1,77 @@
-import csv
-from sgrequests import SgRequests
 from bs4 import BeautifulSoup
-import re
-import json
-import sgzip
-from sglogging import SgLogSetup
+from sglogging import sglog
+from sgrequests import SgRequests
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 
-logger = SgLogSetup().get_logger('suzuki_com')
+log = sglog.SgLogSetup().get_logger(logger_name="suzuki.com")
 
-
-
-
-session = SgRequests()
-
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
-        # Body
-        for row in data:
-
-            writer.writerow(row)
-
-def time_converter(number):
-    number = number - 1
-    temp_time = number/2
-    is_am = "AM"
-    if temp_time > 12:
-        is_am = "PM"
-        temp_time = temp_time - 12
-    hour = ""
-    if ".0" in str(temp_time):
-        return str(int(temp_time)) + ":00" + is_am
-    else:
-        return str(int(temp_time)) + ":30" + is_am
 
 def fetch_data():
-    base_url ="http://suzuki.com"
-    addresses = []
-    search = sgzip.ClosestNSearch() # TODO: OLD VERSION [sgzip==0.0.55]. UPGRADE IF WORKING ON SCRAPER!
-    search.initialize()
-    MAX_RESULTS = 4
-    MAX_DISTANCE = 25.0
-    zip = search.next_zip()
-    while zip:
-        result_coords = []
-        #logger.info("remaining zipcodes: " + str(search.zipcodes_remaining()))
-        #logger.info('Pulling Lat-Long %s...' % (str(zip)))
-        try:
-            r = session.get(base_url+'/DealerSearchHandler.ashx?zip='+str(zip)+'&hasCycles=true&hasAtvs=true&hasScooters=true&hasMarine=true&hasAuto=true&maxResults=4&country=en')
-        except:
-            continue
-        soup=BeautifulSoup(r.text,'lxml')
-        for loc in soup.find_all('dealerinfo'):
-            name=loc.find('name').text.strip()
-            address=loc.find('address').text.strip().lower()
-            city=loc.find('city').text.strip()
-            state=loc.find('state').text.strip()
-            zip=loc.find('zip').text.strip()
-            phone=loc.find('phone').text.strip()
-            country=loc.find('country').text.strip()
-            storeno=loc.find('dealerid').text.strip()
-            lat=loc.find('esriy').text.strip()
-            lng=loc.find('esrix').text.strip()
-            result_coords.append((lat, lng))
-            hour = loc.find('hoursdetails').text
-            hours = ""
-            if hour == "||||||||||||||":
-                continue
-            groups = hour.split('|')
-            days_hour = []
-            for i in range(0,len(groups)-1,2):
-                days_hour.append("|".join(groups[i:i+2]))
-            days_map = {0:"Monday",1:"Tuesday",2:"Wednesday",3:"Thursday",4:"Friday",5:"Saturday",6:"Sunday"}
-            for i in range(len(days_hour)):
-                if days_hour[i] == "|":
-                    hours = hours + " " + days_map[i] + ' Closed'
-                else:
-                    hours = hours + " " + days_map[i] + " " + time_converter(int(days_hour[i].split("|")[0])) + "-" + time_converter(int(days_hour[i].split("|")[1]))
-            store=[]
-            store.append(base_url)
-            store.append(name if name else "<MISSING>")
-            store.append(address if address else "<MISSING>")
-            if store[-1] in addresses:
-                continue
-            addresses.append(store[-1])
-            store.append(city if city else "<MISSING>")
-            store.append(state if state else "<MISSING>")
-            store.append(zip if zip else "<MISSING>")
-            store.append(country if country else "<MISSING>")
-            store.append(storeno if storeno else "<MISSING>")
-            store.append(phone.replace("/","-") if phone else "<MISSING>")
-            store.append("<MISSING>")
-            store.append(lat if lat else "<MISSING>")
-            store.append(lng if lng else "<MISSING>")
-            store.append(hours if hours else "<MISSING>")
-            if store[-1].count("close") > 12:
-                continue
-            store.append("<MISSING>")
-            store = [x.replace("–","-") for x in store]
-            store = [x.strip() if type(x) == str else x for x in store]
-            yield store
-        if len(soup.find_all('dealerinfo')) < MAX_RESULTS:
-            #logger.info("max distance update")
-            search.max_distance_update(MAX_DISTANCE)
-        elif len(soup.find_all('dealerinfo')) == MAX_RESULTS:
-            #logger.info("max count update")
-            search.max_count_update(result_coords)
-        else:
-            raise Exception("expected at most " + str(MAX_RESULTS) + " results")
-        zip = search.next_zip()
+    session = SgRequests()
+
+    start_url = "https://www.suzukiauto.com/DealerSearchHandler.ashx?zip={}&distance=100&hasCycles=true&hasAtvs=true&hasScooters=true&hasMarine=true&hasAuto=true&maxResults=90&country=en"
+    domain = "suzuki.com"
+    hdr = {
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
+    }
+    all_codes = DynamicZipSearch(
+        country_codes=[SearchableCountries.USA], expected_search_radius_miles=100
+    )
+    for code in all_codes:
+        log.info(f"Zipcodes remaining: {all_codes.items_remaining()} | {code}")
+        response = session.get(start_url.format(code), headers=hdr)
+        soup = BeautifulSoup(response.text, "lxml")
+        all_locations = soup.find_all("dealerinfo")
+        for poi_html in all_locations:
+            page_url = "https://www.suzukiauto.com/Service%20Provider.aspx"
+            street_address = poi_html.find("displayaddress").text
+            location_name = poi_html.find("name").text
+            log.info(location_name)
+            city = poi_html.find("city").text
+            state = poi_html.find("state").text
+            zip_code = poi_html.find("zip").text
+            store_number = poi_html.find("dealerid").text
+            phone = poi_html.find("phone").text
+            latitude = poi_html.find("esriy").text
+            longitude = poi_html.find("esrix").text
+            hoo = poi_html.find("hours").text
+
+            item = SgRecord(
+                locator_domain=domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_code,
+                country_code=poi_html.find("country").text,
+                store_number=store_number,
+                phone=phone,
+                location_type="",
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hoo,
+            )
+
+            yield item
+
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
-scrape()
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            ),
+            duplicate_streak_failure_factor=-1,
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
+
+
+if __name__ == "__main__":
+    scrape()
