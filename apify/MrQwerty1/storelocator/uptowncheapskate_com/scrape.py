@@ -99,7 +99,9 @@ def get_data(page_url, sgw: SgWriter):
         logger.info(f"{page_url}: COMING SOON")
         return
 
-    if tree.xpath("//div[contains(text(), 'coming soon')]"):
+    if tree.xpath(
+        "//div[contains(text(), 'coming soon')]|//div[contains(text(), 'opens')]"
+    ):
         logger.info(f"{page_url}: COMING SOON")
         return
 
