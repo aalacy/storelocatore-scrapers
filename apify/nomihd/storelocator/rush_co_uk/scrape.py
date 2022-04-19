@@ -31,13 +31,10 @@ def fetch_data():
 
             locator_domain = website
             location_name = "".join(
-                store_sel.xpath('//h1[@itemprop="name"]/text()')
+                store_sel.xpath('//div[@class="content"]/h1/text()')
             ).strip()
 
-            if location_name == "":
-                location_name = "<MISSING>"
-
-            raw_address = store_sel.xpath('//address[@class="sidebar__address"]')
+            raw_address = store_sel.xpath('//address[@itemprop="address"]')
             if len(raw_address) > 0:
                 temp_add = raw_address[0].xpath(".//text()")
                 add_list = []
@@ -62,39 +59,37 @@ def fetch_data():
 
                 phone = "".join(
                     store_sel.xpath(
-                        '//div[@class="desktop-salon-actions"]//span[@itemprop="telephone"]/text()'
+                        '//div[@class="phone"]/a[contains(@href,"tel:")]/text()'
                     )
                 ).strip()
 
                 location_type = "<MISSING>"
                 store_number = "<MISSING>"
-                hours = store_sel.xpath(
-                    '//div[@class="salon_mobile_address_hours"]/div[2]//text()'
-                )
+                hours = store_sel.xpath('//span[@itemprop="openingHours"]/div')
                 hours_list = []
                 for hour in hours:
-                    if (
-                        "mon:" in "".join(hour).strip().lower()
-                        or "tue:" in "".join(hour).strip().lower()
-                        or "wed:" in "".join(hour).strip().lower()
-                        or "thu:" in "".join(hour).strip().lower()
-                        or "fri:" in "".join(hour).strip().lower()
-                        or "sat:" in "".join(hour).strip().lower()
-                        or "sun:" in "".join(hour).strip().lower()
-                    ):
-                        hours_list.append("".join(hour).strip())
+                    day = "".join(hour.xpath("span[1]/text()")).strip()
+                    time = "".join(hour.xpath("span[2]/text()")).strip()
+                    hours_list.append(day + ":" + time)
 
-                hours_of_operation = (
-                    "; ".join(hours_list)
+                hours_of_operation = "; ".join(hours_list).strip()
+
+                latitude = (
+                    store_req.text.split("google.maps.LatLng(")[1]
                     .strip()
-                    .encode("ascii", "replace")
-                    .decode("utf-8")
-                    .replace("?", "-")
+                    .split(")")[0]
+                    .strip()
+                    .split(",")[0]
                     .strip()
                 )
-
-                latitude = "<MISSING>"
-                longitude = "<MISSING>"
+                longitude = (
+                    store_req.text.split("google.maps.LatLng(")[1]
+                    .strip()
+                    .split(")")[0]
+                    .strip()
+                    .split(",")[-1]
+                    .strip()
+                )
                 yield SgRecord(
                     locator_domain=locator_domain,
                     page_url=page_url,
