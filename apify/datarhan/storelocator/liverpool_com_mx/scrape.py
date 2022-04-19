@@ -7,6 +7,9 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
+from sglogging import sglog
+
+logger = sglog.SgLogSetup().get_logger(logger_name="liverpool.com.mx")
 
 
 def fetch_data():
@@ -18,6 +21,7 @@ def fetch_data():
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
     response = session.get(start_url, headers=hdr)
+    logger.info(f"Crawling {start_url}, Response: {response}")
     dom = etree.HTML(response.text)
     data = dom.xpath('//script[@id="__NEXT_DATA__"]/text()')[0]
     data = json.loads(data)
@@ -27,7 +31,9 @@ def fetch_data():
         store_number = poi["storeId"]
         frm = {"storeId": store_number}
         post_url = "https://www.liverpool.com.mx/getstoredetails"
-        poi_data = session.post(post_url, data=frm, headers=hdr).json()
+        response2 = session.post(post_url, data=frm, headers=hdr)
+        logger.info(f"{store_number} Response: {response}")
+        poi_data = response2.json()
         street_address = poi_data["storeDetails"]["StoreDetails"]["1"]["address1"]
         if poi_data["storeDetails"]["StoreDetails"]["1"]["address2"]:
             street_address += (
