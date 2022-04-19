@@ -1,3 +1,4 @@
+/* eslint-disable no-undef */
 const Apify = require('apify');
 const MISSING = '<MISSING>';
 
@@ -22,7 +23,6 @@ Apify.main(async () => {
     async handlePageFunction({ page }) {
       const data = await page.evaluate(async (body) => {
         const response = await fetch(
-          // eslint-disable-line
           'https://www.amegybank.com/locationservices/searchwithfilter',
           {
             method: 'POST',
