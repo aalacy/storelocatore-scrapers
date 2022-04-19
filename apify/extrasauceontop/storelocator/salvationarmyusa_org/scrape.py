@@ -1,7 +1,6 @@
 # Import dependencies
 from sgrequests import SgRequests
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries, Grain_8
-import pandas as pd
 import re
 from sgscrape import simple_scraper_pipeline as sp
 
