@@ -38,6 +38,7 @@ def fetch_data():
                     continue
                 ltype = ltype["alt"].replace("logo ", "")
                 flag = 0
+                store = ""
                 try:
                     store = title.split("(", 1)[1].split(")", 1)[0]
                     flag = 1
@@ -61,6 +62,31 @@ def fetch_data():
                     phone = phone.split(", ", 1)[0]
                 except:
                     pass
+                try:
+                    phone = phone.split(".", 1)[1]
+                except:
+                    pass
+                try:
+                    phone = phone.split(":", 1)[1]
+                except:
+                    pass
+                try:
+                    phone = phone.split(",", 1)[0]
+                except:
+                    pass
+                if (
+                    phone.replace("(", "")
+                    .replace(")", "")
+                    .replace("-", "")
+                    .replace(" ", "")
+                    .strip()
+                    .isdigit()
+                ):
+                    flag = 1
+                    pass
+                else:
+                    phone = "<MISSING>"
+                address = ""
                 if flag == 1:
                     address = (
                         loc.split(title, 1)[1]
@@ -79,6 +105,15 @@ def fetch_data():
                         .strip()
                     )
                     flag = 0
+                elif "<MISSING>" in phone:
+                    address = loc.split(title, 1)[1].replace("\n", " ").strip()
+                address = (
+                    address.replace(" Tel.", "")
+                    .replace(" TEL.", "")
+                    .replace(" TEL:", "")
+                    .replace(" tel:", "")
+                )
+
                 raw_address = address
                 pa = parse_address_intl(raw_address)
 
