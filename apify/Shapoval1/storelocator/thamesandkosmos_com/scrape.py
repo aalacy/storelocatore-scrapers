@@ -28,6 +28,7 @@ def get_data(coords, sgw: SgWriter):
         page_url = "https://www.thamesandkosmos.com/index.php/about-us/store-locator"
         location_name = "".join(d.xpath(".//name/text()"))
         ad = "".join(d.xpath(".//address/text()"))
+
         location_type = "Brick-and-Mortar Store"
         a = parse_address(International_Parser(), ad)
         street_address = f"{a.street_address_1} {a.street_address_2}".replace(
@@ -45,8 +46,17 @@ def get_data(coords, sgw: SgWriter):
             state = ad.split(",")[2].strip()
             postal = ad.split(",")[3].strip()
             country_code = "CA"
+        if ad.find("Brooklyn") != -1:
+            city = "Brooklyn"
+        if location_name == "About The Gift":
+            street_address = ad.split(",")[0].strip()
+            city = ad.split(",")[1].strip()
+            state = ad.split(",")[2].strip()
+            postal = ad.split(",")[3].strip()
 
         latitude = "".join(d.xpath(".//lat/text()")) or "<MISSING>"
+        if location_name == "Cheshire Cat Fine Toys" and latitude == "26.5496177":
+            continue
         longitude = "".join(d.xpath(".//lng/text()")) or "<MISSING>"
         phone = "".join(d.xpath(".//phone/text()")) or "<MISSING>"
         if street_address == "111 Miranda Ave" and phone == "<MISSING>":

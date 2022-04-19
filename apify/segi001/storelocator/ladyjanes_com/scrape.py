@@ -64,6 +64,9 @@ def fetch_data(sgw: SgWriter):
 if __name__ == "__main__":
     session = SgRequests()
     with SgWriter(
-        SgRecordDeduper(SgRecordID({SgRecord.Headers.STORE_NUMBER}))
+        SgRecordDeduper(
+            SgRecordID({SgRecord.Headers.STORE_NUMBER}),
+            duplicate_streak_failure_factor=-1,
+        )
     ) as writer:
         fetch_data(writer)

@@ -34,8 +34,16 @@ def parse_json(location, page_url, soup):
     data["store_number"] = location["cssClass"]
     data["page_url"] = page_url
     data["location_type"] = "Store"
+    if "Coming soon" in str(data["location_name"]):
+        data["location_type"] = "Coming soon"
+
     data["street_address"] = location["address"].split("<br")[0].replace("<p>", "")
-    data["city"] = location["address"].split("\n")[1].split(",")[0]
+    data["city"] = (
+        (location["address"].split("\n")[1].split(",")[0])
+        .replace("</p>", "")
+        .replace("<br />", "")
+        .replace("76022", "")
+    )
     try:
         data["state"] = re.findall("[A-Z]{2}", location["address"])[0]
     except:
@@ -59,22 +67,28 @@ def parse_json(location, page_url, soup):
             data["country_code"],
         ]
     )
+    data["raw_address"] = data["raw_address"].replace(MISSING, "")
+    data["raw_address"] = " ".join(data["raw_address"].split())
+    data["raw_address"] = data["raw_address"].replace(", ,", ",").replace(",,", ",")
+    if data["raw_address"][len(data["raw_address"]) - 1] == ",":
+        data["raw_address"] = data["raw_address"][:-1]
 
     return data
 
 
 def fetch_data():
 
-    response = session.get(store_sitemap)
+    response = session.get(store_sitemap, headers=headers)
+    logger.info(f"Sitemap Response: {response} ")
     soup = bs(response.text, "lxml")
     stores = [location.text for location in soup.select("loc")]
     logger.info(f"Total Stores: {len(stores)}")
 
     for store in stores:
         page_url = store
-        logger.info(f"Crawling: {page_url}")
-        response_detail = session.get(page_url)
-        soup2 = bs(response_detail.text, "lxml")
+        response_detail = session.get(page_url, headers=headers)
+        logger.info(f"{page_url} Response: {response_detail} ")
+        soup2 = bs(response_detail.text, "html.parser")
         mapinfo = json.loads(
             re.findall("maplistFrontScriptParams = ({.*})", str(soup2))[0]
         )
@@ -87,22 +101,24 @@ def scrape():
     logger.info(f"Start Crawling {DOMAIN} ...")
     field_defs = sp.SimpleScraperPipeline.field_definitions(
         locator_domain=sp.ConstantField(DOMAIN),
-        page_url=sp.MappingField(mapping=["page_url"]),
+        page_url=sp.MappingField(mapping=["page_url"], is_required=False),
         location_name=sp.MappingField(mapping=["location_name"]),
-        latitude=sp.MappingField(mapping=["latitude"]),
-        longitude=sp.MappingField(mapping=["longitude"]),
-        street_address=sp.MappingField(mapping=["street_address"]),
-        city=sp.MappingField(mapping=["city"]),
-        state=sp.MappingField(mapping=["state"]),
-        zipcode=sp.MappingField(mapping=["zip_postal"]),
-        country_code=sp.MappingField(mapping=["country_code"]),
-        phone=sp.MappingField(mapping=["phone"]),
+        latitude=sp.MappingField(mapping=["latitude"], is_required=False),
+        longitude=sp.MappingField(mapping=["longitude"], is_required=False),
+        street_address=sp.MappingField(mapping=["street_address"], is_required=False),
+        city=sp.MappingField(mapping=["city"], is_required=False),
+        state=sp.MappingField(mapping=["state"], is_required=False),
+        zipcode=sp.MappingField(mapping=["zip_postal"], is_required=False),
+        country_code=sp.MappingField(mapping=["country_code"], is_required=False),
+        phone=sp.MappingField(mapping=["phone"], is_required=False),
         store_number=sp.MappingField(
             mapping=["store_number"], part_of_record_identity=True
         ),
-        hours_of_operation=sp.MappingField(mapping=["hours_of_operation"]),
-        location_type=sp.MappingField(mapping=["location_type"]),
-        raw_address=sp.MappingField(mapping=["raw_address"]),
+        hours_of_operation=sp.MappingField(
+            mapping=["hours_of_operation"], is_required=False
+        ),
+        location_type=sp.MappingField(mapping=["location_type"], is_required=False),
+        raw_address=sp.MappingField(mapping=["raw_address"], is_required=False),
     )
 
     pipeline = sp.SimpleScraperPipeline(
@@ -113,3 +129,7 @@ def scrape():
     )
 
     pipeline.run()
+
+
+if __name__ == "__main__":
+    scrape()
