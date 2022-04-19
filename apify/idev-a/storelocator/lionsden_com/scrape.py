@@ -81,7 +81,7 @@ def fetch_data():
 
                 yield SgRecord(
                     page_url=page_url,
-                    store_number=_["id"],
+                    store_number=page_url.split("/")[-2].split("-")[-1].strip(),
                     location_name=block.select_one("div.amlocator-title").text.strip(),
                     street_address=street_address,
                     city=addr.city,
