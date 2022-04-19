@@ -6,6 +6,7 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from concurrent import futures
+from sglogging import sglog
 
 
 def get_urls():
@@ -18,6 +19,7 @@ def get_urls():
 def get_data(slug, sgw: SgWriter):
     page_url = f"https://www.bricomarche.com{slug}"
     r = session.get(page_url, headers=headers)
+    logger.info(f"{page_url}: {r.status_code}")
     tree = html.fromstring(r.text)
     text = "".join(
         tree.xpath("//script[contains(text(), 'LocalBusiness')]/text()")
@@ -76,6 +78,7 @@ def fetch_data(sgw: SgWriter):
 
 if __name__ == "__main__":
     locator_domain = "https://www.bricomarche.com/"
+    logger = sglog.SgLogSetup().get_logger(logger_name="bricomarche.com")
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0"
     }

@@ -37,7 +37,10 @@ def fetch_data():
             .split('"', 1)[0]
             .split(",", 1)
         )
-        phone = soup.find("a", {"class": "link--phone"}).text
+        try:
+            phone = soup.find("a", {"class": "link--phone"}).text
+        except:
+            phone = "<MISSING>"
         try:
             hourlist = div.find("table", {"class": "store-timetable-table"}).findAll(
                 "tr"
