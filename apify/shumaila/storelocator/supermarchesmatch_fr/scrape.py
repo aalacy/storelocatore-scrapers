@@ -79,7 +79,7 @@ def fetch_data():
 
         yield SgRecord(
             locator_domain=base_url,
-            page_url=url,
+            page_url=link,
             location_name=title,
             street_address=street.strip(),
             city=city.strip(),
