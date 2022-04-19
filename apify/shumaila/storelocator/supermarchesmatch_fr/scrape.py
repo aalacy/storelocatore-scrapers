@@ -78,7 +78,7 @@ def fetch_data():
         ccode = ccode.strip() if ccode else MISSING
 
         yield SgRecord(
-            locator_domain=base_url,
+            locator_domain="https://www.supermarchesmatch.fr",
             page_url=link,
             location_name=title,
             street_address=street.strip(),
@@ -86,7 +86,7 @@ def fetch_data():
             state=state.strip(),
             zip_postal=pcode.strip(),
             country_code=ccode,
-            store_number=SgRecord.MISSING,
+            store_number=str(store),
             phone=phone.strip(),
             location_type=SgRecord.MISSING,
             latitude=str(lat),
