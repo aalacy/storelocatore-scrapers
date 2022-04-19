@@ -2,8 +2,8 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.pause_resume import CrawlStateSingleton
-from sgrequests.sgrequests import SgRequests
-from sgzip.dynamic import SearchableCountries, Grain_8
+from sgrequests import SgRequests
+from sgzip.dynamic import Grain_8
 from sgzip.dynamic import DynamicGeoSearch
 from sglogging import sglog
 from sgscrape.sgrecord_id import SgRecordID
@@ -399,13 +399,50 @@ def dattafetch(search, http1):
 
 
 if __name__ == "__main__":
+
     state = CrawlStateSingleton.get_instance()
-    tocopy = SearchableCountries.ALL
-    tocrawl = []
-    for country in tocopy:
-        if any(country == c for c in ["cn", "kz", "ir", "sa"]):
-            continue
-        tocrawl.append(country)
+
+    tocrawl = [
+        "au",
+        "be",
+        "bg",
+        "ca",
+        "hr",
+        "cy",
+        "cz",
+        "dk",
+        "ee",
+        "fi",
+        "fr",
+        "ge",
+        "de",
+        "gr",
+        "hu",
+        "ie",
+        "im",
+        "is",
+        "it",
+        "li",
+        "lu",
+        "lv",
+        "lt",
+        "mt",
+        "nl",
+        "no",
+        "pl",
+        "pt",
+        "ro",
+        "sk",
+        "si",
+        "se",
+        "es",
+        "se",
+        "ch",
+        "us",
+        "gb",
+    ]
+    # Also reflected in readme.md
+
     # additionally to 'search_type', 'DynamicSearchMaker' has all options that all `DynamicXSearch` classes have.
     search = DynamicGeoSearch(
         country_codes=tocrawl,

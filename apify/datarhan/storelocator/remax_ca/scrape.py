@@ -12,13 +12,14 @@ from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 def fetch_data():
     session = SgRequests()
     domain = "remax.ca"
-    start_url = "https://www.remax.ca/api/v1/office/search/?from=0&size=16&category=Residential&text={}"
+    start_url = "https://api.remax.ca/api/v1/office/search/?text={}&from=0&size=12&category=Residential&propertyTypes=Residential"
 
     all_codes = DynamicZipSearch(
-        country_codes=[SearchableCountries.CANADA], expected_search_radius_miles=100
+        country_codes=[SearchableCountries.CANADA], expected_search_radius_miles=10
     )
     for code in all_codes:
-        response = session.get(start_url.format(code.replace(" ", "+")))
+        code = code[:3] + "+" + code[3:]
+        response = session.get(start_url.format(code))
         data = json.loads(response.text)
         all_locations = data["result"]["results"]
 
@@ -61,7 +62,8 @@ def scrape():
         SgRecordDeduper(
             SgRecordID(
                 {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
-            )
+            ),
+            duplicate_streak_failure_factor=-1,
         )
     ) as writer:
         for item in fetch_data():

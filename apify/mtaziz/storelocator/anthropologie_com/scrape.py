@@ -44,8 +44,10 @@ def fetch_data():
             country_code = d["country"]
             locator_domain = locator_domain_url
 
-            location_name = d["addresses"]["marketing"]["name"]
-
+            try:
+                location_name = d["addresses"]["marketing"]["name"]
+            except:
+                location_name = d["storeName"]
             page_url = ""
             if "slug" in d:
                 slug = d["slug"]
@@ -55,7 +57,6 @@ def fetch_data():
                     page_url = MISSING
             else:
                 page_url = MISSING
-
             street_address = d["addressLineOne"] if d["addressLineOne"] else MISSING
             city = d["city"] if d["city"] else MISSING
             state = d["state"] if d["state"] else MISSING
@@ -66,7 +67,6 @@ def fetch_data():
                 phone = d["addresses"]["marketing"]["phoneNumber"]
             except KeyError:
                 phone = MISSING
-
             try:
                 location_type = d["storeType"]
             except KeyError:
@@ -79,7 +79,6 @@ def fetch_data():
                 longitude = d["loc"][0]
             except:
                 longitude = MISSING
-
             hours_of_operation = get_hoo(d["hours"])
             if (
                 page_url == "https://www.anthropologie.com/stores"
@@ -119,7 +118,6 @@ def scrape():
         for rec in results:
             writer.write_row(rec)
             count = count + 1
-
     logger.info(f"No of records being processed: {count}")
     logger.info("Finished")
 

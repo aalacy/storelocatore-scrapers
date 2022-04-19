@@ -33,6 +33,7 @@ def fetch_data(sgw: SgWriter):
         city = j.get("city")
         state = j.get("state")
         postal = j.get("zip") or ""
+        postal = postal.strip()
         country_code = "US"
         if " " in postal:
             country_code = "CA"

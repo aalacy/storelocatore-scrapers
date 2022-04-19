@@ -4,7 +4,6 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
-import time
 
 logger = SgLogSetup().get_logger("kimptonhotels_com")
 
@@ -29,9 +28,14 @@ def fetch_data():
         if 'hreflang="en" rel="alternate">' in line:
             lurl = line.split('href="')[1].split('"')[0]
             if lurl not in locs:
-                locs.append(lurl.replace("localhost:4503", ""))
+                locs.append(lurl.replace("localhost:4503www.", "www.ihg.com/"))
     for loc in locs:
-        time.sleep(10)
+        if loc == "http://www.ihg.com/kimptonhotels.com/shinjuku":
+            loc = "https://www.ihg.com/kimptonhotels/hotels/us/en/shinjuku-hotel-tokyo-japan/tyosj/hoteldetail"
+
+        if loc == "http://www.ihg.com/kimptonhotels.com/maa-laibangkok":
+            loc = "https://www.ihg.com/kimptonhotels/hotels/us/en/maa-lai-bangkok-thailand/bkkls/hoteldetail"
+
         logger.info(loc)
         r2 = session.get(loc, headers=headers)
         website = "kimptonhotels.com"
