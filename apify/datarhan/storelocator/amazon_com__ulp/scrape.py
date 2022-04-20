@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
