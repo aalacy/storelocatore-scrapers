@@ -58,28 +58,27 @@ def _get_loc(_):
 
 
 def _d(_):
-    with SgRequests(proxy_country="us") as http:
-        logger.info(_["storeCode"])
-        loc = _get_loc(_)
-        page_url = f"{base_url}?S={_['storeCode']}"
-        hours_of_operation = ""
-        if loc.get("time", ""):
-            hours_of_operation = loc.get("time", "").replace("&#58;", "-")
-        return SgRecord(
-            page_url=page_url,
-            store_number=_["storeCode"],
-            location_name=_v(_["name"]),
-            street_address=_v(_["address3"]),
-            city=_["address2"],
-            state=_["address1"],
-            country_code="Korea",
-            phone=_["tel"],
-            latitude=_["pointY"],
-            longitude=_["pointX"],
-            locator_domain=locator_domain,
-            hours_of_operation=hours_of_operation,
-            raw_address=_v(_["address"]),
-        )
+    logger.info(_["storeCode"])
+    loc = _get_loc(_)
+    page_url = f"{base_url}?S={_['storeCode']}"
+    hours_of_operation = ""
+    if loc.get("time", ""):
+        hours_of_operation = loc.get("time", "").replace("&#58;", "-")
+    return SgRecord(
+        page_url=page_url,
+        store_number=_["storeCode"],
+        location_name=_v(_["name"]),
+        street_address=_v(_["address3"]),
+        city=_["address2"],
+        state=_["address1"],
+        country_code="Korea",
+        phone=_["tel"],
+        latitude=_["pointY"],
+        longitude=_["pointX"],
+        locator_domain=locator_domain,
+        hours_of_operation=hours_of_operation,
+        raw_address=_v(_["address"]),
+    )
 
 
 def get_driver():
