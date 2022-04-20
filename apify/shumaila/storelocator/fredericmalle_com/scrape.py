@@ -72,7 +72,8 @@ def fetch_data():
 
         ccode = pa.country
         ccode = ccode.strip() if ccode else MISSING
-        title = title + " " + street
+        if "<MISSING>" not in street:
+            title = title + " " + street
         try:
             phone = phone.split(":", 1)[1].strip()
         except:
