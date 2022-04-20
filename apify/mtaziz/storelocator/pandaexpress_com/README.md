@@ -1,13 +1,19 @@
-# How to write a Python3 scraper for SafeGraph (Simple)
+# STORE NUMBER NOTES:
 
-validate.py didn't work on windows.
-worked on linux and acted real wonky.
+- Store Number Hard-code
+- API ENDPOINT URL https://nomnom-prod-api.pandaexpress.com/restaurants/near?lat=33.7578&long=-117.9859&radius=20&limit=100
+	+ SLUG - westminister-px
 
-Note: This template differs from the older `python3` template in that you don't need to worry about javascript related files such as `scrape.js` and `package.json`. This template also builds faster if you're testing it in a local docker image.
+ - API ENDPOINT URL https://nomnom-prod-api.pandaexpress.com/restaurants/near?lat=42.06668&long=-87.953905&radius=20&limit=100
+ 	+ SLUG - rand-central-mt
 
-Please write your scraper such that running `scrape.py` produces a file `data.csv` containing the scraped data.
+- API ENDPOINT URL https://nomnom-prod-api.pandaexpress.com/restaurants/near?lat=41.879552&long=-87.625067&radius=20&limit=100
+	+ SLUG - east-adams-px
 
-Remember to update `requirements.txt` with all dependencies needed to run your scraper. 
-Please make sure that:
-* Your scraper can be run successfully by executing https://github.com/SafeGraphInc/crawl-service/blob/master/scripts/run_scraper.sh 
-* The resulting output passes https://github.com/SafeGraphInc/crawl-service/blob/master/scripts/validate.py
+
+## These page urls don't have store.
+
+## These stores are found to be duplicates, therefore, dropped.
+https://www.pandaexpress.com/locations/gu/santa-rita/exchange-road--building-258
+https://www.pandaexpress.com/locations/ca/los-angeles/1-world-way
+https://www.pandaexpress.com/locations/tx/houston/2800-n-terminal-rd
