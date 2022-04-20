@@ -2,7 +2,7 @@ from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 import re
 from sgpostal.sgpostal import parse_address_intl
@@ -36,14 +36,23 @@ def fetch_data():
                     title = loc.splitlines()[0]
                 except:
                     continue
+                if len(title) < 4:
+                    title = loc.splitlines()[0] + " " + loc.splitlines()[1]
+                    title = title.replace("P LAZ", "PLAZ").strip()
                 ltype = ltype["alt"].replace("logo ", "")
                 flag = 0
+                store = ""
                 try:
-                    store = title.split("(", 1)[1].split(")", 1)[0]
+                    store = title.split("(", 1)[1].split(")", 1)[0].strip()
                     flag = 1
                 except:
                     if loc.splitlines()[1].replace("(", "").replace(")", "").isdigit():
-                        store = loc.splitlines()[1].replace("(", "").replace(")", "")
+                        store = (
+                            loc.splitlines()[1]
+                            .replace("(", "")
+                            .replace(")", "")
+                            .strip()
+                        )
                         flag = 2
                     else:
                         "<MISSING>"
@@ -61,6 +70,31 @@ def fetch_data():
                     phone = phone.split(", ", 1)[0]
                 except:
                     pass
+                try:
+                    phone = phone.split(".", 1)[1]
+                except:
+                    pass
+                try:
+                    phone = phone.split(":", 1)[1]
+                except:
+                    pass
+                try:
+                    phone = phone.split(",", 1)[0]
+                except:
+                    pass
+                if (
+                    phone.replace("(", "")
+                    .replace(")", "")
+                    .replace("-", "")
+                    .replace(" ", "")
+                    .strip()
+                    .isdigit()
+                ):
+                    flag = 1
+                    pass
+                else:
+                    phone = "<MISSING>"
+                address = ""
                 if flag == 1:
                     address = (
                         loc.split(title, 1)[1]
@@ -79,6 +113,15 @@ def fetch_data():
                         .strip()
                     )
                     flag = 0
+                elif "<MISSING>" in phone:
+                    address = loc.split(title, 1)[1].replace("\n", " ").strip()
+                address = (
+                    address.replace(" Tel.", "")
+                    .replace(" TEL.", "")
+                    .replace(" TEL:", "")
+                    .replace(" tel:", "")
+                )
+
                 raw_address = address
                 pa = parse_address_intl(raw_address)
 
@@ -93,7 +136,8 @@ def fetch_data():
 
                 zip_postal = pa.postcode
                 pcode = zip_postal.strip() if zip_postal else MISSING
-
+                if len(store) < 2:
+                    store = "<MISSING>"
                 yield SgRecord(
                     locator_domain="https://www.casaley.com.mx/",
                     page_url=url,
@@ -116,7 +160,7 @@ def fetch_data():
 def scrape():
 
     with SgWriter(
-        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.StoreNumberId)
+        deduper=SgRecordDeduper(SgRecordID({SgRecord.Headers.LOCATION_NAME}))
     ) as writer:
 
         results = fetch_data()
