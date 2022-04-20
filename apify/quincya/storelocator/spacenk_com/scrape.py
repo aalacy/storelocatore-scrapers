@@ -105,7 +105,7 @@ def fetch_data(sgw: SgWriter):
                 hours_of_operation=hours_of_operation,
             )
         )
-
+    driver.close()
 
 with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
     fetch_data(writer)
