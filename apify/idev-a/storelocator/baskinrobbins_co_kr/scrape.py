@@ -47,13 +47,15 @@ detail_url = "http://m.baskinrobbins.co.kr/store/store_info_ajax.php?S={}"
 def _v(val):
     return val.replace("&#40;", "(").replace("&#41;", ")")
 
+
 def _get_loc(_):
     with SgRequests(proxy_country="us") as http:
         return json.loads(
-            http.get(
-                detail_url.format(_["storeCode"]), headers=_headers
-            ).text.split("\n")[-1]
+            http.get(detail_url.format(_["storeCode"]), headers=_headers).text.split(
+                "\n"
+            )[-1]
         )
+
 
 def _d(_):
     with SgRequests(proxy_country="us") as http:
