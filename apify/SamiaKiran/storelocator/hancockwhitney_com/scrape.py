@@ -49,8 +49,13 @@ def record_initial_requests(http: SgRequests, state: CrawlState) -> bool:
 def fetch_records(http: SgRequests, state: CrawlState) -> Iterable[SgRecord]:
     for next_r in state.request_stack_iter():
         r = http.get(next_r.url, headers=headers)
-        logger.info(f"Pulling the data from: {next_r.url}")
         page_url = next_r.url
+        if "financial" in str(page_url):
+            location_type = "Financial Center, ATM"
+        else:
+            location_type = "ATM"
+
+        logger.info(f"Pulling the data from: {next_r.url}")
         schema = r.text.split('<script type="application/ld+json">')[1].split(
             "</script>", 1
         )[0]
@@ -67,8 +72,12 @@ def fetch_records(http: SgRequests, state: CrawlState) -> Iterable[SgRecord]:
         latitude = loc["geo"]["latitude"]
         longitude = loc["geo"]["longitude"]
         hours_of_operation = loc["openingHours"]
-        store_number = MISSING
-        location_type = MISSING
+        if (
+            "Su closed Mo closed Tu closed We closed Th closed Fr closed Sa closed"
+            in hours_of_operation
+        ):
+            hours_of_operation = MISSING
+        store_number = r.text.split('"lid":')[1].split(",")[0]
         raw_address = MISSING
         yield SgRecord(
             locator_domain=DOMAIN,

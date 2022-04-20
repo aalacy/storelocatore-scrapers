@@ -99,6 +99,8 @@ def fetch_data():
             phone = loc_dom.xpath('//a[@class="infos__phone text-link"]/text()')[
                 0
             ].strip()
+        if "(Opening" in location_name:
+            continue
 
         item = SgRecord(
             locator_domain=domain,
