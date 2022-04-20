@@ -1,5 +1,4 @@
 from bs4 import BeautifulSoup
-import re
 import json
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
@@ -16,7 +15,6 @@ headers = {
 
 def fetch_data():
 
-    pattern = re.compile(r"\s\s+")
     url = "https://www.giuseppezanotti.com/wo/store-finder/"
     r = session.get(url, headers=headers)
 
