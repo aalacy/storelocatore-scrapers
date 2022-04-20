@@ -127,12 +127,6 @@ def fetch_data():
                     flag = 0
                 elif "<MISSING>" in phone:
                     address = loc.split(check, 1)[1].replace("\n", " ").strip()
-                pcode = (
-                    pcode.replace("CP.", "")
-                    .replace("C.P.:", "")
-                    .replace("C.P.", "")
-                    .replace("C P ", "")
-                )
                 address = (
                     address.replace(" Tel.", "")
                     .replace(" TEL.", "")
