@@ -1,84 +1,88 @@
-import csv
-import os
-from sgselenium import SgSelenium
-import usaddress
+from bs4 import BeautifulSoup
 
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-        # Body
-        for row in data:
-            writer.writerow(row)
+from sgrequests import SgRequests
 
-def fetch_data():
-    locator_domain = 'https://www.kreationjuice.com/'
-    ext = 'pages/locations'
 
-    driver = SgSelenium().chrome()
-    driver.get(locator_domain + ext)
+def fetch_data(sgw: SgWriter):
+    locator_domain = "https://www.kreationjuice.com/"
+    ext = "pages/locations"
 
-    heading_list = driver.find_elements_by_xpath('//h3[@data-pf-type="Heading"]')
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
+    headers = {"User-Agent": user_agent}
 
-    stores_lists = driver.find_elements_by_xpath('//ul[@data-pf-type="List"]')
+    session = SgRequests()
+    req = session.get(locator_domain + ext, headers=headers)
+    base = BeautifulSoup(req.text, "lxml")
 
-    all_store_data = []
+    heading_list = base.find_all("h3")
+
+    stores_lists = base.find(class_="rte").find_all("ul")
+
     for i, store_list in enumerate(stores_lists):
-        location_type = heading_list[i].text
-        stores = store_list.find_elements_by_css_selector('span')
+        try:
+            location_type = heading_list[i].text
+        except:
+            pass
+        stores = store_list.find_all("li")
         for store in stores:
-            cont = store.text.split('\n')
+            cont = list(store.stripped_strings)
             if len(cont) == 1:
                 continue
-
             else:
                 location_name = cont[0]
-                addy = cont[1]
+                if "," not in cont[1]:
+                    location_name = location_name + cont[1]
+                    cont.pop(1)
+                if "from" in cont[2]:
+                    cont.pop(2)
 
-                parsed_add = usaddress.tag(addy)[0]
+                addy = cont[1].split(",")
+                street_address = " ".join(addy[:-2])
+                city = addy[-2].strip()
+                state = addy[-1].split()[0].strip()
+                zip_code = addy[-1].split()[1].strip()
 
-                street_address = ''
-
-                if 'AddressNumber' in parsed_add:
-                    street_address += parsed_add['AddressNumber'] + ' '
-                if 'StreetNamePreDirectional' in parsed_add:
-                    street_address += parsed_add['StreetNamePreDirectional'] + ' '
-                if 'StreetName' in parsed_add:
-                    street_address += parsed_add['StreetName'] + ' '
-                if 'StreetNamePostType' in parsed_add:
-                    street_address += parsed_add['StreetNamePostType'] + ' '
-                if 'OccupancyType' in parsed_add:
-                    street_address += parsed_add['OccupancyType'] + ' '
-                if 'OccupancyIdentifier' in parsed_add:
-                    street_address += parsed_add['OccupancyIdentifier'] + ' '
-                city = parsed_add['PlaceName']
-                state = parsed_add['StateName']
-                zip_code = parsed_add['ZipCode']
-
-                if len(zip_code) < 5:
-                    zip_code = '<MISSING>'
+                if "Waterside" in street_address:
+                    location_name = location_name + " Waterside"
+                    street_address = street_address.replace("Waterside", "").strip()
 
                 phone_number = cont[2]
                 hours = cont[3]
 
-                store_number = '<MISSING>'
-                lat = '<MISSING>'
-                longit = '<MISSING>'
+                if "open" in phone_number.lower():
+                    phone_number = cont[3]
+                    hours = cont[2]
 
-                country_code = 'US'
+                store_number = "<MISSING>"
+                lat = "<MISSING>"
+                longit = "<MISSING>"
 
-                store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
-                              store_number, phone_number, location_type, lat, longit, hours]
+                country_code = "US"
 
-                all_store_data.append(store_data)
+                sgw.write_row(
+                    SgRecord(
+                        locator_domain=locator_domain,
+                        page_url=locator_domain + ext,
+                        location_name=location_name,
+                        street_address=street_address,
+                        city=city,
+                        state=state,
+                        zip_postal=zip_code,
+                        country_code=country_code,
+                        store_number=store_number,
+                        phone=phone_number,
+                        location_type=location_type,
+                        latitude=lat,
+                        longitude=longit,
+                        hours_of_operation=hours,
+                    )
+                )
 
-    driver.quit()
-    return all_store_data
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-scrape()
+with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))) as writer:
+    fetch_data(writer)

@@ -1,1 +1,2 @@
---ignore CountValidator --ignore StateLevelCountValidator (Validation expected around 72, website has 91)
+--ignore CountValidator --ignore StateLevelCountValidator (Expected 77 POI, but website has 109)
+--ignore CentroidValidator --ignore StreetAddressHasNumber --ignore GeoConsistencyValidator --ignore CountryValidator (Confirmed on website)
