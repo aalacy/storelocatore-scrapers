@@ -5,8 +5,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 import re
-
-# from sgpostal.sgpostal import parse_address_intl
+from sgpostal.sgpostal import parse_address_intl
 
 session = SgRequests()
 headers = {
