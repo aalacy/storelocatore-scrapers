@@ -107,5 +107,6 @@ def fetch_data(sgw: SgWriter):
         )
     driver.close()
 
+
 with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
     fetch_data(writer)
