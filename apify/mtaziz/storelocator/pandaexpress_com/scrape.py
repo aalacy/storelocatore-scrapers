@@ -243,7 +243,7 @@ def fetch_records(lid, loc, sgw: SgWriter):
 
             # STORE NUMBER FIX
             # https://nomnom-prod-api.pandaexpress.com/restaurants/near?lat=33.7578&long=-117.9859&radius=20&limit=100
-            # NOTE: slug ( westminister-px )
+            # NOTE: SLUG - westminister-px
             if (
                 "https://www.pandaexpress.com/locations/ca/westminster/2105-westminster-mall"
                 in purl
@@ -251,7 +251,7 @@ def fetch_records(lid, loc, sgw: SgWriter):
                 store_number = "117"
 
             # https://nomnom-prod-api.pandaexpress.com/restaurants/near?lat=42.06668&long=-87.953905&radius=20&limit=100
-            # NOTE: slug ( rand-central-mt )
+            # NOTE: SLUG - rand-central-mt
             if (
                 "https://www.pandaexpress.com/locations/il/mt-prospect/1200-east-central-road"
                 in purl
@@ -259,7 +259,7 @@ def fetch_records(lid, loc, sgw: SgWriter):
                 store_number = "1529"
 
             # https://nomnom-prod-api.pandaexpress.com/restaurants/near?lat=41.879552&long=-87.625067&radius=20&limit=100
-            # NOTE: slug ( east-adams-px )
+            # NOTE: SLUG - east-adams-px
             if (
                 "https://www.pandaexpress.com/locations/il/chicago/77-e-adams-st"
                 in purl
