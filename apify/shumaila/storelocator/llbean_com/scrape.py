@@ -37,14 +37,14 @@ def fetch_data():
                 pass
             else:
                 link = "https://www.llbean.com" + alink["href"]
-           
+
             title = alink.text
             r = session.get(link, headers=headers)
 
             soup = BeautifulSoup(r.text, "html.parser")
             if "Temporarily Closed" in soup.text or "opening" in soup.text.lower():
                 continue
-            
+
             try:
                 phone = soup.find("address").find("strong", {"class", "tel"}).text
             except:
@@ -105,11 +105,11 @@ def fetch_data():
                 if "Temporarily Closed" in soup.text or "OPENING" in soup.text:
                     continue
                 try:
-                    hours = soup.text.split("store hours", 1)[1].split("In this store", 1)[
-                    0
-                    ]
+                    hours = soup.text.split("store hours", 1)[1].split(
+                        "In this store", 1
+                    )[0]
                 except:
-                    hours ="<MISSING>"
+                    hours = "<MISSING>"
                 hours = re.sub(pattern, " ", hours).replace("\n", " ").strip()
             if len(hours) < 3:
                 hours = "<MISSING>"
@@ -133,7 +133,7 @@ def fetch_data():
                     pass
                 else:
                     lat = longt = "<MISSING>"
-            
+
             yield SgRecord(
                 locator_domain="https://www.llbean.com",
                 page_url=link,
