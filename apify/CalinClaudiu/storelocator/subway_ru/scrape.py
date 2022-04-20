@@ -188,7 +188,7 @@ class ExampleSearchIteration:
                         "hours_of_operation"
                     ].replace(
                         "Sunday Closed Monday Closed Tuesday Closed Wednesday Closed Thursday Closed Friday Closed Saturday Closed",
-                        "",
+                        "<MISSING>",
                     ),
                     raw_address=foundstuff[storeno]["raw_address"],
                 )
@@ -214,7 +214,7 @@ class ExampleSearchIteration:
                         "hours_of_operation"
                     ].replace(
                         "Sunday Closed Monday Closed Tuesday Closed Wednesday Closed Thursday Closed Friday Closed Saturday Closed",
-                        "",
+                        "<MISSING>",
                     ),
                     raw_address=foundstuff[storenum]["raw_address"],
                 )
