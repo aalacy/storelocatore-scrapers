@@ -32,6 +32,7 @@ def fetchConcurrentSingle(store):
 
 def fetchConcurrentList(list, occurrence=max_workers):
     output = []
+    logger.info(f"max workers {occurrence}")
     total = len(list)
     reminder = math.floor(total / 50)
     if reminder < occurrence:
@@ -41,6 +42,7 @@ def fetchConcurrentList(list, occurrence=max_workers):
     with ThreadPoolExecutor(
         max_workers=occurrence, thread_name_prefix="fetcher"
     ) as executor:
+        logger.info(f"max workerss {occurrence}")
         for result in executor.map(fetchConcurrentSingle, list):
             if result:
                 count = count + 1
@@ -100,6 +102,9 @@ def fetch_data():
             ):
                 location_name = "B&M Home Store"
 
+            logger.info(
+                f"Everything went well, got SgRecord \n{page_url}\n{location_name}\n{street_address}"
+            )
             yield SgRecord(
                 page_url=page_url,
                 location_name=location_name,
