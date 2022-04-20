@@ -61,7 +61,7 @@ def fetch_data():
             hoo = hoo.split("Hours:")[1].split("This")[0]
         else:
             hoo = hoo.split("Hours")[-1]
-        hoo = hoo.split('This')[0].replace('br>', '')
+        hoo = hoo.split("This")[0].replace("br>", "")
 
         item = SgRecord(
             locator_domain=domain,
