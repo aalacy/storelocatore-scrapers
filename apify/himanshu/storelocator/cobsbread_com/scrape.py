@@ -77,22 +77,27 @@ def fetch_data():
         page_url = row["link"]
         content = pull_content(page_url)
         location_name = row["title"].replace("&#8211;", "").strip()
-        raw_address = row["map_data"]["address"]
+        if "Permanently Closed" in location_name:
+            continue
+        raw_address = (
+            content.find("p", {"class": "trailer--none"})
+            .get_text(strip=True, separator=", ")
+            .replace(",,", ",")
+        )
         street_address, city, state, zip_postal = getAddress(raw_address)
         if zip_postal == MISSING:
-            zip
-        if "USA" in raw_address:
+            zip_postal = raw_address.split(",")[-1].strip()
+        if "USA" in raw_address or zip_postal.isnumeric():
+            if len(zip_postal) == 4:
+                zip_postal = "0" + zip_postal
             country_code = "US"
-        elif "Canada" in raw_address:
-            country_code = "CA"
         else:
-            country_code = raw_address.split(",")[-1].strip()
+            country_code = "CA"
         store_number = MISSING
         if row["store_status"]:
             location_type = row["store_status"]
         else:
             location_type = MISSING
-        phone = MISSING
         try:
             phone = (
                 content.find("a", {"class": "single-bakery__phone"})
@@ -129,6 +134,7 @@ def fetch_data():
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hours_of_operation,
+            raw_address=raw_address,
         )
 
 

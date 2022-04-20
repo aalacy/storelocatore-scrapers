@@ -37,19 +37,31 @@ def fetch_data():
         latitude = poi["lat"]
         longitude = poi["lng"]
         hoo = loc_dom.xpath('//div[h2[@class="h1"]]/p[2]//text()')
-        hoo = [e.strip() for e in hoo if e.strip() and "We " not in e]
-        hours_of_operation = (
-            " ".join(hoo)
-            .split("Parties")[0]
-            .split("Inside")[0]
-            .split("General")[0]
-            .split("Proper")[0]
-            .replace("Dining Room", "")
-            .split("Located")[0]
-            .strip()
-            if hoo
-            else ""
-        )
+        if hoo and "NOW OPEN FOR DINE-IN" in hoo[0]:
+            hoo = loc_dom.xpath('//p[strong[contains(text(), "Dining Room")]]//text()')
+            hoo = " ".join(hoo).split("Dining Room")[-1].split("Private")[0]
+        elif hoo and "Open For Lunch Daily" in hoo[0]:
+            hoo = loc_dom.xpath('//p[strong[contains(text(), "Dining Room")]]//text()')
+            hoo = " ".join(hoo).split("Dining Room")[-1].split("Private")[0]
+        elif hoo and "Located two" in hoo[1]:
+            hoo = loc_dom.xpath(
+                '//p[strong[contains(text(), "Dining Room")]]/following-sibling::p[1]/text()'
+            )
+            hoo = " ".join(hoo)
+        else:
+            hoo = [e.strip() for e in hoo if e.strip() and "We " not in e]
+            hours_of_operation = (
+                " ".join(hoo)
+                .split("Parties")[0]
+                .split("Inside")[0]
+                .split("General")[0]
+                .split("Proper")[0]
+                .replace("Dining Room", "")
+                .split("Located")[0]
+                .strip()
+                if hoo
+                else ""
+            )
         country_code = "US"
         if len(state) > 2:
             country_code = state
@@ -59,7 +71,7 @@ def fetch_data():
 
         item = SgRecord(
             locator_domain=domain,
-            page_url=start_url,
+            page_url=store_url,
             location_name=location_name,
             street_address=street_address,
             city=city,
