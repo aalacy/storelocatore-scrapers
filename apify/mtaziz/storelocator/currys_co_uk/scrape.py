@@ -70,10 +70,11 @@ def fetch_data(content, sgw: SgWriter):
         state = ""
         postal = j.get("postcode") or ""
         country_code = "GB"
-        store_number = j.get("id") or ""
-        page_url = (
-            f"https://www.currys.co.uk/gbuk/store-finder/london/store-{store_number}"
-        )
+        store_number = j.get("code") or ""
+        page_url = ""
+        if store_number:
+            page_url = f"https://www.currys.co.uk/store?storeID={store_number}"
+
         location_name = f"Currys PC World, {city}"
         phone = ""
         loc = j.get("location")

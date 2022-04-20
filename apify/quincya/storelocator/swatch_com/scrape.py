@@ -77,6 +77,9 @@ def fetch_data(sgw: SgWriter):
             street_address = (
                 (item["address1"] + " " + item["address2"]).strip().split(", AB")[0]
             )
+            if street_address[-1:] == ",":
+                street_address = street_address[:-1]
+
             if location_name + street_address in found:
                 continue
             found.append(location_name + street_address)
