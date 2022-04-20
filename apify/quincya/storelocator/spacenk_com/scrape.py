@@ -1,136 +1,112 @@
-from bs4 import BeautifulSoup
-import csv
+import re
+import ssl
 import time
-from random import randint
-from sgselenium import SgSelenium
+
+from bs4 import BeautifulSoup
+
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
-from selenium.webdriver.common.action_chains import ActionChains
+
+from sgselenium.sgselenium import SgChrome
+
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+
+from sgrequests import SgRequests
+
 from sglogging import SgLogSetup
 
-logger = SgLogSetup().get_logger('spacenk_com')
+logger = SgLogSetup().get_logger("spacenk_com")
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 
+def fetch_data(sgw: SgWriter):
+
+    base_link = "https://uberall.com/api/storefinders/bdwTQJoL7hB55B0EimfSmXjiMRV8eg/locations/all?v=20211005&language=en&fieldMask=id&fieldMask=identifier&fieldMask=googlePlaceId&fieldMask=lat&fieldMask=lng&fieldMask=name&fieldMask=country&fieldMask=city&fieldMask=province&fieldMask=streetAndNumber&fieldMask=zip&fieldMask=businessId&fieldMask=addressExtra&"
+
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
+    headers = {"User-Agent": user_agent}
+
+    locator_domain = "spacenk.com"
+
+    driver = SgChrome(user_agent=user_agent).driver()
+
+    session = SgRequests()
+    stores = session.get(base_link, headers=headers).json()["response"]["locations"]
+
+    for store in stores:
+
+        location_name = store["name"]
+        street_address = store["streetAndNumber"]
+        city = store["city"]
+        state = store["province"]
+        zip_code = store["zip"]
+        country_code = store["country"]
+        store_number = store["id"]
+        location_type = "<MISSING>"
+        latitude = store["lat"]
+        longitude = store["lng"]
+        final_link = (
+            "https://www.spacenk.com/us/stores.html#!/l/"
+            + city.lower().replace(" ", "-")
+            + "/"
+            + street_address.lower().replace(" ", "-")
+            + "/"
+            + str(store_number)
+        )
+
+        logger.info(final_link)
+        driver.get(final_link)
+
+        WebDriverWait(driver, 30).until(
+            EC.presence_of_element_located(
+                (By.CSS_SELECTOR, ".ubsf_details-details-title")
+            )
+        )
+        time.sleep(2)
+
+        item = BeautifulSoup(driver.page_source, "lxml")
+
+        phone = item.find(class_="ubsf_details-phone").text.strip()
+        hours = (
+            " ".join(
+                list(item.find(class_="ubsf_details-opening-hours").stripped_strings)
+            )
+            .replace("closed", "")
+            .replace("Special Opening Hours", "")
+            .strip()
+        )
+
+        hours_of_operation = re.sub(r"[0-9]{2}/[0-9]{2}/[0-9]{4}", "", hours)
+        hours_of_operation = hours_of_operation.replace("  ", " ").strip()
+
+        if ":0" not in hours_of_operation:
+            hours_of_operation = "Closed"
+
+        sgw.write_row(
+            SgRecord(
+                locator_domain=locator_domain,
+                page_url=final_link,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_code,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
+        )
 
 
-def write_output(data):
-	with open('data.csv', mode='w', encoding="utf-8") as output_file:
-		writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
-		# Header
-		writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-		# Body
-		for row in data:
-			writer.writerow(row)
-
-def fetch_data():
-	
-	base_link = "https://www.spacenk.com/us/en_US/stores.html#!"
-
-	driver = SgSelenium().chrome()
-	time.sleep(2)
-
-	driver.get(base_link)
-	time.sleep(randint(1,2))
-
-	actions = ActionChains(driver)
-
-	try:
-		element = WebDriverWait(driver, 50).until(EC.presence_of_element_located(
-			(By.CSS_SELECTOR, ".ubsf_locations-list")))
-		time.sleep(randint(1,2))
-	except:
-		logger.info('[!] Error Occured. ')
-		logger.info('[?] Check whether system is Online.')
-
-	# Load full list
-	total_poi = ""
-	prev_total = 0
-	count = 0
-	while total_poi != prev_total and count < 10:
-		element = driver.find_elements_by_class_name("ubsf_locations-list-item")[-1]
-		actions.move_to_element(element).perform()
-		time.sleep(4)
-		prev_total = total_poi
-		base = BeautifulSoup(driver.page_source,"lxml")
-		total_poi = len(base.find_all(class_="ubsf_locations-list-item"))
-		count += 1
-
-	base = BeautifulSoup(driver.page_source,"lxml")
-
-	data = []
-	final_links = []
-
-	final_items = base.find_all(class_="ubsf_locations-list-item")
-	for final_item in final_items:
-		name = final_item.find(class_="ubsf_locations-list-item-name").text
-		if "Space NK Bloomingdale" in name:
-			continue
-		state = final_item.find(class_="ubsf_locations-list-item-zip-city").text
-		state = state[state.rfind(",")+1:-6].strip()
-		final_link = final_item.a['href']
-		final_links.append([final_link,state])
-
-	for final in final_links:
-		final_link = final[0]
-
-		logger.info(final_link)
-		driver.get(final_link)
-		time.sleep(randint(1,2))
-
-		try:
-			element = WebDriverWait(driver, 30).until(EC.presence_of_element_located(
-				(By.CSS_SELECTOR, ".ubsf_details-details-title")))
-			time.sleep(randint(1,2))
-		except:
-			logger.info('[!] Error Occured. ')
-			logger.info('[?] Check whether system is Online.')
-
-		item = BeautifulSoup(driver.page_source,"lxml")
-
-		try:
-			hours_of_operation = item.find(class_="ubsf_details-opening-hours").text.replace("pm","pm ").replace("closed","").strip()
-		except:
-			# Duplicates have no hours so skip
-			continue
-				
-		locator_domain = "spacenk.com"
-		location_name = item.h1.text
-		# logger.info(location_name)
-
-		raw_address = item.find(class_="ubsf_details-address").text.split(",")
-		street_address = raw_address[0].strip()
-		city = raw_address[1].strip()
-		state = final[1]
-		zip_code = raw_address[2].strip()
-		if len(zip_code) > 5:
-			zip_code = zip_code[-5:]
-		country_code = "US"
-		store_number = final_link.split("/")[-1]
-		location_type = "<MISSING>"
-		phone = item.find(class_="ubsf_details-phone").text
-
-		try:
-			raw_gps = item.find(class_="ubsf_details-box-top-buttons-top").a['href']
-			latitude = raw_gps[raw_gps.find("=")+1:raw_gps.find(",")].strip()
-			longitude = raw_gps[raw_gps.find(",")+1:].strip()
-		except:
-			latitude = "<MISSING>"
-			longitude = "<MISSING>"
-
-		data.append([locator_domain, final_link, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
-
-	try:
-		driver.close()
-	except:
-		pass
-
-	return data
-
-def scrape():
-	data = fetch_data()
-	write_output(data)
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+    fetch_data(writer)
