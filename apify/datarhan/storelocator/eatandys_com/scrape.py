@@ -64,6 +64,8 @@ def fetch_data():
         ]
         hours_of_operation = list(map(lambda day, hour: day + " " + hour, days, hours))
         hours_of_operation = " ".join(hours_of_operation) if hours_of_operation else ""
+        if not hours_of_operation:
+            continue
 
         item = SgRecord(
             locator_domain=domain,
