@@ -19,7 +19,9 @@ def fetch_data():
     loclist = soup.findAll("div", {"class": "map-poi"})
     for link in linklist:
         title = link["aria-label"]
-        link = link["href"]
+
+        link = "https://www.thistle.com/" + link["href"].split("/")[-1].split(".", 1)[0]
+
         for loc in loclist:
             if loc["data-name"] in title:
 
