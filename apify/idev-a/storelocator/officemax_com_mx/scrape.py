@@ -35,7 +35,10 @@ def fetch_data():
             phone = ""
             latitude = _[1][0][0][0]
             longitude = _[1][0][0][1]
-            desc = _[5][1][1][0]
+            try:
+                desc = _[5][1][1][0]
+            except:
+                continue
             raw_address = (
                 desc.split("Dirección:")[-1].split("##")[0].replace("#", " ").strip()
             )
@@ -54,11 +57,17 @@ def fetch_data():
             street_address = addr.street_address_1
             if addr.street_address_2:
                 street_address += ", " + addr.street_address_2
+            city = addr.city
+            state = addr.state
+            if state == "D.F":
+                street_address += " " + city
+                city = "D.F"
+                state = ""
             yield SgRecord(
                 location_name=location_name,
                 street_address=street_address,
-                city=addr.city,
-                state=addr.state,
+                city=city,
+                state=state,
                 zip_postal=addr.postcode,
                 country_code="Mexico",
                 phone=phone,
