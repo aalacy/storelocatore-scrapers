@@ -1,4 +1,5 @@
 --extra-index-url https://dl.cloudsmith.io/KVaWma76J5VNwrOm/crawl/crawl/python/simple/
-sgrequests==0.1.12
-sgscrape==0.1.11
-lxml==4.6.2
+sgscrape==0.2.6
+sgrequests==0.2.10
+lxml==4.6.5
+usaddress==0.5.10

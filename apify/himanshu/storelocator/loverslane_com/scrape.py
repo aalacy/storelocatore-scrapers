@@ -21,6 +21,8 @@ def fetch_data():
         page_url = base_url + link[-1]
         log.info(page_url)
         r1 = session.get(page_url)
+        if "Permanently Closed" in r1.text:
+            continue
         soup1 = BeautifulSoup(r1.text, "lxml")
         store_sel = lxml.html.fromstring(r1.text)
         address = soup1.find("span", itemprop="streetAddress").text.strip()

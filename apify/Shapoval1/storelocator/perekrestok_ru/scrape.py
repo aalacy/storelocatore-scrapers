@@ -9,12 +9,12 @@ def fetch_data(sgw: SgWriter):
 
     locator_domain = "https://www.perekrestok.ru"
     api_url = "https://www.perekrestok.ru/api/customer/1.4.1.0/shop/points"
-    session = SgRequests()
+
     headers = {
         "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0",
         "Accept": "application/json, text/plain, */*",
         "Accept-Language": "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3",
-        "Auth": "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzUxMiJ9.eyJpYXQiOjE2MzUwODQ3NzcsImV4cCI6MTYzNTExMzU3NywiZCI6IjEuNC4xLjA6YzBkNTlkYWQtMmMxMS00MzRlLWJjNWUtZjMzZTMwN2ZlOGI2IiwianRpIjoiZGI3NTY4NWEtODUzNC00ZWI0LWI2ZTMtMDc0NTMzMTBjMDBhIiwiaXAiOiIxNzIuMjAuOS4xMTAiLCJ1IjoiODA5MmZiNWMtZjI1OC00ODY1LWE4MDAtMDcwMmFlN2Y1OTQyIn0.AASWHHVZQ1S5ezny8g_fWzDnp0HWADYzug3mgYKg_LaN5ViaerJpHNZ142vNyBXughxEOXJpWb2CsAXO2UV7mW1bACBfydMl0KDDSnHcXO1ItpG2e8VcM9MFLEM5etOIZ8aanJ-tK1q_Fj0VZncgqLKgiz4F5ughy8RcUsNyyOBiutB2",
+        "Auth": "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzUxMiJ9.eyJpYXQiOjE2NDQ0MTM3NTMsImV4cCI6MTY0NDQ0MjU1MywiZCI6IjEuNC4xLjA6MzU4MDFjNDAtM2VhZS00YThkLTlkMjQtZDllNDkzOGY1OTdjIiwianRpIjoiYTc0NjM4YTUtMmY5Yi00MWU1LWJjOWUtYWM4Mjc1YjY5YjQzIiwiaXAiOiI5My43OC4yMTIuMTY4IiwidSI6ImZjM2ZmMWVhLTMwYmMtNGNhMC1hM2Q4LTMwNTU3ZTQxYjA2YyJ9.AVxLN0XZ3suzz4dtaOR0xTeEF-g4y4r1ApEIviXX-YudfL1CACLizieH4hJ6_7E1Scj6mlY2udSf43pCTfiyO0NOAMOZfz6XisiGesO018m_2yPcEhAMHcvjLSqJH-YBDztRqtbLiStAcXkncQqPUogirz2dRBVN8Z6XBvIszPmSsyKU",
         "Connection": "keep-alive",
         "Sec-Fetch-Dest": "empty",
         "Sec-Fetch-Mode": "cors",
@@ -26,7 +26,6 @@ def fetch_data(sgw: SgWriter):
     for j in js:
         ids = j.get("id")
 
-        session = SgRequests()
         r = session.get(
             f"https://www.perekrestok.ru/api/customer/1.4.1.0/shop/{ids}",
             headers=headers,

@@ -1,126 +1,93 @@
 # -*- coding: utf-8 -*-
-import csv
 from sgrequests import SgRequests
 from sglogging import sglog
 import json
-import lxml.html
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
+import datetime
 
 website = "diy.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
-session = SgRequests()
+
 headers = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36",
-    "Accept": "application/json",
+    "Connection": "keep-alive",
+    "sec-ch-ua": '" Not A;Brand";v="99", "Chromium";v="99", "Google Chrome";v="99"',
+    "Accept": "application/json, text/plain, */*",
+    "Authorization": "Atmosphere atmosphere_app_id=kingfisher-7c4QgmLEROp4PUh0oUebbI94",
+    "sec-ch-ua-mobile": "?0",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.51 Safari/537.36",
+    "sec-ch-ua-platform": '"Windows"',
+    "Origin": "https://diy.com",
+    "Sec-Fetch-Site": "cross-site",
+    "Sec-Fetch-Mode": "cors",
+    "Sec-Fetch-Dest": "empty",
+    "Referer": "https://diy.com/",
+    "Accept-Language": "en-US,en-GB;q=0.9,en;q=0.8",
 }
-
-
-def write_output(data):
-    with open("data.csv", mode="w", newline="", encoding="utf8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        temp_list = []  # ignoring duplicates
-        for row in data:
-            comp_list = [
-                row[2].strip(),
-                row[3].strip(),
-                row[4].strip(),
-                row[5].strip(),
-                row[6].strip(),
-                row[8].strip(),
-                row[10].strip(),
-            ]
-            if comp_list not in temp_list:
-                temp_list.append(comp_list)
-                writer.writerow(row)
-
-        log.info(f"No of records being processed: {len(temp_list)}")
 
 
 def fetch_data():
     # Your scraper here
-    search_url = "https://www.diy.com/static/sitemap.xml"
-    stores_req = session.get(search_url, headers=headers)
-    stores = stores_req.text.split("<loc>")
-    for index in range(1, len(stores)):
-        page_url = stores[index].split("</loc>")[0].strip()
-        if "/store/" in page_url:
-            log.info(page_url)
-            store_resp = session.get(page_url, headers=headers)
-            store_sel = lxml.html.fromstring(store_resp.text)
-            json_list = store_sel.xpath('//script[@type="application/ld+json"]/text()')
-            for json_text in json_list:
-                if "address" in json_text:
-                    store_json = json.loads(json_text)
+    search = DynamicGeoSearch(
+        country_codes=[SearchableCountries.BRITAIN],
+        expected_search_radius_miles=20,
+    )
 
+    search_url = "https://api.kingfisher.com/v1/mobile/stores/BQUK"
+    with SgRequests(
+        dont_retry_status_codes=([404]),
+    ) as session:
+        for lat, long in search:
+
+            log.info(f"Coordinates remaining: {search.items_remaining()}")
+            params = (
+                ("nearLatLong", f"{lat},{long}"),
+                ("page/[size/]", "25"),
+            )
+            stores_req = session.get(search_url, headers=headers, params=params)
+
+            try:
+                stores = json.loads(stores_req.text)["data"]
+                for store in stores:
+                    page_url = "https://diy.com/store/" + store["id"]
                     locator_domain = website
 
-                    store_number = (
-                        store_resp.text.split('"externalId":"')[1]
-                        .strip()
-                        .split('"')[0]
-                        .strip()
-                    )
-
-                    page_url = "https://www.diy.com/store/" + store_number
+                    store_number = store["id"]
+                    store_json = store["attributes"]["store"]
                     location_name = store_json["name"]
-                    if location_name == "":
-                        location_name = "<MISSING>"
+                    address = store_json["geoCoordinates"]["address"]["lines"]
 
-                    street_address = store_json["address"]["streetAddress"]
-                    city = store_json["address"]["addressLocality"]
-                    state = store_json["address"]["addressRegion"]
-                    zip = store_json["address"]["postalCode"]
+                    street_address = (
+                        ", ".join(address[:-2]).strip().replace(", ,", ",").strip()
+                    )
+                    if len(street_address) > 0 and street_address[-1] == ",":
+                        street_address = "".join(street_address[:-1]).strip()
 
-                    country_code = store_json["address"]["addressCountry"]
+                    city = address[-2]
+                    state = address[-1]
+                    zip = store_json["geoCoordinates"]["postalCode"]
 
-                    if not city:
-                        city = street_address.split(",")[-1].strip()
-                        street_address = ",".join(street_address.split(",")[:-1])
+                    country_code = store_json["geoCoordinates"]["countryCode"]
 
-                    if street_address == "" or street_address is None:
-                        street_address = "<MISSING>"
+                    phone = store_json["contactPoint"].get("telephone", "<MISSING>")
 
-                    if city == "" or city is None:
-                        city = "<MISSING>"
+                    location_type = store_json["brand"] + " " + store_json["storeType"]
 
-                    if state == "" or state is None:
-                        state = "<MISSING>"
-
-                    if zip == "" or zip is None:
-                        zip = "<MISSING>"
-
-                    phone = store_json["telephone"]
-
-                    location_type = "<MISSING>"
-                    hours_of_operation = "<MISSING>"
                     hour_list = []
                     try:
-                        hours = store_json["openingHoursSpecification"]
+                        hours = store["attributes"]["openingTimes"]["upcomingDays"]
                         for hour in hours:
-                            day = hour["dayOfWeek"]
-                            time = hour["opens"] + "-" + hour["closes"]
+                            day = datetime.datetime.strptime(
+                                hour["date"], "%Y-%m-%d"
+                            ).strftime("%A")
+                            time = (
+                                hour["openingTimes"]["openingTime"]
+                                + "-"
+                                + hour["openingTimes"]["closingTime"]
+                            )
                             hour_list.append(day + ":" + time)
 
                     except:
@@ -130,44 +97,46 @@ def fetch_data():
                         ";".join(hour_list).strip().replace("Europe/London", "").strip()
                     )
 
-                    latitude = store_json["geo"]["latitude"]
-                    longitude = store_json["geo"]["longitude"]
+                    latitude = store_json["geoCoordinates"]["latitude"]
+                    longitude = store_json["geoCoordinates"]["longitude"]
+                    search.found_location_at(latitude, longitude)
 
-                    if latitude == "" or latitude is None:
-                        latitude = "<MISSING>"
-                    if longitude == "" or longitude is None:
-                        longitude = "<MISSING>"
+                    yield SgRecord(
+                        locator_domain=locator_domain,
+                        page_url=page_url,
+                        location_name=location_name,
+                        street_address=street_address,
+                        city=city,
+                        state=state,
+                        zip_postal=zip,
+                        country_code=country_code,
+                        store_number=store_number,
+                        phone=phone,
+                        location_type=location_type,
+                        latitude=latitude,
+                        longitude=longitude,
+                        hours_of_operation=hours_of_operation,
+                    )
 
-                    if hours_of_operation == "":
-                        hours_of_operation = "<MISSING>"
-
-                    if phone == "" or phone is None:
-                        phone = "<MISSING>"
-
-                    curr_list = [
-                        locator_domain,
-                        page_url,
-                        location_name,
-                        street_address,
-                        city,
-                        state,
-                        zip,
-                        country_code,
-                        store_number,
-                        phone,
-                        location_type,
-                        latitude,
-                        longitude,
-                        hours_of_operation,
-                    ]
-
-                    yield curr_list
+            except:
+                pass
 
 
 def scrape():
     log.info("Started")
-    data = fetch_data()
-    write_output(data)
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(
+            record_id=RecommendedRecordIds.StoreNumberId,
+            duplicate_streak_failure_factor=-1,
+        )
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    log.info(f"No of records being processed: {count}")
     log.info("Finished")
 
 

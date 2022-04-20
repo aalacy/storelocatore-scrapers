@@ -34,7 +34,10 @@ def fetch_data():
             log.info(page_url)
             r = session.get(page_url, headers=headers)
             soup = BeautifulSoup(r.text, "html.parser")
-            location_name = soup.find("h1").text
+            try:
+                location_name = soup.find("h1").text
+            except:
+                continue
             temp = soup.findAll("div", {"class": "wpb_wrapper"})[1].findAll("h3")
             try:
                 address = temp[0].get_text(separator="|", strip=True).split("|")

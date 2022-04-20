@@ -41,9 +41,9 @@ def fetch_data():
                 latitude = e["x"]
                 longitude = e["y"]
         hoo = loc_dom.xpath(
-            '//div[@class="shop-data-openings shop-data-table"]/p/text()'
+            '//div[@class="shop-data-openings shop-data-table"]/p//text()'
         )
-        hoo = " ".join(hoo)
+        hoo = " ".join([e.strip() for e in hoo if e.strip()])
 
         item = SgRecord(
             locator_domain=domain,

@@ -48,41 +48,37 @@ def _v(val):
     return val.replace("&#40;", "(").replace("&#41;", ")")
 
 
-def _d(_):
+def _get_loc(_):
     with SgRequests(proxy_country="us") as http:
-        logger.info(_["storeCode"])
-        try:
-            loc = json.loads(
-                http.get(
-                    detail_url.format(_["storeCode"]), headers=_headers
-                ).text.split("\n")[-1]
-            )
-        except:
-            time.sleep(1)
-            loc = json.loads(
-                http.get(
-                    detail_url.format(_["storeCode"]), headers=_headers
-                ).text.split("\n")[-1]
-            )
-        page_url = f"{base_url}?S={_['storeCode']}"
-        hours_of_operation = ""
-        if loc.get("time", ""):
-            hours_of_operation = loc.get("time", "").replace("&#58;", "-")
-        return SgRecord(
-            page_url=page_url,
-            store_number=_["storeCode"],
-            location_name=_v(_["name"]),
-            street_address=_v(_["address3"]),
-            city=_["address2"],
-            state=_["address1"],
-            country_code="Korea",
-            phone=_["tel"],
-            latitude=_["pointY"],
-            longitude=_["pointX"],
-            locator_domain=locator_domain,
-            hours_of_operation=hours_of_operation,
-            raw_address=_v(_["address"]),
+        return json.loads(
+            http.get(detail_url.format(_["storeCode"]), headers=_headers).text.split(
+                "\n"
+            )[-1]
         )
+
+
+def _d(_):
+    logger.info(_["storeCode"])
+    loc = _get_loc(_)
+    page_url = f"{base_url}?S={_['storeCode']}"
+    hours_of_operation = ""
+    if loc.get("time", ""):
+        hours_of_operation = loc.get("time", "").replace("&#58;", "-")
+    return SgRecord(
+        page_url=page_url,
+        store_number=_["storeCode"],
+        location_name=_v(_["name"]),
+        street_address=_v(_["address3"]),
+        city=_["address2"],
+        state=_["address1"],
+        country_code="Korea",
+        phone=_["tel"],
+        latitude=_["pointY"],
+        longitude=_["pointX"],
+        locator_domain=locator_domain,
+        hours_of_operation=hours_of_operation,
+        raw_address=_v(_["address"]),
+    )
 
 
 def get_driver():

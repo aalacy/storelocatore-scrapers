@@ -74,12 +74,6 @@ def fetch_data(sgw: SgWriter):
                 )
             )
             phone = item.find(class_="section__content").a.text.strip()
-            hours_of_operation = (
-                item.find(class_="section__content")
-                .find_all("p")[-3]
-                .get_text(" ")
-                .strip()
-            )
             script = (
                 item.find(class_="column main")
                 .find("script", attrs={"type": "application/ld+json"})
@@ -87,6 +81,8 @@ def fetch_data(sgw: SgWriter):
             )
             script = script[script.find("{") : script.rfind("}") + 1].strip()
             geo = json.loads(script)
+
+            hours_of_operation = " ".join(geo["openingHours"])
 
             latitude = geo["geo"]["latitude"]
             longitude = geo["geo"]["longitude"]
@@ -110,6 +106,9 @@ def fetch_data(sgw: SgWriter):
             hours_of_operation = ""
             latitude = ""
             longitude = ""
+
+        if "showroom" in location_name.lower():
+            location_type = "Showroom"
 
         sgw.write_row(
             SgRecord(
