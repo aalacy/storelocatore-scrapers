@@ -11,9 +11,10 @@
 	+ SLUG - east-adams-px
 
 
-## These page urls don't have store.
+### These page urls don't have store and found to be duplicates, therefore, dropped.
 
-## These stores are found to be duplicates, therefore, dropped.
 https://www.pandaexpress.com/locations/gu/santa-rita/exchange-road--building-258
+
 https://www.pandaexpress.com/locations/ca/los-angeles/1-world-way
+
 https://www.pandaexpress.com/locations/tx/houston/2800-n-terminal-rd
