@@ -48,6 +48,7 @@ def fetch_data():
                 phone=_p(info[1]),
                 latitude=_["data-lat"],
                 longitude=_["data-lng"],
+                hours_of_operation=info[2].replace("Horario:", ""),
                 locator_domain=locator_domain,
             )
 

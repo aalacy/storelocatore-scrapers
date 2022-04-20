@@ -3,7 +3,7 @@ import re
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgpostal.sgpostal import parse_address_intl
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
@@ -25,8 +25,12 @@ def fetch_data():
     url = "https://www.fredericmalle.com/about#/stores/"
     r = session.get(url, headers=headers)
     soup = BeautifulSoup(r.text, "html.parser")
-    loclist = soup.find_all("div", {"class": "stores__location-wrapper"})
+    loclist = soup.find_all("div", {"class": "stores__location"})
     for loc in loclist:
+        if "flagship" in str(loc):
+            ltype = "Store"
+        elif "stockist" in str(loc):
+            ltype = "Stockist"
         title = loc.find("div", {"class": "stores__location-name"}).text
         address = str(loc.findAll("div", {"class": "stores__location-address"})[-1])
 
@@ -37,6 +41,10 @@ def fetch_data():
             phone = loc.find("div", {"class": "stores__location-phone"}).text
         except:
             phone = "<MISSING>"
+        try:
+            phone = phone.split(":", 1)[0].strip()
+        except:
+            pass
         try:
             hours = loc.find("div", {"class": "stores__location-hours"}).text
         except:
@@ -62,7 +70,7 @@ def fetch_data():
         zip_postal = pa.postcode
         pcode = zip_postal.strip() if zip_postal else MISSING
 
-        ccode = pa.postcode
+        ccode = pa.country
         ccode = ccode.strip() if ccode else MISSING
 
         yield SgRecord(
@@ -76,7 +84,7 @@ def fetch_data():
             country_code=ccode,
             store_number=SgRecord.MISSING,
             phone=phone.strip(),
-            location_type=SgRecord.MISSING,
+            location_type=ltype,
             latitude=str(lat),
             longitude=str(longt),
             hours_of_operation=hours,
@@ -86,7 +94,7 @@ def fetch_data():
 
 def scrape():
     with SgWriter(
-        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.GeoSpatialId)
+        deduper=SgRecordDeduper(SgRecordID({SgRecord.Headers.LOCATION_NAME}))
     ) as writer:
         results = fetch_data()
         for rec in results:
