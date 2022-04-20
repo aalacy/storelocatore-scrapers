@@ -36,9 +36,10 @@ def fetch_data():
                     title = loc.splitlines()[0]
                 except:
                     continue
+                check = ""
                 if len(title) < 4:
                     title = loc.splitlines()[0] + " " + loc.splitlines()[1]
-                    title = title.replace("P LAZ", "PLAZ").strip()
+                    check = loc.splitlines()[1]
                 ltype = ltype["alt"].replace("logo ", "")
                 flag = 0
                 store = ""
@@ -95,9 +96,12 @@ def fetch_data():
                 else:
                     phone = "<MISSING>"
                 address = ""
+
+                if check == "":
+                    check = title
                 if flag == 1:
                     address = (
-                        loc.split(title, 1)[1]
+                        loc.split(check, 1)[1]
                         .split("\n", 1)[1]
                         .split(phone, 1)[0]
                         .replace("\n", " ")
@@ -114,7 +118,7 @@ def fetch_data():
                     )
                     flag = 0
                 elif "<MISSING>" in phone:
-                    address = loc.split(title, 1)[1].replace("\n", " ").strip()
+                    address = loc.split(check, 1)[1].replace("\n", " ").strip()
                 address = (
                     address.replace(" Tel.", "")
                     .replace(" TEL.", "")
@@ -122,6 +126,7 @@ def fetch_data():
                     .replace(" tel:", "")
                 )
 
+                title = title.replace("P LAZ", "PLAZ").strip()
                 raw_address = address
                 pa = parse_address_intl(raw_address)
 
