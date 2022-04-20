@@ -6,8 +6,10 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
 from sgscrape.pause_resume import CrawlStateSingleton, SerializableRequest
+from sglogging import sglog
 
 crawl_state = CrawlStateSingleton.get_instance()
+log = sglog.SgLogSetup().get_logger(logger_name="kumon")
 
 
 def create_coords():
@@ -45,7 +47,7 @@ def get_data():
         search_x = text.split(",")[0]
         search_y = text.split(",")[1]
         count = count + 1
-
+        log.info(count)
         frm = {
             "age": "noSelect",
             "open": "noSelect",
@@ -67,6 +69,7 @@ def get_data():
         if data.status_code != 200:
             continue
         data = data.json()
+        log.info(data["classroomList"])
         for poi in data["classroomList"]:
             page_url = f"https://www.kumon.ne.jp/enter/search/classroom/{poi['cid']}/index.html".lower()
             if page_url in page_urls:
