@@ -11,7 +11,7 @@ from sgrequests import SgRequests
 from sglogging import sglog
 
 MISSING = "<MISSING>"
-website = "wyndhamhotels.com/wyndham"
+website = "wyndhamhotels.com/dazzler"
 propertyUrl = "https://www.wyndhamhotels.com/BWSServices/services/search/properties?recordsPerPage=501200&pageNumber=1&brandId=ALL&countryCode="
 propertListUrl = "https://www.wyndhamhotels.com/bin/propertyDataList.json"
 max_workers = 1
@@ -189,18 +189,24 @@ def getRedirectUrl(store):
 
 
 def fetchSingleSore(store):
-    response = session.get(store["page_url"], headers=headers)
-    if response.text is None or response.text == "":
-        return getRedirectUrl(store)
+    try:
+        store["ex_page_url"] = store["page_url"]
+        response = session.get(store["page_url"], headers=headers)
+        log.info(f'Crawling {store["page_url"]}')
+        if response.text is None or response.text == "":
+            return getRedirectUrl(store)
 
-    if "hotels were found that match your search" in response.text:
-        return getRedirectUrl(store)
+        if "hotels were found that match your search" in response.text:
+            return getRedirectUrl(store)
 
-    body = html.fromstring(response.text, "lxml")
-    geoJSON = getScriptWithGeo(body)
-    if geoJSON is None:
-        return getRedirectUrl(store)
-    return store, body, geoJSON
+        body = html.fromstring(response.text, "lxml")
+        geoJSON = getScriptWithGeo(body)
+        if geoJSON is None:
+            return getRedirectUrl(store)
+        return store, body, geoJSON
+    except Exception as e:
+        log.info(f'{store["page_url"]} Response: {response.status_code} : {e}')
+        return store, None, None
 
 
 def getScriptWithGeo(body):
