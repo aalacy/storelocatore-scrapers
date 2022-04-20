@@ -3,6 +3,9 @@ from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sglogging import sglog
+
+logger = sglog.SgLogSetup().get_logger(logger_name="games-workshop.com")
 
 
 def fetch_data(sgw: SgWriter):
@@ -11,7 +14,9 @@ def fetch_data(sgw: SgWriter):
     api_url = "https://www.games-workshop.com/en-GB/store/fragments/resultsJSON.jsp?latitude=51.5072178&radius=100&longitude=-0.1275862"
 
     r = session.get(api_url)
+    logger.info(f"Response: {r}")
     js = r.json()["locations"]
+    logger.info(f"Total Stores: {len(js)}")
     for j in js:
 
         page_url = f'https://www.games-workshop.com/en-US/{j.get("seoUrl")}'
