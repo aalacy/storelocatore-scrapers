@@ -13,7 +13,7 @@ logger = SgLogSetup().get_logger("hardees.com")
 
 
 def fetch_data(sgw: SgWriter):
-    base_link = "https://hardees.com/sitemap.xml"
+    base_link = "https://locations.hardees.com/"
 
     user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36"
     headers = {"User-Agent": user_agent}
@@ -22,34 +22,28 @@ def fetch_data(sgw: SgWriter):
 
     locator_domain = "hardees.com"
 
-    final_links = []
     req = session.get(base_link, headers=headers)
     base = BeautifulSoup(req.text, "lxml")
-    items = base.find_all("loc")
-    for item in items:
-        if (
-            "https://locations.hardees.com/" in item.text
-            and "/intl/" not in item.text
-            and "/pb/" not in item.text
-        ):
-            link = (
-                item.text.replace(",", "")
-                .replace("-&", "")
-                .replace("-dr-n-w", "-dr-nw")
-                .replace("912-n-w", "912-nw")
-                .replace("--", "-")
-                .split("-suite")[0]
-                .split("-#")[0]
-            )
-            if link == "https://locations.hardees.com/ar/fort-smith/1820-phoenix-av":
-                link = "https://locations.hardees.com/ar/fort-smith/1820-phoenix-ave"
-            if link == "https://locations.hardees.com/mo/leadington/100-plaza-sq":
-                link = "https://locations.hardees.com/mo/leadington/100-plaza-square"
-            if "/6164-county" in link:
-                link = link.replace("6164-county", "travel-center-6164-county")
-            if "/6410-county" in link:
-                link = link.replace("6410-county", "travel-center-6410-county")
-            final_links.append(link)
+    main_items = base.find_all(class_="Directory-listLink")
+
+    final_links = []
+    for main_item in main_items:
+        link = base_link + main_item["href"]
+        logger.info(link)
+        req = session.get(link, headers=headers)
+        base = BeautifulSoup(req.text, "lxml")
+        next_items = base.find_all(class_="Directory-listLink")
+        for next_item in next_items:
+            next_link = base_link + next_item["href"].replace("../", "")
+            if next_item["href"].count("/") > 1:
+                final_links.append(next_link)
+            else:
+                req = session.get(next_link, headers=headers)
+                base = BeautifulSoup(req.text, "lxml")
+                last_items = base.find_all(class_="Teaser-ctaLink")
+                for last_item in last_items:
+                    last_link = base_link + last_item["href"].replace("../", "")
+                    final_links.append(last_link)
 
     logger.info("Processing " + str(len(final_links)) + " links ...")
     for final_link in final_links:
@@ -61,11 +55,7 @@ def fetch_data(sgw: SgWriter):
         street_address = base.find(itemprop="streetAddress")["content"]
         state = base.find(itemprop="addressRegion").text.strip()
         zip_code = base.find(itemprop="postalCode").text.strip()
-
-        try:
-            city = base.find(class_="Address-field Address-city").text.strip()
-        except:
-            city = ""
+        city = base.find(class_="Address-field Address-city").text.strip()
         country_code = "US"
 
         try:
@@ -78,7 +68,13 @@ def fetch_data(sgw: SgWriter):
             store_number = base.main["itemid"].split("#")[1]
         except:
             store_number = ""
-        location_type = ""
+
+        try:
+            location_type = ", ".join(
+                list(base.find(class_="Core-featuresList").stripped_strings)
+            )
+        except:
+            location_type = ""
 
         try:
             hours_of_operation = (
