@@ -67,7 +67,7 @@ def fetch_data(sgw: SgWriter):
         phone = "".join(tree.xpath(".//a[contains(@href, 'tel:')]/text()")).strip()
 
         g = j.get("geometry") or {}
-        latitude, longitude = g.get("coordinates") or (
+        longitude, latitude = g.get("coordinates") or (
             SgRecord.MISSING,
             SgRecord.MISSING,
         )
@@ -114,6 +114,6 @@ if __name__ == "__main__":
         "Sec-Fetch-Mode": "cors",
         "Sec-Fetch-Site": "same-origin",
     }
-    session = SgRequests()
+    session = SgRequests(proxy_country="co")
     with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
         fetch_data(writer)

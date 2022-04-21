@@ -240,6 +240,33 @@ def fetch_records(lid, loc, sgw: SgWriter):
                 phone = phone1
             if phone2:
                 phone = phone2
+
+            # STORE NUMBER FIX
+            if (
+                "https://www.pandaexpress.com/locations/ca/westminster/2105-westminster-mall"
+                in purl
+            ):
+                store_number = "117"
+
+            if (
+                "https://www.pandaexpress.com/locations/il/mt-prospect/1200-east-central-road"
+                in purl
+            ):
+                store_number = "1529"
+
+            if (
+                "https://www.pandaexpress.com/locations/il/chicago/77-e-adams-st"
+                in purl
+            ):
+                store_number = "299"
+
+            # These page urls don't have store.
+            # These stores are found to be duplicates, therefore, dropped.
+            # https://www.pandaexpress.com/locations/gu/santa-rita/exchange-road--building-258
+            # https://www.pandaexpress.com/locations/ca/los-angeles/1-world-way
+            # https://www.pandaexpress.com/locations/tx/houston/2800-n-terminal-rd
+            if not store_number:
+                return
             if len(zc) >= 1:
                 item = SgRecord(
                     locator_domain="pandaexpress.com",
