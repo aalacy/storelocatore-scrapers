@@ -6,7 +6,6 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sglogging import SgLogSetup
 import re
-import math
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 logger = SgLogSetup().get_logger("bmstores")
@@ -28,9 +27,8 @@ def fetchConcurrentSingle(store):
         with SgRequests() as session:
             data = session.get(str(base_url + ext), headers=headers)
         return data
-
-    ##    page_url = base_url + store["properties"]["link"] # noqa
-    ##    logger.info(page_url) # noqa
+##    page_url = base_url + store["properties"]["link"] # noqa
+##    logger.info(page_url) # noqa
     response = request_with_retries(store["properties"]["link"])
     return bs(response.text, "lxml")
 
@@ -38,11 +36,10 @@ def fetchConcurrentSingle(store):
 def fetchConcurrentList(list, occurrence=max_workers):
     output = []
     logger.info(f"max workers {occurrence}")
-    total = len(list)
-    with ThreadPoolExecutor(max_workers=occurrence) as executor:
-        future_to_store = {
-            executor.submit(fetchConcurrentSingle, store): store for store in list
-        }
+    with ThreadPoolExecutor(
+        max_workers=occurrence
+    ) as executor:
+        future_to_store = {executor.submit(fetchConcurrentSingle, store):store for store in list}
         logger.info(f"max workerss {occurrence}")
         for future in as_completed(future_to_store):
             store = future_to_store[future]
@@ -52,15 +49,18 @@ def fetchConcurrentList(list, occurrence=max_workers):
                 tup = (page_url, soup, store)
                 output.append(tup)
             except Exception as e:
-                print("%r generated an exception: %s" % (page_url, e))
-    ##        for result in executor.map(fetchConcurrentSingle, list): # noqa
-    ##            if result: # noqa
-    ##                count = count + 1 # noqa
-    ##                if count % reminder == 0: # noqa
-    ##                    logger.debug(f"Concurrent Operation count = {count}") # noqa
-    ##                output.append(result) # noqa
+                logger.error('\n %r -> exception:\n %s' % (page_url, e))
+##        for result in executor.map(fetchConcurrentSingle, list): # noqa
+##            if result: # noqa
+##                count = count + 1 # noqa
+##                if count % reminder == 0: # noqa
+##                    logger.debug(f"Concurrent Operation count = {count}") # noqa
+##                output.append(result) # noqa
     for res in output:
         yield res
+
+
+
 
 
 def fetch_data():
