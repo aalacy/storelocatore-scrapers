@@ -12,7 +12,9 @@ def fetch_data(sgw: SgWriter):
 
     base_link = "https://www.ganderrv.com/state-directory"
 
-    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
+    user_agent = (
+        "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0"
+    )
     headers = {"User-Agent": user_agent}
 
     session = SgRequests()
@@ -24,10 +26,15 @@ def fetch_data(sgw: SgWriter):
 
     for item in items:
         if "gander" in item.text.lower():
-            link = locator_domain + item["href"].strip().replace(" ", "%20")
 
-            req = session.get(link, headers=headers)
-            base = BeautifulSoup(req.text, "lxml")
+            try:
+                link = locator_domain + item["href"].strip().replace(" ", "%20")
+                req = session.get(link, headers=headers)
+                base = BeautifulSoup(req.text, "lxml")
+            except:
+                link = locator_domain + item["href"].strip()
+                req = session.get(link, headers=headers)
+                base = BeautifulSoup(req.text, "lxml")
 
             location_name = base.h1.text.strip()
             if "gander" not in location_name.lower():

@@ -77,13 +77,19 @@ def fetch_data():
             info.find("strong", text="Address:")
             .parent.get_text(strip=True, separator=",")
             .replace("Address:,", "")
-            .replace(" ", "")
+            .replace(" ", " ")
             .strip()
         )
         street_address, city, state, zip_postal = getAddress(raw_address)
+        if city == MISSING:
+            city = location_name
         phone = (
-            info.find("strong", text="Telephone:")
-            .parent.text.replace("Telephone:", "")
+            (
+                info.find("strong", text="Telephone:")
+                .parent.text.replace("Telephone:", "")
+                .strip()
+            )
+            .replace("TBA", "")
             .strip()
         )
         hoo_content = info.find_all("p", {"class": "xmsonormal"})
@@ -92,20 +98,34 @@ def fetch_data():
             for hours in hoo_content:
                 hoo += hours.text.strip() + ","
         else:
-            hoo = re.sub(
-                r"Opening Times.*:,|Hot Section.*|\(.*\)",
-                "",
-                info.find(
-                    "strong", text=re.compile(r"Opening Times.*")
-                ).parent.get_text(strip=True, separator=","),
-            )
+            try:
+                hoo = re.sub(
+                    r"Opening Times.*:,|Dine-in:,?|/?\s?Dine-in|Hot Section.*|\(.*\)",
+                    "",
+                    info.find(
+                        "strong", text=re.compile(r"Opening Times.*")
+                    ).parent.get_text(strip=True, separator=","),
+                )
+            except:
+                hoo = ""
         hours_of_operation = (
-            re.sub(r"Opening Times.*:,|Hot Section.*|\(.*\)", "", hoo)
+            re.sub(
+                r"Opening Times.*:,|Dine-in:,?|/?\s?Dine-in|Hot Section.*|\(.*\)",
+                "",
+                hoo,
+            )
             .rstrip(",")
             .replace(" ", "")
             .strip()
         )
         location_type = MISSING
+        ext_name = row.find_next().text.strip()
+        if "Opening Soon" in ext_name or "Coming Soon" in ext_name:
+            location_type = "Coming Soon"
+            location_name = location_name + " - Coming Soon"
+        elif "Temp Closed" in ext_name:
+            location_type = "Temp Closed"
+            location_name = location_name + " - Temp Closed"
         if hours_of_operation == "Opening Times:":
             hours_of_operation = (
                 info.find("strong", text=re.compile(r"Opening Times.*"))

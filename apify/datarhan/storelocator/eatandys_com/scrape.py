@@ -1,66 +1,29 @@
-import csv
 import json
 from urllib.parse import urljoin
 from w3lib.url import add_or_replace_parameters
 
 from sgrequests import SgRequests
-
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
-    # Your scraper here
     session = SgRequests()
-
-    items = []
-
-    DOMAIN = "eatandys.com"
+    domain = "eatandys.com"
     base_url = "https://locations.eatandys.com/"
     start_url = "https://api.momentfeed.com/v1/analytics/api/v2/llp/sitemap?auth_token=WYEMXMEMZMFGMIDG&country=US&multi_account=false"
 
     response = session.get(start_url)
     data = json.loads(response.text)
-
     for poi in data["locations"]:
         store_url = urljoin(base_url, poi["llp_url"])
         street_address = poi["store_info"]["address"]
-        street_address = street_address if street_address else "<MISSING>"
         city = poi["store_info"]["locality"]
-        city = city if city else "<MISSING>"
         state = poi["store_info"]["region"]
-        state = state if state else "<MISSING>"
         zip_code = poi["store_info"]["postcode"]
-        zip_code = zip_code if zip_code else "<MISSING>"
         country_code = poi["store_info"]["country"]
-        store_number = "<MISSING>"
 
         loc_url = "https://api.momentfeed.com/v1/analytics/api/llp.json"
         params = {
@@ -80,11 +43,12 @@ def fetch_data():
         }
         loc_response = session.get(loc_url, headers=headers)
         data = json.loads(loc_response.text)
-
+        if type(data) == dict and data["message"] == "No matching locations found":
+            continue
         location_name = data[0]["store_info"]["name"]
+        if "Coming Soon" in location_name:
+            continue
         phone = data[0]["store_info"]["phone"]
-        phone = phone if phone else "<MISSING>"
-        location_type = "<MISSING>"
         latitude = data[0]["store_info"]["latitude"]
         longitude = data[0]["store_info"]["longitude"]
         hours = data[0]["store_info"]["hours"].split(";")[:-1]
@@ -99,35 +63,40 @@ def fetch_data():
             "Sunday",
         ]
         hours_of_operation = list(map(lambda day, hour: day + " " + hour, days, hours))
-        hours_of_operation = (
-            " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
+        hours_of_operation = " ".join(hours_of_operation) if hours_of_operation else ""
+        if not hours_of_operation:
+            continue
+
+        item = SgRecord(
+            locator_domain=domain,
+            page_url=store_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zip_code,
+            country_code=country_code,
+            store_number="",
+            phone=phone,
+            location_type="",
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
         )
 
-        item = [
-            DOMAIN,
-            store_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip_code,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-
-        items.append(item)
-
-    return items
+        yield item
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":
