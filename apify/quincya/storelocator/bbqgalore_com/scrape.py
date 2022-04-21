@@ -64,15 +64,19 @@ def fetch_data(sgw: SgWriter):
         zip_code = raw_address[1][-6:].strip()
         country_code = "US"
         store_number = "<MISSING>"
+        location_type = ""
 
         if got_page:
-            location_type = ", ".join(
-                list(
-                    item.find(class_="section__content")
-                    .find_all("p")[-2]
-                    .stripped_strings
+            try:
+                location_type = ", ".join(
+                    list(
+                        item.find(class_="section__content")
+                        .find_all("p")[-2]
+                        .stripped_strings
+                    )
                 )
-            )
+            except:
+                pass
             phone = item.find(class_="section__content").a.text.strip()
             script = (
                 item.find(class_="column main")
@@ -90,18 +94,20 @@ def fetch_data(sgw: SgWriter):
         else:
             phone = raw_address[-1].replace("Tel:", "").strip()
 
-            location_type = ""
-            raw_types = i[1].find_all("img")
-            for row in raw_types:
-                location_type = (
-                    location_type
-                    + ", "
-                    + row["title"]
-                    .replace("This store location is a", "")
-                    .replace("This store location offers", "")
-                    .strip()
-                )
-            location_type = location_type[1:].title().strip()
+            try:
+                raw_types = i[1].find_all("img")
+                for row in raw_types:
+                    location_type = (
+                        location_type
+                        + ", "
+                        + row["title"]
+                        .replace("This store location is a", "")
+                        .replace("This store location offers", "")
+                        .strip()
+                    )
+                location_type = location_type[1:].title().strip()
+            except:
+                pass
 
             hours_of_operation = ""
             latitude = ""
