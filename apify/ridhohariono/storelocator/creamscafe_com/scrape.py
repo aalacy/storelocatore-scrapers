@@ -90,6 +90,7 @@ def fetch_data():
                 .strip()
             )
             .replace("TBA", "")
+            .replace("TBC", "")
             .strip()
         )
         hoo_content = info.find_all("p", {"class": "xmsonormal"})
