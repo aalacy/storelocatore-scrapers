@@ -66,7 +66,9 @@ def get_missed_cities(MISSED_CITIES):
     new_links = []
     for link in MISSED_CITIES:
         CITY = link.split("/")[-1].title()
-        driver.get(f"https://www.napacanada.com/en/store-finder?q={CITY}&page=10")
+        driver = get_driver(
+            f"https://www.napacanada.com/en/store-finder?q={CITY}&page=10"
+        )
         soup = BeautifulSoup(driver.page_source, "html.parser")
         for store in soup.select("li.aadata-store-item"):
             new_links.append("https://www.napacanada.com" + store.a["href"])
