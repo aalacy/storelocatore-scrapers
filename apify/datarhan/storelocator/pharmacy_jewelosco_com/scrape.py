@@ -1,13 +1,10 @@
 # -*- coding: utf-8 -*-
 import ssl
-from time import sleep
-from lxml import etree
-
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries
+from sgzip.static import static_coordinate_list, SearchableCountries
 from sgselenium.sgselenium import SgFirefox
 
 try:
@@ -17,132 +14,133 @@ except AttributeError:
 else:
     ssl._create_default_https_context = _create_unverified_https_context
 
+token = None
+
+
+def fetch_token(driver):
+    global token
+    result = driver.execute_async_script(
+        """
+        var done = arguments[0]
+        fetch("https://pharmacy.jewelosco.com/joweb/appload.htm", {
+            "headers": {
+                "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+            },
+            "body": "formParams=null",
+            "method": "POST",
+        })
+        .then(res => res.json())
+        .then(done)
+        .catch(done)
+    """
+    )
+
+    token = result["token"][0]
+
+
+def fetch_locations(coord, driver):
+    try:
+        lat, lng = coord
+        result = driver.execute_async_script(
+            f"""
+            var done = arguments[0]
+            fetch("https://pharmacy.jewelosco.com/joweb/getStoreList.htm", {{
+                "headers": {{
+                    "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+                    "csrfPreventionSalt": "{token}",
+                }},
+                "body": "formParams={{storeData: null,lat:{lat},lng:{lng},loggedIn:0}}",
+                "method": "POST",
+            }})
+            .then(res => res.json())
+            .then(done)
+            .catch(done)
+        """
+        )
+
+        if not result.get("data"):
+            return []
+
+        return result["data"]["stores"]["stores_list"]
+
+    except Exception:
+        fetch_token(driver)
+        return fetch_locations(coord, driver)
+
+
+def fetch_location(store_number, driver):
+    try:
+        result = driver.execute_async_script(
+            f"""
+            var done = arguments[0]
+            fetch("https://pharmacy.jewelosco.com/joweb/getStoreDetails.htm", {{
+                "headers": {{
+                    "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+                    "csrfPreventionSalt": "{token}",
+                }},
+                "body": "formParams=%7B%22store_id%22%3A%22{store_number}%22%2C%22isLogged%22%3A%220%22%7D",
+                "method": "POST",
+            }})
+            .then(res => res.json())
+            .then(done)
+            .catch(done)
+        """
+        )
+
+        return result["data"]["stores"]
+    except:
+        fetch_token(driver)
+        return fetch_location(store_number, driver)
+
 
 def fetch_data():
     start_url = "https://pharmacy.jewelosco.com/joweb/#/store"
     domain = "pharmacy.jewelosco.com"
 
-    all_coords = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA], expected_search_radius_miles=100
-    )
-    for code in all_coords:
-        with SgFirefox() as driver:
-            all_poi_html = []
+    all_coords = static_coordinate_list(10, SearchableCountries.USA)
 
-            driver.get(start_url)
-            sleep(15)
-            driver.find_element_by_id("searchData").send_keys(code)
-            driver.find_element_by_id("submitbutton").click()
-            sleep(5)
-            all_locations = driver.find_elements_by_xpath(
-                '//button[contains(text(), "Store details")]'
-            )
-            for i, loc in enumerate(all_locations):
-                all_locations[i].click()
-                sleep(5)
-                all_poi_html.append(etree.HTML(driver.page_source))
-                try:
-                    driver.back()
-                except Exception:
-                    sleep(120)
-                    driver.back()
-                sleep(5)
-                all_locations = driver.find_elements_by_xpath(
-                    '//button[contains(text(), "Store details")]'
-                )
-            try:
-                next_page = driver.find_element_by_xpath(
-                    '//li[@class="pagination-next ng-scope"]/a'
-                )
-            except Exception:
-                next_page = ""
-            if next_page:
-                next_page.click()
-                sleep(10)
-                all_locations = driver.find_elements_by_xpath(
-                    '//button[contains(text(), "Store details")]'
-                )
-                for i, loc in enumerate(all_locations):
-                    all_locations[i].click()
-                    sleep(10)
-                    all_poi_html.append(etree.HTML(driver.page_source))
-                    driver.back()
-                    sleep(10)
-                    next_page = driver.find_element_by_xpath(
-                        '//li[@class="pagination-next ng-scope"]/a'
-                    )
-                    next_page.click()
-                    sleep(10)
-                    all_locations = driver.find_elements_by_xpath(
-                        '//button[contains(text(), "Store details")]'
-                    )
-            try:
-                next_page = driver.find_element_by_xpath(
-                    '//li/a[contains(text(), "3")]'
-                )
-            except Exception:
-                next_page = ""
-            if next_page:
-                next_page.click()
-                sleep(10)
-                all_locations = driver.find_elements_by_xpath(
-                    '//button[contains(text(), "Store details")]'
-                )
-                for i, loc in enumerate(all_locations):
-                    try:
-                        all_locations[i].click()
-                    except Exception:
-                        continue
-                    sleep(10)
-                    all_poi_html.append(etree.HTML(driver.page_source))
-                    driver.back()
-                    sleep(10)
-                    next_page = driver.find_element_by_xpath(
-                        '//li/a[contains(text(), "3")]'
-                    )
-                    next_page.click()
-                    sleep(10)
-                    all_locations = driver.find_elements_by_xpath(
-                        '//button[contains(text(), "Store details")]'
-                    )
+    with SgFirefox(is_headless=True) as driver:
+        driver.set_script_timeout(30)
+        driver.get(start_url)
+        fetch_token(driver)
+        for code in all_coords:
+            locations = fetch_locations(code, driver)
 
-            for poi_html in all_poi_html:
-                location_name = poi_html.xpath("//address/strong/text()")
-                if not location_name:
-                    continue
-                location_name = location_name[0]
-                raw_data = poi_html.xpath(
-                    '//address[@class="storeDetails-address ng-binding"]/text()'
-                )
-                raw_data = [e.strip() for e in raw_data if e.strip()]
-                hoo = poi_html.xpath(
-                    '//tr[@ng-repeat="stores_hrs in storeDetailsResponse.hours"]//text()'
-                )
-                hoo = " ".join([e.strip() for e in hoo if e.strip()])
-                geo = (
-                    poi_html.xpath(
-                        '//iframe[@class="storeDetails-loc-dir-map-frame"]/@src'
-                    )[0]
-                    .split("q=")[-1]
-                    .split("&")[0]
-                    .split("%2C")
+            for location in locations:
+                store_number = location["id"]
+                page_url = f"https://pharmacy.jewelosco.com/joweb/#/store/details/{store_number}"
+                details = fetch_location(store_number, driver)
+
+                location_name = details["store_name"]
+                street_adddress = details["addressline1"]
+                city = details["city"]
+                state = details["state"]
+                postal = details["zip"]
+                phone = details["phone"]
+
+                latitude = details["latitude"]
+                longitude = details["longitude"]
+
+                hours_of_operation = ",".join(
+                    f'{day_hours["day"]}: {day_hours["hours"]}'
+                    for day_hours in details["hours"]
                 )
 
                 item = SgRecord(
                     locator_domain=domain,
-                    page_url=start_url,
+                    page_url=page_url,
                     location_name=location_name,
-                    street_address=location_name,
-                    city=raw_data[0].split(", ")[0],
-                    state=raw_data[0].split(", ")[-1].split()[0],
-                    zip_postal=raw_data[0].split(", ")[-1].split()[-1],
-                    country_code="",
-                    store_number="",
-                    phone=raw_data[-1],
+                    street_address=street_adddress,
+                    city=city,
+                    state=state,
+                    zip_postal=postal,
+                    country_code=SearchableCountries.USA,
+                    store_number=store_number,
+                    phone=phone,
                     location_type="",
-                    latitude=geo[0],
-                    longitude=geo[1],
-                    hours_of_operation=hoo,
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=hours_of_operation,
                 )
 
                 yield item
@@ -153,7 +151,8 @@ def scrape():
         SgRecordDeduper(
             SgRecordID(
                 {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
-            )
+            ),
+            duplicate_streak_failure_factor=-1,
         )
     ) as writer:
         for item in fetch_data():

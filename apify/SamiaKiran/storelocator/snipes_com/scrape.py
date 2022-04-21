@@ -10,16 +10,32 @@ from sgpostal.sgpostal import parse_address_intl
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
+from tenacity import retry, stop_after_attempt
+import tenacity
+import random
+import time
+
 session = SgRequests()
 website = "snipes_com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
-session = SgRequests()
+
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
 }
 
 DOMAIN = "https://www.snipes.com/"
 MISSING = SgRecord.MISSING
+
+
+@retry(stop=stop_after_attempt(5), wait=tenacity.wait_fixed(5))
+def get_response(idx, url):
+    with SgRequests() as http:
+        response = http.get(url, headers=headers)
+        time.sleep(random.randint(1, 3))
+        if response.status_code == 200:
+            log.info(f"[{idx}] | {url} >> HTTP STATUS: {response.status_code}")
+            return response
+        raise Exception(f"[{idx}] | {url} >> HTTP Error Code: {response.status_code}")
 
 
 def strip_accents(text):
@@ -67,19 +83,33 @@ def fetch_data():
             elif "www.snipes.com" in link:
                 country_code = "Germany"
             r = session.get(link, headers=headers)
-            log.info(f"Fetching Stores from {link}")
+            log.info(
+                f"Fetching Stores from {country_code} >> Response Status: {r.status_code}"
+            )
+
             try:
                 loclist = (
                     r.text.split('data-locations="')[1]
                     .split("data-icon=")[0]
                     .replace('}]"', "}]")
                 )
-            except:
-                continue
+            except Exception as e:
+                log.info(f"loclist Error: {e}")
+                response = get_response(country_code, link)
+                try:
+                    loclist = (
+                        response.text.split('data-locations="')[1]
+                        .split("data-icon=")[0]
+                        .replace('}]"', "}]")
+                    )
+                except:
+                    continue
+
             loclist = BeautifulSoup(loclist, "html.parser")
             try:
                 loclist = json.loads(str(loclist))
-            except:
+            except Exception as e:
+                log.info(f"loclist JSON Error: {e}")
                 continue
             for loc in loclist:
                 store_number = loc["id"]
@@ -115,20 +145,42 @@ def fetch_data():
 
                 zip_postal = pa.postcode
                 zip_postal = zip_postal.strip() if zip_postal else MISSING
+
                 try:
                     phone = soup.select_one("a[href*=tel]")["href"].replace("tel:", "")
-                except:
+                except Exception as e:
+                    log.info(f"Phone Error: {e}")
                     phone = MISSING
-                hours_of_operation = (
+                hours_of_operation = strip_accents(
                     soup.find(
                         "div",
-                        {
-                            "class": "b-store-locator-store-hours b-store-map-view-section"
-                        },
+                        {"class": "b-store-locator-store-hours"},
                     )
                     .get_text(separator="|", strip=True)
                     .replace("|", " ")
                 )
+                if (
+                    hours_of_operation
+                    == "Montag: - Dienstag: - Mittwoch: - Donnerstag: - Freitag: - Samstag: - Sonntag: -"
+                ):
+                    hours_of_operation = MISSING
+
+                elif (
+                    hours_of_operation
+                    == "maandag: - dinsdag: - woensdag: - donderdag: - vrijdag: - zaterdag: - zondag: -"
+                    or hours_of_operation
+                    == "Lundi: - Mardi: - Mercredi: - Jeudi: - Vendredi: - Samedi: - Dimanche: -"
+                ):
+                    r = session.get(page_url, headers=headers)
+                    soup = BeautifulSoup(r.text, "html.parser")
+                    hours_of_operation = strip_accents(
+                        soup.find(
+                            "div",
+                            {"class": "b-store-locator-store-hours"},
+                        )
+                        .get_text(separator="|", strip=True)
+                        .replace("|", " ")
+                    )
                 if city is MISSING:
                     city = raw_address.split()[-1]
                 yield SgRecord(

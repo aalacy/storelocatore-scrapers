@@ -25,24 +25,25 @@ def fetch_data():
     url = "https://www.campanile.com/en-us/our-hotels/"
     r = session.get(url, headers=headers1)
     soup = BeautifulSoup(r.text, "html.parser")
-    statelist = soup.select("a[href*=hotels-]")
+    statelist = soup.select("a[href*=our-hotels]")
 
     linklist = []
     for state in statelist:
-
+        try:
+            term = state.find("h2").text
+        except:
+            continue
         if "Hotels " in state.text:
             continue
-        term = state.text
-
         dataobj = (
             '{"operationName":"resortsSearchQueryV2","variables":{"resortsSearchInput":{"homePageUrl":"https://www.campanile.com","term":"'
             + term
-            + '","searchBy":"CITY","code":"","locale":"en-us","brandCode":"CA","withRandomOrder":false,"withCrossSell":true,"top":null}},"query":"query resortsSearchQueryV2($resortsSearchInput: MbResortsSearchInputType!) {\n  resortsSearchV2(resortsSearchInput: $resortsSearchInput) {\n    crossSellBrandResorts {\n      ...ResortFavorite\n      ...ResortSearchData\n      __typename\n    }\n    currentBrandResorts {\n      ...ResortFavorite\n      ...ResortSearchData\n      __typename\n    }\n    __typename\n  }\n}\n\nfragment ResortFavorite on MbResortType {\n  id: resortCode\n  isFavorite\n  __typename\n}\n\nfragment ResortSearchData on MbResortType {\n  resortCode\n  resortName\n  brandCode\n  city\n  cityPageUrl\n  mainPicture\n  stars\n  distanceFromDownTown\n  website\n  brandMapIconUrl\n  brandMapIconAlt\n  tripAdvisorRating\n  tripAdvisorRatingImageUrl\n  tripAdvisorNbReviews\n  isRenovated\n  isOldWebsite\n  location {\n    longitude\n    latitude\n    __typename\n  }\n  preferredLocales {\n    isDefault\n    localeCode\n    __typename\n  }\n  eReputation {\n    score\n    reviewsCount\n    scoreDescription\n    __typename\n  }\n  externalBookingEngineUrl\n  isCutOffOutDated\n  __typename\n}\n"}'
+            + '","searchBy":"REGION","code":"","locale":"en-us","brandCode":"CA","withRandomOrder":true,"withCrossSell":false,"top":null}},"query":"query resortsSearchQueryV2($resortsSearchInput: MbResortsSearchInputType!) {\n  resortsSearchV2(resortsSearchInput: $resortsSearchInput) {\n    crossSellBrandResorts {\n      ...ResortFavorite\n      ...ResortSearchData\n      __typename\n    }\n    currentBrandResorts {\n      ...ResortFavorite\n      ...ResortSearchData\n      __typename\n    }\n    __typename\n  }\n}\n\nfragment ResortFavorite on MbResortType {\n  id: resortCode\n  isFavorite\n  __typename\n}\n\nfragment ResortSearchData on MbResortType {\n  resortCode\n  resortName\n  brandCode\n  city\n  cityPageUrl\n  mainPicture\n  stars\n  distanceFromDownTown\n  website\n  brandMapIconUrl\n  brandMapIconAlt\n  tripAdvisorRating\n  tripAdvisorRatingImageUrl\n  tripAdvisorNbReviews\n  isRenovated\n  isOldWebsite\n  location {\n    longitude\n    latitude\n    __typename\n  }\n  preferredLocales {\n    isDefault\n    localeCode\n    __typename\n  }\n  eReputation {\n    score\n    reviewsCount\n    scoreDescription\n    __typename\n  }\n  externalBookingEngineUrl\n  isCutOffOutDated\n  __typename\n}\n"}'
         )
         try:
             loclist = session.post(apiurl, data=dataobj, headers=headers).json()[
                 "data"
-            ]["resortsSearchV2"]["crossSellBrandResorts"]
+            ]["resortsSearchV2"]["currentBrandResorts"]
         except:
             continue
         for loc in loclist:
@@ -53,8 +54,11 @@ def fetch_data():
             linklist.append(link)
 
             store = loc["id"]
-            r = session.get(link, headers=headers1)
-
+            try:
+                session1 = SgRequests()
+                r = session1.get(link, headers=headers1)
+            except:
+                continue
             try:
                 content = r.text.split('<script type="application/ld+json">', 1)[
                     1
@@ -65,7 +69,7 @@ def fetch_data():
                 continue
             title = content["name"]
 
-            street = content["address"]["streetAddress"]
+            street = str(content["address"]["streetAddress"]).replace("\n", " ").strip()
             city = content["address"]["addressLocality"]
             pcode = content["address"]["postalCode"]
             ccode = content["address"]["addressCountry"]

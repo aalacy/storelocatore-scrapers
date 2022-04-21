@@ -81,9 +81,34 @@ def fetch_data(sgw: SgWriter):
             hours_of_operation = (
                 hours_of_operation.split("HOURS")[1].split("905")[0].strip()
             )
-        hours_of_operation = hours_of_operation.replace(
-            "Open for Indoor Dining", ""
-        ).strip()
+        hours_of_operation = (
+            hours_of_operation.replace("Open for Indoor Dining", "")
+            .replace(f"{phone}", "")
+            .strip()
+        )
+        if page_url.find("https://ilfornello.com/st-catharines/") != -1:
+            street_address = (
+                "".join(tree.xpath('//a[contains(@href, "goo")]//text()'))
+                or "<MISSING>"
+            )
+            ad = "".join(
+                tree.xpath(
+                    '//strong[./a[contains(@href, "goo")]]/following-sibling::text()'
+                )
+            )
+            city = ad.split(",")[0].strip()
+            state = ad.split(",")[1].split()[0].strip()
+            postal = " ".join(ad.split(",")[1].split()[1:]).strip()
+            phone = "".join(
+                tree.xpath("//p[./strong/a]/following-sibling::p[1]//text()")
+            )
+            hours_of_operation = (
+                " ".join(tree.xpath('//p[contains(text(), "Monday")]//text()'))
+                .replace("\n", "")
+                .strip()
+                or "<MISSING>"
+            )
+            hours_of_operation = " ".join(hours_of_operation.split())
 
         row = SgRecord(
             locator_domain=locator_domain,

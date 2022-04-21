@@ -41,7 +41,7 @@ def fetch_data():
 
             raw_address = "<MISSING>"
 
-            street_address = "<MISSING>"
+            street_address = location_name
 
             city = store["address"]["city"]
 

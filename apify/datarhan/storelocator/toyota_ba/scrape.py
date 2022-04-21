@@ -28,6 +28,8 @@ def fetch_data():
         for poi_html in all_locations:
             page_url = poi_html.xpath('.//a[@data-gt-action="view-dealer"]/@href')
             page_url = page_url[0] if page_url else ""
+            if "/contact/dealers/list" in page_url:
+                page_url = "https://www.toyota.hr" + page_url
             if page_url and "http" not in page_url:
                 page_url = "https://" + page_url
             location_name = poi_html.xpath(".//h2/text()")[0]

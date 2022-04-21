@@ -1,49 +1,75 @@
-from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-
+from sgzip.dynamic import SearchableCountries
+from sgzip.static import static_coordinate_list
 
 session = SgRequests()
 headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36",
+    "X-Requested-With": "XMLHttpRequest",
 }
 
 
 def fetch_data():
-    url = "https://local.gcrtires.com/"
-    r = session.get(url, headers=headers)
-    soup = BeautifulSoup(r.text, "html.parser")
-    divlist = soup.find("div", {"id": "contains-city"}).findAll("a")
-    for div in divlist:
 
-        divlink = "https://local.gcrtires.com" + div["href"]
+    daylist = ["mon", "tues", "wednes", "thurs", "fri", "satur", "sun"]
+    mylist = static_coordinate_list(40, SearchableCountries.USA)
+    storelist = []
+    for lat, lng in mylist:
 
-        r = session.get(divlink, headers=headers)
-        soup = BeautifulSoup(r.text, "html.parser")
-        loclist = soup.findAll("div", {"id": "location-list"})
+        url = (
+            "https://www.gcrtires.com/bcsutil/commercial/locations?lat="
+            + str(lat)
+            + "&lon="
+            + str(lng)
+            + "&radius=700&bu=null&collection=aem_commercial_dealers&banner=GCR"
+        )
+
+        loclist = session.get(url, headers=headers).json()
+
         for loc in loclist:
-            store = loc["data-currentlocation"]
-            loc = loc.find("div", {"class": "place"})
 
-            title = loc.find("strong").text
-            link = "https://local.gcrtires.com" + loc.find("a")["href"]
-            street = loc.find("div", {"class": "street"}).text
-            city, state = loc.find("div", {"class": "locality"}).text.split(", ", 1)
-            state, pcode = state.split(" ", 1)
-            phone = loc.find("a", {"class": "list-location-phone-number"}).text
-            hours = (
-                loc.find("div", {"class": "hours"})
-                .text.replace("Hours Today", "")
-                .strip()
-            )
-            lat, longt = (
-                loc.find("a", {"class": "list-location-cta-button"})["href"]
-                .split("/")[-1]
-                .split(",", 1)
-            )
+            pcode = loc["postalCode"]
+            street = loc["streetAddress"]
+            phone = loc["businessPhone"]
+            if "-" not in phone:
+                phone = phone[0:3] + "-" + phone[3:6] + "-" + phone[6:]
+            store = loc["locationNo"]
+            title = loc["tradeName"]
+            ccode = loc["country"]
+            city = loc["city"]
+            state = loc["state"]
+            lat = loc["latitude"]
+            longt = loc["longitude"]
+            hours = ""
+            for day in daylist:
+                day = day + "day"
+                try:
+                    closestr = loc[day + "Close"]
+                except:
+                    hours = hours + day + " " + " Close "
+                    continue
+                close = int(closestr.split(":", 1)[0])
+                if close > 12:
+                    close = close - 12
+                hours = (
+                    hours
+                    + day
+                    + " "
+                    + loc[day + "Open"]
+                    + " AM - "
+                    + str(close)
+                    + ":"
+                    + closestr.split(":", 1)[1]
+                    + " PM "
+                )
+            link = "https://www.gcrtires.com/stores" + loc["externalPath"]
+            if link in storelist:
+                continue
+            storelist.append(link)
 
             yield SgRecord(
                 locator_domain="https://www.gcrtires.com/",
@@ -53,7 +79,7 @@ def fetch_data():
                 city=city.strip(),
                 state=state.strip(),
                 zip_postal=pcode.strip(),
-                country_code="US",
+                country_code=ccode,
                 store_number=str(store),
                 phone=phone.strip(),
                 location_type="<MISSING>",

@@ -64,6 +64,7 @@ def fetch_data():
             street_address = street_address + ", " + formatted_addr.street_address_2
 
         city = formatted_addr.city
+
         state = "<MISSING>"
         zip = store_info[-1].strip()
         country_code = "IE"
@@ -71,6 +72,9 @@ def fetch_data():
         location_name = "".join(
             store.xpath(".//a[@title and not(./img)]//text()")
         ).strip()
+        if not city:
+            city = location_name.split(" ")[0].strip()
+
         phone = list(
             filter(
                 str,

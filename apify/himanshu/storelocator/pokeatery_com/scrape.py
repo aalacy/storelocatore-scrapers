@@ -13,6 +13,27 @@ log = sglog.SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
 
 
+def get_latlng(map_link):
+    if "z/data" in map_link:
+        lat_lng = map_link.split("@")[1].split("z/data")[0]
+        latitude = lat_lng.split(",")[0].strip()
+        longitude = lat_lng.split(",")[1].strip()
+    elif "ll=" in map_link:
+        lat_lng = map_link.split("ll=")[1].split("&")[0]
+        latitude = lat_lng.split(",")[0]
+        longitude = lat_lng.split(",")[1]
+    elif "!2d" in map_link and "!3d" in map_link:
+        latitude = map_link.split("!3d")[1].strip().split("!")[0].strip()
+        longitude = map_link.split("!2d")[1].strip().split("!")[0].strip()
+    elif "/@" in map_link:
+        latitude = map_link.split("/@")[1].split(",")[0].strip()
+        longitude = map_link.split("/@")[1].split(",")[1].strip()
+    else:
+        latitude = "<MISSING>"
+        longitude = "<MISSING>"
+    return latitude, longitude
+
+
 def fetch_data():
     base_url = "http://www.pokeatery.com/"
     soup = bs(session.get(base_url).text, "lxml")
@@ -27,6 +48,11 @@ def fetch_data():
         location_name = "".join(
             store_sel.xpath('//h1[@class="headline__primary"]/text()')
         ).strip()
+
+        map_link = "".join(
+            store_sel.xpath('//div[@class="c-hero__map gmap"]/@data-url')
+        ).strip()
+        latitude, longitude = get_latlng(map_link)
 
         p_tag = location_soup.find_all("div", {"class": "container"})[1].find_all("p")
 
@@ -92,8 +118,8 @@ def fetch_data():
             store_number="<MISSING>",
             phone=phone,
             location_type="<MISSING>",
-            latitude="<MISSING>",
-            longitude="<MISSING>",
+            latitude=latitude,
+            longitude=longitude,
             hours_of_operation=hours,
         )
 

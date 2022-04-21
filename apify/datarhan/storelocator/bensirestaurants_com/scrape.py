@@ -40,24 +40,25 @@ def fetch_data():
 
             yield item
         else:
-            location_name = loc_dom.xpath("//font/strong/text()")[0]
-            raw_data = loc_dom.xpath("//font[font[strong]]/text()")
+            raw_data = loc_dom.xpath(
+                '//font[contains(text(), "Bensi Whitehouse Station")]/text()'
+            )
 
             item = SgRecord(
                 locator_domain=domain,
                 page_url=store_url,
-                location_name=location_name,
-                street_address=raw_data[1].split(", ")[0],
-                city=raw_data[1].split(", ")[1].replace("\u200b", ""),
-                state=raw_data[1].split(", ")[2].split()[0],
-                zip_postal=raw_data[1].split(", ")[2].split()[-1],
+                location_name=raw_data[0],
+                street_address=raw_data[2].split(",")[0],
+                city=raw_data[3].split(", ")[0],
+                state=raw_data[3].split(", ")[-1].split()[0],
+                zip_postal=raw_data[3].split(", ")[-1].split()[-1],
                 country_code="",
                 store_number="",
-                phone=raw_data[0].split()[1],
+                phone=raw_data[1].replace("Tel", "").strip(),
                 location_type="",
                 latitude="",
                 longitude="",
-                hours_of_operation="",
+                hours_of_operation=raw_data[4],
             )
 
             yield item

@@ -86,6 +86,8 @@ class _SearchIteration(SearchIteration):
                 store_number = store["lid"]
 
                 page_url = store["website"]
+                if not page_url:
+                    page_url = "https://www.valvoline.com/en/locations/"
                 location_type = "<MISSING>"
 
                 phone = store["local_phone"]
@@ -121,7 +123,7 @@ class _SearchIteration(SearchIteration):
                     store["lat"],
                     store["lng"],
                 )
-
+                found_location_at(latitude, longitude)
                 yield SgRecord(
                     locator_domain=locator_domain,
                     page_url=page_url,
@@ -144,7 +146,7 @@ def scrape():
     log.info("Started")
     search_maker = DynamicSearchMaker(
         search_type="DynamicZipSearch",
-        expected_search_radius_miles=120,
+        expected_search_radius_miles=20,
         max_search_results=25,
     )
     with SgWriter(

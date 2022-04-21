@@ -47,6 +47,8 @@ def fetch_data():
                 .replace('","0" : "', " Sun ")
                 .replace('" }', "")
             )
+            if "Mon  Tue  Wed  Thu  Fri  Sat  Sun" in hours_of_operation:
+                hours_of_operation = MISSING
             pa = parse_address_intl(raw_address)
 
             street_address = pa.street_address_1
@@ -61,9 +63,9 @@ def fetch_data():
             zip_postal = pa.postcode
             zip_postal = zip_postal.strip() if zip_postal else MISSING
 
-            if len(zip_postal) < 3:
+            if len(zip_postal) < 5:
                 zip_postal = street_address.split()[-1] + " " + zip_postal
-                street_address = street_address.replace(zip_postal, "")
+                street_address = street_address.replace(street_address.split()[-1], "")
             if "null" in latitude:
                 latitude = MISSING
                 longitude = MISSING
