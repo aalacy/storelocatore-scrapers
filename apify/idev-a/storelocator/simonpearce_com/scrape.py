@@ -119,13 +119,15 @@ def fetch_data():
                     street_address = span[-1].replace("\n", " ").replace("\r", "")
             if not street_address and not city:
                 continue
-            pp = sp1.select_one("div.amlocator-block.-contact a")
+            pp = sp1.select_one("div.amlocator-location-info").find(
+                "a", href=re.compile(r"tel:")
+            )
             hours = ""
             if pp:
                 _pp = pp.text.split()
                 phone = _pp[0].strip()
                 if len(_pp) > 1:
-                    hours = _pp[-1].strip()
+                    hours = " ".join(_pp[1:])
             yield SgRecord(
                 page_url=page_url,
                 store_number=_["id"],
