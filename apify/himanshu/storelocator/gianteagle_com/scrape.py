@@ -20,11 +20,6 @@ def fetch_data():
     }
     domain = "gianteagle.com"
 
-    import requests
-
-    session = requests.Session()
-    proxies = {"https": "127.0.0.1:24000", "http": "127.0.0.1:24000"}
-
     page_url = ""
     location_name = ""
     street_address = ""
