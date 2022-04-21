@@ -155,7 +155,7 @@ def fetch_data():
                     .replace("C.P.:", "")
                     .replace("C.P.", "")
                     .replace("C P ", "")
-                    .replace("CP ")
+                    .replace("CP ", "")
                     .strip()
                 )
                 try:

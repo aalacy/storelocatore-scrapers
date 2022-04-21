@@ -19,7 +19,7 @@ headers = {
     "x-requested-with": "XMLHttpRequest",
 }
 
-max_workers = 32
+max_workers = 28
 
 
 def fetchConcurrentSingle(store):
