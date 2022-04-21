@@ -46,6 +46,8 @@ def fetch_data():
         if type(data) == dict and data["message"] == "No matching locations found":
             continue
         location_name = data[0]["store_info"]["name"]
+        if "Coming Soon" in location_name:
+            continue
         phone = data[0]["store_info"]["phone"]
         latitude = data[0]["store_info"]["latitude"]
         longitude = data[0]["store_info"]["longitude"]
@@ -62,6 +64,8 @@ def fetch_data():
         ]
         hours_of_operation = list(map(lambda day, hour: day + " " + hour, days, hours))
         hours_of_operation = " ".join(hours_of_operation) if hours_of_operation else ""
+        if not hours_of_operation:
+            continue
 
         item = SgRecord(
             locator_domain=domain,
