@@ -32,6 +32,7 @@ def fetch_data():
                 ltype = loc.find("img")
                 loc = re.sub(cleanr, "\n", str(loc))
                 loc = re.sub(pattern, "\n", str(loc)).strip()
+
                 try:
                     title = loc.splitlines()[0]
                 except:
@@ -61,16 +62,15 @@ def fetch_data():
                 if "Horario" in phone:
                     hours = phone.replace("Horario: ", "")
                     phone = loc.splitlines()[-2]
+
                     if "(" not in phone:
                         phone = loc.splitlines()[-3]
+                        if len(phone) < 6:
+                            phone = loc.splitlines()[-3] + " " + loc.splitlines()[-2]
                 else:
                     hours = "<MISSING>"
                 if "(" not in phone:
                     phone = loc.splitlines()[-2]
-                try:
-                    phone = phone.split(", ", 1)[0]
-                except:
-                    pass
                 try:
                     phone = phone.split(".", 1)[1]
                 except:
@@ -95,6 +95,14 @@ def fetch_data():
                     pass
                 else:
                     phone = "<MISSING>"
+                try:
+                    phone = phone.split("(", 1)[1]
+                    phone = "(" + phone
+                except:
+                    pass
+                if len(phone.split(" ")) > 2 and len(phone.split(" ")[1]) > 4:
+
+                    phone = " ".join(phone.split(" ")[0:2])
                 address = ""
 
                 if check == "":
@@ -141,6 +149,19 @@ def fetch_data():
 
                 zip_postal = pa.postcode
                 pcode = zip_postal.strip() if zip_postal else MISSING
+
+                pcode = (
+                    pcode.replace("CP.", "")
+                    .replace("C.P.:", "")
+                    .replace("C.P.", "")
+                    .replace("C P ", "")
+                    .replace("CP ", "")
+                    .strip()
+                )
+                try:
+                    hours = hours.split("o: ", 1)[1]
+                except:
+                    pass
                 if len(store) < 2:
                     store = "<MISSING>"
                 yield SgRecord(
