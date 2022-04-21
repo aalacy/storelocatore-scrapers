@@ -32,7 +32,7 @@ def fetch_data():
 
             locator_domain = website
 
-            page_url = search_url + str(no)
+            page_url = search_url
 
             location_name = "".join(
                 store.xpath('.//div[@class="store_title"]/text()')
@@ -88,8 +88,6 @@ def fetch_data():
             phone = "<MISSING>"
 
             hours_of_operation = "<MISSING>"
-            map_info = "".join(store.xpath("./@str_lati/@value"))
-
             latitude, longitude = (
                 "".join(store.xpath("./@str_lati/@value")).strip(),
                 "".join(store.xpath("./@str_longi/@value")).strip(),
