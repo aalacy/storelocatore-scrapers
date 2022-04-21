@@ -61,6 +61,13 @@ def fetch_data():
             zip_postal = pa.postcode
             zip_postal = zip_postal.strip() if zip_postal else MISSING
 
+            if city == MISSING:
+                temp = raw_address.split(",")
+                city = temp[1].strip()
+                street_address = street_address.replace(city, "")
+                temp = temp[-1].split()
+                state = temp[0]
+                zip_postal = temp[-2] + " " + temp[-1]
             country_code = "CA"
             yield SgRecord(
                 locator_domain=DOMAIN,
