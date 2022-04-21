@@ -37,7 +37,7 @@ def fetch_data():
             geo = poi_html.xpath('.//a[contains(@href, "maps")]/@href')
             if geo:
                 if "&ll=" in geo[0]:
-                    geo = geo[0].split("&ll=")[-1].split("&")[0].split(",")
+                    geo = geo[0].split("&ll=")[-1].split("&")[0].split(",")[::-1]
                 else:
                     geo = geo[0].split("sll=")[-1].split("&")[0].split(",")[::-1]
             else:

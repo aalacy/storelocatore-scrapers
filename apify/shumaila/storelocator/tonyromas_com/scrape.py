@@ -51,7 +51,10 @@ def fetch_data():
             longt = coordlist[i]["data-lng"]
             title = loclist[i].find("div", {"class": "title"}).text
             address = str(loclist[i].find("div", {"class": "address"}))
-            phone = loclist[i].find("div", {"class": "phone"}).text
+            try:
+                phone = loclist[i].find("div", {"class": "phone"}).text
+            except:
+                phone = "<MISSING>"
             try:
                 hours = loclist[i].find("div", {"class": "hours"}).text
             except:

@@ -3,7 +3,7 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sglogging import SgLogSetup
-from sgrequests.sgrequests import SgRequests
+from sgrequests import SgRequests
 from sgzip.dynamic import SearchableCountries
 from sgzip.parallel import DynamicSearchMaker, ParallelDynamicSearch, SearchIteration
 from typing import Iterable, Tuple, Callable

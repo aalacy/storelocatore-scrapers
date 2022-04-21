@@ -736,7 +736,7 @@ def checkFail(countries, fromConfig):
                     Country["text"], Country["text"], Country["page"]
                 )
             )
-            raise Exception
+            pass
 
 
 def fix_proxy(StripProxyCountry):
