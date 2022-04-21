@@ -1,3 +1,4 @@
+import json
 import demjson
 from lxml import etree
 from urllib.parse import urljoin
@@ -35,12 +36,22 @@ def fetch_data():
                     loc_dom = etree.HTML(loc_response.text)
                 poi = loc_dom.xpath('//script[contains(text(), "address")]/text()')[1]
                 poi = demjson.decode(poi.replace("\n", ""))[0]
+                data = (
+                    loc_dom.xpath('//script[contains(text(), "JSContext =")]/text()')[0]
+                    .split("JSContext =")[-1]
+                    .strip()[:-1]
+                )
+                data = json.loads(data)
+                street_address = poi["address"]["streetAddress"]
+                suit = data["profile"]["address"].get("suite")
+                if suit:
+                    street_address += " " + suit
 
                 item = SgRecord(
                     locator_domain=domain,
                     page_url=page_url,
                     location_name=poi["name"],
-                    street_address=poi["address"]["streetAddress"],
+                    street_address=street_address,
                     city=poi["address"]["addressLocality"],
                     state=poi["address"]["addressRegion"],
                     zip_postal=poi["address"]["postalCode"],
