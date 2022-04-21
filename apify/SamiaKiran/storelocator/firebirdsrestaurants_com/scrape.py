@@ -30,6 +30,8 @@ def fetch_data():
             if not page_url:
                 continue
             r = session.get(page_url, headers=headers)
+            if "Coming Soon" in r.text:
+                continue
             soup = BeautifulSoup(r.text, "html.parser")
             location_name = soup.find("h1").text
             coords = (

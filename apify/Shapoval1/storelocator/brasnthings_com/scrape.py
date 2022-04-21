@@ -41,6 +41,13 @@ def fetch_data(sgw: SgWriter):
             page_url = (
                 f"https://www.brasnthings.com/stores/store/index/id/{store_number}"
             )
+            if (
+                page_url == "https://www.brasnthings.com/stores/store/index/id/14381"
+                or page_url == "https://www.brasnthings.com/stores/store/index/id/14311"
+                or page_url == "https://www.brasnthings.com/stores/store/index/id/14371"
+                or page_url == "https://www.brasnthings.com/stores/store/index/id/14391"
+            ):
+                continue
             latitude = j.get("latitude") or "<MISSING>"
             longitude = j.get("longitude") or "<MISSING>"
             if latitude == longitude:
