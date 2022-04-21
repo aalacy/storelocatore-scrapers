@@ -17,6 +17,8 @@ def fetch_data():
     }
     all_locations = session.get(start_url, headers=hdr).json()
     for poi in all_locations:
+        if "Coming Soon" in poi["name"]:
+            continue
         raw_address = poi["address"]
         addr = parse_address_intl(raw_address)
         street_address = addr.street_address_1
@@ -38,7 +40,7 @@ def fetch_data():
             if len(zip_code) < 4:
                 zip_code = ""
         phone = poi["phoneNumber"]
-        if len(phone) == 1:
+        if phone and str(phone.strip()) == "0000000000":
             phone = ""
         state = addr.state
         if state:
