@@ -89,6 +89,8 @@ def fetch_data():
                 if page_url == "https://www.anthropologie.com/stores":
                     page_url = MISSING
             raw_address = MISSING
+            if "close" in location_name.lower() or "<MISSING>" in page_url:
+                continue
             yield SgRecord(
                 locator_domain=locator_domain,
                 page_url=page_url,
