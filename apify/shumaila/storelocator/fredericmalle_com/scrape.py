@@ -25,8 +25,12 @@ def fetch_data():
     url = "https://www.fredericmalle.com/about#/stores/"
     r = session.get(url, headers=headers)
     soup = BeautifulSoup(r.text, "html.parser")
-    loclist = soup.find_all("div", {"class": "stores__location-wrapper"})
+    loclist = soup.find_all("div", {"class": "stores__location"})
     for loc in loclist:
+        if "flagship" in str(loc):
+            ltype = "Store"
+        elif "stockist" in str(loc):
+            ltype = "Stockist"
         title = loc.find("div", {"class": "stores__location-name"}).text
         address = str(loc.findAll("div", {"class": "stores__location-address"})[-1])
 
@@ -37,6 +41,10 @@ def fetch_data():
             phone = loc.find("div", {"class": "stores__location-phone"}).text
         except:
             phone = "<MISSING>"
+        try:
+            phone = phone.split(":", 1)[0].strip()
+        except:
+            pass
         try:
             hours = loc.find("div", {"class": "stores__location-hours"}).text
         except:
@@ -62,9 +70,14 @@ def fetch_data():
         zip_postal = pa.postcode
         pcode = zip_postal.strip() if zip_postal else MISSING
 
-        ccode = pa.postcode
+        ccode = pa.country
         ccode = ccode.strip() if ccode else MISSING
-
+        if "<MISSING>" not in street:
+            title = title + " " + street
+        try:
+            phone = phone.split(":", 1)[1].strip()
+        except:
+            pass
         yield SgRecord(
             locator_domain=base_url,
             page_url=url,
@@ -76,7 +89,7 @@ def fetch_data():
             country_code=ccode,
             store_number=SgRecord.MISSING,
             phone=phone.strip(),
-            location_type=SgRecord.MISSING,
+            location_type=ltype,
             latitude=str(lat),
             longitude=str(longt),
             hours_of_operation=hours,
