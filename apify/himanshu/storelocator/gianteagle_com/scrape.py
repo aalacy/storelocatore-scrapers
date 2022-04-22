@@ -1,7 +1,7 @@
 import json
 
 from sglogging import SgLogSetup
-from sgscrape import sgpostal as parser
+from sgpostal.sgpostal import parse_address_usa
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
@@ -63,7 +63,7 @@ def fetch_data():
             ):
                 raw_address += ", " + location_super_market["Address"]["lineTwo"]
 
-            formatted_addr = parser.parse_address_usa(raw_address)
+            formatted_addr = parse_address_usa(raw_address)
             street_address = formatted_addr.street_address_1
             if formatted_addr.street_address_2:
                 street_address = street_address + ", " + formatted_addr.street_address_2
