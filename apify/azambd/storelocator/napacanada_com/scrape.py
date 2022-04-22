@@ -2,10 +2,12 @@ from sgselenium.sgselenium import SgChrome
 from webdriver_manager.chrome import ChromeDriverManager
 
 from sgscrape import simple_scraper_pipeline as sp
+from sgscrape.pause_resume import CrawlStateSingleton
 from sglogging import sglog
 import ssl
 import json
 from bs4 import BeautifulSoup
+
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
@@ -49,6 +51,7 @@ def get_all_stores():
         "https://www.napacanada.com" + province["href"]
         for province in soup.select("a[href*=auto-parts-stores-near-me]")[:-1]
     ]
+    logger.info(f"Total provinces to crawl: {len(provinces)}")
     urls = []
     for province in provinces:
         logger.info(f"Crawling Province: {province}")
@@ -79,7 +82,7 @@ def parse(location):
     data = {}
 
     data["locator_domain"] = DOMAIN
-    data["location_name"] = location["name"]
+    data["location_name"] = location["name"].replace("NAPA Auto Parts -", "").strip()
     data["store_number"] = location["@id"]
     data["page_url"] = location["url"]
     data["location_type"] = location["@type"]
@@ -133,7 +136,9 @@ def fetch_data():
         yield data
 
     missed_links = get_missed_cities(MISSED_CITIES)
+    logger.info(f"Total broken or missed urls: {len(missed_links)}")
     for url in missed_links:
+        logger.info(f"Crawling missed link: {url}")
         driver.get(url)
         soup = BeautifulSoup(driver.page_source, "html.parser")
         location = json.loads(soup.select("script[type*=application]")[1].text)
@@ -143,6 +148,7 @@ def fetch_data():
 
 def scrape():
     logger.info(f"Start Crawling {DOMAIN} ...")
+    CrawlStateSingleton.get_instance().save(override=True)
     field_defs = sp.SimpleScraperPipeline.field_definitions(
         locator_domain=sp.ConstantField(DOMAIN),
         page_url=sp.MappingField(mapping=["page_url"], is_required=False),
@@ -169,7 +175,7 @@ def scrape():
         scraper_name="Crawler",
         data_fetcher=fetch_data,
         field_definitions=field_defs,
-        log_stats_interval=5,
+        log_stats_interval=15,
     )
 
     pipeline.run()
