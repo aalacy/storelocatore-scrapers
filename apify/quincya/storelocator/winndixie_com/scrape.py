@@ -34,6 +34,9 @@ def fetch_data(sgw: SgWriter):
         hours_of_operation = store["WorkingHours"].strip()
         latitude = store["Address"]["Latitude"]
         longitude = store["Address"]["Longitude"]
+        if str(latitude) == "0":
+            latitude = "<INACCESSIBLE>"
+            longitude = "<INACCESSIBLE>"
         link = "https://www.winndixie.com/storedetails?search=" + str(
             store["StoreCode"]
         )

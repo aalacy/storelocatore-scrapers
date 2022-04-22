@@ -1,6 +1,9 @@
-import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 logger = SgLogSetup().get_logger("jimmyjohns_com")
 
@@ -10,48 +13,18 @@ headers = {
 }
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
-
-
 def fetch_data():
     url = "https://locations.jimmyjohns.com/sitemap.xml"
     locs = []
-    while len(locs) < 2500:
+    while len(locs) < 2700:
         r = session.get(url, headers=headers)
-        if r.encoding is None:
-            r.encoding = "utf-8"
-        for line in r.iter_lines(decode_unicode=True):
+        for line in r.iter_lines():
             if ".html</loc>" in line and "/sandwiches-" in line:
                 lurl = line.split("<loc>")[1].split("<")[0]
-                locs.append(lurl)
+                if lurl not in locs:
+                    locs.append(lurl)
     logger.info(("Found %s Locations." % str(len(locs))))
     for loc in locs:
-        logger.info(loc)
-        url = loc
         add = ""
         city = ""
         state = ""
@@ -64,9 +37,7 @@ def fetch_data():
         website = "jimmyjohns.com"
         typ = "Restaurant"
         r2 = session.get(loc, headers=headers)
-        if r2.encoding is None:
-            r2.encoding = "utf-8"
-        for line2 in r2.iter_lines(decode_unicode=True):
+        for line2 in r2.iter_lines():
             if '"telephone": "' in line2:
                 phone = line2.split('"telephone": "')[1].split('"')[0]
             if '"streetAddress": "' in line2:
@@ -85,29 +56,35 @@ def fetch_data():
                 hours = line2.split('"openingHours": "')[1].split('"')[0].strip()
         if hours == "":
             hours = "<MISSING>"
+        if hours.lower().count("closed") == 7:
+            hours = "Temporarily Closed"
         if phone == "":
             phone = "<MISSING>"
-        yield [
-            website,
-            url,
-            name,
-            add,
-            city,
-            state,
-            zc,
-            country,
-            store,
-            phone,
-            typ,
-            lat,
-            lng,
-            hours,
-        ]
+        yield SgRecord(
+            locator_domain=website,
+            page_url=loc,
+            location_name=name,
+            street_address=add,
+            city=city,
+            state=state,
+            zip_postal=zc,
+            country_code=country,
+            phone=phone,
+            location_type=typ,
+            store_number=store,
+            latitude=lat,
+            longitude=lng,
+            hours_of_operation=hours,
+        )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(
+        deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
+    ) as writer:
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()

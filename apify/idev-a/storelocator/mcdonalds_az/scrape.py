@@ -13,6 +13,7 @@ _headers = {
 }
 
 locator_domain = "https://mcdonalds.az"
+
 base_url = "https://mcdonalds.az/restaurant-locations"
 
 
@@ -43,13 +44,15 @@ def fetch_data():
                 country_code="Azerbaijan",
                 phone=phone,
                 locator_domain=locator_domain,
-                hours_of_operation="; ".join(hours).replace("–", "-"),
+                hours_of_operation="".join(hours).replace("–", "-"),
                 raw_address=raw_address,
             )
 
 
 if __name__ == "__main__":
-    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.PHONE}))) as writer:
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.RAW_ADDRESS}))
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

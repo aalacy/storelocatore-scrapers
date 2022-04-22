@@ -28,30 +28,38 @@ headers = {
 
 def fetch_data():
     # Your scraper here
-    search_url = "https://www.mcquadesmarket.com/store-locations.php"
+    search_url = "https://mcquadesmarket.com/locations/"
     stores_req = session.get(search_url, headers=headers)
     stores_sel = lxml.html.fromstring(stores_req.text)
-    stores = stores_sel.xpath('//div[@class="row pad"]')
+    stores = stores_sel.xpath(
+        '//div[@class="sek-column sek-col-base sek-section-custom-breakpoint-col-33   sek-level-has-shadow"]'
+    )
     for store in stores:
         page_url = search_url
 
         locator_domain = website
 
-        location_name = "".join(store.xpath("div[1]/p[1]/strong/text()")).strip()
+        location_name = "".join(store.xpath("div[1]/div[2]//h3/text()")).strip()
 
-        raw_info = store.xpath("div[1]/p[1]/text()")
+        raw_info = store.xpath("div[1]/div[3]/div/p[1]/text()")
         add_list = "".join(raw_info[0]).strip().split(",")
-        street_address = "".join(add_list[0:-2]).strip()
+        street_address = "".join(add_list[:-2]).strip()
         city = add_list[-2].strip()
         state = add_list[-1].strip().split(" ")[0].strip().replace(".", "").strip()
         zip = add_list[-1].strip().split(" ")[-1].strip()
 
         country_code = "US"
-        store_number = "".join(store.xpath("@data-id")).strip()
-        phone = raw_info[-1].strip().replace("Tel:", "").strip()
+        store_number = "<MISSING>"
+        phone = store.xpath("div[1]/div[3]/div/p/a[contains(@href,'tel:')]/text()")
+        if len(phone) > 0:
+            phone = phone[0]
+        else:
+            phone = "<MISSING>"
 
         location_type = "<MISSING>"
-        hours = store.xpath('div[1]/p[./strong[contains(text(),"Store Hours")]]/text()')
+        hours = store.xpath(
+            'div[1]/div[3]/div/p[./strong[contains(text(),"Store Hours")]]/text()'
+        )
         hours_list = []
         for hour in hours:
             if len("".join(hour).strip()) > 0:

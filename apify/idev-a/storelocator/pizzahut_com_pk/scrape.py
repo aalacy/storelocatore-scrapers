@@ -5,7 +5,7 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sglogging import SgLogSetup
 
-logger = SgLogSetup().get_logger("pizzahut")
+logger = SgLogSetup().get_logger("pizza")
 
 _headers = {
     "Accept": "application/json, text/plain, */*",
@@ -22,19 +22,24 @@ city_url = "https://web-api.pizzahut.com.pk/api/v1/area_by_city/{}"
 def fetch_data():
     with SgRequests() as session:
         cities = session.get(base_url, headers=_headers).json()["data"]
+        codes = []
         for city in cities:
             locations = session.get(
                 city_url.format(city["id"]), headers=_headers
             ).json()["data"]
             logger.info(f"[{city['name']}] {len(locations)} found")
             for _ in locations:
+                if _["OutletCode"] in codes:
+                    continue
+                codes.append(_["OutletCode"])
                 yield SgRecord(
                     page_url="",
                     store_number=_["ID"],
                     location_name=_["OutletName"],
                     street_address=_["AreaName"]
-                    .replace(city["name"], "")
-                    .replace(",", ""),
+                    .split(city["name"])[0]
+                    .replace(",", "")
+                    .replace("NO 24HOURS DELIVERY", ""),
                     city=city["name"],
                     country_code="Pakistan",
                     locator_domain=locator_domain,

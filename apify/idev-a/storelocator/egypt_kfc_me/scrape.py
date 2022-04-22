@@ -45,11 +45,13 @@ def fetch_data():
             street_address = addr.street_address_1
             if addr.street_address_2:
                 street_address += ", " + addr.street_address_2
+            city = addr.city
+            if not city:
+                city = location_name.split("-")[-1].split("(")[0].split("/")[0].strip()
             yield SgRecord(
                 location_name=location_name,
                 street_address=street_address.replace("egypt", ""),
-                city=addr.city,
-                state=addr.state,
+                city=city,
                 zip_postal=addr.postcode,
                 country_code="Egypt",
                 phone=phone,
