@@ -40,11 +40,13 @@ def fetch_data():
         raw_data = [
             e.replace("\xa0", "") for e in raw_data if e.strip() and "Phone" not in e
         ]
-        raw_address = " ".join(raw_data)
+        raw_address = " ".join(" ".join(raw_data).split())
         addr = parse_address_intl(raw_address)
         street_address = addr.street_address_1
         if addr.street_address_2:
             street_address += " " + addr.street_address_2
+        if street_address == "100":
+            street_address = "100 Bulla Road"
         phone = loc_dom.xpath('//a[contains(@onclick, "tel")]/text()')[0]
         geo = (
             loc_dom.xpath("//iframe/@src")[0]
@@ -56,13 +58,16 @@ def fetch_data():
             '//tr[td[b[contains(text(), "Regular Trading Hours:")]]]/following-sibling::tr/td/text()'
         )
         hoo = " ".join([e.strip() for e in hoo if e.strip()])
+        city = addr.city
+        if not city:
+            city = page_url.split("/")[-1].capitalize()
 
         item = SgRecord(
             locator_domain=domain,
             page_url=page_url,
             location_name=location_name,
             street_address=street_address,
-            city=addr.city,
+            city=city,
             state=addr.state,
             zip_postal=addr.postcode,
             country_code="AU",
@@ -72,6 +77,7 @@ def fetch_data():
             latitude=geo[1],
             longitude=geo[0],
             hours_of_operation=hoo,
+            raw_address=raw_address,
         )
 
         yield item
