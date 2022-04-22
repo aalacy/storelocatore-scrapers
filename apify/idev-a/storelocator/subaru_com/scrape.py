@@ -24,6 +24,8 @@ logger = SgLogSetup().get_logger("subaru")
 _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
 }
+locator_domain = "https://www.subaru.com/"
+base_url = "https://www.subaru.com/services/dealers/distances/by/bounded-location?latitude=39.857117&longitude=-98.56977&neLatitude=84.92891450547761&neLongitude=180&swLatitude=-20.626499923373608&swLongitude=-180&count=-1"
 
 
 max_workers = 8
@@ -36,7 +38,7 @@ def fetchConcurrentSingle(loc):
             response = request_with_retries(_["siteUrl"])
             return _["siteUrl"], _, bs(response.text, "lxml")
         except:
-            return _["siteUrl"], _, None
+            return _["siteUrl"], _, ""
 
 
 def fetchConcurrentList(list, occurrence=max_workers):
@@ -51,10 +53,11 @@ def fetchConcurrentList(list, occurrence=max_workers):
         max_workers=occurrence, thread_name_prefix="fetcher"
     ) as executor:
         for result in executor.map(fetchConcurrentSingle, list):
-            count = count + 1
-            if count % reminder == 0:
-                logger.debug(f"Concurrent Operation count = {count}")
-            output.append(result)
+            if result:
+                count = count + 1
+                if count % reminder == 0:
+                    logger.debug(f"Concurrent Operation count = {count}")
+                output.append(result)
     return output
 
 
@@ -63,8 +66,6 @@ def request_with_retries(url):
 
 
 def fetch_data():
-    locator_domain = "https://www.subaru.com/"
-    base_url = "https://www.subaru.com/services/dealers/distances/by/bounded-location?latitude=39.857117&longitude=-98.56977&neLatitude=84.92891450547761&neLongitude=180&swLatitude=-20.626499923373608&swLongitude=-180&count=-1"
     with SgRequests() as session:
         locations = session.get(base_url, headers=_headers).json()
         for page_url, _, sp1 in fetchConcurrentList(locations):
@@ -97,7 +98,7 @@ def fetch_data():
 
 
 if __name__ == "__main__":
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

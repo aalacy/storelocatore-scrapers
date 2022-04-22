@@ -11,7 +11,6 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "cinnabonaustralia.com.au"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
-session = SgRequests()
 headers = {
     "authority": "cinnabonaustralia.com.au",
     "sec-ch-ua": '" Not A;Brand";v="99", "Chromium";v="90", "Google Chrome";v="90"',
@@ -30,77 +29,100 @@ headers = {
 def fetch_data():
     # Your scraper here
     search_url = "https://cinnabonaustralia.com.au/bakery-locations/"
-    search_res = session.get(search_url, headers=headers)
+    with SgRequests() as session:
+        search_res = session.get(search_url, headers=headers)
 
-    search_sel = lxml.html.fromstring(search_res.text)
+        search_sel = lxml.html.fromstring(search_res.text)
 
-    store_list = search_sel.xpath('//div[@class="uncont"][.//h4]')
+        store_list = search_sel.xpath('//div[@class="uncont"][.//h4]')
 
-    for store in store_list:
+        for store in store_list:
 
-        page_url = search_url
+            page_url = search_url
 
-        locator_domain = website
+            locator_domain = website
 
-        store_info = list(
-            filter(
-                str,
-                [x.strip() for x in store.xpath(".//div[h5 and h4]//text()")],
+            store_info = list(
+                filter(
+                    str,
+                    [x.strip() for x in store.xpath(".//div[h5 and h4]//text()")],
+                )
             )
-        )
-        raw_address = " ".join(store_info).strip().split("Trading Hours")[0].strip()
+            raw_address = (
+                ", ".join(store_info)
+                .strip()
+                .split("Trading Hours")[0]
+                .strip()
+                .replace("Westfield Southland (near Coles),", "")
+                .strip()
+                .replace("The Kitchens, Robina Town Centre.,", "")
+                .strip()
+                .replace("Outside Coles.,", "")
+                .strip()
+                .replace("Level 2, next to Michael Hill.,", "")
+                .strip()
+                .replace("Level 1,", "")
+                .strip()
+                .replace("Opposite Coles.,", "")
+                .strip()
+            )
 
-        formatted_addr = parser.parse_address_intl(raw_address)
-        street_address = formatted_addr.street_address_1
-        if formatted_addr.street_address_2:
-            street_address = street_address + ", " + formatted_addr.street_address_2
+            formatted_addr = parser.parse_address_intl(raw_address)
+            street_address = formatted_addr.street_address_1
+            if formatted_addr.street_address_2:
+                street_address = street_address + ", " + formatted_addr.street_address_2
 
-        city = formatted_addr.city
-        state = formatted_addr.state
-        zip = formatted_addr.postcode
+            city = formatted_addr.city
+            if not city:
+                city = raw_address.split(",")[1].strip().split(" ")[0].strip()
 
-        country_code = "AU"
+            state = formatted_addr.state
+            zip = formatted_addr.postcode
 
-        location_name = " ".join(store.xpath(".//h2//text()")).strip()
+            country_code = "AU"
 
-        phone = " ".join(store.xpath('.//*[contains(@href,"tel:")]//text()')).strip()
-        store_number = "<MISSING>"
+            location_name = " ".join(store.xpath(".//h2//text()")).strip()
 
-        location_type = "<MISSING>"
-        hours_of_operation = (
-            "; ".join(store_info)
-            .strip()
-            .split("Trading Hours")[1]
-            .strip()
-            .replace(":;", ":")
-            .replace("day", "day:")
-            .strip()
-        )
-        try:
-            if ";" == hours_of_operation[0]:
-                hours_of_operation = "".join(hours_of_operation[2:]).strip()
-        except:
-            pass
+            phone = " ".join(
+                store.xpath('.//*[contains(@href,"tel:")]//text()')
+            ).strip()
+            store_number = "<MISSING>"
 
-        latitude, longitude = "<MISSING>", "<MISSING>"
+            location_type = "<MISSING>"
+            hours_of_operation = (
+                "; ".join(store_info)
+                .strip()
+                .split("Trading Hours")[1]
+                .strip()
+                .replace(":;", ":")
+                .replace("day", "day:")
+                .strip()
+            )
+            try:
+                if ";" == hours_of_operation[0]:
+                    hours_of_operation = "".join(hours_of_operation[2:]).strip()
+            except:
+                pass
 
-        yield SgRecord(
-            locator_domain=locator_domain,
-            page_url=page_url,
-            location_name=location_name,
-            street_address=street_address,
-            city=city,
-            state=state,
-            zip_postal=zip,
-            country_code=country_code,
-            store_number=store_number,
-            phone=phone,
-            location_type=location_type,
-            latitude=latitude,
-            longitude=longitude,
-            hours_of_operation=hours_of_operation,
-            raw_address=raw_address,
-        )
+            latitude, longitude = "<MISSING>", "<MISSING>"
+
+            yield SgRecord(
+                locator_domain=locator_domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+                raw_address=raw_address,
+            )
 
 
 def scrape():

@@ -1,8 +1,11 @@
-import csv
 from sgrequests import SgRequests
-from sglogging import sglog
 from bs4 import BeautifulSoup as bs
 import re
+from sglogging import sglog
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
 
 DOMAIN = "jackjones.com"
 BASE_URL = "https://www.jackjones.com"
@@ -15,35 +18,6 @@ HEADERS = {
 log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
 
 session = SgRequests()
-
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
 
 
 def handle_missing(field):
@@ -89,16 +63,12 @@ def fetch_data():
     country_list = get_country()
     state_url = get_state_url(country_list)
     locations = []
-    name_locations = []
-    address_locations = []
-    store_numbers = []
     for url in state_url:
         data = session.get(url, headers=HEADERS).json()
         if "locations" not in data:
             continue
         for row in data["locations"]:
             page_url = "https://www.jackjones.com/nl/en/stores"
-            locator_domain = DOMAIN
             location_name = handle_missing(row["storeName"])
             if "address2" in row and len(row["address2"]) > 0:
                 street_address = "{}, {}".format(
@@ -118,7 +88,7 @@ def fetch_data():
             city = handle_missing(row["city"])
             state = "<MISSING>" if "state" not in row else row["state"]
             street_address = street_address.replace(city, "").replace(state, "")
-            zip_code = handle_missing(row["postalCode"])
+            zip_postal = handle_missing(row["postalCode"])
             country_code = row["country"]
             store_number = row["storeID"]
             location_type = handle_missing(row["brands"][0]["name"])
@@ -138,53 +108,48 @@ def fetch_data():
                 else "<MISSING>"
             )
             hours_of_operation = "<MISSING>"
-            if (
-                store_number in store_numbers
-                or location_name in name_locations
-                and street_address in address_locations
-            ):
-                log.info(
-                    "[DUPLICATE] Found Duplicate locations: {} : {}".format(
-                        location_name, street_address
-                    )
-                )
-                continue
-            else:
-                log.info(
-                    "[APPEND] Append info to locations: {} : {}".format(
-                        location_name, street_address
-                    )
-                )
-                name_locations.append(location_name)
-                address_locations.append(street_address)
-                store_numbers.append(store_number)
-                locations.append(
-                    [
-                        locator_domain,
-                        page_url,
-                        location_name,
-                        street_address,
-                        city,
-                        state,
-                        zip_code,
-                        country_code,
-                        store_number,
-                        phone,
-                        location_type,
-                        latitude,
-                        longitude,
-                        hours_of_operation,
-                    ]
-                )
+            raw_address = f"{street_address}, {city}, {state}, {zip_postal}"
+            log.info("Append {} => {}".format(location_name, street_address))
+            yield SgRecord(
+                locator_domain=DOMAIN,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_postal,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+                raw_address=raw_address,
+            )
     return locations
 
 
 def scrape():
-    log.info("Start {} Scraper".format(DOMAIN))
-    data = fetch_data()
-    log.info("Found {} locations".format(len(data)))
-    write_output(data)
-    log.info("Finish processed " + str(len(data)))
+    log.info("start {} Scraper".format(DOMAIN))
+    count = 0
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.LOCATION_NAME,
+                    SgRecord.Headers.RAW_ADDRESS,
+                }
+            )
+        )
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
 
 
 scrape()

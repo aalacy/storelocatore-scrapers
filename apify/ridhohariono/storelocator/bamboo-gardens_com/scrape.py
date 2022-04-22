@@ -8,8 +8,8 @@ from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgpostal import parse_address_intl
 import re
 
-DOMAIN = "bamboo-gardens.com.com"
-BASE_URL = "https://bamboo-gardens.com.com"
+DOMAIN = "bamboo-gardens.com"
+BASE_URL = "https://bamboo-gardens.com"
 LOCATION_URL = "https://bamboo-gardens.com/inchins-bamboo-garden-locations/"
 HEADERS = {
     "Accept": "application/json, text/plain, */*",
@@ -76,6 +76,8 @@ def fetch_data():
             continue
         try:
             page_url = row["href"]
+            if "san-mateo-ca" in page_url:
+                continue
             info = (
                 pull_content(page_url)
                 .find("main")
@@ -97,6 +99,7 @@ def fetch_data():
                 info.find("ul")
                 .get_text(strip=True, separator=",")
                 .replace("Banquet hall available for up to 350 guests", " ")
+                .replace(",Event Space: Up to 120 guests", " ")
                 .replace(",:", ",")
                 .replace(":,", ":")
             )
@@ -117,6 +120,7 @@ def fetch_data():
                 parent_btn.find_next("ul")
                 .get_text(strip=True, separator=",")
                 .replace("Banquet hall available for up to 350 guests", " ")
+                .replace(",Event Space: Up to 120 guests", " ")
                 .replace(",:", ":")
                 .replace(":,", ":")
             )
