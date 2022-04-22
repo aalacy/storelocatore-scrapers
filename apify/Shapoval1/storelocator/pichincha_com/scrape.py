@@ -48,14 +48,16 @@ def fetch_data(sgw: SgWriter):
                     longitude = j.get("Longitude") or "<MISSING>"
                     phone = j.get("Phones") or "<MISSING>"
                     phone = str(phone).strip()
-                    if str(phone).find("NE") != -1:
+                    if str(phone).find("NE") != -1 or str(phone) == "-":
                         phone = "<MISSING>"
                     schedule_week = j.get("ScheduleWeek")
                     schedule_sat = j.get("ScheduleSat")
                     schedule_sun = j.get("ScheduleSun")
                     hours_of_operation = "<MISSING>"
                     if schedule_week:
-                        hours_of_operation = str(schedule_week)
+                        hours_of_operation = (
+                            "Monday to Friday" + " " + str(schedule_week)
+                        )
                     if schedule_sat:
                         hours_of_operation = hours_of_operation + " Sat " + schedule_sat
                     if schedule_sun:
@@ -63,6 +65,7 @@ def fetch_data(sgw: SgWriter):
                     hours_of_operation = (
                         hours_of_operation.replace("Sat -Sun -", "")
                         .replace("Sun -", "")
+                        .replace("Sat -", "")
                         .strip()
                     )
 

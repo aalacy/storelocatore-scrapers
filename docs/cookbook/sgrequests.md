@@ -3,7 +3,7 @@
 #### Library version:
 
 ```
-sgrequests>=0.2.0
+sgrequests>=0.3.1
 ```
 
 ## Features
@@ -48,10 +48,13 @@ class SgRequestError(Exception):
   - `PROXY_URL`
 
 ```python
-class SgRequests(SgRequestsAsync):
+from sgrequests import SgRequests, ProxySettings
+
+class SgRequests(SgRequestsBase):
   def __init__(self,
                proxy_country: Optional[str] = None,
-               dont_retry_status_codes: Set[int] = SgRequestsAsync.DEFAULT_DONT_RETRY_STATUS_CODES,
+               proxy_escalation_order: List[Optional[str]] = ProxySettings.DEFAULT_PROXY_ESCALATION_ORDER,
+               dont_retry_status_codes: Set[int] = SgRequestsBase.DEFAULT_DONT_RETRY_STATUS_CODES,
                dont_retry_status_codes_exceptions: Set[int] = frozenset(),
                timeout_config: Timeout = SgRequestsAsync.DEFAULT_TIMEOUT,
                retries_with_fresh_proxy_ip: int = 4):
@@ -59,13 +62,23 @@ class SgRequests(SgRequestsAsync):
       Synchronous SgRequests, backed by httpx, with proxy rotation and lots of customization.
       :param proxy_country: [None] Optionally, override the default proxy 2-letter country code
                             (`us` at the time of writing).
-      :param dont_retry_status_codes: [SgRequestsAsync.DEFAULT_DONT_RETRY_STATUS_CODES] Skip retries for these status codes.
+      :param proxy_escalation_order: [ProxySettings.DEFAULT_PROXY_ESCALATION_ORDER] How to escalate proxies in case of
+                                     failure. For testing using the contractor proxy, use ProxySettings.
+      :param dont_retry_status_codes: [SgRequestsBase.DEFAULT_DONT_RETRY_STATUS_CODES] Skip retries for these status codes.
       :param dont_retry_status_codes_exceptions: Exceptions to `dont_retry_status_codes`. Defaults to an empty set.
       :param timeout_config: [SgRequests.DEFAULT_TIMEOUT] HTTP timeout configuration. See `httpx`'s Timeout object.
       :param retries_with_fresh_proxy_ip: [4] How many times to rotate proxy IPs on errors,
                                               for each request errors before giving up?
       """
 ```
+
+### A word on Proxies
+
+- Proxies are automatically managed via our `proxyfier` library; you should not have to worry about them.
+  - The idea is that as requests fail, the library will escalate from no proxy, to using a cheap proxy, to using a residential one.
+- If you want to test using a proxy, supply the `PROXY_PASSWORD` provided to you, and set the
+  `proxy_escalation_order` constructor parameter to `ProxySettings.TEST_PROXY_ESCALATION_ORDER`.
+- **DON'T FORGET TO REMOVE THE SETTING FROM THE CONSTRUCTOR WHEN YOU'RE DONE TESTING!**
 
 ### Basic `SgRequests` in Action:
 

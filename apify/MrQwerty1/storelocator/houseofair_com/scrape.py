@@ -43,7 +43,21 @@ def get_hoo(url):
     )
     hours = list(filter(None, [h.replace(" CT", "").strip() for h in hours]))
 
-    return ";".join(hours)
+    ss = dict()
+    for h in hours:
+        day = h.split(":")[0].strip()
+        inter = ":".join(h.split(":")[1:])
+        if day in ss:
+            new_end = inter.split("-")[-1].strip()
+            ss[day] = "-".join(ss[day].split("-")[:-1]) + f"- {new_end}"
+        else:
+            ss[day] = inter
+
+    _tmp = []
+    for k, v in ss.items():
+        _tmp.append(f"{k}: {v}")
+
+    return ";".join(_tmp)
 
 
 def get_poland(page_url, sgw: SgWriter):

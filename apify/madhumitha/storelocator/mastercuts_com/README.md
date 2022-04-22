@@ -1,2 +1,0 @@
---ignore StreetAddressHasNumber (Confirmed on website)
---ignore CountValidator --ignore StateLevelCountValidator (Validation error, scraper worked correctly)

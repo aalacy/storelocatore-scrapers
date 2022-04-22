@@ -71,6 +71,8 @@ def fetch_data():
             for store in re.findall('"/stores/([A-Za-z-0-9]*)"', pull_str)
         ]
         stores.append("https://www.davidjones.com/newmarket")
+        stores.append("https://www.davidjones.com/sunshine")
+        stores.append("https://www.davidjones.com/wollongong-central")
         for store in stores:
             logger.info(f"Crawling: {store}")
             driver.get(store)
@@ -104,7 +106,7 @@ def scrape():
         scraper_name="Crawler",
         data_fetcher=fetch_data,
         field_definitions=field_defs,
-        log_stats_interval=1,
+        log_stats_interval=5,
     )
 
     pipeline.run()

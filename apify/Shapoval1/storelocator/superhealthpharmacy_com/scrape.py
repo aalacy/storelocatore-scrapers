@@ -54,8 +54,11 @@ def fetch_data(sgw: SgWriter):
         country_code = "US"
         city = ad.split(",")[0].strip()
         map_link = "".join(tree.xpath("//iframe/@src"))
-        latitude = map_link.split("!3d")[1].strip().split("!")[0].strip()
-        longitude = map_link.split("!2d")[1].strip().split("!")[0].strip()
+        try:
+            latitude = map_link.split("!3d")[1].strip().split("!")[0].strip()
+            longitude = map_link.split("!2d")[1].strip().split("!")[0].strip()
+        except:
+            latitude, longitude = "<MISSING>", "<MISSING>"
         phone = (
             "".join(
                 tree.xpath(
