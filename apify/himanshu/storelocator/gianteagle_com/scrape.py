@@ -41,7 +41,6 @@ def fetch_data():
             "https://www.gianteagle.com/api/sitecore/locations/getlocations?q=&skip="
             + str(skip_counter),
             headers=headers,
-            verify=False,
         )
         json_locations = json.loads(r_locations.text)
 
