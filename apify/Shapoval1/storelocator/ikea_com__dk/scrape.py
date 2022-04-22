@@ -122,9 +122,9 @@ def fetch_data(sgw: SgWriter):
         if hours_of_operation.find("Palveluvarasto") != -1:
             hours_of_operation = hours_of_operation.split("Palveluvarasto")[0].strip()
         js_block = "".join(tree.xpath('//script[contains(text(), "latitude")]/text()'))
-        js = json.loads(js_block)
-        latitude = js.get("geo").get("latitude")
-        longitude = js.get("geo").get("longitude")
+        j = json.loads(js_block)
+        latitude = j.get("geo").get("latitude")
+        longitude = j.get("geo").get("longitude")
 
         row = SgRecord(
             locator_domain=locator_domain,
