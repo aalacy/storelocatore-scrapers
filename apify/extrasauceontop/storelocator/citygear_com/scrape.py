@@ -31,7 +31,9 @@ def fetch_data():
     coords = DynamicGeoSearch(
         expected_search_radius_miles=200, country_codes=[SearchableCountries.USA]
     )
-    with SgRequests(dont_retry_status_codes=([404])) as session:
+    with SgRequests(
+        dont_retry_status_codes=([404]), retries_with_fresh_proxy_ip=2
+    ) as session:
         for lat, lng in coords:
             log.info(f"Pulling stores for {lat,lng}")
             url = (

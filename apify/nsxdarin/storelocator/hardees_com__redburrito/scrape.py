@@ -20,81 +20,91 @@ def fetch_data():
     website = "hardees.com"
     for line in r.iter_lines():
         if "<loc>https://locations.hardees.com/" in line:
-            locs.append(line.split("<loc>")[1].split("<")[0])
+            locs.append(line.split("<loc>")[1].split("<")[0].replace("--", "-"))
     for loc in locs:
-        logger.info(loc)
-        country = "US"
-        typ = "<MISSING>"
-        name = ""
-        add = ""
-        city = ""
-        state = ""
-        zc = ""
-        phone = ""
-        lat = ""
-        store = "<MISSING>"
-        lng = ""
-        hours = ""
-        RB = False
-        r2 = session.get(loc, headers=headers)
-        for line2 in r2.iter_lines():
-            if "<title>" in line2:
-                name = line2.split("<title>")[1].split("<")[0]
-                if ":" in name:
-                    name = name.split(":")[0].strip()
-            if '<meta itemprop="streetAddress" content="' in line2:
-                add = line2.split('<meta itemprop="streetAddress" content="')[1].split(
-                    "<"
-                )[0]
-            if '<span class="location-address">' in line2:
-                csz = line2.split('<span class="location-address">')[1].split("<")[0]
-                city = csz.split(",")[0]
-                state = csz.split(",")[1].strip().split(" ")[0]
-                zc = csz.rsplit(" ", 1)[1]
-            if '<a href="tel:' in line2:
-                phone = line2.split('<a href="tel:')[1].split('"')[0]
-            if "lat: " in line2:
-                lat = line2.split("lat: ")[1].split(",")[0]
-            if "lng: " in line2:
-                lng = (
-                    line2.split("lng: ")[1]
-                    .strip()
-                    .replace("\t", "")
-                    .replace("\r", "")
-                    .replace("\n", "")
+        try:
+            if "fort-smith/1820-phoenix" in loc:
+                loc = "https://locations.hardees.com/ar/fort-smith/1820-phoenix-ave"
+            logger.info(loc)
+            country = "US"
+            typ = "<MISSING>"
+            name = ""
+            add = ""
+            city = ""
+            state = ""
+            zc = ""
+            phone = ""
+            lat = ""
+            store = "<MISSING>"
+            lng = ""
+            hours = ""
+            RB = False
+            r2 = session.get(loc, headers=headers)
+            for line2 in r2.iter_lines():
+                if "<title>" in line2:
+                    name = line2.split("<title>")[1].split("<")[0]
+                    if ":" in name:
+                        name = name.split(":")[0].strip()
+                if '"dimension4":"' in line2:
+                    add = line2.split('"dimension4":"')[1].split('"')[0]
+                if '"Address-field Address-city">' in line2:
+                    city = line2.split('"Address-field Address-city">')[1].split("<")[0]
+                if 'itemprop="addressRegion">' in line2:
+                    state = line2.split('itemprop="addressRegion">')[1].split("<")[0]
+                if 'itemprop="postalCode">' in line2:
+                    zc = line2.split('itemprop="postalCode">')[1].split("<")[0]
+                if '<a href="tel:' in line2:
+                    phone = line2.split('<a href="tel:')[1].split('"')[0]
+                if '<meta itemprop="latitude" content="' in line2:
+                    lat = line2.split('<meta itemprop="latitude" content="')[1].split(
+                        '"'
+                    )[0]
+                    lng = line2.split('<meta itemprop="longitude" content="')[1].split(
+                        '"'
+                    )[0]
+                if hours == "" and '"highlightTodayBackground":null,"hours":[' in line2:
+                    days = (
+                        line2.split('"highlightTodayBackground":null,"hours":[')[1]
+                        .split('],"open24HoursMessage":')[0]
+                        .split('"day":"')
+                    )
+                    for day in days:
+                        if '"intervals"' in day:
+                            if '"isClosed":false' not in day:
+                                hrs = day.split('"')[0] + ": Closed"
+                            else:
+                                hrs = (
+                                    day.split('"')[0]
+                                    + ": "
+                                    + day.split('"start":')[1].split("}")[0]
+                                    + "-"
+                                    + day.split('"end":')[1].split(",")[0]
+                                )
+                            if hours == "":
+                                hours = hrs
+                            else:
+                                hours = hours + "; " + hrs
+                if "Red Burrito</span>" in line2:
+                    RB = True
+            if RB is True:
+                yield SgRecord(
+                    locator_domain=website,
+                    page_url=loc,
+                    location_name=name,
+                    street_address=add,
+                    city=city,
+                    state=state,
+                    zip_postal=zc,
+                    country_code=country,
+                    phone=phone,
+                    location_type=typ,
+                    store_number=store,
+                    latitude=lat,
+                    longitude=lng,
+                    hours_of_operation=hours,
                 )
-            if "<li><span>Mon" in line2:
-                hours = (
-                    line2.strip().replace("\t", "").replace("\r", "").replace("\n", "")
-                )
-                hours = hours.replace("</span></li><li><span>", "; ").replace(
-                    " <span></span> ", "-"
-                )
-                hours = (
-                    hours.replace("<li>", "")
-                    .replace("</li>", "")
-                    .replace("<span>", "")
-                    .replace("</span>", "")
-                )
-            if "Red Burrito</span>" in line2:
-                RB = True
-        if RB is True:
-            yield SgRecord(
-                locator_domain=website,
-                page_url=loc,
-                location_name=name,
-                street_address=add,
-                city=city,
-                state=state,
-                zip_postal=zc,
-                country_code=country,
-                phone=phone,
-                location_type=typ,
-                store_number=store,
-                latitude=lat,
-                longitude=lng,
-                hours_of_operation=hours,
-            )
+        except:
+            pass
 
 
 def scrape():

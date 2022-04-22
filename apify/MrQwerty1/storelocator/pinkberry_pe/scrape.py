@@ -163,6 +163,8 @@ def fetchData():
                 .strip()
             )
             street_address, city, state, zip_postal = getAddress(addr)
+            if " " in zip_postal:
+                zip_postal = zip_postal.split()[-1]
             raw_address = f"{addr}"
 
             yield SgRecord(

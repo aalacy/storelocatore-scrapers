@@ -26,7 +26,7 @@ def fetch_data():
             locations = state.select("div.list")
             st = state.find_previous_sibling("h2").text.strip()
             for _ in locations:
-                location_name = _.h3.text.strip()
+                location_name = _.h3.text.split("–")[0].split("-")[0].strip()
                 if "soon" in location_name.lower():
                     continue
                 hours_of_operation = ""
@@ -42,14 +42,17 @@ def fetch_data():
                 street_address = addr.street_address_1
                 if addr.street_address_2:
                     street_address += " " + addr.street_address_2
+                city = addr.city
+                if not city:
+                    city = location_name.split(",")[0].strip()
                 phone = ""
                 if _.select_one("div.phone"):
                     phone = _.select_one("div.phone").text.strip()
                 yield SgRecord(
                     page_url=base_url,
-                    location_name=location_name.split("–")[0].split("-")[0],
+                    location_name=location_name,
                     street_address=street_address,
-                    city=addr.city,
+                    city=city,
                     state=st,
                     zip_postal=addr.postcode,
                     country_code="AU",

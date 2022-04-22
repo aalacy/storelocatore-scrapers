@@ -35,7 +35,10 @@ def fetch_data(sgw: SgWriter):
             if "coming soon" in item.text.lower():
                 continue
 
-            location_name = item.h2.text.strip()
+            try:
+                location_name = item.h2.text.strip()
+            except:
+                continue
 
             raw_address = list(
                 item.find(class_="locations-grid-address").stripped_strings

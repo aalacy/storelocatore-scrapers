@@ -3,7 +3,7 @@ from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
@@ -18,27 +18,24 @@ MISSING = SgRecord.MISSING
 
 
 def fetch_data():
-    res = session.get(DOMAIN)
+    url = "https://abchome.com/pages/contact"
+    res = session.get(url, headers=headers)
     soup = BeautifulSoup(res.text, "html.parser")
-    loclist = soup.find_all("div", {"class": "container-2 w-container"})[:-1]
+    loclist = soup.findAll("div", {"class": "tt-contact02-col-list"})[1].findAll(
+        "div", {"class": "col-md"}
+    )
     for loc in loclist:
-        location_name = loc.find("h2").text
+        location_name = loc.find("h6").text
         log.info(location_name)
-        phone = loc.select_one("a[href*=tel]").text
-        temp = loc.findAll("p", {"class": "hero-subheading"})
-        address = temp[0].get_text(separator="|", strip=True).split("|")
+        phone = MISSING
+        address = loc.find("address").get_text(separator="|", strip=True).split("|")
+        hours_of_operation = address[-2] + " " + address[-1]
         street_address = address[0]
         address = address[1].split(",")
         city = address[0]
         address = address[1].split()
         state = address[0]
         zip_postal = address[1]
-        hours_of_operation = (
-            temp[1]
-            .get_text(separator="|", strip=True)
-            .replace("|", " ")
-            .replace("Hours", "")
-        )
         country_code = "US"
         yield SgRecord(
             locator_domain=DOMAIN,
@@ -59,18 +56,15 @@ def fetch_data():
 
 
 def scrape():
-    log.info("Started")
-    count = 0
     with SgWriter(
-        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PhoneNumberId)
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
     ) as writer:
-        results = fetch_data()
-        for rec in results:
-            writer.write_row(rec)
-            count = count + 1
-
-    log.info(f"No of records being processed: {count}")
-    log.info("Finished")
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":

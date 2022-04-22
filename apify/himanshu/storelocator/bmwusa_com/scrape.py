@@ -29,10 +29,6 @@ def fetch_data(sgw: SgWriter):
     )
 
     for zip_code in search:
-        if len(str(zip_code)) == 4:
-            zip_code = "0" + str(zip_code)
-        if len(str(zip_code)) == 3:
-            zip_code = "00" + str(zip_code)
         log.info(
             "Searching: %s | Items remaining: %s" % (zip_code, search.items_remaining())
         )
@@ -53,6 +49,7 @@ def fetch_data(sgw: SgWriter):
         for store_data in json_data:
             store = []
             store.append("https://www.bmwusa.com")
+            log.info(store_data["DefaultService"]["Name"])
             store.append(store_data["DefaultService"]["Name"])
             store.append(store_data["DefaultService"]["Address"])
             store.append(store_data["DefaultService"]["City"])

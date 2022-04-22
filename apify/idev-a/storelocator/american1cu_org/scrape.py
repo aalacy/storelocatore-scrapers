@@ -14,14 +14,17 @@ _headers = {
 }
 
 locator_domain = "https://www.american1cu.org"
-base_url = "https://www.american1cu.org/locations"
+base_url = "https://www.american1cu.org/locations?street=&search=49014&state=&radius=99&options%5B%5D=branches&options%5B%5D=cuatms&options%5B%5D=shared_branches"
 
 
 def _coord(infos, addr):
     coord = ["", ""]
     for info in infos:
         loc = bs(info.split(");")[0][1:-1], "lxml")
-        _addr = list(loc.select("p")[1].stripped_strings)
+        try:
+            _addr = list(loc.select("p")[1].stripped_strings)
+        except:
+            continue
         if _addr == addr:
             coord = (
                 loc.select_one("input[type='button']")["onclick"]
@@ -46,7 +49,7 @@ def fetch_data():
         res = session.get(base_url, headers=_headers).text
         infos = res.split("infowindow.setContent(")[1:]
         soup = bs(res, "lxml")
-        links = soup.select("div.loc_list.Cbox div.listbox")
+        links = soup.select("div.loc_list div.listbox")
         logger.info(f"{len(links)} branch found")
         for link in links:
             hours = []
@@ -60,7 +63,12 @@ def fetch_data():
                 else:
                     _hr = link.find("strong", string=re.compile(r"^Hours"))
                     hours = _hoo(_hr)
-            addr = list(link.select("p")[1].stripped_strings)
+            addr = []
+            for aa in link.select("p"):
+                if not aa.text.strip():
+                    continue
+                addr = list(aa.stripped_strings)
+                break
             if "temporarily closed" in addr[0].lower():
                 hours = ["Temporarily Closed"]
                 addr = list(link.select("p")[2].stripped_strings)
@@ -70,9 +78,16 @@ def fetch_data():
                 phone = list(_p.find_parent().stripped_strings)[1]
 
             coord = _coord(infos, addr)
+            type = link.select_one("div.pinned svg")["aria-labelledby"]
+            if "shared_branch" in type:
+                location_type = "Shared Branch"
+            elif "atm" in type:
+                location_type = "American 1 Credit Union ATM"
+            else:
+                location_type = "American 1 Credit Union Branch"
             yield SgRecord(
                 page_url=base_url,
-                location_name=link.select_one("span.cuname").text.strip(),
+                location_name=link.a.text.strip(),
                 street_address=addr[0],
                 city=addr[1].split(",")[0].strip(),
                 state=addr[1].split(",")[1].strip().split(" ")[0].strip(),
@@ -82,26 +97,8 @@ def fetch_data():
                 locator_domain=locator_domain,
                 latitude=coord[0],
                 longitude=coord[1],
-                location_type="branch",
+                location_type=location_type,
                 hours_of_operation="; ".join(hours).replace("–", "-"),
-            )
-
-        links = soup.select("div.loc_list.Abox div.listbox")
-        logger.info(f"{len(links)} atm found")
-        for link in links:
-            addr = list(
-                [pp for pp in link.select("p") if pp.text.strip()][0].stripped_strings
-            )
-            yield SgRecord(
-                page_url=base_url,
-                location_name=link.select_one("span.cuname").text.strip(),
-                street_address=addr[0],
-                city=addr[1].split(",")[0].strip(),
-                state=addr[1].split(",")[1].strip().split(" ")[0].strip(),
-                zip_postal=addr[1].split(",")[1].strip().split(" ")[-1].strip(),
-                country_code="US",
-                locator_domain=locator_domain,
-                location_type="atm",
             )
 
 

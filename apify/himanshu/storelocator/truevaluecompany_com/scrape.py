@@ -80,6 +80,7 @@ if __name__ == "__main__":
                     SgRecord.Headers.PHONE,
                     SgRecord.Headers.LATITUDE,
                     SgRecord.Headers.LONGITUDE,
+                    SgRecord.Headers.LOCATION_TYPE,
                 }
             )
         )

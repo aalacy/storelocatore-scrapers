@@ -32,9 +32,14 @@ def fetch_data():
         item = SgRecord(
             locator_domain=domain,
             page_url=page_url,
-            location_name=poi["name"],
-            street_address=poi["address"]["streetAddress"],
-            city=poi["address"]["addressLocality"],
+            location_name=poi["name"].replace("&ouml;", "ö"),
+            street_address=poi["address"]["streetAddress"]
+            .replace("&Uuml;", "Ü")
+            .replace("&Ccedil;", "Ç")
+            .replace("&ccedil;", "ç")
+            .replace("&uuml;", "ü")
+            .replace("&ouml;", "ö"),
+            city=poi["address"]["addressLocality"].replace("&ouml;", "ö"),
             state="",
             zip_postal=poi["address"]["postalCode"],
             country_code="TR",

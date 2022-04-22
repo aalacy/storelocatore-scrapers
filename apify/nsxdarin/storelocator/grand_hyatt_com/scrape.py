@@ -33,6 +33,7 @@ def fetch_data():
                     )
                     lat = item.split('"latitude":')[1].split(",")[0]
                     lng = item.split('"longitude":')[1].split("}")[0]
+                    hours = "<MISSING>"
                     typ = (
                         item.split('"brand":{"key":"')[1]
                         .split('"label":"')[1]
@@ -64,24 +65,23 @@ def fetch_data():
                     try:
                         r2 = session.get(loc, headers=headers)
                         for line2 in r2.iter_lines():
-                            if (
-                                '<span class="opening-date' in line2
-                                and "Opening 20" in line2
-                            ):
+                            line2 = str(line2.decode("utf-8"))
+                            if ">Coming " in line2:
                                 CS = True
-                            if (
-                                "and beyond" in line2
-                                and "Now accepting reservations" in line2
-                            ):
+                            if ">Opening " in line2:
                                 CS = True
                             if '"telephone":"' in line2:
                                 phone = line2.split('"telephone":"')[1].split('"')[0]
                     except:
                         pass
+                    if "wasxs" in loc:
+                        CS = False
                     if "Club Maui, " in name:
                         name = "Hyatt Residence Club Maui, Kaanapali Beach"
                     if CS:
-                        name = name + " - Coming Soon"
+                        hours = "Coming Soon"
+                    if "dxbzm" in loc:
+                        hours = "<MISSING>"
                     yield SgRecord(
                         locator_domain=website,
                         page_url=loc,
