@@ -178,7 +178,7 @@ def fetch_pages(city_url):
             all_stores.append(
                 {
                     "store_number": store["id"],
-                    "location_name": store["name"],
+                    "location_name": store["name"].split(" - ")[0].strip(),
                     "page_url": page_url,
                     "raw_address": raw_address,
                     "country_code": location["country_code"],

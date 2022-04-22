@@ -6,8 +6,7 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sglogging import SgLogSetup
 import re
-import math
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 logger = SgLogSetup().get_logger("bmstores")
 
@@ -20,41 +19,46 @@ headers = {
     "x-requested-with": "XMLHttpRequest",
 }
 
-max_workers = 48
+max_workers = 28
 
 
 def fetchConcurrentSingle(store):
-    page_url = base_url + store["properties"]["link"]
-    logger.info(page_url)
-    response = request_with_retries(page_url)
-    logger.info(f"status:{response.status_code}")
-    logger.info(f"req.text len:{len(response.text)}")
-    return page_url, bs(response.text, "lxml"), store
+    def request_with_retries(ext):
+        with SgRequests() as session:
+            data = session.get(str(base_url + ext), headers=headers)
+        return data
+
+    ##    page_url = base_url + store["properties"]["link"] # noqa
+    ##    logger.info(page_url) # noqa
+    response = request_with_retries(store["properties"]["link"])
+    return bs(response.text, "lxml")
 
 
 def fetchConcurrentList(list, occurrence=max_workers):
     output = []
-    total = len(list)
-    reminder = math.floor(total / 50)
-    if reminder < occurrence:
-        reminder = occurrence
-
-    count = 0
-    with ThreadPoolExecutor(
-        max_workers=occurrence, thread_name_prefix="fetcher"
-    ) as executor:
-        for result in executor.map(fetchConcurrentSingle, list):
-            if result:
-                count = count + 1
-                if count % reminder == 0:
-                    logger.debug(f"Concurrent Operation count = {count}")
-                output.append(result)
-    return output
-
-
-def request_with_retries(url):
-    with SgRequests() as session:
-        return session.get(url, headers=headers)
+    logger.info(f"max workers {occurrence}")
+    with ThreadPoolExecutor(max_workers=occurrence) as executor:
+        future_to_store = {
+            executor.submit(fetchConcurrentSingle, store): store for store in list
+        }
+        logger.info(f"max workerss {occurrence}")
+        for future in as_completed(future_to_store):
+            store = future_to_store[future]
+            try:
+                soup = future.result()
+                page_url = str(base_url + store["properties"]["link"])
+                tup = (page_url, soup, store)
+                output.append(tup)
+            except Exception as e:
+                logger.error("\n %r -> exception:\n %s" % (page_url, e))
+    ##        for result in executor.map(fetchConcurrentSingle, list): # noqa
+    ##            if result: # noqa
+    ##                count = count + 1 # noqa
+    ##                if count % reminder == 0: # noqa
+    ##                    logger.debug(f"Concurrent Operation count = {count}") # noqa
+    ##                output.append(result) # noqa
+    for res in output:
+        yield res
 
 
 def fetch_data():
@@ -63,7 +67,8 @@ def fetch_data():
             "https://www.bmstores.co.uk/hpcstores/StoresGeoJson&start=1&maxrows=700",
             headers=headers,
         ).json()["features"]
-        for page_url, soup, store in fetchConcurrentList(store_list):
+        for res in fetchConcurrentList(store_list):
+            page_url, soup, store = res
             street_address = soup.select_one("span[itemprop='streetAddress']").text
             city = soup.select_one("span[itemprop='addressLocality']").string
             state = soup.select_one("span[itemprop='addressRegion']").string
@@ -102,6 +107,9 @@ def fetch_data():
             ):
                 location_name = "B&M Home Store"
 
+            logger.info(
+                f"Everything went well, got SgRecord \n{page_url}\n{location_name}\n{street_address}"
+            )
             yield SgRecord(
                 page_url=page_url,
                 location_name=location_name,
