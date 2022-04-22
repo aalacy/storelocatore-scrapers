@@ -18,10 +18,13 @@ def fetch_data(sgw: SgWriter):
         j = json.loads(m)
         root = html.fromstring(j.get("content"))
         _id = "".join(root.xpath("./a[1]/text()")).split("#")[-1]
-        lat = j.get("lat")
-        lng = j.get("lng")
-        phone = "".join(root.xpath("./a[contains(@href, 'tel')]/text()")).strip()
-        hoo = "".join(root.xpath("./text()")).strip()
+        lat = j.get("lat") or SgRecord.MISSING
+        lng = j.get("lng") or SgRecord.MISSING
+        phone = (
+            "".join(root.xpath("./a[contains(@href, 'tel')]/text()")).strip()
+            or SgRecord.MISSING
+        )
+        hoo = "".join(root.xpath("./text()")).strip() or SgRecord.MISSING
         part[_id] = {"lat": lat, "lng": lng, "phone": phone, "hoo": hoo}
 
     divs = tree.xpath("//div[contains(@class, 'x-column x-sm x-1-4') and ./h3]")
