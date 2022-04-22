@@ -16,16 +16,21 @@ def fetch_data():
     with SgFirefox() as driver:
         driver.get(start_url)
         sleep(15)
+        driver.find_element_by_xpath('//span[@class="hustle-icon-close"]').click()
+        sleep(3)
         dom = etree.HTML(driver.page_source)
+        all_names = dom.xpath("//div/div/h6/text()")
 
-        all_locations = dom.xpath('//div[@class="tab-panels"]/div')
-        for poi_html in all_locations:
-            poi_id = poi_html.xpath("@id")[0]
-            driver.switch_to.frame(
-                driver.find_element_by_xpath(f'//div[@id="{poi_id}"]/p/iframe')
+        all_locations = driver.find_elements_by_xpath("//div[div[h6]]")
+        for i, e in enumerate(all_locations):
+            location_name = all_names[i]
+            hoo = dom.xpath(
+                f'.//h6[contains(text(), "{location_name}")]/following-sibling::p/text()'
             )
+            hoo = " ".join([h.strip() for h in hoo])
+
+            driver.switch_to.frame(e.find_element_by_xpath(f".//iframe"))
             loc_dom = etree.HTML(driver.page_source)
-            location_name = loc_dom.xpath('//div[@class="place-name"]/text()')[0]
             raw_address = loc_dom.xpath('//div[@class="address"]/text()')[0]
             addr = parse_address_intl(raw_address)
             street_address = addr.street_address_1
@@ -52,7 +57,7 @@ def fetch_data():
                 location_type="",
                 latitude=geo[0],
                 longitude=geo[1],
-                hours_of_operation="",
+                hours_of_operation=hoo,
             )
 
             yield item
