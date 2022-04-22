@@ -1,4 +1,3 @@
-from lib2to3.pgen2 import driver
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgselenium import SgChrome
@@ -35,9 +34,6 @@ def fetch_data():
     driver = get_driver()
     driver.get(base_url)
     rr = driver.wait_for_request(json_url)
-    import pdb
-
-    pdb.set_trace()
     locations = json.loads(
         rr.response.body.decode()
         .split("t.exports=JSON.parse('")[1]
