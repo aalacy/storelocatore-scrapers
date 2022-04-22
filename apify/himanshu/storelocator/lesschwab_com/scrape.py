@@ -46,7 +46,7 @@ def fetch_data():
             poi = loc_dom.xpath('//script[contains(text(), "postalCode")]/text()')
             location_name = data_json[num]["name"]
             if poi:
-                poi = json.loads(poi[0])
+                poi = json.loads(poi[-1])
                 hoo = loc_dom.xpath(
                     '//section[@class="storeDetails__hoursInformation"]/div/p/text()'
                 )
