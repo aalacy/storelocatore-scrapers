@@ -88,7 +88,7 @@ def get_phone(texts):
 
 
 def click_on_button(driver, body, location_name):
-    links = body.xpath(f"//a/@href")
+    links = body.xpath("//a/@href")
     for link in links:
         if (
             location_name.lower() in link.lower()
