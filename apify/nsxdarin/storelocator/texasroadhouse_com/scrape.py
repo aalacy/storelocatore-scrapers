@@ -26,6 +26,7 @@ def fetch_data():
                 + str(y)
                 + "&radius=100000&limit=20"
             )
+            logger.info(str(y) + " - " + str(x))
             r = session.get(url, headers=headers)
             for item in json.loads(r.content)["restaurants"]:
                 city = item["city"]
