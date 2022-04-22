@@ -1,56 +1,26 @@
-import csv
-from sgrequests import SgRequests
 import json
+
 from sglogging import SgLogSetup
 from sgscrape import sgpostal as parser
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
+from sgrequests import SgRequests
 
 logger = SgLogSetup().get_logger("gianteagle_com")
 
 
-session = SgRequests()
-
-
-def write_output(data):
-    with open("data.csv", mode="w", newline="", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
 def fetch_data():
+    session = SgRequests()
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36",
         "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
         "Accept": "*/*",
     }
+    domain = "gianteagle.com"
 
-    base_url = "https://www.gianteagle.com"
-
-    # it will used in store data.
-    locator_domain = base_url
-    page_url = "<MISSING>"
+    page_url = ""
     location_name = ""
     street_address = ""
     city = ""
@@ -71,6 +41,7 @@ def fetch_data():
             "https://www.gianteagle.com/api/sitecore/locations/getlocations?q=&skip="
             + str(skip_counter),
             headers=headers,
+            verify=False,
         )
         json_locations = json.loads(r_locations.text)
 
@@ -96,11 +67,12 @@ def fetch_data():
             street_address = formatted_addr.street_address_1
             if formatted_addr.street_address_2:
                 street_address = street_address + ", " + formatted_addr.street_address_2
-
             city = location_super_market["Address"]["City"]
             state = location_super_market["Address"]["State"]["Abbreviation"]
             zipp = location_super_market["Address"]["Zip"]
-            phone = location_super_market["TelephoneNumbers"][0]["DisplayNumber"]
+            phone = ""
+            if location_super_market["TelephoneNumbers"]:
+                phone = location_super_market["TelephoneNumbers"][0]["DisplayNumber"]
 
             number = location_super_market["StoreDisplayName"].split(":")[0].strip()
             page_url = (
@@ -139,31 +111,37 @@ def fetch_data():
                     )
                 index += 1
 
-            store = [
-                locator_domain,
-                page_url,
-                location_name,
-                street_address,
-                city,
-                state,
-                zipp,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
+            item = SgRecord(
+                locator_domain=domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zipp,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
 
-            store = [x.strip() if x and x else "<MISSING>" for x in store]
-
-            yield store
+            yield item
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()
