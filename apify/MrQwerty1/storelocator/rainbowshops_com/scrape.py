@@ -9,6 +9,8 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 
 def get_tree(url):
     r = session.get(url, headers=headers)
+    if r.status_code == 404:
+        return html.fromstring("<html>")
     return html.fromstring(r.text)
 
 
@@ -33,6 +35,8 @@ def get_data(slug, sgw: SgWriter):
     store_number = page_url.split("/")[-2]
     tree = get_tree(page_url)
     location_name = "".join(tree.xpath("//div[@id='main-content']/h1/text()")).strip()
+    if not location_name:
+        return
     div = tree.xpath("//div[@role='main']")[0]
     line = div.xpath(".//div[@id='locdetails']//div[@class='loc-address']/div/text()")
     line = list(filter(None, [li.strip() for li in line]))
