@@ -48,6 +48,8 @@ def fetch_data():
 
         all_locations = data["data"]["nearbyStores"]["nodes"]
         for poi in all_locations:
+            if not poi["flags"]["ojFlag"]:
+                continue
             poi = poi["store"]
             hoo = []
             if poi["minisite"]:
