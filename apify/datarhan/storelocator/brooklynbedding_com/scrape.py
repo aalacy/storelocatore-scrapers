@@ -19,7 +19,7 @@ def fetch_data():
 
     all_locations = dom.xpath("//address")
     for poi_html in all_locations:
-        raw_address = poi_html.xpath(".//a/p/text()")
+        raw_address = poi_html.xpath(".//p/text()")
         location_name = raw_address[0]
         if "Brooklyn Bedding" not in location_name:
             continue

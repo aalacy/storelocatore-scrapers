@@ -34,7 +34,12 @@ def get_urls():
         "//a[contains(text(), 'Studios')]/following-sibling::ul[1]//a/@href"
     )
     for link in links:
-        if "virtual" in link or not link.startswith("/"):
+        if (
+            "virtual" in link
+            or not link.startswith("/")
+            or "#" in link
+            or "outdoor" in link
+        ):
             continue
         urls.add(link)
 

@@ -11,21 +11,16 @@ def fetch_data():
     start_urls = {
         "UK": "https://www.lexus.co.uk/api/dealers/all",
         "Austria": "https://www.lexus.at/api/dealers/all",
-        "Belgium": "https://fr.lexus.be/api/dealers/all",
-        "Estonia": "https://ee.lexus.ee/api/dealers/all",
-        "France": "https://www.lexus.fr/api/dealers/all",
         "Germany": "https://www.lexus.de/api/dealers/all",
         "Hungary": "https://www.lexus.hu/api/dealers/all",
         "Italy": "https://www.lexus.it/api/dealers/all",
         "Latvia": "https://lv.lexus.lv/api/dealers/all",
         "Lithuania": "https://lt.lexus.lt/api/dealers/all",
-        "Luxembourg": "https://www.lexus.lu/api/dealers/all",
         "Netherlands": "https://www.lexus.nl/api/dealers/all",
         "Poland": "https://www.lexus-polska.pl/api/dealers/all",
         "Portugal": "https://www.lexus.pt/api/dealers/all",
         "Sweden": "https://www.lexus.se/api/dealers/all",
         "Ukrain": "https://www.lexus.ua/api/dealers/all",
-        "Spain": "https://www.lexusauto.es/api/dealers/all",
     }
 
     hdr = {

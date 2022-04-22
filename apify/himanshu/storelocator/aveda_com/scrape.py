@@ -65,7 +65,7 @@ def get_data(coords, sgw: SgWriter):
         if str(state).isdigit():
             state = "<MISSING>"
         postal = j.get("ZIP") or "<MISSING>"
-        if postal == "0":
+        if postal == "0" or postal == "0000" or postal == ".":
             postal = "<MISSING>"
         country_code = j.get("COUNTRY") or "<MISSING>"
         phone = j.get("PHONE1") or "<MISSING>"

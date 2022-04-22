@@ -3,10 +3,13 @@ from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 
+
 session = SgRequests()
-website = "doctorsofphysicaltherapy_com"
+website = "bargainbasementhomecenter_com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 
 headers = {
@@ -14,7 +17,7 @@ headers = {
 }
 
 DOMAIN = "https://doctorsofphysicaltherapy.com/"
-MISSING = "<MISSING>"
+MISSING = SgRecord.MISSING
 
 
 def fetch_data():
@@ -95,7 +98,9 @@ def fetch_data():
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

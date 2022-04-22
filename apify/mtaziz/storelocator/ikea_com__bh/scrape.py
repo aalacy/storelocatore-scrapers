@@ -285,7 +285,6 @@ def fetch_records_bg(sgw: SgWriter):
     page_urls = get_store_urls_bg()
     for page_url in page_urls:
         try:
-
             r = get_response(page_url)
             sel = html.fromstring(r.text, "lxml")
             xpath_locname = '//meta[contains(@property, "og:title")]/@content'
@@ -316,6 +315,14 @@ def fetch_records_bg(sgw: SgWriter):
             hoo = sel.xpath(xpath_hoo)
             hours_of_operation = get_hoo_clean(hoo)
             page_url = page_url
+
+            # Custom Address
+            rawadd_bg = 'ИКЕА Център за поръчки Пловдив Plovdiv Plaza ул. "Д-р Георги Странски" 3 Пловдив 4019'
+            if rawadd_bg in address1:
+                street_address = 'ул. "Д-р Георги Странски" 3'
+                city = "Пловдив"
+                zip_postal = "4019"
+
             rec = SgRecord(
                 locator_domain=get_domain(page_url),
                 page_url=page_url,
@@ -378,6 +385,15 @@ def fetch_records_hr(sgw: SgWriter):
         hoo = sel.xpath(xpath_hoo)
         hours_of_operation = get_hoo_clean(hoo)
         page_url = hr_store_locator_url
+        # Custom Address
+        rawadd_hr = (
+            "IKEA Hrvatska d.o.o., Ulica Alfreda Nobela 2, Sop, 10361 Sesvete-Kraljevec"
+        )
+        sta_hr_cus = "Alfreda Nobela 2, Sop"
+        if rawadd_hr in address1:
+            street_address = sta_hr_cus
+            zip_postal = "10361"
+            city = "Sesvete-Kraljevec"
         rec = SgRecord(
             locator_domain=get_domain(page_url),
             page_url=hr_store_locator_url,
@@ -467,6 +483,11 @@ def fetch_records_cy(sgw: SgWriter):
         xpath_hoo = '//div[*[contains(text(), "Καταστήματος")]]/p/text()'
         hoo = sel.xpath(xpath_hoo)
         hours_of_operation = get_hoo_clean(hoo)
+        # Custom address
+        rawadd_cy = "Κατσαντωναίων 20 4154 Κάτω Πολεμίδια, Λεμεσός"
+        if rawadd_cy in address1:
+            street_address = "Κατσαντωναίων 20"
+            zip_postal = "4154"
         rec = SgRecord(
             locator_domain=get_domain(page_url),
             page_url=page_url,
@@ -1154,6 +1175,11 @@ def fetch_records_rs(sgw: SgWriter):
     hours = sel.xpath(xpath_hours)
     hoo = " ".join(hours).strip()
     logger.info(f"HOO: {hoo}")
+    # Custom Address
+    raw_add_rs = "Robna kuća IKEA nalazi se na Auto-putu Beograd—Niš, isključenje kod petlje Tranšped, Astrid Lindgren 11, 11231 Beograd, Srbija"
+    if raw_add_rs in address1:
+        street_address = "Astrid Lindgren 11"
+
     rec = SgRecord(
         locator_domain=get_domain(page_url),
         page_url=page_url,
