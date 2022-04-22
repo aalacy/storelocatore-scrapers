@@ -12,7 +12,7 @@ logger = SgLogSetup().get_logger("gianteagle_com")
 
 
 def fetch_data():
-    session = SgRequests()
+    session = SgRequests(verify_ssl=False)
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36",
         "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
@@ -41,7 +41,6 @@ def fetch_data():
             "https://www.gianteagle.com/api/sitecore/locations/getlocations?q=&skip="
             + str(skip_counter),
             headers=headers,
-            verify=False,
         )
         json_locations = json.loads(r_locations.text)
 

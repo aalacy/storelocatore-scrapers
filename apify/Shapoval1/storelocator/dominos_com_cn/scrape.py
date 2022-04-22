@@ -69,8 +69,8 @@ def get_data(coords, sgw: SgWriter):
 def fetch_data(sgw: SgWriter):
     coords = DynamicGeoSearch(
         country_codes=[SearchableCountries.CHINA],
-        max_search_distance_miles=10,
-        expected_search_radius_miles=10,
+        max_search_distance_miles=50,
+        expected_search_radius_miles=50,
         max_search_results=None,
     )
 
