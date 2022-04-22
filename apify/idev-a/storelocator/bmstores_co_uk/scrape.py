@@ -116,9 +116,7 @@ def fetch_data():
             "https://www.bmstores.co.uk/hpcstores/StoresGeoJson&start=1&maxrows=700",
             headers=headers,
         ).json()["features"]
-        ## !!!!!!!!
         results = fetchConcurrentList(store_list[:5])
-        ## !!!!!!!!
         logger.info(f"{results}")
         for res in results:
             record = parse_result(res)
