@@ -24,6 +24,26 @@ def fetch_data():
         hoo = loc_dom.xpath(
             '//h3[contains(text(), "Main Store Hours")]/following-sibling::div[@class="location-hours"]/text()'
         )
+        if not hoo:
+            hoo = loc_dom.xpath(
+                '//h3[text()="Hours"]/following-sibling::div[@class="location-hours"]/text()'
+            )
+        if not hoo:
+            hoo = loc_dom.xpath(
+                '//h3[text()="Main Hours"]/following-sibling::div[@class="location-hours"]/text()'
+            )
+        if not hoo:
+            hoo = loc_dom.xpath(
+                '//h3[text()="Main Store hours"]/following-sibling::div[@class="location-hours"]/text()'
+            )
+        if not hoo:
+            hoo = loc_dom.xpath(
+                '//h3[text()="Colfax Hours"]/following-sibling::div[@class="location-hours"]/text()'
+            )
+        if not hoo:
+            hoo = loc_dom.xpath(
+                '//h3[contains(text(), "Hours")]/following-sibling::div[@class="location-hours"]/text()'
+            )
         hoo = " ".join([e.strip() for e in hoo if e.strip()])
 
         item = SgRecord(

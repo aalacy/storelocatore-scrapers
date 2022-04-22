@@ -1,3 +1,4 @@
+import time
 import json
 from lxml import html
 from sgscrape.sgrecord import SgRecord
@@ -29,9 +30,16 @@ def get_data(url, sgw: SgWriter):
         "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:85.0) Gecko/20100101 Firefox/85.0",
     }
     session = SgRequests(verify_ssl=False)
-    r = session.get(page_url, headers=headers)
-
-    tree = html.fromstring(r.text)
+    try:
+        r = session.get(page_url, headers=headers)
+        tree = html.fromstring(r.text)
+    except:
+        try:
+            time.sleep(5)
+            r = session.get(page_url, headers=headers)
+            tree = html.fromstring(r.text)
+        except:
+            return
     js_block = "".join(
         tree.xpath('//script[contains(text(), "openingHoursSpecification")]/text()')
     )

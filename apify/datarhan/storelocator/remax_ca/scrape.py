@@ -15,7 +15,7 @@ def fetch_data():
     start_url = "https://api.remax.ca/api/v1/office/search/?text={}&from=0&size=12&category=Residential&propertyTypes=Residential"
 
     all_codes = DynamicZipSearch(
-        country_codes=[SearchableCountries.CANADA], expected_search_radius_miles=10
+        country_codes=[SearchableCountries.CANADA], expected_search_radius_miles=1
     )
     for code in all_codes:
         code = code[:3] + "+" + code[3:]
@@ -34,8 +34,8 @@ def fetch_data():
             zip_code = poi["postalCode"]
             country_code = poi["country"]
             phone = poi.get("telephone")
-            latitude = poi["latitude"]
-            longitude = poi["longitude"]
+            latitude = poi.get("latitude")
+            longitude = poi.get("longitude")
 
             item = SgRecord(
                 locator_domain=domain,
