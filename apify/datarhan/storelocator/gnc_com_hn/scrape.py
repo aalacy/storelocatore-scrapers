@@ -29,7 +29,7 @@ def fetch_data():
             )
             hoo = " ".join([h.strip() for h in hoo])
 
-            driver.switch_to.frame(e.find_element_by_xpath(f".//iframe"))
+            driver.switch_to.frame(e.find_element_by_xpath(".//iframe"))
             loc_dom = etree.HTML(driver.page_source)
             raw_address = loc_dom.xpath('//div[@class="address"]/text()')[0]
             addr = parse_address_intl(raw_address)
