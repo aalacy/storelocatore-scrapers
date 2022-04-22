@@ -29,71 +29,76 @@ def record_initial_requests(http: SgRequests):
     links = [link["href"] for link in soup.select("main div.row a.primary.outline")]
     logger.info(f"{len(links)} found")
     for page_url in links:
-        sp1 = bs(http.get(page_url, headers=_headers).text, "lxml")
+        logger.info(page_url)
+        res = http.get(page_url, headers=_headers)
+        if res.status_code != 200:
+            continue
+        sp1 = bs(res.text, "lxml")
         details = [dd["href"] for dd in sp1.select("main div.mt-auto a.outline")]
         if details:
             for url in details:
-                yield fetch_records(http, url)
+                yield fetch_records(url)
         else:
-            yield fetch_records(http, page_url)
+            yield fetch_records(page_url)
 
 
-def fetch_records(http, page_url):
-    logger.info(page_url)
-    res = http.get(page_url)
-    if res.status_code != 200:
-        return None
-    sp2 = bs(res.text, "lxml")
-    raw_address = " ".join(sp2.address.stripped_strings)
-    if "coming soon" in raw_address.lower():
-        return None
+def fetch_records(page_url):
+    with SgRequests() as http:
+        logger.info(page_url)
+        res = http.get(page_url, headers=_headers)
+        if res.status_code != 200:
+            return None
+        sp2 = bs(res.text, "lxml")
+        raw_address = " ".join(sp2.address.stripped_strings)
+        if "coming soon" in raw_address.lower():
+            return None
 
-    location = json.loads(
-        _fix(sp2.find("script", type="application/ld+json").string.strip())
-    )
-    if location["address"]["streetAddress"] == "Coming Soon":
-        return None
-    addr = parse_address_intl(raw_address + ", United Kingdom")
-    city = addr.city
-    if not city:
-        city = raw_address.split(",")[-2]
-    else:
-        if city.lower() in location["address"]["postalCode"].lower():
-            city = raw_address.split(",")[-2]
-    street_address = addr.street_address_1
-    if addr.street_address_2:
-        street_address += " " + addr.street_address_2
-    if location["address"]["streetAddress"] == "M25 Business centre":
-        street_address = (
-            location["address"]["streetAddress"]
-            + " "
-            + location["address"]["addressLocality"]
+        location = json.loads(
+            _fix(sp2.find_all("script", type="application/ld+json")[-1].string.strip())
         )
-    hours = []
-    for _ in location["openingHoursSpecification"]:
-        hour = f"{_['opens']}-{_['closes']}"
-        if hour == "00:00-00:00":
-            hour = "closed"
-        hours.append(f"{_['dayOfWeek']}: {hour}")
-    hours_of_operation = "; ".join(hours)
-    if re.search(r"please contact", hours_of_operation, re.IGNORECASE):
-        hours_of_operation = ""
+        if location["address"]["streetAddress"] == "Coming Soon":
+            return None
+        addr = parse_address_intl(raw_address + ", United Kingdom")
+        city = addr.city
+        if not city:
+            city = raw_address.split(",")[-2]
+        else:
+            if city.lower() in location["address"]["postalCode"].lower():
+                city = raw_address.split(",")[-2]
+        street_address = addr.street_address_1
+        if addr.street_address_2:
+            street_address += " " + addr.street_address_2
+        if location["address"]["streetAddress"] == "M25 Business centre":
+            street_address = (
+                location["address"]["streetAddress"]
+                + " "
+                + location["address"]["addressLocality"]
+            )
+        hours = []
+        for _ in location["openingHoursSpecification"]:
+            hour = f"{_['opens']}-{_['closes']}"
+            if hour == "00:00-00:00":
+                hour = "closed"
+            hours.append(f"{_['dayOfWeek']}: {hour}")
+        hours_of_operation = "; ".join(hours)
+        if re.search(r"please contact", hours_of_operation, re.IGNORECASE):
+            hours_of_operation = ""
 
-    return SgRecord(
-        page_url=page_url,
-        location_type=location["@type"],
-        location_name=location["name"],
-        street_address=street_address,
-        city=city,
-        zip_postal=location["address"]["postalCode"],
-        country_code="uk",
-        latitude=location["geo"]["latitude"],
-        longitude=location["geo"]["longitude"],
-        phone=location["telephone"],
-        locator_domain=locator_domain,
-        hours_of_operation=hours_of_operation,
-        raw_address=raw_address,
-    )
+        return SgRecord(
+            page_url=page_url,
+            location_type=location["@type"],
+            location_name=location["name"],
+            street_address=street_address,
+            city=city,
+            zip_postal=location["address"]["postalCode"],
+            country_code="uk",
+            latitude=location["geo"]["latitude"],
+            longitude=location["geo"]["longitude"],
+            phone=location["telephone"],
+            locator_domain=locator_domain,
+            hours_of_operation=hours_of_operation,
+            raw_address=raw_address,
+        )
 
 
 if __name__ == "__main__":
