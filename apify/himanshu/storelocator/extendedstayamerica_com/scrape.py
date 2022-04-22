@@ -1,4 +1,3 @@
-import time
 import json
 from lxml import html
 from sgscrape.sgrecord import SgRecord
