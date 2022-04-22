@@ -206,7 +206,7 @@ def fetch_data(driver):
         count = count + 1
         log.debug(f"{count}. scrapping {page_url}")
         data = get_map_data(driver, page_url)
-        if data == None:
+        if data is None:
             continue
 
         street_address, city, state, zip_postal = get_address(data["raw_address"])
