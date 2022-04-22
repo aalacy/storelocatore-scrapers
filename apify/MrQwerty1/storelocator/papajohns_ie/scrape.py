@@ -14,7 +14,7 @@ def get_international(line):
     ).strip()
     city = adr.city
     state = adr.state or ""
-    postal = adr.postcode
+    postal = adr.postcode or SgRecord.MISSING
 
     return street_address, city, state, postal
 
@@ -39,6 +39,12 @@ def fetch_data(sgw: SgWriter):
         if len(state) == 3:
             postal = f"{state} {postal}"
             state = SgRecord.MISSING
+        if postal == SgRecord.MISSING:
+            postal = " ".join(raw_address.split(",")[-1].split()[-2:])
+
+        if len(postal) > 8 or (len(postal) == 8 and " " not in postal):
+            postal = SgRecord.MISSING
+
         phone = j.get("store_telephone")
         latitude = j.get("store_latitude")
         longitude = j.get("store_longitude")
@@ -47,12 +53,15 @@ def fetch_data(sgw: SgWriter):
         text = j.get("store_opening_hours") or "<html></html>"
         tree = html.fromstring(text)
         for i in range(1, 8):
-            day = "".join(tree.xpath(f".//tr[1]/th[{i}]/text()")).strip()
-            start = "".join(tree.xpath(f".//tr[2]/td[{i}]/text()")).strip()
-            end = "".join(tree.xpath(f".//tr[4]/td[{i}]/text()")).strip()
-            if not day:
-                continue
-            _tmp.append(f"{day}: {start}-{end}")
+            try:
+                day = tree.xpath(f".//tr[1]/th[{i}]/text()")[0].strip()
+                start = tree.xpath(f".//tr[2]/td[{i}]/text()")[0].strip()
+                end = tree.xpath(f".//tr[4]/td[{i}]/text()")[0].strip()
+                if not day:
+                    continue
+                _tmp.append(f"{day}: {start}-{end}")
+            except IndexError:
+                pass
 
         hours_of_operation = ";".join(_tmp) or "<MISSING>"
 

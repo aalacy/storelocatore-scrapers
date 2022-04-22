@@ -1,112 +1,156 @@
+from bs4 import BeautifulSoup as bs
+from sgrequests import SgRequests
+from sglogging import sglog
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgpostal import parse_address_intl
 import re
 
-from bs4 import BeautifulSoup
+DOMAIN = "prezzorestaurants.co.uk"
+BASE_URL = "https://www.prezzorestaurants.co.uk"
+STORES_URL = "https://www.prezzorestaurants.co.uk/find-and-book/search/?lat=51.502132&lng=-0.1887645&dist=2000&s=&p={}&f=&X-Requested-With=XMLHttpRequest"
+HEADERS = {
+    "Accept": "application/json, text/plain, */*",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
+}
+MISSING = "<MISSING>"
+log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
 
-from lxml import etree
-
-from sgrequests import SgRequests
-
-from sgscrape.sgwriter import SgWriter
-from sgscrape.sgrecord import SgRecord
-from sgscrape.sgrecord_id import RecommendedRecordIds
-from sgscrape.sgrecord_deduper import SgRecordDeduper
-
-from sgscrape.sgpostal import parse_address_intl
+session = SgRequests(verify_ssl=False)
 
 
-def fetch_data(sgw: SgWriter):
+def getAddress(raw_address):
+    try:
+        if raw_address is not None and raw_address != MISSING:
+            data = parse_address_intl(raw_address)
+            street_address = data.street_address_1
+            if data.street_address_2 is not None:
+                street_address = f"{street_address} {data.street_address_2}"
+            city = data.city
+            state = data.state
+            zip_postal = data.postcode
+            if street_address is None or len(street_address) == 0:
+                street_address = MISSING
+            if city is None or len(city) == 0:
+                city = MISSING
+            if state is None or len(state) == 0:
+                state = MISSING
+            if zip_postal is None or len(zip_postal) == 0:
+                zip_postal = MISSING
+            return street_address, city, state, zip_postal
+    except Exception as e:
+        log.info(f"No valid address {e}")
+        pass
+    return MISSING, MISSING, MISSING, MISSING
 
-    session = SgRequests()
 
-    domain = "https://www.prezzorestaurants.co.uk"
+def pull_content(url):
+    log.info("Pull content => " + url)
+    try:
+        soup = bs(session.get(url, headers=HEADERS).content, "lxml")
+    except:
+        # Redirect and get current url
+        if "?X-Requested-With=XMLHttpRequest":
+            req = session.get(
+                url.replace("?X-Requested-With=XMLHttpRequest", ""), headers=HEADERS
+            )
+            redirect_url = req.url
+            soup = bs(
+                session.get(
+                    str(redirect_url) + "?X-Requested-With=XMLHttpRequest",
+                    headers=HEADERS,
+                ),
+                "lxml",
+            )
+    return soup
 
-    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
-    headers = {"User-Agent": user_agent}
 
-    session = SgRequests()
-    all_links = []
-
-    for i in range(1, 15):
-        base_link = (
-            "https://www.prezzorestaurants.co.uk/find-and-book/search/?lat=51.502132&lng=-0.1887645&dist=2000&s=&p=%s&f="
-            % (i)
+def get_hoo(soup):
+    try:
+        hoo = re.sub(
+            r",Christmas.*",
+            "",
+            soup.find("h4", text=re.compile(r"Opening times.*"))
+            .find_next("div", {"class": "has-max-32-center has-text-left"})
+            .get_text(strip=True, separator=",")
+            .replace(":,", ": ")
+            .strip(),
         )
-        req = session.get(base_link, headers=headers)
-        base = BeautifulSoup(req.text, "lxml")
-        locs = base.find(id="restaurant-search-results").find_all(
-            class_="button secondary-button w-100 px-i"
-        )
-        for loc in locs:
-            link = domain + loc["href"]
-            if link not in all_links:
-                all_links.append(link)
+    except:
+        hoo = MISSING
+    return hoo
 
-    for store_url in all_links:
-        loc_response = session.get(store_url)
-        loc_dom = etree.HTML(loc_response.text)
 
-        location_name = loc_dom.xpath(
-            '//h2[@class="title mb-2 has-text-weight-bold"]/text()'
-        )
-        location_name = location_name[0].strip() if location_name else "<MISSING>"
-        raw_address = loc_dom.xpath(
-            '//h4[a[contains(@href, "tel")]]/following-sibling::div[1]/p[1]/text()'
-        )
-        raw_address = [" ".join(e.split()) for e in raw_address][0]
-        addr = parse_address_intl(raw_address)
-        street_address = ", ".join(raw_address.split(", ")[:-2]).strip()
-        city = addr.city
-        if not city:
-            city = raw_address.split(",")[-2].strip()
-        if street_address.split(",")[-1].strip() in city:
-            street_address = " ".join(street_address.split(",")[:-1]).strip()
-        street_address = street_address.replace(" , ", ", ")
-        street_address = (re.sub(" +", " ", street_address)).strip()
-
-        state = addr.state
-        state = state if state else "<MISSING>"
-        zip_code = addr.postcode
-        if not zip_code:
-            zip_code = raw_address.split(",")[-1].strip()
-        country_code = "UK"
-        store_number = "<MISSING>"
-        phone = loc_dom.xpath('//a[contains(@href, "tel")]/text()')
-        phone = phone[0] if phone else "<MISSING>"
-        location_type = "<MISSING>"
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
-
+def get_latlong(url):
+    latlong = re.search(r"@(-?[\d]*\.[\d]*),(-?[\d]*\.[\d]*)", url)
+    if not latlong:
         try:
-            map_link = loc_dom.xpath('//a[contains(@href, "maps")]/@href')[0]
-            geo = re.findall(r"[0-9]{2}\.[0-9]+.{1,2}[0-9]{1,3}\.[0-9]+", map_link)[
-                0
-            ].split(",")
-            latitude = geo[0]
-            longitude = geo[1].split("&")[0]
+            latlong = url.split("?ll=")[1].split("&z")[0].split(",")
+            return latlong
         except:
-            req = session.get(map_link, headers=headers)
-            map_link = req.url
-            if "@" in map_link:
-                latitude = map_link.split("@")[1].split(",")[0]
-                longitude = map_link.split("@")[1].split(",")[1]
+            return MISSING, MISSING
+    return latlong.group(1), latlong.group(2)
 
-        loc_response = session.get(store_url + "?X-Requested-With=XMLHttpRequest")
-        loc_dom = etree.HTML(loc_response.text)
-        hoo = loc_dom.xpath(
-            '//div[h4[contains(text(), "Opening times")]]/following-sibling::div//text()'
+
+def fetch_data():
+    log.info("Fetching store_locator data")
+    num = 1
+    while True:
+        soup = pull_content(STORES_URL.format(num))
+        contents = soup.find_all(
+            "div", {"class": "column is-4 is-12-touch has-max-32-touch-center"}
         )
-        hoo = [e.strip() for e in hoo if e.strip()]
-        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
-
-        sgw.write_row(
-            SgRecord(
-                locator_domain=domain,
-                page_url=store_url,
+        if not contents:
+            break
+        for row in contents:
+            is_closed = row.find("div", {"data-autoheight": "description"}).text.strip()
+            if "Permanently closed" in is_closed:
+                continue
+            page_url = (
+                BASE_URL
+                + row.find("a", {"class": "button secondary-button w-100 px-i"})["href"]
+            )
+            store = pull_content(page_url + "?X-Requested-With=XMLHttpRequest")
+            location_name = row.find("h4", {"data-autoheight": "header"}).text.strip()
+            raw_address = str(
+                " ".join(
+                    row.find("div", {"data-autoheight": "address"})
+                    .get_text(strip=True, separator=",")
+                    .split()
+                )
+                .strip()
+                .rstrip(",")
+                .replace(", ,", ",")
+            )
+            street_address, city, state, zip_postal = getAddress(raw_address)
+            if "None" in street_address or len(street_address) <= 3:
+                street_address = raw_address.split(",")[0].strip()
+            if city == MISSING:
+                city = raw_address.split(",")[-2].strip()
+            if "York" in city and city != "York":
+                city = "York"
+            if zip_postal == MISSING:
+                zip = raw_address.split(",")[-1].strip()
+                if len(zip) > 5 and len(zip) <= 8 and len(zip.split(" ")) > 1:
+                    zip_postal = zip
+            country_code = "UK"
+            phone = row.find("a", {"href": re.compile(r"tel:.*")}).text.strip()
+            hours_of_operation = get_hoo(store)
+            location_type = MISSING
+            store_number = MISSING
+            map_link = row.find("a", text="View on google maps")["href"]
+            latitude, longitude = get_latlong(map_link)
+            log.info("Append {} => {}".format(location_name, street_address))
+            yield SgRecord(
+                locator_domain=DOMAIN,
+                page_url=page_url,
                 location_name=location_name,
                 street_address=street_address,
                 city=city,
                 state=state,
-                zip_postal=zip_code,
+                zip_postal=zip_postal,
                 country_code=country_code,
                 store_number=store_number,
                 phone=phone,
@@ -114,9 +158,21 @@ def fetch_data(sgw: SgWriter):
                 latitude=latitude,
                 longitude=longitude,
                 hours_of_operation=hours_of_operation,
+                raw_address=raw_address,
             )
-        )
+        num += 1
 
 
-with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
-    fetch_data(writer)
+def scrape():
+    log.info("start {} Scraper".format(DOMAIN))
+    count = 0
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
+
+
+scrape()

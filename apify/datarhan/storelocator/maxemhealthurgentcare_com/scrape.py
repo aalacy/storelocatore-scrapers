@@ -6,11 +6,11 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
+from sgselenium.sgselenium import SgFirefox
 
 
 def fetch_data():
-    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
-
+    session = SgRequests()
     start_url = "https://maxemhealthurgentcare.com/locations-2/"
     domain = "maxemhealthurgentcare.com"
     hdr = {
@@ -25,12 +25,13 @@ def fetch_data():
             continue
         loc_response = session.get(store_url)
         loc_dom = etree.HTML(loc_response.text)
-
-        data = (
-            loc_dom.xpath('//script[contains(text(), "map_options")]/text()')[0]
-            .split("maps(")[-1]
-            .split(").data")[0]
-        )
+        data = loc_dom.xpath('//script[contains(text(), "map_options")]/text()')
+        if not data:
+            with SgFirefox() as driver:
+                driver.get(store_url)
+                loc_dom = etree.HTML(driver.page_source)
+            data = loc_dom.xpath('//script[contains(text(), "map_options")]/text()')
+        data = data[0].split("maps(")[-1].split(").data")[0]
         data = json.loads(data)
         poi = data["places"][0]
 
@@ -44,7 +45,15 @@ def fetch_data():
         if not phone:
             phone = loc_dom.xpath("//h1/following-sibling::p[1]/span/text()")
             phone = [e.strip() for e in phone if "Ph." in e]
-            phone = phone[0].replace("Ph. ", "") if phone else SgRecord.MISSING
+            phone = phone[0].replace("Ph. ", "") if phone else ""
+            if not phone:
+                phone = loc_dom.xpath("//h1/following-sibling::p[1]/span/text()")
+                phone = " ".join(phone).split("Ph:")[-1].split("Fax")[0]
+        if not phone:
+            phone = loc_dom.xpath("//h1/following-sibling::p[1]/span/text()")[2].split(
+                ":"
+            )[-1]
+        phone = phone.split("PH:")[-1].split("FAX")[0]
         hoo = loc_dom.xpath(
             '//h3[contains(text(), "Hours of Operation")]/following-sibling::p//text()'
         )
@@ -64,7 +73,7 @@ def fetch_data():
             state=state,
             zip_postal=zip_code,
             country_code=poi["location"]["country"],
-            store_number=SgRecord.MISSING,
+            store_number="",
             phone=phone.replace("Ph: ", ""),
             location_type=SgRecord.MISSING,
             latitude=poi["location"]["lat"],

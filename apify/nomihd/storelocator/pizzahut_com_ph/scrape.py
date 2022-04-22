@@ -66,8 +66,12 @@ def process_record(raw_results_from_one_coordinate):
         raw_address = store["address"]
         formatted_addr = parser.parse_address_intl(raw_address)
         street_address = formatted_addr.street_address_1
-        if formatted_addr.street_address_2:
-            street_address = street_address + ", " + formatted_addr.street_address_2
+        if street_address:
+            if formatted_addr.street_address_2:
+                street_address = street_address + ", " + formatted_addr.street_address_2
+        else:
+            if formatted_addr.street_address_2:
+                street_address = formatted_addr.street_address_2
 
         city = formatted_addr.city
         state = formatted_addr.state
@@ -120,7 +124,7 @@ def scrape():
             search_space=[(coord) for coord in search],
             fetch_results_for_rec=fetch_records_for,
             processing_function=process_record,
-            max_threads=10,  # tweak to see what's fastest
+            max_threads=2,  # tweak to see what's fastest
         )
         for rec in results:
             writer.write_row(rec)

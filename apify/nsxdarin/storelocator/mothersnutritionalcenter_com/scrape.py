@@ -17,7 +17,6 @@ def fetch_data():
     typ = "<MISSING>"
     country = "US"
     for line in r.iter_lines():
-        line = str(line.decode("utf-8"))
         if "<p><strong>" in line:
             items = line.split("<p><strong>")
             for item in items:
@@ -41,10 +40,15 @@ def fetch_data():
                         .split("'")[0]
                         .rsplit("+", 1)[1]
                     )
-                    lat = item.split(',"mothers"]')[0].rsplit(",", 2)[1]
-                    lng = item.split(',"mothers"]')[0].rsplit(",", 1)[1]
+                    try:
+                        lat = item.split("</a></p>',")[1].split(",")[0].strip()
+                        lng = item.split("</a></p>',")[1].split(",")[1].strip()
+                    except:
+                        lat = lng = "<MISSING>"
                     phone = "<MISSING>"
                     loc = "https://mothersnc.com/pages/stores"
+                    state = city.rsplit(" ", 1)[1]
+                    city = city.rsplit(" ", 1)[0]
                     zc = zc.replace("\\", "").replace("/", "").strip()
                     yield SgRecord(
                         locator_domain=website,
@@ -66,7 +70,9 @@ def fetch_data():
 
 def scrape():
     results = fetch_data()
-    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
+    ) as writer:
         for rec in results:
             writer.write_row(rec)
 
