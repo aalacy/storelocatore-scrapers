@@ -1,266 +1,435 @@
 from sgscrape import simple_scraper_pipeline as sp
-from sgscrape import sgpostal as parser
 from sglogging import sglog
-
-from sgscrape import simple_utils as utils
-
-
+from sgzip.dynamic import DynamicGeoSearch, Grain_4
+from sgzip.utils import country_names_by_code
+from fuzzywuzzy import process
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as b4
+from sgscrape.pause_resume import CrawlStateSingleton, CrawlState
+from dataclasses import asdict, dataclass
+from typing import Iterable, Optional
+from sgzip.utils import earth_distance
+from ordered_set import OrderedSet
+from csv import reader
+import json
+import time
+from sgselenium import SgChrome
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as EC
+logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
 
+headerz = None
+@dataclass(frozen=False)
+class SerializableCountry:
+    """
+    Consists of fields that define a country.
+    """
 
-def para(url):
-    headers = {
-        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
-    }
-    session = SgRequests()
-    try:
-        soup = b4(
-            SgRequests.raise_on_err(session.get(url, headers=headers)).text, "lxml"
+    name: str
+    link: str
+    empty: bool
+    tested: bool
+    retries: int
+
+    def serialize(self) -> str:
+        return json.dumps(asdict(self))
+
+    def __hash__(self):
+        return hash((self.name, self.link, self.special))
+
+    def __eq__(self, other):
+        return isinstance(other, SerializableCountry) and hash(self) == hash(other)
+
+    @staticmethod
+    def deserialize(serialized_json: str) -> "SerializableCountry":
+        as_dict = json.loads(serialized_json)
+        return SerializableCountry(
+            name=as_dict["name"],
+            link=as_dict["link"],
+            empty=as_dict["empty"],
+            tested=as_dict["tested"],
+            retries=as_dict["retries"],
         )
-    except Exception:
-        return False
 
-    k = {}
-    k["url"] = url
-    raw_a = soup.find("address").text.strip()
-    k["rawa"] = raw_a
-    parsed = parser.parse_address_intl(raw_a)
-    k["country"] = parsed.country if parsed.country else "<MISSING>"
-    k["address"] = parsed.street_address_1 if parsed.street_address_1 else "<MISSING>"
-    k["address"] = (
-        (k["address"] + ", " + parsed.street_address_2)
-        if parsed.street_address_2
-        else k["address"]
+
+class CountryStack:
+    def __init__(
+        self, seed: Optional[OrderedSet[SerializableCountry]], state: "CrawlState"
+    ):
+        self.__country_stack = seed
+        self.__state = state
+
+    def push_country(self, req: SerializableCountry) -> bool:  # type: ignore
+        self.__country_stack.add(req)  # type: ignore
+
+    def pop_country(self) -> Optional[SerializableCountry]:
+        return self.__country_stack.pop() if self.__country_stack else None
+
+    def serialize_country(self) -> Iterable[str]:  # type: ignore
+        return list(map(lambda r: r.serialize(), self.__country_stack))  # type: ignore
+
+    def __iter__(self):
+        return self
+
+    def __len__(self):
+        return len(self.__country_stack)
+
+    def __next__(self):
+        req = self.pop_request()
+        return req
+
+
+def get_special(session, headers, special):
+    page = session.get(
+        "https://locate.apple.com{}".format(special["link"]), headers=headers
     )
-    k["city"] = parsed.city if parsed.city else "<MISSING>"
-    k["state"] = parsed.state if parsed.state else "<MISSING>"
-    k["zip"] = parsed.postcode if parsed.postcode else "<MISSING>"
-    try:
-        k["name"] = soup.find("title").text.strip()
-    except Exception:
-        k["name"] = "<MISSING>"
+    soup = b4(page.text, "lxml")
+    soup = soup.find_all("script", {"type": "text/javascript"})
+    theScript = None
+    for i in soup:
+        if "window.resourceLocator.setup = " in i.text:
+            theScript = i.text
+    theScript = json.loads(
+        str(theScript.split("window.resourceLocator.setup = ", 1)[1].split("};", 1)[0])
+        + "}"
+    )
 
-    try:
-        coords = (
-            soup.find("a", {"href": lambda x: x and "google.com/maps?q=" in x})["href"]
-            .split("google.com/maps?q=", 1)[1]
-            .split(",")
+    for i in theScript["channels"]["service"]["countries"]:
+        name = i["value"]
+        link = str("/" + i["code"] + "/en/")
+        special = False
+        yield {"name": name, "link": link, "special": special}
+
+
+def fetch_token():
+    url = "https://toniandguy.com/"
+    global headerz
+    with SgChrome() as driver:
+        driver.get(url)
+        byname_xpath = '/html/body/div/nav/div/div[1]/div[1]/a[2]' #Might break
+        byname = WebDriverWait(driver, 30).until(
+            EC.visibility_of_element_located((By.XPATH, byname_xpath))
         )
-    except Exception:
-        coords = ["<MISSING>", "<MISSING>"]
+        byname.click()
+        time.sleep(10)
+        token = driver.page_source.split('"_token" content="',1)[1].split('"',1)[0]
+        logzilla.info("By Name search clicked with SUCCESS")
+        reqs = list(driver.requests)
+        for r in reqs:
+            if "salon" in r.path:
+                headerz = r.headers
+                return token
+    return None
 
-    k["lat"] = coords[0]
-    k["lng"] = coords[1]
+def get_Start(session, headers):
+    page = session.get("https://locate.apple.com/findlocations", headers=headers)
+    soup = b4(page.text, "lxml")
+    data = []
+    soup = soup.find("div", {"class": "content selfclear", "id": "content"}).find_all(
+        "li"
+    )
+    for i in soup:
+        name = i.find("span").text
+        link = i.find("a")["href"]
+        found = False
+        for index, country in enumerate(data):
+            if link.split("/")[1] == country["link"].split("/")[1]:
+                if "/en/" in link:
+                    data[index]["link"] = link
+                    data[index]["name"] = name
+                found = True
+        if not found:
+            if len(link) > 7:
+                data.append({"name": name, "link": link, "special": True})
+            else:
+                data.append({"name": name, "link": link, "special": False})
 
-    try:
-        k["phone"] = soup.find(
-            "a", {"href": lambda x: x and x.startswith("tel:")}
-        ).text.strip()
-    except Exception:
-        k["phone"] = "<MISSING>"
+    this = CountryStack(
+        seed=OrderedSet(map(lambda r: SerializableCountry.deserialize(r), [])),
+        state=None,
+    )
+    for item in data:
+        if item["special"]:
+            for special_item in get_special(session, headers, item):
+                this.push_country(
+                    SerializableCountry(
+                        name=special_item["name"],
+                        link=special_item["link"],
+                        special=special_item["special"],
+                        retries=0,
+                    )
+                )
 
-    try:
-        k["hours"] = "; ".join(
-            list(
-                soup.find(
-                    "ol", {"class": lambda x: x and "opening-times" in x}
-                ).stripped_strings
+        else:
+            this.push_country(
+                SerializableCountry(
+                    name=item["name"],
+                    link=item["link"],
+                    special=item["special"],
+                    retries=0,
+                )
             )
-        )
-    except Exception:
-        k["hours"] = "<MISSING>"
-
-    return k
+    return this
 
 
-def fetch_data():
-    para("https://toniandguy.com/salon/phnom-penh")
-    logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
-    url = "https://toniandguy.com/sitemap.xml"
-    headers = {
-        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
-    }
-    session = SgRequests()
-    soup = b4(session.get(url, headers=headers).text, "lxml")
-
-    links = soup.find_all("loc")
-    pages = []
-    for i in links:
-        pages.append(i.text.strip())
-
-    lize = utils.parallelize(
-        search_space=pages,
-        fetch_results_for_rec=para,
-        max_threads=10,
-        print_stats_interval=10,
+def determine_country(country):
+    Searchable = country_names_by_code()
+    resultName = process.extract(country.name, list(Searchable.values()), limit=1)
+    resultCode = process.extract(
+        country.link.split("/")[1], list(Searchable.keys()), limit=1
     )
-    for i in lize:
-        if i:
-            yield i
+    logzilla.info(
+        f"Matched {country.name}{country.link} to {resultName[0]} or {resultCode[0]}"
+    )
+    if resultName[-1][-1] > resultCode[-1][-1]:
+        for i in Searchable.items():
+            if i[1] == resultName[-1][0]:
+                return i[0]
+    else:
+        return resultCode[-1][0]
 
+
+
+def get_country(search, country, session, headers, SearchableCountry, state):
+    def getPoint(point, session, locale, headers):
+        if locale[-1] != "/":
+            locale = locale + "/"
+        url = "https://locate.apple.com{locale}sales/?pt=all&lat={lat}&lon={lon}&address=".format(
+            locale=locale, lat=point[0], lon=point[1]
+        )
+        result = session.get(url, headers=headers)
+        soup = b4(result.text, "lxml")
+        allscripts = soup.find_all("script")
+        thescript = None
+        for i in allscripts:
+            if "window.resourceLocator.storeSetup" in i.text:
+                thescript = i
+        if thescript:
+            thescript = thescript.text
+            thescript = (
+                thescript.split("window.resourceLocator.storeSetup = ", 1)[1]
+                .rsplit("if(", 1)[0]
+                .rsplit(";", 1)[0]
+            )
+        try:
+            locs = json.loads(thescript)
+            return locs["results"]
+        except Exception as e:
+            try:
+                logzilla.error(
+                    str(
+                        f"had some issues with this country and point  {country}\n{point}{url} \n Matched to: {SearchableCountry}\nIssue was\n{str(e)}"
+                    )
+                )
+            except Exception:
+                pass
+
+    maxZ = None
+    maxZ = search.items_remaining()
+    total = 0
+    Point = (40.773103, -73.964488)
+    try:
+        for record in getPoint(Point, session, country.link, headers):
+            record["COUNTRY"] = country
+            yield record
+    except Exception:
+        pass
+    for Point in search:
+        found = 0
+        try:
+            for record in getPoint(Point, session, country.link, headers):
+                search.found_location_at(
+                    record["locationData"]["geo"][0], record["locationData"]["geo"][1]
+                )
+                record["COUNTRY"] = country
+                found += 1
+                yield record
+        except Exception as e:
+            try:
+                msg = getPoint(Point, session, country.link, headers)
+            except Exception as y:
+                msg = y
+            try:
+                logzilla.error(f"Something happened with {msg} \n error is: {e}")
+            except Exception as p:
+                logzilla.error(f"SMH couldn't even print the error:{e} \n {p}")
+
+        progress = str(round(100 - (search.items_remaining() / maxZ * 100), 2)) + "%"
+        total += found
+        logzilla.info(
+            f"{str(Point).replace('(','').replace(')','')}|found: {found}|total: {total}|prog: {progress}|\nRemaining: {search.items_remaining()} Searchable: {SearchableCountry}"
+        )
+    if total == 0:
+        errorLink = f"https://locate.apple.com{country.link}\n{country.name}"
+        logzilla.error(
+            f"Found a total of 0 results for country {country}\n this is unacceptable and possibly a country/search space mismatch\n Matched to: {SearchableCountry}\n{errorLink}"
+        )
+
+
+state = CrawlStateSingleton.get_instance()
+
+def test_country(country,session):
+    #Finds out if we need to search this country.
+    headers = {}
+    headers["accept"] = "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9"
+    try:
+        SgRequests.raise_on_err(session.get('a'))
+    except Exception:
+        pass
+    
+def fetch_data():
+    with SgRequests() as session:
+        countries = None
+        try:
+            countries = CountryStack(
+                seed=OrderedSet(
+                    map(
+                        lambda r: SerializableCountry.deserialize(r),
+                        state.get_misc_value("countries") or [],
+                    )
+                ),
+                state=state,
+            )
+        except Exception as e:
+            logzilla.warning("Something happened along the lines of", exc_info=e)
+        if not countries:
+            countries = get_Start(session, headers)
+            state.set_misc_value(key="countries", value=countries.serialize_country())
+            state.set_misc_value(key="SearchableCountry", value=None)
+            state.save(override=True)
+        country = countries.pop_country()
+        while country:
+            if not country.tested:
+                test_country(country,session)
+            if country.empty:
+                pass
+            else:
+                SearchableCountry = state.get_misc_value("SearchableCountry")
+                if country.retries < 3:
+                    country.retries = country.retries + 1
+                    if not SearchableCountry:
+                        SearchableCountry = determine_country(country)
+                        state.set_misc_value("SearchableCountry", SearchableCountry)
+                        state.save(override=True)
+                    else:
+                        countries.push_country(country)
+                        state.set_misc_value(
+                            key="countries", value=countries.serialize_country()
+                        )
+                        state.save(override=True)
+                    search = False
+                    try:
+                        search = DynamicGeoSearch(
+                            country_codes=[SearchableCountry],
+                            expected_search_radius_miles=None,  # Must turn it back down to 50 after testing
+                            max_search_results=100,
+                            granularity=Grain_4(),
+                        )
+                    except Exception as e:
+                        errorLink = (
+                            f"https://locate.apple.com{country.link}\n{country.name}"
+                        )
+                        logzilla.warning(
+                            f"Issue with sgzip and country code: {SearchableCountry}\n{e}\n{errorLink}"
+                        )
+                    if SearchableCountry == "hk":
+                        search = HKData()
+                    if search:
+                        for record in get_country(
+                            search, country, session, headers, SearchableCountry, state
+                        ):
+                            yield record
+                        SearchableCountry = None
+                        state.set_misc_value(
+                            key="SearchableCountry", value=SearchableCountry
+                        )
+                        state.save(override=True)
+                    else:
+                        SearchableCountry = None
+                        state.set_misc_value(
+                            key="SearchableCountry", value=SearchableCountry
+                        )
+                        state.save(override=True)
+            country = countries.pop_country()
     logzilla.info(f"Finished grabbing data!!")  # noqa
 
 
+def fix_comma(x):
+    h = []
+    try:
+        for i in x.split(","):
+            if len(i.strip()) >= 1:
+                h.append(i)
+        return ", ".join(h)
+    except Exception:
+        return x
+
+
 def scrape():
-    url = "https://toniandguy.com/"
+    url = "locate.apple.com"
     field_defs = sp.SimpleScraperPipeline.field_definitions(
         locator_domain=sp.ConstantField(url),
-        page_url=sp.MappingField(mapping=["url"], part_of_record_identity=True),
-        location_name=sp.MappingField(mapping=["name"]),
+        page_url=sp.MappingField(
+            mapping=["storeURL"],
+            is_required=False,
+        ),
+        location_name=sp.MappingField(
+            mapping=["storeName"],
+            is_required=False,
+        ),
         latitude=sp.MappingField(
-            mapping=["lat"],
+            mapping=["locationData", "geo", 0],
+            is_required=False,
         ),
         longitude=sp.MappingField(
-            mapping=["lng"],
+            mapping=["locationData", "geo", 1],
+            is_required=False,
         ),
-        street_address=sp.MappingField(mapping=["address"]),
-        city=sp.MappingField(mapping=["city"]),
-        state=sp.MappingField(mapping=["state"]),
-        zipcode=sp.MappingField(mapping=["zip"]),
-        country_code=sp.MappingField(mapping=["country"]),
-        phone=sp.MappingField(mapping=["phone"], part_of_record_identity=True),
-        store_number=sp.MissingField(),
-        hours_of_operation=sp.MappingField(
-            mapping=["hours"],
-            value_transform=lambda x: x.replace("\n", "")
-            .replace("\r", "")
-            .replace("\t", "")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " "),
+        street_address=sp.MultiMappingField(
+            mapping=[
+                ["locationData", "streetAddress1"],
+                ["locationData", "streetAddress2"],
+            ],
+            multi_mapping_concat_with=", ",
+            value_transform=fix_comma,
         ),
-        location_type=sp.MissingField(),
-        raw_address=sp.MappingField(
-            mapping=["rawa"],
-            value_transform=lambda x: x.replace("\n", "")
-            .replace("\r", "")
-            .replace("\t", "")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " ")
-            .replace("  ", " "),
+        city=sp.MappingField(
+            mapping=["locationData", "city"],
+            is_required=False,
+        ),
+        state=sp.MappingField(
+            mapping=["locationData", "state"],
+            is_required=False,
+        ),
+        zipcode=sp.MappingField(
+            mapping=["locationData", "postalCode"],
+            is_required=False,
+        ),
+        country_code=sp.MappingField(
+            mapping=["locationData", "country"],
+            is_required=False,
+        ),
+        phone=sp.MappingField(
+            mapping=["phoneNumber"],
+            part_of_record_identity=True,
+            is_required=False,
+        ),
+        store_number=sp.MappingField(
+            mapping=["storeID"],
+            part_of_record_identity=True,
+            is_required=False,
+        ),
+        hours_of_operation=sp.MissingField(),
+        location_type=sp.MappingField(
+            mapping=["storeURL"],
+            is_required=False,
+        ),
+        raw_address=sp.MultiMappingField(
+            mapping=[["locationData", "district"], ["locationData", "regionName"]],
+            multi_mapping_concat_with=", ",
+            value_transform=fix_comma,
+            is_required=False,
         ),
     )
 
@@ -268,11 +437,12 @@ def scrape():
         scraper_name="pipeline",
         data_fetcher=fetch_data,
         field_definitions=field_defs,
-        log_stats_interval=5,
+        log_stats_interval=25,
+        duplicate_streak_failure_factor=-1,
     )
 
     pipeline.run()
 
 
 if __name__ == "__main__":
-    scrape()
+    fetch_token()
