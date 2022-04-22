@@ -29,12 +29,9 @@ def get_data(slug, sgw: SgWriter):
     longitude = "".join(d.xpath("./@data-longitude"))
     b = d.xpath("./following-sibling::div[1]")[0]
     street_address = "".join(b.xpath(".//p[@itemprop='streetAddress']/text()")).strip()
-    city = "".join(b.xpath(".//p[@itemprop='addressLocality']/text()")).strip()
-    if not city:
-        city = location_name
-    if city[0].isdigit():
-        street_address = city
-        city = location_name
+    city = location_name
+    if "(" in city:
+        city = city.split("(")[0].strip()
     postal = "".join(b.xpath(".//p[@itemprop='zipCode']/text()")).strip()
     phone = "".join(b.xpath(".//p[@itemprop='telephone']/text()")).strip()
     hours_of_operation = "".join(
