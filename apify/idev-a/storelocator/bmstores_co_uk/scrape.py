@@ -19,7 +19,7 @@ headers = {
     "x-requested-with": "XMLHttpRequest",
 }
 
-max_workers = 2
+max_workers = 32
 
 
 def fetchConcurrentSingle(store):
@@ -116,7 +116,7 @@ def fetch_data():
             "https://www.bmstores.co.uk/hpcstores/StoresGeoJson&start=1&maxrows=700",
             headers=headers,
         ).json()["features"]
-        results = fetchConcurrentList(store_list[:5])
+        results = fetchConcurrentList(store_list)
         logger.info(f"{results}")
         for res in results:
             record = parse_result(res)
