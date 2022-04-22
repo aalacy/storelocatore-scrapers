@@ -58,6 +58,9 @@ def get_data(store_number, sgw: SgWriter):
     if not raw_address:
         raw_address = get_vn(raw_address)
     street_address, city, state, postal = get_international(raw_address)
+    if city == "":
+        city = raw_address.split(", ")[-1]
+
     latitude = j.get("lat")
     longitude = j.get("lng")
     hours = j.get("hour") or ""

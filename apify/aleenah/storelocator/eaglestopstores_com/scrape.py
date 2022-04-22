@@ -37,9 +37,9 @@ API_ENDPOINT_URL = "https://eaglestopstores.com/wp-admin/admin-ajax.php"
 
 
 def fetch_records(http: SgRequests) -> Iterable[SgRecord]:
-    loclist = http.post(
-        API_ENDPOINT_URL, headers=headers, data=payload, timeout=200
-    ).json()["locations"]
+    loclist = http.post(API_ENDPOINT_URL, headers=headers, data=payload).json()[
+        "locations"
+    ]
     for loc in loclist:
         location_name = loc["name"]
         log.info(location_name)

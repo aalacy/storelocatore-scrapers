@@ -31,7 +31,7 @@ headers = {
 def fetch_data():
     # Your scraper here
     for x in range(0, 200, 50):
-        api_url = f"https://liveapi.yext.com/v2/accounts/me/entities/geosearch?radius=2000&location=10000&offset={x}&limit=50&api_key=8a15ce20e57479e69a3059450e2a2914&v=20181201&resolvePlaceholders=true&languages=en&entityTypes=restaurant"
+        api_url = f"https://liveapi.yext.com/v2/accounts/me/entities/geosearch?radius=2500&location=10001&offset={x}&limit=50&api_key=8a15ce20e57479e69a3059450e2a2914&v=20181201&resolvePlaceholders=true&languages=en&entityTypes=restaurant"
 
         api_res = session.get(api_url, headers=headers)
 
@@ -56,7 +56,6 @@ def fetch_data():
             locator_domain = website
 
             location_name = store["geomodifier"]
-
             street_address = store["address"]["line1"].strip()
             if "line2" in store["address"] and store["address"]["line2"]:
                 street_address = (
@@ -73,28 +72,35 @@ def fetch_data():
 
             location_type = "<MISSING>"
             hours_list = []
-            for day in store["hours"].keys():
-                time = ""
-                if day != "holidayHours":
-                    if "isClosed" in store["hours"][day]:
-                        if store["hours"][day]["isClosed"] is False:
+            if "reopenDate" in store["hours"].keys():
+                location_type = "Closed"
+                hours_list.append("<MISSING>")
+
+            else:
+                for day in store["hours"].keys():
+                    time = ""
+                    if isinstance(store["hours"][day], dict):
+                        if "isClosed" in store["hours"][day]:
+                            if store["hours"][day]["isClosed"] is False:
+                                time = (
+                                    store["hours"][day]["openIntervals"][0]["start"]
+                                    + " - "
+                                    + store["hours"][day]["openIntervals"][0]["end"]
+                                )
+                            else:
+                                time = "Closed"
+                        else:
                             time = (
                                 store["hours"][day]["openIntervals"][0]["start"]
                                 + " - "
                                 + store["hours"][day]["openIntervals"][0]["end"]
                             )
-                        else:
-                            time = "Closed"
-                    else:
-                        time = (
-                            store["hours"][day]["openIntervals"][0]["start"]
-                            + " - "
-                            + store["hours"][day]["openIntervals"][0]["end"]
-                        )
-                    if len(time) > 0:
-                        hours_list.append(day + ":" + time)
+                        if len(time) > 0:
+                            hours_list.append(day + ":" + time)
 
             hours_of_operation = "; ".join(hours_list).strip()
+            if hours_of_operation.count("Closed") == 7:
+                location_type = "Closed"
 
             latitude = store["yextDisplayCoordinate"]["latitude"]
             longitude = store["yextDisplayCoordinate"]["longitude"]

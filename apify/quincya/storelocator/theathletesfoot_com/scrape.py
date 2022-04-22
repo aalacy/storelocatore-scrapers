@@ -51,6 +51,7 @@ def fetch_data(sgw: SgWriter):
         "Turkey": "tr",
         "USA": "us",
         "Ukraine": "ua",
+        "North Macedonia": "mk",
     }
     countries = list(base.find(class_="country-selector__main").stripped_strings)
     for country in countries:

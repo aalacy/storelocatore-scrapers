@@ -4,7 +4,6 @@ from sgrequests import SgRequests
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sglogging import SgLogSetup
-from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 from tenacity import retry, wait_fixed, stop_after_attempt
 
 logger = SgLogSetup().get_logger("shell")
@@ -14,7 +13,8 @@ _headers = {
 }
 
 locator_domain = "https://www.shell.ae/"
-json_url = "https://shellgsllocator.geoapp.me/api/v1/locations/nearest_to?lat={}&lng={}&autoload=true&travel_mode=driving&avoid_tolls=false&avoid_highways=false&avoid_ferries=false&corridor_radius=500&driving_distances=false&format=json"
+json_url = "https://shelllubricantslocator.geoapp.me/api/v1/global_lubes/locations/within_bounds?sw%5B%5D={}&sw%5B%5D={}&ne%5B%5D={}&ne%5B%5D={}&format=json"
+base_url = "https://shellgsllocator.geoapp.me/api/v1/locations/within_bounds?sw%5B%5D=-80&sw%5B%5D=-179&ne%5B%5D=80&ne%5B%5D=179&format=json"
 
 
 @retry(wait=wait_fixed(2), stop=stop_after_attempt(3))
@@ -23,40 +23,56 @@ def get_json(url):
         return session.get(url, headers=_headers).json()
 
 
-def fetch_data(search):
-    for lat, lng in search:
-        try:
-            locations = get_json(json_url.format(lat, lng))
-            logger.info(f"[{search.current_country()}] [{lat, lng}] {len(locations)}")
-        except:
-            logger.warning(f"[{search.current_country()}] [{lat, lng}] ==========")
+def fetch_boundings(boundings, writer):
+    for bound in boundings:
+        _bb = bound["bounds"]
+        locations = get_json(
+            json_url.format(_bb["sw"][0], _bb["sw"][1], _bb["ne"][0], _bb["ne"][1])
+        )
         if locations:
-            search.found_location_at(lat, lng)
-        for _ in locations:
-            street_address = ""
-            if _.get("address"):
-                street_address = _["address"]
-            if _.get("address1"):
-                street_address += " " + _["address1"]
-            if _.get("address2"):
-                street_address += " " + _["address2"]
-            zip_postal = _.get("postcode")
-            if zip_postal and zip_postal == "00000":
-                zip_postal = ""
-            yield SgRecord(
-                store_number=_["id"],
-                location_name=_["name"],
-                street_address=street_address,
-                city=_["city"],
-                state=_.get("state"),
-                zip_postal=zip_postal,
-                latitude=_["lat"],
-                longitude=_["lng"],
-                country_code=_["country"],
-                phone=_["telephone"],
-                locator_domain=locator_domain,
-                location_type=", ".join(_.get("channel_types", [])),
-            )
+            if locations[0].get("centroid"):
+                logger.info(f"{bound['size']} recuring")
+                fetch_boundings(locations, writer)
+            else:
+                logger.info(f"{len(locations)} locations")
+                for _ in locations:
+                    street_address = ""
+                    if _.get("address1"):
+                        street_address = _["address1"]
+                    if _.get("address2"):
+                        street_address += " " + _["address2"]
+                    zip_postal = _.get("postcode")
+                    if zip_postal and zip_postal == "00000":
+                        zip_postal = ""
+
+                    phone = _["telephone"]
+                    if phone == "0":
+                        phone = ""
+                    if phone:
+                        phone = phone.split("/")[0]
+
+                    writer.write_row(
+                        SgRecord(
+                            store_number=_["id"],
+                            location_name=_["name"],
+                            street_address=street_address,
+                            city=_["city"],
+                            state=_.get("state"),
+                            zip_postal=zip_postal,
+                            latitude=_["lat"],
+                            longitude=_["lng"],
+                            country_code=_["country"],
+                            phone=phone,
+                            locator_domain=locator_domain,
+                            location_type=", ".join(_.get("channel_types", [])),
+                        )
+                    )
+
+
+def fetch_data(writer):
+    boundings = get_json(base_url)
+
+    fetch_boundings(boundings, writer)
 
 
 if __name__ == "__main__":
@@ -65,7 +81,4 @@ if __name__ == "__main__":
             RecommendedRecordIds.StoreNumberId, duplicate_streak_failure_factor=2000
         )
     ) as writer:
-        search = DynamicGeoSearch(country_codes=SearchableCountries.ALL)
-        results = fetch_data(search)
-        for rec in results:
-            writer.write_row(rec)
+        fetch_data(writer)
