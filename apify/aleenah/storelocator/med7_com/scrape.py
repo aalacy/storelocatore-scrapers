@@ -1,3 +1,4 @@
+import html
 from sglogging import sglog
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
@@ -23,7 +24,7 @@ def fetch_data():
         url = "https://med7.com/wp-admin/admin-ajax.php?action=store_search&lat=38.581572&lng=-121.4944&max_results=25&search_radius=50&autoload=1"
         loclist = session.get(url, headers=headers).json()
         for loc in loclist:
-            location_name = loc["store"]
+            location_name = html.unescape(loc["store"])
             log.info(location_name)
             store_number = loc["id"]
             phone = loc["phone"]

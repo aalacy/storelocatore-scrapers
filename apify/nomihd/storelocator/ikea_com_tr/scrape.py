@@ -74,7 +74,7 @@ def fetch_data():
 
         phone = "".join(
             store_sel.xpath(
-                '//div[@class="address-item"][./i[@class="icon-musteri"]]/p/text()'
+                '//div[@class="address-item"][./i[@class="icon-musteri"]]/a/text()'
             )
         ).strip()
         latitude = "".join(store.xpath("@data-latitude")).strip()

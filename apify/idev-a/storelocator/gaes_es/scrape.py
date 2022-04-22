@@ -8,6 +8,7 @@ from bs4 import BeautifulSoup as bs
 import time
 import json
 import ssl
+from tenacity import retry, stop_after_attempt, wait_fixed
 
 try:
     _create_unverified_https_context = (
@@ -33,6 +34,7 @@ def get_driver():
     ).driver()
 
 
+@retry(wait=wait_fixed(5), stop=stop_after_attempt(2))
 def get_bs(driver=None, url=None):
     while True:
         if not driver:
@@ -86,6 +88,7 @@ def fetch_data():
         addr = _["address"]
         yield SgRecord(
             page_url=page_url,
+            store_number=_["branchCode"],
             location_name=_["name"],
             street_address=addr["streetAddress"],
             city=addr["addressLocality"],

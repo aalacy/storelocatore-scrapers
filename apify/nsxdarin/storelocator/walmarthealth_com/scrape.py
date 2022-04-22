@@ -10,8 +10,8 @@ logger = SgLogSetup().get_logger("walmarthealth_com")
 
 search = DynamicZipSearch(
     country_codes=[SearchableCountries.USA],
-    max_search_distance_miles=50,
-    max_search_results=25,
+    max_search_distance_miles=None,
+    max_search_results=10,
 )
 
 headers = {
@@ -31,52 +31,67 @@ def fetch_data():
             r = session.get(url, headers=headers)
             website = "walmarthealth.com"
             for line in r.iter_lines():
-                if '"phone":"' in line:
-                    items = line.split('"phone":"')
+                if '"clinics":' in line:
+                    items = line.split('"clinics":')[1].split('"phone":"')
                     for item in items:
-                        if '"clinicServices":' not in item:
-                            store = "<MISSING>"
+                        if ',"operationalHours"' in item:
                             name = "Walmart Health"
-                            phone = item.split('"')[0]
-                            state = item.split('"address":{"state":"')[1].split('"')[0]
-                            city = item.split('"city":"')[1].split('"')[0]
+                            loc = "https://www.walmarthealth.com/"
+                            hrs = (
+                                "Mon-Fri: "
+                                + item.split('monToFriHrs":{"startHr":"')[1].split('"')[
+                                    0
+                                ]
+                                + "-"
+                                + item.split('monToFriHrs":{"startHr":"')[1]
+                                .split('"endHr":"')[1]
+                                .split('"')[0]
+                            )
+                            try:
+                                hrs = (
+                                    hrs
+                                    + "; Sat: "
+                                    + item.split('"saturdayHrs":{')[1]
+                                    .split('"startHr":"')[1]
+                                    .split('"')[0]
+                                    + "-"
+                                    + item.split('"saturdayHrs":{')[1]
+                                    .split('"endHr":"')[1]
+                                    .split('"')[0]
+                                )
+                            except:
+                                hrs = hrs + "; Sat: Closed"
+                            try:
+                                hrs = (
+                                    hrs
+                                    + "; Sun: "
+                                    + item.split('"sundayHrs":{')[1]
+                                    .split('"startHr":"')[1]
+                                    .split('"')[0]
+                                    + "-"
+                                    + item.split('"sundayHrs":{')[1]
+                                    .split('"endHr":"')[1]
+                                    .split('"')[0]
+                                )
+                            except:
+                                hrs = hrs + "; Sun: Closed"
+                            hours = hrs
+                            state = (
+                                item.split('"address":')[1]
+                                .split('"state":"')[1]
+                                .split('"')[0]
+                            )
+                            city = (
+                                item.split('"address":')[1]
+                                .split('"city":"')[1]
+                                .split('"')[0]
+                            )
                             add = item.split('"address1":"')[1].split('"')[0]
                             zc = item.split('"postalCode":"')[1].split('"')[0]
                             lat = item.split('"latitude":')[1].split(",")[0]
                             lng = item.split('"longitude":')[1].split("}")[0]
-                            loc = "<MISSING>"
-                            hours = (
-                                "Mon-Fri: "
-                                + item.split('"monToFriHrs":{"startHr":"')[1].split(
-                                    '"'
-                                )[0]
-                                + "-"
-                                + item.split('"monToFriHrs":{"')[1]
-                                .split('"endHr":"')[1]
-                                .split('"')[0]
-                            )
-                            hours = (
-                                hours
-                                + "; Sat: "
-                                + item.split('"saturdayHrs":{"startHr":"')[1].split(
-                                    '"'
-                                )[0]
-                                + "-"
-                                + item.split('"saturdayHrs":{"')[1]
-                                .split('"endHr":"')[1]
-                                .split('"')[0]
-                            )
-                            hours = (
-                                hours
-                                + "; Sun: "
-                                + item.split('"sundayHrs":{"startHr":"')[1].split('"')[
-                                    0
-                                ]
-                                + "-"
-                                + item.split('"sundayHrs":{"')[1]
-                                .split('"endHr":"')[1]
-                                .split('"')[0]
-                            )
+                            store = item.split('"storeNbr":"')[1].split('"')[0]
+                            phone = item.split('"')[0]
                             yield SgRecord(
                                 locator_domain=website,
                                 page_url=loc,

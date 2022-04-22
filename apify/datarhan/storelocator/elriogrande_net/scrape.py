@@ -17,20 +17,49 @@ def fetch_data():
     all_locations = session.get(start_url, headers=hdr).json()
     for poi in all_locations:
         page_url = f'https://elriogrande.net{poi["url"]}'
-        hoo = etree.HTML(poi["hours"]).xpath("//text()")
-        hoo = " ".join(hoo)
+        loc_response = session.get(page_url, headers=hdr)
+        phone = ""
+        state = poi["state"]
+        street_address = poi["address"]
+        hoo = ""
+        if loc_response.status_code == 200:
+            loc_dom = etree.HTML(loc_response.text)
+            phone = loc_dom.xpath('//a[contains(@href, "tel")]/text()')
+            phone = phone[0] if phone else ""
+            if not phone:
+                phone = (
+                    loc_dom.xpath(
+                        '//h2[contains(text(), "Address")]/following-sibling::h4/text()'
+                    )[-1]
+                    .split(":")[-1]
+                    .strip()
+                )
+            raw_address = loc_dom.xpath(
+                '//h2[contains(text(), "Address")]/following-sibling::h4/text()'
+            )
+            raw_address = [
+                e.strip() for e in raw_address if "Phone" not in e and "Fax" not in e
+            ]
+            if len(raw_address) == 3:
+                raw_address = [", ".join(raw_address[:2])] + raw_address[2:]
+            if not state:
+                state = raw_address[-1].split(", ")[-1].split()[0]
+            street_address = raw_address[0]
+            hoo = loc_dom.xpath(
+                '//div[contains(text(), "Store")]/following-sibling::div[1]/text()'
+            )[0]
 
         item = SgRecord(
             locator_domain=domain,
             page_url=page_url,
             location_name=poi["store"],
-            street_address=poi["address"],
+            street_address=street_address,
             city=poi["city"],
-            state=poi["state"],
+            state=state,
             zip_postal=poi["zip"],
             country_code=poi["country"],
             store_number=poi["id"],
-            phone=poi["phone"],
+            phone=phone,
             location_type="",
             latitude=poi["lat"],
             longitude=poi["lng"],
