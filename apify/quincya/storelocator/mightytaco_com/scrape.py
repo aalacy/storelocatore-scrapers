@@ -35,7 +35,11 @@ def fetch_data(sgw: SgWriter):
         store_number = item.div["id"].split("_")[1]
         location_type = ""
         phone = item.find(class_="phoneRow").a.text.strip()
-        hours_of_operation = " ".join(list(base.find(class_="time").stripped_strings))
+        hours_of_operation = " ".join(list(item.find(class_="time").stripped_strings))
+        if "temporarily" in hours_of_operation:
+            hours_of_operation = " ".join(
+                list(item.find_all(class_="time")[1].stripped_strings)
+            )
         latitude = ""
         longitude = ""
 
