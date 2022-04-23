@@ -266,56 +266,55 @@ def request_with_retries(page_url):
 
 
 def _d(loc, domain, country):
-    with SgRequests(proxy_country="de") as session:
-        if type(loc["url"]) == dict:
-            page_url = domain + loc["url"]["url"]
-        else:
-            page_url = domain + loc["url"]
+    if type(loc["url"]) == dict:
+        page_url = domain + loc["url"]["url"]
+    else:
+        page_url = domain + loc["url"]
 
-        logger.info(page_url)
-        try:
-            _ = json.loads(
-                bs(request_with_retries(page_url).text, "lxml")
-                .select_one("script#__NEXT_DATA__")
-                .text
-            )["props"]["pageProps"]["queryResult"]["Store"]
-        except Exception as err:
-            logger.info(str(err))
-        raw_address = f"{_['address']}, {_['city']}"
-        if _["postalCode"]:
-            raw_address += f", {_['postalCode']}"
-        raw_address += f", {country}"
-        addr = parse_address_intl(raw_address)
-        hours = []
-        if _["schedules"]:
-            for hh in _["schedules"]:
-                day = hr_obj.get(str(hh["day"]))
-                times = _time(hh["openingHour"], hh["openingMinute"])
-                hours.append((f"{day}: {times}"))
+    logger.info(page_url)
+    try:
+        _ = json.loads(
+            bs(request_with_retries(page_url).text, "lxml")
+            .select_one("script#__NEXT_DATA__")
+            .text
+        )["props"]["pageProps"]["queryResult"]["Store"]
+    except Exception as err:
+        logger.info(str(err))
+    raw_address = f"{_['address']}, {_['city']}"
+    if _["postalCode"]:
+        raw_address += f", {_['postalCode']}"
+    raw_address += f", {country}"
+    addr = parse_address_intl(raw_address)
+    hours = []
+    if _["schedules"]:
+        for hh in _["schedules"]:
+            day = hr_obj.get(str(hh["day"]))
+            times = _time(hh["openingHour"], hh["openingMinute"])
+            hours.append((f"{day}: {times}"))
 
-        city = addr.city
-        if city and city.lower() == "city":
-            city = ""
-        state = addr.state
-        if state and state == _.get("postalCode"):
-            state = ""
-        return SgRecord(
-            page_url=page_url,
-            store_number=_["id"],
-            location_name=_["name"],
-            street_address=_["address"],
-            city=city,
-            state=state,
-            zip_postal=_.get("postalCode"),
-            country_code=country,
-            phone=_["phone"],
-            latitude=_["lat"],
-            longitude=_["lon"],
-            location_type="store",
-            locator_domain=locator_domain,
-            hours_of_operation="; ".join(hours),
-            raw_address=raw_address,
-        )
+    city = addr.city
+    if city and city.lower() == "city":
+        city = ""
+    state = addr.state
+    if state and state == _.get("postalCode"):
+        state = ""
+    return SgRecord(
+        page_url=page_url,
+        store_number=_["id"],
+        location_name=_["name"],
+        street_address=_["address"],
+        city=city,
+        state=state,
+        zip_postal=_.get("postalCode"),
+        country_code=country,
+        phone=_["phone"],
+        latitude=_["lat"],
+        longitude=_["lon"],
+        location_type="store",
+        locator_domain=locator_domain,
+        hours_of_operation="; ".join(hours),
+        raw_address=raw_address,
+    )
 
 
 def get_driver():
