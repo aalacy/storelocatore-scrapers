@@ -1,51 +1,22 @@
-import csv
-from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 
-DOMAIN = "https://mastercuts.com"
-MISSING = "<MISSING>"
+from sgrequests import SgRequests
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
+
+domain = "mastercuts.com"
 
 user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
-HEADERS = {"User-Agent": user_agent}
-
+hdr = {"User-Agent": user_agent}
 session = SgRequests()
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
 def fetch_data():
-    data = []
     storelist = []
     url = "https://www.signaturestyle.com/salon-directory.html"
-    response = session.get(url, headers=HEADERS)
+    response = session.get(url, headers=hdr)
     soup = BeautifulSoup(response.content, "html.parser")
     loclist = soup.select("a[href*=locations]")
     for loc_url in loclist:
@@ -53,12 +24,14 @@ def fetch_data():
 
         if "pr.html" in loc_url:
             continue
-        res = session.get(loc_url, headers=HEADERS)
+        res = session.get(loc_url, headers=hdr)
         soup = BeautifulSoup(res.text, "html.parser")
         linklist = soup.select("a[href*=haircuts]")
         for link in linklist:
             link = "https://www.signaturestyle.com" + link["href"]
-            r = session.get(link, headers=HEADERS)
+            r = session.get(link, headers=hdr)
+            if r.status_code != 200:
+                continue
             loc_data = BeautifulSoup(r.text, "html.parser")
             loc_soup = loc_data.find(class_="salondetailspagelocationcomp")
             try:
@@ -68,7 +41,7 @@ def fetch_data():
                 hours_of_operation = " ".join(
                     list(loc_soup.find(class_="salon-timings").stripped_strings)
                 )
-            except:
+            except Exception:
                 continue
             phone = loc_soup.find(id="sdp-phone").text.strip()
             street_address = loc_soup.find(
@@ -86,39 +59,46 @@ def fetch_data():
             lat = loc_data.find("meta", attrs={"itemprop": "latitude"})["content"]
             lon = loc_data.find("meta", attrs={"itemprop": "longitude"})["content"]
             store_number = link.split("-")[-1].split(".")[0]
-            location_type = "<MISSING>"
+            location_type = ""
 
             if " " in zipcode:
                 country = "CA"
             if len(hours_of_operation) < 3:
-                hours_of_operation = "<MISSING>"
+                hours_of_operation = ""
             if store_number in storelist:
                 continue
             storelist.append(store_number)
-            data.append(
-                [
-                    DOMAIN,
-                    link,
-                    location_name,
-                    street_address,
-                    city,
-                    state,
-                    zipcode,
-                    country,
-                    store_number,
-                    phone,
-                    location_type,
-                    lat,
-                    lon,
-                    hours_of_operation,
-                ]
+            item = SgRecord(
+                locator_domain=domain,
+                page_url=link,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zipcode,
+                country_code=country,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=lat,
+                longitude=lon,
+                hours_of_operation=hours_of_operation,
             )
-    return data
+
+            yield item
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()

@@ -133,6 +133,8 @@ def fetch_records(lid, loc, sgw: SgWriter):
             typ = "<MISSING>"
             hours = ""
             add = ""
+            rawadd = ""
+            zc = ""
             store_number = ""
             latitude = ""
             longitude = ""
@@ -140,12 +142,20 @@ def fetch_records(lid, loc, sgw: SgWriter):
             phone = ""
             phone1 = ""
             phone2 = ""
+            name = ""
+            name1 = ""
+            name2 = ""
+
+            purl = ""
 
             slug20 = sel20.xpath("//@data-productlink")
             if slug20:
                 slug = slug20[0].split("/")[2]
                 if slug:
                     logger.info(f"[SLUG {slug} ]")
+                    # Example of slug boll-weevil-circle-e-lee-st-px
+                    # Example of slug-based URL https://nomnom-prod-api.pandaexpress.com/restaurants/byslug/boll-weevil-circle-e-lee-st-px
+
                     api_endpoint_url = f"https://nomnom-prod-api.pandaexpress.com/restaurants/byslug/{slug}"
                     r21 = get_store_number(api_endpoint_url)
                     js21 = r21.json()
@@ -154,6 +164,7 @@ def fetch_records(lid, loc, sgw: SgWriter):
                     longitude = js21["longitude"]
                     country = js21["country"]
                     phone1 = js21["telephone"]
+                    name1 = js21["name"]
                 else:
                     storeid = "".join(
                         sel20.xpath('//a[contains(@href, "storeid=")]/@href')
@@ -183,9 +194,9 @@ def fetch_records(lid, loc, sgw: SgWriter):
 
                 if '<link rel="canonical" href="' in line2:
                     purl = line2.split('<link rel="canonical" href="')[1].split('"')[0]
-                if '<div class="name"><h2>' in line2:
-                    name = (
-                        line2.split('<div class="name"><h2>')[1]
+                if '<div class="name"><h1>' in line2:
+                    name2 = (
+                        line2.split('<div class="name"><h1>')[1]
                         .split("<")[0]
                         .replace("&amp;", "&")
                     )
@@ -240,6 +251,56 @@ def fetch_records(lid, loc, sgw: SgWriter):
                 phone = phone1
             if phone2:
                 phone = phone2
+
+            # Location Name FIX
+            if name1:
+                name = name1
+            elif name2:
+                name = name2
+            else:
+                name = ""
+
+            # STORE NUMBER FIX
+            if (
+                "https://www.pandaexpress.com/locations/ca/westminster/2105-westminster-mall"
+                in purl
+            ):
+                store_number = "117"
+
+            if (
+                "https://www.pandaexpress.com/locations/il/mt-prospect/1200-east-central-road"
+                in purl
+            ):
+                store_number = "1529"
+
+            if (
+                "https://www.pandaexpress.com/locations/il/chicago/77-e-adams-st"
+                in purl
+            ):
+                store_number = "299"
+
+            # These page urls don't have store.
+            # These stores are found to be duplicates, therefore, dropped.
+            # https://www.pandaexpress.com/locations/gu/santa-rita/exchange-road--building-258
+            # https://www.pandaexpress.com/locations/ca/los-angeles/1-world-way
+            # https://www.pandaexpress.com/locations/tx/houston/2800-n-terminal-rd
+
+            if (
+                "https://www.pandaexpress.com/locations/gu/santa-rita/exchange-road--building-258"
+                in purl
+            ):
+                return
+            if (
+                "https://www.pandaexpress.com/locations/ca/los-angeles/1-world-way"
+                in purl
+            ):
+                return
+            if (
+                "https://www.pandaexpress.com/locations/tx/houston/2800-n-terminal-rd"
+                in purl
+            ):
+                return
+
             if len(zc) >= 1:
                 item = SgRecord(
                     locator_domain="pandaexpress.com",

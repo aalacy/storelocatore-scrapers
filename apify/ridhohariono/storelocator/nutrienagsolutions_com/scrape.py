@@ -65,37 +65,32 @@ def fetch_data():
         except:
             zip_postal = MISSING
         try:
-            phone = row["data-phone"].replace('"', "").strip()
+            phone_content = row.find("a", {"class": "phone"})
+            if phone_content:
+                phone = phone_content.text.strip()
+            else:
+                phone = row["data-phone"].replace('"', "").strip()
         except:
             phone = MISSING
         location_type = row["data-type"].replace('"', "").strip()
         country_code = "US"
         if len(zip_postal.split(" ")) > 1 or "Humboldt" in city:
             country_code = "CA"
-
-        # Fix Broken HTML Structure
-        if "RetailBranch" in city and len(zip_postal) == 2:
-            city = state
-            state = zip_postal
-            zip_postal = MISSING
-            location_type = "RetailBranch"
-            street_address = row["data-type"]
-            if phone == state:
-                phone = MISSING
-            if row["data-latitude"] == "CAN" or row["data-longitude"] == "CAN":
-                country_code = "CA"
-            else:
-                country_code = "US"
-        raw_address = (
-            f"{street_address}, {city}, {state}, {zip_postal}".replace(
-                ", " + MISSING, ""
-            )
-            .replace('"', "")
-            .replace("WSS001285", "")
-            .strip()
+        try:
+            row.find("a", {"class": "phone"}).decompose()
+        except:
+            pass
+        raw_address = row.find("div", {"class": "address-container"}).get_text(
+            strip=True, separator=", "
         )
+        if "Divisionoffice" in raw_address:
+            location_type = "Divisionoffice"
+        elif "Retailbranch" in raw_address:
+            location_type = "Retailbranch"
+        elif "Storage" in raw_address:
+            location_type = "Storage"
         street_address, city, state, zip_postal = getAddress(raw_address)
-        street_address = street_address.replace("Retailbranch", "")
+        street_address = street_address.replace(location_type, "").strip()
         state = state.replace("(Greenfield)", "").strip()
         hours_of_operation = MISSING
         store_number = MISSING
@@ -137,7 +132,7 @@ def fetch_data():
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hours_of_operation,
-            raw_address=f"{street_address}, {city}, {state}, {zip_postal}",
+            raw_address=raw_address,
         )
 
 
