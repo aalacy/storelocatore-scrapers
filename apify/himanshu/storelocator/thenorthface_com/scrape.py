@@ -4,16 +4,19 @@ from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
-from sgzip.dynamic import SearchableCountries, Grain_8
-from sgzip.parallel import DynamicSearchMaker, ParallelDynamicSearch, SearchIteration
 from sglogging import SgLogSetup
+import dirtyjson as json
+from sgzip.dynamic import SearchableCountries
+from sgzip.parallel import DynamicSearchMaker, ParallelDynamicSearch, SearchIteration
 
 logger = SgLogSetup().get_logger("")
 
 headers = {
     "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36"
 }
+
 locator_domain = "https://www.thenorthface.com"
+base_url = "https://stores.thenorthface.com/"
 
 
 class ExampleSearchIteration(SearchIteration):
@@ -97,6 +100,7 @@ class ExampleSearchIteration(SearchIteration):
                         + "".join(_["city"]).replace(" ", "-").lower()
                         + "/"
                         + storekey
+                        + "/"
                     )
                 street_address = ""
                 if _["address1"] is not None:
@@ -155,6 +159,62 @@ class ExampleSearchIteration(SearchIteration):
                 )
 
 
+def fetch_records():
+    with SgRequests() as http:
+        states = bs(http.get(base_url, headers=headers).text, "lxml").select(
+            "div.listitem a"
+        )
+        for state in states:
+            if not state["data-galoc"].endswith("US"):
+                continue
+
+            state_url = state["href"]
+            logger.info(f"[{state.text.strip()}] {state_url}")
+            cities = bs(http.get(state_url, headers=headers).text, "lxml").select(
+                "div.listitem a"
+            )
+            for city in cities:
+                city_url = city["href"]
+                logger.info(f"[{city.text.strip()}] {city_url}")
+                locations = bs(http.get(city_url, headers=headers).text, "lxml").select(
+                    "div.listitem a"
+                )
+                for loc in locations:
+                    page_url = loc["href"]
+                    if not page_url.endswith("/"):
+                        page_url += "/"
+                    logger.info(f"{page_url}")
+                    sp1 = bs(http.get(page_url, headers=headers).text, "lxml")
+                    _ = json.loads(
+                        sp1.find_all("script", type="application/ld+json")[-1].text
+                    )
+
+                    hours = []
+                    for hh in sp1.select_one("div#hoursdiv").findChildren(
+                        recursive=False
+                    ):
+                        if not hh.text.strip():
+                            continue
+                        hours.append(" ".join(hh.stripped_strings))
+
+                    addr = _["address"]
+                    yield SgRecord(
+                        page_url=page_url,
+                        location_name=_["name"],
+                        street_address=addr["streetAddress"],
+                        city=addr["addressLocality"],
+                        state=addr["addressRegion"],
+                        zip_postal=addr["postalCode"],
+                        country_code="US",
+                        phone=_["telephone"],
+                        location_type=_["@type"],
+                        latitude=_["geo"]["latitude"],
+                        longitude=_["geo"]["longitude"],
+                        locator_domain=locator_domain,
+                        hours_of_operation="; ".join(hours),
+                    )
+
+
 if __name__ == "__main__":
     with SgRequests() as session:
         app_key_request = session.get(
@@ -181,15 +241,18 @@ if __name__ == "__main__":
             )
         ) as writer:
             search_maker = DynamicSearchMaker(
-                search_type="DynamicZipSearch", granularity=Grain_8()
+                search_type="DynamicZipSearch", expected_search_radius_miles=500
             )
-            search_iter = ExampleSearchIteration(app_key=app_key)
             par_search = ParallelDynamicSearch(
                 search_maker=search_maker,
-                search_iteration=search_iter,
+                search_iteration=lambda: ExampleSearchIteration(app_key=app_key),
                 country_codes=[SearchableCountries.USA],
             )
 
             for rec in par_search.run():
+                if rec:
+                    writer.write_row(rec)
+
+            for rec in fetch_records():
                 if rec:
                     writer.write_row(rec)

@@ -30,7 +30,6 @@ def get_data(url, sgw: SgWriter):
     }
     session = SgRequests(verify_ssl=False)
     r = session.get(page_url, headers=headers)
-
     tree = html.fromstring(r.text)
     js_block = "".join(
         tree.xpath('//script[contains(text(), "openingHoursSpecification")]/text()')
@@ -115,7 +114,7 @@ def get_data(url, sgw: SgWriter):
 
 def fetch_data(sgw: SgWriter):
     urls = get_urls()
-    with futures.ThreadPoolExecutor(max_workers=1) as executor:
+    with futures.ThreadPoolExecutor(max_workers=10) as executor:
         future_to_url = {executor.submit(get_data, url, sgw): url for url in urls}
         for future in futures.as_completed(future_to_url):
             future.result()

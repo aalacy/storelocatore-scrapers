@@ -41,6 +41,8 @@ def fetch_data():
                 .split("|")[1:]
             )
             phone = raw_address[0]
+            if "KING" in phone:
+                phone = phone.split("KING")[0]
             raw_address = raw_address[-1].replace("{", "")
             pa = parse_address_intl(raw_address)
 
