@@ -44,7 +44,7 @@ def fetch_data():
                 zip_postal=poi["zip"],
                 country_code=poi["countryCode"],
                 store_number=poi["id"],
-                phone=poi["phone"],
+                phone=poi["shippingDetails"]["phone"],
                 location_type=poi["storeType"],
                 latitude=poi["latitude"],
                 longitude=poi["longitude"],
@@ -57,9 +57,7 @@ def fetch_data():
 def scrape():
     with SgWriter(
         SgRecordDeduper(
-            SgRecordID(
-                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
-            )
+            SgRecordID({SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STORE_NUMBER})
         )
     ) as writer:
         for item in fetch_data():

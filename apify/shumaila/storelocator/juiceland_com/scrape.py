@@ -20,7 +20,9 @@ def fetch_data():
     loclist = soup.findAll("div", {"class": "location-list-block__content"})
     for loc in loclist:
         title = loc.find("h4").text
+
         link = loc.find("a")["href"]
+
         try:
             street = loc.find("span", {"class": "address"}).text.replace(",", "")
         except:
@@ -33,8 +35,11 @@ def fetch_data():
         except:
 
             phone = "<MISSING>"
-        hours = loc.find("div", {"class": "single-wpsl__right-hours"}).text.strip()
-        hours = re.sub(pattern, " ", hours).replace("Store Hours: ", "").strip()
+        try:
+            hours = loc.find("div", {"class": "single-wpsl__right-hours"}).text.strip()
+            hours = re.sub(pattern, " ", hours).replace("Store Hours: ", "").strip()
+        except:
+            hours = "<MISSING>"
         r = session.get(link, headers=headers)
         try:
             lat = r.text.split('"lat":"', 1)[1].split('"', 1)[0]
@@ -42,6 +47,7 @@ def fetch_data():
         except:
             lat = longt = "<MISSING>"
         if "Temp Closed" in title:
+
             hours = "Temp Closed"
         yield SgRecord(
             locator_domain="https://www.juiceland.com",

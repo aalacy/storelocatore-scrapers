@@ -57,33 +57,30 @@ def pull_content(url):
 def fetch_data():
     log.info("Fetching store_locator data")
     soup = pull_content(LOCATION_URL)
-    contents = soup.select("a.list-item--panel__trigger")
+    contents = soup.select("div#panel-1 a.readmore-btn")
     for row in contents:
         page_url = BASE_URL + row["href"]
         store = pull_content(page_url)
-        location_name = row.find("div", {"itemprop": "name"}).text.strip()
+        location_name = store.find("h3", {"class": "item-title"}).text.strip()
+        addr = store.find("div", {"class": "location-map"})
         raw_address = re.sub(
-            r"(\(.*\))", "", store.find("address", {"itemprop": "address"}).text.strip()
+            r"(\(.*\))", "", addr["data-address"].replace("</br>", "").strip()
         )
-        if "CH5 3YB" in raw_address or "WD6 3SB" in raw_address:
+        street_address, _, state, _ = getAddress(raw_address)
+        city = addr["data-city"].strip()
+        zip_postal = addr["data-zipcode"] or MISSING
+        if zip_postal == MISSING:
             zip_postal = raw_address.split(",")[-1].strip()
-            raw_address = raw_address.replace(zip_postal, "").rstrip(",")
-            street_address, city, state, _ = getAddress(raw_address)
-        else:
-            street_address, city, state, zip_postal = getAddress(raw_address)
-        phone = MISSING
+        street_address = re.sub(
+            zip_postal, "", street_address, flags=re.IGNORECASE
+        ).strip()
+        phone = store.find("a", {"class": "text-link tel"}).text.strip()
         country_code = "UK"
-        hours_of_operation = store.find(
-            "time", {"itemprop": "openingHours"}
-        ).text.strip()
+        hours_of_operation = MISSING
         location_type = MISSING
         store_number = MISSING
-        latitude = store.find("meta", {"property": "place:location:latitude"})[
-            "content"
-        ]
-        longitude = store.find("meta", {"property": "place:location:longitude"})[
-            "content"
-        ]
+        latitude = addr["data-latitude"]
+        longitude = addr["data-longitude"]
         log.info("Append {} => {}".format(location_name, street_address))
         yield SgRecord(
             locator_domain=DOMAIN,

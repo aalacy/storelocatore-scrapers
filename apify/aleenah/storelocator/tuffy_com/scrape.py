@@ -1,62 +1,28 @@
+from sgselenium.sgselenium import SgChrome
+from webdriver_manager.chrome import ChromeDriverManager
+
+from sgscrape import simple_scraper_pipeline as sp
+from sgscrape.pause_resume import CrawlStateSingleton
+from sglogging import sglog
+import ssl
 from bs4 import BeautifulSoup
-import csv
+import time
 import re
-import usaddress
 
-from sgrequests import SgRequests
-
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger("tuffy.com")
-
-session = SgRequests()
-headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.183 Safari/537.36"
-}
+ssl._create_default_https_context = ssl._create_unverified_context
+DOMAIN = "tuffy_com"
+logger = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    pattern = re.compile(r"\s\s+")
-    data = []
-    titlelist = []
-    p = 0
+def get_states():
     states = [
         "AL",
         "AK",
         "AZ",
         "AR",
+        "CA",
+        "CO",
         "CT",
-        "DC",
         "DE",
         "FL",
         "GA",
@@ -67,13 +33,17 @@ def fetch_data():
         "IA",
         "KS",
         "KY",
+        "LA",
         "ME",
         "MD",
+        "MA",
         "MI",
         "MN",
         "MS",
         "MO",
+        "MT",
         "NE",
+        "NV",
         "NH",
         "NJ",
         "NM",
@@ -82,7 +52,9 @@ def fetch_data():
         "ND",
         "OH",
         "OK",
+        "OR",
         "PA",
+        "RI",
         "SC",
         "SD",
         "TN",
@@ -90,111 +62,142 @@ def fetch_data():
         "UT",
         "VT",
         "VA",
+        "WA",
         "WV",
         "WI",
+        "WY",
     ]
-    for statenow in states:
-        coordlist = []
-        url = "https://www.tuffy.com/location_search?zip_code=" + statenow
-        if statenow == "ID":
-            url = "https://www.tuffy.com/location_search?zip_code=ID&location_destination=/&lat_lng=(44.0682019,%20-114.7420408)"
-        elif statenow == "DE":
-            url = "https://www.tuffy.com/location_search?zip_code=DE&location_destination=/&lat_lng=(37.109542,%20-95.7468942)"
-        logger.info(url)
-        r = session.get(url, headers=headers, verify=False)
-        logger.info(r)
-        soup = BeautifulSoup(r.text, "html.parser")
-        divlist = soup.findAll("div", {"class": "contact-info"})
 
-        if len(divlist) == 0:
+    return states
+
+
+def get_driver(url, driver=None):
+    if driver is not None:
+        driver.quit()
+
+    user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.102 Safari/537.36"
+    x = 0
+    while True:
+        x = x + 1
+        try:
+            driver = SgChrome(
+                executable_path=ChromeDriverManager().install(),
+                user_agent=user_agent,
+                is_headless=True,
+            ).driver()
+            driver.get(url)
+            break
+        except Exception:
+            driver.quit()
+            if x == 5:
+                raise Exception(
+                    "Make sure this ran with a Proxy, will fail without one"
+                )
             continue
-        latlnglist = r.text.split("var locations = [", 1)[1].split("];", 1)[0]
-        while True:
-            try:
-                temp, latlnglist = latlnglist.split("(", 1)[1].split("),", 1)
-                coordlist.append(temp)
-            except:
-                break
+    return driver
 
-        for j in range(0, len(divlist)):
-            div = divlist[j]
-            title = div.find("h2").text.strip().split("T", 1)[1]
-            title = "T" + title
 
-            address = div.find("address").text
-            address = re.sub(pattern, " ", address).strip()
+def parse(location, idx, coordinates, state, page_url):
+    data = {}
+    data["locator_domain"] = DOMAIN
+    data["location_name"] = location.h2.next_element.next_element.next_element
+    data["store_number"] = state + "_" + location.h2.span.text
+    try:
+        data["page_url"] = page_url
+    except:
+        data["page_url"] = "<MISSING>"
 
-            try:
-                address = address.split("MANAGER", 1)[0]
-            except:
-                pass
-            address = usaddress.parse(address)
+    data["location_type"] = "Store"
+    data["street_address"] = location.address.text.strip().split("\n")[0]
+    data["city"] = location.address.text.strip().split("\n")[1].strip().replace(",", "")
+    data["state"] = (
+        location.address.text.strip().split("\n")[2].strip().replace(",", "")
+    )
 
-            i = 0
-            street = ""
-            city = ""
-            state = ""
-            pcode = ""
-            while i < len(address):
-                temp = address[i]
-                if (
-                    temp[1].find("Address") != -1
-                    or temp[1].find("Street") != -1
-                    or temp[1].find("Occupancy") != -1
-                    or temp[1].find("Recipient") != -1
-                    or temp[1].find("BuildingName") != -1
-                    or temp[1].find("USPSBoxType") != -1
-                    or temp[1].find("USPSBoxID") != -1
-                ):
-                    street = street + " " + temp[0]
-                if temp[1].find("PlaceName") != -1:
-                    city = city + " " + temp[0]
-                if temp[1].find("StateName") != -1:
-                    state = state + " " + temp[0]
-                if temp[1].find("ZipCode") != -1:
-                    pcode = pcode + " " + temp[0]
-                i += 1
+    data["country_code"] = "US"
+    data["zip_postal"] = location.address.text.strip().split("\n")[3].strip()
+    data["phone"] = location.select_one("span.tel").text
+    data["latitude"] = coordinates[idx][0]
+    data["longitude"] = coordinates[idx][1]
+    hoo = {}
+    for day in location.select_one("div.schedule-holder").select("span.day_name"):
+        hoo[day.text.strip()] = day.next_element.next_element.strip()
 
-            street = street.lstrip().replace(",", "")
-            if street in titlelist:
-                continue
-            titlelist.append(street)
-            city = city.lstrip().replace(",", "")
-            state = state.lstrip().replace(",", "")
-            pcode = pcode.lstrip().replace(",", "")
-
-            phone = div.find("span", {"class": "tel"}).text
-            hours = div.find("div", {"class": "schedule-holder"}).text
-            hours = re.sub(pattern, "\n", hours).strip().replace("\n", " ")
-
-            lat, longt = coordlist[j].split(", ")
-
-            data.append(
-                [
-                    "https://www.tuffy.com/",
-                    url,
-                    title,
-                    street,
-                    city,
-                    state,
-                    pcode,
-                    "US",
-                    "<MISSING>",
-                    phone,
-                    "<MISSING>",
-                    lat,
-                    longt,
-                    hours,
-                ]
-            )
-            p += 1
-
+    data["hours_of_operation"] = ", ".join(
+        [key + ": " + value for key, value in hoo.items()]
+    )
+    data["raw_address"] = ", ".join(
+        filter(
+            None,
+            [
+                data["street_address"],
+                data["city"],
+                data["state"],
+                data["zip_postal"],
+                data["country_code"],
+            ],
+        )
+    )
     return data
 
 
+def fetch_data():
+
+    states = get_states()
+    logger.info(f"Total States to crawl: {len(states)}")
+    driver = get_driver("https://www.tuffy.com")
+
+    for state in states:
+        page_url = f"https://www.tuffy.com/location_search?zip_code={state}"
+        driver.get(page_url)
+        logger.info(page_url)
+        time.sleep(60)
+
+        soup = BeautifulSoup(driver.page_source, "html.parser")
+        coordinates = coordinates = re.findall(
+            r"LatLng\((\d+.\d+), (-?\d+.\d+)\)", str(soup)
+        )[1:]
+        if len(coordinates) == 0:
+            time.sleep(60)
+            continue
+
+        for idx, location in enumerate(soup.select("div.contact-info")):
+            data = parse(location, idx, coordinates, state, page_url)
+            yield data
+
+
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    logger.info(f"Start Crawling {DOMAIN} ...")
+    CrawlStateSingleton.get_instance().save(override=True)
+    field_defs = sp.SimpleScraperPipeline.field_definitions(
+        locator_domain=sp.ConstantField(DOMAIN),
+        page_url=sp.MappingField(mapping=["page_url"], is_required=False),
+        location_name=sp.MappingField(mapping=["location_name"]),
+        latitude=sp.MappingField(mapping=["latitude"], part_of_record_identity=True),
+        longitude=sp.MappingField(mapping=["longitude"], part_of_record_identity=True),
+        street_address=sp.MappingField(mapping=["street_address"], is_required=False),
+        city=sp.MappingField(mapping=["city"], is_required=False),
+        state=sp.MappingField(mapping=["state"], is_required=False),
+        zipcode=sp.MappingField(mapping=["zip_postal"], is_required=False),
+        country_code=sp.MappingField(mapping=["country_code"], is_required=False),
+        phone=sp.MappingField(mapping=["phone"], is_required=False),
+        store_number=sp.MappingField(mapping=["store_number"], is_required=False),
+        hours_of_operation=sp.MappingField(
+            mapping=["hours_of_operation"], is_required=False
+        ),
+        location_type=sp.MappingField(mapping=["location_type"], is_required=False),
+        raw_address=sp.MappingField(mapping=["raw_address"], is_required=False),
+    )
+
+    pipeline = sp.SimpleScraperPipeline(
+        scraper_name="Crawler",
+        data_fetcher=fetch_data,
+        field_definitions=field_defs,
+        log_stats_interval=5,
+    )
+
+    pipeline.run()
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()

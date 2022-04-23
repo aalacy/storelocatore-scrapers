@@ -11,7 +11,7 @@ locator_domain = "https://www.mannings.com.hk/"
 
 def fetch_data(sgw: SgWriter):
 
-    api_url = "https://www.mannings.com.hk/store-finder/storefilter?q=&page=0&pharmacySelectedOption=&areaSelectedOption=&Selectedservices=&storetype=gnc&selectedPickableOption=&userLat=&userLong="
+    api_url = "https://www.mannings.com.hk/store-finder/storefilter?q=&page=0&pharmacySelectedOption=&areaSelectedOption=&Selectedservices=&storetype=mannings&selectedPickableOption=&userLat=&userLong="
     with SgFirefox() as driver:
         driver.get(api_url)
 
@@ -73,6 +73,10 @@ def fetch_data(sgw: SgWriter):
 
 if __name__ == "__main__":
     with SgWriter(
-        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
     ) as writer:
         fetch_data(writer)

@@ -53,7 +53,8 @@ def get_data():
                     log.info(search_code)
                     log.info(location_name)
                     log.info(page_url)
-                    raise Exception
+                    hours = "<MISSING>"
+                    break
                 try:
                     hours_response = session.get(page_url).text
                     hours_soup = bs(hours_response, "html.parser")

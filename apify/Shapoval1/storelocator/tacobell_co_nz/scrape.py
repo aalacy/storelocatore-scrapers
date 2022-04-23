@@ -1,102 +1,95 @@
 import json
-import httpx
 from lxml import html
-from sgpostal.sgpostal import International_Parser, parse_address
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sglogging import sglog
-
-locator_domain = "https://www.tacobell.co.nz/"
-log = sglog.SgLogSetup().get_logger(logger_name=locator_domain)
+from sgpostal.sgpostal import International_Parser, parse_address
 
 
 def fetch_data(sgw: SgWriter):
-    with SgRequests() as http:
-        api_url = "https://www.tacobell.co.nz/locations"
-        try:
-            r = http.get(url=api_url)
-            assert isinstance(r, httpx.Response)
-            assert 200 == r.status_code
-            tree = html.fromstring(r.text)
-            div = tree.xpath('//div[@class="col sqs-col-3 span-3"]')
-            for d in div:
 
-                page_url = "https://www.tacobell.co.nz/locations"
-                location_name = "".join(d.xpath(".//h2/text()"))
-                if not location_name:
-                    continue
-                ad = (
-                    " ".join(
-                        d.xpath(
-                            './/div[./p/strong[contains(text(), "Hours")]]/p[1]/text()'
-                        )
-                    )
-                    .replace("\n", "")
-                    .strip()
-                )
+    locator_domain = "https://tacobell.co.nz/"
+    api_url = "https://tacobell.co.nz/en/store-locator.html"
+    session = SgRequests()
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
+    }
+    r = session.get(api_url, headers=headers)
+    tree = html.fromstring(r.text)
+    div = (
+        "".join(tree.xpath('//script[contains(text(), "pageData")]/text()'))
+        .split("pageData=")[1]
+        .split("window.isGeneratedStatically")[0]
+        .strip()
+    )
+    div = "".join(div[:-1])
+    js = json.loads(div)
 
-                a = parse_address(International_Parser(), ad)
-                street_address = f"{a.street_address_1} {a.street_address_2}".replace(
-                    "None", ""
-                ).strip()
-                state = a.state or "<MISSING>"
-                postal = a.postcode or "<MISSING>"
-                city = a.city or "<MISSING>"
-                country_code = "New Zealand"
-                js_block = "".join(d.xpath(".//div/@data-block-json"))
-                js = json.loads(js_block)
-                b = js.get("location")
-                latitude = b.get("mapLat")
-                longitude = b.get("markerLng")
-                hours_of_operation = (
-                    " ".join(
-                        d.xpath('.//p[./strong[contains(text(), "Hours")]]/text()')
-                    )
-                    .replace("\n", "")
-                    .strip()
-                )
-                if hours_of_operation.find("Sunday-Thursday CLOSED") != -1:
-                    hours_of_operation = (
-                        hours_of_operation
-                        + " "
-                        + " ".join(
-                            d.xpath(
-                                './/p[./strong[contains(text(), "Hours")]]/following-sibling::p/text()'
-                            )
-                        )
-                        .replace("\n", "")
-                        .strip()
-                    )
+    for j in js["chainStores"]["msg"]:
 
-                row = SgRecord(
-                    locator_domain=locator_domain,
-                    page_url=page_url,
-                    location_name=location_name,
-                    street_address=street_address,
-                    city=city,
-                    state=state,
-                    zip_postal=postal,
-                    country_code=country_code,
-                    store_number=SgRecord.MISSING,
-                    phone=SgRecord.MISSING,
-                    location_type=SgRecord.MISSING,
-                    latitude=latitude,
-                    longitude=longitude,
-                    hours_of_operation=hours_of_operation,
-                    raw_address=ad,
-                )
+        b = j.get("address")
+        location_name = j.get("title").get("en_US")
+        ad = b.get("formatted")
+        a = parse_address(International_Parser(), ad)
+        street_address = (
+            f"{a.street_address_1} {a.street_address_2}".replace("None", "")
+            .replace("Auckland", "")
+            .strip()
+            or "<MISSING>"
+        )
+        state = a.state or "<MISSING>"
+        postal = a.postcode or "<MISSING>"
+        country_code = "NZ"
+        city = b.get("city") or "<MISSING>"
+        latitude = b.get("latLng").get("lat") or "<MISSING>"
+        longitude = b.get("latLng").get("lng") or "<MISSING>"
+        phone = j.get("contact").get("phone") or "<MISSING>"
+        hours = j.get("openingHours")[0].get("en")
+        days = [
+            "Monday",
+            "Tuesday",
+            "Wednesday",
+            "Thursday",
+            "Friday",
+            "Saturday",
+            "Sunday",
+        ]
+        hours_of_operation = "<MISSING>"
+        tmp = []
+        if hours:
+            for d in range(len(days)):
+                day = days[d]
+                times = hours[d][0]
+                line = f"{day} {times}"
+                tmp.append(line)
+            hours_of_operation = "; ".join(tmp)
+        slug = str(location_name).replace(" ", "_")
+        page_url = f"https://tacobell.co.nz/en/store-locator/{slug}.html"
 
-                sgw.write_row(row)
-        except Exception as e:
-            log.info(f"Err at #L100: {e}")
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=SgRecord.MISSING,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+            raw_address=ad,
+        )
+
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
     session = SgRequests()
-    with SgWriter(
-        SgRecordDeduper(SgRecordID({SgRecord.Headers.LOCATION_NAME}))
-    ) as writer:
+    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))) as writer:
         fetch_data(writer)

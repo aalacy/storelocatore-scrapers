@@ -52,9 +52,12 @@ def fetch_data():
                 location_name = "".join(
                     store.xpath("div[@class='office-card tile']/h3/text()")
                 ).strip()
-                raw_address = ", ".join(
-                    store.xpath('.//p[@class="office--address"]/text()')
-                ).strip()
+                raw_address = (
+                    ", ".join(store.xpath('.//p[@class="office--address"]/text()'))
+                    .strip()
+                    .replace(" , ", ", ")
+                    .strip()
+                )
 
                 formatted_addr = parser.parse_address_intl(raw_address)
                 street_address = formatted_addr.street_address_1

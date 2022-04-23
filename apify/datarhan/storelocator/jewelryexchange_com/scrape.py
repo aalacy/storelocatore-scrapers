@@ -47,6 +47,11 @@ def fetch_data():
                 .split("!3m")[0]
                 .split("!3d")
             )
+            latitude = ""
+            longitude = ""
+            if len(geo) == 2:
+                latitude = geo[1].split("!")[0]
+                longitude = geo[0]
             hoo = loc_dom.xpath('//table[@class="wpsl-opening-hours"]//text()')
             hoo = [e.strip() for e in hoo if e.strip()]
             hours_of_operation = " ".join(hoo) if hoo else ""
@@ -59,12 +64,12 @@ def fetch_data():
                 city=city,
                 state=state,
                 zip_postal=zip_code,
-                country_code="",
+                country_code="United States",
                 store_number="",
                 phone=phone,
                 location_type="",
-                latitude=geo[1].split("!")[0],
-                longitude=geo[0],
+                latitude=latitude,
+                longitude=longitude,
                 hours_of_operation=hours_of_operation,
             )
 

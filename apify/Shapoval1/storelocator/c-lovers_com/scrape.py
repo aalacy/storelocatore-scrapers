@@ -27,6 +27,9 @@ def fetch_data(sgw: SgWriter):
         session = SgRequests()
         r = session.get(page_url, headers=headers)
         tree = html.fromstring(r.text)
+        location_name = "".join(
+            tree.xpath('//div[@class="maincontent clearfix location"]//h1//text()')
+        )
         jsblock = (
             "["
             + "".join(tree.xpath('//script[contains(text(), "telephone")]/text()'))
@@ -36,7 +39,6 @@ def fetch_data(sgw: SgWriter):
         js = json.loads(jsblock)
         for j in js:
 
-            location_name = j.get("name")
             location_type = j.get("@type")
             street_address = j.get("address").get("streetAddress")
             country_code = "CA"

@@ -26,8 +26,10 @@ def fetch_data():
         state = state[0] if state else ""
         zip_code = poi_html.xpath('.//span[@id="scasl-zipcode"]/text()')[0]
         phone = poi_html.xpath('.//a[contains(@href, "tel")]/text()')[0]
+        country_code = poi_html.xpath('.//span[@id="scasl-country"]/text()')
+        country_code = country_code[0] if country_code else ""
         hoo = poi_html.xpath('.//div[@id="scasl-schedule"]/text()')
-        hoo = hoo[0] if hoo else ""
+        hoo = " ".join(" ".join(hoo).split()) if hoo else ""
 
         item = SgRecord(
             locator_domain=domain,
@@ -37,7 +39,7 @@ def fetch_data():
             city=city,
             state=state,
             zip_postal=zip_code,
-            country_code="",
+            country_code=country_code,
             store_number="",
             phone=phone,
             location_type="",

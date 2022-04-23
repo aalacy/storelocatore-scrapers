@@ -40,7 +40,7 @@ def fetch_data():
             wed = f'Wednesday: {poi["data"]["hours_Wednesday"]}'
             thu = f'Thursday: {poi["data"]["hours_Thursday"]}'
             fri = f'Friday" {poi["data"]["hours_Friday"]}'
-            sat = f'Saturday: {poi["data"]["hours_Saturday"]}'
+            sat = f'Saturday: {poi.get("data", {}).get("hours_Saturday")}'
             sun = f'Sunday: {poi["data"]["hours_Sunday"]}'
             hoo = f"{mon}, {tue}, {wed}, {thu}, {fri}, {sat}, {sun}"
 

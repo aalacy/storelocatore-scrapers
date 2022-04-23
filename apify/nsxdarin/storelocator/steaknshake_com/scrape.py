@@ -25,9 +25,9 @@ def fetch_data():
         try:
             hours = (
                 str(item)
-                .split("u'hours': {u'")[2]
-                .split("}")[0]
-                .replace("u'", "")
+                .split("]}, 'hours': {'")[1]
+                .split("}}]}")[0]
+                .replace("', '", "; ")
                 .replace("'", "")
             )
         except:
@@ -42,8 +42,8 @@ def fetch_data():
         website = "steaknshake.com"
         typ = "Restaurant"
         if "loc" in item["address"]:
-            lat = item["address"]["loc"][0]
-            lng = item["address"]["loc"][1]
+            lat = item["address"]["loc"][1]
+            lng = item["address"]["loc"][0]
         else:
             lat = "<MISSING>"
             lng = "<MISSING>"

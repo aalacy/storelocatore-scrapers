@@ -74,7 +74,7 @@ def fetch_data():
 def scrape():
     log.info("Started")
     count = 0
-    deduper = SgRecordDeduper(SgRecordID({SgRecord.Headers.LOCATION_NAME}))
+    deduper = SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))
     with SgWriter(deduper) as writer:
         results = fetch_data()
         for rec in results:

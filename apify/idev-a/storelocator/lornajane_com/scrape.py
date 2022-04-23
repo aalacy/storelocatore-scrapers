@@ -27,7 +27,7 @@ cc_map = {
     "sg": "Singapore",
 }
 
-url_map = {"gb": "UK", "sg": "SG", "us": "UK", "au": "UK"}
+url_map = {"gb": "UK", "sg": "SG", "us": "UK", "au": "UK", "nz": "UK"}
 
 
 class ExampleSearchIteration(SearchIteration):
@@ -41,11 +41,11 @@ class ExampleSearchIteration(SearchIteration):
     ) -> Iterable[SgRecord]:
         lat = coord[0]
         lng = coord[1]
-        with SgRequests() as session:
+        with SgRequests(proxy_country=current_country.lower()) as session:
             url = base_url.format(
                 url_map[current_country], current_country.upper(), lat, lng
             )
-            locations = bs(session.get(url, headers=_headers).text, "lxml").select(
+            locations = bs(session.get(url).text, "lxml").select(
                 "div.results div.store-item"
             )
             logger.info(f"[{current_country}] [{lat, lng}] {len(locations)}")
@@ -68,7 +68,7 @@ class ExampleSearchIteration(SearchIteration):
                 except:
                     _coord = ["", ""]
                 page_url = _.select_one("div.store-name a")["href"]
-                sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
+                sp1 = bs(session.get(page_url).text, "lxml")
                 hours = []
                 if sp1.select_one("div.store-hours"):
                     hours = list(sp1.select_one("div.store-hours").stripped_strings)
@@ -112,7 +112,7 @@ if __name__ == "__main__":
         par_search = ParallelDynamicSearch(
             search_maker=search_maker,
             search_iteration=search_iter,
-            country_codes=["us", "au", "nz", "sg"],
+            country_codes=["au", "nz", "sg"],
         )
         for rec in par_search.run():
             writer.write_row(rec)

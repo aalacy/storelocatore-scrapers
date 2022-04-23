@@ -7,9 +7,9 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgzip.dynamic import SearchableCountries
 from sgzip.parallel import DynamicSearchMaker, ParallelDynamicSearch, SearchIteration
-from typing import Iterable, Tuple, Callable
 import math
 from concurrent.futures import ThreadPoolExecutor
+import re
 
 logger = SgLogSetup().get_logger("carrossier")
 
@@ -21,20 +21,27 @@ base_url = "https://www.procolor.com/wp-admin/admin-ajax.php?action=store_search
 
 country_map = {"us": "129", "ca": "128"}
 
-max_workers = 12
+max_workers = 24
 
 
 def fetchConcurrentSingle(_):
     location_name = _["store"].replace("&#8217;", "'")
     slug = (
-        location_name.replace("'", "")
+        location_name.lower()
+        .replace("'", "")
+        .replace("–", "")
+        .replace(".", "")
         .replace("é", "e")
+        .replace("è", "e")
         .replace("ô", "o")
-        .replace("/", "")
+        .replace("/", " ")
         .lower()
     )
     slug = "-".join([ss.strip() for ss in slug.split() if ss.strip()])
-    page_url = f"https://www.procolor.com/en-ca/shop/{slug}/"
+    if _["country"] == "Canada":
+        page_url = f"https://www.procolor.com/fr-ca/atelier/{slug}/"
+    else:
+        page_url = f"https://www.procolor.com/en-us/shop/{slug}/"
     response = request_with_retries(page_url)
     return page_url, _, response
 
@@ -67,12 +74,12 @@ def request_with_retries(url):
 class ExampleSearchIteration(SearchIteration):
     def do(
         self,
-        coord: Tuple[float, float],
-        zipcode: str,
-        current_country: str,
-        items_remaining: int,
-        found_location_at: Callable[[float, float], None],
-    ) -> Iterable[SgRecord]:
+        coord,
+        zipcode,
+        current_country,
+        items_remaining,
+        found_location_at,
+    ):
         lat = coord[0]
         lng = coord[1]
         with SgRequests(proxy_country="us") as session:
@@ -88,16 +95,25 @@ class ExampleSearchIteration(SearchIteration):
                 hours = []
                 if _["hours"]:
                     for hh in bs(_["hours"], "lxml").select("tr"):
-                        hours.append(": ".join(hh.stripped_strings))
+                        day = hh.select("td")[0].text.strip()
+                        times = list(hh.select("td")[1].stripped_strings)
+                        hours.append(f"{day}: {', '.join(times)}")
                 street_address = _["address"]
                 if _["address2"]:
                     street_address += " " + _["address2"]
                 logger.info(page_url)
+                phone = _["phone"]
                 if res.status_code == 200:
                     sp1 = bs(res.text, "lxml")
                     hours = []
                     for hh in sp1.select("div.working-hours div.row"):
-                        hours.append(": ".join(hh.stripped_strings))
+                        day = hh.select_one("div.day").text.strip()
+                        times = ", ".join(hh.select_one("div.hours").stripped_strings)
+                        hours.append(f"{day}: {times}")
+                    pp = sp1.find("a", href=re.compile(r"tel:"))
+                    if not phone and pp:
+                        phone = pp.text.strip()
+
                 yield SgRecord(
                     page_url=page_url,
                     store_number=_["id"],
@@ -109,9 +125,9 @@ class ExampleSearchIteration(SearchIteration):
                     latitude=_["lat"],
                     longitude=_["lng"],
                     country_code=_["country"],
-                    phone=_["phone"],
+                    phone=phone,
                     locator_domain=locator_domain,
-                    hours_of_operation="; ".join(hours),
+                    hours_of_operation="; ".join(hours).replace("0013", "00, 13"),
                 )
 
 

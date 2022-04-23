@@ -74,7 +74,12 @@ def fetch_data():
         if us.states.lookup(state):
             country_code = "US"
 
-        store_number = "<MISSING>"
+        store_number = (
+            "".join(store_sel.xpath('//*[contains(text(),"STORE ID:")]/text()'))
+            .strip()
+            .replace("STORE ID:", "")
+            .strip()
+        )
         raw_text = store_sel.xpath(
             '//div[@class="storeInfoLeft"]/div[@class="storeInfo"]/p'
         )
@@ -129,6 +134,13 @@ def fetch_data():
             latitude = map_link.split("!3d")[1].strip().split("!")[0].strip()
             longitude = map_link.split("!2d")[1].strip().split("!")[0].strip()
 
+        if hours_of_operation:
+            hours_of_operation = (
+                hours_of_operation.split("; GCE")[0]
+                .strip()
+                .split("; 24/7 EZ Pick UP")[0]
+                .strip()
+            )
         yield SgRecord(
             locator_domain=locator_domain,
             page_url=page_url,

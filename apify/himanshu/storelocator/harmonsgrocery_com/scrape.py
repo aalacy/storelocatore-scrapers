@@ -32,7 +32,7 @@ def fetch_data():
             state=raw_data[1].split(", ")[-1].split()[0],
             zip_postal=raw_data[1].split(", ")[-1].split()[-1],
             country_code="",
-            store_number="",
+            store_number=poi["pharmacy"],
             phone=raw_data[2],
             location_type="",
             latitude=poi["latitude"],

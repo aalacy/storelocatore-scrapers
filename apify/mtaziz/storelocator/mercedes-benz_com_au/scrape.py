@@ -168,6 +168,14 @@ def fix_comma(x):
     return h
 
 
+def remove_comma(radd_tobeclean):
+    cra = radd_tobeclean.split(",")
+    cra = [i.strip() for i in cra]
+    cra = [i for i in cra if i]
+    cra = ", ".join(cra)
+    return cra
+
+
 def get_country_code_list():
     try:
         r = SgRequests().get("https://www.mercedes-amg.com/en/vehicles/dealer.html")
@@ -293,7 +301,11 @@ def fetch_records(idx, store_url_tuple, headers_apikey, sgw: SgWriter):
                 longitude = MISSING
 
             hours_of_operation = determine_hours(d, "SMT", "SALES")
-            raw_address = MISSING
+            raw_address = ""
+            radd = [street_address, city, state, zipcode, country_code]
+            radd = [x for x in radd if "<MISSING>" not in x]
+            raw_address = ", ".join(radd)
+            raw_address = remove_comma(raw_address)
 
             item = SgRecord(
                 locator_domain="mbusa.com",
