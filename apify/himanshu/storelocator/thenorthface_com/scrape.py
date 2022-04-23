@@ -100,6 +100,7 @@ class ExampleSearchIteration(SearchIteration):
                         + "".join(_["city"]).replace(" ", "-").lower()
                         + "/"
                         + storekey
+                        + "/"
                     )
                 street_address = ""
                 if _["address1"] is not None:
@@ -180,6 +181,8 @@ def fetch_records():
                 )
                 for loc in locations:
                     page_url = loc["href"]
+                    if not page_url.endswith("/"):
+                        page_url += "/"
                     logger.info(f"{page_url}")
                     sp1 = bs(http.get(page_url, headers=headers).text, "lxml")
                     _ = json.loads(
