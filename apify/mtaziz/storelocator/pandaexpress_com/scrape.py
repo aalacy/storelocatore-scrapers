@@ -301,6 +301,17 @@ def fetch_records(lid, loc, sgw: SgWriter):
             ):
                 return
 
+            if (
+                "https://www.pandaexpress.com/locations/nc/greensboro/1400-spring-garden-st"
+                in purl
+            ):
+                return
+            if (
+                "https://www.pandaexpress.com/locations/ky/bowling-green/1509-hilltop-dr"
+                in purl
+            ):
+                return
+
             if len(zc) >= 1:
                 item = SgRecord(
                     locator_domain="pandaexpress.com",
