@@ -63,7 +63,6 @@ def _d(driver, page_url, res, soup, location_type):
                 hours_of_operation="; ".join(_.get("hours", [])),
                 location_type=location_type,
                 country_code=_["countryCode"],
-                raw_address=" ".join(addr).replace("\n", "").replace("\r", ""),
             )
         except:
             try:
