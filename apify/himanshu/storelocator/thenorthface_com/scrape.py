@@ -227,7 +227,11 @@ if __name__ == "__main__":
                 app_key = (
                     script.text.split("appkey: ")[1].split(",")[0].replace("'", "")
                 )
-        with SgWriter(SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
+        with SgWriter(
+            SgRecordDeduper(
+                RecommendedRecordIds.GeoSpatialId, duplicate_streak_failure_factor=1000
+            )
+        ) as writer:
             search_maker = DynamicSearchMaker(
                 search_type="DynamicZipSearch", expected_search_radius_miles=500
             )
