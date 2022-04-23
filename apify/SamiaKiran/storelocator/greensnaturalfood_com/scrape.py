@@ -22,25 +22,39 @@ MISSING = SgRecord.MISSING
 
 def fetch_data():
     if True:
-        page_url = "https://www.greensnaturalfoods.com/locations/"
-        r = session.get(page_url, headers=headers)
+        url = "https://www.greensnaturalfoods.com/grocery-store-near-me/"
+        r = session.get(url, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
-        loclist = soup.findAll("div", {"class": "et_pb_text_inner"})
+        loclist = soup.findAll("ul")[-3].findAll("li")[:-1]
         for loc in loclist:
-            coords = loc.find("a")["href"].split("@")[1].split(",17z")[0].split(",")
-            latitude = coords[0]
-            longitude = coords[1]
-            address = loc.find("a").get_text(separator="|", strip=True).split("|")
-            if "," not in address[-1]:
-                address = loc.get_text(separator="|", strip=True).split("|")
-                address = address[1] + " " + address[3]
-            else:
-                address = " ".join(x for x in address)
-            temp = loc.get_text(separator="|", strip=True).split("|")
-            location_name = loc.find("h2").text
-            log.info(location_name)
-            phone = loc.select_one("a[href*=tel]").text
-            hours_of_operation = temp[-1].replace("Hours: ", "")
+            page_url = loc.find("a")["href"].replace("https:/www", "https://www")
+            log.info(page_url)
+            r = session.get(page_url, headers=headers)
+            soup = BeautifulSoup(r.text, "html.parser")
+            location_name = soup.findAll("h3")[1].text
+            temp = soup.findAll("span", {"class": "elementor-icon-list-text"})
+            hours_of_operation = (
+                soup.findAll(
+                    "div", {"class": "elementor-text-editor elementor-clearfix"}
+                )[-3]
+                .find("p")
+                .get_text(separator="|", strip=True)
+                .replace("|", " ")
+            )
+            address = temp[0].text
+            phone = temp[1].text
+            try:
+                coords = (
+                    soup.select_one("a[href*=maps]")["href"]
+                    .split("@")[1]
+                    .split(",17z")[0]
+                    .split(",")
+                )
+                latitude = coords[0]
+                longitude = coords[1]
+            except:
+                latitude = MISSING
+                longitude = MISSING
             address = address.replace(",", " ")
             address = usaddress.parse(address)
             i = 0
@@ -67,6 +81,20 @@ def fetch_data():
                 if temp[1].find("ZipCode") != -1:
                     zip_postal = zip_postal + " " + temp[0]
                 i += 1
+            if not state:
+                address = soup.find("meta", {"name": "twitter:description"})["content"]
+                address = (
+                    address.split(street_address.split()[0])[1]
+                    .split('"/>')[0]
+                    .split(",")
+                )
+                if len(address) == 2:
+                    city = address[0].split(".")[1]
+                else:
+                    city = address[1]
+                address = address[-1].strip().split()
+                state = address[0]
+                zip_postal = address[1]
             country_code = "US"
             yield SgRecord(
                 locator_domain=DOMAIN,
@@ -90,7 +118,7 @@ def scrape():
     log.info("Started")
     count = 0
     with SgWriter(
-        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.GeoSpatialId)
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
     ) as writer:
         results = fetch_data()
         for rec in results:

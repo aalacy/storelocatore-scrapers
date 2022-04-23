@@ -41,7 +41,7 @@ def fetch_data():
             '//div[@class="c-dealer-contact-card__opening-times"]//text()'
         )
         hoo = [e.strip() for e in hoo if e.strip()]
-        hoo = " ".join(hoo)
+        hoo = " ".join(hoo).split("o Otevírací doba")[0] + "o"
 
         item = SgRecord(
             locator_domain=domain,
@@ -50,7 +50,7 @@ def fetch_data():
             street_address=street_address,
             city=addr.city,
             state="",
-            zip_postal=addr.postcode,
+            zip_postal=raw_address.split(",")[-1].strip(),
             country_code="CZ",
             store_number="",
             phone=poi["contactPoint"]["telephone"],

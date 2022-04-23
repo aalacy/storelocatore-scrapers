@@ -46,8 +46,9 @@ def fetch_data():
                     if not page_url:
                         page_url = poi_html.xpath("//@urltienda")
                     page_url = urljoin(area_url, page_url[0])
+                    page_url = page_url.replace("/pizzerias/", "/pizzeria/")
                     driver.get(page_url)
-                    sleep(uniform(3, 6))
+                    sleep(uniform(3, 8))
                     loc_dom = etree.HTML(driver.page_source)
                     location_name = poi_html.xpath(".//h2/text()")
                     if not location_name:
@@ -56,7 +57,7 @@ def fetch_data():
                         )
                     if not location_name:
                         continue
-                    location_name = location_name[0]
+                    location_name = location_name[0].replace("Telepizza ", "")
                     raw_address = poi_html.xpath('.//p[@class="prs"]/text()')
                     if not raw_address:
                         raw_address = loc_dom.xpath("//address/span/text()")
@@ -69,9 +70,15 @@ def fetch_data():
                     )
                     if not phone:
                         phone = loc_dom.xpath('//span[@class="phoneFooter"]/text()')
-                    phone = phone[0] if phone else ""
+                    phone = phone[0].strip() if phone else ""
+                    if phone == "0" or phone == "123":
+                        phone = ""
                     latitude = re.findall("lat = (.+?);", driver.page_source)[0]
+                    if latitude == "0":
+                        latitude = ""
                     longitude = re.findall("lng = (.+?);", driver.page_source)[0]
+                    if longitude == "0":
+                        longitude = ""
                     hoo = loc_dom.xpath(
                         '//h4[contains(text(), "A recoger")]/following-sibling::table//text()'
                     )

@@ -66,10 +66,12 @@ def get_driver(url, class_name, timeout, driver=None):
 def get_page_urls():
     base_url = "https://www.weismarkets.com/"
     class_name_main_nav = "main-navigation"
-    timeout3 = 20
+    timeout3 = 40
     driver = get_driver(base_url, class_name_main_nav, timeout3)
-    stores_link_xpath = '//nav[contains(@class, "menu-links")]/a[contains(@href, "https://www.weismarkets.com/stores#")]'
-    WebDriverWait(driver, 20).until(
+    stores_link_xpath = (
+        '//*[contains(@data-original-title, "Stores") and contains(@href, "stores#")]'
+    )
+    WebDriverWait(driver, 30).until(
         EC.element_to_be_clickable((By.XPATH, stores_link_xpath))
     )
     driver.find_element_by_xpath(stores_link_xpath).click()
@@ -102,7 +104,7 @@ def fetch_data():
     for idx, ln_sn_purl in enumerate(page_urls[0:]):
         location_name, store_number, page_url = ln_sn_purl
         class_name2 = "hours-and-contact-header"
-        timeout = 20
+        timeout = 40
         driver = get_driver(page_url, class_name2, timeout)
         logger.info(f"[{idx}] Pulling the data for {page_url}")
         sel2 = html.fromstring(driver.page_source)

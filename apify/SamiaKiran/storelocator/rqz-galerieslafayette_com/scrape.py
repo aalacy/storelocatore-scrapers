@@ -42,7 +42,13 @@ def fetch_data():
         soup = BeautifulSoup(r.text, "html.parser")
         loclist = soup.findAll("script")
         for loc in loclist[:-1]:
-            loc = json.loads(loc.text.split("] = ")[1].split(";")[0])
+            try:
+                schema = (loc.contents[0]).split("=", 1)[1].split(";", 1)[0]
+                schema = schema.replace("\n", "")
+                loc = json.loads(schema)
+            except Exception as e:
+                log.info(f"Error: {e}")
+                continue
             page_url = loc["url"]
             log.info(page_url)
             location_name = strip_accents(loc["title"])

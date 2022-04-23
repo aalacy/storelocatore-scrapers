@@ -60,7 +60,7 @@ def fetch_data():
             )
             stores = json.loads(json_str)
             for store in stores:
-                store_number = store["futuraStoreId"]
+                store_number = store["ID"]
                 locator_domain = website
                 page_url = API_URLs[index]
                 location_name = store["name"]
@@ -76,6 +76,9 @@ def fetch_data():
                 state = store.get("stateCode", "<MISSING>")
                 zip = store.get("postalCode", "<MISSING>")
                 country_code = store.get("countryCode", "<MISSING>")
+                if location_name and location_name == "GANT Outlet Radolfzell":
+                    street_address = store.get("city", "<MISSING>")
+                    city = "Radolfzell"
 
                 phone = store.get("phone", "<MISSING>")
                 location_type = "<MISSING>"

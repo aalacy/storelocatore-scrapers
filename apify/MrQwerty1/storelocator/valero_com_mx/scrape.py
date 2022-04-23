@@ -1,4 +1,3 @@
-from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
@@ -20,54 +19,44 @@ def get_international(line):
 
 
 def fetch_data(sgw: SgWriter):
+    api = "https://valero.com.mx/wp-content/themes/VALERO-THEME-2022/plugins/estaciones/estaciones.json"
     page_url = "https://valero.com.mx/stations-valero/?lang=en"
-    r = session.get(page_url)
-    tree = html.fromstring(r.text)
+    r = session.get(api)
+    js = r.json().values()
 
-    divs = tree.xpath("//div[./div[@class='list-item']]")
-    for d in divs:
-        location_name = "".join(d.xpath(".//h6[@class='title']/text()")).strip()
-        raw_address = (
-            "".join(d.xpath(".//div[@class='desc']//text()"))
-            .strip()
-            .replace("\n", ", ")
-        )
-        phone = "".join(d.xpath("./following-sibling::div[1]//text()")).strip()
-        if "Obtener" in phone:
-            phone = SgRecord.MISSING
-        if "/" in phone:
-            phone = phone.split("/")[0].strip()
-        if "–" in phone:
-            phone = phone.split("–")[0].strip()
-        street_address, city, state, postal = get_international(raw_address)
-        postal = postal.replace("C.P.", "").strip()
-        text = "".join(d.xpath("./following-sibling::div[3]//a/@href"))
-        if ("!3d" and "!4d") in text:
-            latitude = text.split("!3d")[1].split("!")[0]
-            longitude = text.split("!4d")[1].split("!")[0].split("?")[0]
-        elif "@" in text:
-            latitude, longitude = text.split("@")[1].split("/")[0].split(",")[:2]
-        elif ("//" and ",") in text:
-            latitude, longitude = text.split("//")[-1].split(",")
-        else:
-            latitude, longitude = SgRecord.MISSING, SgRecord.MISSING
+    for jj in js:
+        for j in jj:
+            location_name = j.get("name")
+            raw_address = j.get("adress")
+            phone = j.get("phone") or ""
+            if "/" in phone:
+                phone = phone.split("/")[0].strip()
+            if "–" in phone:
+                phone = phone.split("–")[0].strip()
+            if "." in phone:
+                phone = SgRecord.MISSING
 
-        row = SgRecord(
-            page_url=page_url,
-            location_name=location_name,
-            street_address=street_address,
-            city=city,
-            state=state,
-            zip_postal=postal,
-            country_code="MX",
-            phone=phone,
-            latitude=latitude,
-            longitude=longitude,
-            locator_domain=locator_domain,
-            raw_address=raw_address,
-        )
+            street_address, city, state, postal = get_international(raw_address)
+            postal = postal.replace("C", "").replace("P", "").replace(".", "").strip()
+            ll = j.get("long-lat") or ","
+            latitude, longitude = ll.split(",")
 
-        sgw.write_row(row)
+            row = SgRecord(
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=postal,
+                country_code="MX",
+                phone=phone,
+                latitude=latitude.strip(),
+                longitude=longitude.strip(),
+                locator_domain=locator_domain,
+                raw_address=raw_address,
+            )
+
+            sgw.write_row(row)
 
 
 if __name__ == "__main__":

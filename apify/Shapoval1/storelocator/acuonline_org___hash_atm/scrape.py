@@ -1,27 +1,25 @@
 import json
-from sgzip.dynamic import SearchableCountries, DynamicGeoSearch
-
+from sgzip.dynamic import SearchableCountries, DynamicGeoSearch, Grain_2
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
-from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.sgrecord_id import SgRecordID
-from concurrent import futures
-from sgscrape.pause_resume import CrawlStateSingleton
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
+from concurrent import futures
 from sglogging import sglog
 import time
 from tenacity import retry, stop_after_attempt
 import tenacity
 import random
 
-
 locator_domain = "acuonline.org"
 log = sglog.SgLogSetup().get_logger(logger_name=locator_domain)
+
 api_url = "https://locationapi.wave2.io/api/client/getlocations"
 
 headers = {
-    "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0",
+    "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.75 Safari/537.36",
     "Accept": "*/*",
     "Accept-Language": "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3",
     "Content-Type": "application/json; charset=UTF-8",
@@ -49,8 +47,6 @@ def get_response(data):
 def get_data(coord, sgw: SgWriter):
     lat, lng = coord
 
-    page_url = "https://www.acuonline.org/home/resources/locations"
-
     data = {
         "Latitude": f"{lat}",
         "Longitude": f"{lng}",
@@ -65,29 +61,46 @@ def get_data(coord, sgw: SgWriter):
     }
 
     r = get_response(data)
-
     js = r.json()["Features"]
+    log.info(f"From {lat,lng} stores found = {len(js)}")
     if js:
-        log.debug(f"From {lat,lng} stores = {len(js)}")
-
         for j in js:
             a = j.get("Properties")
-            location_name = a.get("LocationName") or "<MISSING>"
-            street_address = a.get("Address") or "<MISSING>"
+            page_url = "https://www.acuonline.org/home/resources/locations"
+            street_address = "".join(a.get("Address")).capitalize() or "<MISSING>"
             city = a.get("City") or "<MISSING>"
             state = a.get("State") or "<MISSING>"
             postal = a.get("Postalcode") or "<MISSING>"
-            if postal == "0":
-                postal = "<MISSING>"
             country_code = a.get("Country") or "<MISSING>"
-            store_number = a.get("LocationId")
-            phone = "<MISSING>"
+            phone = a.get("Phone") or "<MISSING>"
             latitude = a.get("Latitude") or "<MISSING>"
+            store_number = a.get("LocationId") or "<MISSING>"
             longitude = a.get("Longitude") or "<MISSING>"
-            location_type = a.get("LocationCategory") or "<MISSING>"
-            hours_of_operation = (
-                j.get("LocationFeatures").get("TwentyFourHours") or "<MISSING>"
-            )
+            location_type = j.get("LocationFeatures").get("LocationType")
+            location_name = a.get("LocationName")
+            days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+            tmp = []
+            for d in days:
+                day = d
+                try:
+                    opens = a.get(f"{d}Open")
+                    closes = a.get(f"{d}Close")
+                    line = f"{day} {opens} - {closes}"
+                    if opens == closes:
+                        line = "<MISSING>"
+                except:
+                    line = "<MISSING>"
+                tmp.append(line)
+            hours_of_operation = "; ".join(tmp)
+            if hours_of_operation.count("<MISSING>") == 7:
+                hours_of_operation = "<MISSING>"
+            hours_of_operation = hours_of_operation.replace(
+                "Closed -", "Closed"
+            ).strip()
+            if hours_of_operation.count("Closed") == 7:
+                hours_of_operation = "Closed"
+            if hours_of_operation.find("<MISSING>") != -1:
+                hours_of_operation = "<MISSING>"
 
             row = SgRecord(
                 page_url=page_url,
@@ -110,33 +123,22 @@ def get_data(coord, sgw: SgWriter):
 
 
 def fetch_data(sgw: SgWriter):
-    postals = DynamicGeoSearch(
-        country_codes=[SearchableCountries.USA, SearchableCountries.JAPAN],
-        max_search_distance_miles=300,
-        expected_search_radius_miles=50,
+    coords = DynamicGeoSearch(
+        country_codes=[SearchableCountries.USA],
         max_search_results=100,
+        granularity=Grain_2(),
     )
 
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {executor.submit(get_data, url, sgw): url for url in postals}
+    with futures.ThreadPoolExecutor(max_workers=4) as executor:
+        future_to_url = {executor.submit(get_data, url, sgw): url for url in coords}
         for future in futures.as_completed(future_to_url):
             future.result()
 
 
 if __name__ == "__main__":
-    CrawlStateSingleton.get_instance().save(override=True)
-
     with SgWriter(
         deduper=SgRecordDeduper(
-            SgRecordID(
-                {
-                    SgRecord.Headers.STREET_ADDRESS,
-                    SgRecord.Headers.LATITUDE,
-                    SgRecord.Headers.LOCATION_NAME,
-                    SgRecord.Headers.STORE_NUMBER,
-                }
-            ),
-            duplicate_streak_failure_factor=-1,
+            RecommendedRecordIds.StoreNumberId, duplicate_streak_failure_factor=-1
         )
     ) as writer:
         fetch_data(writer)

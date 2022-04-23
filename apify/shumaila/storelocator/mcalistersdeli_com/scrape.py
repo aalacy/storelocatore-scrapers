@@ -85,6 +85,8 @@ def fetch_data():
                     longitude,
                     country_code,
                 ) = store_data(soup)
+                if not hours_of_operation:
+                    continue
                 yield SgRecord(
                     locator_domain=DOMAIN,
                     page_url=state_url,
@@ -125,6 +127,8 @@ def fetch_data():
                             longitude,
                             country_code,
                         ) = store_data(soup)
+                        if not hours_of_operation:
+                            continue
                         yield SgRecord(
                             locator_domain=DOMAIN,
                             page_url=city_url,
@@ -165,6 +169,8 @@ def fetch_data():
                                 longitude,
                                 country_code,
                             ) = store_data(soup)
+                            if not hours_of_operation:
+                                continue
                             yield SgRecord(
                                 locator_domain=DOMAIN,
                                 page_url=page_url,

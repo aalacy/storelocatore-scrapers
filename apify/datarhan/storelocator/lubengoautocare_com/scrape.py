@@ -1,8 +1,6 @@
 from lxml import etree
-from urllib.parse import urljoin
 
 from sgrequests import SgRequests
-from sgpostal.sgpostal import parse_address_intl
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
@@ -10,72 +8,39 @@ from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
-    session = SgRequests(proxy_country="us")
-    start_url = "https://lubengoautocare.com/locations-region/"
+    session = SgRequests(proxy_country="us", verify_ssl=True)
+    start_url = "https://oilchangers.com/wp-admin/admin-ajax.php"
     domain = "lubengoautocare.com"
     hdr = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
-    response = session.get(start_url, headers=hdr)
-    dom = etree.HTML(response.text)
-
-    all_locations = dom.xpath('//div[@class="the_list_item_action"]/a/@href')[1:]
-    for url in all_locations:
-        store_url = urljoin(start_url, url)
-        loc_response = session.get(store_url, headers=hdr)
+    frm = {"action": "get_all_stores", "lat": "", "lng": ""}
+    data = session.post(start_url, headers=hdr, data=frm).json()
+    for i, poi in data.items():
+        location_name = poi["na"]
+        if "coming soon" in location_name.lower():
+            continue
+        page_url = poi["gu"]
+        loc_response = session.get(page_url)
         loc_dom = etree.HTML(loc_response.text)
-
-        raw_address = loc_dom.xpath(
-            '//h3[@class="the_list_item_headline hds_color"]/text()'
-        )[0]
-        addr = parse_address_intl(raw_address)
-        location_name = (
-            loc_dom.xpath('//meta[@property="og:title"]/@content')[0]
-            .split("|")[0]
-            .strip()
-        )
-        city = addr.city
-        street_address = raw_address.split(city)[0].strip()
-        if street_address.endswith(","):
-            street_address = street_address[:-1]
-        state = addr.state
-        zip_code = addr.postcode
-        country_code = addr.country
-        phone = (
-            loc_dom.xpath('//h3[contains(text(), "Phone Number:")]/text()')[0]
-            .split(":")[-1]
-            .strip()
-        )
-        geo = (
-            loc_dom.xpath("//iframe/@src")[0]
-            .split("!2d")[-1]
-            .split("!2")[0]
-            .split("!3d")
-        )
-        latitude = geo[-1].split("!")[0]
-        longitude = geo[0]
-        hoo = loc_dom.xpath('//p[b[contains(text(), "Hours")]]/text()')
-        hoo = [e.strip() for e in hoo if e.strip()]
-        hours_of_operation = (
-            "Monday " + " ".join(hoo).split("Monday ")[-1] if hoo else "<MISSING>"
-        )
+        hoo = loc_dom.xpath('//div[@class="store_locator_single_opening_hours"]/text()')
+        hoo = ", ".join([e.strip() for e in hoo if e.strip()])
 
         item = SgRecord(
             locator_domain=domain,
-            page_url=store_url,
+            page_url=page_url,
             location_name=location_name,
-            street_address=street_address,
-            city=city,
-            state=state,
-            zip_postal=zip_code,
-            country_code=country_code,
-            store_number="",
-            phone=phone,
+            street_address=poi["st"],
+            city=poi["ct"],
+            state=poi["rg"],
+            zip_postal=poi["zp"],
+            country_code="",
+            store_number=poi["ID"],
+            phone=poi.get("te"),
             location_type="",
-            latitude=latitude,
-            longitude=longitude,
-            hours_of_operation=hours_of_operation,
-            raw_address=raw_address,
+            latitude=poi["lat"],
+            longitude=poi["lng"],
+            hours_of_operation=hoo,
         )
 
         yield item

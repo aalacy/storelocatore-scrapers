@@ -7,10 +7,21 @@ import lxml.html
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgpostal import sgpostal as parser
+import json
+from sgselenium import SgChrome
+import ssl
+
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
 website = "hamptons.co.uk"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
-session = SgRequests()
 
 headers = {
     "authority": "www.hamptons.co.uk",
@@ -30,91 +41,96 @@ headers = {
 
 def fetch_data():
     # Your scraper here
-    page_no = 1
-    search_url = "https://www.hamptons.co.uk/branches/page-{}/"
-    while True:
-        log.info(f"pulling links from page:{page_no}")
-        stores_req = session.get(search_url.format(str(page_no)), headers=headers)
-        stores_sel = lxml.html.fromstring(stores_req.text)
-        stores = stores_sel.xpath(
-            '//div[@class="card-grid"]//a[@class="card__link"][not(contains(@href,"card.detailsPageUrl"))]/@href'
-        )
-        for store_url in stores:
-            page_url = "https://www.hamptons.co.uk" + store_url
+    search_url = "https://www.hamptons.co.uk/branches/"
+    with SgChrome() as driver:
+        with SgRequests(dont_retry_status_codes=([404])) as session:
+            stores_req = session.get(search_url, headers=headers)
+            stores = json.loads(
+                stores_req.text.split("var branchData = ")[1]
+                .strip()
+                .split("}};")[0]
+                .strip()
+                + "}}"
+            )["branches"]
 
-            log.info(page_url)
-            store_req = session.get(page_url, headers=headers)
-            store_sel = lxml.html.fromstring(store_req.text)
+            for store in stores:
 
-            locator_domain = website
-            location_name = "".join(
-                store_sel.xpath('//h1[@class="hero__title"]/text()')
-            ).strip()
-            raw_address = "".join(
-                store_sel.xpath('//p[@class="hero__text"]/text()')
-            ).strip()
-            formatted_addr = parser.parse_address_intl(raw_address)
-            street_address = formatted_addr.street_address_1
-            if formatted_addr.street_address_2:
-                street_address = street_address + ", " + formatted_addr.street_address_2
+                page_url = "https://www.hamptons.co.uk" + store["branchURL"]
+                log.info(page_url)
+                driver.get(page_url)
+                store_sel = lxml.html.fromstring(driver.page_source)
+                locator_domain = website
+                location_name = store["name"].strip()
 
-            city = formatted_addr.city
-            state = formatted_addr.state
-            if state:
-                if state == "England":
-                    state = "<MISSING>"
+                raw_address = store["address"].replace("\n", ",")
 
-            zip = formatted_addr.postcode
+                formatted_addr = parser.parse_address_intl(raw_address)
+                street_address = formatted_addr.street_address_1
+                if formatted_addr.street_address_2:
+                    street_address = (
+                        street_address + ", " + formatted_addr.street_address_2
+                    )
 
-            country_code = "GB"
+                city = formatted_addr.city
+                state = formatted_addr.state
+                if state:
+                    if state == "England":
+                        state = "<MISSING>"
 
-            phone = "".join(
-                store_sel.xpath(
-                    '//div[@class="card-content"][./div[@class="card-content__text"]/h4[contains(text(),"Sales")]]//span[@class="branch-contact__telephone-text"]/text()'
+                zip = formatted_addr.postcode
+
+                country_code = "GB"
+
+                store_number = store["branchID"]
+
+                phone = store["salesContactNumber"]
+
+                location_type = ""
+                if store["salesEnabled"] is True:
+                    if store["lettingsEnabled"] is True:
+                        location_type = "Sales, Lettings"
+                    else:
+                        location_type = "Sales"
+                else:
+                    if store["lettingsEnabled"] is True:
+                        location_type = "Lettings"
+
+                hours = store_sel.xpath('//div[@class="card card--office"]')
+                hours_list = []
+                if len(hours) > 0:
+                    hours = hours[0].xpath('.//li[@class="accordion__item-body-item"]')
+                    for hour in hours:
+                        time = "".join(
+                            hour.xpath(
+                                './/strong[@class="opening-times__text opening-times__text--time"]/text()'
+                            )
+                        ).strip()
+                        day = "".join(
+                            hour.xpath('.//span[@class="opening-times__text"]/text()')
+                        ).strip()
+                        hours_list.append(day + ": " + time)
+
+                hours_of_operation = "; ".join(hours_list).strip()
+
+                latitude, longitude = store["lat"], store["lng"]
+
+                yield SgRecord(
+                    locator_domain=locator_domain,
+                    page_url=page_url,
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=zip,
+                    country_code=country_code,
+                    store_number=store_number,
+                    phone=phone,
+                    location_type=location_type,
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=hours_of_operation,
+                    raw_address=raw_address,
                 )
-            ).strip()
-            location_type = "<MISSING>"
-            store_number = "<MISSING>"
-
-            latitude = "<MISSING>"
-            longitude = "<MISSING>"
-
-            hours = store_sel.xpath(
-                '//div[@class="card-content"][./div[@class="card-content__text"]/h4[contains(text(),"Sales")]]//ul[@class="accordion__item-body-list"]/li'
-            )
-            hours_list = []
-            for hour in hours:
-                day = "".join(hour.xpath("span/text()")).strip()
-                time = "".join(hour.xpath("strong/text()")).strip()
-                hours_list.append(day + ":" + time)
-
-            hours_of_operation = "; ".join(hours_list).strip()
-
-            yield SgRecord(
-                locator_domain=locator_domain,
-                page_url=page_url,
-                location_name=location_name,
-                street_address=street_address,
-                city=city,
-                state=state,
-                zip_postal=zip,
-                country_code=country_code,
-                store_number=store_number,
-                phone=phone,
-                location_type=location_type,
-                latitude=latitude,
-                longitude=longitude,
-                hours_of_operation=hours_of_operation,
-                raw_address=raw_address,
-            )
-
-        next_page = stores_sel.xpath(
-            '//a[./span[contains(text(),"Load more offices")]]/@href'
-        )
-        if len(next_page) > 0:
-            page_no = page_no + 1
-        else:
-            break
 
 
 def scrape():

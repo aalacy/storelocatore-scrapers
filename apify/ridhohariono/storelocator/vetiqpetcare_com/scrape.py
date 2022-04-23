@@ -43,14 +43,17 @@ def fetch_data():
         data = session.get(search_url, headers=HEADERS).json()
         for row in data["data"]:
             location_name = row["name"]
-            street_address = row["street"]
+            street_address = row["street"].strip().rstrip(",")
             city = row["city"]
             state = row["state"]
             zip_postal = row["zip"]
             raw_address = row["full_address"]
             phone = row["store_phone_number"]
             hoo = ""
-            if not row["standard_weekly_schedule"]:
+            if (
+                "standard_weekly_schedule" not in row
+                or not row["standard_weekly_schedule"]
+            ):
                 hoo = row["clinics"][0]["display"].split(" ")
                 del hoo[1:-4]
                 hours_of_operation = " ".join(
@@ -65,7 +68,7 @@ def fetch_data():
             country_code = "US"
             latitude = row["latLng"][0]
             longitude = row["latLng"][1]
-            location_type = MISSING
+            location_type = row["brand"]["name"]
             log.info("Append {} => {}".format(location_name, street_address))
             yield SgRecord(
                 locator_domain=DOMAIN,

@@ -47,102 +47,109 @@ def fetch_data():
         for region in regions[1:]:
 
             r_id = "".join(region.xpath("./@value"))
-            data1["rid"] = r_id  # update data1
-            log.info(r_id)
-            region_url = "https://dodge.cl/Async/getCommunesWithConces"
-            region_res = session.post(region_url, headers=headers, data=data1)
-            cities = json.loads(region_res.text)
-            for cit in cities:
-                cit_Data["com"] = str(cit["id"])
-                cities_req = session.post(
-                    "https://dodge.cl/Async/getLocalsInCom",
-                    headers=headers,
-                    data=cit_Data,
-                )
-                stores = json.loads(cities_req.text)
+            stores = []
+            if r_id == "13":
+                region_url = "https://dodge.cl/Async/getDealersAndLocalsFromRegionWS"
+                mdata = {"rid": "13", "localType": "ALL"}
+                region_res = session.post(region_url, headers=headers, data=mdata)
+                stores = json.loads(region_res.text)
+            else:
+                data1["rid"] = r_id  # update data1
+                log.info(r_id)
+                region_url = "https://dodge.cl/Async/getCommunesWithConces"
+                region_res = session.post(region_url, headers=headers, data=data1)
+                cities = json.loads(region_res.text)
+                for cit in cities:
+                    cit_Data["com"] = str(cit["id"])
+                    cities_req = session.post(
+                        "https://dodge.cl/Async/getLocalsInCom",
+                        headers=headers,
+                        data=cit_Data,
+                    )
+                    stores = json.loads(cities_req.text)
 
-                for no, store in enumerate(stores, 1):
+            for no, store in enumerate(stores, 1):
 
-                    sk_id = store["skId"]
-                    store_url = "https://dodge.cl/Async/getLocalInfoBySkId"
-                    data2["skid"] = sk_id
+                sk_id = store["skId"]
+                store_url = "https://dodge.cl/Async/getLocalInfoBySkId"
+                data2["skid"] = sk_id
 
-                    store_res = session.post(store_url, headers=headers, data=data2)
+                store_res = session.post(store_url, headers=headers, data=data2)
 
-                    store_info = json.loads(store_res.text)
-                    if store_info.get("status"):
-                        continue
+                store_info = json.loads(store_res.text)
+                if store_info.get("status"):
+                    continue
 
-                    locator_domain = website
+                locator_domain = website
 
-                    location_name = store_info["nombre"]
+                location_name = store_info["nombre"]
 
-                    location_type = ""
+                location_type = ""
 
-                    if store_info["tiene_ventas"] == "1":
+                if store_info["tiene_ventas"] == "1":
 
-                        raw_address = store_info["direccion"]
+                    raw_address = store_info["direccion"]
 
-                        formatted_addr = parser.parse_address_intl(raw_address)
-                        street_address = formatted_addr.street_address_1
-                        if formatted_addr.street_address_2:
-                            street_address = (
-                                street_address + ", " + formatted_addr.street_address_2
-                            )
-
-                        if street_address is not None:
-                            street_address = street_address.replace("Ste", "Suite")
-                        city = formatted_addr.city
-
-                        state = formatted_addr.state
-                        zip = formatted_addr.postcode
-
-                        country_code = "CL"
-
-                        phone = store_info.get("telefono_venta", "<MISSING>")
-                        if phone:
-                            phone = phone.split("/")[0].strip()
-
-                        page_url = search_url
-
-                        hour_list = []
-                        try:
-                            lunes_a_viernes = store_info["horario_semana"]
-                            sabados = store_info["horario_sabados"]
-                            domingos = store_info["horario_domingos"]
-
-                            hour_list.append(f"Lunes a Viernes: {lunes_a_viernes}")
-                            hour_list.append(f"Sábados: {sabados}")
-                            hour_list.append(f"Domingos: {domingos}")
-                        except:
-                            pass
-
-                        hours_of_operation = "; ".join(hour_list)
-
-                        store_number = store_info["id_local_sk"]
-
-                        latitude, longitude = (
-                            store_info["latitud"],
-                            store_info["longitud"],
+                    formatted_addr = parser.parse_address_intl(raw_address)
+                    street_address = formatted_addr.street_address_1
+                    if formatted_addr.street_address_2:
+                        street_address = (
+                            street_address + ", " + formatted_addr.street_address_2
                         )
 
-                        yield SgRecord(
-                            locator_domain=locator_domain,
-                            page_url=page_url,
-                            location_name=location_name,
-                            street_address=street_address,
-                            city=city,
-                            state=state,
-                            zip_postal=zip,
-                            country_code=country_code,
-                            store_number=store_number,
-                            phone=phone,
-                            location_type=location_type,
-                            latitude=latitude,
-                            longitude=longitude,
-                            hours_of_operation=hours_of_operation,
-                            raw_address=raw_address,
-                        )
+                    if street_address is not None:
+                        street_address = street_address.replace("Ste", "Suite")
+                    city = formatted_addr.city
+
+                    state = formatted_addr.state
+                    zip = formatted_addr.postcode
+
+                    country_code = "CL"
+
+                    phone = store_info.get("telefono_venta", "<MISSING>")
+                    if phone:
+                        phone = phone.split("/")[0].strip()
+
+                    page_url = search_url
+
+                    hour_list = []
+                    try:
+                        lunes_a_viernes = store_info["horario_semana"]
+                        sabados = store_info["horario_sabados"]
+                        domingos = store_info["horario_domingos"]
+
+                        hour_list.append(f"Lunes a Viernes: {lunes_a_viernes}")
+                        hour_list.append(f"Sábados: {sabados}")
+                        hour_list.append(f"Domingos: {domingos}")
+                    except:
+                        pass
+
+                    hours_of_operation = "; ".join(hour_list)
+
+                    store_number = store_info["id_local_sk"]
+
+                    latitude, longitude = (
+                        store_info["latitud"],
+                        store_info["longitud"],
+                    )
+
+                    yield SgRecord(
+                        locator_domain=locator_domain,
+                        page_url=page_url,
+                        location_name=location_name,
+                        street_address=street_address,
+                        city=city,
+                        state=state,
+                        zip_postal=zip,
+                        country_code=country_code,
+                        store_number=store_number,
+                        phone=phone,
+                        location_type=location_type,
+                        latitude=latitude,
+                        longitude=longitude,
+                        hours_of_operation=hours_of_operation,
+                        raw_address=raw_address,
+                    )
 
 
 def scrape():
