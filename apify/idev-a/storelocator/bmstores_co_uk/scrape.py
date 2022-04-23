@@ -77,7 +77,7 @@ def parse_result(page_url, soup, store):
 def fetch_data():
     with SgRequests() as session:
         store_list = session.get(
-            "https://www.bmstores.co.uk/hpcstores/StoresGeoJson&start=1&maxrows=700",
+            "https://www.bmstores.co.uk/hpcstores/StoresGeoJson&start=1&maxrows=10000",
             headers=headers,
         ).json()["features"]
         for store in store_list:
