@@ -44,7 +44,7 @@ def get_driver():
     ).driver()
 
 
-@retry(wait=wait_fixed(2), stop=stop_after_attempt(3))
+@retry(wait=wait_fixed(10), stop=stop_after_attempt(5))
 def get_url(driver=None, url=None):
     if not driver:
         driver = get_driver()
