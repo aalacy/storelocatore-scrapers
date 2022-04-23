@@ -6,7 +6,6 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sglogging import SgLogSetup
 import re
-from concurrent.futures import ThreadPoolExecutor, as_completed
 
 logger = SgLogSetup().get_logger("bmstores")
 
@@ -19,42 +18,8 @@ headers = {
     "x-requested-with": "XMLHttpRequest",
 }
 
-max_workers = 32
 
-
-def fetchConcurrentSingle(store):
-    def request_with_retries(ext):
-        with SgRequests() as session:
-            data = session.get(str(base_url + ext), headers=headers)
-        return data
-
-    ##    page_url = base_url + store["properties"]["link"] # noqa
-    ##    logger.info(page_url) # noqa
-    response = request_with_retries(store["properties"]["link"])
-    return bs(response.text, "lxml")
-
-
-def fetchConcurrentList(storelist, occurrence=max_workers):
-    logger.info(f"max workers {occurrence}")
-    logger.info(f"items {len(storelist)}")
-    newline = "\n"
-    with ThreadPoolExecutor(max_workers=occurrence) as executor:
-        future_to_store = {
-            executor.submit(fetchConcurrentSingle, store): store for store in storelist
-        }
-        logger.info(f"{newline.join(list(str(i) for i in future_to_store.keys()))}")
-        for future in as_completed(future_to_store):
-            logger.info(f"fu:{str(future)}")
-            store = future_to_store[future]
-            soup = future.result()
-            logger.info(f"fu chars: {len(str(soup))}\n")
-            page_url = str(base_url + store["properties"]["link"])
-            tup = (page_url, soup, store)
-            yield tup
-
-
-def parse_result(res):
-    page_url, soup, store = res
+def parse_result(page_url, soup, store):
     street_address = soup.select_one("span[itemprop='streetAddress']").text
     city = soup.select_one("span[itemprop='addressLocality']").string
     state = soup.select_one("span[itemprop='addressRegion']").string
@@ -93,7 +58,6 @@ def parse_result(res):
     ):
         location_name = "B&M Home Store"
 
-    logger.info(f"Everything went well, parsed SgRecord {street_address}")
     return SgRecord(
         page_url=page_url,
         location_name=location_name,
@@ -113,14 +77,14 @@ def parse_result(res):
 def fetch_data():
     with SgRequests() as session:
         store_list = session.get(
-            "https://www.bmstores.co.uk/hpcstores/StoresGeoJson&start=1&maxrows=700",
+            "https://www.bmstores.co.uk/hpcstores/StoresGeoJson&start=1&maxrows=10000",
             headers=headers,
         ).json()["features"]
-        results = fetchConcurrentList(store_list)
-        logger.info(f"{results}")
-        for res in results:
-            record = parse_result(res)
-            yield record
+        for store in store_list:
+            page_url = base_url + store["properties"]["link"]
+            logger.info(page_url)
+            soup = bs(session.get(page_url, headers=headers).text, "lxml")
+            yield parse_result(page_url, soup, store)
 
 
 if __name__ == "__main__":
