@@ -77,6 +77,10 @@ def fetch_data(sgw: SgWriter):
             if "Boksburg" in street_address:
                 city = "Boksburg"
 
+            if ", Claremont" in street_address:
+                city = "Claremont"
+                street_address = street_address.split(", Claremont")[0]
+
             country_code = "ZA"
             store_number = ""
             location_type = "<MISSING>"

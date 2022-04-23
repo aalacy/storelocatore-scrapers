@@ -44,11 +44,18 @@ def fetch_data():
             info = bs(_["content"], "lxml")
             if "Coming Soon" in info.text:
                 continue
+
+            street_address = _["address"]
+            if addr["city"] in street_address:
+                street_address = street_address.split(addr["city"])[0].strip()
+            if street_address.endswith(","):
+                street_address = street_address[:-1]
+
             yield SgRecord(
                 page_url=base_url,
                 store_number=_["id"],
                 location_name=_["title"],
-                street_address=_["address"],
+                street_address=street_address,
                 city=addr["city"],
                 state=addr["state"],
                 zip_postal=addr["postal_code"],

@@ -1,3 +1,5 @@
+from bs4 import BeautifulSoup
+
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import RecommendedRecordIds
@@ -8,13 +10,21 @@ from sgrequests import SgRequests
 
 def fetch_data(sgw: SgWriter):
 
-    base_link = "https://www.axiombanking.com/_next/data/KMSdxDBMx2BvVFX6yHJuZ/en-US/locations.json"
-
     user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
     headers = {"User-Agent": user_agent}
 
     session = SgRequests()
-    stores = session.get(base_link, headers=headers).json()["pageProps"]["locations"]
+
+    base_link = "https://www.axiombanking.com/locations"
+    req = session.get(base_link, headers=headers)
+    base = BeautifulSoup(req.text, "lxml")
+
+    code = str(base).split('buildId":"')[1].split('"')[0]
+
+    api_link = (
+        "https://www.axiombanking.com/_next/data/" + code + "/en-US/locations.json"
+    )
+    stores = session.get(api_link, headers=headers).json()["pageProps"]["locations"]
 
     locator_domain = "axiombanking.com"
 

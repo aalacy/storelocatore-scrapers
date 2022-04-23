@@ -304,7 +304,7 @@ def scrape():
             part_of_record_identity=True,
         ),
         location_name=sp.MappingField(
-            mapping=["storeType", "name"],
+            mapping=["displayName"],
         ),
         latitude=sp.MappingField(
             mapping=["geoPoint", "latitude"],

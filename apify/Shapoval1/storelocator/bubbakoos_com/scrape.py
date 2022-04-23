@@ -1,86 +1,138 @@
-from sgscrape.sgrecord import SgRecord
+import usaddress
+from lxml import html
 from sgrequests import SgRequests
+from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
-from concurrent import futures
-
-
-def get_data(coords, sgw: SgWriter):
-    lat, long = coords
-    locator_domain = "https://www.bubbakoos.com/"
-    api_url = f"https://api.thelevelup.com/v15/apps/1641/locations?fulfillment_types=pickup&lat={str(lat)}&lng={str(long)}&page_size=30"
-
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0",
-    }
-
-    session = SgRequests()
-
-    r = session.get(api_url, headers=headers)
-
-    js = r.json()
-
-    for j in js:
-
-        page_url = "https://www.bubbakoos.com/locations"
-        a = j.get("location")
-        location_name = f"{a.get('merchant_name')} {a.get('name')}"
-        street_address = a.get("street_address") or "<MISSING>"
-        city = a.get("locality") or "<MISSING>"
-        state = a.get("region") or "<MISSING>"
-        postal = a.get("postal_code") or "<MISSING>"
-        country_code = "US"
-        phone = a.get("phone") or "<MISSING>"
-        latitude = a.get("latitude") or "<MISSING>"
-        longitude = a.get("longitude") or "<MISSING>"
-        hours_of_operation = (
-            "".join(a.get("hours")).replace("\n", " ").replace("\r", " ").strip()
-        )
-        hours_of_operation = " ".join(hours_of_operation.split()) or "<MISSING>"
-        store_number = j.get("location").get("id")
-
-        row = SgRecord(
-            locator_domain=locator_domain,
-            page_url=page_url,
-            location_name=location_name,
-            street_address=street_address,
-            city=city,
-            state=state,
-            zip_postal=postal,
-            country_code=country_code,
-            store_number=store_number,
-            phone=phone,
-            location_type=SgRecord.MISSING,
-            latitude=latitude,
-            longitude=longitude,
-            hours_of_operation=hours_of_operation,
-        )
-
-        sgw.write_row(row)
+from sgselenium.sgselenium import SgFirefox
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 
 
 def fetch_data(sgw: SgWriter):
-    coords = DynamicGeoSearch(
-        country_codes=[SearchableCountries.USA],
-        max_search_distance_miles=100,
-        expected_search_radius_miles=100,
-        max_search_results=None,
-    )
 
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {executor.submit(get_data, url, sgw): url for url in coords}
-        for future in futures.as_completed(future_to_url):
-            future.result()
+    locator_domain = "https://www.bubbakoos.com/"
+    api_url = "https://www.bubbakoos.com/locations"
+    tag = {
+        "Recipient": "recipient",
+        "AddressNumber": "address1",
+        "AddressNumberPrefix": "address1",
+        "AddressNumberSuffix": "address1",
+        "StreetName": "address1",
+        "StreetNamePreDirectional": "address1",
+        "StreetNamePreModifier": "address1",
+        "StreetNamePreType": "address1",
+        "StreetNamePostDirectional": "address1",
+        "StreetNamePostModifier": "address1",
+        "StreetNamePostType": "address1",
+        "CornerOf": "address1",
+        "IntersectionSeparator": "address1",
+        "LandmarkName": "address1",
+        "USPSBoxGroupID": "address1",
+        "USPSBoxGroupType": "address1",
+        "USPSBoxID": "address1",
+        "USPSBoxType": "address1",
+        "BuildingName": "address2",
+        "OccupancyType": "address2",
+        "OccupancyIdentifier": "address2",
+        "SubaddressIdentifier": "address2",
+        "SubaddressType": "address2",
+        "PlaceName": "city",
+        "StateName": "state",
+        "ZipCode": "postal",
+    }
+    with SgFirefox() as driver:
+        driver.get(api_url)
+        a = driver.page_source
+
+        tree = html.fromstring(a)
+        div = tree.xpath('//div[@class="location_part my-3"]')
+        for d in div:
+            slug = "".join(d.xpath(".//h3/a/@href"))
+            cms = "".join(d.xpath('.//h2[contains(text(), "Coming Soon")]/text()'))
+            if cms:
+                continue
+            page_url = f"https://www.bubbakoos.com/{slug}"
+            location_name = "".join(d.xpath(".//h3/a/text()"))
+            phone = (
+                "".join(d.xpath('.//a[contains(@href, "tel")]/text()')) or "<MISSING>"
+            )
+            with SgFirefox() as driver:
+                driver.get(page_url)
+                driver.implicitly_wait(30)
+                driver.maximize_window()
+                driver.switch_to.frame(0)
+                try:
+                    WebDriverWait(driver, 30).until(
+                        EC.presence_of_element_located(
+                            (By.XPATH, '//div[@class="address"]')
+                        )
+                    )
+                except:
+                    driver.switch_to.default_content()
+                try:
+                    ad = driver.find_element_by_xpath('//div[@class="address"]').text
+                    ll = driver.find_element_by_xpath(
+                        '//div[@class="google-maps-link"]/a'
+                    ).get_attribute("href")
+                except:
+                    ad = "<MISSING>"
+                    ll = "<MISSING>"
+                ll = "".join(ll)
+                ad = "".join(ad)
+
+                driver.switch_to.default_content()
+                a = usaddress.tag(ad, tag_mapping=tag)[0]
+                street_address = (
+                    f"{a.get('address1')} {a.get('address2')}".replace(
+                        "None", ""
+                    ).strip()
+                    or "<MISSING>"
+                )
+                city = a.get("city") or "<MISSING>"
+                state = a.get("state") or "<MISSING>"
+                postal = a.get("postal") or "<MISSING>"
+                country_code = "US"
+                try:
+                    latitude = ll.split("ll=")[1].split(",")[0].strip()
+                    longitude = ll.split("ll=")[1].split(",")[1].split("&")[0].strip()
+                except:
+                    latitude, longitude = "<MISSING>", "<MISSING>"
+
+                if street_address == "US-46":
+                    street_address = "3079 US-46"
+                hours = driver.find_elements_by_xpath('//p[./i[@class="far fa-clock"]]')
+                tmp = []
+                for h in hours:
+                    line = "".join(h.text).replace("\n", "").strip()
+                    tmp.append(line)
+                hours_of_operation = " ".join(tmp)
+
+                row = SgRecord(
+                    locator_domain=locator_domain,
+                    page_url=page_url,
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=postal,
+                    country_code=country_code,
+                    store_number=SgRecord.MISSING,
+                    phone=phone,
+                    location_type=SgRecord.MISSING,
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=hours_of_operation,
+                )
+
+                sgw.write_row(row)
 
 
 if __name__ == "__main__":
     session = SgRequests()
     with SgWriter(
-        SgRecordDeduper(
-            SgRecordID({SgRecord.Headers.STORE_NUMBER}),
-            duplicate_streak_failure_factor=-1,
-        )
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
     ) as writer:
         fetch_data(writer)

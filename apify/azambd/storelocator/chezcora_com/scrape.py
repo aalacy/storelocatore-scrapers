@@ -50,6 +50,7 @@ def parse_json(soup2, page_url):
     data["page_url"] = page_url
     data["location_type"] = "Chezcora"
     addresses = soup2.find("div", id="code_block-31-35").text
+    addresses = addresses.replace("B.C.,", "").replace("S.E.", "")
     street_address, city, state, zip_postal = getAddress(addresses)
     data["street_address"] = street_address
     data["city"] = city

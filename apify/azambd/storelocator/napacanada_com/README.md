@@ -19,9 +19,7 @@ Detected row count deviation: row count was 90 on 2021-07-13 and 55 on 2021-07-2
 
 ## R&D:
 
-- It has CloudFlare(CF) protection & must need US proxy to subdue the CF 
-
-- Total 56 locations found as of 11 Aug 2021, although 90 locations in the past 
+- It has CloudFlare(CF) protection & must need US proxy to subdue the CF  
 
 ## Info: 
 - Previous ticket info: `https://safegraph-crawl.atlassian.net/browse/SLC-16685` 

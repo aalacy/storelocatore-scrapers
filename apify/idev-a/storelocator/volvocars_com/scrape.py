@@ -48,9 +48,11 @@ def fetch_records(http, search):
                                 times.append(f"{hr['start']} - {hr['end']}")
                         hours.append(f"{day}: {', '.join(times)}")
 
+            page_url = "https://www.volvocarssouthbay.com/"
+            if _.get("c_dealerSiteTrackingTag"):
+                page_url += _["c_dealerSiteTrackingTag"]
             yield SgRecord(
-                page_url="https://www.volvocarssouthbay.com/"
-                + _["c_dealerSiteTrackingTag"],
+                page_url=page_url,
                 location_name=_["name"],
                 store_number=_["meta"]["id"],
                 street_address=addr["line1"],
