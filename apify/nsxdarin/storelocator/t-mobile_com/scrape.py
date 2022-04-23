@@ -105,6 +105,7 @@ def fetch_data():
                     lat = location["latitude"]
                     lng = location["longitude"]
                     hours = parse_hours(store)
+                    hours = hours.replace("None-None", "Closed")
                     yield SgRecord(
                         locator_domain=website,
                         page_url=loc,
