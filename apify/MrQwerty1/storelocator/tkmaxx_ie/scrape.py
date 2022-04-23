@@ -23,6 +23,9 @@ def get_data(slug, sgw: SgWriter):
     d = tree.xpath("//div[@class='nearby-store active-store']")[0]
 
     location_name = "".join(d.xpath("./a/text()")).strip()
+    raw_address = " ".join(
+        " ".join(d.xpath("//address[@itemprop='address']//text()")).split()
+    )
     page_url = "https://www.tkmaxx.ie" + "".join(d.xpath("./a/@href"))
     store_number = "".join(d.xpath("./@data-store-id"))
     latitude = "".join(d.xpath("./@data-latitude"))
@@ -54,6 +57,7 @@ def get_data(slug, sgw: SgWriter):
         latitude=latitude,
         longitude=longitude,
         locator_domain=locator_domain,
+        raw_address=raw_address,
         hours_of_operation=hours_of_operation,
     )
 
