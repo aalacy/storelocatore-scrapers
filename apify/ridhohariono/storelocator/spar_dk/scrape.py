@@ -1,3 +1,4 @@
+import json
 import re
 from bs4 import BeautifulSoup as bs
 from sgrequests import SgRequests
@@ -33,7 +34,6 @@ def getAddress(raw_address):
             city = data.city
             state = data.state
             zip_postal = data.postcode
-
             if street_address is None or len(street_address) == 0:
                 street_address = MISSING
             if city is None or len(city) == 0:
@@ -70,6 +70,15 @@ def fetch_data():
         "query": 'ss_search_api_datasource:"entity:node" AND bs_status:true AND ss_type:"store"',
         "limit": 1000,
     }
+    days = [
+        "Mandag",
+        "Tirsdag",
+        "Onsdag",
+        "Torsdag",
+        "Fredag",
+        "Lørdag",
+        "Søndag",
+    ]
     data = session.post(API_URL, json=payload).json()
     for row in data["response"]["docs"]:
         page_url = BASE_URL + row["ss_path_alias"]
@@ -84,31 +93,21 @@ def fetch_data():
         location_type = row["ss_type"]
         latitude = row["fts_lat"]
         longitude = row["fts_lon"]
-        if "itm_starthours" not in row or row["itm_starthours"] == 0:
-            hours_of_operation = MISSING
-        else:
-            days = [
-                "Mandag",
-                "Tirsdag",
-                "Onsdag",
-                "Torsdag",
-                "Fredag",
-                "Lørdag",
-                "Søndag",
-            ]
-            hoo = ""
-            for i in range(len(days)):
-                hoo += (
-                    days[i]
-                    + ": "
-                    + str(row["itm_starthours"][i])
-                    + " - "
-                    + str(row["itm_endhours"][i])
-                    + ","
-                )
-            hours_of_operation = re.sub(
-                r"(\d{1,2})(\d{2})", r"\1:\g<2>", hoo.strip()
-            ).rstrip(",")
+        hoo = ""
+        hoo_info = json.loads(row["sm_solr_opening_hours"][0])
+        for hday in hoo_info:
+            print(hday)
+            hoo += (
+                days[int(hday["day"]) - 1]
+                + ": "
+                + str(hday["starthours"])
+                + " - "
+                + str(hday["endhours"])
+                + ","
+            )
+        hours_of_operation = re.sub(
+            r"(\d{1,2})(\d{2})", r"\1:\g<2>", hoo.strip()
+        ).rstrip(",")
         log.info("Append {} => {}".format(location_name, street_address))
         yield SgRecord(
             locator_domain=DOMAIN,
