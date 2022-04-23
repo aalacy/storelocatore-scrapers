@@ -1,17 +1,14 @@
 from sgselenium.sgselenium import SgChrome
 from webdriver_manager.chrome import ChromeDriverManager
-from sgrequests import SgRequests
 
 from sgscrape import simple_scraper_pipeline as sp
 from sgscrape.pause_resume import CrawlStateSingleton
 from sglogging import sglog
 import ssl
-import json
 from bs4 import BeautifulSoup
 import time
 import re
 
-session = SgRequests()
 ssl._create_default_https_context = ssl._create_unverified_context
 DOMAIN = "tuffy_com"
 logger = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
