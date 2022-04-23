@@ -37,7 +37,6 @@ def fetch_data():
     driver.get(base_url)
     rr = driver.wait_for_request(json_url, timeout=30)
     time.sleep(20)
-    soup = bs(driver.page_source, "lxml")
     locations = json.loads(rr.response.body)["data"]["stores"]["items"]
     for _ in locations:
         addr = _["address"]
