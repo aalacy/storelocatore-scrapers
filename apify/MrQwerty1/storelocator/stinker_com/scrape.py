@@ -77,7 +77,7 @@ def fetch_data(coord, sgw: SgWriter):
 
         line = j.get("location")
         street_address, city, state, postal = get_address(line)
-        page_url = j.get("permalink")
+        page_url = j.get("permalink") or SgRecord.MISSING
         location_name = j.get("title").replace("&#038;", "&")
         store_number = location_name.split()[0].replace("#", "")
         if not store_number.isdigit():
@@ -120,8 +120,9 @@ def fetch_data(coord, sgw: SgWriter):
 if __name__ == "__main__":
     session = SgRequests()
     locator_domain = "https://stinker.com/"
+
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:88.0) Gecko/20100101 Firefox/88.0"
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:99.0) Gecko/20100101 Firefox/99.0",
     }
     token = get_token()
     with SgWriter(

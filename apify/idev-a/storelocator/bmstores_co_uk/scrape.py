@@ -6,8 +6,7 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sglogging import SgLogSetup
 import re
-import math
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 logger = SgLogSetup().get_logger("bmstores")
 
@@ -24,37 +23,91 @@ max_workers = 32
 
 
 def fetchConcurrentSingle(store):
-    page_url = base_url + store["properties"]["link"]
-    logger.info(page_url)
-    response = request_with_retries(page_url)
-    return page_url, bs(response.text, "lxml"), store
+    def request_with_retries(ext):
+        with SgRequests() as session:
+            data = session.get(str(base_url + ext), headers=headers)
+        return data
+
+    ##    page_url = base_url + store["properties"]["link"] # noqa
+    ##    logger.info(page_url) # noqa
+    response = request_with_retries(store["properties"]["link"])
+    return bs(response.text, "lxml")
 
 
-def fetchConcurrentList(list, occurrence=max_workers):
-    output = []
+def fetchConcurrentList(storelist, occurrence=max_workers):
     logger.info(f"max workers {occurrence}")
-    total = len(list)
-    reminder = math.floor(total / 50)
-    if reminder < occurrence:
-        reminder = occurrence
-
-    count = 0
-    with ThreadPoolExecutor(
-        max_workers=occurrence, thread_name_prefix="fetcher"
-    ) as executor:
-        logger.info(f"max workerss {occurrence}")
-        for result in executor.map(fetchConcurrentSingle, list):
-            if result:
-                count = count + 1
-                if count % reminder == 0:
-                    logger.debug(f"Concurrent Operation count = {count}")
-                output.append(result)
-    return output
+    logger.info(f"items {len(storelist)}")
+    newline = "\n"
+    with ThreadPoolExecutor(max_workers=occurrence) as executor:
+        future_to_store = {
+            executor.submit(fetchConcurrentSingle, store): store for store in storelist
+        }
+        logger.info(f"{newline.join(list(str(i) for i in future_to_store.keys()))}")
+        for future in as_completed(future_to_store):
+            logger.info(f"fu:{str(future)}")
+            store = future_to_store[future]
+            soup = future.result()
+            logger.info(f"fu chars: {len(str(soup))}\n")
+            page_url = str(base_url + store["properties"]["link"])
+            tup = (page_url, soup, store)
+            yield tup
 
 
-def request_with_retries(url):
-    with SgRequests() as session:
-        return session.get(url, headers=headers)
+def parse_result(res):
+    page_url, soup, store = res
+    street_address = soup.select_one("span[itemprop='streetAddress']").text
+    city = soup.select_one("span[itemprop='addressLocality']").string
+    state = soup.select_one("span[itemprop='addressRegion']").string
+    zipcode = soup.select_one("span[itemprop='postalCode']").string
+    phone = soup.select_one("span[itemprop='telephone']")
+    phone = "" if phone is None else phone.string
+
+    hr = []
+    if soup.find_all("h4", string=re.compile(r"Opening Times$")):
+        hr = (
+            soup.find_all("h4", string=re.compile(r"Opening Times$"))[-1]
+            .find_next_sibling()
+            .select("li")
+        )
+    hours = []
+    for hh in hr:
+        div = hh.select("div")
+        hours.append(f"{div[0].text.strip()}: {div[1].text.strip()}")
+
+    if not hours:
+        note = soup.find("h4", string=re.compile(r"Store Notes"))
+        if note:
+            note = note.find_next_sibling().text.strip()
+            if "Unfortunately" in note and "CLOSED" in note:
+                hours = ["closed"]
+
+    street_address = street_address.replace("\n", " ").strip()
+    location_name = ""
+    if "markerHomestoreGardenCentre" in store["properties"]["svg"]:
+        location_name = "B&M Home Store with Garden Centre"
+    elif "markerBargainstore" in store["properties"]["svg"]:
+        location_name = "B&M Store"
+    elif (
+        "markerBargainstore" in store["properties"]["svg"]
+        or "markerHomestore" in store["properties"]["svg"]
+    ):
+        location_name = "B&M Home Store"
+
+    logger.info(f"Everything went well, parsed SgRecord {street_address}")
+    return SgRecord(
+        page_url=page_url,
+        location_name=location_name,
+        street_address=street_address,
+        city=city,
+        state=state,
+        zip_postal=zipcode,
+        country_code="GB",
+        phone=phone,
+        locator_domain=locator_domain,
+        latitude=store["geometry"]["coordinates"][1],
+        longitude=store["geometry"]["coordinates"][0],
+        hours_of_operation="; ".join(hours).replace("Store Hours:", ""),
+    )
 
 
 def fetch_data():
@@ -63,62 +116,11 @@ def fetch_data():
             "https://www.bmstores.co.uk/hpcstores/StoresGeoJson&start=1&maxrows=700",
             headers=headers,
         ).json()["features"]
-        for page_url, soup, store in fetchConcurrentList(store_list):
-            street_address = soup.select_one("span[itemprop='streetAddress']").text
-            city = soup.select_one("span[itemprop='addressLocality']").string
-            state = soup.select_one("span[itemprop='addressRegion']").string
-            zip = soup.select_one("span[itemprop='postalCode']").string
-            phone = soup.select_one("span[itemprop='telephone']")
-            phone = "" if phone is None else phone.string
-
-            hr = []
-            if soup.find_all("h4", string=re.compile(r"Opening Times$")):
-                hr = (
-                    soup.find_all("h4", string=re.compile(r"Opening Times$"))[-1]
-                    .find_next_sibling()
-                    .select("li")
-                )
-            hours = []
-            for hh in hr:
-                div = hh.select("div")
-                hours.append(f"{div[0].text.strip()}: {div[1].text.strip()}")
-
-            if not hours:
-                note = soup.find("h4", string=re.compile(r"Store Notes"))
-                if note:
-                    note = note.find_next_sibling().text.strip()
-                    if "Unfortunately" in note and "CLOSED" in note:
-                        hours = ["closed"]
-
-            street_address = street_address.replace("\n", " ").strip()
-            location_name = ""
-            if "markerHomestoreGardenCentre" in store["properties"]["svg"]:
-                location_name = "B&M Home Store with Garden Centre"
-            elif "markerBargainstore" in store["properties"]["svg"]:
-                location_name = "B&M Store"
-            elif (
-                "markerBargainstore" in store["properties"]["svg"]
-                or "markerHomestore" in store["properties"]["svg"]
-            ):
-                location_name = "B&M Home Store"
-
-            logger.info(
-                f"Everything went well, got SgRecord \n{page_url}\n{location_name}\n{street_address}"
-            )
-            yield SgRecord(
-                page_url=page_url,
-                location_name=location_name,
-                street_address=street_address,
-                city=city,
-                state=state,
-                zip_postal=zip,
-                country_code="GB",
-                phone=phone,
-                locator_domain=locator_domain,
-                latitude=store["geometry"]["coordinates"][1],
-                longitude=store["geometry"]["coordinates"][0],
-                hours_of_operation="; ".join(hours).replace("Store Hours:", ""),
-            )
+        results = fetchConcurrentList(store_list)
+        logger.info(f"{results}")
+        for res in results:
+            record = parse_result(res)
+            yield record
 
 
 if __name__ == "__main__":
