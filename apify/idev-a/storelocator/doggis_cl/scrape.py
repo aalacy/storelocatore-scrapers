@@ -4,9 +4,6 @@ from sgselenium import SgChrome
 from bs4 import BeautifulSoup as bs
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.common.by import By
 from sgpostal.sgpostal import parse_address_intl
 import ssl
 import time
