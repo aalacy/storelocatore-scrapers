@@ -150,7 +150,7 @@ class CleanRecord:
         cleanRecord["country_code"] = "China"
         cleanRecord["phone"] = badRecord["tel"]
         try:
-            cleanRecord["phone"] = cleanRecord["phone"].split(':',1)[0]
+            cleanRecord["phone"] = cleanRecord["phone"].split(":", 1)[0]
         except Exception:
             pass
         cleanRecord["store_number"] = badRecord["id"]
