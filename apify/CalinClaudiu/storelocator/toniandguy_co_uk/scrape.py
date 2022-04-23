@@ -1,6 +1,6 @@
 from sgscrape import simple_scraper_pipeline as sp
 from sglogging import sglog
-from sgzip.dynamic import DynamicGeoSearch, Grain_4
+from sgzip.dynamic import DynamicGeoSearch, Grain_4, SearchableCountries
 from sgzip.utils import country_names_by_code
 from fuzzywuzzy import process
 from sgrequests import SgRequests
@@ -19,6 +19,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
 
+state = CrawlStateSingleton.get_instance()
 headerz = None
 @dataclass(frozen=False)
 class SerializableCountry:
@@ -27,7 +28,7 @@ class SerializableCountry:
     """
 
     name: str
-    link: str
+    code: str
     empty: bool
     tested: bool
     retries: int
@@ -36,7 +37,7 @@ class SerializableCountry:
         return json.dumps(asdict(self))
 
     def __hash__(self):
-        return hash((self.name, self.link, self.special))
+        return hash((self.name, self.code, self.empty, self.tested, self.retries))
 
     def __eq__(self, other):
         return isinstance(other, SerializableCountry) and hash(self) == hash(other)
@@ -46,7 +47,7 @@ class SerializableCountry:
         as_dict = json.loads(serialized_json)
         return SerializableCountry(
             name=as_dict["name"],
-            link=as_dict["link"],
+            code=as_dict["code"],
             empty=as_dict["empty"],
             tested=as_dict["tested"],
             retries=as_dict["retries"],
@@ -112,9 +113,8 @@ def fetch_token():
             EC.visibility_of_element_located((By.XPATH, byname_xpath))
         )
         byname.click()
-        time.sleep(10)
+        time.sleep(5)
         token = driver.page_source.split('"_token" content="',1)[1].split('"',1)[0]
-        logzilla.info("By Name search clicked with SUCCESS")
         reqs = list(driver.requests)
         for r in reqs:
             if "salon" in r.path:
@@ -122,55 +122,6 @@ def fetch_token():
                 return token
     return None
 
-def get_Start(session, headers):
-    page = session.get("https://locate.apple.com/findlocations", headers=headers)
-    soup = b4(page.text, "lxml")
-    data = []
-    soup = soup.find("div", {"class": "content selfclear", "id": "content"}).find_all(
-        "li"
-    )
-    for i in soup:
-        name = i.find("span").text
-        link = i.find("a")["href"]
-        found = False
-        for index, country in enumerate(data):
-            if link.split("/")[1] == country["link"].split("/")[1]:
-                if "/en/" in link:
-                    data[index]["link"] = link
-                    data[index]["name"] = name
-                found = True
-        if not found:
-            if len(link) > 7:
-                data.append({"name": name, "link": link, "special": True})
-            else:
-                data.append({"name": name, "link": link, "special": False})
-
-    this = CountryStack(
-        seed=OrderedSet(map(lambda r: SerializableCountry.deserialize(r), [])),
-        state=None,
-    )
-    for item in data:
-        if item["special"]:
-            for special_item in get_special(session, headers, item):
-                this.push_country(
-                    SerializableCountry(
-                        name=special_item["name"],
-                        link=special_item["link"],
-                        special=special_item["special"],
-                        retries=0,
-                    )
-                )
-
-        else:
-            this.push_country(
-                SerializableCountry(
-                    name=item["name"],
-                    link=item["link"],
-                    special=item["special"],
-                    retries=0,
-                )
-            )
-    return this
 
 
 def determine_country(country):
@@ -267,20 +218,38 @@ def get_country(search, country, session, headers, SearchableCountry, state):
         )
 
 
-state = CrawlStateSingleton.get_instance()
 
 def test_country(country,session):
     #Finds out if we need to search this country.
     headers = {}
     headers["accept"] = "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9"
     try:
-        SgRequests.raise_on_err(session.get('a'))
+        SgRequests.raise_on_err(session.get())
     except Exception:
         pass
+    
+def get_Start():
+    this = CountryStack(
+        seed=OrderedSet(map(lambda r: SerializableCountry.deserialize(r), [])),
+        state=None,
+    )
+    Searchable = country_names_by_code().items()
+    for country in Searchable:
+        this.push_country(
+                SerializableCountry(
+                    name=country[1],
+                    code=country[0],
+                    empty=None,
+                    tested=False,
+                    retries = 0,
+                )
+            )
+    return this
     
 def fetch_data():
     with SgRequests() as session:
         countries = None
+        searchables = state.get_misc_value(key="SearchableCountries", value=None)
         try:
             countries = CountryStack(
                 seed=OrderedSet(
@@ -294,9 +263,11 @@ def fetch_data():
         except Exception as e:
             logzilla.warning("Something happened along the lines of", exc_info=e)
         if not countries:
-            countries = get_Start(session, headers)
+            countries = get_Start()
             state.set_misc_value(key="countries", value=countries.serialize_country())
-            state.set_misc_value(key="SearchableCountry", value=None)
+            
+            headers = fetch_token()
+            headers = headerz
             state.save(override=True)
         country = countries.pop_country()
         while country:
@@ -381,10 +352,12 @@ def scrape():
         latitude=sp.MappingField(
             mapping=["locationData", "geo", 0],
             is_required=False,
+            part_of_record_identity=True,
         ),
         longitude=sp.MappingField(
             mapping=["locationData", "geo", 1],
             is_required=False,
+            part_of_record_identity=True,
         ),
         street_address=sp.MultiMappingField(
             mapping=[
@@ -417,7 +390,6 @@ def scrape():
         ),
         store_number=sp.MappingField(
             mapping=["storeID"],
-            part_of_record_identity=True,
             is_required=False,
         ),
         hours_of_operation=sp.MissingField(),
@@ -445,4 +417,4 @@ def scrape():
 
 
 if __name__ == "__main__":
-    fetch_token()
+    scrape()
