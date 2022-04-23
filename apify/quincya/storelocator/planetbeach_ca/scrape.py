@@ -1,133 +1,93 @@
-from sgrequests import SgRequests
 from bs4 import BeautifulSoup
-import csv
-import time
-import re
 
-from random import randint
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('planetbeach_ca')
+from sgrequests import SgRequests
 
 
+def fetch_data(sgw: SgWriter):
+
+    session = SgRequests()
+
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
+    headers = {"User-Agent": user_agent}
+
+    base_link = "https://planetbeachcanada.com/location-contact/"
+
+    req = session.get(base_link, headers=headers)
+    base = BeautifulSoup(req.text, "lxml")
+
+    items = base.find_all("h3", class_="heading-title")
+
+    for i in items:
+
+        locator_domain = "planetbeachcanada.com"
+        location_name = i.span.text.replace("\xa0", " ").strip()
+        if "a spa" in location_name.lower():
+            continue
+
+        item = i.find_previous(class_="fl-col")
+
+        raw_address = list(item.p.stripped_strings)
+        street_address = raw_address[0]
+        city_line = raw_address[-1].strip().split(",")
+        city = city_line[0].strip()
+        state = city_line[1].strip().split()[0]
+        zip_code = " ".join(city_line[1].strip().split()[1:])
+        country_code = "CA"
+        phone = item.find_all("a")[1].text.strip()
+        location_type = "<MISSING>"
+        hours_of_operation = (
+            item.find_all("p")[-1]
+            .get_text()
+            .replace("\n", " ")
+            .replace("PMF", "PM F")
+            .replace("PMS", "PM S")
+            .split("Stat")[0]
+            .strip()
+        )
+        if not hours_of_operation:
+            hours_of_operation = (
+                item.find_all("p")[-2]
+                .get_text()
+                .replace("\n", " ")
+                .replace("PMF", "PM F")
+                .replace("PMS", "PM S")
+                .split("Stat")[0]
+                .strip()
+            )
+        try:
+            map_link = item.iframe["src"]
+            lat_pos = map_link.rfind("!3d")
+            latitude = map_link[lat_pos + 3 : map_link.find("!", lat_pos + 5)].strip()
+            lng_pos = map_link.find("!2d")
+            longitude = map_link[lng_pos + 3 : map_link.find("!", lng_pos + 5)].strip()
+        except:
+            latitude = "<MISSING>"
+            longitude = "<MISSING>"
+
+        sgw.write_row(
+            SgRecord(
+                locator_domain=locator_domain,
+                page_url=base_link,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_code,
+                country_code=country_code,
+                store_number="",
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
+        )
 
 
-def get_driver():
-	options = Options()
-	options.add_argument('--headless')
-	options.add_argument('--no-sandbox')
-	options.add_argument('--disable-dev-shm-usage')
-	return webdriver.Chrome('chromedriver', chrome_options=options)
-
-def write_output(data):
-	with open('data.csv', mode='w') as output_file:
-		writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
-		# Header
-		writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-		# Body
-		for row in data:
-			writer.writerow(row)
-
-def fetch_data():
-	
-	base_link = "https://planetbeachcanada.com/store-locator/"
-
-	driver = get_driver()
-	driver.get(base_link)
-	time.sleep(randint(8,10))
-
-	sel_base = BeautifulSoup(driver.page_source,"lxml")
-	results = sel_base.find(id="wpsl-stores").find_all('li')
-	sel_items = []
-
-	for sel_item in results:
-		name = sel_item.strong.text.replace("St.Albert", "St. Albert")
-		if name == "Saskatoon":
-			name = "University Heights Saskatoon"
-		num = sel_item['data-store-id']
-		map_link = sel_item.a['href']
-
-		sel_items.append([name,num,map_link])
-
-	driver.close()
-
-	user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36'
-	HEADERS = {'User-Agent' : user_agent}
-
-	session = SgRequests()
-	
-	data = []
-
-	req = session.get(base_link, headers = HEADERS)
-	time.sleep(randint(2,4))
-
-	try:
-		base = BeautifulSoup(req.text,"lxml")
-		logger.info("Got main page")
-	except (BaseException):
-		logger.info('[!] Error Occured. ')
-		logger.info('[?] Check whether system is Online.')
-
-	items = base.find_all(class_="icon_description")
-
-	for item in items:
-
-		locator_domain = "planetbeachcanada.com"
-		location_name = item.h4.text.strip()
-		logger.info(location_name)
-
-		raw_address = item.p.text.strip().split("\n")
-
-		street_address = raw_address[-3].strip()
-		city_line = raw_address[-2].strip().split(",")
-		city = city_line[0].strip()
-		state = city_line[1][:3].strip()
-		zip_code = city_line[1][3:].strip()
-
-		country_code = "CA"
-
-		phone = raw_address[-1].replace("Phone:","").strip()
-		location_type = "<MISSING>"
-
-		hours_of_operation = item.find_all("p")[-1].text.replace("\n"," ").strip()
-
-		for sel_item in sel_items:
-			if sel_item[0] == location_name:
-				store_number = sel_item[1]
-				map_link = sel_item[2]
-				break
-
-		if map_link:
-			req = session.get(map_link, headers = HEADERS)
-			time.sleep(randint(1,2))
-			try:
-				maps = BeautifulSoup(req.text,"lxml")
-			except (BaseException):
-				logger.info('[!] Error Occured. ')
-				logger.info('[?] Check whether system is Online.')
-
-			try:
-				raw_gps = maps.find('meta', attrs={'itemprop': "image"})['content']
-				lat = raw_gps[raw_gps.find("=")+1:raw_gps.find("%")].strip()
-				longit = raw_gps[raw_gps.find("-"):raw_gps.find("&")].strip()
-
-				if len(lat) < 5:
-					lat = "<MISSING>"
-					longit = "<MISSING>"
-			except:
-				lat = "<MISSING>"
-				longit = "<MISSING>"
-
-		data.append([locator_domain, base_link, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, lat, longit, hours_of_operation])
-
-	return data
-
-def scrape():
-	data = fetch_data()
-	write_output(data)
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PhoneNumberId)) as writer:
+    fetch_data(writer)
