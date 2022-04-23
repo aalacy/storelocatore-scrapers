@@ -96,7 +96,6 @@ def fetch_data():
         hoo = ""
         hoo_info = json.loads(row["sm_solr_opening_hours"][0])
         for hday in hoo_info:
-            print(hday)
             hoo += (
                 days[int(hday["day"]) - 1]
                 + ": "
