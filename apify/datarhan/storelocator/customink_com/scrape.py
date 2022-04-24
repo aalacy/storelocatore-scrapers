@@ -45,8 +45,8 @@ def fetch_data():
                 latitude = poi["geocodedCoordinate"]["latitude"]
                 longitude = poi["geocodedCoordinate"]["longitude"]
             else:
-                latitude = poi['yextDisplayCoordinate']['latitude']
-                longitude = poi['yextDisplayCoordinate']['longitude']
+                latitude = poi["yextDisplayCoordinate"]["latitude"]
+                longitude = poi["yextDisplayCoordinate"]["longitude"]
 
             item = SgRecord(
                 locator_domain=domain,
