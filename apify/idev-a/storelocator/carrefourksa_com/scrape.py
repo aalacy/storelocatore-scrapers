@@ -127,10 +127,9 @@ if __name__ == "__main__":
             duplicate_streak_failure_factor=100,
         )
     ) as writer:
-        search_iter = ExampleSearchIteration()
         par_search = ParallelDynamicSearch(
             search_maker=search_maker,
-            search_iteration=search_iter,
+            search_iteration=lambda: ExampleSearchIteration(),
             country_codes=[
                 SearchableCountries.UNITED_ARAB_EMIRATES,
                 SearchableCountries.PAKISTAN,
