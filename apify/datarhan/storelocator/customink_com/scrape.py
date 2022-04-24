@@ -29,6 +29,8 @@ def fetch_data():
             for day, hours in poi["hours"].items():
                 if day == "holidayHours":
                     continue
+                if day == "reopenDate":
+                    continue
                 if hours and hours.get("openIntervals"):
                     opens = hours["openIntervals"][0]["start"]
                     closes = hours["openIntervals"][0]["end"]
@@ -39,6 +41,12 @@ def fetch_data():
             street_address = poi["address"]["line1"]
             if poi["address"].get("line2"):
                 street_address += ", " + poi["address"]["line2"]
+            if poi.get("geocodedCoordinate"):
+                latitude = poi["geocodedCoordinate"]["latitude"]
+                longitude = poi["geocodedCoordinate"]["longitude"]
+            else:
+                latitude = poi['yextDisplayCoordinate']['latitude']
+                longitude = poi['yextDisplayCoordinate']['longitude']
 
             item = SgRecord(
                 locator_domain=domain,
@@ -52,8 +60,8 @@ def fetch_data():
                 store_number="",
                 phone=poi["mainPhone"],
                 location_type="",
-                latitude=poi["geocodedCoordinate"]["latitude"],
-                longitude=poi["geocodedCoordinate"]["longitude"],
+                latitude=latitude,
+                longitude=longitude,
                 hours_of_operation=hoo,
             )
 
