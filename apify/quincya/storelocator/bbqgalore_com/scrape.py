@@ -52,6 +52,11 @@ def fetch_data(sgw: SgWriter):
             raw_address[-2] = raw_address[-2].replace("Jose CA", "Jose, CA")
             got_page = False
 
+        location_type = ""
+
+        if "authorized" in raw_address[0].lower():
+            location_type = "Authorized Dealer"
+
         if (
             "located in" in raw_address[0].lower()
             or "authorized" in raw_address[0].lower()
@@ -64,19 +69,19 @@ def fetch_data(sgw: SgWriter):
         zip_code = raw_address[1][-6:].strip()
         country_code = "US"
         store_number = "<MISSING>"
-        location_type = ""
 
         if got_page:
-            try:
-                location_type = ", ".join(
-                    list(
-                        item.find(class_="section__content")
-                        .find_all("p")[-2]
-                        .stripped_strings
+            if not location_type:
+                try:
+                    location_type = ", ".join(
+                        list(
+                            item.find(class_="section__content")
+                            .find_all("p")[-2]
+                            .stripped_strings
+                        )
                     )
-                )
-            except:
-                pass
+                except:
+                    pass
             phone = item.find(class_="section__content").a.text.strip()
             script = (
                 item.find(class_="column main")
@@ -93,21 +98,21 @@ def fetch_data(sgw: SgWriter):
 
         else:
             phone = raw_address[-1].replace("Tel:", "").strip()
-
-            try:
-                raw_types = i[1].find_all("img")
-                for row in raw_types:
-                    location_type = (
-                        location_type
-                        + ", "
-                        + row["title"]
-                        .replace("This store location is a", "")
-                        .replace("This store location offers", "")
-                        .strip()
-                    )
-                location_type = location_type[1:].title().strip()
-            except:
-                pass
+            if not location_type:
+                try:
+                    raw_types = i[1].find_all("img")
+                    for row in raw_types:
+                        location_type = (
+                            location_type
+                            + ", "
+                            + row["title"]
+                            .replace("This store location is a", "")
+                            .replace("This store location offers", "")
+                            .strip()
+                        )
+                    location_type = location_type[1:].title().strip()
+                except:
+                    pass
 
             hours_of_operation = ""
             latitude = ""
