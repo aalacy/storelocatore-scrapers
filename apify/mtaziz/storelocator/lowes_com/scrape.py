@@ -48,39 +48,42 @@ def fetch_records(zc, sgw: SgWriter, driver: SgChrome):
     if json_raw:
         api_js = json.loads(json_raw)
         stores = api_js["stores"]
-        logger.info(f"[StoresFound: {len(stores)}] || [PullingFor: {zc}]")
-        for idx, i in enumerate(stores[0:]):
-            store = i["store"]
-            city_f = store["city"] or ""
-            if city_f:
-                city_f = city_f.lower().replace(" ", "-")
-            state_f = store["state"] or ""
-            sn_f = store["id"] or ""
-            purl = ""
-            if city_f and state_f and sn_f:
-                purl = f"https://www.lowes.com/store/{state_f}-{city_f}/{sn_f}"
-            else:
+        if isinstance(stores, list):
+            logger.info(f"[StoresFound: {len(stores)}] || [PullingFor: {zc}]")
+            for idx, i in enumerate(stores[0:]):
+                store = i["store"]
+                city_f = store["city"] or ""
+                if city_f:
+                    city_f = city_f.lower().replace(" ", "-")
+                state_f = store["state"] or ""
+                sn_f = store["id"] or ""
                 purl = ""
+                if city_f and state_f and sn_f:
+                    purl = f"https://www.lowes.com/store/{state_f}-{city_f}/{sn_f}"
+                else:
+                    purl = ""
 
-            item = SgRecord(
-                locator_domain=DOMAIN,
-                page_url=purl,
-                location_name=store["store_name"] or "",
-                street_address=store["address"] or "",
-                city=store["city"] or "",
-                state=store["state"] or "",
-                zip_postal=store["zip"] or "",
-                country_code=store["country"] or "",
-                store_number=store["id"] or "",
-                phone=store["phone"] or "",
-                location_type=store["storeFeature"] or "",
-                latitude=store["lat"] or "",
-                longitude=store["long"] or "",
-                hours_of_operation=get_hoo(store),
-                raw_address="",
-            )
+                item = SgRecord(
+                    locator_domain=DOMAIN,
+                    page_url=purl,
+                    location_name=store["store_name"] or "",
+                    street_address=store["address"] or "",
+                    city=store["city"] or "",
+                    state=store["state"] or "",
+                    zip_postal=store["zip"] or "",
+                    country_code=store["country"] or "",
+                    store_number=store["id"] or "",
+                    phone=store["phone"] or "",
+                    location_type=store["storeFeature"] or "",
+                    latitude=store["lat"] or "",
+                    longitude=store["long"] or "",
+                    hours_of_operation=get_hoo(store),
+                    raw_address="",
+                )
 
-            sgw.write_row(item)
+                sgw.write_row(item)
+        else:
+            return
 
 
 def fetch_data(sgw: SgWriter):
