@@ -145,11 +145,14 @@ def fetch_data():
 
     states = get_states()
     logger.info(f"Total States to crawl: {len(states)}")
-    driver = get_driver("https://www.tuffy.com")
 
     for state in states:
         page_url = f"https://www.tuffy.com/location_search?zip_code={state}"
-        driver.get(page_url)
+        try:
+            driver = get_driver(page_url, driver=None)
+        except Exception:
+            driver = get_driver(page_url)
+
         logger.info(page_url)
         time.sleep(60)
 
@@ -161,7 +164,9 @@ def fetch_data():
             time.sleep(60)
             continue
 
-        for idx, location in enumerate(soup.select("div.contact-info")):
+        locations = soup.select("div.contact-info")
+        logger.info(f"{state} Locations Found: {len(locations)}")
+        for idx, location in enumerate(locations):
             data = parse(location, idx, coordinates, state, page_url)
             yield data
 
@@ -173,15 +178,17 @@ def scrape():
         locator_domain=sp.ConstantField(DOMAIN),
         page_url=sp.MappingField(mapping=["page_url"], is_required=False),
         location_name=sp.MappingField(mapping=["location_name"]),
-        latitude=sp.MappingField(mapping=["latitude"], part_of_record_identity=True),
-        longitude=sp.MappingField(mapping=["longitude"], part_of_record_identity=True),
+        latitude=sp.MappingField(mapping=["latitude"], is_required=False),
+        longitude=sp.MappingField(mapping=["longitude"], is_required=False),
         street_address=sp.MappingField(mapping=["street_address"], is_required=False),
         city=sp.MappingField(mapping=["city"], is_required=False),
         state=sp.MappingField(mapping=["state"], is_required=False),
         zipcode=sp.MappingField(mapping=["zip_postal"], is_required=False),
         country_code=sp.MappingField(mapping=["country_code"], is_required=False),
         phone=sp.MappingField(mapping=["phone"], is_required=False),
-        store_number=sp.MappingField(mapping=["store_number"], is_required=False),
+        store_number=sp.MappingField(
+            mapping=["store_number"], part_of_record_identity=True
+        ),
         hours_of_operation=sp.MappingField(
             mapping=["hours_of_operation"], is_required=False
         ),
