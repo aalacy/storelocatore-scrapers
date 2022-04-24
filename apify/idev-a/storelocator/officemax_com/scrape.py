@@ -7,15 +7,14 @@ from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 from sglogging import SgLogSetup
 from bs4 import BeautifulSoup as bs
 
-logger = SgLogSetup().get_logger("officemax")
+logger = SgLogSetup().get_logger("officedepot_com")
 
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
 
-locator_domain = "https://www.officemax.com/"
+locator_domain = "https://www.officedepot.com/"
 base_url = 'https://storelocator.officedepot.com/ajax?&xml_request=<request><appkey>AC2AD3C2-C08F-11E1-8600-DCAD4D48D7F4</appkey><formdata id="locatorsearch"><dataview>store_default</dataview><limit>500</limit><geolocs><geoloc><addressline>'
-
 days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 
 
@@ -24,7 +23,7 @@ def fetch_data(search):
     with SgRequests(verify_ssl=False) as session:
         maxZ = search.items_remaining()
         total = 0
-        MAX_DISTANCE = 250
+        MAX_DISTANCE = 550
         for zip_code in search:
             if search.items_remaining() > maxZ:
                 maxZ = search.items_remaining()
@@ -92,7 +91,6 @@ if __name__ == "__main__":
     ) as writer:
         search = DynamicZipSearch(
             country_codes=[SearchableCountries.USA],
-            expected_search_radius_miles=100,
         )
         results = fetch_data(search)
         for rec in results:
