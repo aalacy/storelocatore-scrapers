@@ -54,7 +54,7 @@ def fetch_data():
             .replace("Apply Now", "")
             .replace("pmSunday ", "pm Sunday")
         )
-        if "Coming Soon!Apply Now" in hours_of_operation:
+        if "Coming Soon" in hours_of_operation:
             continue
         if "CLOSED until further notice" in hours_of_operation:
             hours_of_operation = "Temporarily CLOSED"
