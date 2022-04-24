@@ -389,8 +389,9 @@ def scrape():
                     SgRecord.Headers.LATITUDE,
                     SgRecord.Headers.LONGITUDE,
                     SgRecord.Headers.STREET_ADDRESS,
-                }
-            )
+                },
+            ),
+            duplicate_streak_failure_factor=100,
         )
     ) as writer:
         fetch_data(writer)

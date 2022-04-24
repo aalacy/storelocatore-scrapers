@@ -25,6 +25,8 @@ def fetch_data():
     )
     for url in all_counties:
         response = session.get(url)
+        if response.status_code != 200:
+            continue
         dom = etree.HTML(response.text)
         all_cities = dom.xpath(
             '//h3[contains(text(), "Care homes")]/following-sibling::ul[1]//a/@href'
