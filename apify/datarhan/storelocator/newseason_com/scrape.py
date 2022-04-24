@@ -35,8 +35,14 @@ def fetch_data():
             location_name = loc_dom.xpath("//h1/text()")[0]
             raw_address = loc_dom.xpath(
                 '//div[@class="locContact"]/div[@class="section"]/text()'
-            )[:2]
-            raw_address = ", ".join([e.strip() for e in raw_address if e.strip()])
+            )
+            for e in ["Bldg", "Suit", "Ste", "Unit", "Hwy"]:
+                if e in raw_address[1]:
+                    raw_address = [" ".join(raw_address[:2])] + [raw_address[2]]
+            raw_address = raw_address[:2]
+            raw_address = " ".join(
+                ", ".join([e.strip() for e in raw_address if e.strip()]).split()
+            )
             addr = parse_address_usa(raw_address)
             street_address = addr.street_address_1
             if addr.street_address_2:
