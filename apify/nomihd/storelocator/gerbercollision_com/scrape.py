@@ -98,22 +98,25 @@ def fetch_data():
 
                 street_address = "".join(
                     store_sel.xpath(
-                        '//div[@class="location-info"]/div[@class="address"]//span[@itemprop="streetAddress"]/text()'
+                        '//div[@class="location-info"]//span[@itemprop="streetAddress"]/text()'
                     )
                 ).strip()
+                if len(street_address) > 0 and street_address[-1] == ",":
+                    street_address = "".join(street_address[:-1]).strip()
+
                 city = "".join(
                     store_sel.xpath(
-                        '//div[@class="location-info"]/div[@class="address"]//span[@itemprop="addressLocality"]/text()'
+                        '//div[@class="location-info"]//span[@itemprop="addressLocality"]/text()'
                     )
                 ).strip()
                 state = "".join(
                     store_sel.xpath(
-                        '//div[@class="location-info"]/div[@class="address"]//span[@itemprop="addressRegion"]/text()'
+                        '//div[@class="location-info"]//span[@itemprop="addressRegion"]/text()'
                     )
                 ).strip()
                 zip = "".join(
                     store_sel.xpath(
-                        '//div[@class="location-info"]/div[@class="address"]//span[@itemprop="postalCode"]/text()'
+                        '//div[@class="location-info"]//span[@itemprop="postalCode"]/text()'
                     )
                 ).strip()
                 country_code = "US"

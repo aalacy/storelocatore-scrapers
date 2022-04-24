@@ -11,7 +11,7 @@ def fetch_data(sgw: SgWriter):
     r = session.get(page_url, headers=headers)
     tree = html.fromstring(r.text)
 
-    divs = tree.xpath("//div[@class='vc_column-inner ' and .//span[@itemprop]]")
+    divs = tree.xpath("//div[@class='vc_column-inner' and .//span[@itemprop]]")
     for d in divs:
         location_name = "".join(d.xpath(".//p[./a]/span/text()")).strip()
         street_address = " ".join(

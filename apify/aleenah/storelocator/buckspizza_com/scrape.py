@@ -29,12 +29,16 @@ def fetch_data():
         )[:-2]
         for loc in loclist:
             page_url = loc.find("a")["href"]
+            page_url = page_url.replace("-tx", "-tx/")
             if "franchise-information" in page_url:
                 continue
             log.info(page_url)
             r = session.get(page_url, headers=headers)
             soup = BeautifulSoup(r.text, "html.parser")
-            location_name = soup.find("h1").text
+            try:
+                location_name = soup.find("h1").text
+            except:
+                continue
             temp = soup.findAll("div", {"class": "wpb_wrapper"})[1].findAll("h3")
             try:
                 address = temp[0].get_text(separator="|", strip=True).split("|")
@@ -60,8 +64,13 @@ def fetch_data():
                 soup.findAll("p")[2]
                 .get_text(separator="|", strip=True)
                 .replace("|", " ")
+                .replace("Temporary Hours:", "")
+                .replace("Hours:", "")
             )
+
             if "DINE-IN" in hours_of_operation:
+                hours_of_operation = MISSING
+            elif "Temporarily Closed" in hours_of_operation:
                 hours_of_operation = MISSING
             country_code = "US"
             yield SgRecord(

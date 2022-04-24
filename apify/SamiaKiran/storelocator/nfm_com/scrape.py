@@ -29,7 +29,7 @@ def fetch_data():
             log.info(page_url)
             r = session.get(page_url, headers=headers)
             soup = BeautifulSoup(r.text, "html.parser")
-            location_name = soup.find("h2", {"class": "h4 mb-2"}).text
+            location_name = soup.find("h2").text
             address = (
                 soup.find("div", {"class": "store-address"})
                 .find("p")

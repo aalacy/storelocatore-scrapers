@@ -7,6 +7,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 import lxml.html
 from sgselenium import SgChrome
 import ssl
+from sgpostal import sgpostal as parser
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
@@ -56,6 +57,8 @@ def fetch_data():
             location_name = "".join(
                 store_sel.xpath('//div[@class="store"]/div[@class="detail"]/h1/text()')
             ).strip()
+            if len(location_name) <= 0:
+                continue
             log.info(location_name)
             street_Address_list = []
             add_1 = "".join(
@@ -75,21 +78,46 @@ def fetch_data():
                 street_Address_list.append(add_2)
 
             street_address = ", ".join(street_Address_list).strip()
+
+            raw_address = street_address
+
             city = "".join(
                 store_sel.xpath(
                     '//div[@class="store"]/div[@class="detail"]//span[@itemprop="addressLocality"]/text()'
                 )
             ).strip()
+            if city:
+                raw_address = raw_address + ", " + city
+
             state = "".join(
                 store_sel.xpath(
                     '//div[@class="store"]/div[@class="detail"]//span[@itemprop="addressRegion"]/text()'
                 )
             ).strip()
+
+            if state:
+                raw_address = raw_address + ", " + state
+
             zip = "".join(
                 store_sel.xpath(
                     '//div[@class="store"]/div[@class="detail"]//span[@itemprop="postalCode"]/text()'
                 )
             ).strip()
+
+            if zip:
+                raw_address = raw_address + ", " + zip
+
+            formatted_addr = parser.parse_address_intl(raw_address)
+            street_address = formatted_addr.street_address_1
+            if street_address:
+                if formatted_addr.street_address_2:
+                    street_address = (
+                        street_address + ", " + formatted_addr.street_address_2
+                    )
+            else:
+                if formatted_addr.street_address_2:
+                    street_address = formatted_addr.street_address_2
+
             phone = "".join(
                 store_sel.xpath(
                     '//div[@class="store"]/div[@class="detail"]//span[@itemprop="telephone"]/text()'
@@ -119,6 +147,9 @@ def fetch_data():
                 hours_list.append(day + ":" + time)
 
             hours_of_operation = "; ".join(hours_list).strip()
+            if hours_of_operation:
+                if hours_of_operation.count("Permanently closed") == 7:
+                    continue
 
             yield SgRecord(
                 locator_domain=locator_domain,
@@ -135,6 +166,7 @@ def fetch_data():
                 latitude=latitude,
                 longitude=longitude,
                 hours_of_operation=hours_of_operation,
+                raw_address=raw_address,
             )
 
 

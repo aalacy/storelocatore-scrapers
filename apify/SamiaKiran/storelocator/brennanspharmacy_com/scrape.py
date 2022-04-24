@@ -26,7 +26,7 @@ def fetch_data():
         soup = BeautifulSoup(r.text, "html.parser")
         loclist = soup.findAll(
             "a", {"class": "elementor-button-link elementor-button elementor-size-sm"}
-        )[1:]
+        )
         for loc in loclist:
             page_url = loc["href"]
             log.info(page_url)

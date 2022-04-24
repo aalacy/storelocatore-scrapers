@@ -27,7 +27,12 @@ def fetch_data(sgw: SgWriter):
     divs = tree.xpath("//ul[.//strong]")
     for d in divs:
         location_name = "".join(d.xpath(".//text()")).split(".")[-1].strip()
-        raw_address = "".join(d.xpath("./following-sibling::p[1]//text()")).strip()
+        store_number = "".join(d.xpath(".//text()")).split(".")[0].strip()
+        raw_address = (
+            "".join(d.xpath("./following-sibling::p[1]//text()"))
+            .replace("/", ",")
+            .strip()
+        )
         street_address, city, state, postal = get_international(raw_address)
         hours = d.xpath(
             "./following-sibling::p[position()>1 and position()<=3]//text()"
@@ -43,6 +48,7 @@ def fetch_data(sgw: SgWriter):
             state=state,
             zip_postal=postal,
             country_code="BR",
+            store_number=store_number,
             locator_domain=locator_domain,
             hours_of_operation=hours_of_operation,
             raw_address=raw_address,

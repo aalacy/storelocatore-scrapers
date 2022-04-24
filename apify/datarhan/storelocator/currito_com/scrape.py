@@ -33,7 +33,7 @@ def fetch_data():
         latitude = ""
         longitude = ""
         geo = poi_html.xpath('.//a[contains(text(), "Directions")]/@href')
-        if geo:
+        if geo and "@" in geo[0]:
             geo = geo[0].split("/@")[-1].split(",")[:2]
             latitude = geo[0]
             longitude = geo[1]
