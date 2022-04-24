@@ -14,8 +14,6 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
-from sgrequests import SgRequests
-
 from sglogging import SgLogSetup
 
 from sgselenium.sgselenium import SgChrome
