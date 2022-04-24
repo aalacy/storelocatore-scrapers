@@ -140,12 +140,12 @@ def fetch_data():
                     (By.CSS_SELECTOR, "div.autocomplete-suggestions > div")
                 )
             )
+            driver.find_element_by_css_selector(
+                "div.autocomplete-suggestions > div"
+            ).click()
         except:
             input.clear()
             continue
-        driver.find_element_by_css_selector(
-            "div.autocomplete-suggestions > div"
-        ).click()
         driver = wait_load(driver, "STORE")
         data = (
             bs(driver.page_source, "lxml")
