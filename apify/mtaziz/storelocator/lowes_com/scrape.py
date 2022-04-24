@@ -95,7 +95,7 @@ def fetch_data(sgw: SgWriter):
 
     search = DynamicZipSearch(
         country_codes=[SearchableCountries.USA],
-        expected_search_radius_miles=200,
+        expected_search_radius_miles=20,
         granularity=Grain_8(),
         use_state=False,
     )
@@ -124,7 +124,8 @@ def scrape():
                     SgRecord.Headers.LONGITUDE,
                     SgRecord.Headers.STREET_ADDRESS,
                 }
-            )
+            ),
+            duplicate_streak_failure_factor=-1,
         )
     ) as writer:
         fetch_data(writer)
