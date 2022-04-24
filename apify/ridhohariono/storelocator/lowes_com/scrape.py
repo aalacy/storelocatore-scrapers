@@ -52,7 +52,10 @@ def get_hoo(store):
 def fetch_records(zc, sgw: SgWriter, session: SgRequests, headers: dict):
     api_url = f"https://www.lowes.com/store/api/search?maxResults=&responseGroup=large&searchTerm={zc}"
     rapi = session.get(api_url, headers=headers)
+    # Want to check what is kind of response we are getting on prod env
+    logger.info(f"[ZIP: {zc}] [HTTP {rapi.status_code}]")
     if rapi.status_code == 200:
+        logger.info("HTTP 200 OK!!")
         api_js = rapi.json()
         stores = api_js["stores"]
         logger.info(f"Store Count: [{len(stores)}] || << Pulling data for {zc} >>")
@@ -93,10 +96,12 @@ def fetch_records(zc, sgw: SgWriter, session: SgRequests, headers: dict):
 def fetch_data(sgw: SgWriter):
     logger.info("Started")
 
-    # NOTE: Radius 1000 miles for testing purpose on apify
+    # TEST1: Search Radius 1000 miles set for testing purpose on apify
+    # TEST2: Search Radius 500 miles set for testing purpose on apify
+
     search = DynamicZipSearch(
         country_codes=[SearchableCountries.USA],
-        expected_search_radius_miles=200,
+        expected_search_radius_miles=500,
         granularity=Grain_8(),
         use_state=False,
     )

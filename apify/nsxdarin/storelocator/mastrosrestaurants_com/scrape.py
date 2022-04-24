@@ -42,6 +42,8 @@ def fetch_data():
         CS = False
         r2 = session.get(loc, headers=headers)
         for line2 in r2.iter_lines():
+            if ">Opening Soon<" in line2:
+                CS = True
             if ">COMING SOON!<" in line2:
                 CS = True
             if "<title>" in line2:

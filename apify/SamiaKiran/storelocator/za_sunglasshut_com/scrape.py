@@ -41,6 +41,8 @@ def fetch_data():
                 .split("|")[1:]
             )
             phone = raw_address[0]
+            if "KING" in phone:
+                phone = phone.split("KING")[0]
             raw_address = raw_address[-1].replace("{", "")
             pa = parse_address_intl(raw_address)
 
@@ -56,7 +58,7 @@ def fetch_data():
             zip_postal = pa.postcode
             zip_postal = zip_postal.strip() if zip_postal else MISSING
 
-            country_code = "UK"
+            country_code = "South Africa"
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url=url,
