@@ -3,7 +3,7 @@ from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgzip.dynamic import SearchableCountries, DynamicGeoSearch
 
@@ -77,7 +77,7 @@ def fetch_data(coord, sgw: SgWriter):
 
         line = j.get("location")
         street_address, city, state, postal = get_address(line)
-        page_url = j.get("permalink")
+        page_url = j.get("permalink") or SgRecord.MISSING
         location_name = j.get("title").replace("&#038;", "&")
         store_number = location_name.split()[0].replace("#", "")
         if not store_number.isdigit():
@@ -120,13 +120,15 @@ def fetch_data(coord, sgw: SgWriter):
 if __name__ == "__main__":
     session = SgRequests()
     locator_domain = "https://stinker.com/"
+
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:88.0) Gecko/20100101 Firefox/88.0"
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:99.0) Gecko/20100101 Firefox/99.0",
     }
     token = get_token()
     with SgWriter(
         SgRecordDeduper(
-            RecommendedRecordIds.PageUrlId, duplicate_streak_failure_factor=-1
+            SgRecordID({SgRecord.Headers.STREET_ADDRESS}),
+            duplicate_streak_failure_factor=-1,
         )
     ) as writer:
         search = DynamicGeoSearch(

@@ -2,12 +2,10 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
-from sgscrape.sgpostal import parse_address_intl
-from sglogging import SgLogSetup
+from sgpostal.sgpostal import parse_address_intl
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-logger = SgLogSetup().get_logger("lagranjarestaurants")
 
 _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
@@ -21,7 +19,6 @@ def fetch_data():
     with SgRequests() as http:
         soup = bs(http.get(base_url, headers=_headers).text, "lxml")
         locations = soup.select("div.w-item.lanza-direccion")
-        logger.info(f"{len(locations)} found")
         for _ in locations:
             coord = _["data-coor"].split(",")
             raw_address = " ".join(list(_.select_one("div.w-text1").stripped_strings))
