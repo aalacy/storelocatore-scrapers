@@ -13,16 +13,71 @@ def fetch_data():
     domain = "kidtokid.com"
     start_url = "https://kidtokid.com/stores/"
 
-    response = session.get(start_url)
-    dom = etree.HTML(response.text)
-    all_locations = dom.xpath('//a[span[contains(text(), "View Location")]]/@href')
-    all_states = dom.xpath('//a[contains(@href, "search-results")]/@href')
-    for url in all_states:
-        url = urljoin(start_url, url)
-        response = session.get(url)
-        dom = etree.HTML(response.text)
-        all_locations += dom.xpath('//a[span[contains(text(), "View Location")]]/@href')
-
+    frm = {
+        "action": "jet_engine_ajax",
+        "handler": "listing_load_more",
+        "query[post_status]": "publish",
+        "query[post_type]": "location",
+        "query[posts_per_page]": "100",
+        "query[paged]": "1",
+        "query[ignore_sticky_posts]": "1",
+        "query[order]": "ASC",
+        "query[orderby]": "name",
+        "query[post__not_in][]": "3873",
+        "query[suppress_filters]": "false",
+        "query[jet_smart_filters]": "jet-engine/usQuery",
+        "widget_settings[lisitng_id]": "1035",
+        "widget_settings[posts_num]": "10",
+        "widget_settings[columns]": "1",
+        "widget_settings[columns_tablet]": "1",
+        "widget_settings[columns_mobile]": "1",
+        "widget_settings[is_archive_template]": "",
+        "widget_settings[post_status][]": "publish",
+        "widget_settings[use_random_posts_num]": "",
+        "widget_settings[max_posts_num]": "9",
+        "widget_settings[not_found_message]": "No stores were found",
+        "widget_settings[is_masonry]": "false",
+        "widget_settings[equal_columns_height]": "",
+        "widget_settings[use_load_more]": "yes",
+        "widget_settings[load_more_id]": "",
+        "widget_settings[load_more_type]": "scroll",
+        "widget_settings[use_custom_post_types]": "",
+        "widget_settings[hide_widget_if]": "",
+        "widget_settings[carousel_enabled]": "",
+        "widget_settings[slides_to_scroll]": "1",
+        "widget_settings[arrows]": "true",
+        "widget_settings[arrow_icon]": "fa fa-angle-left",
+        "widget_settings[dots]": "",
+        "widget_settings[autoplay]": "true",
+        "widget_settings[autoplay_speed]": "5000",
+        "widget_settings[infinite]": "true",
+        "widget_settings[center_mode]": "",
+        "widget_settings[effect]": "slide",
+        "widget_settings[speed]": "500",
+        "widget_settings[inject_alternative_items]": "",
+        "widget_settings[scroll_slider_enabled]": "",
+        "widget_settings[custom_query]": "false",
+        "widget_settings[custom_query_id]": "",
+        "widget_settings[_element_id]": "usQuery",
+        "page_settings[post_id]": "false",
+        "page_settings[queried_id]": "false",
+        "page_settings[element_id]": "false",
+        "page_settings[page]": "1",
+        "listing_type": "false",
+        "isEditMode": "false",
+        "iwcUZYQabyzD": "ecC[sv",
+        "odWjEFpswhQ": "HJ[X1U",
+    }
+    url = "https://kidtokid.com/stores/?nocache=1650582417"
+    hdr = {
+        "accept": "application/json, text/javascript, */*; q=0.01",
+        "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36",
+        "x-requested-with": "XMLHttpRequest",
+    }
+    data = session.post(url, data=frm, headers=hdr).json()
+    dom = etree.HTML(data["data"]["html"])
+    all_locations = dom.xpath('//a[contains(@href, "/location/")]/@href')
     for url in list(set(all_locations)):
         page_url = urljoin(start_url, url)
         loc_response = session.get(page_url)

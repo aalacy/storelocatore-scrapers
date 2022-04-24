@@ -32,12 +32,16 @@ def fetch_data():
         city = ""
 
         if vk.find("span", {"itemprop": "addressLocality"}) is not None:
-            city = (
-                vk.find("span", {"itemprop": "addressLocality"})
-                .text.strip()
-                .split(",")[0]
-                .strip()
+            parsed = (
+                vk.find("span", {"itemprop": "addressLocality"}).text.strip().split(",")
             )
+
+            if len(parsed) == 1:
+                city = parsed[0]
+            elif len(parsed) > 1:
+                address += f", {parsed[0]}"
+                city = parsed[-1]
+
         state = ""
         if vk.find("span", {"itemprop": "addressRegion"}) is not None:
             state = vk.find("span", {"itemprop": "addressRegion"}).text.strip()
