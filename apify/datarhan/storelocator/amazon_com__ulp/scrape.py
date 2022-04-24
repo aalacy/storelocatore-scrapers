@@ -48,7 +48,10 @@ def fetch_data():
         if data.status_code != 200:
             session = SgRequests()
             continue
-        data = data.json()
+        try:
+            data = data.json()
+        except Exception:
+            continue
         if not data["locationList"]:
             continue
         for poi in data["locationList"]:
