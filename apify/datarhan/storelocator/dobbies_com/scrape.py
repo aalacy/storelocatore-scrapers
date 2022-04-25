@@ -4,7 +4,6 @@ from time import sleep
 
 from sgrequests import SgRequests
 from sgselenium import SgChrome
-
 from sgpostal.sgpostal import parse_address_intl
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
@@ -12,13 +11,11 @@ from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
 
 try:
-    _create_unverified_https_context = (
-        ssl._create_unverified_context
-    )  # Legacy Python that doesn't verify HTTPS certificates by default
+    _create_unverified_https_context = ssl._create_unverified_context
 except AttributeError:
     pass
 else:
-    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
+    ssl._create_default_https_context = _create_unverified_https_context
 
 
 def fetch_data():
@@ -27,12 +24,16 @@ def fetch_data():
     domain = "dobbies.com"
     start_url = "https://www.dobbies.com/store-locator"
 
+    params = {"latitude": 50.1109, "longitude": 8.6821, "accuracy": 100}
+
     with SgChrome() as driver:
+        driver.execute_cdp_cmd("Page.setGeolocationOverride", params)
         driver.get(start_url)
+        sleep(20)
         driver.find_element_by_xpath(
             '//div[@class="ms-store-select__search-see-all-stores"]'
         ).click()
-        sleep(15)
+        sleep(5)
         dom = etree.HTML(driver.page_source)
 
     all_locations = dom.xpath(

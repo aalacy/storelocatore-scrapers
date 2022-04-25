@@ -25,7 +25,7 @@ log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
 def is_coming_soon(url):
     soup = BeautifulSoup(session.get(url, headers=headers).content, "lxml")
     coming_soon = soup.select_one(
-        "#content-area > div > div.subcontent > div.subright > p > strong"
+        "div#content-area  div.container  div.subcontent  div.subright"
     )
     if coming_soon and re.search(
         r"COMING SOON", coming_soon.text.strip(), flags=re.IGNORECASE
@@ -55,7 +55,7 @@ def fetch_data():
         if not store["hours"]:
             hours = MISSING
         else:
-            hours = BeautifulSoup(store["hours"], "html.parser")
+            hours = BeautifulSoup(store["hours"], "lxml")
             hours = hours.text
             hours = hours.replace("day", "day ")
             hours = hours.replace("PM", "PM ")
@@ -64,6 +64,10 @@ def fetch_data():
         if country == "United States":
             country = "US"
         pcode = pcode.replace("]", "").strip()
+        if hours == MISSING:
+            location_type = "TEMP_CLOSED"
+        else:
+            location_type = MISSING
         log.info("Append {} => {}".format(title, street))
         yield SgRecord(
             locator_domain=DOMAIN,
@@ -76,7 +80,7 @@ def fetch_data():
             country_code=country,
             store_number=storeid,
             phone=phone,
-            location_type=MISSING,
+            location_type=location_type,
             latitude=lat,
             longitude=lng,
             hours_of_operation=hours.strip(),

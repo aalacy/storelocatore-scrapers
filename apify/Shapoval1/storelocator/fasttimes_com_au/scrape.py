@@ -54,15 +54,33 @@ def fetch_data(sgw: SgWriter):
             "Saturday",
             "Sunday",
         ]
-        h = eval(j.get("hoursofoperation"))
-        tmp = []
-        for d in days:
-            day = d
-            opens = h.get(f"{d}")[0]
-            closes = h.get(f"{d}")[1]
-            line = f"{day} {opens} - {closes}"
-            tmp.append(line)
-        hours_of_operation = "; ".join(tmp)
+        try:
+            h = eval(j.get("hoursofoperation"))
+
+            tmp = []
+            for d in days:
+                day = d
+                opens = h.get(f"{d}")[0]
+                closes = h.get(f"{d}")[1]
+                line = f"{day} {opens} - {closes}"
+                tmp.append(line)
+            hours_of_operation = "; ".join(tmp)
+        except:
+            hours_of_operation = "<MISSING>"
+        if hours_of_operation == "<MISSING>":
+            r = session.get(page_url, headers=headers)
+            tree = html.fromstring(r.text)
+
+            hours_of_operation = (
+                " ".join(
+                    tree.xpath(
+                        '//p[./strong[text()="Opening Hours:"]]/following-sibling::p[1]//text()'
+                    )
+                )
+                .replace("\n", "")
+                .strip()
+            )
+            hours_of_operation = " ".join(hours_of_operation.split())
 
         row = SgRecord(
             locator_domain=locator_domain,

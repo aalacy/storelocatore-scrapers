@@ -81,6 +81,10 @@ def fetch_data():
                                 phone = line2.split('"telephone":"')[1].split('"')[0]
                             if "Tel: <" in line2 and phone == "":
                                 phone = line2.rsplit('">')[1].split("<")[0].strip()
+                            if '"hotelPhone" href="tel:' in line2 and phone == "":
+                                phone = line2.split('"hotelPhone" href="tel:')[1].split(
+                                    '"'
+                                )[0]
                         time.sleep(5)
                     except:
                         pass
@@ -88,6 +92,8 @@ def fetch_data():
                         name = "Hyatt Residence Club Maui, Kaanapali Beach"
                     if CS:
                         name = name + " - Coming Soon"
+                    if "hnlrw" in loc:
+                        phone = "+1 808 923 1234"
                     yield SgRecord(
                         locator_domain=website,
                         page_url=loc,

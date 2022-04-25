@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
-from sgrequests import SgRequests
+from sgrequests import SgRequests, SgRequestError
 from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import json
 import lxml.html
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 import us
 
 website = "dsdistribution.com"
@@ -62,41 +64,47 @@ def fetch_data():
     for store in stores_list:
 
         page_url = store["link"]
-
-        locator_domain = website
-        log.info(page_url)
-        store_res = session.get(page_url, headers=headers)
-        store_sel = lxml.html.fromstring(store_res.text)
-
         store_number = store["id"]
-
-        location_name = "".join(store_sel.xpath("//title/text()")).strip()
-
-        full_address = list(
-            filter(
-                str,
-                [
-                    x.strip()
-                    for x in store_sel.xpath(
-                        '//div[@class="col"]//*[self::h2 or self::h3]/text()'
-                    )
-                ],
-            )
-        )
-        street_address, city, state, zip, country_code = split_fulladdress(full_address)
-
-        phone = "".join(
-            store_sel.xpath('//div[contains(@class,"col-last")]//h4/text()')
-        ).strip()
-
         location_type = "<MISSING>"
-
         hours_of_operation = "<MISSING>"
-
         latitude = store["lat"]
         longitude = store["lng"]
+        locator_domain = website
+        phone = "<MISSING>"
 
-        raw_address = "<MISSING>"
+        log.info(page_url)
+        store_res = session.get(page_url, headers=headers)
+        if not isinstance(store_res, SgRequestError):
+            store_sel = lxml.html.fromstring(store_res.text)
+            location_name = "".join(store_sel.xpath("//title/text()")).strip()
+            full_address = list(
+                filter(
+                    str,
+                    [
+                        x.strip()
+                        for x in store_sel.xpath(
+                            '//div[@class="col"]//*[self::h2 or self::h3]/text()'
+                        )
+                    ],
+                )
+            )
+            street_address, city, state, zip, country_code = split_fulladdress(
+                full_address
+            )
+
+            phone = "".join(
+                store_sel.xpath('//div[contains(@class,"col-last")]//h4/text()')
+            ).strip()
+
+        else:
+            location_name = store["title"]  # title and address is same
+            raw_address = location_name.split(",")
+            street_address = raw_address[0].strip()
+            city = raw_address[1].strip()
+            state = raw_address[-1].strip().split(" ")[0].strip()
+            zip = raw_address[-1].strip().split(" ")[-1].strip()
+            country_code = "US"
+
         yield SgRecord(
             locator_domain=locator_domain,
             page_url=page_url,
@@ -112,14 +120,15 @@ def fetch_data():
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hours_of_operation,
-            raw_address=raw_address,
         )
 
 
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.StoreNumberId)
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

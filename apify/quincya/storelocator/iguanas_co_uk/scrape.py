@@ -40,7 +40,7 @@ def fetch_data(sgw: SgWriter):
     locator_domain = "iguanas.co.uk"
 
     for store in stores:
-        slug = store["fields"]["slug"]
+        slug = store["fields"]["city"] + "/" + store["fields"]["slug"]
         link = "https://www.iguanas.co.uk/restaurants/" + slug
         logger.info(link)
 
@@ -54,7 +54,10 @@ def fetch_data(sgw: SgWriter):
         except:
             street_address = store["fields"]["addressLine1"].strip()
         city = store["fields"]["addressCity"]
-        state = store["fields"]["county"]
+        try:
+            state = store["fields"]["county"]
+        except:
+            state = ""
         zip_code = store["fields"]["postcode"]
         country_code = "GB"
         store_number = store["fields"]["storeId"]
@@ -79,12 +82,19 @@ def fetch_data(sgw: SgWriter):
                     base = BeautifulSoup(req.text, "lxml")
 
             hours_of_operation = ""
-            raw_hours = list(base.find(class_="opening-hours").stripped_strings)
-            for hours in raw_hours:
-                if "festive hours" in hours.lower():
-                    break
-                hours_of_operation = (hours_of_operation + " " + hours).strip()
-            hours_of_operation = hours_of_operation.replace("Opening Hours", "").strip()
+            try:
+                raw_hours = list(base.find(class_="opening-hours").stripped_strings)
+                for hours in raw_hours:
+                    if "festive hours" in hours.lower():
+                        break
+                    hours_of_operation = (
+                        hours_of_operation + " " + hours.split("/")[0]
+                    ).strip()
+                hours_of_operation = hours_of_operation.replace(
+                    "Opening Hours", ""
+                ).strip()
+            except:
+                hours_of_operation = ""
 
         sgw.write_row(
             SgRecord(

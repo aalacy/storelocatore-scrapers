@@ -11,23 +11,26 @@ def fetch_data():
     session = SgRequests()
     domain = "heinens.com"
     start_urls = [
-        "https://www.heinens.com/stores/?state=IL",
-        "https://www.heinens.com/stores/?state=OH",
+        "https://www.heinens.com/stores/?state=OH&near=&ref=&lat=&lng=&range=10",
+        "https://www.heinens.com/stores/?state=IL&near=&ref=&lat=&lng=&range=10",
     ]
+    hdr = {
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
+    }
     all_locations = []
     for start_url in start_urls:
-        response = session.get(start_url)
+        response = session.get(start_url, headers=hdr)
         dom = etree.HTML(response.text)
         all_locations += dom.xpath('//h2/a[contains(@href, "/stores/")]/@href')
         next_page = dom.xpath('//a[@class="next page-numbers"]/@href')
         while next_page:
-            response = session.get(next_page[0])
+            response = session.get(next_page[0], headers=hdr)
             dom = etree.HTML(response.text)
             all_locations += dom.xpath('//h2/a[contains(@href, "/stores/")]/@href')
             next_page = dom.xpath('//a[@class="next page-numbers"]/@href')
 
     for store_url in all_locations:
-        loc_response = session.get(store_url)
+        loc_response = session.get(store_url, headers=hdr)
         loc_dom = etree.HTML(loc_response.text)
 
         location_name = loc_dom.xpath('//h1[@class="page-title"]/text()')

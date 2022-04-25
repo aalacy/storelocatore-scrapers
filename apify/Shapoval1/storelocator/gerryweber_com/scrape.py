@@ -39,7 +39,9 @@ def fetch_data(sgw: SgWriter):
     for j in js:
 
         page_url = "https://www.gerryweber.com/en-eu/storefinder/"
-        location_name = "".join(j.get("name")).replace("&amp;", "&").strip()
+        location_name = (
+            "".join(j.get("name")).replace("&amp;", "&").replace("&#39;", "`").strip()
+        )
         street_address = (
             str(j.get("street")).replace("&#39;", "`").strip() or "<MISSING>"
         )

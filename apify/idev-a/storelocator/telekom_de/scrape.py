@@ -28,6 +28,13 @@ types = {
 }
 
 
+def _hoo(days, time):
+    if len(days) > 1:
+        return f"{days[0]} - {days[-1]}: {time}"
+    else:
+        return f"{days[0]}: {time}"
+
+
 def fetch_data():
     with SgRequests() as session:
         shop_url = json.loads(
@@ -48,11 +55,26 @@ def fetch_data():
                 res = session.get(_["yext_url"], headers=_headers)
                 if res.status_code == 200:
                     sp1 = bs(res.text, "lxml")
-                    for tr in sp1.select("table.c-location-hours-details tbody tr"):
+                    prev_time = ""
+                    days = []
+                    hr = sp1.select("table.c-location-hours-details tbody tr")
+                    for x, tr in enumerate(hr):
                         td = tr.select("td")
-                        hours.append(
-                            f"{td[0].text.strip()}: {' '.join(td[1].stripped_strings)}"
-                        )
+                        day = td[0].text.strip()
+                        time = f"{' '.join(td[1].stripped_strings)}"
+                        if prev_time == time:
+                            days.append(day)
+                            if x == len(hr) - 1:
+                                hours.append(_hoo(days, prev_time))
+                            continue
+                        elif prev_time:
+                            hours.append(_hoo(days, prev_time))
+                            days = []
+
+                        prev_time = time
+                        days.append(day)
+                        if x == len(hr) - 1:
+                            hours.append(_hoo(days, prev_time))
 
             phone = ""
             if _["phone_code"]:

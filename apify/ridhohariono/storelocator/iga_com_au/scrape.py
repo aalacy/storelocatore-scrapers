@@ -140,12 +140,12 @@ def fetch_data():
                     (By.CSS_SELECTOR, "div.autocomplete-suggestions > div")
                 )
             )
+            driver.find_element_by_css_selector(
+                "div.autocomplete-suggestions > div"
+            ).click()
         except:
             input.clear()
             continue
-        driver.find_element_by_css_selector(
-            "div.autocomplete-suggestions > div"
-        ).click()
         driver = wait_load(driver, "STORE")
         data = (
             bs(driver.page_source, "lxml")
@@ -163,11 +163,12 @@ def fetch_data():
             street_address, city, state, zip_postal = getAddress(raw_address)
             country_code = "AU"
             store_number = row["data-storeid"]
-            phone = (
-                row.find("p", {"class": "sf-storecontact"})
-                .text.replace("Phone:", "")
-                .strip()
-            )
+            try:
+                phone = row.find(
+                    "a", {"class": "sf-phone sf-contact-line"}
+                ).text.strip()
+            except:
+                phone = MISSING
             location_type = MISSING
             hoo_content = row.find("div", {"class": "sf-storehours"})
             if not hoo_content:

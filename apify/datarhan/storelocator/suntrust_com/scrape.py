@@ -47,7 +47,7 @@ def fetch_data():
     start_url = "https://www.mapquestapi.com/search/v2/radius?origin={}&radius=50&maxMatches=500&ambiguities=ignore&hostedData=mqap.32547_SunTrust_Branch_Loc&outFormat=json&key=Gmjtd|lu6zn1ua2d,70=o5-l0850"
 
     all_codes = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA], max_radius_miles=50
+        country_codes=[SearchableCountries.USA], max_search_distance_miles=50
     )
     for code in all_codes:
         response = session.get(start_url.format(code))
