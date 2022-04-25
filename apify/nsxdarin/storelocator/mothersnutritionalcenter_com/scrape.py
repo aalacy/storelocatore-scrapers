@@ -1,8 +1,10 @@
+import json
+from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
-from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
 headers = {
@@ -10,69 +12,61 @@ headers = {
 }
 
 
+from sglogging import SgLogSetup
+
+
+logger = SgLogSetup().get_logger("bluefcu_com")
+
+
 def fetch_data():
-    url = "https://cdn.shopify.com/s/files/1/0397/6842/4614/t/8/assets/stores-map.js"
+
+    url = "https://mothersnc.pixelatedarts.net/assets/files/stores-map.js"
     r = session.get(url, headers=headers)
-    website = "mothersnutritionalcenter.com"
-    typ = "<MISSING>"
-    country = "US"
-    for line in r.iter_lines():
-        if "<p><strong>" in line:
-            items = line.split("<p><strong>")
-            for item in items:
-                if "api=1&destination" in item:
-                    name = item.split("<")[0].replace("\\", "")
-                    store = name.rsplit(" ", 1)[1]
-                    hours = (
-                        item.split("Store Hours: ")[1].split("<")[0].replace(" |", ";")
-                    )
-                    add = (
-                        item.split("</p><p>")[2].split(",")[0].strip().replace('"', "")
-                    )
-                    city = (
-                        item.split("</p><p>")[2].split(",")[1].strip().rsplit(" ", 1)[0]
-                    )
-                    state = (
-                        item.split("</p><p>")[2].split(",")[1].strip().rsplit(" ", 1)[1]
-                    )
-                    zc = (
-                        item.split("?api=1&destination")[1]
-                        .split("'")[0]
-                        .rsplit("+", 1)[1]
-                    )
-                    try:
-                        lat = item.split("</a></p>',")[1].split(",")[0].strip()
-                        lng = item.split("</a></p>',")[1].split(",")[1].strip()
-                    except:
-                        lat = lng = "<MISSING>"
-                    phone = "<MISSING>"
-                    loc = "https://mothersnc.com/pages/stores"
-                    state = city.rsplit(" ", 1)[1]
-                    city = city.rsplit(" ", 1)[0]
-                    zc = zc.replace("\\", "").replace("/", "").strip()
-                    yield SgRecord(
-                        locator_domain=website,
-                        page_url=loc,
-                        location_name=name,
-                        street_address=add,
-                        city=city,
-                        state=state,
-                        zip_postal=zc,
-                        country_code=country,
-                        phone=phone,
-                        location_type=typ,
-                        store_number=store,
-                        latitude=lat,
-                        longitude=lng,
-                        hours_of_operation=hours,
-                    )
+    hourslist = r.text.split("var locations = ", 1)[1].split(";var storeLocations", 1)[
+        0
+    ]
+    hourslist = json.loads(hourslist)
+
+    for hr in hourslist:
+
+        divlist = BeautifulSoup(str(hr[0]), "html.parser").findAll("p")
+        title = divlist[0].text
+        hours = divlist[1].text.replace("Store Hours:", "").strip()
+        address = divlist[2].text
+        street, city = address.split(", ", 1)
+        pcode = city.split(" ")[-1]
+        state = city.split(" ")[-2]
+        city = city.split(" " + state, 1)[0]
+        phone = divlist[3].text
+        store = title.split("Store ", 1)[1]
+        lat = hr[1]
+        longt = hr[2]
+
+        yield SgRecord(
+            locator_domain="https://mothersnutritionalcenter.com/",
+            page_url="https://mothersnc.com/pages/stores/",
+            location_name=title,
+            street_address=street.strip(),
+            city=city.strip(),
+            state=state.strip(),
+            zip_postal=pcode.strip(),
+            country_code="US",
+            store_number=str(store),
+            phone=phone.strip(),
+            location_type=SgRecord.MISSING,
+            latitude=str(lat),
+            longitude=str(longt),
+            hours_of_operation=hours,
+        )
 
 
 def scrape():
-    results = fetch_data()
+
     with SgWriter(
-        deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.StoreNumberId)
     ) as writer:
+
+        results = fetch_data()
         for rec in results:
             writer.write_row(rec)
 
