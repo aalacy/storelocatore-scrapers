@@ -12,12 +12,6 @@ headers = {
 }
 
 
-from sglogging import SgLogSetup
-
-
-logger = SgLogSetup().get_logger("bluefcu_com")
-
-
 def fetch_data():
 
     url = "https://mothersnc.pixelatedarts.net/assets/files/stores-map.js"
