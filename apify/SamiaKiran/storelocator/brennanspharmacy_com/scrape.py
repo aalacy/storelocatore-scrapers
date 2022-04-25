@@ -55,6 +55,8 @@ def fetch_data():
             zip_postal = pa.postcode
             zip_postal = zip_postal.strip() if zip_postal else MISSING
 
+            if city == MISSING:
+                city = location_name.split()[0]
             if zip_postal == MISSING:
                 zip_postal = raw_address.split(",")[-1]
                 if "Co. Dublin" in zip_postal:
