@@ -78,8 +78,12 @@ def get_data():
             raw_address = poi["addr"] + poi["saddr"]
             addr = parse_address_intl(raw_address)
             street_address = addr.street_address_1
-            if addr.street_address_2 and addr.street_address_2 is not None:
-                street_address = street_address + ", " + addr.street_address_2
+            if street_address is None:
+                street_address = "<MISSING>"
+
+            else:
+                if addr.street_address_2 and addr.street_address_2 is not None:
+                    street_address = street_address + ", " + addr.street_address_2
             loc_response = session.get(page_url)
             if loc_response.status_code != 200:
                 continue
