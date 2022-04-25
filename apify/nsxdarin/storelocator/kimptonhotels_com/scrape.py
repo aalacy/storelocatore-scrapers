@@ -4,6 +4,7 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
+import time
 
 logger = SgLogSetup().get_logger("kimptonhotels_com")
 
@@ -15,27 +16,17 @@ headers = {
 
 def fetch_data():
     locs = []
-    url = "https://www.ihg.com/bin/sitemapindex.xml"
+    url = "https://www.ihg.com/ubeapi/kimptonhotels/ki/us/en/explore.json"
     r = session.get(url, headers=headers)
-    brand = "kimptonhotels"
-    brand_string = brand + ".en.hoteldetail.xml"
-    smurl = ""
     for line in r.iter_lines():
-        if brand_string in line:
-            smurl = line.split("<loc>")[1].split("<")[0]
-    r = session.get(smurl, headers=headers)
-    for line in r.iter_lines():
-        if 'hreflang="en" rel="alternate">' in line:
-            lurl = line.split('href="')[1].split('"')[0]
-            if lurl not in locs:
-                locs.append(lurl.replace("localhost:4503www.", "www.ihg.com/"))
+        if '"url":"' in line:
+            items = line.split('"url":"')
+            for item in items:
+                if '{"regions":' not in item:
+                    lurl = "https:" + item.split('"')[0]
+                    locs.append(lurl)
     for loc in locs:
-        if loc == "http://www.ihg.com/kimptonhotels.com/shinjuku":
-            loc = "https://www.ihg.com/kimptonhotels/hotels/us/en/shinjuku-hotel-tokyo-japan/tyosj/hoteldetail"
-
-        if loc == "http://www.ihg.com/kimptonhotels.com/maa-laibangkok":
-            loc = "https://www.ihg.com/kimptonhotels/hotels/us/en/maa-lai-bangkok-thailand/bkkls/hoteldetail"
-
+        time.sleep(30)
         logger.info(loc)
         r2 = session.get(loc, headers=headers)
         website = "kimptonhotels.com"

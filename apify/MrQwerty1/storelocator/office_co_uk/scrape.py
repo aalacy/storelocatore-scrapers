@@ -6,6 +6,9 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from concurrent import futures
 from sgscrape.sgpostal import parse_address, International_Parser
+from sglogging import sglog
+
+log = sglog.SgLogSetup().get_logger(logger_name="office.co.uk")
 
 
 def get_international(line):
@@ -23,6 +26,7 @@ def get_urls():
     r = session.get(
         "https://www.office.co.uk/view/content/storelocator", headers=headers
     )
+    log.info(f"Get URLs: {r}")
     tree = html.fromstring(r.text)
 
     return tree.xpath("//div[contains(@id, 'addressDetail')]/a/@href")
@@ -31,13 +35,18 @@ def get_urls():
 def get_data(slug, sgw: SgWriter):
     page_url = f"https://www.office.co.uk/view/content/storelocator{slug}"
     r = session.get(page_url, headers=headers)
+    log.info(f"{page_url} Response: {r}")
     tree = html.fromstring(r.text)
 
     line = tree.xpath(
         "//ul[@class='storelocator_addressdetails_address darkergrey']/li/text()"
     )
     line = list(filter(None, [li.strip() for li in line]))
-    location_name = line.pop(0)
+    if line:
+        location_name = line.pop(0)
+    else:
+        location_name = SgRecord.MISSING
+
     raw_address = ", ".join(line)
     phone = "".join(
         tree.xpath(
@@ -86,7 +95,7 @@ def get_data(slug, sgw: SgWriter):
 
 def fetch_data(sgw: SgWriter):
     urls = get_urls()
-
+    log.info(f"Total URLs to crawl: {len(urls)}")
     with futures.ThreadPoolExecutor(max_workers=1) as executor:
         future_to_url = {executor.submit(get_data, url, sgw): url for url in urls}
         for future in futures.as_completed(future_to_url):

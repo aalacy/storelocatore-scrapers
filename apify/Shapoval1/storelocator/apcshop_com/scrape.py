@@ -29,7 +29,6 @@ def fetch_data(sgw: SgWriter):
     )
     div = "".join(div[:-1])
     js = json.loads(div)
-
     for j in js["retailers"]:
         url_key = j.get("url_key")
         page_url = (
@@ -40,8 +39,12 @@ def fetch_data(sgw: SgWriter):
             == "https://www.apcshop.com/retailer/presentation/retailer/urlKey/None"
         ):
             page_url = "https://www.apcshop.com/retailer/retailer/index/"
+        if url_key == "https://minishopmadrid.com/":
+            page_url = url_key
         location_name = j.get("name") or "<MISSING>"
         street_address = j.get("street") or "<MISSING>"
+        if str(street_address).find(";") != -1:
+            street_address = str(street_address).split(";")[0].strip()
         state = "<MISSING>"
         postal = j.get("zip_code") or "<MISSING>"
         country_code = j.get("country")
@@ -55,16 +58,21 @@ def fetch_data(sgw: SgWriter):
         if phone.find("/") != -1:
             phone = phone.split("/")[0].strip()
         hours_of_operation = "<MISSING>"
-        if page_url != "https://www.apcshop.com/retailer/retailer/index/":
+        store_number = j.get("code")
+
+        if (
+            page_url != "https://www.apcshop.com/retailer/retailer/index/"
+            or page_url != "https://minishopmadrid.com/"
+        ):
             r = session.get(page_url, headers=headers)
             tree = html.fromstring(r.text)
+
             hours_of_operation = (
                 " ".join(tree.xpath('//tr[@class="schedule"]//text()'))
                 .replace("\n", "")
                 .strip()
             )
             hours_of_operation = " ".join(hours_of_operation.split()) or "<MISSING>"
-        store_number = j.get("code")
 
         row = SgRecord(
             locator_domain=locator_domain,
