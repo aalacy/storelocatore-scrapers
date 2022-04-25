@@ -56,7 +56,7 @@ def fetch_data():
             latitude=poi["lat"],
             longitude=poi["lng"],
             hours_of_operation="",
-            raw_address=raw_address
+            raw_address=raw_address,
         )
 
         yield item
