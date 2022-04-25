@@ -5,48 +5,58 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
+from sgpostal.sgpostal import parse_address_intl
 
 
 def fetch_data():
     session = SgRequests()
     domain = "thedaileymethod.com"
-    start_url = "https://thedaileymethod.com/wp-content/themes/dailey-method/locations.xml?origLat=56.130366&origLng=-106.346771&origAddress=canada"
+    start_url = "https://thedaileymethod.com/wp-json/wpgmza/v1/features/base64eJyrVkrLzClJLVKyUqqOUcpNLIjPTIlRsopRMoxR0gEJFGeUFni6FAPFomOBAsmlxSX5uW6ZqTkpELFapVoABU0Wug"
 
-    response = session.get(start_url)
-    dom = etree.HTML(response.content)
-
-    all_locations = dom.xpath("//marker")
-    for poi_html in all_locations:
-        page_url = poi_html.xpath("@web")[0]
-        location_name = poi_html.xpath("@name")[0]
-        street_address = poi_html.xpath("@address")[0]
-        city = poi_html.xpath("@city")[0]
-        state = poi_html.xpath("@state")[0]
-        zip_code = poi_html.xpath("@postal")[0]
-        phone = poi_html.xpath("@phone")[0]
-        if not phone and "thedaileymethod" in page_url:
+    data = session.get(start_url).json()
+    for poi in data["markers"]:
+        page_url = poi["link"]
+        phone = ""
+        zip_code = ""
+        raw_address = poi["address"]
+        addr = parse_address_intl(raw_address)
+        street_address = addr.street_address_1
+        if addr.street_address_2:
+            street_address += " " + addr.street_address_2
+        zip_code = addr.postcode
+        if "thedaileymethod" in page_url:
             loc_response = session.get(page_url)
-            loc_dom = etree.HTML(loc_response.text)
-            phone = loc_dom.xpath('//a[@class="mobile-phone"]/@href')[0].split(":")[-1]
-        country = poi_html.xpath("@country")[0]
-        latitude = poi_html.xpath("@lat")[0]
-        longitude = poi_html.xpath("@lng")[0]
+            if loc_response.status_code == 200:
+                loc_dom = etree.HTML(loc_response.text)
+                if loc_dom.xpath('//div[@id="test"]'):
+                    continue
+                raw_data = loc_dom.xpath('//div[@id="studio-address"]//text()')
+                raw_data = [
+                    e.strip() for e in raw_data if e.strip() and "We ask" not in e
+                ]
+                phone = [e.split("Phone:")[1] for e in raw_data if "Phone" in e]
+                phone = phone[0] if phone else ""
+                zip_code = raw_data[1].split()[-1]
+                cp = [e.split("C.P.")[-1] for e in raw_data if "C.P." in e]
+                if cp:
+                    zip_code = cp[0]
 
         item = SgRecord(
             locator_domain=domain,
-            page_url=page_url,
-            location_name=location_name,
+            page_url=poi["link"],
+            location_name=poi["title"],
             street_address=street_address,
-            city=city,
-            state=state,
+            city=addr.city,
+            state=addr.state,
             zip_postal=zip_code,
-            country_code=country,
+            country_code=addr.country,
             store_number="",
             phone=phone,
             location_type="",
-            latitude=latitude,
-            longitude=longitude,
+            latitude=poi["lat"],
+            longitude=poi["lng"],
             hours_of_operation="",
+            raw_address=raw_address
         )
 
         yield item
