@@ -79,9 +79,7 @@ def fetch_data():
 
 def scrape():
     with SgWriter(
-        SgRecordDeduper(
-            SgRecordID({SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.RAW_ADDRESS})
-        )
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.LOCATION_NAME}))
     ) as writer:
         for item in fetch_data():
             writer.write_row(item)

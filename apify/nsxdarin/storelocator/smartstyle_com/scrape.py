@@ -1,169 +1,198 @@
-import csv
-from sgrequests import SgRequests
-from sglogging import SgLogSetup
+from lxml import html
 import time
+import json
+from concurrent.futures import ThreadPoolExecutor
 
-logger = SgLogSetup().get_logger("smartstyle_com")
+from sgrequests import SgRequests
+from sglogging import sglog
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+
+website = "https://www.smartstyle.com"
+starter_url = f"{website}/en-us/salon-directory.html"
+json_url = "https://info3.regiscorp.com/salonservices/siteid/6/salon/"
+MISSING = SgRecord.MISSING
+max_workers = 10
 
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
 
+session = SgRequests()
+log = sglog.SgLogSetup().get_logger(logger_name=website)
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
+
+def request_with_retries(url, retry=1):
+    try:
+        response = session.get(url, headers=headers)
+        if response.status_code == 404:
+            log.error(f"failed with status code ={response.status_code}")
+            return None
+        if response.status_code == 200:
+            return html.fromstring(response.text, "lxml")
+        else:
+            log.error(f"failed with status code ={response.status_code}")
+    except Exception as e:
+        log.error(f"Failed to load e={e}")
+    if retry > 3:
+        return None
+    return request_with_retries(url, retry + 1)
+
+
+def fetch_store(page_url):
+    store_number = page_url.replace(".html", "").split("-")
+    store_number = store_number[len(store_number) - 1]
+    response = session.get(json_url + store_number, headers=headers)
+    if response.status_code == 200:
+        return page_url, store_number, json.loads(response.text)
+    return page_url, None, None
+
+
+def fetch_stores():
+    body = request_with_retries(starter_url)
+    codeNames = ["US", "CA", "PR"]
+    codes = {}
+    countries = body.xpath('//div[contains(@class, "acs-commons-resp-colctrl-row")]')
+    log.info(f"Total countries = {len(countries)}")
+    stores = []
+    count = 0
+    for index in range(0, len(countries)):
+        code = codeNames[index]
+        cities = countries[index].xpath('.//a[contains(@href, "/locations/")]/@href')
+        log.info(f"Total cities = {len(cities)}")
+
+        for city in cities:
+            count = count + 1
+            body = request_with_retries(city)
+            if body is None:
+                continue
+
+            newStores = body.xpath('//td/a[contains(@href, "/locations/")]/@href')
+            log.info(f"{count}. newStores = {len(newStores)} in {city}")
+
+            for store in newStores:
+                store = f"{website}{store}"
+                if store not in stores:
+                    stores.append(store)
+                    codes[store] = code
+    return codes, stores
+
+
+def get_var_name(value):
+    try:
+        return int(value)
+    except ValueError:
+        pass
+    return value
+
+
+def get_JSON_object(Object, varNames, noVal=MISSING):
+    value = noVal
+    for varName in varNames.split("."):
+        varName = get_var_name(varName)
+        try:
+            value = Object[varName]
+            Object = Object[varName]
+        except Exception:
+            return noVal
+    return value
+
+
+def stringify_nodes(body, xpath):
+    nodes = body.xpath(xpath)
+    values = []
+    for node in nodes:
+        for text in node.itertext():
+            text = text.strip()
+            if text:
+                values.append(text)
+    if len(values) == 0:
+        return MISSING
+    return " ".join((" ".join(values)).split())
+
+
+def get_hoo(page_url, hours_of_operation):
+    hoo = []
+    for h in hours_of_operation:
+        hoo.append(f"{h['days']}:{h['hours']['open']} - {h['hours']['close']}")
+    hoo = "; ".join(hoo)
+    if len(hoo) > 0:
+        return hoo
+    body = request_with_retries(page_url)
+    if body is None:
+        return MISSING
+    hoo = stringify_nodes(body, '//div[contains(@class, "store-hours")]')
+    return hoo
 
 
 def fetch_data():
-    url = "https://www.smartstyle.com/en-us/salon-directory.html"
-    locs = []
-    canada = ["ab", "nb", "on", "bc", "nl", "qc", "mb", "ns", "sk"]
-    states = []
-    donelocs = []
-    session = SgRequests()
-    r = session.get(url, headers=headers, verify=False)
-    for line in r.iter_lines():
-        line = str(line.decode("utf-8"))
-        if 'style="width: 100%; margin-bottom: 10px;" href="' in line:
-            states.append(line.split('href="')[1].split('"')[0])
-    for state in states:
-        logger.info("Pulling State %s..." % state)
-        r2 = session.get(state, headers=headers)
-        for line2 in r2.iter_lines():
-            line2 = str(line2.decode("utf-8"))
-            if '<tr><td><a href="' in line2:
-                locs.append(
-                    "https://www.smartstyle.com"
-                    + line2.split('href="')[1].split('"')[0]
-                )
-    logger.info("Found %s Locations." % str(len(locs)))
-    for loc in locs:
-        name = ""
-        add = ""
-        city = ""
-        state = ""
-        store = loc.split(".html")[0].rsplit("-", 1)[1]
-        lat = ""
-        lng = ""
-        hours = ""
-        country = "US"
-        zc = ""
-        phone = ""
-        logger.info("Pulling Location %s..." % loc)
-        website = "smartstyle.com"
-        typ = "Salon"
-        PFound = True
-        retries = 0
-        while PFound:
-            try:
-                time.sleep(3)
-                PFound = False
-                retries = retries + 1
-                session = SgRequests()
-                dcount = 0
-                r2 = session.get(loc, headers=headers, timeout=5)
-                for line2 in r2.iter_lines():
-                    line2 = str(line2.decode("utf-8"))
-                    if '<meta itemprop="openingHours" content="' in line2:
-                        dcount = dcount + 1
-                        hrs = (
-                            line2.split('<meta itemprop="openingHours" content="')[1]
-                            .split('"')[0]
-                            .strip()
-                        )
-                        if dcount <= 7:
-                            if hours == "":
-                                hours = hrs
-                            else:
-                                hours = hours + "; " + hrs
-                    if '<h2 class="hidden-xs salontitle_salonlrgtxt">' in line2:
-                        name = line2.split(
-                            '<h2 class="hidden-xs salontitle_salonlrgtxt">'
-                        )[1].split("<")[0]
-                    if 'var salonDetailLat = "' in line2:
-                        lat = line2.split('var salonDetailLat = "')[1].split('"')[0]
-                    if 'var salonDetailLng = "' in line2:
-                        lng = line2.split('var salonDetailLng = "')[1].split('"')[0]
-                    if 'itemprop="streetAddress">' in line2:
-                        add = line2.split('itemprop="streetAddress">')[1].split("<")[0]
-                    if '<span  itemprop="addressLocality">' in line2:
-                        city = line2.split('<span  itemprop="addressLocality">')[
-                            1
-                        ].split("<")[0]
-                    if '<span itemprop="addressRegion">' in line2:
-                        state = line2.split('<span itemprop="addressRegion">')[1].split(
-                            "<"
-                        )[0]
-                    if '"postalCode">' in line2:
-                        zc = line2.split('"postalCode">')[1].split("<")[0]
-                    if 'id="sdp-phn" value="' in line2:
-                        phone = line2.split('id="sdp-phn" value="')[1].split('"')[0]
-                    if (
-                        "sc_secondLevel = '/content/smartstyle/www/en-us/locations/"
-                        in line2
-                    ):
-                        stabb = line2.split(
-                            "sc_secondLevel = '/content/smartstyle/www/en-us/locations/"
-                        )[1].split("'")[0]
-                if stabb in canada:
-                    country = "CA"
-                if add != "":
-                    if phone == "":
-                        phone = "<MISSING>"
-                    if hours == "":
-                        hours = "<MISSING>"
-                    state = state.replace("&nbsp;", "")
-                    if loc not in donelocs:
-                        donelocs.append(loc)
-                        if "0" not in hours and "3" not in hours and "1" not in hours:
-                            hours = "Sun-Sat: Closed"
-                        yield [
-                            website,
-                            loc,
-                            name,
-                            add,
-                            city,
-                            state,
-                            zc,
-                            country,
-                            store,
-                            phone,
-                            typ,
-                            lat,
-                            lng,
-                            hours,
-                        ]
-            except:
-                if retries <= 5:
-                    PFound = True
+    codes, stores = fetch_stores()
+    log.info(f"Total stores = {len(stores)}")
+
+    location_type = MISSING
+    with ThreadPoolExecutor(
+        max_workers=max_workers, thread_name_prefix="fetcher"
+    ) as executor:
+        for page_url, store_number, store in executor.map(fetch_store, stores):
+            if store_number is None:
+                continue
+            location_name = get_JSON_object(store, "name")
+            street_address = get_JSON_object(store, "address")
+            city = get_JSON_object(store, "city")
+            state = get_JSON_object(store, "state")
+            zip_postal = get_JSON_object(store, "zip")
+            location_name = get_JSON_object(store, "name")
+            country_code = codes[page_url]
+            phone = get_JSON_object(store, "phonenumber")
+            latitude = get_JSON_object(store, "latitude")
+            longitude = get_JSON_object(store, "longitude")
+            hours_of_operation = get_JSON_object(store, "store_hours")
+
+            hours_of_operation = get_hoo(
+                page_url, get_JSON_object(store, "store_hours")
+            )
+            if "0" not in hours_of_operation:
+                hours_of_operation = "Temporarily Closed"
+            if "Sun" not in hours_of_operation:
+                hours_of_operation = hours_of_operation + "; Sun:Closed"
+            raw_address = f"{street_address}, {city}, {state} {zip_postal}".replace(
+                MISSING, ""
+            )
+            raw_address = " ".join(raw_address.split())
+            raw_address = raw_address.replace(", ,", ",").replace(",,", ",")
+            if raw_address[len(raw_address) - 1] == ",":
+                raw_address = raw_address[:-1]
+
+            yield SgRecord(
+                locator_domain=website,
+                store_number=store_number,
+                page_url=page_url,
+                location_name=location_name,
+                location_type=location_type,
+                street_address=street_address,
+                city=city,
+                zip_postal=zip_postal,
+                state=state,
+                country_code=country_code,
+                phone=phone,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+                raw_address=raw_address,
+            )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    log.info(f"Start crawling {website} ...")
+    start = time.time()
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        for rec in fetch_data():
+            writer.write_row(rec)
+    end = time.time()
+    log.info(f"Scrape took {end-start} seconds.")
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()

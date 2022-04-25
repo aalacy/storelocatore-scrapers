@@ -12,6 +12,8 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
+from webdriver_manager.chrome import ChromeDriverManager
+from tenacity import retry, stop_after_attempt, wait_fixed
 
 try:
     _create_unverified_https_context = (
@@ -90,47 +92,81 @@ def _ah(sp1, driver, idx=0):
     return addr, _h(hours), phone
 
 
-def fetch_data():
-    with SgChrome() as driver:
-        driver.get(base_url)
-        links = json.loads(
-            bs(driver.page_source, "lxml")
-            .select_one("div#mobify_branchdata")
-            .text.replace("&quot;", '"')
-        )["branch_list"]
-        logger.info(f"{len(links)} found")
-        for link in links:
-            if link["status"] == "pre-live":
-                continue
-            location_name = link["name"]
-            url = "-".join(location_name.split(" ")[1:]).lower()
-            page_url = urljoin(
-                locator_domain,
-                f"branch/{url}",
-            )
-            logger.info(page_url)
-            driver.get(page_url)
-            WebDriverWait(driver, 10).until(
-                EC.presence_of_element_located(
-                    (
-                        By.XPATH,
-                        '//div[@id="address-box"]',
-                    )
+def get_driver():
+    return SgChrome(
+        executable_path=ChromeDriverManager().install(),
+        user_agent="Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0",
+        is_headless=True,
+    ).driver()
+
+
+@retry(wait=wait_fixed(2), stop=stop_after_attempt(3))
+def get_url(driver=None, url=None):
+    if not driver:
+        driver = get_driver()
+    try:
+        driver.get(url)
+    except:
+        driver = get_driver()
+        raise Exception
+
+
+@retry(wait=wait_fixed(10), stop=stop_after_attempt(5))
+def get_url1(driver=None, url=None):
+    if not driver:
+        driver = get_driver()
+    try:
+        driver.get(url)
+        WebDriverWait(driver, 30).until(
+            EC.presence_of_element_located(
+                (
+                    By.XPATH,
+                    '//div[@id="address-box"]',
                 )
             )
-            sp1 = bs(driver.page_source, "lxml")
-            if sp1.select(".grid-container-desktop"):
-                containers = [
-                    co
-                    for co in sp1.select(".grid-container-desktop")
-                    if co.select("div#address-box")
-                ]
-                for idx, _ in enumerate(containers):
-                    addr, hours, phone = _ah(sp1, driver, idx)
-                    yield _d(page_url, link, addr, hours, phone)
-            else:
-                addr, hours, phone = _ah(sp1, driver)
+        )
+    except:
+        driver = get_driver()
+        raise Exception
+
+
+def fetch_data():
+    driver = get_driver()
+    get_url(driver, base_url)
+    links = json.loads(
+        bs(driver.page_source, "lxml")
+        .select_one("div#mobify_branchdata")
+        .text.replace("&quot;", '"')
+    )["branch_list"]
+    logger.info(f"{len(links)} found")
+    for link in links:
+        if link["status"] == "pre-live":
+            continue
+        location_name = link["name"]
+        url = "-".join(location_name.split(" ")[1:]).lower()
+        page_url = urljoin(
+            locator_domain,
+            f"branch/{url}",
+        )
+        logger.info(page_url)
+        try:
+            get_url1(driver, page_url)
+        except:
+            continue
+
+        sp1 = bs(driver.page_source, "lxml")
+        if sp1.select(".grid-container-desktop"):
+            containers = [
+                co
+                for co in sp1.select(".grid-container-desktop")
+                if co.select("div#address-box")
+            ]
+            for idx, _ in enumerate(containers):
+                addr, hours, phone = _ah(sp1, driver, idx)
                 yield _d(page_url, link, addr, hours, phone)
+        else:
+            addr, hours, phone = _ah(sp1, driver)
+            yield _d(page_url, link, addr, hours, phone)
 
 
 if __name__ == "__main__":

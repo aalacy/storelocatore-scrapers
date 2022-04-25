@@ -47,7 +47,7 @@ def fetch_data():
     start_url = "https://spatial.virtualearth.net/REST/v1/data/e0ac722002794ad6b6cb3e5b3320e23b/AssociatedProduction/AssociatedBank?$filter=Branch%20Eq%27Yes%27%20Or%20ATM%20Eq%27Yes%27%20Or%20NonBranchLocation%20Eq%27Yes%27&spatialFilter=nearby({},{},%2080%20)&$select=EntityID,AddressLine,Latitude,Longitude,PostalCode,DriveUpHours,LobbyHours,LocationName,PrimaryCity,State,Phone,ATM,Branch,DAATMs,MortgageOfficer,AISRep,SafeDepositBox,PrivateClient,InstitutionalTrust,InstantIssueCards,NonBranchLocation&$*&$format=json&jsonp=SDSServiceCallback&key=Apc8XDQjnMpfQnJXz8qbV_y8lRaMTqq35W_gbey3U-P3j2EmFs7eCjLO-fofpeMJ"
     search = DynamicGeoSearch(
         country_codes=[SearchableCountries.USA],
-        max_radius_miles=30,
+        max_search_distance_miles=30,
         max_search_results=None,
     )
     for lat, lng in search:

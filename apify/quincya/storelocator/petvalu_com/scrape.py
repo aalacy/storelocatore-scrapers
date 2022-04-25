@@ -1,95 +1,89 @@
-import csv
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
-import sgzip 
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-session = SgRequests()
 
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
-        # Body
-        for row in data:
-            writer.writerow(row)
+def fetch_data(sgw: SgWriter):
 
-def parse_hours(store):
-    hrs = store['op']
-    days = ['mon', 'tues', 'wed', 'thurs', 'fri', 'sat', 'sun']
-    hours = []
-    for dayidx in range(len(days)):
-        day = days[dayidx]
-        start = hrs[str(dayidx*2)] 
-        end = hrs[str(dayidx*2 + 1)] 
-        hours.append('{}: {}-{}'.format(day, start, end))
-    return ', '.join(hours)
-
-def fetch_data():    
-    headers ={
-        'authority': 'store.petvalu.com',
-        'accept': 'application/json, text/javascript, */*; q=0.01',
-        'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
-        'origin': 'https://store.petvalu.com',
-        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.117 Safari/537.36',     
+    locator_domain = "https://petvalu.com/"
+    api_url = "https://store.petvalu.ca/modules/multilocation/?near_location=ON&threshold=400000&geocoder_components=country:CA&distance_unit=km&limit=2000000&services__in=&language_code=en-us&published=1&within_business=true"
+    session = SgRequests()
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
-    base_url = "petvalu.com"
-    keys = set()
-    for ctry in ['us', 'ca']:
-        search = sgzip.ClosestNSearch() # TODO: OLD VERSION [sgzip==0.0.55]. UPGRADE IF WORKING ON SCRAPER!
-        search.initialize(country_codes = [ctry])
-        coord = search.next_coord()
-        while coord:
-            lat, lng = coord[0], coord[1]
-            stores = session.post("https://store.petvalu.com/{}/wp-admin/admin-ajax.php".format(ctry), headers=headers, data="action=get_stores&lat={}&lng={}&radius=100&store=&states=&cities=&adds=&zip=".format(lat, lng)).json().values()
-            result_coords = []
-            for store in stores:
-                location_name = store['na']
-                store_number = store['ID']
-                street_address = store['st']
-                if '<' in street_address:
-                    street_address = street_address.split('<')[0].strip()
-                city = store['ct'].strip()
-                state = store['rg'].strip()
-                zipp = store['zp'].strip()
-                country_code = store['co'].strip()
-                if country_code.lower() != ctry:
-                    continue
-                key = "|".join([street_address, city, state, zipp, country_code])
-                if key in keys:
-                    continue
-                else:
-                    keys.add(key)
-                phone = store['te'] if 'te' in store else '<MISSING>' 
-                location_type = '<MISSING>'
-                latitude = store['lat']
-                longitude = store['lng']
-                result_coords.append((latitude, longitude))
-                page_url = store['gu']
-                hours = parse_hours(store)
-                res = [base_url]
-                res.append(location_name if location_name else "<MISSING>")
-                res.append(street_address if street_address else "<MISSING>")
-                res.append(city if city else "<MISSING>")
-                res.append(state if state else "<MISSING>")
-                res.append(zipp if zipp else "<MISSING>")
-                res.append(country_code if country_code else "<MISSING>")
-                res.append(store_number if store_number else "<MISSING>")
-                res.append(phone if phone else "<MISSING>")
-                res.append(location_type if location_type else "<MISSING>")
-                res.append(latitude if latitude else "<MISSING>")
-                res.append(longitude if longitude else "<MISSING>")
-                res.append(hours if hours else "<MISSING>")
-                res.append(page_url.replace("-/","/").replace("---","-") if page_url else "<MISSING>")
-                yield res
-            if len(result_coords) > 0:
-                search.max_count_update(result_coords)
-            else:
-                search.max_distance_update(100)
-            coord = search.next_coord()
+    r = session.get(api_url, headers=headers)
+    js = r.json()["objects"]
+    for j in js:
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        location_name = j.get("location_name") or "<MISSING>"
+        street_address = j.get("street") or "<MISSING>"
+        state = j.get("state") or "<MISSING>"
+        postal = j.get("postal_code") or "<MISSING>"
+        country_code = j.get("country") or "<MISSING>"
+        city = j.get("city") or "<MISSING>"
+        store_number = j.get("partner_location_sub_id")
+        page_url = (
+            j.get("location_url")
+            or f"https://store.petvalu.ca/location/{store_number}/"
+        )
+        latitude = j.get("lat") or "<MISSING>"
+        longitude = j.get("lon") or "<MISSING>"
+        phone = j.get("phonemap").get("phone") or "<MISSING>"
+        hours_of_operation = "<MISSING>"
+        hours = j.get("hours")[0].get("hours")
+        tmp = []
+        if hours:
+            for h in range(len(hours)):
+                day = (
+                    str(h)
+                    .replace("0", "Monday")
+                    .replace("1", "Tuesday")
+                    .replace("2", "Wednesday")
+                    .replace("3", "Thursday")
+                    .replace("4", "Friday")
+                    .replace("5", "Saturday")
+                    .replace("6", "Sunday")
+                )
+                opens = (
+                    str(hours[h][0][0])
+                    .replace(":00:00", ":00")
+                    .replace(":30:00", ":30")
+                    .strip()
+                )
+                closes = (
+                    str(hours[h][0][1])
+                    .replace(":00:00", ":00")
+                    .replace(":30:00", ":30")
+                    .strip()
+                )
+                line = f"{day} {opens} - {closes}"
+                tmp.append(line)
+            hours_of_operation = "; ".join(tmp)
 
-scrape()
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+            raw_address=f"{street_address} {city}, {state} {postal}",
+        )
+
+        sgw.write_row(row)
+
+
+if __name__ == "__main__":
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))) as writer:
+        fetch_data(writer)

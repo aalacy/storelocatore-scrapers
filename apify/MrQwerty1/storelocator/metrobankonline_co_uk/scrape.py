@@ -31,9 +31,9 @@ def fetch_data(sgw: SgWriter):
                 street_address = a.pop(0)
                 city = a.pop(0)
 
-        opt = j.get("optionalFields") or []
+        opt = i.get("optionalFields") or []
         for o in opt:
-            phone = o.get("Telephone")
+            phone = o.get("Telephone ")
             if phone:
                 break
         else:
