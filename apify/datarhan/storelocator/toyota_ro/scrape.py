@@ -30,7 +30,6 @@ def fetch_data():
     for url in start_urls:
         data = session.get(url, headers=hdr).json()
         for poi in data["dealers"]:
-            print(poi)
             page_url = poi.get("url")
             hoo = ""
             if page_url:
