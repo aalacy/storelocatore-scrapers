@@ -52,8 +52,11 @@ def scrape():
     logger.info("Started")
     count = 0
     with SgRequests() as http:
-        r = http.get(STORE_LOCATOR)
-        logger.info(f"HttpStatusCode: {r.status_code}")
+        try:
+            r = http.get(STORE_LOCATOR)
+            logger.info(f"HttpStatusCode: {r.status_code}")
+        except:
+            pass
         deduper = SgRecordDeduper(
             SgRecordID(
                 {SgRecord.Headers.STREET_ADDRESS, SgRecord.Headers.HOURS_OF_OPERATION}
