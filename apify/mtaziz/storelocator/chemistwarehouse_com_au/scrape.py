@@ -1,22 +1,54 @@
 from sglogging import SgLogSetup
-from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from bs4 import BeautifulSoup
 import cloudscraper
+import os
+from tenacity import retry, stop_after_attempt
+import tenacity
 
 
 logger = SgLogSetup().get_logger(logger_name="chemistwarehouse_com_au")
 DOMAIN = "chemistwarehouse.com.au"
 STORE_LOCATOR = "https://www.chemistwarehouse.com.au/aboutus/store-locator"
+proxy_password = os.environ["PROXY_PASSWORD"]
+DEFAULT_PROXY_URL = (
+    f"http://groups-RESIDENTIAL,country-us:{proxy_password}@proxy.apify.com:8000/"
+)
+proxies = {
+    "http": DEFAULT_PROXY_URL,
+    "https": DEFAULT_PROXY_URL,
+}  # Proxy that works with cloudscraper
+
+
+@retry(stop=stop_after_attempt(10), wait=tenacity.wait_fixed(5))
+def get_response(url):
+    scraper = cloudscraper.create_scraper()  # returns a CloudScraper instance
+    scraper.proxies = proxies
+    stores_req = scraper.get(url)
+    logger.info(
+        "<=========================START OF RESPONSECONTNT=========================>"
+    )
+
+    logger.info(
+        f"HTTPSTATUS: {stores_req.status_code} | ResponseContent: {stores_req.text}"
+    )
+    logger.info(
+        "<=========================END OF RESPONSECONTNT=========================>"
+    )
+    if stores_req.status_code == 200:
+        logger.info(f"[ {url} ]")
+        logger.info(f"{url} >> HTTP Status: {stores_req.status_code}")
+        return stores_req
+
+    raise Exception(f"{url} >> TemporaryError: {stores_req.status_code}")
 
 
 def fetch_data():
     search_url = "https://www.chemistwarehouse.com.au/ams/webparts/Google_Map_SL_files/storelocator_data.ashx?searchedPoint=(-35.1423355,%20149.0353134)"
-    scraper = cloudscraper.create_scraper()  # returns a CloudScraper instance
-    stores_req = scraper.get(search_url)
+    stores_req = get_response(search_url)
     soup = BeautifulSoup(stores_req.text, "html.parser")
     markers = soup.findAll("marker")
     for _ in markers:
@@ -51,24 +83,18 @@ def fetch_data():
 def scrape():
     logger.info("Started")
     count = 0
-    with SgRequests() as http:
-        try:
-            r = http.get(STORE_LOCATOR)
-            logger.info(f"HttpStatusCode: {r.status_code}")
-        except:
-            pass
-        deduper = SgRecordDeduper(
-            SgRecordID(
-                {SgRecord.Headers.STREET_ADDRESS, SgRecord.Headers.HOURS_OF_OPERATION}
-            )
+    deduper = SgRecordDeduper(
+        SgRecordID(
+            {SgRecord.Headers.STREET_ADDRESS, SgRecord.Headers.HOURS_OF_OPERATION}
         )
-        with SgWriter(deduper) as writer:
-            results = fetch_data()
-            for rec in results:
-                writer.write_row(rec)
-                count = count + 1
-        logger.info(f"No of records being processed: {count}")
-        logger.info("Finished")
+    )
+    with SgWriter(deduper) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+    logger.info(f"No of records being processed: {count}")
+    logger.info("Finished")
 
 
 if __name__ == "__main__":
