@@ -81,7 +81,9 @@ def fetch_data():
             city = row["city"]
             zip_postal = row["postcode"]
         state = MISSING
-        phone = row["phone"]
+        phone = row["phone"].split("/")[0].strip()
+        if "@guardian.in" in phone:
+            phone = MISSING
         country_code = row["country_code"]
         store_number = row["store_id"]
         hours_of_operation = MISSING

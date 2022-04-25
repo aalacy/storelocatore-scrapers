@@ -19,7 +19,7 @@ def fetch_data():
     url = "https://resources.sears.com.mx/medios-plazavip/swift/v1/Sears/assets/js/scriptSucursalesSears7_6.js"
     r = session.get(url, headers=headers)
     divlist = r.text.split("<option")[1:]
-    divlist = divlist[0 : len(divlist) - 2]
+
     for div in divlist:
         div = "<option" + div.split("</option", 1)[0] + "</option>"
         soup = BeautifulSoup(div, "html.parser").find("option")
@@ -33,6 +33,7 @@ def fetch_data():
             pass
         store = soup["data-tienda"]
         title = soup.text.strip()
+
         content = soup["data-text"]
         address, phone = content.split("Tel. ", 1)
         address = address.replace("|", "").strip()

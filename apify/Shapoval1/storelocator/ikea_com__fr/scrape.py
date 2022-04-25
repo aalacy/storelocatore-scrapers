@@ -41,7 +41,16 @@ def fetch_data(sgw: SgWriter):
             ad = ad.split("Vous serez aussi")[0].strip()
         if ad.find("à la conception pour tous vos projets !") != -1:
             ad = ad.split("à la conception pour tous vos projets !")[1].strip()
-        if ad == "<MISSING>":
+
+        if page_url == "https://www.ikea.com/fr/fr/stores/grand-parilly/":
+            ad = (
+                " ".join(
+                    tree.xpath('//p[./strong[contains(text(), "IKEA Grand")]]/text()')
+                )
+                .replace("\n", "")
+                .strip()
+            )
+        if page_url.find("marseille-la-valentine") != -1:
             ad = (
                 " ".join(
                     tree.xpath(
@@ -52,7 +61,7 @@ def fetch_data(sgw: SgWriter):
                 .strip()
                 or "<MISSING>"
             )
-        if ad == "<MISSING>":
+        if page_url == "https://www.ikea.com/fr/fr/stores/paris-la-madeleine/":
             ad = (
                 " ".join(
                     tree.xpath(
@@ -61,7 +70,6 @@ def fetch_data(sgw: SgWriter):
                 )
                 .replace("\n", "")
                 .strip()
-                or "<MISSING>"
             )
 
         location_name = "".join(tree.xpath("//h1/text()")).strip()
@@ -92,40 +100,37 @@ def fetch_data(sgw: SgWriter):
                 longitude = text.split("!4d")[1].strip()
             except:
                 latitude, longitude = "<MISSING>", "<MISSING>"
-        info = (
-            tree.xpath(
-                '//article/section[.//strong[contains(text(), "IKEA ")]]//text()'
-            )
+        hours_of_operation = (
+            " ".join(
+                tree.xpath(
+                    '//p[./strong[contains(text(), "Horaires d\'ouverture")]]/text()'
+                )
+            ).replace("\n", "")
             or "<MISSING>"
         )
-        if info == "<MISSING>":
-            info = (
-                tree.xpath(
-                    '//article/section[.//strong[contains(text(), "City Paris La Madeleine")]]//text()'
-                )
+        if page_url == "https://www.ikea.com/fr/fr/stores/rennes/":
+            hours_of_operation = (
+                " ".join(
+                    tree.xpath('//p[./strong[contains(text(), "Magasin ")]]/text()')
+                ).replace("\n", "")
                 or "<MISSING>"
             )
-        if info == "<MISSING>":
-            info = (
-                tree.xpath(
-                    '//article/section[.//strong[contains(text(), "Marseille - La Valentine")]]//text()'
-                )
-                or "<MISSING>"
-            )
-
-        tmp = []
-        for i in info:
-            if i.find("Lun") != -1:
-                tmp.append(i)
-                break
-        hours_of_operation = "".join(tmp) or "<MISSING>"
-        if hours_of_operation == "<MISSING>":
+        if page_url == "https://www.ikea.com/fr/fr/stores/grand-parilly/":
             hours_of_operation = (
                 " ".join(
                     tree.xpath(
-                        '//strong[contains(text(), "Horaires d\'ouverture ")]/following-sibling::text()'
+                        '//p[./strong[contains(text(), "Horaires d\'ouverture")]]/following-sibling::p[1]/text()'
                     )
-                )
+                ).replace("\n", "")
+                or "<MISSING>"
+            )
+        if page_url == "https://www.ikea.com/fr/fr/stores/bordeaux/":
+            hours_of_operation = (
+                " ".join(
+                    tree.xpath(
+                        '//p[./strong[contains(text(), "Magasin")]]/following-sibling::p[1]/text()'
+                    )
+                ).replace("\n", "")
                 or "<MISSING>"
             )
 
@@ -151,7 +156,5 @@ def fetch_data(sgw: SgWriter):
 
 if __name__ == "__main__":
     session = SgRequests()
-    with SgWriter(
-        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
-    ) as writer:
+    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))) as writer:
         fetch_data(writer)

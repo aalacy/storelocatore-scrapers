@@ -65,6 +65,10 @@ searchurls = [
     "QATAR|https://order.golo02.dominos.com/store-locator-international/locate/store?regionCode=QA&latitude=25.4477038&longitude=51.1814573&radius=9999999",
 ]
 
+searchurls1 = [
+    "QATAR|https://order.golo02.dominos.com/store-locator-international/locate/store?regionCode=QA&latitude=25.4477038&longitude=51.1814573&radius=9999999",
+]
+
 
 @retry(stop=stop_after_attempt(5), wait=tenacity.wait_fixed(5))
 def get_response_global(idx, url, headers_custom):
@@ -90,13 +94,15 @@ def fetch_records_global(idx, url, sgw: SgWriter):
     website = "dominos.com"
     typ = MISSING
     country = lurl.split("regionCode=")[1].split("&")[0]
-    loc = MISSING
-    store = MISSING
+    store_num = MISSING
     hours = MISSING
-    lat = MISSING
-    lng = MISSING
     logger.info("Pulling Stores")
-    for idx2, item in enumerate(json.loads(r.content)["Stores"][0:]):
+    try:
+        data_js = json.loads(r.content)["Stores"]
+    except:
+        logger.info(f"Please fix data_json: {json.loads(r.content)} | {lurl} ")
+    for idx2, item in enumerate(data_js[0:]):
+
         if "StoreName" in str(item):
             name = item["StoreName"]
         else:
@@ -110,14 +116,24 @@ def fetch_records_global(idx, url, sgw: SgWriter):
             phone = MISSING
         phone = phone if phone else MISSING
         logger.info(f"[{idx}][{cc}][{idx2}] phone: {phone}")
+
+        add = ""
         try:
-            add = item["StreetName"]
+            add1 = item["StreetName"]
+            if add1 is not None or add1:
+                add = add1
+            else:
+                add = ""
         except:
-            add = MISSING
+            add = ""
         add = str(add).replace("\r", "").replace("\n", "")
+        if add == "None":
+            add = ""
+
         city = ""
         if "City" in item:
-            city = str(item["City"]).replace("\r", "").replace("\n", "")
+            if item["City"] is not None:
+                city = str(item["City"]).replace("\r", "").replace("\n", "")
         else:
             city = MISSING
         city = city if city else MISSING
@@ -129,21 +145,44 @@ def fetch_records_global(idx, url, sgw: SgWriter):
             state = MISSING
 
         zc = ""
-        if "PostalCode" in item:
-            zc = item["PostalCode"]
-        else:
-            zc = MISSING
-        zc = zc if zc else MISSING
+        try:
+            if "PostalCode" in item:
+                zc = item["PostalCode"]
+            else:
+                zc = MISSING
 
-        if "StoreCoordinates" in item and "StoreLatitude" in item["StoreCoordinates"]:
-            lat = item["StoreCoordinates"]["StoreLatitude"]
-            lng = item["StoreCoordinates"]["StoreLongitude"]
-        elif "Latitude" in item:
-            lat = item["Latitude"]
-            lng = item["Longitude"]
-        else:
-            lat = MISSING
-            lng = MISSING
+            if "MISSING" not in zc:
+                j = zc.replace("-", "")
+                if str.isdigit(j) is False:
+                    zc = MISSING
+                else:
+                    zc = zc
+
+            if zc == "" or zc is None:
+                zc = MISSING
+        except Exception as e:
+            logger.info(f"Please fix ZIPCODEERROR at {e} | {lurl}")
+
+        lat = ""
+        lng = ""
+        if "StoreCoordinates" in item:
+            coords = item["StoreCoordinates"]
+            if coords is not None:
+                if "StoreLatitude" in coords:
+                    if (
+                        coords["StoreLatitude"] is not None
+                        and coords["StoreLongitude"] is not None
+                    ):
+                        lat = coords["StoreLatitude"]
+                        lng = coords["StoreLongitude"]
+
+        if not lat and not lng:
+            if "Latitude" in item:
+                lat = item["Latitude"]
+                lng = item["Longitude"]
+            else:
+                lat = MISSING
+                lng = MISSING
 
         logger.info(f"[{idx}][{cc}][{idx2}] Latlng: {lat} | {lng}")
 
@@ -158,6 +197,8 @@ def fetch_records_global(idx, url, sgw: SgWriter):
         else:
             hours = MISSING
         hours = hours if hours else MISSING
+        if hours == "None":
+            hours = ""
 
         loc = MISSING
         raw_address = MISSING
@@ -176,7 +217,7 @@ def fetch_records_global(idx, url, sgw: SgWriter):
             country_code=country,
             phone=phone,
             location_type=typ,
-            store_number=store,
+            store_number=store_num,
             latitude=lat,
             longitude=lng,
             hours_of_operation=hours,
@@ -200,7 +241,14 @@ def fetch_data(sgw: SgWriter):
 def scrape():
     with SgWriter(
         SgRecordDeduper(
-            SgRecordID({SgRecord.Headers.STORE_NUMBER, SgRecord.Headers.STREET_ADDRESS})
+            SgRecordID(
+                {
+                    SgRecord.Headers.STORE_NUMBER,
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.LATITUDE,
+                    SgRecord.Headers.LONGITUDE,
+                }
+            )
         )
     ) as writer:
         fetch_data(writer)

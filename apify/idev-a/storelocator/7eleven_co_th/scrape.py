@@ -1,12 +1,12 @@
 from sgrequests import SgRequests
-from sgzip.dynamic import DynamicGeoSearch, SearchableCountries, Grain_8
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries, Grain_1_KM
 from sglogging import SgLogSetup
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import random
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-
+from tenacity import retry, wait_random, stop_after_attempt
 
 logger = SgLogSetup().get_logger("7eleven")
 
@@ -82,63 +82,60 @@ locator_domain = "https://www.7eleven.co.th"
 base_url = "https://7eleven-api-prod.jenosize.tech/v1/Store/GetStoreByCurrentLocation"
 
 search = DynamicGeoSearch(
-    country_codes=[SearchableCountries.THAILAND], granularity=Grain_8()
+    country_codes=[SearchableCountries.THAILAND], granularity=Grain_1_KM()
 )
+
+
+@retry(stop=stop_after_attempt(7), wait=wait_random(min=100, max=160))
+def get_locs(data):
+    locations = []
+    with SgRequests(proxy_country="th", retries_with_fresh_proxy_ip=10) as session:
+        locations = session.post(
+            base_url,
+            headers={"user-agent": random.choices(_headers)[0]},
+            json=data,
+        ).json()["data"]
+
+    return locations
 
 
 def fetch_data():
     # Need to add dedupe. Added it in pipeline.
-    with SgRequests(proxy_country="us", retries_with_fresh_proxy_ip=10) as session:
-        maxZ = search.items_remaining()
-        total = 0
-        for lat, lng in search:
-            if search.items_remaining() > maxZ:
-                maxZ = search.items_remaining()
-            logger.info(("Pulling Geo Code %s..." % lat, lng))
-            data = {"latitude": str(lat), "longitude": str(lng)}
-            locations = []
-            while True:
-                try:
-                    locations = session.post(
-                        base_url,
-                        headers={"user-agent": random.choices(_headers)[0]},
-                        json=data,
-                    ).json()["data"]
-                    break
-                except:
-                    pass
+    maxZ = search.items_remaining()
+    total = 0
+    for lat, lng in search:
+        if search.items_remaining() > maxZ:
+            maxZ = search.items_remaining()
+        logger.info(("Pulling Geo Code %s..." % lat, lng))
+        data = {"latitude": str(lat), "longitude": str(lng)}
+        locations = get_locs(data)
 
-            total += len(locations)
-            progress = (
-                str(round(100 - (search.items_remaining() / maxZ * 100), 2)) + "%"
-            )
-            logger.info(
-                f"found: {len(locations)} | total: {total} | progress: {progress}"
-            )
+        total += len(locations)
+        progress = str(round(100 - (search.items_remaining() / maxZ * 100), 2)) + "%"
+        logger.info(f"found: {len(locations)} | total: {total} | progress: {progress}")
 
-            for store in locations:
-                store["street"] = store["address"]
-                if store.get("province"):
-                    store["street"] = (
-                        store["address"].replace(store["province"], "").strip()
-                    )
-                store["phone"] = (
-                    store["tel"].split()[0] if store.get("tel") else SgRecord.MISSING
+        for store in locations:
+            store["street"] = store["address"]
+            if store.get("province"):
+                store["street"] = (
+                    store["address"].replace(store["province"], "").strip()
                 )
-                yield SgRecord(
-                    page_url="https://www.7eleven.co.th/find-store",
-                    store_number=store["id"],
-                    location_name=store["name"],
-                    street_address=store["street"],
-                    state=store["province"],
-                    zip_postal=store["postcode"],
-                    country_code="Thailand",
-                    latitude=store["lat"],
-                    longitude=store["lng"],
-                    phone=store["phone"],
-                    locator_domain=locator_domain,
-                    raw_address=store["address"],
-                )
+            phone = store["tel"].split()[0].split(",")[0] if store.get("tel") else ""
+            search.found_location_at(store["lat"], store["lng"])
+            yield SgRecord(
+                page_url="https://www.7eleven.co.th/find-store",
+                store_number=store["id"],
+                location_name=store["name"],
+                street_address=store["street"],
+                state=store["province"],
+                zip_postal=store["postcode"],
+                country_code="Thailand",
+                latitude=store["lat"],
+                longitude=store["lng"],
+                phone=phone,
+                locator_domain=locator_domain,
+                raw_address=store["address"],
+            )
 
 
 if __name__ == "__main__":

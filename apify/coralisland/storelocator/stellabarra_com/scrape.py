@@ -1,92 +1,107 @@
-import csv
-from lxml import etree
+from bs4 import BeautifulSoup as bs
 from sgrequests import SgRequests
-from bs4 import BeautifulSoup
-import time
-from random import randint
-from unidecode import unidecode
-from sglogging import SgLogSetup
+from sglogging import sglog
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgpostal import parse_address_usa
+import re
 
-logger = SgLogSetup().get_logger('stellabarra_com')
+
+DOMAIN = "stellabarra.com"
+BASE_URL = "https://www.stellabarra.com/"
+HEADERS = {
+    "Accept": "application/json, text/plain, */*",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
+}
+MISSING = "<MISSING>"
+log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
 
 
+def getAddress(raw_address):
+    try:
+        if raw_address is not None and raw_address != MISSING:
+            data = parse_address_usa(raw_address)
+            street_address = data.street_address_1
+            if data.street_address_2 is not None:
+                street_address = street_address + " " + data.street_address_2
+            city = data.city
+            state = data.state
+            zip_postal = data.postcode
+            if street_address is None or len(street_address) == 0:
+                street_address = MISSING
+            if city is None or len(city) == 0:
+                city = MISSING
+            if state is None or len(state) == 0:
+                state = MISSING
+            if zip_postal is None or len(zip_postal) == 0:
+                zip_postal = MISSING
+            return street_address, city, state, zip_postal
+    except Exception as e:
+        log.info(f"No valid address {e}")
+        pass
+    return MISSING, MISSING, MISSING, MISSING
 
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-        for row in data:
-            writer.writerow(row)
 
-def sanitize(x):
-    return unidecode(x)
+def pull_content(url):
+    session = SgRequests()
+    log.info("Pull content => " + url)
+    soup = bs(session.get(url, headers=HEADERS).content, "lxml")
+    return soup
+
+
+def get_latlong(url):
+    latlong = re.search(r"@(-?[\d]*\.[\d]*),(-[\d]*\.[\d]*)", url)
+    if not latlong:
+        return "<MISSING>", "<MISSING>"
+    return latlong.group(1), latlong.group(2)
+
 
 def fetch_data():
-    data = []
-    url = "https://www.stellabarra.com"
-    session = SgRequests()
-    source = session.get(url).text
-    response = etree.HTML(source)
-    store_list = response.xpath('//a[@class="underline tracked"]/@href')
+    log.info("Fetching store_locator data")
+    soup = pull_content(BASE_URL)
+    store = soup.select_one("a[data-label='Map']")
+    location_name = soup.find("meta", {"property": "og:site_name"})["content"]
+    raw_address = store.get_text(strip=True, separator=",")
+    street_address, city, state, zip_postal = getAddress(raw_address)
+    phone = soup.find("a", {"data-label": "Call"}).text.strip()
+    country_code = "US"
+    location_type = MISSING
+    store_number = MISSING
+    hours_of_operation = (
+        soup.find("h2", text="Hours").find_next("p").get_text(strip=True, separator=" ")
+    )
+    latitude, longitude = get_latlong(store["href"])
+    log.info("Append {} => {}".format(location_name, street_address))
+    yield SgRecord(
+        locator_domain=DOMAIN,
+        page_url=BASE_URL,
+        location_name=location_name,
+        street_address=street_address,
+        city=city,
+        state=state,
+        zip_postal=zip_postal,
+        country_code=country_code,
+        store_number=store_number,
+        phone=phone,
+        location_type=location_type,
+        latitude=latitude,
+        longitude=longitude,
+        hours_of_operation=hours_of_operation,
+    )
 
-    user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36'
-    HEADERS = {'User-Agent' : user_agent}
-
-    for store_link in store_list:
-
-        req = session.get(store_link, headers = HEADERS)
-        time.sleep(randint(1,2))
-
-        item = BeautifulSoup(req.text,"lxml")
-
-        locator_domain = "stellabarra.com"
-        location_name = "Stella Barra " + item.find('h1').text.strip()
-        logger.info(location_name)
-
-        raw_address = item.find("footer").div.find_all("div")[3].a.text.replace("\r\n",",").split(",")
-        street_address = raw_address[0].strip()
-        city = raw_address[1].strip()
-        state = raw_address[2].strip()
-        if " " in state:
-            zip_code = state.split()[1].strip()
-            state = state.split()[0].strip()
-        else:
-            zip_code = "<MISSING>"
-
-        country_code = "US"
-
-        store_number = "<MISSING>"
-        try:
-            phone = item.find('a', attrs={'data-label': 'Call'}).text.strip()
-        except:
-            phone = "<MISSING>"
-
-        location_type = "<MISSING>"
-        try:
-            raw_gps = item.find('a', attrs={'data-label': 'Map'})["href"]
-            lat_pos = raw_gps.find("@")+1
-            latitude = raw_gps[lat_pos:raw_gps.find(",", lat_pos)].strip()
-            long_pos = raw_gps.find(",", lat_pos)
-            longitude = raw_gps[long_pos+1:raw_gps.find(",",long_pos+3)].strip()
-        except:
-            latitude = "<MISSING>"
-            longitude = "<MISSING>"
-
-        raw_hours = item.find("footer").div.find_all("div")[2].text
-        raw_hours = raw_hours[raw_hours.find("\r\n"):raw_hours.rfind("\n\r")].strip()
-        if "Dine-In" in raw_hours or "Friday" in raw_hours[:15]:
-            raw_hours = item.find("footer").div.find_all("div")[2].text
-            raw_hours = raw_hours[raw_hours.find("Monday"):raw_hours.rfind("\n")].strip()
-
-        hours_of_operation = sanitize(raw_hours).replace("\r\n"," ").replace("\r\n"," ").replace("\xa0"," ").replace("\n"," ").strip()
-        if "Brunch" in hours_of_operation:
-            hours_of_operation = hours_of_operation[:hours_of_operation.find("Brunch")-2].strip()
-
-        data.append([locator_domain, store_link, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
-    return data
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    log.info("start {} Scraper".format(DOMAIN))
+    count = 0
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
+
 
 scrape()

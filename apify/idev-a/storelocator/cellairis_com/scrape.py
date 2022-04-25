@@ -4,9 +4,9 @@ from sgrequests import SgRequests
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from bs4 import BeautifulSoup as bs
-import us
 from sgpostal.sgpostal import parse_address_intl
 import re
+import us
 
 from sglogging import SgLogSetup
 
@@ -97,9 +97,7 @@ def fetch_records(http):
 
 if __name__ == "__main__":
     with SgRequests() as http:
-        with SgWriter(
-            deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)
-        ) as writer:
+        with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
             for rec in fetch_one(http):
                 writer.write_row(rec)
 

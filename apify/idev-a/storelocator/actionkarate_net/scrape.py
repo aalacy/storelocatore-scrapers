@@ -9,6 +9,16 @@ import time
 from sglogging import SgLogSetup
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+import ssl
+
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
 logger = SgLogSetup().get_logger("actionkarate")
 
@@ -110,7 +120,10 @@ def fetch_data():
                 store_number=driver.current_url.split("-")[-1],
                 page_url=driver.current_url,
                 location_name=location_name,
-                street_address=" ".join(addr[:-1]).replace(",", ""),
+                street_address=" ".join(addr[:-1])
+                .replace(",", "")
+                .split("-")[0]
+                .strip(),
                 city=addr[-1].split(",")[0].strip(),
                 state=" ".join(addr[-1].split(",")[1].strip().split(" ")[:-1]),
                 zip_postal=addr[-1].split(",")[1].strip().split(" ")[-1].strip(),

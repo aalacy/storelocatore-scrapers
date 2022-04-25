@@ -1,5 +1,5 @@
 import json
-from sgzip.dynamic import SearchableCountries, DynamicGeoSearch, Grain_1_KM
+from sgzip.dynamic import SearchableCountries, DynamicGeoSearch, Grain_2
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
@@ -118,10 +118,10 @@ def fetch_data(sgw: SgWriter):
     coords = DynamicGeoSearch(
         country_codes=[SearchableCountries.USA],
         max_search_results=100,
-        granularity=Grain_1_KM(),
+        granularity=Grain_2(),
     )
 
-    with futures.ThreadPoolExecutor(max_workers=5) as executor:
+    with futures.ThreadPoolExecutor(max_workers=10) as executor:
         future_to_url = {executor.submit(get_data, url, sgw): url for url in coords}
         for future in futures.as_completed(future_to_url):
             future.result()
