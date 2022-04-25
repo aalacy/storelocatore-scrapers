@@ -35,11 +35,11 @@ def fetch_data():
                 .replace('"Buld', "Buld")
                 .replace('Centre"', "Centre")
             )
-            location_name = poi["location"]["name"]
-            street_address = poi["location"]["address"]["streetAddress"]
-            city = poi["location"]["address"]["addressLocality"]
-            zip_code = poi["location"]["address"]["postalCode"]
-            country_code = poi["location"]["address"]["addressCountry"]
+            location_name = poi["name"]
+            street_address = poi["address"]["streetAddress"]
+            city = poi["address"]["addressLocality"]
+            zip_code = poi["address"]["postalCode"]
+            country_code = poi["address"]["addressCountry"]
             raw_address = ""
         else:
             location_name = loc_dom.xpath('//h1[@class="zo-store__title"]/text()')[

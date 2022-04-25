@@ -3,6 +3,7 @@ from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
+from sgpostal.sgpostal import parse_address_intl
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
@@ -21,13 +22,13 @@ MISSING = SgRecord.MISSING
 
 def fetch_data():
     if True:
-        url = "https://www.guzmanygomez.com.au/all-locations/"
+        url = "https://www.guzmanygomez.com.au/locations/"
         r = session.get(url, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
-        loclist = soup.select("a[href*=all-location]")
+        loclist = soup.findAll("div", {"class": "location"})
         for loc in loclist:
             location_type = MISSING
-            page_url = loc["href"]
+            page_url = loc["data-url"]
             closed = loc.text.split(" - ")
             closed = closed[-1]
             if (
@@ -36,31 +37,31 @@ def fetch_data():
                 or closed == "CLOSED"
             ):
                 location_type = "TEMPORARILY CLOSED"
-            r = session.get(page_url, headers=headers)
-            soup = BeautifulSoup(r.text, "html.parser")
-            location_name = (
-                soup.find("h2")
+            location_name = loc.find("h4").text
+            log.info(page_url)
+            raw_address = loc["data-address"]
+            pa = parse_address_intl(raw_address)
+
+            street_address = pa.street_address_1
+            street_address = street_address if street_address else MISSING
+
+            city = pa.city
+            city = city.strip() if city else MISSING
+
+            state = pa.state
+            state = state.strip() if state else MISSING
+
+            zip_postal = pa.postcode
+            zip_postal = zip_postal.strip() if zip_postal else MISSING
+
+            store_number = loc["data-locationid"]
+            latitude = loc["data-latitude"]
+            longitude = loc["data-longitude"]
+            hours_of_operation = (
+                loc.findAll("table")[-1]
                 .get_text(separator="|", strip=True)
-                .replace("|", "")
-                .split("–")[0]
+                .replace("|", " ")
             )
-            log.info(location_name)
-            raw_address = soup.find("div", {"class": "order_location"})
-            address = raw_address.findAll("span")
-            raw_address = raw_address.get_text(separator="|", strip=True).replace(
-                "|", " "
-            )
-            street_address = address[-4].text
-            city = address[-3].text
-            state = address[-2].text
-            zip_postal = address[-1].text
-            temp = soup.findAll("table", {"class": "order_location"})
-            try:
-                hours_of_operation = (
-                    temp[1].get_text(separator="|", strip=True).replace("|", " ")
-                )
-            except:
-                hours_of_operation = MISSING
             if hours_of_operation == "Temporarily Closed":
                 hours_of_operation = MISSING
                 location_type = "TEMPORARILY CLOSED"
@@ -70,31 +71,22 @@ def fetch_data():
             elif hours_of_operation == "TEMP: CLOSED":
                 hours_of_operation = MISSING
                 location_type = "TEMPORARILY CLOSED"
-            phone = (
-                temp[0]
-                .findAll("td")[1]
-                .get_text(separator="|", strip=True)
-                .replace("|", "")
-            )
-            if "26/09/21: 11:30 - 21:30" in hours_of_operation:
-                hours_of_operation = hours_of_operation.split(
-                    "26/09/21: 11:30 - 21:30"
-                )[1]
+            phone = MISSING
             country_code = "AUS"
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url=page_url,
                 location_name=location_name,
                 street_address=street_address.strip(),
-                city=city.strip(),
+                city=city,
                 state=state.strip(),
                 zip_postal=zip_postal.strip(),
                 country_code=country_code,
-                store_number=MISSING,
+                store_number=store_number,
                 phone=phone.strip(),
                 location_type=location_type,
-                latitude=MISSING,
-                longitude=MISSING,
+                latitude=latitude,
+                longitude=longitude,
                 hours_of_operation=hours_of_operation.strip(),
                 raw_address=raw_address,
             )
