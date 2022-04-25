@@ -39,6 +39,8 @@ def fetch_data():
             hoo = loc_dom.xpath(
                 '//h5[contains(text(), "Hours")]/following-sibling::p/text()'
             )[1]
+        if "permanently closed" in hoo:
+            continue
         phone = loc_dom.xpath(
             '//h5[contains(text(), "Take out")]/following-sibling::p[1]/text()'
         )
