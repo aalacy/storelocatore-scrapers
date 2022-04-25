@@ -30,6 +30,7 @@ def fetch_data():
     for url in start_urls:
         data = session.get(url, headers=hdr).json()
         for poi in data["dealers"]:
+            print(poi)
             page_url = poi.get("url")
             hoo = ""
             if page_url:
@@ -58,7 +59,9 @@ def fetch_data():
                 street_address = street_address[:-1]
             phone = poi["phone"]
             if phone:
-                phone = phone.split("elle")[0]
+                phone = phone.split("elle")[0].split(",")[0]
+            services = [e["service"] for e in poi["services"]]
+            services = ", ".join(services) if services else ""
 
             item = SgRecord(
                 locator_domain=domain,
@@ -71,7 +74,7 @@ def fetch_data():
                 country_code=poi["country"],
                 store_number=poi.get("localDealerID"),
                 phone=phone,
-                location_type="",
+                location_type=services,
                 latitude=poi["address"]["geo"]["lat"],
                 longitude=poi["address"]["geo"]["lon"],
                 hours_of_operation=hoo,
