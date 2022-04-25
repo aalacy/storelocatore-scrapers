@@ -53,9 +53,14 @@ def fetch_data(sgw: SgWriter):
         if hours:
             for d in days:
                 day = d
-                opens = hours.get(f"{d}").get("openIntervals")[0].get("start")
-                closes = hours.get(f"{d}").get("openIntervals")[0].get("end")
-                line = f"{day} {opens} - {closes}"
+                closed = hours.get(f"{d}").get("closed")
+                line = ""
+                if closed:
+                    line = f"{day} Closed"
+                if not closed:
+                    opens = hours.get(f"{d}").get("openIntervals")[0].get("start")
+                    closes = hours.get(f"{d}").get("openIntervals")[0].get("end")
+                    line = f"{day} {opens} - {closes}"
                 tmp.append(line)
             hours_of_operation = "; ".join(tmp)
         if latitude == "<MISSING>":
