@@ -11,13 +11,16 @@ import json
 DOMAIN = "malbeccuisine.com"
 LOCATION_URL = "https://www.malbeccuisine.com/"
 HEADERS = {
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+    "Accept": "*/*",
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.63 Safari/537.36",
+    "Referer": LOCATION_URL,
+    "content-type": "text/plain",
+    "origin": LOCATION_URL,
 }
 MISSING = "<MISSING>"
 log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
 
-session = SgRequests()
+session = SgRequests(verify_ssl=False)
 
 
 def getAddress(raw_address):
@@ -78,7 +81,7 @@ def fetch_data():
             .replace("Tu", "Tuesday:")
             .replace("We", "Wednesday:")
             .replace("Th", "Thursday:")
-            .replace("Fr", "Firday:")
+            .replace("Fr", "Friday:")
             .replace("Sa", "Saturday:")
         )
         log.info("Append {} => {}".format(location_name, street_address))
