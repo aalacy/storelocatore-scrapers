@@ -1,18 +1,35 @@
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
+from sgselenium import SgChrome
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sglogging import SgLogSetup
 from datetime import datetime, timedelta
+from bs4 import BeautifulSoup as bs
 import math
 from concurrent.futures import ThreadPoolExecutor
+from webdriver_manager.chrome import ChromeDriverManager
+import os
+
+os.environ[
+    "PROXY_URL"
+] = "http://groups-RESIDENTIAL,country-us:{}@proxy.apify.com:8000/"
 
 logger = SgLogSetup().get_logger("quizclothing")
 _headers = {
     "accept": "application/json",
+    "accept-language": "en-US,en;q=0.9",
     "content-type": "application/json",
-    "x-device-id": "1d605e0d-84ed-493a-98d2-fa501440775f",
+    "origin": "https://mrbeastburger.com",
+    "referer": "https://mrbeastburger.com/",
+    "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
+}
+
+header2 = {
+    "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+    "accept-encoding": "gzip, deflate, br",
+    "accept-language": "en-US,en;q=0.9",
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
 }
 
@@ -60,33 +77,45 @@ def request_with_retries(url):
         return session.get(url, headers=_headers)
 
 
+def get_driver():
+    return SgChrome(
+        executable_path=ChromeDriverManager().install(),
+        user_agent="Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0",
+        is_headless=True,
+    ).driver()
+
+
 def fetch_data():
-    with SgRequests() as session:
-        locations = session.get(base_url, headers=_headers).json()["restaurants"]
-        for _, page_url, ca in fetchConcurrentList(locations):
-            hours = []
-            for hr in ca:
-                if not hr["label"]:
-                    for hh in hr["ranges"]:
-                        temp = f"{hh['weekday']}: {hh['start'].split()[-1]} - {hh['end'].split()[-1]}"
-                        if temp not in hours:
-                            hours.append(temp)
-                    break
-            yield SgRecord(
-                page_url=page_url,
-                store_number=_["id"],
-                location_name=_["name"],
-                street_address=_["streetaddress"],
-                city=_["city"],
-                state=_["state"],
-                zip_postal=_["zip"],
-                latitude=_["latitude"],
-                longitude=_["longitude"],
-                country_code=_["country"],
-                phone=_["telephone"],
-                locator_domain=locator_domain,
-                hours_of_operation="; ".join(hours),
-            )
+    driver = get_driver()
+    driver.get(base_url)
+    locations = bs(driver.page_source, "lxml").select("restaurant")
+    import pdb
+
+    pdb.set_trace()
+    for _, page_url, ca in fetchConcurrentList(locations):
+        hours = []
+        for hr in ca:
+            if not hr["label"]:
+                for hh in hr["ranges"]:
+                    temp = f"{hh['weekday']}: {hh['start'].split()[-1]} - {hh['end'].split()[-1]}"
+                    if temp not in hours:
+                        hours.append(temp)
+                break
+        yield SgRecord(
+            page_url=page_url,
+            store_number=_["id"],
+            location_name=_["name"],
+            street_address=_["streetaddress"],
+            city=_["city"],
+            state=_["state"],
+            zip_postal=_["zip"],
+            latitude=_["latitude"],
+            longitude=_["longitude"],
+            country_code=_["country"],
+            phone=_["telephone"],
+            locator_domain=locator_domain,
+            hours_of_operation="; ".join(hours),
+        )
 
 
 if __name__ == "__main__":
