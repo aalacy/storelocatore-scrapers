@@ -105,8 +105,8 @@ def fetch_data(sgw: SgWriter):
 if __name__ == "__main__":
     locator_domain = "https://www.office.co.uk/"
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0"
+        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36"
     }
-    session = SgRequests()
+    session = SgRequests(proxy_country="gb")
     with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         fetch_data(writer)
