@@ -1,8 +1,11 @@
 from bs4 import BeautifulSoup
-import csv
 import json
 import re
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
 headers = {
@@ -10,42 +13,10 @@ headers = {
 }
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
 def fetch_data():
-    # Your scraper here
-    data = []
+
     pattern = re.compile(r"\s\s+")
     url = "https://www.fishkeeper.co.uk/storefinder"
-    p = 0
     r = session.get(url, headers=headers, verify=False)
     r = r.text.split(':{"stores":')[1].split(',"center"', 1)[0]
     r = r.replace("\n", "")
@@ -65,16 +36,18 @@ def fetch_data():
         store = loc["id"]
         hours = "<MISSING>"
         r = session.get(link, headers=headers, verify=False)
-        hours = (
-            BeautifulSoup(r.text, "html.parser")
-            .find("div", {"class": "store-finder__main"})
-            .find("div", {"class": "time"})
-            .text.replace("\n", "")
-        )
         try:
-            hours = hours.split("-")[0]
+            hours = (
+                BeautifulSoup(r.text, "html.parser")
+                .find("table", {"class": "hours-table"})
+                .text.replace("\n", " ")
+                .replace("day", "day ")
+                .replace(":00", ":00 ")
+                .replace(":30", ":30 ")
+                .strip()
+            )
         except:
-            pass
+            hours = "<MISSING>"
         if "Due to" in hours:
             hours = "<MISSING>"
         if len(phone) < 3:
@@ -82,33 +55,31 @@ def fetch_data():
         if len(pcode) < 2:
             pcode = city
             city = street.strip().split(" ")[-1]
-        data.append(
-            [
-                "https://www.fishkeeper.co.uk/",
-                link,
-                title,
-                street,
-                city,
-                state,
-                pcode.replace("\xa0", ""),
-                "UK",
-                store,
-                phone,
-                "<MISSING>",
-                lat,
-                longt,
-                hours,
-            ]
+        yield SgRecord(
+            locator_domain="https://www.fishkeeper.co.uk/",
+            page_url=link,
+            location_name=title,
+            street_address=street.strip(),
+            city=city.strip(),
+            state=state.strip(),
+            zip_postal=pcode.replace("\xa0", ""),
+            country_code="UK",
+            store_number=store,
+            phone=phone.strip(),
+            location_type="<MISSING>",
+            latitude=lat,
+            longitude=longt,
+            hours_of_operation=hours,
         )
-
-        p += 1
-    return data
 
 
 def scrape():
-
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()

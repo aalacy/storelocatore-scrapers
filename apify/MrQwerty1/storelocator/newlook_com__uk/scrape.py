@@ -1,148 +1,106 @@
-import csv
-import json
-
-from concurrent import futures
-from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgzip.dynamic import SearchableCountries, DynamicGeoSearch
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def get_urls():
-    session = SgRequests()
-    r = session.get("https://www.newlook.com/uk/sitemap/maps/sitemap_uk_pos_en_1.xml")
-    tree = html.fromstring(r.content)
-
-    return tree.xpath(
-        "//loc[contains(text(), 'https://www.newlook.com/uk/store/')]/text()"
+def fetch_data(sgw: SgWriter):
+    search = DynamicGeoSearch(
+        expected_search_radius_miles=5,
+        country_codes=[SearchableCountries.BRITAIN, SearchableCountries.IRELAND],
     )
+    for lat, lng in search:
+        params = {
+            "countryCode": search.current_country().upper(),
+            "latitude": str(lat),
+            "longitude": str(lng),
+        }
+        r = session.get(api, headers=headers, params=params)
+        js = r.json()["data"]["results"]
 
+        for j in js:
+            location_name = j.get("displayName") or ""
+            message = j.get("exceptionalMessage") or ""
+            if "closed" in location_name.lower() or "closed" in message.lower():
+                continue
 
-def get_data(page_url):
-    locator_domain = "https://www.newlook.com/"
-    if page_url.lower().find("closed") != -1:
-        return
+            a = j.get("address") or {}
+            raw_address = a.get("formattedAddress")
+            adr1 = a.get("line1") or ""
+            adr2 = a.get("line2") or ""
+            street_address = f"{adr1} {adr2}".strip()
+            city = a.get("town")
+            postal = a.get("postalCode")
+            try:
+                country_code = a["country"]["isocode"]
+            except:
+                country_code = search.current_country().upper()
+            store_number = j.get("name")
+            slug = j.get("url")
+            page_url = f"https://www.newlook.com{slug}"
+            phone = a.get("phone")
 
-    session = SgRequests()
-    r = session.get(page_url)
-    tree = html.fromstring(r.text)
-    text = "".join(tree.xpath("//script[@id='store-hours']/text()"))
-    if not text:
-        return
+            g = j.get("geoPoint") or {}
+            latitude = g.get("latitude")
+            longitude = g.get("longitude")
 
-    j = json.loads(text)
-    location_name = j.get("name").replace("&#39;", "'")
-    a = j.get("address") or {}
-    line = (
-        "".join(tree.xpath("//p[@class='store-results__address']/text()"))
-        .replace("&#39;", "'")
-        .strip()
-    )
-    city = a.get("addressLocality").replace("&#39;", "'") or "<MISSING>"
-    try:
-        street_address = line.split(f", {city},")[0].strip()
-    except:
-        street_address = a.get("streetAddress") or "<MISSING>"
+            _tmp = []
+            try:
+                hours = j["openingHours"]["weekDayOpeningList"]
+            except KeyError:
+                hours = []
 
-    street_address = street_address.replace(", Speke", "").replace(", Skelmersdale", "")
-    state = "<MISSING>"
-    postal = a.get("postalCode") or "<MISSING>"
-    country_code = "GB"
+            for h in hours:
+                day = h.get("weekDay")
+                if h.get("closed"):
+                    _tmp.append(f"{day}: Closed")
+                    continue
 
-    if "," in location_name:
-        location_name = location_name.split(",")[0].strip()
-    store_number = page_url.split("-")[-1]
-    phone = j.get("telephone") or "<MISSING>"
-    g = j.get("geo") or {}
-    latitude = g.get("latitude") or "<MISSING>"
-    longitude = g.get("longitude") or "<MISSING>"
-    location_type = "<MISSING>"
+                start = h["openingTime"]["formattedHour"]
+                end = h["closingTime"]["formattedHour"]
+                _tmp.append(f"{day}: {start}-{end}")
 
-    _tmp = []
-    hours = j.get("openingHoursSpecification") or []
+            hours_of_operation = ";".join(_tmp)
 
-    for h in hours:
-        day = h.get("dayOfWeek").split("/")[-1]
-        start = h.get("opens")
-        close = h.get("closes")
-        if start != close:
-            _tmp.append(f"{day}: {start} - {close}")
-        else:
-            _tmp.append(f"{day}: Closed")
+            row = SgRecord(
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                zip_postal=postal,
+                country_code=country_code,
+                latitude=latitude,
+                longitude=longitude,
+                phone=phone,
+                store_number=store_number,
+                raw_address=raw_address,
+                hours_of_operation=hours_of_operation,
+                locator_domain=locator_domain,
+            )
 
-    hours_of_operation = ";".join(_tmp) or "<MISSING>"
-    message = "".join(tree.xpath("//p[@class='store-results__message']/text()")).strip()
-    if message.lower().find("closed") != -1:
-        location_type = message
-
-    if tree.xpath("//p[text()='Coming Soon']"):
-        location_type = "Coming Soon"
-
-    row = [
-        locator_domain,
-        page_url,
-        location_name,
-        street_address,
-        city,
-        state,
-        postal,
-        country_code,
-        store_number,
-        phone,
-        location_type,
-        latitude,
-        longitude,
-        hours_of_operation,
-    ]
-
-    return row
-
-
-def fetch_data():
-    out = []
-    urls = get_urls()
-
-    with futures.ThreadPoolExecutor(max_workers=5) as executor:
-        future_to_url = {executor.submit(get_data, url): url for url in urls}
-        for future in futures.as_completed(future_to_url):
-            row = future.result()
-            if row:
-                out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+            sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://www.newlook.com/"
+    api = "https://www.newlook.com/row/json/store-finder/getStores.json"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:99.0) Gecko/20100101 Firefox/99.0",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+        "Connection": "keep-alive",
+        "Upgrade-Insecure-Requests": "1",
+        "Sec-Fetch-Dest": "document",
+        "Sec-Fetch-Mode": "navigate",
+        "Sec-Fetch-Site": "none",
+        "Sec-Fetch-User": "?1",
+        "Cache-Control": "max-age=0",
+    }
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(
+            RecommendedRecordIds.PageUrlId, duplicate_streak_failure_factor=-1
+        )
+    ) as writer:
+        fetch_data(writer)

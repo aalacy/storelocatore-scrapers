@@ -1,67 +1,110 @@
-import csv
-import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
-import sgzip
 import json
 from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
-logger = SgLogSetup().get_logger('savealot_com')
-
-
+logger = SgLogSetup().get_logger("savealot_com")
 
 session = SgRequests()
-headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
-           }
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+}
 
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-        for row in data:
-            writer.writerow(row)
 
 def fetch_data():
-    ids = []
-    for code in sgzip.for_radius(50):
-        logger.info(('Pulling Zip Code %s...' % code))
-        try:
-            url = 'https://savealot.com/grocery-stores/locationfinder/modules/multilocation/?near_location=' + code + '&threshold=4000&services__in=&within_business=true'
-            r = session.get(url, headers=headers, verify=False)
-            array = json.loads(r.content)['objects']
+    for x in range(40, 100):
+        for y in range(-250, -120):
+            midlat = str(x / 2)
+            midlng = str(y / 2)
+            lowlat = str(int(x) / 2 - 1)
+            lowlng = str(int(y) / 2 - 1)
+            hilat = str(int(x) / 2 + 1)
+            hilng = str(int(y) / 2 + 1)
+            url = (
+                "https://savealot.com/wp-json/locator/v1/search/"
+                + midlat
+                + "/"
+                + midlng
+                + "/"
+                + lowlat
+                + "/"
+                + lowlng
+                + "/"
+                + hilat
+                + "/"
+                + hilng
+            )
+            logger.info(url)
+            r = session.get(url, headers=headers)
+            array = json.loads(r.content)
             for item in array:
-                website = 'savealot.com'
-                phone = item['phonemap_e164']['phone']
-                state = item['state_name']
-                store = item['id']
-                purl = item['location_url']
-                city = item['city']
-                name = 'Save A Lot'
-                add = item['street']
-                zc = item['postal_code']
-                country = 'US'
-                typ = 'Store'
-                lat = item['lat']
-                lng = item['lon']
-                hrs = item['hours_by_type']['primary']['hours']
+                website = "savealot.com"
+                phone = item["primary_phone"]
+                state = item["state"]
+                store = item["store"]
+                zc = item["postal_code"]
+                city = item["city"]
+                purl = (
+                    "https://savealot.com/grocery-stores/"
+                    + city.replace(" ", "-").replace(".", "")
+                    + "-"
+                    + zc
+                    + "-"
+                    + store
+                )
+                purl = purl.lower()
+                name = "Save A Lot"
+                add = item["street"]
+                country = "US"
+                typ = "Store"
+                lat = item["lat"]
+                lng = item["lng"]
+                hours = ""
                 try:
-                    hours = 'Mon: ' + hrs[0][0][0] + '-' + hrs[0][0][1]
-                    hours = hours + '; ' + 'Tue: ' + hrs[1][0][0] + '-' + hrs[1][0][1]
-                    hours = hours + '; ' + 'Wed: ' + hrs[2][0][0] + '-' + hrs[2][0][1]
-                    hours = hours + '; ' + 'Thu: ' + hrs[3][0][0] + '-' + hrs[3][0][1]
-                    hours = hours + '; ' + 'Fri: ' + hrs[4][0][0] + '-' + hrs[4][0][1]
-                    hours = hours + '; ' + 'Sat: ' + hrs[5][0][0] + '-' + hrs[5][0][1]
-                    hours = hours + '; ' + 'Sun: ' + hrs[6][0][0] + '-' + hrs[6][0][1]
+                    r2 = session.get(purl, headers=headers)
+                    for line2 in r2.iter_lines():
+                        if 'class="day">' in line2:
+                            day = line2.split('class="day">')[1].split("<")[0]
+                        if '<span class="hours">' in line2:
+                            hrs = (
+                                day
+                                + ": "
+                                + line2.split('<span class="hours">')[1].split("<")[0]
+                            )
+                            if hours == "":
+                                hours = hrs
+                            else:
+                                hours = hours + "; " + hrs
                 except:
-                    hours = '<MISSING>'
-                hours = hours.replace(':00:00',':00').replace(':30:00',':30')
-                if store not in ids:
-                    ids.append(store)
-                    yield [website, purl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
-        except:
-            pass
+                    pass
+                if hours == "":
+                    hours = "<MISSING>"
+                yield SgRecord(
+                    locator_domain=website,
+                    page_url=purl,
+                    location_name=name,
+                    street_address=add,
+                    city=city,
+                    state=state,
+                    zip_postal=zc,
+                    country_code=country,
+                    phone=phone,
+                    location_type=typ,
+                    store_number=store,
+                    latitude=lat,
+                    longitude=lng,
+                    hours_of_operation=hours,
+                )
+
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
+        for rec in results:
+            writer.write_row(rec)
+
 
 scrape()

@@ -1,51 +1,22 @@
-import csv
-
-from concurrent import futures
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
-
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from concurrent import futures
 
 
 def get_urls():
-    session = SgRequests()
     r = session.get("https://www.fitworks.com/")
     tree = html.fromstring(r.text)
 
-    return tree.xpath("//a[@class='dropdown-link-3 w-dropdown-link']/@href")
+    return tree.xpath(
+        "//a[@class='dropdown-link-3 w-dropdown-link' and contains(@href, 'location')]/@href"
+    )
 
 
-def get_data(page_url):
-    locator_domain = "https://www.fitworks.com/"
-
-    session = SgRequests()
+def get_data(page_url, sgw: SgWriter):
     r = session.get(page_url)
     tree = html.fromstring(r.text)
 
@@ -59,14 +30,7 @@ def get_data(page_url):
     line = line.split(",")[1].strip()
     state = line.split()[0]
     postal = line.split()[1]
-    country_code = "US"
-    store_number = "<MISSING>"
-    phone = (
-        "".join(tree.xpath("//a[contains(@href, 'tel')]/text()")).strip() or "<MISSING>"
-    )
-    latitude = "<MISSING>"
-    longitude = "<MISSING>"
-    location_type = "<MISSING>"
+    phone = "".join(tree.xpath("//a[contains(@href, 'tel')]/text()")).strip()
 
     _tmp = []
     hours = tree.xpath("//div[text()='Club hours']/following-sibling::div[1]//text()")
@@ -75,46 +39,35 @@ def get_data(page_url):
             continue
         _tmp.append(h.strip())
 
-    hours_of_operation = ";".join(_tmp) or "<MISSING>"
+    hours_of_operation = ";".join(_tmp)
 
-    row = [
-        locator_domain,
-        page_url,
-        location_name,
-        street_address,
-        city,
-        state,
-        postal,
-        country_code,
-        store_number,
-        phone,
-        location_type,
-        latitude,
-        longitude,
-        hours_of_operation,
-    ]
+    row = SgRecord(
+        page_url=page_url,
+        location_name=location_name,
+        street_address=street_address,
+        city=city,
+        state=state,
+        zip_postal=postal,
+        country_code="US",
+        phone=phone,
+        locator_domain=locator_domain,
+        hours_of_operation=hours_of_operation,
+    )
 
-    return row
+    sgw.write_row(row)
 
 
-def fetch_data():
-    out = []
+def fetch_data(sgw: SgWriter):
     urls = get_urls()
 
     with futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {executor.submit(get_data, url): url for url in urls}
+        future_to_url = {executor.submit(get_data, url, sgw): url for url in urls}
         for future in futures.as_completed(future_to_url):
-            row = future.result()
-            if row:
-                out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+            future.result()
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://www.fitworks.com/"
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        fetch_data(writer)

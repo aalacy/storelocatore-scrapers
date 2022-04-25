@@ -1,8 +1,10 @@
 from bs4 import BeautifulSoup
-import csv
 import json
-
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
 headers = {
@@ -10,75 +12,39 @@ headers = {
 }
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
 def fetch_data():
-    data = []
+
     titlelist = []
-    state_list = []
-    url = "https://www.extraspace.com/help/accessibility-commitment/"
-    try:
-        r = session.get(url)
-    except:
-        pass
-    soup = BeautifulSoup(r.text, "html.parser")
-    maindiv = soup.findAll("a")
-    for lt in maindiv:
+    url = "https://www.extraspace.com/sitemap/states/"
+    r = session.get(url, headers=headers)
+    statelist = r.text.split(
+        '"linkReference":"https://www.extraspace.com/sitemap/states/'
+    )[1:]
+
+    for st in statelist:
+        statelink = "https://www.extraspace.com/sitemap/states/" + st.split('"', 1)[0]
+
         try:
-            if lt["href"].find("SiteMap-") > -1:
-                state_list.append("https://www.extraspace.com" + lt["href"])
-        except:
-            pass
-    p = 0
-    for alink in state_list:
-        statelink = alink
-        try:
-            r1 = session.get(statelink, headers=headers, verify=False)
+            r1 = session.get(statelink, headers=headers)
         except:
             pass
         soup1 = BeautifulSoup(r1.text, "html.parser")
-        maindiv1 = soup1.find("div", {"id": "acc-main"})
-        link_list = maindiv1.findAll("a")
+        link_list = soup1.select("a[href*=facilities]")
+
         for alink in link_list:
-            if alink.text.find("Extra Space Storage #") > -1:
+
+            if alink["href"].split("/")[-2].isdigit():
                 link = "https://www.extraspace.com" + alink["href"]
-                r2 = session.get(link, headers=headers, verify=False)
+
+                r2 = session.get(link, headers=headers)
                 try:
                     content = r2.text.split(' "@type": "SelfStorage",', 1)[1].split(
                         "</script>"
                     )[0]
+                    content = "{" + content
+                    content = json.loads(content)
                 except:
                     continue
-                content = "{" + content
-                content = json.loads(content)
                 city = content["address"]["addressLocality"]
                 state = content["address"]["addressRegion"]
                 pcode = content["address"]["postalCode"]
@@ -121,32 +87,34 @@ def fetch_data():
                 if street in titlelist:
                     continue
                 titlelist.append(street)
-                data.append(
-                    [
-                        "https://www.extraspace.com",
-                        link,
-                        title.replace("?", ""),
-                        street.replace("<br />", " "),
-                        city,
-                        state,
-                        pcode,
-                        "US",
-                        store,
-                        phone,
-                        "<MISSING>",
-                        lat,
-                        longt,
-                        hours,
-                    ]
-                )
 
-                p += 1
-    return data
+                yield SgRecord(
+                    locator_domain="https://www.extraspace.com",
+                    page_url=link,
+                    location_name=title.replace("?", ""),
+                    street_address=street.replace("<br />", " ").strip(),
+                    city=city.strip(),
+                    state=state.strip(),
+                    zip_postal=pcode.strip(),
+                    country_code="US",
+                    store_number=str(store),
+                    phone=phone.strip(),
+                    location_type=SgRecord.MISSING,
+                    latitude=str(lat),
+                    longitude=str(longt),
+                    hours_of_operation=hours,
+                )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()

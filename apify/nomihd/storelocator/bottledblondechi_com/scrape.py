@@ -36,6 +36,8 @@ def fetch_data():
         log.info(page_url)
         store_req = session.get(page_url, headers=headers)
         if store_req.ok:
+            if "OPENING" in store_req.text:
+                continue
             store_sel = lxml.html.fromstring(store_req.text)
 
             locator_domain = website

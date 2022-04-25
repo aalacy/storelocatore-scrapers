@@ -1,128 +1,98 @@
-import csv
-import json
-
-from concurrent import futures
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from concurrent import futures
+from sglogging import sglog
 
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
+logger = sglog.SgLogSetup().get_logger(logger_name="publicstorage.com")
 
 
 def get_urls():
-    session = SgRequests()
-    r = session.get("https://www.publicstorage.com/sitemap_plp.xml")
+    r = session.get("https://www.publicstorage.com/sitemap_plp.xml", headers=headers)
     tree = html.fromstring(r.content)
 
     return tree.xpath("//loc/text()")
 
 
-def get_data(page_url):
-    locator_domain = "https://www.publicstorage.com/"
-
-    session = SgRequests()
-    r = session.get(page_url)
-    tree = html.fromstring(r.text)
-    text = "".join(tree.xpath("//script[@type='application/ld+json']/text()")).strip()
-    if not text:
-        return
-    j = json.loads(text)["@graph"][0]
-
-    location_name = "".join(tree.xpath("//h1/text()")).strip()
-    a = j.get("address")
-    street_address = a.get("streetAddress") or "<MISSING>"
-    city = a.get("addressLocality") or "<MISSING>"
-    state = a.get("addressRegion") or "<MISSING>"
-    postal = a.get("postalCode") or "<MISSING>"
-    if len(postal) == 4:
-        postal = f"0{postal}"
-    country_code = a.get("addressCountry") or "<MISSING>"
+def get_data(page_url, sgw: SgWriter):
     store_number = page_url.split("/")[-1]
-    phone = j.get("telephone") or "<MISSING>"
-    phone = phone.replace("+", "")
-    g = j.get("geo") or {}
-    latitude = g.get("latitude") or "<MISSING>"
-    longitude = g.get("longitude") or "<MISSING>"
-    location_type = "<MISSING>"
+    api_url = f"https://www.publicstorage.com/api/sitecore/properties/getpropertyjsonld?siteid={store_number}"
+    r = session.get(api_url, headers=headers)
+    logger.info(f"{api_url} >> Response: {r.status_code}")
+    try:
+        j = r.json()["@graph"][0]
 
-    _tmp = []
-    hours = j.get("openingHoursSpecification") or []
-    for h in hours:
-        day = ",".join(h.get("dayOfWeek"))
-        start = h.get("opens")
-        end = h.get("closes")
-        _tmp.append(f"{day}: {start} - {end}")
+        location_name = j.get("name")
+        a = j.get("address")
+        street_address = a.get("streetAddress")
+        city = a.get("addressLocality")
+        state = a.get("addressRegion")
+        postal = a.get("postalCode")
+        if len(postal) == 4:
+            postal = f"0{postal}"
+        country_code = a.get("addressCountry")
+        phone = j.get("telephone") or ""
+        phone = phone.replace("+", "")
+        g = j.get("geo") or {}
+        latitude = g.get("latitude")
+        longitude = g.get("longitude")
+        if str(latitude) == "0":
+            return
 
-    hours_of_operation = ";".join(_tmp) or "<MISSING>"
+        _tmp = []
+        hours = j.get("openingHoursSpecification") or []
+        for h in hours:
+            day = ",".join(h.get("dayOfWeek"))
+            start = h.get("opens")
+            end = h.get("closes")
+            _tmp.append(f"{day}: {start} - {end}")
 
-    row = [
-        locator_domain,
-        page_url,
-        location_name,
-        street_address,
-        city,
-        state,
-        postal,
-        country_code,
-        store_number,
-        phone,
-        location_type,
-        latitude,
-        longitude,
-        hours_of_operation,
-    ]
+        hours_of_operation = ";".join(_tmp)
 
-    return row
+        row = SgRecord(
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            locator_domain=locator_domain,
+            hours_of_operation=hours_of_operation,
+        )
+
+        sgw.write_row(row)
+
+    except Exception as e:
+        logger.info(
+            f"Err 'Oops...Something went wrong':{e}, {api_url} >> Response: {r.status_code}"
+        )
+        pass
 
 
-def fetch_data():
-    out = []
-    s = set()
+def fetch_data(sgw: SgWriter):
     urls = get_urls()
-
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {executor.submit(get_data, url): url for url in urls}
+    logger.info(f"Total Stores: {len(urls)}")
+    with futures.ThreadPoolExecutor(max_workers=3) as executor:
+        future_to_url = {executor.submit(get_data, url, sgw): url for url in urls}
         for future in futures.as_completed(future_to_url):
-            row = future.result()
-            if row:
-                check = tuple(row[2:6])
-                if check not in s:
-                    s.add(check)
-                    out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+            future.result()
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://www.publicstorage.com/"
+    session = SgRequests()
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:92.0) Gecko/20100101 Firefox/92.0",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+    }
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        fetch_data(writer)

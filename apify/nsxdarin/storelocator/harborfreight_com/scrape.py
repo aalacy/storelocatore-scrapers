@@ -1,8 +1,11 @@
-import csv
 from sgrequests import SgRequests
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 from sglogging import SgLogSetup
 import json
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 logger = SgLogSetup().get_logger("harborfreight_com")
 
@@ -13,98 +16,80 @@ headers = {
 
 search = DynamicGeoSearch(
     country_codes=[SearchableCountries.USA],
-    max_radius_miles=50,
+    max_search_distance_miles=50,
     max_search_results=None,
 )
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
-
-
 def fetch_data():
-    ids = []
     typ = "<MISSING>"
     website = "harborfreight.com"
-    for lat, lng in search:
-        logger.info(str(lat) + "-" + str(lng))
-        url = (
-            "https://www.harborfreight.com/api/storelocator/location_api/page?lat="
-            + str(lat)
-            + "&lng="
-            + str(lng)
-        )
-        r = session.get(url, headers=headers)
-        for item in json.loads(r.content)["data"]["stores"]:
-            store = item["number"]
-            loc = "https://www.harborfreight.com/storelocator/store?number=" + store
-            name = item["name"]
-            country = "US"
-            add = item["address"]
-            city = item["city"]
-            state = item["state"]
-            zc = item["zip"]
-            phone = item["phone"]
-            lat = item["latitude"]
-            lng = item["longitude"]
-            hours = (
-                str(item["open_hours"])
-                .replace("', '", "; ")
-                .replace("'", "")
-                .replace("{", "")
-                .replace("}", "")
-                .strip()
+    for clat, clng in search:
+        try:
+            logger.info(str(clat) + "-" + str(clng))
+            url = (
+                "https://api.harborfreight.com/graphql?operationName=FindStoresNearCoordinates&variables=%7B%22filter%22%3A%7B%22status%22%3A%22OPEN%22%7D%2C%22latitude%22%3A"
+                + str(clat)
+                + "%2C%22longitude%22%3A"
+                + str(clng)
+                + "%2C%22withDistance%22%3Atrue%7D&extensions=%7B%22persistedQuery%22%3A%7B%22sha256Hash%22%3A%22de67488071fd8519ed17e17001d8aaf81efa1521%22%7D%7D"
             )
-            status = item["status"]
-            if store not in ids:
+            r = session.get(url, headers=headers)
+            for item in json.loads(r.content)["data"]["findStoresNearCoordinates"][
+                "stores"
+            ]:
+                store = item["store_number"]
+                loc = "https://www.harborfreight.com/storelocator/store?number=" + store
+                name = item["title"]
+                country = "US"
+                add = item["address"]
+                city = item["city"]
+                state = item["state"]
+                zc = item["postcode"]
+                phone = item["telephone"]
+                lat = item["latitude"]
+                lng = item["longitude"]
+                hours = (
+                    "Mon-Fri: "
+                    + item["store_hours_mf"]
+                    + "; Sat: "
+                    + item["store_hours_sat"]
+                    + "; Sun: "
+                    + item["store_hours_sun"]
+                )
+                status = item["status"]
                 if status == "NEW" or status == "OPEN":
-                    ids.append(store)
                     if add == "":
                         add = "<MISSING>"
-                    yield [
-                        website,
-                        loc,
-                        name,
-                        add,
-                        city,
-                        state,
-                        zc,
-                        country,
-                        store,
-                        phone,
-                        typ,
-                        lat,
-                        lng,
-                        hours,
-                    ]
+                    yield SgRecord(
+                        locator_domain=website,
+                        page_url=loc,
+                        location_name=name,
+                        street_address=add,
+                        city=city,
+                        state=state,
+                        zip_postal=zc,
+                        country_code=country,
+                        phone=phone,
+                        location_type=typ,
+                        store_number=store,
+                        latitude=lat,
+                        longitude=lng,
+                        hours_of_operation=hours,
+                    )
+        except:
+            pass
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(
+        deduper=SgRecordDeduper(
+            RecommendedRecordIds.StoreNumberId, duplicate_streak_failure_factor=-1
+        )
+    ) as writer:
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()

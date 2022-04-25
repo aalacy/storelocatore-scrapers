@@ -5,6 +5,8 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import json
 import lxml.html
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "mrgreek.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -26,6 +28,8 @@ def fetch_data():
     stores = stores_raw_text.split("googleMapsLocations.push(")
     for index in range(1, len(stores)):
         store_json = json.loads(stores[index].split(");")[0].strip())
+        if "estHref" not in store_json:
+            continue
         page_url = store_json["estHref"]
         locator_domain = website
         location_name = store_json["estName"].replace("&amp;", "&").strip()
@@ -65,7 +69,7 @@ def fetch_data():
 
         hours_of_operation = "; ".join(hours_list).strip()
         latitude = store_json["centerLat"]
-        longitude = store_json["centerLat"]
+        longitude = store_json["centerLon"]
 
         yield SgRecord(
             locator_domain=locator_domain,
@@ -88,7 +92,9 @@ def fetch_data():
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.StoreNumberId)
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

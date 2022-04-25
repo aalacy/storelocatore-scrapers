@@ -56,7 +56,7 @@ def request_with_retries(url):
 def _d(sp1, page_url):
     street_address = sp1.select_one("span.c-address-street-1").text.strip()
     if sp1.select_one("span.c-address-street-2"):
-        street_address += " " + sp1.select_one("span.c-address-street-1").text.strip()
+        street_address += " " + sp1.select_one("span.c-address-street-2").text.strip()
     hours = [hh["content"] for hh in sp1.select("table.c-hours-details tbody tr")]
     phone = ""
     if sp1.select_one("div#phone-main"):
@@ -114,6 +114,8 @@ if __name__ == "__main__":
                     SgRecord.Headers.STREET_ADDRESS,
                     SgRecord.Headers.PHONE,
                     SgRecord.Headers.PAGE_URL,
+                    SgRecord.Headers.LATITUDE,
+                    SgRecord.Headers.LONGITUDE,
                 }
             )
         )

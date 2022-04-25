@@ -1,208 +1,72 @@
-import csv
-import json
-import usaddress
 from lxml import etree
 
 from sgrequests import SgRequests
-
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
+from sgselenium import SgFirefox
 
 
 def fetch_data():
-    # Your scraper here
     session = SgRequests()
-
-    items = []
-
-    DOMAIN = "eegees.com"
-    start_url = "https://eegees.com/wp-admin/admin-ajax.php?action=get_locations"
-
+    domain = "eegees.com"
+    start_url = "https://eegees.com/locations/"
     response = session.get(start_url)
-    data = json.loads(response.text)
+    dom = etree.HTML(response.text)
 
-    for poi in data:
-        hoo_html = etree.HTML(poi["info_popup"])
-        all_text = hoo_html.xpath('//div[@id="maps-popup"]//text()')
-        all_text = [elem.strip() for elem in all_text if elem.strip()]
+    all_locations = dom.xpath('//a[contains(text(), "View Location")]/@href')
+    for page_url in all_locations:
+        with SgFirefox() as driver:
+            driver.get(page_url)
+            loc_dom = etree.HTML(driver.page_source)
+        location_name = loc_dom.xpath('//h1/span[@class="heading"]/text()')[0]
+        raw_adr = loc_dom.xpath(
+            '//h2[contains(text(), "Address")]/following-sibling::p/text()'
+        )
+        phone = loc_dom.xpath('//a[contains(@href, "tel")]/text()')[0]
+        geo = (
+            loc_dom.xpath('//a[contains(@href, "maps?ll")]/@href')[0]
+            .split("ll=")[-1]
+            .split("&")[0]
+            .split(",")
+        )
+        hoo = loc_dom.xpath(
+            '//h2[contains(text(), "Lobby Hours")]/following-sibling::p/text()'
+        )
+        hoo = [e.strip() for e in hoo if e.strip()]
+        hoo = " ".join(hoo)
 
-        store_url = "https://eegees.com/locations/"
-        location_name = poi["title"]
-        location_name = (
-            location_name.replace("&#8211;", "").replace("&#8217;", "'")
-            if location_name
-            else "<MISSING>"
+        item = SgRecord(
+            locator_domain=domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=raw_adr[0],
+            city=raw_adr[-1].split(", ")[0],
+            state=raw_adr[-1].split(", ")[-1].split()[0],
+            zip_postal=raw_adr[-1].split(", ")[-1].split()[-1],
+            country_code=SgRecord.MISSING,
+            store_number=SgRecord.MISSING,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=geo[0],
+            longitude=geo[1],
+            hours_of_operation=hoo,
         )
 
-        try:
-            add_raw = etree.HTML(poi["sidebar_info"])
-            add_raw = " ".join(add_raw.xpath("//text()"))
-            address_dict = usaddress.tag(add_raw)[0]
-        except Exception:
-            if poi["address"]:
-                address_dict = usaddress.tag(poi["address"])[0]
-            else:
-                address_dict = usaddress.tag(
-                    poi["title"].replace("&#8211;", "").replace("Blimpie&#8217;s", "")
-                )[0]
-
-        AddressNumber = address_dict.get("AddressNumber")
-        AddressNumber = AddressNumber if AddressNumber else " "
-        StreetNamePreDirectional = address_dict.get("StreetNamePreDirectional")
-        StreetNamePreDirectional = (
-            StreetNamePreDirectional if StreetNamePreDirectional else " "
-        )
-        StreetName = address_dict.get("StreetName")
-        StreetName = StreetName if StreetName else " "
-        StreetNamePostType = address_dict.get("StreetNamePostType")
-        StreetNamePostType = StreetNamePostType if StreetNamePostType else " "
-        OccupancyType = address_dict.get("OccupancyType")
-        OccupancyType = OccupancyType if OccupancyType else " "
-        OccupancyIdentifier = address_dict.get("OccupancyIdentifier")
-        OccupancyIdentifier = OccupancyIdentifier if OccupancyIdentifier else " "
-
-        street_address = f"{AddressNumber} {StreetNamePreDirectional} {StreetName} {StreetNamePostType} {OccupancyType} {OccupancyIdentifier}".replace(
-            "  ", " "
-        )
-        if not street_address.strip():
-            street_address = address_dict["BuildingName"]
-        city = address_dict.get("PlaceName")
-        if not city:
-            address_dict = usaddress.tag(poi["address"])[0]
-            city = address_dict.get("PlaceName")
-            if not city:
-                address_dict = usaddress.tag(
-                    poi["title"].replace("&#8211;", "").replace("Blimpie&#8217;s", "")
-                )[0]
-                zip_code = address_dict.get("PlaceName")
-        city = city if city else "<MISSING>"
-        state = address_dict.get("StateName")
-        if not state:
-            address_dict = usaddress.tag(poi["address"])[0]
-            state = address_dict.get("StateName")
-            if not city:
-                address_dict = usaddress.tag(
-                    poi["title"].replace("&#8211;", "").replace("Blimpie&#8217;s", "")
-                )[0]
-                state = address_dict.get("StateName")
-            if not state:
-                state = usaddress.tag(all_text[2])[0].get("StateName")
-        state = state if state else "<MISSING>"
-        zip_code = address_dict.get("ZipCode")
-        if not zip_code:
-            address_dict = usaddress.tag(poi["address"])[0]
-            zip_code = address_dict.get("ZipCode")
-            if not zip_code:
-                address_dict = usaddress.tag(
-                    poi["title"].replace("&#8211;", "").replace("Blimpie&#8217;s", "")
-                )[0]
-                zip_code = address_dict.get("ZipCode")
-            if not zip_code:
-                zip_code = usaddress.tag(all_text[2])[0].get("ZipCode")
-        zip_code = zip_code if zip_code else "<MISSING>"
-        country_code = "<MISSING>"
-        store_number = poi["id"]
-        phone = poi["phone"]
-        if not phone:
-            phone = all_text[3]
-        phone = phone if phone else "<MISSING>"
-        location_type = poi.get("category_name")
-        location_type = location_type if location_type else "<MISSING>"
-        latitude = poi["lat"]
-        latitude = latitude if latitude else "<MISSING>"
-        longitude = poi["lng"]
-        longitude = longitude if longitude else "<MISSING>"
-
-        hoo = hoo_html.xpath('//h3[contains(text(), "Store Hours")]/following::text()')
-        hoo = [elem.strip() for elem in hoo if elem.strip()][:2]
-        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
-        if hours_of_operation == "<MISSING>":
-            hoo = hoo_html.xpath(
-                '//*[contains(text(), "Store Hours")]/following-sibling::p/text()'
-            )
-            hoo = [elem.strip() for elem in hoo if elem.strip()]
-            if not hoo:
-                hoo = hoo_html.xpath(
-                    '//*[strong[contains(text(), "STORE HOURS")]]//text()'
-                )
-                hoo = [elem.strip() for elem in hoo if elem.strip()]
-            hours_of_operation = (
-                " ".join(hoo).replace("STORE HOURS ", "") if hoo else "<MISSING>"
-            )
-
-        hours_of_operation = hours_of_operation.split("Drive")[0]
-
-        if state == "<MISSING>":
-            if "Arizona" in location_name:
-                state = "Arizona"
-        if "Arizona" in city:
-            city = city.replace("Arizona", "")
-            state = "Arizona"
-
-        street_address = street_address.split("Offers")[0].strip()
-        if "Get" in phone:
-            phone = "<MISSING>"
-        if len(phone.split()) > 2:
-            phone = "<MISSING>"
-        if "," in phone:
-            phone = "<MISSING>"
-
-        street_address = street_address.replace(
-            "Courtney Page Way Courtney Page Way", "Courtney Page Way"
-        )
-
-        item = [
-            DOMAIN,
-            store_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip_code,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-
-        items.append(item)
-
-    return items
+        yield item
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":

@@ -3,16 +3,18 @@ import json
 
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgrequests import SgRequests
 from sglogging import sglog
 
 DOMAIN = "juanvaldezcafe.com/en-us"
 
-MISSING = "<MISSING>"
+MISSING = SgRecord.MISSING
 website = "https://www.juanvaldezcafe.com/"
-jsonUrl = "https://storerocket.global.ssl.fastly.net/api/user/OdJEDYo4WE/locations"
+jsonUrl = "https://api.storerocket.io/api/user/OdJEDYo4WE/locations"
 
-session = SgRequests().requests_retry_session()
+session = SgRequests()
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 
 days = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]
@@ -103,7 +105,9 @@ def scrape():
     count = 0
     start = time.time()
     result = fetchData()
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
+    ) as writer:
         for rec in result:
             writer.write_row(rec)
             count = count + 1

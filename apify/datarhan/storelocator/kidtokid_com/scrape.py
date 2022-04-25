@@ -1,118 +1,140 @@
-import csv
-import json
+from lxml import etree
+from urllib.parse import urljoin
 
 from sgrequests import SgRequests
-
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
-    # Your scraper here
     session = SgRequests()
+    domain = "kidtokid.com"
+    start_url = "https://kidtokid.com/stores/"
 
-    items = []
-    scraped_items = []
+    frm = {
+        "action": "jet_engine_ajax",
+        "handler": "listing_load_more",
+        "query[post_status]": "publish",
+        "query[post_type]": "location",
+        "query[posts_per_page]": "100",
+        "query[paged]": "1",
+        "query[ignore_sticky_posts]": "1",
+        "query[order]": "ASC",
+        "query[orderby]": "name",
+        "query[post__not_in][]": "3873",
+        "query[suppress_filters]": "false",
+        "query[jet_smart_filters]": "jet-engine/usQuery",
+        "widget_settings[lisitng_id]": "1035",
+        "widget_settings[posts_num]": "10",
+        "widget_settings[columns]": "1",
+        "widget_settings[columns_tablet]": "1",
+        "widget_settings[columns_mobile]": "1",
+        "widget_settings[is_archive_template]": "",
+        "widget_settings[post_status][]": "publish",
+        "widget_settings[use_random_posts_num]": "",
+        "widget_settings[max_posts_num]": "9",
+        "widget_settings[not_found_message]": "No stores were found",
+        "widget_settings[is_masonry]": "false",
+        "widget_settings[equal_columns_height]": "",
+        "widget_settings[use_load_more]": "yes",
+        "widget_settings[load_more_id]": "",
+        "widget_settings[load_more_type]": "scroll",
+        "widget_settings[use_custom_post_types]": "",
+        "widget_settings[hide_widget_if]": "",
+        "widget_settings[carousel_enabled]": "",
+        "widget_settings[slides_to_scroll]": "1",
+        "widget_settings[arrows]": "true",
+        "widget_settings[arrow_icon]": "fa fa-angle-left",
+        "widget_settings[dots]": "",
+        "widget_settings[autoplay]": "true",
+        "widget_settings[autoplay_speed]": "5000",
+        "widget_settings[infinite]": "true",
+        "widget_settings[center_mode]": "",
+        "widget_settings[effect]": "slide",
+        "widget_settings[speed]": "500",
+        "widget_settings[inject_alternative_items]": "",
+        "widget_settings[scroll_slider_enabled]": "",
+        "widget_settings[custom_query]": "false",
+        "widget_settings[custom_query_id]": "",
+        "widget_settings[_element_id]": "usQuery",
+        "page_settings[post_id]": "false",
+        "page_settings[queried_id]": "false",
+        "page_settings[element_id]": "false",
+        "page_settings[page]": "1",
+        "listing_type": "false",
+        "isEditMode": "false",
+        "iwcUZYQabyzD": "ecC[sv",
+        "odWjEFpswhQ": "HJ[X1U",
+    }
+    url = "https://kidtokid.com/stores/?nocache=1650582417"
+    hdr = {
+        "accept": "application/json, text/javascript, */*; q=0.01",
+        "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36",
+        "x-requested-with": "XMLHttpRequest",
+    }
+    data = session.post(url, data=frm, headers=hdr).json()
+    dom = etree.HTML(data["data"]["html"])
+    all_locations = dom.xpath('//a[contains(@href, "/location/")]/@href')
+    for url in list(set(all_locations)):
+        page_url = urljoin(start_url, url)
+        loc_response = session.get(page_url)
+        loc_dom = etree.HTML(loc_response.text)
+        if loc_dom.xpath('//div[contains(text(), "coming soon")]'):
+            continue
 
-    DOMAIN = "kidtokid.com"
-    start_url = "https://kidtokid.com/global/gen/model/search?include_classes=sitefile,address&take=6000&class_string=location"
-
-    response = session.get(start_url)
-    data = json.loads(response.text)
-
-    for poi in data["data"]["models"]:
-        store_url = "https://kidtokid.com/location/{}".format(poi["url"])
-        location_name = poi["name"]
-        location_name = location_name if location_name else "<MISSING>"
-        street_address = poi["address"]["street_1"]
-        street_address = street_address if street_address else "<MISSING>"
-        city = poi["address"]["city"]
-        city = city if city else "<MISSING>"
-        state = poi["address"]["state"]
-        state = state if state else "<MISSING>"
-        zip_code = poi["address"]["zipcode"]
-        zip_code = zip_code if zip_code else "<MISSING>"
-        country_code = poi["address"]["country"]
-        store_number = poi["location_id"]
-        phone = poi["phone"]
-        phone = phone if phone else "<MISSING>"
-        location_type = "<MISSING>"
-        latitude = poi["address"]["latitude"]
-        latitude = latitude if latitude else "<MISSING>"
-        longitude = poi["address"]["longitude"]
-        longitude = longitude if longitude else "<MISSING>"
-        hours_of_operation = (
-            poi["c_store-hours"].replace("\n", " ").replace("\t", " ").strip()
-        )
-        if not hours_of_operation:
-            hours_of_operation = (
-                poi["hours_of_operation"].replace("\n", " ").replace("\t", " ")
+        location_name = " ".join(
+            loc_dom.xpath(
+                '//div[@class="elementor-column-wrap elementor-element-populated"]//h1/text()'
             )
-        hours_of_operation = hours_of_operation.split("for high")[0].strip()
-        hours_of_operation = (
-            hours_of_operation.split("or anytime")[0].strip().split("Buying")[0].strip()
         )
-        hours_of_operation = hours_of_operation.split("Face masks")[0].strip()
-        if hours_of_operation.endswith(","):
-            hours_of_operation = hours_of_operation[:-1]
-        if not hours_of_operation:
-            location_type = "coming soon"
-            hours_of_operation = "<MISSING>"
+        raw_address = loc_dom.xpath(
+            '//div[div[h2[contains(text(), "Contact Us")]]]/following-sibling::div//p/text()'
+        )
+        if not raw_address:
+            continue
+        country_code = "US"
+        zip_code = " ".join(raw_address[1].split(", ")[-1].split()[1:])
+        if len(zip_code.split()) == 2:
+            country_code = "CA"
+        phone = loc_dom.xpath('//a[contains(@href, "tel")]/span/text()')[0]
+        hoo = loc_dom.xpath(
+            '//div[div[h2[contains(text(), "Store Hours")]]]/following-sibling::div//text()'
+        )
+        hoo = " ".join([e.strip() for e in hoo if e.strip()])
 
-        item = [
-            DOMAIN,
-            store_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip_code,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
+        item = SgRecord(
+            locator_domain=domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=raw_address[0],
+            city=raw_address[1].split(", ")[0],
+            state=raw_address[1].split(", ")[-1].split()[0],
+            zip_postal=zip_code,
+            country_code=country_code,
+            store_number="",
+            phone=phone,
+            location_type="",
+            latitude="",
+            longitude="",
+            hours_of_operation=hoo,
+        )
 
-        if store_number not in scraped_items:
-            scraped_items.append(store_number)
-            items.append(item)
-
-    return items
+        yield item
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":
