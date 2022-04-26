@@ -1,48 +1,17 @@
-import csv
 from lxml import etree
 from urllib.parse import urljoin
 
 from sgrequests import SgRequests
-from sgscrape.sgpostal import parse_address_usa
-
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+from sgpostal.sgpostal import parse_address_usa
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
-    # Your scraper here
     session = SgRequests()
-
-    items = []
-
-    DOMAIN = "cowboychicken.com"
+    domain = "cowboychicken.com"
     start_url = "https://www.cowboychicken.com/locations/"
 
     response = session.get(start_url)
@@ -58,52 +27,51 @@ def fetch_data():
         parsed_adr = parse_address_usa(raw_address)
         country_code = parsed_adr.country
         city = parsed_adr.city
-        city = city if city else "<MISSING>"
         street_address = parsed_adr.street_address_1
-        try:
-            if street_address.street_address_2:
-                street_address += " " + street_address.street_address_2
-        except:
-            pass
+        if parsed_adr.street_address_2:
+            street_address += " " + parsed_adr.street_address_2
         state = parsed_adr.state
         zip_code = parsed_adr.postcode
-        store_number = "<MISSING>"
         phone = poi_html.xpath('.//a[@class="number-block"]/text()')
-        phone = phone[0] if phone else "<MISSING>"
-        location_type = "<MISSING>"
+        phone = phone[0] if phone else ""
         latitude = poi_html.xpath(".//preceding-sibling::input[3]/@value")[0]
-        latitude = latitude if latitude else "<MISSING>"
         longitude = poi_html.xpath(".//preceding-sibling::input[2]/@value")[0]
-        longitude = longitude if longitude else "<MISSING>"
         hoo = poi_html.xpath('.//ul[@class="inner"]//text()')
         hoo = [elem.strip() for elem in hoo if elem.strip()]
-        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
+        hours_of_operation = " ".join(hoo) if hoo else ""
+        if not hours_of_operation:
+            continue
 
-        item = [
-            DOMAIN,
-            store_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip_code,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
+        item = SgRecord(
+            locator_domain=domain,
+            page_url=store_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zip_code,
+            country_code=country_code,
+            store_number="",
+            phone=phone,
+            location_type="",
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+        )
 
-        items.append(item)
-
-    return items
+        yield item
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":

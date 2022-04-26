@@ -15,9 +15,6 @@ _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
 }
 
-session = SgRequests().requests_retry_session()
-
-
 max_workers = 8
 
 
@@ -46,7 +43,8 @@ def fetchConcurrentList(list, occurrence=max_workers):
 
 
 def request_with_retries(url):
-    return session.get(url, headers=_headers)
+    with SgRequests() as session:
+        return session.get(url, headers=_headers)
 
 
 def fetch_data():
@@ -81,9 +79,13 @@ def fetch_data():
             if temp and "closed" in temp[0].lower():
                 hours = ["closed"]
             else:
+                if len(temp) % 2 != 0:
+                    temp.append("")
                 for x in range(0, len(temp), 2):
                     hours.append(f"{temp[x]} {temp[x+1]}")
             ss = json.loads(sp2.find("script", type="application/ld+json").string)
+            if "opening" in ss["name"].lower():
+                continue
             yield SgRecord(
                 page_url=page_url,
                 location_name=ss["name"],

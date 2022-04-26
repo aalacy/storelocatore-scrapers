@@ -48,7 +48,7 @@ def fetch_data():
     all_locations = []
     all_codes = DynamicZipSearch(
         country_codes=[SearchableCountries.USA],
-        max_radius_miles=100,
+        max_search_distance_miles=100,
         max_search_results=None,
     )
     for code in all_codes:

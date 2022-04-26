@@ -66,13 +66,17 @@ def fetch_data():
                 time = ""
                 if hour["isClosed"] == 1:
                     time = "Closed"
+                    hours_list.append(day + ":" + time)
                 else:
-                    time = hour["openingTime"] + "-" + hour["closingTime"]
-                hours_list.append(day + ":" + time)
+                    if len(hour["openingTime"]) > 0 and len(hour["closingTime"]) > 0:
+                        time = hour["openingTime"] + "-" + hour["closingTime"]
+                        hours_list.append(day + ":" + time)
 
             hours_of_operation = "; ".join(hours_list).strip()
 
             store_number = str(store_json["id"])
+            if len(street_address) <= 0:
+                continue
             yield SgRecord(
                 locator_domain=locator_domain,
                 page_url=page_url,

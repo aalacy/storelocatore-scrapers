@@ -39,8 +39,14 @@ def fetch_data():
                     continue
                 if "Telephone" in _p:
                     phone = _p.split(":")[-1]
-                elif "Opening times" in _p:
-                    hours = _p.replace("Opening times:", "").replace("and", "; ")
+                if "Opening times" in _p:
+                    hours = (
+                        _p.replace("Opening times:", "")
+                        .replace("and", "; ")
+                        .split("Telephone")[0]
+                    )
+                    if not hours:
+                        hours = "; ".join(p.find_next_sibling().stripped_strings)
 
             coord = (
                 sp1.h1.find_next_sibling()

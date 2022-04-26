@@ -43,7 +43,10 @@ def fetch_data():
             if "Opening Soon!" in r.text:
                 continue
             soup = BeautifulSoup(r.text, "html.parser")
-            location_name = soup.find("h1").text.replace("\n", "")
+            try:
+                location_name = soup.find("h1").text.replace("\n", "")
+            except:
+                continue
             try:
                 raw_address = (
                     soup.find("div", {"itemprop": "address"})
@@ -101,7 +104,9 @@ def fetch_data():
             except:
                 pass
             phone = phone.replace("Call", "")
-
+            if not city:
+                city = r.text.split('"city":"')[1].split('"')[0]
+            store_number = r.text.split('"franchisee":"')[1].split('"')[0]
             latitude = MISSING
             longitude = MISSING
             yield SgRecord(
@@ -113,7 +118,7 @@ def fetch_data():
                 state=state.strip(),
                 zip_postal=zip_postal,
                 country_code=country_code,
-                store_number=MISSING,
+                store_number=store_number,
                 phone=phone.strip(),
                 location_type=MISSING,
                 latitude=latitude,

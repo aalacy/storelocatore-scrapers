@@ -142,10 +142,6 @@ def get_data(url, sgw: SgWriter):
         longitude = ll.split("markers=")[1].split(",")[1].split("h")[0].strip()
     except:
         latitude, longitude = "<MISSING>", "<MISSING>"
-    map_link = "".join(tree.xpath("//iframe/@src"))
-    if location_name.find("Tucson") != -1:
-        latitude = map_link.split("!3d")[1].strip().split("!")[0].strip()
-        longitude = map_link.split("!2d")[1].strip().split("!")[0].strip()
 
     row = SgRecord(
         locator_domain=locator_domain,
