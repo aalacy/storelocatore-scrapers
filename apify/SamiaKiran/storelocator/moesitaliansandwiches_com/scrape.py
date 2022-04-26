@@ -68,7 +68,6 @@ def fetch_data():
             driver = get_driver(url, class_name)
         else:
             driver = get_driver(url, class_name, driver=driver)
-        soup = BeautifulSoup(driver.page_source, "html.parser")
         loclist = driver.page_source.split('<script type="application/ld+json">')[1:]
         if len(loclist) == 0:
             continue
