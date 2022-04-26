@@ -22,15 +22,21 @@ def get_urls():
     js = json5.loads(text)
 
     for j in js:
-        urls.append(j.get("slug"))
+        url = j.get("slug")
+        if url:
+            urls.append(url)
 
     return urls
 
 
-def get_data(page_url, sgw: SgWriter):
+def get_data(page_url, sgw: SgWriter, retry=0):
     r = session.get(page_url, headers=headers)
     if r.status_code != 200:
-        logger.info(f"{page_url}: {r.status_code}")
+        logger.info(f"{page_url}: {r.status_code}, retries: {retry}")
+        retry += 1
+        if retry == 3:
+            return
+        get_data(page_url, sgw, retry)
         return
     tree = html.fromstring(r.text)
     text = "".join(tree.xpath("//script[contains(text(), 'window.dataSeo')]/text()"))
@@ -71,7 +77,7 @@ def get_data(page_url, sgw: SgWriter):
 def fetch_data(sgw: SgWriter):
     urls = get_urls()
 
-    with futures.ThreadPoolExecutor(max_workers=3) as executor:
+    with futures.ThreadPoolExecutor(max_workers=2) as executor:
         future_to_url = {executor.submit(get_data, url, sgw): url for url in urls}
         for future in futures.as_completed(future_to_url):
             future.result()
