@@ -1,65 +1,120 @@
-import csv
-from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
-import json
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('bonobos_com')
-
-
-
+import usaddress
+from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+}
 
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-        # Body
-        for row in data:
-            writer.writerow(row)
 
 def fetch_data():
-    base_url = "https://bonobos.com"
-    return_main_object = []
-    r = session.get("https://bonobos.brickworksoftware.com/locations_search?page=0&getRankingInfo=true&facets[]=*&aroundRadius=all&filters=domain:bonobos.brickworksoftware.com+AND+publishedAt%3C%3D1563105560591&esSearch={%22page%22:"+ str(0) + ",%22storesPerPage%22:50,%22domain%22:%22bonobos.brickworksoftware.com%22,%22locale%22:%22en_US%22,%22must%22:[{%22type%22:%22range%22,%22field%22:%22published_at%22,%22value%22:{%22lte%22:1563105560590}}],%22filters%22:[],%22aroundLatLngViaIP%22:true}&aroundLatLngViaIP=true")
-    data = r.json()
-    page_id = data["nbPages"]
-    for k in range(0,page_id):
-        logger.info(k)
-        r = session.get("https://bonobos.brickworksoftware.com/locations_search?page=0&getRankingInfo=true&facets[]=*&aroundRadius=all&filters=domain:bonobos.brickworksoftware.com+AND+publishedAt%3C%3D1563105560591&esSearch={%22page%22:"+ str(k) + ",%22storesPerPage%22:50,%22domain%22:%22bonobos.brickworksoftware.com%22,%22locale%22:%22en_US%22,%22must%22:[{%22type%22:%22range%22,%22field%22:%22published_at%22,%22value%22:{%22lte%22:1563105560590}}],%22filters%22:[],%22aroundLatLngViaIP%22:true}&aroundLatLngViaIP=true")
-        data = r.json()["hits"]
-        for i in range(len(data)):
-            store_data = data[i]
-            store = []
-            store.append("https://bonobos.com")
-            store.append(store_data["attributes"]["name"])
-            store.append(store_data["attributes"]["address1"] + store_data["attributes"]["address2"] if store_data["attributes"]["address2"] != None else store_data["attributes"]["address1"])
-            store.append(store_data["attributes"]["city"])
-            store.append(store_data["attributes"]["state"])
-            store.append(store_data["attributes"]["postalCode"].strip())
-            store.append(store_data["attributes"]["countryCode"])
-            store.append(store_data["id"])
-            store.append(store_data["attributes"]["phoneNumber"])
-            store.append("bonobos")
-            store.append(store_data["_geoloc"]["lat"])
-            store.append(store_data["_geoloc"]["lng"])
-            hours = ""
-            store_hours = store_data["relationships"]["hours"]
-            for j in range(len(store_hours)):
-                if store_hours[j]["closed"] == True or store_hours[j]["closed"] == "true":
-                    pass
-                else:
-                    hours = hours + store_hours[j]["displayDay"] + " " + store_hours[j]["startTime"] + " " + store_hours[j]["endTime"] + " "
-            store.append(hours if hours != "" else "<MISSING>")
-            return_main_object.append(store)
-    return return_main_object
+    cleanr = re.compile(r"<[^>]+>")
+    pattern = re.compile(r"\s\s+")
+    url = "https://bonobos.com/locations"
+    r = session.get(url, headers=headers)
+    soup = BeautifulSoup(r.text, "html.parser")
+    linklist = soup.select("a[href*=locations]")
+    for link in linklist:
+
+        link = link["href"]
+
+        r = session.get(link, headers=headers)
+        soup = BeautifulSoup(r.text, "html.parser")
+
+        content = soup.find("div", {"class": "contentful-block-component"})
+        content = re.sub(cleanr, "\n", str(content))
+        content = re.sub(pattern, "\n", str(content)).replace("\xa0", " ").strip()
+        title = content.splitlines()[0]
+        address = (
+            content.split(title, 1)[1]
+            .split("(", 1)[0]
+            .replace("Get Directions", "")
+            .replace(", US", "")
+            .replace(", Located on the 1st floor", "")
+            .replace("Located at the corner of Court & Dean St", "")
+            .replace("\n", " ")
+            .strip()
+        )
+
+        address = usaddress.parse(address)
+
+        i = 0
+        street = ""
+        city = ""
+        state = ""
+        pcode = ""
+        while i < len(address):
+            temp = address[i]
+            if (
+                temp[1].find("Address") != -1
+                or temp[1].find("Street") != -1
+                or temp[1].find("Recipient") != -1
+                or temp[1].find("Occupancy") != -1
+                or temp[1].find("BuildingName") != -1
+                or temp[1].find("USPSBoxType") != -1
+                or temp[1].find("USPSBoxID") != -1
+            ):
+                street = street + " " + temp[0]
+            if temp[1].find("PlaceName") != -1:
+                city = city + " " + temp[0]
+            if temp[1].find("StateName") != -1:
+                state = state + " " + temp[0]
+            if temp[1].find("ZipCode") != -1:
+                pcode = pcode + " " + temp[0]
+            i += 1
+        street = street.lstrip().replace(",", "")
+        city = city.lstrip().replace(",", "")
+        state = state.lstrip().replace(",", "")
+        pcode = pcode.lstrip().replace(",", "")
+
+        phone = content.split("(", 1)[1].split("\n", 1)[0]
+        phone = "(" + phone
+        hours = (
+            content.split("Hours", 1)[1].split("Book", 1)[0].replace("\n", " ").strip()
+        )
+        try:
+            lat, longt = (
+                r.text.split("https://www.google.com/maps/", 1)[1]
+                .split("@", 1)[1]
+                .split("data", 1)[0]
+                .split(",", 1)
+            )
+            longt = longt.split(",", 1)[0]
+        except:
+            lat = longt = "<MISSING>"
+        yield SgRecord(
+            locator_domain="https://bonobos.com/",
+            page_url=link,
+            location_name=title,
+            street_address=street.strip(),
+            city=city.strip(),
+            state=state.strip(),
+            zip_postal=pcode.strip(),
+            country_code="US",
+            store_number=SgRecord.MISSING,
+            phone=phone.strip(),
+            location_type=SgRecord.MISSING,
+            latitude=str(lat),
+            longitude=str(longt),
+            hours_of_operation=hours,
+        )
+
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+
 
 scrape()
