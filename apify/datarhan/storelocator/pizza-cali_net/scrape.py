@@ -43,7 +43,9 @@ def fetch_data():
             geo = demjson.decode(geo[0])
             latitude = geo["lat"]
             longitude = geo["lng"]
-        hoo = " ".join(loc_dom.xpath('//div[@class="shop-time"]/text()')[0].split())
+        hoo = " ".join(
+            loc_dom.xpath('//div[@class="shop-time"]/text()')[0].split()
+        ).replace("ご注文受付時間:", "")
 
         item = SgRecord(
             locator_domain=domain,
