@@ -1,10 +1,11 @@
 from bs4 import BeautifulSoup as bs
 from sgrequests import SgRequests
 import re
+from sgselenium import SgSelenium
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
+from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.support import expected_conditions as EC
-from sgselenium import SgSelenium
 from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
@@ -140,12 +141,19 @@ def fetch_data():
                     (By.CSS_SELECTOR, "div.autocomplete-suggestions > div")
                 )
             )
-            driver.find_element_by_css_selector(
-                "div.autocomplete-suggestions > div"
-            ).click()
         except:
             input.clear()
             continue
+
+        # Click autocomplete locations
+        try:
+            driver.find_element_by_css_selector(
+                "div.autocomplete-suggestions > div"
+            ).click()
+        except TimeoutException as ex:
+            log.info("Exception has been thrown. " + str(ex))
+            continue
+
         driver = wait_load(driver, "STORE")
         data = (
             bs(driver.page_source, "lxml")
