@@ -1,39 +1,12 @@
-import csv
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
+def fetch_data(sgw: SgWriter):
 
     locator_domain = "https://www.showcasecinemas.com"
     api_url = "https://www.showcasecinemas.com/theaters"
@@ -43,17 +16,18 @@ def fetch_data():
     }
     r = session.get(api_url, headers=headers)
     tree = html.fromstring(r.text)
-    jsblock = (
+    js_block = (
         "".join(tree.xpath('//script[contains(text(), "pc.cinemas")]/text()'))
         .split("pc.cinemas = ")[1]
         .split(";")[0]
         .replace("false", "False")
         .strip()
     )
-    js = eval(jsblock)
+    js = eval(js_block)
     for j in js:
+
         slug = j.get("CinemaInfoUrl")
-        page_url = f"{locator_domain}{slug}"
+        page_url = f"{locator_domain}/{slug}"
         location_name = "".join(j.get("CinemaName"))
         location_type = "Showcase Cinema"
         street_address = j.get("Address1")
@@ -61,16 +35,16 @@ def fetch_data():
         postal = j.get("ZipCode")
         country_code = "USA"
         city = j.get("City")
-        store_number = "<MISSING>"
         latitude = j.get("Latitude")
         longitude = j.get("Longitude")
         phone = "<MISSING>"
-        hours_of_operation = "<MISSING>"
 
-        session = SgRequests()
         r = session.get("https://www.showcasecinemas.com/contact-us", headers=headers)
         tree = html.fromstring(r.text)
         loc_name = tree.xpath("//ul/li/strong")
+
+        hours_of_operation = "<MISSING>"
+
         for l in loc_name:
             l_name = "".join(l.xpath(".//text()")).capitalize()
             if l_name.find(" ") != -1:
@@ -80,31 +54,33 @@ def fetch_data():
             if location_name.find(l_name) != -1:
                 phone = "".join(l.xpath(".//following-sibling::a//text()"))
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
+        r = session.get(page_url, headers=headers)
+        tree = html.fromstring(r.text)
+        cls = "".join(tree.xpath('//*[contains(text(), "TEMPORARILY CLOSED")]/text()'))
+        if cls:
+            hours_of_operation = "Temporarily Closed"
 
-    return out
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=SgRecord.MISSING,
+            phone=phone,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+        )
 
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))) as writer:
+        fetch_data(writer)
