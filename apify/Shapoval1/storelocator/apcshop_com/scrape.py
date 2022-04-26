@@ -43,10 +43,11 @@ def fetch_data(sgw: SgWriter):
             page_url = url_key
         location_name = j.get("name") or "<MISSING>"
         street_address = j.get("street") or "<MISSING>"
-        if str(street_address).find(";") != -1:
-            street_address = str(street_address).split(";")[0].strip()
+        street_address = str(street_address).replace(";", "").strip()
         state = "<MISSING>"
         postal = j.get("zip_code") or "<MISSING>"
+        if street_address.find(f"{postal}") != -1:
+            street_address = street_address.split(f"{postal}")[0].strip()
         country_code = j.get("country")
         city = j.get("city") or "<MISSING>"
         latitude = j.get("latitude") or "<MISSING>"
