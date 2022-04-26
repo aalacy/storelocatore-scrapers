@@ -10,8 +10,6 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 from sglogging import sglog
 
-from sgrequests import SgRequests
-
 from sgselenium.sgselenium import SgChrome
 
 log = sglog.SgLogSetup().get_logger("olimpica_com")
