@@ -37,7 +37,7 @@ def fetch_data():
             .replace("Get Directions", "")
             .replace(", US", "")
             .replace(", Located on the 1st floor", "")
-            .replace("Located at the corner of Court & Dean St", "")
+            .replace("Located at the corner of Court &amp; Dean St", "")
             .replace("\n", " ")
             .strip()
         )
