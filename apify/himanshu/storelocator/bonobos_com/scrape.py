@@ -88,6 +88,8 @@ def fetch_data():
             longt = longt.split(",", 1)[0]
         except:
             lat = longt = "<MISSING>"
+        if ">" in lat:
+            lat = longt = "<MISSING>"
         yield SgRecord(
             locator_domain="https://bonobos.com/",
             page_url=link,
