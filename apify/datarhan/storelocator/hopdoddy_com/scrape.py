@@ -21,27 +21,13 @@ def fetch_data():
     )
 
     for url in all_locations:
-        poi_url = urljoin(start_url, url)
-        loc_response = session.get(poi_url)
+        page_url = urljoin(start_url, url)
+        loc_response = session.get(page_url)
         loc_dom = etree.HTML(loc_response.text)
         poi = loc_dom.xpath('//script[@type="application/ld+json"]/text()')[0]
         poi = json.loads(poi)
-
-        poi_name = poi["name"]
-        street = poi["address"]["streetAddress"]
-        street = street if street else "<MISSING>"
-        city = poi["address"]["addressLocality"]
-        city = city if city else "<MISSING>"
-        state = poi["address"]["addressRegion"]
-        state = state if state else "<MISSING>"
-        zip_code = poi["address"]["postalCode"]
-        zip_code = zip_code if zip_code else "<MISSING>"
-        country_code = poi["address"]["addressCountry"]
-        country_code = country_code if country_code else "<MISSING>"
-        poi_number = loc_dom.xpath("//@data-location-olo-id")[0]
-        phone = poi["telephone"]
-        phone = phone if phone else "<MISSING>"
-        poi_type = poi["@type"]
+        location_name = loc_dom.xpath("//h1/text()")[0]
+        store_number = loc_dom.xpath("//@data-location-olo-id")[0]
         geo = loc_dom.xpath('//iframe[contains(@src, "maps")]/@src')
         latitude = ""
         longitude = ""
@@ -53,7 +39,7 @@ def fetch_data():
         hours_of_operation = []
         hoo_response = session.get(
             "https://na6c0i4fb0.execute-api.us-west-2.amazonaws.com/calendars/{}".format(
-                poi_number
+                store_number
             )
         )
         hoo = json.loads(hoo_response.text)
@@ -63,16 +49,16 @@ def fetch_data():
 
         item = SgRecord(
             locator_domain=domain,
-            page_url=poi_url,
-            location_name=poi_name,
-            street_address=street,
-            city=city,
-            state=state,
-            zip_postal=zip_code,
-            country_code=country_code,
-            store_number="",
-            phone=phone,
-            location_type=poi_type,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=poi["address"]["streetAddress"],
+            city=poi["address"]["addressLocality"],
+            state=poi["address"]["addressRegion"],
+            zip_postal=poi["address"]["postalCode"],
+            country_code=poi["address"]["addressCountry"],
+            store_number=store_number,
+            phone=poi["telephone"],
+            location_type=poi["@type"],
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hoo,
