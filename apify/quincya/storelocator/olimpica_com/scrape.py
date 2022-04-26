@@ -1,3 +1,6 @@
+import ssl
+import time
+
 from bs4 import BeautifulSoup
 
 from sgscrape.sgwriter import SgWriter
@@ -5,54 +8,76 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
+from sglogging import sglog
+
 from sgrequests import SgRequests
+
+from sgselenium.sgselenium import SgChrome
+
+log = sglog.SgLogSetup().get_logger("olimpica_com")
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 
 def fetch_data(sgw: SgWriter):
 
-    base_link = "https://www.olimpica.info/landing/domicilios/index.php"
-
-    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
-    headers = {"User-Agent": user_agent}
+    base_link = "https://www.olimpica.com/nuestras-tiendas"
 
     locator_domain = "https://www.olimpica.com/"
 
-    session = SgRequests()
+    user_agent = (
+        "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0"
+    )
 
-    req = session.get(base_link, headers=headers)
-    base = BeautifulSoup(req.text, "lxml")
+    driver = SgChrome(user_agent=user_agent).driver()
 
-    city_list = base.find(class_="form-control").find_all("option")[1:]
+    driver.get(base_link)
+    time.sleep(2)
+    driver.find_element_by_class_name("css-1wy0on6").click()
+    time.sleep(1)
 
-    for city_row in city_list:
-        city = city_row["value"]
-        payload = {"paises[]": city}
-        response = session.post(base_link, headers=headers, data=payload)
-        base = BeautifulSoup(response.text, "lxml")
+    city_list = driver.find_elements_by_css_selector(".flex.self-center.pr3.w1")[1:]
+    search_button = driver.find_element_by_class_name("ml4")
 
-        items = base.find(class_="table horarios").find_all("tr")[1:]
+    for i, city_item in enumerate(city_list):
+        driver.find_element_by_class_name("css-1wy0on6").click()
+        time.sleep(1)
+
+        try:
+            city_list = driver.find_elements_by_css_selector(
+                ".flex.self-center.pr3.w1"
+            )[1:]
+            time.sleep(1)
+            city_item = city_list[i]
+        except:
+            driver.find_element_by_class_name("css-1wy0on6").click()
+            time.sleep(1)
+            city_list = driver.find_elements_by_css_selector(
+                ".flex.self-center.pr3.w1"
+            )[1:]
+            time.sleep(1)
+            city_item = city_list[i]
+        driver.execute_script("arguments[0].click();", city_item)
+        search_button.click()
+        time.sleep(2)
+        base = BeautifulSoup(driver.page_source, "lxml")
+
+        items = base.find_all(class_="relative olimpica-our-shops-0-x-card")
+        city = base.find(class_="css-dvua67-singleValue").text
+        log.info(city)
 
         for item in items:
-            location_name = item.find("td", attrs={"data-title": "Nombre"}).text
-            street_address = item.find("td", attrs={"data-title": "Dirección"}).text
-            if "direccion" in street_address:
-                continue
+            location_name = item.h3.text.strip()
+            street_address = item.p.text.strip()
             state = ""
             zip_code = ""
             country_code = "CO"
             store_number = ""
             location_type = ""
-            phone = item.find("td", attrs={"data-title": "Directo"}).text
-            if not phone:
-                phone = item.find("td", attrs={"data-title": "Whatsapp"}).text
-            if phone == "0" or phone == "n/a":
-                phone = ""
-            if "TIENE" in phone:
-                phone = ""
-            phone = (
-                phone.split("-")[0].split("\n")[0].split("/")[0].split("EXT")[0].strip()
-            )
-            hours_of_operation = ""
+            phone = ""
+            hours_of_operation = base.find(
+                class_="olimpica-our-shops-0-x-cardSchedule"
+            ).get_text(" ")
             latitude = ""
             longitude = ""
             sgw.write_row(
@@ -73,6 +98,8 @@ def fetch_data(sgw: SgWriter):
                     hours_of_operation=hours_of_operation,
                 )
             )
+
+    driver.close()
 
 
 with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))) as writer:
