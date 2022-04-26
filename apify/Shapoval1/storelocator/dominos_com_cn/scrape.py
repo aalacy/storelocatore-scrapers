@@ -36,11 +36,15 @@ def get_data(coords, sgw: SgWriter):
         city = j.get("cityNameEN") or "<MISSING>"
         state = j.get("districtNameCN") or "<MISSING>"
         postal = j.get("cityCode") or "<MISSING>"
-        country_code = "CH"
+        country_code = "CN"
         phone = j.get("storeTel") or "<MISSING>"
         latitude = j.get("lat") or "<MISSING>"
         longitude = j.get("lng") or "<MISSING>"
         store_number = j.get("storeCode") or "<MISSING>"
+        hours_of_operation = "<MISSING>"
+        if street_address == "Opening Soon":
+            street_address = "<MISSING>"
+            hours_of_operation = "Coming Soon"
 
         row = SgRecord(
             locator_domain=locator_domain,
@@ -56,7 +60,7 @@ def get_data(coords, sgw: SgWriter):
             location_type=SgRecord.MISSING,
             latitude=latitude,
             longitude=longitude,
-            hours_of_operation=SgRecord.MISSING,
+            hours_of_operation=hours_of_operation,
         )
 
         sgw.write_row(row)
@@ -65,12 +69,11 @@ def get_data(coords, sgw: SgWriter):
 def fetch_data(sgw: SgWriter):
     coords = DynamicGeoSearch(
         country_codes=[SearchableCountries.CHINA],
-        max_search_distance_miles=50,
-        expected_search_radius_miles=50,
+        max_search_distance_miles=10,
         max_search_results=None,
     )
 
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
+    with futures.ThreadPoolExecutor(max_workers=1) as executor:
         future_to_url = {executor.submit(get_data, url, sgw): url for url in coords}
         for future in futures.as_completed(future_to_url):
             future.result()
@@ -78,5 +81,5 @@ def fetch_data(sgw: SgWriter):
 
 if __name__ == "__main__":
     session = SgRequests()
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
         fetch_data(writer)
