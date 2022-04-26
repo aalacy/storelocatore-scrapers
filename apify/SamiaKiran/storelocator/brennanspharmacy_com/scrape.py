@@ -54,7 +54,6 @@ def fetch_data():
 
             if city == MISSING:
                 city = location_name.split()[0]
-                zip_postal
             zip_postal = raw_address.split(",")[-1]
             if "F93" in state:
                 state = MISSING
