@@ -30,7 +30,6 @@ def fetch_data():
         for page_url in all_locations:
             if page_url == "https://www.napolipizza.jp/store/":
                 continue
-            print(page_url)
             loc_response = session.get(page_url)
             loc_dom = etree.HTML(loc_response.text)
 
