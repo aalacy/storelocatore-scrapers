@@ -14,13 +14,11 @@ from selenium.webdriver.support import expected_conditions as EC
 
 
 try:
-    _create_unverified_https_context = (
-        ssl._create_unverified_context
-    ) 
+    _create_unverified_https_context = ssl._create_unverified_context
 except AttributeError:
     pass
 else:
-    ssl._create_default_https_context = _create_unverified_https_context 
+    ssl._create_default_https_context = _create_unverified_https_context
 
 website = "moesitaliansandwiches_com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -72,12 +70,12 @@ def fetch_data():
         else:
             driver = get_driver(url, class_name, driver=driver)
         soup = BeautifulSoup(driver.page_source, "html.parser")
-        loclist =driver.page_source.split('<script type="application/ld+json">')[1:]
+        loclist = driver.page_source.split('<script type="application/ld+json">')[1:]
         if len(loclist) == 0:
             continue
         else:
             break
-    coords_list =driver.page_source.split('"lat":')[1:]
+    coords_list = driver.page_source.split('"lat":')[1:]
     for loc in loclist:
         loc = json.loads(loc.split("</script>")[0])
         location_name = loc["name"]
