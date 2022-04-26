@@ -40,7 +40,8 @@ def fetch_data(sgw: SgWriter):
         _tmp = []
         types = j.get("poi_types") or []
         for _t in types:
-            _tmp.append(_types.get(_t))
+            __t = _types.get(_t) or ""
+            _tmp.append(__t)
         location_type = ", ".join(_tmp)
         store_number = j.get("id")
         street_address, city, postal = get_international(raw_address)
