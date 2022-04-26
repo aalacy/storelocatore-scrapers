@@ -113,7 +113,7 @@ def fetch_data():
 
                         location_name = "".join(
                             store_sel.xpath(
-                                '//h1[@class="hotel-title__heading hotel-details__title"]/text()'
+                                '//h1[@class="hdp-topsection__hotel-title"]/text()'
                             )
                         ).strip()
 
@@ -195,9 +195,7 @@ def fetch_data():
                     continue
 
                 location_name = "".join(
-                    store_sel.xpath(
-                        '//h1[@class="hotel-title__heading hotel-details__title"]/text()'
-                    )
+                    store_sel.xpath('//h1[@class="hdp-topsection__hotel-title"]/text()')
                 ).strip()
 
                 street_address = "".join(
