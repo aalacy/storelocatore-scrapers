@@ -13,6 +13,9 @@ from concurrent.futures import ThreadPoolExecutor
 from tenacity import retry, wait_random, stop_after_attempt
 import random
 from webdriver_manager.chrome import ChromeDriverManager
+import ssl
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 logger = SgLogSetup().get_logger("")
 

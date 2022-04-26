@@ -62,9 +62,7 @@ def fetch_data():
 def scrape():
     with SgWriter(
         SgRecordDeduper(
-            SgRecordID(
-                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
-            ),
+            SgRecordID({SgRecord.Headers.PAGE_URL}),
             duplicate_streak_failure_factor=-1,
         )
     ) as writer:

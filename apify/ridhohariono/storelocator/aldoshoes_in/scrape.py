@@ -6,20 +6,9 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgpostal import parse_address_intl
 from sgscrape.sgrecord_id import SgRecordID
-from sgselenium import SgSelenium
-import ssl
-
-try:
-    _create_unverified_https_context = (
-        ssl._create_unverified_context
-    )  # Legacy Python that doesn't verify HTTPS certificates by default
-except AttributeError:
-    pass
-else:
-    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
 DOMAIN = "aldoshoes.in"
-LOCATION_URL = "https://www.aldoshoes.in/store-locator"
+LOCATION_URL = "https://www.aldoshoes.in/store-locator/aldo-store-locator.html"
 HEADERS = {
     "Accept": "application/json, text/plain, */*",
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
@@ -29,7 +18,7 @@ log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
 session = SgRequests()
 
 
-MISSING = "<MISSING>"
+MISSING = SgRecord.MISSING
 
 
 def getAddress(raw_address):
@@ -65,11 +54,7 @@ def pull_content(url):
 
 def fetch_data():
     log.info("Fetching store_locator data")
-    driver = SgSelenium().chrome()
-    driver.get(LOCATION_URL)
-    driver.implicitly_wait(10)
-    soup = bs(driver.page_source, "lxml")
-    driver.quit()
+    soup = pull_content(LOCATION_URL)
     contents = soup.find("div", id="store_body_list").find_all(
         "div", {"class": "wk_st_product_gen"}
     )

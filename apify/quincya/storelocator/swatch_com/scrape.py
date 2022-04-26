@@ -30,15 +30,6 @@ def fetch_data(sgw: SgWriter):
     found = []
     for country in countries:
         code = country["data-locale"]
-        try:
-            country["data-id"].split("-")[1]
-        except:
-            if "_BE" in code:
-                code = "fr_BE"
-            elif "_CH" in code:
-                code = "fr_CH"
-            else:
-                code = "en_" + code.split("_")[1]
         if code in found:
             continue
         found.append(code)
@@ -50,12 +41,14 @@ def fetch_data(sgw: SgWriter):
         req = session.get(stores_link, headers=headers)
         try:
             base = BeautifulSoup(req.text, "lxml")
+            swarp = (
+                base.find(class_="b-search")["data-url"]
+                .split("store/")[1]
+                .split("/")[0]
+            )
         except:
+            log.info("Error..Skip!")
             continue
-
-        swarp = (
-            base.find(class_="b-search")["data-url"].split("store/")[1].split("/")[0]
-        )
 
         token = base.find("div", attrs={"data-token-name": "csrf_token"})[
             "data-token-value"
@@ -110,6 +103,7 @@ def fetch_data(sgw: SgWriter):
                 latitude = ""
                 longitude = ""
             link = locator_domain + item["detailsUrl"]
+            log.info(link)
             hours_of_operation = item["storeHours"]
             if not state:
                 if "/united-states" in link:

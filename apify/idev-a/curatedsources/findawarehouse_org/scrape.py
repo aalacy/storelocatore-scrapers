@@ -100,7 +100,7 @@ def _detail(_, json_locations, session):
         del _addr[-1]
     if _p(_addr[-1]):
         del _addr[-1]
-    raw_address = " ".join(_addr)
+    raw_address = " ".join(_addr).replace("\n", " ").replace("\r", "").replace("\t", "")
     addr = parse_address_intl(raw_address)
     city = addr.city
     if city:
@@ -123,7 +123,9 @@ def _detail(_, json_locations, session):
     return SgRecord(
         page_url=page_url,
         location_name=name,
-        street_address=street_address,
+        street_address=street_address.replace("\n", " ")
+        .replace("\r", "")
+        .replace("\t", ""),
         city=city,
         state=addr.state,
         zip_postal=addr.postcode,
