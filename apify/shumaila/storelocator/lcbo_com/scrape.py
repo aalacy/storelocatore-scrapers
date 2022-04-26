@@ -66,7 +66,7 @@ def fetch_data():
 
             address = re.sub(cleanr, " ", address)
             address = re.sub(pattern, " ", address).replace(" address 2:", " ").strip()
-            print(address)
+
             raw_address = address
             r = session.get(link, headers=headers)
             city = (
