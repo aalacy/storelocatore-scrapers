@@ -13,10 +13,8 @@ headers = {
 
 
 def fetch_data():
-
     url = "https://presto.com.co/encuentranos"
     r = session.get(url, headers=headers)
-    r.encoding = "utf-8-sig"
     coordlist = r.text.split("mapa1.agregarMarker(")[1:]
 
     soup = BeautifulSoup(r.text, "html.parser")
@@ -27,18 +25,14 @@ def fetch_data():
         longt = loc[1]
         title = loc[3].split("<b>", 1)[1].split("</b>", 1)[0]
         street = loc[3].split("<br> ", 1)[1].replace('"', "").strip()
-        loc = loclist[i].text.strip()
+        loc = loclist[i].text.strip().splitlines()[-1]
         if "24 Horas" in loc:
-            city = loc.split(street, 1)[1].split("24 Horas", 1)[0]
+            city = loc.split("24 Horas", 1)[0]
             hours = "24 Horas"
         else:
-            hours = loc.split(street, 1)[1].split("De")[-1]
-            city = " ".join(
-                loc.split(street, 1)[1].split("De")[
-                    0 : len(loc.split(street, 1)[1].split("De")) - 1
-                ]
-            )
-        city = unidecode.unidecode(city)
+            city, hours = loc.split("De ", 1)
+        city = unidecode.unidecode(city).strip()
+        city = city.replace("\n", "").strip()
         title = unidecode.unidecode(title)
         street = unidecode.unidecode(street)
 
