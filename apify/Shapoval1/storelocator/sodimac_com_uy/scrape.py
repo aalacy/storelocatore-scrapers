@@ -23,6 +23,8 @@ def fetch_data(sgw: SgWriter):
         street_address = "".join(d.xpath("./p[1]/text()")).replace("\n", "").strip()
         if street_address.find("(") != -1:
             street_address = street_address.split("(")[0].strip()
+        if street_address.endswith(".") != -1:
+            street_address = "".join(street_address[:-1]).strip()
         country_code = "UY"
         map_link = "".join(d.xpath(".//iframe/@src"))
         latitude = map_link.split("!3d")[1].strip().split("!")[0].strip()
