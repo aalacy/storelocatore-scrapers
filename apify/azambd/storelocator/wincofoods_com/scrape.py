@@ -54,7 +54,6 @@ def fetch_data():
     while True:
         x = x + 1
 
-        class_name = "store-list__scroll-container"
         url = "https://www.wincofoods.com/stores/?coordinates=36.10713810722304,-117.25231734999998&zoom=6"
         with SgChrome(user_agent=user_agent) as driver:
 
