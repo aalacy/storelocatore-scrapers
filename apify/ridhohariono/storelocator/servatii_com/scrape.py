@@ -63,23 +63,19 @@ def get_latlong(url):
 def fetch_data():
     log.info("Fetching store_locator data")
     soup = pull_content(LOCATION_URL)
-    contents = soup.find_all("span", class_="wQYUw")
+    contents = soup.find_all("span", class_="_1Qjd7")
     for row in contents:
         info = re.sub(
-            r"@@Get in Touch",
+            r"@@Get in Touch|@@Hours of Operation",
             "",
             row.find_previous(
                 "div", {"data-testid": "mesh-container-content"}
             ).get_text(strip=True, separator="@@"),
         ).split("@@")
         location_name = info[0].replace("HOURS OF OPERATION", "").strip()
-        raw_address = info[1].replace("\xa0", " ").strip()
+        raw_address = (info[1] + ", " + info[2]).strip()
         street_address, city, state, zip_postal = getAddress(raw_address)
-        hours_of_operation = ", ".join(info[2:-1]).strip()
-        if city == MISSING and state == MISSING and zip_postal == MISSING:
-            raw_address = (info[1] + ", " + info[2]).strip()
-            street_address, city, state, zip_postal = getAddress(raw_address)
-            hours_of_operation = ", ".join(info[3:-1]).strip()
+        hours_of_operation = " ".join(info[3:-1]).strip()
         country_code = "US"
         phone = info[-1].strip()
         location_type = MISSING
