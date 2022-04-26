@@ -1,7 +1,6 @@
 import ssl
 import json
 from sglogging import sglog
-from bs4 import BeautifulSoup
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgselenium.sgselenium import SgChrome
