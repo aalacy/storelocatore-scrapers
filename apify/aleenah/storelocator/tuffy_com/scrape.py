@@ -145,13 +145,16 @@ def fetch_data():
 
     states = get_states()
     logger.info(f"Total States to crawl: {len(states)}")
-    driver = get_driver("https://www.tuffy.com")
 
     for state in states:
         page_url = f"https://www.tuffy.com/location_search?zip_code={state}"
-        driver.get(page_url)
+        try:
+            driver = get_driver(page_url, driver=None)
+        except Exception:
+            driver = get_driver(page_url)
+
         logger.info(page_url)
-        time.sleep(60)
+        time.sleep(70)
 
         soup = BeautifulSoup(driver.page_source, "html.parser")
         coordinates = coordinates = re.findall(
@@ -161,7 +164,9 @@ def fetch_data():
             time.sleep(60)
             continue
 
-        for idx, location in enumerate(soup.select("div.contact-info")):
+        locations = soup.select("div.contact-info")
+        logger.info(f"{state} Locations Found: {len(locations)}")
+        for idx, location in enumerate(locations):
             data = parse(location, idx, coordinates, state, page_url)
             yield data
 

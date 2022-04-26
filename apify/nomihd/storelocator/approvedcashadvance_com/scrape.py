@@ -27,7 +27,7 @@ def fetch_data():
     )
     states_sel = lxml.html.fromstring(states_resp.text)
 
-    states = states_sel.xpath('//div[@class="col ml-5 mt-2 mr-4"]/p/a')
+    states = states_sel.xpath('//div[@class="col mr-1 mt-1"]//a')
     for state in states:
         state_url = "".join(state.xpath("@href")).strip()
         stores_resp = session.get(domain + state_url, headers=headers)
@@ -63,7 +63,7 @@ def fetch_data():
             state = ""
             zip = ""
             country_code = ""
-            store_number = "<MISSING>"
+            store_number = None
             phone = ""
             location_type = ""
             latitude = ""
@@ -152,6 +152,8 @@ def fetch_data():
                                         hours_list.append("".join(hour).strip())
 
                                 hours_of_operation = " ".join(hours_list).strip()
+                                if not store_number and "store=" in page_url:
+                                    store_number = page_url.split("store=")[1].strip()
                                 yield SgRecord(
                                     locator_domain=locator_domain,
                                     page_url=page_url,
@@ -191,6 +193,9 @@ def fetch_data():
                     latitude = store_loc_array[count][1]
                     longitude = store_loc_array[count][2]
                     hours_of_operation = "<MISSING>"
+
+                    if not store_number and "store=" in page_url:
+                        store_number = page_url.split("store=")[1].strip()
 
                     yield SgRecord(
                         locator_domain=locator_domain,
@@ -232,7 +237,8 @@ def fetch_data():
                 latitude = store_loc_array[count][1]
                 longitude = store_loc_array[count][2]
                 hours_of_operation = "<MISSING>"
-
+                if not store_number and "store=" in page_url:
+                    store_number = page_url.split("store=")[1].strip()
                 yield SgRecord(
                     locator_domain=locator_domain,
                     page_url=page_url,
