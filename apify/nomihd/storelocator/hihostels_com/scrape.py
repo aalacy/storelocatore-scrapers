@@ -30,8 +30,8 @@ headers = {
 }
 
 
-def get_session():
-    if not hasattr(local, "session"):
+def get_session(retry):
+    if retry or not hasattr(local, "session"):
         local.session = SgRequests(timeout_config=600)
 
     return local.session
@@ -40,22 +40,22 @@ def get_session():
 def fetch_locations(retry=0):
     try:
         urls = []
-        with get_session() as session:
-            response = session.get(
-                "https://www.hihostels.com/sitemap.xml",
-            )
+        session = get_session()
+        response = session.get(
+            "https://www.hihostels.com/sitemap.xml",
+        )
 
-            time.sleep(15)
+        time.sleep(15)
 
-            stores = response.text.split("<loc>")
-            for index in range(1, len(stores)):
-                page_url = "".join(stores[index].split("</loc>")[0].strip()).strip()
-                if "/hostels/" not in page_url or "/es/" in page_url:
-                    continue
+        stores = response.text.split("<loc>")
+        for index in range(1, len(stores)):
+            page_url = "".join(stores[index].split("</loc>")[0].strip()).strip()
+            if "/hostels/" not in page_url or "/es/" in page_url:
+                continue
 
-                urls.append(page_url)
+            urls.append(page_url)
 
-            return urls
+        return urls
     except Exception as e:
         if retry < 10:
             return fetch_locations(retry + 1)
@@ -65,7 +65,7 @@ def fetch_locations(retry=0):
 
 def fetch_location(page_url, retry=0):
     try:
-        session = get_session()
+        session = get_session(retry)
         response = session.get(page_url)
 
         store_sel = lxml.html.fromstring(response.text)
