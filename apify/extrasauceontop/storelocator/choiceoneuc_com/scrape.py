@@ -2,7 +2,7 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 import cloudscraper
 import json
-import pandas as pd
+from sgscrape import simple_scraper_pipeline as sp
 
 
 def extract_json(html_string):
@@ -30,111 +30,108 @@ def extract_json(html_string):
     return json_objects
 
 
-locator_domains = []
-page_urls = []
-location_names = []
-street_addresses = []
-citys = []
-states = []
-zips = []
-country_codes = []
-store_numbers = []
-phones = []
-location_types = []
-latitudes = []
-longitudes = []
-hours_of_operations = []
+def get_data():
 
-session = SgRequests()
+    session = SgRequests()
 
-scraper = cloudscraper.create_scraper(sess=session)
+    scraper = cloudscraper.create_scraper(sess=session)
 
-url = "https://www.umms.org/health-services/urgent-care/locations"
-response = scraper.get(url).text
-
-soup = bs(response, "html.parser")
-
-loc_urls = [
-    "https://www.umms.org" + a_tag["href"]
-    for a_tag in soup.find("ul", attrs={"class": "nav-content__nested-level"}).find_all(
-        "a"
-    )
-]
-
-for url in loc_urls:
-
+    url = "https://www.umms.org/health-services/urgent-care/locations"
     response = scraper.get(url).text
+
     soup = bs(response, "html.parser")
 
-    locator_domain = "www.umms.org"
-    page_url = url
+    loc_urls = [
+        "https://www.umms.org" + a_tag["href"]
+        for a_tag in soup.find(
+            "ul", attrs={"class": "nav-content__nested-level"}
+        ).find_all("a")
+    ]
 
-    json_objects = extract_json(response)
+    for url in loc_urls:
+        if (
+            url
+            == "https://www.umms.org/health-services/urgent-care/locations/telemedicine"
+        ):
+            continue
+        response = scraper.get(url).text
+        soup = bs(response, "html.parser")
 
-    location_name = soup.find(
-        "h1", attrs={"class": "l-content-header__h1"}
-    ).text.strip()
-    address = json_objects[1]["items"][0]["address1"]
-    city = json_objects[1]["items"][0]["address2"].split(",")[0]
-    state = json_objects[1]["items"][0]["address2"].split(", ")[1].split(" ")[0]
-    zipp = json_objects[1]["items"][0]["address2"].split(", ")[1].split(" ")[1][:5]
-    country_code = "US"
-    store_number = "<MISSING>"
-    phone = json_objects[1]["items"][0]["phone"]
-    location_type = "<MISSING>"
-    latitude = json_objects[1]["items"][0]["coordinates"][0]["lat"]
-    longitude = json_objects[1]["items"][0]["coordinates"][0]["lng"]
+        locator_domain = "www.umms.org"
+        page_url = url
 
-    hours = "Sun-Sat 8 am-8 pm"
+        json_objects = extract_json(response)
+        location_name = soup.find(
+            "h1", attrs={"class": "l-content-header__h1"}
+        ).text.strip()
+        address = json_objects[1]["items"][0]["address1"]
+        city = json_objects[1]["items"][0]["address2"].split(",")[0]
+        state = json_objects[1]["items"][0]["address2"].split(", ")[1].split(" ")[0]
+        zipp = json_objects[1]["items"][0]["address2"].split(", ")[1].split(" ")[1][:5]
+        country_code = "US"
+        store_number = "<MISSING>"
+        phone = json_objects[1]["items"][0]["phone"]
+        location_type = "<MISSING>"
+        latitude = json_objects[1]["items"][0]["coordinates"][0]["lat"]
+        longitude = json_objects[1]["items"][0]["coordinates"][0]["lng"]
 
-    locator_domains.append(locator_domain)
-    page_urls.append(page_url)
-    location_names.append(location_name)
-    street_addresses.append(address)
-    citys.append(city)
-    states.append(state)
-    zips.append(zipp)
-    country_codes.append(country_code)
-    phones.append(phone)
-    location_types.append(location_type)
-    latitudes.append(latitude)
-    longitudes.append(longitude)
-    store_numbers.append(store_number)
-    hours_of_operations.append(hours)
+        hours = "Sun-Sat 8 am-8 pm"
 
-df = pd.DataFrame(
-    {
-        "locator_domain": locator_domains,
-        "page_url": page_urls,
-        "location_name": location_names,
-        "street_address": street_addresses,
-        "city": citys,
-        "state": states,
-        "zip": zips,
-        "store_number": store_numbers,
-        "phone": phones,
-        "latitude": latitudes,
-        "longitude": longitudes,
-        "country_code": country_codes,
-        "location_type": location_types,
-        "hours_of_operation": hours_of_operations,
-    }
-)
+        yield {
+            "locator_domain": locator_domain,
+            "page_url": page_url,
+            "location_name": location_name,
+            "latitude": latitude,
+            "longitude": longitude,
+            "city": city,
+            "store_number": store_number,
+            "street_address": address,
+            "state": state,
+            "zip": zipp,
+            "phone": phone,
+            "location_type": location_type,
+            "hours": hours,
+            "country_code": country_code,
+        }
 
-df = df.fillna("<MISSING>")
-df = df.replace(r"^\s*$", "<MISSING>", regex=True)
 
-df["dupecheck"] = (
-    df["location_name"]
-    + df["street_address"]
-    + df["city"]
-    + df["state"]
-    + df["location_type"]
-)
+def scrape():
+    field_defs = sp.SimpleScraperPipeline.field_definitions(
+        locator_domain=sp.MappingField(mapping=["locator_domain"]),
+        page_url=sp.MappingField(mapping=["page_url"], part_of_record_identity=True),
+        location_name=sp.MappingField(
+            mapping=["location_name"],
+        ),
+        latitude=sp.MappingField(
+            mapping=["latitude"],
+        ),
+        longitude=sp.MappingField(
+            mapping=["longitude"],
+        ),
+        street_address=sp.MultiMappingField(
+            mapping=["street_address"], is_required=False
+        ),
+        city=sp.MappingField(
+            mapping=["city"],
+        ),
+        state=sp.MappingField(mapping=["state"], is_required=False),
+        zipcode=sp.MultiMappingField(mapping=["zip"], is_required=False),
+        country_code=sp.MappingField(mapping=["country_code"]),
+        phone=sp.MappingField(mapping=["phone"], is_required=False),
+        store_number=sp.MappingField(
+            mapping=["store_number"], part_of_record_identity=True
+        ),
+        hours_of_operation=sp.MappingField(mapping=["hours"], is_required=False),
+        location_type=sp.MappingField(mapping=["location_type"], is_required=False),
+    )
 
-df = df.drop_duplicates(subset=["dupecheck"])
-df = df.drop(columns=["dupecheck"])
-df = df.replace(r"^\s*$", "<MISSING>", regex=True)
-df = df.fillna("<MISSING>")
+    pipeline = sp.SimpleScraperPipeline(
+        scraper_name="Crawler",
+        data_fetcher=get_data,
+        field_definitions=field_defs,
+        log_stats_interval=15,
+    )
+    pipeline.run()
 
-df.to_csv("data.csv", index=False)
+
+scrape()

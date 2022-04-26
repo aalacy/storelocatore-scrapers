@@ -1,167 +1,110 @@
+# --extra-index-url https://dl.cloudsmith.io/KVaWma76J5VNwrOm/crawl/crawl/python/simple/
+import re
+import demjson
+from lxml import etree
+
 from sgrequests import SgRequests
-from bs4 import BeautifulSoup
-import csv
-import os
-from sgselenium import SgSelenium
-from selenium.webdriver.support.ui import Select
-import time
-from random import randint
-import usaddress
-from sglogging import SgLogSetup
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
+from sgpostal.sgpostal import parse_address_intl
 
-logger = SgLogSetup().get_logger('mission-bbq_com')
-
-
-
-def parse_addy(addy):
-    parsed_add = usaddress.tag(addy)[0]
-
-    street_address = ''
-
-    if 'AddressNumber' in parsed_add:
-        street_address += parsed_add['AddressNumber'] + ' '
-    if 'StreetNamePreDirectional' in parsed_add:
-        street_address += parsed_add['StreetNamePreDirectional'] + ' '
-    if 'StreetNamePreType' in parsed_add:
-        street_address += parsed_add['StreetNamePreType'] + ' '
-    if 'StreetName' in parsed_add:
-        street_address += parsed_add['StreetName'] + ' '
-    if 'StreetNamePostType' in parsed_add:
-        street_address += parsed_add['StreetNamePostType'] + ' '
-    if 'OccupancyType' in parsed_add:
-        street_address += parsed_add['OccupancyType'] + ' '
-    if 'OccupancyIdentifier' in parsed_add:
-        street_address += parsed_add['OccupancyIdentifier'] + ' '
-    city = parsed_add['PlaceName']
-    state = parsed_add['StateName']
-    zip_code = parsed_add['ZipCode']
-
-    return street_address, city, state, zip_code
-
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
-        # Body
-        for row in data:
-            writer.writerow(row)
 
 def fetch_data():
-    locator_domain = 'https://mission-bbq.com/'
-    ext = 'locations'
-
-    user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36'
-    HEADERS = {'User-Agent' : user_agent}
-
     session = SgRequests()
 
-    driver = SgSelenium().chrome()
-    driver.get(locator_domain + ext)
+    start_url = "https://mission-bbq.com/locations/"
+    domain = re.findall(r"://(.+?)/", start_url)[0].replace("www.", "")
 
-    divs = driver.find_elements_by_css_selector('div.hidden-phone')
-    hours = ''
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
+    hdr = {"User-Agent": user_agent}
 
-    for div in divs:
-        if 'Restaurant Hours:' in div.text:
-            hours = div.text.replace('Restaurant Hours:', '').replace('\n', ' ').strip()
+    response = session.get(start_url)
+    dom = etree.HTML(response.text)
+    all_locations = dom.xpath('//div[@class="esg-entry-content eg-mission-content"]')
+    data = re.findall(r"tpessential\((.+?)\);", response.text.replace("\n", ""))[0]
+    data = demjson.decode(data)
+    all_ids = [str(e[0]) for e in data["loadMoreItems"]]
+    frm = {
+        "action": "Essential_Grid_Front_request_ajax",
+        "client_action": "load_more_items",
+        "token": "0e229c4124",
+        "data[]": all_ids,
+        "gridid": "1",
+    }
 
-    drop_down = driver.find_element_by_id('categories-1')
-    options = drop_down.find_elements_by_css_selector('option')
-
-    states = []
-    for opt in options:
-        if 'Select State' in opt.text:
+    url = "https://mission-bbq.com/wp-admin/admin-ajax.php?action=Essential_Grid_Front_request_ajax&client_action=load_more_items&token=0e229c4124&data%5B%5D=5018&data%5B%5D=1597&data%5B%5D=1611&gridid=1"
+    data = session.post(url, headers=hdr, data=frm).json()
+    dom = etree.HTML(data["data"])
+    all_locations += dom.xpath('//div[@class="esg-entry-content eg-mission-content"]')
+    for poi_html in all_locations:
+        raw_data = poi_html.xpath(".//text()")
+        raw_data = [e.strip() for e in raw_data if e.strip()]
+        addr = parse_address_intl(" ".join(raw_data[1:3]))
+        street_address = addr.street_address_1
+        if addr.street_address_2:
+            street_address += " " + addr.street_address_2
+        phone = [e for e in raw_data if "Restaurant" in e][0].split(":")[-1].strip()
+        if "Coming Soon" in phone:
             continue
-        states.append(opt.text)
+        map_link = poi_html.xpath(".//a/@href")[0]
+        if "@" in map_link:
+            try:
+                geo = re.findall(
+                    r"[0-9]{2}\.[0-9]+,-[0-9]{2,3}\.[0-9]+", str(map_link)
+                )[0].split(",")
+                latitude = geo[0]
+                longitude = geo[1]
+            except:
+                at_pos = map_link.rfind("@")
+                latitude = map_link[at_pos + 1 : map_link.find(",", at_pos)].strip()
+                longitude = (
+                    map_link[map_link.find(",", at_pos) + 1 :].replace(",", "").strip()
+                )
+            if longitude == "-":
+                latitude = SgRecord.MISSING
+                longitude = SgRecord.MISSING
+            if longitude[-1:] == ".":
+                longitude = longitude + "000"
 
-    all_store_data = []
-    for state in states:
-        logger.info(state)
-        driver.get(locator_domain + ext)
-        driver.implicitly_wait(10)
-        drop_down = driver.find_element_by_id('categories-1')
-        select = Select(drop_down)
-        # select by visible text
-        select.select_by_visible_text(state)
-        driver.find_element_by_css_selector('button.button.button-primary.mission-search-button').click()
-        driver.implicitly_wait(10)
+        else:
+            latitude = SgRecord.MISSING
+            longitude = SgRecord.MISSING
 
-        locs = driver.find_elements_by_css_selector('div.grid-item.span4')
+        item = SgRecord(
+            locator_domain=domain,
+            page_url="https://mission-bbq.com/locations/",
+            location_name=raw_data[0],
+            street_address=street_address,
+            city=addr.city,
+            state=addr.state,
+            zip_postal=addr.postcode,
+            country_code="US",
+            store_number=poi_html.xpath('.//*[contains(@class, "eg-post-")]/@class')[0]
+            .split()[1]
+            .split("-")[-1],
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=SgRecord.MISSING,
+        )
 
-        for loc in locs:
-            img_url = loc.find_element_by_css_selector('div.grid-content').find_element_by_css_selector(
-                'img').get_attribute('src')
+        yield item
 
-            if 'comingsoon' in img_url:
-                continue
-
-            cont = loc.find_element_by_css_selector('div.grid-item-name')
-            location_name = cont.find_element_by_css_selector('h8').text
-
-            divs = cont.find_elements_by_css_selector('div')
-            addy = divs[0].text.replace('\n', ' ')
-
-            street_address, city, state, zip_code = parse_addy(addy)
-
-            href = divs[1].find_element_by_css_selector('a').get_attribute('href')
-
-            start = href.find('/@')
-            if start > 0:
-                end = href.find('z/data')
-                coords = href[start + 2:end].split(',')
-                lat = coords[0]
-                longit = coords[1]
-            else:
-                lat = '<MISSING>'
-                longit = '<MISSING>'
-
-            if '.' not in longit:
-                req = session.get(href, headers = HEADERS)
-                time.sleep(randint(1,2))
-                try:
-                    maps = BeautifulSoup(req.text,"lxml")
-                except (BaseException):
-                    logger.info('[!] Error Occured. ')
-                    logger.info('[?] Check whether system is Online.')
-
-                try:
-                    raw_gps = maps.find('meta', attrs={'itemprop': "image"})['content']
-                    lat = raw_gps[raw_gps.rfind("=")+1:raw_gps.rfind(",")].strip()
-                    longit = raw_gps[raw_gps.rfind(",")+1:].strip()
-
-                    if len(lat) > 20:
-                        lat = raw_gps[raw_gps.find("=")+1:raw_gps.find("%")].strip()
-                        longit = raw_gps[raw_gps.find("-"):raw_gps.find("&")].strip()
-                    if len(lat) > 20:
-                        lat = "<MISSING>"
-                        longit = "<MISSING>"
-                except:
-                    lat = "<MISSING>"
-                    longit = "<MISSING>"
-            if longit == "-77.2":
-                longit = "-77.2704962"
-
-            phone_number = divs[2].text.replace('Restaurant :', '').strip()
-
-            country_code = 'US'
-
-            location_type = '<MISSING>'
-            page_url = driver.current_url
-            store_number = '<MISSING>'
-
-            store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
-                          store_number, phone_number, location_type, lat, longit, hours, page_url]
-            all_store_data.append(store_data)
-
-        time.sleep(2)
-
-    driver.quit()
-    return all_store_data
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
-scrape()
+
+if __name__ == "__main__":
+    scrape()

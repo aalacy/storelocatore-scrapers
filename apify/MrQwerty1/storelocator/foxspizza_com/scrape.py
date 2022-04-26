@@ -1,54 +1,19 @@
-import csv
 import usaddress
-
-from concurrent import futures
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
-
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
 def get_urls():
-    session = SgRequests()
     r = session.get("https://www.foxspizza.com/store-sitemap.xml")
     tree = html.fromstring(r.content)
     return tree.xpath("//loc/text()")
 
 
-def get_data(page_url):
-    locator_domain = "https://foxspizza.com/"
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:85.0) Gecko/20100101 Firefox/85.0",
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-    }
-
+def get_address(line):
     tag = {
         "Recipient": "recipient",
         "AddressNumber": "address1",
@@ -78,68 +43,65 @@ def get_data(page_url):
         "ZipCode": "postal",
     }
 
-    session = SgRequests()
-    r = session.get(page_url, headers=headers)
-    tree = html.fromstring(r.text)
+    try:
+        a = usaddress.tag(line, tag_mapping=tag)[0]
+        street_address = f"{a.get('address1')} {a.get('address2') or ''}".strip()
+        if street_address == "None":
+            street_address = SgRecord.MISSING
+        city = a.get("city")
+        state = a.get("state")
+        postal = a.get("postal")
+    except usaddress.RepeatedLabelError:
+        adr = line.split(",")
+        street_address = adr.pop(0).strip()
+        city = adr.pop(0).strip()
+        ad = adr.pop(0).strip()
+        state, postal = ad.split()
 
-    location_name = "".join(tree.xpath("//h5[@class='blog_title']//text()")).strip()
-    line = "".join(tree.xpath("//h6[@class='loc_address']/text()")).strip()
-    if not line:
-        return
-    a = usaddress.tag(line, tag_mapping=tag)[0]
-    street_address = f"{a.get('address1')} {a.get('address2') or ''}".strip()
-    if street_address == "None":
-        street_address = "<MISSING>"
-    city = a.get("city") or "<MISSING>"
-    state = a.get("state") or "<MISSING>"
-    postal = a.get("postal") or "<MISSING>"
-    country_code = "US"
-    store_number = "<MISSING>"
-    phone = "".join(tree.xpath("//span[@class='phone_no']/a/text()")).strip()
-    location_type = "<MISSING>"
-    latitude = "<MISSING>"
-    longitude = "<MISSING>"
-    hours_of_operation = (
-        ";".join(tree.xpath("//span[@class='ad1']/text()")) or "<MISSING>"
-    )
-
-    row = [
-        locator_domain,
-        page_url,
-        location_name,
-        street_address,
-        city,
-        state,
-        postal,
-        country_code,
-        store_number,
-        phone,
-        location_type,
-        latitude,
-        longitude,
-        hours_of_operation,
-    ]
-    return row
+    return street_address, city, state, postal
 
 
-def fetch_data():
-    out = []
+def fetch_data(sgw: SgWriter):
     urls = get_urls()
 
-    with futures.ThreadPoolExecutor(max_workers=1) as executor:
-        future_to_url = {executor.submit(get_data, url): url for url in urls}
-        for future in futures.as_completed(future_to_url):
-            row = future.result()
-            if row:
-                out.append(row)
+    for page_url in urls:
+        r = session.get(page_url, headers=headers)
+        tree = html.fromstring(r.text)
+        location_name = "".join(tree.xpath("//h5[@class='blog_title']//text()")).strip()
+        line = "".join(tree.xpath("//h6[@class='loc_address']/text()")).strip()
+        if not line:
+            continue
 
-    return out
+        street_address, city, state, postal = get_address(line)
+        phone = "".join(tree.xpath("//span[@class='phone_no']/a/text()")).strip()
+        hours_of_operation = ";".join(tree.xpath("//span[@class='ad1']/text()"))
 
+        row = SgRecord(
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code="US",
+            store_number=SgRecord.MISSING,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=SgRecord.MISSING,
+            longitude=SgRecord.MISSING,
+            locator_domain=locator_domain,
+            hours_of_operation=hours_of_operation,
+        )
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    locator_domain = "https://www.foxspizza.com/"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:85.0) Gecko/20100101 Firefox/85.0",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+    }
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        fetch_data(writer)

@@ -1,46 +1,15 @@
-import csv
 import json
 
 from sgrequests import SgRequests
-
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
-    # Your scraper here
     session = SgRequests()
-
-    items = []
-
-    DOMAIN = "turtlebay.co.uk"
+    domain = "turtlebay.co.uk"
     start_url = "https://www.turtlebay.co.uk/api/locations/items.json"
 
     headers = {
@@ -50,6 +19,8 @@ def fetch_data():
     data = json.loads(response.text)
 
     for poi in data["data"]:
+        if "COMING SOON" in poi["title"]:
+            continue
         store_url = poi["url"]
         location_name = poi["title"]
         location_name = location_name if location_name else "<MISSING>"
@@ -72,8 +43,7 @@ def fetch_data():
         )
         location_type = "<MISSING>"
         if "t open right now" in zip_code:
-            location_type = "temporary closed"
-            zip_code = "<MISSING>"
+            continue
         latitude = poi["address"]["latitude"]
         latitude = latitude if latitude and "n/a" not in latitude else "<MISSING>"
         longitude = poi["address"]["longitude"]
@@ -84,31 +54,36 @@ def fetch_data():
                 [elem["label"] for elem in poi["openingHours"]]
             )
 
-        item = [
-            DOMAIN,
-            store_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip_code,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
+        item = SgRecord(
+            locator_domain=domain,
+            page_url=store_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zip_code,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+        )
 
-        items.append(item)
-
-    return items
+        yield item
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":
