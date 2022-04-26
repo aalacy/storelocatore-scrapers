@@ -192,177 +192,176 @@ def fetch_data_global(urlpartnum, urlpart, sgw: SgWriter):
         f"{urlpart[0]}/store-finder/search?q={space_rep_w_plus}&page=0"
     )
     logger.info(f"Pulling the data from: {global_api_endpoint_url_formed}")
-    try:
-        global_data = get_json_data_global(global_api_endpoint_url_formed)
-        if global_data is not None:
-            global_data = global_data["data"]
-            for idx1, gitem in enumerate(global_data[0:]):
-                # locator_domain
-                locator_domain = "costco.com"
+    #     try:
+    global_data = get_json_data_global(global_api_endpoint_url_formed)
+    if global_data is not None:
+        global_data = global_data["data"]
+        logger.info(f"StoreCount: {len(global_data)}")
+        for idx1, gitem in enumerate(global_data[0:]):
+            # locator_domain
+            locator_domain = "costco.com"
 
-                # Page URL
-                page_url = global_api_endpoint_url_formed
-                page_url = page_url if page_url else MISSING
+            # Page URL
+            page_url = global_api_endpoint_url_formed
+            page_url = page_url if page_url else MISSING
 
-                # Location Name
-                locname = gitem["name"]
-                location_name = locname if locname else MISSING
-                logger.info(f"[{idx1}] Locname: {location_name}")
+            # Location Name
+            locname = gitem["name"]
+            location_name = locname if locname else MISSING
+            logger.info(f"[{idx1}] Locname: {location_name}")
 
-                # Street Address
-                street_address = ""
-                line1 = gitem["line1"]
-                line2 = gitem["line2"]
-                if line1 and line2:
-                    street_address = line1 + ", " + line2
-                elif line1 and not line2:
-                    street_address = line1
-                elif not line1 and line2:
-                    street_address = line2
-                else:
-                    street_address = MISSING
+            # Street Address
+            street_address = ""
+            line1 = gitem["line1"]
+            line2 = gitem["line2"]
+            if line1 and line2:
+                street_address = line1 + ", " + line2
+            elif line1 and not line2:
+                street_address = line1
+            elif not line1 and line2:
+                street_address = line2
+            else:
+                street_address = MISSING
 
-                logger.info(f"[{idx1}] st_add: {street_address}")
-                city = gitem["town"]
-                city = city if city else MISSING
+            logger.info(f"[{idx1}] st_add: {street_address}")
+            city = gitem["town"]
+            city = city if city else MISSING
 
-                state = ""
-                state = state if state else MISSING
+            state = ""
+            state = state if state else MISSING
 
-                zip_postal = gitem["postalCode"]
-                # A store located in Perth Airport, Australia having addition info
-                # in it's postalcode.
-                zip_postal = zip_postal.replace(
-                    "6105<br> PO Box 230, Cloverdale WA 6985", "6105"
-                )
-                zip_postal = zip_postal if zip_postal else MISSING
+            zip_postal = gitem["postalCode"]
+            # A store located in Perth Airport, Australia having addition info
+            # in it's postalcode.
+            zip_postal = zip_postal.replace(
+                "6105<br> PO Box 230, Cloverdale WA 6985", "6105"
+            )
+            zip_postal = zip_postal if zip_postal else MISSING
 
-                country_code = ""
-                domain = urlparse(global_api_endpoint_url_formed).netloc
-                cc = domain.split(".")[-1].upper()
-                country_code = cc
-                if country_code == "UK":
-                    country_code = "GB"
+            country_code = ""
+            domain = urlparse(global_api_endpoint_url_formed).netloc
+            cc = domain.split(".")[-1].upper()
+            country_code = cc
+            if country_code == "UK":
+                country_code = "GB"
 
-                store_number = gitem["warehouseCode"]
-                store_number = store_number if store_number else MISSING
+            store_number = gitem["warehouseCode"]
+            store_number = store_number if store_number else MISSING
 
-                # Phone numbers in Taiwanese store contain additional info.
-                # 449-9909 (手機撥打請加02), this say while calling from mobile,
-                # add 02. However this note has been removed from the phone number
-                phone = gitem["phone"]
-                phone = " ".join(phone.split())
-                phone = phone if phone else MISSING
-                phone = phone.replace("(手機撥打請加02)", "").strip()
-                logger.info(f"[{idx1}] Phone: {phone}")
+            # Phone numbers in Taiwanese store contain additional info.
+            # 449-9909 (手機撥打請加02), this say while calling from mobile,
+            # add 02. However this note has been removed from the phone number
+            phone = gitem["phone"]
+            phone = " ".join(phone.split())
+            phone = phone if phone else MISSING
+            phone = phone.replace("(手機撥打請加02)", "").strip()
+            logger.info(f"[{idx1}] Phone: {phone}")
 
-                # Location Type
-                location_type = "Warehouse"
-                lat = gitem["latitude"]
-                latitude = lat if lat else MISSING
+            # Location Type
+            location_type = ""
+            lat = gitem["latitude"]
+            latitude = lat if lat else MISSING
 
-                lng = gitem["longitude"]
-                longitude = lng if lng else MISSING
-                hours_of_operation = ""
-                hoo = []
-                if "openings" in gitem:
-                    warehouse_hoo = gitem["openings"]
-                    if warehouse_hoo:
-                        for k, v in warehouse_hoo.items():
-                            if "individual" in v:
-                                times = v["individual"]
-                                daytimes = k + " " + times
-                                hoo.append(daytimes)
-                        hours_of_operation = "; ".join(hoo)
-                    else:
-                        hours_of_operation = MISSING
+            lng = gitem["longitude"]
+            longitude = lng if lng else MISSING
+            hours_of_operation = ""
+            hoo = []
+            if "openings" in gitem:
+                warehouse_hoo = gitem["openings"]
+                if warehouse_hoo:
+                    for k, v in warehouse_hoo.items():
+                        if "individual" in v:
+                            times = v["individual"]
+                            daytimes = k + " " + times
+                            hoo.append(daytimes)
+                    hours_of_operation = "; ".join(hoo)
                 else:
                     hours_of_operation = MISSING
+            else:
+                hours_of_operation = MISSING
 
-                # It is found that the city of AU data contains the state data
-                # This extracts the state data from city and assign it back to the state
-                # State data removed from the city
-                if "AU" in country_code:
-                    if "MISSING" not in city:
-                        au_state = re.findall(r"\S[A-Z].*", city)
-                        if au_state:
-                            state = "".join(au_state)
-                            city = city.replace(state, "").strip()
+            # It is found that the city of AU data contains the state data
+            # This extracts the state data from city and assign it back to the state
+            # State data removed from the city
+            if "AU" in country_code:
+                if "MISSING" not in city:
+                    au_state = re.findall(r"\S[A-Z].*", city)
+                    if au_state:
+                        state = "".join(au_state)
+                        city = city.replace(state, "").strip()
+                    else:
+                        state = MISSING
+
+            # If pharmacy available then get the data for HOO, Phone, and Location Type
+            if "availableServices" in gitem:
+                available_services = gitem["availableServices"]
+                pharma_keys = [i["code"] for i in available_services]
+
+                if "PHARMACY" in pharma_keys:
+                    phindex = pharma_keys.index("PHARMACY")
+                    pharmacy_dict = available_services[phindex]
+                    as_code = pharmacy_dict["code"]
+                    logger.info(f"[{idx1}=>{as_code}]")
+                    # Location Type
+
+                    location_type = "Pharmacy"
+
+                    # Phone
+                    as_phone = pharmacy_dict["phone"]
+                    phone = as_phone if as_phone else MISSING
+
+                    # Phone raw data contains <br> along with additional information
+                    # which needs to be cleaned up
+                    if "JP" in country_code:
+                        if "<br>" in phone:
+                            phone = phone.split("<br>")[0]
+
+                    # HOO
+                    as_opening_hours = pharmacy_dict["openingHours"]
+
+                    if as_opening_hours:
+                        sel_hoo = html.fromstring(as_opening_hours, "lxml")
+                        pharmacy_global_hoo = sel_hoo.xpath("//ul/li/text()")
+                        if pharmacy_global_hoo:
+                            hours_of_operation = "; ".join(pharmacy_global_hoo)
                         else:
-                            state = MISSING
+                            hours_of_operation = MISSING
+                        if "JP" in country_code:
+                            pharmacy_global_hoo_jp = sel_hoo.xpath("//ul/li//text()")
+                            if pharmacy_global_hoo_jp:
+                                hours_of_operation = " ".join(pharmacy_global_hoo_jp)
+                            else:
+                                hours_of_operation = MISSING
 
-                # If pharmacy available then get the data for HOO, Phone, and Location Type
-                if "availableServices" in gitem:
-                    available_services = gitem["availableServices"]
-                    for as_ in available_services:
-                        as_code = as_["code"]
-                        if "PHARMACY" in as_code:
-                            # Location Type
+                    logger.info(f"[{idx1}] hoo: {hours_of_operation}")
 
-                            location_type = "Pharmacy"
-
-                            # Phone
-                            as_phone = as_["phone"]
-                            phone = as_phone if as_phone else MISSING
-
-                            # Phone raw data contains <br> along with additional information
-                            # which needs to be cleaned up
-                            if "JP" in country_code:
-                                if "<br>" in phone:
-                                    phone = phone.split("<br>")[0]
-
-                            # HOO
-                            as_opening_hours = as_["openingHours"]
-                            if as_opening_hours:
-                                sel_hoo = html.fromstring(as_opening_hours, "lxml")
-                                pharmacy_global_hoo = sel_hoo.xpath("//ul/li/text()")
-                                if pharmacy_global_hoo:
-                                    hours_of_operation = "; ".join(pharmacy_global_hoo)
-                                else:
-                                    hours_of_operation = MISSING
-                                if "JP" in country_code:
-                                    pharmacy_global_hoo_jp = sel_hoo.xpath(
-                                        "//ul/li//text()"
-                                    )
-                                    if pharmacy_global_hoo_jp:
-                                        hours_of_operation = " ".join(
-                                            pharmacy_global_hoo_jp
-                                        )
-                                    else:
-                                        hours_of_operation = MISSING
-
-                        else:
-                            continue
-                logger.info(f"[{idx1}] hoo: {hours_of_operation}")
-                if "Warehouse" in location_type:
+                    item = SgRecord(
+                        locator_domain=locator_domain,
+                        page_url=page_url,
+                        location_name=location_name,
+                        street_address=street_address,
+                        city=city,
+                        state=state,
+                        zip_postal=zip_postal,
+                        country_code=country_code,
+                        store_number=store_number,
+                        phone=phone,
+                        location_type=location_type,
+                        latitude=latitude,
+                        longitude=longitude,
+                        hours_of_operation=hours_of_operation,
+                        raw_address=MISSING,
+                    )
+                    if item is not None:
+                        sgw.write_row(item)
+                else:
                     return
-                item = SgRecord(
-                    locator_domain=locator_domain,
-                    page_url=page_url,
-                    location_name=location_name,
-                    street_address=street_address,
-                    city=city,
-                    state=state,
-                    zip_postal=zip_postal,
-                    country_code=country_code,
-                    store_number=store_number,
-                    phone=phone,
-                    location_type=location_type,
-                    latitude=latitude,
-                    longitude=longitude,
-                    hours_of_operation=hours_of_operation,
-                    raw_address=MISSING,
-                )
-                if item is not None:
-                    sgw.write_row(item)
-    except Exception as e:
-        logger.info(
-            f"Please fix FetchRecordsGlobalError: {e} || {global_api_endpoint_url_formed}"
-        )
 
 
 def fetch_data(sgw: SgWriter):
     global_url_wout_us_ca = get_global_urls()
+    # Example Store Locator followed by country - https://www.costco.com.mx, Mexico
+    # Mexico API Example Call - https://www.costco.com.mx/store-finder/search?q=Mexico&page=0
     locs = get_us_ca_store_urls()
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
         tasks = []
