@@ -49,6 +49,8 @@ def fetch_data():
                     )
                 except:
                     hours_of_operation = MISSING
+                if "Here are the store hours" in hours_of_operation:
+                    hours_of_operation = MISSING
                 phone = loc["phone"]
                 street_address = loc["address1"]
                 log.info(street_address)
