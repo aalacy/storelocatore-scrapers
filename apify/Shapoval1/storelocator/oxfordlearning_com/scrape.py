@@ -55,6 +55,8 @@ def fetch_data(sgw: SgWriter):
         postal = (
             " ".join(tree.xpath('//span[@itemprop="postalCode"]//text()'))
             .replace("\n", "")
+            .replace("P.O. Box 22683", "")
+            .strip()
             .strip()
             or "<MISSING>"
         )
