@@ -192,7 +192,6 @@ def fetch_data_global(urlpartnum, urlpart, sgw: SgWriter):
         f"{urlpart[0]}/store-finder/search?q={space_rep_w_plus}&page=0"
     )
     logger.info(f"Pulling the data from: {global_api_endpoint_url_formed}")
-    #     try:
     global_data = get_json_data_global(global_api_endpoint_url_formed)
     if global_data is not None:
         global_data = global_data["data"]
