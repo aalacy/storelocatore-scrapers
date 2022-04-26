@@ -5,7 +5,6 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 
-# from concurrent import futures
 from sgscrape.sgpostal import parse_address, International_Parser
 from sglogging import sglog
 
