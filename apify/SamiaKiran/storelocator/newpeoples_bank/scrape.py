@@ -64,7 +64,7 @@ def fetch_data():
                 hours_of_operation = hours_of_operation.split("ITM Hours*")[0]
             if "S Boone" in city:
                 city = city.replace("S", "")
-            street_address = street_address + " S"
+                street_address = street_address + " S"
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url=url,

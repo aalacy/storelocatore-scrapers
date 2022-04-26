@@ -8,17 +8,30 @@ from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgpostal import parse_address_intl
 import re
 import json
+from sgselenium import SgSelenium
+import ssl
+
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
+
 
 DOMAIN = "winkinglizard.com"
 BASE_URL = "https://www.winkinglizard.com/"
 LOCATION_URL = "https://www.winkinglizard.com/locations"
 HEADERS = {
-    "Accept": "application/json, text/plain, */*",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.",
+    "accept-encoding": "gzip, deflate, br",
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
 }
 log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
 
-session = SgRequests()
+session = SgRequests(verify_ssl=False)
 
 MISSING = "<MISSING>"
 
@@ -33,7 +46,6 @@ def getAddress(raw_address):
             city = data.city
             state = data.state
             zip_postal = data.postcode
-
             if street_address is None or len(street_address) == 0:
                 street_address = MISSING
             if city is None or len(city) == 0:
@@ -51,13 +63,18 @@ def getAddress(raw_address):
 
 def pull_content(url):
     log.info("Pull content => " + url)
-    soup = bs(session.get(url, headers=HEADERS).content, "lxml")
+    req = session.get(url, headers=HEADERS)
+    soup = bs(req.content, "lxml")
     return soup
 
 
 def fetch_data():
     log.info("Fetching store_locator data")
-    soup = pull_content(LOCATION_URL)
+    driver = SgSelenium().chrome()
+    driver.get(LOCATION_URL)
+    driver.implicitly_wait(10)
+    soup = bs(driver.page_source, "lxml")
+    driver.quit()
     info = soup.find("script", {"id": "popmenu-apollo-state"})
     info = re.search(r"window\.POPMENU_APOLLO_STATE\s+=\s+(.*);", info.string).group(1)
     info = json.loads(info)
