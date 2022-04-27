@@ -11,6 +11,9 @@ import math
 from concurrent.futures import ThreadPoolExecutor
 from webdriver_manager.chrome import ChromeDriverManager
 import os
+import ssl
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 os.environ[
     "PROXY_URL"
