@@ -1,8 +1,11 @@
-import csv
 from sgrequests import SgRequests
 import json
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 logger = SgLogSetup().get_logger("pennzoil_com")
 
@@ -13,111 +16,83 @@ headers = {
 
 search = DynamicGeoSearch(
     country_codes=[SearchableCountries.USA],
-    max_search_distance_miles=50,
-    max_search_results=5,
+    max_search_distance_miles=None,
+    max_search_results=50,
 )
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
-
-
 def fetch_data():
-    locations = []
     for lat, lng in search:
-        try:
-            x = lat
-            y = lng
-            logger.info(str(x) + "," + str(y))
-            website = "pennzoil.com"
-            url = (
-                "https://locator.pennzoil.com/api/v1/pennzoil/oil_change_locations/nearest_to?limit=50&lat="
-                + str(x)
-                + "&lng="
-                + str(y)
-                + "&format=json"
-            )
-            r = session.get(url, headers=headers, timeout=15)
-            purl = "<MISSING>"
-            for item in json.loads(r.content):
-                store = item["id"]
-                name = item["name"]
-                lat = item["lat"]
-                lng = item["lng"]
-                add = item["address1"]
-                city = item["city"]
-                state = item["state"]
-                zc = item["postcode"]
-                country = "US"
-                phone = item["telephone"]
-                if phone == "":
-                    phone = "<MISSING>"
-                hours = "<MISSING>"
-                typ = "<MISSING>"
-                canada = [
-                    "NL",
-                    "NS",
-                    "PE",
-                    "QC",
-                    "ON",
-                    "BC",
-                    "AB",
-                    "MB",
-                    "SK",
-                    "YT",
-                    "NU",
-                    "NT",
-                    "NB",
-                ]
-                if store not in locations and state not in canada:
-                    locations.append(store)
-                    if "PENNZOIL" in name.upper():
-                        yield [
-                            website,
-                            purl,
-                            name,
-                            add,
-                            city,
-                            state,
-                            zc,
-                            country,
-                            store,
-                            phone,
-                            typ,
-                            lat,
-                            lng,
-                            hours,
-                        ]
-        except:
-            pass
+        x = lat
+        y = lng
+        logger.info(str(x) + "," + str(y))
+        website = "pennzoil.com"
+        url = (
+            "https://locator.pennzoil.com/api/v1/pennzoil/oil_change_locations/nearest_to?limit=50&lat="
+            + str(x)
+            + "&lng="
+            + str(y)
+            + "&format=json"
+        )
+        r = session.get(url, headers=headers)
+        purl = "<MISSING>"
+        for item in json.loads(r.content):
+            store = item["id"]
+            name = item["name"]
+            lat = item["lat"]
+            lng = item["lng"]
+            add = item["address1"]
+            city = item["city"]
+            state = item["state"]
+            zc = item["postcode"]
+            country = "US"
+            phone = item["telephone"]
+            if phone == "":
+                phone = "<MISSING>"
+            hours = "<MISSING>"
+            typ = "<MISSING>"
+            canada = [
+                "NL",
+                "NS",
+                "PE",
+                "QC",
+                "ON",
+                "BC",
+                "AB",
+                "MB",
+                "SK",
+                "YT",
+                "NU",
+                "NT",
+                "NB",
+            ]
+            if state not in canada:
+                if "PENNZOIL" in name.upper():
+                    yield SgRecord(
+                        locator_domain=website,
+                        page_url=purl,
+                        location_name=name,
+                        street_address=add,
+                        city=city,
+                        state=state,
+                        zip_postal=zc,
+                        country_code=country,
+                        phone=phone,
+                        location_type=typ,
+                        store_number=store,
+                        latitude=lat,
+                        longitude=lng,
+                        hours_of_operation=hours,
+                    )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(
+        deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
+    ) as writer:
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()
