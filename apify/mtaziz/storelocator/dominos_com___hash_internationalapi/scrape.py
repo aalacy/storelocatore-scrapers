@@ -206,6 +206,12 @@ def fetch_records_global(idx, url, sgw: SgWriter):
         if MISSING not in store and country == "CA":
             name = "STORE #" + store
 
+        # Fix city contains numerics / numbers
+
+        if city.isdigit() is True:
+            city = MISSING
+        city = city.replace('"', "")
+
         rec = SgRecord(
             locator_domain=website,
             page_url=loc,

@@ -38,6 +38,8 @@ def fetch_data():
             city = poi["city"]
             state = poi["state"]
             zip_code = poi["postal_code"]
+            if zip_code and len(zip_code) < 3:
+                zip_code = ""
             country_code = poi["country"]
             store_number = poi["id"]
             phone = poi["phone"]
