@@ -111,7 +111,7 @@ class ExampleSearchIteration(SearchIteration):
                     continue
 
                 state = _["state"] if _["country"] == "US" else _["province"]
-                location_type = "the north face"
+                location_type = ""
                 north_store = _.get("northface")
                 if north_store == "1":
                     location_type = "the north face store"
@@ -207,7 +207,7 @@ def fetch_records():
                         zip_postal=addr["postalCode"],
                         country_code="US",
                         phone=_["telephone"],
-                        location_type=_["@type"],
+                        location_type="the north face",
                         latitude=_["geo"]["latitude"],
                         longitude=_["geo"]["longitude"],
                         locator_domain=locator_domain,
