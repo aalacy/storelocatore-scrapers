@@ -29,12 +29,13 @@ def fetch_data(sgw: SgWriter):
             continue
         with SgFirefox() as driver:
 
+            driver.implicitly_wait(10)
             driver.get(page_url)
-            driver.implicitly_wait(20)
+            driver.implicitly_wait(10)
             driver.maximize_window()
             driver.switch_to.frame(0)
             try:
-                WebDriverWait(driver, 20).until(
+                WebDriverWait(driver, 5).until(
                     EC.presence_of_element_located(
                         (By.XPATH, '//div[@class="address"]')
                     )
@@ -50,15 +51,24 @@ def fetch_data(sgw: SgWriter):
                 ad = "<MISSING>"
                 ll = "<MISSING>"
             ll = "".join(ll)
-            ad = "".join(ad)
+            ad = (
+                "".join(ad)
+                .replace(", N.L.", "")
+                .replace(", Mor.", "")
+                .replace(", Méx.", "")
+                .replace(", S.L.P.", "")
+                .replace(", Ver.", "")
+                .replace(", Gto.", "")
+                .strip()
+            )
             driver.switch_to.default_content()
             location_name = "".join(location_name)
             street_address = "<MISSING>"
             country_code = "MX"
-            city = "<MISSING>"
+            city = page_url.split("Tienda-")[1].replace("-", " ").strip()
+            postal = "<MISSING>"
             if ad != "<MISSING>":
-                postal = ad.split(",")[-2].split()[0].strip()
-                city = " ".join(ad.split(",")[-2].split()[1:])
+                postal = ad.split(",")[-1].split()[0].strip()
                 street_address = ad.split(f", {postal}")[0].strip()
             try:
                 latitude = ll.split("ll=")[1].split(",")[0].strip()
@@ -69,7 +79,7 @@ def fetch_data(sgw: SgWriter):
                 '//span[text()="Venta Telefónica"]/following-sibling::span'
             ).text
             hours = driver.find_element_by_xpath(
-                '//span[text()="Venta Telefónica"]/following::div[@class="horario"][1]/span'
+                '//div[./strong[text()="Nuestra Tienda"]]/div/span[2]'
             ).text
             hours_of_operation = (
                 "".join(hours).replace("\n", " ").strip() or "<MISSING>"
@@ -82,7 +92,7 @@ def fetch_data(sgw: SgWriter):
                 street_address=street_address,
                 city=city,
                 state=SgRecord.MISSING,
-                zip_postal=SgRecord.MISSING,
+                zip_postal=postal,
                 country_code=country_code,
                 store_number=SgRecord.MISSING,
                 phone=phone,
@@ -90,6 +100,7 @@ def fetch_data(sgw: SgWriter):
                 latitude=latitude,
                 longitude=longitude,
                 hours_of_operation=hours_of_operation,
+                raw_address=ad,
             )
 
             sgw.write_row(row)
