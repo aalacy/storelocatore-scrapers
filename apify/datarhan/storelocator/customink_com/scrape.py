@@ -25,6 +25,11 @@ def fetch_data():
         state_url = f"https://www.customink.com/ink/api/yext-stores?state={state_id}&city={city}&radius={radius}"
         data = session.get(state_url).json()
         for poi in data["stores"]:
+            if (
+                poi.get("c_locatedIn")
+                and poi.get("c_locatedIn") == "New Location Opening Soon!"
+            ):
+                continue
             hoo = []
             for day, hours in poi["hours"].items():
                 if day == "holidayHours":
