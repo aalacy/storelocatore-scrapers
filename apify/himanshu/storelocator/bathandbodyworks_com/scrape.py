@@ -87,7 +87,6 @@ def fetch_data():
     ).driver() as driver:
         driver.get(url)
         response = driver.page_source
-        print(response)
 
     json_objects = extract_json(response)
 
