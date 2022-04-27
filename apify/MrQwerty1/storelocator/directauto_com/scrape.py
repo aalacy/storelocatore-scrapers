@@ -1,92 +1,110 @@
 from lxml import html
 from sgscrape.sgrecord import SgRecord
-from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from concurrent import futures
+from sgselenium import SgChrome
+from selenium.webdriver.common.by import By
+from sglogging import sglog
+import ssl
+import json
+
+ssl._create_default_https_context = ssl._create_unverified_context
+
+logger = sglog.SgLogSetup().get_logger(logger_name="directauto.com")
+
+user_agent = (
+    "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0"
+)
+
+sitemap = "https://local.directauto.com/sitemap.xml"
 
 
 def get_urls():
-    urls = set()
-    r = session.get("https://local.directauto.com/sitemap.xml", headers=headers)
-    tree = html.fromstring(r.content)
-    links = tree.xpath("//loc/text()")
-    for link in links:
-        if link.count("/") == 5:
-            urls.add(f"{link}.json")
+    with SgChrome(user_agent=user_agent) as driver:
+        driver.get(sitemap)
+        tree = html.fromstring(driver.page_source, "lxml")
+        links = tree.xpath("//loc/text()")
+        urls = set()
+        for link in links:
+            if link.count("/") == 5:
+                urls.add(f"{link}.json")
 
     return urls
 
 
 def get_data(api, sgw: SgWriter):
-    r = session.get(api, headers=headers)
-    j = r.json()["profile"]
-    page_url = api.replace(".json", "")
-    location_name = j.get("name")
-    a = j.get("address") or {}
-    adr1 = a.get("line1") or ""
-    adr2 = a.get("line2") or ""
-    street_address = f"{adr1} {adr2}".strip()
-    city = a.get("city")
-    state = a.get("region")
-    postal = a.get("postalCode")
-
-    try:
-        phone = j["mainPhone"]["display"]
-    except:
-        phone = SgRecord.MISSING
-    g = j.get("yextDisplayCoordinate") or {}
-    latitude = g.get("lat")
-    longitude = g.get("long")
-
-    _tmp = []
-    try:
-        hours = j["hours"]["normalHours"]
-    except:
-        hours = []
-
-    for h in hours:
-        day = h.get("day")
-        isclosed = h.get("isClosed")
-        if isclosed:
-            _tmp.append(f"{day}: Closed")
-            continue
+    with SgChrome(user_agent=user_agent) as driver:
+        logger.info(f"Crawling {api}")
+        driver.get(api)
+        j = json.loads(driver.find_element(By.CSS_SELECTOR, "body").text)["profile"]
+        page_url = api.replace(".json", "")
+        location_name = j.get("name")
+        logger.info(f"Location Name: {location_name}")
+        a = j.get("address") or {}
+        adr1 = a.get("line1") or ""
+        adr2 = a.get("line2") or ""
+        street_address = f"{adr1} {adr2}".strip()
+        city = a.get("city")
+        state = a.get("region")
+        postal = a.get("postalCode")
 
         try:
-            i = h.get("intervals")[0]
+            phone = j["mainPhone"]["display"]
         except:
-            i = dict()
+            phone = SgRecord.MISSING
+        g = j.get("yextDisplayCoordinate") or {}
+        latitude = g.get("lat")
+        longitude = g.get("long")
 
-        start = str(i.get("start")).zfill(4)
-        end = str(i.get("end")).zfill(4)
-        start = start[:2] + ":" + start[2:]
-        end = end[:2] + ":" + end[2:]
-        _tmp.append(f"{day}: {start}-{end}")
+        _tmp = []
+        try:
+            hours = j["hours"]["normalHours"]
+        except:
+            hours = []
 
-    hours_of_operation = ";".join(_tmp)
+        for h in hours:
+            day = h.get("day")
+            isclosed = h.get("isClosed")
+            if isclosed:
+                _tmp.append(f"{day}: Closed")
+                continue
 
-    row = SgRecord(
-        page_url=page_url,
-        location_name=location_name,
-        street_address=street_address,
-        city=city,
-        state=state,
-        zip_postal=postal,
-        country_code="US",
-        latitude=latitude,
-        longitude=longitude,
-        phone=phone,
-        locator_domain=locator_domain,
-        hours_of_operation=hours_of_operation,
-    )
+            try:
+                i = h.get("intervals")[0]
+            except:
+                i = dict()
 
-    sgw.write_row(row)
+            start = str(i.get("start")).zfill(4)
+            end = str(i.get("end")).zfill(4)
+            start = start[:2] + ":" + start[2:]
+            end = end[:2] + ":" + end[2:]
+            _tmp.append(f"{day}: {start}-{end}")
+
+        hours_of_operation = ";".join(_tmp)
+
+        row = SgRecord(
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code="US",
+            latitude=latitude,
+            longitude=longitude,
+            phone=phone,
+            locator_domain=locator_domain,
+            hours_of_operation=hours_of_operation,
+        )
+
+        sgw.write_row(row)
 
 
 def fetch_data(sgw: SgWriter):
     urls = get_urls()
-
+    logger.info(f"Total pages to crawl {len(urls)}")
     with futures.ThreadPoolExecutor(max_workers=3) as executor:
         future_to_url = {executor.submit(get_data, url, sgw): url for url in urls}
         for future in futures.as_completed(future_to_url):
@@ -96,18 +114,5 @@ def fetch_data(sgw: SgWriter):
 if __name__ == "__main__":
     locator_domain = "https://directauto.com/"
 
-    headers = {
-        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:98.0) Gecko/20100101 Firefox/98.0",
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
-        "Accept-Language": "ru,en-US;q=0.7,en;q=0.3",
-        "Alt-Used": "local.directauto.com",
-        "Connection": "keep-alive",
-        "Upgrade-Insecure-Requests": "1",
-        "Sec-Fetch-Dest": "document",
-        "Sec-Fetch-Mode": "navigate",
-        "Sec-Fetch-Site": "none",
-        "Sec-Fetch-User": "?1",
-    }
-    session = SgRequests()
     with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         fetch_data(writer)
