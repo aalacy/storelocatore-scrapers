@@ -1,6 +1,6 @@
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
@@ -229,15 +229,7 @@ if __name__ == "__main__":
                 )
         with SgWriter(
             SgRecordDeduper(
-                SgRecordID(
-                    {
-                        SgRecord.Headers.STORE_NUMBER,
-                        SgRecord.Headers.LATITUDE,
-                        SgRecord.Headers.LONGITUDE,
-                        SgRecord.Headers.PAGE_URL,
-                    }
-                ),
-                duplicate_streak_failure_factor=1000,
+                RecommendedRecordIds.GeoSpatialId, duplicate_streak_failure_factor=1000
             )
         ) as writer:
             search_maker = DynamicSearchMaker(
