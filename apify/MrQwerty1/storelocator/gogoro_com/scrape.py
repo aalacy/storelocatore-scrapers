@@ -6,35 +6,33 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgpostal import parse_address, International_Parser
 
 
-def get_international(line):
+def get_street(line):
     adr = parse_address(International_Parser(), line)
     adr1 = adr.street_address_1 or ""
     adr2 = adr.street_address_2 or ""
     street = f"{adr1} {adr2}".strip()
-    city = adr.city or SgRecord.MISSING
-    state = adr.state or SgRecord.MISSING
-    postal = adr.postcode or SgRecord.MISSING
 
-    return street, city, state, postal
+    return street
 
 
 def fetch_data(sgw: SgWriter):
-    api = "http://www.gulf.pl/wp-admin/admin-ajax.php?action=loadDistributors"
+    api = "https://official-site-pro.gogoroapp.com/PartnerService/Gogoro/GetVmList?offset=0&pageSize=10000"
     r = session.get(api, headers=headers)
-    js = r.json()
+    js = r.json()["Data"]
 
     for j in js:
-        g = j.get("geolocation") or {}
-        raw_address = g.get("address") or ""
-        street_address, city, state, postal = get_international(raw_address)
-        state = j.get("region")
-        country_code = "PL"
-        location_type = ", ".join(j.get("services") or [])
-        location_name = j.get("title")
-        phone = j.get("phone") or ""
-        phone = phone.replace("tel.", "").strip()
-        latitude = g.get("lat")
-        longitude = g.get("lng")
+        location_name = j["LocName"]["en-US"]
+        raw_address = j["Address"]["en-US"]
+        street_address = get_street(raw_address)
+        city = j["City"]["en-US"]
+        state = j["District"]["en-US"]
+        postal = j.get("ZipCode")
+        country_code = "TW"
+        store_number = j.get("Id")
+        page_url = f"https://www.gogoro.com/findus/?station={store_number}"
+        phone = j.get("Phone")
+        latitude = j.get("Latitude")
+        longitude = j.get("Longitude")
 
         row = SgRecord(
             page_url=page_url,
@@ -46,8 +44,8 @@ def fetch_data(sgw: SgWriter):
             country_code=country_code,
             latitude=latitude,
             longitude=longitude,
-            location_type=location_type,
             phone=phone,
+            store_number=store_number,
             raw_address=raw_address,
             locator_domain=locator_domain,
         )
@@ -56,11 +54,10 @@ def fetch_data(sgw: SgWriter):
 
 
 if __name__ == "__main__":
-    locator_domain = "http://www.gulf.pl/"
-    page_url = "http://www.gulf.pl/punkty-sprzedazy-gulf/"
+    locator_domain = "https://www.gogoro.com/"
     headers = {
         "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:97.0) Gecko/20100101 Firefox/97.0",
     }
     session = SgRequests()
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         fetch_data(writer)
