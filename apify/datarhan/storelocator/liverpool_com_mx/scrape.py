@@ -40,24 +40,36 @@ def fetch_data():
         response2 = session.post(post_url, data=frm, headers=headers)
         logger.info(f"{store_number} Response: {response2}")
         poi_data = response2.json()
-        street_address = poi_data["storeDetails"]["StoreDetails"]["1"]["address1"]
-        if poi_data["storeDetails"]["StoreDetails"]["1"]["address2"]:
-            street_address += (
-                " " + poi_data["storeDetails"]["StoreDetails"]["1"]["address2"]
-            )
+        city = poi["city"].replace("-", "")
+        street_address = (
+            poi_data["storeDetails"]["StoreDetails"]["1"]["generalDetails"]
+            .split("\n")[0]
+            .strip()
+            .split("<br")[0]
+            .replace(",", "")
+            .replace("<p>", "")
+            .split("Col.")[0]
+            .replace("</br>", "")
+        )
+        if city:
+            street_address = street_address.split(city)[0]
         poi_html = etree.HTML(
             poi_data["storeDetails"]["StoreDetails"]["1"]["generalDetails"]
         )
-        hoo = [e.strip() for e in poi_html.xpath("//text()") if "Horario" in e][
-            0
-        ].split("tienda:")[-1]
+        hoo = (
+            [e.strip() for e in poi_html.xpath("//text()") if "horario" in e.lower()][0]
+            .split("ienda:")[-1]
+            .strip()
+        )
+        if not hoo:
+            hoo = poi_html.xpath("//text()")[-1]
 
         item = SgRecord(
             locator_domain=domain,
             page_url=start_url,
             location_name=poi["name"],
             street_address=street_address,
-            city=poi["city"],
+            city=city,
             state=poi["state"],
             zip_postal=poi["postalCode"],
             country_code=poi_data["storeDetails"]["StoreDetails"]["1"]["country"],
