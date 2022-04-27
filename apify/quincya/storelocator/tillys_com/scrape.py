@@ -16,7 +16,8 @@ def fetch_data(sgw: SgWriter):
     base_link = "https://www.tillys.com/on/demandware.store/Sites-tillys-Site/default/Stores-FindStores?showMap=false&isAjax=false&location=30030&radius=5000"
 
     session = SgRequests()
-    stores = session.get(base_link, headers=headers).json()["stores"]
+    req = session.get(base_link, headers=headers)
+    stores = req.json()["stores"]
 
     locator_domain = "https://www.tillys.com/"
 
@@ -30,6 +31,10 @@ def fetch_data(sgw: SgWriter):
             street_address = (store["address1"] + " " + store["address2"]).strip()
         except:
             street_address = store["address1"]
+
+        if "3710 Route 9" in street_address:
+            street_address = "3710 Route 9 Suite H215"
+
         city = store["city"]
         state = store["stateCode"]
         zip_code = store["postalCode"]
