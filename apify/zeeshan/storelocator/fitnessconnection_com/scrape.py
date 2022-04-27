@@ -48,7 +48,7 @@ def fetch_data(sgw: SgWriter):
 
         try:
             location_name = (
-                item.find("h3")
+                item.find("h2")
                 .text.replace("-", "- ")
                 .replace("– NOW OPEN", "")
                 .replace("– Now Open!", "")
@@ -60,7 +60,9 @@ def fetch_data(sgw: SgWriter):
         if "coming soon" in location_name.lower():
             continue
 
-        street_address = raw_address[: raw_address.find("<")].strip()
+        street_address = (
+            raw_address[: raw_address.find("<")].split("Greenspoint")[0].strip()
+        )
         if ", Austin" in street_address:
             street_address = street_address[: street_address.find(", Austin")].strip()
         city = raw_address[raw_address.find(">") + 1 : raw_address.rfind(",")].strip()
