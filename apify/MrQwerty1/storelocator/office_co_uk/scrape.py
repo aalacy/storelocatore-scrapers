@@ -8,6 +8,9 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgpostal import parse_address, International_Parser
 from sglogging import sglog
 from sgselenium import SgChrome
+import ssl
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 log = sglog.SgLogSetup().get_logger(logger_name="office.co.uk")
 
