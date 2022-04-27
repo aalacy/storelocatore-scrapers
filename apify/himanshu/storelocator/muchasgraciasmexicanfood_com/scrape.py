@@ -54,12 +54,13 @@ def fetch_data():
             if city.lower() in slug:
                 link = slug
                 break
-        if ",sat:1,sun:1" in hours:
-            hours = hours.replace(",sat:1,sun:1", ",sat:24 Hours,sun:24 Hours")
-        elif "mon:1,tue:1,wed:1,thu:1,fri:1,sat:1,sun:1" in hours:
-            hours = "24 Hours"
+        if "mon:1,tue:1,wed:1,thu:1,fri:1,sat:1,sun:1" in hours:
+            hours = "<MISSING>"
+        elif ",sat:1,sun:1" in hours:
+            hours = hours.replace(",sat:1,sun:1", "")
         elif "sun:0" in hours:
-            hours = hours.replace("sun:0", "sun Closed")
+            if len(hours.split("sun:", 1)[1]) == 1:
+                hours = hours.replace("sun:0", "sun Closed")
         yield SgRecord(
             locator_domain="https://www.muchasgraciasmexicanfood.com/",
             page_url=link,
