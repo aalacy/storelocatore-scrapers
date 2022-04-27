@@ -30,15 +30,6 @@ def fetch_data(sgw: SgWriter):
     found = []
     for country in countries:
         code = country["data-locale"]
-        try:
-            country["data-id"].split("-")[1]
-        except:
-            if "_BE" in code:
-                code = "fr_BE"
-            elif "_CH" in code:
-                code = "fr_CH"
-            else:
-                code = "en_" + code.split("_")[1]
         if code in found:
             continue
         found.append(code)
@@ -50,12 +41,14 @@ def fetch_data(sgw: SgWriter):
         req = session.get(stores_link, headers=headers)
         try:
             base = BeautifulSoup(req.text, "lxml")
+            swarp = (
+                base.find(class_="b-search")["data-url"]
+                .split("store/")[1]
+                .split("/")[0]
+            )
         except:
+            log.info("Error..Skip!")
             continue
-
-        swarp = (
-            base.find(class_="b-search")["data-url"].split("store/")[1].split("/")[0]
-        )
 
         token = base.find("div", attrs={"data-token-name": "csrf_token"})[
             "data-token-value"
@@ -77,6 +70,9 @@ def fetch_data(sgw: SgWriter):
             street_address = (
                 (item["address1"] + " " + item["address2"]).strip().split(", AB")[0]
             )
+            if street_address[-1:] == ",":
+                street_address = street_address[:-1]
+
             if location_name + street_address in found:
                 continue
             found.append(location_name + street_address)
@@ -94,24 +90,20 @@ def fetch_data(sgw: SgWriter):
             country_code = item["countryCode"]
             store_number = item["ID"]
             phone = item["phone"]
-            location_type = ""
-            if item["isClosed"]:
-                continue
-            if item["isTemporaryClosed"]:
-                location_type = "Temporary Closed"
-            if item["isRetailShop"]:
-                location_type = ", ".join([location_type, "Retail Shop"])
-            if item["isKiosk"]:
-                location_type = ", ".join([location_type, "Kiosk"])
-            if item["isKioskOrShop"]:
-                location_type = ", ".join([location_type, "Kiosk Or Shop"])
-            if item["isServiceCenter"]:
-                location_type = ", ".join([location_type, "Service Center"])
-            if location_type[:1] == ",":
-                location_type = location_type[1:].strip()
+            # ----------Location Type -----------#
+            brands = []
+            for b in item["brands"]:
+                brand = b["value"]
+                brands.append(brand)
+            location_type = (",").join(brands)
+
             latitude = item["lat"]
             longitude = item["lng"]
+            if "." not in str(latitude):
+                latitude = ""
+                longitude = ""
             link = locator_domain + item["detailsUrl"]
+            log.info(link)
             hours_of_operation = item["storeHours"]
             if not state:
                 if "/united-states" in link:

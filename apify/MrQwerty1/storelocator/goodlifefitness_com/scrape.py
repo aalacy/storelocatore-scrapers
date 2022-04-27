@@ -8,7 +8,7 @@ from sgzip.dynamic import SearchableCountries, DynamicGeoSearch
 
 def fetch_data(lat, lng, sgw: SgWriter):
     lat, lng = str(lat).replace(".", "_"), str(lng).replace(".", "_")
-    url = f"https://www.goodlifefitness.com/content/goodlife/en/clubs/jcr:content/root/responsivegrid/responsivegrid_1015243366/findaclub.ClubByMapBounds.{lat}.{lng}...20211014.json"
+    url = f"https://www.goodlifefitness.com/content/goodlife/en/clubs/jcr:content/root/responsivegrid/responsivegrid_1015243366/findaclub.ClubByMapBounds.{lat}.{lng}.undef.undef.2022127.json"
     r = session.get(url)
     js = r.json()["map"]["response"]
 
@@ -29,13 +29,13 @@ def fetch_data(lat, lng, sgw: SgWriter):
 
         _tmp = []
         days = [
-            "sunday",
             "monday",
             "tuesday",
             "wednesday",
             "thursday",
             "friday",
             "saturday",
+            "sunday",
         ]
         hours = j.get("OperatingHours") or []
 
@@ -43,10 +43,7 @@ def fetch_data(lat, lng, sgw: SgWriter):
             day = days[h.get("Day") - 1]
             start = h.get("StartTime").split("T")[1][:-3]
             end = h.get("EndTime").split("T")[1][:-3]
-            if start.find("00:00") == -1:
-                _tmp.append(f"{day.capitalize()}: {start} - {end}")
-            else:
-                _tmp.append(f"{day.capitalize()}: Closed")
+            _tmp.append(f"{day.capitalize()}: {start} - {end}")
 
         hours_of_operation = ";".join(_tmp)
         if j.get("Is247"):
@@ -83,7 +80,7 @@ if __name__ == "__main__":
         )
     ) as writer:
         search = DynamicGeoSearch(
-            country_codes=[SearchableCountries.CANADA], expected_search_radius_miles=50
+            country_codes=[SearchableCountries.CANADA], expected_search_radius_miles=10
         )
         for la, ln in search:
             fetch_data(la, ln, writer)

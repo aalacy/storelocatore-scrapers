@@ -91,12 +91,20 @@ def fetch_records(session: SgRequests, state: CrawlState) -> Iterable[SgRecord]:
         state = soup.find("abbr", {"itemprop": "addressRegion"}).text
         zip_postal = soup.find("span", {"class": "c-address-postal-code"}).text
         country_code = soup.find("abbr", {"itemprop": "addressCountry"}).text
-        phone = soup.find("span", {"itemprop": "telephone"}).text
-        hours_of_operation = (
-            soup.find("table", {"class": "c-location-hours-details"})
-            .get_text(separator="|", strip=True)
-            .replace("|", " ")
-        )
+        try:
+            phone = soup.find("span", {"itemprop": "telephone"}).text
+        except Exception:
+            phone = "<MISSING>"
+
+        try:
+            hours_of_operation = (
+                soup.find("table", {"class": "c-location-hours-details"})
+                .get_text(separator="|", strip=True)
+                .replace("|", " ")
+                .replace("Day of the Week Hours ", "")
+            )
+        except Exception:
+            hours_of_operation = "<MISSING>"
         latitude = soup.find("meta", {"itemprop": "latitude"})["content"]
         longitude = soup.find("meta", {"itemprop": "longitude"})["content"]
         yield SgRecord(

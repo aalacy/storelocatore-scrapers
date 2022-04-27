@@ -1,11 +1,15 @@
 from bs4 import BeautifulSoup
-import csv
 from sgrequests import SgRequests
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from sgselenium.sgselenium import SgChrome
 from webdriver_manager.chrome import ChromeDriverManager
+from sgscrape import simple_scraper_pipeline as sp
+import ssl
+import re
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 
 def get_driver(url, class_name, driver=None):
@@ -46,37 +50,7 @@ headers = {
 }
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
+def get_data():
     got_driver = 0
     linklist = []
     data = []
@@ -205,10 +179,17 @@ def fetch_data():
                                 state = address[-1].split(", ")[-1].split(" ")[0]
 
                                 if ccode == "US":
-                                    pcode = address[-1].split(", ")[-1].split(" ")[-1]
+                                    postal = address[-1].split(", ")[-1].split(" ")[-1]
+                                    pcode = ""
+                                    for character in postal:
+                                        if bool(re.search(r"\d", character)) is True:
+                                            pcode = pcode + character
+
+                                    if len(pcode) == 9:
+                                        pcode = pcode[:-4] + "-" + pcode[-4:]
 
                                 else:
-                                    pcode = (
+                                    postal = (
                                         address[-1].split(", ")[-1].split(" ")[-2]
                                         + address[-1].split(", ")[-1].split(" ")[-1]
                                     )
@@ -242,24 +223,22 @@ def fetch_data():
 
                                     state = "QC"
                                 if True:
-                                    data.append(
-                                        [
-                                            "http://www.primerica.com/",
-                                            alink,
-                                            title,
-                                            street,
-                                            city,
-                                            state,
-                                            pcode,
-                                            ccode,
-                                            "<MISSING>",
-                                            phone,
-                                            "<MISSING>",
-                                            "<MISSING>",
-                                            "<MISSING>",
-                                            "<MISSING>",
-                                        ]
-                                    )
+                                    yield {
+                                        "locator_domain": "http://www.primerica.com/",
+                                        "page_url": alink,
+                                        "location_name": title,
+                                        "latitude": "<MISSING>",
+                                        "longitude": "<MISSING>",
+                                        "city": city,
+                                        "store_number": "<MISSING>",
+                                        "street_address": street,
+                                        "state": state,
+                                        "zip": pcode,
+                                        "phone": phone,
+                                        "location_type": "<MISSING>",
+                                        "hours": "<MISSING>",
+                                        "country_code": ccode,
+                                    }
 
                                     p += 1
         sec += 1
@@ -267,9 +246,38 @@ def fetch_data():
 
 
 def scrape():
+    field_defs = sp.SimpleScraperPipeline.field_definitions(
+        locator_domain=sp.MappingField(mapping=["locator_domain"]),
+        page_url=sp.MappingField(mapping=["page_url"], part_of_record_identity=True),
+        location_name=sp.MappingField(
+            mapping=["location_name"], part_of_record_identity=True
+        ),
+        latitude=sp.MappingField(mapping=["latitude"], part_of_record_identity=True),
+        longitude=sp.MappingField(mapping=["longitude"], part_of_record_identity=True),
+        street_address=sp.MultiMappingField(
+            mapping=["street_address"], is_required=False
+        ),
+        city=sp.MappingField(
+            mapping=["city"],
+        ),
+        state=sp.MappingField(mapping=["state"], is_required=False),
+        zipcode=sp.MultiMappingField(mapping=["zip"], is_required=False),
+        country_code=sp.MappingField(mapping=["country_code"]),
+        phone=sp.MappingField(mapping=["phone"], is_required=False),
+        store_number=sp.MappingField(
+            mapping=["store_number"], part_of_record_identity=True
+        ),
+        hours_of_operation=sp.MappingField(mapping=["hours"], is_required=False),
+        location_type=sp.MappingField(mapping=["location_type"], is_required=False),
+    )
 
-    data = fetch_data()
-    write_output(data)
+    pipeline = sp.SimpleScraperPipeline(
+        scraper_name="Crawler",
+        data_fetcher=get_data,
+        field_definitions=field_defs,
+        log_stats_interval=15,
+    )
+    pipeline.run()
 
 
 scrape()
