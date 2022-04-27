@@ -23,18 +23,18 @@ def get_data(slug, sgw: SgWriter):
     d = tree.xpath("//div[@class='nearby-store active-store']")[0]
 
     location_name = "".join(d.xpath("./a/text()")).strip()
+    raw_address = " ".join(
+        " ".join(d.xpath("//address[@itemprop='address']//text()")).split()
+    )
     page_url = "https://www.tkmaxx.ie" + "".join(d.xpath("./a/@href"))
     store_number = "".join(d.xpath("./@data-store-id"))
     latitude = "".join(d.xpath("./@data-latitude"))
     longitude = "".join(d.xpath("./@data-longitude"))
     b = d.xpath("./following-sibling::div[1]")[0]
     street_address = "".join(b.xpath(".//p[@itemprop='streetAddress']/text()")).strip()
-    city = "".join(b.xpath(".//p[@itemprop='addressLocality']/text()")).strip()
-    if not city:
-        city = location_name
-    if city[0].isdigit():
-        street_address = city
-        city = location_name
+    city = location_name
+    if "(" in city:
+        city = city.split("(")[0].strip()
     postal = "".join(b.xpath(".//p[@itemprop='zipCode']/text()")).strip()
     phone = "".join(b.xpath(".//p[@itemprop='telephone']/text()")).strip()
     hours_of_operation = "".join(
@@ -57,6 +57,7 @@ def get_data(slug, sgw: SgWriter):
         latitude=latitude,
         longitude=longitude,
         locator_domain=locator_domain,
+        raw_address=raw_address,
         hours_of_operation=hours_of_operation,
     )
 
