@@ -120,7 +120,8 @@ def fetch_single_store(store, retry=0):
         if "KSA, KING FAHAD ROAD, Al Manar, 3543 8 A، Dammam 32274" in str(zip_postal):
             zip_postal = "32274"
         if (
-            str(zip_postal) == "00"
+            str(zip_postal) == "0"
+            or str(zip_postal) == "00"
             or str(zip_postal) == "000"
             or str(zip_postal) == "0000"
             or str(zip_postal) == "00000"

@@ -2,7 +2,7 @@ from bs4 import BeautifulSoup
 
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
-from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 from sgrequests import SgRequests
@@ -23,6 +23,8 @@ def fetch_data(sgw: SgWriter):
 
     locator_domain = "https://bldr.com"
 
+    found = []
+
     for i in items:
         link = locator_domain + i["href"]
         if "/location/" not in link:
@@ -36,6 +38,12 @@ def fetch_data(sgw: SgWriter):
         street_address = (
             " ".join(raw_address[:-1]).replace("\xa0", " ").split("(")[0].strip()
         )
+
+        if street_address in ["12028 Hwy 145", "1331 208th St E"]:
+            if street_address in found:
+                continue
+        found.append(street_address)
+
         city_line = raw_address[-1].replace("\xa0", " ").replace("\n", "").split(",")
         city = city_line[0].strip()
         state = city_line[-1].strip().split()[0].strip()
@@ -87,5 +95,5 @@ def fetch_data(sgw: SgWriter):
         )
 
 
-with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))) as writer:
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
     fetch_data(writer)

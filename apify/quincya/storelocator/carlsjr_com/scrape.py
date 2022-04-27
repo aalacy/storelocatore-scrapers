@@ -72,7 +72,13 @@ def fetch_data(sgw: SgWriter):
             store_number = base.main["itemid"].split("#")[1]
         except:
             store_number = ""
-        location_type = ""
+
+        try:
+            location_type = ", ".join(
+                list(base.find(class_="Core-featuresList").stripped_strings)
+            )
+        except:
+            location_type = ""
 
         try:
             hours_of_operation = (
