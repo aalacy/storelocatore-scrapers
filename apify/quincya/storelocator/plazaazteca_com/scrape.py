@@ -1,106 +1,125 @@
-import requests
 from bs4 import BeautifulSoup
-import csv
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-import time
-import re
-from sglogging import SgLogSetup
 
-logger = SgLogSetup().get_logger('plazaazteca_com')
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
+from sgrequests import SgRequests
 
 
+def fetch_data(sgw: SgWriter):
 
-def get_driver():
-    options = Options() 
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    #return webdriver.Chrome(executable_path='driver/chromedriver', chrome_options=options)
-    return webdriver.Chrome('chromedriver', chrome_options=options)
+    base_link = "https://plazaazteca.com/locations/"
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
 
-def write_output(data):
-	with open('data.csv', mode='w') as output_file:
-		writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+    headers = {"User-Agent": user_agent}
 
-		# Header
-		writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-		# Body
-		for row in data:
-			writer.writerow(row)
+    session = SgRequests()
+    req = session.get(base_link, headers=headers)
+    base = BeautifulSoup(req.text, "lxml")
 
-def fetch_data():
-	
-	base_link = "https://www.plazaazteca.com/locations-hours"
+    items = base.find_all(class_="elementor-heading-title")
 
-	user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36'
-	headers = {'User-Agent' : user_agent}
+    locator_domain = "https://plazaazteca.com"
 
-	req = requests.get(base_link, headers=headers)
+    for item in items:
+        try:
+            link = item.a["href"]
+        except:
+            continue
 
-	try:
-		base = BeautifulSoup(req.text,"lxml")
-	except (BaseException):
-		logger.info('[!] Error Occured. ')
-		logger.info('[?] Check whether system is Online.')
+        req = session.get(link, headers=headers)
+        base = BeautifulSoup(req.text, "lxml")
 
-	headings = base.findAll('h3', attrs={'class': 'header-4'})
-	details = base.findAll('div', attrs={'class': 'row location'})
-	driver = get_driver()
-	data = []
-	for index in range(0,len(headings)):
+        location_name = item.text.strip()
+        try:
+            raw_address = base.find_all(class_="elementor-text-editor")[-1].find_all(
+                "p"
+            )
+            street_address = raw_address[0].text.strip()
+            city_line = raw_address[1].text.split(",")
+            city = city_line[0].strip()
+            state = city_line[1].strip()
+            if not state.isdigit():
+                zip_code = city_line[2].strip()
+            else:
+                zip_code = state
+                state = city
+                city = street_address.split(",")[1].strip()
+                street_address = street_address.split(",")[0].strip()
+            phone = raw_address[-1].text.strip()
+            if "," in phone:
+                phone = list(item.a.find_next().stripped_strings)[-1].strip()
+        except:
+            raw_address = list(item.a.find_next().stripped_strings)
+            street_address = raw_address[0].strip()
+            city_line = raw_address[1].strip().split(",")
+            city = city_line[0].strip()
+            state = city_line[1].strip()
+            zip_code = city_line[2].strip()
+            phone = raw_address[-1].strip()
+        if street_address[-1:] == ",":
+            street_address = street_address[:-1]
+        if "York" in state:
+            city = "York"
+            state = state.replace("York", "").strip()
+        country_code = "US"
+        store_number = ""
+        location_type = ""
+        phone = phone.split("·")[0].strip()
+        if "TEMPORARY CLOSED" in location_name.upper():
+            hours_of_operation = "TEMPORARY CLOSED".title()
+            phone = ""
+        else:
+            try:
+                hours_of_operation = " ".join(
+                    list(
+                        base.find(class_="elementor-icon-box-wrapper")
+                        .find_previous(class_="elementor-widget-wrap")
+                        .stripped_strings
+                    )
+                )
+            except:
+                try:
+                    hours_of_operation = " ".join(
+                        list(
+                            base.find(class_="hours-of-operation").div.stripped_strings
+                        )
+                    )
+                except:
+                    hours_of_operation = ""
+        if "," in phone:
+            phone = (
+                base.find_all(class_="elementor-text-editor")[-1]
+                .find_all("p")[-1]
+                .text.strip()
+            )
+        hours_of_operation = hours_of_operation.replace(
+            " (Late night menu available - Bar open late 1am)", ""
+        )
+        latitude = ""
+        longitude = ""
 
-		locator_domain = "plazaazteca.com"
-		location_name = headings[index].text.strip()
-		if "*" in location_name:
-			location_name = location_name[:location_name.find("*")].strip()
-		location_type = "<MISSING>"	
-		logger.info(location_name)
+        sgw.write_row(
+            SgRecord(
+                locator_domain=locator_domain,
+                page_url=link,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_code,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
+        )
 
-		raw_data = str(details[index].find('div', attrs={'class': 'col-xs-6 address-info'}).p).replace('<p>',"").replace('</p>',"").replace('\n',"").split('<br/>')
-		street_address = raw_data[0].replace('Â','').strip()
-		raw_line = raw_data[1].strip()
-		city = raw_line[:raw_line.rfind(',')].strip()
-		state = raw_line[raw_line.rfind(',')+1:raw_line.rfind(' ')].strip()
-		zip_code = raw_line[raw_line.rfind(' ')+1:].strip()
-		country_code = "US"
-		store_number = "<MISSING>"
-		phone = raw_data[2].strip()
 
-		try:
-			link = details[index].find('a')['href']
-			driver.get(link)
-			time.sleep(3)
-			raw_gps = driver.current_url
-			start_point = raw_gps.find("@") + 1
-			latitude = raw_gps[start_point:raw_gps.find(',',start_point)]
-			long_start = raw_gps.find(',',start_point)+1
-			longitude = raw_gps[long_start:raw_gps.find(',',long_start)]
-			try:
-				int(latitude[4:8])
-			except:
-				time.sleep(2)
-				raw_gps = driver.current_url
-				start_point = raw_gps.find("@") + 1
-				latitude = raw_gps[start_point:raw_gps.find(',',start_point)]
-				long_start = raw_gps.find(',',start_point)+1
-				longitude = raw_gps[long_start:raw_gps.find(',',long_start)]
-		except:
-			latitude = "<MISSING>"
-			longitude = "<MISSING>"
-
-		hours_of_operation = details[index].find('div', attrs={'class': 'col-xs-6 hours-info'}).get_text(separator=u' ').replace("\n"," ").replace("\xa0","").strip()
-		hours_of_operation = re.sub(' +', ' ', hours_of_operation)
-		if hours_of_operation == "":
-			hours_of_operation = "<MISSING>"
-
-		data.append([locator_domain, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
-	driver.close()
-	return data
-
-def scrape():
-	data = fetch_data()
-	write_output(data)
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    fetch_data(writer)

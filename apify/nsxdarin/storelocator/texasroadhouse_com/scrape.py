@@ -26,10 +26,17 @@ def fetch_data():
                 + str(y)
                 + "&radius=100000&limit=20"
             )
+            logger.info(str(y) + " - " + str(x))
             r = session.get(url, headers=headers)
             for item in json.loads(r.content)["restaurants"]:
-                city = item["city"]
-                state = item["state"]
+                try:
+                    city = item["city"]
+                except:
+                    city = "<MISSING>"
+                try:
+                    state = item["state"]
+                except:
+                    state = "<MISSING>"
                 if state == "":
                     state = "<MISSING>"
                 lat = item["latitude"]
@@ -37,11 +44,20 @@ def fetch_data():
                 loc = "https://togo.texasroadhouse.com/location/" + item["slug"]
                 add = item["streetaddress"]
                 country = item["country"]
-                phone = item["telephone"]
-                store = item["extref"]
+                try:
+                    phone = item["telephone"]
+                except:
+                    phone = "<MISSING>"
+                try:
+                    store = item["extref"]
+                except:
+                    store = "<MISSING>"
                 if phone == "":
                     phone = "<MISSING>"
-                zc = item["zip"]
+                try:
+                    zc = item["zip"]
+                except:
+                    zc = "<MISSING>"
                 if zc == "":
                     zc = "<MISSING>"
                 name = item["storename"]

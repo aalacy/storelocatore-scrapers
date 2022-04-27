@@ -20,9 +20,9 @@ def fetch_data():
         for y in range(-70, 70, 1):
             Found = True
             count = 0
-            while Found and count <= 8:
+            while Found and count <= 5:
                 try:
-                    time.sleep(2)
+                    time.sleep(1)
                     Found = False
                     count = count + 1
                     logger.info(str(y) + "-" + str(x))

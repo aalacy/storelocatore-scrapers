@@ -4,7 +4,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.pause_resume import CrawlStateSingleton
-from sgrequests.sgrequests import SgRequests
+from sgrequests import SgRequests
 from sgzip.dynamic import SearchableCountries, Grain_2
 from sgzip.parallel import DynamicSearchMaker, ParallelDynamicSearch, SearchIteration
 
@@ -24,7 +24,6 @@ def record_transformer(poi):
     if state.isdigit():
         state = ""
     zip_code = poi["zipCode"]
-    zip_code = zip_code if zip_code else ""
     if zip_code and str(zip_code.strip()) == "0":
         zip_code = ""
     country_code = poi["countryCode"]
@@ -32,16 +31,14 @@ def record_transformer(poi):
     phone = poi["phones"]
     phone = phone[0] if phone else ""
     if phone == "--":
-        phone = SgRecord.MISSING
+        phone = ""
     location_type = poi["datatype"]
     latitude = poi["latitude"]
-    latitude = latitude if latitude else ""
     longitude = poi["longitude"]
-    longitude = longitude if longitude else ""
 
     item = SgRecord(
         locator_domain=domain,
-        page_url=SgRecord.MISSING,
+        page_url="https://www.zara.com/us/en/z-stores-st1404.html?v1=11108",
         location_name=location_name,
         street_address=street_address,
         city=city,
