@@ -7,6 +7,7 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 
 from sgscrape.sgpostal import parse_address, International_Parser
 from sglogging import sglog
+from sgselenium import SgChrome
 
 log = sglog.SgLogSetup().get_logger(logger_name="office.co.uk")
 
@@ -25,11 +26,9 @@ def get_international(line):
 
 
 def get_urls():
-    r = session.get(
-        "https://www.office.co.uk/view/content/storelocator", headers=headers
-    )
-    log.info(f"Get URLs: {r}")
-    tree = html.fromstring(r.text, "lxml")
+    with SgChrome() as driver:
+        driver.get("https://www.office.co.uk/view/content/storelocator")
+        tree = html.fromstring(driver.page_source, "lxml")
 
     return tree.xpath("//div[contains(@id, 'addressDetail')]/a/@href")
 
