@@ -40,7 +40,7 @@ def fetch_data(sgw: SgWriter):
         if street_address:
             city = get_city(raw_address)
             state = g.get("state_short")
-            postal = g.get("post_code")
+            postal = g.get("post_code") or ""
         else:
             street_address, city, state, postal = get_international(raw_address)
 
