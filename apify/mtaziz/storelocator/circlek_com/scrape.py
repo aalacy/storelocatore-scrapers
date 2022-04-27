@@ -275,6 +275,10 @@ def fetch_details(item_num, data_dict, sgw: SgWriter):
                 if state is not None:
                     state = state.replace("franchise", "")
 
+                keep_countries = ["Canada", "CA", "GB", "US"]
+                if country_code not in keep_countries:
+                    return
+
                 hours_of_operation = get_hoo(store_sel)
                 rec = SgRecord(
                     locator_domain=locator_domain,

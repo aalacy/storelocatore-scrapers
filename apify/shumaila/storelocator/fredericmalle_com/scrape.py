@@ -72,7 +72,12 @@ def fetch_data():
 
         ccode = pa.country
         ccode = ccode.strip() if ccode else MISSING
-
+        if "<MISSING>" not in street:
+            title = title + " " + street
+        try:
+            phone = phone.split(":", 1)[1].strip()
+        except:
+            pass
         yield SgRecord(
             locator_domain=base_url,
             page_url=url,

@@ -90,16 +90,19 @@ def fetch_data():
             location_type = "<MISSING>"
 
             days = store_sel.xpath(
-                '//div[./div/h2[contains(text(),"Hours of operation") or contains(text(),"hours of Operation") or contains(text(),"hours of operation")]]/following-sibling::div[1]//h5/b/text()'
+                '//div[./div/h2[contains(text(),"Hours of operation") or contains(text(),"hours of Operation") or contains(text(),"hours of operation")]]/following-sibling::div[1]//h5/b//text()'
             )
 
             time = store_sel.xpath(
                 '//div[./div/h2[contains(text(),"Hours of operation") or contains(text(),"hours of Operation") or contains(text(),"hours of operation")]]/following-sibling::div[1]//h5/text()'
+            ) + store_sel.xpath(
+                '//div[./div/h2[contains(text(),"Hours of operation") or contains(text(),"hours of Operation") or contains(text(),"hours of operation")]]/following-sibling::div[1]//div/b//text()'
             )
             if len(time) <= 0:
                 time = store_sel.xpath(
                     '//div[./div/h2[contains(text(),"Hours of operation") or contains(text(),"hours of Operation") or contains(text(),"hours of operation")]]/following-sibling::div[1]//h5[./span/b]/span/b/text()'
                 )
+
             hours_list = []
             for index in range(0, len(time)):
                 hours_list.append(
