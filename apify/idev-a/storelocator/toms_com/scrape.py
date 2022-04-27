@@ -50,6 +50,9 @@ class ExampleSearchIteration(SearchIteration):
                 phone = _.get("phone")
                 if phone:
                     phone = phone.split("EXT")[0]
+                location_type = "retail store"
+                if "toms" in _["name"].lower() or "tom's" in _["name"].lower():
+                    location_type = "tom's store"
                 yield SgRecord(
                     page_url="https://www.toms.com/us/store-locator",
                     store_number=_["ID"],
@@ -60,6 +63,7 @@ class ExampleSearchIteration(SearchIteration):
                     zip_postal=_.get("postalCode"),
                     country_code=_["countryCode"],
                     phone=phone,
+                    location_type=location_type,
                     latitude=_["latitude"],
                     longitude=_["longitude"],
                     locator_domain=locator_domain,
