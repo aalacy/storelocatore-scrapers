@@ -17,9 +17,11 @@ def _d(_, page_url, street_address, city, state, zip_postal=None):
     phone = _["storeTelephone"]
     if phone:
         phone = phone.split(",")[0].replace("022-69198883", "").strip()
+    hours_of_operation = _["openTime"]
+    if "暂停营业" in hours_of_operation:
+        hours_of_operation = ""
     return SgRecord(
         page_url=page_url,
-        store_number=_["storeId"],
         location_name=_["storeName"],
         street_address=street_address,
         city=city.replace("SM", ""),
@@ -30,7 +32,7 @@ def _d(_, page_url, street_address, city, state, zip_postal=None):
         country_code=_["countryId"],
         phone=phone,
         locator_domain=locator_domain,
-        hours_of_operation=_["openTime"],
+        hours_of_operation=hours_of_operation,
         raw_address=_["storeAddress"].replace("\n", ""),
     )
 
