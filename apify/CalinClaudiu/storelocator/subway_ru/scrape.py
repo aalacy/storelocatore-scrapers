@@ -413,6 +413,9 @@ if __name__ == "__main__":
     state = CrawlStateSingleton.get_instance()
 
     tocrawl = [
+        "kz",
+        "ir",
+        "sa",
         "bb",
         "bd",
         "bf",
