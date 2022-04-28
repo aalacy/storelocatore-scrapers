@@ -136,7 +136,6 @@ def fetch_data():
                     hours = hours[1:]
                 if "appointment" in hours:
                     hours = ""
-            street_address = city = state = zip_postal = ""
             raw_address = ", ".join(addr)
             addr = parse_address_intl(raw_address)
             street_address = addr.street_address_1
