@@ -40,7 +40,7 @@ def get_session(retry):
 def fetch_locations(retry=0):
     try:
         urls = []
-        session = get_session()
+        session = get_session(retry)
         response = session.get(
             "https://www.hihostels.com/sitemap.xml",
         )
@@ -168,7 +168,7 @@ def fetch_location(page_url, retry=0):
 
 def fetch_data():
     urls = fetch_locations()
-    with ThreadPoolExecutor() as executor:
+    with ThreadPoolExecutor(max_workers=2) as executor:
         futures = [executor.submit(fetch_location, url) for url in urls]
         for future in as_completed(futures):
             poi = future.result()
