@@ -6,6 +6,7 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgzip.dynamic import SearchableCountries, DynamicGeoSearch
+from sglogging import sglog
 
 
 def get_token():
@@ -59,7 +60,7 @@ def get_address(line):
     return street_address, city, state, postal
 
 
-def fetch_data(coord, sgw: SgWriter):
+def fetch_data(coord, sgw: SgWriter, retry=0):
     lat, lng = coord
     api = f"https://www.stinker.com/system/wp-admin/admin-ajax.php?action=lookupLocations&lkp={token}&lat={lat}&lng={lng}"
 
@@ -67,7 +68,13 @@ def fetch_data(coord, sgw: SgWriter):
     try:
         js = r.json()["locations"]
     except:
-        return
+        logger.info(f"{coord}: Error, retries={retry}")
+        if retry == 3:
+            return
+        else:
+            retry += 1
+            fetch_data(coord, sgw, retry)
+            return
 
     for j in js:
         loc = j.get("latLng")
@@ -77,7 +84,6 @@ def fetch_data(coord, sgw: SgWriter):
 
         line = j.get("location")
         street_address, city, state, postal = get_address(line)
-        page_url = j.get("permalink") or SgRecord.MISSING
         location_name = j.get("title").replace("&#038;", "&")
         store_number = location_name.split()[0].replace("#", "")
         if not store_number.isdigit():
@@ -107,7 +113,6 @@ def fetch_data(coord, sgw: SgWriter):
             country_code="US",
             store_number=store_number,
             phone=phone,
-            location_type=SgRecord.MISSING,
             latitude=latitude,
             longitude=longitude,
             locator_domain=locator_domain,
@@ -120,6 +125,8 @@ def fetch_data(coord, sgw: SgWriter):
 if __name__ == "__main__":
     session = SgRequests()
     locator_domain = "https://stinker.com/"
+    page_url = "https://www.stinker.com/store-search/"
+    logger = sglog.SgLogSetup().get_logger(logger_name="stinker.com")
 
     headers = {
         "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:99.0) Gecko/20100101 Firefox/99.0",
