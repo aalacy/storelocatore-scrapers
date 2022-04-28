@@ -27,6 +27,7 @@ def fetch_data(sgw: SgWriter):
         g = j.get("geolocation") or {}
         raw_address = g.get("address") or ""
         street_address, city, state, postal = get_international(raw_address)
+        state = j.get("region")
         country_code = "PL"
         location_type = ", ".join(j.get("services") or [])
         location_name = j.get("title")

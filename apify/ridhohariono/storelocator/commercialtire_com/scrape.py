@@ -91,7 +91,11 @@ def fetch_data():
             )
         location_name = row.text.strip()
         addr_info = info.find("div", {"data-type": "inlineMap"})
-        raw_address = addr_info["data-address"].strip()
+        raw_address = (
+            info.find("span", text="LOCATION:")
+            .find_next("p")
+            .get_text(strip=True, separator=",")
+        )
         if "boise---state" in page_url:
             raw_address = "1190 W State St, Downtown Boise, Boise, ID, United States"
         street_address, city, state, zip_postal = getAddress(raw_address)
@@ -111,6 +115,7 @@ def fetch_data():
             phone = phone_content.text.replace("\n", "").strip()
         except:
             phone = MISSING
+        phone = phone.replace("﻿", "").strip()
         country_code = "US"
         location_type = "commercialtire"
         addr_info = info.find("div", {"data-type": "inlineMap"})
