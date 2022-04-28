@@ -20,7 +20,7 @@ def fetch_data(sgw: SgWriter):
         location_name = "".join(d.xpath("./div[@class='listing-title']/text()")).strip()
         page_url = "".join(d.xpath("./div[@class='storemapdata']/@data-url"))
 
-        line = d.xpath("./div[@class='listing-address']/text()")
+        line = d.xpath("./div[@class='listing-address']/a/text()")
         line = list(filter(None, [l.strip() for l in line]))
         street_address = ", ".join(line[:-1])
         if street_address.endswith(","):
@@ -60,7 +60,6 @@ def fetch_data(sgw: SgWriter):
             country_code=country_code,
             store_number=store_number,
             phone=phone,
-            location_type=SgRecord.MISSING,
             latitude=latitude,
             longitude=longitude,
             locator_domain=locator_domain,

@@ -13,7 +13,16 @@ def fetch_data(sgw: SgWriter):
     api_url = "https://www.apcshop.com/retailer/retailer/index/"
     session = SgRequests()
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+        "Accept-Language": "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3",
+        "Connection": "keep-alive",
+        "Referer": "https://www.apcshop.com/retailer/retailer/index/",
+        "Upgrade-Insecure-Requests": "1",
+        "Sec-Fetch-Dest": "document",
+        "Sec-Fetch-Mode": "navigate",
+        "Sec-Fetch-Site": "same-origin",
+        "Sec-Fetch-User": "?1",
     }
     r = session.get(api_url, headers=headers)
     tree = html.fromstring(r.text)
@@ -29,7 +38,6 @@ def fetch_data(sgw: SgWriter):
     )
     div = "".join(div[:-1])
     js = json.loads(div)
-
     for j in js["retailers"]:
         url_key = j.get("url_key")
         page_url = (
@@ -40,10 +48,15 @@ def fetch_data(sgw: SgWriter):
             == "https://www.apcshop.com/retailer/presentation/retailer/urlKey/None"
         ):
             page_url = "https://www.apcshop.com/retailer/retailer/index/"
+        if url_key == "https://minishopmadrid.com/":
+            page_url = url_key
         location_name = j.get("name") or "<MISSING>"
         street_address = j.get("street") or "<MISSING>"
+        street_address = str(street_address).replace(";", "").strip()
         state = "<MISSING>"
         postal = j.get("zip_code") or "<MISSING>"
+        if street_address.find(f"{postal}") != -1:
+            street_address = street_address.split(f"{postal}")[0].strip()
         country_code = j.get("country")
         city = j.get("city") or "<MISSING>"
         latitude = j.get("latitude") or "<MISSING>"
@@ -55,16 +68,21 @@ def fetch_data(sgw: SgWriter):
         if phone.find("/") != -1:
             phone = phone.split("/")[0].strip()
         hours_of_operation = "<MISSING>"
-        if page_url != "https://www.apcshop.com/retailer/retailer/index/":
+        store_number = j.get("code")
+
+        if (
+            page_url != "https://www.apcshop.com/retailer/retailer/index/"
+            or page_url != "https://minishopmadrid.com/"
+        ):
             r = session.get(page_url, headers=headers)
             tree = html.fromstring(r.text)
+
             hours_of_operation = (
                 " ".join(tree.xpath('//tr[@class="schedule"]//text()'))
                 .replace("\n", "")
                 .strip()
             )
             hours_of_operation = " ".join(hours_of_operation.split()) or "<MISSING>"
-        store_number = j.get("code")
 
         row = SgRecord(
             locator_domain=locator_domain,
