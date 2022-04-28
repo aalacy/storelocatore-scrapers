@@ -4,7 +4,6 @@ from sgscrape.simple_scraper_pipeline import MappingField
 from sgscrape.simple_scraper_pipeline import MultiMappingField
 from sgscrape import simple_utils as utils
 from sgrequests import SgRequests
-from sglogging import sglog
 from bs4 import BeautifulSoup as b4
 
 
