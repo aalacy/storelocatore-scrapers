@@ -20,7 +20,8 @@ def fetch_data():
         "https://kong-proxy-aws.toyota-europe.com/dxp/dealers/api/toyota/gb/en/drive/-0.081018/51.652085?count=500&extraCountries=&isCurrentLocation=false",
         "https://kong-proxy-aws.toyota-europe.com/dxp/dealers/api/toyota/es/es/drive/-3.703583/40.416705?count=500&extraCountries=&isCurrentLocation=false",
         "https://kong-proxy-aws.toyota-europe.com/dxp/dealers/api/toyota/fi/fi/drive/22.75/60.5?count=500&extraCountries=&isCurrentLocation=false",
-        "https://kong-prox-aws.toyota-europe.com/dxp/dealers/api/toyota/fr/fr/drive/0.428551/44.064432?count=500&extraCountries=MC&isCurrentLocation=false",
+        "https://kong-proxy-aws.toyota-europe.com/dxp/dealers/api/toyota/fr/fr/drive/2.35183/48.85658?count=500&extraCountries=MC&isCurrentLocation=false",
+        "https://kong-proxy-aws.toyota-europe.com/dxp/dealers/api/toyota/nl/nl/drive/4.893604/52.37276?count=500&extraCountries=&isCurrentLocation=false",
     ]
     domain = "toyota.ro"
     hdr = {
@@ -55,6 +56,11 @@ def fetch_data():
             street_address = street_address.split(zip_code)[0]
             if street_address.endswith(","):
                 street_address = street_address[:-1]
+            phone = poi["phone"]
+            if phone:
+                phone = phone.split("elle")[0].split(",")[0]
+            services = [e["service"] for e in poi["services"]]
+            services = ", ".join(services) if services else ""
 
             item = SgRecord(
                 locator_domain=domain,
@@ -66,8 +72,8 @@ def fetch_data():
                 zip_postal=zip_code,
                 country_code=poi["country"],
                 store_number=poi.get("localDealerID"),
-                phone=poi["phone"],
-                location_type="",
+                phone=phone,
+                location_type=services,
                 latitude=poi["address"]["geo"]["lat"],
                 longitude=poi["address"]["geo"]["lon"],
                 hours_of_operation=hoo,
