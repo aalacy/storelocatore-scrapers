@@ -1,4 +1,3 @@
-import re
 from lxml import etree
 
 from sgrequests import SgRequests
@@ -10,9 +9,9 @@ from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
-    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
+    session = SgRequests()
     start_url = "https://www.bakersfieldtacos.com/locations/"
-    domain = re.findall(r"://(.+?)/", start_url)[0].replace("www.", "")
+    domain = "bakersfieldtacos.com"
     hdr = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
@@ -32,23 +31,17 @@ def fetch_data():
         city = addr.city
         state = addr.state
         zip_code = addr.postcode
-        zip_code = zip_code if zip_code else "<MISSING>"
-        country_code = "<MISSING>"
-        store_number = "<MISSING>"
         phone = raw_data[-1]
-        location_type = "<MISSING>"
         geo = poi_html.xpath(".//p/a/@href")[0]
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
+        latitude = ""
+        longitude = ""
         if "/@" in geo:
             geo = geo.split("/@")[-1].split(",")[:2]
             latitude = geo[0]
             longitude = geo[1]
         hoo = poi_html.xpath('.//ul[@class="list-unstyled"]/li/text()')
         hoo = [e.strip() for e in hoo if e.strip()]
-        hours_of_operation = (
-            " ".join(hoo).split("Call for")[0].strip() if hoo else "<MISSING>"
-        )
+        hours_of_operation = " ".join(hoo).split("Call for")[0].strip() if hoo else ""
 
         item = SgRecord(
             locator_domain=domain,
@@ -58,10 +51,10 @@ def fetch_data():
             city=city,
             state=state,
             zip_postal=zip_code,
-            country_code=country_code,
-            store_number=store_number,
+            country_code="",
+            store_number="",
             phone=phone,
-            location_type=location_type,
+            location_type="",
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hours_of_operation,

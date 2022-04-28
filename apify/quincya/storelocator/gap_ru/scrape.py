@@ -22,7 +22,7 @@ def fetch_data(sgw: SgWriter):
             "https://gap.ru/ajax/?controller=stock&action=getList&productCityId="
             + city_id
         )
-        stores = session.post(base_link, headers=headers).json()["data"]["shops"]
+        stores = session.get(base_link, headers=headers).json()["data"]["shops"]
 
         for store in stores:
 
@@ -35,6 +35,24 @@ def fetch_data(sgw: SgWriter):
             city = addr.city
             state = addr.state
             zip_code = addr.postcode
+            if street_address.isdigit() and not zip_code:
+                zip_code = street_address
+                street_address = (
+                    raw_address.replace(city, "")
+                    .replace(zip_code, "")
+                    .replace(",", "")
+                    .strip()
+                )
+
+            if not city:
+                city = raw_address.split(",")[1].strip()
+                street_address = (
+                    street_address.replace("Г.Москва", "")
+                    .replace("Г.Екатеринбург", "")
+                    .strip()
+                )
+            if not zip_code:
+                zip_code = raw_address.split(",")[0].strip()
 
             country_code = "RU"
             location_type = store["name"]

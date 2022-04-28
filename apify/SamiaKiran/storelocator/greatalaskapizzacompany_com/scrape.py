@@ -31,11 +31,16 @@ def fetch_data():
             log.info(page_url)
             r = session.get(page_url, headers=headers)
             soup = BeautifulSoup(r.text, "html.parser")
-            address = (
-                soup.find("div", {"class": "street-address"})
-                .get_text(separator="|", strip=True)
-                .split("|")[1]
-            )
+            temp_var = soup.find("div", {"class": "street-address"})
+            try:
+                latitude, longitude = (
+                    temp_var.find("a")["href"].split("ll=")[2].split("&")[0].split(",")
+                )
+            except:
+                latitude, longitude = (
+                    temp_var.find("a")["href"].split("@")[1].split(",17z")[0].split(",")
+                )
+            address = temp_var.get_text(separator="|", strip=True).split("|")[1]
             address = address.replace(",", " ")
             address = usaddress.parse(address)
             i = 0
@@ -70,20 +75,8 @@ def fetch_data():
                 .replace("|", " ")
                 .replace("Store Hours:", "")
             )
-            try:
-                latitude, longitude = (
-                    soup.find("a", {"class": "mapButtton"})["href"]
-                    .split("ll=")[1]
-                    .split("&")[0]
-                    .split(",")
-                )
-            except:
-                latitude, longitude = (
-                    soup.find("a", {"class": "mapButtton"})["href"]
-                    .split("@")[1]
-                    .split(",17z")[0]
-                    .split(",")
-                )
+            if not zip_postal:
+                zip_postal = temp_var.find("a")["href"].split("+")[-1].split("&z")[0]
             country_code = "US"
             yield SgRecord(
                 locator_domain=DOMAIN,

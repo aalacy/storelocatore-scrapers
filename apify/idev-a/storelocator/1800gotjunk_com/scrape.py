@@ -37,6 +37,11 @@ def _d(page_url, locator_domain, _, city, country):
     hours = []
     for hh in _["openingHoursSpecification"]:
         hours.append(f"{hh['dayOfWeek']}: {hh['opens']} - {hh['closes']}")
+    try:
+        latitude = _["geo"].get("latitude")
+        longitude = _["geo"].get("longitude")
+    except:
+        latitude = longitude = ""
     return SgRecord(
         page_url=page_url,
         store_number=page_url.split("/")[-1],
@@ -47,8 +52,8 @@ def _d(page_url, locator_domain, _, city, country):
         zip_postal=addr["postalCode"],
         country_code=country,
         phone=_["telephone"],
-        latitude=_["geo"].get("latitude"),
-        longitude=_["geo"].get("longitude"),
+        latitude=latitude,
+        longitude=longitude,
         locator_domain=locator_domain,
         hours_of_operation="; ".join(hours),
     )

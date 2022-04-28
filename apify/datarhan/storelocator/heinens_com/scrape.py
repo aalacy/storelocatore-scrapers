@@ -1,64 +1,36 @@
-import csv
 from lxml import etree
 
 from sgrequests import SgRequests
-
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
-    # Your scraper here
     session = SgRequests()
-
-    items = []
-
-    DOMAIN = "heinens.com"
+    domain = "heinens.com"
     start_urls = [
-        "https://www.heinens.com/stores/?state=IL",
-        "https://www.heinens.com/stores/?state=OH",
+        "https://www.heinens.com/stores/?state=OH&near=&ref=&lat=&lng=&range=10",
+        "https://www.heinens.com/stores/?state=IL&near=&ref=&lat=&lng=&range=10",
     ]
+    hdr = {
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
+    }
     all_locations = []
     for start_url in start_urls:
-        response = session.get(start_url)
+        response = session.get(start_url, headers=hdr)
         dom = etree.HTML(response.text)
         all_locations += dom.xpath('//h2/a[contains(@href, "/stores/")]/@href')
         next_page = dom.xpath('//a[@class="next page-numbers"]/@href')
         while next_page:
-            response = session.get(next_page[0])
+            response = session.get(next_page[0], headers=hdr)
             dom = etree.HTML(response.text)
             all_locations += dom.xpath('//h2/a[contains(@href, "/stores/")]/@href')
             next_page = dom.xpath('//a[@class="next page-numbers"]/@href')
 
     for store_url in all_locations:
-        loc_response = session.get(store_url)
+        loc_response = session.get(store_url, headers=hdr)
         loc_dom = etree.HTML(loc_response.text)
 
         location_name = loc_dom.xpath('//h1[@class="page-title"]/text()')
@@ -85,33 +57,41 @@ def fetch_data():
             elem.strip() for elem in hours_of_operation if elem.strip()
         ]
         hours_of_operation = (
-            " ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
+            " ".join(hours_of_operation).replace("Store Hours ", "")
+            if hours_of_operation
+            else "<MISSING>"
         )
 
-        item = [
-            DOMAIN,
-            store_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip_code,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        items.append(item)
+        item = SgRecord(
+            locator_domain=domain,
+            page_url=store_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zip_code,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+        )
 
-    return items
+        yield item
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":
