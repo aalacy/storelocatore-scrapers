@@ -1,7 +1,7 @@
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 _headers = {
@@ -17,9 +17,11 @@ def _d(_, page_url, street_address, city, state, zip_postal=None):
     phone = _["storeTelephone"]
     if phone:
         phone = phone.split(",")[0].replace("022-69198883", "").strip()
+    hours_of_operation = _["openTime"]
+    if "暂停营业" in hours_of_operation:
+        hours_of_operation = ""
     return SgRecord(
         page_url=page_url,
-        store_number=_["storeId"],
         location_name=_["storeName"],
         street_address=street_address,
         city=city.replace("SM", ""),
@@ -30,7 +32,7 @@ def _d(_, page_url, street_address, city, state, zip_postal=None):
         country_code=_["countryId"],
         phone=phone,
         locator_domain=locator_domain,
-        hours_of_operation=_["openTime"],
+        hours_of_operation=hours_of_operation,
         raw_address=_["storeAddress"].replace("\n", ""),
     )
 
@@ -109,7 +111,9 @@ def fetch_data():
 
 
 if __name__ == "__main__":
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.RAW_ADDRESS}))
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
