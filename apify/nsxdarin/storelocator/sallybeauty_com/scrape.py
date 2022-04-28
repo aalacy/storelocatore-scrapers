@@ -1,4 +1,3 @@
-import os
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
@@ -10,7 +9,7 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 logger = SgLogSetup().get_logger("sallybeauty_com")
 
 headers = {
-    "user-agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0"
+    "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.141 Safari/537.36"
 }
 
 search = DynamicGeoSearch(
@@ -18,12 +17,6 @@ search = DynamicGeoSearch(
     max_search_distance_miles=250,
     expected_search_radius_miles=100,
 )
-
-proxy_password = os.environ["PROXY_PASSWORD"]
-proxy_url = "http://groups-RESIDENTIAL,country-US:{}@proxy.apify.com:8000/".format(
-    proxy_password
-)
-proxies = {"http": proxy_url, "https": proxy_url}
 
 
 def fetch_data():
@@ -40,7 +33,6 @@ def fetch_data():
         url = curl
         logger.info(("Pulling Canada URL %s..." % curl))
         session = SgRequests()
-        session.proxies = proxies
         r = session.get(url, headers=headers)
         if "disabled or blocked" in r.text:
             logger.info("BLOCKED BY SITE")
@@ -317,7 +309,6 @@ def fetch_data():
             + str(y)
         )
         session = SgRequests()
-        session.proxies = proxies
         r = session.get(url, headers=headers)
         if "disabled or blocked" in r.text:
             logger.info("BLOCKED BY SITE")
@@ -425,7 +416,6 @@ def fetch_data():
             + str(y)
         )
         session = SgRequests()
-        session.proxies = proxies
         r = session.get(url, headers=headers)
         if "disabled or blocked" in r.text:
             logger.info("BLOCKED BY SITE")
