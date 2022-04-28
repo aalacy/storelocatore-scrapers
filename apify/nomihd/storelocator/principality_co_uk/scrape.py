@@ -49,6 +49,18 @@ def fetch_data():
                     ],
                 )
             )
+            if len(store_info) <= 0:
+                store_info = list(
+                    filter(
+                        str,
+                        [
+                            x.strip()
+                            for x in store_sel.xpath(
+                                '//div[@class="your-branch"]/p/text()'
+                            )
+                        ],
+                    )
+                )
             raw_address = " ".join(store_info)
 
             formatted_addr = parser.parse_address_intl(raw_address)

@@ -40,12 +40,17 @@ def fetch_data():
                 location_name = loc["name"]
                 latitude = loc["latitude"]
                 longitude = loc["longitude"]
-                hours_of_operation = loc["storeHours"]
-                hours_of_operation = (
-                    BeautifulSoup(hours_of_operation, "html.parser")
-                    .get_text(separator="|", strip=True)
-                    .replace("|", " ")
-                )
+                try:
+                    hours_of_operation = loc["storeHours"]
+                    hours_of_operation = (
+                        BeautifulSoup(hours_of_operation, "html.parser")
+                        .get_text(separator="|", strip=True)
+                        .replace("|", " ")
+                    )
+                except:
+                    hours_of_operation = MISSING
+                if "Here are the store hours" in hours_of_operation:
+                    hours_of_operation = MISSING
                 phone = loc["phone"]
                 street_address = loc["address1"]
                 log.info(street_address)
