@@ -7,6 +7,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sglogging import SgLogSetup
 import re
 import itertools
+from sgpostal.sgpostal import parse_address_intl
 
 logger = SgLogSetup().get_logger("aqualivingstores")
 
@@ -45,7 +46,7 @@ def _addr(_aa):
 
             addr.append(list(cc.stripped_strings))
         addr = list(itertools.chain(*addr))
-    return addr[:-1]
+    return addr
 
 
 def fetch_data():
@@ -61,7 +62,7 @@ def fetch_data():
             page_url = link["href"]
             logger.info(page_url)
             sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
-            _aa = sp1.find("", string=re.compile(r"Address$"))
+            _aa = sp1.find("", string=re.compile(r"Address:?$"))
             phone = ""
             addr = []
             if _aa:
@@ -136,32 +137,24 @@ def fetch_data():
                 if "appointment" in hours:
                     hours = ""
             street_address = city = state = zip_postal = ""
+            raw_address = ", ".join(addr)
+            addr = parse_address_intl(raw_address)
+            street_address = addr.street_address_1
+            if addr.street_address_2:
+                street_address += " " + addr.street_address_2
 
-            if len(addr) > 1:
-                c_s = [
-                    cc.strip()
-                    for cc in addr[-1].replace(",", " ").split()
-                    if cc.strip()
-                ]
-                street_address = " ".join(addr[:-1])
-                city = " ".join(c_s[:-2])
-                state = c_s[-2]
-                zip_postal = c_s[-1]
-            else:
-                city = addr[-1].split(",")[0].strip()
-                state = addr[-1].split(",")[-1].strip()
             yield SgRecord(
                 page_url=page_url,
                 location_name=location_name,
                 street_address=street_address,
-                city=city,
-                state=state.replace(".", ""),
-                zip_postal=zip_postal,
+                city=addr.city,
+                state=addr.state,
+                zip_postal=addr.postcode,
                 country_code="US",
                 phone=phone,
                 locator_domain=locator_domain,
                 hours_of_operation=hours.strip(),
-                raw_address=" ".join(addr),
+                raw_address=raw_address,
             )
 
 
