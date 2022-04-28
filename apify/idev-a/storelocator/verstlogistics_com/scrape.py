@@ -45,44 +45,6 @@ def fetch_data():
                     raw_address=raw_address,
                 )
 
-            blocks = []
-            for block in sp1.select(
-                'div.body-container-wrapper span.hs_cos_wrapper.hs_cos_wrapper_widget.hs_cos_wrapper_type_rich_text p[style="text-align: center;"]'
-            ):
-                tt = block.text.strip().lower()
-                if not tt:
-                    continue
-                if "check" in tt or "location" in tt or "started" in tt or "view" in tt:
-                    continue
-                blocks.append(block)
-
-            if blocks:
-                addr = list(blocks[0].stripped_strings)
-                if "verst" in addr[0].lower():
-                    del addr[0]
-                phone = ""
-                if _p(addr[-1]):
-                    phone = addr[-1]
-                try:
-                    coord = (
-                        blocks[0].a["href"].split("/@")[1].split("/data")[0].split(",")
-                    )
-                except:
-                    coord = ["", ""]
-                yield SgRecord(
-                    page_url=page_url,
-                    location_name=sp1.h1.text.strip(),
-                    street_address=addr[0],
-                    city=addr[1].split(",")[0].strip(),
-                    state=addr[1].split(",")[1].strip().split(" ")[0].strip(),
-                    zip_postal=addr[1].split(",")[1].strip().split(" ")[-1].strip(),
-                    country_code="US",
-                    phone=phone,
-                    locator_domain=locator_domain,
-                    latitude=coord[0],
-                    longitude=coord[1],
-                )
-
 
 if __name__ == "__main__":
     with SgWriter(
