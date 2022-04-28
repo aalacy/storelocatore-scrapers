@@ -18,7 +18,6 @@ def fetch_data(sgw: SgWriter):
         "https://www.fyzical.com/contact.php?v=4&action=ajax_get_locations&ne=65.47336744902078,-12.629251250000006&sw=8.312726964373702,-167.66831375"
     ).json()
 
-    found = []
 
     for data in data["locations"]:
         Suite = ""
