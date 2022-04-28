@@ -50,7 +50,7 @@ def fetch_data():
     time.sleep(2)
     for marker in driver.find_elements_by_css_selector('div[aria-label="Map marker"]'):
         driver.execute_script("arguments[0].click();", marker)
-        time.sleep(1)
+        time.sleep(2)
         info = driver.find_element_by_css_selector("div.mapboxgl-popup-content")
         raw_address = info.find_element_by_css_selector("p.popup-address").text.strip()
         addr = parse_address_intl(raw_address)
@@ -67,7 +67,7 @@ def fetch_data():
         ).text.strip()
         location_name = info.find_element_by_css_selector("h5.popup-name").text.strip()
         info.find_element_by_css_selector("button.mapboxgl-popup-close-button").click()
-        time.sleep(1)
+        time.sleep(2)
         if "Coming Soon" in hours_of_operation:
             continue
         logger.info(location_name)
