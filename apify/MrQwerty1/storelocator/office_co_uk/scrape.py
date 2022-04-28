@@ -1,6 +1,5 @@
 from lxml import html
 from sgscrape.sgrecord import SgRecord
-from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
@@ -9,12 +8,6 @@ from sgscrape.sgpostal import parse_address, International_Parser
 from sglogging import sglog
 from sgselenium import SgChrome
 import ssl
-
-ssl._create_default_https_context = ssl._create_unverified_context
-
-log = sglog.SgLogSetup().get_logger(logger_name="office.co.uk")
-
-session = SgRequests()
 
 
 def get_international(line):
@@ -39,72 +32,73 @@ def get_urls():
 def fetch_data():
     urls = get_urls()
     log.info(f"Total URLs to crawl: {len(urls)}")
-    for slug in urls:
-        page_url = f"https://www.office.co.uk/view/content/storelocator{slug}"
-        r = session.get(page_url, headers=headers)
-        log.info(f"{page_url} Response: {r}")
-        tree = html.fromstring(r.text, "lxml")
+    with SgChrome() as driver:
+        for slug in urls:
+            page_url = f"https://www.office.co.uk/view/content/storelocator{slug}"
+            driver.get(page_url)
+            tree = html.fromstring(driver.page_source, "lxml")
 
-        line = tree.xpath(
-            "//ul[@class='storelocator_addressdetails_address darkergrey']/li/text()"
-        )
-        line = list(filter(None, [li.strip() for li in line]))
-        if line:
-            location_name = line.pop(0)
-        else:
-            location_name = SgRecord.MISSING
-
-        raw_address = ", ".join(line)
-        phone = "".join(
-            tree.xpath(
-                "//div[@class='storelocator_contactdetails floatProperties']/div[1]/text()"
+            line = tree.xpath(
+                "//ul[@class='storelocator_addressdetails_address darkergrey']/li/text()"
             )
-        ).strip()
+            line = list(filter(None, [li.strip() for li in line]))
+            if line:
+                location_name = line.pop(0)
+            else:
+                location_name = SgRecord.MISSING
 
-        street_address, city, postal = get_international(raw_address)
-        country_code = "GB"
-        if " " not in postal and postal != SgRecord.MISSING:
-            country_code = "DE"
+            raw_address = ", ".join(line)
+            phone = "".join(
+                tree.xpath(
+                    "//div[@class='storelocator_contactdetails floatProperties']/div[1]/text()"
+                )
+            ).strip()
 
-        text = "".join(tree.xpath("//script[contains(text(),'LatLng')]/text()"))
-        try:
-            latitude, longitude = eval(text.split("LatLng")[1].split(");")[0])
-        except:
-            latitude, longitude = SgRecord.MISSING, SgRecord.MISSING
+            street_address, city, postal = get_international(raw_address)
+            country_code = "GB"
+            if " " not in postal and postal != SgRecord.MISSING:
+                country_code = "DE"
 
-        _tmp = []
-        hours = tree.xpath("//ul[@class='storelocator_open_times_content']/li//text()")
-        hours = list(filter(None, [h.strip() for h in hours]))
-        for h in hours:
-            if h.endswith("-"):
-                continue
-            _tmp.append(h)
+            text = "".join(tree.xpath("//script[contains(text(),'LatLng')]/text()"))
+            try:
+                latitude, longitude = eval(text.split("LatLng")[1].split(");")[0])
+            except:
+                latitude, longitude = SgRecord.MISSING, SgRecord.MISSING
 
-        hours_of_operation = ";".join(_tmp)
+            _tmp = []
+            hours = tree.xpath(
+                "//ul[@class='storelocator_open_times_content']/li//text()"
+            )
+            hours = list(filter(None, [h.strip() for h in hours]))
+            for h in hours:
+                if h.endswith("-"):
+                    continue
+                _tmp.append(h)
 
-        row = SgRecord(
-            page_url=page_url,
-            location_name=location_name,
-            street_address=street_address,
-            city=city,
-            zip_postal=postal,
-            country_code=country_code,
-            latitude=latitude,
-            longitude=longitude,
-            phone=phone,
-            locator_domain=locator_domain,
-            hours_of_operation=hours_of_operation,
-            raw_address=raw_address,
-        )
+            hours_of_operation = ";".join(_tmp)
 
-        yield row
+            row = SgRecord(
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                zip_postal=postal,
+                country_code=country_code,
+                latitude=latitude,
+                longitude=longitude,
+                phone=phone,
+                locator_domain=locator_domain,
+                hours_of_operation=hours_of_operation,
+                raw_address=raw_address,
+            )
+
+            yield row
 
 
 if __name__ == "__main__":
     locator_domain = "https://www.office.co.uk/"
-    headers = {
-        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36"
-    }
+    ssl._create_default_https_context = ssl._create_unverified_context
+    log = sglog.SgLogSetup().get_logger(logger_name="office.co.uk")
 
     with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         for rec in fetch_data():
