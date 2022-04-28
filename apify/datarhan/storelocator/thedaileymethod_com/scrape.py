@@ -14,8 +14,17 @@ def fetch_data():
     start_url = "https://thedaileymethod.com/wp-json/wpgmza/v1/features/base64eJyrVkrLzClJLVKyUqqOUcpNLIjPTIlRsopRMoxR0gEJFGeUFni6FAPFomOBAsmlxSX5uW6ZqTkpELFapVoABU0Wug"
 
     data = session.get(start_url).json()
+    response = session.get("https://thedaileymethod.com/locations/")
+    dom = etree.HTML(response.text)
+
     for poi in data["markers"]:
         page_url = poi["link"]
+        orig_url = dom.xpath(
+            '//a[contains(text(), "%s")]/@href'
+            % poi["title"].replace("Dailey Method ", "")
+        )
+        if orig_url:
+            page_url = orig_url[0]
         phone = ""
         zip_code = ""
         raw_address = poi["address"]
@@ -43,7 +52,7 @@ def fetch_data():
 
         item = SgRecord(
             locator_domain=domain,
-            page_url=poi["link"],
+            page_url=page_url,
             location_name=poi["title"],
             street_address=street_address,
             city=addr.city,
