@@ -2,12 +2,10 @@ from sgscrape.simple_scraper_pipeline import SimpleScraperPipeline
 from sgscrape.simple_scraper_pipeline import ConstantField
 from sgscrape.simple_scraper_pipeline import MappingField
 from sgscrape.simple_scraper_pipeline import MultiMappingField
-from sgscrape import simple_network_utils as net_utils
 from sgscrape import simple_utils as utils
 from sgrequests import SgRequests
 from sglogging import sglog
 from bs4 import BeautifulSoup as b4
-import json
 
 
 def fetch_subpage(tup):
@@ -42,7 +40,6 @@ def fetch_subpage(tup):
 
 
 def fetch_data():
-    logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
     url = "https://stockist.co/api/v1/u3601/locations/search?&tag=u3601&latitude=47.805670899999996&longitude=-122.28511505&distance=99999"
     headers = {
         "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
