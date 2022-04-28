@@ -2,7 +2,7 @@ from sglogging import SgLogSetup
 
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 from sgrequests import SgRequests
@@ -44,6 +44,9 @@ def fetch_data(sgw: SgWriter):
         latitude = data["Latitude"]
         page_url = data["Long_description_url"]
 
+        if street_address == "2200 S Kipling Street":
+            page_url = "https://www.fyzical.com/carmody-co"
+
         hours = ""
         for hour in data["Workhours"]:
             if data["Workhours"][hour]["Always_closed"] == "yes":
@@ -60,10 +63,6 @@ def fetch_data(sgw: SgWriter):
                 )
         hours = hours.replace("  ", " ")
         store_number = data["ID_Location"]
-
-        if street_address in found:
-            continue
-        found.append(street_address)
 
         sgw.write_row(
             SgRecord(
@@ -85,5 +84,5 @@ def fetch_data(sgw: SgWriter):
         )
 
 
-with SgWriter(SgRecordDeduper(RecommendedRecordIds.PhoneNumberId)) as writer:
+with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))) as writer:
     fetch_data(writer)
