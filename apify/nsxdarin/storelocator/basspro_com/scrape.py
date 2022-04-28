@@ -51,14 +51,6 @@ def fetch_data():
                 )[0]
             if '<span itemprop="telephone">' in line2:
                 phone = line2.split('<span itemprop="telephone">')[1].split("<")[0]
-            if '<p itemprop="openingHours" content="' in line2:
-                hrs = line2.split('<p itemprop="openingHours" content="')[1].split('"')[
-                    0
-                ]
-                if hours == "":
-                    hours = hrs
-                else:
-                    hours = hours + "; " + hrs
             if '<span><span itemprop="addressLocality">' in line2:
                 city = line2.split('<span><span itemprop="addressLocality">')[1].split(
                     "<"
@@ -82,7 +74,17 @@ def fetch_data():
                 ditems = line2.split('itemprop="openingHours" content="')
                 for ditem in ditems:
                     if "'dimension1'" not in ditem:
-                        hrs = ditem.split('"')[0]
+                        hrs = (
+                            ditem.split('"')[0]
+                            .replace("<p ; ", "")
+                            .replace("  ", " ")
+                            .replace("  ", " ")
+                            .replace("  ", " ")
+                            .replace("  ", " ")
+                            .replace("  ", " ")
+                            .replace("  ", " ")
+                            .strip()
+                        )
                         if hours == "":
                             hours = hrs
                         else:
@@ -123,6 +125,7 @@ def fetch_data():
             lat = "<MISSING>"
         if lng == "":
             lng = "<MISSING>"
+        hours = hours.replace("<p;", "").replace(" ;", ";").replace("; ", ";")
         yield SgRecord(
             locator_domain=website,
             page_url=loc,

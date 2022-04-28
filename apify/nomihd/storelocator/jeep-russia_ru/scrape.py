@@ -42,6 +42,8 @@ def fetch_data():
             page_url = "https://www.jeep-russia.ru/dealers"
 
             location_type = "<MISSING>"
+            if "dealer_service" in store:
+                location_type = ", ".join(store["dealer_service"]).strip()
 
             raw_address = store["dealer_adress_en"]
             formatted_addr = parser.parse_address_intl(raw_address)

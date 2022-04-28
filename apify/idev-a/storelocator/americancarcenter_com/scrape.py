@@ -46,22 +46,29 @@ def fetch_data():
                     " ".join(hh.stripped_strings)
                     for hh in sp1.select("div.widget-paragraph table tr")
                 ]
-                ss = _d(sp1, sp1.select("div.widget-paragraph p")[1].text.strip())
-                yield SgRecord(
-                    page_url=page_url,
-                    store_number=ss["id"],
-                    location_name=ss["name"],
-                    street_address=ss["address"],
-                    city=ss["city"],
-                    state=ss["state"],
-                    zip_postal=ss["zip"],
-                    country_code="US",
-                    phone=ss["phone"] if ss["phone"] else ss["phone2"],
-                    latitude=ss["lat"],
-                    longitude=ss["lng"],
-                    locator_domain=locator_domain,
-                    hours_of_operation="; ".join(hours),
+                ss = _d(
+                    sp1, sp1.select("div.widget-paragraph p strong")[1].text.strip()
                 )
+                try:
+                    yield SgRecord(
+                        page_url=page_url,
+                        store_number=ss["id"],
+                        location_name=ss["name"],
+                        street_address=ss["address"],
+                        city=ss["city"],
+                        state=ss["state"],
+                        zip_postal=ss["zip"],
+                        country_code="US",
+                        phone=ss["phone"] if ss["phone"] else ss["phone2"],
+                        latitude=ss["lat"],
+                        longitude=ss["lng"],
+                        locator_domain=locator_domain,
+                        hours_of_operation="; ".join(hours),
+                    )
+                except:
+                    import pdb
+
+                    pdb.set_trace()
 
 
 if __name__ == "__main__":

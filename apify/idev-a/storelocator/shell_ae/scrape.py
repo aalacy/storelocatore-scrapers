@@ -1,7 +1,7 @@
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sglogging import SgLogSetup
 from tenacity import retry, wait_fixed, stop_after_attempt
@@ -13,8 +13,16 @@ _headers = {
 }
 
 locator_domain = "https://www.shell.ae/"
-json_url = "https://shellgsllocator.geoapp.me/api/v1/locations/within_bounds?sw%5B%5D={}&sw%5B%5D={}&ne%5B%5D={}&ne%5B%5D={}&autoload=true&travel_mode=driving&avoid_tolls=false&avoid_highways=false&avoid_ferries=false&corridor_radius=50&driving_distances=false&format=json"
-base_url = "https://shellgsllocator.geoapp.me/api/v1/locations/within_bounds?sw%5B%5D=-80&sw%5B%5D=-179&ne%5B%5D=80&ne%5B%5D=179&autoload=true&travel_mode=driving&avoid_tolls=false&avoid_highways=false&avoid_ferries=false&corridor_radius=5&driving_distances=false&format=json"
+urls = [
+    {
+        "json_url": "https://shelllubricantslocator.geoapp.me/api/v1/global_lubes/locations/within_bounds?sw%5B%5D={}&sw%5B%5D={}&ne%5B%5D={}&ne%5B%5D={}&format=json",
+        "base_url": "https://shellgsllocator.geoapp.me/api/v1/locations/within_bounds?sw%5B%5D=-179&sw%5B%5D=-179&ne%5B%5D=179&ne%5B%5D=179&format=json",
+    },
+    {
+        "json_url": "https://shellretaillocator.geoapp.me/api/v1/locations/within_bounds?sw%5B%5D={}&sw%5B%5D={}&ne%5B%5D={}&ne%5B%5D={}&format=json",
+        "base_url": "https://shellretaillocator.geoapp.me/api/v1/locations/within_bounds?sw%5B%5D=-80&sw%5B%5D=-179&ne%5B%5D=80&ne%5B%5D=179&format=json",
+    },
+]
 
 
 @retry(wait=wait_fixed(2), stop=stop_after_attempt(3))
@@ -23,7 +31,7 @@ def get_json(url):
         return session.get(url, headers=_headers).json()
 
 
-def fetch_boundings(boundings, writer):
+def fetch_boundings(boundings, json_url, writer):
     for bound in boundings:
         _bb = bound["bounds"]
         locations = get_json(
@@ -32,23 +40,31 @@ def fetch_boundings(boundings, writer):
         if locations:
             if locations[0].get("centroid"):
                 logger.info(f"{bound['size']} recuring")
-                fetch_boundings(locations, writer)
+                fetch_boundings(locations, json_url, writer)
             else:
                 logger.info(f"{len(locations)} locations")
                 for _ in locations:
                     street_address = ""
-                    if _.get("address"):
-                        street_address = _["address"]
                     if _.get("address1"):
-                        street_address += " " + _["address1"]
+                        street_address = _["address1"]
                     if _.get("address2"):
                         street_address += " " + _["address2"]
                     zip_postal = _.get("postcode")
                     if zip_postal and zip_postal == "00000":
                         zip_postal = ""
+
+                    phone = _["telephone"]
+                    if phone == "0":
+                        phone = ""
+                    if phone:
+                        phone = phone.split("/")[0]
+
+                    location_type = ", ".join(_.get("channel_types", []))
+                    if not location_type:
+                        location_type = _.get("brand")
                     writer.write_row(
                         SgRecord(
-                            store_number=_["id"],
+                            page_url=_.get("website_url"),
                             location_name=_["name"],
                             street_address=street_address,
                             city=_["city"],
@@ -57,25 +73,32 @@ def fetch_boundings(boundings, writer):
                             latitude=_["lat"],
                             longitude=_["lng"],
                             country_code=_["country"],
-                            phone=_["telephone"],
+                            phone=phone,
                             locator_domain=locator_domain,
-                            location_type=", ".join(_.get("channel_types", [])),
+                            location_type=location_type,
                         )
                     )
-        else:
-            break
 
 
-def fetch_data(writer):
+def fetch_data(writer, base_url, json_url):
     boundings = get_json(base_url)
 
-    fetch_boundings(boundings, writer)
+    fetch_boundings(boundings, json_url, writer)
 
 
 if __name__ == "__main__":
     with SgWriter(
         SgRecordDeduper(
-            RecommendedRecordIds.StoreNumberId, duplicate_streak_failure_factor=2000
+            SgRecordID(
+                {
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.CITY,
+                    SgRecord.Headers.PHONE,
+                    SgRecord.Headers.COUNTRY_CODE,
+                }
+            ),
+            duplicate_streak_failure_factor=3000,
         )
     ) as writer:
-        fetch_data(writer)
+        for url in urls:
+            fetch_data(writer, url["base_url"], url["json_url"])

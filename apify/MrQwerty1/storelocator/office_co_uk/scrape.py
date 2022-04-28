@@ -1,151 +1,105 @@
-import csv
-
-from concurrent import futures
 from lxml import html
-from sgrequests import SgRequests
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+
+from sgscrape.sgpostal import parse_address, International_Parser
+from sglogging import sglog
+from sgselenium import SgChrome
+import ssl
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def get_international(line):
+    adr = parse_address(International_Parser(), line)
+    adr1 = adr.street_address_1 or ""
+    adr2 = adr.street_address_2 or ""
+    street = f"{adr1} {adr2}".strip()
+    city = adr.city or SgRecord.MISSING
+    postal = adr.postcode or SgRecord.MISSING
 
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def get_sitemap_url():
-    session = SgRequests()
-    r = session.get("https://www.office.co.uk/view/component/sitemap.xml")
-    tree = html.fromstring(r.content)
-
-    return "".join(tree.xpath("//loc[contains(text(), 'Store')]/text()"))
+    return street, city, postal
 
 
 def get_urls():
-    session = SgRequests()
-    url = get_sitemap_url()
-    r = session.get(url)
-    tree = html.fromstring(r.content)
+    with SgChrome() as driver:
+        driver.get("https://www.office.co.uk/view/content/storelocator")
+        tree = html.fromstring(driver.page_source, "lxml")
 
-    return tree.xpath("//loc/text()")
-
-
-def get_data(page_url):
-    locator_domain = " https://office.co.uk/"
-
-    session = SgRequests()
-    r = session.get(page_url)
-    tree = html.fromstring(r.text)
-
-    location_name = "".join(
-        tree.xpath("//div[@class='addressDetails']/a/span/text()")
-    ).strip()
-    line = tree.xpath("//div[@class='addressDetails']/a/text()")
-    line = list(filter(None, [l.strip() for l in line]))
-    phone = "<MISSING>"
-
-    i = 0
-    for l in line:
-        if l.lower().find("tel") != -1:
-            phone = l.lower().replace("tel", "").replace(":", "").strip()
-            break
-        i += 1
-
-    if i != len(line):
-        line.remove(line[i])
-
-    street_address = line[0]
-    line = line[-1]
-    postal = " ".join(line.split()[-2:])
-    city = line.replace(postal, "").strip()
-    if postal == line:
-        city = postal
-        postal = "<MISSING>"
-
-    if (
-        city.lower().find("dublin") != -1
-        or city.lower().find("cork") != -1
-        or postal.lower().find("dublin") != -1
-    ):
-        return
-    state = "<MISSING>"
-    country_code = "GB"
-    store_number = "<MISSING>"
-
-    try:
-        text = "".join(tree.xpath("//script[contains(text(), 'LatLng')]/text()"))
-        latitude, longitude = eval(text.split("LatLng")[1].split(");")[0])
-    except IndexError:
-        latitude, longitude = "<MISSING>", "<MISSING>"
-    location_type = "<MISSING>"
-    hours_of_operation = (
-        ";".join(
-            tree.xpath("//span[@class='storelocator_open_times_day']/text()")
-        ).replace("  - ", "Closed")
-        or "<MISSING>"
-    )
-    if hours_of_operation.count("Closed") == 7:
-        hours_of_operation = "Closed"
-
-    row = [
-        locator_domain,
-        page_url,
-        location_name,
-        street_address,
-        city,
-        state,
-        postal,
-        country_code,
-        store_number,
-        phone,
-        location_type,
-        latitude,
-        longitude,
-        hours_of_operation,
-    ]
-
-    return row
+    return tree.xpath("//div[contains(@id, 'addressDetail')]/a/@href")
 
 
 def fetch_data():
-    out = []
     urls = get_urls()
+    log.info(f"Total URLs to crawl: {len(urls)}")
+    with SgChrome() as driver:
+        for slug in urls:
+            page_url = f"https://www.office.co.uk/view/content/storelocator{slug}"
+            driver.get(page_url)
+            tree = html.fromstring(driver.page_source, "lxml")
 
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {executor.submit(get_data, url): url for url in urls}
-        for future in futures.as_completed(future_to_url):
-            row = future.result()
-            if row:
-                out.append(row)
+            line = tree.xpath(
+                "//ul[@class='storelocator_addressdetails_address darkergrey']/li/text()"
+            )
+            line = list(filter(None, [li.strip() for li in line]))
+            if line:
+                location_name = line.pop(0)
+            else:
+                location_name = SgRecord.MISSING
 
-    return out
+            raw_address = ", ".join(line)
+            phone = "".join(
+                tree.xpath(
+                    "//div[@class='storelocator_contactdetails floatProperties']/div[1]/text()"
+                )
+            ).strip()
 
+            street_address, city, postal = get_international(raw_address)
+            country_code = "GB"
+            if " " not in postal and postal != SgRecord.MISSING:
+                country_code = "DE"
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
+            text = "".join(tree.xpath("//script[contains(text(),'LatLng')]/text()"))
+            try:
+                latitude, longitude = eval(text.split("LatLng")[1].split(");")[0])
+            except:
+                latitude, longitude = SgRecord.MISSING, SgRecord.MISSING
+
+            _tmp = []
+            hours = tree.xpath(
+                "//ul[@class='storelocator_open_times_content']/li//text()"
+            )
+            hours = list(filter(None, [h.strip() for h in hours]))
+            for h in hours:
+                if h.endswith("-"):
+                    continue
+                _tmp.append(h)
+
+            hours_of_operation = ";".join(_tmp)
+
+            row = SgRecord(
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                zip_postal=postal,
+                country_code=country_code,
+                latitude=latitude,
+                longitude=longitude,
+                phone=phone,
+                locator_domain=locator_domain,
+                hours_of_operation=hours_of_operation,
+                raw_address=raw_address,
+            )
+
+            yield row
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://www.office.co.uk/"
+    ssl._create_default_https_context = ssl._create_unverified_context
+    log = sglog.SgLogSetup().get_logger(logger_name="office.co.uk")
+
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        for rec in fetch_data():
+            writer.write_row(rec)
