@@ -5,6 +5,9 @@ from bs4 import BeautifulSoup as bs
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgpostal.sgpostal import parse_address_intl
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger("")
 
 _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
@@ -23,6 +26,7 @@ def fetch_data():
         for country, base_url in urls.items():
             soup = bs(session.get(base_url, headers=_headers).text, "lxml")
             locations = soup.select("div.oxp-exteriorFeatureTwo div.extf-content")
+            logger.info(f"{base_url} ------------ {len(locations)} locations")
             for _ in locations:
                 if not _.text.strip():
                     continue
