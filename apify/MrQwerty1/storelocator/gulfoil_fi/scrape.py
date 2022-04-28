@@ -48,9 +48,12 @@ def fetch_data(sgw: SgWriter):
             city = city.split("(")[0].strip()
 
         country_code = "FI"
-        location_type = "".join(d.xpath("./preceding-sibling::h3[1]/text()")).strip()
+        location_type = (
+            "".join(d.xpath("./preceding-sibling::h3[1]/text()")).strip()
+            or "Veneasemat"
+        )
         key = location_name.lower().replace("gulf", "").strip()
-        latitude, longitude = coords.get(key) or (SgRecord.MISSING, SgRecord.MISSING)
+        longitude, latitude = coords.get(key) or (SgRecord.MISSING, SgRecord.MISSING)
 
         row = SgRecord(
             page_url=page_url,

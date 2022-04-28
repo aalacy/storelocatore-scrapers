@@ -17,7 +17,9 @@ from selenium.webdriver.common.by import By
 import ssl
 
 ssl._create_default_https_context = ssl._create_unverified_context
-
+user_agent = (
+    "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0"
+)
 
 website = "https://www.cineplex.com"
 MISSING = SgRecord.MISSING
@@ -154,7 +156,7 @@ def scrape():
     start = time.time()
     count = 0
     with SgRequests() as http:
-        with SgChrome() as driver:
+        with SgChrome(user_agent=user_agent) as driver:
             with SgWriter(
                 deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)
             ) as writer:
