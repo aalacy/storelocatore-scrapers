@@ -1,4 +1,3 @@
-import re
 from lxml import etree
 
 from sgrequests import SgRequests
@@ -10,9 +9,9 @@ from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
-    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
+    session = SgRequests()
     start_url = "https://ramenbannai.com/location/"
-    domain = re.findall(r"://(.+?)/", start_url)[0].replace("www.", "")
+    domain = "ramenbannai.com"
     hdr = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
@@ -21,6 +20,8 @@ def fetch_data():
 
     all_locations = dom.xpath('//div[@class="location-box clearfix"]')
     for poi_html in all_locations:
+        if poi_html.xpath('.//*[contains(text(), "OPENING SOON")]'):
+            continue
         store_url = start_url
         location_name = poi_html.xpath('.//p/span[@class="tenpo"]/text()')[0].split()
         location_name = [e.strip() for e in location_name if e.strip()]
@@ -37,21 +38,14 @@ def fetch_data():
         city = addr.city
         state = addr.state
         zip_code = addr.postcode
-        country_code = "<MISSING>"
-        store_number = "<MISSING>"
         phone = poi_html.xpath(".//p/text()")[1].split("Phone: ")[-1].strip()
         if not phone:
             phone = poi_html.xpath('.//span[contains(text(), "Phone:")]/text()')[
                 0
             ].split(": ")[-1]
-        location_type = "<MISSING>"
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
         hoo = poi_html.xpath('.//p[@class="p01 hours-text"]/text()')
         hoo = [e.strip() for e in hoo if e.strip()]
-        hours_of_operation = (
-            " ".join(hoo).replace("â\x80\x93", "-") if hoo else "<MISSING>"
-        )
+        hours_of_operation = " ".join(hoo).replace("â\x80\x93", "-") if hoo else ""
 
         item = SgRecord(
             locator_domain=domain,
@@ -61,13 +55,14 @@ def fetch_data():
             city=city,
             state=state,
             zip_postal=zip_code,
-            country_code=country_code,
-            store_number=store_number,
+            country_code="",
+            store_number="",
             phone=phone,
-            location_type=location_type,
-            latitude=latitude,
-            longitude=longitude,
+            location_type="",
+            latitude="",
+            longitude="",
             hours_of_operation=hours_of_operation,
+            raw_address=raw_address,
         )
 
         yield item

@@ -45,7 +45,7 @@ def fetch_data(sgw: SgWriter):
 
 
 if __name__ == "__main__":
-    locator_domain = page_url = "https://juliobertos.com/"
+    locator_domain = page_url = "http://juliobertos.com/"
     session = SgRequests()
     with SgWriter(SgRecordDeduper(RecommendedRecordIds.PhoneNumberId)) as writer:
         fetch_data(writer)
