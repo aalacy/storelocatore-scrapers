@@ -1,4 +1,4 @@
-from sgselenium import SgSelenium, SgChrome
+from sgselenium import SgChrome
 import time
 from bs4 import BeautifulSoup as bs
 from sgrequests import SgRequests
