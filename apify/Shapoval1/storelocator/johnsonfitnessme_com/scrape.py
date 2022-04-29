@@ -4,7 +4,6 @@ from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgpostal.sgpostal import International_Parser, parse_address
 
 
 def fetch_data(sgw: SgWriter):
@@ -20,56 +19,27 @@ def fetch_data(sgw: SgWriter):
     page_url = "https://johnsonfitnessme.com/contact/"
     ad = (
         " ".join(
-            tree.xpath(
-                '//div[./div/h2[text()="Info"]]/following-sibling::div[1]//p/a/text()'
-            )
+            tree.xpath('//i[@class="las la-home fs__16"]/following-sibling::text()')
         )
         .replace("\n", "")
         .strip()
     )
-    a = parse_address(International_Parser(), ad)
-    street_address = f"{a.street_address_1} {a.street_address_2}".replace(
-        "None", ""
-    ).strip()
-    state = a.state or "<MISSING>"
-    postal = (
-        "".join(
-            tree.xpath(
-                '//div[./div/h2[text()="Info"]]/following-sibling::div[1]//p/a[last()]/text()'
-            )
-        )
-        .replace("\n", "")
-        .split()[-1]
-        .strip()
-    )
-    country_code = a.country or "<MISSING>"
-    city = a.city or "<MISSING>"
-    text = " ".join(
-        tree.xpath(
-            '//div[./div/h2[text()="Info"]]/following-sibling::div[1]//p/a/@href'
-        )
-    )
-    try:
-        if text.find("ll=") != -1:
-            latitude = text.split("ll=")[1].split(",")[0]
-            longitude = text.split("ll=")[1].split(",")[1].split("&")[0]
-        else:
-            latitude = text.split("@")[1].split(",")[0]
-            longitude = text.split("@")[1].split(",")[1]
-    except IndexError:
-        latitude, longitude = "<MISSING>", "<MISSING>"
+    ad = " ".join(ad.split())
+    street_address = " ".join(ad.split(",")[2].split()[:-1]).strip()
+    country_code = "UAE"
+    city = ad.split(",")[2].split()[-1]
+    map_link = "".join(tree.xpath('//iframe[contains(@src, "maps")]/@src'))
+    latitude = map_link.split("!3d")[1].strip().split("!")[0].strip()
+    longitude = map_link.split("!2d")[1].strip().split("!")[0].strip()
     phone = (
         " ".join(
-            tree.xpath(
-                '//div[./div/h2[text()="Info"]]/following-sibling::div//a[contains(@href, "tel")]/@href'
-            )
+            tree.xpath('//i[@class="las la-phone fs__18"]/following-sibling::text()')
         )
-        .replace("tel:", "")
         .replace("\n", "")
+        .replace("JOHNSON ", "")
         .strip()
     )
-    info = tree.xpath("//footer//p/text()")
-    location_name = "".join(info[0]).strip()
+    location_name = "".join(tree.xpath("//title/text()"))
 
     row = SgRecord(
         locator_domain=locator_domain,
@@ -77,8 +47,8 @@ def fetch_data(sgw: SgWriter):
         location_name=location_name,
         street_address=street_address,
         city=city,
-        state=state,
-        zip_postal=postal,
+        state=SgRecord.MISSING,
+        zip_postal=SgRecord.MISSING,
         country_code=country_code,
         store_number=SgRecord.MISSING,
         phone=phone,
