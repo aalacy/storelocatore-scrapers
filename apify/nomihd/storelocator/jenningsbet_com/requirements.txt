@@ -3,5 +3,5 @@ webdriver_manager==3.4.2
 sgvalidator==0.0.70
 sglogging==0.0.4
 sgpostal==0.1.0
-sgselenium==0.1.5
-sgscrape==0.2.6
+sgselenium==0.1.10
+sgscrape==0.2.9
