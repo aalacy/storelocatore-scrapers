@@ -5,7 +5,11 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgselenium import SgChrome
+import ssl
+import json
 
+ssl._create_default_https_context = ssl._create_unverified_context
 session = SgRequests()
 website = "bathandbodyworks_com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -16,6 +20,31 @@ headers = {
 
 DOMAIN = "https://www.bathandbodyworks.com"
 MISSING = SgRecord.MISSING
+
+
+def extract_json(html_string):
+    json_objects = []
+    count = 0
+
+    brace_count = 0
+    for element in html_string:
+
+        if element == "{":
+            brace_count = brace_count + 1
+            if brace_count == 1:
+                start = count
+
+        elif element == "}":
+            brace_count = brace_count - 1
+            if brace_count == 0:
+                end = count
+                try:
+                    json_objects.append(json.loads(html_string[start : end + 1]))
+                except Exception:
+                    pass
+        count = count + 1
+
+    return json_objects
 
 
 def fetch_data():
@@ -50,11 +79,18 @@ def fetch_data():
             hours_of_operation=MISSING,
         )
     base_url = "https://www.bathandbodyworks.com"
-    r = session.get(
-        "https://www.bathandbodyworks.com/on/demandware.store/Sites-BathAndBodyWorks-Site/en_US/Stores-GetNearestStores?latitude=40.7895453&longitude=-74.05652980000002&countryCode=US&distanceUnit=mi&maxdistance=100000&BBW=1",
-        headers=headers,
-    )
-    location_data = r.json()["stores"]
+
+    url = "https://www.bathandbodyworks.com/on/demandware.store/Sites-BathAndBodyWorks-Site/en_US/Stores-GetNearestStores?latitude=40.7895453&longitude=-74.05652980000002&countryCode=US&distanceUnit=mi&maxdistance=100000&BBW=1"
+    with SgChrome(
+        user_agent="Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0",
+        is_headless=True,
+    ).driver() as driver:
+        driver.get(url)
+        response = driver.page_source
+
+    json_objects = extract_json(response)
+
+    location_data = json_objects[0]["stores"]
     for key in location_data:
         store_data = location_data[key]
         location_name = store_data["name"]
