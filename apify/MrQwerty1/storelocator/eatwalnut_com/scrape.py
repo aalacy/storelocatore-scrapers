@@ -73,9 +73,9 @@ def get_data(page_url, sgw: SgWriter):
         day = "".join(h.xpath("./h4/text()")).strip()
         line = " ".join(h.xpath(".//p/text()")).strip()
         start = line.split("–")[0].strip()
-        end = line.split("–")[-1].strip()
-        if "Hap" in end:
-            end = end.split("Hap")[0].strip()
+        end = line.split("–")[2].strip()
+        if "Din" in end:
+            end = end.split("Din")[0].strip()
         _tmp.append(f"{day}: {start}-{end}")
 
     hours_of_operation = ";".join(_tmp)
