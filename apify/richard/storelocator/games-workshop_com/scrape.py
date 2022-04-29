@@ -5,52 +5,64 @@ from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sglogging import sglog
 
+import json
+from sgselenium import SgChrome
+from selenium.webdriver.common.by import By
+import ssl
+import time
+
 logger = sglog.SgLogSetup().get_logger(logger_name="games-workshop.com")
+ssl._create_default_https_context = ssl._create_unverified_context
+
+user_agent = (
+    "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0"
+)
 
 
 def fetch_data(sgw: SgWriter):
+    with SgChrome(is_headless=True, user_agent=user_agent) as driver:
 
-    locator_domain = "https://www.games-workshop.com/"
-    api_url = "https://www.games-workshop.com/en-GB/store/fragments/resultsJSON.jsp?latitude=51.5072178&radius=100&longitude=-0.1275862"
+        locator_domain = "https://www.games-workshop.com/"
+        api_url = "https://www.games-workshop.com/en-GB/store/fragments/resultsJSON.jsp?latitude=51.5072178&radius=100&longitude=-0.1275862"
 
-    r = session.get(api_url)
-    logger.info(f"Response: {r}")
-    js = r.json()["locations"]
-    logger.info(f"Total Stores: {len(js)}")
-    for j in js:
+        driver.get(api_url)
+        time.sleep(40)
+        js = json.loads(driver.find_element(By.CSS_SELECTOR, "body").text)["locations"]
+        logger.info(f"Total pages to crawl: {len(js)}")
+        for j in js:
+            page_url = f'https://www.games-workshop.com/en-US/{j.get("seoUrl")}'
+            logger.info(f"Crawling: {page_url}")
+            location_name = j.get("name")
+            street_address = j.get("address1")
+            postal = j.get("postalCode")
+            country_code = j.get("country")
+            city = j.get("city")
+            latitude = j.get("latitude")
+            longitude = j.get("longitude")
+            phone = j.get("telephone")
+            store_number = (
+                str(j.get("id")).replace("store-gb-", "").replace("UK.C000", "").strip()
+            )
+            location_type = j.get("type")
 
-        page_url = f'https://www.games-workshop.com/en-US/{j.get("seoUrl")}'
-        location_name = j.get("name")
-        street_address = j.get("address1")
-        postal = j.get("postalCode")
-        country_code = j.get("country")
-        city = j.get("city")
-        latitude = j.get("latitude")
-        longitude = j.get("longitude")
-        phone = j.get("telephone")
-        store_number = (
-            str(j.get("id")).replace("store-gb-", "").replace("UK.C000", "").strip()
-        )
-        location_type = j.get("type")
+            row = SgRecord(
+                locator_domain=locator_domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=SgRecord.MISSING,
+                zip_postal=postal,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=SgRecord.MISSING,
+            )
 
-        row = SgRecord(
-            locator_domain=locator_domain,
-            page_url=page_url,
-            location_name=location_name,
-            street_address=street_address,
-            city=city,
-            state=SgRecord.MISSING,
-            zip_postal=postal,
-            country_code=country_code,
-            store_number=store_number,
-            phone=phone,
-            location_type=location_type,
-            latitude=latitude,
-            longitude=longitude,
-            hours_of_operation=SgRecord.MISSING,
-        )
-
-        sgw.write_row(row)
+            sgw.write_row(row)
 
 
 if __name__ == "__main__":
