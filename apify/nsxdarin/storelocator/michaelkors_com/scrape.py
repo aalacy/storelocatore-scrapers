@@ -41,7 +41,6 @@ def fetch_data(sgw: SgWriter):
                 locs.append(lurl)
     logger.info(len(locs))
     for loc in locs:
-        print(loc)
         website = "michaelkors.com"
         typ = "<MISSING>"
         hours = ""
