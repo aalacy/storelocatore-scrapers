@@ -18,6 +18,8 @@ MISSING = SgRecord.MISSING
 
 def fetch_data():
     pattern = re.compile(r"\s\s+")
+    cleanr = re.compile(r"<[^>]+>")
+
     url = "https://tonyromas.com/locations/"
     r = session.get(url, headers=headers)
     soup = BeautifulSoup(r.text, "html.parser")
@@ -51,6 +53,7 @@ def fetch_data():
             longt = coordlist[i]["data-lng"]
             title = loclist[i].find("div", {"class": "title"}).text
             address = str(loclist[i].find("div", {"class": "address"}))
+            address = re.sub(cleanr, " ", str(address)).strip()
             try:
                 phone = loclist[i].find("div", {"class": "phone"}).text
             except:
@@ -64,6 +67,14 @@ def fetch_data():
             ltype = "<MISSING>"
             if "COMING SOON" in title:
                 ltype = "COMING SOON"
+            try:
+                phone = phone.split(":", 1)[1].strip()
+            except:
+                pass
+            try:
+                hours = hours.split(":", 1)[1].strip()
+            except:
+                pass
             raw_address = address
             raw_address = raw_address.replace("\n", " ").strip()
             raw_address = re.sub(pattern, " ", raw_address).strip()
@@ -82,9 +93,6 @@ def fetch_data():
             zip_postal = pa.postcode
             pcode = zip_postal.strip() if zip_postal else MISSING
 
-            ccode = pa.country
-            ccode = ccode.strip() if ccode else MISSING
-
             yield SgRecord(
                 locator_domain="https://tonyromas.com/",
                 page_url=link,
@@ -93,7 +101,7 @@ def fetch_data():
                 city=city.strip(),
                 state=state.strip(),
                 zip_postal=pcode.strip(),
-                country_code=ccode,
+                country_code=div.text,
                 store_number=SgRecord.MISSING,
                 phone=phone.strip(),
                 location_type=ltype,

@@ -1,37 +1,33 @@
 from sgscrape.sgrecord import SgRecord
-from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sglogging import sglog
-
 import json
 from sgselenium import SgChrome
 from selenium.webdriver.common.by import By
 import ssl
 import time
+from sglogging import sglog
 
-logger = sglog.SgLogSetup().get_logger(logger_name="games-workshop.com")
 ssl._create_default_https_context = ssl._create_unverified_context
-
 user_agent = (
     "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0"
 )
+locator_domain = "https://www.games-workshop.com/"
+log = sglog.SgLogSetup().get_logger(logger_name=locator_domain)
 
 
 def fetch_data(sgw: SgWriter):
-    with SgChrome(is_headless=True, user_agent=user_agent) as driver:
-
-        locator_domain = "https://www.games-workshop.com/"
+    with SgChrome(user_agent=user_agent) as driver:
         api_url = "https://www.games-workshop.com/en-GB/store/fragments/resultsJSON.jsp?latitude=51.5072178&radius=100&longitude=-0.1275862"
-
         driver.get(api_url)
         time.sleep(40)
         js = json.loads(driver.find_element(By.CSS_SELECTOR, "body").text)["locations"]
-        logger.info(f"Total pages to crawl: {len(js)}")
+        log.info(f"Total pages to crawl: {len(js)}")
         for j in js:
+
             page_url = f'https://www.games-workshop.com/en-US/{j.get("seoUrl")}'
-            logger.info(f"Crawling: {page_url}")
+            log.info(f"Crawling: {page_url}")
             location_name = j.get("name")
             street_address = j.get("address1")
             postal = j.get("postalCode")
@@ -66,7 +62,6 @@ def fetch_data(sgw: SgWriter):
 
 
 if __name__ == "__main__":
-    session = SgRequests()
     with SgWriter(
         SgRecordDeduper(SgRecordID({SgRecord.Headers.STORE_NUMBER}))
     ) as writer:

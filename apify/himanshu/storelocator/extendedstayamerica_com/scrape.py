@@ -10,12 +10,26 @@ from concurrent import futures
 
 
 def get_urls():
-    session = SgRequests()
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:85.0) Gecko/20100101 Firefox/85.0",
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+        "Accept-Language": "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3",
+        "Connection": "keep-alive",
+        "Upgrade-Insecure-Requests": "1",
+        "Sec-Fetch-Dest": "document",
+        "Sec-Fetch-Mode": "navigate",
+        "Sec-Fetch-Site": "none",
+        "Sec-Fetch-User": "?1",
+        "Cache-Control": "max-age=0",
+    }
+    cookies = {
+        "datadome": "ADyWo80f_lZRvssbxuXLzk-~V_LXxCQzkKouvoV4WNM2FWddtZujzBoh4xFYbOnDgnakRJcxzI2dYuxLHnTlRl8XHiCYEW~NkbRhtRKXZ20VTOIX2~5PK2YAZkqY~sW",
+        "_ga_W6HGZ97M1K": "GS1.1.1651176965.9.1.1651177072.60",
     }
     r = session.get(
-        "https://api.prod.bws.esa.com/cms-proxy-api/sitemap/property", headers=headers
+        "https://api.prod.bws.esa.com/cms-proxy-api/sitemap/property",
+        headers=headers,
+        cookies=cookies,
     )
     tree = html.fromstring(r.content)
     return tree.xpath("//url/loc[contains(text(), '/hotels/')]/text()")
@@ -24,13 +38,24 @@ def get_urls():
 def get_data(url, sgw: SgWriter):
     locator_domain = "https://www.extendedstayamerica.com/"
     page_url = "".join(url)
-
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:85.0) Gecko/20100101 Firefox/85.0",
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+        "Accept-Language": "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3",
+        "Connection": "keep-alive",
+        "Upgrade-Insecure-Requests": "1",
+        "Sec-Fetch-Dest": "document",
+        "Sec-Fetch-Mode": "navigate",
+        "Sec-Fetch-Site": "none",
+        "Sec-Fetch-User": "?1",
+        "Cache-Control": "max-age=0",
     }
-    session = SgRequests(verify_ssl=False)
-    r = session.get(page_url, headers=headers)
+    cookies = {
+        "datadome": "ADyWo80f_lZRvssbxuXLzk-~V_LXxCQzkKouvoV4WNM2FWddtZujzBoh4xFYbOnDgnakRJcxzI2dYuxLHnTlRl8XHiCYEW~NkbRhtRKXZ20VTOIX2~5PK2YAZkqY~sW",
+        "_ga_W6HGZ97M1K": "GS1.1.1651176965.9.1.1651177072.60",
+    }
 
+    r = session.get(page_url, headers=headers, cookies=cookies)
     tree = html.fromstring(r.text)
     js_block = "".join(
         tree.xpath('//script[contains(text(), "openingHoursSpecification")]/text()')
