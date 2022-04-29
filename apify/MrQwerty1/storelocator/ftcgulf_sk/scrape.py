@@ -67,7 +67,7 @@ def fetch_data(sgw: SgWriter):
 
 
 if __name__ == "__main__":
-    locator_domain = "hhttps://www.ftcgulf.sk/"
+    locator_domain = "https://www.ftcgulf.sk/"
     page_url = "https://www.ftcgulf.sk/products-services/fuel/siet-cerpacich-stanic/"
     headers = {
         "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:97.0) Gecko/20100101 Firefox/97.0",
