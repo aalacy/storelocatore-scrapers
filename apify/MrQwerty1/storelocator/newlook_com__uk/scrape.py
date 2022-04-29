@@ -31,7 +31,10 @@ def fetch_data(sgw: SgWriter):
             adr1 = a.get("line1") or ""
             adr2 = a.get("line2") or ""
             street_address = f"{adr1} {adr2}".strip()
-            city = a.get("town")
+            city = a.get("town") or ""
+            if "," in city:
+                city = city.split(",")[0].strip()
+
             postal = a.get("postalCode")
             try:
                 country_code = a["country"]["isocode"]
