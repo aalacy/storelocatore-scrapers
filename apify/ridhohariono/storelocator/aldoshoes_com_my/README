@@ -1,0 +1,26 @@
+--ignore StreetAddressHasNumber (Confirmed scrape correctly)
+Found 5 concerning rows. Examples:
+                                       street_address              REASON  rowNumber
+0     Lingkaran Syed Putra Mid Valley City Lot S-226A  ADDR_HAS_NO_NUMBER          0
+8                            Lingkaran Sv Maluri G-35  ADDR_HAS_NO_NUMBER          8
+13  Malaysia Melaka Directions Jalan Merdeka Banda...  ADDR_HAS_NO_NUMBER         13
+17                   G06 Malaysia Selangor Directions  ADDR_HAS_NO_NUMBER         17
+18                Malaysia Johor Directions Suite 814  ADDR_HAS_NO_NUMBER         18
+
+
+--ignore GeoConsistencyValidator (Not US zip code)
+Found 1 concerning rows. Examples:
+      zip    state                REASON  rowNumber
+16  93300  Sarawak  ZIPCODE_NOT_IN_STATE         16
+
+
+--ignore StreetAddressHasStateName (Confirmed scrape correctly)
+Found 1 concerning rows. Examples:
+                       street_address                    REASON  rowNumber
+9  2 Jalan Telawi 1 Bangsar Lot Ugf-7  ADDR_CONTAINS_STATE_NAME          9
+
+
+--ignore CountryValidator (Not US State)
+Found 1 concerning rows. Examples:
+      state      phone    zip            REASON  rowNumber
+16  Sarawak  <MISSING>  93300  INVALID_US_STATE         16

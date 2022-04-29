@@ -6,7 +6,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
 def fetch_data(sgw: SgWriter):
-    api = "https://marathonsportsbrand.locally.com/stores/conversion_data?has_data=true&company_id=108134&upc=&category=&show_links_in_list=&parent_domain=&map_center_lat=32.51594939854937&map_center_lng=34.540700000000214&map_distance_diag=500000"
+    api = "https://marathonsportsbrand.locally.com/stores/conversion_data?has_data=true&company_id=108134&upc=&category=&show_links_in_list=true&parent_domain=&map_center_lat=42.38166944&map_center_lng=-71.12013117&map_distance_diag=3000"
 
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0"
@@ -15,9 +15,14 @@ def fetch_data(sgw: SgWriter):
     js = r.json()["markers"]
 
     for j in js:
-        location_name = j.get("name")
+        location_name = j.get("name") or ""
         slug = j.get("slug")
-        page_url = f"https://stores.marathonsports.com/{slug}"
+        if "Alley" in location_name:
+            page_url = f"https://stores.runnersalley.com/{slug}"
+        elif "Sound" in location_name:
+            page_url = f"https://stores.soundrunner.com/{slug}"
+        else:
+            page_url = f"https://stores.marathonsports.com/{slug}"
 
         street_address = j.get("address")
         city = j.get("city")

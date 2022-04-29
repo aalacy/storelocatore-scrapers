@@ -29,7 +29,7 @@ headers = {
 
 def fetch_store_urls(stores_sel, session):
     stores = stores_sel.xpath(
-        '//div[@class="menu-tab-item city four-column"][./div[@class="count"]]'
+        '//div[@class="menu-tab-item city city four-column"][./div[@class="count"]]'
     )
     store_urls_list = []
     for store in stores:
@@ -51,7 +51,9 @@ def fetch_store_urls(stores_sel, session):
 
             temp_stores_req = session.get(temp_url, headers=headers)
             temp_stores_sel = lxml.html.fromstring(temp_stores_req.text)
-            store_urls = temp_stores_sel.xpath('//div[@class="sizes"]/a/@href')
+            store_urls = temp_stores_sel.xpath(
+                '//div[@class="location-container"]//div[@class="title"]/a/@href'
+            )
             for url in store_urls:
                 store_urls_list.append("https://www.derrels.com" + url)
 

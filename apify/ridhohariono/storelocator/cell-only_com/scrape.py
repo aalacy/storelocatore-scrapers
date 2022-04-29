@@ -6,7 +6,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
-from sgscrape.sgpostal import parse_address_intl
+from sgscrape.sgpostal import parse_address_usa
 import json
 
 DOMAIN = "cell-only.com"
@@ -26,7 +26,7 @@ session = SgRequests()
 def getAddress(raw_address):
     try:
         if raw_address is not None and raw_address != MISSING:
-            data = parse_address_intl(raw_address)
+            data = parse_address_usa(raw_address)
             street_address = data.street_address_1
             if data.street_address_2 is not None:
                 street_address = street_address + " " + data.street_address_2
@@ -78,22 +78,28 @@ def fetch_data():
         raw_address = re.sub(
             r"(,){2,}",
             ",",
-            content.find("address", {"id": "address"}).get_text(
+            content.find("address", {"class": "Address-content"}).get_text(
                 strip=True, separator=","
             ),
         )
         street_address, city, state, zip_postal = getAddress(raw_address)
         store_number = MISSING
-        phone = content.find("span", {"id": "telephone"}).text.strip()
+        phone = content.find("span", {"class": "Phone-number"}).text.strip()
         country_code = "US"
         location_type = "cell-only"
         latitude = content.find("meta", {"itemprop": "latitude"})["content"]
         longitude = content.find("meta", {"itemprop": "longitude"})["content"]
         hours_of_operation = (
-            content.find("table", {"class": "c-location-hours-details"})
+            content.find("table", {"class": "c-hours-details"})
             .find("tbody")
             .get_text(strip=True, separator=",")
-            .replace("day,", "day: ")
+            .replace("Mon,", "Monday: ")
+            .replace("Tue,", "Tuesday: ")
+            .replace("Wed,", "Wednesday: ")
+            .replace("Thu,", "Thursday: ")
+            .replace("Fri,", "Friday: ")
+            .replace("Sat,", "Saturday: ")
+            .replace("Sun,", "Sunday: ")
             .replace(",-,", " - ")
         )
         log.info("Append {} => {}".format(location_name, street_address))

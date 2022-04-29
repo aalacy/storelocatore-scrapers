@@ -1,5 +1,3 @@
-import ssl
-
 from bs4 import BeautifulSoup
 
 from sgscrape.sgwriter import SgWriter
@@ -9,82 +7,45 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 from sgrequests import SgRequests
 
-from sgselenium import SgChrome
-
-try:
-    _create_unverified_https_context = (
-        ssl._create_unverified_context
-    )  # Legacy Python that doesn't verify HTTPS certificates by default
-except AttributeError:
-    pass
-else:
-    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
-
 
 def fetch_data(sgw: SgWriter):
 
-    session = SgRequests()
+    base_link = "https://www.altabank.com/_/api/branches/40.3771253/-111.7978905/500"
 
-    base_link = "https://altabank.com/locations/"
-
-    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36"
     headers = {"User-Agent": user_agent}
 
-    driver = SgChrome(user_agent=user_agent).driver()
+    session = SgRequests()
+    store_data = session.get(base_link, headers=headers).json()["branches"]
 
-    driver.get(base_link)
-    base = BeautifulSoup(driver.page_source, "lxml")
+    locator_domain = "https://www.altabank.com"
 
-    driver.close()
-
-    locations = base.findAll(class_="location-card")
-    locator_domain = "altabank.com"
-
-    for location in locations:
-
-        location_name = location.find(class_="branch-name").h5.text
-
-        raw_address = location.find(class_="branch-address").find_all("p")
-        street_address = raw_address[0].text
-        city_line = raw_address[1].text
-        city = city_line[: city_line.find(",")].strip()
-        state = city_line[city_line.find(",") + 1 : city_line.rfind(" ")].strip()
-        zip_code = city_line[city_line.rfind(" ") + 1 :].strip()
+    for store in store_data:
+        location_name = store["name"]
+        street_address = store["address"]
+        city = store["city"]
+        state = store["state"]
+        if city == "Preston":
+            state = "ID"
+        zip_code = store["zip"]
         country_code = "US"
-        store_number = "<MISSING>"
-        phone = (
-            location.find(class_="branch-numbers")
-            .p.text.replace("Phone: ", "")
-            .replace("Toll Free:", "")
-            .strip()
-        )
-        location_type = "<MISSING>"
+        store_number = ""
+        phone = store["phone"]
+        location_type = ""
+        latitude = store["lat"]
+        longitude = store["long"]
 
+        raw_data = BeautifulSoup(store["description"], "lxml")
+        rows = list(raw_data.stripped_strings)
         hours_of_operation = ""
-        raw_hours = list(location.find(class_="branch-hours").stripped_strings)
-        for hour in raw_hours:
-            if "drive" not in hour and "peration" not in hour:
-                hours_of_operation = (hours_of_operation + " " + hour).strip()
 
-        link = location.a["href"]
-        req = session.get(link, headers=headers)
-        base = BeautifulSoup(req.text, "lxml")
+        for row in rows:
+            if "lobby" in row.lower():
+                hours_of_operation = (
+                    hours_of_operation + " " + row.split("(")[0]
+                ).strip()
 
-        raw_gps = base.find(class_="location-address").find(class_="btn blue")["href"]
-        start_point = raw_gps.find("@")
-        latitude = raw_gps[start_point + 1 : raw_gps.find(",", start_point)]
-        long_start = raw_gps.find(",", start_point) + 1
-        longitude = raw_gps[long_start : raw_gps.find(",", long_start)]
-
-        try:
-            int(latitude[4:8])
-        except:
-            latitude = "<MISSING>"
-            longitude = "<MISSING>"
-
-        if "2176 N Main" in street_address:
-            latitude = "41.771821"
-            longitude = "-111.833339"
+        link = raw_data.find_all("a")[-1]["href"]
 
         sgw.write_row(
             SgRecord(

@@ -1,95 +1,71 @@
-import csv
-import json
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
+def fetch_data(sgw: SgWriter):
 
     locator_domain = "https://www.shopmissa.com/"
-    api_url = "https://cdn.shopify.com/s/files/1/0882/6874/t/269/assets/sca.storelocator_scripttag.js?v=1619556494&shop=shopmissa.myshopify.com"
+    api_url = "https://cdn.shopify.com/s/files/1/0882/6874/t/320/assets/sca.storelocatordata.json?v=1645471805&_=1647357518234"
     session = SgRequests()
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
     r = session.get(api_url, headers=headers)
-    text = r.text.split('"locationsRaw":"')[1].split('"};')[0].replace("\\", "")
-    js = json.loads(text)
+    js = r.json()
     for j in js:
 
-        page_url = j.get("web")
-        location_name = j.get("name")
+        page_url = j.get("web") or "<MISSING>"
+        location_name = j.get("name") or "<MISSING>"
+        street_address = f"{j.get('address')} {j.get('address2')}".strip()
+        state = j.get("state") or "<MISSING>"
+        postal = j.get("postal") or "<MISSING>"
+        country_code = "US"
+        city = j.get("city") or "<MISSING>"
+        latitude = j.get("lat") or "<MISSING>"
+        longitude = j.get("lng") or "<MISSING>"
+        phone = j.get("phone") or "<MISSING>"
         location_type = "<MISSING>"
-        street_address = f"{j.get('address')} {j.get('address2')}".replace(
-            "None", ""
-        ).strip()
-        phone = j.get("phone")
-        state = j.get("state") or "TX"
-        postal = j.get("postal")
-        country_code = j.get("country")
-        city = j.get("city")
-        store_number = "<MISSING>"
-        try:
-            hours_of_operation = "".join(j.get("schedule")).replace("r<br>", " ")
-        except TypeError:
-            hours_of_operation = "<MISSING>"
-        latitude = j.get("lat")
-        longitude = j.get("lng")
+        hours_of_operation = (
+            str(j.get("schedule"))
+            .replace("\n", " ")
+            .replace("<br>", "")
+            .replace("\r", "")
+            .replace("None", "")
+            .strip()
+            or "<MISSING>"
+        )
+        hours_of_operation = " ".join(hours_of_operation.split())
+        if "Coming Soon" in location_name:
+            location_type = "Coming Soon"
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=SgRecord.MISSING,
+            phone=phone,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+        )
 
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID({SgRecord.Headers.PAGE_URL, SgRecord.Headers.STREET_ADDRESS})
+        )
+    ) as writer:
+        fetch_data(writer)

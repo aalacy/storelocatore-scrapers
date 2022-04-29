@@ -4,7 +4,6 @@ from time import sleep
 
 from sgrequests import SgRequests
 from sgselenium import SgChrome
-from sgselenium.sgselenium import webdriver
 from sgpostal.sgpostal import parse_address_intl
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
@@ -12,28 +11,11 @@ from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
 
 try:
-    _create_unverified_https_context = (
-        ssl._create_unverified_context
-    )  # Legacy Python that doesn't verify HTTPS certificates by default
+    _create_unverified_https_context = ssl._create_unverified_context
 except AttributeError:
     pass
 else:
-    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
-
-chrome_options = webdriver.ChromeOptions()
-capabilities = webdriver.DesiredCapabilities().CHROME
-
-chrome_options.add_argument("--incognito")
-chrome_options.add_argument("--disable-infobars")
-chrome_options.add_argument("--disable-extensions")
-chrome_options.add_argument("--disable-popup-blocking")
-
-prefs = {
-    "profile.default_content_setting_values": {"notifications": 1, "geolocation": 1},
-    "profile.managed_default_content_settings": {"geolocation": 1},
-}
-chrome_options.add_experimental_option("prefs", prefs)
-capabilities.update(chrome_options.to_capabilities())
+    ssl._create_default_https_context = _create_unverified_https_context
 
 
 def fetch_data():
@@ -42,12 +24,16 @@ def fetch_data():
     domain = "dobbies.com"
     start_url = "https://www.dobbies.com/store-locator"
 
-    with SgChrome(chrome_options=chrome_options) as driver:
+    params = {"latitude": 50.1109, "longitude": 8.6821, "accuracy": 100}
+
+    with SgChrome() as driver:
+        driver.execute_cdp_cmd("Page.setGeolocationOverride", params)
         driver.get(start_url)
+        sleep(20)
         driver.find_element_by_xpath(
             '//div[@class="ms-store-select__search-see-all-stores"]'
         ).click()
-        sleep(15)
+        sleep(5)
         dom = etree.HTML(driver.page_source)
 
     all_locations = dom.xpath(
@@ -89,11 +75,11 @@ def fetch_data():
             location_type = "temporarily closed"
         if loc_dom.xpath('//p[contains(text(), "temporarily closed")]'):
             location_type = "temporarily closed"
-        geo = loc_dom.xpath('//a[contains(@href, "/maps/")]/@href')
         latitude = "<MISSING>"
         longitude = "<MISSING>"
+        geo = loc_dom.xpath('//a[contains(@href, "maps")]/@href')
         if geo:
-            if "/@" in geo:
+            if "/@" in geo[0]:
                 geo = geo[0].split("/@")[-1].split(",")[:2]
                 latitude = geo[0]
                 longitude = geo[1]

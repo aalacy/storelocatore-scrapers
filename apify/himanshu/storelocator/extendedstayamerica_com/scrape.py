@@ -1,119 +1,152 @@
-import csv
-from sgrequests import SgRequests
-from bs4 import BeautifulSoup
-from lxml import html
-
-
-session = SgRequests()
-session.max_redirects = 1000
 import json
+from lxml import html
+from sgscrape.sgrecord import SgRecord
+from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgpostal.sgpostal import USA_Best_Parser, parse_address
+from concurrent import futures
 
 
-# +1.912.692.0076
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-                "page_url",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
+def get_urls():
     headers = {
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/34.0.1847.131 Safari/537.36"
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+        "Accept-Language": "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3",
+        "Connection": "keep-alive",
+        "Upgrade-Insecure-Requests": "1",
+        "Sec-Fetch-Dest": "document",
+        "Sec-Fetch-Mode": "navigate",
+        "Sec-Fetch-Site": "none",
+        "Sec-Fetch-User": "?1",
+        "Cache-Control": "max-age=0",
     }
-    addresses = []
-    base_url = "https://www.extendedstayamerica.com"
-    session = SgRequests()
-    r = session.get("https://www.extendedstayamerica.com/hotels", headers=headers)
-    soup = BeautifulSoup(r.text, "html.parser")
-    jd = (
-        str(soup)
-        .split("window.esa.hotelsData = ")[1]
-        .split("</script>")[0]
-        .replace("}];", "}]")
+    cookies = {
+        "datadome": "ADyWo80f_lZRvssbxuXLzk-~V_LXxCQzkKouvoV4WNM2FWddtZujzBoh4xFYbOnDgnakRJcxzI2dYuxLHnTlRl8XHiCYEW~NkbRhtRKXZ20VTOIX2~5PK2YAZkqY~sW",
+        "_ga_W6HGZ97M1K": "GS1.1.1651176965.9.1.1651177072.60",
+    }
+    r = session.get(
+        "https://api.prod.bws.esa.com/cms-proxy-api/sitemap/property",
+        headers=headers,
+        cookies=cookies,
     )
+    tree = html.fromstring(r.content)
+    return tree.xpath("//url/loc[contains(text(), '/hotels/')]/text()")
 
-    json_data = json.loads(jd)
 
-    for value in json_data:
-        a = value["address"]
+def get_data(url, sgw: SgWriter):
+    locator_domain = "https://www.extendedstayamerica.com/"
+    page_url = "".join(url)
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+        "Accept-Language": "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3",
+        "Connection": "keep-alive",
+        "Upgrade-Insecure-Requests": "1",
+        "Sec-Fetch-Dest": "document",
+        "Sec-Fetch-Mode": "navigate",
+        "Sec-Fetch-Site": "none",
+        "Sec-Fetch-User": "?1",
+        "Cache-Control": "max-age=0",
+    }
+    cookies = {
+        "datadome": "ADyWo80f_lZRvssbxuXLzk-~V_LXxCQzkKouvoV4WNM2FWddtZujzBoh4xFYbOnDgnakRJcxzI2dYuxLHnTlRl8XHiCYEW~NkbRhtRKXZ20VTOIX2~5PK2YAZkqY~sW",
+        "_ga_W6HGZ97M1K": "GS1.1.1651176965.9.1.1651177072.60",
+    }
 
-        location_name = value["title"]
-        street_address = a["street"]
-        city = a["city"]
-        state = a["region"]
-        zipp = a["postalCode"]
+    r = session.get(page_url, headers=headers, cookies=cookies)
+    tree = html.fromstring(r.text)
+    js_block = "".join(
+        tree.xpath('//script[contains(text(), "openingHoursSpecification")]/text()')
+    )
+    try:
+        js = json.loads(js_block)
+        a = js.get("address")
+        street_address = a.get("streetAddress") or "<MISSING>"
+        city = a.get("addressLocality") or "<MISSING>"
+        state = a.get("addressRegion") or "<MISSING>"
+        postal = a.get("postalCode") or "<MISSING>"
         country_code = "US"
-        store_number = value["siteId"]
-
-        location_type = "<MISSING>"
-        latitude = value["latitude"]
-        longitude = value["longitude"]
+        location_name = js.get("name") or "<MISSING>"
+        phone = js.get("telephone") or "<MISSING>"
+        store_number = js.get("identifier") or "<MISSING>"
+        latitude = js.get("geo").get("latitude") or "<MISSING>"
+        longitude = js.get("geo").get("longitude") or "<MISSING>"
         hours_of_operation = "Open 24 hours a day, seven days a week"
-        page_url = "https://www.extendedstayamerica.com" + value["urlMap"]
-
-        session = SgRequests()
-        r = session.get(page_url, headers=headers)
-        tree = html.fromstring(r.text)
-        try:
-            phone = (
-                "".join(
-                    tree.xpath("//script[contains(text(), " "telephone" ")]/text()")
+    except:
+        location_name = "".join(tree.xpath("//h1//text()"))
+        ad = (
+            "".join(
+                tree.xpath("//div[./h1]/following-sibling::div[1]/div/div[2]/text()")
+            )
+            .replace("\n", "")
+            .strip()
+        )
+        a = parse_address(USA_Best_Parser(), ad)
+        street_address = (
+            f"{a.street_address_1} {a.street_address_2}".replace("None", "").strip()
+            or "<MISSING>"
+        )
+        state = a.state or "<MISSING>"
+        postal = a.postcode or "<MISSING>"
+        country_code = "US"
+        city = a.city or "<MISSING>"
+        phone = (
+            "".join(
+                tree.xpath(
+                    "//div[./h1]/following-sibling::div[1]/div/div[1]//a//text()"
                 )
-                .split('"telephone": "')[1]
+            )
+            .replace("\n", "")
+            .strip()
+        )
+        ll = "".join(tree.xpath("//div[@data-latlng]/@data-latlng"))
+        latitude = ll.split(",")[0].strip()
+        longitude = ll.split(",")[1].strip()
+        hours_of_operation = "Open 24 hours a day, seven days a week"
+        try:
+            store_number = (
+                "".join(
+                    tree.xpath(
+                        '//script[contains(text(), "openingHoursSpecification")]/text()'
+                    )
+                )
+                .split('"identifier": "')[1]
                 .split('"')[0]
                 .strip()
             )
         except:
-            phone = "<MISSING>"
+            store_number = "<MISSING>"
+    row = SgRecord(
+        locator_domain=locator_domain,
+        page_url=page_url,
+        location_name=location_name,
+        street_address=street_address,
+        city=city,
+        state=state,
+        zip_postal=postal,
+        country_code=country_code,
+        store_number=store_number,
+        phone=phone,
+        location_type=SgRecord.MISSING,
+        latitude=latitude,
+        longitude=longitude,
+        hours_of_operation=hours_of_operation,
+    )
 
-        store = []
-        store.append(base_url)
-        store.append(location_name)
-        store.append(street_address)
-        store.append(city)
-        store.append(state)
-        store.append(zipp)
-        store.append(country_code)
-        store.append(store_number)
-        store.append(phone)
-        store.append(location_type)
-        store.append(latitude)
-        store.append(longitude)
-        store.append(hours_of_operation)
-        store.append(page_url)
-        store = [str(x).strip() if x else "<MISSING>" for x in store]
-        if store[2] in addresses:
-            continue
-        addresses.append(store[2])
-        yield store
+    sgw.write_row(row)
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
+def fetch_data(sgw: SgWriter):
+    urls = get_urls()
+    with futures.ThreadPoolExecutor(max_workers=1) as executor:
+        future_to_url = {executor.submit(get_data, url, sgw): url for url in urls}
+        for future in futures.as_completed(future_to_url):
+            future.result()
 
 
-scrape()
+if __name__ == "__main__":
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))) as writer:
+        fetch_data(writer)

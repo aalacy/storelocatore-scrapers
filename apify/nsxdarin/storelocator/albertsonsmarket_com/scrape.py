@@ -7,16 +7,17 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 
 session = SgRequests()
 headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36",
+    "x-requeted-with": "XMLHttpRequest",
 }
 
 logger = SgLogSetup().get_logger("albertsonsmarket_com")
 
 
 def fetch_data():
-    url = "https://www.albertsonsmarket.com/RS.Relationshop/StoreLocation/GetListClosestStores"
+    url = "https://www.albertsonsmarket.com/RS.Relationshop/StoreLocation/GetAllStoresPosition"
     payload = {
-        "__RequestVerificationToken": "i0uRi5H_YVPKWOH-rOiBsz003fjy1y-l6DqfTxHP_WsWwsjgewRjUXVOhvxho4YhJhkELE9SL_SeL8NHeZmubA9_RGU1"
+        "__RequestVerificationToken": "HSH41-zsqM68f4O03Sh4nZ7uZJsCC9YE9rHD0DU5k0Rasrtst10nLxtbp4MlwIyUdwlb9IlXBNZQO2gWAHkvhjjmwDg1"
     }
     r = session.post(url, headers=headers, data=payload)
     website = "albertsonsmarket.com"
@@ -24,9 +25,8 @@ def fetch_data():
     country = "US"
     logger.info("Pulling Stores")
     for line in r.iter_lines():
-        line = str(line.decode("utf-8"))
-        if '{"Distance":' in line:
-            items = line.split('{"Distance":')
+        if '{"Active":' in line:
+            items = line.split('{"Active":')
             for item in items:
                 if '"Logo":"' in item:
                     name = item.split('"StoreName":"')[1].split('"')[0]
@@ -39,7 +39,10 @@ def fetch_data():
                     phone = item.split('"PhoneNumber":"')[1].split('"')[0]
                     lat = item.split('"Latitude":')[1].split(",")[0]
                     lng = item.split('"Longitude":')[1].split(",")[0]
-                    hours = item.split('"StoreHours":"')[1].split('"')[0]
+                    try:
+                        hours = item.split('"StoreHours":"')[1].split('"')[0]
+                    except:
+                        hours = "<MISSING>"
                     yield SgRecord(
                         locator_domain=website,
                         page_url=loc,
