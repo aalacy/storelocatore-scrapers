@@ -1,40 +1,53 @@
 from bs4 import BeautifulSoup as bs
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
 from sgselenium.sgselenium import SgChrome
 from sgscrape import simple_scraper_pipeline as sp
+import html
+import json
+import ssl
+from webdriver_manager.chrome import ChromeDriverManager
+
+ssl._create_default_https_context = ssl._create_unverified_context
+
+
+def extract_json(html_string):
+    json_objects = []
+    count = 0
+
+    brace_count = 0
+    for element in html_string:
+
+        if element == "{":
+            brace_count = brace_count + 1
+            if brace_count == 1:
+                start = count
+
+        elif element == "}":
+            brace_count = brace_count - 1
+            if brace_count == 0:
+                end = count
+                try:
+                    json_objects.append(json.loads(html_string[start : end + 1]))
+                except Exception:
+                    pass
+        count = count + 1
+
+    return json_objects
 
 
 def get_data():
-    url = "https://baddaddysburgerbar.com/find-us"
     user_agent = (
         "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0"
     )
 
-    x = 0
-    while True:
-        x = x + 1
-        if x == 10:
-            raise Exception
-        try:
-            with SgChrome(
-                user_agent=user_agent,
-                is_headless=True,
-            ).driver() as driver:
-                driver.get(url)
-                WebDriverWait(driver, 20).until(
-                    EC.presence_of_element_located(
-                        (By.CLASS_NAME, "text-color-primary")
-                    )
-                )
-                response = driver.page_source
+    with SgChrome(executable_path=ChromeDriverManager().install(), user_agent=user_agent, is_headless=True).driver() as driver:
+        driver.get(
+            "https://api.dineengine.io/baddaddys/items/custom_pages?fields%5B0%5D=%2A.%2A.%2A.%2A&single=false&limit=-1"
+        )
+        soup = bs(
+            html.unescape(extract_json(driver.page_source)[0]["data"][6]["content"]),
+            "html.parser",
+        )
 
-                break
-        except Exception:
-            continue
-
-    soup = bs(response, "html.parser")
     grids = soup.find_all("div", attrs={"class": "h-fit-content"})
     for grid in grids:
         locator_domain = "baddaddysburgerbar.com"
