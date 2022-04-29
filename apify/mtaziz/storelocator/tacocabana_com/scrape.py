@@ -31,7 +31,6 @@ def get_hours_from_daily_schedule(url_location):
     store_info_link.click()
     driver.implicitly_wait(20)
     logger.info("[Store Information Clicked]")
-    after_click_pgsrc = driver.page_source
     driver.switch_to.active_element
     dropdown = driver.find_element_by_xpath("//div/h4/button")
     dropdown.click()
@@ -53,17 +52,9 @@ def get_hours(url):
 
 
 def get_headers_for(url: str) -> dict:
-    with SgChrome(
-        executable_path=ChromeDriverManager().install(), is_headless=True
-    ) as chrome:
+    with SgChrome() as chrome:
         headers = SgSelenium.get_default_headers_for(chrome, url)
     return headers  # type: ignore
-
-
-# def get_headers_for(url: str) -> dict:
-#     with SgChrome() as chrome:
-#         headers = SgSelenium.get_default_headers_for(chrome, url)
-#     return headers  # type: ignore
 
 
 def get_driver(url, driver=None):
@@ -85,12 +76,12 @@ def fetch_records(headers_):
     d1 = "".join(d)
     d2 = d1.split("var locations_meta = ")[-1]
     d3 = json.loads(d2)
-    for idx1, i in enumerate(d3[0:10]):
+    for idx1, i in enumerate(d3[0:]):
         j = i["map_pin"]
         page_url = i.get("order_now_link")
 
-        logger.info(f"{idx1}")
         location_name = j.get("name")
+        logger.info(f"[{idx1}] [LOCNAME] {location_name}")
 
         # Street Address
         sta = ""
@@ -154,7 +145,19 @@ def scrape():
     logger.info("Scraping Started")
     count = 0
     headers_ = get_headers_for(locator_url)
-    with SgWriter() as writer:
+
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.PAGE_URL,
+                    SgRecord.Headers.LATITUDE,
+                    SgRecord.Headers.LONGITUDE,
+                    SgRecord.Headers.STREET_ADDRESS,
+                }
+            )
+        )
+    ) as writer:
         results = fetch_records(headers_)
         for rec in results:
             writer.write_row(rec)
