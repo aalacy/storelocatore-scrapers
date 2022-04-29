@@ -55,7 +55,6 @@ def fetch_data(sgw: SgWriter):
             page_url = store["url"]
             storeno = store["id"]
             if page_url:
-                print(page_url)
                 if (
                     "http://www.verneidemitsubishi.com" in page_url
                     or "http://www.kingautomitsubishi.com" in page_url
