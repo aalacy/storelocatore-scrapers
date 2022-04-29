@@ -35,7 +35,7 @@ def fetch_data():
             + "&format=json"
         )
         r = session.get(url, headers=headers)
-        purl = "<MISSING>"
+        purl = "https://www.pennzoil.com/en_ca/oil-change-retail-locations.html"
         for item in json.loads(r.content):
             store = item["id"]
             name = item["name"]
