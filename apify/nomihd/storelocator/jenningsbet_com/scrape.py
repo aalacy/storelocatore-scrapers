@@ -9,7 +9,6 @@ from sgselenium import SgChrome
 import time
 from webdriver_manager.chrome import ChromeDriverManager
 import ssl
-import lxml.html
 import json
 
 try:
