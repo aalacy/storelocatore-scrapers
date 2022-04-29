@@ -1,65 +1,70 @@
-import csv
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
-from bs4 import BeautifulSoup
-import re
-import json
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgpostal.sgpostal import International_Parser, parse_address
 
 
-session = SgRequests()
+def fetch_data(sgw: SgWriter):
 
-def write_output(data):
-    with open('data.csv', mode='w',encoding="utf-8") as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-def fetch_data():
+    locator_domain = "https://www.millenniumhotels.com/"
+    api_url = "https://www.millenniumhotels.com/api/data/destinations"
     headers = {
-    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
-    base_url = "https://www.millenniumhotels.com"
-    r = session.get("https://www.millenniumhotels.com/api/data/destinations",headers=headers)
-    return_main_object = []
-    for store_data in r.json():
-        if "United States" not in store_data["address"]:
-            continue
-        location_request = session.get(base_url + store_data["url"],headers=headers)
-        location_soup = BeautifulSoup(location_request.text,"lxml")
-        store = []
-        store.append("https://www.millenniumhotels.com")
-        store.append(store_data["name"])
-        address = store_data["address"]
-        for i in range(len(address.split(" "))):
-            if len(address.split(" ")[i].replace(",","")) == 2 and address.split(" ")[i].replace(",","").isdigit() == False:
-                state = address.split(" ")[i]
-        for i in range(len(address.split(" "))):
-            if len(address.split(" ")[i].replace(",","")) == 5 and address.split(" ")[i].replace(",","").isdigit():
-                store_zip = address.split(" ")[i]
-        address = address.split(state)[0][:-2]
-        if len(address.split(",")) == 2:
-            store.append(address.split(",")[0])
-            store.append(address.split(",")[1])
-        else:
-            store.append(" ".join(address.split(" ")[:-1]))
-            store.append(address.split(" ")[-1])
-        store.append(state.replace(",",""))
-        store.append(store_zip.replace(",",""))
-        store.append("US")
-        store.append(store_data["hotelid"])
-        store.append(store_data["telphone"])
-        store.append("millennium hotels")
-        store.append(store_data["lat"])
-        store.append(store_data["lng"])
-        store.append("<MISSING>")
-        return_main_object.append(store)
-    return return_main_object
+    r = session.get(api_url, headers=headers)
+    js = r.json()
+    for j in js:
+        slug = j.get("url")
+        page_url = f"https://www.millenniumhotels.com{slug}"
+        location_name = j.get("name") or "<MISSING>"
+        location_type = j.get("type") or "<MISSING>"
+        ad = "".join(j.get("address"))
+        a = parse_address(International_Parser(), ad)
+        street_address = (
+            f"{a.street_address_1} {a.street_address_2}".replace("None", "").strip()
+            or "<MISSING>"
+        )
+        if street_address == "<MISSING>":
+            street_address = ad.split(",")[0].strip()
+        state = a.state or "<MISSING>"
+        postal = a.postcode or "<MISSING>"
+        country_code = a.country or "<MISSING>"
+        city = a.city or "<MISSING>"
+        latitude = j.get("lat") or "<MISSING>"
+        longitude = j.get("lng") or "<MISSING>"
+        phone = "".join(j.get("telphone")) or "<MISSING>"
+        if phone.find("ext") != -1:
+            phone = phone.split("ext")[0].strip()
+        if phone.find("; Toll") != -1:
+            phone = phone.split("; Toll")[0].strip()
+        hours_of_operation = "<MISSING>"
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=SgRecord.MISSING,
+            phone=phone,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+            raw_address=ad,
+        )
 
-scrape()
+        sgw.write_row(row)
+
+
+if __name__ == "__main__":
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.RAW_ADDRESS}))
+    ) as writer:
+        fetch_data(writer)

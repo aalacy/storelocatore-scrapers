@@ -4,10 +4,11 @@ from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgpostal.sgpostal import International_Parser, parse_address
 
 
 def fetch_data(sgw: SgWriter):
-
+    locator_domain = "https://geodis.com/"
     session = SgRequests()
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:88.0) Gecko/20100101 Firefox/88.0",
@@ -30,13 +31,14 @@ def fetch_data(sgw: SgWriter):
             data=data,
         )
         tree = html.fromstring(r.text)
-        page_url = "https://geodis.com/locations"
+
         street_address = (
             " ".join(tree.xpath('//span[@class="address-line1"]/text()'))
             .replace("\n", "")
             .strip()
             or "<MISSING>"
         )
+
         city = (
             " ".join(tree.xpath('//span[@class="locality"]/text()'))
             .replace("\n", "")
@@ -75,6 +77,7 @@ def fetch_data(sgw: SgWriter):
             .replace("NY-", "")
             .strip()
         )
+
         if postal.find("Santiago") != -1:
             postal = "<MISSING>"
 
@@ -84,7 +87,21 @@ def fetch_data(sgw: SgWriter):
             .strip()
             or "<MISSING>"
         )
-
+        page_url = (
+            " ".join(tree.xpath('//div[@class="title-agency-view"]/a/@href'))
+            or "<MISSING>"
+        )
+        if (
+            page_url
+            == "https://geodis.com/agency/geodis-distribution-express-agence-de-mulhouse-wittelsheim"
+        ):
+            street_address = (
+                street_address
+                + " "
+                + " ".join(tree.xpath('//span[@class="address-line2"]/text()'))
+                .replace("\n", "")
+                .strip()
+            )
         country_code = (
             " ".join(tree.xpath('//span[@class="country"]/text()'))
             .replace("\n", "")
@@ -102,15 +119,18 @@ def fetch_data(sgw: SgWriter):
         store_number = node_id
         hours_of_operation = (
             " ".join(tree.xpath('//div[1][@class="group-clock-view"]/div/text()'))
-            .replace("\n", "")
+            .replace("\n", " ")
             .strip()
             or "<MISSING>"
         )
+        hours_of_operation = " ".join(hours_of_operation.split())
         if (
             hours_of_operation.count("24/7") == 7
             or hours_of_operation.count("24/7") > 7
         ):
             hours_of_operation = "24/7"
+        if hours_of_operation.count("Closed") == 7:
+            hours_of_operation = "Closed"
         phone = "".join(tree.xpath('//a[contains(@href, "tel")]/text()')) or "<MISSING>"
         if phone.find("|") != -1:
             phone = phone.split("|")[0].strip()
@@ -118,6 +138,190 @@ def fetch_data(sgw: SgWriter):
             phone = phone.split("(Wittelsheim)")[1].strip()
         if phone == "0" or phone == "2":
             phone = "<MISSING>"
+
+        if state.find("EX5") != -1:
+            state = "<MISSING>"
+            postal = "EX5 2UL"
+            country_code = "UK"
+        if state == "HP12":
+            state = "<MISSING>"
+            postal = "HP12 3TA"
+            country_code = "UK"
+        if state == "HU4":
+            state = "<MISSING>"
+            postal = "HU4 7DW"
+            country_code = "UK"
+        if state == "NN17":
+            state = "<MISSING>"
+            postal = "NN17 9RS"
+            country_code = "UK"
+
+        if city.find(",") != -1 and country_code == "United States":
+            city = (
+                " ".join(tree.xpath('//span[@class="locality"]/text()'))
+                .replace("\n", "")
+                .split(",")[0]
+                .strip()
+            )
+            state = (
+                " ".join(tree.xpath('//span[@class="locality"]/text()'))
+                .replace("\n", "")
+                .split(",")[1]
+                .strip()
+            )
+        if city.find(",") != -1 and country_code == "United States":
+            city = (
+                " ".join(tree.xpath('//span[@class="locality"]/text()'))
+                .replace("\n", "")
+                .split(",")[0]
+                .strip()
+            )
+            state = (
+                " ".join(tree.xpath('//span[@class="locality"]/text()'))
+                .replace("\n", "")
+                .split(",")[1]
+                .strip()
+            )
+        if city.find(";") != -1 and country_code == "United States":
+            city = (
+                " ".join(tree.xpath('//span[@class="locality"]/text()'))
+                .replace("\n", "")
+                .split(";")[0]
+                .strip()
+            )
+            state = (
+                " ".join(tree.xpath('//span[@class="locality"]/text()'))
+                .replace("\n", "")
+                .split(";")[1]
+                .strip()
+            )
+        if city.find(";") != -1 and country_code == "United States":
+            city = (
+                " ".join(tree.xpath('//span[@class="locality"]/text()'))
+                .replace("\n", "")
+                .split(";")[0]
+                .strip()
+            )
+            state = (
+                " ".join(tree.xpath('//span[@class="locality"]/text()'))
+                .replace("\n", "")
+                .split(";")[1]
+                .strip()
+            )
+
+        if city.find(",") != -1 and country_code == "Canada":
+            city = (
+                " ".join(tree.xpath('//span[@class="locality"]/text()'))
+                .replace("\n", "")
+                .split(",")[0]
+                .strip()
+            )
+            state = (
+                " ".join(tree.xpath('//span[@class="locality"]/text()'))
+                .replace("\n", "")
+                .split(",")[1]
+                .strip()
+            )
+        if city.find(",") != -1 and country_code == "Canada":
+            city = (
+                " ".join(tree.xpath('//span[@class="locality"]/text()'))
+                .replace("\n", "")
+                .split(",")[0]
+                .strip()
+            )
+            state = (
+                " ".join(tree.xpath('//span[@class="locality"]/text()'))
+                .replace("\n", "")
+                .split(",")[1]
+                .strip()
+            )
+        if city.find(";") != -1 and country_code == "Canada":
+            city = (
+                " ".join(tree.xpath('//span[@class="locality"]/text()'))
+                .replace("\n", "")
+                .split(";")[0]
+                .strip()
+            )
+            state = (
+                " ".join(tree.xpath('//span[@class="locality"]/text()'))
+                .replace("\n", "")
+                .split(";")[1]
+                .strip()
+            )
+        if city.find(";") != -1 and country_code == "Canada":
+            city = (
+                " ".join(tree.xpath('//span[@class="locality"]/text()'))
+                .replace("\n", "")
+                .split(";")[0]
+                .strip()
+            )
+            state = (
+                " ".join(tree.xpath('//span[@class="locality"]/text()'))
+                .replace("\n", "")
+                .split(";")[1]
+                .strip()
+            )
+        if city.find("(") != -1:
+            city = city.split("(")[0].strip()
+        if city.find("-") != -1:
+            city = city.split("-")[0].strip()
+        if city.find(";") != -1:
+            city = city.split(";")[0].strip()
+        if city.find("/") != -1:
+            city = city.split("/")[0].strip()
+        if city == "62500":
+            city = "St Martin Lez Tatinghem"
+            postal = "62500"
+        city = city.replace("- TERMINAL CARGO", "").strip()
+
+        if (
+            phone.find("GEODIS - Castel San Giovanni (Contract Logistics)") != -1
+            or phone == "<MISSING>"
+        ):
+            phone = "<MISSING>"
+        if phone.find("GEODIS - Pioltello (Air & Ocean Freight)") != -1:
+            phone = phone.replace(
+                "GEODIS - Pioltello (Air & Ocean Freight)", ""
+            ).strip()
+
+        if street_address == "<MISSING>":
+            session = SgRequests()
+            r = session.get(page_url, headers=headers)
+            tree = html.fromstring(r.text)
+            ad = (
+                "".join(
+                    tree.xpath(
+                        '//div[./div/div[@class="field field--name-field-address-1 field--type-string field--label-hidden field--item"]]/div//text()'
+                    )
+                )
+                .replace("\n", " ")
+                .strip()
+                + " "
+                + "".join(
+                    tree.xpath(
+                        '//div[./div/div[@class="field field--name-field-address-2 field--type-string field--label-hidden field--item"]]/div//text()'
+                    )
+                )
+                .replace("\n", " ")
+                .strip()
+                or "<MISSING>"
+            )
+            a = parse_address(International_Parser(), ad)
+            street_address = (
+                f"{a.street_address_1} {a.street_address_2}".replace("None", "").strip()
+                or ad
+                or "<MISSING>"
+            )
+            state = a.state or "<MISSING>"
+            postal = a.postcode or "<MISSING>"
+            city = a.city or "<MISSING>"
+        if street_address.find("Dove Close") != -1:
+            street_address = street_address + " - " + "Fradley Park"
+
+        if postal == "Province" or postal == "Cali":
+            postal = "<MISSING>"
+        if postal.find("C.P.") != -1:
+            postal = postal.replace("C.P.", "").strip()
 
         row = SgRecord(
             locator_domain=locator_domain,
@@ -141,8 +345,9 @@ def fetch_data(sgw: SgWriter):
 
 if __name__ == "__main__":
     session = SgRequests()
-    locator_domain = "https://geodis.com/"
     with SgWriter(
-        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
+        SgRecordDeduper(
+            SgRecordID({SgRecord.Headers.LATITUDE, SgRecord.Headers.STREET_ADDRESS})
+        )
     ) as writer:
         fetch_data(writer)

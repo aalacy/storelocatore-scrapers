@@ -1,11 +1,19 @@
+from sglogging import sglog
 from bs4 import BeautifulSoup
-import csv
-import time
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+import os
 
-logger = SgLogSetup().get_logger("us_ecco_com")
 
+os.environ["PROXY_URL"] = "http://groups-BUYPROXIES94952:{}@proxy.apify.com:8000/"
+os.environ["PROXY_PASSWORD"] = "apify_proxy_4j1h689adHSx69RtQ9p5ZbfmGA3kw12p0N2q"
+
+session = SgRequests()
+website = "us_ecco_com"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
 
 headers = {
@@ -29,118 +37,90 @@ headers = {
 }
 
 
-def write_output(data):
-    with open("data.csv", mode="w", newline="", encoding="utf8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        temp_list = []
-        for row in data:
-            comp_list = [
-                row[2].strip(),
-                row[3].strip(),
-                row[4].strip(),
-                row[5].strip(),
-                row[6].strip(),
-                row[8].strip(),
-                row[10].strip(),
-            ]
-            if comp_list not in temp_list:
-                temp_list.append(comp_list)
-                writer.writerow(row)
-        logger.info(f"No of records being processed: {len(temp_list)}")
+DOMAIN = "https://us.ecco.com/"
+MISSING = SgRecord.MISSING
 
 
 def fetch_data():
-    data = []
-    dedup = []
-    url = "https://us.ecco.com/store-locator"
-    stores_req = session.get(url, headers=headers)
-    soup = BeautifulSoup(stores_req.text, "html.parser")
-    scripts = soup.findAll("script")[16]
-    scripts = str(scripts)
-    locations = scripts.split('},{"storeID"')
-    for loc in locations:
-        loc = loc + "}"
-        store = loc.split('"isECCOStore":')[1].split("}")[0]
-        if store == "true":
-            storeid = loc.split('","name"')[0]
-            storeid = storeid.lstrip(':"').strip()
-            title = loc.split('"name":"')[1].split('","')[0].strip()
-            street = loc.split('"address1":"')[1].split('","')[0].strip()
-            address = loc.split('"address":"')[1].split('","')[0].strip()
-            pcode = address.split(",")[-1].strip()
-            city = loc.split('"city":"')[1].split('","')[0].strip()
-            state = loc.split('"stateCode":"')[1].split('","')[0].strip()
-            country = loc.split('"countryCode":"')[1].split('","')[0].strip()
-            phone = loc.split('"phone":"')[1].split('","')[0].strip()
-            phone = phone.lstrip("+")
-            if phone == "":
-                phone = "<MISSING>"
-            lat = loc.split('"latitude":')[1].split(',"')[0]
-            lng = loc.split('"longitude":')[1].split(',"')[0]
-            if lat == "null":
-                lat = "<MISSING>"
-            if lng == "null":
-                lng = "<MISSING>"
-            hours = loc.split('"storeHours":')[1].split('],"')[0]
-            hours = hours.split("},{")
-            hoo = ""
-            for hr in hours:
-                day = hr.split('"label":"')[1].split('","')[0]
-                hour = hr.split('"data":"')[1].split('"')[0]
-                h1 = day + " " + hour
-                hoo = h1 + " " + hoo
+    if True:
+        dedup = []
+        url = "https://us.ecco.com/store-locator"
+        stores_req = session.get(url, headers=headers)
+        soup = BeautifulSoup(stores_req.text, "html.parser")
+        scripts = soup.findAll("script")[19]
+        scripts = str(scripts)
+        locations = scripts.split('},{"storeID"')
+        for loc in locations:
+            loc = loc + "}"
+            store = loc.split('"isECCOStore":')[1].split("}")[0]
+            if store == "true":
+                storeid = loc.split('","name"')[0]
+                storeid = storeid.lstrip(':"').strip()
+                title = loc.split('"name":"')[1].split('","')[0].strip()
+                street = loc.split('"address1":"')[1].split('","')[0].strip()
+                address = loc.split('"address":"')[1].split('","')[0].strip()
+                pcode = address.split(",")[-1].strip()
+                city = loc.split('"city":"')[1].split('","')[0].strip()
+                state = loc.split('"stateCode":"')[1].split('","')[0].strip()
+                country = loc.split('"countryCode":"')[1].split('","')[0].strip()
+                phone = loc.split('"phone":"')[1].split('","')[0].strip()
+                phone = phone.lstrip("+")
+                if phone == "":
+                    phone = "<MISSING>"
+                lat = loc.split('"latitude":')[1].split(',"')[0]
+                lng = loc.split('"longitude":')[1].split(',"')[0]
+                if lat == "null":
+                    lat = "<MISSING>"
+                if lng == "null":
+                    lng = "<MISSING>"
+                hours = loc.split('"storeHours":')[1].split('],"')[0]
+                hours = hours.split("},{")
+                hoo = ""
+                for hr in hours:
+                    day = hr.split('"label":"')[1].split('","')[0]
+                    hour = hr.split('"data":"')[1].split('"')[0]
+                    h1 = day + " " + hour
+                    hoo = h1 + " " + hoo
+                street = street.strip()
 
-            data_dedup = street + "-" + city + "-" + state + "-" + pcode
-            if data_dedup not in dedup:
-                dedup.append(data_dedup)
-                data.append(
-                    [
-                        "https://us.ecco.com/",
-                        "https://us.ecco.com/store-locator",
-                        title,
-                        street,
-                        city,
-                        state,
-                        pcode,
-                        country,
-                        storeid,
-                        phone,
-                        "<MISSING>",
-                        lat,
-                        lng,
-                        hoo,
-                    ]
-                )
-    return data
+                data_dedup = street + "-" + city + "-" + state + "-" + pcode
+                if data_dedup not in dedup:
+                    dedup.append(data_dedup)
+                    if street != "4000 ARROWHEAD BLVD STE 874":
+                        yield SgRecord(
+                            locator_domain=DOMAIN,
+                            page_url=url,
+                            location_name=title,
+                            street_address=street,
+                            city=city,
+                            state=state,
+                            zip_postal=pcode,
+                            country_code=country,
+                            store_number=storeid,
+                            phone=phone,
+                            location_type="ECCO Store",
+                            latitude=lat,
+                            longitude=lng,
+                            hours_of_operation=hoo.strip(),
+                        )
 
 
 def scrape():
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
-    data = fetch_data()
-    write_output(data)
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    log.info("Started")
+    count = 0
+    deduper = SgRecordDeduper(
+        SgRecordID(
+            {SgRecord.Headers.STREET_ADDRESS, SgRecord.Headers.HOURS_OF_OPERATION}
+        )
+    )
+    with SgWriter(deduper) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()

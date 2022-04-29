@@ -39,10 +39,20 @@ def fetch_data(sgw: SgWriter):
                     city = city[:-1]
                 zipp = adr.find("span", class_="storepostalcode").text.strip()
                 state = anchor["c"]
+                country_code = "UK"
+                if state == "ROI":
+                    country_code = "IE"
                 street_address = adr.text.strip().replace(city, "").replace(zipp, "")
+                if street_address.count(city.title()) > 0:
+                    index = street_address.rfind(city.title())
+                    street_address = street_address[:index].strip()
+                if len(street_address) < 10:
+                    street_address = (
+                        adr.text.strip().replace(city, "").replace(zipp, "")
+                    )
                 location_name = anchor["n"]
                 store_number = location_name.split()[-1].strip()
-                page_url = "<MISSING>"
+                page_url = "https://help.ladbrokes.com/en/retail/shoplocator"
                 phone = anchor["p"]
                 hours = (
                     "mon "
@@ -74,7 +84,7 @@ def fetch_data(sgw: SgWriter):
                 store.append(city.strip())
                 store.append(state)
                 store.append(zipp if zipp else "<MISSING>")
-                store.append("UK")
+                store.append(country_code)
                 store.append(store_number)
                 store.append(phone)
                 store.append(location_type)
