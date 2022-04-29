@@ -76,9 +76,9 @@ def fetch_data(sgw: SgWriter):
                 )
             if '"dimension4":"' in line2:
                 try:
-                    country = line2.split('temprop="address" data-country="')[1].split('"')[
-                        0
-                    ]
+                    country = line2.split('temprop="address" data-country="')[1].split(
+                        '"'
+                    )[0]
                 except:
                     pass
                 add = (
