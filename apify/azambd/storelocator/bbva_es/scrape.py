@@ -4,6 +4,9 @@ from bs4 import BeautifulSoup as bs
 from sgrequests import SgRequests
 from sgscrape import simple_scraper_pipeline as sp
 from sglogging import sglog
+import ssl
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 session = SgRequests()
 
