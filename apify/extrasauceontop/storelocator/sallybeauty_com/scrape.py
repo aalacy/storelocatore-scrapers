@@ -58,8 +58,8 @@ def get_data():
         )
 
         try:
-            driver.get(url)
-            response = driver.page_source
+            driver.get(url)  # noqa
+            response = driver.page_source  # noqa
             json_objects = extract_json(response)
             json_objects[0]["stores"]
 
