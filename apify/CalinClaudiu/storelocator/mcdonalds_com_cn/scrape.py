@@ -136,7 +136,7 @@ class CleanRecord:
     def China(badRecord, config):
         cleanRecord = {}
         cleanRecord["locator_domain"] = config.get("Domain")
-        cleanRecord["page_url"] = ""
+        cleanRecord["page_url"] = "https://www.mcdonalds.com.cn/top/map"
         cleanRecord["location_name"] = badRecord["title"]
         cleanRecord["latitude"] = badRecord["location"]["lat"]
         cleanRecord["longitude"] = badRecord["location"]["lng"]
@@ -146,9 +146,13 @@ class CleanRecord:
         cleanRecord["street_address4"] = ""
         cleanRecord["city"] = badRecord["city"]
         cleanRecord["state"] = badRecord["province"]
-        cleanRecord["zipcode"] = badRecord["district"]
+        cleanRecord["zipcode"] = "<MISSING>"
         cleanRecord["country_code"] = "China"
         cleanRecord["phone"] = badRecord["tel"]
+        try:
+            cleanRecord["phone"] = cleanRecord["phone"].split(";", 1)[0]
+        except Exception:
+            pass
         try:
             cleanRecord["phone"] = cleanRecord["phone"].split(":", 1)[0]
         except Exception:
