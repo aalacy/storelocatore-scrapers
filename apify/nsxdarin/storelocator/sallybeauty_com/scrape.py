@@ -9,8 +9,11 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 logger = SgLogSetup().get_logger("sallybeauty_com")
 
 headers = {
-    "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.141 Safari/537.36"
+    "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+    "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36",
+    "upgrade-insecure-requests": "1",
 }
+
 
 search = DynamicGeoSearch(
     country_codes=[SearchableCountries.USA, SearchableCountries.CANADA],
@@ -36,6 +39,8 @@ def fetch_data():
         r = session.get(url, headers=headers)
         if "disabled or blocked" in r.text:
             logger.info("BLOCKED BY SITE")
+            session = SgRequests()
+            r = session.get(url, headers=headers)
         try:
             for line in r.iter_lines():
                 if '"ID": "' in line:
@@ -312,6 +317,8 @@ def fetch_data():
         r = session.get(url, headers=headers)
         if "disabled or blocked" in r.text:
             logger.info("BLOCKED BY SITE")
+            session = SgRequests()
+            r = session.get(url, headers=headers)
         try:
             for line in r.iter_lines():
                 if '"ID": "' in line:
@@ -419,6 +426,8 @@ def fetch_data():
         r = session.get(url, headers=headers)
         if "disabled or blocked" in r.text:
             logger.info("BLOCKED BY SITE")
+            session = SgRequests()
+            r = session.get(url, headers=headers)
         for line in r.iter_lines():
             if '"ID": "' in line:
                 hours = ""

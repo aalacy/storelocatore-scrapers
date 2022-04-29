@@ -11,7 +11,6 @@ def fetch_data(sgw: SgWriter):
 
     locator_domain = "https://www.apcshop.com"
     api_url = "https://www.apcshop.com/retailer/retailer/index/"
-    session = SgRequests()
     headers = {
         "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0",
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
