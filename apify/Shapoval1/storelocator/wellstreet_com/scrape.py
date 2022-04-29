@@ -21,6 +21,11 @@ def fetch_data(sgw: SgWriter):
     for d in div:
         slug_sub_url = "".join(d.xpath(".//@href"))
         sub_url = f"https://www.wellstreet.com{slug_sub_url}"
+        location_type = "<MISSING>"
+        if sub_url.find("atlanta") != -1:
+            location_type = "Piedmont Urgent Care"
+        if sub_url.find("detroit") != -1:
+            location_type = "Beaumont Urgent Care"
         state = "".join(d.xpath('.//div[@class="bar"]//text()'))
         r = session.get(sub_url, headers=headers)
         tree = html.fromstring(r.text)
@@ -100,7 +105,7 @@ def fetch_data(sgw: SgWriter):
                 country_code=country_code,
                 store_number=store_number,
                 phone=phone,
-                location_type=SgRecord.MISSING,
+                location_type=location_type,
                 latitude=latitude,
                 longitude=longitude,
                 hours_of_operation=hours_of_operation,
