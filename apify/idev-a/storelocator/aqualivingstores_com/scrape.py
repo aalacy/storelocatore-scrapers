@@ -37,6 +37,7 @@ def _p(val):
 
 
 def _addr(_aa):
+    phone = ""
     addr = list(_aa.find_parent("p").stripped_strings)[1:]
     if not addr:
         addr = []
@@ -46,7 +47,146 @@ def _addr(_aa):
 
             addr.append(list(cc.stripped_strings))
         addr = list(itertools.chain(*addr))
-    return addr
+
+    pp = (
+        _aa.find_parent("p").find("a", href=re.compile(r"tel:"))
+        if _aa.find_parent("p")
+        else None
+    )
+    if pp:
+        phone = pp.text.strip()
+    return addr, phone
+
+
+def _d(page_url, location_name, raw_address, lat, lng, phone, hours):
+    addr = parse_address_intl(raw_address)
+    street_address = addr.street_address_1
+    if addr.street_address_2:
+        street_address += " " + addr.street_address_2
+
+    return SgRecord(
+        page_url=page_url,
+        location_name=location_name,
+        street_address=street_address,
+        city=addr.city,
+        state=addr.state,
+        zip_postal=addr.postcode,
+        country_code="US",
+        latitude=lat,
+        longitude=lng,
+        phone=phone,
+        locator_domain=locator_domain,
+        hours_of_operation=hours.strip(),
+        raw_address=raw_address,
+    )
+
+
+def _latlng(sp1, x):
+    try:
+        lng, lat = (
+            sp1.select("div.fusion-no-small-visibility p iframe")[x]["src"]
+            .split("!2d")[1]
+            .split("!2m")[0]
+            .split("!3m")[0]
+            .split("!3d")
+        )
+    except:
+        lat = lng = ""
+
+    return lat, lng
+
+
+def _hoo(sp1, x):
+    h_br = sp1.find_all("strong", string=re.compile(r"^Hours:"))
+    hours = ""
+    if h_br:
+        _hr = h_br[x]
+        _tt = list(_hr.find_parent("p").stripped_strings)
+        if len(_tt) == 1:
+            hours = "; ".join(
+                list(_hr.find_parent("p").find_next_sibling().stripped_strings)
+            )
+        else:
+            hh = _tt[1].lower()
+            if (
+                "by appointment only. please give" in hh
+                or "call for an appointment" in hh
+            ):
+                hours = ""
+            elif "seven days a week" in hh:
+                hours = "seven days a week"
+            else:
+                hours = (
+                    hh.split("open")[-1]
+                    .split("only")[-1]
+                    .split("call")[0]
+                    .split("give")[0]
+                    .replace("please", "")
+                    .replace(".", "")
+                    .strip()
+                )
+    else:
+        _hr = sp1.find("p", string=re.compile(r"^Hours:"))
+        if _hr:
+            hours = "; ".join(list(_hr.find_next_sibling().stripped_strings))
+    if hours:
+        if hours.startswith(","):
+            hours = hours[1:]
+        if hours.startswith(":"):
+            hours = hours[1:]
+        if "appointment" in hours:
+            hours = ""
+
+    return hours
+
+
+def _parse_addr(sp1):
+    _aa = sp1.find("", string=re.compile(r"Address:?$"))
+    phone = ""
+    addr = []
+    if _aa:
+        addr, phone = _addr(_aa)
+    else:
+        _bb = sp1.find("", string=re.compile(r"Outlet Location$"))
+        if _bb:
+            addr, phone = _addr(_bb)
+        else:
+            _cc = sp1.find("", string=re.compile(r"Outlet$"))
+            if _cc:
+                addr, phone = _addr(_cc)
+            else:
+                temp = [
+                    list(aa.stripped_strings)
+                    for aa in sp1.select_one("div.fusion-text.fusion-text-1").select(
+                        "p"
+                    )[1:]
+                ]
+                for aa in list(itertools.chain(*temp)):
+                    _a = aa.lower()
+                    if "outlet" in _a or "address" in _a or "location" in _a:
+                        continue
+                    if _p(aa):
+                        phone = aa
+                        continue
+                    addr.append(aa)
+    if not addr:
+        addr = list(sp1.select_one("div.fusion-text.fusion-text-3 p").stripped_strings)
+    if addr and "hour" in addr[0].lower():
+        if sp1.select_one("div.fusion-text.fusion-text-4"):
+            addr = list(
+                sp1.select_one("div.fusion-text.fusion-text-4").stripped_strings
+            )
+    if _p(addr[-1]):
+        phone = addr[-1]
+        del addr[-1]
+    if not phone:
+        _pp = sp1.select_one("div.fusion-text.fusion-text-1").find(
+            "a", href=re.compile(r"tel:")
+        )
+        if _pp:
+            phone = _pp.text.strip()
+
+    return addr, phone
 
 
 def fetch_data():
@@ -61,129 +201,27 @@ def fetch_data():
                 page_url = link["href"]
                 logger.info(page_url)
                 sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
-                _aa = sp1.find("", string=re.compile(r"Address:?$"))
-                phone = ""
-                addr = []
-                if _aa:
-                    addr = _addr(_aa)
-                else:
-                    _bb = sp1.find("", string=re.compile(r"Outlet Location$"))
-                    if _bb:
-                        addr = _addr(_bb)
-                    else:
-                        _cc = sp1.find("", string=re.compile(r"Outlet$"))
-                        if _cc:
-                            addr = _addr(_cc)
-                        else:
-                            temp = [
-                                list(aa.stripped_strings)
-                                for aa in sp1.select_one(
-                                    "div.fusion-text.fusion-text-1"
-                                ).select("p")[1:]
-                            ]
-                            for aa in list(itertools.chain(*temp)):
-                                _a = aa.lower()
-                                if (
-                                    "outlet" in _a
-                                    or "address" in _a
-                                    or "location" in _a
-                                ):
-                                    continue
-                                if _p(aa):
-                                    phone = aa
-                                    continue
-                                addr.append(aa)
-                if not addr:
-                    addr = list(
-                        sp1.select_one(
-                            "div.fusion-text.fusion-text-3 p"
-                        ).stripped_strings
-                    )
-                if addr and "hour" in addr[0].lower():
-                    if sp1.select_one("div.fusion-text.fusion-text-4"):
-                        addr = list(
-                            sp1.select_one(
-                                "div.fusion-text.fusion-text-4"
-                            ).stripped_strings
-                        )
-                if _p(addr[-1]):
-                    phone = addr[-1]
-                    del addr[-1]
-                if not phone:
-                    _pp = sp1.select_one("div.fusion-text.fusion-text-1").find(
-                        "a", href=re.compile(r"tel:")
-                    )
-                    if _pp:
-                        phone = _pp.text.strip()
-                _hr = sp1.find("strong", string=re.compile(r"^Hours:"))
-                hours = ""
-                if _hr:
-                    _tt = list(_hr.find_parent("p").stripped_strings)
-                    if len(_tt) == 1:
-                        hours = "; ".join(
-                            list(
-                                _hr.find_parent("p")
-                                .find_next_sibling()
-                                .stripped_strings
-                            )
-                        )
-                    else:
-                        hh = _tt[1].lower()
-                        if (
-                            "by appointment only. please give" in hh
-                            or "call for an appointment" in hh
-                        ):
-                            hours = ""
-                        elif "seven days a week" in hh:
-                            hours = "seven days a week"
-                        else:
-                            hours = (
-                                hh.split("open")[-1]
-                                .split("only")[-1]
-                                .split("call")[0]
-                                .split("give")[0]
-                                .replace("please", "")
-                                .replace(".", "")
-                                .strip()
-                            )
-                if hours:
-                    if hours.startswith(","):
-                        hours = hours[1:]
-                    if hours.startswith(":"):
-                        hours = hours[1:]
-                    if "appointment" in hours:
-                        hours = ""
-                raw_address = ", ".join(addr)
-                addr = parse_address_intl(raw_address)
-                street_address = addr.street_address_1
-                if addr.street_address_2:
-                    street_address += " " + addr.street_address_2
 
-                try:
-                    lat, lng = (
-                        sp1.select_one("p iframe")["src"]
-                        .split("!2d")[1]
-                        .split("!2m")[0]
-                        .split("!3m")[0]
-                        .split("!3d")
-                    )
-                except:
-                    lat = lng = ""
-                yield SgRecord(
-                    page_url=page_url,
-                    location_name=location_name,
-                    street_address=street_address,
-                    city=addr.city,
-                    state=addr.state,
-                    zip_postal=addr.postcode,
-                    country_code="US",
-                    latitude=lat,
-                    longitude=lng,
-                    phone=phone,
-                    locator_domain=locator_domain,
-                    hours_of_operation=hours.strip(),
-                    raw_address=raw_address,
+                cnt = len(sp1.select("div.fusion-no-small-visibility p iframe"))
+                addr, phone = _parse_addr(sp1)
+                hours = _hoo(sp1, 0)
+                lat, lng = _latlng(sp1, 0)
+
+                yield _d(
+                    page_url, location_name, ", ".join(addr), lat, lng, phone, hours
                 )
+                if cnt > 1:
+                    _aa = sp1.find_all("", string=re.compile(r"Address:?$"))[cnt - 1]
+                    phone = ""
+                    addr = []
+                    if _aa:
+                        addr, phone = _addr(_aa)
+                    hours = _hoo(sp1, 1)
+                    lat, lng = _latlng(sp1, 1)
+
+                    yield _d(
+                        page_url, location_name, ", ".join(addr), lat, lng, phone, hours
+                    )
 
 
 if __name__ == "__main__":
