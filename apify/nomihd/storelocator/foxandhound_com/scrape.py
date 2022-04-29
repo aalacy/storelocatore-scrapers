@@ -110,7 +110,7 @@ def fetch_data():
                         hours_list.append(day + time)
 
                 for index in range(1, 8):
-                    if index not in day_list:
+                    if str(index) not in day_list:
                         if index == "1":
                             day = "Monday:"
                         if index == "2":
