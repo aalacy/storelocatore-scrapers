@@ -56,7 +56,8 @@ def fetch_data():
                 log.info(store)
                 store_res = session.get(store, headers=headers)
                 store_sel = lxml.html.fromstring(store_res.text)
-
+                if store_sel.xpath('//div[@class="coming-soon"]'):
+                    continue
                 page_url = store
                 locator_domain = website
 
@@ -77,6 +78,8 @@ def fetch_data():
                         street_address + ", " + formatted_addr.street_address_2
                     )
 
+                if street_address:
+                    street_address = street_address.replace("Hill Center ", "").strip()
                 city = formatted_addr.city
                 state = state_name
                 zip = formatted_addr.postcode
