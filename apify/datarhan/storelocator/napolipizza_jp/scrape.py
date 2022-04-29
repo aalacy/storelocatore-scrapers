@@ -54,7 +54,8 @@ def fetch_data():
             )
             hoo = loc_dom.xpath(
                 '//th[contains(text(), "営業時間")]/following-sibling::td[1]//text()'
-            )[0]
+            )
+            hoo = " ".join([e.strip() for e in hoo if e.strip()])
 
             item = SgRecord(
                 locator_domain=domain,
@@ -68,8 +69,8 @@ def fetch_data():
                 store_number=page_url.split("/")[-2],
                 phone=phone,
                 location_type="",
-                latitude=geo[0].split("!")[0],
-                longitude=geo[1].split("!")[0],
+                latitude=geo[1].split("!")[0],
+                longitude=geo[0].split("!")[0],
                 hours_of_operation=hoo,
                 raw_address=raw_address,
             )

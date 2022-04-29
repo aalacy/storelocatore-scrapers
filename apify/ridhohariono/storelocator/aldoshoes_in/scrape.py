@@ -64,12 +64,14 @@ def fetch_data():
         location_name = row.find("div", {"class": "store_title"}).text.strip()
         raw_address = row.find("p", {"class": "store_addressline"}).text
         street_address, city, state, zip_postal = getAddress(raw_address)
+        if city == MISSING:
+            city = location_name.split(",")[-1].strip()
         phone = MISSING
         country_code = "IN"
         location_type = MISSING
         hours_of_operation = MISSING
-        latitude = row.find("input", id="str_lati")["value"]
-        longitude = row.find("input", id="str_longi")["value"]
+        latitude = MISSING
+        longitude = MISSING
         log.info("Append {} => {}".format(location_name, street_address))
         yield SgRecord(
             locator_domain=DOMAIN,
