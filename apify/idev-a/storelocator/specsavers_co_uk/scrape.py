@@ -11,6 +11,11 @@ from sglogging import SgLogSetup
 import ssl
 from webdriver_manager.chrome import ChromeDriverManager
 from tenacity import retry, stop_after_attempt, wait_fixed
+import os
+
+os.environ[
+    "PROXY_URL"
+] = "http://groups-RESIDENTIAL,country-ca:{}@proxy.apify.com:8000/"
 
 ssl._create_default_https_context = ssl._create_unverified_context
 

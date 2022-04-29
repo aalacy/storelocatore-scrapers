@@ -16,7 +16,7 @@ def fetch_data():
     url = "https://www.muchasgraciasmexicanfood.com/"
     r = session.get(url, headers=headers)
     soup = BeautifulSoup(r.text, "html.parser")
-    divlist = soup.select_one('li:contains("Locations")').findAll("li")
+    divlist = soup.select_one('li:-soup-contains("Locations")').findAll("li")
     linklist = []
     for link in divlist:
 

@@ -29,13 +29,12 @@ def fetch_data(sgw: SgWriter):
             continue
         with SgFirefox() as driver:
 
-            driver.implicitly_wait(10)
             driver.get(page_url)
-            driver.implicitly_wait(10)
+            driver.implicitly_wait(100)
             driver.maximize_window()
             driver.switch_to.frame(0)
             try:
-                WebDriverWait(driver, 5).until(
+                WebDriverWait(driver, 100).until(
                     EC.presence_of_element_located(
                         (By.XPATH, '//div[@class="address"]')
                     )
