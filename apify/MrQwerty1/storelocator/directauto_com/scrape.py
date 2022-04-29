@@ -38,7 +38,11 @@ def get_data(api, sgw: SgWriter):
     with SgChrome(user_agent=user_agent) as driver:
         logger.info(f"Crawling {api}")
         driver.get(api)
-        j = json.loads(driver.find_element(By.CSS_SELECTOR, "body").text)["profile"]
+        try:
+            j = json.loads(driver.find_element(By.CSS_SELECTOR, "body").text)["profile"]
+        except Exception as e:
+            logger.info(f"{api} raised the error: {e}")
+            return
         page_url = api.replace(".json", "")
         location_name = j.get("name")
         logger.info(f"Location Name: {location_name}")

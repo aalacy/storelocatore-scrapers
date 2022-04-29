@@ -11,7 +11,12 @@ def fetch_data(sgw: SgWriter):
     js = r.json()
 
     for j in js:
-        location_name = j.get("store")
+        location_name = j.get("store") or ""
+        location_name = (
+            location_name.replace("&#8211;", "-")
+            .replace("&#8217;", "'")
+            .replace("&#038;", "&")
+        )
         adr1 = j.get("address") or ""
         adr2 = j.get("address2") or ""
         street_address = f"{adr1} {adr2}".strip()
