@@ -32,6 +32,13 @@ def fetch_data(sgw: SgWriter):
             lurl = line.split("<loc>")[1].split("<")[0]
             if lurl.count("/") == 5:
                 locs.append(lurl)
+    url = "https://locations.michaelkors.co.uk/sitemap.xml"
+    r = session.get(url, headers=headers)
+    for line in r.iter_lines():
+        if "<loc>https://locations.michaelkors.co.uk/" in line:
+            lurl = line.split("<loc>")[1].split("<")[0]
+            if lurl.count("/") > 3:
+                locs.append(lurl)
     logger.info(len(locs))
     for loc in locs:
         website = "michaelkors.com"
@@ -45,6 +52,8 @@ def fetch_data(sgw: SgWriter):
         zc = ""
         if "locations.michaelkors.ca" in loc:
             country = "CA"
+        elif "locations.michaelkors.co.uk" in loc:
+            country = "GB"
         else:
             country = loc.split("com/")[1].split("/")[0].replace("-", " ").upper()
         phone = ""
@@ -65,9 +74,12 @@ def fetch_data(sgw: SgWriter):
                     + line2.split('span class="Heading-main">')[1].split("<")[0]
                 )
             if '"dimension4":"' in line2:
-                country = line2.split('temprop="address" data-country="')[1].split('"')[
-                    0
-                ]
+                try:
+                    country = line2.split('temprop="address" data-country="')[1].split(
+                        '"'
+                    )[0]
+                except:
+                    pass
                 add = (
                     line2.split('"dimension4":"')[1]
                     .split('"')[0]

@@ -44,6 +44,8 @@ def fetch_data(sgw: SgWriter):
                 street_address = (
                     store[1]
                     .split(", Nashville")[0]
+                    .split(", Naples")[0]
+                    .split(", Charleston")[0]
                     .replace(", Beijing", "")
                     .replace(", Hong Kong", "")
                     .strip()
@@ -84,6 +86,15 @@ def fetch_data(sgw: SgWriter):
                         start = int(digit.split("(")[1].split(",")[0])
                         street_address = street_address[start:]
 
+                if country_code == "Europe":
+                    country = state
+                    fin_state = ""
+                else:
+                    country = country_code
+                    fin_state = state
+                if country_code == "Asia":
+                    country = "China"
+
                 sgw.write_row(
                     SgRecord(
                         locator_domain=locator_domain,
@@ -91,9 +102,9 @@ def fetch_data(sgw: SgWriter):
                         location_name=location_name,
                         street_address=street_address,
                         city=city,
-                        state=state,
+                        state=fin_state,
                         zip_postal=zip_code,
-                        country_code=country_code,
+                        country_code=country,
                         store_number=store_number,
                         phone=phone,
                         location_type=location_type,
