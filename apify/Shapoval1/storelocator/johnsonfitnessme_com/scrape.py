@@ -39,7 +39,9 @@ def fetch_data(sgw: SgWriter):
         .replace("JOHNSON ", "")
         .strip()
     )
-    location_name = "".join(tree.xpath("//title/text()"))
+    location_name = (
+        "".join(tree.xpath("//title/text()")).replace("Contact –", "").strip()
+    )
 
     row = SgRecord(
         locator_domain=locator_domain,
