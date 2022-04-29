@@ -29,9 +29,10 @@ MISSING = "<MISSING>"
 locator_url = "https://www.tacocabana.com/find-a-tc-location/"
 
 
-def get_hours_from_daily_schedule(url_location):
-    driver = get_driver(url_location)
-    WebDriverWait(driver, 10).until(
+def get_hours_from_daily_schedule(url_location, driver):
+    driver.get(url_location)
+    driver.implicitly_wait(10)
+    WebDriverWait(driver, 20).until(
         EC.element_to_be_clickable((By.XPATH, '//a[contains(@href, "showInfoModal")]'))
     )
     logger.info("[Store Information Loaded]")
@@ -49,9 +50,9 @@ def get_hours_from_daily_schedule(url_location):
     return sel3
 
 
-def get_hours(url):
+def get_hours(url, driver):
     temp_hours = []
-    sel3 = get_hours_from_daily_schedule(url)
+    sel3 = get_hours_from_daily_schedule(url, driver)
     scheduledays = sel3.xpath('//div[contains(@class, "_scheduleDay")]')
     for sch in scheduledays:
         days = sch.xpath(".//p/text()")
@@ -62,18 +63,9 @@ def get_hours(url):
 
 
 def get_headers_for(url: str) -> dict:
-    with SgChrome() as chrome:
+    with SgChrome(executable_path=ChromeDriverManager().install()) as chrome:
         headers = SgSelenium.get_default_headers_for(chrome, url)
     return headers  # type: ignore
-
-
-def get_driver(url, driver=None):
-    driver = SgChrome(
-        executable_path=ChromeDriverManager().install(), is_headless=True
-    ).driver()
-    driver.get(url)
-    driver.implicitly_wait(3)
-    return driver
 
 
 def fetch_records(headers_):
@@ -86,69 +78,73 @@ def fetch_records(headers_):
     d1 = "".join(d)
     d2 = d1.split("var locations_meta = ")[-1]
     d3 = json.loads(d2)
-    for idx1, i in enumerate(d3[0:]):
-        j = i["map_pin"]
-        page_url = i.get("order_now_link")
+    with SgChrome(
+        executable_path=ChromeDriverManager().install(), is_headless=True
+    ) as driver:
 
-        location_name = j.get("name")
-        logger.info(f"[{idx1}] [LOCNAME] {location_name}")
+        for idx1, i in enumerate(d3[0:10]):
+            j = i["map_pin"]
+            page_url = i.get("order_now_link")
 
-        # Street Address
-        sta = ""
-        streetnum = j.get("street_number")
-        streetname = j.get("street_name")
-        if streetnum and streetname:
-            sta = streetnum + " " + streetname
-        elif not streetnum and streetname:
-            sta = streetname
-        elif streetnum and not streetname:
-            sta = streetnum
-        else:
+            location_name = j.get("name")
+            logger.info(f"[{idx1}] [LOCNAME] {location_name}")
+
+            # Street Address
             sta = ""
+            streetnum = j.get("street_number")
+            streetname = j.get("street_name")
+            if streetnum and streetname:
+                sta = streetnum + " " + streetname
+            elif not streetnum and streetname:
+                sta = streetname
+            elif streetnum and not streetname:
+                sta = streetnum
+            else:
+                sta = ""
 
-        city = j.get("city")
-        state = j.get("state_short")
-        zip_postal = j.get("post_code")
-        country_code = j.get("country_short")
-        logger.info(f"[{idx1}] [CountryCode: {country_code}]")
+            city = j.get("city")
+            state = j.get("state_short")
+            zip_postal = j.get("post_code")
+            country_code = j.get("country_short")
+            logger.info(f"[{idx1}] [CountryCode: {country_code}]")
 
-        # Phone
-        phone = ""
-        if "map_pin_content" in i:
-            map_content = i.get("map_pin_content")
-
-            sel__phone = html.fromstring(map_content, "lxml")
-            phone_raw = sel__phone.xpath("//text()")
-            logger.info(phone_raw)
-            pr = [" ".join(i.split()) for i in phone_raw]
-            pr = [i for i in pr if i]
-            phone = pr[-1]
-        else:
+            # Phone
             phone = ""
-        store_number = j.get("place_id")
-        latitude = j.get("lat")
-        longitude = j.get("lng")
-        hours_of_operation = get_hours(page_url) or ""
-        raw_address = j.get("address")
-        item = SgRecord(
-            locator_domain="tacocabana.com",
-            page_url=page_url,
-            location_name=location_name,
-            street_address=sta,
-            city=city,
-            state=state,
-            zip_postal=zip_postal,
-            country_code=country_code,
-            store_number=store_number,
-            phone=phone,
-            location_type="",
-            latitude=latitude,
-            longitude=longitude,
-            hours_of_operation=hours_of_operation,
-            raw_address=raw_address,
-        )
-        yield item
-        logger.info(f"[{idx1}] item: {item}")
+            if "map_pin_content" in i:
+                map_content = i.get("map_pin_content")
+
+                sel__phone = html.fromstring(map_content, "lxml")
+                phone_raw = sel__phone.xpath("//text()")
+                logger.info(phone_raw)
+                pr = [" ".join(i.split()) for i in phone_raw]
+                pr = [i for i in pr if i]
+                phone = pr[-1]
+            else:
+                phone = ""
+            store_number = j.get("place_id")
+            latitude = j.get("lat")
+            longitude = j.get("lng")
+            hours_of_operation = get_hours(page_url, driver) or ""
+            raw_address = j.get("address")
+            item = SgRecord(
+                locator_domain="tacocabana.com",
+                page_url=page_url,
+                location_name=location_name,
+                street_address=sta,
+                city=city,
+                state=state,
+                zip_postal=zip_postal,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type="",
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+                raw_address=raw_address,
+            )
+            yield item
+            logger.info(f"[{idx1}] item: {item}")
 
 
 def scrape():
