@@ -42,7 +42,7 @@ def fetch_data():
         except:
             phone = "<MISSING>"
         try:
-            phone = phone.split(":", 1)[0].strip()
+            phone = phone.split(":", 1)[1].strip()
         except:
             pass
         try:
