@@ -56,7 +56,7 @@ def fetch_data(sgw: SgWriter):
 
             country_code = "RU"
             location_type = store["name"]
-            phone = store["phone"]
+            phone = store["phone"].split("/")[0]
             latitude = store["coords"]["lat"]
             longitude = store["coords"]["lng"]
             hours_of_operation = store["workTime"]
