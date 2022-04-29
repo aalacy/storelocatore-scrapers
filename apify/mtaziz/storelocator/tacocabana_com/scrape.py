@@ -82,7 +82,7 @@ def fetch_records(headers_):
         executable_path=ChromeDriverManager().install(), is_headless=True
     ) as driver:
 
-        for idx1, i in enumerate(d3[0:10]):
+        for idx1, i in enumerate(d3[0:]):
             j = i["map_pin"]
             page_url = i.get("order_now_link")
 
