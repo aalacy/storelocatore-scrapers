@@ -49,7 +49,7 @@ def fetch_data():
                 longitude=_["store_long"],
                 country_code="US",
                 phone=_["store_phone"],
-                location_type=_['BU'],
+                location_type=_["BU"],
                 locator_domain=locator_domain,
                 hours_of_operation="; ".join(hours),
                 raw_address=_["geo_address"],
