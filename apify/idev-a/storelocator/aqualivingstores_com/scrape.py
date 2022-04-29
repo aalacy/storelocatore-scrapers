@@ -47,14 +47,18 @@ def _addr(_aa):
 
             addr.append(list(cc.stripped_strings))
         addr = list(itertools.chain(*addr))
+    elif _p(addr[-1]):
+        phone = addr[-1]
+        del addr[-1]
 
-    pp = (
-        _aa.find_parent("p").find("a", href=re.compile(r"tel:"))
-        if _aa.find_parent("p")
-        else None
-    )
-    if pp:
-        phone = pp.text.strip()
+    if not phone:
+        pp = (
+            _aa.find_parent("p").find("a", href=re.compile(r"tel:"))
+            if _aa.find_parent("p")
+            else None
+        )
+        if pp:
+            phone = pp.text.strip()
     return addr, phone
 
 
@@ -103,9 +107,10 @@ def _hoo(sp1, x):
         _hr = h_br[x]
         _tt = list(_hr.find_parent("p").stripped_strings)
         if len(_tt) == 1:
-            hours = "; ".join(
-                list(_hr.find_parent("p").find_next_sibling().stripped_strings)
-            )
+            temp = []
+            for hh in _hr.find_parent("p").find_next_siblings("p"):
+                temp.append("; ".join(hh.stripped_strings))
+            hours = "; ".join(temp)
         else:
             hh = _tt[1].lower()
             if (
@@ -226,7 +231,14 @@ def fetch_data():
 
 if __name__ == "__main__":
     with SgWriter(
-        SgRecordDeduper(SgRecordID({SgRecord.Headers.RAW_ADDRESS}))
+        SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.ZIP,
+                    SgRecord.Headers.PHONE,
+                }
+            )
+        )
     ) as writer:
         results = fetch_data()
         for rec in results:
