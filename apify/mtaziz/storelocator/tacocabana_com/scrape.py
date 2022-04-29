@@ -1,188 +1,164 @@
-from sglogging import SgLogSetup
-from sgselenium import SgChrome
+import json
 from sgrequests import SgRequests
+from sglogging import SgLogSetup
+from sgselenium import SgChrome, SgSelenium
+from webdriver_manager.chrome import ChromeDriverManager
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.by import By
 from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
-from datetime import datetime, timedelta
-import time
-import pytz
+from lxml import html
 
-session = SgRequests()
+
 DOMAIN = "https://www.tacocabana.com"
 logger = SgLogSetup().get_logger(logger_name="tacocabana_com")
 MISSING = "<MISSING>"
+locator_url = "https://www.tacocabana.com/find-a-tc-location/"
 
 
-def get_headers(url, api_v1_ordering, headerIdent):
-    with SgChrome(is_headless=True) as driver:
-        driver.get(url)
-        time.sleep(20)
-        for r in driver.requests:
-            logger.info(f"Getting Bearer Token from Path: {r.path}")
-            if api_v1_ordering in r.path and r.headers[headerIdent]:
-                logger.info("Bearer Token Found: Congrats!")
-                return r.headers
+def get_hours_from_daily_schedule(url_location):
+    driver = get_driver(url_location)
+    WebDriverWait(driver, 10).until(
+        EC.element_to_be_clickable((By.XPATH, '//a[contains(@href, "showInfoModal")]'))
+    )
+    logger.info("[Store Information Loaded]")
+    store_info_link = driver.find_element_by_xpath(
+        '//a[contains(@href, "showInfoModal")]'
+    )
+    store_info_link.click()
+    driver.implicitly_wait(20)
+    logger.info("[Store Information Clicked]")
+    driver.switch_to.active_element
+    dropdown = driver.find_element_by_xpath("//div/h4/button")
+    dropdown.click()
+    driver.implicitly_wait(5)
+    sel3 = html.fromstring(driver.page_source, "lxml")
+    return sel3
 
 
-def get_hoo(hoo, state_for_different_timezone):
-    hoo_list = []
-    current_date_found_at = 0
-    for idx, h in enumerate(hoo):
-        tz = pytz.timezone("US/Central")
-        ct = datetime.now(tz=tz)
-        today_date = datetime.strftime(ct, "%Y-%m-%d")
-        start_time = h["start"]
-        if today_date in start_time:
-            current_date_found_at += idx
-    logger.info(f"Current Date Id: {current_date_found_at}")
-    for idx, h in enumerate(hoo):
-        if idx >= current_date_found_at and idx <= current_date_found_at + 6:
-            day_of_week = h["day_of_week"]
-            test_start = h["start"]
-            test_end = h["end"]
-            start_line = test_start.split("T")[1]
-            end_line = test_end.split("T")[1]
-            if "NM" in state_for_different_timezone:
-                start_sanitized = (
-                    datetime.strptime(start_line, "%H:%M:%S+00:00") - timedelta(hours=6)
-                ).strftime("%I:%M %p")
-
-                end_sanitized = (
-                    datetime.strptime(end_line, "%H:%M:%S+00:00") - timedelta(hours=6)
-                ).strftime("%I:%M %p")
-            else:
-                start_sanitized = (
-                    datetime.strptime(start_line, "%H:%M:%S+00:00") - timedelta(hours=5)
-                ).strftime("%I:%M %p")
-
-                end_sanitized = (
-                    datetime.strptime(end_line, "%H:%M:%S+00:00") - timedelta(hours=5)
-                ).strftime("%I:%M %p")
-            hoo_sanitized = f"{day_of_week} {start_sanitized} - {end_sanitized}"
-            hoo_list.append(hoo_sanitized)
-    hoo_formatted = "; ".join(hoo_list)
-    logger.info(f"Hours of Operation: {hoo_formatted}")
-    if hoo_formatted:
-        return hoo_formatted
-    else:
-        return MISSING
+def get_hours(url):
+    temp_hours = []
+    sel3 = get_hours_from_daily_schedule(url)
+    scheduledays = sel3.xpath('//div[contains(@class, "_scheduleDay")]')
+    for sch in scheduledays:
+        days = sch.xpath(".//p/text()")
+        days = " ".join(days)
+        temp_hours.append(days)
+        logger.info(days)
+    return "; ".join(temp_hours)
 
 
-def get_all_stores_data():
-    data_list = []
-    url_location = "https://www.tacocabana.com/locations"
-    api_url_ordering = "/v1/ordering/store-locations"
-    headers = get_headers(url_location, api_url_ordering, "Authorization")
-    headers = dict(headers)
-    logger.info(f"Headers: {headers}")
-    page_num = 1
-    url_api = f"https://api.koala.fuzzhq.com/v1/ordering/store-locations/?include%5B0%5D=operating_hours&include%5B1%5D=attributes&per_page=50&page={page_num}"
-    logger.info(f"URL API Endpoint: {url_api} ")
-    logger.info("Pulling the count info for total number of pages")
-    data_json = session.get(url_api, headers=headers, timeout=60).json()
-    total_pages = data_json.get("meta").get("pagination").get("total_pages")
-    logger.info(f"Total Pages Found: {total_pages}")
-    page_offset = 1
-    total_pages = total_pages + page_offset
-    data_list.extend(data_json["data"])
-    if total_pages:
-        for i in range(1, total_pages):
-            page_num_new = page_num + i
-            url_api_new = f"https://api.koala.fuzzhq.com/v1/ordering/store-locations/?include%5B0%5D=operating_hours&include%5B1%5D=attributes&per_page=50&page={page_num_new}"
-            data_json = session.get(url_api_new, headers=headers).json()
-            data_list.extend(data_json["data"])
-    logger.info(f"store count: {len(data_list)}")
-    return data_list
+def get_headers_for(url: str) -> dict:
+    with SgChrome() as chrome:
+        headers = SgSelenium.get_default_headers_for(chrome, url)
+    return headers  # type: ignore
 
 
-def fetch_data():
-    data_all = get_all_stores_data()
-    location_name_menu = "https://olo.tacocabana.com/menu/"
-    s = set()
-    for row_num, data in enumerate(data_all):
-        logger.info(f"(Data: {row_num}: {data} ")
-        logger.info(f"Parsing the data at Row: {row_num}")
-        # Location Name
-        location_name_data = data["label"]
-        location_name = location_name_data if location_name_data else MISSING
+def get_driver(url, driver=None):
+    driver = SgChrome(
+        executable_path=ChromeDriverManager().install(), is_headless=True
+    ).driver()
+    driver.get(url)
+    driver.implicitly_wait(3)
+    return driver
 
-        # Page URL
-        slug = data["slug"]
-        page_url = f"{location_name_menu}{slug}"
-        logger.info(f"[Page URL: {page_url} ]")
 
-        # Locator Domain
-        locator_domain = DOMAIN
-        logger.info(f"[Location Name: {location_name} ]")
+def fetch_records(headers_):
+    s = SgRequests(verify_ssl=False)
+    r = s.get(locator_url, headers=headers_)
+    sel = html.fromstring(r.text, "lxml")
+    d = sel.xpath(
+        '//script[contains(@type, text/javascript) and contains(text(), "var locations_meta")]/text()'
+    )
+    d1 = "".join(d)
+    d2 = d1.split("var locations_meta = ")[-1]
+    d3 = json.loads(d2)
+    for idx1, i in enumerate(d3[0:]):
+        j = i["map_pin"]
+        page_url = i.get("order_now_link")
 
-        # Address and Country Code
-        street_address = data["street_address"].strip() or MISSING
-        logger.info(f"[Street Address: {street_address} ]")
-        city = data["city"] or MISSING
-        state_data = data["cached_data"]["state"]
-        state = state_data if state_data else MISSING
-        zip_postal = data["zip_code"] or MISSING
-        country_code = data["country"] or MISSING
-        logger.info(
-            f"[Street Address: {street_address} | [City: {city} | State: {state} | Zip: {zip_postal} | Country Code: {country_code}]"
-        )
+        location_name = j.get("name")
+        logger.info(f"[{idx1}] [LOCNAME] {location_name}")
 
-        store_number = data["brand_id"]
-        store_number = store_number if store_number else MISSING
-        logger.info(f"[Store Number: {store_number} ]")
-        if "OLO" in store_number:
-            continue
-        if store_number in s:
-            continue
-        s.add(store_number)
+        # Street Address
+        sta = ""
+        streetnum = j.get("street_number")
+        streetname = j.get("street_name")
+        if streetnum and streetname:
+            sta = streetnum + " " + streetname
+        elif not streetnum and streetname:
+            sta = streetname
+        elif streetnum and not streetname:
+            sta = streetnum
+        else:
+            sta = ""
 
-        # Phone Number
-        phone = phone = data["phone_number"] or MISSING
-        logger.info(f"[Phone: {phone}]")
-        # Longitude
-        latitude = data["latitude"] or MISSING
-        logger.info(f"[Latitude: {latitude}]")
+        city = j.get("city")
+        state = j.get("state_short")
+        zip_postal = j.get("post_code")
+        country_code = j.get("country_short")
+        logger.info(f"[{idx1}] [CountryCode: {country_code}]")
 
-        # Latitude
-        longitude = data["longitude"] or MISSING
-        logger.info(f"[Longitude: {longitude}]")
+        # Phone
+        phone = ""
+        if "map_pin_content" in i:
+            map_content = i.get("map_pin_content")
 
-        # Location Type
-        location_type = ""
-        location_type = location_type if location_type else MISSING
-        logger.info(f"[Location Type: {location_type}]")
-
-        # Hours of Operation
-        hoo_raw = data["operating_hours"]
-        hours_of_operation = get_hoo(hoo_raw, state_data)
-
-        # Raw Address
-        raw_address = MISSING
-        logger.info(f"[Raw Address: {raw_address} ]")
-        yield SgRecord(
-            locator_domain=locator_domain,
+            sel__phone = html.fromstring(map_content, "lxml")
+            phone_raw = sel__phone.xpath("//text()")
+            logger.info(phone_raw)
+            pr = [" ".join(i.split()) for i in phone_raw]
+            pr = [i for i in pr if i]
+            phone = pr[-1]
+        else:
+            phone = ""
+        store_number = j.get("place_id")
+        latitude = j.get("lat")
+        longitude = j.get("lng")
+        hours_of_operation = get_hours(page_url) or ""
+        raw_address = j.get("address")
+        item = SgRecord(
+            locator_domain="tacocabana.com",
             page_url=page_url,
             location_name=location_name,
-            street_address=street_address,
+            street_address=sta,
             city=city,
             state=state,
             zip_postal=zip_postal,
             country_code=country_code,
             store_number=store_number,
             phone=phone,
-            location_type=location_type,
+            location_type="",
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hours_of_operation,
             raw_address=raw_address,
         )
+        yield item
+        logger.info(f"[{idx1}] item: {item}")
 
 
 def scrape():
     logger.info("Scraping Started")
     count = 0
-    with SgWriter() as writer:
-        results = fetch_data()
+    headers_ = get_headers_for(locator_url)
+
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.PAGE_URL,
+                    SgRecord.Headers.LATITUDE,
+                    SgRecord.Headers.LONGITUDE,
+                    SgRecord.Headers.STREET_ADDRESS,
+                }
+            )
+        )
+    ) as writer:
+        results = fetch_records(headers_)
         for rec in results:
             writer.write_row(rec)
             count = count + 1
