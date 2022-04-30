@@ -115,6 +115,7 @@ def fetch_records(headers_):
             # Phone
             phone = ""
             locname = ""
+            locname_hash_20 = ""
             store_number = ""
             for_page_url = ""
             page_url = i.get("order_now_link")
@@ -126,6 +127,7 @@ def fetch_records(headers_):
                 pr = [i for i in pr if i]
                 phone = pr[-1]
                 locname = pr[0].replace("# ", "#")
+                locname_hash_20 = locname.replace("#", "#20")
                 store_number = locname.strip().replace("TC #", "20").strip()
                 for_page_url = "tc-" + store_number
 
@@ -146,7 +148,7 @@ def fetch_records(headers_):
             item = SgRecord(
                 locator_domain="tacocabana.com",
                 page_url=page_url,
-                location_name=locname,
+                location_name=locname_hash_20,
                 street_address=sta,
                 city=city,
                 state=state,
