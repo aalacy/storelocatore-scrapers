@@ -11,7 +11,6 @@ def fetch_data(sgw: SgWriter):
 
     locator_domain = "https://www.apcoa.co.uk/"
     api_url = "https://www.apcoa.co.uk/typo3temp/assets/js/1d282eaa2d.js"
-    session = SgRequests()
     headers = {
         "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0",
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
@@ -27,7 +26,15 @@ def fetch_data(sgw: SgWriter):
     div = r.text.split("uid:")[1:]
     for d in div:
 
-        location_name = d.split("title:")[1].split(",")[0].replace("'", "").strip()
+        location_name = (
+            d.split("title:")[1]
+            .split(",")[0]
+            .replace("'", "")
+            .replace("&amp;", "&")
+            .replace("\&#039;", "`")
+            .strip()
+        )
+
         country_code = "UK"
         store_number = d.split(",")[0].strip()
         latitude = d.split("latitude:")[1].split(",")[0].strip()
@@ -37,12 +44,16 @@ def fetch_data(sgw: SgWriter):
         )
         js = r.json()
         con = js.get("content")
-        tree = html.fromstring(con)
+        page_url = "https://www.apcoa.co.uk/parking-locations/all-locations/"
+        if con:
+            tree = html.fromstring(con)
 
-        slug = "".join(
-            tree.xpath('//div[@class="locationlistBoxPad"]/a[@class="loctitle"]/@href')
-        )
-        page_url = f"https://www.apcoa.co.uk/{slug}"
+            slug = "".join(
+                tree.xpath(
+                    '//div[@class="locationlistBoxPad"]/a[@class="loctitle"]/@href'
+                )
+            )
+            page_url = f"https://www.apcoa.co.uk/{slug}"
         try:
             r = session.get(page_url, headers=headers)
             tree = html.fromstring(r.text)
