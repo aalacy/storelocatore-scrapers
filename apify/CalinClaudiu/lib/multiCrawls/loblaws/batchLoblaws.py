@@ -2,13 +2,13 @@ import os
 import shutil
 from sglogging import sglog
 
+logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
 src_dir = os.getcwd()
 logzilla.info(src_dir)
 dest = "\\".join(src_dir.split("\\")[0:-3]) + "\\storelocator\\"
 logzilla.info(dest)
 import time
 
-logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
 files_to_copy = ["scrape.py", "requirements.txt", "SUCCESS"]
 folders = [
     "joefresh_com",
