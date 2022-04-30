@@ -5,7 +5,7 @@ from bs4 import BeautifulSoup as bs
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sglogging import SgLogSetup
-from sgscrape.sgpostal import parse_address_intl
+from sgpostal.sgpostal import parse_address_intl
 
 logger = SgLogSetup().get_logger("moonvalleynurseries")
 
@@ -23,9 +23,16 @@ def fetch_data():
         locations = soup.select("div#maintabContent div.subcontent-bg")
         for _ in locations:
             page_url = locator_domain + _.a["href"]
-            raw_address = " ".join(_.p.stripped_strings)
-            if not raw_address or "Contact" in raw_address:
-                continue
+            temp = []
+            for pp in _.select("p"):
+                if pp.a:
+                    continue
+                raw = " ".join(pp.stripped_strings)
+                if not raw or "Contact" in raw:
+                    continue
+                temp.append(raw)
+
+            raw_address = " ".join(temp)
             addr = parse_address_intl(raw_address)
             street_address = addr.street_address_1
             if addr.street_address_2:
