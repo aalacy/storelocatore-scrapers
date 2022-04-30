@@ -379,11 +379,7 @@ def determine_verification_link(rec, typ, fullId, last4, typIter):
 
     def determined_possible():
         def passed():
-            retryBehaviour = Retry(total=2, connect=2, read=2, backoff_factor=0.1)
-            retryBehaviour = False
-            with SgRequests(
-                retry_behavior=retryBehaviour, proxy_rotation_failure_threshold=2
-            ) as session:
+            with SgRequests() as session:
                 try:
                     if result["api"]:
                         test_url = result["api"]
@@ -474,47 +470,47 @@ def url_fix(url):
 
 
 def get_api_call(url):
-    driver = SgChrome().driver()
-    driver.get(url)
-    to_click = WebDriverWait(driver, 40).until(
-        EC.visibility_of_element_located(
-            (By.XPATH, '//*[@id="root"]/section/div/div[1]/div[2]/div')
-        )
-    )
-    to_click.click()
-
-    input_field = WebDriverWait(driver, 10).until(
-        EC.visibility_of_element_located(
-            (
-                By.XPATH,
-                "/html/body/div[6]/div[3]/div[2]/section/div/div[1]/div[2]/div/div[3]/form/div/div[2]/div/input",
+    with SgChrome() as driver:
+        driver.get(url)
+        to_click = WebDriverWait(driver, 40).until(
+            EC.visibility_of_element_located(
+                (By.XPATH, '//*[@id="root"]/section/div/div[1]/div[2]/div')
             )
         )
-    )
-    input_field.send_keys("B3L 4T2")
-    input_field.send_keys(Keys.RETURN)
-    time.sleep(10)
-    try:
-        wait_for_loc = WebDriverWait(driver, 30).until(  # noqa
+        to_click.click()
+
+        input_field = WebDriverWait(driver, 10).until(
             EC.visibility_of_element_located(
                 (
                     By.XPATH,
-                    "/html/body/div[6]/div[3]/div[2]/section/div/div[3]/div[1]/div/ol/li[1]/div",
+                    "/html/body/div[6]/div[3]/div[2]/section/div/div[1]/div[2]/div/div[3]/form/div/div[2]/div/input",
                 )
             )
         )
-    except Exception:
-        logzilla.info(driver.page_source)
-        logzilla.info(driver.requests)
+        input_field.send_keys("B3L 4T2")
+        input_field.send_keys(Keys.RETURN)
+        time.sleep(10)
+        try:
+            wait_for_loc = WebDriverWait(driver, 30).until(  # noqa
+                EC.visibility_of_element_located(
+                    (
+                        By.XPATH,
+                        "/html/body/div[6]/div[3]/div[2]/section/div/div[3]/div[1]/div/ol/li[1]/div",
+                    )
+                )
+            )
+        except Exception:
+            logzilla.info(driver.page_source)
+            logzilla.info(driver.requests)
 
-    time.sleep(10)
-    for r in driver.requests:
-        if "DoSearch2" in r.path:
-            url = r.url
-            headers = r.headers
-    driver.quit()
-    time.sleep(10)
-    return url, headers
+        time.sleep(10)
+        headers = {}
+        for r in driver.requests:
+            if "DoSearch2" in r.path:
+                url = r.url
+                headers = r.headers
+        time.sleep(10)
+        return url, headers
 
 
 def defuzz(record):
