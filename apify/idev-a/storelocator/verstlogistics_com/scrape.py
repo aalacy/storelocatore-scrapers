@@ -3,7 +3,9 @@ from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
-import re
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgpostal.sgpostal import parse_address_intl
 
 logger = SgLogSetup().get_logger("verstlogistics")
 
@@ -12,112 +14,42 @@ _headers = {
 }
 
 locator_domain = "https://www.verstlogistics.com"
-base_url = "https://www.verstlogistics.com/locations"
-
-
-def _p(val):
-    return (
-        val.replace("(", "")
-        .replace(")", "")
-        .replace("+", "")
-        .replace("-", "")
-        .replace(".", " ")
-        .replace("to", "")
-        .replace(" ", "")
-        .strip()
-        .isdigit()
-    )
+base_url = "https://www.verstlogistics.com/cincinnati-ohio-and-kentucky-fulfillment-warehouse-and-transportation-management-locations"
 
 
 def fetch_data():
     with SgRequests() as session:
         soup = bs(session.get(base_url, headers=_headers).text, "lxml")
-        links = (
-            soup.find("h2", string=re.compile(r"Locations")).find_parent().select("p a")
-        )
+        links = soup.select("div.servicesGroupItem ul li a")
         logger.info(f"{len(links)} found")
         for link in links:
-            if not link["href"].startswith("/locations"):
-                continue
             page_url = locator_domain + link["href"]
             logger.info(page_url)
             sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
-            coord = (
-                sp1.select_one(
-                    "div.body-container-wrapper span.hs_cos_wrapper.hs_cos_wrapper_widget.hs_cos_wrapper_type_rich_text h4 a"
-                )["href"]
-                .split("/@")[1]
-                .split("/data")[0]
-                .split(",")
-            )
-            addr = [
-                aa.text.strip()
-                for aa in sp1.select(
-                    "div.body-container-wrapper span.hs_cos_wrapper.hs_cos_wrapper_widget.hs_cos_wrapper_type_rich_text h4"
-                )
-                if aa.text.strip()
-            ]
-            if "verst" in addr[0].lower():
-                del addr[0]
-            phone = ""
-            pp = sp1.find_all("a", href=re.compile(r"tel:"))
-            if pp and len(pp) > 1:
-                phone = pp[-2].text
-            yield SgRecord(
-                page_url=page_url,
-                location_name=sp1.h1.text.strip(),
-                street_address=addr[0],
-                city=addr[1].split(",")[0].strip(),
-                state=addr[1].split(",")[1].strip().split(" ")[0].strip(),
-                zip_postal=addr[1].split(",")[1].strip().split(" ")[-1].strip(),
-                country_code="US",
-                phone=phone,
-                locator_domain=locator_domain,
-                latitude=coord[0],
-                longitude=coord[1],
-            )
-
-            blocks = []
-            for block in sp1.select(
-                'div.body-container-wrapper span.hs_cos_wrapper.hs_cos_wrapper_widget.hs_cos_wrapper_type_rich_text p[style="text-align: center;"]'
-            ):
-                tt = block.text.strip().lower()
-                if not tt:
-                    continue
-                if "check" in tt or "location" in tt or "started" in tt or "view" in tt:
-                    continue
-                blocks.append(block)
-
-            if blocks:
-                addr = list(blocks[0].stripped_strings)
-                if "verst" in addr[0].lower():
-                    del addr[0]
-                phone = ""
-                if _p(addr[-1]):
-                    phone = addr[-1]
-                try:
-                    coord = (
-                        blocks[0].a["href"].split("/@")[1].split("/data")[0].split(",")
-                    )
-                except:
-                    coord = ["", ""]
+            locations = sp1.select("div.desktopAccordions div.accordContent__Area")
+            for _ in locations:
+                raw_address = _.span.text.strip()
+                addr = parse_address_intl(raw_address)
+                street_address = addr.street_address_1
+                if addr.street_address_2:
+                    street_address += " " + addr.street_address_2
                 yield SgRecord(
                     page_url=page_url,
                     location_name=sp1.h1.text.strip(),
-                    street_address=addr[0],
-                    city=addr[1].split(",")[0].strip(),
-                    state=addr[1].split(",")[1].strip().split(" ")[0].strip(),
-                    zip_postal=addr[1].split(",")[1].strip().split(" ")[-1].strip(),
+                    street_address=street_address,
+                    city=addr.city,
+                    state=addr.state,
+                    zip_postal=addr.postcode,
                     country_code="US",
-                    phone=phone,
                     locator_domain=locator_domain,
-                    latitude=coord[0],
-                    longitude=coord[1],
+                    raw_address=raw_address,
                 )
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.RAW_ADDRESS}))
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
