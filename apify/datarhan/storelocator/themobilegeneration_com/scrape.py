@@ -1,81 +1,55 @@
-import ssl
 from lxml import etree
-from time import sleep
 
+from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
-from sgselenium.sgselenium import SgFirefox
-from selenium.webdriver.firefox.options import Options
-
-options = Options()
-options.set_preference("geo.prompt.testing", True)
-options.set_preference("geo.prompt.testing.allow", True)
-options.set_preference(
-    "geo.provider.network.url",
-    'data:application/json,{"location": {"lat": 51.47, "lng": 0.0}, "accuracy": 100.0}',
-)
-options.add_argument("--headless")
-
-try:
-    _create_unverified_https_context = ssl._create_unverified_context
-except AttributeError:
-    pass
-else:
-    ssl._create_default_https_context = _create_unverified_https_context
 
 
 def fetch_data():
-    start_url = "https://themobilegeneration.com/locations/"
+    session = SgRequests()
+    start_url = "https://themobilegeneration.com/wp-json/wpgmza/v1/features/base64eJyrVkrLzClJLVKyUqqOUcpNLIjPTIlRsopRMo5R0gEJFGeUFni6FAPFomOBAsmlxSX5uW6ZqTkpELFapVoABaMWvA"
     domain = "themobilegeneration.com"
 
-    with SgFirefox(firefox_options=options, is_headless=False) as driver:
-        driver.get(start_url)
-        sleep(15)
-        dom = etree.HTML(driver.page_source)
-        all_locations = dom.xpath("//div[@mapid]")
-        driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-        sleep(15)
-        next_page = driver.find_element_by_xpath('//li[@title="Next page"]/a')
-        while next_page:
-            next_page.click()
-            dom = etree.HTML(driver.page_source)
-            all_locations += dom.xpath("//div[@mapid]")
-            driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-            try:
-                next_page = driver.find_element_by_xpath('//li[@title="Next page"]/a')
-            except Exception:
-                next_page = False
-
-        for poi_html in all_locations:
-            location_name = poi_html.xpath(".//strong/a/text()")[0]
-            raw_address = poi_html.xpath('.//div[@class="wpgmza-address"]/text()')[
-                0
-            ].split(", ")
-            phone = poi_html.xpath('.//a[contains(@href, "tel")]/text()')[0]
-            hoo = poi_html.xpath('.//p[b[contains(text(), "M-F")]]//text()')
-            hoo = " ".join([e.strip() for e in hoo if e.strip()])
-            geo = poi_html.xpath("@data-latlng")[0].split(", ")
-
-            item = SgRecord(
-                locator_domain=domain,
-                page_url="https://themobilegeneration.com/locations/",
-                location_name=location_name,
-                street_address=raw_address[0],
-                city=raw_address[1],
-                state=raw_address[2].split()[0],
-                zip_postal=raw_address[2].split()[-1],
-                country_code=raw_address[3],
-                store_number="",
-                phone=phone,
-                location_type="",
-                latitude=geo[0],
-                longitude=geo[1],
-                hours_of_operation=hoo,
+    data = session.get(start_url).json()
+    for poi in data["markers"]:
+        raw_address = poi["address"].split(", ")
+        raw_data = etree.HTML(poi["description"]).xpath("//text()")
+        raw_data = [e.strip() for e in raw_data if e.strip()]
+        zip_code = raw_address[2].split()[-1]
+        if len(zip_code) == 2:
+            zip_code = ""
+        page_url = f"https://themobilegeneration.com{poi['link']}"
+        if not zip_code:
+            loc_response = session.get(page_url)
+            loc_dom = etree.HTML(loc_response.text)
+            zip_code = (
+                loc_dom.xpath('//div[@class="post-excerpt"]/p/text()')[0]
+                .split("Address:")[-1]
+                .split("Phone")[0]
+                .split(", ")[-1]
+                .split()[-1]
             )
 
-            yield item
+        item = SgRecord(
+            locator_domain=domain,
+            page_url=page_url,
+            location_name=poi["title"],
+            street_address=raw_address[0],
+            city=raw_address[1],
+            state=raw_address[2].split()[0],
+            zip_postal=zip_code,
+            country_code=raw_address[3],
+            store_number=poi["id"],
+            phone=raw_data[0],
+            location_type="",
+            latitude=poi["lat"],
+            longitude=poi["lng"],
+            hours_of_operation=" ".join(raw_data[1:]),
+        )
+
+        yield item
 
 
 def scrape():

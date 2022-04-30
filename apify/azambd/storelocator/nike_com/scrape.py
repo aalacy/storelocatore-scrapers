@@ -139,7 +139,9 @@ def get_phone(main_section):
     if Source is None or Source == "":
         return phone
 
-    for match in re.findall(r"[\+\(]?[1-9][0-9 .\-\(\)]{8,}[0-9]", Source):
+    for match in re.findall(
+        r"[\+\(]?[0-9][0-9 .\-\(\)]{8,}[0-9][\(]?[0-9][0-9 .\-\(\)]", Source
+    ):
         phone = match
         return phone
     return phone
@@ -203,7 +205,6 @@ def update_location_name(location_name):
 def fetch_data(driver):
     stores = fetch_stores(driver)
     log.info(f"Total stores = {len(stores)}")
-
     count = 0
     error_urls = []
     for page_url in stores:
@@ -234,6 +235,14 @@ def fetch_data(driver):
         latitude, longitude = get_lat_lng(main_section)
         hours_of_operation = get_hoo(main_section)
         street_address, city, state, zip_postal = get_address(raw_address)
+
+        if city == "-02":
+            city = "Toco"
+        if city == "598-8509":
+            city = "泉佐野市"
+        if "6Th Of October Cairo" in str(city):
+            city = "6Th Of October"
+
         location_name = update_location_name(location_name)
 
         yield SgRecord(
