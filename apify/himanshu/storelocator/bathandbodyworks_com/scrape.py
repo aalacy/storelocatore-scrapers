@@ -104,9 +104,16 @@ def fetch_data():
         store_number = key
         latitude = store_data["latitude"]
         longitude = store_data["longitude"]
-        hours_of_operation =BeautifulSoup(store_data["storeHours"], "html.parser").get_text(separator='|', strip=True).replace('|'," ")
+        hours_of_operation = (
+            BeautifulSoup(store_data["storeHours"], "html.parser")
+            .get_text(separator="|", strip=True)
+            .replace("|", " ")
+        )
         url = "https://www.bathandbodyworks.com/store-locator"
-        if 'Mon: CLOSED Tue: CLOSED Wed: CLOSED Thu: CLOSED Fri: CLOSED Sat: CLOSED Sun: CLOSED' in hours_of_operation:
+        if (
+            "Mon: CLOSED Tue: CLOSED Wed: CLOSED Thu: CLOSED Fri: CLOSED Sat: CLOSED Sun: CLOSED"
+            in hours_of_operation
+        ):
             hours_of_operation = MISSING
         yield SgRecord(
             locator_domain=DOMAIN,
