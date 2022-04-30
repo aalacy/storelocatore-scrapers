@@ -3,7 +3,7 @@ from sglogging import sglog
 
 import ssl
 from sgscrape import simple_utils as utils
-from sgrequests.sgrequests import SgRequests
+from sgrequests import SgRequests
 from requests.packages.urllib3.util.retry import Retry
 
 from sgselenium import SgChrome
