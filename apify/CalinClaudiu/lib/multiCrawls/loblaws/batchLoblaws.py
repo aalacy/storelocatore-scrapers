@@ -5,7 +5,6 @@ src_dir = os.getcwd()
 print(src_dir)
 dest = "\\".join(src_dir.split("\\")[0:-3]) + "\\storelocator\\"
 print(dest)
-import time
 
 files_to_copy = ["scrape.py", "requirements.txt", "SUCCESS"]
 folders = [
@@ -37,5 +36,3 @@ print("Copying ", len(files_to_copy), " files to ", len(folders), " locations")
 for i in folders:
     for j in files_to_copy:
         shutil.copy2(src_dir + "\\" + str(j), dest + i + "\\")
-        print('copied')
-        time.sleep(15)
