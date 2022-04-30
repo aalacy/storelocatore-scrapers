@@ -4,7 +4,6 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from lxml import html
 
 logger = SgLogSetup().get_logger(logger_name="anthropologie_com")
 
@@ -39,23 +38,25 @@ def get_hoo(hours):
 
 def fetch_data():
     with SgRequests() as session:
-        url_stores = "https://www.anthropologie.com/stores#?viewAll=true"
-        r_page_url = session.get(url_stores, headers=headers)
-        locations = html.fromstring(r_page_url.text, "lxml")
         url_api = "https://www.anthropologie.com/api/misl/v1/stores/search?brandId=54%7C04&distance=25&urbn_key=937e0cfc7d4749d6bb1ad0ac64fce4d5"
         data = session.get(url_api, headers=headers).json()
-        for d in data["results"]:
+        for idx, d in enumerate(data["results"]):
             country_code = d["country"]
             locator_domain = locator_domain_url
-            location_name = d["addresses"]["marketing"]["name"]
-            url_store = locations.xpath('//a[contains(., "%s")]/@href' % location_name)[
-                0
-            ]
-            if url_store:
-                page_url = "https://www.anthropologie.com" + url_store
+
+            try:
+                location_name = d["addresses"]["marketing"]["name"]
+            except:
+                location_name = d["storeName"]
+            page_url = ""
+            if "slug" in d:
+                slug = d["slug"]
+                if slug:
+                    page_url = f"https://www.anthropologie.com/stores/{slug}"
+                else:
+                    page_url = MISSING
             else:
                 page_url = MISSING
-
             street_address = d["addressLineOne"] if d["addressLineOne"] else MISSING
             city = d["city"] if d["city"] else MISSING
             state = d["state"] if d["state"] else MISSING
@@ -66,7 +67,6 @@ def fetch_data():
                 phone = d["addresses"]["marketing"]["phoneNumber"]
             except KeyError:
                 phone = MISSING
-
             try:
                 location_type = d["storeType"]
             except KeyError:
@@ -79,7 +79,6 @@ def fetch_data():
                 longitude = d["loc"][0]
             except:
                 longitude = MISSING
-
             hours_of_operation = get_hoo(d["hours"])
             if (
                 page_url == "https://www.anthropologie.com/stores"
@@ -90,6 +89,8 @@ def fetch_data():
                 if page_url == "https://www.anthropologie.com/stores":
                     page_url = MISSING
             raw_address = MISSING
+            if "close" in location_name.lower() or "<MISSING>" in page_url:
+                continue
             yield SgRecord(
                 locator_domain=locator_domain,
                 page_url=page_url,
@@ -119,7 +120,6 @@ def scrape():
         for rec in results:
             writer.write_row(rec)
             count = count + 1
-
     logger.info(f"No of records being processed: {count}")
     logger.info("Finished")
 

@@ -1,241 +1,236 @@
-from sgselenium.sgselenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from sgselenium.sgselenium import SgChrome
 from webdriver_manager.chrome import ChromeDriverManager
 from bs4 import BeautifulSoup as bs
-import pandas as pd
+from sgscrape import simple_scraper_pipeline as sp
+import time
+import ssl
+from sglogging import sglog
+from tenacity import retry  # noqa
+from tenacity import stop_after_attempt  # noqa
 
-locator_domains = []
-page_urls = []
-location_names = []
-street_addresses = []
-citys = []
-states = []
-zips = []
-country_codes = []
-store_numbers = []
-phones = []
-location_types = []
-latitudes = []
-longitudes = []
-hours_of_operations = []
-url_checks = []
+ssl._create_default_https_context = ssl._create_unverified_context
+log = sglog.SgLogSetup().get_logger(logger_name="ynhh")
 
-option = webdriver.ChromeOptions()
-option.add_argument("--disable-blink-features=AutomationControlled")
-option.add_argument("window-size=1280,800")
-option.add_argument(
-    "user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36"
-)
-option.add_argument("--no-sandbox")
-option.add_argument("--disable-dev-shm-usage")
-option.add_argument("--headless")
 
-start_url = "https://www.ynhh.org/find-a-location.aspx?page=1&keyword=&sortBy=&distance=0&cz=&locs=0&within=Yale+New+Haven+Hospital&avail=0"
+@retry(stop=stop_after_attempt(10))
+def driver_retry(user_agent, url, class_name):
+    try:
+        driver = SgChrome(
+            executable_path=ChromeDriverManager().install(),
+            user_agent=user_agent,
+            is_headless=True,
+        ).driver()
+        driver.get(url)
+        WebDriverWait(driver, 60).until(
+            EC.presence_of_element_located((By.CLASS_NAME, class_name))
+        )
+        return driver
 
-with webdriver.Chrome(
-    executable_path=ChromeDriverManager().install(), options=option
-) as driver:
-    driver.get(start_url)
-    html = driver.page_source
-    soup = bs(html, "html.parser")
+    except Exception:
+        driver.quit()
+        raise Exception("10 consecutive attempts blocked. Retry with a proxy")
 
-    location_list = (
-        html.split("markers = ")[1].split("</script")[0].replace("[", "").split("], ")
+
+def get_driver(url, class_name, driver=None):
+    if driver is not None:
+        driver.quit()
+
+    user_agent = (
+        "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0"
     )
+    driver = driver_retry(user_agent, url, class_name)
 
-    for location in location_list:
-        location_deets = location.split(",")
-        locator_domain = "https://www.ynhh.org"
-        location_name = location_deets[0].replace("'", "")
-        page_url = (
-            "https://www.ynhh.org" + location_deets[-3].replace("'", "")
-        ).replace(" ", "")
-        latitude = location_deets[-2]
-        longitude = str(location_deets[-1]).replace("]];", "")
-        country_code = "US"
-        store_number = "<MISSING>"
-        location_type = "<MISSING>"
+    return driver
 
-        locator_domains.append(locator_domain)
-        location_names.append(location_name)
-        page_urls.append(page_url)
-        latitudes.append(latitude)
-        longitudes.append(longitude)
-        country_codes.append(country_code)
-        store_numbers.append(store_number)
-        location_types.append(location_type)
 
-    total_pages = int(soup.find("span", attrs={"id": "center_0_lblPages"}).text.strip())
+def get_data():
+    done_q = "No"
+    page_number = 0
+    while True:
+        start_url = "https://www.ynhh.org/find-a-location.aspx?page=1&keyword=&sortBy=&distance=0&cz=&locs=0&within=Yale+New+Haven+Hospital&avail=0#sort=relevancy&numberOfResults=25&f:deliverynetwork=[Yale%20New%20Haven%20Hospital]"
+        driver = get_driver(start_url, "map-location")
+        log.info("got driver")
+        for num in range(page_number):
+            num = num
+            try:
+                driver.find_element_by_class_name("coveo-pager-next").click()
+            except Exception:
+                done_q = "Yes"
+                break
 
-    for x in range(total_pages):
-        grids = soup.find_all("div", attrs={"class": "module search-details"})
+            time.sleep(5)
+
+        if done_q == "Yes":
+            break
+        html = driver.page_source
+        soup = bs(html, "html.parser")
+
+        grids = soup.find_all("div", attrs={"class": "card-content"})
+        page_number = page_number + 1
         for grid in grids:
-            address_parts = str(grid.find("address")).split("\n")[1].split("<br/>")
-            if len(address_parts) == 3:
-                address = address_parts[0]
-                city = address_parts[1].split(",")[0]
-                state = address_parts[-2].split(", ")[1].split(" ")[0]
-                try:
-                    zipp = address_parts[-2].split(", ")[1].split(" ")[1]
-                except Exception:
-                    zipp = address_parts[-2].split("CT")[1].strip()
+            location_name = grid.find(
+                "a", attrs={"class": "CoveoResultLink"}
+            ).text.strip()
+            log.info(location_name)
+            locator_domain = "ynhh.org"
+            page_url = (
+                "https://www.ynhh.org"
+                + grid.find("a", attrs={"class": "CoveoResultLink"})["href"]
+            )
+            address_parts = str(grid.find("p")).split("<br/>")
 
-            else:
-                address = address_parts[0] + " " + address_parts[1]
-                city = address_parts[-2].split(",")[0]
-                state = address_parts[-2].split(", ")[1].split(" ")[0]
-                zipp = address_parts[-2].split(", ")[1].split(" ")[1]
+            address = ""
+            for part in address_parts[:-1]:
+                address = address + part + " "
 
-            phone_section = grid.find_all("div", attrs={"class": "col-sm-4"})[-1]
-            phone = "<MISSING>"
-            if "Phone" in str(phone_section):
-                phone = phone_section.find("a")["href"].replace("tel:", "")
-                phone = phone[:10]
+            address = address[:-1].replace("<p>", "")
+            city = address_parts[-1].split(", ")[0].strip()
+            state = address_parts[-1].split(", ")[-1].split(" ")[0]
+            zipp = address_parts[-1].split(", ")[-1].split(" ")[-1].replace("</p>", "")
 
-            hours_section = grid.find_all("div", attrs={"class": "col-sm-4"})[2]
+            country_code = "US"
+            store_number = "<MISSING>"
 
-            if hours_section.text.strip() == "Hours vary.":
-                hours = "<MISSING>"
-
-            elif hours_section.text.strip() == "":
-                hours = "<MISSING>"
-
-            elif (
-                "by appointment"
-                == hours_section.text.strip().split(" ")[0].lower()
-                + " "
-                + hours_section.text.strip().split(" ")[1].lower()
-            ):
-                hours = "<MISSING>"
-
-            elif 'colspan="2"' not in str(hours_section):
-                try:
-                    hours_days = grid.find_all("tr")
-                    if len(hours_days) > 0:
-                        hours = ""
-                        for row in hours_days:
-                            day = row.find_all("td")[0].text.strip()
-                            hours_part = row.find_all("td")[1].text.strip()
-                            hours = hours + day + " " + hours_part + ", "
-                        hours = hours[:-2]
-                    else:
-                        if (
-                            "always open" in str(hours_section).lower()
-                            or "24/7" in str(hours_section).lower()
-                            or " anytime" in str(hours_section).lower()
-                        ):
-                            hours = "24/7"
-
-                        elif (
-                            "call for information" in str(hours_section).lower()
-                            or "hours vary" in str(hours_section).lower()
-                        ):
-                            hours = "<MISSING>"
-
-                        elif address == "175 Sherman Avenue Second floor":
-                            days = hours_section.text.strip().split("\n")
-                            hours = ""
-                            for day in days:
-                                hours = hours + day + " "
-
-                        elif address == "184 Liberty Street":
-                            hours = "Mon-Sun " + hours_section.text.strip()
-
-                        else:
-                            hours = (
-                                str(hours_section)
-                                .replace("\n", "")
-                                .split("Hours: ")[1]
-                                .split("<")[0]
-                                .strip()
-                            )
-                except Exception:
-                    hours = "<MISSING>"
-
-            else:
-                last_text = hours_section.find_all("td", attrs={"colspan": "2"})[
-                    -1
-                ].text.strip()
-                last_hours = (
-                    hours_section.text.strip().split(last_text)[1].split("X-ray")[0]
+            try:
+                phone = (
+                    grid.find_all("p")[-1]
+                    .text.strip()
+                    .split("Main")[-1]
+                    .split("\n")[0]
+                    .strip()
                 )
+            except Exception:
+                phone = "<MISSING>"
 
-                hours = ""
-                for line in last_hours.split("\n"):
-                    if "schedule" not in line.lower():
-                        hours = hours + line + " "
-                hours = (
-                    hours.strip()
-                    .replace("  ", " ")
-                    .replace("  ", " ")
-                    .replace("  ", " ")
-                    .split("Note:")[0]
-                )
-                if "or" in hours:
-                    hours = hours.split("pm")[0] + "pm"
-
-            if hours[0] == "M":
-                hours = "M " + hours.split("M")[1].strip()
-
-            page_url_to_check = (
-                "https://www.ynhh.org" + grid.find("h3").find("a")["href"]
+            location_type = "<MISSING>"
+            count = 0
+            while True:
+                try:
+                    driver.get(page_url)
+                    WebDriverWait(driver, 60).until(
+                        EC.presence_of_element_located((By.CLASS_NAME, "location-geo"))
+                    )
+                    break
+                except Exception:
+                    count = count + 1
+                    if count == 10:
+                        raise Exception
+            location_soup = bs(driver.page_source, "html.parser")
+            latitude = location_soup.find(
+                "input", attrs={"class": "location-geo", "type": "hidden"}
+            )["value"].split(",")[0]
+            longitude = (
+                location_soup.find(
+                    "input", attrs={"class": "location-geo", "type": "hidden"}
+                )["value"]
+                .split(",")[1]
+                .strip()
             )
 
-            url_checks.append(page_url_to_check)
-            street_addresses.append(address)
-            citys.append(city)
-            states.append(state)
-            zips.append(zipp)
-            phones.append(phone)
-            hours_of_operations.append(hours)
-        new_url = (
-            "https://www.ynhh.org/find-a-location.aspx?page="
-            + str(x + 2)
-            + "&keyword=&sortBy=&distance=0&cz=&locs=0&within=Yale+New+Haven+Hospital&avail=0"
-        )
-        driver.get(new_url)
-        soup = bs(driver.page_source, "html.parser")
+            try:
+                hours_parts = [
+                    part
+                    for part in location_soup.find("div", attrs={"class": "card"})
+                    .text.strip()
+                    .split("\n")
+                    if part != "" and part.lower() != "hours"
+                ]
 
-df_first = pd.DataFrame(
-    {
-        "locator_domain": locator_domains,
-        "page_url": page_urls,
-        "location_name": location_names,
-        "latitude": latitudes,
-        "longitude": longitudes,
-        "country_code": country_codes,
-        "store_number": store_numbers,
-        "location_type": location_types,
-    }
-)
+            except Exception:
+                hours = "<MISSING>"
 
-df_second = pd.DataFrame(
-    {
-        "url_checks": url_checks,
-        "street_address": street_addresses,
-        "city": citys,
-        "state": states,
-        "zip": zips,
-        "phone": phones,
-        "hours_of_operation": hours_of_operations,
-    }
-)
+            try:
+                if hours_parts[0] != "M":
+                    hours = "<MISSING>"
 
-df = df_first.merge(df_second, left_on="page_url", right_on="url_checks")
+                else:
+                    hours = ""
+                    for part in hours_parts:
 
-df = df.fillna("<MISSING>")
-df = df.replace(r"^\s*$", "<MISSING>", regex=True)
+                        if "vary" in part:
+                            hours = "<MISSING>"
+                            break
 
-df["dupecheck"] = (
-    df["location_name"]
-    + df["street_address"]
-    + df["city"]
-    + df["state"]
-    + df["location_type"]
-)
+                        if "(" in part:
+                            break
 
-df = df.drop_duplicates(subset=["dupecheck", "url_checks"])
-df = df.drop(columns=["dupecheck"])
-df = df.replace(r"^\s*$", "<MISSING>", regex=True)
-df = df.fillna("<MISSING>")
+                        if ": " in part:
+                            break
 
-df.to_csv("data.csv", index=False)
+                        hours = hours + part + " "
+
+            except Exception:
+                hours = "<MISSING>"
+
+            hours = hours.strip()
+            if zipp in state:
+                state = zipp
+                zipp = "<MISSING>"
+
+            if "Fax" in phone:
+                phone = location_soup.find(
+                    "a", attrs={"class": "phone-number"}
+                ).text.strip()
+
+            yield {
+                "locator_domain": locator_domain,
+                "page_url": page_url,
+                "location_name": location_name,
+                "latitude": latitude,
+                "longitude": longitude,
+                "city": city,
+                "store_number": store_number,
+                "street_address": address,
+                "state": state,
+                "zip": zipp,
+                "phone": phone.replace("203-867-5254", "").strip(),
+                "location_type": location_type,
+                "hours": hours,
+                "country_code": country_code,
+            }
+        driver.quit()
+
+
+def scrape():
+    field_defs = sp.SimpleScraperPipeline.field_definitions(
+        locator_domain=sp.MappingField(mapping=["locator_domain"]),
+        page_url=sp.MappingField(mapping=["page_url"], part_of_record_identity=True),
+        location_name=sp.MappingField(
+            mapping=["location_name"],
+        ),
+        latitude=sp.MappingField(
+            mapping=["latitude"],
+        ),
+        longitude=sp.MappingField(
+            mapping=["longitude"],
+        ),
+        street_address=sp.MultiMappingField(
+            mapping=["street_address"], is_required=False
+        ),
+        city=sp.MappingField(
+            mapping=["city"],
+        ),
+        state=sp.MappingField(mapping=["state"], is_required=False),
+        zipcode=sp.MultiMappingField(mapping=["zip"], is_required=False),
+        country_code=sp.MappingField(mapping=["country_code"]),
+        phone=sp.MappingField(mapping=["phone"], is_required=False),
+        store_number=sp.MappingField(
+            mapping=["store_number"], part_of_record_identity=True
+        ),
+        hours_of_operation=sp.MappingField(mapping=["hours"], is_required=False),
+        location_type=sp.MappingField(mapping=["location_type"], is_required=False),
+    )
+
+    pipeline = sp.SimpleScraperPipeline(
+        scraper_name="Crawler",
+        data_fetcher=get_data,
+        field_definitions=field_defs,
+        log_stats_interval=15,
+    )
+    pipeline.run()
+
+
+scrape()

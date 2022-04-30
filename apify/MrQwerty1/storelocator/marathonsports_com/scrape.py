@@ -1,112 +1,70 @@
-import csv
-
-from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def fetch_data(sgw: SgWriter):
+    api = "https://marathonsportsbrand.locally.com/stores/conversion_data?has_data=true&company_id=108134&upc=&category=&show_links_in_list=true&parent_domain=&map_center_lat=42.38166944&map_center_lng=-71.12013117&map_distance_diag=3000"
 
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
-    locator_domain = "https://www.marathonsports.com/"
-    api = "https://www.marathonsports.com/locations/"
-
-    session = SgRequests()
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0"
     }
     r = session.get(api, headers=headers)
-    tree = html.fromstring(r.text)
-    divs = tree.xpath("//li[@data-workhours]")
+    js = r.json()["markers"]
 
-    for d in divs:
-        location_name = "".join(d.xpath("./@data-clubtitle")) or "<MISSING>"
-        page_url = "".join(d.xpath("./@data-posturl")) or "<MISSING>"
-        line = d.xpath(".//h2[@class='location-grid__title']//text()")
-        line = list(filter(None, [l.strip() for l in line]))
-        street_address = ", ".join(line[:-1])
-        line = line[-1]
-        city = line.split(",")[0].strip()
-        line = line.split(",")[1].strip()
-        state = line.split()[0]
-        if state == "Wellesley":
-            state = "<MISSING>"
-        try:
-            postal = line.split()[1]
-        except IndexError:
-            postal = "<MISSING>"
-        country_code = "US"
-        store_number = "<MISSING>"
-        phone = (
-            "".join(d.xpath(".//a[contains(@href, 'tel:')]/text()")).strip()
-            or "<MISSING>"
+    for j in js:
+        location_name = j.get("name") or ""
+        slug = j.get("slug")
+        if "Alley" in location_name:
+            page_url = f"https://stores.runnersalley.com/{slug}"
+        elif "Sound" in location_name:
+            page_url = f"https://stores.soundrunner.com/{slug}"
+        else:
+            page_url = f"https://stores.marathonsports.com/{slug}"
+
+        street_address = j.get("address")
+        city = j.get("city")
+        state = j.get("state")
+        postal = j.get("zip")
+        country_code = j.get("country")
+        phone = j.get("phone")
+        latitude = j.get("lat")
+        longitude = j.get("lng")
+        store_number = j.get("id")
+        location_type = j.get("disclaimer")
+
+        _tmp = []
+        hours = j.get("display_dow").values()
+        for h in hours:
+            day = h.get("label")
+            inter = h.get("bil_hrs")
+            _tmp.append(f"{day}: {inter}")
+
+        hours_of_operation = ";".join(_tmp)
+        row = SgRecord(
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            locator_domain=locator_domain,
+            hours_of_operation=hours_of_operation,
         )
-        latitude = "".join(d.xpath("./@data-marker-lat")) or "<MISSING>"
-        longitude = "".join(d.xpath("./@data-marker-lng")) or "<MISSING>"
-        color = "".join(d.xpath("./@data-color"))
-        location_type = "<MISSING>"
-        if color == "blue":
-            location_type = "soundRunner"
-        elif color == "red":
-            location_type = "RUNNER'S ALLEY"
-        elif color == "yellow":
-            location_type = "Marathon Sports"
-        hours_of_operation = (
-            ";".join(eval("".join(d.xpath("./@data-workhours")).strip())) or "<MISSING>"
-        )
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    locator_domain = "https://www.marathonsports.com/"
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        fetch_data(writer)

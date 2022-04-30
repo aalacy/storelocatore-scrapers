@@ -93,6 +93,7 @@ def fetch_data():
 
             address_data_json = get_address_and_hoo_data(page_url)
             street_address = address_data_json["address"]["streetAddress"]
+            street_address = street_address.replace("&amp;", "&")
             street_address = street_address if street_address else MISSING
             logger.info(f"[Record:{idx}] Street Address: {street_address}")
 

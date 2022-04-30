@@ -1,153 +1,132 @@
-import csv
+from bs4 import BeautifulSoup as bs
 from sgrequests import SgRequests
-from bs4 import BeautifulSoup
+from sglogging import sglog
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgpostal import parse_address_intl
 import re
-import json
-from sglogging import SgLogSetup
 
-logger = SgLogSetup().get_logger('tomjames_com')
-
-
-
-
+DOMAIN = "tomjames.com"
+BASE_URL = "https://www.tomjames.com"
+LOCATION_URL = "https://www.tomjames.com/locations/"
+HEADERS = {
+    "Accept": "application/json, text/plain, */*",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
+}
+MISSING = "<MISSING>"
+log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
 
 session = SgRequests()
 
-def write_output(data):
-    with open('data.csv', mode='w', encoding="utf-8") as output_file:
-        writer = csv.writer(output_file, delimiter=',',
-                            quotechar='"', quoting=csv.QUOTE_ALL)
 
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
-        # Body
-        for row in data:
-            writer.writerow(row)
+def getAddress(raw_address):
+    try:
+        if raw_address is not None and raw_address != MISSING:
+            data = parse_address_intl(raw_address)
+            street_address = data.street_address_1
+            if data.street_address_2 is not None:
+                street_address = street_address + " " + data.street_address_2
+            city = data.city
+            state = data.state
+            zip_postal = data.postcode
+
+            if street_address is None or len(street_address) == 0:
+                street_address = MISSING
+            if city is None or len(city) == 0:
+                city = MISSING
+            if state is None or len(state) == 0:
+                state = MISSING
+            if zip_postal is None or len(zip_postal) == 0:
+                zip_postal = MISSING
+            return street_address, city, state, zip_postal
+    except Exception as e:
+        log.info(f"No valid address {e}")
+        pass
+    return MISSING, MISSING, MISSING, MISSING
+
+
+def pull_content(url):
+    log.info("Pull content => " + url)
+    soup = bs(session.get(url, headers=HEADERS).content, "lxml")
+    return soup
+
+
+def get_latlong(url):
+    longlat = re.search(r"!2d(-[\d]*\.[\d]*)\!3d(-?[\d]*\.[\d]*)", url)
+    if not longlat:
+        return "<MISSING>", "<MISSING>"
+    return longlat.group(2), longlat.group(1)
 
 
 def fetch_data():
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
-    }
-    base_url = "https://www.tomjames.com"
-    r = session.get("https://www.tomjames.com/locations/", headers=headers)
-    soup = BeautifulSoup(r.text, "lxml")
-    return_main_object = []
-    usa_part = BeautifulSoup(soup.find(
-        "div", {"class": "white-section center"}).prettify().split("<h4")[2], "lxml")
-    locator_domain = "https://www.tomjames.com"
-    store_number = "<MISSING>"
-    location_type = "<MISSING>"
-    hours_of_operation = "<MISSING>"
-    for location in usa_part.find_all("a"):
-        # logger.info(location["href"])
-        page_url = location["href"].strip()
-        #logger.info(page_url)
-        location_request = session.get(
-            location["href"].strip(), headers=headers)
-        location_soup = BeautifulSoup(location_request.text, "lxml")
-        try:
-            iframe = location_soup.find('iframe')['src']
-            r_coord = session.get(iframe, headers=headers)
-            soup_coord = BeautifulSoup(r_coord.text, 'lxml')
-            script = soup_coord.find(lambda tag: (
-                tag.name == "script") and "initEmbed" in tag.text)
-            sc_string = script.text.split(
-                'initEmbed(')[1].split(');')[0].split(',')[61:64]
-            if "null" in " ".join(sc_string):
-                sc_string.remove("null")
-            latitude = sc_string[0]
-            longitude = sc_string[1].replace(']', '').strip()
-            # logger.info([list((i, sc_string[i])) for i in range(len(sc_string))])
-            # logger.info(latitude, longitude)
-            # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-        except:
-            latitude = "<MISSING>"
-            longitude = "<MISSING>"
-        country_code = "US"
-
-        location_name = location_soup.find("h1").text
-        if location_name == "Our Apologies":
+    log.info("Fetching store_locator data")
+    soup = pull_content(LOCATION_URL)
+    contents = soup.find_all("div", {"class": "button-link-white white middle"})
+    for row in contents:
+        page_url = row.find("a")["href"]
+        if "lubbock-#337" in page_url:
             continue
-        address = list(location_soup.find(
-            "span", {"itemprop": "address"}).stripped_strings)
-        street_address = " ".join(address[:-1])
-        city = address[-1].split(",")[0]
-        state = address[-1].split(",")[-1].split(" ")[-2]
-        zipp = address[-1].split(",")[-1].split(" ")[-1]
-        if "972015848" == zipp or "212081393" == zipp:
-            zipp = "".join(zipp[:5]) + "-" + "".join(zipp[5:])
-            #logger.info(zipp)
-        phone = location_soup.find("span", {"itemprop": "telephone"}).text
-        store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
-                 store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
-
-        # if x == "":
-        #     store = "<MISSING>"
-        # else:
-        #     x for x in store
-        store = ["<MISSING>" if x == "" else x for x in store]
-
-        # logger.info("data == " + str(store))
-        # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-        return_main_object.append(store)
-    for location in soup.find_all("div", {"class": "button-link-white white middle"}):
-        if "Canada" in location.find("h6").text:
-            location_request = session.get(
-                location.find("a")["href"].strip(), headers=headers)
-            location_soup = BeautifulSoup(location_request.text, "lxml")
-            try:
-                iframe = location_soup.find('iframe')['src']
-                r_coord = session.get(iframe, headers=headers)
-                soup_coord = BeautifulSoup(r_coord.text, 'lxml')
-                script = soup_coord.find(lambda tag: (
-                    tag.name == "script") and "initEmbed" in tag.text)
-                sc_string = script.text.split(
-                    'initEmbed(')[1].split(');')[0].split(',')[61:64]
-                if "null" in " ".join(sc_string):
-                    sc_string.remove("null")
-                latitude = sc_string[0]
-                longitude = sc_string[1].replace(']', '').strip()
-                # logger.info([list((i, sc_string[i])) for i in range(len(sc_string))])
-                # logger.info(latitude, longitude)
-                # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-            except:
-                latitude = "<MISSING>"
-                longitude = "<MISSING>"
-            location_name = location_soup.find("h1").text
-            if location_name == "Our Apologies":
-                continue
-            country_code = "CA"
-            address = list(location_soup.find(
-                "span", {"itemprop": "address"}).stripped_strings)
-            phone = location_soup.find("span", {"itemprop": "telephone"}).text
-            street_address = " ".join(address[:-1])
-            city = address[-1].split(",")[0]
-            state = address[-1].split(",")[-1].split(" ")[1]
-            zipp = " ".join(address[-1].split(",")[-1].split(" ")[2:])
-            page_url = location.find("a")["href"].strip()
-            # logger.info(page_url)
-
-            store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
-                     store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
-
-            # if x == "":
-            #     store = "<MISSING>"
-            # else:
-            #     x for x in store
-            store = ["<MISSING>" if x == "" else x for x in store]
-
-            # logger.info("data == " + str(store))
-            # logger.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-
-            return_main_object.append(store)
-    return return_main_object
+        content = pull_content(page_url)
+        location_name = content.find("div", {"id": "hero"}).find("h1").text.strip()
+        raw_address = content.find("span", {"itemprop": "address"}).get_text(
+            strip=True, separator=","
+        )
+        street_address, city, state, zip_postal = getAddress(raw_address)
+        phone = content.find("span", {"itemprop": "telephone"}).text.strip()
+        hours_of_operation = MISSING
+        check_country = row.find_previous_sibling(
+            "h4", {"class": "margin40"}
+        ).text.strip()
+        if "Worldwide" in check_country:
+            country_code = row.find("h6").text.strip()
+            location_type = "WORLDWIDE"
+        else:
+            country_code = "US"
+            location_type = "US LOCATION"
+        store_number = MISSING
+        latitude = MISSING
+        longitude = MISSING
+        log.info("Append {} => {}".format(location_name, street_address))
+        yield SgRecord(
+            locator_domain=DOMAIN,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zip_postal,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+            raw_address=raw_address,
+        )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    log.info("start {} Scraper".format(DOMAIN))
+    count = 0
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.PAGE_URL,
+                }
+            )
+        )
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
 
 
 scrape()

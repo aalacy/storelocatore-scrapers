@@ -1,67 +1,74 @@
-import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
-import re
-import json
-
+from sglogging import sglog
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+import lxml.html
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
+log = sglog.SgLogSetup().get_logger(logger_name="loverslane")
 
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-        # Body
-        for row in data:
-            writer.writerow(row)
 
 def fetch_data():
     base_url = "https://www.loverslane.com"
-    r = session.get(base_url+'/stores')
-    soup=BeautifulSoup(r.text,'lxml')
-    return_main_object = []
-    main=soup.find_all('script', type="text/javascript")
-    for script in main:
-        if "var stores" in script.text:
-            for link in eval(script.text.split('var stores =')[1].split('];')[0]+"]"):
-                lat=link[1]
-                lng=link[2]
-                name=link[0]
-                r1 = session.get(base_url+link[-1])
-                soup1=BeautifulSoup(r1.text,'lxml')
-                address=soup1.find('span',itemprop="streetAddress").text.strip()
-                city=soup1.find('span',itemprop="addressLocality").text.strip()
-                state=soup1.find('span',itemprop="addressRegion").text.strip()
-                zip=soup1.find('span',itemprop="postalCode").text.strip()
-                phone=soup1.find('span',itemprop="telephone").text.strip()
-                hour=""
-                for hr in soup1.find_all('span',itemprop="openingHours"):
-                    hour+=hr.text+" , "
-                hour=hour.rstrip(' , ')
-                store=[]
-                store.append(base_url)
-                store.append(name)
-                store.append(address)
-                store.append(city)
-                store.append(state)
-                store.append(zip)
-                store.append("US")
-                store.append("<MISSING>")
-                store.append(phone)
-                store.append("loverslane")
-                store.append(lat)
-                store.append(lng)
-                if hour:
-                    store.append(hour)
-                else:
-                    store.append("<MISSING>")
-                return_main_object.append(store)
-    return return_main_object
+    r = session.get(base_url + "/stores")
+    for link in eval(r.text.split("var stores =")[1].split("];")[0] + "]"):
+        lat = link[1]
+        lng = link[2]
+        name = link[0]
+        page_url = base_url + link[-1]
+        log.info(page_url)
+        r1 = session.get(page_url)
+        if "Permanently Closed" in r1.text:
+            continue
+        soup1 = BeautifulSoup(r1.text, "lxml")
+        store_sel = lxml.html.fromstring(r1.text)
+        address = soup1.find("span", itemprop="streetAddress").text.strip()
+        city = soup1.find("span", itemprop="addressLocality").text.strip()
+        state = soup1.find("span", itemprop="addressRegion").text.strip()
+        zip = soup1.find("span", itemprop="postalCode").text.strip()
+        phone = soup1.find("span", itemprop="telephone").text.strip()
+        hour = ", ".join(
+            store_sel.xpath('//p[./strong[contains(text(),"Store Hours")]]/span/text()')
+        ).strip()
+        location_type = "<MISSING>"
+        if "Not a Retail Store" in name:
+            location_type = "Corporate Offices/Distribution Center"
+
+        yield SgRecord(
+            locator_domain=base_url,
+            page_url=page_url,
+            location_name=name,
+            street_address=address,
+            city=city,
+            state=state,
+            zip_postal=zip,
+            country_code="US",
+            store_number="<MISSING>",
+            phone=phone,
+            location_type=location_type,
+            latitude=lat,
+            longitude=lng,
+            hours_of_operation=hour,
+        )
+
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    log.info("Started")
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
 
-scrape()
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
+
+
+if __name__ == "__main__":
+    scrape()

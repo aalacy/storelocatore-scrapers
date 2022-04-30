@@ -1,588 +1,79 @@
-import csv
-import time
+from sglogging import sglog
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger("goodcentssubs_com")
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 session = SgRequests()
+DOMAIN = "goodcentssubs_com"
+log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
+MISSING = SgRecord.MISSING
+API_URL = "https://locations.goodcentssubs.com/modules/multilocation/?near_location=65804&threshold=4000&distance_unit=miles&limit=1000"
+
 headers = {
-    "authority": "api.momentfeed.com",
-    "method": "GET",
-    "path": "/v1/analytics/api/llp.json?auth_token=PFXIXKQCSSESFAKV&center=40.4174201146,-82.7114488167578&coordinates=34.67359733335056,-78.00930037925845,45.70977840200902,-87.41359725425836&multi_account=false&page=1&pageSize=30",
-    "scheme": "https",
-    "accept": "application/json, text/plain, */*",
-    "accept-encoding": "gzip, deflate, br",
-    "accept-language": "en-US,en;q=0.9",
-    "origin": "https://locations.goodcentssubs.com",
-    "referer": "https://locations.goodcentssubs.com/",
-    "sec-fetch-dest": "empty",
-    "sec-fetch-mode": "cors",
-    "sec-fetch-site": "cross-site",
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:97.0) Gecko/20100101 Firefox/97.0"
 }
-
-
-center = {
-    0: ["32.828865808", "-86.7892920871389"],
-    1: ["64.6358675746", "-153.180996665583"],
-    2: ["40.8187", "-124.1865"],
-    3: ["34.2202611707", "-111.422127989113"],
-    4: ["35.0968852383", "-92.4202962772624"],
-    5: ["37.0743595873", "-119.699375153073"],
-    6: ["39.190245999", "-105.604997408086"],
-    7: ["41.6261419326", "-72.7262428031069"],
-    8: ["38.9978781537", "-75.5055627423557"],
-    9: ["38.895", "-77.03667"],
-    10: ["28.94446470552", "-82.033629763236"],
-    11: ["32.3305706594", "-83.2572560296474"],
-    12: ["21.31139", "-157.79639"],
-    13: ["44.3918682454", "-114.651378585904"],
-    14: ["40.1492928594", "-89.2749461071049"],
-    15: ["39.9184076479", "-86.2846076064882"],
-    16: ["42.086950782", "-93.4967816941637"],
-    17: ["38.5320800989", "-98.7257387818225"],
-    18: ["37.5310880799", "-85.2893967376316"],
-    19: ["30.93749930159", "-92.305998069584"],
-    20: ["45.3982848479", "-69.2365510393463"],
-    21: ["39.4780636707", "-76.8536374638244"],
-    22: ["42.3204700602", "-71.9603257607071"],
-    23: ["44.93374589245", "-84.525239999781"],
-    24: ["46.3434063154", "-94.1991167709013"],
-    25: ["32.8566735673", "-89.7181678797461"],
-    26: ["38.19080239858", "-92.585914899503"],
-    27: ["47.0725146587", "-109.172599073804"],
-    28: ["41.8637326962", "-99.9595472694748"],
-    29: ["40.0711202976", "-116.598821819119"],
-    30: ["43.6898878153", "-71.5783054333969"],
-    31: ["40.1502478924", "-74.3893168105238"],
-    32: ["34.32485649", "-105.998350627305"],
-    33: ["42.751210955", "-75.4652471468304"],
-    34: ["35.5568849207", "-79.3896838690365"],
-    35: ["47.4443684021", "-100.459284161645"],
-    36: ["40.4174201146", "-82.7114488167578"],
-    37: ["35.9015874097", "-97.5389608460746"],
-    38: ["44.0328841608", "-120.281411696945"],
-    39: ["41.0911397651", "-78.2907462468837"],
-    40: ["41.6850953372", "-71.5793902557177"],
-    41: ["33.9184118141", "-80.9007732114739"],
-    42: ["44.8688864124", "-100.149201511155"],
-    43: ["35.9885949444", "-85.9823352140893"],
-    44: ["31.8039734986", "-98.8223185136653"],
-    45: ["39.2548171647", "-111.602499934826"],
-    46: ["44.0473082937", "-72.7473878342175"],
-    47: ["37.677592044", "-78.6190526172645"],
-    48: ["48.0250054263", "-120.094292506456"],
-    49: ["38.7432593107", "-80.7144445663771"],
-    50: ["44.7131688504", "-89.7639108198947"],
-    51: ["43.5444588856", "-107.539857541109"],
-    52: ["38.9536", "-94.7336"],
-    53: ["39.0278", "-94.6558"],
-    54: ["38.9822", "-94.6708"],
-}
-
-coordinates = {
-    0: [
-        "26.53452110780667",
-        "-82.08714364963845",
-        "38.70698200398482",
-        "-91.49144052463834",
-    ],
-    1: [
-        "61.34696126160637",
-        "-148.47884822808317",
-        "67.56962820389367",
-        "-157.8831451030832",
-    ],
-    2: [
-        "40.646996954231184",
-        "-124.03955786132867",
-        "40.98995974685394",
-        "-124.33344213867237",
-    ],
-    3: [
-        "28.017982697437773",
-        "-106.71997955161335",
-        "39.99758416390395",
-        "-116.12427642661318",
-    ],
-    4: [
-        "28.95468920718217",
-        "-87.71814783976319",
-        "40.80913863972549",
-        "-97.12244471476303",
-    ],
-    5: [
-        "31.073526235185454",
-        "-114.99722671557295",
-        "42.635479317426814",
-        "-124.40152359057284",
-    ],
-    6: [
-        "33.3494831495763",
-        "-100.90284897058645",
-        "44.583152999374164",
-        "-110.30714584558638",
-    ],
-    7: [
-        "35.980698027897446",
-        "-68.02409436560737",
-        "46.817375060311605",
-        "-77.42839124060723",
-    ],
-    8: [
-        "33.1421905289245",
-        "-70.80341430485663",
-        "44.406350122691435",
-        "-80.20771117985642",
-    ],
-    9: [
-        "33.03136095153401",
-        "-72.33452156249945",
-        "44.311774024265105",
-        "-81.73881843749939",
-    ],
-    10: [
-        "22.41483466198443",
-        "-77.33148132573615",
-        "35.08732461754417",
-        "-86.73577820073602",
-    ],
-    11: [
-        "26.004245645735395",
-        "-78.5551075921471",
-        "38.244031238599035",
-        "-87.95940446714704",
-    ],
-    12: [
-        "14.415005169689863",
-        "-153.09424156249963",
-        "27.898813805295035",
-        "-162.49853843749975",
-    ],
-    13: [
-        "38.982123945439724",
-        "-109.94923014840408",
-        "49.344160871303956",
-        "-119.35352702340403",
-    ],
-    14: [
-        "34.384035127955144",
-        "-84.57279766960576",
-        "45.463804196771605",
-        "-93.97709454460563",
-    ],
-    15: [
-        "34.13480587699168",
-        "-81.58245916898804",
-        "45.2519129590479",
-        "-90.98675604398795",
-    ],
-    16: [
-        "36.47976098311685",
-        "-88.79463325666354",
-        "47.239095131146854",
-        "-98.19893013166347",
-    ],
-    17: [
-        "32.64056027461629",
-        "-94.02359034432229",
-        "43.97801768198238",
-        "-103.42788721932223",
-    ],
-    18: [
-        "31.56404186074738",
-        "-80.58724830013038",
-        "43.05645909341828",
-        "-89.99154517513026",
-    ],
-    19: [
-        "24.524562613984912",
-        "-87.60384963208425",
-        "36.947632280127166",
-        "-97.0081465070841",
-    ],
-    20: [
-        "40.077891484537446",
-        "-64.53440260184564",
-        "50.26110348754173",
-        "-73.93869947684561",
-    ],
-    21: [
-        "33.659768765975926",
-        "-72.15148902632453",
-        "44.84758250551266",
-        "-81.55578590132438",
-    ],
-    22: [
-        "36.732822450774435",
-        "-67.25817732320705",
-        "47.45269412000766",
-        "-76.6624741982069",
-    ],
-    23: [
-        "39.57187613862743",
-        "-79.82309156228193",
-        "49.838027552325",
-        "-89.22738843728182",
-    ],
-    24: [
-        "41.10862546628442",
-        "-89.49696833340238",
-        "51.12101107407571",
-        "-98.9012652084022",
-    ],
-    25: [
-        "26.56412900306742",
-        "-85.01601944224677",
-        "38.732805574630106",
-        "-94.42031631724664",
-    ],
-    26: [
-        "32.27330563777011",
-        "-87.88376646200355",
-        "43.663988270336574",
-        "-97.28806333700342",
-    ],
-    27: [
-        "41.90489185135965",
-        "-104.4704506363049",
-        "51.783609073681305",
-        "-113.87474751130469",
-    ],
-    28: [
-        "36.237961116028885",
-        "-95.25739883197586",
-        "47.03484847630233",
-        "-104.66169570697562",
-    ],
-    29: [
-        "34.29963989304133",
-        "-111.89667338161942",
-        "45.392071091973634",
-        "-121.30097025661931",
-    ],
-    30: [
-        "38.218942197736624",
-        "-66.87615699589793",
-        "48.703801733025045",
-        "-76.28045387089782",
-    ],
-    31: [
-        "34.385066257841714",
-        "-69.68716837302574",
-        "45.46468050514633",
-        "-79.09146524802556",
-    ],
-    32: [
-        "28.129662761671213",
-        "-101.2962021898043",
-        "40.094478782120405",
-        "-110.70049906480423",
-    ],
-    33: [
-        "37.19988513933626",
-        "-70.76309870933002",
-        "47.84649510686549",
-        "-80.16739558432988",
-    ],
-    34: [
-        "29.446854389933662",
-        "-74.68753543153697",
-        "41.23451595630735",
-        "-84.09183230653679",
-    ],
-    35: [
-        "42.31136635214904",
-        "-95.75713572414465",
-        "52.12128637600915",
-        "-105.1614325991446",
-    ],
-    36: [
-        "34.67359733335056",
-        "-78.00930037925845",
-        "45.70977840200902",
-        "-87.41359725425836",
-    ],
-    37: [
-        "29.815946616306235",
-        "-92.83681240857543",
-        "41.553060396685",
-        "-102.24110928357531",
-    ],
-    38: [
-        "38.59172641535494",
-        "-115.57926325944514",
-        "49.01677071492796",
-        "-124.98356013444507",
-    ],
-    39: [
-        "35.40179954534429",
-        "-73.5885978093843",
-        "46.32738546038891",
-        "-82.99289468438405",
-    ],
-    40: [
-        "36.04452252315872",
-        "-66.87724181821739",
-        "46.871344039322764",
-        "-76.28153869321733",
-    ],
-    41: [
-        "27.695815738418915",
-        "-76.19862477397263",
-        "39.71786157643291",
-        "-85.60292164897257",
-    ],
-    42: [
-        "39.50125752858068",
-        "-95.44705307365523",
-        "49.778934907745736",
-        "-104.85134994865508",
-    ],
-    43: [
-        "29.90914913130797",
-        "-81.280186776589",
-        "41.63343649335434",
-        "-90.68448365158885",
-    ],
-    44: [
-        "25.44442311848755",
-        "-94.12017007616446",
-        "37.75434961427359",
-        "-103.52446695116438",
-    ],
-    45: [
-        "33.4190805884481",
-        "-106.90035149732597",
-        "44.64248751559916",
-        "-116.30464837232583",
-    ],
-    46: [
-        "38.60740808514865",
-        "-68.04523939671722",
-        "49.0299286748355",
-        "-77.44953627171712",
-    ],
-    47: [
-        "31.72147334141792",
-        "-73.91690417976444",
-        "43.191430009109496",
-        "-83.32120105476437",
-    ],
-    48: [
-        "42.94655716342595",
-        "-115.3921440689563",
-        "52.64821719055513",
-        "-124.79644094395618",
-    ],
-    49: [
-        "32.86793091008727",
-        "-76.01229612887683",
-        "44.17225034311673",
-        "-85.41659300387673",
-    ],
-    50: [
-        "39.331745153252626",
-        "-85.06176238239468",
-        "49.637040232811216",
-        "-94.46605925739456",
-    ],
-    51: [
-        "38.06095042633035",
-        "-102.83770910360901",
-        "48.571056957206565",
-        "-112.24200597860892",
-    ],
-    52: [
-        "38.86009303801717",
-        "-94.59661422119044",
-        "39.04698375296371",
-        "-94.87058577880771",
-    ],
-    53: [
-        "38.93439091600521",
-        "-94.51881422119283",
-        "39.12108580701715",
-        "-94.79278577881009",
-    ],
-    54: [
-        "38.888730745971856",
-        "-94.53381422119178",
-        "39.07554601871723",
-        "-94.80778577880903",
-    ],
-}
-
-
-def write_output(data):
-    with open("data.csv", mode="w", newline="", encoding="utf8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        temp_list = []
-        for row in data:
-            comp_list = [
-                row[2].strip(),
-                row[3].strip(),
-                row[4].strip(),
-                row[5].strip(),
-                row[6].strip(),
-                row[8].strip(),
-                row[10].strip(),
-            ]
-            if comp_list not in temp_list:
-                temp_list.append(comp_list)
-                writer.writerow(row)
-        logger.info(f"No of records being processed: {len(temp_list)}")
 
 
 def fetch_data():
-    data = []
-    time = ""
-    for i, j in zip(center, coordinates):
-        url = (
-            "https://api.momentfeed.com/v1/analytics/api/llp.json?auth_token=PFXIXKQCSSESFAKV&center="
-            + center[i][0]
-            + ","
-            + center[i][1]
-            + "&coordinates="
-            + coordinates[j][0]
-            + ","
-            + coordinates[j][1]
-            + ","
-            + coordinates[j][2]
-            + ","
-            + coordinates[j][3]
-            + "&multi_account=false&page=1&pageSize=30"
-        )
-        r = session.get(url, headers=headers, verify=False).json()
-        for loc in r:
-            page = loc["store_info"]["website"].strip()
-            name = loc["store_info"]["name"].strip()
-            street = loc["store_info"]["address"].strip()
-            city = loc["store_info"]["locality"].strip()
-            state = loc["store_info"]["region"].strip()
-            pcode = loc["store_info"]["postcode"].strip()
-            lat = loc["store_info"]["latitude"].strip()
-            lng = loc["store_info"]["longitude"].strip()
-            phone = loc["store_info"]["phone"].strip()
-            storeid = loc["store_info"]["corporate_id"].strip()
-            hours = loc["store_info"]["store_hours"].strip()
-            hours = hours.split(";")
-            if len(hours) < 8:
-                HOO = "Mon: Closed, Tues: Closed, Wed: Closed, Thurs: Closed, Fri: Closed, Sat: Closed, Sun: Closed"
-            else:
-                mon = hours[0]
-                mon = mon.split(",")
-                tues = hours[1]
-                tues = tues.split(",")
-                wed = hours[2]
-                wed = wed.split(",")
-                thurs = hours[3]
-                thurs = thurs.split(",")
-                fri = hours[4]
-                fri = fri.split(",")
-                sat = hours[5]
-                sat = sat.split(",")
-                sun = hours[6]
-                sun = sun.split(",")
-                start = []
-                start.append(mon[1])
-                start.append(tues[1])
-                start.append(wed[1])
-                start.append(thurs[1])
-                start.append(fri[1])
-                start.append(sat[1])
-                start.append(sun[1])
-                end = []
-                end.append(mon[2])
-                end.append(tues[2])
-                end.append(wed[2])
-                end.append(thurs[2])
-                end.append(fri[2])
-                end.append(sat[2])
-                end.append(sun[2])
-                days = ["Mon:", "Tues:", "Wed:", "Thurs:", "Fri:", "Sat:", "Sun:"]
-                for d, st, e in zip(days, start, end):
-                    day = d
-                    if st == "1000":
-                        opentime = "10:00 AM"
-                    if st == "1030":
-                        opentime = "10:30 AM"
-                    if st == "0900":
-                        opentime = "09:00 AM"
-                    if st == "0000":
-                        opentime = "12:00 AM"
-                    if st == "1100":
-                        opentime = "11:00 AM"
-                    if e == "2000":
-                        closetime = "08:00 PM"
-                    if e == "1900":
-                        closetime = "07:00 PM"
-                    if e == "2100":
-                        closetime = "09:00 PM"
-                    if e == "0000":
-                        closetime = "12:00 AM"
-                    if e == "1600":
-                        closetime = "04:00 PM"
-                    Hrs = day + " " + opentime + " - " + closetime
-                    time = time + " " + Hrs
-                Hrs = ""
-                HOO = time
-                time = ""
-                HOO = HOO.strip()
-                if (
-                    HOO
-                    == "Mon: 12:00 AM - 12:00 AM Tues: 12:00 AM - 12:00 AM Wed: 12:00 AM - 12:00 AM Thurs: 12:00 AM - 12:00 AM Fri: 12:00 AM - 12:00 AM Sat: 12:00 AM - 12:00 AM Sun: 12:00 AM - 12:00 AM"
-                ):
-                    HOO = "Mon: Open 24 hours, Tues: Open 24 hours, Wed: Open 24 hours, Thurs: Open 24 hours, Fri: Open 24 hours, Sat: Open 24 hours, Sun: Open 24 hours"
-            data.append(
-                [
-                    "https://goodcentssubs.com/",
-                    page,
-                    name,
-                    street,
-                    city,
-                    state,
-                    pcode,
-                    "US",
-                    storeid,
-                    phone,
-                    "<MISSING>",
-                    lat,
-                    lng,
-                    HOO,
-                ]
+    if True:
+        stores_req = session.get(API_URL, headers=headers).json()
+        for stores in stores_req["objects"]:
+            state = stores["state"]
+            phone = stores["phonemap"]["phone"]
+            pcode = stores["postal_code"]
+            storeid = stores["id"]
+            link = stores["location_url"]
+            city = stores["city"]
+            title = stores["location_name"]
+            lng = stores["lon"]
+            lat = stores["lat"]
+            try:
+                street = stores["street"] + " " + stores["street2"]
+            except:
+                street = stores["street"]
+            log.info(street)
+            country = stores["country"]
+            raw_address = stores["geocoded"]
+            hours = stores["formatted_hours"]["primary"]["grouped_days"]
+            hoos = []
+            for hr in hours:
+                hoo = f"{hr['label']}:{hr['content']}"
+                hoos.append(hoo)
+
+            hours_of_operation = ("; ").join(hoos)
+
+            yield SgRecord(
+                locator_domain=DOMAIN,
+                page_url=link,
+                location_name=title,
+                street_address=street.strip(),
+                city=city.strip(),
+                state=state.strip(),
+                zip_postal=pcode,
+                country_code=country.strip(),
+                store_number=storeid,
+                phone=phone,
+                location_type=MISSING,
+                latitude=lat,
+                longitude=lng,
+                hours_of_operation=hours_of_operation,
+                raw_address=raw_address,
             )
-    return data
 
 
 def scrape():
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
-    data = fetch_data()
-    write_output(data)
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    log.info("Started")
+    count = 0
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()

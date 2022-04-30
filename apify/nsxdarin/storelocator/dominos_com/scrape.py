@@ -61,7 +61,7 @@ searchurls = [
     "AUSTRIA|https://order.golo02.dominos.com/store-locator-international/locate/store?regionCode=AT&latitude=48.262853&longitude=16.399944",
     "CZECH_REPUBLIC|https://order.golo02.dominos.com/store-locator-international/locate/store?regionCode=CZ&latitude=49.1938084&longitude=16.6076158",
     "ITALY|https://order.golo02.dominos.com/store-locator-international/locate/store?regionCode=IT&latitude=45.4654219&longitude=9.18592430000001",
-    "KOSOVO|https://order.golo02.dominos.com/store-locator-international/locations/city?countryCode=XK&regionCode=XK",
+    "KOSOVO|https://order.golo02.dominos.com/store-locator-international/locate/store?regionCode=XK&latitude=42.665411916980034&longitude=21.158615201711655",
     "PORTUGAL|https://order.golo02.dominos.com/store-locator-international/locate/store?regionCode=PT&latitude=38.740335&longitude=-9.1833424",
     "SLOVAKIA|https://order.golo02.dominos.com/store-locator-international/locate/store?regionCode=SK&latitude=48.14816&longitude=17.10674",
     "SWEDEN|https://order.golo02.dominos.com/store-locator-international/locate/store?regionCode=SE&latitude=55.5700886&longitude=12.8758906",
@@ -787,58 +787,61 @@ def fetch_data():
             "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
             "DPZ-Market": cc,
         }
-        r = session.get(lurl, headers=headers2)
-        website = "dominos.br"
-        typ = "<MISSING>"
-        country = lurl.split("regionCode=")[1].split("&")[0]
-        loc = "<MISSING>"
-        store = "<MISSING>"
-        hours = "<MISSING>"
-        lat = "<MISSING>"
-        lng = "<MISSING>"
-        logger.info("Pulling Stores")
-        for item in json.loads(r.content)["Stores"]:
-            if "StoreName" in str(item):
-                name = item["StoreName"]
-                store = item["StoreID"]
-                phone = item["Phone"]
-                try:
-                    add = item["StreetName"]
-                except:
-                    add = "<MISSING>"
-                add = str(add).replace("\r", "").replace("\n", "")
-                city = str(item["City"]).replace("\r", "").replace("\n", "")
-                state = "<MISSING>"
-                zc = item["PostalCode"]
-                try:
-                    lat = item["StoreCoordinates"]["StoreLatitude"]
-                    lng = item["StoreCoordinates"]["StoreLongitude"]
-                except:
-                    lat = "<MISSING>"
-                    lng = "<MISSING>"
-                hours = (
-                    str(item["HoursDescription"])
-                    .replace("\t", "")
-                    .replace("\n", "")
-                    .replace("\r", "")
-                )
-                loc = "<MISSING>"
-                yield SgRecord(
-                    locator_domain=website,
-                    page_url=loc,
-                    location_name=name,
-                    street_address=add,
-                    city=city,
-                    state=state,
-                    zip_postal=zc,
-                    country_code=country,
-                    phone=phone,
-                    location_type=typ,
-                    store_number=store,
-                    latitude=lat,
-                    longitude=lng,
-                    hours_of_operation=hours,
-                )
+        try:
+            r = session.get(lurl, headers=headers2)
+            website = "dominos.br"
+            typ = "<MISSING>"
+            country = lurl.split("regionCode=")[1].split("&")[0]
+            loc = "<MISSING>"
+            store = "<MISSING>"
+            hours = "<MISSING>"
+            lat = "<MISSING>"
+            lng = "<MISSING>"
+            logger.info("Pulling Stores")
+            for item in json.loads(r.content)["Stores"]:
+                if "StoreName" in str(item):
+                    name = item["StoreName"]
+                    store = item["StoreID"]
+                    phone = item["Phone"]
+                    try:
+                        add = item["StreetName"]
+                    except:
+                        add = "<MISSING>"
+                    add = str(add).replace("\r", "").replace("\n", "")
+                    city = str(item["City"]).replace("\r", "").replace("\n", "")
+                    state = "<MISSING>"
+                    zc = item["PostalCode"]
+                    try:
+                        lat = item["StoreCoordinates"]["StoreLatitude"]
+                        lng = item["StoreCoordinates"]["StoreLongitude"]
+                    except:
+                        lat = "<MISSING>"
+                        lng = "<MISSING>"
+                    hours = (
+                        str(item["HoursDescription"])
+                        .replace("\t", "")
+                        .replace("\n", "")
+                        .replace("\r", "")
+                    )
+                    loc = "<MISSING>"
+                    yield SgRecord(
+                        locator_domain=website,
+                        page_url=loc,
+                        location_name=name,
+                        street_address=add,
+                        city=city,
+                        state=state,
+                        zip_postal=zc,
+                        country_code=country,
+                        phone=phone,
+                        location_type=typ,
+                        store_number=store,
+                        latitude=lat,
+                        longitude=lng,
+                        hours_of_operation=hours,
+                    )
+        except:
+            pass
 
     locs = []
     states = []
