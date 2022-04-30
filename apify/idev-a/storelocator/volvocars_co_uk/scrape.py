@@ -112,7 +112,7 @@ def fetch_data():
                     page_url=_["url"] if _["url"] else base_url,
                     location_name=_["name"].split("(")[0],
                     street_address=street_address,
-                    city=city,
+                    city=city.split("(")[0],
                     state=state,
                     zip_postal=zip_postal,
                     latitude=_["latitude"],

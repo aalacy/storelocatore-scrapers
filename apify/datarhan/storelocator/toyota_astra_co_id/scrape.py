@@ -10,13 +10,25 @@ def fetch_data():
 
     domain = "toyota.astra.co.id"
     hdr = {
-        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:95.0) Gecko/20100101 Firefox/95.0",
+        "Accept": "*/*",
+        "Access-Control-Request-Method": "GET",
+        "Access-Control-Request-Headers": "authorization",
     }
-
-    provinces = session.get("https://ilm.toyota-emc.tech/api/v1/provinces").json()
+    session.request(
+        "https://ilm.toyota-emc.tech/api/v1/provinces", method="OPTIONS", headers=hdr
+    )
+    hdr = {
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:95.0) Gecko/20100101 Firefox/95.0",
+        "Accept": "application/json, text/javascript, */*; q=0.01",
+        "Authorization": "Bearer j8AV9INIchSsX1CFFD4T5vo6LyH9RUWukFsakQYpH0V8k2pMXnkX8NKtZURp",
+    }
+    provinces = session.get(
+        "https://ilm.toyota-emc.tech/api/v1/provinces", headers=hdr
+    ).json()
     for p in provinces:
         url = f"https://ilm.toyota-emc.tech/api/v1/cities?province_id={p['id']}"
-        cities = session.get(url).json()
+        cities = session.get(url, headers=hdr).json()
         for c in cities:
             url = f"https://ilm.toyota-emc.tech/api/v1/dealers?field=all&city_id={c['id']}"
             hdr = {

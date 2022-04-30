@@ -1,99 +1,78 @@
-import csv
+from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def fetch_data(sgw: SgWriter):
 
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
+    locator_domain = "https://docbsrestaurant.com/"
+    api_url = "https://docbsrestaurant.com/locations"
 
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
-
-    locator_domain = "https://docbsrestaurant.com"
-    api_url = "https://docbsrestaurant.com/page-data/sq/d/1778102472.json"
-    session = SgRequests()
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
     r = session.get(api_url, headers=headers)
-    js = r.json()["data"]["allLocation"]["edges"]
+    tree = html.fromstring(r.text)
+    div = tree.xpath("//h3/following-sibling::div[./a][1]/a")
+    for d in div:
+        slug = "".join(d.xpath(".//@href"))
+        slug_js = slug.split("/")[-1].strip()
+        page_url = f"https://docbsrestaurant.com{slug}"
+        r = session.get(
+            f"https://docbsrestaurant.com/_next/data/zc-i6VAPi5HXka6E6gACu/en-US/locations/{slug_js}.json"
+        )
+        js = r.json()["pageProps"]["location"]
 
-    for j in js:
-        a = j.get("node")
-        slug = a.get("slug")
-        page_url = f"https://docbsrestaurant.com/locations/{slug}"
-
-        location_name = a.get("name")
-        location_type = "Restaurant"
-        street_address = f"{a.get('address')} {a.get('address2') or ''}".strip()
-        phone = a.get("phone")
-        state = a.get("state")
-        postal = a.get("zip")
+        location_name = js.get("name") or "<MISSING>"
+        street_address = (
+            f"{js.get('address')} {js.get('address2') or ''}".replace(
+                "None", ""
+            ).strip()
+            or "<MISSING>"
+        )
+        state = js.get("state") or "<MISSING>"
+        postal = js.get("zip") or "<MISSING>"
         country_code = "US"
-        city = a.get("city")
-        store_number = a.get("store")
-        latitude = a.get("latitude")
-        longitude = a.get("longitude")
-        hours = a.get("hours")[0].get("hours")
+        city = js.get("city") or "<MISSING>"
+        store_number = js.get("id") or "<MISSING>"
+        latitude = js.get("latitude") or "<MISSING>"
+        longitude = js.get("longitude") or "<MISSING>"
+        phone = js.get("phone") or "<MISSING>"
+        hours = js.get("hours")[0].get("hours")
         tmp = []
-        for h in hours:
-            day = h.get("days")
-            times = h.get("times")
-            line = f"{day} {times}"
-            tmp.append(line)
+        hours_of_operation = "<MISSING>"
+        if hours:
+            for h in hours:
+                day = h.get("days")
+                times = h.get("times")
+                line = f"{day} {times}"
+                tmp.append(line)
+            hours_of_operation = "; ".join(tmp)
 
-        hours_of_operation = "; ".join(tmp) or "<MISSING>"
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+        )
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))) as writer:
+        fetch_data(writer)

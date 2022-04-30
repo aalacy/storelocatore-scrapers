@@ -32,15 +32,15 @@ def parallel_run_one(link):
     locations = session.post(payload_url, headers=_headers).json()["searchResults"]
 
     for _ in locations:
-
         hours_of_operation = "; ".join(_.get("arrDailyEvents", []))
         if (
-            "incidentMessage" in _
-            and _["incidentMessage"].get("incidentDesc", "").lower()
+            _.get("incidentMessage", {}).get("incidentDesc", "").lower()
             == "temporary closure"
-            and _["incidentMessage"].get("outletStatusDesc", "").lower() == "closed"
         ):
             hours_of_operation = "Temporary closed"
+
+        if _.get("incidentMessage", {}).get("outletStatusDesc", "").lower() == "closed":
+            hours_of_operation = "closed"
 
         if "ATM" in _["locationType"]:
             hours_of_operation = _["serviceDetails"]["atmServices"]["atmSiteHours"]
@@ -91,14 +91,16 @@ def scrape_loc_urls_two(location_urls):
 def parallel_run_two(link):
     logger.info(f"[2] {link}")
     res = session.get(link, headers=_headers)
-    if "error.html" in str(res.url) or "PageNotFound.html" in str(res.url):
+    if (
+        "error.html" in str(res.url)
+        or "PageNotFound.html" in str(res.url)
+        or "The transaction failed" in res.text
+    ):
         return None
     sp1 = bs(res.text, "lxml")
     if sp1.find("", string=re.compile(r"could not find")):
         return None
     location_type = sp1.select_one("div.fn.heading").text.strip()
-    if "ATM" not in location_type:
-        return None
     try:
         coord = (
             sp1.select_one("div.mapView img")["src"]
@@ -110,8 +112,19 @@ def parallel_run_two(link):
         coord = ["", ""]
     hours = []
     _hr = sp1.find("h2", string=re.compile(r"Lobby Hours", re.IGNORECASE))
+    if not _hr:
+        _hr = sp1.find("h3", string=re.compile(r"^ATMs", re.IGNORECASE))
     if _hr:
         hours = list(_hr.find_next_sibling().stripped_strings)
+
+    if not hours:
+        if sp1.select("div.incidentMessage p"):
+            hours = [sp1.select("div.incidentMessage p")[-1].text.strip()]
+        elif sp1.select("div.location-timings p"):
+            hours = [sp1.select("div.location-timings p")[1].text.strip()]
+            if "Hours vary" in hours[0]:
+                hours = []
+
     addr = [aa for aa in list(sp1.address.stripped_strings) if aa.strip() != ","]
     street_address = " ".join(addr[1].split(",")[:-1])
     phone = ""
@@ -136,15 +149,6 @@ def parallel_run_two(link):
 
 def fetch_data():
 
-    # sitemap1
-    links = bs(session.get(sitemap1).text, "lxml").text.strip().split("\n")
-    logger.info(f"{len(links)} sitemap1")
-    results = scrape_loc_urls(links)
-
-    for result in results:
-        for item in result:
-            yield item
-
     # sitemap2
     links = (
         bs(session.get(sitemap2, headers=_headers).text, "lxml")
@@ -158,6 +162,15 @@ def fetch_data():
         for item in result:
             yield item
 
+    # sitemap1
+    links = bs(session.get(sitemap1).text, "lxml").text.strip().split("\n")
+    logger.info(f"{len(links)} sitemap1")
+    results = scrape_loc_urls(links)
+
+    for result in results:
+        for item in result:
+            yield item
+
 
 if __name__ == "__main__":
     with SgWriter(
@@ -166,8 +179,7 @@ if __name__ == "__main__":
                 {
                     SgRecord.Headers.PHONE,
                     SgRecord.Headers.CITY,
-                    SgRecord.Headers.LATITUDE,
-                    SgRecord.Headers.LONGITUDE,
+                    SgRecord.Headers.STREET_ADDRESS,
                 }
             ),
             duplicate_streak_failure_factor=150,
