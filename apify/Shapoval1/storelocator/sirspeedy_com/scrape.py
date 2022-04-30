@@ -1,155 +1,117 @@
-import csv
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgpostal.sgpostal import International_Parser, parse_address
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def fetch_data(sgw: SgWriter):
 
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
-    locator_domain = "https://www.sirspeedy.com/"
-    api_url = "https://www.sirspeedy.com/find-locator/#all_locations"
-
+    locator_domain = "https://sirspeedy.com"
+    api_url = "https://sirspeedy.com/find-a-location"
     session = SgRequests()
-
-    r = session.get(api_url)
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
+    }
+    r = session.get(api_url, headers=headers)
     tree = html.fromstring(r.text)
-    block = tree.xpath('//div[@id="locations_columns"]//li/a')
+    div = tree.xpath('//section[@class="c-tab__panel"]')
+    for d in div:
 
-    for b in block:
-        page_url = "".join(b.xpath(".//@href"))
-        page_url = f"https://www.sirspeedy.com{page_url}"
-        if page_url.find("middleburyct420/") != -1:
-            continue
-        if page_url.find("https://www.sirspeedy.com/bostonma460/") != -1:
-            continue
-        session = SgRequests()
-        r = session.get(page_url)
-        tree = html.fromstring(r.text)
+        blocks = d.xpath('.//div[@class="c-tab__panel-card"]//a')
+        for b in blocks:
+            slug = "".join(b.xpath(".//@href"))
+            page_url = f"https://sirspeedy.com{slug}"
 
-        street_address = (
-            "".join(tree.xpath('//span[@itemprop="streetAddress"]/text()'))
-            .replace("\n", "")
-            .strip()
-        )
-        city = (
-            "".join(tree.xpath('//span[@itemprop="addressLocality"]/text()'))
-            .replace("\n", "")
-            .replace(",", "")
-            .strip()
-        )
-        line = (
-            "".join(tree.xpath('//span[@itemprop="addressRegion"]/text()'))
-            .replace("\n", "")
-            .strip()
-        )
-        state = line.split()[0]
-        postal = line.split()[1]
-        country_code = "US"
-        store_number = "<MISSING>"
-        location_type = "<MISSING>"
-        location_name = (
-            "".join(tree.xpath('//p[@itemprop="name"]/text()'))
-            .replace("\n", "")
-            .strip()
-        )
-        phone = (
-            "".join(tree.xpath('//span[@itemprop="telephone"]/text()'))
-            .replace("\n", "")
-            .strip()
-        )
-        latitude = (
-            "".join(
-                tree.xpath(
-                    '//input[@id="ctl00_cphMainContent_uxLocations_hiddenCenterLat"]/@value'
-                )
+            r = session.get(page_url, headers=headers)
+            tree = html.fromstring(r.text)
+            ad = (
+                " ".join(tree.xpath('//div[@class="c-cta-row__address"]//text()'))
+                .replace("\n", "")
+                .strip()
             )
-            .replace("\n", "")
-            .strip()
-        )
-        longitude = (
-            "".join(
-                tree.xpath(
-                    '//input[@id="ctl00_cphMainContent_uxLocations_hiddenCenterLong"]/@value'
+            ad = " ".join(ad.split())
+            a = parse_address(International_Parser(), ad)
+            street_address = f"{a.street_address_1} {a.street_address_2}".replace(
+                "None", ""
+            ).strip()
+            state = a.state or "<MISSING>"
+            country_code = "US"
+            if state == "ON":
+                country_code = "CA"
+            country_head = "".join(b.xpath(".//preceding::h3[1]/text()"))
+            if country_head == "Brazil":
+                country_code = "Brazil"
+            if country_head == "India":
+                country_code = "India"
+            if country_head == "Taiwan":
+                country_code = "Taiwan"
+            postal = a.postcode or "<MISSING>"
+            city = a.city or "<MISSING>"
+            if city == "<MISSING>":
+                city = "".join(b.xpath(".//text()"))
+            location_name = (
+                "".join(
+                    tree.xpath(
+                        '//div[@class="c-cta-row__address"]/preceding-sibling::h2[1]/text()'
+                    )
                 )
+                .replace("\n", "")
+                .strip()
             )
-            .replace("\n", "")
-            .strip()
-        )
-        hours_of_operation = (
-            " ".join(tree.xpath('//p[@class="store_hours"]/text()'))
-            .replace("\n", "")
-            .strip()
-        )
-        if hours_of_operation.find("Email") != -1:
-            hours_of_operation = hours_of_operation.split("Email")[0].strip()
-        if hours_of_operation.find("Weekends") != -1:
-            hours_of_operation = hours_of_operation.split("Weekends")[0].strip()
-        if hours_of_operation.find("BY APPT ONLY") != -1:
-            hours_of_operation = "<MISSING>"
-        if hours_of_operation.find("(subject to change)") != -1:
-            hours_of_operation = hours_of_operation.split("(subject to change)")[
-                0
-            ].strip()
-        if hours_of_operation.find("By") != -1:
-            hours_of_operation = hours_of_operation.split("By")[0].strip()
-        if hours_of_operation.find("This") != -1:
-            hours_of_operation = hours_of_operation.split("This")[0].strip()
-        if hours_of_operation.find("Available") != -1:
-            hours_of_operation = hours_of_operation.split("Available")[0].strip()
+            hours_of_operation = (
+                " ".join(tree.xpath('//div[@class="c-cta-row__hours-row"]//text()'))
+                .replace("\n", "")
+                .strip()
+            )
+            hours_of_operation = (
+                " ".join(hours_of_operation.split())
+                .replace("Email for Curbside", "")
+                .replace("Weekends - Please Call", "")
+                .replace("Please Call", "<MISSING>")
+                .replace("(subject to change)", "")
+                .replace("By Appointment Only", "")
+                .replace("Available After Hours by Appointment", "")
+                .strip()
+            )
+            phone = (
+                "".join(
+                    tree.xpath(
+                        '//div[@class="c-cta-row__franchise-content"]//a[contains(@href, "tel")]/text()'
+                    )
+                )
+                .replace("\n", "")
+                .strip()
+            )
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
+            row = SgRecord(
+                locator_domain=locator_domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=postal,
+                country_code=country_code,
+                store_number=SgRecord.MISSING,
+                phone=phone,
+                location_type=SgRecord.MISSING,
+                latitude=SgRecord.MISSING,
+                longitude=SgRecord.MISSING,
+                hours_of_operation=hours_of_operation,
+                raw_address=ad,
+            )
 
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+            sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID({SgRecord.Headers.RAW_ADDRESS, SgRecord.Headers.LOCATION_NAME})
+        )
+    ) as writer:
+        fetch_data(writer)

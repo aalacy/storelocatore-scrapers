@@ -69,6 +69,11 @@ def fetch_data():
             state2 = state
             if "PRINCE GEORGE" in name:
                 state2 = "BRITISH COLUMBIA"
+            if "Calgary" in add:
+                state2 = "ALBERTA"
+                add = add.split(",")[0]
+            if "Edmonton" in add:
+                add = add.split(",")[0]
             yield SgRecord(
                 locator_domain=website,
                 page_url=loc,
@@ -92,6 +97,11 @@ def fetch_data():
             state2 = state
             if "PRINCE GEORGE" in name:
                 state2 = "BRITISH COLUMBIA"
+            if "Calgary" in add:
+                state2 = "ALBERTA"
+                add = add.split(",")[0]
+            if "Edmonton" in add:
+                add = add.split(",")[0]
             yield SgRecord(
                 locator_domain=website,
                 page_url=loc,

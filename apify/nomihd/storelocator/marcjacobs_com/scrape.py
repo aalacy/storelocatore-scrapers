@@ -5,6 +5,8 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import json
 import lxml.html
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "marcjacobs.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -50,7 +52,13 @@ def fetch_data():
 
         store_number = store["ID"]
 
-        phone = store["phone"].split("; Cell:")[0].strip().replace("Phone:", "").strip()
+        phone = (
+            store.get("phone", "<MISSING>")
+            .split("; Cell:")[0]
+            .strip()
+            .replace("Phone:", "")
+            .strip()
+        )
 
         location_type = "<MISSING>"
         if "MARC JACOBS" in location_name:
@@ -93,7 +101,9 @@ def fetch_data():
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.StoreNumberId)
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
