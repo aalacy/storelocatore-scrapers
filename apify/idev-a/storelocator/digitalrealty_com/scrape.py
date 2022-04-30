@@ -19,8 +19,24 @@ _headers = {
 
 base_url = "https://www.digitalrealty.com/data-centers"
 locator_domain = "https://www.digitalrealty.com"
-session = SgRequests().requests_retry_session()
+session = SgRequests()
 max_workers = 16
+
+ca_provinces_codes = {
+    "AB",
+    "BC",
+    "MB",
+    "NB",
+    "NL",
+    "NS",
+    "NT",
+    "NU",
+    "ON",
+    "PE",
+    "QC",
+    "SK",
+    "YT",
+}
 
 
 def _p(val):
@@ -39,7 +55,7 @@ def _p(val):
 
 def fetchConcurrentSingle(link):
     page_url = link["href"]
-    if "/data-centers" in page_url:
+    if "/data-centers" in page_url and "asia-pacific" not in page_url:
         if not page_url.startswith("http"):
             page_url = locator_domain + page_url
         response = request_with_retries(page_url)
@@ -67,13 +83,17 @@ def fetchConcurrentList(list, occurrence=max_workers):
 
 
 def request_with_retries(url):
-    return session.get(url, headers=_headers)
+    with SgRequests() as session:
+        return session.get(url, headers=_headers)
 
 
-def _d(page_url, sp3):
-    ss = list(
-        sp3.select("main div.uk-margin-medium")[0].select("p")[-1].stripped_strings
-    )
+def _d(page_url, sp3, country):
+    try:
+        ss = list(
+            sp3.select("main div.uk-margin-medium")[0].select("p")[-1].stripped_strings
+        )
+    except:
+        ss = []
     location_name = sp3.select_one(
         'h1[data-uk-scrollspy-class="uk-animation-slide-left"]'
     ).text.strip()
@@ -87,7 +107,14 @@ def _d(page_url, sp3):
             .nextSibling.strip()
         )
     except:
-        raw_address = location_name + " " + city_state
+        try:
+            raw_address = (
+                sp3.find("h3", string=re.compile(r"Property Specs"))
+                .find_next_sibling()
+                .text.strip()
+            )
+        except:
+            raw_address = location_name + " " + city_state
     addr = parse_address_intl(raw_address)
     city = addr.city
     zip_postal = addr.postcode
@@ -99,6 +126,19 @@ def _d(page_url, sp3):
     if location_name == "VESTA Querétaro Industrial Park":
         city = city_state.split(",")[0]
         zip_postal = city_state.split(",")[1]
+    country_code = addr.country
+    if not country_code:
+        if country == "north-america":
+            if addr.state in ca_provinces_codes:
+                country_code = "CA"
+            else:
+                country_code = "US"
+        elif country not in ["south-america", "europe", "africa"]:
+            country_code = country
+    if country_code == "singapore-region":
+        country_code = "singapore"
+    if country_code:
+        country_code = country_code.replace("-", " ")
     return SgRecord(
         page_url=page_url,
         location_name=location_name,
@@ -106,26 +146,26 @@ def _d(page_url, sp3):
         state=addr.state,
         city=city,
         zip_postal=zip_postal,
-        country_code=addr.country,
+        country_code=country_code,
         phone=phone,
         locator_domain=locator_domain,
         raw_address=raw_address,
     )
 
 
-def fetch_data():
+def fetch_data(session):
     soup = bs(session.get(base_url, headers=_headers).text, "lxml")
-    countries = soup.select("div.Footer > div > ul > li")[1].select("ul a")
+    countries = soup.select("ul.uk-list")[0].select("li a")
     logger.info(f"{len(countries)} found")
     for country_url, sp1 in fetchConcurrentList(countries):
-        logger.info(country_url)
+        country = country_url.split("/")[-1]
         states = sp1.select("main div.uk-section div.uk-container ul a")
-        logger.info(f"{len(states)} found")
+        logger.info(f"[{country}] {len(states)} found")
         for state_url, sp2 in fetchConcurrentList(states):
             links = sp2.select("main a.uk-link-reset")
             for page_url, sp3 in fetchConcurrentList(links):
                 logger.info(page_url)
-                yield _d(page_url, sp3)
+                yield _d(page_url, sp3, country)
 
         if not states:
             states1 = sp1.select("main a.uk-link-reset")
@@ -133,15 +173,16 @@ def fetch_data():
                 links1 = sp4.select("main a.uk-link-reset")
                 if not links1:
                     logger.info(url)
-                    yield _d(url, sp4)
+                    yield _d(url, sp4, country)
                 else:
                     for url1, sp5 in fetchConcurrentList(links1):
                         logger.info(url1)
-                        yield _d(url1, sp5)
+                        yield _d(url1, sp5, country)
 
 
 if __name__ == "__main__":
     with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
-        results = fetch_data()
-        for rec in results:
-            writer.write_row(rec)
+        with SgRequests() as session:
+            results = fetch_data(session)
+            for rec in results:
+                writer.write_row(rec)

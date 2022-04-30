@@ -15,7 +15,8 @@ days = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sun
 
 def _p(val):
     if (
-        val.split("Ex")[0]
+        val
+        and val.split("Ex")[0]
         .replace("(", "")
         .replace(")", "")
         .replace("+", "")
@@ -54,7 +55,7 @@ def fetch_data():
                 latitude=_["customAttributes"]["latitude"],
                 longitude=_["customAttributes"]["longitude"],
                 country_code=_["country"],
-                phone=_p(_["phoneBusiness"]),
+                phone=_p(_.get("phoneBusiness")),
                 locator_domain=locator_domain,
                 hours_of_operation=hours,
             )

@@ -6,14 +6,24 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgpostal import parse_address_intl
+from sgselenium import SgSelenium
 import re
+import ssl
+
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
 DOMAIN = "commercialtire.com"
 BASE_URL = "https://commercialtire.com"
 LOCATION_URL = "https://www.commercialtire.com/locations"
 HEADERS = {
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.63 Safari/537.36",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.88 Safari/537.36",
 }
 MISSING = "<MISSING>"
 log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
@@ -31,7 +41,6 @@ def getAddress(raw_address):
             city = data.city
             state = data.state
             zip_postal = data.postcode
-
             if street_address is None or len(street_address) == 0:
                 street_address = MISSING
             if city is None or len(city) == 0:
@@ -56,7 +65,9 @@ def pull_content(url):
 
 def fetch_data():
     log.info("Fetching store_locator data")
-    soup = pull_content(LOCATION_URL)
+    driver = SgSelenium().chrome()
+    driver.get(LOCATION_URL)
+    soup = bs(driver.page_source, "lxml")
     contents = soup.find("div", {"id": "1968833344"}).find_all(
         "a", {"data-display-type": "block"}
     )
@@ -67,15 +78,44 @@ def fetch_data():
             "div",
             {"class": re.compile(r"u_(.*) dmRespRow fullBleedChanged fullBleedMode")},
         )
-        location_name = info.find("h1").text.replace("|", "")
+        if not info:
+            driver.get(page_url)
+            content = bs(driver.page_source, "lxml")
+            info = content.find(
+                "div",
+                {
+                    "class": re.compile(
+                        r"u_(.*) dmRespRow fullBleedChanged fullBleedMode"
+                    )
+                },
+            )
+        location_name = row.text.strip()
         addr_info = info.find("div", {"data-type": "inlineMap"})
-        raw_address = addr_info["data-address"].strip()
+        raw_address = (
+            info.find("span", text="LOCATION:")
+            .find_next("p")
+            .get_text(strip=True, separator=",")
+        )
+        if "boise---state" in page_url:
+            raw_address = "1190 W State St, Downtown Boise, Boise, ID, United States"
         street_address, city, state, zip_postal = getAddress(raw_address)
+        street_address = street_address.replace("Winstead Park", "").replace(
+            "Yakima", ""
+        )
         store_number = MISSING
+        phone_content = info.find(
+            re.compile(r"p|span"),
+            {
+                "class": re.compile(
+                    r"m-font-size-19 font-size-24|m-size-17 size-24|font-size-24 m-font-size-19"
+                )
+            },
+        )
         try:
-            phone = info.find("a", {"href": re.compile(r"tel:.*")}).text.strip()
+            phone = phone_content.text.replace("\n", "").strip()
         except:
             phone = MISSING
+        phone = phone.replace("﻿", "").strip()
         country_code = "US"
         location_type = "commercialtire"
         addr_info = info.find("div", {"data-type": "inlineMap"})
@@ -103,27 +143,21 @@ def fetch_data():
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hours_of_operation,
-            raw_address=f"{street_address}, {city}, {state} {zip_postal}",
+            raw_address=raw_address,
         )
+    driver.quit()
 
 
 def scrape():
     log.info("start {} Scraper".format(DOMAIN))
     count = 0
     with SgWriter(
-        SgRecordDeduper(
-            SgRecordID(
-                {
-                    SgRecord.Headers.RAW_ADDRESS,
-                }
-            )
-        )
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.RAW_ADDRESS}))
     ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
             count = count + 1
-
     log.info(f"No of records being processed: {count}")
     log.info("Finished")
 

@@ -22,14 +22,13 @@ def fetch_data():
     for poi_html in all_locations:
         country_code = poi_html.xpath('.//span[@class="country"]/text()')
         country_code = country_code[0] if country_code else "<MISSING>"
-        if country_code not in ["Canada", "United Kingdom", "United States"]:
-            continue
         store_url = start_url
         location_name = poi_html.xpath('.//span[@class="address"]/text()')
         location_name = location_name[0] if location_name else "<MISSING>"
         raw_address = poi_html.xpath('.//span[@class="address"]/text()')[1:]
         raw_address = [e.strip() for e in raw_address if e.strip()]
-        addr = parse_address_intl(" ".join(raw_address) + " " + country_code)
+        full_address = " ".join(raw_address) + " " + country_code
+        addr = parse_address_intl(full_address)
         if not addr.street_address_1:
             raw_address = poi_html.xpath('.//span[@class="address"]/text()')
             location_name = "<MISSING>"
@@ -44,13 +43,13 @@ def fetch_data():
                 street_address = ", ".join(raw_address[:2])
             else:
                 street_address = raw_address[0]
-        street_address = street_address if street_address else "<MISSING>"
         city = poi_html.xpath('.//span[@class="city"]/text()')
         city = city[0].split(",")[0] if city else "<MISSING>"
         state = addr.state
         state = state.replace(".", "") if state else "<MISSING>"
         zip_code = addr.postcode
         zip_code = zip_code if zip_code else "<MISSING>"
+        street_address = street_address.replace(zip_code, "")
         store_number = "<MISSING>"
         phone = poi_html.xpath('.//span[@class="phone"]/span/text()')
         phone = phone[0] if phone else "<MISSING>"
@@ -78,6 +77,7 @@ def fetch_data():
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hours_of_operation,
+            raw_address=full_address,
         )
 
         yield item

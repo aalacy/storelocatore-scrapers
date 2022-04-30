@@ -1,47 +1,22 @@
-import csv
+import json
 
 from bs4 import BeautifulSoup
 
 from sglogging import sglog
+
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 from sgrequests import SgRequests
 
 log = sglog.SgLogSetup().get_logger("ikessandwich.com")
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def fetch_data(sgw: SgWriter):
 
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-
-    base_link = "https://locations.ikessandwich.com/"
+    base_link = "https://locations.ikessandwich.com"
 
     user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
     headers = {"User-Agent": user_agent}
@@ -52,72 +27,98 @@ def fetch_data():
 
     locator_domain = "ikessandwich.com"
 
-    items = base.find(id="browse-content").find_all(class_="ga-link")
+    items = base.find(class_="sb-directory-list sb-directory-list-states").find_all(
+        "li"
+    )
 
     for item in items:
-        state_link = item["href"]
+        state_link = base_link + item.a["href"]
         req = session.get(state_link, headers=headers)
         base = BeautifulSoup(req.text, "lxml")
 
-        stores = base.find(class_="map-list-wrap map-list-tall").ul.find_all(
-            "li", recursive=False
-        )
+        stores = base.find(class_="content sb-directory-content").ul.find_all("li")
         for store in stores:
-            store = store.find(class_="map-list-item")
-            location_name = store.a.text.strip()
-            link = store.a["href"]
-            log.info(link)
 
-            req = session.get(link, headers=headers)
+            fin_link = base_link + store.a["href"]
+
+            req = session.get(fin_link, headers=headers)
             base = BeautifulSoup(req.text, "lxml")
 
-            if "coming soon" in base.find(class_="map-list").text.lower():
-                continue
+            links = base.find(
+                class_="sb-directory-list sb-directory-list-sites"
+            ).find_all("li")
 
-            street_address = (
-                base.find(class_="address").find_all("span")[-2].text.strip()
-            )
-            city_line = (
-                base.find(class_="address").find_all("span")[-1].text.strip().split(",")
-            )
-            city = city_line[0].strip()
-            state = city_line[-1].strip().split()[0].strip()
-            zip_code = city_line[-1].strip().split()[1].strip()
-            country_code = "US"
-            store_number = base.find(class_="map-list").div["data-fid"]
-            map_link = base.find(class_="ga-link")["href"]
-            latitude = map_link.split("=")[-1].split(",")[0]
-            longitude = map_link.split("=")[-1].split(",")[1]
-            location_type = ", ".join(
-                list(base.find(class_="location-services").stripped_strings)
-            )
+            for i in links:
+                link = i.a["href"]
+                log.info(link)
 
-            phone = base.find(class_="phone ga-link").text.strip()
-            hours_of_operation = " ".join(
-                list(base.find(class_="hours").stripped_strings)
-            )
+                req = session.get(link, headers=headers)
+                base = BeautifulSoup(req.text, "lxml")
 
-            yield [
-                locator_domain,
-                link,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip_code,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
+                location_name = (
+                    base.find(class_="map-list-item")
+                    .find(class_="location-name")
+                    .text.strip()
+                )
+                if "coming soon" in base.find(class_="map-list").text.lower():
+                    continue
+
+                street_address = " ".join(
+                    list(base.find(class_="address").stripped_strings)[1:-1]
+                )
+                city_line = (
+                    base.find(class_="address")
+                    .find_all("span")[-1]
+                    .text.strip()
+                    .split(",")
+                )
+                city = city_line[0].strip()
+                state = city_line[-1].strip().split()[0].strip()
+                zip_code = city_line[-1].strip().split()[1].strip()
+                country_code = "US"
+                store_number = link.split("/")[-2]
+                location_type = ", ".join(
+                    list(base.find(class_="location-services").stripped_strings)
+                )
+
+                phone = base.find(class_="phone ga-link").text.strip()
+                script = base.find(
+                    "script", attrs={"type": "application/ld+json"}
+                ).contents[0]
+                js = json.loads(script)
+
+                latitude = js["geo"]["latitude"]
+                longitude = js["geo"]["longitude"]
+
+                if "closed temporarily" in base.find(class_="map-list").text.lower():
+                    hours_of_operation = "Closed Temporarily"
+                else:
+                    try:
+                        hours_of_operation = " ".join(
+                            list(base.find(class_="hours").stripped_strings)
+                        )
+                    except:
+                        hours_of_operation = ""
+
+                sgw.write_row(
+                    SgRecord(
+                        locator_domain=locator_domain,
+                        page_url=link,
+                        location_name=location_name,
+                        street_address=street_address,
+                        city=city,
+                        state=state,
+                        zip_postal=zip_code,
+                        country_code=country_code,
+                        store_number=store_number,
+                        phone=phone,
+                        location_type=location_type,
+                        latitude=latitude,
+                        longitude=longitude,
+                        hours_of_operation=hours_of_operation,
+                    )
+                )
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    fetch_data(writer)
