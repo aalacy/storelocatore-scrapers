@@ -135,6 +135,9 @@ def fetch_records(headers_):
             if page_url == "https://olo.tacocabana.com/":
                 page_url = f"https://olo.tacocabana.com/menu/{for_page_url}"
 
+            if page_url == "https://olo.tacocabana.com/menu/tc-20366":
+                page_url = "https://olo.tacocabana.com/menu/tc20366"
+
             logger.info(f"[{idx1}] [LOCNAME] {locname}")
             latitude = j.get("lat")
             longitude = j.get("lng")
