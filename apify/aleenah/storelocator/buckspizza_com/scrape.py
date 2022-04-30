@@ -26,9 +26,9 @@ def fetch_data():
         loclist = soup.findAll(
             "div",
             {"class": "nd_options_display_table_cell nd_options_vertical_align_bottom"},
-        )[:-2]
+        )
         for loc in loclist:
-            page_url = loc.find("a")["href"]
+            page_url = loc.find("a")["href"].strip("/") + "/"
             if "franchise-information" in page_url:
                 continue
             log.info(page_url)
@@ -63,9 +63,14 @@ def fetch_data():
                 soup.findAll("p")[2]
                 .get_text(separator="|", strip=True)
                 .replace("|", " ")
+                .replace("Temporary Hours:", "")
+                .replace("Hours:", "")
             )
+
             if "DINE-IN" in hours_of_operation:
                 hours_of_operation = MISSING
+            elif "Temporarily Closed" in hours_of_operation:
+                hours_of_operation = "Temporarily Closed"
             country_code = "US"
             yield SgRecord(
                 locator_domain=DOMAIN,

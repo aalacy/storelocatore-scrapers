@@ -1,115 +1,99 @@
-import csv
+from bs4 import BeautifulSoup
+
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 from sgrequests import SgRequests
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
+def fetch_data(sgw: SgWriter):
 
+    base_link = "https://bldr.com/location/all-locations"
 
-def fetch_data():
-
-    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36"
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
     headers = {"User-Agent": user_agent}
 
-    base_link = "https://bldr-back-central.azurewebsites.net//umbraco/api/LocationData/GetAllLocations"
-
     session = SgRequests()
+    req = session.get(base_link, headers=headers)
+    base = BeautifulSoup(req.text, "lxml")
 
-    json = {"radius": 150, "DistributionList": "", "installedServiceName": ""}
+    items = base.find(class_="landingLayout2Page all-locations").find_all("a")
 
-    stores = session.post(base_link, headers=headers, json=json).json()
+    locator_domain = "https://bldr.com"
 
-    data = []
-    locator_domain = "bldr.com"
+    found = []
 
-    for store in stores:
-        location_name = store["Name"]
-        street_address = (store["Address1"] + " " + store["Address2"]).strip()
-        city = store["City"]
-        state = store["State"]
-        zip_code = store["ZipCode"]
+    for i in items:
+        link = locator_domain + i["href"]
+        if "/location/" not in link:
+            continue
+
+        req = session.get(link, headers=headers)
+        base = BeautifulSoup(req.text, "lxml")
+
+        location_name = base.h1.text.strip()
+        raw_address = list(base.find(class_="address").a.stripped_strings)
+        street_address = (
+            " ".join(raw_address[:-1]).replace("\xa0", " ").split("(")[0].strip()
+        )
+
+        if street_address in ["12028 Hwy 145", "1331 208th St E"]:
+            if street_address in found:
+                continue
+        found.append(street_address)
+
+        city_line = raw_address[-1].replace("\xa0", " ").replace("\n", "").split(",")
+        city = city_line[0].strip()
+        state = city_line[-1].strip().split()[0].strip()
+        zip_code = city_line[-1].strip().split()[1].strip()
         country_code = "US"
-        store_number = store["Id"]
-        location_type = "<MISSING>"
-        phone = store["PhoneNo"].replace("Call to make an appointment", "").strip()
-        if not phone:
-            phone = "<MISSING>"
+        store_number = link.split("/")[-1]
         try:
-            mon_fri = "Mon-Fri " + store["HoursMFNew"]
+            location_type = (
+                ", ".join(list(base.find(class_="facilityType").stripped_strings)[1:])
+                .split("Location")[0]
+                .strip()
+            )
+            if location_type[-1:] == ",":
+                location_type = location_type[:-1].strip()
         except:
-            mon_fri = ""
-        try:
-            sat = " Sat " + store["HoursSat"]
-        except:
-            sat = ""
-        try:
-            sun = " Sun " + store["HoursSun"]
-        except:
-            sun = ""
+            location_type = ""
+        phone = base.find(class_="phone").a.text.strip()
         hours_of_operation = (
-            (mon_fri + sat + sun).replace(",", "-").replace("0-0", "Closed").strip()
+            " ".join(list(base.find(class_="hours").stripped_strings))
+            .split("Pick-")[0]
+            .replace("Hours", "")
+            .strip()
         )
 
-        hours_of_operation = hours_of_operation.replace(
-            "Sat  Sun", "Sat-Sun Closed"
-        ).replace("Sat Closed Sun Closed", "Sat-Sun Closed")
-        if not hours_of_operation:
-            hours_of_operation = "<MISSING>"
+        try:
+            latitude = base.find(id="location-map")["data-lat"]
+            longitude = base.find(id="location-map")["data-lng"]
+        except:
+            latitude = ""
+            longitude = ""
 
-        latitude = store["Latitude"]
-        longitude = store["Longitude"]
-        link = "https://bldr.com/location_" + store["Alias"]
-
-        # Store data
-        data.append(
-            [
-                locator_domain,
-                link,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip_code,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
+        sgw.write_row(
+            SgRecord(
+                locator_domain=locator_domain,
+                page_url=link,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_code,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
         )
 
-    return data
 
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    fetch_data(writer)

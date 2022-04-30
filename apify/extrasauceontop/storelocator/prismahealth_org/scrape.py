@@ -88,7 +88,6 @@ def get_data():
             city = location["Address"][2].split(",")[0]
             state = location["Address"][2].split(" ")[-2]
             zipp = location["Address"][2].split(" ")[-1]
-
             country_code = "US"
             store_number = location["Id"].split(";")[0]
 

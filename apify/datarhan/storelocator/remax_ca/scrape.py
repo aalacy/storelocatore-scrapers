@@ -6,19 +6,26 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries
+from sgzip.static import static_zipcode_list, SearchableCountries
 
 
 def fetch_data():
     session = SgRequests()
     domain = "remax.ca"
-    start_url = "https://www.remax.ca/api/v1/office/search/?from=0&size=16&category=Residential&text={}"
 
-    all_codes = DynamicZipSearch(
-        country_codes=[SearchableCountries.CANADA], expected_search_radius_miles=100
-    )
+    start_url = "https://api.remax.ca/api/v1/office/search"
+    all_codes = static_zipcode_list(1, SearchableCountries.CANADA)
+
     for code in all_codes:
-        response = session.get(start_url.format(code.replace(" ", "+")))
+        code = code[:3] + "+" + code[3:]
+        params = {
+            "randomSeed": "1651060139549",
+            "text": code,
+            "size": 1000,
+            "from": 0,
+            "category": "Residential",
+        }
+        response = session.get(start_url, params=params)
         data = json.loads(response.text)
         all_locations = data["result"]["results"]
 
@@ -32,11 +39,9 @@ def fetch_data():
             state = poi["state"]
             zip_code = poi["postalCode"]
             country_code = poi["country"]
-            store_number = "<MISSING>"
             phone = poi.get("telephone")
-            location_type = "<MISSING>"
-            latitude = poi["latitude"]
-            longitude = poi["longitude"]
+            latitude = poi.get("latitude")
+            longitude = poi.get("longitude")
 
             item = SgRecord(
                 locator_domain=domain,
@@ -47,9 +52,9 @@ def fetch_data():
                 state=state,
                 zip_postal=zip_code,
                 country_code=country_code,
-                store_number=store_number,
+                store_number="",
                 phone=phone,
-                location_type=location_type,
+                location_type="",
                 latitude=latitude,
                 longitude=longitude,
                 hours_of_operation="",
@@ -63,7 +68,8 @@ def scrape():
         SgRecordDeduper(
             SgRecordID(
                 {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
-            )
+            ),
+            duplicate_streak_failure_factor=-1,
         )
     ) as writer:
         for item in fetch_data():

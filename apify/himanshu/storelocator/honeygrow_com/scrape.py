@@ -48,7 +48,14 @@ def fetch_data():
             .replace("Located in Ellisburg Shopping Center", "")
             .split("\n")[-2]
         )
-        hours_of_operation = (re.sub(" +", " ", hours_of_operation)).strip()
+        hours_of_operation = (
+            (re.sub(" +", " ", hours_of_operation))
+            .strip()
+            .replace("Apply Now", "")
+            .replace("pmSunday ", "pm Sunday")
+        )
+        if "Coming Soon" in hours_of_operation:
+            continue
         if "CLOSED until further notice" in hours_of_operation:
             hours_of_operation = "Temporarily CLOSED"
         country_code = "US"
@@ -56,13 +63,13 @@ def fetch_data():
             locator_domain=DOMAIN,
             page_url=page_url,
             location_name=location_name,
-            street_address=street_address.strip(),
-            city=city.strip(),
-            state=state.strip(),
-            zip_postal=zip_postal.strip(),
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zip_postal,
             country_code=country_code,
             store_number=MISSING,
-            phone=phone.strip(),
+            phone=phone,
             location_type=MISSING,
             latitude=latitude,
             longitude=longitude,
