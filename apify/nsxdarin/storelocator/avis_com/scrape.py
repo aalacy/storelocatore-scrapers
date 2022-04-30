@@ -4,6 +4,7 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
+import time
 
 logger = SgLogSetup().get_logger("avis_com")
 
@@ -23,7 +24,10 @@ def fetch_data():
             lurl = line.split("<loc>")[1].split("<")[0]
             if lurl.count("/") == 7:
                 locs.append(lurl)
-    urls = ["https://www.avis.com/en/locations/us"]
+    urls = [
+        "https://www.avis.com/en/locations/us",
+        "https://www.avis.com/en/locations/ca",
+    ]
     for url in urls:
         r = session.get(url, headers=headers)
         for line in r.iter_lines():
@@ -45,22 +49,23 @@ def fetch_data():
                 if lurl.count("/") == 8 and "uber-only" not in lurl:
                     locs.append(lurl)
     for loc in locs:
-        LocFound = True
-        logger.info("Pulling Location %s..." % loc)
-        website = "avis.com"
-        typ = "<MISSING>"
-        hours = ""
-        name = ""
-        store = loc.rsplit("/", 1)[1]
-        city = ""
-        add = ""
-        state = ""
-        zc = ""
-        country = ""
-        phone = ""
-        lat = ""
-        lng = ""
+        time.sleep(3)
         try:
+            LocFound = True
+            logger.info("Pulling Location %s..." % loc)
+            website = "avis.com"
+            typ = "<MISSING>"
+            hours = ""
+            name = ""
+            store = loc.rsplit("/", 1)[1]
+            city = ""
+            add = ""
+            state = ""
+            zc = ""
+            country = ""
+            phone = ""
+            lat = ""
+            lng = ""
             r2 = session.get(loc, headers=headers)
             for line2 in r2.iter_lines():
                 if "&amp; Nearby Locations" in line2:
@@ -95,6 +100,10 @@ def fetch_data():
                     lat = line2.split('"latitude":"')[1].split('"')[0]
                 if '"longitude":"' in line2:
                     lng = line2.split('"longitude":"')[1].split('"')[0]
+                if 'itemprop="latitude" content="' in line2:
+                    lat = line2.split('itemprop="latitude" content="')[1].split('"')[0]
+                if 'itemprop="longitude" content="' in line2:
+                    lng = line2.split('itemprop="longitude" content="')[1].split('"')[0]
             if hours == "":
                 hours = "<MISSING>"
             if lat == "":
@@ -134,6 +143,8 @@ def fetch_data():
             phone = phone.replace("&amp;", "&")
             hours = hours.replace("&amp;", "&")
             loc = loc.replace("&amp;", "&")
+            raw_address = add + " " + city + ", " + state + " " + zc + ", " + country
+            raw_address = raw_address.strip().replace("  ", " ")
             if LocFound:
                 yield SgRecord(
                     locator_domain=website,
@@ -149,6 +160,7 @@ def fetch_data():
                     store_number=store,
                     latitude=lat,
                     longitude=lng,
+                    raw_address=raw_address,
                     hours_of_operation=hours,
                 )
         except:

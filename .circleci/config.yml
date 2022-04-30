@@ -39,7 +39,7 @@ jobs:
       tag: <<parameters.python-version>>
     parameters:
       cache-prefix:
-        default: 'v7'
+        default: 'v8'
         description: Cache prefix (increment to clear)
         type: string
       python-version:
@@ -124,6 +124,12 @@ jobs:
             source ./venv/bin/activate
             source ./.circleci/lib.sh
             check_how_records_are_written_to_file
+      - run:
+          name: Check script isn't using test proxies
+          command: |
+            source ./venv/bin/activate
+            source ./.circleci/lib.sh
+            check_sgrequests_uses_prod_proxies
       - run:
           name: Check Dockerfile inherits from latest image
           command: |

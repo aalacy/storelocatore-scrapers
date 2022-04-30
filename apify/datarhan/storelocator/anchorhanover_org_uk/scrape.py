@@ -10,9 +10,9 @@ from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
-    session = SgRequests()
+    session = SgRequests(verify_ssl=False, proxy_country="uk")
 
-    start_url = "https://www.anchorhanover.org.uk/our-properties/locations"
+    start_url = "https://www.anchor.org.uk/our-properties/locations"
     domain = "anchorhanover.org.uk"
     hdr = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
@@ -24,7 +24,9 @@ def fetch_data():
         '//h4[contains(text(), "Select a county")]/following-sibling::ul[1]//a/@href'
     )
     for url in all_counties:
-        response = session.get(url)
+        response = session.get(url, headers=hdr)
+        if response.status_code != 200:
+            continue
         dom = etree.HTML(response.text)
         all_cities = dom.xpath(
             '//h3[contains(text(), "Care homes")]/following-sibling::ul[1]//a/@href'
@@ -39,17 +41,28 @@ def fetch_data():
             all_locations += dom.xpath(
                 '//div[@class="property-results__buttons"]/a/@href'
             )
+    total = "120"
+    for i in range(0, int(total) + 12):
+        data = session.get(
+            f"https://www.anchor.org.uk/internals/property-finder/search?offset={str(i)}"
+        ).json()
+        for e in data["results"]:
+            poi = json.loads(e)
+            all_locations.append(poi["metatag"]["value"]["canonical_url"])
 
-    for page_url in all_locations:
-        page_url = urljoin(start_url, page_url)
-        loc_response = session.get(page_url)
+    for url in list(set(all_locations)):
+        page_url = urljoin(start_url, url)
+        loc_response = session.get(page_url, headers=hdr)
+        if loc_response.status_code != 200:
+            continue
         loc_dom = etree.HTML(loc_response.text)
 
         poi = loc_dom.xpath('//script[contains(text(), "streetAddress")]/text()')[0]
         poi = json.loads(poi)
         location_type = loc_dom.xpath(
             '//button[contains(text(), "Property type")]/following-sibling::div[1]/p/text()'
-        )[0]
+        )
+        location_type = location_type[0] if location_type else ""
         geo = (
             loc_dom.xpath('//iframe[contains(@src, "/maps/embed")]/@src')[0]
             .split("q=")[-1]

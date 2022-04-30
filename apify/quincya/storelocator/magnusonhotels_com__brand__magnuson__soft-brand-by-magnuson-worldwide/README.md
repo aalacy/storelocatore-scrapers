@@ -1,1 +1,1 @@
---ignore StreetAddressHasNumber (Confirmed on website)
+ --ignore CentroidValidator --ignore StreetAddressHasNumber --ignore StreetAddressHasStateName --ignore GeoConsistencyValidator --ignore CountryValidator --ignore StoreNumberColumnValidator (Confirmed on website)

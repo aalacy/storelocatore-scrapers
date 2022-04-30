@@ -25,8 +25,10 @@ def fetch_data():
         r = session.get(url, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
         loclist = soup.findAll("iframe")
-        for loc in loclist:
+        loc_list = soup.findAll("h1")
+        for loc, loc_name in zip(loclist, loc_list):
             temp_url = loc["src"]
+            location_name = loc_name.text
             r = session.get(temp_url, headers=headers)
             temp = r.text.split("null,0,[[")[1].split('],"')[0]
             address = temp.split('","')[1]
@@ -51,10 +53,12 @@ def fetch_data():
             country_code = pa.country
             country_code = country_code.strip() if country_code else MISSING
             log.info(street_address)
+            if city == MISSING:
+                city = raw_address.split(",")[-3]
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url=url,
-                location_name=MISSING,
+                location_name=location_name,
                 street_address=street_address.strip(),
                 city=city.strip(),
                 state=state,

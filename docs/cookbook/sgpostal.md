@@ -28,7 +28,7 @@ sgpostal>=0.1.0
 ## In use:
 
 ```python
-from sgpostal.sgpostal import *
+from sgpostal.sgpostal import parse_address_usa, parse_address_intl, SgAddress
 
 an_address_in_the_usa    = parse_address_usa('836 Prudential Drive, Jacksonville, Florida 12345')
 an_international_address = parse_address_intl('221B Baker Street, London, NW1 6XE, UK')
@@ -54,7 +54,5 @@ class SgAddress:
 
 - Oftentimes, the raw address cannot be parsed. This can be due to many reasons - either because it's in a format that
   the library can't parse, there's some data missing, or there is high ambiguity.
-- This means that one or more of the fields in the resulting `SgAddress` will be `None`. You should check for that.
-- In this case, if you already have a raw address string which you cannot parse, simply populate the `raw_address` field
-  of `SgRecord` with it.
-  - Otherwise, if you successfully parsed the required address fields, please don't populate the `raw_address` field.
+- This means that one or more of the fields in the resulting `SgAddress` will be `None`. You should check for that, and discuss with QA / business if it's acceptable.
+- You should always populate the `SgRecord(raw_address=...)` field with the raw address field, if you're using `sgpostal`. 

@@ -15,6 +15,10 @@ from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 
 import pycountry
 
+import ssl
+
+ssl._create_default_https_context = ssl._create_unverified_context
+
 website = "puma.com"
 MISSING = SgRecord.MISSING
 STORE_JSON_URL = "https://about.puma.com/api/PUMA/Feature/Locations/StoreLocator/StoreLocator?coordinates={}%2C{}8&loadMore=50"
@@ -23,7 +27,7 @@ headers = {
 }
 
 log = sglog.SgLogSetup().get_logger(logger_name=website)
-max_workers = 4
+max_workers = 24
 
 http = SgRequests()
 
@@ -98,11 +102,6 @@ def fetch_single_store(store, retry=0):
         page_url = f"https://about.puma.com{store['Url']}"
         location_type = "Outlet" if "Outlet" in location_name else "Store"
 
-        if location_type == "Outlet":
-            location_name = "Puma Outlet"
-        else:
-            location_name = "Puma Store"
-
         log.info(f"Scrapping {page_url}...")
         response = http.get(page_url)
         body = html.fromstring(response.text, "lxml")
@@ -116,6 +115,25 @@ def fetch_single_store(store, retry=0):
         street_address = get_json_objectVariable(storeData, "address.streetAddress")
         city = get_json_objectVariable(storeData, "address.addressLocality")
         zip_postal = get_json_objectVariable(storeData, "address.postalCode")
+        zip_postal = zip_postal.replace("´", "")
+        # known Issue:
+        if "KSA, KING FAHAD ROAD, Al Manar, 3543 8 A، Dammam 32274" in str(zip_postal):
+            zip_postal = "32274"
+        if (
+            str(zip_postal) == "0"
+            or str(zip_postal) == "00"
+            or str(zip_postal) == "000"
+            or str(zip_postal) == "0000"
+            or str(zip_postal) == "00000"
+            or str(zip_postal) == "000000"
+            or str(zip_postal) == "0000000"
+            or str(zip_postal).lower() == "na"
+            or str(zip_postal).lower() == "n/a"
+            or str(zip_postal).lower() == "nil"
+            or str(zip_postal) == "-"
+        ):
+            zip_postal = MISSING
+
         state = get_json_objectVariable(storeData, "address.addressRegion")
         hours = get_json_objectVariable(storeData, "openingHoursSpecification", [])
         hoo = []
