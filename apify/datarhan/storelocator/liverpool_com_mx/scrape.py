@@ -41,7 +41,7 @@ def fetch_data():
         logger.info(f"{store_number} Response: {response2}")
         poi_data = response2.json()
         city = poi["city"].replace("-", "")
-        if not poi_data.get("storeDetails"):
+        if not poi_data.get("storeDetails", {}).get("StoreDetails"):
             continue
         street_address = (
             poi_data["storeDetails"]["StoreDetails"]["1"]["generalDetails"]
