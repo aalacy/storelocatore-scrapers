@@ -90,6 +90,26 @@ def fetch_data():
             lat = longt = "<MISSING>"
         if ">" in lat:
             lat = longt = "<MISSING>"
+        try:
+            hours = hours.split(" Appointments", 1)[0]
+        except:
+            pass
+        try:
+            hours = hours.split("We are", 1)[0]
+        except:
+            pass
+        try:
+            hours = hours.split(" Parking ", 1)[0]
+        except:
+            pass
+        try:
+            street = street.split(" Located ", 1)[0]
+        except:
+            pass
+        try:
+            street = street.split(" Corner of ", 1)[0]
+        except:
+            pass
         yield SgRecord(
             locator_domain="https://bonobos.com/",
             page_url=link,
@@ -104,7 +124,7 @@ def fetch_data():
             location_type=SgRecord.MISSING,
             latitude=str(lat),
             longitude=str(longt),
-            hours_of_operation=hours,
+            hours_of_operation=hours.replace(": Sun", "Sun").strip(),
         )
 
 

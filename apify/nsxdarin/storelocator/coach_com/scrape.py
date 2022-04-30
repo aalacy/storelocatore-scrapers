@@ -64,7 +64,7 @@ def fetch_data():
                 CFound = True
                 items = allinfo.split("<h2>")
                 for item in items:
-                    if '<div class="store-info">' in item:
+                    if 'span itemprop="streetAddress">' in item:
                         name = item.split("</h2>")[0].replace("&amp;", "&")
                         add = (
                             item.split('span itemprop="streetAddress">')[1]
@@ -86,7 +86,10 @@ def fetch_data():
                             )[0]
                         except:
                             zc = "<MISSING>"
-                        phone = item.split('itemprop="telephone">')[1].split("<")[0]
+                        try:
+                            phone = item.split('itemprop="telephone">')[1].split("<")[0]
+                        except:
+                            phone = "<MISSING>"
                         lat = "<MISSING>"
                         lng = "<MISSING>"
                         try:

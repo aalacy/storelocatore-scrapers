@@ -29,6 +29,7 @@ def fetch_data():
             street_address = poi["address"]["line1"]
             if poi["address"].get("line2"):
                 street_address += " " + poi["address"]["line2"]
+            street_address = " ".join(street_address.split())
             city = poi["address"]["city"]
             zip_code = poi["address"]["postalCode"]
             country_code = poi["address"]["countryCode"]

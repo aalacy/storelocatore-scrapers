@@ -1,105 +1,66 @@
-import csv
 import json
 
 from sgrequests import SgRequests
-
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
+from sgpostal.sgpostal import parse_address_intl
 
 
 def fetch_data():
-    # Your scraper here
     session = SgRequests()
-
-    items = []
-    scraped_items = []
-
-    DOMAIN = "olympiasports.net"
-    start_url = "https://www.olympiasports.net/on/demandware.store/Sites-OlympiaSports-Site/en_US/Stores-FindStores?showMap=false&radius=50000&lat=34.1571232&long=-118.4913086"
+    domain = "olympiasports.net"
+    start_url = "https://cdn.storelocatorwidgets.com/json/MCTYcb63A5zRmDDdPtrI6AtjcG7tnjbW?callback=slw&_=1651226854861"
     response = session.get(start_url)
-    data = json.loads(response.text)
+    data = json.loads(response.text.replace("slw(", "")[:-1])
 
     for poi in data["stores"]:
-        store_url = "<MISSING>"
-        location_name = poi["name"]
-        location_name = location_name if location_name else "<MISSING>"
-        street_address = poi["address1"]
-        if poi["address2"]:
-            street_address += ", " + poi["address2"]
-        street_address = street_address if street_address else "<MISSING>"
-        city = poi["city"]
-        city = city if city else "<MISSING>"
-        state = poi["stateCode"]
-        state = state if state else "<MISSING>"
-        zip_code = poi["postalCode"]
-        zip_code = zip_code if zip_code else "<MISSING>"
-        country_code = poi["countryCode"]
-        store_number = poi["ID"]
-        store_number = store_number if store_number else "<MISSING>"
-        phone = poi["phone"]
-        phone = phone if phone else "<MISSING>"
-        location_type = "<MISSING>"
-        latitude = poi["latitude"]
-        longitude = poi["longitude"]
-        hours_of_operation = "<MISSING>"
+        raw_address = poi["data"]["address"]
+        addr = parse_address_intl(raw_address)
+        street_address = addr.street_address_1
+        if addr.street_address_2:
+            street_address += " " + addr.street_address_2
+        mon = f"Monday: {poi['data']['hours_Monday']}"
+        tue = f"Tuesday: {poi['data']['hours_Tuesday']}"
+        wed = f"Wednesday: {poi['data']['hours_Tuesday']}"
+        thu = f"Thursday: {poi['data']['hours_Thursday']}"
+        fri = f"Friday: {poi['data']['hours_Friday']}"
+        sat = f"Saturday: {poi['data']['hours_Saturday']}"
+        sun = f"Sunday: {poi['data']['hours_Sunday']}"
+        hoo = f"{mon}, {tue}, {wed}, {thu}, {fri}, {sat}, {sun}"
 
-        if len(city) == 2:
-            state = city
-            city = poi["stateCode"]
+        item = SgRecord(
+            locator_domain=domain,
+            page_url="https://olympiasports.net/store-locator",
+            location_name=poi["name"],
+            street_address=street_address,
+            city=addr.city,
+            state=addr.state,
+            zip_postal=addr.postcode,
+            country_code=addr.country,
+            store_number=poi["name"].split("-")[-1],
+            phone=poi["data"].get("phone"),
+            location_type="",
+            latitude=poi["data"]["map_lat"],
+            longitude=poi["data"]["map_lng"],
+            hours_of_operation=hoo,
+            raw_address=raw_address,
+        )
 
-        item = [
-            DOMAIN,
-            store_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip_code,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        if location_name not in scraped_items:
-            scraped_items.append(location_name)
-            items.append(item)
-
-    return items
+        yield item
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":

@@ -18,6 +18,7 @@ def fetch_data():
     dom = etree.HTML(response.text)
 
     all_locations = dom.xpath('//div[@id="nav-tabContent"]//li/a/@href')
+    all_locations += dom.xpath('//li/a[contains(@href, "/find-a-branch/")]/@href')
     all_locations.append(
         "https://www.adecco.co.uk/find-a-branch/branches/grey-street-newcastle-upon-tyne-uk?location=grey%20street+%20newcastle%20upon%20tyne+%20uk&distance=50&latitude=54.9724619&longitude=-1.6123224"
     )
