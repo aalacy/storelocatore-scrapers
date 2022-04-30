@@ -37,5 +37,5 @@ print("Copying ", len(files_to_copy), " files to ", len(folders), " locations")
 for i in folders:
     for j in files_to_copy:
         shutil.copy2(src_dir + "\\" + str(j), dest + i + "\\")
-        print(f'copied {j}')
+        print(f"copied {j}")
         time.sleep(15)
