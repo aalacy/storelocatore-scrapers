@@ -3,7 +3,7 @@ from sglogging import sglog
 
 import ssl
 from sgscrape import simple_utils as utils
-from sgrequests.sgrequests import SgRequests
+from sgrequests import SgRequests
 from requests.packages.urllib3.util.retry import Retry
 
 from sgselenium import SgChrome
@@ -494,14 +494,17 @@ def get_api_call(url):
     input_field.send_keys("B3L 4T2")
     input_field.send_keys(Keys.RETURN)
     time.sleep(10)
-    wait_for_loc = WebDriverWait(driver, 30).until(  # noqa
-        EC.visibility_of_element_located(
-            (
-                By.XPATH,
-                "/html/body/div[6]/div[3]/div[2]/section/div/div[3]/div[1]/div/ol/li[1]/div",
+    try:
+        wait_for_loc = WebDriverWait(driver, 30).until(  # noqa
+            EC.visibility_of_element_located(
+                (
+                    By.XPATH,
+                    "/html/body/div[6]/div[3]/div[2]/section/div/div[3]/div[1]/div/ol/li[1]/div",
+                )
             )
         )
-    )
+    except Exception:
+        pass
 
     time.sleep(10)
     for r in driver.requests:
@@ -626,6 +629,34 @@ def lesser_datasource():
         }
 
 
+def fix_rec(x):
+    x["Address1x"] = x["Address1"]
+    x["Address2x"] = x["Address2"]
+    x["Address3x"] = x["Address3"]
+    x["Address4x"] = x["Address4"]
+    try:
+        if (
+            any(j in x for j in ["UITE", "LOOR", "NIT", "uite", "loor", "nit"])
+            not in x["Address2"]
+        ):
+            x["Address2"] = ""
+
+        if (
+            any(j in x for j in ["UITE", "LOOR", "NIT", "uite", "loor", "nit"])
+            not in x["Address3"]
+        ):
+            x["Address3"] = ""
+
+        if (
+            any(j in x for j in ["UITE", "LOOR", "NIT", "uite", "loor", "nit"])
+            not in x["Address4"]
+        ):
+            x["Address4"] = ""
+    except Exception:
+        pass
+    return x
+
+
 def fetch_data():
     # https://ws2.bullseyelocations.com/RestSearch.svc/ # noqa
     # DoSearch2? # noqa
@@ -707,7 +738,7 @@ def fetch_data():
             megafails.append(i)  # noqa
             yield defuzz(i)
         else:
-            yield i
+            yield fix_rec(i)
 
     # ########for debugging megafails: # noqa
     # print(len(megafails)) # noqa
@@ -725,7 +756,8 @@ def fix_comma(x):
     try:
         for i in x.split(", "):
             if len(i.strip()) >= 1:
-                h.append(i)
+                if i != ",":
+                    h.append(i)
         return ", ".join(h)
     except Exception:
         return x
@@ -767,6 +799,13 @@ def phoneident(x):
     return x
 
 
+def fix_city(x):
+    try:
+        return x.split(",")[0]
+    except Exception:
+        return x
+
+
 def scrape():
     field_defs = sp.SimpleScraperPipeline.field_definitions(
         locator_domain=sp.MappingField(
@@ -802,6 +841,7 @@ def scrape():
         ),
         city=sp.MappingField(
             mapping=["City"],
+            value_transform=fix_city,
             is_required=False,
         ),
         state=sp.MappingField(
@@ -836,7 +876,12 @@ def scrape():
             is_required=False,
             part_of_record_identity=True,
         ),
-        raw_address=sp.MissingField(),
+        raw_address=sp.MultiMappingField(
+            mapping=[["Address1x"], ["Address2x"], ["Address3x"], ["Address4x"]],
+            multi_mapping_concat_with=", ",
+            value_transform=fix_comma,
+            is_required=False,
+        ),
     )
 
     pipeline = sp.SimpleScraperPipeline(

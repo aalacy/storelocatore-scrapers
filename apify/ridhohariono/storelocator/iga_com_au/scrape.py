@@ -191,7 +191,9 @@ def fetch_data():
                 )
             latitude = row["data-latitude"]
             longitude = row["data-longitude"]
-            search.found_location_at(latitude, longitude)
+            if str(latitude) == "0":
+                latitude = MISSING
+                longitude = MISSING
             log.info("Append {} => {}".format(location_name, street_address))
             yield SgRecord(
                 locator_domain=DOMAIN,
