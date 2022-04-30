@@ -91,15 +91,18 @@ def fetch_records(http: SgRequests, state: CrawlState) -> Iterable[SgRecord]:
         log.info(f"Pulling the data from: {next_r.url}")
         soup = BeautifulSoup(r.text, "html.parser")
         try:
-            street_address = strip_accents(
+            street = strip_accents(
                 soup.find("span", {"class": "c-address-street-1"}).text
                 + " "
                 + soup.find("span", {"class": "c-address-street-2"}).text
             )
         except:
-            street_address = strip_accents(
+            street = strip_accents(
                 soup.find("span", {"class": "c-address-street-1"}).text
             )
+        street_address = strip_accents(
+            soup.find("span", {"class": "c-address-street-1"}).text
+        )
         city = soup.find("span", {"class": "c-address-city"}).text
         try:
             state = strip_accents(soup.find("abbr", {"itemprop": "addressRegion"}).text)
@@ -137,6 +140,8 @@ def fetch_records(http: SgRequests, state: CrawlState) -> Iterable[SgRecord]:
             )
         except:
             hours_of_operation = MISSING
+        raw_address = street + " " + city + " " + state + " " + zip_postal
+        raw_address = raw_address.replace(MISSING, "")
         yield SgRecord(
             locator_domain=DOMAIN,
             page_url=next_r.url,
@@ -152,6 +157,7 @@ def fetch_records(http: SgRequests, state: CrawlState) -> Iterable[SgRecord]:
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hours_of_operation.strip(),
+            raw_address=raw_address,
         )
 
 

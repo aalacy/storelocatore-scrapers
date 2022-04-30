@@ -42,14 +42,16 @@ def fetch_data():
 
         location_name = poi["name"]
         location_name = location_name if location_name else "<MISSING>"
+        raw_address = ""
         if not poi.get("address"):
-            addr = parse_address_intl(
+            raw_address = (
                 loc_dom.xpath('//a[contains(@href, "maps")]/@href')[0]
-                .split("q=")[-1]
-                .split("&")[0]
+                .split("query=")[-1]
+                .split("&query")[0]
                 .replace("+", " ")
-                .replace("%2C", "")
+                .replace("%2C", ",")
             )
+            addr = parse_address_intl(raw_address)
             street_address = addr.street_address_1
             if addr.street_address_2:
                 street_address += " " + addr.street_address_2
@@ -77,15 +79,10 @@ def fetch_data():
         location_type = poi["@type"]
         latitude = poi["geo"]["latitude"]
         longitude = poi["geo"]["longitude"]
-        hoo = loc_dom.xpath('//div[@class="openhours"]/table//text()')
-        hoo = (
-            " ".join([e.strip() for e in hoo if e.strip()])
-            .split(" Mon,")[0]
-            .replace(
-                " Tue, Wed, Thu, Fri, Sat, Sun 10:00 AM - 11:30 PM Mon 2:00 PM - 11:30 PM",
-                "",
-            )
+        hoo = loc_dom.xpath(
+            '//h4[contains(text(), "Opening Hours")]/following-sibling::div[@class="table-wrap"][1]//text()'
         )
+        hoo = " ".join([e.strip() for e in hoo if e.strip()])
         if loc_dom.xpath('//div[contains(text(), "temporarily closed")]'):
             location_type = "temporarily closed"
 
@@ -104,6 +101,7 @@ def fetch_data():
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hoo,
+            raw_address=raw_address,
         )
 
         yield item

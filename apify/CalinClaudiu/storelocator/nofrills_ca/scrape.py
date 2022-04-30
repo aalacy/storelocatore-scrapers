@@ -1,13 +1,11 @@
 from sgscrape import simple_scraper_pipeline as sp
 from sglogging import sglog
 
-
+import ssl
 from sgscrape import simple_utils as utils
-
 from sgrequests import SgRequests
-from requests.packages.urllib3.util.retry import Retry
 
-from sgselenium import SgFirefox
+from sgselenium import SgChrome
 
 from selenium.webdriver.support.ui import WebDriverWait
 
@@ -23,6 +21,17 @@ from fuzzywuzzy import process
 
 import json  # noqa
 
+import time
+
+try:
+    _create_unverified_https_context = ssl._create_unverified_context
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context
+
+logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
+
 
 def return_last4(fullId):
     last4 = list(fullId[-4:])
@@ -31,11 +40,7 @@ def return_last4(fullId):
     return "".join(last4)
 
 
-def determine_verification_link(rec, typ, fullId, last4, typIter):
-    defaultHeaders = {
-        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
-    }
-
+def _detStation(fullId, last4, defaultHeaders):
     determinationStation = {
         "Shop Easy Foods": {
             "url": "https://www.shopeasy.ca/find-store/?location={fullId}".format(
@@ -332,7 +337,7 @@ def determine_verification_link(rec, typ, fullId, last4, typIter):
             "api": None,
         },
         # LAST 4 CAN NOT START WITH 0 !!!!
-        # Addressed this :)
+        # Addressed this
         # Has to start with 0 for a few..
         "No Frills": {
             "url": "https://www.nofrills.ca/store-locator/details/{last4}".format(
@@ -362,21 +367,29 @@ def determine_verification_link(rec, typ, fullId, last4, typIter):
         },
         # https://stores.shoppersdrugmart.ca/en/store/6071
     }
+    return determinationStation
+
+
+def determine_verification_link(rec, typ, fullId, last4, typIter):
+    defaultHeaders = {
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+    }
+    determinationStation = _detStation(fullId, last4, defaultHeaders)
 
     def determined_possible():
         def passed():
-            retryBehaviour = Retry(total=2, connect=2, read=2, backoff_factor=0.1)
-            retryBehaviour = False
-            with SgRequests(
-                retry_behavior=retryBehaviour, proxy_rotation_failure_threshold=2
-            ) as session:
+            with SgRequests() as session:
                 try:
                     if result["api"]:
                         test_url = result["api"]
-                        test = session.get(test_url, headers=result["headers"]).json()
+                        test = SgRequests.raise_on_err(
+                            session.get(test_url, headers=result["headers"])
+                        ).json()
                     elif result["url"]:
                         test_url = result["url"]
-                        test = session.get(test_url, headers=result["headers"]).json()
+                        test = SgRequests.raise_on_err(
+                            session.get(test_url, headers=result["headers"])
+                        ).json()
                     else:
                         test = None
                     if test:
@@ -456,7 +469,7 @@ def url_fix(url):
 
 
 def get_api_call(url):
-    with SgFirefox() as driver:
+    with SgChrome() as driver:
         driver.get(url)
         to_click = WebDriverWait(driver, 40).until(
             EC.visibility_of_element_located(
@@ -469,27 +482,34 @@ def get_api_call(url):
             EC.visibility_of_element_located(
                 (
                     By.XPATH,
-                    "/html/body/div[6]/div[3]/div[2]/section/div/div[1]/div[2]/div/div[2]/form/div[1]/div[2]/input",
+                    "/html/body/div[6]/div[3]/div[2]/section/div/div[1]/div[2]/div/div[3]/form/div/div[2]/div/input",
                 )
             )
         )
         input_field.send_keys("B3L 4T2")
         input_field.send_keys(Keys.RETURN)
-
-        wait_for_loc = WebDriverWait(driver, 30).until(  # noqa
-            EC.visibility_of_element_located(
-                (
-                    By.XPATH,
-                    "/html/body/div[6]/div[3]/div[2]/section/div/div[3]/div[1]/div/ol/li[1]/div",
+        time.sleep(10)
+        try:
+            wait_for_loc = WebDriverWait(driver, 30).until(  # noqa
+                EC.visibility_of_element_located(
+                    (
+                        By.XPATH,
+                        "/html/body/div[6]/div[3]/div[2]/section/div/div[3]/div[1]/div/ol/li[1]/div",
+                    )
                 )
             )
-        )
+        except Exception:
+            logzilla.info(driver.page_source)
+            logzilla.info(driver.requests)
+
+        time.sleep(10)
+        headers = {}
         for r in driver.requests:
             if "DoSearch2" in r.path:
                 url = r.url
                 headers = r.headers
-
-    return url, headers
+        time.sleep(10)
+        return url, headers
 
 
 def defuzz(record):
@@ -532,6 +552,7 @@ def defuzz(record):
     testString = record["Name"] + "," + record["CategoryNames"]
     result = process.extractOne(testString, knownTypes)
     if result[1] > 50:
+        record["ttype"] = result[0]
         record["CategoryNames"] = result[0] + ","
         return do_everything(record)
     else:
@@ -547,8 +568,92 @@ def fix_phone(record):
             return attribute["AttributeValue"]
 
 
+def lesser_determination(banner, fullId):
+    # "HOME HEALTH CARE": { # noqa
+    #         "url": "https://stores.shoppersdrugmart.ca/en/store/{last4}".format( # noqa
+    #            last4=last4 # noqa
+    #        ), # noqa
+    #        "headers": defaultHeaders, # noqa
+    #        "api": None, # noqa
+    #    }, # noqa
+
+    defaultHeaders = {
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+    }
+    determinationStation = _detStation(fullId, fullId, defaultHeaders)
+
+    for i in list(determinationStation):
+        try:
+            if (
+                determinationStation[i]["headers"]["Site-Banner"] == banner
+                or banner in determinationStation[i]["headers"]["Site-Banner"]
+            ):
+                return str(i), str(determinationStation[i]["url"])
+        except Exception:
+            pass
+
+
+def lesser_datasource():
+    url = "https://www.loblaws.ca/api/pickup-locations"
+    session = SgRequests()
+    headers = {
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+    }
+    lesserData = SgRequests.raise_on_err(session.get(url, headers=headers)).json()
+    session.close()
+    for i in lesserData:
+        loctype, url = lesser_determination(
+            i["storeBannerId"], i["id"] if i["id"] else i["storeId"]
+        )
+        yield {
+            "url": url,
+            "Name": i["name"],
+            "Latitude": i["geoPoint"]["latitude"],
+            "Longitude": i["geoPoint"]["longitude"],
+            "Address1": i["address"]["line1"],
+            "Address2": i["address"]["line2"],
+            "Address3": "",
+            "Address4": "",
+            "City": i["address"]["town"],
+            "State": i["address"]["region"],
+            "PostCode": i["address"]["postalCode"],
+            "CountryCode": i["address"]["country"],
+            "PhoneNumber": i["contactNumber"],
+            "ThirdPartyId": i["id"] if i["id"] else i["storeId"],
+            "BusinessHours": "",
+            "ttype": loctype,
+        }
+
+
+def fix_rec(x):
+    x["Address1x"] = x["Address1"]
+    x["Address2x"] = x["Address2"]
+    x["Address3x"] = x["Address3"]
+    x["Address4x"] = x["Address4"]
+    try:
+        if (
+            any(j in x for j in ["UITE", "LOOR", "NIT", "uite", "loor", "nit"])
+            not in x["Address2"]
+        ):
+            x["Address2"] = ""
+
+        if (
+            any(j in x for j in ["UITE", "LOOR", "NIT", "uite", "loor", "nit"])
+            not in x["Address3"]
+        ):
+            x["Address3"] = ""
+
+        if (
+            any(j in x for j in ["UITE", "LOOR", "NIT", "uite", "loor", "nit"])
+            not in x["Address4"]
+        ):
+            x["Address4"] = ""
+    except Exception:
+        pass
+    return x
+
+
 def fetch_data():
-    logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
     # https://ws2.bullseyelocations.com/RestSearch.svc/ # noqa
     # DoSearch2? # noqa
     # ClientId=4664 # noqa
@@ -578,17 +683,22 @@ def fetch_data():
     # url entrypoint to get all loblaws data
     logzilla.info(f"Figuring out bullseye url and headers with selenium")  # noqa
 
-    def retry_starting():
-        try:
-            return get_api_call(url)
-        except Exception as e:
-            logzilla.info(f"Handling this:\n{e}")
-            retry_starting()
-            # shouldn't be to worried,
-            # worst case if their API changes crawl will timeout
-            # rather than just pull from the other (worse) data source
+    def rRetry(retry):
+        def retry_starting():
+            try:
+                return get_api_call(url)
+            except Exception as e:
+                logzilla.info(f"Handling this:\n{str(e)}")
+                retry_starting()
+                # shouldn't be to worried,
+                # worst case if their API changes crawl will timeout
+                # rather than just pull from the other (worse) data source
 
-    url, headers = retry_starting()
+        if retry:
+            retry_starting()
+        return get_api_call(url)
+
+    url, headers = rRetry(False)
     logzilla.info(f"Found out this bullseye url:\n{url}\n\n& headers:\n{headers}")
 
     logzilla.info(f"Fixing up URL,")  # noqa
@@ -596,12 +706,13 @@ def fetch_data():
     logzilla.info(f"New URL:\n{url}\n\n")
 
     session = SgRequests()
-    bullsEyeData = session.get(url, headers=headers).json()
+    headers = dict(headers)
+    bullsEyeData = SgRequests.raise_on_err(session.get(url, headers=headers)).json()
     session.close()
 
     lize = utils.parallelize(
         search_space=bullsEyeData["ResultList"],
-        fetch_results_for_rec=do_everything,
+        fetch_results_for_rec=defuzz,
         max_threads=10,
         print_stats_interval=10,
     )
@@ -623,13 +734,15 @@ def fetch_data():
             megafails.append(i)  # noqa
             yield defuzz(i)
         else:
-            yield i
+            yield fix_rec(i)
 
     # ########for debugging megafails: # noqa
     # print(len(megafails)) # noqa
     # with open('megafails.txt', mode='w', encoding = 'utf-8') as file: # noqa
     #    file.write(json.dumps(megafails)) # noqa
 
+    for i in lesser_datasource():
+        yield i
     logzilla.info(f"Finished grabbing data!!☺ ")  # noqa
 
 
@@ -639,7 +752,8 @@ def fix_comma(x):
     try:
         for i in x.split(", "):
             if len(i.strip()) >= 1:
-                h.append(i)
+                if i != ",":
+                    h.append(i)
         return ", ".join(h)
     except Exception:
         return x
@@ -667,6 +781,27 @@ def fix_domain(x):
         )
 
 
+def showme(x):
+    logzilla.info(f"Showme: {x}")
+    return x
+
+
+def phoneident(x):
+    phone = []
+    for i in x:
+        if i.isdigit():
+            phone.append(i)
+    x = "".join(phone)
+    return x
+
+
+def fix_city(x):
+    try:
+        return x.split(",")[0]
+    except Exception:
+        return x
+
+
 def scrape():
     field_defs = sp.SimpleScraperPipeline.field_definitions(
         locator_domain=sp.MappingField(
@@ -680,6 +815,7 @@ def scrape():
                 "None", "<MISSING>"
             ),
             is_required=False,
+            part_of_record_identity=True,
         ),
         location_name=sp.MappingField(
             mapping=["Name"],
@@ -701,6 +837,7 @@ def scrape():
         ),
         city=sp.MappingField(
             mapping=["City"],
+            value_transform=fix_city,
             is_required=False,
         ),
         state=sp.MappingField(
@@ -709,7 +846,9 @@ def scrape():
         ),
         zipcode=sp.MappingField(
             mapping=["PostCode"],
+            value_transform=lambda x: x.replace(" ", "").strip(),
             is_required=False,
+            part_of_record_identity=True,
         ),
         country_code=sp.MappingField(
             mapping=["CountryCode"],
@@ -717,9 +856,7 @@ def scrape():
         ),
         phone=sp.MappingField(
             mapping=["PhoneNumber"],
-            value_transform=lambda x: x.replace("none", "<MISSING>").replace(
-                "None", "<MISSING>"
-            ),
+            value_transform=phoneident,
             is_required=False,
         ),
         store_number=sp.MappingField(
@@ -731,10 +868,16 @@ def scrape():
             is_required=False,
         ),
         location_type=sp.MappingField(
-            mapping=["type"],
+            mapping=["ttype"],
+            is_required=False,
+            part_of_record_identity=True,
+        ),
+        raw_address=sp.MultiMappingField(
+            mapping=[["Address1x"], ["Address2x"], ["Address3x"], ["Address4x"]],
+            multi_mapping_concat_with=", ",
+            value_transform=fix_comma,
             is_required=False,
         ),
-        raw_address=sp.MissingField(),
     )
 
     pipeline = sp.SimpleScraperPipeline(

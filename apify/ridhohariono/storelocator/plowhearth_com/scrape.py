@@ -5,7 +5,7 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 
-DOMAIN = "inspirahealthnetwork.com"
+DOMAIN = "plowhearth.com"
 BASE_URL = "https://www.plowhearth.com"
 LOCATION_URL = "https://www.plowhearth.com/en/store-finder?q=-&page={}"
 HEADERS = {
@@ -38,6 +38,7 @@ def fetch_data():
             zip_postal = row["postalCode"]
             phone = row["phone"]
             country_code = "US"
+            location_type = MISSING
             try:
                 hours_of_operation = " ".join(
                     "{} : {}".format(key, value)
@@ -45,7 +46,7 @@ def fetch_data():
                 )
             except:
                 hours_of_operation = MISSING
-            location_type = MISSING
+                location_type = "TEMP_CLOSED"
             store_number = MISSING
             latitude = row["latitude"]
             longitude = row["longitude"]

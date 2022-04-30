@@ -9,8 +9,12 @@ from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.pause_resume import SerializableRequest, CrawlState, CrawlStateSingleton
 
+from tenacity import retry, stop_after_attempt
+import tenacity
+import random
+import time
 
-website = "bargainbasementhomecenter_com"
+website = "visionexpress_com"
 logger = sglog.SgLogSetup().get_logger(logger_name=website)
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
@@ -18,6 +22,17 @@ headers = {
 
 DOMAIN = "https://www.visionexpress.com"
 MISSING = SgRecord.MISSING
+
+
+@retry(stop=stop_after_attempt(5), wait=tenacity.wait_fixed(5))
+def get_response(url):
+    with SgRequests() as http:
+        response = http.get(url, headers=headers)
+        time.sleep(random.randint(1, 3))
+        if response.status_code == 200:
+            logger.info(f"{url} >> HTTP STATUS: {response.status_code}")
+            return response
+        raise Exception(f" {url} >> HTTP Error Code: {response.status_code}")
 
 
 def record_initial_requests(http: SgRequests, state: CrawlState) -> bool:
@@ -49,30 +64,46 @@ def record_initial_requests(http: SgRequests, state: CrawlState) -> bool:
 def fetch_records(http: SgRequests, state: CrawlState) -> Iterable[SgRecord]:
     for next_r in state.request_stack_iter():
         r = http.get(next_r.url, headers=headers)
+        soup = BeautifulSoup(r.text, "html.parser")
         logger.info(f"Pulling the data from: {next_r.url}")
         page_url = next_r.url
-        schema = r.text.split('<script type="application/ld+json">')[2].split(
-            "</script>", 1
-        )[0]
+        try:
+            schema = r.text.split('<script type="application/ld+json">')[2].split(
+                "</script>", 1
+            )[0]
+        except:
+            r = http.get(next_r.url, headers=headers)
+            schema = r.text.split('<script type="application/ld+json">')[2].split(
+                "</script>", 1
+            )[0]
         schema = schema.replace("\n", "")
         loc = json.loads(schema)
         location_name = loc["name"]
         address = loc["address"][0]
         phone = loc["telephone"]
-        street_address = address["streetAddress"]
+        street_address = address["streetAddress"].replace("undefined", "")
         city = address["addressLocality"]
         state = MISSING
         zip_postal = address["postalCode"]
         country_code = address["addressCountry"]
-        latitude = r.text.split('"lat":')[1].split(",")
-        longitude = r.text.split('"lon":')[1].split(",")
-        hours_of_operation = (
-            str(loc["openingHours"])
-            .replace("[", "")
-            .replace("]", "")
-            .replace("', '", ", ")
-            .replace("'", "")
-        )
+        coords = r.text.split('"lat":')[1].split(',"emailAddress":')[0].split(',"lon":')
+        latitude = coords[0]
+        longitude = coords[1]
+        try:
+            hours_of_operation = (
+                soup.findAll("dl", {"class": "location-opening-hours__list"})[-1]
+                .get_text(separator="|", strip=True)
+                .replace("|", " ")
+            )
+        except Exception as e:
+            logger.info(f"loclist Error: {e}")
+            response = get_response(page_url)
+            soup = BeautifulSoup(response.text, "html.parser")
+            hours_of_operation = (
+                soup.findAll("dl", {"class": "location-opening-hours__list"})[-1]
+                .get_text(separator="|", strip=True)
+                .replace("|", " ")
+            )
         store_number = MISSING
         location_type = MISSING
         raw_address = MISSING
@@ -80,13 +111,13 @@ def fetch_records(http: SgRequests, state: CrawlState) -> Iterable[SgRecord]:
             locator_domain=DOMAIN,
             page_url=page_url,
             location_name=location_name,
-            street_address=street_address.strip(),
-            city=city.strip(),
-            state=state.strip(),
-            zip_postal=zip_postal.strip(),
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zip_postal,
             country_code=country_code,
             store_number=store_number,
-            phone=phone.strip(),
+            phone=phone,
             location_type=location_type,
             latitude=latitude,
             longitude=longitude,
