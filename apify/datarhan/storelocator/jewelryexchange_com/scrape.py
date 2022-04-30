@@ -1,123 +1,71 @@
-import csv
-from urllib.parse import urljoin
 from lxml import etree
 
-from sgselenium import SgFirefox
-
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+from sgrequests import SgRequests
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
+from sgpostal.sgpostal import parse_address_usa
 
 
 def fetch_data():
-    # Your scraper here
-    items = []
-
-    start_url = "https://www.jewelryexchange.com/Location/Index"
+    session = SgRequests()
+    start_url = "https://jewelryexchange.com/locations-the-jewelry-exchange/"
     domain = "jewelryexchange.com"
+    hdr = {
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
+    }
 
-    with SgFirefox() as driver:
-        driver.get(start_url)
-        dom = etree.HTML(driver.page_source)
-
-    all_locations = dom.xpath('//a[span[contains(text(), "Map")]]/@ng-href')
-    for url in all_locations:
-        store_url = urljoin("https://www.jewelryexchange.com/", url)
-        with SgFirefox() as driver:
-            driver.get(store_url)
-            loc_dom = etree.HTML(driver.page_source)
-        raw_data = loc_dom.xpath(
-            '//span[@ng-bind-html="StoreModel.StoreAddress"]/text()'
-        )
-        raw_data = [e.strip() for e in raw_data if e.strip()]
-
-        location_name = loc_dom.xpath('//h2[@class="ng-binding"]/text()')[0].split(
-            " - "
-        )[0]
-        street_address = raw_data[0]
-        city = raw_data[1].split(", ")[0]
-        if "Store Closed" in city:
+    response = session.get(start_url, headers=hdr)
+    dom = etree.HTML(response.text)
+    all_locations = dom.xpath('//div[@class="vc_row wpb_row vc_row-fluid"]/div')[1:]
+    for poi_html in all_locations:
+        location_name = poi_html.xpath(".//strong//text()")
+        if not location_name:
             continue
-        state = raw_data[1].split(", ")[-1].split()[0].replace(".", "")
-        zip_code = raw_data[1].split(", ")[-1].split()[-1]
-        country_code = "<MISSING>"
-        store_number = "<MISSING>"
-        phone = loc_dom.xpath('//span[@ng-if="isMobile == false"]/a/text()')
-        phone = phone[0] if phone else "<MISSING>"
-        location_type = "<MISSING>"
-        geo = (
-            loc_dom.xpath('//iframe[@class="MapContainer"]/@src')[0]
-            .split("sll=")[-1]
-            .split("&")[0]
-            .split(",")
+        location_name = location_name[0]
+        raw_address = poi_html.xpath(".//a//text()")[0]
+        addr = parse_address_usa(raw_address)
+        street_address = addr.street_address_1
+        if addr.street_address_2:
+            street_address += " " + addr.street_address_2
+        phone = poi_html.xpath(".//p/text()")[-1].strip()
+        hoo = dom.xpath(
+            '//h3[descendant::strong[contains(text(), "Store Hours")]]/following-sibling::p[1]//text()'
         )
-        if len(geo) == 2:
-            latitude = geo[0]
-            longitude = geo[1]
-        else:
-            geo = (
-                loc_dom.xpath('//iframe[@class="MapContainer"]/@src')[0]
-                .split("!2d")[-1]
-                .split("!2m")[0]
-                .split("!3d")
-            )
-            latitude = geo[1]
-            longitude = geo[0]
-        hoo = loc_dom.xpath('//div[@ng-bind-html="StoreModel.StoreHours"]/text()')
-        hoo = [e.strip() for e in hoo if e.strip()]
-        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
+        hoo = " ".join([e.strip() for e in hoo if e.strip()])
 
-        item = [
-            domain,
-            store_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip_code,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
+        item = SgRecord(
+            locator_domain=domain,
+            page_url=start_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=addr.city,
+            state=addr.state,
+            zip_postal=addr.postcode,
+            country_code="United States",
+            store_number="",
+            phone=phone,
+            location_type="",
+            latitude="",
+            longitude="",
+            hours_of_operation=hoo,
+            raw_address=raw_address,
+        )
 
-        items.append(item)
-
-    return items
+        yield item
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":

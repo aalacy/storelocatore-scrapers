@@ -26,7 +26,7 @@ def fetch_data():
         soup = BeautifulSoup(r.text, "html.parser")
         loclist = soup.findAll(
             "a", {"class": "elementor-button-link elementor-button elementor-size-sm"}
-        )[1:]
+        )
         for loc in loclist:
             page_url = loc["href"]
             log.info(page_url)
@@ -52,13 +52,9 @@ def fetch_data():
             state = pa.state
             state = state.strip() if state else MISSING
 
-            zip_postal = pa.postcode
-            zip_postal = zip_postal.strip() if zip_postal else MISSING
-
-            if zip_postal == MISSING:
-                zip_postal = raw_address.split(",")[-1]
-                if "Co. Dublin" in zip_postal:
-                    zip_postal = MISSING
+            if city == MISSING:
+                city = location_name.split()[0]
+            zip_postal = raw_address.split(",")[-1]
             if "F93" in state:
                 state = MISSING
             if "F92 F5Hw" in street_address:

@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
-import csv
 from sgrequests import SgRequests
 from sglogging import sglog
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
 import lxml.html
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "benbridge.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -13,61 +16,15 @@ headers = {
 }
 
 
-def write_output(data):
-    with open("data.csv", mode="w", newline="", encoding="utf8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        temp_list = []  # ignoring duplicates
-        for row in data:
-            comp_list = [
-                row[2].strip(),
-                row[3].strip(),
-                row[4].strip(),
-                row[5].strip(),
-                row[6].strip(),
-                row[8].strip(),
-                row[10].strip(),
-            ]
-            if comp_list not in temp_list:
-                temp_list.append(comp_list)
-                writer.writerow(row)
-
-        log.info(f"No of records being processed: {len(temp_list)}")
-
-
 def fetch_data():
     # Your scraper here
-    loc_list = []
-
     countries = ["US", "CA"]
     for country in countries:
         search_url = "https://www.benbridge.com/jewelry-stores"
         search_req = session.get(search_url, headers=headers)
         search_sel = lxml.html.fromstring(search_req.text)
         post_url = "".join(
-            search_sel.xpath('//form[@id="dwfrm_storelocator_countrylocator"]/@action')
+            search_sel.xpath('//form[@id="dwfrm_storelocator"]/@action')
         ).strip()
 
         data = {
@@ -81,7 +38,7 @@ def fetch_data():
         stores = stores_sel.xpath('//a[@class="storedetail"]/@href')
         for store_url in stores:
             page_url = "https://www.benbridge.com" + store_url
-
+            log.info(page_url)
             store_req = session.get(page_url, headers=headers)
             store_sel = lxml.html.fromstring(store_req.text)
 
@@ -91,8 +48,6 @@ def fetch_data():
                     '//span[@class="c-section-contact-info__subheading"]/text()'
                 )
             ).strip()
-            if location_name == "":
-                location_name = "<MISSING>"
 
             address = store_sel.xpath(
                 '//p[@class="c-section-contact-info__text"]/text()'
@@ -108,18 +63,6 @@ def fetch_data():
             zip = add_list[1].strip().split(",")[1].strip().split(" ", 1)[1].strip()
 
             country_code = country
-
-            if street_address == "":
-                street_address = "<MISSING>"
-
-            if city == "":
-                city = "<MISSING>"
-
-            if state == "":
-                state = "<MISSING>"
-
-            if zip == "":
-                zip = "<MISSING>"
 
             store_number = "".join(
                 store_sel.xpath('//meta[@itemprop="branchCode"]/@content')
@@ -137,56 +80,49 @@ def fetch_data():
                 location_type = "PANDORA"
 
             hours = store_sel.xpath('//table[@class="store-hours"]/tr')
-            hours_of_operation = ""
+            hours_list = []
             for hour in hours:
-                hours_of_operation = (
-                    hours_of_operation
-                    + "".join(hour.xpath('td[@class="day"]/text()')).strip()
+                hours_list.append(
+                    "".join(hour.xpath('td[@class="day"]/text()')).strip()
                     + ":"
                     + "".join(hour.xpath('td[@class="time"]/text()')).strip()
-                    + " "
                 )
 
-            hours_of_operation = hours_of_operation.strip()
+            hours_of_operation = "; ".join(hours_list).strip()
 
             latitude = store_req.text.split("lat:")[1].strip().split(",")[0].strip()
             longitude = store_req.text.split("lng:")[1].strip().split("}")[0].strip()
 
-            if latitude == "":
-                latitude = "<MISSING>"
-            if longitude == "":
-                longitude = "<MISSING>"
-
-            if hours_of_operation == "":
-                hours_of_operation = "<MISSING>"
-            if phone == "":
-                phone = "<MISSING>"
-
-            curr_list = [
-                locator_domain,
-                page_url,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
-            loc_list.append(curr_list)
-
-    return loc_list
+            yield SgRecord(
+                locator_domain=locator_domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
 
 
 def scrape():
     log.info("Started")
-    data = fetch_data()
-    write_output(data)
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    log.info(f"No of records being processed: {count}")
     log.info("Finished")
 
 

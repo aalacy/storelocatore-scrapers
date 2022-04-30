@@ -67,7 +67,7 @@ def get_data(url, sgw: SgWriter):
     location_type = (
         ",".join(
             tree.xpath(
-                '//h2[contains(text(), "STORE SERVICES")]/following-sibling::ul/li/text()'
+                "//main[@class='store-locator__main']//h2[contains(text(), 'STORE SERVICES')]/following-sibling::ul[1]/li//text()"
             )
         )
         .replace("\n", "")
@@ -106,5 +106,15 @@ def fetch_data(sgw: SgWriter):
 
 if __name__ == "__main__":
     session = SgRequests()
-    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))) as writer:
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.LOCATION_NAME,
+                    SgRecord.Headers.LOCATION_TYPE,
+                    SgRecord.Headers.STREET_ADDRESS,
+                }
+            )
+        )
+    ) as writer:
         fetch_data(writer)
