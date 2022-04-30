@@ -5,6 +5,9 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 _headers = {
+    "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+    "accept-encoding": "gzip, deflate, br",
+    "accept-language": "en-US,en;q=0.9",
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
 }
 
@@ -27,15 +30,25 @@ def fetch_data():
         locations = session.get(base_url, headers=_headers).json()["storeJobs"]
         for _ in locations:
             hours = []
+            temp = {}
             for hh in _["operatingHours"].get("dinein", []):
-                hours.append(f"{days[hh['dayofweek']]}: {hh['start']}-{hh['end']}")
+                day = days[hh["dayofweek"]]
+                if temp.get(day):
+                    temp[day]["end"] = hh["end"]
+                else:
+                    temp[day] = {"start": hh["start"], "end": hh["end"]}
+            for day, hh in temp.items():
+                hours.append(f"{day}: {hh['start']} - {hh['end']}")
             page_url = f"https://www.kfc.de/find-a-kfc/{_['urlname']}"
+            location_name = _["displayName"]
+            if "COMING SOON" in location_name:
+                continue
             yield SgRecord(
                 page_url=page_url,
                 store_number=_["id"],
-                location_name=_["displayName"],
+                location_name=location_name,
                 street_address=_["address"],
-                city=_["city"],
+                city=_["city"].split("/")[0],
                 zip_postal=_["postalcode"],
                 latitude=_["location"]["latitude"],
                 longitude=_["location"]["longitude"],

@@ -245,7 +245,6 @@ def get_subpage(session, url):
         try:
             response = SgRequests.raise_on_err(session.get(url, headers=headers))
             soup = b4(response.text, "lxml")
-            logzilla.info(f"URL\n{url}\nLen:{len(response.text)}\n")
             if len(response.text) < 400:
                 logzilla.info(f"Content\n{response.text}\n\n")
         except Exception as e:
@@ -263,8 +262,8 @@ def get_subpage(session, url):
                         logzilla.info(f"Content\n{response.text}\n\n")
                     soup = b4(response.text, "lxml")
                 except Exception as e:
-                    logzilla.error(f"{str(e)}")
-                    raise
+                    logzilla.error(f" for url: {str(url)}\n{str(e)}")
+                    pass
 
         try:
             data = json.loads(
@@ -318,7 +317,6 @@ def initial(driver, url, state):
         time.sleep(15)
         time.sleep(5)
         reqs = list(driver.requests)
-        logzilla.info(f"Length of driver.requests: {len(reqs)}")
         for r in reqs:
             x = r.url
             if "zimba" in x and "hotels?" in x:
@@ -366,6 +364,48 @@ def fix_phone(x):
     return x
 
 
+def old_brands(x):
+    brands = {
+        "ry": "noClue",
+        "pii": "Park Inn by Radisson",
+        "rdb": "Radisson Blu",
+        "rdr": "Radisson RED",
+        "art": "art'otel",
+        "rad": "Radisson",
+        "ri": "Radisson Individuals",
+        "prz": "prizeotel",
+        "pph": "Park Plaza",
+        "cis": "Country Inn & Suites",
+        "rco": "Radisson Collection",
+    }
+
+    try:
+        return brands[x]
+    except Exception:
+        return x
+
+
+def fix_india(x):
+    if x.count("<") == x.count(">"):
+        x = list(x)
+        inside = False
+        copy = []
+        while x:
+            whatis = x.pop(0)
+            if whatis == "<":
+                inside = True
+            if whatis == ">":
+                inside = False
+                continue
+            if not inside:
+                copy.append(whatis)
+        if len(copy) > 0:
+            return "".join(copy)
+        return "".join(x)
+    else:
+        return "".join(x)
+
+
 def scrape():
     url = "https://www.radissonhotels.com/en-us/destination"
     field_defs = sp.SimpleScraperPipeline.field_definitions(
@@ -411,6 +451,7 @@ def scrape():
         country_code=sp.MappingField(
             mapping=["sub", "mainEntity", "address", "addressCountry"],
             is_required=False,
+            value_transform=fix_india,
         ),
         phone=sp.MappingField(
             mapping=["sub", "mainEntity", "telephone", 0],
@@ -424,7 +465,8 @@ def scrape():
         ),
         hours_of_operation=sp.MissingField(),
         location_type=sp.MappingField(
-            mapping=["sub", "publisher", "brand", "name"],
+            mapping=["main", "brand"],
+            value_transform=old_brands,
             is_required=False,
         ),
     )

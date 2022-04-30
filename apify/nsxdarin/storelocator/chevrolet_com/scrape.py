@@ -47,15 +47,17 @@ def get_data(coords, sgw: SgWriter):
     js = r.json()["payload"]["dealers"]
 
     for j in js:
+
         a = j.get("address")
         page_url = "https://www.chevrolet.com/dealer-locator"
         location_name = j.get("dealerName")
         street_address = f"{a.get('addressLine1')} {a.get('addressLine2')} {a.get('addressLine3')}".strip()
         city = a.get("cityName") or "<MISSING>"
         state = a.get("region") or "<MISSING>"
-        postal = a.get("postalCode") or "<MISSING>"
+        postal = a.get("postalCodeFormatted") or "<MISSING>"
         country_code = "US"
         phone = j.get("generalContact").get("phone1") or "<MISSING>"
+        phone = str(phone).replace(",", "").strip()
         latitude = j.get("geolocation").get("latitude") or "<MISSING>"
         longitude = j.get("geolocation").get("longitude") or "<MISSING>"
         store_number = j.get("dealerCode") or "<MISSING>"

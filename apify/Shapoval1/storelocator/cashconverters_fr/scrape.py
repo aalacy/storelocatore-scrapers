@@ -28,6 +28,11 @@ def fetch_data(sgw: SgWriter):
             or page_url == "#"
         ):
             continue
+        if (
+            page_url.find("occasion") != -1
+            or page_url.find("franchise.cashconverters") != -1
+        ):
+            continue
         location_name = "".join(d.xpath(".//text()")).strip()
         try:
             r = session.get(page_url, headers=headers)
