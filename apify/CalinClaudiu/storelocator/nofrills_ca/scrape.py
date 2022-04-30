@@ -504,7 +504,8 @@ def get_api_call(url):
             )
         )
     except Exception:
-        pass
+        logzilla.info(driver.page_source)
+        logzilla.info(driver.requests)
 
     time.sleep(10)
     for r in driver.requests:
