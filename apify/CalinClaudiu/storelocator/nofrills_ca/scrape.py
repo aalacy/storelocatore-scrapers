@@ -500,7 +500,9 @@ def get_api_call(url):
             )
         except Exception:
             logzilla.info(driver.page_source)
-            logzilla.info(driver.requests)
+            z = driver.requests
+            for i in z:
+                logzilla.info(i)
 
         time.sleep(10)
         headers = {}
