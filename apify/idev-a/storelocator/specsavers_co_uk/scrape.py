@@ -11,6 +11,11 @@ from sglogging import SgLogSetup
 import ssl
 from webdriver_manager.chrome import ChromeDriverManager
 from tenacity import retry, stop_after_attempt, wait_fixed
+import os
+
+os.environ[
+    "PROXY_URL"
+] = "http://groups-RESIDENTIAL,country-ca:{}@proxy.apify.com:8000/"
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
@@ -96,6 +101,8 @@ def _d(driver, page_url, res, soup, location_type):
                     soup = bs(driver.page_source, "lxml")
                     addr = list(soup.select_one("div.store p").stripped_strings)
 
+                raw_address = " ".join(addr).replace("\n", "").replace("\r", "")
+                addr = raw_address.split(",")
                 street_address = " ".join(addr[:-3])
                 if street_address.endswith(","):
                     street_address = street_address[:-1]
@@ -133,10 +140,10 @@ def _d(driver, page_url, res, soup, location_type):
                     hours_of_operation="; ".join(hours),
                     location_type=location_type,
                     country_code="UK",
-                    raw_address=" ".join(addr).replace("\n", "").replace("\r", ""),
+                    raw_address=raw_address,
                 )
             except Exception as e:
-                logger.info("failed ", page_url)
+                logger.info(f"failed {page_url} {str(e)}")
                 open("w", "a+").write(page_url + ": " + str(e) + "\n")
 
 

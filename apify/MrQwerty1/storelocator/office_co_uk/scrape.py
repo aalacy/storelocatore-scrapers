@@ -1,16 +1,13 @@
 from lxml import html
 from sgscrape.sgrecord import SgRecord
-from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 
 from sgscrape.sgpostal import parse_address, International_Parser
 from sglogging import sglog
-
-log = sglog.SgLogSetup().get_logger(logger_name="office.co.uk")
-
-session = SgRequests()
+from sgselenium import SgChrome
+import ssl
 
 
 def get_international(line):
@@ -25,13 +22,30 @@ def get_international(line):
 
 
 def get_urls():
-    r = session.get(
-        "https://www.office.co.uk/view/content/storelocator", headers=headers
-    )
-    log.info(f"Get URLs: {r}")
-    tree = html.fromstring(r.text, "lxml")
+    with SgChrome() as driver:
+        driver.get("https://www.office.co.uk/view/content/storelocator")
+        tree = html.fromstring(driver.page_source, "lxml")
 
     return tree.xpath("//div[contains(@id, 'addressDetail')]/a/@href")
+
+
+def get_tree(page_url, retry=0):
+    with SgChrome() as driver:
+        driver.get(page_url)
+        tree = html.fromstring(driver.page_source, "lxml")
+        line = tree.xpath(
+            "//ul[@class='storelocator_addressdetails_address darkergrey']/li/text()"
+        )
+        line = list(filter(None, [li.strip() for li in line]))
+
+    if line:
+        return tree
+    else:
+        if retry == 3:
+            return None
+        else:
+            retry += 1
+            return get_tree(page_url, retry)
 
 
 def fetch_data():
@@ -39,9 +53,10 @@ def fetch_data():
     log.info(f"Total URLs to crawl: {len(urls)}")
     for slug in urls:
         page_url = f"https://www.office.co.uk/view/content/storelocator{slug}"
-        r = session.get(page_url, headers=headers)
-        log.info(f"{page_url} Response: {r}")
-        tree = html.fromstring(r.text, "lxml")
+        tree = get_tree(page_url)
+        if tree is None:
+            log.info(f"{page_url} hasn't tree...")
+            continue
 
         line = tree.xpath(
             "//ul[@class='storelocator_addressdetails_address darkergrey']/li/text()"
@@ -100,9 +115,8 @@ def fetch_data():
 
 if __name__ == "__main__":
     locator_domain = "https://www.office.co.uk/"
-    headers = {
-        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36"
-    }
+    ssl._create_default_https_context = ssl._create_unverified_context
+    log = sglog.SgLogSetup().get_logger(logger_name="office.co.uk")
 
     with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         for rec in fetch_data():

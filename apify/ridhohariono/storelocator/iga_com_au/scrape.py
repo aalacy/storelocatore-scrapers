@@ -100,7 +100,7 @@ def wait_load(driver, wait, number=0):
             WebDriverWait(driver, 5).until(
                 EC.presence_of_element_located((By.ID, "sf-stores-list"))
             )
-        except:
+        except TimeoutException:
             driver.refresh()
             if number < 3:
                 log.info(f"Try to Refresh for ({number}) times")
@@ -112,7 +112,7 @@ def wait_load(driver, wait, number=0):
                     (By.XPATH, '//*[@id="sf-location-search"]')
                 )
             )
-        except:
+        except TimeoutException:
             driver.delete_all_cookies()
             driver.refresh()
             if number < 3:
@@ -191,7 +191,9 @@ def fetch_data():
                 )
             latitude = row["data-latitude"]
             longitude = row["data-longitude"]
-            search.found_location_at(latitude, longitude)
+            if str(latitude) == "0":
+                latitude = MISSING
+                longitude = MISSING
             log.info("Append {} => {}".format(location_name, street_address))
             yield SgRecord(
                 locator_domain=DOMAIN,

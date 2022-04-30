@@ -45,7 +45,7 @@ def fetch_data():
             longitude = geo["lng"]
         hoo = " ".join(
             loc_dom.xpath('//div[@class="shop-time"]/text()')[0].split()
-        ).replace("ご注文受付時間:", "")
+        ).replace("ご注文受付時間：", "")
 
         item = SgRecord(
             locator_domain=domain,

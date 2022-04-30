@@ -29,6 +29,10 @@ def fetch_data():
         pcode = loc["location"]["postal_code"]
         street = street.split(", " + state, 1)[0]
         phone = loc["location"]["extra_fields"]["phone"]
+        if ", " + city in street:
+            street = street.split(", " + city, 1)[0]
+        elif " " + city in street:
+            street = street.split(" " + city, 1)[0]
         ltypelist = loc["categories"]
         ltype = ""
         for lt in ltypelist:
