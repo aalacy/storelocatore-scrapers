@@ -496,13 +496,13 @@ def get_api_call(url):
     time.sleep(10)
     try:
         wait_for_loc = WebDriverWait(driver, 30).until(  # noqa
-        EC.visibility_of_element_located(
-            (
-                By.XPATH,
-                "/html/body/div[6]/div[3]/div[2]/section/div/div[3]/div[1]/div/ol/li[1]/div",
+            EC.visibility_of_element_located(
+                (
+                    By.XPATH,
+                    "/html/body/div[6]/div[3]/div[2]/section/div/div[3]/div[1]/div/ol/li[1]/div",
+                )
             )
         )
-    )
     except Exception:
         logzilla.info(driver.page_source)
         logzilla.info(driver.requests)
