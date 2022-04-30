@@ -31,7 +31,7 @@ def fetch_data(sgw: SgWriter):
             .split(",")[0]
             .replace("'", "")
             .replace("&amp;", "&")
-            .replace("\&#039;", "`")
+            .replace("&#039;", "`")
             .strip()
         )
 
