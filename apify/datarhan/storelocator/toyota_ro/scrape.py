@@ -15,13 +15,17 @@ def fetch_data():
         "https://kong-proxy-aws.toyota-europe.com/dxp/dealers/api/toyota/ro/ro/drive/26.08333/44.4?count=500&extraCountries=&isCurrentLocation=false",
         "https://kong-proxy-aws.toyota-europe.com/dxp/dealers/api/toyota/ch/de/drive/7.43861/46.95083?count=500&extraCountries=li&isCurrentLocation=false",
         "https://kong-proxy-aws.toyota-europe.com/dxp/dealers/api/toyota/se/sv/drive/13.167381/55.701493?count=500&extraCountries=&limitSearchDistance=0&isCurrentLocation=false&services=",
-        "https://kong-proxy-aws.toyota-europe.com/dxp/dealers/api/toyota/sk/sk/drive/17.135763/48.156086?count=500&extraCountries=&limitSearchDistance=60&isCurrentLocation=false",
+        "https://kong-proxy-aws.toyota-europe.com/dxp/dealers/api/toyota/sk/sk/drive/17.135763/48.156086?count=500&extraCountries=&limitSearchDistance=0&isCurrentLocation=false",
         "https://kong-proxy-aws.toyota-europe.com/dxp/dealers/api/toyota/dk/da/drive/12.079135/55.648779?count=500&extraCountries=&isCurrentLocation=false",
         "https://kong-proxy-aws.toyota-europe.com/dxp/dealers/api/toyota/gb/en/drive/-0.081018/51.652085?count=500&extraCountries=&isCurrentLocation=false",
         "https://kong-proxy-aws.toyota-europe.com/dxp/dealers/api/toyota/es/es/drive/-3.703583/40.416705?count=500&extraCountries=&isCurrentLocation=false",
         "https://kong-proxy-aws.toyota-europe.com/dxp/dealers/api/toyota/fi/fi/drive/22.75/60.5?count=500&extraCountries=&isCurrentLocation=false",
         "https://kong-proxy-aws.toyota-europe.com/dxp/dealers/api/toyota/fr/fr/drive/2.35183/48.85658?count=500&extraCountries=MC&isCurrentLocation=false",
         "https://kong-proxy-aws.toyota-europe.com/dxp/dealers/api/toyota/nl/nl/drive/4.893604/52.37276?count=500&extraCountries=&isCurrentLocation=false",
+        "https://kong-proxy-aws.toyota-europe.com/dxp/dealers/api/toyota/be/nl/drive/4.351697/50.846557?count=500&extraCountries=&isCurrentLocation=false",
+        "https://kong-proxy-aws.toyota-europe.com/dxp/dealers/api/toyota/ee/et/drive/24.745369/59.437216?count=500&extraCountries=&isCurrentLocation=false",
+        "https://kong-proxy-aws.toyota-europe.com/dxp/dealers/api/toyota/lu/fr/drive/6.129799/49.611277?count=500&extraCountries=&isCurrentLocation=false",
+        "https://kong-proxy-aws.toyota-europe.com/dxp/dealers/api/toyota/at/de/drive/15.75/48.33333?count=500&extraCountries=&isCurrentLocation=false",
     ]
     domain = "toyota.ro"
     hdr = {
@@ -58,7 +62,9 @@ def fetch_data():
                 street_address = street_address[:-1]
             phone = poi["phone"]
             if phone:
-                phone = phone.split("elle")[0]
+                phone = phone.split("elle")[0].split(",")[0]
+            services = [e["service"] for e in poi["services"]]
+            services = ", ".join(services) if services else ""
 
             item = SgRecord(
                 locator_domain=domain,
@@ -71,7 +77,7 @@ def fetch_data():
                 country_code=poi["country"],
                 store_number=poi.get("localDealerID"),
                 phone=phone,
-                location_type="",
+                location_type=services,
                 latitude=poi["address"]["geo"]["lat"],
                 longitude=poi["address"]["geo"]["lon"],
                 hours_of_operation=hoo,
