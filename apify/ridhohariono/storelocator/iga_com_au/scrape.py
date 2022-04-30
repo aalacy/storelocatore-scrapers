@@ -162,6 +162,7 @@ def fetch_data():
         )
         log.info(f"Found {len(data)} Locations at {zipcode}")
         for row in data:
+            search.found_location_at(latitude, longitude)
             location_name = row.find("span", {"class": "sf-storename"}).text.strip()
             raw_address = (
                 row.find("p", {"class": "sf-storeaddress"})
@@ -191,7 +192,9 @@ def fetch_data():
                 )
             latitude = row["data-latitude"]
             longitude = row["data-longitude"]
-            search.found_location_at(latitude, longitude)
+            if str(latitude) == "0":
+                latitude = MISSING
+                longitude = MISSING
             log.info("Append {} => {}".format(location_name, street_address))
             yield SgRecord(
                 locator_domain=DOMAIN,
