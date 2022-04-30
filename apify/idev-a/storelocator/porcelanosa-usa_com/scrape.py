@@ -26,7 +26,11 @@ def fetch_data():
             for _ in locations:
                 block = list(_.ul.stripped_strings)
                 _addr = []
+                location_type = "store"
                 for aa in block:
+                    if "Dealer" in aa:
+                        location_type = aa
+                        continue
                     if "Phone" in aa:
                         break
                     _addr.append(aa.replace("\n", ""))
@@ -51,8 +55,14 @@ def fetch_data():
                 if not state and country_code == "CA":
                     state = location_name.split(",")[-1].strip()
                 phone = ""
-                if _.select_one("li a"):
-                    phone = _.select_one("li a").text.strip()
+                if _.find("a", href=re.compile(r"tel:")):
+                    phone = _.find("a", href=re.compile(r"tel:")).text.strip()
+                if not phone and _.find("li", string=re.compile(r"Phone")):
+                    phone = (
+                        _.find("li", string=re.compile(r"Phone"))
+                        .text.replace("Phone", "")
+                        .replace(":", "")
+                    )
                 hr = _.find("strong", string=re.compile(r"Store Hours"))
                 hours = []
                 if hr:
@@ -78,6 +88,8 @@ def fetch_data():
                 hours_of_operation = "; ".join(hours).strip()
                 if hours_of_operation == "By appointment only":
                     hours_of_operation = ""
+                if "www.tftnm.com" in hours_of_operation:
+                    hours_of_operation = ""
 
                 if hours_of_operation.startswith(";"):
                     hours_of_operation = hours_of_operation[1:]
@@ -89,6 +101,7 @@ def fetch_data():
                     street_address=street_address,
                     city=city,
                     state=state,
+                    location_type=location_type,
                     zip_postal=addr.postcode,
                     country_code=country_code,
                     phone=phone,

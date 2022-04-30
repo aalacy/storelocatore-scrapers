@@ -16,6 +16,18 @@ logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
 os.environ["HTTPX_LOG_LEVEL"] = "trace"
 
 
+import ssl
+
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
+
+
 def set_proxies():
     if "PROXY_PASSWORD" in os.environ and os.environ["PROXY_PASSWORD"].strip():
 
@@ -313,6 +325,23 @@ class CleanRecord:
             if "OPEN" in badRecord["properties"]["openstatus"]
             else badRecord["properties"]["openstatus"]
         )
+        if (
+            cleanRecord["hours_of_operation"] == ""
+            or not cleanRecord["hours_of_operation"]
+        ):
+            try:
+                cleanRecord["hours_of_operation"] = (
+                    str(list(badRecord["properties"]["drivethruhours"].items()))
+                    .replace("'", "")
+                    .replace("(", "")
+                    .replace(")", "")
+                    .replace("[", "")
+                    .replace("]", "")
+                    .replace("hours", "")
+                )
+            except Exception:
+                cleanRecord["hours_of_operation"] = ""
+
         cleanRecord["raw_address"] = ""
         identifier = None
         cleanRecord["page_url"] = None
@@ -905,7 +934,7 @@ class getData(CrawlMethod):
         )
 
     def EnableSGREQUESTS(self):
-        self._session = SgRequests()
+        self._session = SgRequests(verify_ssl=False)
 
     def EnableSGREQUESTSclose(self):
         self._session.close()

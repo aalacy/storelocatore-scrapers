@@ -16,11 +16,11 @@ logger = SgLogSetup().get_logger("swarovski_com")
 
 
 def fetch_data():
-    for x in range(-170, 170):
-        for y in range(-70, 70):
+    for x in range(-179, 179, 1):
+        for y in range(-70, 70, 1):
             Found = True
             count = 0
-            while Found and count <= 3:
+            while Found and count <= 5:
                 try:
                     time.sleep(1)
                     Found = False
