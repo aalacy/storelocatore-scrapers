@@ -35,7 +35,7 @@ folders = [
     "shoppersdrugmart_ca",
 ]
 
-logzilla.info("Copying ", len(files_to_copy), " files to ", len(folders), " locations")
+logzilla.info(f"Copying , {len(files_to_copy)},  files to, {len(folders)},  locations")
 for i in folders:
     for j in files_to_copy:
         shutil.copy2(src_dir + "\\" + str(j), dest + i + "\\")
