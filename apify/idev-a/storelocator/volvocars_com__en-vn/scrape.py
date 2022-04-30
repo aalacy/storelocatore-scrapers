@@ -6,6 +6,7 @@ from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgpostal.sgpostal import parse_address_intl
 from sglogging import SgLogSetup
+import re
 
 logger = SgLogSetup().get_logger("")
 
@@ -39,20 +40,20 @@ def fetch_data():
                 for x, pp in enumerate(bb):
                     _pp = list(pp.stripped_strings)
                     p_text = " ".join(_pp)
-                    if not _pp:
-                        continue
-                    if "volvo car" in p_text.lower():
+                    if not p_text:
                         continue
                     if (
-                        "Co., Ltd" in p_text
+                        "SHOWROOM" in p_text
+                        or "Authorized" in p_text
+                        or "Genuine" in p_text
                         or "Email" in p_text
                         or "ელ.ფოსტა" in p_text
                     ):
                         continue
-                    if not location_name:
+                    if not location_name and "Hotline" not in p_text:
                         location_name = p_text.split(":")[-1].strip()
                         continue
-                    if "Hotline" in _pp or "Tel" in _pp or "ტელ" in _pp:
+                    if "Hotline" in p_text or "Tel" in p_text or "ტელ" in p_text:
                         if not phone:
                             if len(_pp) == 1:
                                 phone = _pp[0].split(":")[-1].split("If")[0].strip()
@@ -76,6 +77,10 @@ def fetch_data():
                     zip_postal = addr[-2].strip().split()[-1]
                     state = ""
                     street_address = ", ".join(addr[:-2])
+                    if not phone:
+                        pp = _.find("a", href=re.compile(r"tel:"))
+                        if pp:
+                            phone = pp.text.strip()
                 else:
                     addr = parse_address_intl(raw_address + ", ")
                     street_address = addr.street_address_1
