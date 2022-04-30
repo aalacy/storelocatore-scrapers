@@ -42,11 +42,17 @@ def fetch_data(sgw: SgWriter):
             latitude, longitude = SgRecord.MISSING, SgRecord.MISSING
 
         _tmp = []
-        li = d.xpath(".//li[./span]")
-        for l in li:
-            day = "".join(l.xpath("./text()")).strip()
-            time = "".join(l.xpath("./span/text()")).strip()
-            _tmp.append(f"{day} {time}")
+        try:
+            hours = d.xpath(".//ul[@class='toggle-time2 store-specific-hours']")[
+                0
+            ].xpath(".//li[./span]")
+        except:
+            hours = []
+
+        for h in hours:
+            day = "".join(h.xpath("./span[1]/text()")).strip()
+            inter = "".join(h.xpath("./span[2]/text()")).strip()
+            _tmp.append(f"{day}: {inter}")
 
         hours_of_operation = ";".join(_tmp) or "Closed"
 

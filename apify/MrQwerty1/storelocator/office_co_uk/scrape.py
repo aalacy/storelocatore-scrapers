@@ -29,70 +29,88 @@ def get_urls():
     return tree.xpath("//div[contains(@id, 'addressDetail')]/a/@href")
 
 
+def get_tree(page_url, retry=0):
+    with SgChrome() as driver:
+        driver.get(page_url)
+        tree = html.fromstring(driver.page_source, "lxml")
+        line = tree.xpath(
+            "//ul[@class='storelocator_addressdetails_address darkergrey']/li/text()"
+        )
+        line = list(filter(None, [li.strip() for li in line]))
+
+    if line:
+        return tree
+    else:
+        if retry == 3:
+            return None
+        else:
+            retry += 1
+            return get_tree(page_url, retry)
+
+
 def fetch_data():
     urls = get_urls()
     log.info(f"Total URLs to crawl: {len(urls)}")
-    with SgChrome() as driver:
-        for slug in urls:
-            page_url = f"https://www.office.co.uk/view/content/storelocator{slug}"
-            driver.get(page_url)
-            tree = html.fromstring(driver.page_source, "lxml")
+    for slug in urls:
+        page_url = f"https://www.office.co.uk/view/content/storelocator{slug}"
+        tree = get_tree(page_url)
+        if tree is None:
+            log.info(f"{page_url} hasn't tree...")
+            continue
 
-            line = tree.xpath(
-                "//ul[@class='storelocator_addressdetails_address darkergrey']/li/text()"
+        line = tree.xpath(
+            "//ul[@class='storelocator_addressdetails_address darkergrey']/li/text()"
+        )
+        line = list(filter(None, [li.strip() for li in line]))
+        if line:
+            location_name = line.pop(0)
+        else:
+            location_name = SgRecord.MISSING
+
+        raw_address = ", ".join(line)
+        phone = "".join(
+            tree.xpath(
+                "//div[@class='storelocator_contactdetails floatProperties']/div[1]/text()"
             )
-            line = list(filter(None, [li.strip() for li in line]))
-            if line:
-                location_name = line.pop(0)
-            else:
-                location_name = SgRecord.MISSING
+        ).strip()
 
-            raw_address = ", ".join(line)
-            phone = "".join(
-                tree.xpath(
-                    "//div[@class='storelocator_contactdetails floatProperties']/div[1]/text()"
-                )
-            ).strip()
+        street_address, city, postal = get_international(raw_address)
+        country_code = "GB"
+        if " " not in postal and postal != SgRecord.MISSING:
+            country_code = "DE"
 
-            street_address, city, postal = get_international(raw_address)
-            country_code = "GB"
-            if " " not in postal and postal != SgRecord.MISSING:
-                country_code = "DE"
+        text = "".join(tree.xpath("//script[contains(text(),'LatLng')]/text()"))
+        try:
+            latitude, longitude = eval(text.split("LatLng")[1].split(");")[0])
+        except:
+            latitude, longitude = SgRecord.MISSING, SgRecord.MISSING
 
-            text = "".join(tree.xpath("//script[contains(text(),'LatLng')]/text()"))
-            try:
-                latitude, longitude = eval(text.split("LatLng")[1].split(");")[0])
-            except:
-                latitude, longitude = SgRecord.MISSING, SgRecord.MISSING
+        _tmp = []
+        hours = tree.xpath("//ul[@class='storelocator_open_times_content']/li//text()")
+        hours = list(filter(None, [h.strip() for h in hours]))
+        for h in hours:
+            if h.endswith("-"):
+                continue
+            _tmp.append(h)
 
-            _tmp = []
-            hours = tree.xpath(
-                "//ul[@class='storelocator_open_times_content']/li//text()"
-            )
-            hours = list(filter(None, [h.strip() for h in hours]))
-            for h in hours:
-                if h.endswith("-"):
-                    continue
-                _tmp.append(h)
+        hours_of_operation = ";".join(_tmp)
 
-            hours_of_operation = ";".join(_tmp)
+        row = SgRecord(
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            zip_postal=postal,
+            country_code=country_code,
+            latitude=latitude,
+            longitude=longitude,
+            phone=phone,
+            locator_domain=locator_domain,
+            hours_of_operation=hours_of_operation,
+            raw_address=raw_address,
+        )
 
-            row = SgRecord(
-                page_url=page_url,
-                location_name=location_name,
-                street_address=street_address,
-                city=city,
-                zip_postal=postal,
-                country_code=country_code,
-                latitude=latitude,
-                longitude=longitude,
-                phone=phone,
-                locator_domain=locator_domain,
-                hours_of_operation=hours_of_operation,
-                raw_address=raw_address,
-            )
-
-            yield row
+        yield row
 
 
 if __name__ == "__main__":
