@@ -2,11 +2,12 @@ import os
 import shutil
 
 src_dir = os.getcwd()
-print(src_dir)
+logzilla.info(src_dir)
 dest = "\\".join(src_dir.split("\\")[0:-3]) + "\\storelocator\\"
-print(dest)
+logzilla.info(dest)
 import time
 
+logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
 files_to_copy = ["scrape.py", "requirements.txt", "SUCCESS"]
 folders = [
     "joefresh_com",
@@ -33,9 +34,9 @@ folders = [
     "shoppersdrugmart_ca",
 ]
 
-print("Copying ", len(files_to_copy), " files to ", len(folders), " locations")
+logzilla.info("Copying ", len(files_to_copy), " files to ", len(folders), " locations")
 for i in folders:
     for j in files_to_copy:
         shutil.copy2(src_dir + "\\" + str(j), dest + i + "\\")
-        print(f"copied {j}")
+        logzilla.info(f"copied {j}")
         time.sleep(15)
