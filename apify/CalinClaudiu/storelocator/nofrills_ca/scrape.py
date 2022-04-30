@@ -494,14 +494,17 @@ def get_api_call(url):
     input_field.send_keys("B3L 4T2")
     input_field.send_keys(Keys.RETURN)
     time.sleep(10)
-    wait_for_loc = WebDriverWait(driver, 30).until(  # noqa
-        EC.visibility_of_element_located(
-            (
-                By.XPATH,
-                "/html/body/div[6]/div[3]/div[2]/section/div/div[3]/div[1]/div/ol/li[1]/div",
+    try:
+        wait_for_loc = WebDriverWait(driver, 30).until(  # noqa
+            EC.visibility_of_element_located(
+                (
+                    By.XPATH,
+                    "/html/body/div[6]/div[3]/div[2]/section/div/div[3]/div[1]/div/ol/li[1]/div",
+                )
             )
         )
-    )
+    except Exception:
+        pass
 
     time.sleep(10)
     for r in driver.requests:
