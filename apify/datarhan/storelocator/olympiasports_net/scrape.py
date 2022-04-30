@@ -21,6 +21,8 @@ def fetch_data():
         street_address = addr.street_address_1
         if addr.street_address_2:
             street_address += " " + addr.street_address_2
+        if len(street_address) < 5:
+            street_address = raw_address.split(", ")[0]
         mon = f"Monday: {poi['data']['hours_Monday']}"
         tue = f"Tuesday: {poi['data']['hours_Tuesday']}"
         wed = f"Wednesday: {poi['data']['hours_Tuesday']}"
