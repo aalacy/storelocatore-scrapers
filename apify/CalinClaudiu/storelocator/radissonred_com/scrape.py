@@ -10,7 +10,7 @@ import time
 import ssl
 from sgscrape.pause_resume import SerializableRequest, CrawlStateSingleton
 import json
-from seleniumwire.utils import decode
+import seleniumwire as selw
 
 try:
     _create_unverified_https_context = (
@@ -321,7 +321,7 @@ def initial(driver, url, state):
         for r in reqs:
             x = r.url
             if "zimba" in x and "hotels?" in x:
-                body = decode(
+                body = selw.utils.decode(
                     r.response.body,
                     r.response.headers.get("Content-Encoding", "identity"),
                 )
