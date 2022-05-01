@@ -210,6 +210,9 @@ def gen_hours(rec):
         except Exception:
             pass
         if len(newrec["horas"]) > 0:
+            for i in newrec["horas"]:
+                if "HARMAC" in i or "harmac" in i:
+                    return i
             newrec["horas"] = "\n".join(newrec["horas"])
         else:
             raise
