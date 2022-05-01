@@ -33,8 +33,12 @@ def fetch_data():
         )
         country_code = loc_dom.xpath("//@country_full")[0]
         latitude = loc_dom.xpath("//@data-lat")
+        if not latitude:
+            latitude = loc_dom.xpath("//@lat")
         latitude = latitude[0] if latitude else ""
         longitude = loc_dom.xpath("//@data-lng")
+        if not longitude:
+            longitude = loc_dom.xpath("//@lon")
         longitude = longitude[0] if longitude else ""
         hoo = loc_dom.xpath('//dl[@class="open-hours-data"]//text()')
         hoo = " ".join([e.strip() for e in hoo if e.strip()])
@@ -42,7 +46,7 @@ def fetch_data():
         item = SgRecord(
             locator_domain=domain,
             page_url=page_url,
-            location_name="Paradiso Mexican Restaurant",
+            location_name=raw_data[1].split(", ")[0],
             street_address=raw_data[0],
             city=raw_data[1].split(", ")[0],
             state=raw_data[1].split(", ")[1].split()[0],
