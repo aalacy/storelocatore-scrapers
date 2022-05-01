@@ -19,9 +19,9 @@ detail_url = "https://shellgsllocator.geoapp.me/api/v1/locations/{}?origin%5Blat
 locator = "https://www.shell.co.uk/motorist/shell-station-locator.html#iframe=Lz9sb2NhbGU9ZW5fR0IjL0A1NC41MzYsLTguNDc0NzQsNno"
 
 
-@retry(wait=wait_fixed(2), stop=stop_after_attempt(3))
+@retry(wait=wait_fixed(10), stop=stop_after_attempt(5))
 def get_json(url):
-    with SgRequests(proxy_country="us") as session:
+    with SgRequests(proxy_country="gb") as session:
         return session.get(url, headers=_headers).json()
 
 

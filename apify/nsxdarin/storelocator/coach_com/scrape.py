@@ -18,7 +18,7 @@ def fetch_data():
     main_url = "https://fr.coach.com/en_FR/stores-edit-country?dwfrm_storelocator_address_international=FR&dwfrm_storelocator_findbycountry=Search%2Bcountry"
     states = []
     cities = []
-    countries = []
+    countries = ["DE", "ES", "FR", "IT"]
     r = session.get(main_url, headers=headers)
     for line in r.iter_lines():
         if 'name="dwfrm_storelocator_address_international" >' in line:
@@ -36,7 +36,8 @@ def fetch_data():
                         and ccode != "GB"
                         and ccode != "US"
                     ):
-                        countries.append(ccode)
+                        if ccode not in countries:
+                            countries.append(ccode)
     for ccode in countries:
         CFound = True
         start = -15
@@ -63,7 +64,7 @@ def fetch_data():
                 CFound = True
                 items = allinfo.split("<h2>")
                 for item in items:
-                    if '<div class="store-info">' in item:
+                    if 'span itemprop="streetAddress">' in item:
                         name = item.split("</h2>")[0].replace("&amp;", "&")
                         add = (
                             item.split('span itemprop="streetAddress">')[1]
@@ -85,7 +86,10 @@ def fetch_data():
                             )[0]
                         except:
                             zc = "<MISSING>"
-                        phone = item.split('itemprop="telephone">')[1].split("<")[0]
+                        try:
+                            phone = item.split('itemprop="telephone">')[1].split("<")[0]
+                        except:
+                            phone = "<MISSING>"
                         lat = "<MISSING>"
                         lng = "<MISSING>"
                         try:
