@@ -7,3 +7,4 @@ tenacity==7.0.0
 sgscrape==0.2.9
 sgselenium==0.2.0
 sgrequests==0.3.4
+selenium-wire==4.6.3
