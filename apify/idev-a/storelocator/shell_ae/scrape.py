@@ -1,7 +1,7 @@
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
-from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sglogging import SgLogSetup
 from tenacity import retry, wait_fixed, stop_after_attempt
@@ -49,6 +49,20 @@ def fetch_boundings(boundings, json_url, writer):
                         street_address = _["address1"]
                     if _.get("address2"):
                         street_address += " " + _["address2"]
+                    if _.get("address3"):
+                        street_address += " " + _["address3"]
+                    if _.get("address4"):
+                        street_address += " " + _["address4"]
+
+                    if not street_address:
+                        street_address = _.get("address")
+                        if street_address and _["city"]:
+                            cc = street_address.split(_["city"])
+                            if len(cc) == 1:
+                                street_address = cc[-1]
+                            else:
+                                street_address = _["city"].join(cc[1:])
+
                     zip_postal = _.get("postcode")
                     if zip_postal and zip_postal == "00000":
                         zip_postal = ""
@@ -89,14 +103,7 @@ def fetch_data(writer, base_url, json_url):
 if __name__ == "__main__":
     with SgWriter(
         SgRecordDeduper(
-            SgRecordID(
-                {
-                    SgRecord.Headers.STREET_ADDRESS,
-                    SgRecord.Headers.CITY,
-                    SgRecord.Headers.PHONE,
-                    SgRecord.Headers.COUNTRY_CODE,
-                }
-            ),
+            RecommendedRecordIds.GeoSpatialId,
             duplicate_streak_failure_factor=3000,
         )
     ) as writer:

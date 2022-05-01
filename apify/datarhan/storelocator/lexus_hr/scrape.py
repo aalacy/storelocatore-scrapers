@@ -43,10 +43,7 @@ def fetch_data():
                     closed = poi["openingDays"][0]["hours"][0]["endTime"]
                     hoo.append(f"{start_day} - {end_day}: {opens} - {closed}")
                 hoo = " ".join(hoo)
-            location_type = []
-            for e in poi["services"]:
-                location_type.append(e["label"])
-            location_type = ", ".join(location_type)
+            location_type = " ".join([e["service"] for e in poi["openingDays"]])
 
             item = SgRecord(
                 locator_domain=domain,

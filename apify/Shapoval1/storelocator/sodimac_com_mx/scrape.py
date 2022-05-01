@@ -5,9 +5,6 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgselenium.sgselenium import SgFirefox
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
 
 
 def fetch_data(sgw: SgWriter):
@@ -29,19 +26,10 @@ def fetch_data(sgw: SgWriter):
             continue
         with SgFirefox() as driver:
 
-            driver.implicitly_wait(10)
             driver.get(page_url)
-            driver.implicitly_wait(10)
+            driver.implicitly_wait(100)
             driver.maximize_window()
             driver.switch_to.frame(0)
-            try:
-                WebDriverWait(driver, 5).until(
-                    EC.presence_of_element_located(
-                        (By.XPATH, '//div[@class="address"]')
-                    )
-                )
-            except:
-                driver.switch_to.default_content()
             try:
                 ad = driver.find_element_by_xpath('//div[@class="address"]').text
                 ll = driver.find_element_by_xpath(
