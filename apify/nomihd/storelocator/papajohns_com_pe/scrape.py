@@ -63,9 +63,12 @@ def fetch_data():
                 data=json.dumps(data),
             )
 
-            store_list = json.loads(search_res.text)["data"]["stores"]
+            store_list = json.loads(search_res.text)["data"]
+            if "stores" not in store_list:
+                continue
 
-            for store in store_list:
+            stores = store_list["stores"]
+            for store in stores:
 
                 page_url = home_url
 
