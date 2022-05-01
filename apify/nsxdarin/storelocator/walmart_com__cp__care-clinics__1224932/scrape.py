@@ -218,6 +218,11 @@ def gen_hours(rec):
             raise
         return newrec
     except Exception as mf:
+        logger.error(f"{str(rec)}", exc_info=mf)
+        if rec:
+            newrec = rec
+        else:
+            raise
         newrec["horas"] = str(mf)
         return newrec
 
