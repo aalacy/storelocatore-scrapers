@@ -95,12 +95,12 @@ def fetch_data(sgw: SgWriter):
     for country in SearchableCountries.ALL:
         coords = DynamicGeoSearch(
             country_codes=[f"{country}"],
-            max_search_distance_miles=100,
-            expected_search_radius_miles=100,
+            max_search_distance_miles=20,
+            expected_search_radius_miles=20,
             max_search_results=None,
         )
 
-        with futures.ThreadPoolExecutor(max_workers=7) as executor:
+        with futures.ThreadPoolExecutor(max_workers=1) as executor:
             future_to_url = {executor.submit(get_data, url, sgw): url for url in coords}
             for future in futures.as_completed(future_to_url):
                 future.result()
