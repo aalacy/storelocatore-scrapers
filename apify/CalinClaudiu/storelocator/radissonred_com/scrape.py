@@ -10,7 +10,7 @@ import time
 import ssl
 from sgscrape.pause_resume import SerializableRequest, CrawlStateSingleton
 import json
-import seleniumwire as selw
+import seleniumwire as selw  # noqa
 
 try:
     _create_unverified_https_context = (
