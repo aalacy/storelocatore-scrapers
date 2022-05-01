@@ -4,7 +4,6 @@ import json
 from sgscrape import simple_scraper_pipeline as sp
 from bs4 import BeautifulSoup as bs
 import html
-from webdriver_manager.chrome import ChromeDriverManager
 
 
 def extract_json(html_string):
@@ -39,7 +38,6 @@ def get_driver():
     driver = SgChrome(
         user_agent=user_agent,
         is_headless=True,
-        executable_path=ChromeDriverManager().install(),
     ).driver()
 
     return driver
