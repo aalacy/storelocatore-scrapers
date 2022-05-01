@@ -67,7 +67,7 @@ def scrape():
 
 
 if __name__ == "__main__":
-    if os.environ.get('PROXY_PASSWORD'):
-        del os.environ['PROXY_PASSWORD']
-        
+    if os.environ.get("PROXY_PASSWORD"):
+        del os.environ["PROXY_PASSWORD"]
+
     scrape()
