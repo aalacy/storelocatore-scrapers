@@ -92,6 +92,8 @@ def fetch_data():
 
         city = formatted_addr.city
         state = formatted_addr.state
+        if not state:
+            state = "CA"
         zip = formatted_addr.postcode
 
         country_code = "US"

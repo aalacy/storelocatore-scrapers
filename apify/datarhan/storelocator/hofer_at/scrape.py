@@ -26,16 +26,19 @@ def fetch_data():
                 closes = e["closeFormatted"]
                 hoo.append(f"{day}: {opens} - {closes}")
         hoo = " ".join(hoo)
+        city = poi.get("city")
+        if city:
+            city = city.split(".,")[-1].split(",")[-1].strip()
 
         item = SgRecord(
             locator_domain=domain,
             page_url="https://www.hofer.at/de/filialen.html",
             location_name=poi["displayName"],
-            street_address=poi["streetAddress"],
-            city=poi["city"].split(".,")[-1].split(",")[-1].strip(),
-            state=SgRecord.MISSING,
-            zip_postal=poi["postalCode"],
-            country_code=poi["countryCode"],
+            street_address=poi.get("streetAddress"),
+            city=city,
+            state="",
+            zip_postal=poi.get("postalCode"),
+            country_code=poi.get("countryCode"),
             store_number=poi["storeId"],
             phone=poi.get("phoneNumber"),
             location_type=poi["storeType"],
