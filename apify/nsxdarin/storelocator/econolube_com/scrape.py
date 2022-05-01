@@ -23,9 +23,7 @@ def fetch_data():
     for line in response.iter_lines():
         line = str(line)
         if "<loc>https://www.econolube.com/locations/" in line and "-" in line:
-            lurl = line.split("<loc>")[1].split("<")[0]
             all_locations.append(line.split("<loc>")[1].split("<")[0])
-
     for page_url in all_locations:
         logger.info(page_url)
         loc_response = session.get(page_url)
