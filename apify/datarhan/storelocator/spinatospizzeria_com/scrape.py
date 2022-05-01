@@ -1,3 +1,4 @@
+import os
 import json
 from lxml import etree
 from urllib.parse import urljoin
@@ -14,7 +15,7 @@ def fetch_data():
     start_url = "https://www.spinatospizzeria.com/locations-and-menus"
     domain = "spinatospizzeria.com"
 
-    driver = SgChrome().driver()
+    driver = SgChrome(is_headless=False).driver()
 
     driver.get(start_url)
     time.sleep(15)
@@ -66,4 +67,7 @@ def scrape():
 
 
 if __name__ == "__main__":
+    if os.environ.get('PROXY_PASSWORD'):
+        del os.environ['PROXY_PASSWORD']
+        
     scrape()
