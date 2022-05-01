@@ -212,7 +212,8 @@ def gen_hours(rec):
         if len(newrec["horas"]) > 0:
             for i in newrec["horas"]:
                 if "HARMAC" in i or "harmac" in i:
-                    return i
+                    newrec["horas"] = i
+                    return newrec
             newrec["horas"] = "\n".join(newrec["horas"])
         else:
             raise
