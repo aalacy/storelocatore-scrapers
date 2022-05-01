@@ -35,6 +35,16 @@ def fetch_data():
             r = session.get(page_url, headers=headers)
             soup = BeautifulSoup(r.text, "html.parser")
             try:
+                longitude, latitude = (
+                    soup.select_one("iframe[src*=maps]")["src"]
+                    .split("!2d", 1)[1]
+                    .split("!2m", 1)[0]
+                    .split("!3d")
+                )
+            except:
+                longitude = MISSING
+                lattude = MISSING
+            try:
                 location_name = soup.find("h1").text
             except:
                 continue
