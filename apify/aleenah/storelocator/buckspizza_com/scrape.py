@@ -43,7 +43,7 @@ def fetch_data():
                 )
             except:
                 longitude = MISSING
-                lattude = MISSING
+                latitude = MISSING
             try:
                 location_name = soup.find("h1").text
             except:
@@ -94,8 +94,8 @@ def fetch_data():
                 store_number=MISSING,
                 phone=phone.strip(),
                 location_type=MISSING,
-                latitude=MISSING,
-                longitude=MISSING,
+                latitude=latitude,
+                longitude=longitude,
                 hours_of_operation=hours_of_operation.strip(),
             )
 
