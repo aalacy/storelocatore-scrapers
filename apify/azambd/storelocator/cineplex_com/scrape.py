@@ -1,4 +1,4 @@
-from sgrequests import SgRequests, ProxySettings
+from sgrequests import SgRequests
 from sgscrape import simple_scraper_pipeline as sp
 from sgpostal.sgpostal import parse_address_intl
 from sglogging import sglog
