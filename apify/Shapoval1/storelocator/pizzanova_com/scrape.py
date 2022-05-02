@@ -75,6 +75,16 @@ def fetch_data(sgw: SgWriter):
                     .strip()
                 )
                 hours_of_operation = " ".join(hours_of_operation.split()) or "<MISSING>"
+                hours_of_operation = (
+                    hours_of_operation.replace("Monday", "Monday ")
+                    .replace("Tuesday", "Tuesday ")
+                    .replace("Wednesday", "Wednesday ")
+                    .replace("Thursday", "Thursday ")
+                    .replace("Friday", "Friday ")
+                    .replace("Saturday", "Saturday ")
+                    .replace("Sunday", "Sunday ")
+                    .strip()
+                )
 
                 row = SgRecord(
                     locator_domain=locator_domain,

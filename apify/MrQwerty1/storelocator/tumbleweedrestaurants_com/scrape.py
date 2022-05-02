@@ -1,93 +1,54 @@
-import csv
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
-    locator_domain = "https://tumbleweedrestaurants.com/"
-    api_url = "https://tumbleweedrestaurants.com/getAllLocationsNoLatLng.php"
-
-    session = SgRequests()
-    r = session.get(api_url)
+def fetch_data(sgw: SgWriter):
+    api = "https://tumbleweedrestaurants.com/wp-admin/admin-ajax.php?action=store_search&autoload=1"
+    r = session.get(api, headers=headers)
     js = r.json()
 
     for j in js:
-        street_address = j.get("address") or "<MISSING>"
-        city = j.get("city") or "<MISSING>"
-        state = j.get("state") or "<MISSING>"
-        postal = j.get("zip") or "<MISSING>"
+        adr1 = j.get("address") or ""
+        adr2 = j.get("address2") or ""
+        street_address = f"{adr1} {adr2}".strip()
+        city = j.get("city")
+        state = j.get("state")
+        postal = j.get("zip")
         country_code = "US"
-        store_number = "<MISSING>"
-        page_url = (
-            "https://tumbleweedrestaurants.com/tex-mex-locator.php#full-locations-list"
+        store_number = j.get("id")
+        location_name = j.get("store")
+        phone = j.get("phone")
+        latitude = j.get("lat")
+        longitude = j.get("lng")
+
+        row = SgRecord(
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            latitude=latitude,
+            longitude=longitude,
+            phone=phone,
+            store_number=store_number,
+            locator_domain=locator_domain,
         )
-        location_name = j.get("name")
-        phone = j.get("phone") or "<MISSING>"
-        latitude = j.get("latitude") or "<MISSING>"
-        longitude = j.get("longitude") or "<MISSING>"
-        location_type = "<MISSING>"
 
-        _tmp = []
-        hours = j.get("hours") or {}
-        for k, v in hours.items():
-            _tmp.append(f"{k}: {v}")
-
-        hours_of_operation = ";".join(_tmp) or "<MISSING>"
-
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://tumbleweedrestaurants.com/"
+    page_url = "https://tumbleweedrestaurants.com/find-a-location/"
+
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:97.0) Gecko/20100101 Firefox/97.0",
+    }
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
+        fetch_data(writer)

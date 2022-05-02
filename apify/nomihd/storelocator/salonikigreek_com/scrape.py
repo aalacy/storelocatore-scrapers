@@ -42,7 +42,11 @@ def fetch_data():
 
         locator_domain = website
 
-        location_name = "".join(store_sel.xpath("//h1/text()")).strip()
+        location_name = "".join(
+            store_sel.xpath(
+                "//div[@class='elementor-element elementor-element-aee801e card-title elementor-widget elementor-widget-heading']//h2//text()"
+            )
+        ).strip()
 
         add_list = store_sel.xpath(
             '//li[@class="elementor-icon-list-item"]/a[contains(@href,"google.com")]//span[@class="elementor-icon-list-text"]/text()'

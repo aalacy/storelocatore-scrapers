@@ -13,6 +13,7 @@ def fetch_data(sgw: SgWriter):
         "AR": "https://searchapi.samsung.com/v6/front/b2c/storelocator/list?siteCode=ar&distanceUnit=6371&latitude=-34.603541&longitude=-58.381691&nRadius=10&shopTypeList=E",
         "BE": "https://searchapi.samsung.com/v6/front/b2c/storelocator/list?siteCode=be&distanceUnit=6371&latitude=50.852049&longitude=4.348954&nRadius=10&shopTypeList=E",
         "BG": "https://searchapi.samsung.com/v6/front/b2c/storelocator/list?siteCode=bg&distanceUnit=6371&latitude=42.134892&longitude=24.745681&nRadius=10&shopTypeList=E",
+        "CA": "https://searchapi.samsung.com/v6/front/b2c/storelocator/list?siteCode=ca&distanceUnit=6371&latitude=43.6532&longitude=-79.3832&nRadius=300&shopTypeList=E",
         "CL": "https://searchapi.samsung.com/v6/front/b2c/storelocator/list?siteCode=cl&distanceUnit=6371&latitude=-33.461234&longitude=-70.64209&nRadius=10&shopTypeList=E",
         "CO": "https://searchapi.samsung.com/v6/front/b2c/storelocator/list?siteCode=co&distanceUnit=6371&latitude=4.612016&longitude=-74.078064&nRadius=10&shopTypeList=E",
         "DE": "https://searchapi.samsung.com/v6/front/b2c/storelocator/list?siteCode=de&distanceUnit=6371&latitude=52.519451&longitude=13.403483&nRadius=10&shopTypeList=E",
@@ -59,8 +60,11 @@ def fetch_data(sgw: SgWriter):
         for j in js:
             street_address = j.get("address")
             city = j.get("cityName")
-            state = j.get("area")
-            postal = j.get("postalCode")
+            state = j.get("area") or ""
+            postal = j.get("postalCode") or ""
+            if c == "CA":
+                state = postal.split()[0]
+                postal = postal.replace(state, "").strip()
             store_number = j.get("id")
             location_name = j.get("name")
             location_type = j.get("brandType")

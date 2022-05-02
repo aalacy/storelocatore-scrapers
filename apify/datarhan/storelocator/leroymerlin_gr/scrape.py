@@ -46,6 +46,17 @@ def fetch_data():
         hoo = loc_dom.xpath('//div[h5[span[contains(text(), "Ωράριο")]]]//text()')
         hoo = [e.strip() for e in hoo if e.strip()][1:]
         hoo = " ".join(hoo)
+        if not hoo:
+            hoo = loc_dom.xpath(
+                '//h3[span[contains(text(), "Ωράριο")]]/following-sibling::h5[1]//text()'
+            )
+            hoo = " ".join([e.strip() for e in hoo])
+        if not hoo:
+            hoo = loc_dom.xpath(
+                '//h3[span[contains(text(), "Ωράριο")]]/following::text()'
+            )
+            hoo = " ".join([e.strip() for e in hoo if e.strip()])
+        hoo = hoo.split("Τμήμα")[0]
 
         item = SgRecord(
             locator_domain=domain,

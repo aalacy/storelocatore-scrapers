@@ -29,7 +29,7 @@ def fetch_data():
             item = SgRecord(
                 locator_domain=domain,
                 page_url="https://www.coles.com.au/stores",
-                location_name=poi["storeName"],
+                location_name=poi["brandName"],
                 street_address=poi["address"],
                 city=poi["suburb"],
                 state=poi["state"],

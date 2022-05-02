@@ -70,6 +70,21 @@ def fetch_data():
         location_name = info[0]
         raw_address = ",".join(info[1:])
         street_address, city, state, zip_postal = getAddress(raw_address)
+        addr_split = raw_address.split(",")
+        if len(addr_split[-1]) < 5:
+            zip_postal = " ".join(addr_split[-2:]).strip()
+        else:
+            zip_postal = addr_split[-1].strip()
+        if city == MISSING:
+            if len(addr_split[-1]) < 5:
+                city = addr_split[-3].strip()
+            else:
+                city = addr_split[-2].strip()
+        if zip_postal == MISSING:
+            if len(addr_split[-1]) < 5:
+                zip_postal = " ".join(addr_split[-2:]).strip()
+            else:
+                zip_postal = addr_split[-1].strip()
         phone = MISSING
         country_code = "GB"
         hours_of_operation = MISSING

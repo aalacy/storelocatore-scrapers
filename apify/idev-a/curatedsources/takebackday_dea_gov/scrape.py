@@ -52,7 +52,8 @@ def fetch_data():
                     page_url = ""
                 yield SgRecord(
                     page_url=page_url,
-                    location_name=(_["name1"] + " " + _.get("name2")).strip(),
+                    location_name="Drug Disposal Site at "
+                    + (_["name1"] + " " + _.get("name2")).upper().strip(),
                     street_address=street_address,
                     city=_["city"],
                     state=_["state"],
