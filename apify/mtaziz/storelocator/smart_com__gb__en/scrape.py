@@ -8,7 +8,6 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from tenacity import retry, stop_after_attempt
 import tenacity
 from lxml import html
-import re
 import json
 
 
@@ -39,36 +38,19 @@ def get_response(urlnum, url, headers_):
         raise Exception(f"{urlnum} : {url} >> Temporary Error: {r.status_code}")
 
 
-def get_api_key():
+def get_apikey_new():
     r_js = get_response(0, LOCATION_DEALER_URL, headers_dealer_locator)
-    xpath_2 = '//iframe[contains(@data-nn-pluginid, "dlc")]/@data-nn-config-url'
+    xpath_2 = '//dh-io-dlc[contains(@datajson, "searchProfileName")]/@datajson'
     sel_apikey = html.fromstring(r_js.text, "lxml")
-    raw_plugin_dlc_file_url = sel_apikey.xpath(xpath_2)
-    logger.info(f"Plugin DLC File Name: {raw_plugin_dlc_file_url}")
-    raw_plugin_dlc_file_url = "".join(raw_plugin_dlc_file_url)
-
-    dealerlocator_payload_pluginJSUrl = get_response(
-        0, raw_plugin_dlc_file_url, headers_dealer_locator
-    ).json()["pluginJSUrl"]
-    response_pjsurl = get_response(
-        0, dealerlocator_payload_pluginJSUrl, headers_dealer_locator
-    )
-
-    apikey_pjsurl = re.findall(
-        r"apiKey:.\|\|String(.*)searchProfileName", response_pjsurl.text
-    )
-
-    apikey = "".join(apikey_pjsurl).split('"')[1]
-    try:
-        if apikey:
-            return apikey
-    except Exception as e:
-        logger.rinfo(f"Fix this issue {e}")
+    datajson_apikey_raw = "".join(sel_apikey.xpath(xpath_2))
+    datajson_apikey = json.loads(datajson_apikey_raw)
+    payload_apikey = datajson_apikey["payload"]["apiKey"]
+    return payload_apikey
 
 
 def get_api_based_headers():
     headers_with_apikey = {}
-    apikey = get_api_key()
+    apikey = get_apikey_new()
     headers_with_apikey["x-apikey"] = apikey
     headers_with_apikey[
         "User-agent"

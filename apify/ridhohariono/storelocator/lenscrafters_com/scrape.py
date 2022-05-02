@@ -39,6 +39,9 @@ def fetch_data():
             if count != 5:
                 continue
             store = pull_content(page_url)
+            title = store.find("title").text.strip()
+            if "Coming Soon" in title:
+                continue
             try:
                 hours_today = store.find(
                     "div", {"class": "Hero-hoursToday"}
@@ -69,12 +72,15 @@ def fetch_data():
                 phone = MISSING
             location_type = MISSING
             store_number = MISSING
-            hours_of_operation = (
-                store.find("table", {"class": "c-hours-details"})
-                .find("tbody")
-                .get_text(strip=True, separator=" ")
-                .strip()
-            )
+            try:
+                hours_of_operation = (
+                    store.find("table", {"class": "c-hours-details"})
+                    .find("tbody")
+                    .get_text(strip=True, separator=" ")
+                    .strip()
+                )
+            except:
+                hours_of_operation = MISSING
             latitude = store.find("meta", {"itemprop": "latitude"})["content"]
             longitude = store.find("meta", {"itemprop": "longitude"})["content"]
             log.info("Append {} => {}".format(location_name, street_address))
