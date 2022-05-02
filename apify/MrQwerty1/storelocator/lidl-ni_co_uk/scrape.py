@@ -23,7 +23,7 @@ def fetch_data(sgw: SgWriter):
 
             if f", {city}" in street_address:
                 street_address = street_address.split(f", {city}")[0].strip()
-            country_code = "IE"
+            country_code = "GB"
             store_number = j.get("EntityID")
             location_name = j.get("ShownStoreName") or city
             latitude = j.get("Latitude")
