@@ -55,7 +55,11 @@ def get_data():
     grids = soup.find_all("div", attrs={"class": "h-fit-content"})
     for grid in grids:
         locator_domain = "baddaddysburgerbar.com"
-        page_url = grid.find_all("a")[-1]["href"]
+        page_url = (
+            grid.find_all("a")[-1]["href"]
+            .replace("menu", "locations")
+            .replace("order.", "")
+        )
         location_name = grid.find("div").find("div").text.strip()
         address = grid.find("div").find_all("div")[1].text.strip()
         city = grid.find("div").find_all("div")[2].text.strip().split(", ")[0]
@@ -90,8 +94,7 @@ def get_data():
         while "  " in hours_parts:
             hours_parts = hours_parts.replace("  ", " ")
 
-        hours_parts = hours_parts.split(phone[-3:])[1]
-        hours = "MM"
+        hours = hours_parts.split(phone[-3:])[1].replace(" ", "")
 
         yield {
             "locator_domain": locator_domain,
