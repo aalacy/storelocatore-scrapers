@@ -10,6 +10,7 @@ import time
 import ssl
 from sgscrape.pause_resume import SerializableRequest, CrawlStateSingleton
 import json
+import seleniumwire as selw  # noqa
 
 try:
     _create_unverified_https_context = (
@@ -245,7 +246,6 @@ def get_subpage(session, url):
         try:
             response = SgRequests.raise_on_err(session.get(url, headers=headers))
             soup = b4(response.text, "lxml")
-            logzilla.info(f"URL\n{url}\nLen:{len(response.text)}\n")
             if len(response.text) < 400:
                 logzilla.info(f"Content\n{response.text}\n\n")
         except Exception as e:
@@ -263,8 +263,8 @@ def get_subpage(session, url):
                         logzilla.info(f"Content\n{response.text}\n\n")
                     soup = b4(response.text, "lxml")
                 except Exception as e:
-                    logzilla.error(f"{str(e)}")
-                    raise
+                    logzilla.error(f" for url: {str(url)}\n{str(e)}")
+                    pass
 
         try:
             data = json.loads(
@@ -318,11 +318,14 @@ def initial(driver, url, state):
         time.sleep(15)
         time.sleep(5)
         reqs = list(driver.requests)
-        logzilla.info(f"Length of driver.requests: {len(reqs)}")
         for r in reqs:
             x = r.url
             if "zimba" in x and "hotels?" in x:
-                son = json.loads(r.response.body)
+                body = selw.utils.decode(
+                    r.response.body,
+                    r.response.headers.get("Content-Encoding", "identity"),
+                )
+                son = json.loads(body)
                 for item in son["hotels"]:
                     state.push_request(
                         SerializableRequest(url=item["overviewPath"], context=item)
