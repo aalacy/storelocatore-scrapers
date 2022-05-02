@@ -4,4 +4,3 @@ sgrequests==0.3.4
 lxml==4.6.5
 json5==0.9.6
 sglogging==0.0.4
-sgpostal==0.1
