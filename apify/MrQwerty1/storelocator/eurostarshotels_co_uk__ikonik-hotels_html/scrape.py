@@ -43,10 +43,14 @@ def get_data(page_url, sgw: SgWriter, retry=0):
     text = text.split("hotel    :")[1].split("opinions")[0].strip()[:-1]
     j = json5.loads(text)
 
+    script = "".join(
+        tree.xpath("//script[contains(text(), 'window.hotel_address = ')]/text()")
+    )
+    raw_address = script.split('window.hotel_address = "')[1].split('";')[0].strip()
     location_name = j.get("name")
     street_address = j.get("address")
     city = j.get("city")
-    postal = j.get("cp")
+    postal = raw_address.split(",")[-2].replace("FL", "").strip()
     country_code = j.get("country")
     phone = j.get("tel")
     store_number = j.get("id")
@@ -68,6 +72,7 @@ def get_data(page_url, sgw: SgWriter, retry=0):
         latitude=latitude,
         longitude=longitude,
         phone=phone,
+        raw_address=raw_address,
         locator_domain=locator_domain,
     )
 
