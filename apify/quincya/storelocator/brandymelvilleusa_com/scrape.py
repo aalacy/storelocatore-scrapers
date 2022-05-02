@@ -10,6 +10,8 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
+from sgpostal.sgpostal import parse_address_intl
+
 
 def fetch_data(sgw: SgWriter):
 
@@ -44,10 +46,13 @@ def fetch_data(sgw: SgWriter):
                 street_address = (
                     store[1]
                     .split(", Nashville")[0]
+                    .split(", Naples")[0]
+                    .split(", Charleston")[0]
                     .replace(", Beijing", "")
                     .replace(", Hong Kong", "")
                     .strip()
                 )
+                raw_address = street_address
                 city = store[0]
                 state = state.replace("Washington", "WA")
                 location_name = "Brandy Melville - " + city
@@ -84,6 +89,18 @@ def fetch_data(sgw: SgWriter):
                         start = int(digit.split("(")[1].split(",")[0])
                         street_address = street_address[start:]
 
+                if country_code == "Europe":
+                    country = state
+                    fin_state = ""
+                else:
+                    country = country_code
+                    fin_state = state
+                if country_code == "Asia":
+                    country = "China"
+                if country in ["China", "Australia"]:
+                    addr = parse_address_intl(raw_address)
+                    street_address = addr.street_address_1.split("Shop")[0].strip()
+
                 sgw.write_row(
                     SgRecord(
                         locator_domain=locator_domain,
@@ -91,15 +108,16 @@ def fetch_data(sgw: SgWriter):
                         location_name=location_name,
                         street_address=street_address,
                         city=city,
-                        state=state,
+                        state=fin_state,
                         zip_postal=zip_code,
-                        country_code=country_code,
+                        country_code=country,
                         store_number=store_number,
                         phone=phone,
                         location_type=location_type,
                         latitude=latitude,
                         longitude=longitude,
                         hours_of_operation=hours_of_operation,
+                        raw_address=raw_address,
                     )
                 )
 

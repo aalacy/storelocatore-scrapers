@@ -40,19 +40,10 @@ def fetch_data():
             hoo = hoo.replace("PEN DAILY ", "").strip()
             hoo = "Mon - Sat: " + hoo
             phone = phone.lstrip("Store Phone:").strip()
-            title = div.findAll("div", {"class": "_1Q9if"})[2]
-            title = title.text
+            title = div.find("span", {"style": "letter-spacing:0.1em;"}).text.strip()
             city = title
-            info = div.findAll("div", {"class": "_1Q9if"})[3]
-            info = div.findAll("div", {"class": "_1Q9if"})[3].text
-            info = info.split("\n")
-            if len(info) == 5:
-                street = info[0] + " " + info[1] + " " + info[2]
-            if len(info) == 4:
-                street = info[0] + " " + info[1]
-            if len(info) == 6:
-                street = info[0] + " " + info[1] + " " + info[2] + " " + info[3]
-            street = street.split("Phone")[0].strip()
+            info = div.findAll("div", {"class": "_2Hij5"})[2].text
+            street = info.replace("\n", " ").split("Store Phone:")[0].strip()
 
             yield SgRecord(
                 locator_domain=DOMAIN,
@@ -68,7 +59,7 @@ def fetch_data():
                 location_type=MISSING,
                 latitude=MISSING,
                 longitude=MISSING,
-                hours_of_operation=hours.strip(),
+                hours_of_operation=hoo.strip(),
             )
 
 

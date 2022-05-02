@@ -48,7 +48,7 @@ def fetch_data():
             location_name = store["name"]
 
             phone = store["phoneNumber"]
-            street_address = store["street"]
+            street_address = store["street"].replace("\n", ", ").strip()
             city = store["city"]
             state = "<MISSING>"
             zip = store["postalCode"]
@@ -61,10 +61,10 @@ def fetch_data():
                 hours_list.append("Mon - Fri: " + store["openingHoursMonThruFri"])
 
             if store["openingHoursSat"]:
-                hours_list.append("Sat: " + store["openingHoursMonThruFri"])
+                hours_list.append("Sat: " + store["openingHoursSat"])
 
             if store["openingHoursSun"]:
-                hours_list.append("Sun: " + store["openingHoursMonThruFri"])
+                hours_list.append("Sun: " + store["openingHoursSun"])
 
             hours_of_operation = "; ".join(hours_list).strip()
 
