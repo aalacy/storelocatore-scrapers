@@ -49,11 +49,13 @@ def fetch_data():
         country_code = "US"
         latitude = row["latitude"]
         longitude = row["longitude"]
-        hours_of_operation = get_hours(page_url)
         location_type = MISSING
         if "ONLINE ONLY" in location_name or "Online Only" in street_address:
             location_type = "ONLINE ONLY"
             street_address = MISSING
+            hours_of_operation = MISSING
+        else:
+            hours_of_operation = get_hours(page_url)
         log.info("Append {} => {}".format(location_name, street_address))
         yield SgRecord(
             locator_domain=DOMAIN,
