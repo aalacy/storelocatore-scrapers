@@ -53,6 +53,9 @@ def get_data(slug, sgw: SgWriter, retry=0):
     adr2 = "".join(d.xpath(".//span[@itemprop='addressLocality']/text()")).strip()
     adr = f"{adr1} {adr2}"
     street_address, city = get_international(adr)
+    city = location_name
+    if "(" in city:
+        city = city.split("(")[0].strip()
     postal = "".join(d.xpath(".//span[@itemprop='zipCode']/text()")).strip()
     phone = "".join(d.xpath(".//p[@itemprop='telephone']/text()")).strip()
     hours_of_operation = "".join(
