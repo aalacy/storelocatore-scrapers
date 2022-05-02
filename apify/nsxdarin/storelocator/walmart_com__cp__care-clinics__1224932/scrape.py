@@ -259,8 +259,6 @@ def fetch_data():
     state = CrawlStateSingleton.get_instance()
     session = SgRequests(dont_retry_status_codes=set([404, 520]))
     # print(vision(transform_types(test_other(session))["rawadd"])) # noqa
-    test = gen_hours(transform_types(test_other(session)))
-    please_write(test)
     state.get_misc_value("init", default_factory=lambda: other_source(session, state))
     for item in fetch_other(session, state):
         yield gen_hours(transform_types(item))
