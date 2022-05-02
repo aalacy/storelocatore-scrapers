@@ -3,7 +3,7 @@ from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries, Grain_2
 import dirtyjson as json
 from sglogging import SgLogSetup
 
@@ -85,7 +85,7 @@ if __name__ == "__main__":
             RecommendedRecordIds.StoreNumberId, duplicate_streak_failure_factor=1000
         )
     ) as writer:
-        search = DynamicGeoSearch(country_codes=SearchableCountries.ALL)
+        search = DynamicGeoSearch(country_codes=SearchableCountries.ALL, granuarity=Grain_2())
         results = fetch_records(search)
         for rec in results:
             writer.write_row(rec)
