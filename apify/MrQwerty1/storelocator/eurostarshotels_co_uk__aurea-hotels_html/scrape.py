@@ -7,6 +7,13 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from concurrent import futures
 from sglogging import sglog
+from sgscrape.sgpostal import parse_address, International_Parser
+
+
+def get_postcode(line):
+    adr = parse_address(International_Parser(), line)
+
+    return adr.postcode
 
 
 def get_urls():
@@ -43,10 +50,14 @@ def get_data(page_url, sgw: SgWriter, retry=0):
     text = text.split("hotel    :")[1].split("opinions")[0].strip()[:-1]
     j = json5.loads(text)
 
+    script = "".join(
+        tree.xpath("//script[contains(text(), 'window.hotel_address = ')]/text()")
+    )
+    raw_address = script.split('window.hotel_address = "')[1].replace('";', "").strip()
     location_name = j.get("name")
     street_address = j.get("address")
     city = j.get("city")
-    postal = j.get("cp")
+    postal = get_postcode(raw_address) or j.get("cp")
     country_code = j.get("country")
     phone = j.get("tel")
     store_number = j.get("id")
@@ -68,6 +79,7 @@ def get_data(page_url, sgw: SgWriter, retry=0):
         latitude=latitude,
         longitude=longitude,
         phone=phone,
+        raw_address=raw_address,
         locator_domain=locator_domain,
     )
 
