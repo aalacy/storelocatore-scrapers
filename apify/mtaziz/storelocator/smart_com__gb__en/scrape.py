@@ -8,7 +8,6 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from tenacity import retry, stop_after_attempt
 import tenacity
 from lxml import html
-import re
 import json
 
 
