@@ -42,12 +42,16 @@ def fetch_data():
             log.info(page_url)
             store_number = loc["id"]
             description = loc["description"]
-            description = BeautifulSoup(description, "html.parser")
-            description = description.get_text(separator="|", strip=True).split("|")
-            raw_address = strip_accents(description[0] + " " + description[1])
+            soup = BeautifulSoup(description, "html.parser")
+            description = soup.get_text(separator="|", strip=True).split("|")
+            raw_address = strip_accents(description[0] + " " + description[1]).replace(
+                "24066P", "24066 P"
+            )
             phone = description[2].replace("Tel", "")
-            hours_of_operation = strip_accents(" ".join(x for x in description[-5:]))
-
+            hours_of_operation = strip_accents(
+                soup.get_text(separator="|", strip=True).replace("|", " ")
+            ).split("Lunedi  Venerdi")[1]
+            hours_of_operation = "Lunedì – Venerdì" + hours_of_operation
             pa = parse_address_intl(strip_accents(raw_address))
 
             street_address = pa.street_address_1
@@ -62,6 +66,8 @@ def fetch_data():
             zip_postal = pa.postcode
             zip_postal = zip_postal.strip() if zip_postal else MISSING
 
+            if city == MISSING:
+                city = raw_address.split()[-2]
             latitude = loc["lt"]
             longitude = loc["ln"]
             country_code = "IT"

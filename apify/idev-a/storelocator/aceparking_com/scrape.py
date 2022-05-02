@@ -6,8 +6,8 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from urllib.parse import urlencode
 import dirtyjson as json
-from sglogging import SgLogSetup
 import csv
+from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger("aceparking")
 
@@ -66,12 +66,14 @@ def fetch_data(city_list):
                 if soup.select_one("div.siteResults h4.error"):
                     logger.warning("div.siteResults h4.error")
                     continue
+
                 locations = soup.select("div.lotSection")
                 try:
                     soup.select_one("div.resultAddress").text.strip().split(",")
                 except:
                     logger.warning("div.resultAddress")
                     continue
+
                 if hourly == 1:
                     location_type = "daily"
                 else:

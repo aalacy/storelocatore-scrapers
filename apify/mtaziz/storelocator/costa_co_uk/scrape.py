@@ -24,7 +24,7 @@ else:
 logger = SgLogSetup().get_logger("costa_co_uk")
 DOMAIN = "costa.co.uk"
 MISSING = SgRecord.MISSING
-MAX_WORKERS = 16
+MAX_WORKERS = 10
 
 
 headers = {
@@ -33,12 +33,12 @@ headers = {
 }
 
 
-@retry(stop=stop_after_attempt(5), wait=tenacity.wait_fixed(5))
+@retry(stop=stop_after_attempt(5), wait=tenacity.wait_fixed(50))
 def get_response(url):
-    with SgRequests() as http:
+    with SgRequests(verify_ssl=False, timeout_config=400) as http:
         response = http.get(url, headers=headers)
         if response.status_code == 200:
-            logger.info(f"{url} >> HTTP STATUS: {response.status_code}")
+            logger.info(f"{url} <<= {response.status_code} OK!==>")  # noqa
             return response
         raise Exception(f"{url} >> HTTP Error Code: {response.status_code}")
 
@@ -47,148 +47,156 @@ def fetch_records(latlng, sgw):
     total = 0
     lat, lng = latlng
     url = f"https://www.costa.co.uk/api/locations/stores?latitude={str(lat)}&longitude={str(lng)}&maxrec=500"
-    r = get_response(url)
-    js = json.loads(r.content)["stores"]
-    logger.info(f"Pulling the data from : {r.url} ")
-    if js:
-        total += len(js)
-        for item in js:
-            locator_domain = DOMAIN
-            store_number = item["storeNo8Digit"]
-            location_type = item["storeType"]
+    try:
+        r = get_response(url)
+        js = json.loads(r.content)["stores"]
+        logger.info(f"Pulling the data from : {r.url} ")
+        if js:
+            total += len(js)
+            for item in js:
+                locator_domain = DOMAIN
+                store_number = item["storeNo8Digit"]
+                location_type = item["storeType"]
 
-            # Phone
-            phone = item["telephone"]
-            if phone == "":
-                phone = MISSING
+                # Phone
+                phone = item["telephone"]
+                if phone == "":
+                    phone = MISSING
 
-            # Street Address
-            add1 = item["storeAddress"]["addressLine1"]
-            add = (
-                add1
-                + " "
-                + item["storeAddress"]["addressLine2"]
-                + " "
-                + item["storeAddress"]["addressLine3"]
+                # Street Address
+                add1 = item["storeAddress"]["addressLine1"]
+                add = (
+                    add1
+                    + " "
+                    + item["storeAddress"]["addressLine2"]
+                    + " "
+                    + item["storeAddress"]["addressLine3"]
+                )
+                add = add.strip()
+                street_address = ""
+                if add == "" or add is None:
+                    street_address = MISSING
+                else:
+                    street_address = add
+
+                # Location Name
+                location_name = item["storeNameExternal"]
+                if location_name == "":
+                    location_name = location_type
+
+                # City Name
+                city = item["storeAddress"]["city"]
+                if city == "":
+                    city = item["storeAddress"]["addressLine3"]
+                if city == "" or city is None:
+                    city = MISSING
+                if city == MISSING:
+                    city = location_name
+                if "Belfast" in location_name:
+                    city = "Belfast"
+                if "Knightswick" in location_name:
+                    city = "Knightswick"
+                if "Lewes" in location_name:
+                    city = "Lewes"
+                if "Belper" in location_name:
+                    city = "Belper"
+                if "Barrow in Furness" in location_name:
+                    city = "Barrow in Furness"
+                if "Washington" in location_name:
+                    city = "Washington"
+                if "Purfleet" in add:
+                    city = "Purfleet"
+                if "Taunton" in location_name:
+                    city = "Taunton"
+                if "Hempstead Valley" in location_name:
+                    city = "Hempstead Valley"
+                if "Belfast" in add:
+                    city = "Belfast"
+                if "Bideford" in location_name:
+                    city = "Bideford"
+
+                # State
+                state = MISSING
+
+                # Zip Postal
+                zip_postal = item["storeAddress"]["postCode"]
+                if zip_postal == "" or zip_postal is None:
+                    zip_postal = MISSING
+
+                # Country Code
+                country_code = "GB"
+
+                # Latitude and Longitude
+                latitude = item["latitude"]
+                latitude = latitude if latitude else MISSING
+
+                longitude = item["longitude"]
+                longitude = longitude if longitude else MISSING
+
+                # page url
+                page_url = ""
+                if MISSING not in latitude or MISSING not in longitude:
+                    page_url = f"https://www.costa.co.uk/locations/store-locator/map?latitude={latitude}&longitude={longitude}"
+                else:
+                    page_url = "https://www.costa.co.uk/locations/store-locator"
+
+                # Hours of Operation
+                soh = item["storeOperatingHours"]
+                mon = "Mon: " + soh["openMon"] + "-" + soh["closeMon"]
+                tue = "Tue: " + soh["openTue"] + "-" + soh["closeTue"]
+                wed = "Wed: " + soh["openWed"] + "-" + soh["closeWed"]
+                thu = "Thu: " + soh["openThu"] + "-" + soh["closeThu"]
+                fri = "Fri: " + soh["openFri"] + "-" + soh["closeFri"]
+                sat = "Sat: " + soh["openSat"] + "-" + soh["closeSat"]
+                sun = "Sun: " + soh["openSun"] + "-" + soh["closeSun"]
+                hours_of_operation = f"{mon}; {tue}; {wed}; {thu}; {fri}; {sat}; {sun}"
+                if ":" not in hours_of_operation:
+                    hours_of_operation = MISSING
+
+                if (
+                    "Mon: -; Tue: -; Wed: -; Thu: -; Fri: -; Sat: -; Sun: -"
+                    in hours_of_operation
+                ):
+                    hours_of_operation = MISSING
+
+                # Clean street_address
+                if street_address is not None or street_address:
+                    street_address = " ".join(street_address.split())
+
+                raw_address = MISSING
+                item = SgRecord(
+                    locator_domain=locator_domain,
+                    page_url=page_url,
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=zip_postal,
+                    country_code=country_code,
+                    store_number=store_number,
+                    phone=phone,
+                    location_type=location_type,
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=hours_of_operation,
+                    raw_address=raw_address,
+                )
+                sgw.write_row(item)
+            logger.info(
+                f'Number of items found: {len(json.loads(r.content)["stores"])} : Total: {total}'
             )
-            add = add.strip()
-            street_address = ""
-            if add == "" or add is None:
-                street_address = MISSING
-            else:
-                street_address = add
+        else:
+            return
 
-            # Location Name
-            location_name = item["storeNameExternal"]
-            if location_name == "":
-                location_name = location_type
-
-            # City Name
-            city = item["storeAddress"]["city"]
-            if city == "":
-                city = item["storeAddress"]["addressLine3"]
-            if city == "" or city is None:
-                city = MISSING
-            if city == MISSING:
-                city = location_name
-            if "Belfast" in location_name:
-                city = "Belfast"
-            if "Knightswick" in location_name:
-                city = "Knightswick"
-            if "Lewes" in location_name:
-                city = "Lewes"
-            if "Belper" in location_name:
-                city = "Belper"
-            if "Barrow in Furness" in location_name:
-                city = "Barrow in Furness"
-            if "Washington" in location_name:
-                city = "Washington"
-            if "Purfleet" in add:
-                city = "Purfleet"
-            if "Taunton" in location_name:
-                city = "Taunton"
-            if "Hempstead Valley" in location_name:
-                city = "Hempstead Valley"
-            if "Belfast" in add:
-                city = "Belfast"
-            if "Bideford" in location_name:
-                city = "Bideford"
-
-            # State
-            state = MISSING
-
-            # Zip Postal
-            zip_postal = item["storeAddress"]["postCode"]
-            if zip_postal == "" or zip_postal is None:
-                zip_postal = MISSING
-
-            # Country Code
-            country_code = "GB"
-
-            # Latitude and Longitude
-            latitude = item["latitude"]
-            latitude = latitude if latitude else MISSING
-
-            longitude = item["longitude"]
-            longitude = longitude if longitude else MISSING
-
-            # page url
-            page_url = ""
-            if MISSING not in latitude or MISSING not in longitude:
-                page_url = f"https://www.costa.co.uk/locations/store-locator/map?latitude={latitude}&longitude={longitude}"
-            else:
-                page_url = "https://www.costa.co.uk/locations/store-locator"
-
-            # Hours of Operation
-            soh = item["storeOperatingHours"]
-            mon = "Mon: " + soh["openMon"] + "-" + soh["closeMon"]
-            tue = "Tue: " + soh["openTue"] + "-" + soh["closeTue"]
-            wed = "Wed: " + soh["openWed"] + "-" + soh["closeWed"]
-            thu = "Thu: " + soh["openThu"] + "-" + soh["closeThu"]
-            fri = "Fri: " + soh["openFri"] + "-" + soh["closeFri"]
-            sat = "Sat: " + soh["openSat"] + "-" + soh["closeSat"]
-            sun = "Sun: " + soh["openSun"] + "-" + soh["closeSun"]
-            hours_of_operation = f"{mon}; {tue}; {wed}; {thu}; {fri}; {sat}; {sun}"
-            if ":" not in hours_of_operation:
-                hours_of_operation = MISSING
-
-            if (
-                "Mon: -; Tue: -; Wed: -; Thu: -; Fri: -; Sat: -; Sun: -"
-                in hours_of_operation
-            ):
-                hours_of_operation = MISSING
-
-            raw_address = MISSING
-            item = SgRecord(
-                locator_domain=locator_domain,
-                page_url=page_url,
-                location_name=location_name,
-                street_address=street_address,
-                city=city,
-                state=state,
-                zip_postal=zip_postal,
-                country_code=country_code,
-                store_number=store_number,
-                phone=phone,
-                location_type=location_type,
-                latitude=latitude,
-                longitude=longitude,
-                hours_of_operation=hours_of_operation,
-                raw_address=raw_address,
-            )
-            sgw.write_row(item)
-        logger.info(
-            f'Number of items found: {len(json.loads(r.content)["stores"])} : Total: {total}'
-        )
-    else:
-        return
+    except Exception as e:
+        logger.info(f"Please fix FetchRecordsError: << {e} >> << {url} >> ")  # noqa
 
 
 def fetch_data(sgw: SgWriter):
     logger.info("Started")
     search = DynamicGeoSearch(
         country_codes=[SearchableCountries.BRITAIN],
-        expected_search_radius_miles=10,
+        expected_search_radius_miles=5,
         granularity=Grain_8(),
         use_state=False,
     )

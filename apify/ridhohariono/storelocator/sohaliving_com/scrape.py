@@ -54,7 +54,7 @@ def pull_content(url):
 def get_latlong(url):
     latlong = re.search(r"@(-?[\d]*\.[\d]*),(-?[\d]*\.[\d]*)", url)
     if not latlong:
-        return "<MISSING>", "<MISSING>"
+        return MISSING, MISSING
     return latlong.group(1), latlong.group(2)
 
 
@@ -87,8 +87,10 @@ def fetch_data():
                 phone = addr
                 break
             raw_address += " " + addr
+        if not raw_address:
+            continue
         street_address, city, state, zip_postal = getAddress(raw_address.strip())
-        hours_of_operation = get_hoo(info)
+        hours_of_operation = get_hoo(info).rstrip(",")
         country_code = "US"
         store_number = MISSING
         location_type = "sohaliving"
@@ -130,7 +132,6 @@ def scrape():
         for rec in results:
             writer.write_row(rec)
             count = count + 1
-
     log.info(f"No of records being processed: {count}")
     log.info("Finished")
 

@@ -4,12 +4,14 @@ from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgpostal import parse_address_usa
 
 DOMAIN = "myiga.com"
 LOCATION_URL = "https://www.myiga.com/my-store/store-locator"
-API_URL = "https://api.freshop.com/1/stores?app_key=houchens_iga&has_address=true&limit=-1&token=8505187f27062232d6c5948969c120e6"
+API_URL = (
+    "https://api.freshop.com/1/stores?app_key=houchens_iga&has_address=true&limit=-1"
+)
 HEADERS = {
     "Accept": "application/json, text/plain, */*",
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
@@ -87,22 +89,13 @@ def fetch_data():
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hours_of_operation,
-            raw_address=f"{street_address}, {city}, {state}, {zip_postal}",
         )
 
 
 def scrape():
     log.info("start {} Scraper".format(DOMAIN))
     count = 0
-    with SgWriter(
-        SgRecordDeduper(
-            SgRecordID(
-                {
-                    SgRecord.Headers.RAW_ADDRESS,
-                }
-            )
-        )
-    ) as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

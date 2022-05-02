@@ -5,7 +5,7 @@ from sglogging import sglog
 import json
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.pause_resume import CrawlStateSingleton
 from sgzip.parallel import DynamicSearchMaker, ParallelDynamicSearch, SearchIteration
@@ -39,8 +39,7 @@ class _SearchIteration(SearchIteration):
     a method to register found locations.
     """
 
-    def __init__(self, http: SgRequests):
-        self.__http = http
+    def __init__(self):
         self.__state = CrawlStateSingleton.get_instance()
         # country=> key, language:domain_part => value
         self.__country_dict = {
@@ -91,68 +90,71 @@ class _SearchIteration(SearchIteration):
 
         final_url = search_url.format(domain_part, lat, lng, current_language_code)
 
-        stores_req = self.__http.get(
-            final_url,
-            headers=headers,
-        )
-        try:
-            if "data" in stores_req.text:
+        with SgRequests(dont_retry_status_codes=([404]), proxy_country="us") as session:
+            stores_req = session.get(
+                final_url,
+                headers=headers,
+            )
+            try:
+                if "data" in stores_req.text:
 
-                for store in json.loads(stores_req.text)["data"]:
-                    page_url = "<MISSING>"
-                    locator_domain = website
-                    location_name = store["name"]
-                    raw_address = store["address"]
-                    formatted_addr = parser.parse_address_intl(raw_address)
-                    street_address = formatted_addr.street_address_1
-                    if street_address:
-                        if formatted_addr.street_address_2:
-                            street_address = (
-                                street_address + ", " + formatted_addr.street_address_2
-                            )
-                    else:
-                        if formatted_addr.street_address_2:
-                            street_address = formatted_addr.street_address_2
+                    for store in json.loads(stores_req.text)["data"]:
+                        page_url = "<MISSING>"
+                        locator_domain = website
+                        location_name = store["name"]
+                        raw_address = store["address"]
+                        formatted_addr = parser.parse_address_intl(raw_address)
+                        street_address = formatted_addr.street_address_1
+                        if street_address:
+                            if formatted_addr.street_address_2:
+                                street_address = (
+                                    street_address
+                                    + ", "
+                                    + formatted_addr.street_address_2
+                                )
+                        else:
+                            if formatted_addr.street_address_2:
+                                street_address = formatted_addr.street_address_2
 
-                    city = formatted_addr.city
-                    state = formatted_addr.state
-                    zip = formatted_addr.postcode
+                        city = formatted_addr.city
+                        state = formatted_addr.state
+                        zip = formatted_addr.postcode
 
-                    country_code = current_country
-                    store_number = store["id"]
-                    phone = (
-                        store["dealer_phone"]
-                        .replace("Showroom:", "")
-                        .strip()
-                        .split("Service:")[0]
-                        .strip()
-                    )
-                    location_type = "<MISSING>"
-                    hours_of_operation = "<MISSING>"
-                    latitude = store["lat"]
-                    longitude = store["lng"]
+                        country_code = current_country
+                        store_number = store["id"]
+                        phone = (
+                            store["dealer_phone"]
+                            .replace("Showroom:", "")
+                            .strip()
+                            .split("Service:")[0]
+                            .strip()
+                        )
+                        location_type = "<MISSING>"
+                        hours_of_operation = "<MISSING>"
+                        latitude = store["lat"]
+                        longitude = store["lng"]
 
-                    found_location_at(latitude, longitude)
-                    yield SgRecord(
-                        locator_domain=locator_domain,
-                        page_url=page_url,
-                        location_name=location_name,
-                        street_address=street_address,
-                        city=city,
-                        state=state,
-                        zip_postal=zip,
-                        country_code=country_code,
-                        store_number=store_number,
-                        phone=phone,
-                        location_type=location_type,
-                        latitude=latitude,
-                        longitude=longitude,
-                        hours_of_operation=hours_of_operation,
-                        raw_address=raw_address,
-                    )
+                        found_location_at(latitude, longitude)
+                        yield SgRecord(
+                            locator_domain=locator_domain,
+                            page_url=page_url,
+                            location_name=location_name,
+                            street_address=street_address,
+                            city=city,
+                            state=state,
+                            zip_postal=zip,
+                            country_code=country_code,
+                            store_number=store_number,
+                            phone=phone,
+                            location_type=location_type,
+                            latitude=latitude,
+                            longitude=longitude,
+                            hours_of_operation=hours_of_operation,
+                            raw_address=raw_address,
+                        )
 
-        except:
-            pass
+            except:
+                pass
 
 
 def scrape():
@@ -191,19 +193,25 @@ def scrape():
 
     with SgWriter(
         deduper=SgRecordDeduper(
-            RecommendedRecordIds.StoreNumberId, duplicate_streak_failure_factor=-1
+            SgRecordID(
+                {
+                    SgRecord.Headers.RAW_ADDRESS,
+                    SgRecord.Headers.COUNTRY_CODE,
+                    SgRecord.Headers.LOCATION_NAME,
+                }
+            ),
+            duplicate_streak_failure_factor=-1,
         )
     ) as writer:
-        with SgRequests(dont_retry_status_codes=([404]), proxy_country="us") as http:
-            search_iter = _SearchIteration(http=http)
-            par_search = ParallelDynamicSearch(
-                search_maker=search_maker,
-                search_iteration=search_iter,
-                country_codes=country_list,
-            )
+        search_iter = _SearchIteration()
+        par_search = ParallelDynamicSearch(
+            search_maker=search_maker,
+            search_iteration=search_iter,
+            country_codes=country_list,
+        )
 
-            for rec in par_search.run():
-                writer.write_row(rec)
+        for rec in par_search.run():
+            writer.write_row(rec)
 
 
 if __name__ == "__main__":

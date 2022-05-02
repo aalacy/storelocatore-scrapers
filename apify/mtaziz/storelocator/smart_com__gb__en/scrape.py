@@ -8,7 +8,6 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from tenacity import retry, stop_after_attempt
 import tenacity
 from lxml import html
-import re
 import json
 
 
@@ -39,34 +38,19 @@ def get_response(urlnum, url, headers_):
         raise Exception(f"{urlnum} : {url} >> Temporary Error: {r.status_code}")
 
 
-def get_api_key():
+def get_apikey_new():
     r_js = get_response(0, LOCATION_DEALER_URL, headers_dealer_locator)
-    xpath_2 = '//iframe[contains(@data-nn-pluginid, "dlc")]/@data-nn-config-url'
+    xpath_2 = '//dh-io-dlc[contains(@datajson, "searchProfileName")]/@datajson'
     sel_apikey = html.fromstring(r_js.text, "lxml")
-    raw_plugin_dlc_file_url = sel_apikey.xpath(xpath_2)
-    logger.info(f"Plugin DLC File Name: {raw_plugin_dlc_file_url}")
-    raw_plugin_dlc_file_url = "".join(raw_plugin_dlc_file_url)
-
-    dealerlocator_payload_pluginJSUrl = get_response(
-        0, raw_plugin_dlc_file_url, headers_dealer_locator
-    ).json()["pluginJSUrl"]
-    response_pjsurl = get_response(
-        0, dealerlocator_payload_pluginJSUrl, headers_dealer_locator
-    )
-    apikey_pjsurl = re.findall(
-        r"apiKey:_\|\|String(.*)searchProfileName", response_pjsurl.text
-    )
-    apikey = "".join(apikey_pjsurl).split('"')[1]
-    try:
-        if apikey:
-            return apikey
-    except Exception as e:
-        logger.rinfo(f"Fix this issue {e}")
+    datajson_apikey_raw = "".join(sel_apikey.xpath(xpath_2))
+    datajson_apikey = json.loads(datajson_apikey_raw)
+    payload_apikey = datajson_apikey["payload"]["apiKey"]
+    return payload_apikey
 
 
 def get_api_based_headers():
     headers_with_apikey = {}
-    apikey = get_api_key()
+    apikey = get_apikey_new()
     headers_with_apikey["x-apikey"] = apikey
     headers_with_apikey[
         "User-agent"
@@ -82,7 +66,7 @@ def determine_brand(k):
         brands.append(
             str(i["brand"]["name"]) + str("(" + str(i["brand"]["code"]) + ")")
         )
-    logger.info(" brands: %s" % brands)
+    logger.info("Brands: %s" % brands)
     return ", ".join(brands)
 
 
@@ -230,6 +214,8 @@ def fetch_records(idx, store_url_tuple, headers_apikey, sgw: SgWriter):
             l = fix_comma(l)
             street_address = l or SgRecord.MISSING
             city = d["address"]["city"] or SgRecord.MISSING
+            state1 = ""
+            state2 = ""
             if "region" in d["address"]["region"]:
                 state1 = d["address"]["region"]["region"]
             else:
@@ -239,13 +225,13 @@ def fetch_records(idx, store_url_tuple, headers_apikey, sgw: SgWriter):
                 state2 = d["address"]["region"]["subRegion"]
             else:
                 state2 = ""
-
-            if state1 and state2:
-                state = state1 + ": " + state2
+            state = ""
+            if state1:
+                state = state1
+            elif not state1 and state2:
+                state = state2
             elif state1 and not state2:
                 state = state1
-            elif state2 and not state1:
-                state = state2
             else:
                 state = SgRecord.MISSING
 
@@ -325,6 +311,7 @@ def get_api_endpoint_url_based_on_dealer(headers_ak):
 def fetch_data(sgw: SgWriter):
     headers_with_apikey = get_api_based_headers()
     api_endpoint_urls = get_api_endpoint_url_based_on_dealer(headers_with_apikey)
+    logger.info(f"Total API ENDPOINT URLs: {len(api_endpoint_urls)}")
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
         tasks = []
         task = [
