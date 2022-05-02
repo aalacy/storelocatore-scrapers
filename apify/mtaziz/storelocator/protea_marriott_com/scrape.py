@@ -71,7 +71,6 @@ def get__regions_submit_search_urls():
     # "RZ Hotel" refers to "the Ritz-Carlton Hotel"
     # "PR Hotel" refers to "the Protea Hotel"
 
-
     # non-API-based marriottBrands include EB,RZ,BG,BR,GE,PR,ER".
     # non-API-based 4 brands has the tickets, these 4 brands include BR, EB, GE, RZ.
 
