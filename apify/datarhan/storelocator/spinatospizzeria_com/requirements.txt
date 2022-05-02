@@ -2,4 +2,3 @@
 sgselenium==0.2.4
 sgzip==0.11.0
 sgscrape==0.2.9
-lxml==4.8.0
