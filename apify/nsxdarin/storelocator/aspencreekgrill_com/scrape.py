@@ -17,7 +17,7 @@ headers = {
 def fetch_data():
     url = "https://aspencreekgrill.com/"
     locs = []
-    r = session.get(url, headers=headers, verify=False)
+    r = session.get(url, headers=headers)
     Found = False
     for line in r.iter_lines():
         if '<ul class="sub-menu">' in line and len(locs) == 0:

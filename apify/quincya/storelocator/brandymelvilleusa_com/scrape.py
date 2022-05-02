@@ -10,6 +10,8 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
+from sgpostal.sgpostal import parse_address_intl
+
 
 def fetch_data(sgw: SgWriter):
 
@@ -50,6 +52,7 @@ def fetch_data(sgw: SgWriter):
                     .replace(", Hong Kong", "")
                     .strip()
                 )
+                raw_address = street_address
                 city = store[0]
                 state = state.replace("Washington", "WA")
                 location_name = "Brandy Melville - " + city
@@ -94,6 +97,9 @@ def fetch_data(sgw: SgWriter):
                     fin_state = state
                 if country_code == "Asia":
                     country = "China"
+                if country in ["China", "Australia"]:
+                    addr = parse_address_intl(raw_address)
+                    street_address = addr.street_address_1.split("Shop")[0].strip()
 
                 sgw.write_row(
                     SgRecord(
@@ -111,6 +117,7 @@ def fetch_data(sgw: SgWriter):
                         latitude=latitude,
                         longitude=longitude,
                         hours_of_operation=hours_of_operation,
+                        raw_address=raw_address,
                     )
                 )
 
