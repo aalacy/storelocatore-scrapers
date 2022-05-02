@@ -40,6 +40,8 @@ def fetch_data():
         street_address = addr.street_address_1
         if addr.street_address_2:
             street_address += " " + addr.street_address_2
+        hoo = loc_dom.xpath('//div[@class="locator-h"]/p/text()')
+        hoo = " ".join([e.strip() for e in hoo if e.strip()])
 
         item = SgRecord(
             locator_domain=domain,
@@ -55,7 +57,7 @@ def fetch_data():
             location_type="",
             latitude=poi["position"].split(", ")[0],
             longitude=poi["position"].split(", ")[1],
-            hours_of_operation="",
+            hours_of_operation=hoo,
             raw_address=raw_address,
         )
 

@@ -30,7 +30,7 @@ def fetch_data():
             if page_url.strip():
                 with SgFirefox() as driver:
                     driver.get(page_url)
-                    sleep(5)
+                    sleep(15)
                     loc_dom = etree.HTML(driver.page_source)
                 hoo = loc_dom.xpath('//dl[@itemprop="openingHours"]//text()')
                 hoo = " ".join([e.strip() for e in hoo if e.strip()])
