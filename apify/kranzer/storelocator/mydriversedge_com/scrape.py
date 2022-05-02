@@ -1,41 +1,83 @@
-import re
-from pprint import pprint
-from string import capwords
+import html
+from sglogging import sglog
+from bs4 import BeautifulSoup
+from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-import base
-import requests, json
-from urllib.parse import urljoin
+session = SgRequests()
+website = "mydriversedge_com"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
 
-from w3lib.html import remove_tags
-from lxml import etree
-from sglogging import SgLogSetup
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36"
+}
 
-logger = SgLogSetup().get_logger('mydriversedge_com')
-
-
-crawled = []
-class Scrape(base.Spider):
-
-    def crawl(self):
-        for sel in requests.get('https://www.mydriversedge.com/wp-admin/admin-ajax.php?action=store_search&lat=32.776664&lng=-96.796988&max_results=25&search_radius=50&autoload=1', headers={"user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.87 Safari/537.36"}).json():
-            i = base.Item(sel)
-            i.add_value('location_name', sel['store'])
-            i.add_value('locator_domain', 'https://www.mydriversedge.com/locations/')
-            i.add_value('page_url', sel['permalink'])
-            i.add_value('phone', sel['phone'])
-            i.add_value('latitude', sel['lat'])
-            i.add_value('longitude', sel['lng'])
-            i.add_value('street_address', sel['address'])
-            i.add_value('city', sel['city'])
-            i.add_value('state', sel['state'])
-            i.add_value('zip', sel['zip'])
-            i.add_value('country_code', sel['country'])
-            i.add_value('store_number', sel['id'])
-            selector = base.selector(sel['permalink'], headers={"user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.87 Safari/537.36"})
-            i.add_value('hours_of_operation', '; '.join([''.join(s.xpath('./td//text()')).replace('\xa0',' ') for s in selector['tree'].xpath('//table[contains(@class, "hours-list")]//tr')]))
-            yield i
+DOMAIN = "https://www.mydriversedge.com"
+MISSING = SgRecord.MISSING
 
 
-if __name__ == '__main__':
-    s = Scrape()
-    s.run()
+def fetch_data():
+    if True:
+        url = "https://www.mydriversedge.com/wp-admin/admin-ajax.php?action=store_search&lat=32.776664&lng=-96.796988&max_results=25&search_radius=50&autoload=1"
+        loclist = session.get(url, headers=headers).json()
+        for loc in loclist:
+            location_name = html.unescape(loc["store"])
+            page_url = loc["permalink"]
+            r = session.get(page_url, headers=headers)
+            soup = BeautifulSoup(r.text, "html.parser")
+            hours_of_operation = (
+                soup.find("table", {"class": "hours-list"})
+                .get_text(separator="|", strip=True)
+                .replace("|", " ")
+            )
+            log.info(page_url)
+            store_number = loc["id"]
+            phone = loc["phone"]
+            if not phone:
+                phone = soup.find("a", {"class": "store-phone"}).text
+            street_address = loc["address"]
+            city = loc["city"]
+            state = loc["state"]
+            zip_postal = loc["zip"]
+            country_code = "US"
+            latitude = loc["lat"]
+            longitude = loc["lng"]
+            country_code = loc["country"]
+            yield SgRecord(
+                locator_domain=DOMAIN,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address.strip(),
+                city=city.strip(),
+                state=state.strip(),
+                zip_postal=zip_postal.strip(),
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone.strip(),
+                location_type=MISSING,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
+
+
+def scrape():
+    log.info("Started")
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.GeoSpatialId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
+
+
+if __name__ == "__main__":
+    scrape()

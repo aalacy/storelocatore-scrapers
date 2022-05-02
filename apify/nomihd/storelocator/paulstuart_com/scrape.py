@@ -5,6 +5,8 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import lxml.html
 import re
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
 website = "paulstuart.com"
@@ -105,7 +107,7 @@ def fetch_data():
 
     search_sel = lxml.html.fromstring(search_res.text)
 
-    store_list = list(search_sel.xpath("//h2[u]/parent::node()"))
+    store_list = list(search_sel.xpath("//h2[.//u]/parent::node()"))
 
     for store in store_list:
 
@@ -125,22 +127,37 @@ def fetch_data():
                 ],
             )
         )
+        phone = None
+        if (
+            full_address[-1]
+            .replace("(", "")
+            .replace(")", "")
+            .replace(" ", "")
+            .replace("-", "")
+            .strip()
+            .isdigit()
+        ):
+            phone = full_address[-1]
+            full_address = full_address[:-1]
 
         street_address, city, state, zip, country_code = split_fulladdress(full_address)
 
         store_number = "<MISSING>"
 
-        phone = "".join(
-            list(
-                filter(
-                    str,
-                    [
-                        x.strip()
-                        for x in store.xpath('.//p[contains(.//@href,"tel")]//text()')
-                    ],
+        if not phone:
+            phone = "".join(
+                list(
+                    filter(
+                        str,
+                        [
+                            x.strip()
+                            for x in store.xpath(
+                                './/p[contains(.//@href,"tel")]//text()'
+                            )
+                        ],
+                    )
                 )
-            )
-        ).strip()
+            ).strip()
 
         location_type = "<MISSING>"
 
@@ -188,7 +205,18 @@ def fetch_data():
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.LOCATION_NAME,
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.CITY,
+                    SgRecord.Headers.ZIP,
+                }
+            )
+        )
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

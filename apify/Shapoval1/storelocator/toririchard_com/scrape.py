@@ -8,14 +8,19 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 def fetch_data(sgw: SgWriter):
 
     locator_domain = "https://toririchard.com/"
-    api_url = "https://cdn.shopify.com/s/files/1/0265/8762/7586/t/2/assets/sca.storelocator_scripttag.js?v=1632117928&shop=toririchard-com.myshopify.com"
+    api_url = "https://cdn.shopify.com/s/files/1/0265/8762/7586/t/89/assets/sca.storelocator_scripttag.js?v=1642029367&shop=toririchard-com.myshopify.com"
     session = SgRequests()
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
     r = session.get(api_url, headers=headers)
 
-    jsblock = r.text.split("locationsRaw:'")[1].split("'}")[0].strip()
+    jsblock = (
+        r.text.split('"locationsRaw":"')[1]
+        .split('","app_url"')[0]
+        .replace("\\", "")
+        .strip()
+    )
     js = eval(jsblock)
     for j in js:
 
@@ -44,6 +49,8 @@ def fetch_data(sgw: SgWriter):
             .replace("<br>", " ")
             .replace("\\", "")
             .replace("Open", "")
+            .replace("r ", " ")
+            .strip()
             .strip()
             or "<MISSING>"
         )

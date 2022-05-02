@@ -4,8 +4,8 @@ from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.sgrecord_id import SgRecordID
-from sgscrape.sgpostal import parse_address_intl
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgpostal import parse_address_usa
 import re
 import json
 
@@ -25,14 +25,13 @@ session = SgRequests()
 def getAddress(raw_address):
     try:
         if raw_address is not None and raw_address != MISSING:
-            data = parse_address_intl(raw_address)
+            data = parse_address_usa(raw_address)
             street_address = data.street_address_1
             if data.street_address_2 is not None:
                 street_address = street_address + " " + data.street_address_2
             city = data.city
             state = data.state
             zip_postal = data.postcode
-
             if street_address is None or len(street_address) == 0:
                 street_address = MISSING
             if city is None or len(city) == 0:
@@ -64,17 +63,13 @@ def get_latlong(url):
 def fetch_data():
     log.info("Fetching store_locator data")
     soup = pull_content(LOCATION_URL)
-    contents = soup.find("div", {"class": "location-middle-content"}).find_all(
-        "div", {"class": "span4"}
-    )
+    contents = soup.select("ul#list-store-detail li div.tag-content")
     for row in contents:
-        if not row.find("h2"):
-            continue
-        page_url = BASE_URL + row.find("h2").find("a")["href"]
+        page_url = row.find("h4").find("a")["href"]
         content = pull_content(page_url)
         info = content.find("div", {"class": "store-info"})
         location_name = info.find("h4").text.strip()
-        raw_address = info.find("p").text.strip()
+        raw_address = info.find("p").text.strip().replace("United States. -", "")
         street_address, city, state, zip_postal = getAddress(raw_address)
         phone = info.find("a", {"href": re.compile(r"tel:.*")}).text.strip()
         hours_of_operation = (
@@ -85,7 +80,7 @@ def fetch_data():
         )
         country_code = "US"
         store_number = MISSING
-        location_type = "showrooms"
+        location_type = MISSING
         map_link = json.loads(
             content.find("script", {"type": "application/ld+json"}).string
         )["hasmap"]
@@ -113,20 +108,11 @@ def fetch_data():
 def scrape():
     log.info("start {} Scraper".format(DOMAIN))
     count = 0
-    with SgWriter(
-        SgRecordDeduper(
-            SgRecordID(
-                {
-                    SgRecord.Headers.PAGE_URL,
-                }
-            )
-        )
-    ) as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
             count = count + 1
-
     log.info(f"No of records being processed: {count}")
     log.info("Finished")
 

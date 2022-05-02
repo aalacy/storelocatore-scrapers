@@ -59,10 +59,14 @@ def fetch_data():
             if not loc["humanSchedule"]:
                 hours_of_operation = MISSING
             else:
-                hours_of_operation = loc["humanSchedule"][0]
-                hours_of_operation = strip_accents(
-                    hours_of_operation["days"] + " " + hours_of_operation["schedule"]
-                )
+                hours_of_operation = ""
+                hour_list = loc["humanSchedule"]
+                for hour in hour_list:
+                    day = hour["days"]
+                    time = hour["schedule"]
+                    hours_of_operation = (
+                        hours_of_operation + " " + strip_accents(day) + " " + time
+                    )
             pa = parse_address_intl(raw_address)
 
             street_address = pa.street_address_1
@@ -85,13 +89,13 @@ def fetch_data():
                 locator_domain=DOMAIN,
                 page_url="https://www.pollostop.cl/locales",
                 location_name=location_name,
-                street_address=street_address.strip(),
-                city=city.strip(),
-                state=state.strip(),
-                zip_postal=zip_postal.strip(),
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_postal,
                 country_code=country_code,
                 store_number=MISSING,
-                phone=phone.strip(),
+                phone=phone,
                 location_type=MISSING,
                 latitude=latitude,
                 longitude=longitude,

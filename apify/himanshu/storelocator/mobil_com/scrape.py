@@ -16,10 +16,10 @@ def fetch_data():
 
     all_coords = DynamicGeoSearch(
         country_codes=[SearchableCountries.USA],
-        expected_search_radius_miles=3,
+        expected_search_radius_miles=5,
     )
     for lat, lng in all_coords:
-        url = start_url.format(lat, lat + 0.3, lng, lng + 0.8)
+        url = start_url.format(lat, lat + 3.0, lng, lng + 5.0)
         try:
             all_locations = session.get(url).json()
         except Exception:

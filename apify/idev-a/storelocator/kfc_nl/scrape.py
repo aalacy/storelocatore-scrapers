@@ -6,6 +6,10 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 import json
 
 _headers = {
+    "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+    "accept-encoding": "gzip, deflate, br",
+    "accept-language": "en-US,en;q=0.9",
+    "referer": "https://www.kfc.nl/",
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
 }
 
@@ -39,7 +43,7 @@ def fetch_data():
             for hh in _["Hours"]:
                 hours.append(f"{days[hh['Day']]}: {hh['OpenTime']}-{hh['CloseTime']}")
             yield SgRecord(
-                page_url="https://www.kfc.nl/find-a-kfc",
+                page_url=base_url,
                 store_number=_["RestaurantId"],
                 location_name=_["RestaurantName"],
                 street_address=street_address,

@@ -20,18 +20,6 @@ def fetch_data():
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36",
     }
 
-    hdr_loc = {
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:93.0) Gecko/20100101 Firefox/93.0",
-        "Accept": "application/json, */*",
-        "Accept-Language": "en-US,ru-RU;q=0.8,ru;q=0.5,en;q=0.3",
-        "Accept-Encoding": "gzip, deflate, br",
-        "__RequestVerificationToken": "",
-        "X-Requested-With": "XMLHttpRequest",
-        "X-Olo-Request": "1",
-        "X-Olo-Viewport": "Desktop",
-        "X-Olo-App-Platform": "web",
-        "X-Olo-Country": "us",
-    }
     response = session.post(start_url, headers=hdr)
     dom = etree.HTML(response.text)
     data = dom.xpath('//script[contains(text(), "var locations")]/text()')[0]
@@ -46,31 +34,33 @@ def fetch_data():
         poi_html = etree.HTML(poi["content"])
         raw_address = poi_html.xpath('//span[@class="address"]/text()')
         sleep(uniform(3, 10))
-        poi_url = (
-            f'https://order.millersalehouse.com/api/vendors/{poi["olo"].split("/")[-1]}'
-        )
-        poi_data = session.get(poi_url, headers=hdr_loc).json()
-        passed = False
-        while not passed:
-            session = SgRequests(proxy_country="us")
-            sleep(uniform(3, 10))
-            poi_data = session.get(poi_url, headers=hdr_loc).json()
-            passed = poi_data.get("vendor")
 
-        hoo = []
-        for e in poi_data["vendor"]["weeklySchedule"]["calendars"][0]["schedule"]:
-            hoo.append(f'{e["weekDay"]} {e["description"]}')
-        hoo = " ".join(hoo)
+        hdr = {
+            "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
+        }
+        loc_response = session.get(poi["url"], headers=hdr)
+        loc_dom = etree.HTML(loc_response.text)
+        hoo = loc_dom.xpath(
+            '//span[contains(text(), "Hours")]/following-sibling::fieldset//text()'
+        )
+        hoo = (
+            " ".join([e.strip() for e in hoo if e.strip()])
+            .split("*")[0]
+            .split("We are open!")[0]
+            .strip()
+        )
+        location_name = (
+            poi["name"].replace("&#8217", "'").replace("&#8211; Now Open!", "")
+        )
+        street_address = (
+            poi["street"].replace("<br>", " ").replace(" Crossings Plaza", "")
+        )
 
         item = SgRecord(
             locator_domain=domain,
-            page_url=poi["olo"],
-            location_name=poi["name"]
-            .replace("&#8217", "'")
-            .replace("&#8211; Now Open!", ""),
-            street_address=poi["street"]
-            .replace("<br>", " ")
-            .replace(" Crossings Plaza", ""),
+            page_url=poi["url"],
+            location_name=location_name,
+            street_address=street_address,
             city=raw_address[-1].split(", ")[0],
             state=raw_address[-1].split(", ")[-1].split()[0],
             zip_postal=poi["zip"],

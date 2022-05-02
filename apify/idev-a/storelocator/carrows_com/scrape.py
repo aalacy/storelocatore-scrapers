@@ -23,10 +23,8 @@ def fetch_data():
                 street_address += " " + _["street2"]
             hours = []
             for hh in list(bs(_["website"], "lxml").stripped_strings):
-                hh = hh.split("Open")[0].strip()
-                if (
-                    "Hours" in hh or "Delivery" in hh or not hh
-                ) and "Thanksgiving" not in hh:
+                hh = hh.split("Open")[0].split("Thanksgiving")[0].strip()
+                if "Delivery" in hh or not hh:
                     continue
                 hours.append(hh)
             yield SgRecord(

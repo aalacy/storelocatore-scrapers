@@ -56,10 +56,13 @@ def get_data(slug, sgw: SgWriter):
         tree.xpath("//div[@class='txt']/text()")[0]
         .replace("·", "")
         .replace("/", ";")
+        .replace("~", "-")
         .strip()
     )
     if "(" in hours_of_operation:
         hours_of_operation = hours_of_operation.split("(")[0].strip()
+    if "-" not in hours_of_operation:
+        hours_of_operation = SgRecord.MISSING
     store_number = slug.split("=")[-1]
 
     try:

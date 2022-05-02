@@ -57,7 +57,7 @@ def fetch_data(sgw: SgWriter):
             page_url=page_url,
             location_name=location_name,
             street_address=street_address,
-            city=city,
+            city=SgRecord.MISSING,
             state=state,
             zip_postal=postal,
             country_code="SG",
