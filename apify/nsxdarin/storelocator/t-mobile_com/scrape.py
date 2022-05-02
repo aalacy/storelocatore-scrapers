@@ -84,10 +84,6 @@ def fetch_data():
             website = "t-mobile.com"
             if "code" not in stores:
                 for store in stores:
-                    if "name" in store:
-                        name = store["name"]
-                    else:
-                        name = "<MISSING>"
                     typ = compute_location_type(store)
                     storeid = store["id"]
                     if "url" in store:
@@ -105,6 +101,8 @@ def fetch_data():
                     lat = location["latitude"]
                     lng = location["longitude"]
                     hours = parse_hours(store)
+                    hours = hours.replace("None-None", "Closed")
+                    name = typ
                     yield SgRecord(
                         locator_domain=website,
                         page_url=loc,
