@@ -325,11 +325,12 @@ def initial(driver, url, state):
                     r.response.body,
                     r.response.headers.get("Content-Encoding", "identity"),
                 )
-                son = json.loads(body)
-                for item in son["hotels"]:
-                    state.push_request(
-                        SerializableRequest(url=item["overviewPath"], context=item)
-                    )
+                if body:
+                    son = json.loads(body)
+                    for item in son["hotels"]:
+                        state.push_request(
+                            SerializableRequest(url=item["overviewPath"], context=item)
+                        )
 
 
 def record_initial_requests(state):
