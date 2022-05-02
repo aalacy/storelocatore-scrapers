@@ -14,7 +14,7 @@ session = SgRequests()
 
 def fetch_data(sgw: SgWriter):
 
-    base_link = "https://stores.cosmoprofbeauty.com/sitemap.xml"
+    base_link = "https://stores.cosmoprofbeauty.com/"
 
     user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
     headers = {"User-Agent": user_agent}
@@ -26,10 +26,25 @@ def fetch_data(sgw: SgWriter):
     base = BeautifulSoup(req.text, "lxml")
 
     final_links = []
-    locs = base.find_all("loc")
-    for loc in locs:
-        if "/salon-supply" in loc.text:
-            final_links.append(loc.text)
+
+    main_items = base.find(id="bowse-content").find_all(class_="ga-link")
+    for main_item in main_items:
+        main_link = main_item["href"]
+
+        req = session.get(main_link, headers=headers)
+        base = BeautifulSoup(req.text, "lxml")
+        next_items = base.find(class_="map-list").find_all(class_="ga-link")
+        for next_item in next_items:
+            next_link = next_item["href"]
+            next_req = session.get(next_link, headers=headers)
+            next_base = BeautifulSoup(next_req.text, "lxml")
+
+            other_links = next_base.find(class_="map-list").find_all(
+                class_="map-list-links"
+            )
+            for other_link in other_links:
+                link = other_link.a["href"]
+                final_links.append(link)
 
     for final_link in final_links:
         req = session.get(final_link, headers=headers)
@@ -46,6 +61,10 @@ def fetch_data(sgw: SgWriter):
         state = store["address"]["addressRegion"]
         zip_code = store["address"]["postalCode"]
         country_code = "US"
+        if " " in zip_code or not zip_code[0].isdigit():
+            country_code = "CA"
+        if "/pr/" in final_link:
+            country_code = "PR"
         store_number = "<MISSING>"
         location_type = "<MISSING>"
         phone = store["address"]["telephone"]

@@ -43,7 +43,7 @@ def fetch_data():
             store_number = str(loc["id"])
             location_name = loc["name"]
             phone = loc["phone"]
-            street_address = loc["address"].split(",")[1]
+            street_address = loc["address"].replace("Jennifer Furniture,", "")
             city = loc["city"]
             state = loc["state"]
             zip_postal = loc["postal"]

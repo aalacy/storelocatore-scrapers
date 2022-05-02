@@ -9,7 +9,7 @@ from sgselenium import SgChrome
 import time
 from webdriver_manager.chrome import ChromeDriverManager
 import ssl
-import lxml.html
+import json
 
 try:
     _create_unverified_https_context = (
@@ -69,72 +69,70 @@ def get_driver(url, driver=None):
 def fetch_data():
     # Your scraper here
 
-    api_url = "https://www.jenningsbet.com/shop-locator/"
+    api_url = "https://www.jenningsbet.com/shops/"
     driver = get_driver(api_url)
-    time.sleep(90)
-    stores = driver.find_elements_by_xpath(
-        '//ul[@class="column-list js-area-container"]/li'
+    time.sleep(10)
+    driver.get(
+        "https://www.jenningsbet.com/shop-locator-app.118b9ee-9a56dc3-d0c54ca8.js"
     )
-    for store in stores:
-        element = store.find_element_by_xpath("./span")
-        driver.execute_script("arguments[0].click();", element)
-        time.sleep(3)
-        store_sel = lxml.html.fromstring(driver.page_source)
+    time.sleep(20)
+    storeLocations = json.loads(
+        driver.page_source.split("JSON.parse('")[1].strip().split("');")[0].strip()
+    )["storeLocations"]
+    for loc in storeLocations:
+        state = loc["areaName"]
+        stores = loc["shops"]
+        for store in stores:
+            locator_domain = website
+            page_url = api_url
+            location_name = store["name"]
 
-        locator_domain = website
-        page_url = "https://www.jenningsbet.com/shop-locator/"
-        location_name = "".join(
-            store_sel.xpath('//div[@class="leaflet-popup-content"]/b/text()')
-        ).strip()
+            location_type = "<MISSING>"
 
-        location_type = "<MISSING>"
+            raw_address = store["address"]
 
-        raw_address = "".join(
-            store_sel.xpath('//div[@class="leaflet-popup-content"]/text()')
-        ).strip()
+            formatted_addr = parser.parse_address_intl(raw_address)
+            street_address = formatted_addr.street_address_1
+            if formatted_addr.street_address_2:
+                street_address = street_address + ", " + formatted_addr.street_address_2
 
-        formatted_addr = parser.parse_address_intl(raw_address)
-        street_address = formatted_addr.street_address_1
-        if formatted_addr.street_address_2:
-            street_address = street_address + ", " + formatted_addr.street_address_2
+            if street_address is not None:
+                street_address = street_address.replace("Ste", "Suite")
 
-        if street_address is not None:
-            street_address = street_address.replace("Ste", "Suite")
+            city = formatted_addr.city
+            if city:
+                city = city.replace("Great Clacton", "").strip()
 
-        city = formatted_addr.city
-        if city:
-            city = city.replace("Great Clacton", "").strip()
+            zip = formatted_addr.postcode
 
-        state = formatted_addr.state
-        zip = formatted_addr.postcode
+            country_code = "GB"
 
-        country_code = "GB"
+            phone = "<MISSING>"
 
-        phone = "<MISSING>"
+            hours_of_operation = "<MISSING>"
 
-        hours_of_operation = "<MISSING>"
+            store_number = "<MISSING>"
 
-        store_number = "<MISSING>"
+            latitude = store["lat"]
+            longitude = store["lon"]
 
-        latitude = longitude = "<MISSING>"
-
-        yield SgRecord(
-            locator_domain=locator_domain,
-            page_url=page_url,
-            location_name=location_name,
-            street_address=street_address,
-            city=city,
-            state=state,
-            zip_postal=zip,
-            country_code=country_code,
-            store_number=store_number,
-            phone=phone,
-            location_type=location_type,
-            latitude=latitude,
-            longitude=longitude,
-            hours_of_operation=hours_of_operation,
-            raw_address=raw_address,
-        )
+            yield SgRecord(
+                locator_domain=locator_domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+                raw_address=raw_address,
+            )
 
 
 def scrape():
