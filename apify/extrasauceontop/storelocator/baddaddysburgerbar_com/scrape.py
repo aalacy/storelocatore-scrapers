@@ -17,9 +17,7 @@ def get_driver(url, class_name, driver=None):
     options.add_argument("--headless")
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
-    driver = uc.Chrome(
-        executable_path=ChromeDriverManager().install(), options=options
-    )
+    driver = uc.Chrome(executable_path=ChromeDriverManager().install(), options=options)
 
     driver.get(url)
 
@@ -34,7 +32,7 @@ def get_data():
     class_name = "text-color-primary"
     with get_driver(url, class_name) as driver:
         response = driver.page_source
-    
+
     soup = bs(response, "html.parser")
     grids = soup.find_all("div", attrs={"class": "h-fit-content"})
     for grid in grids:
@@ -43,19 +41,37 @@ def get_data():
         location_name = grid.find("div").find("div").text.strip()
         address = grid.find("div").find_all("div")[1].text.strip()
         city = grid.find("div").find_all("div")[2].text.strip().split(", ")[0]
-        state = grid.find("div").find_all("div")[2].text.strip().split(", ")[1].split(" ")[0]
-        zipp = grid.find("div").find_all("div")[2].text.strip().split(", ")[1].split(" ")[1]
-        phone = grid.find("div", attrs={"class": "pb-3"}).find("a")["href"].replace("tel:", "")
+        state = (
+            grid.find("div")
+            .find_all("div")[2]
+            .text.strip()
+            .split(", ")[1]
+            .split(" ")[0]
+        )
+        zipp = (
+            grid.find("div")
+            .find_all("div")[2]
+            .text.strip()
+            .split(", ")[1]
+            .split(" ")[1]
+        )
+        phone = (
+            grid.find("div", attrs={"class": "pb-3"})
+            .find("a")["href"]
+            .replace("tel:", "")
+        )
         location_type = "<MISSING>"
         country_code = "US"
         latitude = "<MISSING>"
         longitude = "<MISSING>"
         store_number = "<MISSING>"
 
-        hours_parts = grid.find("div", attrs={"class": "pb-3"}).text.strip().replace("\n", "")
+        hours_parts = (
+            grid.find("div", attrs={"class": "pb-3"}).text.strip().replace("\n", "")
+        )
         while "  " in hours_parts:
             hours_parts = hours_parts.replace("  ", " ")
-    
+
         hours = hours_parts.split(phone[-3:])[1]
         yield {
             "locator_domain": locator_domain,
