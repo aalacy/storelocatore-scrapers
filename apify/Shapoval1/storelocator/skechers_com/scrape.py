@@ -3,12 +3,12 @@ from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgpostal.sgpostal import International_Parser, parse_address
 
 
 def fetch_data(sgw: SgWriter):
 
     locator_domain = "https://www.skechers.com/"
-    session = SgRequests()
     headers = {
         "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0",
         "Accept": "application/json, text/javascript, */*; q=0.01",
@@ -33,7 +33,6 @@ def fetch_data(sgw: SgWriter):
     js = r.json()["response"]["collection"]
     for j in js:
         slug = j.get("name")
-        session = SgRequests()
         headers = {
             "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0",
             "Accept": "application/json, text/javascript, */*; q=0.01",
@@ -51,11 +50,11 @@ def fetch_data(sgw: SgWriter):
         data = (
             '{"request":{"appkey":"8C3F989C-6D95-11E1-9DE0-BB3690553863","formdata":{"order":"rank::numeric","limit":10000,"objectname":"Locator::Store","where":{"country":{"eq":"'
             + slug
-            + '"},"authorized":{"distinctfrom":"1"},"or":{"retail":{"eq":""},"outlet":{"eq":""},"warehouse":{"eq":""},"apparel_store":{"eq":""},"curbside_pickup":{"eq":""},"reduced_hours":{"eq":""},"in_store_pickup":{"eq":""},"promotions":{"eq":""}}}}}}'
+            + '"},"expdate":{"ge":"2021-109"}, "authorized":{"distinctfrom":"1"},"or":{"retail":{"eq":""},"outlet":{"eq":""},"warehouse":{"eq":""},"apparel_store":{"eq":""},"curbside_pickup":{"eq":""},"reduced_hours":{"eq":""},"in_store_pickup":{"eq":""},"promotions":{"eq":""}}}}}}'
         )
 
         r = session.post(
-            "https://hosted.where2getit.com/skechers/rest/getlist?like=0.3861557476198114&lang=en_US",
+            "https://hosted.where2getit.com/skechers/rest/getlist?like=0.16207988000569884&lang=en_US",
             headers=headers,
             data=data,
         )
@@ -73,6 +72,15 @@ def fetch_data(sgw: SgWriter):
                 .strip()
                 or "<MISSING>"
             )
+            if street_address != "<MISSING>":
+                ad = street_address
+                a = parse_address(International_Parser(), ad)
+                street_address = (
+                    f"{a.street_address_1} {a.street_address_2}".replace(
+                        "None", ""
+                    ).strip()
+                    or "<MISSING>"
+                )
             state = j.get("state") or j.get("province") or "<MISSING>"
             state = str(state).replace("&#xf1;", "ñ").strip()
             if state == "110001":
@@ -113,6 +121,12 @@ def fetch_data(sgw: SgWriter):
                 latitude=latitude,
                 longitude=longitude,
                 hours_of_operation=hours_of_operation,
+                raw_address=f"{j.get('address1')} {j.get('address2')} {j.get('city')}, {j.get('state')} {j.get('postalcode')}".replace(
+                    "\n", ""
+                )
+                .replace("None", "")
+                .replace("<MISSING>", "")
+                .strip(),
             )
 
             sgw.write_row(row)

@@ -6,6 +6,7 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgpostal import parse_address_intl
 from sgscrape.sgrecord_id import RecommendedRecordIds
+import re
 
 DOMAIN = "aldoshoes.co.id"
 LOCATION_URL = "https://www.aldoshoes.co.id/store-locator"
@@ -52,47 +53,62 @@ def pull_content(url):
     return soup
 
 
-def get_phone(url):
-    soup = pull_content(url)
-    phone = soup.find("a", {"class": "font-bold underline contact-link"})
-    if not phone:
-        return MISSING
-    return phone.text.strip()
-
-
 def fetch_data():
     log.info("Fetching store_locator data")
     soup = pull_content(LOCATION_URL)
     contents = soup.find("div", id="mw-sl__stores__list_block").find_all("li")
     for row in contents:
-        info = (
-            row.find("address", {"class": "mw-sl__store__info"})
-            .get_text(strip=True, separator="@")
-            .replace("\n", ",")
-            .replace("\t", "")
-            .replace("@Tunjukkan Arah", "")
-            .strip()
-            .split("@")
-        )
         page_url = row.find("div", {"class": "mw-sl__stores__list__item__right"}).find(
             "a"
         )["href"]
-        location_name = info[0]
-        raw_address = " ".join(", ".join(info[1:]).split()).strip()
-        street_address, city, state, zip_postal = getAddress(raw_address)
-        phone = get_phone(page_url)
+        store = pull_content(page_url).find(
+            "div", {"id": "mw-store-locator-details-page"}
+        )
+        location_name = row.find(
+            "span", {"class": "mw-sl__store__info__name"}
+        ).text.strip()
+        raw_address = " ".join(
+            store.find(
+                "div", {"class": "mw-sl__details__item mw-sl__details__item--location"}
+            )
+            .get_text(strip=True, separator="@")
+            .replace("Address@", "")
+            .split()
+        )
+        addr = raw_address.split("@")
+        city = addr[1]
+        state_zip = addr[2].split(",")
+        state = state_zip[0]
+        zip_postal = state_zip[1].replace("Indonesia", "").strip()
+        street_address = addr[0].replace("Kota", "")
+        if "Depok" in street_address:
+            city = "Depok"
+        if "Yogyakarta" in street_address:
+            city = "Yogyakarta"
+        street_address = re.sub(
+            r",\s+,$|,$",
+            "",
+            street_address.replace(city, "").replace(state, "").strip(),
+        )
+        try:
+            phone = store.find(
+                "a", {"class": "font-bold underline contact-link"}
+            ).text.strip()
+        except:
+            phone = MISSING
         country_code = "ID"
         location_type = MISSING
         store_number = row["id"]
+        hoo_table = row.find("table", {"class": "mw-sl__stores__details__hours__table"})
+        hoo_table.find("tr").decompose()
         hours_of_operation = (
-            row.find("table", {"class": "mw-sl__stores__details__hours__table"})
-            .select_one("tr:nth-child(2)")
-            .get_text(strip=True, separator=",")
+            hoo_table.get_text(strip=True, separator=",")
             .replace("Setiap Hari", "Everyday")
             .replace("day,", "day: ")
         )
         latitude = row["data-lat"]
         longitude = row["data-long"]
+        raw_address = raw_address.replace("@", ", ")
         log.info("Append {} => {}".format(location_name, street_address))
         yield SgRecord(
             locator_domain=DOMAIN,

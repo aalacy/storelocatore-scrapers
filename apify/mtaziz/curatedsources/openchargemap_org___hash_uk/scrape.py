@@ -69,6 +69,57 @@ def get_api_urls():
     return api_urls
 
 
+def get_custom_locname(_):
+    location_name = ""
+    if "OperatorInfo" in _ and _["OperatorInfo"] is not None:
+        try:
+            if "Title" in _["OperatorInfo"]:
+                ln = _["OperatorInfo"]["Title"]
+                if ln is not None:
+                    location_name = ln + " " + "Charging Station"
+                else:
+                    location_name = MISSING
+            else:
+                location_name = MISSING
+        except:
+            location_name = MISSING
+    else:
+        location_name = "OperatorInfo Unavailable"
+    return location_name
+
+
+def remove_parenthesis_n_string(locname):
+    ln = None
+    if "(" in locname and ")" in locname:
+        ln1 = locname.split("(")[0].strip()
+        ln2 = locname.split("(")[-1].strip()
+        ln3 = ln2.split(")")[-1].strip()
+        ln4 = ln1 + " " + ln3
+        ln = ln4.strip()
+    else:
+        ln = locname
+    return ln
+
+
+def get_custom_location_type(_):
+    location_type = ""
+    if "StatusType" in _:
+        try:
+            if "IsOperational" in _["StatusType"]:
+                lt = _["StatusType"]["IsOperational"]
+                if lt is not None:
+                    location_type = "IsOperational: " + str(lt)
+                else:
+                    location_type = MISSING
+            else:
+                location_type = MISSING
+        except:
+            location_type = MISSING
+    else:
+        location_type = MISSING
+    return location_type
+
+
 def fetch_records(url_country, sgw: SgWriter):
     store_count_total = 0
     url = url_country[1]
@@ -86,7 +137,11 @@ def fetch_records(url_country, sgw: SgWriter):
         for _ in data:
             locator_domain = DOMAIN
             ai = _["AddressInfo"]
-            location_name = ai["Title"] or MISSING
+
+            # Custom Location Name
+            locname = get_custom_locname(_)
+            location_name = remove_parenthesis_n_string(locname)
+
             street_address = ai["AddressLine1"] or MISSING
             city = ai["Town"] or MISSING
             state = ai["StateOrProvince"] or MISSING
@@ -96,7 +151,10 @@ def fetch_records(url_country, sgw: SgWriter):
             latitude = ai["Latitude"] or MISSING
             longitude = ai["Longitude"] or MISSING
             phone = ai["ContactTelephone1"] or MISSING
-            location_type = MISSING
+
+            # Custom Location Type
+            location_type = get_custom_location_type(_)
+
             hours_of_operation = MISSING
             raw_address = MISSING
             page_url = ai["RelatedURL"] or MISSING

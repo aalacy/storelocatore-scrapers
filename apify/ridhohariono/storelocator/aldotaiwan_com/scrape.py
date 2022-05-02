@@ -6,6 +6,7 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgpostal import parse_address_intl
 from sgscrape.sgrecord_id import SgRecordID
+import re
 
 DOMAIN = "aldotaiwan.com"
 LOCATION_URL = "https://www.aldotaiwan.com/en/store"
@@ -52,6 +53,13 @@ def pull_content(url):
     return soup
 
 
+def get_latlong(url):
+    latlong = re.search(r"@(-?[\d]*\.[\d]*),(-?[\d]*\.[\d]*)", url)
+    if not latlong:
+        return "<MISSING>", "<MISSING>"
+    return latlong.group(1), latlong.group(2)
+
+
 def fetch_data():
     log.info("Fetching store_locator data")
     soup = pull_content(LOCATION_URL)
@@ -61,14 +69,17 @@ def fetch_data():
         info = row.find("ul").get_text(strip=True, separator="@").split("@")
         raw_address = info[1].strip()
         street_address, city, state, zip_postal = getAddress(raw_address)
+        if "Taipei" in street_address:
+            city = "Taipei"
         city = city.replace("City", "")
+        street_address = street_address.replace(city, "").strip()
         phone = info[0].strip()
         country_code = "TW"
         location_type = MISSING
         store_number = MISSING
         hours_of_operation = MISSING
-        latitude = MISSING
-        longitude = MISSING
+        map_link = row.find("a", {"href": re.compile(r"maps\/place.*")})["href"]
+        latitude, longitude = get_latlong(map_link)
         log.info("Append {} => {}".format(location_name, street_address))
         yield SgRecord(
             locator_domain=DOMAIN,

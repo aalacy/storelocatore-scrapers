@@ -4,12 +4,39 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.pause_resume import CrawlStateSingleton
-from sgrequests.sgrequests import SgRequests
-from sgzip.dynamic import SearchableCountries, Grain_8
+from sgrequests import SgRequests
+from sgzip.dynamic import SearchableCountries, Grain_4
 from sgzip.parallel import DynamicSearchMaker, ParallelDynamicSearch, SearchIteration
 from sglogging import sglog
 
 logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
+
+
+def format_hours(hours_json):
+    DAYS = [
+        "monday",
+        "tuesday",
+        "wednesday",
+        "thursday",
+        "friday",
+        "saturday",
+        "sunday",
+    ]
+    formatted = []
+    day_index = (DAYS.index(hours_json[2]["dayName"].lower()) - 2) % 7
+    for schedule in hours_json:
+        day = DAYS[day_index].capitalize()
+        day_index = (day_index + 1) % 7
+        hours = schedule["hours"]
+        formatted.append(f"{day}: {hours}")
+    return ", ".join(formatted)
+
+
+def clean(x):
+    if not x or x.lower() in ["none", "na"]:
+        return SgRecord.MISSING
+    else:
+        return x
 
 
 def fix_comma(x):
@@ -25,29 +52,29 @@ def fix_comma(x):
 
 
 def ret_record(record):
-    page_url = "<MISSING>"
-    location_name = "<MISSING>"
+    page_url = SgRecord.MISSING
+    location_name = SgRecord.MISSING
 
-    street_address = "<MISSING>"
+    street_address = SgRecord.MISSING
 
-    city = "<MISSING>"
+    city = SgRecord.MISSING
 
-    state = "<MISSING>"
+    state = SgRecord.MISSING
 
-    zip_postal = "<MISSING>"
+    zip_postal = SgRecord.MISSING
 
-    country_code = "<MISSING>"
+    country_code = SgRecord.MISSING
 
-    store_number = "<MISSING>"
+    store_number = SgRecord.MISSING
 
-    phone = "<MISSING>"
+    phone = SgRecord.MISSING
 
-    location_type = "<MISSING>"
+    location_type = SgRecord.MISSING
 
-    latitude = "<MISSING>"
+    latitude = SgRecord.MISSING
 
-    longitude = "<MISSING>"
-    hours_of_operation = "<MISSING>"
+    longitude = SgRecord.MISSING
+    hours_of_operation = SgRecord.MISSING
 
     try:
         page_url = "https://www.starbucks.com/store-locator/store/{}/{}".format(
@@ -93,7 +120,7 @@ def ret_record(record):
         pass
 
     try:
-        store_number = str(record["id"])
+        store_number = str(record["storeNumber"].split("-")[0])
     except Exception:
         pass
 
@@ -120,11 +147,11 @@ def ret_record(record):
         pass
 
     try:
-        hours_of_operation = str(record["schedule"])
+        hours_of_operation = format_hours(record["schedule"])
     except Exception:
         pass
 
-    raw_address = "<MISSING>"
+    raw_address = SgRecord.MISSING
 
     return SgRecord(
         page_url=page_url,
@@ -132,10 +159,10 @@ def ret_record(record):
         street_address=street_address,
         city=city,
         state=state,
-        zip_postal=zip_postal,
+        zip_postal=clean(zip_postal),
         country_code=country_code,
         store_number=store_number,
-        phone=phone,
+        phone=clean(phone),
         location_type=location_type,
         latitude=latitude,
         longitude=longitude,
@@ -146,13 +173,6 @@ def ret_record(record):
 
 
 class ExampleSearchIteration(SearchIteration):
-    """
-    Here, you define what happens with each iteration of the search.
-    The `do(...)` method is what you'd do inside of the `for location in search:` loop
-    It provides you with all the data you could get from the search instance, as well as
-    a method to register found locations.
-    """
-
     def __init__(self):
         self.__state = CrawlStateSingleton.get_instance()
 
@@ -182,10 +202,26 @@ class ExampleSearchIteration(SearchIteration):
                 f"https://www.starbucks.com/bff/locations?lat={round(lat,6)}&lng={round(lng,6)}&mop=true"
             )
             headers = {}
-            headers["x-requested-with"] = "XMLHttpRequest"
+            headers["accept"] = "application/json"
+            headers["accept-encoding"] = "gzip, deflate, br"
+            headers["accept-language"] = "en-US,en;q=0.9,ro;q=0.8,es;q=0.7"
+            headers["cache-control"] = "no-cache"
+            headers["pragma"] = "no-cache"
+            headers[
+                "referer"
+            ] = "https://www.starbucks.com/store-locator?map=39.21362,-105.911692,8z"
+            headers[
+                "sec-ch-ua"
+            ] = '"Google Chrome";v="95", "Chromium";v="95", ";Not A Brand";v="99"'
+            headers["sec-ch-ua-mobile"] = "?0"
+            headers["sec-ch-ua-platform"] = '"Windows"'
+            headers["sec-fetch-dest"] = "empty"
+            headers["sec-fetch-mode"] = "cors"
+            headers["sec-fetch-site"] = "same-origin"
             headers[
                 "user-agent"
-            ] = "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+            ] = "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.54 Safari/537.36"
+            headers["x-requested-with"] = "XMLHttpRequest"
             try:
                 locations = SgRequests.raise_on_err(
                     http.get(url, headers=headers)
@@ -212,7 +248,7 @@ class ExampleSearchIteration(SearchIteration):
 if __name__ == "__main__":
     # additionally to 'search_type', 'DynamicSearchMaker' has all options that all `DynamicXSearch` classes have.
     search_maker = DynamicSearchMaker(
-        search_type="DynamicGeoSearch", granularity=Grain_8()
+        search_type="DynamicGeoSearch", granularity=Grain_4()
     )
 
     with SgWriter(
@@ -221,13 +257,12 @@ if __name__ == "__main__":
             duplicate_streak_failure_factor=-1,
         )
     ) as writer:
-        with SgRequests() as http1:
-            search_iter = ExampleSearchIteration()
-            par_search = ParallelDynamicSearch(
-                search_maker=search_maker,
-                search_iteration=search_iter,
-                country_codes=SearchableCountries.ALL,
-            )
+        search_iter = ExampleSearchIteration()
+        par_search = ParallelDynamicSearch(
+            search_maker=search_maker,
+            search_iteration=search_iter,
+            country_codes=SearchableCountries.ALL,
+        )
 
-            for rec in par_search.run():
-                writer.write_row(rec)
+        for rec in par_search.run():
+            writer.write_row(rec)

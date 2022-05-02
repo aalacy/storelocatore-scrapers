@@ -5,12 +5,16 @@ from sgscrape.sgwriter import SgWriter
 import lxml.html
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgselenium.sgselenium import SgChrome
+import time
+from sgselenium.sgselenium import SgChrome  # noqa
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from seleniumwire import webdriver  # noqa
 import ssl
+from undetected_chromedriver import ChromeOptions
+from sgpostal import sgpostal as parser
 
 try:
     _create_unverified_https_context = (
@@ -40,63 +44,87 @@ headers = {
 }
 
 
-def get_driver(url, class_name, driver=None):
-    if driver is not None:
-        driver.quit()
-
+def get_driver():
     user_agent = (
         "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:89.0) Gecko/20100101 Firefox/89.0"
     )
-    x = 0
-    while True:
-        x = x + 1
-        try:
-            driver = SgChrome(
-                executable_path=ChromeDriverManager().install(),
-                user_agent=user_agent,
-                is_headless=True,
-            ).driver()
-            driver.get(url)
+    options = ChromeOptions()
+    options.add_argument("--disable-gpu")
+    options.add_argument("--headless")
+    options.add_argument(f"user-agent={user_agent}")
+    options.add_argument("--no-sandbox")  #
+    options.add_argument("--disable-dev-shm-usage")  #
+    options.add_argument("--ignore-certificate-errors")  #
+    options.add_argument(f"user-agent={user_agent}")
+    return webdriver.Chrome(
+        options=options, executable_path=ChromeDriverManager().install()
+    )
 
-            WebDriverWait(driver, 30).until(
-                EC.presence_of_element_located((By.ID, class_name))
-            )
-            break
-        except Exception:
-            driver.quit()
-            if x == 10:
-                raise Exception(
-                    "Make sure this ran with a Proxy, will fail without one"
-                )
-            continue
-    return driver
+
+def check(url, class_name, driver):
+    try:
+        driver.get(url)
+        WebDriverWait(driver, 30).until(
+            EC.presence_of_element_located((By.ID, class_name))
+        )
+        return True
+    except Exception:
+        driver.quit()
+        return False
+
+
+def Se(url, class_name):
+    for c in range(10):
+        time.sleep(5)
+        driver = get_driver()
+        if check(url, class_name, driver):
+            return driver
 
 
 def fetch_data():
     # Your scraper here
-
     search_url = "https://www.rentokil.co.uk/property-care/branches/"
     class_name = "menu"
-    driver = get_driver(search_url, class_name)
+    driver = Se(search_url, class_name)
     stores_sel = lxml.html.fromstring(driver.page_source)
     stores = stores_sel.xpath('//select[@id="menu"]/option[position()>1]/@value')
     for store_url in stores:
         page_url = "https://www.rentokil.co.uk" + store_url
 
-        log.info(page_url)
-        driver.get(page_url)
+        is_timeout = True
+        while is_timeout is True:
+            try:
+                log.info(page_url)
+                driver.get(page_url)
+                is_timeout = False
+            except:
+                pass
         store_sel = lxml.html.fromstring(driver.page_source)
 
         locator_domain = website
         location_name = "".join(
             store_sel.xpath('//p[@class="section-title_header alpha"]/text()')
         ).strip()
-        street_address = ", ".join(
-            store_sel.xpath('//span[@itemprop="streetAddress"]/text()')
+        raw_address = ", ".join(
+            list(filter(str, [x.strip() for x in store_sel.xpath("//address//text()")]))
         ).strip()
+
         city = location_name
         state = "<MISSING>"
         zip = "".join(store_sel.xpath('//span[@itemprop="postalCode"]/text()')).strip()
+
+        formatted_addr = parser.parse_address_intl(raw_address)
+        street_address = formatted_addr.street_address_1
+        if street_address:
+            if formatted_addr.street_address_2:
+                street_address = street_address + ", " + formatted_addr.street_address_2
+        else:
+            if formatted_addr.street_address_2:
+                street_address = formatted_addr.street_address_2
+
+        state = "<MISSING>"
+        if not zip:
+            zip = formatted_addr.postcode
 
         country_code = "GB"
 
@@ -126,6 +154,7 @@ def fetch_data():
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hours_of_operation,
+            raw_address=raw_address,
         )
 
 

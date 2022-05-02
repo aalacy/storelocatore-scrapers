@@ -18,7 +18,7 @@ def fetch_data():
     main_url = "https://fr.coach.com/en_FR/stores-edit-country?dwfrm_storelocator_address_international=FR&dwfrm_storelocator_findbycountry=Search%2Bcountry"
     states = []
     cities = []
-    countries = []
+    countries = ["DE", "ES", "FR", "IT"]
     r = session.get(main_url, headers=headers)
     for line in r.iter_lines():
         if 'name="dwfrm_storelocator_address_international" >' in line:
@@ -36,7 +36,8 @@ def fetch_data():
                         and ccode != "GB"
                         and ccode != "US"
                     ):
-                        countries.append(ccode)
+                        if ccode not in countries:
+                            countries.append(ccode)
     for ccode in countries:
         CFound = True
         start = -15
@@ -63,7 +64,7 @@ def fetch_data():
                 CFound = True
                 items = allinfo.split("<h2>")
                 for item in items:
-                    if '<div class="store-info">' in item:
+                    if 'span itemprop="streetAddress">' in item:
                         name = item.split("</h2>")[0].replace("&amp;", "&")
                         add = (
                             item.split('span itemprop="streetAddress">')[1]
@@ -85,7 +86,10 @@ def fetch_data():
                             )[0]
                         except:
                             zc = "<MISSING>"
-                        phone = item.split('itemprop="telephone">')[1].split("<")[0]
+                        try:
+                            phone = item.split('itemprop="telephone">')[1].split("<")[0]
+                        except:
+                            phone = "<MISSING>"
                         lat = "<MISSING>"
                         lng = "<MISSING>"
                         try:
@@ -367,83 +371,92 @@ def fetch_data():
                 hours_of_operation=hours,
             )
 
-    for x in range(0, 100, 15):
-        url = (
-            "https://uk.coach.com/on/demandware.store/Sites-Coach_EU-Site/en_GB/Stores-FilterResult?firstQuery=GB_country&showRFStoreDivider=true&showRStoreDivider=true&showDStoreDivider=false&showFStoreDivider=false&start="
-            + str(x)
-            + "&sz=15&format=ajax"
-        )
-        r = session.get(url, headers=headers)
-        website = "uk.coach.com"
-        typ = "<MISSING>"
-        country = "GB"
-        logger.info("Pulling Stores")
-        for line in r.iter_lines():
-            if 'meta itemprop="name" content="' in line:
-                items = line.split('meta itemprop="name" content="')
-                for item in items:
-                    if 'data-address="' in item:
-                        name = item.split('"')[0]
-                        loc = "<MISSING>"
-                        add = (
-                            item.split('"streetAddress">')[1]
-                            .split("</span>")[0]
-                            .replace("<br />", "")
-                            .strip()
-                            .replace("  ", " ")
-                        )
-                        city = item.split('rop="addressLocality">')[1].split("<")[0]
-                        state = "<MISSING>"
-                        zc = item.split('"postalCode">')[1].split("<")[0]
-                        try:
-                            phone = item.split('itemprop="telephone">')[1].split("<")[0]
-                        except:
-                            phone = "<MISSING>"
-                        phone = phone.replace("&#40;", "(").replace("&#41;", ")")
-                        lat = "<MISSING>"
-                        lng = "<MISSING>"
-                        store = "<MISSING>"
-                        hours = (
-                            item.split('<span itemprop="openingHours">')[1]
-                            .split("<")[0]
-                            .strip()
-                        )
-                        name = name.replace("&amp;", "&")
-                        add = add.replace("&amp;", "&")
-                        name = name.replace("&#39;", "'")
-                        add = add.replace("&#39;", "'")
-                        if "outlet" in name.lower():
-                            typ = "Coach Outlet"
-                        else:
-                            typ = "Coach"
-                        if "coach house" in name.lower():
-                            typ = "Coach Flagship Store"
-                        if (
-                            "coach fenwick" in name.lower()
-                            or "coach harvey" in name.lower()
-                            or "coach john lewis" in name.lower()
-                            or "coach selfridges" in name.lower()
-                            or "coach williams &" in name.lower()
-                        ):
-                            typ = "Coach Department & Specialty Store"
-                        name = typ
-                        if "popup" not in name.lower() and "pop-up" not in name.lower():
-                            yield SgRecord(
-                                locator_domain=website,
-                                page_url=loc,
-                                location_name=name,
-                                street_address=add,
-                                city=city,
-                                state=state,
-                                zip_postal=zc,
-                                country_code=country,
-                                phone=phone,
-                                location_type=typ,
-                                store_number=store,
-                                latitude=lat,
-                                longitude=lng,
-                                hours_of_operation=hours,
+    for y in range(1, 6):
+        for x in range(0, 100, 15):
+            url = (
+                "https://uk.coach.com/on/demandware.store/Sites-Coach_EU-Site/en_GB/Stores-FilterResult?firstQuery=GB_country&showRFStoreDivider=true&showRStoreDivider=true&showDStoreDivider=true&showFStoreDivider=false&start="
+                + str(x)
+                + "&sz=15&format=ajax"
+            )
+            r = session.get(url, headers=headers)
+            website = "uk.coach.com"
+            typ = "<MISSING>"
+            country = "GB"
+            logger.info("Pulling Stores...")
+            for line in r.iter_lines():
+                if 'meta itemprop="name" content="' in line:
+                    items = line.split('meta itemprop="name" content="')
+                    for item in items:
+                        if 'data-address="' in item:
+                            name = item.split('"')[0]
+                            loc = "<MISSING>"
+                            add = (
+                                item.split('"streetAddress">')[1]
+                                .split("</span>")[0]
+                                .replace("<br />", "")
+                                .strip()
+                                .replace("  ", " ")
                             )
+                            city = item.split('rop="addressLocality">')[1].split("<")[0]
+                            state = "<MISSING>"
+                            zc = item.split('"postalCode">')[1].split("<")[0]
+                            try:
+                                phone = item.split('itemprop="telephone">')[1].split(
+                                    "<"
+                                )[0]
+                            except:
+                                phone = "<MISSING>"
+                            phone = phone.replace("&#40;", "(").replace("&#41;", ")")
+                            lat = "<MISSING>"
+                            lng = "<MISSING>"
+                            store = "<MISSING>"
+                            try:
+                                hours = (
+                                    item.split('<span itemprop="openingHours">')[1]
+                                    .split("<")[0]
+                                    .strip()
+                                )
+                            except:
+                                hours = "<MISSING>"
+                            name = name.replace("&amp;", "&")
+                            add = add.replace("&amp;", "&")
+                            name = name.replace("&#39;", "'")
+                            add = add.replace("&#39;", "'")
+                            if "outlet" in name.lower():
+                                typ = "Coach Outlet"
+                            else:
+                                typ = "Coach"
+                            if "coach house" in name.lower():
+                                typ = "Coach Flagship Store"
+                            if (
+                                "coach fenwick" in name.lower()
+                                or "coach harvey" in name.lower()
+                                or "coach john lewis" in name.lower()
+                                or "coach selfridges" in name.lower()
+                                or "coach williams &" in name.lower()
+                            ):
+                                typ = "Coach Department & Specialty Store"
+                            name = typ
+                            if (
+                                "popup" not in name.lower()
+                                and "pop-up" not in name.lower()
+                            ):
+                                yield SgRecord(
+                                    locator_domain=website,
+                                    page_url=loc,
+                                    location_name=name,
+                                    street_address=add,
+                                    city=city,
+                                    state=state,
+                                    zip_postal=zc,
+                                    country_code=country,
+                                    phone=phone,
+                                    location_type=typ,
+                                    store_number=store,
+                                    latitude=lat,
+                                    longitude=lng,
+                                    hours_of_operation=hours,
+                                )
 
 
 def scrape():

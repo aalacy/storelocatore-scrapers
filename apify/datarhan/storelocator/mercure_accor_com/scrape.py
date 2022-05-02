@@ -1,3 +1,4 @@
+import re
 import json
 from bs4 import BeautifulSoup
 from lxml import etree
@@ -7,6 +8,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
+from concurrent.futures import as_completed, ThreadPoolExecutor
 
 headers = {
     "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:91.0) Gecko/20100101 Firefox/91.0",
@@ -26,20 +28,42 @@ def write_output(data):
             writer.write_row(row)
 
 
-def traverse(url, session, locations):
+def get_countries():
+    with SgRequests() as session:
+        url = "https://all.accor.com/gb/world/hotels-accor-monde.shtml"
+        bookings, sublocations = get_bookings_and_sublocations(url, session)
+        return sublocations
+
+
+def get_bookings_and_sublocations(url, session):
     response = session.get(url, headers=headers)
     try:
         soup = BeautifulSoup(response.text)
     except:
-        return
+        return [], []
 
     links = []
-    links.extend(soup.find_all("a", class_="Teaser-link"))
-    links.extend(soup.find_all("a", class_="is-hidden"))
+    paginator = soup.find("div", class_="Paginator-list")
+
+    if not paginator:
+        return [], []
+
+    links.extend(paginator.find_all("a", class_="Teaser-link"))
+    links.extend(a for a in paginator.find_all("a") if "data-id" in a.attrs)
 
     urls = [link["href"] for link in links]
     bookings = [url for url in urls if "index.en.shtml" in url]
-    sublocations = [url for url in urls if "index.en.shtml" not in url]
+    sublocations = [
+        re.sub(r"\.\./\.\./", "https://all.accor.com/", url)
+        for url in urls
+        if "index.en.shtml" not in url
+    ]
+
+    return bookings, sublocations
+
+
+def traverse(url, session, locations):
+    bookings, sublocations = get_bookings_and_sublocations(url, session)
 
     locations.extend(bookings)
     for sublocation in sublocations:
@@ -89,13 +113,20 @@ def fetch_location(page_url, session):
 
 
 def fetch_data():
-    url = "https://all.accor.com/gb/world/hotels-accor-monde.shtml"
-    with SgRequests() as session:
-        locations = []
-        traverse(url, session, locations)
+    locations = []
+    with ThreadPoolExecutor() as executor, SgRequests() as session:
+        futures = [
+            executor.submit(traverse, url, SgRequests(), locations)
+            for url in get_countries()
+        ]
+        for future in as_completed(futures):
+            pass
 
-        for location in locations:
-            poi = fetch_location(location, session)
+        futures = [
+            executor.submit(fetch_location, location, session) for location in locations
+        ]
+        for future in as_completed(futures):
+            poi = future.result()
             if poi:
                 yield poi
 

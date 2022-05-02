@@ -1,3 +1,4 @@
+import re
 from sglogging import sglog
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
@@ -18,71 +19,88 @@ MISSING = SgRecord.MISSING
 
 
 def fetch_data():
+    pattern = re.compile(r"\s\s+")
     if True:
         url = "https://wahlburgers.com/all-locations"
         r = session.get(url, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
-        linklist = soup.find("div", {"class": "cell medium-6"}).findAll("a")
+        linklist = soup.select("a[href*=location-details]")
         for link in linklist:
             page_url = "https://wahlburgers.com" + link["href"]
-            log.info(page_url)
             if "Coming soon" in page_url:
                 continue
             if "canada" in page_url:
                 country_code = "Canada"
             elif "germany" in page_url:
                 country_code = "Germany"
+            elif "australia" in page_url:
+                country_code = "Australia"
             else:
                 country_code = "USA"
-            r = session.get(page_url, headers=headers)
+            r = session.get(page_url)
             soup = BeautifulSoup(r.text, "html.parser")
-            loclist = soup.find("div", {"class": "cell"}).findAll(
-                "a", {"class": "fadey"}
-            )
+            loclist = soup.findAll("li", {"class": "single-location"})
             for loc in loclist:
-                try:
-                    page_url = "https://wahlburgers.com" + loc["href"]
-                    r = session.get(page_url, headers=headers)
-                    if "Coming soon" in r.text:
-                        continue
-                    soup = BeautifulSoup(r.text, "html.parser")
-                    temp = soup.find("div", {"class": "insideThing"}).findAll("div")
-                    if "We are currently closed" in r.text:
-                        location_type = "Temporarily Closed"
-                    else:
-                        location_type = "<MISSING>"
-                except:
+                if "COMING SOON" in loc.text:
                     continue
+                page_url = loc.find("a")["href"]
                 log.info(page_url)
-                location_name = (
-                    soup.find("div", {"class": "location whitepage"})
-                    .find("h1")
-                    .text.replace("@", "")
-                    .replace("\n", "")
-                    .split()
-                )
-                location_name = " ".join(x for x in location_name)
-                if "General Manager:" in temp[-1].text:
-                    del temp[-1]
-                if len(temp) > 3:
-                    temp = temp[1:]
+                r = session.get(page_url, headers=headers)
+                if "Coming soon" in r.text:
+                    continue
+                soup = BeautifulSoup(r.text, "html.parser")
                 try:
-                    phone = (
-                        temp[0].find("a")["href"].replace("tel:", "").replace("%20", "")
+                    raw_address = (
+                        soup.find("div", {"class": "container grid location"})
+                        .find("p")
+                        .get_text(separator="|", strip=True)
+                        .replace("|", " ")
+                        .replace("\n", " ")
                     )
-                    hours_of_operation = (
-                        temp[2].get_text(separator="|", strip=True).replace("|", " ")
-                    ).replace("Opening hours:", "")
-                    address = temp[1].get_text(separator="|", strip=True).split("|")[1:]
                 except:
-                    phone = "<MISSING>"
+                    raw_address = (
+                        soup.find("li", {"class": "single-location"})
+                        .find("p")
+                        .get_text(separator="|", strip=True)
+                        .replace("|", " ")
+                        .replace("\n", " ")
+                    )
+                if "We are currently closed" in r.text:
+                    location_type = "Temporarily Closed"
+                else:
+                    location_type = MISSING
+                schema = r.text.split('<script type="application/ld+json">', 1)[
+                    1
+                ].split("</script>", 1)[0]
+                location_name = schema.split('"name": "')[1].split('"')[0]
+                try:
+                    phone = schema.split('"telephone": "')[1].split('"')[0]
+                except:
+                    phone = MISSING
+                try:
+                    latitude = schema.split('"latitude":')[1].split(",")[0]
+                    longitude = (
+                        schema.split('"longitude":')[1].split("}")[0].replace("\n", "")
+                    )
+                except:
+                    latitude = MISSING
+                    longitude = MISSING
+                try:
+
                     hours_of_operation = (
-                        temp[1].get_text(separator="|", strip=True).replace("|", " ")
-                    ).replace("Opening hours:", "")
-                    address = temp[0].get_text(separator="|", strip=True).split("|")[1:]
-                raw_address = " ".join(
-                    x.replace("\n", "").replace("    ", " ") for x in address
-                )
+                        schema.split('"openingHours":')[1]
+                        .split("],")[0]
+                        .replace("[", "")
+                        .replace("\n", " ")
+                        .replace("         ", "")
+                        .replace('"', "")
+                        .replace(" ,", "")
+                        .replace(" P.M.  -", "P.M.")
+                    )
+                except:
+                    hours_of_operation = MISSING
+                raw_address = re.sub(pattern, "\n", raw_address)
+                raw_address = raw_address.replace("\n", " ")
                 pa = parse_address_intl(raw_address)
 
                 street_address = pa.street_address_1
@@ -96,16 +114,6 @@ def fetch_data():
 
                 zip_postal = pa.postcode
                 zip_postal = zip_postal.strip() if zip_postal else MISSING
-                try:
-                    longitude, latitude = (
-                        soup.select_one("iframe[src*=maps]")["src"]
-                        .split("!2d", 1)[1]
-                        .split("!3m")[0]
-                        .split("!3d")
-                    )
-                except:
-                    latitude = MISSING
-                    longitude = MISSING
                 yield SgRecord(
                     locator_domain=DOMAIN,
                     page_url=page_url,

@@ -23,6 +23,8 @@ def fetch_data(sgw: SgWriter):
         cont = j.get("Html")
         a = html.fromstring(cont)
         page_url = "".join(a.xpath('//div[@class="loc-result-card-name"]/a/@href'))
+        if page_url == "/":
+            page_url = "https://www.selectspecialtyhospitals.com/locations-and-tours/"
         location_name = "".join(
             a.xpath('//div[@class="loc-result-card-name"]/a/text()')
         )
@@ -34,7 +36,6 @@ def fetch_data(sgw: SgWriter):
         street_address = "".join(
             a.xpath('//a[contains(@href, "maps")]/text()[1]')
         ).strip()
-
         ad = (
             "".join(a.xpath('//a[contains(@href, "maps")]/text()[2]'))
             .replace("\n", "")
@@ -55,34 +56,54 @@ def fetch_data(sgw: SgWriter):
             longitude = ll.split(",")[-1].strip()
         except:
             latitude, longitude = "<MISSING>", "<MISSING>"
-
-        session = SgRequests()
-        r = session.get(page_url, headers=headers)
-        try:
-            tree = html.fromstring(r.text)
-        except AttributeError:
-            continue
-        hooco = "".join(tree.xpath('//div[@class="field-businesshours"]/p/a/@href'))
-        if hooco.find("http") == -1:
-            hooco = f"https://www.selectspecialtyhospitals.com{hooco}"
         hours_of_operation = "<MISSING>"
-        if hooco:
-            r = session.get(hooco, headers=headers)
+        if page_url != "https://www.selectspecialtyhospitals.com/locations-and-tours/":
+            r = session.get(page_url, headers=headers)
             try:
                 tree = html.fromstring(r.text)
             except AttributeError:
                 continue
             hours_of_operation = (
-                "".join(
-                    tree.xpath(
-                        '//p[contains(text(), "Hours:")]/text() | //strong[contains(text(), "hours")]/text()'
-                    )
-                )
-                .replace("Hours:", "")
-                .replace("Visiting hours:", "")
+                "".join(tree.xpath('//div[@class="field-businesshours"]//text()'))
+                .replace("\n", "")
                 .strip()
-                or "<MISSING>"
             )
+            if (
+                hours_of_operation.find("View COVID-19 hours") != -1
+                or hours_of_operation.find("New COVID pandemic visitor hours") != -1
+            ):
+                hoo_url = "".join(
+                    tree.xpath('//div[@class="field-businesshours"]//a/@href')
+                )
+                if hoo_url.find("http") == -1:
+                    hoo_url = f"https://www.selectspecialtyhospitals.com{hoo_url}"
+                r = session.get(hoo_url, headers=headers)
+                try:
+                    tree = html.fromstring(r.text)
+                except AttributeError:
+                    continue
+                hours_of_operation = (
+                    "".join(
+                        tree.xpath(
+                            '//p[contains(text(), "Hours:")]/text() | //strong[contains(text(), "hours")]/text() | //strong[contains(text(), "Hours:")]/text()'
+                        )
+                    )
+                    .replace("Hours:", "")
+                    .replace("Visiting hours:", "")
+                    .strip()
+                    or "<MISSING>"
+                )
+                sub_info = (
+                    "".join(tree.xpath('//p[contains(text(), "Two visitors")]/text()'))
+                    .replace("\n", "")
+                    .strip()
+                )
+                if sub_info:
+                    hours_of_operation = (
+                        sub_info.split("from")[1].split("The")[0].strip()
+                    )
+            if hours_of_operation.find(". Visitors") != -1:
+                hours_of_operation = hours_of_operation.split(". Visitors")[0].strip()
 
         row = SgRecord(
             locator_domain=locator_domain,

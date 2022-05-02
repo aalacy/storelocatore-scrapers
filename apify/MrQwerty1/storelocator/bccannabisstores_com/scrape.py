@@ -1,70 +1,33 @@
-import csv
-
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgpostal import parse_address, International_Parser
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def get_international(line):
+    adr = parse_address(International_Parser(), line)
+    adr1 = adr.street_address_1 or ""
+    adr2 = adr.street_address_2 or ""
+    street = f"{adr1} {adr2}".strip()
+    city = adr.city or SgRecord.MISSING
+    state = adr.state or SgRecord.MISSING
+    postal = adr.postcode or SgRecord.MISSING
 
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
+    return street, city, state, postal
 
 
-def get_coords_from_google_url(url):
-    try:
-        if url.find("ll=") != -1:
-            latitude = url.split("ll=")[1].split(",")[0]
-            longitude = url.split("ll=")[1].split(",")[1].split("&")[0]
-        else:
-            latitude = url.split("@")[1].split(",")[0]
-            longitude = url.split("@")[1].split(",")[1]
-    except IndexError:
-        latitude, longitude = "<MISSING>", "<MISSING>"
-
-    return latitude, longitude
-
-
-def fetch_data():
-    out = []
-    locator_domain = "https://www.bccannabisstores.com/"
-    page_url = "https://www.bccannabisstores.com/pages/store-locations"
-
-    session = SgRequests()
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0"
-    }
+def fetch_data(sgw: SgWriter):
     r = session.get(page_url, headers=headers)
     tree = html.fromstring(r.text)
-    divs = tree.xpath("//div[@class='page--store-locations']")
+    divs = tree.xpath(
+        "//header[h2[@id='-- NOW OPEN --']]/following-sibling::div[@class='page--store-locations']"
+    )
 
     for d in divs:
-        location_name = (
-            "".join(d.xpath(".//h3[@class='store-name']/text()")).strip() or "<MISSING>"
-        )
+        location_name = "".join(d.xpath(".//h3[@class='store-name']/text()")).strip()
         line = d.xpath(".//div[@class='page--store-locations--store-info']/p//text()")
         line = list(
             filter(
@@ -81,27 +44,21 @@ def fetch_data():
         if "Shop" in line[-1]:
             line.pop()
 
-        line = ", ".join(line).replace(", 9", "9").replace(",,", ",")
-        adr = parse_address(International_Parser(), line)
-        street_address = (
-            f"{adr.street_address_1} {adr.street_address_2 or ''}".replace(
-                "None", ""
-            ).strip()
-            or "<MISSING>"
-        )
-        if "3B Hwy" in line:
-            street_address = line.split(",")[0].strip()
-        city = adr.city or "<MISSING>"
-        state = adr.state or "<MISSING>"
-        postal = adr.postcode or "<MISSING>"
+        raw_address = ", ".join(line).replace(", 9", "9").replace(",,", ",")
+        street_address, city, state, postal = get_international(raw_address)
+        if street_address == "3B Hwy":
+            street_address = raw_address.split(",")[0].strip()
         country_code = "CA"
-        store_number = "<MISSING>"
-        phone = (
-            "".join(d.xpath(".//a[@class='store-phone']/text()")).strip() or "<MISSING>"
-        )
+        phone = "".join(d.xpath(".//a[@class='store-phone']/text()")).strip()
+
         text = "".join(d.xpath(".//a[contains(@href, 'google')]/@href"))
-        latitude, longitude = get_coords_from_google_url(text)
-        location_type = "<MISSING>"
+        if "/@" in text:
+            latitude, longitude = text.split("/@")[1].split(",")[:2]
+        elif "!3d" in text and "!4d" in text:
+            latitude = text.split("!3d")[1].split("!")[0]
+            longitude = text.split("!4d")[1]
+        else:
+            latitude, longitude = SgRecord.MISSING, SgRecord.MISSING
 
         _tmp = []
         days = d.xpath(".//div[@class='page--store-locations--hours-days']/span/text()")
@@ -112,33 +69,36 @@ def fetch_data():
         for da, t in zip(days, times):
             _tmp.append(f"{da.strip()}: {t.strip()}")
 
-        hours_of_operation = ";".join(_tmp) or "<MISSING>"
+        hours_of_operation = ";".join(_tmp)
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
+        row = SgRecord(
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            latitude=latitude,
+            longitude=longitude,
+            phone=phone,
+            hours_of_operation=hours_of_operation,
+            raw_address=raw_address,
+            locator_domain=locator_domain,
+        )
 
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://www.bccannabisstores.com/"
+    page_url = "https://www.bccannabisstores.com/pages/store-locations"
+
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:97.0) Gecko/20100101 Firefox/97.0",
+    }
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.RAW_ADDRESS}))
+    ) as writer:
+        fetch_data(writer)
