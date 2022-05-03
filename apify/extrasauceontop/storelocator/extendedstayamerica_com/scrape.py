@@ -3,7 +3,6 @@ from sgselenium import SgChrome
 from sgrequests import SgRequests
 import json
 from sgscrape import simple_scraper_pipeline as sp
-from sgrequests import ProxySettings
 from bs4 import BeautifulSoup as bs
 
 
@@ -33,9 +32,7 @@ def extract_json(html_string):
 
 
 def get_data():
-    session = SgRequests(
-        proxy_escalation_order=ProxySettings.TEST_PROXY_ESCALATION_ORDER
-    )
+    session = SgRequests()
 
     url = "https://www.extendedstayamerica.com/hotels/"
     browser_headers = SgSelenium.get_default_headers_for(
