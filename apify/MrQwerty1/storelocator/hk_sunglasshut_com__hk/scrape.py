@@ -14,7 +14,8 @@ def fetch_data(sgw: SgWriter):
         location_name = j.get("name")
         slug = j.get("exampleUrl")
         page_url = f"https://hk.sunglasshut.com/hk/store-locator/{slug}"
-        street_address = j.get("address")
+        street_address = j.get("address") or ""
+        street_address = street_address.replace(", Hong Kong", "").strip()
         city = j.get("city")
         postal = j.get("zip")
         phone = j.get("phone")
