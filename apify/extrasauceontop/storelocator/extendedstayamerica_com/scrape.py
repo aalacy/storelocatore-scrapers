@@ -4,6 +4,7 @@ from sgrequests import SgRequests
 import json
 from sgscrape import simple_scraper_pipeline as sp
 from bs4 import BeautifulSoup as bs
+import os
 
 
 def extract_json(html_string):
@@ -89,6 +90,15 @@ def get_data():
 
 
 def scrape():
+    try:
+        proxy_pass = os.environ["PROXY_PASSWORD"]
+
+    except Exception:
+        proxy_pass = "No"
+
+    if proxy_pass == "No":
+        raise Exception("Run this with a proxy")
+        
     field_defs = sp.SimpleScraperPipeline.field_definitions(
         locator_domain=sp.MappingField(mapping=["locator_domain"]),
         page_url=sp.MappingField(mapping=["page_url"], part_of_record_identity=True),
