@@ -8,7 +8,6 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgselenium import SgChrome
 import ssl
 import json
-from webdriver_manager.chrome import ChromeDriverManager
 
 ssl._create_default_https_context = ssl._create_unverified_context
 session = SgRequests()
