@@ -89,6 +89,8 @@ def fetch_data(sgw: SgWriter):
             final_req = session.get(link, headers=headers1)
             base = BeautifulSoup(final_req.text, "lxml")
 
+            location_name = base.h1.text.strip()
+
             try:
                 hours_of_operation = (
                     (
