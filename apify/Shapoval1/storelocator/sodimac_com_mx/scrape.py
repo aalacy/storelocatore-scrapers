@@ -4,17 +4,16 @@ from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgselenium.sgselenium import SgFirefox
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from sgselenium.sgselenium import SgFirefox
 
 
 def fetch_data(sgw: SgWriter):
 
     locator_domain = "https://www.sodimac.com.mx/"
     api_url = "https://www.sodimac.com.mx/sodimac-mx/content/a40055/Tiendas"
-    session = SgRequests()
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
@@ -29,13 +28,10 @@ def fetch_data(sgw: SgWriter):
             continue
         with SgFirefox() as driver:
 
-            driver.implicitly_wait(10)
             driver.get(page_url)
-            driver.implicitly_wait(10)
-            driver.maximize_window()
             driver.switch_to.frame(0)
             try:
-                WebDriverWait(driver, 5).until(
+                WebDriverWait(driver, 30).until(
                     EC.presence_of_element_located(
                         (By.XPATH, '//div[@class="address"]')
                     )

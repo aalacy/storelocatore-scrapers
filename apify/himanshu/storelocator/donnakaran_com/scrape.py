@@ -95,8 +95,7 @@ def fetch_data(sgw: SgWriter):
     for country in SearchableCountries.ALL:
         coords = DynamicGeoSearch(
             country_codes=[f"{country}"],
-            max_search_distance_miles=100,
-            expected_search_radius_miles=100,
+            max_search_distance_miles=10,
             max_search_results=None,
         )
 
