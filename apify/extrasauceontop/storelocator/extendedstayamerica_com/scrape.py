@@ -58,7 +58,6 @@ def get_data():
         location_type = "<MISSING>"
         hours = "24/7"
         country_code = "US"
-        print(location_name)
         try:
             phone_response = session.get(page_url, headers=browser_headers).text
             phone_soup = bs(phone_response, "html.parser")
