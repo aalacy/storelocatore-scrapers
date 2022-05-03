@@ -13,8 +13,16 @@ _headers = {
 }
 
 locator_domain = "https://www.shell.ae/"
-json_url = "https://shelllubricantslocator.geoapp.me/api/v1/global_lubes/locations/within_bounds?sw%5B%5D={}&sw%5B%5D={}&ne%5B%5D={}&ne%5B%5D={}&format=json"
-base_url = "https://shellgsllocator.geoapp.me/api/v1/locations/within_bounds?sw%5B%5D=-80&sw%5B%5D=-179&ne%5B%5D=80&ne%5B%5D=179&format=json"
+urls = [
+    {
+        "json_url": "https://shelllubricantslocator.geoapp.me/api/v1/global_lubes/locations/within_bounds?sw%5B%5D={}&sw%5B%5D={}&ne%5B%5D={}&ne%5B%5D={}&format=json",
+        "base_url": "https://shellgsllocator.geoapp.me/api/v1/locations/within_bounds?sw%5B%5D=-179&sw%5B%5D=-179&ne%5B%5D=179&ne%5B%5D=179&format=json",
+    },
+    {
+        "json_url": "https://shellretaillocator.geoapp.me/api/v1/locations/within_bounds?sw%5B%5D={}&sw%5B%5D={}&ne%5B%5D={}&ne%5B%5D={}&format=json",
+        "base_url": "https://shellretaillocator.geoapp.me/api/v1/locations/within_bounds?sw%5B%5D=-80&sw%5B%5D=-179&ne%5B%5D=80&ne%5B%5D=179&format=json",
+    },
+]
 
 
 @retry(wait=wait_fixed(2), stop=stop_after_attempt(3))
@@ -23,7 +31,7 @@ def get_json(url):
         return session.get(url, headers=_headers).json()
 
 
-def fetch_boundings(boundings, writer):
+def fetch_boundings(boundings, json_url, writer):
     for bound in boundings:
         _bb = bound["bounds"]
         locations = get_json(
@@ -32,7 +40,7 @@ def fetch_boundings(boundings, writer):
         if locations:
             if locations[0].get("centroid"):
                 logger.info(f"{bound['size']} recuring")
-                fetch_boundings(locations, writer)
+                fetch_boundings(locations, json_url, writer)
             else:
                 logger.info(f"{len(locations)} locations")
                 for _ in locations:
@@ -41,6 +49,20 @@ def fetch_boundings(boundings, writer):
                         street_address = _["address1"]
                     if _.get("address2"):
                         street_address += " " + _["address2"]
+                    if _.get("address3"):
+                        street_address += " " + _["address3"]
+                    if _.get("address4"):
+                        street_address += " " + _["address4"]
+
+                    if not street_address:
+                        street_address = _.get("address")
+                        if street_address and _["city"]:
+                            cc = street_address.split(_["city"])
+                            if len(cc) == 1:
+                                street_address = cc[-1]
+                            else:
+                                street_address = _["city"].join(cc[1:])
+
                     zip_postal = _.get("postcode")
                     if zip_postal and zip_postal == "00000":
                         zip_postal = ""
@@ -51,9 +73,12 @@ def fetch_boundings(boundings, writer):
                     if phone:
                         phone = phone.split("/")[0]
 
+                    location_type = ", ".join(_.get("channel_types", []))
+                    if not location_type:
+                        location_type = _.get("brand")
                     writer.write_row(
                         SgRecord(
-                            store_number=_["id"],
+                            page_url=_.get("website_url"),
                             location_name=_["name"],
                             street_address=street_address,
                             city=_["city"],
@@ -64,21 +89,23 @@ def fetch_boundings(boundings, writer):
                             country_code=_["country"],
                             phone=phone,
                             locator_domain=locator_domain,
-                            location_type=", ".join(_.get("channel_types", [])),
+                            location_type=location_type,
                         )
                     )
 
 
-def fetch_data(writer):
+def fetch_data(writer, base_url, json_url):
     boundings = get_json(base_url)
 
-    fetch_boundings(boundings, writer)
+    fetch_boundings(boundings, json_url, writer)
 
 
 if __name__ == "__main__":
     with SgWriter(
         SgRecordDeduper(
-            RecommendedRecordIds.StoreNumberId, duplicate_streak_failure_factor=2000
+            RecommendedRecordIds.GeoSpatialId,
+            duplicate_streak_failure_factor=3000,
         )
     ) as writer:
-        fetch_data(writer)
+        for url in urls:
+            fetch_data(writer, url["base_url"], url["json_url"])
