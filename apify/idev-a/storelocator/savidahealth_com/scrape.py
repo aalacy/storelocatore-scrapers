@@ -54,11 +54,14 @@ def fetch_data():
                         .strip()[:-1]
                     )
 
+                    street_address = ss["address"].strip()
+                    if street_address.endswith(","):
+                        street_address = street_address[:-1]
                     yield SgRecord(
                         page_url=page_url,
                         location_name=ss["title"],
-                        street_address=ss["address"],
-                        city=td[0].text.strip(),
+                        street_address=street_address,
+                        city=td[0].text.split(",")[0].strip(),
                         state=ss["state"],
                         zip_postal=ss["zip"],
                         country_code="US",
@@ -87,15 +90,21 @@ def fetch_data():
                         .strip()[:-1]
                     )
 
+                    street_address = ss["address"].strip()
+                    if street_address.endswith(","):
+                        street_address = street_address[:-1]
                     yield SgRecord(
                         page_url=page_url,
                         location_name=ss["title"],
-                        street_address=ss["address"],
-                        city=ss["city"],
+                        street_address=street_address,
+                        city=ss["city"].split(",")[0],
                         state=ss["state"],
                         zip_postal=ss["zip"],
                         country_code="US",
-                        phone=ss["phone"],
+                        phone=ss["phone"]
+                        or link.find_next_sibling("div")
+                        .find("a", href=re.compile(r"tel:"))
+                        .text.strip(),
                         locator_domain=locator_domain,
                         latitude=ss["latitude"],
                         longitude=ss["longitude"],
