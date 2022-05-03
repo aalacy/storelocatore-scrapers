@@ -86,7 +86,7 @@ if __name__ == "__main__":
         )
     ) as writer:
         search = DynamicGeoSearch(
-            country_codes=SearchableCountries.ALL, granuarity=Grain_2()
+            country_codes=SearchableCountries.ALL, granularity=Grain_2()
         )
         results = fetch_records(search)
         for rec in results:
