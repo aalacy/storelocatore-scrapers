@@ -3,6 +3,8 @@ from sgselenium import SgChrome
 from sgrequests import SgRequests
 import json
 from sgscrape import simple_scraper_pipeline as sp
+from sgrequests import ProxySettings
+from bs4 import BeautifulSoup as bs
 
 
 def extract_json(html_string):
@@ -31,7 +33,9 @@ def extract_json(html_string):
 
 
 def get_data():
-    session = SgRequests()
+    session = SgRequests(
+        proxy_escalation_order=ProxySettings.TEST_PROXY_ESCALATION_ORDER
+    )
 
     url = "https://www.extendedstayamerica.com/hotels/"
     browser_headers = SgSelenium.get_default_headers_for(
@@ -54,8 +58,21 @@ def get_data():
         location_type = "<MISSING>"
         hours = "24/7"
         country_code = "US"
+        print(location_name)
+        try:
+            phone_response = session.get(page_url, headers=browser_headers).text
+            phone_soup = bs(phone_response, "html.parser")
 
-        phone = "<INACCESSIBLE>"
+            phone = phone_soup.find("span", attrs={"class": "text-white"}).text.strip()
+
+        except Exception:
+            browser_headers = SgSelenium.get_default_headers_for(
+                the_driver=SgChrome().driver(), request_url=page_url
+            )
+            phone_response = session.get(page_url, headers=browser_headers).text
+            phone_soup = bs(phone_response, "html.parser")
+
+            phone = phone_soup.find("span", attrs={"class": "text-white"}).text.strip()
 
         yield {
             "locator_domain": locator_domain,
