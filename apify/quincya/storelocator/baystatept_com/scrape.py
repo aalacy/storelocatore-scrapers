@@ -68,7 +68,11 @@ def fetch_data(sgw: SgWriter):
 
             store_number = store["meta"]["id"]
             location_type = "<MISSING>"
-            phone = store["mainPhone"]["display"]
+
+            try:
+                phone = store["mainPhone"]["display"]
+            except:
+                continue
 
             latitude = store["yextDisplayCoordinate"]["lat"]
             longitude = store["yextDisplayCoordinate"]["long"]
@@ -77,6 +81,9 @@ def fetch_data(sgw: SgWriter):
                 link = store["c_baseURL"]
             except:
                 link = store["websiteUrl"]
+
+            if not link:
+                continue
 
             logger.info(link)
             final_req = session.get(link, headers=headers1)
