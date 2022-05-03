@@ -1,30 +1,49 @@
-import json
-import random
 import time
+import ssl
+import json
 from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
+from sglogging import sglog
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgpostal.sgpostal import USA_Best_Parser, parse_address
+
+from tenacity import retry, stop_after_attempt
+import tenacity
+import random
+
+locator_domain = "https://www.extendedstayamerica.com/"
+headers = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
+}
+log = sglog.SgLogSetup().get_logger(logger_name=locator_domain)
+ssl._create_default_https_context = ssl._create_unverified_context
+
+
+@retry(stop=stop_after_attempt(3), wait=tenacity.wait_fixed(5))
+def get_response(url):
+    with SgRequests() as http:
+        response = http.get(url, headers=headers)
+        log.info(response)
+        time.sleep(random.randint(7, 10))
+        if response.status_code == 200:
+            log.info(f"{url} >> HTTP STATUS: {response.status_code}")
+            return response
 
 
 def fetch_data(sgw: SgWriter):
 
-    locator_domain = "https://www.extendedstayamerica.com/"
     api_url = "https://api.prod.bws.esa.com/cms-proxy-api/sitemap/property"
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
-    }
     r = session.get(api_url, headers=headers)
     tree = html.fromstring(r.content)
     div = tree.xpath("//url/loc[contains(text(), '/hotels/')]")
     for d in div:
 
         page_url = "".join(d.xpath(".//text()"))
-        time.sleep(random.randint(3, 7))
-        r = session.get(page_url, headers=headers)
+        log.debug(f"fetching {page_url} ...")
+        r = get_response(page_url)
         tree = html.fromstring(r.text)
         js_block = "".join(
             tree.xpath('//script[contains(text(), "openingHoursSpecification")]/text()')
