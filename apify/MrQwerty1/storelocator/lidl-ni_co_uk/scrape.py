@@ -9,10 +9,10 @@ from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 
 def fetch_data(sgw: SgWriter):
     search = DynamicGeoSearch(
-        country_codes=[SearchableCountries.BRITAIN], expected_search_radius_miles=10
+        country_codes=[SearchableCountries.BRITAIN], expected_search_radius_miles=20
     )
     for lat, lng in search:
-        api = f"https://spatial.virtualearth.net/REST/v1/data/91bdba818b3c4f5e8b109f223ac4a9f0/Filialdaten-NIE/Filialdaten-NIE?$select=*,__Distance&$filter=Adresstyp%20eq%201&key=AkeGPHUAkt63PHcPYgWMYeSXRmUHkFqe4ql0f8XDSEdG-PnxQ22O6gL9rTAdQ-WV&$format=json&spatialFilter=nearby({lat},{lng},15)"
+        api = f"https://spatial.virtualearth.net/REST/v1/data/91bdba818b3c4f5e8b109f223ac4a9f0/Filialdaten-NIE/Filialdaten-NIE?$select=*,__Distance&$filter=Adresstyp%20eq%201&key=AomVkJ5BxZzNbI7ki_vBFJyCASu8niWWaY7wSFOQra1GGTmwYEeDXQvGPSzy3fYr&$format=json&spatialFilter=nearby({lat},{lng},25)"
         r = session.get(api, headers=headers)
         try:
             js = r.json()["d"]["results"]
