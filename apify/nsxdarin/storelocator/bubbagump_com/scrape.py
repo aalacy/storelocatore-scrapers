@@ -102,6 +102,9 @@ def fetch_data():
                     if "beijing" in purl:
                         phone = "010-13651001283"
                         hours = "<MISSING>"
+                    hours = hours.strip()
+                    if hours[-1:] == ";":
+                        hours = hours[:-1]
                     if "Coming" not in name:
                         yield SgRecord(
                             locator_domain=website,
