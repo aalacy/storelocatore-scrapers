@@ -52,7 +52,7 @@ def get_data():
         state = location["address"]["region"]
         zipp = location["address"]["postalCode"]
         location_type = "<MISSING>"
-        hours = "<MISSING>"
+        hours = "24/7"
         country_code = "US"
 
         phone = "<INACCESSIBLE>"
