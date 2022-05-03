@@ -19,8 +19,8 @@ def fetch_data(sgw: SgWriter):
         store_number = j.get("storeId")
         phone = j.get("phone")
         g = j.get("coordinate") or {}
-        latitude = g.get("x")
-        longitude = g.get("y")
+        longitude = g.get("x")
+        latitude = g.get("y")
 
         _tmp = []
         hours = j.get("openingTimes") or []
