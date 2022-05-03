@@ -98,7 +98,7 @@ def scrape():
 
     if proxy_pass == "No":
         raise Exception("Run this with a proxy")
-        
+
     field_defs = sp.SimpleScraperPipeline.field_definitions(
         locator_domain=sp.MappingField(mapping=["locator_domain"]),
         page_url=sp.MappingField(mapping=["page_url"], part_of_record_identity=True),
