@@ -66,6 +66,14 @@ def fetch_data(sgw: SgWriter):
         if not city:
             if "london" in location_name.lower():
                 city = "London"
+            else:
+                city = (
+                    location_name.split("Restaurant")[0]
+                    .replace("Quays", "")
+                    .replace("Lakes", "")
+                    .replace("Trafford Centre", "")
+                    .strip()
+                )
 
         store_number = "<MISSING>"
         location_type = "<MISSING>"
@@ -105,5 +113,5 @@ def fetch_data(sgw: SgWriter):
         )
 
 
-with SgWriter(SgRecordDeduper(RecommendedRecordIds.PhoneNumberId)) as writer:
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
     fetch_data(writer)

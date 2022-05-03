@@ -113,7 +113,7 @@ def fetchConcurrentList(list, locations, occurrence=max_workers):
 
 
 def request_with_retries(url):
-    with SgRequests() as session:
+    with SgRequests(proxy_country="us") as session:
         return session.get(url, headers=_headers)
 
 
@@ -132,10 +132,6 @@ def fetch_records(http):
     )
     locations = http.post(loc_url, headers=header1).json()["set_locations"]
     for page_url, _ in fetchConcurrentList(locs, locations):
-        if not _:
-            import pdb
-
-            pdb.set_trace()
         hours_of_operation = ""
         if _.get("hours"):
             hours_of_operation = (

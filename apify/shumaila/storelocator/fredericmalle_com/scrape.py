@@ -42,7 +42,7 @@ def fetch_data():
         except:
             phone = "<MISSING>"
         try:
-            phone = phone.split(":", 1)[0].strip()
+            phone = phone.split(":", 1)[1].strip()
         except:
             pass
         try:
@@ -56,6 +56,10 @@ def fetch_data():
             longt = longt.split(",", 1)[0]
         except:
             lat = longt = "<MISSING>"
+        if "Frederic Malle" in title or "Store" in ltype:
+            pass
+        else:
+            continue
         pa = parse_address_intl(address)
 
         street_address = pa.street_address_1
@@ -70,14 +74,16 @@ def fetch_data():
         zip_postal = pa.postcode
         pcode = zip_postal.strip() if zip_postal else MISSING
 
-        ccode = pa.country
-        ccode = ccode.strip() if ccode else MISSING
         if "<MISSING>" not in street:
             title = title + " " + street
         try:
             phone = phone.split(":", 1)[1].strip()
         except:
             pass
+        if "Paris" in address or "Milano" in address:
+            ccode = "FR"
+        else:
+            ccode = "US"
         yield SgRecord(
             locator_domain=base_url,
             page_url=url,
