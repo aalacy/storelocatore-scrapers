@@ -75,10 +75,6 @@ def get_data():
             except Exception:
                 location_name = location["name"]
             address = location["name"]
-            try:
-                print(address)
-            except Exception:
-                print("PASS")
             city = "<MISSING>"
             state = "<MISSING>"
             zipp = "<MISSING>"
