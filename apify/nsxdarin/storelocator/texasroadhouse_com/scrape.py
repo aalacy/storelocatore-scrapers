@@ -17,8 +17,8 @@ headers = {
 def fetch_data():
     website = "texasroadhouse.com"
     typ = "<MISSING>"
-    for x in range(-170, 170):
-        for y in range(-70, 70):
+    for x in range(-170, 170, 3):
+        for y in range(-70, 70, 3):
             url = (
                 "https://www.texasroadhouse.com/restaurants/near?lat="
                 + str(x)
@@ -39,11 +39,26 @@ def fetch_data():
                     state = "<MISSING>"
                 if state == "":
                     state = "<MISSING>"
-                lat = item["latitude"]
-                lng = item["longitude"]
-                loc = "https://togo.texasroadhouse.com/location/" + item["slug"]
-                add = item["streetaddress"]
-                country = item["country"]
+                try:
+                    lat = item["latitude"]
+                except:
+                    lat = "<MISSING>"
+                try:
+                    lng = item["longitude"]
+                except:
+                    lng = "<MISSING>"
+                try:
+                    loc = "https://togo.texasroadhouse.com/location/" + item["slug"]
+                except:
+                    loc = "<MISSING>"
+                try:
+                    add = item["streetaddress"]
+                except:
+                    add = "<MISSING>"
+                try:
+                    country = item["country"]
+                except:
+                    country = "<MISSING>"
                 try:
                     phone = item["telephone"]
                 except:
@@ -60,24 +75,28 @@ def fetch_data():
                     zc = "<MISSING>"
                 if zc == "":
                     zc = "<MISSING>"
-                name = item["storename"]
+                try:
+                    name = item["storename"]
+                except:
+                    name = "<MISSING>"
                 hours = "<MISSING>"
-                yield SgRecord(
-                    locator_domain=website,
-                    page_url=loc,
-                    location_name=name,
-                    street_address=add,
-                    city=city,
-                    state=state,
-                    zip_postal=zc,
-                    country_code=country,
-                    phone=phone,
-                    location_type=typ,
-                    store_number=store,
-                    latitude=lat,
-                    longitude=lng,
-                    hours_of_operation=hours,
-                )
+                if name != "<MISSING>":
+                    yield SgRecord(
+                        locator_domain=website,
+                        page_url=loc,
+                        location_name=name,
+                        street_address=add,
+                        city=city,
+                        state=state,
+                        zip_postal=zc,
+                        country_code=country,
+                        phone=phone,
+                        location_type=typ,
+                        store_number=store,
+                        latitude=lat,
+                        longitude=lng,
+                        hours_of_operation=hours,
+                    )
 
 
 def scrape():

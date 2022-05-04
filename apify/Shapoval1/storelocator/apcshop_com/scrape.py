@@ -11,9 +11,17 @@ def fetch_data(sgw: SgWriter):
 
     locator_domain = "https://www.apcshop.com"
     api_url = "https://www.apcshop.com/retailer/retailer/index/"
-    session = SgRequests()
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+        "Accept-Language": "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3",
+        "Connection": "keep-alive",
+        "Referer": "https://www.apcshop.com/retailer/retailer/index/",
+        "Upgrade-Insecure-Requests": "1",
+        "Sec-Fetch-Dest": "document",
+        "Sec-Fetch-Mode": "navigate",
+        "Sec-Fetch-Site": "same-origin",
+        "Sec-Fetch-User": "?1",
     }
     r = session.get(api_url, headers=headers)
     tree = html.fromstring(r.text)
@@ -43,10 +51,11 @@ def fetch_data(sgw: SgWriter):
             page_url = url_key
         location_name = j.get("name") or "<MISSING>"
         street_address = j.get("street") or "<MISSING>"
-        if str(street_address).find(";") != -1:
-            street_address = str(street_address).split(";")[0].strip()
+        street_address = str(street_address).replace(";", "").strip()
         state = "<MISSING>"
         postal = j.get("zip_code") or "<MISSING>"
+        if street_address.find(f"{postal}") != -1:
+            street_address = street_address.split(f"{postal}")[0].strip()
         country_code = j.get("country")
         city = j.get("city") or "<MISSING>"
         latitude = j.get("latitude") or "<MISSING>"

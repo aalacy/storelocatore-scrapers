@@ -9,6 +9,13 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 import re
 from sglogging import SgLogSetup
 import ssl
+from webdriver_manager.chrome import ChromeDriverManager
+from tenacity import retry, stop_after_attempt, wait_fixed
+import os
+
+os.environ[
+    "PROXY_URL"
+] = "http://groups-RESIDENTIAL,country-ca:{}@proxy.apify.com:8000/"
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
@@ -32,6 +39,27 @@ header1 = {
 def request_with_retries(url):
     with SgRequests(proxy_country="us") as session:
         return session.get(url, headers=_headers)
+
+
+def get_driver():
+    return SgChrome(
+        executable_path=ChromeDriverManager().install(),
+        user_agent="Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0",
+        is_headless=True,
+    ).driver()
+
+
+@retry(wait=wait_fixed(10), stop=stop_after_attempt(5))
+def get_url(driver=None, url=None):
+    if not driver:
+        driver = get_driver()
+    try:
+        driver.get(url)
+        soup = bs(driver.page_source, "lxml")
+        list(soup.select_one("div.store p").stripped_strings)
+    except:
+        driver = get_driver()
+        raise Exception
 
 
 def _d(driver, page_url, res, soup, location_type):
@@ -69,10 +97,12 @@ def _d(driver, page_url, res, soup, location_type):
                 if soup.select_one("div.store p"):
                     addr = list(soup.select_one("div.store p").stripped_strings)
                 else:
-                    driver.get(page_url)
+                    get_url(driver, page_url)
                     soup = bs(driver.page_source, "lxml")
                     addr = list(soup.select_one("div.store p").stripped_strings)
 
+                raw_address = " ".join(addr).replace("\n", "").replace("\r", "")
+                addr = raw_address.split(",")
                 street_address = " ".join(addr[:-3])
                 if street_address.endswith(","):
                     street_address = street_address[:-1]
@@ -110,32 +140,33 @@ def _d(driver, page_url, res, soup, location_type):
                     hours_of_operation="; ".join(hours),
                     location_type=location_type,
                     country_code="UK",
-                    raw_address=" ".join(addr).replace("\n", "").replace("\r", ""),
+                    raw_address=raw_address,
                 )
             except Exception as e:
-                logger.info("failed ", page_url)
+                logger.info(f"failed {page_url} {str(e)}")
                 open("w", "a+").write(page_url + ": " + str(e) + "\n")
 
 
 def fetch_data():
-    with SgChrome() as driver:
-        with SgRequests(proxy_country="us") as session:
-            soup = bs(session.get(base_url, headers=_headers).text, "lxml")
-            store_links = soup.select("div.item-list ul li a")
-            for link in store_links:
-                page_url = "https://www.specsavers.co.uk/stores/" + link["href"]
-                logger.info(page_url)
-                res = request_with_retries(page_url)
-                if res.status_code == 200:
-                    soup = bs(res.text, "lxml")
-                    location_type = (
-                        "Hearing Centre" if "hearing" in page_url else "Optician"
-                    )
-                    yield _d(driver, page_url, res, soup, location_type)
+    driver = get_driver()
+    with SgRequests(proxy_country="us") as session:
+        soup = bs(session.get(base_url, headers=_headers).text, "lxml")
+        store_links = soup.select("div.item-list ul li a")
+        for link in store_links:
+            page_url = "https://www.specsavers.co.uk/stores/" + link["href"]
+            logger.info(page_url)
+            res = request_with_retries(page_url)
+            if res.status_code == 200:
+                soup = bs(res.text, "lxml")
+                location_type = (
+                    "Hearing Centre" if "hearing" in page_url else "Optician"
+                )
+                yield _d(driver, page_url, res, soup, location_type)
 
 
 if __name__ == "__main__":
     with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         results = fetch_data()
         for rec in results:
-            writer.write_row(rec)
+            if rec:
+                writer.write_row(rec)
