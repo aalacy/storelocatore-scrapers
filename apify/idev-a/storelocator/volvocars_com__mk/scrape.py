@@ -50,7 +50,7 @@ def fetch_data():
                 phone = ""
                 for x, bb in enumerate(block):
                     if bb == "T:":
-                        phone = block[x + 1]
+                        phone = block[x + 1].replace("(Shitja)", "").strip()
                         break
                 lat, lng = (
                     _.select_one("a.location_link")["href"].split("q=")[-1].split(",")
