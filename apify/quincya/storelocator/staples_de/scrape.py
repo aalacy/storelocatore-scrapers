@@ -1,3 +1,4 @@
+import json
 from bs4 import BeautifulSoup
 
 from sgrequests import SgRequests
@@ -12,45 +13,47 @@ from sgpostal.sgpostal import parse_address_intl
 
 def fetch_data(sgw: SgWriter):
 
-    base_link = "https://bahamas.com.br/lojas/"
-    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
-
-    locator_domain = "https://bahamas.com.br/"
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36"
     headers = {"User-Agent": user_agent}
+
+    base_link = "https://frame.staples-wiki.de/finderend/js/store-data.js"
 
     session = SgRequests()
     req = session.get(base_link, headers=headers)
     base = BeautifulSoup(req.text, "lxml")
 
-    items = base.find_all(class_="entry-title")
-    for i in items:
-        link = i.a["href"]
-        req = session.get(link, headers=headers)
-        item = BeautifulSoup(req.text, "lxml")
-        location_name = item.h1.text
-        raw_address = item.find(
-            class_="elementor-element elementor-element-ad63210 elementor-widget elementor-widget-text-editor"
-        ).text.strip()
+    locator_domain = "https://staples.de/"
+
+    js = (
+        base.text.split("stores =")[1]
+        .replace("},  },", "}  },")
+        .replace("\n", "")
+        .strip()
+    )
+    stores = json.loads(js)
+
+    for store in stores:
+        location_name = store["name"]
+        raw_address = (
+            " ".join(store["addressLines"]).replace("  ", " ").replace("  ", " ")
+        )
         addr = parse_address_intl(raw_address)
         street_address = addr.street_address_1
         city = addr.city
         state = addr.state
         zip_code = addr.postcode
-        country_code = "BR"
-        store_number = ""
+        country_code = "Germany"
+        phone = store["phoneNumber"]
+        store_number = store["storeNumber"]
         location_type = ""
-        phone = item.find(
-            class_="elementor-element elementor-element-70290f0 elementor-widget elementor-widget-text-editor"
-        ).text.strip()
-        hours_of_operation = item.find(
-            class_="elementor-element elementor-element-92d7138 elementor-widget elementor-widget-text-editor"
-        ).text.strip()
-        latitude = ""
-        longitude = ""
+        latitude = store["coordinates"]["latitude"]
+        longitude = store["coordinates"]["longitude"]
+        hours_of_operation = store["page"]
+
         sgw.write_row(
             SgRecord(
                 locator_domain=locator_domain,
-                page_url=link,
+                page_url="https://staples.de/filial-finder.html",
                 location_name=location_name,
                 street_address=street_address,
                 city=city,
@@ -68,5 +71,5 @@ def fetch_data(sgw: SgWriter):
         )
 
 
-with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
     fetch_data(writer)
