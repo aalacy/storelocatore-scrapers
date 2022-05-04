@@ -21,6 +21,10 @@ log = sglog.SgLogSetup().get_logger(logger_name=website)
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
+user_agent = (
+    "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0"
+)
+
 
 def driver_sleep(driver, time=2):
     try:
@@ -36,12 +40,15 @@ def random_sleep(driver, start=5, limit=3):
 
 
 def fetch_stores():
-    with SgFirefox(block_third_parties=True) as driver:
+    with SgFirefox(
+        block_third_parties=True, is_headless=False, user_agent=user_agent
+    ) as driver:
         driver.get(store_url)
         random_sleep(driver, 30)
-        return json.loads(driver.page_source.split("fnacStoreData =")[1].split(";")[0])[
-            "Store"
-        ]
+        jsontxt = (
+            driver.page_source.split('data-stores="')[1].split('" data-zoom=')[0]
+        ).replace("&quot;", '"')
+        return json.loads(jsontxt)["Store"]
     return []
 
 
@@ -90,8 +97,10 @@ def fetch_data():
         page_url = get_JSON_object_variable(store, "Url")
         location_name = get_JSON_object_variable(store, "Name")
         location_type = get_JSON_object_variable(store, "ShopTypeName")
-        street_address = get_JSON_object_variable(store, "AddressLine").replace(
-            "\n", ", "
+        street_address = (
+            get_JSON_object_variable(store, "AddressLine")
+            .replace("\n", ", ")
+            .replace(",,", ",")
         )
         city = get_JSON_object_variable(store, "CityName")
         zip_postal = get_JSON_object_variable(store, "ZipCode")
