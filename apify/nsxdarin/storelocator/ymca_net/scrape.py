@@ -41,7 +41,6 @@ def fetch_data():
             country = "US"
             logger.info(str(x) + "," + str(y))
             for line in r.iter_lines():
-                line = str(line.decode("utf-8"))
                 if (
                     'view-mode-location-listing node--promoted" data-entity-id="'
                     in line
@@ -72,7 +71,6 @@ def fetch_data():
                         HFound = False
                         logger.info(loc)
                         for line2 in r2.iter_lines():
-                            line2 = str(line2.decode("utf-8"))
                             if "Hours of Operation</h4>" in line2:
                                 HFound = True
                             if HFound and "</tbody>" in line2:
@@ -170,7 +168,11 @@ def fetch_data():
 
 def scrape():
     results = fetch_data()
-    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(
+            RecommendedRecordIds.PageUrlId, duplicate_streak_failure_factor=-1
+        )
+    ) as writer:
         for rec in results:
             writer.write_row(rec)
 
