@@ -4,7 +4,7 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
 import re
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 logger = SgLogSetup().get_logger("simonpearce")
@@ -97,41 +97,38 @@ def fetch_data():
         for _ in links:
             info = bs(_["popup_html"], "lxml")
             page_url = info.a["href"].replace("&apos;", "'")
-            if page_url == "https://www.simonpearce.com/store-locator":
-                continue
-            logger.info(page_url)
-            street_address = city = state = zip_postal = country_code = phone = ""
-            sp1 = bs(session.get(page_url).text, "lxml")
-            blocks = sp1.select("div.amlocator-location-info div.amlocator-block")
+            street_address = (
+                city
+            ) = state = zip_postal = country_code = phone = hours = ""
+            if page_url != "https://www.simonpearce.com/store-locator":
+                logger.info(page_url)
+                sp1 = bs(session.get(page_url).text, "lxml")
+                if sp1.select_one("div.amlocator-location-info"):
+                    pp = sp1.select_one("div.amlocator-location-info").find(
+                        "a", href=re.compile(r"tel:")
+                    )
+                    if pp:
+                        _pp = pp.text.split()
+                        if len(_pp) > 1:
+                            hours = " ".join(_pp[1:])
+            blocks = list(info.stripped_strings)[1:]
             for bb in blocks:
-                span = list(bb.stripped_strings)
-                if not span:
-                    continue
-                if "Zip" in span[0]:
-                    zip_postal = span[-1]
-                elif "Country" in span[0]:
-                    country_code = span[-1]
-                elif "State" in span[0]:
-                    state = span[-1]
-                elif "City" in span[0]:
-                    city = span[-1]
-                elif "Address" in span[0]:
-                    street_address = span[-1].replace("\n", " ").replace("\r", "")
-            if not street_address and not city:
-                continue
-            pp = sp1.select_one("div.amlocator-location-info").find(
-                "a", href=re.compile(r"tel:")
-            )
-            hours = ""
-            if pp:
-                _pp = pp.text.split()
-                phone = _pp[0].strip()
-                if len(_pp) > 1:
-                    hours = " ".join(_pp[1:])
+                if "Zip" in bb:
+                    zip_postal = bb.split(":")[-1]
+                elif "State" in bb:
+                    state = bb.split(":")[-1]
+                elif "City" in bb:
+                    city = bb.split(":")[-1]
+                elif "Address" in bb:
+                    street_address = (
+                        bb.split(":")[-1].replace("\n", " ").replace("\r", "")
+                    )
+                elif "Phone" in bb:
+                    phone = bb.split(":")[-1]
             yield SgRecord(
                 page_url=page_url,
                 store_number=_["id"],
-                location_name=info.a.text.strip(),
+                location_name=info.h3.text.strip(),
                 street_address=street_address,
                 city=city,
                 state=state,
@@ -139,14 +136,18 @@ def fetch_data():
                 country_code=country_code,
                 phone=phone,
                 locator_domain=locator_domain,
-                latitude=_["lat"],
-                longitude=_["lng"],
+                latitude=_["lat"] if _["lat"] != "0.00000000" else "",
+                longitude=_["lng"] if _["lat"] != "0.00000000" else "",
                 hours_of_operation=hours,
             )
 
 
 if __name__ == "__main__":
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID({SgRecord.Headers.PAGE_URL, SgRecord.Headers.STORE_NUMBER})
+        )
+    ) as writer:
         results = fetch_stores()
         for rec in results:
             writer.write_row(rec)

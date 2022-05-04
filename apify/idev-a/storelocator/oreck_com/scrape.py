@@ -53,6 +53,7 @@ if __name__ == "__main__":
         SgRecordDeduper(
             SgRecordID(
                 {
+                    SgRecord.Headers.LOCATION_NAME,
                     SgRecord.Headers.STREET_ADDRESS,
                     SgRecord.Headers.CITY,
                     SgRecord.Headers.PHONE,
