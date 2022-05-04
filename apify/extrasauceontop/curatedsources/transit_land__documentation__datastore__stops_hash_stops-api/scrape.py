@@ -1,138 +1,115 @@
 from sgrequests import SgRequests
-import time
 from sgscrape import simple_scraper_pipeline as sp
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries, Grain_2
+import json
+import time
 
 
 def get_data():
-    headers = {
-        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-        "content-type": "application/json",
-        "origin": "https://www.transit.land",
-        "referer": "https://www.transit.land/",
-    }
-    session = SgRequests(retry_behavior=False)
-    x = 0
-
-    onestop_ids = []
-    while True:
-        params = {
-            "operationName": "",
-            "variables": {"search": "", "merged": False, "limit": 1000, "after": x},
-            "query": "query ($limit: Int, $after: Int, $search: String, $merged: Boolean) {\n  entities: operators(\n    after: $after\n    limit: $limit\n    where: {search: $search, merged: $merged}\n  ) {\n    id\n    agency_name\n    operator_name\n    operator_short_name\n    onestop_id\n    city_name\n    adm1name\n    adm0name\n    places_cache\n    agency {\n      places(where: {min_rank: 0.2}) {\n        name\n        adm0name\n        adm1name\n        __typename\n      }\n      __typename\n    }\n    __typename\n  }\n}\n",
-        }
-
-        url = "https://demo.transit.land/api/v2/query"
-        response = session.post(url, json=params, headers=headers).json()
-
-        if len(response["data"]["entities"]) == 0:
-            break
-
-        for location in response["data"]["entities"]:
-            if (
-                location["adm0name"] == "United States of America"
-                or location["adm0name"] == "Ireland"
-                or location["adm0name"] == "United Kingdom"
-                or location["adm0name"] == "Canada"
-            ):
-                onestop_ids.append(location["onestop_id"])
-
-        x = x + 1000
-
-    x = 0
+    search = DynamicGeoSearch(
+        country_codes=[
+            SearchableCountries.USA,
+            SearchableCountries.CANADA,
+            SearchableCountries.BRITAIN,
+        ],
+        expected_search_radius_miles=4,
+        granularity=Grain_2(),
+    )
+    session = SgRequests()
     api_keys = [
         "js3Mzn9chq5ZCMWiJCn2rcE86pJSE7Kt",
         "LZplP41M9JQ0tJq2obNgMoGIs4sgaERl",
         "mf5aDbbRmWv6tHZeu73zGz9yWX1sQ0WR",
+        "d7pRKCRzcXWGUzYkQ4xHL8A2IUX9zKWJ",
     ]
-    for onestop_id in onestop_ids:
-        offset = 0
+    x = 0
+    for search_lat, search_lon in search:
         x = x + 1
+        api_key = api_keys[x % 4]
+        url = (
+            "https://transit.land/api/v1/stops?lon="
+            + str(search_lon)
+            + "&lat="
+            + str(search_lat)
+            + "&r=10000&apikey="
+            + api_key
+            + "&per_page=100000"
+        )
 
-        api_key = api_keys[x % 3]
-        while True:
+        try:
+            response = session.get(url).json()
 
-            y = 0
-            while True:
-                y = y + 1
-                if y == 11:
-                    break
-                try:
-                    url = (
-                        "https://api.transit.land/api/v1/stops?apikey="
-                        + api_key
-                        + "&offset="
-                        + str(offset)
-                        + "&per_page=500&sort_key=id&sort_order=asc&served_by="
-                        + onestop_id
-                    )
-                    response = session.get(url, timeout=1000)
-                    response_code = response.status_code
-                    response = response.json()
-                    break
-                except Exception:
-                    continue
+        except Exception:
+            time.sleep(0.5)
+            x = x + 1
+            api_key = api_keys[x % 4]
+            url = (
+                "https://transit.land/api/v1/stops?lon="
+                + str(search_lon)
+                + "&lat="
+                + str(search_lat)
+                + "&r=10000&apikey="
+                + api_key
+                + "&per_page=100000"
+            )
+            response = session.get(url).json()
 
-            if response_code == 404:
-                time.sleep(0.5)
+        with open("file.txt", "w", encoding="utf-8") as output:
+            json.dump(response, output, indent=4)
+        if len(response["stops"]) == 0:
+            time.sleep(0.5)
+        for location in response["stops"]:
             try:
-                if len(response["stops"]) == 0:
-                    break
+                page_url = location["tags"]["stop_url"]
+
             except Exception:
-                break
+                page_url = "<MISSING>"
 
-            for location in response["stops"]:
-                try:
-                    page_url = location["tags"]["stop_url"]
-
-                except Exception:
-                    page_url = "<MISSING>"
-
+            try:
                 location_name = (
                     location["operators_serving_stop"][0]["operator_name"]
                     + "-"
                     + location["name"]
                 )
-                address = location["name"]
-                city = "<MISSING>"
-                state = "<MISSING>"
-                zipp = "<MISSING>"
-                latitude = location["geometry"]["coordinates"][1]
-                longitude = location["geometry"]["coordinates"][0]
-                store_number = (
-                    location["operators_serving_stop"][0]["operator_name"]
-                    + "_"
-                    + location["onestop_id"]
-                )
-                hours = "<MISSING>"
-                phone = "<MISSING>"
-                location_type_parts = location["served_by_vehicle_types"]
 
-                location_type = ""
-                for part in location_type_parts:
-                    location_type = location_type + str(part) + ","
+            except Exception:
+                location_name = location["name"]
+            address = location["name"]
+            city = "<MISSING>"
+            state = "<MISSING>"
+            zipp = "<MISSING>"
+            latitude = location["geometry"]["coordinates"][1]
+            longitude = location["geometry"]["coordinates"][0]
+            search.found_location_at(latitude, longitude)
+            store_number = (
+                location["operators_serving_stop"][0]["operator_name"]
+                + "_"
+                + location["onestop_id"]
+            )
+            hours = "<MISSING>"
+            phone = "<MISSING>"
+            location_type_parts = location["served_by_vehicle_types"]
 
-                location_type = location_type[:-1]
+            location_type = ""
+            for part in location_type_parts:
+                location_type = location_type + str(part) + ","
 
-                yield {
-                    "page_url": page_url,
-                    "location_name": location_name,
-                    "latitude": latitude,
-                    "longitude": longitude,
-                    "city": city,
-                    "store_number": store_number,
-                    "street_address": address,
-                    "state": state,
-                    "zip": zipp,
-                    "phone": phone,
-                    "location_type": location_type,
-                    "hours": hours,
-                }
+            location_type = location_type[:-1]
 
-            if len(response["stops"]) < 500:
-                break
-
-            else:
-                offset = offset + 500
+            yield {
+                "page_url": page_url,
+                "location_name": location_name,
+                "latitude": latitude,
+                "longitude": longitude,
+                "city": city,
+                "store_number": store_number,
+                "street_address": address,
+                "state": state,
+                "zip": zipp,
+                "phone": phone,
+                "location_type": location_type,
+                "hours": hours,
+            }
 
 
 def scrape():

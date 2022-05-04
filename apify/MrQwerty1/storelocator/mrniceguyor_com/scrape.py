@@ -170,7 +170,10 @@ def fetch_data(sgw: SgWriter):
             city = raw.pop(0)
             state, postal = raw.pop(0).split()
             text = "".join(d.xpath(".//a/@href"))
-            latitude, longitude = text.split("/@")[1].split(",")[:2]
+            try:
+                latitude, longitude = text.split("/@")[1].split(",")[:2]
+            except IndexError:
+                latitude, longitude = SgRecord.MISSING, SgRecord.MISSING
 
             data = {
                 "location_name": location_name,
