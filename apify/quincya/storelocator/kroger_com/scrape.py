@@ -1,152 +1,129 @@
-import csv
+import json
+import ssl
+import time
+
+from bs4 import BeautifulSoup
 
 from sglogging import sglog
 
-from sgrequests import SgRequests
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as ec
+from selenium.webdriver.support.ui import WebDriverWait
 
-from sgzip.dynamic import DynamicZipSearch, Grain_1_KM, SearchableCountries
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-log = sglog.SgLogSetup().get_logger(logger_name="kroger.com")
+from sgselenium.sgselenium import SgChrome
 
+log = sglog.SgLogSetup().get_logger("kroger.com")
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-                "page_url",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+ssl._create_default_https_context = ssl._create_unverified_context
 
 
-def fetch_data():
+def fetch_data(sgw: SgWriter):
 
-    session = SgRequests()
+    base_link = "https://www.kroger.com/storelocator-sitemap.xml"
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
 
-    headers = {
-        "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
-    }
-    locator_domain = "kroger.com"
+    driver = SgChrome(user_agent=user_agent).driver()
 
-    max_results = 50
-    max_distance = 40
+    driver.get(base_link)
+    soup = BeautifulSoup(driver.page_source, "lxml")
 
-    dup_tracker = []
+    for i, url in enumerate(soup.find_all("loc")[:-1]):
+        page_url = url.text
+        for i in range(6):
+            log.info(page_url)
+            driver.get(page_url)
+            time.sleep(2)
+            WebDriverWait(driver, 50).until(
+                ec.presence_of_element_located((By.TAG_NAME, "h1"))
+            )
+            time.sleep(2)
+            location_soup = BeautifulSoup(driver.page_source, "lxml")
 
-    search = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA],
-        granularity=Grain_1_KM(),
-        max_search_distance_miles=max_distance,
-        max_search_results=max_results,
-    )
+            location_name = ""
+            try:
+                script = location_soup.find(
+                    "script", attrs={"type": "application/ld+json"}
+                ).contents[0]
+                data = json.loads(script)
+                street_address = data["address"]
 
-    log.info("Running sgzips..")
+                location_name = location_soup.find(
+                    "h1", {"data-qa": "storeDetailsHeader"}
+                ).text.strip()
 
-    for postcode in search:
-        base_link = (
-            "https://www.kroger.com/atlas/v1/stores/v1/search?filter.query="
-            + str(postcode)
-        )
+                if location_name:
+                    break
+            except:
+                log.info("Retrying ..")
 
         try:
-            locs = session.get(base_link, headers=headers).json()["data"][
-                "storeSearch"
-            ]["results"]
+            street_address = data["address"]["streetAddress"]
+            city = data["address"]["addressLocality"]
+            state = data["address"]["addressRegion"]
+            zipp = data["address"]["postalCode"]
         except:
-            continue
-
-        for loc in locs:
-
-            if "KROGER" not in loc["brand"].upper():
-                continue
-
-            page_url = (
-                "https://www.kroger.com/stores/details/"
-                + loc["loyaltyDivisionNumber"]
-                + "/"
-                + loc["storeNumber"]
+            raw_address = (
+                location_soup.find(class_="StoreAddress-storeAddressGuts")
+                .get_text(" ")
+                .replace(",", "")
+                .replace(" .", ".")
+                .replace("..", ".")
+                .split("  ")
             )
-
-            location_name = loc["vanityName"] + " " + loc["facilityName"]
-
-            lat = loc["location"]["lat"]
-            lng = loc["location"]["lng"]
-            search.found_location_at(lat, lng)
-
-            store_number = loc["locationId"]
-            if store_number not in dup_tracker:
-                dup_tracker.append(store_number)
+            if len(raw_address) != 1:
+                street_address = raw_address[0].strip()
+                city = raw_address[1].strip()
+                state = raw_address[2].strip()
+                zipp = raw_address[3].split("Get")[0].strip()
             else:
-                continue
-
-            raw_address = loc["address"]["address"]
-            street_address = " ".join(raw_address["addressLines"]).strip()
-            city = raw_address["cityTown"]
-            state = raw_address["stateProvince"]
-            zip_code = raw_address["postalCode"]
-            country_code = raw_address["countryCode"]
+                raw_address = list(
+                    location_soup.find(
+                        class_="StoreAddress-storeAddressGuts"
+                    ).stripped_strings
+                )[0].split(",")
+                street_address = " ".join(raw_address[0].split()[:-1])
+                city = raw_address[0].split()[-1]
+                state = raw_address[1].split()[0]
+                zipp = raw_address[1].split()[1]
+        country_code = "US"
+        store_number = page_url.split("/")[-1]
+        try:
+            phone = data["telephone"]
+        except:
             try:
-                phone_number = loc["phoneNumber"]
+                phone = location_soup.find(class_="PhoneNumber-phone").text.strip()
             except:
-                phone_number = "<MISSING>"
-            location_type = "<MISSING>"
+                phone = ""
+        lat = data["geo"]["latitude"]
+        lng = data["geo"]["longitude"]
+        hours = " ".join(data["openingHours"])
 
-            hours = ""
-            raw_hours = loc["formattedHours"]
-            for raw_hour in raw_hours:
-                hours = (
-                    hours
-                    + " "
-                    + raw_hour["displayName"]
-                    + " "
-                    + raw_hour["displayHours"]
-                ).strip()
-            hours = hours.replace("  ", " ")
-            if not hours:
-                hours = "<MISSING>"
+        sgw.write_row(
+            SgRecord(
+                locator_domain="https://www.kroger.com/",
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zipp,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type="",
+                latitude=lat,
+                longitude=lng,
+                hours_of_operation=hours,
+            )
+        )
 
-            store_data = [
-                locator_domain,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip_code,
-                country_code,
-                store_number,
-                phone_number,
-                location_type,
-                lat,
-                lng,
-                hours,
-                page_url,
-            ]
-            yield store_data
+    driver.close()
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    fetch_data(writer)
