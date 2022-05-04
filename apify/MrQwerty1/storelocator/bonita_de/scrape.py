@@ -8,7 +8,7 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 
 
 def fetch_data(sgw: SgWriter):
-    api = f"https://www.bonita.de/de/de/shop_api/app/store_finder/search.json?address=&country=&distance=5000"
+    api = "https://www.bonita.de/de/de/shop_api/app/store_finder/search.json?address=&country=&distance=5000"
     r = session.get(api, headers=headers)
     tree = html.fromstring(r.json())
     divs = tree.xpath("//div[@class='card']")
