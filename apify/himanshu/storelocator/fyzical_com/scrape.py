@@ -1,45 +1,18 @@
-import csv
-from sgrequests import SgRequests
 from sglogging import SgLogSetup
 
-logger = SgLogSetup().get_logger("fyzical_com")
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
+from sgrequests import SgRequests
+
+logger = SgLogSetup().get_logger("fyzical_com")
 
 session = SgRequests()
 
 
-def write_output(data):
-    with open("data.csv", mode="w", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-                "page_url",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    addresses = []
+def fetch_data(sgw: SgWriter):
 
     data = session.get(
         "https://www.fyzical.com/contact.php?v=4&action=ajax_get_locations&ne=65.47336744902078,-12.629251250000006&sw=8.312726964373702,-167.66831375"
@@ -57,8 +30,10 @@ def fetch_data():
                 else:
                     Suit = " Suite " + Suite
 
-        street_address = data["Street"] + " " + Suit
+        street_address = (data["Street"] + " " + Suit).replace("  ", " ")
         location_name = data["Name"]
+        if "ming soon" in location_name.lower():
+            continue
         city = data["City"]
         zipp = data["Zip"]
         state = data["State"]
@@ -66,6 +41,9 @@ def fetch_data():
         longitude = data["Longitude"]
         latitude = data["Latitude"]
         page_url = data["Long_description_url"]
+
+        if street_address == "2200 S Kipling Street":
+            page_url = "https://www.fyzical.com/carmody-co"
 
         hours = ""
         for hour in data["Workhours"]:
@@ -81,42 +59,28 @@ def fetch_data():
                     + " "
                     + data["Workhours"][hour]["Closing_time"]
                 )
+        hours = hours.replace("  ", " ")
+        store_number = data["ID_Location"]
 
-        store_number = "<MISSING>"
-        store = []
-        store.append("https://www.fyzical.com")
-        store.append(location_name)
-        store.append(street_address)
-        store.append(city)
-        store.append(state)
-        store.append(zipp)
-        store.append("US")
-        store.append(store_number)
-        store.append(phone)
-        store.append("<MISSING>")
-        store.append(latitude)
-        store.append(longitude)
-        store.append(hours)
-        store.append(page_url if page_url else "<MISSING>")
-        store = [
-            str(x)
-            .strip()
-            .replace("0.000000", "<MISSING>")
-            .replace("(248) 865-4148 / 4444", "(248) 865-4148")
-            if x
-            else "<MISSING>"
-            for x in store
-        ]
-        if store[2] in addresses:
-            continue
-        addresses.append(store[2])
-
-        yield store
+        sgw.write_row(
+            SgRecord(
+                locator_domain="https://www.fyzical.com",
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zipp,
+                country_code="US",
+                store_number=store_number,
+                phone=phone,
+                location_type="",
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours,
+            )
+        )
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))) as writer:
+    fetch_data(writer)

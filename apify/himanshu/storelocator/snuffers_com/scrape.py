@@ -1,3 +1,4 @@
+import re
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 from sgscrape.sgwriter import SgWriter
@@ -17,11 +18,7 @@ def fetch_data():
     soup = BeautifulSoup(r.text, "lxml")
     main = soup.find_all("div", {"class": "location-info"})
     for dt in main:
-        loc = list(dt.stripped_strings)
-        del loc[0]
-        del loc[0]
-        del loc[0]
-        hour = " ".join(loc)
+        hour = re.sub(r"\n", ", ", dt.find("p").getText().strip())
 
         r = session.get(
             dt.find("a", {"class": "more-btn"})["href"] + "?req=more-info",
@@ -35,12 +32,16 @@ def fetch_data():
         city = ""
 
         if vk.find("span", {"itemprop": "addressLocality"}) is not None:
-            city = (
-                vk.find("span", {"itemprop": "addressLocality"})
-                .text.strip()
-                .split(",")[0]
-                .strip()
+            parsed = (
+                vk.find("span", {"itemprop": "addressLocality"}).text.strip().split(",")
             )
+
+            if len(parsed) == 1:
+                city = parsed[0]
+            elif len(parsed) > 1:
+                address += f", {parsed[0]}"
+                city = parsed[-1]
+
         state = ""
         if vk.find("span", {"itemprop": "addressRegion"}) is not None:
             state = vk.find("span", {"itemprop": "addressRegion"}).text.strip()

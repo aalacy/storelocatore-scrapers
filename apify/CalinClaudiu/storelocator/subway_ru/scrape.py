@@ -184,7 +184,12 @@ class ExampleSearchIteration:
                     latitude=foundstuff[storeno]["latitude"],
                     longitude=foundstuff[storeno]["longitude"],
                     locator_domain=foundstuff[storeno]["locator_domain"],
-                    hours_of_operation=foundstuff[storeno]["hours_of_operation"],
+                    hours_of_operation=foundstuff[storeno][
+                        "hours_of_operation"
+                    ].replace(
+                        "Sunday Closed Monday Closed Tuesday Closed Wednesday Closed Thursday Closed Friday Closed Saturday Closed",
+                        "<MISSING>",
+                    ),
                     raw_address=foundstuff[storeno]["raw_address"],
                 )
         this = []
@@ -205,7 +210,12 @@ class ExampleSearchIteration:
                     latitude=foundstuff[storenum]["latitude"],
                     longitude=foundstuff[storenum]["longitude"],
                     locator_domain=foundstuff[storenum]["locator_domain"],
-                    hours_of_operation=foundstuff[storenum]["hours_of_operation"],
+                    hours_of_operation=foundstuff[storenum][
+                        "hours_of_operation"
+                    ].replace(
+                        "Sunday Closed Monday Closed Tuesday Closed Wednesday Closed Thursday Closed Friday Closed Saturday Closed",
+                        "<MISSING>",
+                    ),
                     raw_address=foundstuff[storenum]["raw_address"],
                 )
 
@@ -403,6 +413,9 @@ if __name__ == "__main__":
     state = CrawlStateSingleton.get_instance()
 
     tocrawl = [
+        "kz",
+        "ir",
+        "sa",
         "bb",
         "bd",
         "bf",

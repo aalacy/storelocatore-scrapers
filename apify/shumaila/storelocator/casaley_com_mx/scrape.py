@@ -2,7 +2,7 @@ from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 import re
 from sgpostal.sgpostal import parse_address_intl
@@ -32,18 +32,29 @@ def fetch_data():
                 ltype = loc.find("img")
                 loc = re.sub(cleanr, "\n", str(loc))
                 loc = re.sub(pattern, "\n", str(loc)).strip()
+
                 try:
                     title = loc.splitlines()[0]
                 except:
                     continue
+                check = ""
+                if len(title) < 4:
+                    title = loc.splitlines()[0] + " " + loc.splitlines()[1]
+                    check = loc.splitlines()[1]
                 ltype = ltype["alt"].replace("logo ", "")
                 flag = 0
+                store = ""
                 try:
-                    store = title.split("(", 1)[1].split(")", 1)[0]
+                    store = title.split("(", 1)[1].split(")", 1)[0].strip()
                     flag = 1
                 except:
                     if loc.splitlines()[1].replace("(", "").replace(")", "").isdigit():
-                        store = loc.splitlines()[1].replace("(", "").replace(")", "")
+                        store = (
+                            loc.splitlines()[1]
+                            .replace("(", "")
+                            .replace(")", "")
+                            .strip()
+                        )
                         flag = 2
                     else:
                         "<MISSING>"
@@ -51,19 +62,54 @@ def fetch_data():
                 if "Horario" in phone:
                     hours = phone.replace("Horario: ", "")
                     phone = loc.splitlines()[-2]
+
                     if "(" not in phone:
                         phone = loc.splitlines()[-3]
+                        if len(phone) < 6:
+                            phone = loc.splitlines()[-3] + " " + loc.splitlines()[-2]
                 else:
                     hours = "<MISSING>"
                 if "(" not in phone:
                     phone = loc.splitlines()[-2]
                 try:
-                    phone = phone.split(", ", 1)[0]
+                    phone = phone.split(".", 1)[1]
                 except:
                     pass
+                try:
+                    phone = phone.split(":", 1)[1]
+                except:
+                    pass
+                try:
+                    phone = phone.split(",", 1)[0]
+                except:
+                    pass
+                if (
+                    phone.replace("(", "")
+                    .replace(")", "")
+                    .replace("-", "")
+                    .replace(" ", "")
+                    .strip()
+                    .isdigit()
+                ):
+                    flag = 1
+                    pass
+                else:
+                    phone = "<MISSING>"
+                try:
+                    phone = phone.split("(", 1)[1]
+                    phone = "(" + phone
+                except:
+                    pass
+                if len(phone.split(" ")) > 2 and len(phone.split(" ")[1]) > 4:
+
+                    phone = " ".join(phone.split(" ")[0:2])
+                address = ""
+
+                if check == "":
+                    check = title
                 if flag == 1:
                     address = (
-                        loc.split(title, 1)[1]
+                        loc.split(check, 1)[1]
                         .split("\n", 1)[1]
                         .split(phone, 1)[0]
                         .replace("\n", " ")
@@ -79,6 +125,16 @@ def fetch_data():
                         .strip()
                     )
                     flag = 0
+                elif "<MISSING>" in phone:
+                    address = loc.split(check, 1)[1].replace("\n", " ").strip()
+                address = (
+                    address.replace(" Tel.", "")
+                    .replace(" TEL.", "")
+                    .replace(" TEL:", "")
+                    .replace(" tel:", "")
+                )
+
+                title = title.replace("P LAZ", "PLAZ").strip()
                 raw_address = address
                 pa = parse_address_intl(raw_address)
 
@@ -94,6 +150,20 @@ def fetch_data():
                 zip_postal = pa.postcode
                 pcode = zip_postal.strip() if zip_postal else MISSING
 
+                pcode = (
+                    pcode.replace("CP.", "")
+                    .replace("C.P.:", "")
+                    .replace("C.P.", "")
+                    .replace("C P ", "")
+                    .replace("CP ", "")
+                    .strip()
+                )
+                try:
+                    hours = hours.split("o: ", 1)[1]
+                except:
+                    pass
+                if len(store) < 2:
+                    store = "<MISSING>"
                 yield SgRecord(
                     locator_domain="https://www.casaley.com.mx/",
                     page_url=url,
@@ -116,7 +186,7 @@ def fetch_data():
 def scrape():
 
     with SgWriter(
-        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.StoreNumberId)
+        deduper=SgRecordDeduper(SgRecordID({SgRecord.Headers.LOCATION_NAME}))
     ) as writer:
 
         results = fetch_data()
