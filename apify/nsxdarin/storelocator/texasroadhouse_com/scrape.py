@@ -17,8 +17,8 @@ headers = {
 def fetch_data():
     website = "texasroadhouse.com"
     typ = "<MISSING>"
-    for x in range(-170, 170):
-        for y in range(-70, 70):
+    for x in range(-170, 170, 3):
+        for y in range(-70, 70, 3):
             url = (
                 "https://www.texasroadhouse.com/restaurants/near?lat="
                 + str(x)
