@@ -29,7 +29,7 @@ def fetch_data():
                         lurl = "https://redrobin.com" + item.split('"')[0].replace(
                             ".", "-"
                         )
-                    if lurl != "https://redrobin.com/locations/" and "/fl/" in lurl:
+                    if lurl != "https://redrobin.com/locations/":
                         if "fl/st.petersburg/tyrone-mall-553" in lurl:
                             lurl = (
                                 "https://locations.redrobin.com/fl/st-petersburg/553/"
