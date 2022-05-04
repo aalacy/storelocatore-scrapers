@@ -21,9 +21,7 @@ log = sglog.SgLogSetup().get_logger(logger_name=website)
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
-user_agent = (
-    "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0"
-)
+user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.99 Safari/537.36"
 
 
 def driver_sleep(driver, time=2):
@@ -41,7 +39,7 @@ def random_sleep(driver, start=5, limit=3):
 
 def fetch_stores():
     with SgFirefox(
-        block_third_parties=True, is_headless=False, user_agent=user_agent
+        block_third_parties=True, is_headless=True, user_agent=user_agent
     ) as driver:
         driver.get(store_url)
         random_sleep(driver, 30)
