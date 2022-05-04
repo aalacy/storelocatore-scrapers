@@ -2,7 +2,7 @@ import json
 import ssl
 from bs4 import BeautifulSoup
 from sglogging import sglog
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries, Grain_2
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import RecommendedRecordIds
@@ -23,9 +23,8 @@ def fetch_data():
 
     zip_codes = DynamicZipSearch(
         country_codes=[SearchableCountries.USA],
-        max_search_results=100,
-        max_search_distance_miles=100,
-        expected_search_radius_miles=100,
+        expected_search_radius_miles=30,
+        granularity=Grain_2(),
     )
     for zip_code in zip_codes:
 

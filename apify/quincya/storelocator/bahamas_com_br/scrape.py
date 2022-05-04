@@ -1,91 +1,56 @@
-import re
-import ssl
-import time
-
 from bs4 import BeautifulSoup
+
+from sgrequests import SgRequests
 
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-from sgselenium.sgselenium import SgChrome
-
-ssl._create_default_https_context = ssl._create_unverified_context
+from sgpostal.sgpostal import parse_address_intl
 
 
 def fetch_data(sgw: SgWriter):
 
-    base_link = "http://www.bahamas.com.br/ListaLojas.aspx"
+    base_link = "https://bahamas.com.br/lojas/"
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
 
-    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.80 Safari/537.36"
+    locator_domain = "https://bahamas.com.br/"
+    headers = {"User-Agent": user_agent}
 
-    locator_domain = "https://www.bahamas.com.br"
+    session = SgRequests()
+    req = session.get(base_link, headers=headers)
+    base = BeautifulSoup(req.text, "lxml")
 
-    driver = SgChrome(user_agent=user_agent).driver()
-
-    driver.get(locator_domain)
-    time.sleep(2)
-    driver.find_element_by_id("ddlCidade").find_elements_by_tag_name("option")[
-        1
-    ].click()
-    time.sleep(2)
-    driver.get(base_link)
-    time.sleep(2)
-    driver.find_element_by_id(
-        "ctl00_ContentPlaceHolder1_ddlCidadeFiltro"
-    ).find_elements_by_tag_name("option")[1].click()
-    time.sleep(2)
-    driver.find_element_by_id(
-        "ctl00_ContentPlaceHolder1_ibtnFiltroBandeiraBuscar"
-    ).click()
-    time.sleep(2)
-
-    base = BeautifulSoup(driver.page_source, "lxml")
-    items = base.find_all(class_="loja")
-
-    for item in items:
-        location_name = item.find(class_="titulo").text.strip()
+    items = base.find_all(class_="entry-title")
+    for i in items:
+        link = i.a["href"]
+        req = session.get(link, headers=headers)
+        item = BeautifulSoup(req.text, "lxml")
+        location_name = item.h1.text
         raw_address = item.find(
-            "span",
-            {"id": re.compile(r"ctl00_ContentPlaceHolder1_rptLoja_ctl[0-9].+_lblEnd")},
-        ).text.split("-")
-        street_address = " ".join(raw_address[:-2]).strip()
-        city = raw_address[-2].split("(")[0].strip()
-        state = raw_address[-1].strip()
-        zip_code = item.find(
-            "span",
-            {"id": re.compile(r"ctl00_ContentPlaceHolder1_rptLoja_ctl[0-9].+_lblCep")},
+            class_="elementor-element elementor-element-ad63210 elementor-widget elementor-widget-text-editor"
         ).text.strip()
+        addr = parse_address_intl(raw_address)
+        street_address = addr.street_address_1
+        city = addr.city
+        state = addr.state
+        zip_code = addr.postcode
         country_code = "BR"
-        store_number = item["num"]
+        store_number = ""
         location_type = ""
         phone = item.find(
-            "span",
-            {
-                "id": re.compile(
-                    r"ctl00_ContentPlaceHolder1_rptLoja_ctl[0-9].+_lblTelefone"
-                )
-            },
+            class_="elementor-element elementor-element-70290f0 elementor-widget elementor-widget-text-editor"
         ).text.strip()
-        hours_of_operation = (
-            item.find(
-                "span",
-                {
-                    "id": re.compile(
-                        r"ctl00_ContentPlaceHolder1_rptLoja_ctl[0-9].+_lblHorario"
-                    )
-                },
-            )
-            .text.strip()
-            .replace("\n", " ")
-        )
+        hours_of_operation = item.find(
+            class_="elementor-element elementor-element-92d7138 elementor-widget elementor-widget-text-editor"
+        ).text.strip()
         latitude = ""
         longitude = ""
         sgw.write_row(
             SgRecord(
                 locator_domain=locator_domain,
-                page_url=base_link,
+                page_url=link,
                 location_name=location_name,
                 street_address=street_address,
                 city=city,
@@ -98,17 +63,10 @@ def fetch_data(sgw: SgWriter):
                 latitude=latitude,
                 longitude=longitude,
                 hours_of_operation=hours_of_operation,
-                raw_address=item.find(
-                    "span",
-                    {
-                        "id": re.compile(
-                            r"ctl00_ContentPlaceHolder1_rptLoja_ctl[0-9].+_lblEnd"
-                        )
-                    },
-                ).text.strip(),
+                raw_address=raw_address,
             )
         )
 
 
-with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
     fetch_data(writer)
