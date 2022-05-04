@@ -23,27 +23,68 @@ def fetch_data():
         data = session.get(start_url.format(c["LanguageCode"]), headers=hdr).json()
         all_locations = data["DealerCardData"]["DealerCards"]
         for poi in all_locations:
-            page_url = poi["DealerWebsiteUrl"]
+            page_url = poi["DealerUrl"]
+            if "http" not in page_url:
+                page_url = "https:" + page_url
+            if "usa/" in page_url:
+                page_url = "https://www.triumphmotorcycles.com" + poi["DealerUrl"]
+            if page_url == "https:":
+                page_url = ""
             location_name = poi["Title"]
-
             raw_address = f"{poi['AddressLine1']} {poi['AddressLine2']} {poi['AddressLine3']} {poi['AddressLine4']}"
             addr = parse_address_intl(raw_address.replace("<br/>", " "))
             street_address = addr.street_address_1
             if addr.street_address_2:
                 street_address += " " + addr.street_address_2
+            if street_address:
+                street_address = street_address.replace("None", "")
             city = addr.city
             state = addr.state
             zip_code = addr.postcode
+            if zip_code == "00000":
+                zip_code = ""
             if not zip_code:
                 zip_code = poi["PostCode"]
             phone = poi["Phone"]
+            if phone and phone.strip() == ".":
+                phone = ""
+            if phone:
+                phone = phone.split(" (+")[0]
             latitude = poi["Latitude"]
+            if latitude == "0" or latitude == "0.000000":
+                latitude = ""
             longitude = poi["Longitude"]
+            if longitude == "0" or longitude == "0.000000":
+                longitude = ""
             hoo = []
             if poi["OpeningTimes"]:
                 hoo = etree.HTML(poi["OpeningTimes"]).xpath("//text()")
             hoo = [e.strip() for e in hoo if e.strip()]
-            hours_of_operation = ", ".join(hoo) if hoo else ""
+            hours_of_operation = (
+                " ".join(" ".join(hoo).split())
+                .split("Showroom:")[-1]
+                .split("Service")[0]
+                .split("In den")[0]
+                .split("GmbH")[-1]
+                .split("Schlaak")[-1]
+                .split("gszeiten:")[-1]
+                .split("Winter")[0]
+                .split("(Schautag")[0]
+                .split("Borchardt")[-1]
+                .split("Zweiradtechnik")[-1]
+                .split("Uhr von")[0]
+                .split("Uhr 24")[0]
+                if hoo
+                else ""
+            )
+            if not hours_of_operation:
+                loc_response = session.get(page_url, headers=hdr)
+                if loc_response.status_code == 200:
+                    loc_dom = etree.HTML(loc_response.text)
+                    hoo = loc_dom.xpath(
+                        '//ul[@class="dealer-location__opening-times"]//text()'
+                    )
+                    hours_of_operation = " ".join([e.strip() for e in hoo if e.strip()])
 
             item = SgRecord(
                 locator_domain=domain,

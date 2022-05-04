@@ -31,6 +31,9 @@ def fetch_data(sgw: SgWriter):
         else:
             country = "IT"
 
+        if country == "BE":
+            continue
+
         row = SgRecord(
             page_url=page_url,
             location_name=location_name,

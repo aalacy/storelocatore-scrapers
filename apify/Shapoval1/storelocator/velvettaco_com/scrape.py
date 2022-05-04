@@ -47,6 +47,9 @@ def fetch_data(sgw: SgWriter):
                 line = f"{day} {opens} - {closes}"
                 tmp.append(line)
             hours_of_operation = "; ".join(tmp)
+        cms = a.get("coming_soon")
+        if cms:
+            location_type = "Coming Soon"
 
         row = SgRecord(
             locator_domain=locator_domain,

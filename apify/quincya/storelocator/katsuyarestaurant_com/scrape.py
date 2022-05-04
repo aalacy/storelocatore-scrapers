@@ -1,5 +1,7 @@
 import json
 import re
+import ssl
+import time
 
 from bs4 import BeautifulSoup
 
@@ -8,28 +10,41 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-from sgrequests import SgRequests
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+
+from sglogging import SgLogSetup
+
+from sgselenium.sgselenium import SgChrome
+
+logger = SgLogSetup().get_logger("katsuyarestaurant.com")
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 
 def fetch_data(sgw: SgWriter):
 
+    user_agent = (
+        "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0"
+    )
+
     base_link = "https://www.katsuyarestaurant.com/locations"
 
-    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36"
-    headers = {"User-Agent": user_agent}
+    driver = SgChrome(user_agent=user_agent).driver()
+
+    driver.get(base_link)
+
+    base = BeautifulSoup(driver.page_source, "lxml")
 
     locator_domain = "katsuyarestaurant.com"
-
-    session = SgRequests()
-    req = session.get(base_link, headers=headers)
-    base = BeautifulSoup(req.text, "lxml")
 
     scripts = base.find_all("script", attrs={"type": "application/ld+json"})
     for script in scripts:
         store = json.loads(script.contents[0])
 
         location_name = store["name"]
-        street_address = store["address"]["streetAddress"]
+        street_address = store["address"]["streetAddress"].replace(" -", ",")
         city = store["address"]["addressLocality"]
         country_code = ""
         try:
@@ -59,8 +74,20 @@ def fetch_data(sgw: SgWriter):
             link = "https://www.sbe.com/restaurants/katsuya/south-beach"
         if "nassau" in link:
             link = "https://www.sbe.com/restaurants/katsuya/baha-mar"
-        req = session.get(link, headers=headers)
-        base = BeautifulSoup(req.text, "lxml")
+        if "dubai" in link:
+            link = "https://www.sbe.com/restaurants/katsuya/dubai"
+
+        logger.info(link)
+
+        driver.get(link)
+        time.sleep(2)
+
+        WebDriverWait(driver, 50).until(
+            EC.presence_of_element_located((By.TAG_NAME, "section"))
+        )
+        time.sleep(2)
+
+        base = BeautifulSoup(driver.page_source, "lxml")
 
         latitude = ""
         longitude = ""
@@ -129,6 +156,8 @@ def fetch_data(sgw: SgWriter):
                 hours_of_operation=hours_of_operation,
             )
         )
+
+    driver.close()
 
 
 with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:

@@ -1,3 +1,5 @@
+import json
+from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
@@ -6,9 +8,11 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 
 
 def fetch_data(sgw: SgWriter):
-    api = "https://crumblcookies.com/_next/data/oMoph6vq1lN5_-O8x_HJw/en/stores.json"
+    api = "https://crumblcookies.com/stores"
     r = session.get(api, headers=headers)
-    js = r.json()["pageProps"]["stores"]
+    tree = html.fromstring(r.text)
+    text = "".join(tree.xpath("//script[@id='__NEXT_DATA__']/text()"))
+    js = json.loads(text)["props"]["pageProps"]["stores"]
 
     for j in js:
         raw_address = j.get("address") or ""

@@ -11,10 +11,13 @@ from sgscrape.sgwriter import SgWriter
 def fetch_data():
     session = SgRequests()
 
-    start_url = "https://www.dia.es/clubdia/ES/tiendas.v1574.json.gz"
+    start_url = "https://www.dia.es/clubdia/ES/tiendas.v{}.json.gz"
     domain = "dia.es"
 
-    response = session.get(start_url)
+    for i in range(1584, 2000):
+        response = session.get(start_url.format(str(i)))
+        if response.status_code == 200:
+            break
     all_locations = json.loads(gzip.decompress(response.content))
 
     for poi in all_locations:

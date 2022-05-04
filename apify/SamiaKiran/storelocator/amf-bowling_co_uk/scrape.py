@@ -53,6 +53,10 @@ def fetch_data():
                 .get_text(separator="|", strip=True)
                 .replace("|", " ")
             )
+            if len(street_address) < 3:
+                street_address = raw_address.split(",")[0]
+            if city == MISSING:
+                city = location_name
             coords = loc.find("div")
             latitude = coords["data-lat"]
             longitude = coords["data-lng"]

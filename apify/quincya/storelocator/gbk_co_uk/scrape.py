@@ -35,7 +35,11 @@ def fetch_data(sgw: SgWriter):
     for store_data in stores:
         link = store_data["permalink"]
         location_name = store_data["title"]
-        street_address = store_data["address_lines"][0]["address_line"]
+        location_type = "Booking, Delvery"
+        try:
+            street_address = store_data["address_lines"][0]["address_line"]
+        except:
+            street_address = ""
         city = store_data["city"]
         if city in street_address.strip()[-len(city) :]:
             street_address = " ".join(street_address.split(",")[:-1])
@@ -44,7 +48,6 @@ def fetch_data(sgw: SgWriter):
             state = "<MISSING>"
         zip_code = store_data["zip_postal_code"]
         country_code = "GB"
-        location_type = "<MISSING>"
         store_number = store_data["restaurant_id"]
         if not store_number:
             store_number = "<MISSING>"
@@ -69,6 +72,8 @@ def fetch_data(sgw: SgWriter):
                 hours_of_operation = (hours_of_operation + " " + clean_hours).strip()
         if not hours_of_operation:
             hours_of_operation = "<MISSING>"
+        if not street_address:
+            location_type = "Delivery"
 
         sgw.write_row(
             SgRecord(

@@ -3,7 +3,7 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sglogging import SgLogSetup
-from sgrequests.sgrequests import SgRequests
+from sgrequests import SgRequests
 from sgzip.dynamic import SearchableCountries
 from sgzip.parallel import DynamicSearchMaker, ParallelDynamicSearch, SearchIteration
 from typing import Iterable, Tuple, Callable
@@ -120,7 +120,6 @@ if __name__ == "__main__":
             SgRecordID(
                 {
                     SgRecord.Headers.LOCATION_NAME,
-                    SgRecord.Headers.COUNTRY_CODE,
                     SgRecord.Headers.LOCATION_TYPE,
                     SgRecord.Headers.RAW_ADDRESS,
                 }
@@ -128,12 +127,10 @@ if __name__ == "__main__":
             duplicate_streak_failure_factor=100,
         )
     ) as writer:
-        search_iter = ExampleSearchIteration()
         par_search = ParallelDynamicSearch(
             search_maker=search_maker,
-            search_iteration=search_iter,
+            search_iteration=lambda: ExampleSearchIteration(),
             country_codes=[
-                SearchableCountries.KUWAIT,
                 SearchableCountries.UNITED_ARAB_EMIRATES,
                 SearchableCountries.PAKISTAN,
                 SearchableCountries.JORDAN,

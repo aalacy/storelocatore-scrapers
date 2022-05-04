@@ -22,9 +22,6 @@ json_url = "https://dbrgenipc.interplay.iterate.ai/api/v1/carwash/allstores"
 
 def fetch_data():
     with SgRequests() as session:
-        import pdb
-
-        pdb.set_trace()
         _headers["apikey"] = (
             session.get(base_url).text.split("apiKey:")[1].split("}")[0].strip()[1:-1]
         )
@@ -52,6 +49,7 @@ def fetch_data():
                 longitude=_["store_long"],
                 country_code="US",
                 phone=_["store_phone"],
+                location_type=_["BU"],
                 locator_domain=locator_domain,
                 hours_of_operation="; ".join(hours),
                 raw_address=_["geo_address"],

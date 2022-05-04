@@ -24,14 +24,16 @@ def get_data():
         except Exception:
             return
         begin_hours = 0
-        hours = ""
-        for line in final_text.split("\n"):
-            if begin_hours == 1:
-                hours = hours + line + ", "
 
-            if " mayor parte de nuestra red de oficinas" in line:
-                begin_hours = 1
-        hours = hours.strip()[:-3]
+        if x == 0:
+            hours = ""
+            for line in final_text.split("\n"):
+                if begin_hours == 1:
+                    hours = hours + line + ", "
+
+                if " mayor parte de nuestra red de oficinas" in line:
+                    begin_hours = 1
+            hours = hours.strip()[:-3]
 
         df = tabula.read_pdf("my_pdf.pdf", pages="all")[x]
         df = df.fillna("0")
