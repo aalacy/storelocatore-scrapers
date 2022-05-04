@@ -59,6 +59,9 @@ def fetch_data(sgw: SgWriter):
             .strip()
         )
         hours_of_operation = "<MISSING>"
+        cms = "".join(tree.xpath('//h2[contains(text(), "Opening")]/text()'))
+        if cms:
+            hours_of_operation = "Coming Soon"
 
         row = SgRecord(
             locator_domain=locator_domain,
