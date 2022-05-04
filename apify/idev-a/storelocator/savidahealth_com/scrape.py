@@ -38,8 +38,6 @@ def fetch_data():
                 links = sp0.select("table.tablepress tbody tr")
                 for link in links:
                     td = link.select("td")
-                    if "Coming Soon" in td[1].text or not td[3].text.strip():
-                        continue
                     page_url = td[2].a["href"]
                     times = [hh.text for hh in td[4:]]
                     hours = []
@@ -54,11 +52,14 @@ def fetch_data():
                         .strip()[:-1]
                     )
 
+                    street_address = ss["address"].strip()
+                    if street_address.endswith(","):
+                        street_address = street_address[:-1]
                     yield SgRecord(
                         page_url=page_url,
                         location_name=ss["title"],
-                        street_address=ss["address"],
-                        city=td[0].text.strip(),
+                        street_address=street_address,
+                        city=td[0].text.split(",")[0].strip(),
                         state=ss["state"],
                         zip_postal=ss["zip"],
                         country_code="US",
@@ -71,8 +72,6 @@ def fetch_data():
             else:
                 links = sp0.select("div.vc-ihe-panel")
                 for link in links:
-                    if "Coming Soon" in link.text:
-                        continue
                     hours = []
                     for hh in link.select("table.tablepress tr"):
                         hours.append(f"{': '.join(hh.stripped_strings)}")
@@ -87,15 +86,28 @@ def fetch_data():
                         .strip()[:-1]
                     )
 
+                    street_address = ss["address"].strip()
+                    if street_address.endswith(","):
+                        street_address = street_address[:-1]
+
+                    phone = ss["phone"]
+                    if not phone and link.find_next_sibling("div").find(
+                        "a", href=re.compile(r"tel:")
+                    ):
+                        phone = (
+                            link.find_next_sibling("div")
+                            .find("a", href=re.compile(r"tel:"))
+                            .text.strip()
+                        )
                     yield SgRecord(
                         page_url=page_url,
                         location_name=ss["title"],
-                        street_address=ss["address"],
-                        city=ss["city"],
+                        street_address=street_address,
+                        city=ss["city"].split(",")[0],
                         state=ss["state"],
                         zip_postal=ss["zip"],
                         country_code="US",
-                        phone=ss["phone"],
+                        phone=phone,
                         locator_domain=locator_domain,
                         latitude=ss["latitude"],
                         longitude=ss["longitude"],
