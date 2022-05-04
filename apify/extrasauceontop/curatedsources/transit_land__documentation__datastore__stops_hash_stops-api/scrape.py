@@ -66,11 +66,7 @@ def get_data():
                 page_url = "<MISSING>"
 
             try:
-                location_name = (
-                    location["operators_serving_stop"][0]["operator_name"]
-                    + "-"
-                    + location["name"]
-                )
+                location_name = "<MISSING>" + "-" + location["name"]
 
             except Exception:
                 location_name = location["name"]
@@ -81,11 +77,18 @@ def get_data():
             latitude = location["geometry"]["coordinates"][1]
             longitude = location["geometry"]["coordinates"][0]
             search.found_location_at(latitude, longitude)
-            store_number = (
-                location["operators_serving_stop"][0]["operator_name"]
-                + "_"
-                + location["onestop_id"]
-            )
+
+            try:
+                store_number = (
+                    location["operators_serving_stop"][0]["operator_name"]
+                    + "_"
+                    + location["onestop_id"]
+                )
+
+            except Exception:
+                "<MISSING>"
+                +"_"
+                +location["onestop_id"]
             hours = "<MISSING>"
             phone = "<MISSING>"
             location_type_parts = location["served_by_vehicle_types"]
