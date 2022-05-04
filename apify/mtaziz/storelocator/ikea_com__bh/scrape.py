@@ -65,6 +65,16 @@ def get_response(url):
         raise Exception(f"{url} >> HTTP Error Code: {response.status_code}")
 
 
+def get_response_gmapurl(url):
+    with SgRequests(verify_ssl=False) as http:
+        response = http.get(url, headers=headers)
+        time.sleep(random.randint(3, 7))
+        if response.status_code == 200:
+            logger.info(f"{url} >> HTTP STATUS: {response.status_code}")
+            return response
+        raise Exception(f"{url} >> HTTP Error Code: {response.status_code}")
+
+
 def get_domain(page_url):
     # Identify the domain for each country
     locator_domain = ""
@@ -275,7 +285,6 @@ def fetch_records_bg(sgw: SgWriter):
     page_urls = get_store_urls_bg()
     for page_url in page_urls:
         try:
-
             r = get_response(page_url)
             sel = html.fromstring(r.text, "lxml")
             xpath_locname = '//meta[contains(@property, "og:title")]/@content'
@@ -306,6 +315,14 @@ def fetch_records_bg(sgw: SgWriter):
             hoo = sel.xpath(xpath_hoo)
             hours_of_operation = get_hoo_clean(hoo)
             page_url = page_url
+
+            # Custom Address
+            rawadd_bg = 'ИКЕА Център за поръчки Пловдив Plovdiv Plaza ул. "Д-р Георги Странски" 3 Пловдив 4019'
+            if rawadd_bg in address1:
+                street_address = 'ул. "Д-р Георги Странски" 3'
+                city = "Пловдив"
+                zip_postal = "4019"
+
             rec = SgRecord(
                 locator_domain=get_domain(page_url),
                 page_url=page_url,
@@ -368,6 +385,15 @@ def fetch_records_hr(sgw: SgWriter):
         hoo = sel.xpath(xpath_hoo)
         hours_of_operation = get_hoo_clean(hoo)
         page_url = hr_store_locator_url
+        # Custom Address
+        rawadd_hr = (
+            "IKEA Hrvatska d.o.o., Ulica Alfreda Nobela 2, Sop, 10361 Sesvete-Kraljevec"
+        )
+        sta_hr_cus = "Alfreda Nobela 2, Sop"
+        if rawadd_hr in address1:
+            street_address = sta_hr_cus
+            zip_postal = "10361"
+            city = "Sesvete-Kraljevec"
         rec = SgRecord(
             locator_domain=get_domain(page_url),
             page_url=hr_store_locator_url,
@@ -457,6 +483,11 @@ def fetch_records_cy(sgw: SgWriter):
         xpath_hoo = '//div[*[contains(text(), "Καταστήματος")]]/p/text()'
         hoo = sel.xpath(xpath_hoo)
         hours_of_operation = get_hoo_clean(hoo)
+        # Custom address
+        rawadd_cy = "Κατσαντωναίων 20 4154 Κάτω Πολεμίδια, Λεμεσός"
+        if rawadd_cy in address1:
+            street_address = "Κατσαντωναίων 20"
+            zip_postal = "4154"
         rec = SgRecord(
             locator_domain=get_domain(page_url),
             page_url=page_url,
@@ -691,7 +722,8 @@ def fetch_records_jo(sgw: SgWriter):
     jo_store_locator_url = "https://www.ikea.com/jo/en/stores/"
     r1 = get_response(jo_store_locator_url)
     sel1 = html.fromstring(r1.text, "lxml")
-    xpath_store_locator = '//div[contains(@tabindex, "-1")]/a/@href'
+    xpath_store_locator = '//div[contains(@data-pub-type, "page-list")]//a[contains(@href, "ikea.com/jo/en/stores/")]/@href'
+
     page_urls = sel1.xpath(xpath_store_locator)
     logger.info(f"page urls: {page_urls}")
     for page_url in page_urls:
@@ -765,79 +797,7 @@ def fetch_records_jo(sgw: SgWriter):
         sgw.write_row(rec)
 
 
-# Kuwait
-
-
-def fetch_records_kw(sgw: SgWriter):
-    kw_store_locator_url = "https://www.ikea.com/kw/en/stores/"
-    try:
-        logger.info(f"Pulling the data from {kw_store_locator_url}")
-        r2 = get_response(kw_store_locator_url)
-        sel2 = html.fromstring(r2.text, "lxml")
-        address_hoo = '//div[h4[contains(text(), "Address")]]'
-        ahoo = sel2.xpath(address_hoo)
-        for idx, ah in enumerate(ahoo):
-            xpath_locname = '//div[h2[contains(text(), "IKEA")]]/h2/text()'
-            location_name = sel2.xpath(xpath_locname)
-            location_name = location_name[idx]
-            logger.info(f"Location Name: {location_name}")
-            page_url = kw_store_locator_url
-
-            add = ah.xpath(".//text()")
-            add1 = [" ".join(i.split()) for i in add]
-            add2 = [i for i in add1 if i]
-            address1 = ", ".join(add2[1:3])
-            logger.info(f"address raw: {address1}")
-            address1 = address1.replace("IKEA Store - ", "")
-            logger.info(f"Address: {address1}")
-            street_address, city, state, zip_postal = get_parsed_address(address1)
-
-            xpath_phone1 = '//p[*[contains(text(), "Call us:")]]/text()'
-            xpath_phone2 = '//*[contains(text(), "Call us:")]/text()'
-            ph = sel2.xpath(f"{xpath_phone1} | {xpath_phone2}")
-            logger.info(f"Phone raw: {ph}")
-            ph = ph = [" ".join(i.split()) for i in ph]
-            ph = "".join(ph).replace("T:", "").replace("Call us:", "").strip()
-            phone = ph.strip() if ph else MISSING
-            logger.info(f"Phone: {phone}")
-
-            xpath_gmap_url = '//a[*[*[contains(text(), "Get directions")]]]/@href'
-            gurl_list = sel2.xpath(xpath_gmap_url)
-            logger.info(f"Google Get Directions URL (KW): {gurl_list}")
-            gurl = gurl_list[idx]
-            r3 = get_response(gurl)
-            gurl_redirected = r3.url
-            logger.info(f"gurl: {gurl_redirected}")
-            lat, lng = get_latlng(str(gurl_redirected))
-
-            # HOO
-            hoo = add2[4]
-            logger.info(f"HOO raw: {hoo}")
-            hours_of_operation = hoo
-            logger.info(f"HOO: {hours_of_operation}")
-            rec = SgRecord(
-                locator_domain=get_domain(page_url),
-                page_url=page_url,
-                location_name=location_name,
-                street_address=street_address,
-                city=city,
-                state=state,
-                zip_postal=zip_postal,
-                country_code=get_country_code(page_url),
-                store_number=MISSING,
-                phone=phone,
-                location_type=MISSING,
-                latitude=lat,
-                longitude=lng,
-                hours_of_operation=hours_of_operation,
-                raw_address=address1 if address1 else MISSING,
-            )
-            logger.info(
-                f"Record for {rec.country_code()} | {rec.page_url()}\n{rec.as_dict()}\n"
-            )
-            sgw.write_row(rec)
-    except Exception as e:
-        logger.info(f"Please Fix FetchRecordsKW: << {e} >> for {kw_store_locator_url}")
+# Kuwait - Please a separate ticket
 
 
 def get_phone(sel2):
@@ -944,8 +904,7 @@ def fetch_records_ma(sgw: SgWriter):
     ma_store_locator_url = "https://www.ikea.com/ma/en/stores/"
     r1 = get_response(ma_store_locator_url)
     sel1 = html.fromstring(r1.text, "lxml")
-    xpath_store_locator = '//div[*[*[contains(text(), "Stores")]]]//a/@href'
-    xpath_store_locator = '//div[contains(@tabindex, "-1")]/a/@href'
+    xpath_store_locator = '//div[contains(@data-pub-type, "page-list")]//a[contains(@href, "/stores/")]/@href'
     page_urls = sel1.xpath(xpath_store_locator)
     logger.info(f"page urls: {page_urls}")
     for page_url in page_urls:
@@ -1043,7 +1002,11 @@ def fetch_records_pr(sgw: SgWriter):
     address1, ph, hoo = get_add_ph_n_hoo_pr(sel)
     logger.info(f"Address: {address1}")
     street_address, city, state, zip_postal = get_parsed_address(address1)
+
+    # Phone
     phone = ph.strip() if ph else MISSING
+    phone = phone.replace(": ", "")
+
     xpath_gmap_url = '//div[contains(@class, "google-maps-link")]/a/@href'
     gurl = sel.xpath(xpath_gmap_url)
     lat = ""
@@ -1084,8 +1047,6 @@ def fetch_records_pr(sgw: SgWriter):
 
 
 # Qatar
-
-
 def remove_comma(d):
     c = d.strip().lstrip(",").rstrip(",").strip().lstrip(";").rstrip(";").lstrip(":")
     return c
@@ -1112,7 +1073,7 @@ def fetch_records_qa(sgw: SgWriter):
     qa_store_locator_url = "https://www.ikea.com/qa/en/stores/"
     r1 = get_response(qa_store_locator_url)
     sel1 = html.fromstring(r1.text, "lxml")
-    xpath_store_locator = '//div[contains(@tabindex, "-1")]/a/@href'
+    xpath_store_locator = '//div[contains(@data-pub-type, "page-list")]//a[contains(@href, "/stores/")]/@href'
     page_urls = sel1.xpath(xpath_store_locator)
     logger.info(f"page urls: {page_urls}")
     for page_url in page_urls:
@@ -1121,12 +1082,14 @@ def fetch_records_qa(sgw: SgWriter):
         sel2 = html.fromstring(r2.text, "lxml")
         xpath_locname = '//meta[contains(@property, "og:title")]/@content'
         location_name = "".join(sel2.xpath(xpath_locname))
+        location_name = "IKEA Doha store"
         logger.info(f"Location Name: {location_name}")
         xpath_address = (
             '//div[*[strong[contains(text(), "IKEA Doha store")]]]/p//text()'
         )
 
         address_custom = sel2.xpath(xpath_address)
+        logger.info(f"{[page_url]} = > {address_custom}")
         address1, hoo = get_add_n_hoo_qa(address_custom)
         logger.info(f"Address: {address1}")
         street_address, city, state, zip_postal = get_parsed_address(address1)
@@ -1136,16 +1099,17 @@ def fetch_records_qa(sgw: SgWriter):
         xpath_gmap_url = f"{xpath_gmap_url1} | {xpath_gmap_url2}"
         gurl = sel2.xpath(xpath_gmap_url)
         logger.info(f"Google URL List: {gurl}")
+        lat = ""
+        lng = ""
         try:
             gurl = gurl[0]
-            gurl_redirected = ""
             if gurl:
                 logger.info(f"Google URL: {gurl}")
-                r3 = get_response(gurl)
-                logger.info(f"Google URL Response HTTP Status Code: {r3.status_code}")
-                gurl_redirected = r3.url
-                logger.info(f"gurl: {gurl_redirected}")
-            lat, lng = get_latlng(str(gurl_redirected))
+                lat, lng = get_latlng(gurl)
+            else:
+                lat = MISSING
+                lng = MISSING
+
         except:
             lat = MISSING
             lng = MISSING
@@ -1211,6 +1175,11 @@ def fetch_records_rs(sgw: SgWriter):
     hours = sel.xpath(xpath_hours)
     hoo = " ".join(hours).strip()
     logger.info(f"HOO: {hoo}")
+    # Custom Address
+    raw_add_rs = "Robna kuća IKEA nalazi se na Auto-putu Beograd—Niš, isključenje kod petlje Tranšped, Astrid Lindgren 11, 11231 Beograd, Srbija"
+    if raw_add_rs in address1:
+        street_address = "Astrid Lindgren 11"
+
     rec = SgRecord(
         locator_domain=get_domain(page_url),
         page_url=page_url,
@@ -1250,8 +1219,12 @@ def fetch_records_sk(sgw: SgWriter):
     logger.info(f"Address: {address1}")
     street_address, city, state, zip_postal = get_parsed_address(address1)
     xpath_phone = '//*[contains(text(), "+421")]/text()'
-    ph = sel.xpath(xpath_phone)[0].replace("tel:", "")
-    phone = ph.strip() if ph else MISSING
+    phone = ""
+    try:
+        ph = sel.xpath(xpath_phone)[0].replace("tel:", "")
+        phone = ph.strip() if ph else MISSING
+    except:
+        phone = MISSING
 
     # Zobraziť na mape
     xpath_gmap_url = '//a[contains(text(), "Zobraziť na mape")]/@href'
@@ -1428,6 +1401,27 @@ def fetch_records_ua(sgw: SgWriter):
 
 
 def fetch_data(sgw: SgWriter):
+    # NOTE: Kuwait will have a separate ticket as
+    # it is having issues Google Map URls
+    # 502 ProxyError.
+
+    # [0]: https://www.ikea.com/bh/en/stores Bahrain BH
+    # [1]: https://www.ikea.bg/stores/ Bulgaria BG
+    # [2]: https://www.ikea.com/hr/hr/stores Croatia HR
+    # [3]: https://www.ikea.com.cy/katastimata/ Cyprus CY
+    # [4]: https://www.ikea.com/in/en/stores/ India IN
+    # [5]: https://www.ikea.com/ie/en/stores/ Ireland IE
+    # [6]: https://www.ikea.com/jo/en/stores Jordan JO
+    # [7]: https://www.ikea.com/kw/en/stores/ Kuwait KW
+    # [8]: https://www.ikea.com/mx/en/stores/ Mexico MX
+    # [9]: https://www.ikea.com/ma/en/stores/ Morocco MA
+    # [10]: https://www.ikea.pr/mayaguez/en/information/contact Puerto Rico PR
+    # [11]: https://www.ikea.com/qa/en/stores/doha/ Qatar QA
+    # [12]: https://www.ikea.com/rs/sr/stores/ Serbia RS
+    # [13]: https://www.ikea.com/sk/sk/stores/ Slovakia SK
+    # [14]: https://www.ikea.com/si/sl/stores/ Slovenia SI
+    # [15]: https://www.ikea.com/ua/uk/stores/ Ukraine UA
+
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
         tasks = []
         task_bh = [executor.submit(fetch_records_bh, sgw)]
@@ -1451,9 +1445,6 @@ def fetch_data(sgw: SgWriter):
         task_jo = [executor.submit(fetch_records_jo, sgw)]
         tasks.extend(task_jo)
 
-        task_kw = [executor.submit(fetch_records_kw, sgw)]
-        tasks.extend(task_kw)
-
         task_mx = [executor.submit(fetch_records_mx, sgw)]
         tasks.extend(task_mx)
 
@@ -1462,6 +1453,9 @@ def fetch_data(sgw: SgWriter):
 
         task_pr = [executor.submit(fetch_records_pr, sgw)]
         tasks.extend(task_pr)
+
+        task_qa = [executor.submit(fetch_records_qa, sgw)]
+        tasks.extend(task_qa)
 
         task_rs = [executor.submit(fetch_records_rs, sgw)]
         tasks.extend(task_rs)

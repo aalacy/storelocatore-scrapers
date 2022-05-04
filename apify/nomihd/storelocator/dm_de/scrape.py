@@ -27,7 +27,7 @@ headers = {
 
 def fetch_data():
     with SgRequests() as session:
-        for index in range(1, 4):
+        for index in range(0, 4):
             countries_req = session.get(
                 f"https://store-data-service.services.dmtech.com/stores/cluster/85.999%2C-179.999%2C-89.999%2C179.999/{index}",
                 headers=headers,

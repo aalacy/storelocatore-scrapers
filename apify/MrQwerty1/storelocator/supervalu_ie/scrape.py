@@ -5,10 +5,20 @@ from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgpostal import parse_address, International_Parser
+
+
+def get_city(line):
+    adr = parse_address(International_Parser(), line)
+    city = adr.city or ""
+
+    return city
 
 
 def rem(text):
-    return text[:-1]
+    if text.endswith(","):
+        return text[:-1]
+    return text
 
 
 def fetch_data(sgw: SgWriter):
@@ -21,8 +31,17 @@ def fetch_data(sgw: SgWriter):
     for j in js:
         adr1 = j.get("address_line_1") or ""
         adr2 = j.get("address_line_2") or ""
-        street_address = rem(f"{adr1} {adr2}".strip())
+        street_address = f"{adr1} {adr2}".strip()
+        if not adr1:
+            street_address = j.get("address_name") or ""
+
+        street_address = rem(street_address)
         city = j.get("address_city") or ""
+        if not city:
+            ad = j.get("address") or ""
+            ad = ad.replace("\r\n", "").replace("<br />", " ")
+            city = get_city(ad).replace("Co.", "").strip()
+
         city = rem(city)
         postal = j.get("address_post_code")
         country_code = "IE"
@@ -33,9 +52,9 @@ def fetch_data(sgw: SgWriter):
         longitude = j.get("longitude")
 
         hours = j.get("opening_hours") or ""
-        hours_of_operation = hours.replace("<br />\r\n", ";")
+        hours_of_operation = hours.replace("<br />\r\n", ";").strip()
         if hours_of_operation.endswith(";"):
-            hours_of_operation = rem(hours_of_operation)
+            hours_of_operation = hours_of_operation[:-1]
 
         row = SgRecord(
             page_url=page_url,

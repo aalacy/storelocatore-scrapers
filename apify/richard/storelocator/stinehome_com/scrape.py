@@ -61,7 +61,7 @@ def fetch_data():
                 if temp[1].find("ZipCode") != -1:
                     zip_postal = zip_postal + " " + temp[0]
                 i += 1
-            phone = soup.find("a", {"class": "storelocator-phone"}).text
+            phone = loc.find("a", {"class": "storelocator-phone"}).text
             hours_of_operation = (
                 soup.find("div", {"class": "store-hours"})
                 .get_text(separator="|", strip=True)

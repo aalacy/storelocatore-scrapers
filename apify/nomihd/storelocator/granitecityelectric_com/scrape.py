@@ -74,7 +74,12 @@ def fetch_data():
         if us.states.lookup(state):
             country_code = "US"
 
-        store_number = "<MISSING>"
+        store_number = (
+            "".join(store_sel.xpath('//*[contains(text(),"STORE ID:")]/text()'))
+            .strip()
+            .replace("STORE ID:", "")
+            .strip()
+        )
         raw_text = store_sel.xpath(
             '//div[@class="storeInfoLeft"]/div[@class="storeInfo"]/p'
         )

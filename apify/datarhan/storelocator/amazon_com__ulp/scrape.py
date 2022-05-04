@@ -1,11 +1,9 @@
-# -*- coding: utf-8 -*-
-
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
-from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries, Grain_2
 
 
 def fetch_data():
@@ -41,13 +39,21 @@ def fetch_data():
             SearchableCountries.MEXICO,
             SearchableCountries.UNITED_ARAB_EMIRATES,
         ],
-        expected_search_radius_miles=50,
+        granularity=Grain_2(),
     )
     for lat, lng in all_coords:
         c_iso = all_coords.current_country()
         url = start_url.format(domains[c_iso], lng, lat, c_iso, c_iso)
-        data = session.get(url).json()
-
+        data = session.get(url)
+        if data.status_code != 200:
+            session = SgRequests()
+            continue
+        try:
+            data = data.json()
+        except Exception:
+            continue
+        if not data["locationList"]:
+            continue
         for poi in data["locationList"]:
             street_address = poi["addressLine1"]
             if poi["addressLine2"]:
@@ -58,15 +64,20 @@ def fetch_data():
             for e in poi["standardHours"]:
                 hoo.append(f'{e["dateString"]}: {e["hoursString"]}')
             hoo = " ".join(hoo)
-
+            zip_code = poi["postalCode"]
+            if zip_code == "00000":
+                zip_code = ""
+            all_coords.found_location_at(
+                poi["location"]["latitude"], poi["location"]["longitude"]
+            )
             item = SgRecord(
                 locator_domain=domain,
                 page_url=f"https://www.amazon.{domains[c_iso]}/ulp",
-                location_name=poi["name"].split("-")[0],
+                location_name=poi["name"].split("-")[0].split("(")[0],
                 street_address=street_address,
                 city=poi["city"],
                 state=poi["stateOrRegion"],
-                zip_postal=poi["postalCode"],
+                zip_postal=zip_code,
                 country_code=poi["countryCode"],
                 store_number=poi["storeId"],
                 phone="",
@@ -84,7 +95,8 @@ def scrape():
         SgRecordDeduper(
             SgRecordID(
                 {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
-            )
+            ),
+            duplicate_streak_failure_factor=-1,
         )
     ) as writer:
         for item in fetch_data():
