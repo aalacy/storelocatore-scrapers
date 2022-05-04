@@ -19,7 +19,7 @@ def fetch_data():
     with SgRequests() as session:
         response = session.get(base_url, headers=_headers)
         result = re.search(r"servervalue\s*=\s*\'\s*(.*)\s*\'\s*;", response.text)
-        
+
         data = result.group(1)
         data = re.sub(r"\\", "/", data)
         data = re.sub(r'"Mon', "Mon", data)
