@@ -6,6 +6,7 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sglogging import SgLogSetup
 import json
+from sgpostal.sgpostal import parse_address_intl
 
 logger = SgLogSetup().get_logger("")
 
@@ -28,18 +29,24 @@ def _d(res, session):
         page_url = info.a["href"]
         logger.info(page_url)
         sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
+        raw_address = sp1.select_one('span[itemprop="streetAddress"]').text.strip()
+        addr = parse_address_intl(raw_address + ", Vietnam")
+        street_address = addr.street_address_1
+        if addr.street_address_2:
+            street_address += " " + addr.street_address_2
         yield SgRecord(
             page_url=page_url,
             location_name=info.a.text.strip(),
-            street_address=sp1.select_one(
-                'span[itemprop="streetAddress"]'
-            ).text.strip(),
-            city=sp1.select_one('span[itemprop="addressRegion"]').text.strip(),
+            street_address=street_address,
+            city=addr.city,
+            state=addr.state,
+            zip_postal=addr.postcode,
             country_code="VN",
             latitude=_["lat"],
             longitude=_["lng"],
             phone=sp1.select_one("div.sabai-directory-contact").text.strip(),
             locator_domain=locator_domain,
+            raw_address=raw_address,
         )
 
 
