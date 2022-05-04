@@ -6,10 +6,15 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from tenacity import stop_after_attempt, retry
 import time
-import dirtyjson as json
 from sglogging import SgLogSetup
 from webdriver_manager.chrome import ChromeDriverManager
 import ssl
+import os
+
+os.environ[
+    "PROXY_URL"
+] = "http://groups-RESIDENTIAL,country-ca:{}@proxy.apify.com:8000/"
+
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
@@ -30,7 +35,7 @@ days = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sun
 def get_driver():
     return SgChrome(
         executable_path=ChromeDriverManager().install(),
-        user_agent="Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0",
+        user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.75 Safari/537.36",
         is_headless=True,
     ).driver()
 
@@ -153,6 +158,11 @@ def fetch_data():
             )
 
 
+def get_url(url):
+    with SgRequests() as session:
+        session.get(url, headers=headers)
+
+
 def fetch_br():
     driver = get_driver()
     driver.get(br_base_url)
@@ -170,31 +180,38 @@ def fetch_br():
 
     x = 0
     while True:
-        rr = driver.wait_for_request(br_json_url)
-        locations = json.loads(rr.response.body)["data"]["documents"]
-        logger.info(f"page {x}, {len(locations)}")
-        for loc in locations:
-            yield _d(loc)
+        try:
+            rr = driver.wait_for_request(br_json_url)
+            locations = get_url(rr.url).json()["data"]["documents"]
+            logger.info(f"page {x}, {len(locations)}")
+            for loc in locations:
+                yield _d(loc)
 
-        button = driver.find_elements_by_css_selector(
-            "div.carrefourbr-carrefour-components-0-x-showMoreButton button"
-        )
-        if button:
             del driver.requests
-            x += 1
-            try:
-                banner = driver.find_element_by_css_selector(
-                    "button.onetrust-close-btn-handler.banner-close-button"
-                )
-                if banner:
-                    banner.click()
-                    time.sleep(1)
-            except:
-                pass
-            button[0].click()
-            time.sleep(5)
-        else:
-            break
+
+            button = driver.find_elements_by_css_selector(
+                "div.carrefourbr-carrefour-components-0-x-showMoreButton button"
+            )
+            if button:
+                del driver.requests
+                x += 1
+                try:
+                    banner = driver.find_element_by_css_selector(
+                        "button.onetrust-close-btn-handler.banner-close-button"
+                    )
+                    if banner:
+                        banner.click()
+                        time.sleep(1)
+                except:
+                    pass
+                button[0].click()
+                time.sleep(5)
+            else:
+                break
+        except:
+            import pdb
+
+            pdb.set_trace()
 
     if driver:
         driver.close()
