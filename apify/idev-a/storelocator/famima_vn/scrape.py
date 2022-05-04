@@ -34,6 +34,8 @@ def _d(res, session):
         street_address = addr.street_address_1
         if addr.street_address_2:
             street_address += " " + addr.street_address_2
+        if street_address.isdigit():
+            street_address = raw_address.split(",")[0]
         yield SgRecord(
             page_url=page_url,
             location_name=info.a.text.strip(),
@@ -42,8 +44,6 @@ def _d(res, session):
             state=addr.state,
             zip_postal=addr.postcode,
             country_code="VN",
-            latitude=_["lat"],
-            longitude=_["lng"],
             phone=sp1.select_one("div.sabai-directory-contact").text.strip(),
             locator_domain=locator_domain,
             raw_address=raw_address,
