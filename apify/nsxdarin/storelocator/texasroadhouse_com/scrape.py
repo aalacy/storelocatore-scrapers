@@ -48,7 +48,7 @@ def fetch_data():
                 except:
                     lng = "<MISSING>"
                 try:
-                    loc = "https://togo.texasroadhouse.com/location/" + item["slug"]
+                    loc = "https://togo.texasroadhouse.com/locations/" + item["slug"]
                 except:
                     loc = "<MISSING>"
                 try:
@@ -80,6 +80,28 @@ def fetch_data():
                 except:
                     name = "<MISSING>"
                 hours = "<MISSING>"
+                if ".com" in loc:
+                    hours = ""
+                    r2 = session.get(loc, headers=headers)
+                    for line2 in r2.iter_lines():
+                        if "day :" in line2:
+                            hrs = (
+                                line2.replace("<strong>", "")
+                                .replace("</strong>", "")
+                                .replace("\t", "")
+                                .replace("\n", "")
+                                .replace("\r", "")
+                                .strip()
+                            )
+                            if hours == "":
+                                hours = hrs
+                            else:
+                                hours = hours + "; " + hrs
+                if "," in city:
+                    city = city.split(",")[0].strip()
+                city = city.replace(" 110", "")
+                if hours == "":
+                    hours = "<MISSING>"
                 if name != "<MISSING>":
                     yield SgRecord(
                         locator_domain=website,
