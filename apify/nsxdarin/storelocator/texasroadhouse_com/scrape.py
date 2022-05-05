@@ -21,9 +21,9 @@ def fetch_data():
         for y in range(-70, 70, 3):
             url = (
                 "https://www.texasroadhouse.com/restaurants/near?lat="
-                + str(x)
-                + "&long="
                 + str(y)
+                + "&long="
+                + str(x)
                 + "&radius=100000&limit=20"
             )
             logger.info(str(y) + " - " + str(x))
@@ -81,22 +81,25 @@ def fetch_data():
                     name = "<MISSING>"
                 hours = "<MISSING>"
                 if ".com" in loc:
-                    hours = ""
-                    r2 = session.get(loc, headers=headers)
-                    for line2 in r2.iter_lines():
-                        if "day :" in line2:
-                            hrs = (
-                                line2.replace("<strong>", "")
-                                .replace("</strong>", "")
-                                .replace("\t", "")
-                                .replace("\n", "")
-                                .replace("\r", "")
-                                .strip()
-                            )
-                            if hours == "":
-                                hours = hrs
-                            else:
-                                hours = hours + "; " + hrs
+                    try:
+                        hours = ""
+                        r2 = session.get(loc, headers=headers)
+                        for line2 in r2.iter_lines():
+                            if "day :" in line2:
+                                hrs = (
+                                    line2.replace("<strong>", "")
+                                    .replace("</strong>", "")
+                                    .replace("\t", "")
+                                    .replace("\n", "")
+                                    .replace("\r", "")
+                                    .strip()
+                                )
+                                if hours == "":
+                                    hours = hrs
+                                else:
+                                    hours = hours + "; " + hrs
+                    except:
+                        pass
                 if "," in city:
                     city = city.split(",")[0].strip()
                 city = city.replace(" 110", "")
