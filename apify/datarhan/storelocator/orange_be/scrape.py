@@ -10,7 +10,7 @@ from sgselenium.sgselenium import SgFirefox
 
 
 def fetch_data():
-    session = SgRequests()
+    session = SgRequests(verify_ssl=False)
     start_url = "https://www.orange.be/nl/shop_locator/shop.json?LCZSG"
     domain = "orange.be"
     hdr = {
@@ -18,39 +18,47 @@ def fetch_data():
     }
 
     all_locations = session.get(start_url, headers=hdr).json()
-    for poi in all_locations:
-        page_url = f'https://www.orange.be/nl/shops/{poi["slug"]}'
-        poi_data = session.get(
-            f'https://www.orange.be/nl/shop_locator/shop/{poi["slug"]}.json'
-        ).json()
-
-        with SgFirefox() as driver:
+    with SgFirefox() as driver:
+        for poi in all_locations:
+            page_url = f'https://www.orange.be/nl/shops/{poi["slug"]}'
+            poi_data = session.get(
+                f'https://www.orange.be/nl/shop_locator/shop/{poi["slug"]}.json'
+            ).json()
             driver.get(page_url)
             loc_dom = etree.HTML(driver.page_source)
-        hoo = loc_dom.xpath('//div[@class="hours-week"]//text()')
-        hoo = " ".join([e.strip() for e in hoo if e.strip()])
-        phone = poi_data["phone"]
-        if phone and phone == "./..":
-            phone = ""
+            hoo = loc_dom.xpath('//div[@class="hours-week"]//text()')
+            hoo = " ".join([e.strip() for e in hoo if e.strip()])
+            phone = poi_data["phone"]
+            if phone and phone == "./..":
+                phone = ""
+            street_address = poi["address"]["thoroughfare"]
+            if street_address == "-":
+                street_address = ""
+            zip_code = poi["address"]["postal_code"]
+            if zip_code == "-":
+                zip_code = ""
+            city = poi["address"]["locality"]
+            if city == "-":
+                city = ""
 
-        item = SgRecord(
-            locator_domain=domain,
-            page_url=page_url,
-            location_name=poi["name"],
-            street_address=poi["address"]["thoroughfare"],
-            city=poi["address"]["locality"],
-            state=poi["address"]["region"],
-            zip_postal=poi["address"]["postal_code"],
-            country_code=poi["address"]["country"],
-            store_number=poi["id"],
-            phone=phone,
-            location_type=poi["type"],
-            latitude=poi["lat"],
-            longitude=poi["lng"],
-            hours_of_operation=hoo,
-        )
+            item = SgRecord(
+                locator_domain=domain,
+                page_url=page_url,
+                location_name=poi["name"],
+                street_address=street_address,
+                city=city,
+                state=poi["address"]["region"],
+                zip_postal=zip_code,
+                country_code=poi["address"]["country"],
+                store_number=poi["id"],
+                phone=phone,
+                location_type=poi["type"],
+                latitude=poi["lat"],
+                longitude=poi["lng"],
+                hours_of_operation=hoo,
+            )
 
-        yield item
+            yield item
 
 
 def scrape():

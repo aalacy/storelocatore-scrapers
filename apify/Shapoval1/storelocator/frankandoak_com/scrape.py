@@ -26,7 +26,7 @@ def fetch_data(sgw: SgWriter):
             continue
         ad = "".join(
             d.xpath(
-                './/i[contains(@class, "pfa-map-marker")]/following-sibling::span/text()'
+                './/i[contains(@class, "pfa-map-marker")]/following-sibling::span//text()'
             )
         )
         a = parse_address(International_Parser(), ad)
@@ -39,8 +39,14 @@ def fetch_data(sgw: SgWriter):
             country_code = "US"
         else:
             country_code = "Canada"
+        if location_name.find("Shanghai") != -1:
+            country_code = "China"
         city = a.city or "<MISSING>"
-        text = "".join(d.xpath('.//li[contains(@data-href, "maps")]/@data-href'))
+        text = "".join(
+            d.xpath(
+                './/li[contains(@data-href, "maps")]/@data-href | .//a[contains(@href, "maps")]/@href'
+            )
+        )
         try:
             if text.find("ll=") != -1:
                 latitude = text.split("ll=")[1].split(",")[0]
@@ -53,7 +59,7 @@ def fetch_data(sgw: SgWriter):
         phone = (
             "".join(
                 d.xpath(
-                    './/i[contains(@class, "pfa-phone")]/following-sibling::span/text()'
+                    './/i[contains(@class, "pfa-phone")]/following-sibling::span//text()'
                 )
             )
             or "<MISSING>"

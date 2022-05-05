@@ -30,7 +30,7 @@ def fetch_data(sgw: SgWriter):
 
     search = DynamicGeoSearch(
         country_codes=[SearchableCountries.USA],
-        max_radius_miles=max_distance,
+        max_search_distance_miles=max_distance,
         max_search_results=max_results,
     )
 
@@ -75,6 +75,10 @@ def fetch_data(sgw: SgWriter):
 
             if "Open 24hrs" in location_type:
                 hours_of_operation = "Open 24 Hours"
+            hours_of_operation = BeautifulSoup(hours_of_operation, "html.parser")
+            hours_of_operation = hours_of_operation.get_text(
+                separator="|", strip=True
+            ).replace("|", " ")
 
             sgw.write_row(
                 SgRecord(

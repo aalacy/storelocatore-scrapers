@@ -9,6 +9,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 
 from concurrent import futures
+import re
 
 DOMAIN = "homelessshelterdirectory.org"
 website = "https://www.homelessshelterdirectory.org"
@@ -110,41 +111,65 @@ def get_data(page_url, sgw: SgWriter):
     longitude = MISSING
     country_code = "US"
 
-    location_name = get_text(body, "//h1/text()")
+    try:
+        location_name = body.xpath('//h1[@class="entry_title"]/text()')[0]
+    except:
+        location_name = get_text(body, "//h1/text()")
 
-    raw_address = body.xpath('//div[@class="col col_4_of_12"]/p/text()')
-    raw_address = [e.strip() for e in raw_address if e.strip()]
-    raw_address = ", ".join(raw_address)
-    street_address, city, state, zip_postal = get_address(raw_address)
-    phone = get_text(body, '//a[contains(@href, "tel:")]/@href', "tel:")
-    hours = body.xpath('//div[@class="col col_12_of_12 hours"]/ul/li')
-    hours_list = []
-    for hour in hours:
-        day = "".join(hour.xpath("text()")).strip()
-        time = "".join(hour.xpath("span/text()")).strip()
-        hours_list.append(day + ": " + time)
+    # Website has some Test pages which are not useful for data, skipped these
+    if "TEST" not in str(location_name) and "Test Clinic" not in str(location_name):
 
-    hours_of_operation = "; ".join(hours_list).strip()
+        raw_address = body.xpath('//div[@class="col col_4_of_12"]/p/text()')
+        raw_address = [e.strip() for e in raw_address if e.strip()]
+        raw_address = ", ".join(raw_address)
+        if raw_address == ",  -":
+            raw_address = MISSING
 
-    row = SgRecord(
-        locator_domain=DOMAIN,
-        store_number=store_number,
-        page_url=page_url,
-        location_name=location_name,
-        location_type=location_type,
-        street_address=street_address,
-        city=city,
-        zip_postal=zip_postal,
-        state=state,
-        country_code=country_code,
-        phone=phone,
-        latitude=latitude,
-        longitude=longitude,
-        hours_of_operation=hours_of_operation,
-        raw_address=raw_address,
-    )
+        street_address, city, state, zip_postal = get_address(raw_address)
+        phone = get_text(body, '//a[contains(@href, "tel:")]/@href', "tel:")
+        if "ext" in phone.lower():
+            phone = (phone.lower()).split("ext")[0]
+        if "or" in phone.lower():
+            phone = (phone.lower()).split("or")[0]
+        if "()" in phone:
+            phone = phone.replace("()", "")
 
-    sgw.write_row(row)
+        hours = body.xpath('//div[@class="col col_12_of_12 hours"]/ul/li')
+        hours_list = []
+        for hour in hours:
+            day = "".join(hour.xpath("text()")).strip()
+            time = "".join(hour.xpath("span/text()")).strip()
+            time = re.sub(r"\s+", " ", time, flags=re.UNICODE)
+            hours_list.append(day + ": " + time)
+
+        hours_of_operation = "; ".join(hours_list).strip()
+
+        # To handle PO BOX address where lib failed
+        if "p.o" in raw_address.lower():
+            street_address = raw_address.split(",")[0]
+
+        if street_address is MISSING and "box" in raw_address.lower():
+            street_address = raw_address.split(",")[0]
+
+        row = SgRecord(
+            locator_domain=DOMAIN,
+            store_number=store_number,
+            page_url=page_url,
+            location_name=location_name,
+            location_type=location_type,
+            street_address=street_address,
+            city=city,
+            zip_postal=zip_postal,
+            state=state,
+            country_code=country_code,
+            phone=phone,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+            raw_address=raw_address,
+        )
+
+        sgw.write_row(row)
 
 
 def fetch_data(sgw: SgWriter):

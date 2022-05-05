@@ -44,6 +44,7 @@ def fetch_data(sgw: SgWriter):
             ).strip()
 
             city = j.get("city") or ""
+            city = city.replace("(S)", "").strip()
             state = j.get("stateCode") or ""
             postal = j.get("postalCode") or ""
 
@@ -51,6 +52,8 @@ def fetch_data(sgw: SgWriter):
                 line, city, state, postal
             )
 
+            if postal.count("0") == 5:
+                postal = SgRecord.MISSING
             raw_address = " ".join(f"{line} {city} {state} {postal}".split())
             country_code = j.get("countryCode")
             store_number = j.get("ID")
@@ -60,23 +63,16 @@ def fetch_data(sgw: SgWriter):
             latitude = j.get("latitude")
             longitude = j.get("longitude")
 
-            _tmp = []
-            days = [
-                "Monday",
-                "Tuesday",
-                "Wednesday",
-                "Thursday",
-                "Friday",
-                "Saturday",
-                "Sunday",
-            ]
-            for d in days:
-                part = d[:3].lower()
-                time = j.get(f"{part}Hours")
-                if time.lower().find("no data") != -1:
-                    continue
-                _tmp.append(f"{d}: {time}")
+            if country_code == "JP":
+                street_address = line
 
+            _tmp = []
+            hours = j.get("openingHours") or {}
+            for day, h in hours.items():
+                inter = h.get("openFromTo") or ""
+                if "DATA" in inter:
+                    inter = "Closed"
+                _tmp.append(f"{day}: {inter}")
             hours_of_operation = ";".join(_tmp)
 
             row = SgRecord(

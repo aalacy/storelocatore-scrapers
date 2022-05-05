@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from lxml import etree
+from urllib.parse import urljoin
 
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
@@ -12,57 +13,39 @@ from sgpostal.sgpostal import parse_address_intl
 def fetch_data():
     session = SgRequests()
 
-    start_url = "https://www.tonyromas.es/restaurantes-resultado/"
+    start_url = "https://tonyromas.es/reservas/#"
     domain = "tonyromas.es"
-    hdr = {
-        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
-    }
-    response = session.get(start_url, headers=hdr)
+
+    response = session.get(start_url)
     dom = etree.HTML(response.text)
-    all_regions = dom.xpath('//select[@name="localidad"]/option/@value')
-    all_regions = [e for e in all_regions if e != "#"]
-    for e in all_regions:
-        page_url = (
-            f"https://www.tonyromas.es/restaurantes-resultado/?nogames=&localidad={e}"
-        )
+    all_cities = dom.xpath(
+        '//a[contains(text(), "ELEGIR CIUDAD")]/following-sibling::ul//a/@href'
+    )
+    for url in all_cities:
+        page_url = urljoin(start_url, url)
         response = session.get(page_url)
         dom = etree.HTML(response.text)
-
-        all_locations = dom.xpath('//div[@class="bloque-restaurante"]')
+        all_locations = dom.xpath(
+            '//div[div[div[h5[span[contains(text(), "Tony Roma")]]]]]'
+        )
+        all_locations += dom.xpath('//div[div[div[h5[contains(text(), "Tony Roma")]]]]')
         for poi_html in all_locations:
-            location_name = poi_html.xpath(".//h2/text()")[0]
-            raw_address = poi_html.xpath(".//p[1]/text()")
-            street_address = ""
-            city = ""
-            state = dom.xpath('//option[@value="{}"]/text()'.format(e))[0].replace(
-                "--", ""
+            location_name = poi_html.xpath(".//h5//text()")[0]
+            city = dom.xpath('//a[@aria-current="page"]/text()')[0]
+            raw_address = poi_html.xpath(".//h5/following-sibling::*[1]//text()")[0]
+            addr = parse_address_intl(raw_address)
+            street_address = addr.street_address_1
+            if addr.street_address_2:
+                street_address += " " + addr.street_address_2
+            zip_code = addr.postcode
+            if zip_code:
+                zip_code = zip_code.split("-")[0]
+            phone = poi_html.xpath('.//a[contains(@href, "tel")]/text()')
+            phone = phone[0] if phone else ""
+            hoo = poi_html.xpath(
+                './/div[div[p[strong[contains(text(), "Horarios:")]]]]/following-sibling::div[1]//text()'
             )
-            zip_code = ""
-            phone = ""
-            if raw_address:
-                raw_address = raw_address[0]
-                if ":" in raw_address:
-                    phone = raw_address.split(":")[-1]
-                    if "," in phone:
-                        phone = ""
-                raw_address = (
-                    raw_address.split("Tlf")[0]
-                    .split("Teléf")[0]
-                    .split("Telf")[0]
-                    .split("telf:")[0]
-                )
-                raw_address = " ".join(raw_address.split())
-                addr = parse_address_intl(raw_address)
-                street_address = addr.street_address_1
-                if addr.street_address_2:
-                    street_address += ", " + addr.street_address_2
-                city = addr.city
-                if city and city.endswith("."):
-                    city = city[:-1]
-                zip_code = addr.postcode
-            if not raw_address:
-                raw_address = ""
-            hoo = " ".join(poi_html.xpath('.//p[@class="horarios"]/text()')[0].split())
+            hoo = " ".join([e.strip() for e in hoo if e.strip()])
 
             item = SgRecord(
                 locator_domain=domain,
@@ -70,7 +53,7 @@ def fetch_data():
                 location_name=location_name,
                 street_address=street_address,
                 city=city,
-                state=state,
+                state="",
                 zip_postal=zip_code,
                 country_code="ES",
                 store_number="",

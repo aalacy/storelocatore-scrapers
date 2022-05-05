@@ -29,6 +29,7 @@ def fetch_data(sgw: SgWriter):
         ad = (
             "".join(d.xpath('.//p[@class="address"]/a/text()[2]'))
             .replace("\n", "")
+            .replace("Saint-Nicolas", "Saint-Nicolas,")
             .strip()
         )
         state = ad.split(",")[1].split()[0].strip()
@@ -47,6 +48,11 @@ def fetch_data(sgw: SgWriter):
             .strip()
         )
         hours_of_operation = " ".join(hours_of_operation.split())
+        cms = "".join(
+            tree.xpath('//strong[contains(text(), "OUVERTURE MAI 2022")]/text()')
+        )
+        if cms:
+            hours_of_operation = "Coming Soon"
 
         row = SgRecord(
             locator_domain=locator_domain,
