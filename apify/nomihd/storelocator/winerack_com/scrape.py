@@ -5,9 +5,9 @@ import random
 from sglogging import sglog
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import SgRecordID
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgrequests import SgRequests
 from sgselenium.sgselenium import SgChrome
 from webdriver_manager.chrome import ChromeDriverManager
@@ -98,6 +98,12 @@ def fetch_store(http, apiKey, store_number):
     else:
         street_address = route
 
+    if not street_address or street_address == MISSING:
+        if store["formatted_address"]:
+            street_address = store["formatted_address"].split(",")[0].strip()
+
+    if street_address:
+        street_address = street_address.split(" inside ")[0].strip()
     city = get_address_component(address, "locality")
     state = get_address_component(address, "administrative_area_level_1")
     zip_postal = get_address_component(address, "postal_code")
@@ -144,9 +150,8 @@ def fetch_data(driver, http, search):
         log.info(f"Driver failed to find element: {e}")
         pass
     random_sleep(driver, 5)
-    driver.find_element_by_xpath(
-        "//div[@class='stores__radius']/select/option[@value='50000']"
-    ).click()
+    driver.find_element(By.CSS_SELECTOR, ".current-selection").click()
+    driver.find_element(By.CSS_SELECTOR, ".jsRadius:nth-child(3) > span").click()
 
     random_sleep(driver, 5)
     inputZip = driver.find_element_by_xpath("//input[contains(@id, 'storesearch')]")
@@ -187,15 +192,26 @@ def fetch_data(driver, http, search):
 def scrape():
     log.info(f"Start scrapping {website} ...")
     start = time.time()
-    search = DynamicZipSearch(
-        country_codes=[SearchableCountries.CANADA], expected_search_radius_miles=100
-    )
+    search = DynamicZipSearch(country_codes=[SearchableCountries.CANADA])
 
     with SgChrome(
         executable_path=ChromeDriverManager().install(), is_headless=True
     ) as driver:
         with SgWriter(
-            deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
+            SgRecordDeduper(
+                SgRecordID(
+                    {
+                        SgRecord.Headers.PAGE_URL,
+                        SgRecord.Headers.LOCATION_NAME,
+                        SgRecord.Headers.RAW_ADDRESS,
+                        SgRecord.Headers.STORE_NUMBER,
+                        SgRecord.Headers.PHONE,
+                        SgRecord.Headers.LATITUDE,
+                        SgRecord.Headers.LONGITUDE,
+                        SgRecord.Headers.LOCATION_NAME,
+                    }
+                )
+            )
         ) as writer:
             with SgRequests() as http:
                 for rec in fetch_data(driver, http, search):

@@ -1,9 +1,7 @@
-import os
 import re
 import json
-import threading
-from time import sleep
 from random import randint
+from time import sleep
 from bs4 import BeautifulSoup as bs
 from datetime import datetime as dt
 from sglogging import SgLogSetup
@@ -13,381 +11,148 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgzip.dynamic import SearchableCountries
 from tenacity import retry, stop_after_attempt
+from sgzip.static import static_zipcode_list
+from sgscrape.sgpostal import parse_address, USA_Best_Parser
 
 logger = SgLogSetup().get_logger("napaonline_com")
-
+user_agent = (
+    "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:92.0) Gecko/20100101 Firefox/92.0"
+)
 base_url = "https://www.napaonline.com/stores"
-
-local = threading.local()
 
 
 def get_driver():
-    if not hasattr(local, "driver"):
-        local.driver = SgChrome(
-            seleniumwire_auto_config=False, is_headless=True
-        ).driver()
-        local.driver.set_script_timeout(120)
-        load_initial_page(local.driver)
+    driver = SgChrome(
+        is_headless=True, seleniumwire_auto_config=True, user_agent=user_agent
+    ).driver()
+    driver.set_script_timeout(600)
+    load_initial_page(driver)
 
-    sleep(randint(3, 5))
-    return local.driver
+    return driver
 
 
-class PageConfig:
-    def __init__(
-        self,
-        name,
-        base_url,
-        location_path,
-        directory_page_selector,
-        details_link_selector,
-        dedup_tracker,
-        initial_page="",
-    ):
-        self.name = name
-        self.base_url = base_url.strip("/")
-        self.location_path = location_path.strip("/")
-        self.initial_page = initial_page.strip("/") or self.location_path
-        self.directory_page_selector = directory_page_selector
-        self.details_link_selector = details_link_selector
-        self.dedup_tracker = dedup_tracker
+def fetch(postal, driver, retry=0):
+    try:
+        sleep(randint(2, 5))
+        html = driver.execute_async_script(
+            f"""
+            fetch('https://www.napaonline.com/en/store-finder?q={postal}&sort=true&page=50')
+                .then(res => res.text())
+                .then(arguments[0])
+        """
+        )
 
-    def has_multiple_locations(self, link):
-        if link.has_attr("data-count"):
-            return "(1)" not in link.attrs["data-count"]
+        return bs(html, "html.parser")
+    except Exception as e:
+        logger.error(e)
+        if retry < 5:
+            return fetch(postal, driver, retry + 1)
 
-        return "(1)" not in link.text
-
-    def is_directory_page(self, soup):
-        return soup.find(class_=self.directory_page_selector) is not None
-
-    def get_next_url(self, path):
-        next_path = self.clean_path(path)
-
-        if self.__is_from_root__(next_path):
-            return os.path.join(self.base_url, next_path)
-
-        return os.path.join(self.get_base_location_url(), next_path)
-
-    def get_state_links(self, soup):
-        return soup.select(self.directory_page_selector)
-
-    def get_city_links(self, soup):
-        return soup.select(self.directory_page_selector)
-
-    def get_details_links(self, soup):
-        return soup.select(self.details_link_selector)
-
-    def get_tracking_id(self, store):
-        # use the store_number as unique key
-        return store.store_number()
-
-    def track_location(self, id):
-        return self.dedup_tracker.append(id)
-
-    def is_location_tracked(self, id):
-        return id in self.dedup_tracker
-
-    def get_base_location_url(self):
-        return os.path.join(self.base_url, self.location_path)
-
-    def get_initial_page(self):
-        return os.path.join(self.base_url, self.initial_page)
-
-    def clean_path(self, path):
-        return re.sub(
-            f"{self.base_url}|{self.location_path}(?!-)|\\.\\.", "", path
-        ).strip("/")
-
-    def __is_from_root__(self, path):
-        return "stores/" in path or "en/auto-parts-stores-near-me" in path
+        return None
 
 
-def write_output(data):
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
-        for row in data:
-            writer.write_row(row)
-
-
-def fetch(url, driver):
-    sleep(randint(3, 5))
-    return driver.execute_async_script(
-        f"""
-        var done = arguments[0]
-        fetch("{url}")
-            .then(res => res.text())
-            .then(done)
-    """
-    )
-
-
-def scrape_store_number(soup):
-    html_content = str(soup)
-    match = re.search(r"\[\"entityId\"\] = \"(\d+?)\"", html_content)
-    return match.group(1) if match else None
-
-
-def get_store_key(store):
-    # use the store_number as unique key
-    return f"{store[7]}".lower()
-
-
-def get_details(soup):
-    for tag in soup.find_all("script", type="application/ld+json"):
-        if "BreadcrumbList" not in tag.string:
-            return json.loads(tag.string)
-    return {}
-
-
-MISSING = "<MISSING>"
-
-
-def get(entity, key, default=MISSING):
+def get(entity, key, default=SgRecord.MISSING):
     return entity.get(key, default)
 
 
-def scrape_html(soup, page_url):
-    try:
-        details = get_details(soup)
+def get_hours(store_number, soup):
+    hours = []
+    store_hours = soup.find(
+        "li", class_="aadata-store-item", attrs={"data-storeid": store_number}
+    ).find_all("div", class_="store-hours-block")
+    for hour in store_hours:
+        day = hour.find("span", class_="days").text.strip()
+        hour_of_operation = hour.find("span", class_="hours").text.strip()
+        hours.append(f"{day} {hour_of_operation}")
 
-        name_elem = soup.find(id="location-name")
-        location_name = name_elem.text if name_elem else get(details, "name")
-
-        address = get(details, "address", {})
-        addr_elem = soup.find(itemprop="streetAddress")
-        street_address = (
-            addr_elem["content"] if addr_elem else get(address, "streetAddress")
-        )
-
-        if location_name == MISSING and street_address == MISSING:
-            return None
-
-        city_elem = soup.find(itemprop="addressLocality")
-        city = city_elem["content"] if city_elem else get(address, "addressLocality")
-
-        state_elem = soup.find(itemprop="addressRegion")
-        state = state_elem.text if state_elem else get(address, "addressRegion")
-
-        zipp_elem = soup.find(itemprop="postalCode")
-        zipp = zipp_elem.text if zipp_elem else get(address, "postalCode")
-
-        country_elem = soup.find(itemprop="addressCountry")
-        country_code = (
-            country_elem.text if country_elem else get(address, "addressCountry")
-        )
-
-        phone_elem = soup.find(itemprop="telephone")
-        phone = phone_elem.text if phone_elem else get(details, "telephone")
-
-        location_type = None
-        main = soup.select_one("#main")
-        if main and main.has_attr("itemtype"):
-            location_type = re.sub(
-                "http://schema.org/",
-                "",
-                main["itemtype"],
-            )
-
-        if not location_type:
-            location_type = get(details, "@type", MISSING)
-
-        geo = get(details, "geo", {})
-        lat_elem = soup.find(itemprop="latitude")
-        latitude = lat_elem["content"] if lat_elem else get(geo, "latitude")
-
-        lng_elem = soup.find(itemprop="longitude")
-        longitude = lng_elem["content"] if lng_elem else get(geo, "longitude")
-
-        hours = ""
-        hours_table = soup.find(class_="c-hours-details")
-        if hours_table:
-            hours = " ".join(list(hours_table.find("tbody").stripped_strings))
-            hours = re.sub("PM ", "PM, ", hours)
-        else:
-            hours = ", ".join(
-                f'{day["dayOfWeek"][0]}: {day["opens"]}-{day["closes"]}'
-                for day in get(details, "openingHoursSpecification", [])
-            )
-            if not hours:
-                hours = MISSING
-
-        store_number = scrape_store_number(soup) or get(details, "@id")
-
-        return SgRecord(
-            locator_domain="napaonline.com",
-            location_name=location_name,
-            street_address=street_address,
-            city=city,
-            state=state,
-            zip_postal=zipp,
-            country_code=country_code,
-            store_number=store_number,
-            phone=phone,
-            location_type=location_type,
-            latitude=latitude,
-            longitude=longitude,
-            hours_of_operation=hours.strip(),
-            page_url=page_url,
-        )
-    except Exception as e:
-        logger.error(e)
-
-
-def scrape_one_in_city(url, page, driver):
-    link_url = page.get_next_url(url["href"])
-    html = fetch(link_url, driver)
-    soup = bs(html, "lxml")
-
-    # make sure we're on a store detail page and not a listing page ...
-    #   we got here by looking for "(1)" in the url link, but sometimes these links are lying
-    #   and we end up at a page with multiple stores instead of one
-    is_directory_page = page.is_directory_page(soup)
-    if is_directory_page:
-        return scrape_multiple_in_city(url, page, driver)
-
-    store = scrape_html(soup, link_url)
-
-    if not store:
-        return []
-
-    id = page.get_tracking_id(store)
-    if page.is_location_tracked(id):
-        return []
-
-    page.track_location(id)
-    return [store]
-
-
-@retry(stop=stop_after_attempt(3), reraise=True)
-def scrape_multiple_in_city(url, page, driver):
-    stores = []
-    link_url = page.get_next_url(url["href"])
-    html = fetch(link_url, driver)
-    if not html:
-        return stores
-    soup = bs(html, "lxml")
-
-    for link in page.get_details_links(soup):
-        locations_link_url = page.get_next_url(link["href"])
-        html = fetch(locations_link_url, driver)
-        soup = bs(html, "lxml")
-
-        store = scrape_html(soup, locations_link_url)
-        if not store:
-            continue
-
-        id = page.get_tracking_id(store)
-        if page.is_location_tracked(id):
-            continue
-
-        page.track_location(id)
-
-        stores.append(store)
-
-    if not len(stores):
-        logger.error(f"unable to scrape multiple locations: {link_url}")
-
-    return stores
-
-
-def crawl_state_url(link, page):
-    driver = get_driver()
-    state_url = page.get_next_url(link["href"])
-    html = fetch(state_url, driver)
-    soup = bs(html, "lxml")
-    return page.get_city_links(soup)
-
-
-def crawl_city_url(url, page):
-    driver = get_driver()
-
-    # the url argument is of type bs4.element.Tag
-    if page.has_multiple_locations(url):
-        return scrape_multiple_in_city(url, page, driver)
-    else:
-        return scrape_one_in_city(url, page, driver)
+    return ", ".join(hours)
 
 
 @retry(stop=stop_after_attempt(3), reraise=True)
 def load_initial_page(driver):
-    driver.get("https://www.napaonline.com")
-    driver.execute_script('window.open("https://www.napaonline.com")')
-    sleep(15)
+    sleep(randint(2, 5))
+    driver.get("http://www.napaonline.com/store-locator")
+    sleep(20)
 
 
-@retry(stop=stop_after_attempt(3), reraise=True)
-def get_state_urls(page, driver):
-    html = fetch(page.get_initial_page(), driver)
-    soup = bs(html, "lxml")
+def fetch_locations(postal, driver, writer):
+    soup = fetch(postal, driver)
 
-    state_urls = page.get_state_links(soup)
+    if not soup:
+        return
 
-    if not len(state_urls):
-        raise Exception()
+    canvas = soup.find("div", id="map_canvas")
 
-    return state_urls
+    if not canvas:
+        return
+
+    locations = json.loads(canvas.attrs["data-stores"])
+    for _, location in locations.items():
+        locator_domain = "napaonline.com"
+        store_number = location["facilityId"]
+        page_url = location["url"]
+        if "https://www.napaonline.com" not in page_url:
+            page_url = f"https://www.napaonline.com{page_url}"
+
+        location_name = location["name"]
+
+        cleaned = re.split("<br/>", location["address"])
+        phone = cleaned.pop()
+        cleaned = [item for item in cleaned if item]
+        address = re.sub("<br/>|&nbsp", " ", " ".join(cleaned))
+
+        parsed = parse_address(USA_Best_Parser(), address)
+
+        street_address = parsed.street_address_1
+        city = parsed.city
+        state = parsed.state
+        postal = parsed.postcode
+        country_code = parsed.country
+
+        latitude = location["latitude"]
+        longitude = location["longitude"]
+
+        hours_of_operation = get_hours(store_number, soup)
+
+        writer.write_row(
+            SgRecord(
+                locator_domain=locator_domain,
+                location_name=location_name,
+                store_number=store_number,
+                page_url=page_url,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=postal,
+                country_code=country_code,
+                phone=phone,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
+        )
 
 
 def fetch_data():
-    tracker = []
-
-    stores_config = PageConfig(
-        name="stores",
-        base_url="https://www.napaonline.com",
-        initial_page="/stores/index.html",
-        location_path="/stores",
-        directory_page_selector=".Directory-content a",
-        details_link_selector=".Teaser-titleLink",
-        dedup_tracker=tracker,
-    )
-
-    near_me_config = PageConfig(
-        name="auto parts",
-        base_url="https://www.napaonline.com",
-        location_path="/en/auto-parts-stores-near-me",
-        directory_page_selector=".store-browse-content a",
-        details_link_selector=".store-browse-store-detail .store-listing-title:first-child",
-        dedup_tracker=tracker,
-    )
-
-    with ThreadPoolExecutor(max_workers=10) as executor, get_driver() as driver:
-        for page in (near_me_config, stores_config):
-            count = 0
-            state_urls = []
-            city_urls = []
-
-            state_urls = get_state_urls(page, driver)
-
-            futures = [
-                executor.submit(crawl_state_url, url, page) for url in state_urls
-            ]
-            # return when all finished or after 20 min regardless
-            for result in as_completed(futures):
-                try:
-                    cities_in_state = result.result()
-                    city_urls.extend(cities_in_state)
-                except Exception as ex:
-                    logger.info(
-                        f"crawl_state_url with result {result} threw exception: {ex}"
-                    )
-
-            futures = [executor.submit(crawl_city_url, url, page) for url in city_urls]
-
-            for result in as_completed(futures):
-                locations = result.result()
-                if locations:
-                    for store in locations:
-                        count += 1
-                        yield store
-
-            logger.info(f"{page.name}: {count}")
+    with SgWriter(
+        SgRecordDeduper(
+            RecommendedRecordIds.PageUrlId, duplicate_streak_failure_factor=100
+        )
+    ) as writer, ThreadPoolExecutor(max_workers=4) as executor, get_driver() as driver:
+        search = static_zipcode_list(country_code=SearchableCountries.USA, radius=5)
+        futures = [
+            executor.submit(fetch_locations, postal, driver, writer)
+            for postal in search
+        ]
+        for future in as_completed(futures):
+            pass
 
 
 def scrape():
     now = dt.now()
-    data = fetch_data()
-    write_output(data)
+    fetch_data()
     logger.info(f"duration: {dt.now() - now}")
 
 

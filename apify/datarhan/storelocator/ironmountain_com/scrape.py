@@ -1,48 +1,16 @@
-import csv
 import urllib.parse
 from lxml import etree
 
 from sgrequests import SgRequests
-
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
-    # Your scraper here
     session = SgRequests()
-
-    items = []
-    scraped_items = []
-
-    DOMAIN = "ironmountain.com"
+    domain = "ironmountain.com"
     start_url = "https://locations.ironmountain.com/"
     response = session.get(start_url)
     dom = etree.HTML(response.text)
@@ -68,7 +36,9 @@ def fetch_data():
                 street_address = loc_dom.xpath(
                     '//meta[@property="business:contact_data:street_address"]/@content'
                 )
-                street_address = street_address[0] if street_address else "<MISSING>"
+                street_address = street_address[0] if street_address else ""
+                if not street_address:
+                    continue
                 city = loc_dom.xpath(
                     '//meta[@property="business:contact_data:locality"]/@content'
                 )
@@ -89,7 +59,7 @@ def fetch_data():
                     '//meta[@property="business:contact_data:country_name"]/@content'
                 )
                 country_code = country_code[0] if country_code else "<MISSING>"
-                store_number = loc_response.url.split("/")[-2]
+                store_number = response.url.raw[-1].decode("utf-8").split("/")[-2]
                 phone = loc_dom.xpath(
                     '//meta[@property="business:contact_data:phone_number"]/@content'
                 )
@@ -105,32 +75,36 @@ def fetch_data():
                 longitude = longitude[0] if longitude else "<MISSING>"
                 hours_of_operation = "<MISSING>"
 
-                item = [
-                    DOMAIN,
-                    store_url,
-                    location_name,
-                    street_address,
-                    city,
-                    state,
-                    zip_code,
-                    country_code,
-                    store_number,
-                    phone,
-                    location_type,
-                    latitude,
-                    longitude,
-                    hours_of_operation,
-                ]
-                if store_number not in scraped_items:
-                    scraped_items.append(store_number)
-                    items.append(item)
+                item = SgRecord(
+                    locator_domain=domain,
+                    page_url=store_url,
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=zip_code,
+                    country_code=country_code,
+                    store_number=store_number,
+                    phone=phone,
+                    location_type=location_type,
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=hours_of_operation,
+                )
 
-    return items
+                yield item
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":

@@ -7,31 +7,22 @@ import dirtyjson as json
 import re
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.sgpostal import parse_address_intl
+from sgpostal.sgpostal import parse_address_intl
 
 logger = SgLogSetup().get_logger("findawarehouse")
 
 _headers = {
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-    "Accept-Encoding": "gzip, deflate, br",
-    "Accept-Language": "en-US,en;q=0.5",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+    "Accept-Language": "en-US,en;q=0.9",
     "Content-Type": "application/x-www-form-urlencoded",
-    "Host": "www.findawarehouse.org",
     "Origin": "https://www.findawarehouse.org",
     "Referer": "https://www.findawarehouse.org/SearchFAW",
-    "Content-Length": "9570",
-    "Connection": "keep-alive",
-    "Upgrade-Insecure-Requests": "1",
-    "Pragma": "no-cache",
-    "Cache-Control": "no-cache",
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:88.0) Gecko/20100101 Firefox/88.0",
 }
 
 header1 = {
     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-    "Accept-Encoding": "gzip, deflate, br",
-    "Accept-Language": "en-US,en;q=0.9,ko;q=0.8",
-    "Host": "www.findawarehouse.org",
+    "Accept-Language": "en-US,en;q=0.9",
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:88.0) Gecko/20100101 Firefox/88.0",
 }
 
@@ -50,12 +41,6 @@ ca_provinces_codes = {
     "SK",
     "YT",
 }
-
-
-_header1 = {
-    "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
-}
-
 
 locator_domain = "https://www.findawarehouse.org/"
 base_url = "https://www.findawarehouse.org/SearchFAW"
@@ -115,7 +100,8 @@ def _detail(_, json_locations, session):
         del _addr[-1]
     if _p(_addr[-1]):
         del _addr[-1]
-    addr = parse_address_intl(" ".join(_addr))
+    raw_address = " ".join(_addr).replace("\n", " ").replace("\r", "").replace("\t", "")
+    addr = parse_address_intl(raw_address)
     city = addr.city
     if city:
         x = " ".join(_addr).lower().rfind(city.lower())
@@ -132,10 +118,14 @@ def _detail(_, json_locations, session):
         street_address = (
             street_address.split("PO Box")[0].split("P.O. Box")[0].split("P O Box")[0]
         )
+    if not city and not addr.state and not addr.postcode:
+        return None
     return SgRecord(
         page_url=page_url,
         location_name=name,
-        street_address=street_address,
+        street_address=street_address.replace("\n", " ")
+        .replace("\r", "")
+        .replace("\t", ""),
         city=city,
         state=addr.state,
         zip_postal=addr.postcode,
@@ -144,14 +134,15 @@ def _detail(_, json_locations, session):
         latitude=latitude,
         longitude=longitude,
         locator_domain=locator_domain,
-        raw_address=brand_website,
+        location_type=brand_website,
+        raw_address=raw_address,
     )
 
 
 def fetch_data():
     with SgRequests() as session:
         total = 0
-        res = session.get(base_url, headers=_header1).text
+        res = session.get(base_url, headers=header1).text
         soup = bs(res, "lxml")
         json_locations = json.loads(res.split("JSON.parse('")[1].split("');")[0])
         locations = soup.select("div.srch-res-l")
@@ -225,4 +216,5 @@ if __name__ == "__main__":
     ) as writer:
         results = fetch_data()
         for rec in results:
-            writer.write_row(rec)
+            if rec:
+                writer.write_row(rec)

@@ -1,5 +1,3 @@
-import json
-from lxml import etree
 from urllib.parse import urljoin
 
 from sgrequests import SgRequests
@@ -7,6 +5,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 
 
 def fetch_data():
@@ -15,78 +14,58 @@ def fetch_data():
     domain = "adecco.co.uk"
     start_url = "https://www.adecco.co.uk/find-a-branch/"
 
-    response = session.get(start_url)
-    dom = etree.HTML(response.text)
+    all_codes = DynamicGeoSearch(
+        country_codes=[SearchableCountries.IRELAND, SearchableCountries.BRITAIN],
+        expected_search_radius_miles=500,
+    )
+    url = "https://www.adecco.co.uk/globalweb/branch/branchsearch"
+    for lat, lng in all_codes:
+        frm = {
+            "dto": {
+                "Latitude": lat,
+                "Longitude": lng,
+                "MaxResults": "100",
+                "Radius": "500",
+                "Industry": "ALL",
+                "RadiusUnits": "MILES",
+            }
+        }
+        hdr = {
+            "accept": "application/json, text/javascript, */*; q=0.01",
+            "content-type": "application/json; charset=UTF-8",
+            "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/101.0.4951.41 Safari/537.36",
+            "x-requested-with": "XMLHttpRequest",
+        }
+        data = session.post(url, json=frm, headers=hdr).json()
+        for poi in data["Items"]:
+            page_url = urljoin(start_url, poi["ItemUrl"])
+            street_address = f'{poi["Address"]} {poi["AddressExtension"]}'
+            hoo = []
+            for e in poi["ScheduleList"]:
+                day = e["WeekdayId"]
+                opens = e["StartTime"].split("T")[-1].replace("0:00", "0")
+                closes = e["EndTime"].split("T")[-1].replace("0:00", "0")
+                hoo.append(f"{day}: {opens} - {closes}")
+            hoo = " ".join(hoo)
 
-    all_locations = dom.xpath('//div[@id="nav-tabContent"]//li/a/@href')
-    for url in list(set(all_locations)):
-        store_url = urljoin(start_url, url)
-        if "branches" in url:
-            continue
-        loc_response = session.get(store_url)
-        if loc_response.status_code != 200:
-            continue
-        loc_dom = etree.HTML(loc_response.text)
-        poi = loc_dom.xpath('//script[contains(text(), "branch_details =")]/text()')
-        if not poi:
-            continue
-        if (
-            poi
-            and poi[0].split("branch_details =")[-1].split(";\r\n")[0].strip() == "[]"
-        ):
-            continue
-        poi = json.loads(poi[0].split("branch_details =")[-1].split(";\r\n")[0])[0]
+            item = SgRecord(
+                locator_domain=domain,
+                page_url=page_url,
+                location_name=poi["MetaTitle"],
+                street_address=street_address,
+                city=poi["City"],
+                state=poi["State"],
+                zip_postal=poi["ZipCode"],
+                country_code=poi["CountryCode"],
+                store_number=poi["BranchCode"],
+                phone=poi["PhoneNumber"],
+                location_type="",
+                latitude=poi["Latitude"],
+                longitude=poi["Longitude"],
+                hours_of_operation=hoo,
+            )
 
-        location_name = poi["BranchName"]
-        street_address = poi["Address"]
-        if poi["AddressExtension"]:
-            street_address += ", " + poi["AddressExtension"]
-        city = poi["City"]
-        city = city if city else "<MISSING>"
-        state = poi["State"]
-        state = state if state else "<MISSING>"
-        zip_code = poi["ZipCode"]
-        zip_code = zip_code if zip_code else "<MISSING>"
-        country_code = poi["CountryCode"]
-        country_code = country_code if country_code else "<MISSING>"
-        store_number = poi["BranchCode"]
-        store_number = store_number if store_number else "<MISSING>"
-        phone = poi["PhoneNumber"]
-        phone = phone if phone else "<MISSING>"
-        location_type = ""
-        location_type = location_type if location_type else "<MISSING>"
-        latitude = poi["Latitude"]
-        latitude = latitude if latitude else "<MISSING>"
-        longitude = poi["Longitude"]
-        longitude = longitude if longitude else "<MISSING>"
-        hours_of_operation = []
-        for elem in poi["ScheduleList"]:
-            day = elem["WeekdayId"]
-            opens = elem["StartTime"].split("T")[-1]
-            closes = elem["EndTime"].split("T")[-1]
-            hours_of_operation.append("{} {} - {}".format(day, opens, closes))
-        hours_of_operation = (
-            ", ".join(hours_of_operation) if hours_of_operation else "<MISSING>"
-        )
-
-        item = SgRecord(
-            locator_domain=domain,
-            page_url=store_url,
-            location_name=location_name,
-            street_address=street_address,
-            city=city,
-            state=state,
-            zip_postal=zip_code,
-            country_code=country_code,
-            store_number=store_number,
-            phone=phone,
-            location_type=location_type,
-            latitude=latitude,
-            longitude=longitude,
-            hours_of_operation=hours_of_operation,
-        )
-
-        yield item
+            yield item
 
 
 def scrape():
