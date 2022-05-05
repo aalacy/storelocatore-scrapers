@@ -4,7 +4,6 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from tenacity import retry, stop_after_attempt
 from sgpostal.sgpostal import parse_address_intl
 import tenacity
