@@ -1,3 +1,5 @@
+import os
+import ssl
 from lxml import html
 from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
@@ -7,6 +9,16 @@ from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgpostal.sgpostal import International_Parser, parse_address
 
+os.environ[
+    "PROXY_URL"
+] = "http://groups-RESIDENTIAL,country-jp:{}@proxy.apify.com:8000/"
+
+try:
+    _create_unverified_https_context = ssl._create_unverified_context
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context
 
 locator_domain = "https://www.yusen-logistics.com/"
 log = sglog.SgLogSetup().get_logger(logger_name=locator_domain)
