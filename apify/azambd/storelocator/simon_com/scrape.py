@@ -51,6 +51,8 @@ def parse_simon(location):
     data["country_code"] = location[0]["address"]["country"]
     data["zip_postal"] = location[0]["address"]["zipCode"]
     data["phone"] = location[0]["phones"]["information"]
+    if data["phone"] == "":
+        daya["phone"] = location[0]["phones"]["office"]
     data["latitude"] = location[0]["latitude"]
     data["longitude"] = location[0]["longitude"]
     data["raw_address"] = ", ".join(
