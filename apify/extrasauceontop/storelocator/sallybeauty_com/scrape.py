@@ -47,6 +47,7 @@ def get_data():
     search = DynamicGeoSearch(
         country_codes=[SearchableCountries.USA, SearchableCountries.CANADA],
         granularity=Grain_8(),
+        expected_search_radius_miles=200,
     )
 
     for search_lat, search_lon in search:
@@ -56,19 +57,43 @@ def get_data():
             + "&long="
             + str(search_lon)
         )
+        driver = None
+        x = 0
+        count = 300
+        while True:
+            x = x + 1
+            if x % 2 == 0:
+                count = count - 50
+            url = (
+                "https://www.sallybeauty.com/on/demandware.store/Sites-SA-Site/default/Stores-FindStores?showMap=true&radius="
+                + str(count)
+                + "&lat="
+                + str(search_lat)
+                + "&long="
+                + str(search_lon)
+            )
+            if x == 10:
+                raise Exception
+            try:
+                try:
+                    driver.get(url)  # noqa
+                    response = driver.page_source  # noqa
+                    json_objects = extract_json(response)
+                    json_objects[0]["stores"]
 
-        try:
-            driver.get(url)  # noqa
-            response = driver.page_source  # noqa
-            json_objects = extract_json(response)
-            json_objects[0]["stores"]
+                except Exception:
+                    if driver is not None:
+                        driver.quit()
+                    driver = get_driver()
+                    driver.get(url)
+                    response = driver.page_source
+                    json_objects = extract_json(response)
+                    json_objects[0]["stores"]
 
-        except Exception:
-            driver = get_driver()
-            driver.get(url)
-            response = driver.page_source
-            json_objects = extract_json(response)
-            json_objects[0]["stores"]
+                break
+
+            except Exception:
+                continue
 
         for location in json_objects[0]["stores"]:
             locator_domain = "www.sallybeauty.com"
@@ -86,22 +111,28 @@ def get_data():
             phone = location["phone"]
             location_type = "<MISSING>"
             country_code = location["countryCode"]
-            hours_soup = bs(html.unescape(location["storeHours"]), "html.parser")
-            hours_parts = hours_soup.find_all("div", attrs={"class": "store-hours-day"})
-
-            hours = ""
-            for part in hours_parts:
-                text_stuff = (
-                    part.text.strip()
-                    .replace("\r", "")
-                    .replace("\n", "")
-                    .replace("\t", "")
+            try:
+                hours_soup = bs(html.unescape(location["storeHours"]), "html.parser")
+                hours_parts = hours_soup.find_all(
+                    "div", attrs={"class": "store-hours-day"}
                 )
-                while "  " in text_stuff:
-                    text_stuff = text_stuff.replace("  ", " ")
 
-                hours = hours + text_stuff + ", "
-            hours = hours[:-2]
+                hours = ""
+                for part in hours_parts:
+                    text_stuff = (
+                        part.text.strip()
+                        .replace("\r", "")
+                        .replace("\n", "")
+                        .replace("\t", "")
+                    )
+                    while "  " in text_stuff:
+                        text_stuff = text_stuff.replace("  ", " ")
+
+                    hours = hours + text_stuff + ", "
+                hours = hours[:-2]
+
+            except Exception:
+                hours = "<MISSING>"
 
             yield {
                 "locator_domain": locator_domain,

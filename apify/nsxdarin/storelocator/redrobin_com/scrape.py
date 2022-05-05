@@ -18,17 +18,22 @@ def fetch_data():
     url = "https://www.redrobin.com/locations"
     r = session.get(url, headers=headers)
     for line in r.iter_lines():
-        if '<a href="/locations/' in line:
-            items = line.split('<a href="/locations/')
+        if '<li><a href="' in line:
+            items = line.split('<li><a href="')
             for item in items:
                 if "<!DOCTYPE html>" not in item:
-                    lurl = "https://redrobin.com/locations/" + item.split('"')[
-                        0
-                    ].replace(".", "-")
-                    if (
-                        lurl.count("/") == 6
-                        and lurl != "https://redrobin.com/locations/"
-                    ):
+                    stub = item.split('"')[0]
+                    if "https" in stub:
+                        lurl = stub
+                    else:
+                        lurl = "https://redrobin.com" + item.split('"')[0].replace(
+                            ".", "-"
+                        )
+                    if lurl != "https://redrobin.com/locations/":
+                        if "fl/st.petersburg/tyrone-mall-553" in lurl:
+                            lurl = (
+                                "https://locations.redrobin.com/fl/st-petersburg/553/"
+                            )
                         locs.append(lurl)
     for loc in locs:
         try:

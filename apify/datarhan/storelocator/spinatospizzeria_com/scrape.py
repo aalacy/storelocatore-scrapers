@@ -15,43 +15,41 @@ def fetch_data():
     start_url = "https://www.spinatospizzeria.com/locations-and-menus"
     domain = "spinatospizzeria.com"
 
-    driver = SgChrome(is_headless=False).driver()
+    with SgChrome(is_headless=True, seleniumwire_auto_config=False).driver() as driver:
+        driver.get(start_url)
+        time.sleep(15)
+        dom = etree.HTML(driver.page_source)
 
-    driver.get(start_url)
-    time.sleep(15)
-    dom = etree.HTML(driver.page_source)
-    driver.quit()
-
-    data = (
-        dom.xpath('//script[@id="popmenu-apollo-state"]/text()')[0]
-        .split("APOLLO_STATE =")[-1]
-        .strip()[:-1]
-    )
-    data = json.loads(data)
-
-    all_locations = [k for k in data.keys() if "RestaurantLocation:" in k]
-    for k in all_locations:
-        poi = data[k]
-        page_url = urljoin(start_url, poi["slug"])
-
-        item = SgRecord(
-            locator_domain=domain,
-            page_url=page_url,
-            location_name=poi["name"],
-            street_address=poi["streetAddress"].replace("\n", ""),
-            city=poi["city"],
-            state=poi["state"],
-            zip_postal=poi["postalCode"],
-            country_code=poi["country"],
-            store_number=poi["id"],
-            phone=poi["displayPhone"],
-            location_type=poi["__typename"],
-            latitude=poi["lat"],
-            longitude=poi["lng"],
-            hours_of_operation=" ".join(poi["schemaHours"]),
+        data = (
+            dom.xpath('//script[@id="popmenu-apollo-state"]/text()')[0]
+            .split("APOLLO_STATE =")[-1]
+            .strip()[:-1]
         )
+        data = json.loads(data)
 
-        yield item
+        all_locations = [k for k in data.keys() if "RestaurantLocation:" in k]
+        for k in all_locations:
+            poi = data[k]
+            page_url = urljoin(start_url, poi["slug"])
+
+            item = SgRecord(
+                locator_domain=domain,
+                page_url=page_url,
+                location_name=poi["name"],
+                street_address=poi["streetAddress"].replace("\n", ""),
+                city=poi["city"],
+                state=poi["state"],
+                zip_postal=poi["postalCode"],
+                country_code=poi["country"],
+                store_number=poi["id"],
+                phone=poi["displayPhone"],
+                location_type=poi["__typename"],
+                latitude=poi["lat"],
+                longitude=poi["lng"],
+                hours_of_operation=" ".join(poi["schemaHours"]),
+            )
+
+            yield item
 
 
 def scrape():

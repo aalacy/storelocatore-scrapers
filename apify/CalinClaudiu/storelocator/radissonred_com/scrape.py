@@ -297,7 +297,7 @@ def initial(driver, url, state):
     with SgChrome() as driver:
         driver.get(url)
         try:
-            locator = WebDriverWait(driver, 10).until(  # noqa
+            locator = WebDriverWait(driver, 30).until(  # noqa
                 EC.visibility_of_element_located(
                     (
                         By.XPATH,
@@ -306,17 +306,19 @@ def initial(driver, url, state):
                 )
             )  # noqa
         except Exception:
-            locator2 = WebDriverWait(driver, 10).until(  # noqa
-                EC.visibility_of_element_located(
-                    (
-                        By.XPATH,
-                        "/html/body/main/div[3]/div/div/div/div/span",
+            try:
+                locator2 = WebDriverWait(driver, 30).until(  # noqa
+                    EC.visibility_of_element_located(
+                        (
+                            By.XPATH,
+                            "/html/body/main/div[3]/div/div/div/div/span",
+                        )
                     )
-                )
-            )  # noqa
+                )  # noqa
+            except Exception:
+                logzilla.error(f"{driver.page_source}")
 
         time.sleep(15)
-        time.sleep(5)
         reqs = list(driver.requests)
         for r in reqs:
             x = r.url
@@ -325,11 +327,12 @@ def initial(driver, url, state):
                     r.response.body,
                     r.response.headers.get("Content-Encoding", "identity"),
                 )
-                son = json.loads(body)
-                for item in son["hotels"]:
-                    state.push_request(
-                        SerializableRequest(url=item["overviewPath"], context=item)
-                    )
+                if body:
+                    son = json.loads(body)
+                    for item in son["hotels"]:
+                        state.push_request(
+                            SerializableRequest(url=item["overviewPath"], context=item)
+                        )
 
 
 def record_initial_requests(state):
