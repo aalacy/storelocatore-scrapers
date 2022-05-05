@@ -1,65 +1,47 @@
 import json
 import ssl
-import time
-
 from bs4 import BeautifulSoup
-
-from sglogging import sglog
-
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support import expected_conditions as ec
-from selenium.webdriver.support.ui import WebDriverWait
-
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-
-from sgselenium.sgselenium import SgChrome
+from sgrequests import SgRequests
+from sglogging import sglog
 
 log = sglog.SgLogSetup().get_logger("kroger.com")
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
+user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
+headers = {"user-agent": user_agent}
+session = SgRequests()
 
-def fetch_data(sgw: SgWriter):
 
-    base_link = "https://www.kroger.com/storelocator-sitemap.xml"
-    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
+def get_session(retry):
+    global session
+    if retry:
+        session = SgRequests()
 
-    driver = SgChrome(user_agent=user_agent).driver()
+    return session
 
-    driver.get(base_link)
-    soup = BeautifulSoup(driver.page_source, "lxml")
 
-    for i, url in enumerate(soup.find_all("loc")[:-1]):
+def fetch_location(url, retry=0):
+    try:
+        session = get_session(retry)
         page_url = url.text
-        for i in range(6):
-            log.info(page_url)
-            driver.get(page_url)
-            time.sleep(2)
-            WebDriverWait(driver, 50).until(
-                ec.presence_of_element_located((By.TAG_NAME, "h1"))
-            )
-            time.sleep(2)
-            location_soup = BeautifulSoup(driver.page_source, "lxml")
+        log.info(page_url)
+        response = session.get(page_url, headers=headers)
+        location_soup = BeautifulSoup(response.text, "lxml")
 
-            location_name = ""
-            try:
-                script = location_soup.find(
-                    "script", attrs={"type": "application/ld+json"}
-                ).contents[0]
-                data = json.loads(script)
-                street_address = data["address"]
+        script = location_soup.find(
+            "script", attrs={"type": "application/ld+json"}
+        ).contents[0]
+        data = json.loads(script)
+        street_address = data["address"]
 
-                location_name = location_soup.find(
-                    "h1", {"data-qa": "storeDetailsHeader"}
-                ).text.strip()
-
-                if location_name:
-                    break
-            except:
-                log.info("Retrying ..")
+        location_name = location_soup.find(
+            "h1", {"data-qa": "storeDetailsHeader"}
+        ).text.strip()
 
         try:
             street_address = data["address"]["streetAddress"]
@@ -103,27 +85,44 @@ def fetch_data(sgw: SgWriter):
         lng = data["geo"]["longitude"]
         hours = " ".join(data["openingHours"])
 
-        sgw.write_row(
-            SgRecord(
-                locator_domain="https://www.kroger.com/",
-                page_url=page_url,
-                location_name=location_name,
-                street_address=street_address,
-                city=city,
-                state=state,
-                zip_postal=zipp,
-                country_code=country_code,
-                store_number=store_number,
-                phone=phone,
-                location_type="",
-                latitude=lat,
-                longitude=lng,
-                hours_of_operation=hours,
-            )
+        return SgRecord(
+            locator_domain="https://www.kroger.com/",
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zipp,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type="",
+            latitude=lat,
+            longitude=lng,
+            hours_of_operation=hours,
         )
+    except Exception as e:
+        if retry < 3:
+            return fetch_location(url, retry + 1)
 
-    driver.close()
+        log.error(e)
+
+        return None
+
+
+def fetch_data():
+
+    base_link = "https://www.kroger.com/storelocator-sitemap.xml"
+
+    response = session.get(base_link, headers=headers)
+    soup = BeautifulSoup(response.text, "lxml")
+    urls = soup.find_all("loc")[:-1]
+
+    for url in urls:
+        yield fetch_location(url)
 
 
 with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
-    fetch_data(writer)
+    data = fetch_data()
+    for row in data:
+        writer.write_row(row)
