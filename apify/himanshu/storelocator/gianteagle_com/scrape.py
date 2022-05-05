@@ -1,7 +1,7 @@
 import json
 
 from sglogging import SgLogSetup
-from sgscrape import sgpostal as parser
+from sgpostal.sgpostal import parse_address_usa
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
@@ -12,7 +12,7 @@ logger = SgLogSetup().get_logger("gianteagle_com")
 
 
 def fetch_data():
-    session = SgRequests()
+    session = SgRequests(verify_ssl=False)
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36",
         "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
@@ -41,7 +41,6 @@ def fetch_data():
             "https://www.gianteagle.com/api/sitecore/locations/getlocations?q=&skip="
             + str(skip_counter),
             headers=headers,
-            verify=False,
         )
         json_locations = json.loads(r_locations.text)
 
@@ -63,7 +62,7 @@ def fetch_data():
             ):
                 raw_address += ", " + location_super_market["Address"]["lineTwo"]
 
-            formatted_addr = parser.parse_address_usa(raw_address)
+            formatted_addr = parse_address_usa(raw_address)
             street_address = formatted_addr.street_address_1
             if formatted_addr.street_address_2:
                 street_address = street_address + ", " + formatted_addr.street_address_2

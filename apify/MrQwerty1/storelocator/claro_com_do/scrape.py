@@ -46,6 +46,7 @@ def fetch_data(sgw: SgWriter):
         for j in js:
             raw_address = j.get("direccion")
             street_address, city, postal = get_international(raw_address)
+            city = city.replace(".", "").strip()
             country_code = "DO"
             store_number = j.get("idCac")
             location_name = j.get("nombre")
