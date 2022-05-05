@@ -49,7 +49,7 @@ def fetch_data():
         )
         hoo = [e.strip() for e in hoo if e.strip()]
         hours_of_operation = " ".join(hoo) if hoo else ""
-        if hours_of_operation and 'Coming Soon' in hours_of_operation:
+        if hours_of_operation and "Coming Soon" in hours_of_operation:
             continue
 
         item = SgRecord(
