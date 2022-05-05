@@ -81,10 +81,11 @@ def fetch_data():
                     phone = sp1.select("footer div.textwidget p")[1].a.text
                 hours = sp1.select("footer div.textwidget")[1].p.stripped_strings
             elif sp1.select_one(
-                "div.mod_article div.container div.row div.ce_text.first.col-lg-6"
+                "div.mod_article div.container div.row div.ce_text.col-lg-6"
             ):
+                # https://www.ausdauer-shop.de/
                 for ch in sp1.select_one(
-                    "div.mod_article div.container div.row div.ce_text.first.col-lg-6"
+                    "div.mod_article div.container div.row div.ce_text.col-lg-6"
                 ).findChildren(recursive=False):
                     if not ch.text.strip():
                         continue

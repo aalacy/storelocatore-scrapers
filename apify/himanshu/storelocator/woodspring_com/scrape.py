@@ -19,7 +19,7 @@ def fetch_data(sgw: SgWriter):
         max_search_distance_miles=200,
         expected_search_radius_miles=200,
     )
-    logger.info(coords.items_remaining())
+    logger.info(f"remaining coordinates: {coords.items_remaining()}")
     main_url = "https://www.woodspring.com"
     addresses = []
     for cord in coords:
@@ -54,6 +54,7 @@ def fetch_data(sgw: SgWriter):
                 continue
             store = []
             store.append(main_url)
+            logger.info(store_data["hotelName"])
             store.append(store_data["hotelName"])
             location_request = session.get(
                 "https://www-api.woodspring.com/v2/hotel/hotels/"

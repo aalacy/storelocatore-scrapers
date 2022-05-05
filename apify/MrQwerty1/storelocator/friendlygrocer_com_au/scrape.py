@@ -69,6 +69,22 @@ def get_data(page_url, sgw: SgWriter):
     except:
         latitude, longitude = SgRecord.MISSING, SgRecord.MISSING
 
+    phone = "".join(
+        tree.xpath("//i[@class='fa fa-phone']/following-sibling::b/text()")
+    ).strip()
+
+    _tmp = []
+    hours = tree.xpath("//h3[contains(text(), 'Hours')]/following-sibling::p[1]/text()")
+    for h in hours:
+        if not h.strip() or ("open" in h.lower() and ":" not in h):
+            continue
+        if "pub" in h.lower() and "sun" not in h.lower():
+            break
+        _tmp.append(h.strip())
+        if "sun" in h.lower():
+            break
+    hours_of_operation = ";".join(_tmp)
+
     row = SgRecord(
         page_url=page_url,
         location_name=location_name,
@@ -77,9 +93,11 @@ def get_data(page_url, sgw: SgWriter):
         state=state,
         zip_postal=postal,
         country_code=country_code,
+        phone=phone,
         latitude=latitude,
         longitude=longitude,
         locator_domain=locator_domain,
+        hours_of_operation=hours_of_operation,
         raw_address=raw_address,
     )
 

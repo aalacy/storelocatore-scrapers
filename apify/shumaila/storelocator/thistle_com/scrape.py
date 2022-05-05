@@ -19,9 +19,12 @@ def fetch_data():
     loclist = soup.findAll("div", {"class": "map-poi"})
     for link in linklist:
         title = link["aria-label"]
-        link = link["href"]
+
+        link = "https://www.thistle.com/" + link["href"].split("/")[-1].split(".", 1)[0]
+
         for loc in loclist:
             if loc["data-name"] in title:
+
                 title = loc["data-name"]
                 lat = loc["data-lat"]
                 longt = loc["data-lng"]
@@ -31,7 +34,8 @@ def fetch_data():
                 if " London" in street:
                     street = street.split(" London", 1)[0]
                     city = "London"
-                else:
+                elif " Poole " in street:
+
                     street, pcode = street.split(" Poole ", 1)
                     city = "Poole"
                 yield SgRecord(
