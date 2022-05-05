@@ -74,7 +74,7 @@ def fetch_data(sgw: SgWriter):
             "None", ""
         ).strip()
         postal = a.get("zip")
-        country_code = a.get("country")
+        country_code = "AT"
         city = a.get("city")
         latitude = j.get("geoPoint").get("lat")
         longitude = j.get("geoPoint").get("lon")

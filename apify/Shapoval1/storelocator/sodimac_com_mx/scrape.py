@@ -78,7 +78,7 @@ def fetch_data(sgw: SgWriter):
                 '//span[text()="Venta Telefónica"]/following-sibling::span'
             ).text
             hours = driver.find_element_by_xpath(
-                '//div[./strong[text()="Nuestra Tienda"]]/div/span[2]'
+                '//div[./span/strong[text()="Nuestra Tienda"]]/div/span[2]//text()'
             ).text
             hours_of_operation = (
                 "".join(hours).replace("\n", " ").strip() or "<MISSING>"
