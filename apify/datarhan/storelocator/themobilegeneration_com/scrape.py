@@ -25,7 +25,7 @@ def fetch_data():
             loc_response = session.get(page_url)
             loc_dom = etree.HTML(loc_response.text)
             raw_data = loc_dom.xpath('//p[@class="gbcols_p"]/text()')
-            raw_data = [e.strip() for e in raw_data if e.strip() and e.strip() != '<']
+            raw_data = [e.strip() for e in raw_data if e.strip() and e.strip() != "<"]
             zip_code = raw_data[1].split()[-1]
 
         item = SgRecord(
