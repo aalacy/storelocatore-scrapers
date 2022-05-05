@@ -32,6 +32,7 @@ def fetch_data(sgw: SgWriter):
                 req = session.get(link, headers=headers)
                 base = BeautifulSoup(req.text, "lxml")
             except:
+                session = SgRequests()
                 link = locator_domain + item["href"].strip()
                 req = session.get(link, headers=headers)
                 base = BeautifulSoup(req.text, "lxml")
