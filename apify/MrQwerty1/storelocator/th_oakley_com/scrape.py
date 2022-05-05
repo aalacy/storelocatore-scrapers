@@ -52,6 +52,14 @@ def fetch_data(sgw: SgWriter):
             latitude = j.get("lat")
             longitude = j.get("lng")
 
+            ch = j.get("channel_of_trade") or ""
+            if ch == "101" or ch == "100":
+                location_type = "Oakley Store"
+            elif ch == "200" or ch == "201":
+                location_type = "Oakley Vault"
+            else:
+                location_type = "Resellers"
+
             row = SgRecord(
                 page_url=page_url,
                 location_name=location_name,
@@ -63,6 +71,7 @@ def fetch_data(sgw: SgWriter):
                 latitude=latitude,
                 longitude=longitude,
                 phone=phone,
+                location_type=location_type,
                 store_number=store_number,
                 raw_address=raw_address,
                 locator_domain=locator_domain,

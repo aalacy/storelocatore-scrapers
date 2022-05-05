@@ -1,3 +1,4 @@
+import re
 import random
 import ssl
 import time
@@ -21,6 +22,8 @@ log = sglog.SgLogSetup().get_logger(logger_name=website)
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
+user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.99 Safari/537.36"
+
 
 def driver_sleep(driver, time=2):
     try:
@@ -36,12 +39,13 @@ def random_sleep(driver, start=5, limit=3):
 
 
 def fetch_stores():
-    with SgFirefox(block_third_parties=True) as driver:
+    with SgFirefox(block_third_parties=True, user_agent=user_agent) as driver:
         driver.get(store_url)
         random_sleep(driver, 20)
-        return json.loads(driver.page_source.split("fnacStoreData =")[1].split(";")[0])[
-            "Store"
-        ]
+        jsontxt = (
+            driver.page_source.split('data-stores="')[1].split('" data-zoom=')[0]
+        ).replace("&quot;", '"')
+        return json.loads(jsontxt)["Store"]
     return []
 
 
@@ -78,6 +82,31 @@ def get_hoo(tt):
     return "; ".join(hoo)
 
 
+def get_phone(Source):
+    phone = MISSING
+
+    if Source is None or Source == "":
+        return phone
+
+    for match in re.findall(r"[\+\(]?[1-9][0-9 .\-\(\)]{8,}[0-9]", Source):
+        phone = match
+        return phone
+    return phone
+
+
+def get_detail_page(page_url):
+    with SgFirefox(block_third_parties=True, user_agent=user_agent) as driver:
+        driver.get(page_url)
+        random_sleep(driver, 10)
+        htmlpage = driver.page_source
+        if "Telefoonnummer" in htmlpage:
+            phonetxt = htmlpage.split("Telefoonnummer:")[1].split("<br>")[0]
+            phone = get_phone(phonetxt)
+            return phone
+        else:
+            return MISSING
+
+
 def fetch_data():
     stores = fetch_stores()
     log.info(f"Total stores = {len(stores)}")
@@ -90,12 +119,14 @@ def fetch_data():
         page_url = get_JSON_object_variable(store, "Url")
         location_name = get_JSON_object_variable(store, "Name")
         location_type = get_JSON_object_variable(store, "ShopTypeName")
-        street_address = get_JSON_object_variable(store, "AddressLine").replace(
-            "\n", ", "
+        street_address = (
+            get_JSON_object_variable(store, "AddressLine")
+            .replace("\n", ", ")
+            .replace(",,", ",")
         )
         city = get_JSON_object_variable(store, "CityName")
         zip_postal = get_JSON_object_variable(store, "ZipCode")
-        phone = get_JSON_object_variable(store, "Phone")
+        phone = get_detail_page(page_url)
         coord = (
             get_JSON_object_variable(store, "Coord")
             .replace("(", "")

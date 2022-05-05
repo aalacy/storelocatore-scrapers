@@ -51,8 +51,11 @@ def fetch_data():
     base_url = (
         "https://www.bathandbodyworks.com/north-america/global-locations-canada.html"
     )
-    r = session.get(base_url, headers=headers)
-    soup = BeautifulSoup(r.text, "lxml")
+    with SgChrome(is_headless=True) as driver:
+        url = "https://www.bathandbodyworks.com/north-america/global-locations-canada.html"
+        driver.get(url)
+        response = driver.page_source
+    soup = BeautifulSoup(response, "lxml")
     data = soup.find_all("div", {"class": "store-location"})
     for i in data:
         data2 = i.find("p", {"class": "location"})
@@ -105,9 +108,13 @@ def fetch_data():
         latitude = store_data["latitude"]
         longitude = store_data["longitude"]
         hours_of_operation = (
-            BeautifulSoup(store_data["storeHours"], "html.parser")
-            .get_text(separator="|", strip=True)
-            .replace("|", " ")
+            (
+                BeautifulSoup(store_data["storeHours"], "html.parser")
+                .get_text(separator="|", strip=True)
+                .replace("|", " ")
+            )
+            .replace("<br>", " ")
+            .strip()
         )
         url = "https://www.bathandbodyworks.com/store-locator"
         if (
@@ -115,6 +122,7 @@ def fetch_data():
             in hours_of_operation
         ):
             hours_of_operation = MISSING
+
         yield SgRecord(
             locator_domain=DOMAIN,
             page_url=url,
