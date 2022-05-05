@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from lxml import etree
 
 from sgrequests import SgRequests
@@ -8,41 +9,42 @@ from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
-    session = SgRequests(verify_ssl=False)
+    session = SgRequests()
 
-    start_url = "https://www.suzukicar.com.bd/showrooms"
-    domain = "suzukicar.com.bd"
+    start_url = "https://bipa.cz/pobocky/"
+    domain = "bipa.cz"
     hdr = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
     response = session.get(start_url, headers=hdr)
     dom = etree.HTML(response.text)
+    raw_data = dom.xpath("//figure/blockquote/p[3]/text()")
+    raw_data = "; ".join(raw_data)
+    raw_data = raw_data.split(" Neděle: Zavřeno")
 
-    all_locations = dom.xpath('//div[div[@id="address-item"]]')
-    for poi_html in all_locations:
-        city = location_name = poi_html.xpath('.//div[@id="address-item"]/text()')[0]
-        raw_data = poi_html.xpath(".//p/text()")
-        raw_address = ", ".join(raw_data[:2])
-        street_address = raw_address.split(city)[0].strip()
-        if street_address.endswith(","):
-            street_address = street_address[:-1]
+    for poi in raw_data:
+        if not poi.strip():
+            continue
+
+        poi = poi.split("; ")
+        poi = [e.strip() for e in poi if e.strip()]
+        hoo = " ".join(poi[3:]) + " Neděle: Zavřeno"
 
         item = SgRecord(
             locator_domain=domain,
             page_url=start_url,
-            location_name=location_name,
-            street_address=street_address,
-            city=city,
+            location_name=poi[0],
+            street_address=poi[1],
+            city=" ".join(poi[2].split()[1:]),
             state="",
-            zip_postal="",
-            country_code="BD",
+            zip_postal=poi[2].split()[0],
+            country_code="CZ",
             store_number="",
-            phone=raw_data[-1].strip(),
+            phone="",
             location_type="",
             latitude="",
             longitude="",
-            hours_of_operation="",
-            raw_address=raw_address,
+            hours_of_operation=hoo,
         )
 
         yield item
