@@ -1,3 +1,4 @@
+import re
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
@@ -16,13 +17,19 @@ base_url = "https://www.7-eleven.com.sg/Locate"
 
 def fetch_data():
     with SgRequests() as session:
-        locations = json.loads(
-            session.get(base_url, headers=_headers)
-            .text.split("var servervalue =")[1]
-            .split("if (")[0]
-            .strip()[1:-2]
-            .replace("\\", "/")
-        )["location"]
+        response = session.get(base_url, headers=_headers)
+        result = re.search(r"servervalue\s*=\s*\'\s*(.*)\s*\'\s*;", response.text)
+
+        data = result.group(1)
+        data = re.sub(r"\\", "/", data)
+        data = re.sub(r'"Mon', "Mon", data)
+        data = re.sub(r'""', '"', data)
+        data = re.sub("\n", " ", data)
+
+        with open("data.json", "w") as file:
+            file.write(data)
+
+        locations = json.loads(data)["location"]
         for _ in locations:
             addr = parse_address_intl(_["locationAddress"] + ", Singapore")
             street_address = addr.street_address_1

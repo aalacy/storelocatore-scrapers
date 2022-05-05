@@ -1,1 +1,0 @@
-Hours of operation not useful (contains "today" values)

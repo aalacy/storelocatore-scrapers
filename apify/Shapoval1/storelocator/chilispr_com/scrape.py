@@ -10,7 +10,7 @@ from sgpostal.sgpostal import International_Parser, parse_address
 def fetch_data(sgw: SgWriter):
 
     locator_domain = "https://chilispr.com/"
-    api_url = "https://chilispr.com/wp-content/plugins/superstorefinder-wp/ssf-wp-xml.php?wpml_lang=&t=1634283492563"
+    api_url = "https://chilispr.com/wp-content/plugins/superstorefinder-wp/ssf-wp-xml.php?wpml_lang=&t=1647618471213"
     session = SgRequests()
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
@@ -20,7 +20,7 @@ def fetch_data(sgw: SgWriter):
     div = tree.xpath("//locator/store/item")
     for d in div:
 
-        page_url = "https://chilispr.com/en/locations/"
+        page_url = "https://chilispr.com/restaurantes/"
         location_name = (
             "".join(d.xpath(".//location/text()"))
             .replace("MayagÃ¼ez", "Mayagüez")
@@ -59,20 +59,6 @@ def fetch_data(sgw: SgWriter):
             )
             or "<MISSING>"
         )
-        session = SgRequests()
-        r = session.get("https://chilispr.com/en/locations/", headers=headers)
-        tree = html.fromstring(r.text)
-        hours_of_operation = "<MISSING>"
-        hours = tree.xpath(
-            '//p[contains(text(), "Teléfono")] | //p[contains(text(), "Horario Salón")]'
-        )
-        for h in hours:
-            info = " ".join(h.xpath(".//text()")).replace("\n", "").strip()
-            if phone not in info:
-                continue
-            hours_of_operation = info.split("Horario Salón y Para Recoger:")[1].strip()
-            if hours_of_operation.find("Teléfono") != -1:
-                hours_of_operation = hours_of_operation.split("Teléfono")[0].strip()
 
         row = SgRecord(
             locator_domain=locator_domain,
@@ -88,7 +74,7 @@ def fetch_data(sgw: SgWriter):
             location_type=SgRecord.MISSING,
             latitude=latitude,
             longitude=longitude,
-            hours_of_operation=hours_of_operation,
+            hours_of_operation=SgRecord.MISSING,
             raw_address=ad,
         )
 

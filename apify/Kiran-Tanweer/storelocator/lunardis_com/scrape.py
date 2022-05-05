@@ -1,15 +1,10 @@
 from sglogging import sglog
-from sgrequests import SgRequests
 from bs4 import BeautifulSoup
+from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
-from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
-import os
-
-
-os.environ["PROXY_URL"] = "http://groups-BUYPROXIES94952:{}@proxy.apify.com:8000/"
-os.environ["PROXY_PASSWORD"] = "apify_proxy_4j1h689adHSx69RtQ9p5ZbfmGA3kw12p0N2q"
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
 website = "lunardis_com"
@@ -28,52 +23,41 @@ def fetch_data():
         search_url = "https://www.lunardis.com/locations"
         stores_req = session.get(search_url, headers=headers)
         soup = BeautifulSoup(stores_req.text, "html.parser")
-        divlist = soup.findAll("div", {"class": "_1ozXL"})
+        divlist = soup.find(
+            "div", {"data-mesh-id": "ContainercdeixinlineContent-gridContainer"}
+        ).findAll("div", {"data-testid": "richTextElement"})
         for div in divlist:
-            details = div.text
-            details = details.split("\n")
-            hours = details[-1]
-            if hours.find("Hours") != -1:
-                hoo = details[-1]
-                phone = details[-2]
-            else:
-                hoo = details[-2]
-                phone = details[-3]
-                if phone.find("Store Phone:") == -1:
-                    phone = details[-4]
-            hoo = hoo.lstrip("Hours: Open Daily ").strip()
-            hoo = hoo.replace("PEN DAILY ", "").strip()
-            hoo = "Mon - Sat: " + hoo
-            phone = phone.lstrip("Store Phone:").strip()
-            title = div.findAll("div", {"class": "_1Q9if"})[2]
-            title = title.text
-            city = title
-            info = div.findAll("div", {"class": "_1Q9if"})[3]
-            info = div.findAll("div", {"class": "_1Q9if"})[3].text
-            info = info.split("\n")
-            if len(info) == 5:
-                street = info[0] + " " + info[1] + " " + info[2]
-            if len(info) == 4:
-                street = info[0] + " " + info[1]
-            if len(info) == 6:
-                street = info[0] + " " + info[1] + " " + info[2] + " " + info[3]
-            street = street.split("Phone")[0].strip()
-
+            if "Phone" not in div.text:
+                continue
+            div = div.get_text(separator="|", strip=True).split("|")
+            if "Peet's Coffee" in div[-1]:
+                del div[-1]
+            elif "OPEN LONGER TO SERVE YOU" in div[-1]:
+                del div[-1]
+            location_name = div[0]
+            log.info(location_name)
+            hours_of_operation = div[-1].replace("Hours:", "")
+            phone = div[-2].replace("Store Phone:", "").replace("Meat Dept:", "")
+            street_address = " ".join(div[1:-2])
+            if "Store Phone:" in street_address:
+                street_address = street_address.split("Store Phone:")[0]
+            city = location_name
+            country_code = "US"
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url=search_url,
-                location_name=title,
-                street_address=street.strip(),
+                location_name=location_name,
+                street_address=street_address,
                 city=city.strip(),
                 state=MISSING,
                 zip_postal=MISSING,
-                country_code="US",
+                country_code=country_code,
                 store_number=MISSING,
                 phone=phone,
                 location_type=MISSING,
                 latitude=MISSING,
                 longitude=MISSING,
-                hours_of_operation=hoo.strip(),
+                hours_of_operation=hours_of_operation,
             )
 
 

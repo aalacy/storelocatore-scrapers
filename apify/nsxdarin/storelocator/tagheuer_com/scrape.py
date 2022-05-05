@@ -5,16 +5,18 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 import time
+import json
 
 headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36",
+    "X-Algolia-API-Key": "8cf40864df513111d39148923f754024",
+    "X-Algolia-Application-Id": "6OBGA4VJKI",
 }
 
 logger = SgLogSetup().get_logger("tagheuer_com")
 
 
 def fetch_data():
-    ids = []
     countries = [
         "ad",
         "ag",
@@ -159,187 +161,105 @@ def fetch_data():
         "us",
         "za",
     ]
+
     for cc in countries:
-        page = 1
         session = SgRequests()
-        time.sleep(5)
-        url = "https://store.tagheuer.com/" + cc + "?page=" + str(page)
-        r = session.get(url, headers=headers)
+        time.sleep(3)
+        url = "https://6obga4vjki-dsn.algolia.net/1/indexes/stores/query"
+        payload = {
+            "params": "filters=country:"
+            + cc
+            + "&attributesToRetrieve=address,Latitude,zip,country,phone,type,id,image,address2,email,name,description,services,payments,city,openingHours,exceptionalHours,contactUsForm,_geoloc,i18nAddress,specialProducts,image1,image2,image3,timezone,sfccUrl,getRankingInfo:1",
+            "aroundRadius": "15000",
+            "hitsPerPage": "1000",
+            "getRankingInfo": "1",
+            "attributesToRetrieve": "address,Latitude,zip,country,phone,type,id,image,address2,email,name,description,services,payments,city,openingHours,exceptionalHours,contactUsForm,_geoloc,i18nAddress,specialProducts,image1,image2,image3,timezone,sfccUrl",
+            "attributesToHighlight": "name",
+        }
+        r = session.post(url, headers=headers, data=json.dumps(payload))
         website = "tagheuer.com"
         country = cc.upper()
         logger.info("Pulling %s..." % cc)
-        pages = "1"
-        for line in r.iter_lines():
-            line = str(line.decode("utf-8"))
-            if '<span class="sr-only">Pagination"</span>' in line:
-                pages = (
-                    line.split('<span class="sr-only">Pagination"</span>')[1]
-                    .strip()
-                    .replace("\t", "")
-                    .replace("\r", "")
-                    .replace("\n", "")
+        for item in json.loads(r.content)["hits"]:
+            add = item["address"]
+            name = item["name"]
+            zc = item["zip"]
+            city = item["city"]
+            phone = item["phone"]
+            state = "<MISSING>"
+            typ = item["type"]
+            loc = "https://www.tagheuer.com/us/en/" + item["sfccUrl"]
+            hrstring = str(item["openingHours"])
+            try:
+                hours = (
+                    "Sunday: "
+                    + hrstring.split("'0'")[1].split("'start': '")[1].split("'")[0]
+                    + "-"
+                    + hrstring.split("'0'")[1].split("'end': '")[1].split("'")[0]
                 )
-        for x in range(1, int(pages) + 1):
-            coords = []
-            infos = []
-            name = ""
-            logger.info("%s, Page %s..." % (cc, str(x)))
-            purl = "https://store.tagheuer.com/" + cc + "?page=" + str(x)
-            session = SgRequests()
-            r2 = session.get(purl, headers=headers)
-            lines = r2.iter_lines()
-            time.sleep(5)
-            AFound = False
-            for line2 in lines:
-                line2 = str(line2.decode("utf-8"))
-                if 'data-lf-url="' in line2:
-                    curl = (
-                        "https://store.tagheuer.com"
-                        + line2.split('data-lf-url="')[1].split('"')[0]
-                    )
-                if '<span class="components-outlet-item-search-result-basic' in line2:
-                    g = next(lines)
-                    g = str(g.decode("utf-8"))
-                    name = (
-                        g.strip().replace("\r", "").replace("\t", "").replace("\n", "")
-                    )
-                    add = ""
-                    city = ""
-                    state = ""
-                    zc = ""
-                    phone = ""
-                if '<a href="tel:' in line2:
-                    phone = (
-                        line2.split('<a href="tel:')[1].split('"')[0].replace("+", "")
-                    )
-                if "point.latitude" in line2 and "allPosMarker" not in line2:
-                    llat = line2.split('"')[1]
-                if "point.longitude " in line2 and "allPosMarker" not in line2:
-                    llng = line2.split('"')[1]
-                if 'point.data.id = "' in line2:
-                    store = line2.split('"')[1]
-                if 'point.data.posType = "' in line2:
-                    typ = line2.split('point.data.posType = "')[1].split('"')[0]
-                    if typ == "":
-                        typ = "<MISSING>"
-                    coords.append(llat + "|" + llng + "|" + store + "|" + typ)
-                if 'address-basic__line"' in line2:
-                    AFound = True
-                    g = next(lines)
-                    g = str(g.decode("utf-8"))
-                    if ">" in g:
-                        g = next(lines)
-                        g = str(g.decode("utf-8"))
-                        add = (
-                            g.strip()
-                            .replace("\r", "")
-                            .replace("\n", "")
-                            .replace("\t", "")
-                        )
-                if AFound and "</div>" in line2:
-                    AFound = False
-                if AFound and "<span" in line2:
-                    g = next(lines)
-                    h = next(lines)
-                    g = str(g.decode("utf-8"))
-                    h = str(h.decode("utf-8"))
-                    city = line2.split(">")[1].split("<")[0].strip()
-                    state = g.split(">")[1].split("<")[0].strip()
-                    zc = h.split(">")[1].split("<")[0].strip()
-                if AFound and "<br />" in line2:
-                    add = (
-                        add
-                        + " "
-                        + line2.split("<br />")[1]
-                        .strip()
-                        .replace("\t", "")
-                        .replace("\n", "")
-                        .replace("\r", "")
-                    )
-                if '<div class="components-outlet-item-search-result-basic"' in line2:
-                    if name != "":
-                        infos.append(
-                            name
-                            + "|"
-                            + curl
-                            + "|"
-                            + add
-                            + "|"
-                            + city
-                            + "|"
-                            + state
-                            + "|"
-                            + zc
-                            + "|"
-                            + phone
-                        )
-                if (
-                    '<div class="search-full__pan__results-container__results__infos">'
-                    in line2
-                ):
-                    infos.append(
-                        name
-                        + "|"
-                        + curl
-                        + "|"
-                        + add
-                        + "|"
-                        + city
-                        + "|"
-                        + state
-                        + "|"
-                        + zc
-                        + "|"
-                        + phone
-                    )
-            for y in range(0, len(infos)):
-                name = infos[y].split("|")[0]
-                loc = infos[y].split("|")[1]
-                add = infos[y].split("|")[2]
-                city = infos[y].split("|")[3]
-                state = infos[y].split("|")[4]
-                zc = infos[y].split("|")[5]
-                phone = infos[y].split("|")[6]
-                lat = coords[y].split("|")[0]
-                lng = coords[y].split("|")[1]
-                store = coords[y].split("|")[2]
-                typ = coords[y].split("|")[3]
+                hours = (
+                    hours
+                    + "; Monday: "
+                    + hrstring.split("'1'")[1].split("'start': '")[1].split("'")[0]
+                    + "-"
+                    + hrstring.split("'1'")[1].split("'end': '")[1].split("'")[0]
+                )
+                hours = (
+                    hours
+                    + "; Tuesday: "
+                    + hrstring.split("'2'")[1].split("'start': '")[1].split("'")[0]
+                    + "-"
+                    + hrstring.split("'2'")[1].split("'end': '")[1].split("'")[0]
+                )
+                hours = (
+                    hours
+                    + "; Wednesday: "
+                    + hrstring.split("'3'")[1].split("'start': '")[1].split("'")[0]
+                    + "-"
+                    + hrstring.split("'3'")[1].split("'end': '")[1].split("'")[0]
+                )
+                hours = (
+                    hours
+                    + "; Thursday: "
+                    + hrstring.split("'4'")[1].split("'start': '")[1].split("'")[0]
+                    + "-"
+                    + hrstring.split("'4'")[1].split("'end': '")[1].split("'")[0]
+                )
+                hours = (
+                    hours
+                    + "; Friday: "
+                    + hrstring.split("'5'")[1].split("'start': '")[1].split("'")[0]
+                    + "-"
+                    + hrstring.split("'5'")[1].split("'end': '")[1].split("'")[0]
+                )
+                hours = (
+                    hours
+                    + "; Saturday: "
+                    + hrstring.split("'6'")[1].split("'start': '")[1].split("'")[0]
+                    + "-"
+                    + hrstring.split("'6'")[1].split("'end': '")[1].split("'")[0]
+                )
+            except:
                 hours = "<MISSING>"
-                if state == "":
-                    state = "<MISSING>"
-                if zc == "":
-                    zc = "<MISSING>"
-                if country == "US":
-                    if " " in zc:
-                        zc = zc.rsplit(" ", 1)[1].strip()
-                if store not in ids:
-                    ids.append(store)
-                    if phone == "":
-                        phone = "<MISSING>"
-                    if "144998-ahmed-seddiqi-sons-city-centre-mirdif" in loc:
-                        add = "City Centre Mirdif Dubai"
-                    if "144978-ahmed-seddiqi-sons-dubai-festival-city" in loc:
-                        add = "Dubai Festival City Dubai"
-                    if "144970-ahmed-seddiqi-sons-mall-of-the-emirates" in loc:
-                        add = "Mall Of The Emirates Dubai"
-                    if "144971-ahmed-seddiqi-sons-wafi-shopping-mall" in loc:
-                        add = "Wafi Shopping Mall Dubai"
-                    yield SgRecord(
-                        locator_domain=website,
-                        page_url=loc,
-                        location_name=name,
-                        street_address=add,
-                        city=city,
-                        state=state,
-                        zip_postal=zc,
-                        country_code=country,
-                        phone=phone,
-                        location_type=typ,
-                        store_number=store,
-                        latitude=lat,
-                        longitude=lng,
-                        hours_of_operation=hours,
-                    )
+            lat = item["_geoloc"]["lat"]
+            lng = item["_geoloc"]["lng"]
+            store = item["objectID"]
+            yield SgRecord(
+                locator_domain=website,
+                page_url=loc,
+                location_name=name,
+                street_address=add,
+                city=city,
+                state=state,
+                zip_postal=zc,
+                country_code=country,
+                phone=phone,
+                location_type=typ,
+                store_number=store,
+                latitude=lat,
+                longitude=lng,
+                hours_of_operation=hours,
+            )
 
 
 def scrape():

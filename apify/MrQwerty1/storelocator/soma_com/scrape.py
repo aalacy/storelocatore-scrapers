@@ -1,119 +1,67 @@
-import csv
-import json
-
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+def fetch_data(sgw: SgWriter):
+    api = "https://www.soma.com/locations/modules/multilocation/?near_location=75022&threshold=4000&geocoder_region=&distance_unit=miles&limit=5000&services__in=&language_code=en-us&published=1&within_business=true"
+    r = session.get(api, headers=headers)
+    js = r.json()["objects"]
+
+    for j in js:
+        adr1 = j.get("street") or ""
+        adr2 = j.get("street2") or ""
+        street_address = f"{adr1} {adr2}".strip()
+        city = j.get("city")
+        state = j.get("state")
+        postal = j.get("postal_code")
+        country_code = "US"
+        store_number = j.get("id")
+        location_name = j.get("location_name")
+        page_url = j.get("location_url")
+        phone = j["phones"][0]["number"]
+        latitude = j.get("lat")
+        longitude = j.get("lon")
+
+        _tmp = []
+        try:
+            hours = j["formatted_hours"]["primary"]["grouped_days"]
+        except:
+            hours = []
+
+        for h in hours:
+            day = h.get("label_abbr")
+            inter = h.get("content")
+            _tmp.append(f"{day}: {inter}")
+
+        hours_of_operation = ";".join(_tmp)
+
+        row = SgRecord(
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            latitude=latitude,
+            longitude=longitude,
+            phone=phone,
+            store_number=store_number,
+            locator_domain=locator_domain,
+            hours_of_operation=hours_of_operation,
         )
 
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
-    url = "https://soma.com/"
-
-    session = SgRequests()
-
-    for i in range(0, 5000):
-        api_url = "https://soma.brickworksoftware.com/locations_search?esSearch="
-        params = {
-            "page": i,
-            "storesPerPage": 50,
-            "domain": "soma.brickworksoftware.com",
-            "must": [
-                {
-                    "type": "range",
-                    "field": "published_at",
-                    "value": {"lte": 1607376261444},
-                }
-            ],
-        }
-        r = session.get(f"{api_url}{json.dumps(params)}")
-        js = r.json()["hits"]
-
-        for j in js:
-            locator_domain = url
-            a = j.get("attributes")
-            location_name = a.get("name") or "<MISSING>"
-            page_url = f'https://stores.soma.com/boutique/{a.get("slug")}'
-            street_address = (
-                f"{a.get('address1')} {a.get('address2') or ''}".strip() or "<MISSING>"
-            )
-            city = a.get("city") or "<MISSING>"
-            state = a.get("state") or "<MISSING>"
-            postal = a.get("postalCode") or "<MISSING>"
-            country_code = a.get("countryCode") or "<MISSING>"
-            store_number = j.get("id") or "<MISSING>"
-            phone = a.get("phoneNumber") or "<MISSING>"
-            loc = j.get("_geoloc")
-            latitude = loc.get("lat") or "<MISSING>"
-            longitude = loc.get("lng") or "<MISSING>"
-            location_type = "<MISSING>"
-
-            _tmp = []
-            hours = j.get("relationships", {}).get("hours", []) or []
-            for h in hours:
-                day = h.get("displayDay")
-                start = h.get("displayStartTime")
-                end = h.get("displayEndTime")
-                _tmp.append(f"{day}: {start} -{end}")
-
-            hours_of_operation = ";".join(_tmp) or "<MISSING>"
-
-            row = [
-                locator_domain,
-                page_url,
-                location_name,
-                street_address,
-                city,
-                state,
-                postal,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
-
-            out.append(row)
-
-        if len(js) < 50:
-            break
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://www.soma.com/"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:97.0) Gecko/20100101 Firefox/97.0",
+    }
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        fetch_data(writer)

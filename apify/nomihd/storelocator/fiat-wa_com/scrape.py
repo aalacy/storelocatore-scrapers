@@ -83,6 +83,7 @@ def fetch_data():
                     location_name = loc_name_list[index]
                     store_info_list = temp_addresses[index].split(",")
                     add_list = []
+                    latlng = []
                     for info in store_info_list:
                         if len("".join(info).strip()) > 0:
                             if (
@@ -115,6 +116,8 @@ def fetch_data():
                                     and '"W' not in "".join(info).strip()
                                 ):
                                     add_list.append("".join(info).strip())
+                                else:
+                                    latlng.append("".join(info).strip())
 
                     raw_address = ", ".join(add_list).strip().replace(",,", ",").strip()
                     formatted_addr = parser.parse_address_intl(raw_address)
@@ -127,6 +130,12 @@ def fetch_data():
                     city = formatted_addr.city
                     state = formatted_addr.state
                     zip = "<MISSING>"
+
+                    if len(latlng) > 0:
+                        latitude, longitude = (
+                            latlng[0].split('"N')[0].strip(),
+                            latlng[0].split('"N')[-1].strip().replace('"W', "").strip(),
+                        )
 
                     yield SgRecord(
                         locator_domain=locator_domain,
@@ -149,6 +158,7 @@ def fetch_data():
             else:
                 location_name = "".join(location_name).strip()
                 add_list = []
+                latlng = []
                 for info in store_info_list:
                     if (
                         "Tél:" in "".join(info).strip()
@@ -172,7 +182,13 @@ def fetch_data():
                         )
                         break
                     else:
-                        add_list.append("".join(info).strip())
+                        if (
+                            '"N' not in "".join(info).strip()
+                            and '"W' not in "".join(info).strip()
+                        ):
+                            add_list.append("".join(info).strip())
+                        else:
+                            latlng.append("".join(info).strip())
 
                 raw_address = ", ".join(add_list).strip().replace(",,", ",").strip()
                 formatted_addr = parser.parse_address_intl(raw_address)
@@ -185,6 +201,12 @@ def fetch_data():
                 city = formatted_addr.city
                 state = formatted_addr.state
                 zip = "<MISSING>"
+
+                if len(latlng) > 0:
+                    latitude, longitude = (
+                        latlng[0].split('"N')[0].strip(),
+                        latlng[0].split('"N')[-1].strip().replace('"W', "").strip(),
+                    )
 
                 yield SgRecord(
                     locator_domain=locator_domain,
