@@ -61,6 +61,7 @@ def fetch_data():
             .replace("\n", "")
             .replace("\t", "")
             .replace("\r", "")
+            .replace("Face Mask Requi", "")
         )
 
         str_to_del = [
