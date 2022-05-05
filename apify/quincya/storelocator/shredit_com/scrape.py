@@ -57,6 +57,9 @@ def fetch_data(sgw: SgWriter):
         except:
             hours_of_operation = ""
 
+        if "Schedule" in hours_of_operation:
+            hours_of_operation = ""
+
         location_type = ""
 
         link = locator_domain + store["url"]
