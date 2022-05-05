@@ -291,10 +291,30 @@ def fetch_records_kw(sgw: SgWriter):
                 lng = MISSING
 
             # HOO
-            hoo = add2[4]
+            hoo = add2[5]
             logger.info(f"HOO raw: {hoo}")
             hours_of_operation = hoo
             logger.info(f"HOO: {hours_of_operation}")
+
+            # IKEA Avenues
+            if "IKEA Avenues" in location_name:
+                city = "Al Rai"
+                zip_postal = "13037"
+                lat = "29.3017876"
+                lng = "47.9293925"
+                phone = "+9651840408"
+
+            # IKEA 360
+            if "IKEA 360" in location_name:
+                city = "Zahra"
+                lat = "29.2678583"
+                lng = "47.9983848"
+                phone = "+9651840408"
+
+            # IKEA The Assima Mall
+            if "IKEA The Assima Mall" in location_name:
+                phone = "+9651840408"
+
             rec = SgRecord(
                 locator_domain=get_domain(page_url),
                 page_url=page_url,
@@ -341,6 +361,14 @@ def fetch_data(sgw: SgWriter):
     # [13]: https://www.ikea.com/sk/sk/stores/ Slovakia SK
     # [14]: https://www.ikea.com/si/sl/stores/ Slovenia SI
     # [15]: https://www.ikea.com/ua/uk/stores/ Ukraine UA
+
+    # Ikea Avenues
+    # https://g.page/r/CXe2sHU_BjKsEBA
+    # https://www.google.com/maps/place/IKEA+Avenues/@29.3017876,47.9293925,17z/data=!3m1!4b1!4m5!3m4!1s0x3fcf9bec8fdd4ac9:0xac32063f75b0b677!8m2!3d29.3017876!4d47.9293925
+
+    # Ikea 360 Mall
+    # https://g.page/r/CUHUo031Jo8HEBA
+    # https://www.google.com/maps/place/IKEA+360+Mall+Shop/@29.2678583,47.9983848,17z/data=!4m5!3m4!1s0x3fcf996c76f9dc09:0x78f26f54da3d441!8m2!3d29.2678452!4d47.9983841
 
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
         tasks = []
