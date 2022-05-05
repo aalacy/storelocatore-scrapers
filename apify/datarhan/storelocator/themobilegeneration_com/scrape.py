@@ -24,13 +24,9 @@ def fetch_data():
         if not zip_code:
             loc_response = session.get(page_url)
             loc_dom = etree.HTML(loc_response.text)
-            zip_code = (
-                loc_dom.xpath('//div[@class="post-excerpt"]/p/text()')[0]
-                .split("Address:")[-1]
-                .split("Phone")[0]
-                .split(", ")[-1]
-                .split()[-1]
-            )
+            raw_data = loc_dom.xpath('//p[@class="gbcols_p"]/text()')
+            raw_data = [e.strip() for e in raw_data if e.strip() and e.strip() != '<']
+            zip_code = raw_data[1].split()[-1]
 
         item = SgRecord(
             locator_domain=domain,
