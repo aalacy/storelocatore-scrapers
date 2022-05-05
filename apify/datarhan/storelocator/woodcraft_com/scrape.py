@@ -5,6 +5,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
+from sgpostal.sgpostal import parse_address_intl
 
 
 def fetch_data():
@@ -23,14 +24,13 @@ def fetch_data():
         location_name = loc_dom.xpath('//span[@itemprop="name"]/text()')
         location_name = location_name[0] if location_name else "<MISSING>"
         raw_address = loc_dom.xpath('//p[@itemprop="address"]/text()')
-        raw_address = [elem.strip() for elem in raw_address if elem.strip()]
-        street_address = raw_address[0]
-        if "CLOSED" in street_address:
+        raw_address = ", ".join([elem.strip() for elem in raw_address if elem.strip()])
+        addr = parse_address_intl(raw_address)
+        street_address = addr.street_address_1
+        if addr.street_address_2:
+            street_address += " " + addr.street_address_2
+        if "This Store Is Now Closed" in street_address:
             continue
-        city = raw_address[1].split(", ")[0]
-        state = raw_address[1].split(", ")[-1].split()[0]
-        zip_code = raw_address[1].split(", ")[-1].split()[-1]
-        country_code = raw_address[2]
         phone = loc_dom.xpath('//span[@itemprop="telephone"]/text()')
         phone = phone[0] if phone else ""
         hours_of_operation = loc_dom.xpath(
@@ -84,16 +84,17 @@ def fetch_data():
             page_url=page_url,
             location_name=location_name,
             street_address=street_address,
-            city=city,
-            state=state,
-            zip_postal=zip_code,
-            country_code=country_code,
+            city=addr.city,
+            state=addr.state,
+            zip_postal=addr.postcode,
+            country_code=addr.country,
             store_number="",
             phone=phone,
             location_type="",
             latitude="",
             longitude="",
             hours_of_operation=hours_of_operation,
+            raw_address=raw_address,
         )
 
         yield item
