@@ -1,5 +1,3 @@
-from sgzip.dynamic import DynamicGeoSearch, SearchableCountries, Grain_8
-from sglogging import SgLogSetup
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
@@ -7,10 +5,6 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
-from sgscrape.sgrecord import SgRecord
-from sgscrape.sgwriter import SgWriter
-from sgscrape.sgrecord_id import SgRecordID
-from sgscrape.sgrecord_deduper import SgRecordDeduper
 from lxml import html
 from time import sleep
 from random import randint
@@ -76,7 +70,7 @@ def get_human_hours(data_store):
             hoo = weekdays + ": " + hoo1
         logger.info(f"HOO: {hoo}")
     except:
-        logger.info(f"Please check if HOO is empty: {store_url}")
+        logger.info(f"Please check if HOO is empty: {data_store}")
         hoo = ""
     return hoo
 
