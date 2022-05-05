@@ -5,7 +5,7 @@ import json
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from sgselenium.sgselenium import SgChrome
+from sgselenium.sgselenium import SgFirefox
 from sglogging import sglog
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
@@ -37,12 +37,13 @@ def random_sleep(driver, start=5, limit=3):
 
 
 def fetch_stores():
-    with SgChrome(user_agent=user_agent) as driver:
+    with SgFirefox(block_third_parties=True, user_agent=user_agent) as driver:
         driver.get(store_url)
         random_sleep(driver, 20)
-        return json.loads(driver.page_source.split("fnacStoreData =")[1].split(";")[0])[
-            "Store"
-        ]
+        jsontxt = (
+            driver.page_source.split('data-stores="')[1].split('" data-zoom=')[0]
+        ).replace("&quot;", '"')
+        return json.loads(jsontxt)["Store"]
     return []
 
 
@@ -96,6 +97,12 @@ def fetch_data():
         )
         city = get_JSON_object_variable(store, "CityName")
         zip_postal = get_JSON_object_variable(store, "ZipCode")
+
+        if zip_postal in street_address:
+            street_address = street_address.replace(city, "").replace(
+                f", {zip_postal}", ""
+            )
+
         phone = get_JSON_object_variable(store, "Phone")
         coord = (
             get_JSON_object_variable(store, "Coord")

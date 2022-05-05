@@ -22,10 +22,13 @@ def _coord(infos, addr):
     for info in infos:
         loc = bs(info.split(");")[0][1:-1], "lxml")
         try:
-            _addr = list(loc.select("p")[1].stripped_strings)
+            _addr = list(loc.select("p")[-2].stripped_strings)
         except:
             continue
-        if _addr == addr:
+        if (
+            _addr[0].replace(".", "") == addr[0].replace(".", "")
+            and _addr[1] == addr[1]
+        ):
             coord = (
                 loc.select_one("input[type='button']")["onclick"]
                 .split("(")[1][:-2]

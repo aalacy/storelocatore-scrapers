@@ -65,7 +65,7 @@ def fetch_data():
         location_type = MISSING
         latitude = row["latitude"]
         longitude = row["longitude"]
-        hours_of_operation = row["hourInfo"].replace("7 Days a Week: ", "")
+        hours_of_operation = row["hourInfo"]
         log.info("Append {} => {}".format(location_name, street_address))
         yield SgRecord(
             locator_domain=DOMAIN,
