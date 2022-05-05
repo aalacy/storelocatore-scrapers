@@ -4,7 +4,8 @@ from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import lxml.html
-
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "gerbercollision.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -57,7 +58,7 @@ def fetch_data():
                     base
                     + "".join(
                         store.xpath(
-                            './/div[@class="col-md-9 col-sm-6 data"]/h3/a/@href'
+                            './/div[@class="col-md-9 col-sm-6 data"]/h2/a/@href'
                         )
                     ).strip()
                 )
@@ -69,7 +70,7 @@ def fetch_data():
 
                 location_name = "".join(
                     store_sel.xpath(
-                        '//div[@class="location-info"]/div[@class="location_name"]/text()'
+                        '//div[@class="location-info"]/div[@itemprop="name"]/text()'
                     )
                 ).strip()
                 if len(location_name) <= 0:
@@ -79,7 +80,7 @@ def fetch_data():
                         "https://www.boydautobody.com"
                         + "".join(
                             store.xpath(
-                                './/div[@class="col-md-9 col-sm-6 data"]/h3/a/@href'
+                                './/div[@class="col-md-9 col-sm-6 data"]/h2/a/@href'
                             )
                         ).strip()
                     )
@@ -89,7 +90,7 @@ def fetch_data():
 
                     location_name = "".join(
                         store_sel.xpath(
-                            '//div[@class="location-info"]/div[@class="location_name"]/text()'
+                            '//div[@class="location-info"]/div[@itemprop="name"]/text()'
                         )
                     ).strip()
                     if len(location_name) <= 0:
@@ -97,22 +98,25 @@ def fetch_data():
 
                 street_address = "".join(
                     store_sel.xpath(
-                        '//div[@class="location-info"]/div[@class="address"]//span[@itemprop="streetAddress"]/text()'
+                        '//div[@class="location-info"]//span[@itemprop="streetAddress"]/text()'
                     )
                 ).strip()
+                if len(street_address) > 0 and street_address[-1] == ",":
+                    street_address = "".join(street_address[:-1]).strip()
+
                 city = "".join(
                     store_sel.xpath(
-                        '//div[@class="location-info"]/div[@class="address"]//span[@itemprop="addressLocality"]/text()'
+                        '//div[@class="location-info"]//span[@itemprop="addressLocality"]/text()'
                     )
                 ).strip()
                 state = "".join(
                     store_sel.xpath(
-                        '//div[@class="location-info"]/div[@class="address"]//span[@itemprop="addressRegion"]/text()'
+                        '//div[@class="location-info"]//span[@itemprop="addressRegion"]/text()'
                     )
                 ).strip()
                 zip = "".join(
                     store_sel.xpath(
-                        '//div[@class="location-info"]/div[@class="address"]//span[@itemprop="postalCode"]/text()'
+                        '//div[@class="location-info"]//span[@itemprop="postalCode"]/text()'
                     )
                 ).strip()
                 country_code = "US"
@@ -139,7 +143,20 @@ def fetch_data():
                     time = "".join(hour.xpath("strong/text()")).strip()
                     hours_list.append(day + ": " + time)
 
-                hours_of_operation = "; ".join(hours_list).strip()
+                if len(hours_list) <= 0:
+                    hours_list = store_sel.xpath(
+                        '//div[@class="location-info"]//div[@class="timesheet"]/text()'
+                    )
+                hours_of_operation = (
+                    "; ".join(hours_list)
+                    .strip()
+                    .replace("\n", "")
+                    .strip()
+                    .replace("day;", "day:")
+                    .strip()
+                )
+                if len(hours_of_operation) > 0 and hours_of_operation[0] == ";":
+                    hours_of_operation = "".join(hours_of_operation[1:]).strip()
 
                 latitude = "".join(
                     store.xpath('.//div[@class="location-map2"]/@data-lat')
@@ -169,7 +186,19 @@ def fetch_data():
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.LOCATION_NAME,
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.CITY,
+                    SgRecord.Headers.STATE,
+                    SgRecord.Headers.ZIP,
+                }
+            )
+        )
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

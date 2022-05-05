@@ -30,7 +30,7 @@ def fetch_data(sgw: SgWriter):
     response = session.get(base_link, headers=headers)
     base = BeautifulSoup(response.text, "lxml")
 
-    items = base.find(class_="entry-content").find_all("a")
+    items = base.find(class_="sub-menu").find_all("a")
     log.info("Locations found: " + str(len(items)))
 
     for item in items:

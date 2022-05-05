@@ -41,6 +41,8 @@ def fetch_data():
         for line2 in lines:
             if '<h2 class="h1">' in line2:
                 name = line2.split('<h2 class="h1">')[1].split("<")[0]
+            if "<title>" in line2:
+                store = line2.split("Plaid Pantry ")[1].split("<")[0]
             if '<p class="store-address"><strong><a' in line2:
                 addinfo = (
                     line2.split('<p class="store-address"><strong><a')[1]

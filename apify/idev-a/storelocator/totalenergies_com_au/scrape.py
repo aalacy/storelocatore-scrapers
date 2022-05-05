@@ -4,7 +4,8 @@ from sgrequests import SgRequests
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sglogging import SgLogSetup
-from tenacity import retry, stop_after_attempt, wait_fixed
+import math
+from concurrent.futures import ThreadPoolExecutor
 
 logger = SgLogSetup().get_logger("totalenergies")
 
@@ -28,23 +29,47 @@ hr_obj = {
     "7": "Sunday",
 }
 
+max_workers = 24
 
-@retry(wait=wait_fixed(1), stop=stop_after_attempt(7))
-def _d(store_number):
-    with SgRequests() as http:
-        store_url = f"https://datastore-webapp-p.azurewebsites.net/REVERSE/api/Info/Poi?Lang=fr_FR&AdditionalData=Items&AdditionalDataFields=Items_Code,Items_Price,Items_Availability,Items_UpdateDate&Code={store_number}"
-        res = http.get(store_url, headers=_headers).json()
-        if res["ErrorCode"] == "0001":
-            return {}
 
-        return res["Pois"][0]
+def fetchConcurrentSingle(store):
+    logger.info(store["store_id"])
+    url = f"https://api.woosmap.com/stores/{store['store_id']}?key=mapstore-prod-woos"
+    loc = request_with_retries(url).json()
+    _ = loc["properties"]
+    return loc, _
+
+
+def fetchConcurrentList(list, occurrence=max_workers):
+    output = []
+    total = len(list)
+    reminder = math.floor(total / 50)
+    if reminder < occurrence:
+        reminder = occurrence
+
+    count = 0
+    with ThreadPoolExecutor(
+        max_workers=occurrence, thread_name_prefix="fetcher"
+    ) as executor:
+        for result in executor.map(fetchConcurrentSingle, list):
+            if result:
+                count = count + 1
+                if count % reminder == 0:
+                    logger.debug(f"Concurrent Operation count = {count}")
+                output.append(result)
+    return output
+
+
+def request_with_retries(url):
+    with SgRequests() as session:
+        return session.get(url, headers=_headers)
 
 
 def fetch_data():
     with SgRequests() as http:
-        for a in range(20):
-            for b in range(100):
-                for c in range(100):
+        for a in range(1, 11):
+            for b in range(20):
+                for c in range(10):
                     logger.info(f"{a, b, c}")
                     try:
                         data = http.get(
@@ -53,12 +78,13 @@ def fetch_data():
                     except:
                         break
                     logger.info(f"[{a, b, c}] {len(data.keys())} found")
-                    for kk, store in data.items():
-                        logger.info(store["store_id"])
-                        url = f"https://api.woosmap.com/stores/{store['store_id']}?key=mapstore-prod-woos"
-                        loc = http.get(url, headers=_headers).json()
-                        _ = loc["properties"]
+                    stores = [store for kk, store in data.items()]
+                    for loc, _ in fetchConcurrentList(stores):
                         addr = _["address"]
+                        raw_address = " ".join(addr["lines"])
+                        raw_address += " " + addr["city"]
+                        raw_address += " " + addr.get("zipcode")
+                        raw_address += " " + addr["country_code"]
                         hours = []
                         for key, hh in _["weekly_opening"].items():
                             if key.isdigit() and hh["hours"]:
@@ -71,26 +97,43 @@ def fetch_data():
                         if phone and ("contact" in phone.lower() or phone == "-"):
                             phone = ""
 
+                        if phone:
+                            phone = phone.split(",")[0]
+
+                        city = addr["city"]
+                        zip_postal = addr.get("zipcode")
+                        if "Excellium" in city:
+                            city = ""
+                        if city and city.isdigit():
+                            city = ""
+
+                        if city:
+                            city = city.split(",")[0]
+
                         yield SgRecord(
                             page_url=base_url,
                             store_number=_["store_id"],
                             location_name=_["name"],
                             street_address=" ".join(addr["lines"]),
-                            city=addr["city"],
-                            state=addr.get("State"),
-                            zip_postal=addr.get("zipcode"),
+                            city=city,
+                            zip_postal=zip_postal,
                             country_code=addr["country_code"],
                             phone=phone,
-                            latitude=loc["geometry"]["coordinates"][0],
-                            longitude=loc["geometry"]["coordinates"][1],
+                            latitude=loc["geometry"]["coordinates"][1],
+                            longitude=loc["geometry"]["coordinates"][0],
                             hours_of_operation="; ".join(hours),
                             location_type=_["user_properties"]["brand"],
                             locator_domain=locator_domain,
+                            raw_address=raw_address,
                         )
 
 
 if __name__ == "__main__":
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+    with SgWriter(
+        SgRecordDeduper(
+            RecommendedRecordIds.StoreNumberId, duplicate_streak_failure_factor=100
+        )
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

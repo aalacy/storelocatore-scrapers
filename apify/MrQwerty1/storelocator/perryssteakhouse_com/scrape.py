@@ -38,7 +38,7 @@ def get_friendswood(sgw: SgWriter):
     longitude = text.split("sll=")[1].split(",")[1].split("&")[0]
     hours = tree.xpath("//div[@class='taxonomy-description']/p[last()]/text()")
     hours = list(filter(None, [h.strip() for h in hours]))
-    hours_of_operation = ";".join(hours) or "<MISSING>"
+    hours_of_operation = ";".join(hours)
 
     row = SgRecord(
         page_url=page_url,
@@ -68,8 +68,10 @@ def get_data(page_url, sgw: SgWriter):
     line = tree.xpath(
         "//div[@class='info']//span[@class='vertical'][1]/following-sibling::span/p[1]/text()"
     )
-    street_address = line[0]
-    line = line[1]
+    street_address = line.pop(0)
+    if "Plaza" in street_address:
+        street_address = line.pop(0)
+    line = line[0]
     city = line.split(",")[0].strip()
     line = line.split(",")[1].strip()
     state = line.split()[0]
@@ -120,7 +122,7 @@ def fetch_data(sgw: SgWriter):
     urls = get_urls()
     get_friendswood(sgw)
 
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
+    with futures.ThreadPoolExecutor(max_workers=3) as executor:
         future_to_url = {executor.submit(get_data, url, sgw): url for url in urls}
         for future in futures.as_completed(future_to_url):
             future.result()

@@ -22,25 +22,24 @@ def get_international(line):
 def fetch_data(sgw: SgWriter):
     r = session.get(page_url, headers=headers)
     tree = html.fromstring(r.text)
-    divs = tree.xpath("//div[@class='feature-two-column-short__list ']//li[./h3]")
+    divs = tree.xpath(
+        "//h1[./span[contains(text(), 'Regional')]]/following-sibling::div//div[@class='offices-item']"
+    )
 
     for d in divs:
-        location_name = "".join(d.xpath(".//h3/text()")).strip()
+        location_name = "".join(d.xpath(".//strong/text()")).strip()
 
         _tmp = []
-        lines = d.xpath(".//p[@class='feature-two-column-short__list-desc']/text()")
-        phone = SgRecord.MISSING
+        lines = d.xpath(".//p[@class='item-desc']/text()")
         for line in lines:
-            if not line.strip() or "Device" in line:
+            if not line.strip():
                 continue
-            if "+" in line:
-                phone = line.strip()
-                continue
-            _tmp.append(line.strip())
+            line = " ".join(line.split())
+            _tmp.append(line)
 
         raw_address = "".join(_tmp)
         street_address, city, state, postal = get_international(raw_address)
-        country = location_name.split(",")[-1].strip()
+        country = raw_address.split(",")[-1].strip()
 
         row = SgRecord(
             page_url=page_url,
@@ -50,7 +49,6 @@ def fetch_data(sgw: SgWriter):
             state=state,
             zip_postal=postal,
             country_code=country,
-            phone=phone,
             locator_domain=locator_domain,
             raw_address=raw_address,
         )
@@ -61,7 +59,7 @@ def fetch_data(sgw: SgWriter):
 if __name__ == "__main__":
     session = SgRequests()
     locator_domain = (
-        "https://www.samsung.com/semiconductor/about-us/location/regional-offices/"
+        "https://www.samsung.com/semiconductor/about-us/location/manufacturing-centers/"
     )
     page_url = locator_domain
     headers = {

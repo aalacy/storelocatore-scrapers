@@ -32,7 +32,9 @@ def get_data(coords, sgw: SgWriter):
         page_url = "https://www.honda.co.za/cars/find-a-dealer"
         location_name = j.get("title") or "<MISSING>"
         a = j.get("address")
-        street_address = a.get("street1") or "<MISSING>"
+        street_address = str(a.get("street1")) or "<MISSING>"
+        if street_address[-1] == ",":
+            street_address = "".join(street_address[:-1])
         state = a.get("state") or "<MISSING>"
         postal = a.get("zip") or "<MISSING>"
         country_code = a.get("country") or "<MISSING>"

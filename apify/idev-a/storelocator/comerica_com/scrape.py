@@ -132,7 +132,7 @@ def human_hours(k):
     days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
     if k.get("lobby") or k.get("drive"):
         hours = []
-        for x, _ in enumerate(k["lobby"] or k.get("drive")):
+        for x, _ in enumerate(k.get("lobby", []) or k.get("drive", [])):
             time = _
             if not _:
                 time = "closed"

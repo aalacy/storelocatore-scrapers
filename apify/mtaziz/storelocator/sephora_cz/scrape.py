@@ -30,16 +30,15 @@ LOCATION_URLS_GRID = [
     "https://www.sephora.pt/lojas",
     "https://www.sephora.es/tiendas",
     "https://www.sephora.se/butiker/",
-    "https://ch.sephora.fr/ch/fr/magasin",
     "https://www.sephora.ae/en/store",
     "https://www.sephora.de/Stores-Alle",
     "https://www.sephora.it/beauty-store/",
     "https://www.sephora.pl/perfumerie",
 ]
-
+LOCATION_URLS_GRID = sorted(LOCATION_URLS_GRID)
 
 MISSING = SgRecord.MISSING
-logger = SgLogSetup().get_logger("sephora_cz")
+logger = SgLogSetup().get_logger("sephora_cz")  # noqa
 headers = {
     "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
     "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.159 Safari/537.36",
@@ -52,7 +51,7 @@ def get_response(url):
     with SgRequests() as http:
         response = http.get(url, headers=headers)
         if response.status_code == 200:
-            logger.info(f"{url} >> HTTP STATUS: {response.status_code}")
+            logger.info(f"{url} >> HTTP STATUS: {response.status_code}")  # noqa
             return response
         raise Exception(f"{url} >> HTTP Error Code: {response.status_code}")
 
@@ -63,22 +62,22 @@ def get_store_urls():
         r = get_response(gurl)
         sel = html.fromstring(r.text, "lxml")
         purls = sel.xpath('//a[contains(@class, "store-name")]/@href')
-        logger.info(f"Pulling the store URLs from: {gurl}")
-        logger.info(f"{gurl} | Total number of Store URLs: {len(purls)}")
+        logger.info(f"Pulling the store URLs from: {gurl}")  # noqa
+        logger.info(f"{gurl} | Total number of Store URLs: {len(purls)}")  # noqa
         store_urls.extend(purls)
     return store_urls
 
 
 def fetch_records(idx, store_url, sgw: SgWriter):
     try:
-        phone = None
-        street_address = None
-        city = None
-        state = None
-        zip_postal = None
-        hours_of_operation = None
+        phone = ""
+        street_address = ""
+        city = ""
+        state = ""
+        zip_postal = ""
+        hours_of_operation = ""
 
-        logger.info(f"[{idx}] Pulling the data from: {store_url}")
+        logger.info(f"[{idx}] Pulling the data from: {store_url}")  # noqa
         rcz = get_response(store_url)
         sel_cz = html.fromstring(rcz.text, "lxml")
         dcz = sel_cz.xpath(
@@ -93,15 +92,14 @@ def fetch_records(idx, store_url, sgw: SgWriter):
 
         location_name = data_json["name"]
         location_name = location_name if location_name else MISSING
+
         if "address" in data_json:
             add = data_json["address"]
             street_address = " ".join(add["streetAddress"].split())
             street_address = street_address if street_address else MISSING
-
             city = add["addressLocality"]
             city = city if city else MISSING
             state = state if state else MISSING
-
             zip_postal = add["postalCode"]
             zip_postal = zip_postal if zip_postal else MISSING
             if zip_postal == "-":
@@ -124,7 +122,22 @@ def fetch_records(idx, store_url, sgw: SgWriter):
             state = MISSING
             zip_postal = MISSING
 
-        logger.info(f"[{idx}] Zip Code: {zip_postal}")
+        logger.info(f"[{idx}] Zip Code: {zip_postal}")  # noqa
+
+        # Street Address has additional info which
+        # should be removed
+        street_address = " ".join(street_address.split())
+        sta_sp = street_address.split(",")
+        sta_additional_info_rmved = ""
+        if len(sta_sp) > 1:
+            sta_additional_info_rmved = sta_sp[0] + ", " + sta_sp[1]
+        else:
+            sta_additional_info_rmved = street_address
+        if (
+            "Al Badee District،، Riyadh 14924,  Saudi Arabia"
+            in sta_additional_info_rmved
+        ):
+            sta_additional_info_rmved = "Al Badee District, Riyadh 14924"
 
         country_code = locator_domain.split(".")[-1].upper()
         store_number = page_url.split("storeID=")[-1]
@@ -147,7 +160,7 @@ def fetch_records(idx, store_url, sgw: SgWriter):
         if phone == "000000":
             phone = MISSING
 
-        logger.info(f"[{idx}] Phone: {phone}")
+        logger.info(f"[{idx}] Phone: {phone}")  # noqa
 
         # Location Type
         location_type = data_json["@type"]
@@ -166,12 +179,12 @@ def fetch_records(idx, store_url, sgw: SgWriter):
             # Latitude
             latitude = latlng1["lat"]
             latitude = latitude if latitude else MISSING
-            logger.info(f"[{idx}] lat: {latitude}")
+            logger.info(f"[{idx}] lat: {latitude}")  # noqa
 
             # Longitude
             longitude = latlng1["lng"]
             longitude = longitude if longitude else MISSING
-            logger.info(f"[{idx}] lng: {longitude}")
+            logger.info(f"[{idx}] lng: {longitude}")  # noqa
         except:
             latitude = MISSING
             longitude = MISSING
@@ -181,7 +194,7 @@ def fetch_records(idx, store_url, sgw: SgWriter):
             hours_of_operation = ", ".join(hoo)
         else:
             hours_of_operation = hoo
-        logger.info(f"HOO: {hours_of_operation}")
+        logger.info(f"HOO: {hours_of_operation}")  # noqa
 
         if str(hours_of_operation) == "Mo-Su ":
             hours_of_operation = MISSING
@@ -197,7 +210,7 @@ def fetch_records(idx, store_url, sgw: SgWriter):
             locator_domain=locator_domain,
             page_url=page_url,
             location_name=location_name,
-            street_address=street_address,
+            street_address=sta_additional_info_rmved,
             city=city,
             state=state,
             zip_postal=zip_postal,
@@ -208,7 +221,7 @@ def fetch_records(idx, store_url, sgw: SgWriter):
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hours_of_operation,
-            raw_address=raw_address,
+            raw_address=street_address,
         )
         sgw.write_row(item)
     except Exception as e:
@@ -232,14 +245,11 @@ def fetch_data(sgw: SgWriter):
 
 
 def scrape():
-    logger.info("Started")
+    logger.info("Started")  # noqa
     with SgWriter(
         SgRecordDeduper(
             SgRecordID(
                 {
-                    SgRecord.Headers.PAGE_URL,
-                    SgRecord.Headers.LOCATION_NAME,
-                    SgRecord.Headers.STORE_NUMBER,
                     SgRecord.Headers.STREET_ADDRESS,
                     SgRecord.Headers.LONGITUDE,
                     SgRecord.Headers.LATITUDE,
@@ -248,7 +258,7 @@ def scrape():
         )
     ) as writer:
         fetch_data(writer)
-    logger.info("Finished")
+    logger.info("Finished")  # noqa
 
 
 if __name__ == "__main__":

@@ -1,11 +1,13 @@
 from bs4 import BeautifulSoup
-
+from sglogging import sglog
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
+
+log = sglog.SgLogSetup().get_logger(logger_name="suzuki.com")
 
 
 def fetch_data():
@@ -20,6 +22,7 @@ def fetch_data():
         country_codes=[SearchableCountries.USA], expected_search_radius_miles=100
     )
     for code in all_codes:
+        log.info(f"Zipcodes remaining: {all_codes.items_remaining()} | {code}")
         response = session.get(start_url.format(code), headers=hdr)
         soup = BeautifulSoup(response.text, "lxml")
         all_locations = soup.find_all("dealerinfo")
@@ -27,6 +30,7 @@ def fetch_data():
             page_url = "https://www.suzukiauto.com/Service%20Provider.aspx"
             street_address = poi_html.find("displayaddress").text
             location_name = poi_html.find("name").text
+            log.info(location_name)
             city = poi_html.find("city").text
             state = poi_html.find("state").text
             zip_code = poi_html.find("zip").text
