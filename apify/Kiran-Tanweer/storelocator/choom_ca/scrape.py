@@ -33,6 +33,7 @@ def fetch_data():
             req = session.get(link, headers=headers)
             bs = BeautifulSoup(req.text, "html.parser")
             title = bs.find("div", {"class": "rl-name is-flex"}).find("h1").text
+            log.info(title)
             address = bs.find("div", {"class": "rl-address rl-item"}).findAll("p")
             street = address[0].text
             city = address[1].text
