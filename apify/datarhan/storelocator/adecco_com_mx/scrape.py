@@ -41,7 +41,7 @@ def fetch_data():
         street_address = addr.street_address_1
         if addr.street_address_2:
             street_address += " " + addr.street_address_2
-        phone = poi['phone'].split('/')[0] if poi['phone'] != '0' else ""
+        phone = poi["phone"].split("/")[0] if poi["phone"] != "0" else ""
 
         item = SgRecord(
             locator_domain=domain,
