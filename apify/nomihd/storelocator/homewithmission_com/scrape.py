@@ -78,7 +78,8 @@ def fetch_data():
                                 page_url = base + "/" + store["link"]
                             else:
                                 page_url = base + store["link"]
-
+                        else:
+                            continue
                         locator_domain = website
 
                         if len(store["description"]) <= 0:
@@ -114,7 +115,6 @@ def fetch_data():
                         country_code = "US"
 
                         location_name = store["title"]
-
                         if (
                             location_name
                             == "dvanced Healthcare Services Home Health- Newark"
@@ -123,11 +123,19 @@ def fetch_data():
                                 "Advanced Healthcare Services Home Health- Newark"
                             )
 
+                        location_name = (
+                            location_name.encode("ascii", "replace")
+                            .decode("utf-8")
+                            .replace("?", "-")
+                            .strip()
+                            .split("-")[0]
+                            .strip()
+                        )
                         phone = "".join(
                             desc_sel.xpath('//div[@class="office-wrapper"]/text()')
                         ).strip()
 
-                        store_number = store["id"]
+                        store_number = "<MISSING>"
 
                         location_type = "<MISSING>"
 
