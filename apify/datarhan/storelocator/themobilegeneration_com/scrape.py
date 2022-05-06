@@ -21,12 +21,16 @@ def fetch_data():
         if len(zip_code) == 2:
             zip_code = ""
         page_url = f"https://themobilegeneration.com{poi['link']}"
+        hoo = " ".join(raw_data[1:])
+        phone = raw_data[0]
         if not zip_code:
             loc_response = session.get(page_url)
             loc_dom = etree.HTML(loc_response.text)
             raw_data = loc_dom.xpath('//p[@class="gbcols_p"]/text()')
             raw_data = [e.strip() for e in raw_data if e.strip() and e.strip() != "<"]
             zip_code = raw_data[1].split()[-1]
+            hoo = " ".join([e for e in raw_data[1:] if " PM" in e])
+            phone = raw_data[2]
 
         item = SgRecord(
             locator_domain=domain,
@@ -38,11 +42,11 @@ def fetch_data():
             zip_postal=zip_code,
             country_code=raw_address[3],
             store_number=poi["id"],
-            phone=raw_data[0],
+            phone=phone,
             location_type="",
             latitude=poi["lat"],
             longitude=poi["lng"],
-            hours_of_operation=" ".join(raw_data[1:]),
+            hours_of_operation=hoo,
         )
 
         yield item
