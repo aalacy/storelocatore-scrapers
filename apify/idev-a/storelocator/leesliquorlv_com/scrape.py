@@ -57,6 +57,8 @@ def fetch_data():
     with SgRequests() as session:
         with SgChrome(executable_path=ChromeDriverManager().install()) as driver:
             driver.get(start_url)
+            time.sleep(5)
+            driver.get(start_url)
             time.sleep(10)
             locations = []
             SessionId = ""
@@ -69,8 +71,6 @@ def fetch_data():
                     json_data = json.loads(rr.response.body)
 
             for loc in locations:
-                if "coming soon" in loc["Location"].lower():
-                    continue
                 logger.info(loc["StoreId"])
                 json_data["StoreId"] = loc["StoreId"]
                 json_data = _sessionId(session, json_data, loc["StoreId"])
@@ -105,7 +105,7 @@ def fetch_data():
 
 
 if __name__ == "__main__":
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

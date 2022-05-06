@@ -82,7 +82,9 @@ locator_domain = "https://www.7eleven.co.th"
 base_url = "https://7eleven-api-prod.jenosize.tech/v1/Store/GetStoreByCurrentLocation"
 
 search = DynamicGeoSearch(
-    country_codes=[SearchableCountries.THAILAND], granularity=Grain_1_KM()
+    country_codes=[SearchableCountries.THAILAND],
+    granularity=Grain_1_KM(),
+    expected_search_radius_miles=4,
 )
 
 
