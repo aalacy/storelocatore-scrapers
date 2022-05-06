@@ -65,6 +65,7 @@ def fetch_data():
                     .strip()
                 )
 
+            raw_address = raw_address.split("Sign up")[0].strip()
             formatted_addr = parser.parse_address_usa(raw_address)
             street_address = formatted_addr.street_address_1
             if formatted_addr.street_address_2:
