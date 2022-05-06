@@ -3,7 +3,7 @@ import ssl
 import time
 import json
 
-from sgselenium.sgselenium import SgChrome
+from sgselenium.sgselenium import SgFirefox
 from sglogging import sglog
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
@@ -16,10 +16,6 @@ ssl._create_default_https_context = ssl._create_unverified_context
 website = "https://www.shoestation.com"
 page_url = f"{website}/storelocator/"
 MISSING = SgRecord.MISSING
-
-headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
-}
 
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 
@@ -44,7 +40,7 @@ def stringify_children(nodes):
 
 
 def fetch_stores():
-    with SgChrome(user_agent=user_agent) as driver:
+    with SgFirefox(block_third_parties=True, user_agent=user_agent) as driver:
         driver.get(page_url)
 
         time.sleep(30)
