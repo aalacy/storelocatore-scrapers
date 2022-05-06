@@ -124,13 +124,10 @@ def fetch_data(sgw: SgWriter):
                 .replace("\n", "")
                 .strip()
             )
-        try:
-            state = ad.split(",")[1].split()[0].strip()
-            postal = ad.split(",")[1].split()[1].strip()
-            country_code = "US"
-            city = ad.split(",")[0].strip()
-        except:
-            print(ad, street_address)
+        state = ad.split(",")[1].split()[0].strip()
+        postal = ad.split(",")[1].split()[1].strip()
+        country_code = "US"
+        city = ad.split(",")[0].strip()
         try:
             latitude = str(d).split(",")[-2].split(",")[0].strip()
             longitude = str(d).split(",")[-1].replace("]", "").strip()
