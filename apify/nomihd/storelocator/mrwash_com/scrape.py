@@ -59,13 +59,12 @@ def fetch_data():
             ).strip()
             if len(raw_address) <= 0:
                 raw_address = (
-                    store_req.text.split("wash located at")[1]
+                    store_req.text.split("wash located at")[-1]
                     .strip()
                     .split("<")[0]
                     .strip()
                 )
 
-            raw_address = raw_address.split("Sign up")[0].strip()
             formatted_addr = parser.parse_address_usa(raw_address)
             street_address = formatted_addr.street_address_1
             if formatted_addr.street_address_2:
