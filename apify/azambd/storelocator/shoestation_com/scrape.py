@@ -4,7 +4,6 @@ import time
 import json
 
 from sgselenium.sgselenium import SgChrome
-from sgrequests import SgRequests
 from sglogging import sglog
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
@@ -22,7 +21,6 @@ headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
 
-session = SgRequests()
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 
 user_agent = (
@@ -88,8 +86,13 @@ def fetch_data():
         state = store[0].strip()
         store = store[1].split("Distance:")
         street_address = store[0].strip()
-        store = store[1].split("Monday")
-        hours_of_operation = ("Monday" + store[1]).strip()
+        try:
+            store = store[1].split("Monday")
+            hours_of_operation = ("Monday" + store[1]).strip()
+        except Exception as e:
+            hours_of_operation = MISSING
+            log.info(f"HOO MISSING: {e}")
+
         raw_address = f"{street_address} {city}, {state} {zip_postal}"
 
         yield SgRecord(
