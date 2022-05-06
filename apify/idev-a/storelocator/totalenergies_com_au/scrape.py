@@ -185,11 +185,11 @@ def fetch_data():
                         longitude = loc["geometry"]["coordinates"][0]
                         if latitude:
                             street_address = street_address.replace(
-                                latitude, ""
+                                str(latitude), ""
                             ).strip()
                         if longitude:
                             street_address = street_address.replace(
-                                longitude, ""
+                                str(longitude), ""
                             ).strip()
 
                         yield SgRecord(
