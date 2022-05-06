@@ -110,8 +110,14 @@ def fetch_data():
                     rawadd = add + " " + city + " " + state
                 if hours == "":
                     hours = "<MISSING>"
-                add = add.replace("&#39;", "'").replace("&amp;", "&")
-                name = name.replace("&#39;", "'").replace("&amp;", "&")
+                try:
+                    add = add.replace("&#39;", "'").replace("&amp;", "&")
+                except:
+                    add = "<MISSING>"
+                try:
+                    name = name.replace("&#39;", "'").replace("&amp;", "&")
+                except:
+                    name = "<MISSING>"
                 if country == "CANADA":
                     country = "CA"
                 if country == "UNITED STATES":
