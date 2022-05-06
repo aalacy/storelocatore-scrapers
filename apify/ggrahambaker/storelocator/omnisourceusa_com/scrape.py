@@ -31,7 +31,6 @@ def fetch_data(sgw: SgWriter):
     base = BeautifulSoup(req.text, "lxml")
 
     addys = base.find_all(class_="mb-3")
-    all_store_data = []
     for i in addys:
         addy = list(i.stripped_strings)
         location_name = addy[0]
