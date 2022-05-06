@@ -174,12 +174,13 @@ def fetch_data():
                                 street_address = street_address.split(" km")[-1].strip()
 
                             _street = street_address.split()
-                            if _street[-1].strip() == addr["country_code"]:
-                                del _street[-1]
-                            if city and _street[-1].strip() == city:
-                                del _street[-1]
+                            if _street:
+                                if _street[-1].strip() == addr["country_code"]:
+                                    del _street[-1]
+                                if city and _street[-1].strip() == city:
+                                    del _street[-1]
 
-                            street_address = " ".join(_street)
+                                street_address = " ".join(_street)
 
                         latitude = loc["geometry"]["coordinates"][1]
                         longitude = loc["geometry"]["coordinates"][0]
