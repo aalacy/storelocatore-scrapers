@@ -53,6 +53,8 @@ def fetch_data():
             )
         if not location_name:
             location_name = loc_dom.xpath('//h2[@class="header"]/text()')
+        if not location_name:
+            location_name = loc_dom.xpath("//h1/text()")
         location_name = location_name[0]
         raw_address = poi_html.xpath("text()")
         raw_address = [e.strip() for e in raw_address if e.strip()]
