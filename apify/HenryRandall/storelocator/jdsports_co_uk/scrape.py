@@ -68,6 +68,7 @@ class ScrapableSite:
 
 
 sites = [
+    ScrapableSite("jdsports.ie", SearchableCountries.IRELAND),
     ScrapableSite("jdsports.co.uk", SearchableCountries.BRITAIN),
     ScrapableSite("jdsports.es", SearchableCountries.SPAIN),
     ScrapableSite("jdsports.se", SearchableCountries.SWEDEN),
