@@ -60,6 +60,7 @@ def fetch_data(sgw: SgWriter):
                         f"https://www.luluhypermarket.com{country_slug}store-finder"
                     )
                     location_name = j.get("displayName") or "<MISSING>"
+                    location_name = str(location_name).replace("&amp;", "&").strip()
                     ad = f"{j.get('line1')} {j.get('line2')}".replace(
                         "None", ""
                     ).strip()
