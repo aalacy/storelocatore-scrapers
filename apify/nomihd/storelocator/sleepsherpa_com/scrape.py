@@ -82,40 +82,61 @@ def fetch_data():
                 ],
             )
         )
-
         raw_address = " ".join(full_address[1:])
+        if len(raw_address) <= 0:
+            home_req = session.get(
+                "https://sleepsherpa.com/home-page/showrooms/", headers=headers
+            )
+            home_sel = lxml.html.fromstring(home_req.text)
 
-        formatted_addr = parser.parse_address_usa(raw_address)
-        street_address = formatted_addr.street_address_1
-        if formatted_addr.street_address_2:
-            street_address = street_address + ", " + formatted_addr.street_address_2
+            full_address = list(
+                filter(
+                    str,
+                    [
+                        x.strip()
+                        for x in home_sel.xpath(
+                            '//div[@class="page-content lazyload"]/p/text()'
+                        )
+                    ],
+                )
+            )
+            street_address = full_address[-3]
+            city = full_address[-2].strip().split(",")[0].strip()
+            state = (
+                full_address[-2].strip().split(",")[-1].strip().split(" ")[0].strip()
+            )
+            zip = full_address[-2].strip().split(",")[-1].strip().split(" ")[-1].strip()
+        else:
+            formatted_addr = parser.parse_address_usa(raw_address)
+            street_address = formatted_addr.street_address_1
+            if formatted_addr.street_address_2:
+                street_address = street_address + ", " + formatted_addr.street_address_2
 
-        city = formatted_addr.city
-        state = formatted_addr.state
-        if not state:
-            state = "CA"
-        zip = formatted_addr.postcode
+            city = formatted_addr.city
+            state = formatted_addr.state
+            if not state:
+                state = "CA"
+            zip = formatted_addr.postcode
 
         country_code = "US"
         store_number = "<MISSING>"
-        phone = (
-            "".join(
-                list(
-                    filter(
-                        str,
-                        [
-                            x.strip()
-                            for x in store_sel.xpath(
-                                '//*[(self::h2 or self::h4 or self::h3) and contains(text(),"Call us")]//text()'
-                            )
-                        ],
-                    )
+        phone = "".join(
+            list(
+                filter(
+                    str,
+                    [
+                        x.strip()
+                        for x in store_sel.xpath(
+                            '//*[(self::h2 or self::h4 or self::h3) and contains(text(),"Call ")]//text()'
+                        )
+                    ],
                 )
             )
-            .split("at")[1]
-            .strip()
-        )
-
+        ).strip()
+        try:
+            phone = phone.split(":")[1].strip().split("email")[0].strip()
+        except:
+            pass
         location_type = "<MISSING>"
 
         hours = list(
@@ -123,9 +144,7 @@ def fetch_data():
                 str,
                 [
                     x.strip()
-                    for x in store_sel.xpath(
-                        '//*[(self::h2 or self::h4 or self::h3) and contains(text(),"day")]//text()'
-                    )
+                    for x in store_sel.xpath('//p[contains(text(),"day")]//text()')
                 ],
             )
         )
