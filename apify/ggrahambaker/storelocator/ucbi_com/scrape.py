@@ -17,7 +17,6 @@ headers = {
 
 def fetch_data(sgw: SgWriter):
     # Your scraper here
-    data = []
     pattern = re.compile(r"\s\s+")
     url = "https://www.ucbi.com/locations/"
     r = session.get(url, headers=headers)
