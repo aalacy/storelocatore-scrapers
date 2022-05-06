@@ -24,8 +24,8 @@ def fetch_data(sgw: SgWriter):
         .replace("}}} -->", "")
         .strip()
     )
-    js_block = js_block.replace("\\", "").split('href="')[1:]
-    for j in js_block:
+    js_block_l = js_block.replace("\\", "").split('href="')[1:]
+    for j in js_block_l:
 
         slug = str(j).split('"')[0].strip()
         page_url = f"https://www.dollartree.com{slug}"
