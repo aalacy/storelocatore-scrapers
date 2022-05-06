@@ -11,12 +11,21 @@ import json
 website = "berluti.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 headers = {
-    "Connection": "keep-alive",
-    "Cache-Control": "max-age=0",
-    "Upgrade-Insecure-Requests": "1",
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36",
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-    "Accept-Language": "en-US,en-GB;q=0.9,en;q=0.8",
+    "authority": "store.berluti.com",
+    "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+    "accept-language": "en-US,en-GB;q=0.9,en;q=0.8",
+    # Requests sorts cookies= alphabetically
+    # 'cookie': 'route=1651229838.497.9567.132960; device_view=full; _gcl_au=1.1.486805058.1651229841; sbjs_migrations=1418474375998%3D1; sbjs_current_add=fd%3D2022-04-29%2015%3A57%3A20%7C%7C%7Cep%3Dhttps%3A%2F%2Fstore.berluti.com%2F%7C%7C%7Crf%3D%28none%29; sbjs_first_add=fd%3D2022-04-29%2015%3A57%3A20%7C%7C%7Cep%3Dhttps%3A%2F%2Fstore.berluti.com%2F%7C%7C%7Crf%3D%28none%29; sbjs_current=typ%3Dtypein%7C%7C%7Csrc%3D%28direct%29%7C%7C%7Cmdm%3D%28none%29%7C%7C%7Ccmp%3D%28none%29%7C%7C%7Ccnt%3D%28none%29%7C%7C%7Ctrm%3D%28none%29; sbjs_first=typ%3Dtypein%7C%7C%7Csrc%3D%28direct%29%7C%7C%7Cmdm%3D%28none%29%7C%7C%7Ccmp%3D%28none%29%7C%7C%7Ccnt%3D%28none%29%7C%7C%7Ctrm%3D%28none%29; bridge-vid=34a899f2-e96e-4af6-ab60-c36f52a44dd6; euconsent-v2=CPSXeoAPSXeoAAHABBENCMCgAIAAAAAAAAAAAAAAAAAA.cAAAAAAAAAAA; _ga=GA1.3.130067645.1651229843; dw=1; dw_cookies_accepted=1; PHPSESSID=15c4c5d5db0b056cc051ebc94a2c593c; cookieconsent_status=allow; sbjs_udata=vst%3D2%7C%7C%7Cuip%3D%28none%29%7C%7C%7Cuag%3DMozilla%2F5.0%20%28Windows%20NT%2010.0%3B%20Win64%3B%20x64%29%20AppleWebKit%2F537.36%20%28KHTML%2C%20like%20Gecko%29%20Chrome%2F100.0.4896.127%20Safari%2F537.36; sbjs_session=pgs%3D1%7C%7C%7Ccpg%3Dhttps%3A%2F%2Fstore.berluti.com%2F; bridge-sid=41266fb3-d5d2-435c-be90-2926f11cdcaf; _uetsid=83383840cd4211eca54cd7ae10208c2a; _uetvid=649639c06edd11ec82e665c093bad17f; _gid=GA1.3.33413762.1651844610; _gat_bridge=1; OptanonConsent=isIABGlobal=false&datestamp=Fri+May+06+2022+18%3A43%3A30+GMT%2B0500+(Pakistan+Standard+Time)&version=6.16.0&hosts=&consentId=c8195df5-e425-4822-96d5-75b53d71319a&interactionCount=1&landingPath=NotLandingPage&groups=C0001%3A1%2CC0002%3A0%2CC0004%3A0%2CC0005%3A0&AwaitingReconsent=false; _clck=4zbmv0|1|f18|0; _clsk=1b03xdr|1651844611619|1|1|d.clarity.ms/collect; RT="sl=1&ss=1651844605731&tt=5517&obo=0&bcn=%2F%2F684d0d4c.akstat.io%2F&sh=1651844611260%3D1%3A0%3A5517&dm=berluti.com&si=776fbc72-f882-4d28-b193-e08485c94639&ld=1651844611262&nu=&cl=1651844629254&r=https%3A%2F%2Fstore.berluti.com%2F&ul=1651844629267"',
+    "referer": "https://store.berluti.com/",
+    "sec-ch-ua": '" Not A;Brand";v="99", "Chromium";v="100", "Google Chrome";v="100"',
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": '"Windows"',
+    "sec-fetch-dest": "document",
+    "sec-fetch-mode": "navigate",
+    "sec-fetch-site": "same-origin",
+    "sec-fetch-user": "?1",
+    "upgrade-insecure-requests": "1",
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36",
 }
 
 
@@ -45,20 +54,27 @@ def fetch_data():
     # Your scraper here
     search_url = "https://store.berluti.com/"
     with SgRequests() as session:
-        cities_req = session.get(search_url, headers=headers)
-        cities_sel = lxml.html.fromstring(cities_req.text)
-        cities = cities_sel.xpath(
-            '//div[@class="lf-footer-seo__container__grid__group lf-home__bottom-content__seo-footer__container__grid__group"]/ul/li//a'
-        )
-        for cit in cities:
+        home_req = session.get(search_url, headers=headers)
+        home_sel = lxml.html.fromstring(home_req.text)
+        countries = home_sel.xpath('//select[@id="country-input"]/option/@value')
+        for country in countries:
+            params = {
+                "countries[]": country,
+                "query": "",
+                "lat": "",
+                "lon": "",
+                "geo": "0",
+            }
+
             stores_req = session.get(
-                "https://store.berluti.com" + "".join(cit.xpath("@href")).strip(),
+                "https://store.berluti.com/search",
+                params=params,
                 headers=headers,
             )
-            city = "".join(cit.xpath("span/text()")).strip()
-            log.info(city)
             stores_sel = lxml.html.fromstring(stores_req.text)
-            stores = stores_sel.xpath('.//a[contains(text(),"Go to store")]/@href')
+            stores = list(
+                set(stores_sel.xpath('//a[contains(text(),"Go to store")]/@href'))
+            )
             for store_url in stores:
                 page_url = "https://store.berluti.com" + store_url
                 log.info(page_url)
