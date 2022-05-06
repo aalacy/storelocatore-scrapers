@@ -32,6 +32,7 @@ def fetch_data():
             street_address = addr.street_address_1
             if addr.street_address_2:
                 street_address += " " + addr.street_address_2
+
             yield SgRecord(
                 page_url=page_url,
                 location_name=_.h3.text.strip(),

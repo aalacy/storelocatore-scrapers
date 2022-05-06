@@ -91,7 +91,10 @@ def fetch_data():
             street_address = raw_address.split(",")[0].strip()
             city = raw_address.split(",")[1].strip().split(" ")[0].strip()
             state = "<MISSING>"
-            zip = raw_address.split(",")[1].strip().split(" ")[1].strip()
+            try:
+                zip = raw_address.split(",")[1].strip().split(" ")[1].strip()
+            except:
+                zip = "<MISSING>"
 
             country_code = "SA"
 

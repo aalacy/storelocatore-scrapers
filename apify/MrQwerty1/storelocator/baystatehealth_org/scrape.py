@@ -158,7 +158,7 @@ def fetch_data(sgw: SgWriter):
     urls = get_urls()
     _types, coords = get_params()
 
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
+    with futures.ThreadPoolExecutor(max_workers=3) as executor:
         future_to_url = {
             executor.submit(get_data, url, _types, coords, sgw): url for url in urls
         }

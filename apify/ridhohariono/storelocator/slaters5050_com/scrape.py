@@ -16,7 +16,7 @@ HEADERS = {
 }
 log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
 
-session = SgRequests()
+session = SgRequests(verify_ssl=False, timeout_config=5)
 
 MISSING = "<MISSING>"
 
@@ -48,7 +48,10 @@ def getAddress(raw_address):
 
 def pull_content(url):
     log.info("Pull content => " + url)
-    soup = bs(session.get(url, headers=HEADERS).content, "lxml")
+    try:
+        soup = bs(session.get(url, headers=HEADERS).content, "lxml")
+    except:
+        return False
     return soup
 
 
@@ -70,46 +73,57 @@ def fetch_data():
     for row in contents:
         page_url = row["href"]
         info = pull_content(page_url)
-        if "las-vegas" in page_url:
-            addr = (
-                info.select_one(
-                    "div.vc_column-inner.vc_custom_1512389166631 div.wpb_text_column.wpb_content_element"
-                )
-                .get_text(strip=True, separator="@@")
-                .split("@@")
-            )
-            location_name = addr[0]
-            raw_address = ",".join(addr[1:-2])
-            phone = addr[-2]
-            hours_of_operation = (
-                info.find(
-                    "div",
-                    {
-                        "class": "wpb_text_column wpb_content_element vc_custom_1585601459333"
-                    },
-                )
-                .find("p")
-                .text.strip()
-                .replace("HOURS", "")
-            )
-            map_link = info.find("iframe")["data-src"]
-            latitude, longitude = get_latlong(map_link)
-            location_type = MISSING
-        else:
-            location_name = row.text
-            hoo_content = info.find("div", {"class": "hours"}).find("p")
-            if "Coming Soon" in hoo_content.text.strip():
-                location_type = "COMING_SOON"
-                phone = MISSING
-            else:
-                phone = info.find("p", {"class": "phone"}).text.strip()
-                location_type = MISSING
-            raw_address = info.find("p", {"class": "address"}).get_text(
-                strip=True, separator=","
-            )
-            hours_of_operation = hoo_content.get_text(strip=True, separator=",")
+        if not info:
+            location_name = row.text.strip()
+            phone = row.find_next("a").text.strip()
+            addr_info = row.find_next("a").find_next("a")["href"]
+            addr_info = addr_info.split("?q=")[1].replace("+", " ").strip()
+            hours_of_operation = MISSING
             latitude = MISSING
             longitude = MISSING
+        else:
+            if "las-vegas" in page_url:
+                addr = (
+                    info.select_one(
+                        "div.vc_column-inner.vc_custom_1512389166631 div.wpb_text_column.wpb_content_element"
+                    )
+                    .get_text(strip=True, separator="@@")
+                    .split("@@")
+                )
+                location_name = addr[0]
+                raw_address = ",".join(addr[1:-2])
+                phone = addr[-2]
+                hours_of_operation = (
+                    info.find(
+                        "div",
+                        {
+                            "class": "wpb_text_column wpb_content_element vc_custom_1585601459333"
+                        },
+                    )
+                    .find("p")
+                    .text.strip()
+                    .replace("HOURS", "")
+                )
+                map_link = info.find("iframe")["src"]
+                latitude, longitude = get_latlong(map_link)
+                location_type = MISSING
+            else:
+                location_name = row.text
+                hoo_content = info.find("div", {"class": "hours"}).find("p")
+                if "Coming Soon" in hoo_content.text.strip():
+                    location_type = "COMING_SOON"
+                    phone = MISSING
+                else:
+                    phone = info.find("p", {"class": "phone"}).text.strip()
+                    location_type = MISSING
+                raw_address = " ".join(
+                    info.find("p", {"class": "address"})
+                    .get_text(strip=True, separator=",")
+                    .split()
+                )
+                hours_of_operation = hoo_content.get_text(strip=True, separator=",")
+                latitude = MISSING
+                longitude = MISSING
         street_address, city, state, zip_postal = getAddress(raw_address)
         country_code = "US"
         store_number = MISSING

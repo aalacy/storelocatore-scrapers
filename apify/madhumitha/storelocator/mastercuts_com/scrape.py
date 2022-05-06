@@ -1,124 +1,105 @@
-import csv
+from lxml import etree
+from urllib.parse import urljoin
+
 from sgrequests import SgRequests
-from bs4 import BeautifulSoup
-
-DOMAIN = "https://mastercuts.com"
-MISSING = "<MISSING>"
-
-user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
-HEADERS = {"User-Agent": user_agent}
-
-session = SgRequests()
-
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
+from sgselenium.sgselenium import SgFirefox
 
 
 def fetch_data():
-    data = []
-    storelist = []
-    url = "https://www.signaturestyle.com/salon-directory.html"
-    response = session.get(url, headers=HEADERS)
-    soup = BeautifulSoup(response.content, "html.parser")
-    loclist = soup.select("a[href*=locations]")
-    for loc_url in loclist:
-        loc_url = "https://www.signaturestyle.com" + loc_url["href"]
+    session = SgRequests()
+    domain = "mastercuts.com"
+    hdr = {
+        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
+    }
 
-        if "pr.html" in loc_url:
-            continue
-        res = session.get(loc_url, headers=HEADERS)
-        soup = BeautifulSoup(res.text, "html.parser")
-        linklist = soup.select("a[href*=haircuts]")
-        for link in linklist:
-            link = "https://www.signaturestyle.com" + link["href"]
-            r = session.get(link, headers=HEADERS)
-            loc_data = BeautifulSoup(r.text, "html.parser")
-            loc_soup = loc_data.find(class_="salondetailspagelocationcomp")
-            try:
-                location_name = loc_data.find("h2").text.strip()
-                country = "US"
+    start_url = "https://www.signaturestyle.com/salon-directory.html"
+    response = session.get(start_url, headers=hdr)
+    dom = etree.HTML(response.text)
+    all_states = dom.xpath('//a[@class="btn btn-primary"]/@href')
+    with SgFirefox() as driver:
+        for url in all_states:
+            response = session.get(urljoin(start_url, url))
+            dom = etree.HTML(response.text)
+            all_locations = dom.xpath("//td/a")
+            for poi_html in all_locations:
+                url = poi_html.xpath("@href")[0]
+                raw_address = poi_html.xpath("text()")[0]
+                page_url = urljoin(start_url, url)
+                driver.get(page_url)
+                loc_dom = etree.HTML(driver.page_source)
 
-                hours_of_operation = " ".join(
-                    list(loc_soup.find(class_="salon-timings").stripped_strings)
+                location_name = loc_dom.xpath("//h2/text()")
+                if not location_name:
+                    continue
+                location_name = location_name[0]
+                street_address = loc_dom.xpath(
+                    '//span[@itemprop="streetAddress"]/text()'
                 )
-            except:
-                continue
-            phone = loc_soup.find(id="sdp-phone").text.strip()
-            street_address = loc_soup.find(
-                "span", attrs={"itemprop": "streetAddress"}
-            ).text.strip()
-            city = loc_soup.find(
-                "span", attrs={"itemprop": "addressLocality"}
-            ).text.strip()
-            state = loc_soup.find(
-                "span", attrs={"itemprop": "addressRegion"}
-            ).text.strip()
-            zipcode = loc_soup.find(
-                "span", attrs={"itemprop": "postalCode"}
-            ).text.strip()
-            lat = loc_data.find("meta", attrs={"itemprop": "latitude"})["content"]
-            lon = loc_data.find("meta", attrs={"itemprop": "longitude"})["content"]
-            store_number = link.split("-")[-1].split(".")[0]
-            location_type = "<MISSING>"
+                street_address = street_address[0] if street_address else ""
+                if not street_address:
+                    street_address = raw_address.split(", ")[1]
+                city = loc_dom.xpath('//span[@itemprop="addressLocality"]/text()')
+                city = city[0] if city else ""
+                if not city:
+                    city = raw_address.split(", ")[2]
+                state = loc_dom.xpath('//span[@itemprop="addressRegion"]/text()')
+                state = state[0].strip() if state else ""
+                if not state:
+                    state = raw_address.split(", ")[3].split()[0]
+                zip_code = loc_dom.xpath('//span[@itemprop="postalCode"]/text()')
+                zip_code = zip_code[0] if zip_code else ""
+                if not zip_code:
+                    zip_code = raw_address.split(", ")[3].split()[1]
+                phone = loc_dom.xpath('//a[@id="sdp-phone"]/text()')
+                phone = phone[0] if phone else ""
+                latitude = loc_dom.xpath('//meta[@itemprop="latitude"]/@content')
+                if not latitude:
+                    continue
+                latitude = latitude[0] if latitude else ""
+                longitude = loc_dom.xpath('//meta[@itemprop="longitude"]/@content')[0]
+                hoo = loc_dom.xpath(
+                    '//div[@class="salondetailspagelocationcomp"]//div[@class="store-hours sdp-store-hours"]//text()'
+                )
+                hoo = " ".join(hoo).split(" Monday")[0]
+                if not hoo:
+                    hoo = loc_dom.xpath('//div[@class="salon-timings"]//text()')
+                    hoo = " ".join([e.strip() for e in hoo if e.strip()])
 
-            if " " in zipcode:
-                country = "CA"
-            if len(hours_of_operation) < 3:
-                hours_of_operation = "<MISSING>"
-            if store_number in storelist:
-                continue
-            storelist.append(store_number)
-            data.append(
-                [
-                    DOMAIN,
-                    link,
-                    location_name,
-                    street_address,
-                    city,
-                    state,
-                    zipcode,
-                    country,
-                    store_number,
-                    phone,
-                    location_type,
-                    lat,
-                    lon,
-                    hours_of_operation,
-                ]
-            )
-    return data
+                item = SgRecord(
+                    locator_domain=domain,
+                    page_url=page_url,
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=zip_code,
+                    country_code="",
+                    store_number="",
+                    phone=phone,
+                    location_type="",
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=hoo,
+                )
+
+                yield item
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()

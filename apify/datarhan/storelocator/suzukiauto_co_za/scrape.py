@@ -43,6 +43,8 @@ def fetch_data():
         )
         hoo = loc_dom.xpath('//div[p[contains(text(), "Sales Hours")]]/p/text()')[:-1]
         hoo = " ".join([e.strip() for e in hoo if e.strip()])
+        if not hoo:
+            continue
 
         item = SgRecord(
             locator_domain=domain,

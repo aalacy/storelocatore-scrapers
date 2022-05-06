@@ -6,7 +6,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
-from sgselenium.sgselenium import SgChrome
+from sgselenium.sgselenium import SgFirefox
 from sglogging import sglog
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
@@ -20,6 +20,8 @@ MISSING = SgRecord.MISSING
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 
 ssl._create_default_https_context = ssl._create_unverified_context
+
+user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.99 Safari/537.36"
 
 
 def driver_sleep(driver, time=2):
@@ -36,12 +38,15 @@ def random_sleep(driver, start=5, limit=3):
 
 
 def fetch_stores():
-    with SgChrome() as driver:
+    with SgFirefox(
+        block_third_parties=True, is_headless=True, user_agent=user_agent
+    ) as driver:
         driver.get(store_url)
-        random_sleep(driver, 20)
-        return json.loads(driver.page_source.split("fnacStoreData =")[1].split(";")[0])[
-            "Store"
-        ]
+        random_sleep(driver, 30)
+        jsontxt = (
+            driver.page_source.split('data-stores="')[1].split('" data-zoom=')[0]
+        ).replace("&quot;", '"')
+        return json.loads(jsontxt)["Store"]
     return []
 
 
@@ -90,8 +95,10 @@ def fetch_data():
         page_url = get_JSON_object_variable(store, "Url")
         location_name = get_JSON_object_variable(store, "Name")
         location_type = get_JSON_object_variable(store, "ShopTypeName")
-        street_address = get_JSON_object_variable(store, "AddressLine").replace(
-            "\n", ", "
+        street_address = (
+            get_JSON_object_variable(store, "AddressLine")
+            .replace("\n", ", ")
+            .replace(",,", ",")
         )
         city = get_JSON_object_variable(store, "CityName")
         zip_postal = get_JSON_object_variable(store, "ZipCode")
@@ -110,6 +117,11 @@ def fetch_data():
         raw_address = raw_address.replace(", ,", ",").replace(",,", ",")
         if raw_address[len(raw_address) - 1] == ",":
             raw_address = raw_address[:-1]
+
+        # temporarily closed checking
+        tcc = get_JSON_object_variable(store, "MessageOpening")
+        if "Fermé" in str(tcc):
+            location_type = "Temporarily closed"
 
         yield SgRecord(
             locator_domain="fnac.com",
@@ -134,7 +146,9 @@ def fetch_data():
 def scrape():
     log.info(f"Start Crawling {website} ...")
     start = time.time()
-    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
+    ) as writer:
         for rec in fetch_data():
             writer.write_row(rec)
     end = time.time()
