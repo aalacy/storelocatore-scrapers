@@ -94,9 +94,9 @@ def fetch_location(url, retry=0):
                 )
             )
             if "gas" not in loc_type.lower() and "diesel" not in loc_type.lower():
-                continue
+                loc_type = "No Fuel"
         except:
-            continue
+            loc_type = ""
 
         return SgRecord(
             locator_domain="https://www.kroger.com/",
@@ -109,7 +109,7 @@ def fetch_location(url, retry=0):
             country_code=country_code,
             store_number=store_number,
             phone=phone,
-            location_type="",
+            location_type=loc_type,
             latitude=lat,
             longitude=lng,
             hours_of_operation=hours,
