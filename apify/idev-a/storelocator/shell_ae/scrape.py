@@ -56,12 +56,10 @@ def fetch_boundings(boundings, json_url, writer):
 
                     if not street_address:
                         street_address = _.get("address")
-                        if street_address and _["city"]:
+                        if street_address and _["city"] and _["city"] in street_address:
                             cc = street_address.split(_["city"])
-                            if len(cc) == 1:
-                                street_address = cc[-1]
-                            else:
-                                street_address = _["city"].join(cc[1:])
+                            if len(cc) > 2:
+                                street_address = _["city"].join(cc[:-1])
 
                     zip_postal = _.get("postcode")
                     if zip_postal and zip_postal == "00000":
@@ -71,7 +69,7 @@ def fetch_boundings(boundings, json_url, writer):
                     if phone == "0":
                         phone = ""
                     if phone:
-                        phone = phone.split("/")[0]
+                        phone = phone.split("/")[0].split("\n")[0]
 
                     location_type = ", ".join(_.get("channel_types", []))
                     if not location_type:
@@ -80,7 +78,9 @@ def fetch_boundings(boundings, json_url, writer):
                         SgRecord(
                             page_url=_.get("website_url"),
                             location_name=_["name"],
-                            street_address=street_address,
+                            street_address=street_address.replace("\n", " ")
+                            .replace("\r", "")
+                            .replace("\t", ""),
                             city=_["city"],
                             state=_.get("state"),
                             zip_postal=zip_postal,
