@@ -203,20 +203,6 @@ def fetch_records(coord, search, current_country, sgw: SgWriter):
                     sgw.write_row(item)
 
 
-# countries_to_be_crawled = {
-#     "Canada": ["CA", "CANADA"],
-#     "Mainland China": ["CN", "CHINA"],
-#     "Hong Kong SAR, China": ["HK", "HONG_KONG"],
-#     "Korea": ["KR", "KOREA_S"],
-#     "Macao SAR, China": ["MO", "MACAO"],
-#     "Sweden": ["SE", "SWEDEN"],
-#     "Singapore": ["SG", "SINGAPORE"],
-#     "Taiwan Region": ["TW", "TAIWAN"],
-#     "United Kingdom": ["GB", "BRITAIN"],
-#     "United States": ["US", "USA"],
-# }
-
-
 def fetch_data(sgw: SgWriter):
     logger.info("Started")
 
