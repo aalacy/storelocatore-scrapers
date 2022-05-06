@@ -19,10 +19,11 @@ def fetch_data():
         hoo = etree.HTML(poi["hours"])
         hoo = [elem.strip() for elem in hoo.xpath("//text()") if elem.strip()]
         hoo = " ".join(hoo) if hoo else ""
+        page_url = poi["url"] if poi["url"] else "https://juanpollo.com/locations/"
 
         item = SgRecord(
             locator_domain=domain,
-            page_url=poi["url"],
+            page_url=page_url,
             location_name=poi["store"],
             street_address=poi["address"],
             city=poi["city"],
