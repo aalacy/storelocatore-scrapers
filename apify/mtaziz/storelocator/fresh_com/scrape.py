@@ -15,7 +15,9 @@ MISSING = SgRecord.MISSING
 
 
 def fetch_data():
-    with SgFirefox(executable_path=GeckoDriverManager().install(), block_third_parties=True) as driver:
+    with SgFirefox(
+        executable_path=GeckoDriverManager().install(), block_third_parties=True
+    ) as driver:
         driver.get(STORE_LOCATOR)
         logger.info(f"Pulling the content from {STORE_LOCATOR}")
         driver.implicitly_wait(30)
@@ -23,8 +25,10 @@ def fetch_data():
         sel = html.fromstring(pgsrcf, "lxml")
         divs_bout = sel.xpath('//div[@id="boutique"]/div')
         for idx, div in enumerate(divs_bout[0:]):
-            store_number = "".join(div.xpath('./@data-store-id'))
-            location_name = "".join(div.xpath('.//a[@class="store_heading"]/@aria-label'))
+            store_number = "".join(div.xpath("./@data-store-id"))
+            location_name = "".join(
+                div.xpath('.//a[@class="store_heading"]/@aria-label')
+            )
             coord = div.xpath('.//a[@class="store_heading"]/@data-store-coord')
             lat = ""
             lng = ""
@@ -34,10 +38,12 @@ def fetch_data():
             store_state = "".join(store_state).replace(", ", "")
             state = ""
             if store_state:
-                state=store_state
+                state = store_state
             store_hours = div.xpath('.//*[@class="store_hours"]/text()')
             store_hours = "".join(store_hours)
-            location_type = "".join(div.xpath('.//address/div[@class="show-in-map"]/@data-store-type'))
+            location_type = "".join(
+                div.xpath('.//address/div[@class="show-in-map"]/@data-store-type')
+            )
             raw_address = div.xpath('.//address/div[@class="show-in-map"]/text()')
             raw_address = "".join(raw_address)
             ra = " ".join(raw_address.split())
@@ -55,22 +61,22 @@ def fetch_data():
             else:
                 country_code = MISSING
             item = SgRecord(
-                            locator_domain="fresh.com",
-                            page_url="https://www.fresh.com/us/stores",
-                            location_name=location_name,
-                            street_address=street_address.strip(),
-                            city=city.strip(),
-                            state=state,
-                            zip_postal=zip_postal.strip(),
-                            country_code=country_code,
-                            store_number=store_number,
-                            phone=phone.strip(),
-                            location_type=location_type,
-                            latitude=lat,
-                            longitude=lng,
-                            hours_of_operation=store_hours.strip(),
-                            raw_address=ra,
-                        )
+                locator_domain="fresh.com",
+                page_url="https://www.fresh.com/us/stores",
+                location_name=location_name,
+                street_address=street_address.strip(),
+                city=city.strip(),
+                state=state,
+                zip_postal=zip_postal.strip(),
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone.strip(),
+                location_type=location_type,
+                latitude=lat,
+                longitude=lng,
+                hours_of_operation=store_hours.strip(),
+                raw_address=ra,
+            )
             yield item
 
 
