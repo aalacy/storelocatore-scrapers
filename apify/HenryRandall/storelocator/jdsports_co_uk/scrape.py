@@ -97,6 +97,7 @@ def format_hours(hours):
 
     return ", ".join(data)
 
+
 def fetch_locations(site):
     pois = []
     locations = site.get_locations()
@@ -124,6 +125,7 @@ def fetch_locations(site):
         )
 
     return pois
+
 
 def fetch_data():
     pois = []
