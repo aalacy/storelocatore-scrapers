@@ -29,7 +29,6 @@ def fetch_data(sgw: SgWriter):
                 "license",
                 "number",
                 "ahccs",
-                "airport",
                 "hcs",
                 "hha",
                 "ahca",
