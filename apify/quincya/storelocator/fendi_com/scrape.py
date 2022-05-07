@@ -88,7 +88,7 @@ def fetch_data(sgw: SgWriter):
                 phone = ""
         except:
             phone = ""
-        store_number = ""
+        store_number = base.main["itemid"].split("#")[-1]
         location_type = ""
 
         try:
