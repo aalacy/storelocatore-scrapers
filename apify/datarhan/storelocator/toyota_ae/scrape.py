@@ -26,7 +26,10 @@ def fetch_data():
         loc_response = session.get(page_url)
         loc_dom = etree.HTML(loc_response.text)
         phone = loc_dom.xpath('//a[contains(@href, "tel")]/@href')[0].split(":")[-1]
-        hoo = f"{poi['Opening_Time']} - {poi['Closing_Time']}"
+        hoo = loc_dom.xpath(
+            '//p[strong[contains(text(), "SALES")]]/following-sibling::table[1]//text()'
+        )
+        hoo = " ".join(" ".join(hoo).split())
 
         item = SgRecord(
             locator_domain=domain,
@@ -52,7 +55,11 @@ def scrape():
     with SgWriter(
         SgRecordDeduper(
             SgRecordID(
-                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+                {
+                    SgRecord.Headers.LOCATION_NAME,
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.PAGE_URL,
+                }
             )
         )
     ) as writer:

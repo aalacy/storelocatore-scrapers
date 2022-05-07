@@ -59,11 +59,7 @@ def fetch_data(sgw: SgWriter):
         street_address = base.find(itemprop="streetAddress")["content"]
         state = base.find(itemprop="addressRegion").text.strip()
         zip_code = base.find(itemprop="postalCode").text.strip()
-
-        try:
-            city = base.find(class_="c-address-city").text.strip()
-        except:
-            city = base.find(class_="Address-field Address-city").text.strip()
+        city = base.find(class_="Address-field Address-city").text.strip()
         country_code = "US"
 
         try:
@@ -76,7 +72,13 @@ def fetch_data(sgw: SgWriter):
             store_number = base.main["itemid"].split("#")[1]
         except:
             store_number = ""
-        location_type = ""
+
+        try:
+            location_type = ", ".join(
+                list(base.find(class_="Core-featuresList").stripped_strings)
+            )
+        except:
+            location_type = ""
 
         try:
             hours_of_operation = (

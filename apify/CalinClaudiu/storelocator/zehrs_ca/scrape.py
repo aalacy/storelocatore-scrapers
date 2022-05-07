@@ -3,8 +3,7 @@ from sglogging import sglog
 
 import ssl
 from sgscrape import simple_utils as utils
-from sgrequests.sgrequests import SgRequests
-from requests.packages.urllib3.util.retry import Retry
+from sgrequests import SgRequests
 
 from sgselenium import SgChrome
 
@@ -379,11 +378,7 @@ def determine_verification_link(rec, typ, fullId, last4, typIter):
 
     def determined_possible():
         def passed():
-            retryBehaviour = Retry(total=2, connect=2, read=2, backoff_factor=0.1)
-            retryBehaviour = False
-            with SgRequests(
-                retry_behavior=retryBehaviour, proxy_rotation_failure_threshold=2
-            ) as session:
+            with SgRequests() as session:
                 try:
                     if result["api"]:
                         test_url = result["api"]
@@ -474,43 +469,49 @@ def url_fix(url):
 
 
 def get_api_call(url):
-    driver = SgChrome().driver()
-    driver.get(url)
-    to_click = WebDriverWait(driver, 40).until(
-        EC.visibility_of_element_located(
-            (By.XPATH, '//*[@id="root"]/section/div/div[1]/div[2]/div')
-        )
-    )
-    to_click.click()
-
-    input_field = WebDriverWait(driver, 10).until(
-        EC.visibility_of_element_located(
-            (
-                By.XPATH,
-                "/html/body/div[6]/div[3]/div[2]/section/div/div[1]/div[2]/div/div[3]/form/div/div[2]/div/input",
+    with SgChrome() as driver:
+        driver.get(url)
+        to_click = WebDriverWait(driver, 40).until(
+            EC.visibility_of_element_located(
+                (By.XPATH, '//*[@id="root"]/section/div/div[1]/div[2]/div')
             )
         )
-    )
-    input_field.send_keys("B3L 4T2")
-    input_field.send_keys(Keys.RETURN)
-    time.sleep(10)
-    wait_for_loc = WebDriverWait(driver, 30).until(  # noqa
-        EC.visibility_of_element_located(
-            (
-                By.XPATH,
-                "/html/body/div[6]/div[3]/div[2]/section/div/div[3]/div[1]/div/ol/li[1]/div",
+        to_click.click()
+
+        input_field = WebDriverWait(driver, 10).until(
+            EC.visibility_of_element_located(
+                (
+                    By.XPATH,
+                    "/html/body/div[6]/div[3]/div[2]/section/div/div[1]/div[2]/div/div[3]/form/div/div[2]/div/input",
+                )
             )
         )
-    )
+        input_field.send_keys("B3L 4T2")
+        input_field.send_keys(Keys.RETURN)
+        time.sleep(10)
+        try:
+            wait_for_loc = WebDriverWait(driver, 30).until(  # noqa
+                EC.visibility_of_element_located(
+                    (
+                        By.XPATH,
+                        "/html/body/div[6]/div[3]/div[2]/section/div/div[3]/div[1]/div/ol/li[1]/div",
+                    )
+                )
+            )
+        except Exception:
+            logzilla.info(driver.page_source)
+            z = driver.requests
+            for i in z:
+                logzilla.info(i)
 
-    time.sleep(10)
-    for r in driver.requests:
-        if "DoSearch2" in r.path:
-            url = r.url
-            headers = r.headers
-    driver.quit()
-    time.sleep(10)
-    return url, headers
+        time.sleep(10)
+        headers = {}
+        for r in driver.requests:
+            if "DoSearch2" in r.path:
+                url = r.url
+                headers = r.headers
+        time.sleep(10)
+        return url, headers
 
 
 def defuzz(record):
@@ -626,6 +627,34 @@ def lesser_datasource():
         }
 
 
+def fix_rec(x):
+    x["Address1x"] = x.get("Address1")
+    x["Address2x"] = x.get("Address2")
+    x["Address3x"] = x.get("Address3")
+    x["Address4x"] = x.get("Address4")
+    try:
+        if (
+            any(j in x for j in ["UITE", "LOOR", "NIT", "uite", "loor", "nit"])
+            not in x["Address2"]
+        ):
+            x["Address2"] = ""
+
+        if (
+            any(j in x for j in ["UITE", "LOOR", "NIT", "uite", "loor", "nit"])
+            not in x["Address3"]
+        ):
+            x["Address3"] = ""
+
+        if (
+            any(j in x for j in ["UITE", "LOOR", "NIT", "uite", "loor", "nit"])
+            not in x["Address4"]
+        ):
+            x["Address4"] = ""
+    except Exception:
+        pass
+    return x
+
+
 def fetch_data():
     # https://ws2.bullseyelocations.com/RestSearch.svc/ # noqa
     # DoSearch2? # noqa
@@ -707,7 +736,7 @@ def fetch_data():
             megafails.append(i)  # noqa
             yield defuzz(i)
         else:
-            yield i
+            yield fix_rec(i)
 
     # ########for debugging megafails: # noqa
     # print(len(megafails)) # noqa
@@ -715,7 +744,7 @@ def fetch_data():
     #    file.write(json.dumps(megafails)) # noqa
 
     for i in lesser_datasource():
-        yield i
+        yield fix_rec(i)
     logzilla.info(f"Finished grabbing data!!☺ ")  # noqa
 
 
@@ -725,7 +754,8 @@ def fix_comma(x):
     try:
         for i in x.split(", "):
             if len(i.strip()) >= 1:
-                h.append(i)
+                if i != ",":
+                    h.append(i)
         return ", ".join(h)
     except Exception:
         return x
@@ -767,6 +797,13 @@ def phoneident(x):
     return x
 
 
+def fix_city(x):
+    try:
+        return x.split(",")[0]
+    except Exception:
+        return x
+
+
 def scrape():
     field_defs = sp.SimpleScraperPipeline.field_definitions(
         locator_domain=sp.MappingField(
@@ -802,6 +839,7 @@ def scrape():
         ),
         city=sp.MappingField(
             mapping=["City"],
+            value_transform=fix_city,
             is_required=False,
         ),
         state=sp.MappingField(
@@ -836,7 +874,11 @@ def scrape():
             is_required=False,
             part_of_record_identity=True,
         ),
-        raw_address=sp.MissingField(),
+        raw_address=sp.MultiMappingField(
+            mapping=[["Address1x"], ["Address2x"], ["Address3x"], ["Address4x"]],
+            multi_mapping_concat_with=" ",
+            is_required=False,
+        ),
     )
 
     pipeline = sp.SimpleScraperPipeline(
