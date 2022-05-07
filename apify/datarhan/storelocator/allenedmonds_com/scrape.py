@@ -26,8 +26,11 @@ def fetch_data():
                 driver.get(start_url)
             except Exception:
                 continue
-            sleep(5)
-            driver.find_element_by_name("zip").send_keys(code)
+            sleep(8)
+            try:
+                driver.find_element_by_name("zip").send_keys(code)
+            except Exception:
+                continue
             sleep(2)
             driver.find_element_by_name("zip").send_keys(Keys.ENTER)
             sleep(3)

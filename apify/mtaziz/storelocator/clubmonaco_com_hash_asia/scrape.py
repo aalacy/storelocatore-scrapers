@@ -155,6 +155,7 @@ def fetch_records(coord, search, current_country, sgw: SgWriter):
             js = sel.xpath(
                 '//script[contains(@type, "application/ld+json") and contains(text(), "store")]/text()'
             )
+            storeids = sel.xpath('//*[contains(@class, "google-map-")]/@data-storeid')
             js = "".join(js)
             js = json.loads(js)
             json_data = js["store"]
@@ -163,7 +164,7 @@ def fetch_records(coord, search, current_country, sgw: SgWriter):
             if not json_data:
                 return
             else:
-                for _ in json_data:
+                for sid, _ in enumerate(json_data):
                     ln = _["name"] or ""
                     tel = _["telephone"] or ""
                     tel = good_phone(tel)
@@ -178,21 +179,28 @@ def fetch_records(coord, search, current_country, sgw: SgWriter):
                     cc = _["address"]["addressCountry"] or ""
                     lat = _["geo"]["latitude"] or ""
                     lng = _["geo"]["longitude"] or ""
-                    lt = ""
+                    lt = _["@type"] or ""
                     hoo = fix_hours(_["openingHours"])
                     raw_address = staraw
-                    DOMAIN = "clubmonaco_com"
                     search.found_location_at(float(lat), float(lng))
+                    store_number = ""
+                    store_url = ""
+                    try:
+                        store_number = storeids[sid]
+                        store_url = f"https://www.clubmonaco.com/en/Stores-Details?StoreID={store_number}"
+                    except:
+                        store_number = ""
+                        store_url = ""
                     item = SgRecord(
-                        locator_domain=DOMAIN,
-                        page_url="",
+                        locator_domain="clubmonaco.com",
+                        page_url=store_url,
                         location_name=ln,
                         street_address=sta,
                         city=city,
                         state=state,
                         zip_postal=zc,
                         country_code=cc,
-                        store_number="",
+                        store_number=store_number,
                         phone=tel,
                         location_type=lt,
                         latitude=lat,

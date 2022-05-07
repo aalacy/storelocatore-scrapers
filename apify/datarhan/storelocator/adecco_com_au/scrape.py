@@ -8,7 +8,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
-from sgselenium.sgselenium import SgFirefox
+from sgselenium.sgselenium import SgChrome
 
 
 def fetch_data():
@@ -23,11 +23,11 @@ def fetch_data():
     dom = etree.HTML(response.text)
 
     all_locations = dom.xpath('//div[@class="location-list"]//a/@href')
-    with SgFirefox() as driver:
+    with SgChrome() as driver:
         for url in all_locations:
             page_url = urljoin(start_url, url)
             driver.get(page_url)
-            sleep(5)
+            sleep(15)
             try:
                 driver.switch_to.frame(
                     driver.find_element_by_xpath('//iframe[contains(@src, "maps")]')
