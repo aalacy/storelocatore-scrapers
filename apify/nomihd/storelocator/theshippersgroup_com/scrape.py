@@ -96,7 +96,7 @@ def fetch_data():
         phone = "<MISSING>"
         for raw in store_info:
             if "-" in raw:
-                phone = raw
+                phone = raw.replace("Phone:", "").strip()
                 break
             elif "ft" in raw or "square feet" in raw:
                 break

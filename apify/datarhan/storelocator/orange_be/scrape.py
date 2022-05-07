@@ -1,3 +1,4 @@
+from time import sleep
 from lxml import etree
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
@@ -24,6 +25,7 @@ def fetch_data():
                 f'https://www.orange.be/nl/shop_locator/shop/{poi["slug"]}.json'
             ).json()
             driver.get(page_url)
+            sleep(5)
             loc_dom = etree.HTML(driver.page_source)
             hoo = loc_dom.xpath('//div[@class="hours-week"]//text()')
             hoo = " ".join([e.strip() for e in hoo if e.strip()])
