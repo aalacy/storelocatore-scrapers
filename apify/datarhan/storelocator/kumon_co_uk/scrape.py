@@ -87,6 +87,8 @@ def fetch_data():
 
         for store_url in list(set(all_locations)):
             loc_response = session.get(store_url)
+            if loc_response.status_code != 200:
+                continue
             loc_dom = etree.HTML(loc_response.text)
             if "/" in domain:
                 country_code = domain.split("/")[-1]
