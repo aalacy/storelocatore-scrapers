@@ -47,6 +47,8 @@ def fetch_data(sgw: SgWriter):
             .replace("|", " ")
             .strip()
         )
+        if "Coming Soon" in location_name:
+            hours_of_operation = "Coming Soon"
 
         row = SgRecord(
             locator_domain=locator_domain,

@@ -35,7 +35,7 @@ def fetch_data():
     stores = stores_sel.xpath('//div[@class="wp-block-columns"]')
     for store in stores:
         store_url = "".join(
-            store.xpath(".//p/span/a[contains(@href,'/locations/')]/@href")
+            store.xpath(".//p//a[contains(@href,'/locations/')]/@href")
         ).strip()
         page_url = ""
         if "biscuitsandbath" not in store_url:
@@ -82,7 +82,7 @@ def fetch_data():
                 store.xpath('div[2]/p[1]/a[contains(@href,"tel:")]/text()')
             ).strip()
 
-        temp_days = store.xpath("div[2]/p[1]/strong/span/text()")
+        temp_days = store.xpath("div[2]/p[1]/strong/mark/text()")
         days_list = []
         for day in temp_days:
             if len("".join(day).strip()) > 0:

@@ -38,13 +38,13 @@ def get_latlng(map_link):
 
 def fetch_data():
     # Your scraper here
-    search_url = "https://jeeppr.com/contactenos.html"
+    search_url = "https://jeeppr.com/concesionarios.html"
 
     with SgRequests() as session:
         search_res = session.get(search_url, headers=headers)
 
         search_sel = lxml.html.fromstring(search_res.text)
-        stores = search_sel.xpath("//label[input and div]")
+        stores = search_sel.xpath("//div[@style='margin: 20px;']")
 
         for store in stores:
 
@@ -53,11 +53,11 @@ def fetch_data():
             location_type = "<MISSING>"
 
             store_info = list(
-                filter(str, [x.strip() for x in store.xpath("./div//text()")])
+                filter(str, [x.strip() for x in store.xpath("div[1]/p//text()")])
             )
 
-            location_name = store_info[0].strip()
-            raw_address = store_info[1].strip()
+            location_name = "".join(store.xpath("div[1]/h4//a/text()")).strip()
+            raw_address = ", ".join(store_info[:2]).strip()
 
             formatted_addr = parser.parse_address_intl(raw_address)
             street_address = formatted_addr.street_address_1
@@ -69,18 +69,47 @@ def fetch_data():
             city = formatted_addr.city
 
             state = formatted_addr.state
+            if not state:
+                state = "PR"
             zip = formatted_addr.postcode
 
+            if "PR00680" in raw_address:
+                state = "PR"
+                zip = "00680"
+
             country_code = "PR"
-            phone = store_info[-1].strip().replace("Tel:", "").strip()
+            phone = "".join(
+                store.xpath("div[1]/p/strong[contains(text(),'Tel:')]/span/text()")
+            ).strip()
+            if not phone:
+                phone = store.xpath("div[1]/p//span/text()")
+                if len(phone) > 0:
+                    phone = "".join(phone[0]).strip()
 
-            page_url = search_url
+            page_url = "".join(store.xpath("div[1]/h4//a/@href")).strip()
 
-            hours_of_operation = "<MISSING>"
+            hours_of_operation = store.xpath(
+                "div[1]/p[./strong[contains(text(),'Horarios:')]]//text()"
+            )
+            hours_of_operation = (
+                "; ".join(hours_of_operation)
+                .strip()
+                .replace("Horarios:;", "")
+                .replace("Horarios:", "")
+                .strip()
+                .replace(":;", ":")
+                .strip()
+                .split("; Horario de")[0]
+                .strip()
+            )
+            if len(hours_of_operation) > 0 and hours_of_operation[-1] == ";":
+                hours_of_operation = "".join(hours_of_operation[:-1]).strip()
 
             store_number = "<MISSING>"
 
-            map_link = "".join(store.xpath("./td[4]//@href")).strip()
+            map_link = "".join(
+                store.xpath(".//iframe[contains(@src,'maps/embed')]//@src")
+            ).strip()
 
             latitude, longitude = get_latlng(map_link)
 

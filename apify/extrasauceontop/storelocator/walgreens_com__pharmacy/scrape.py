@@ -1,7 +1,7 @@
 from sgrequests import SgRequests
 from sgscrape import simple_scraper_pipeline as sp
 from bs4 import BeautifulSoup as bs
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries, Grain_8
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries, Grain_4
 from sglogging import sglog
 
 
@@ -9,7 +9,7 @@ def get_data():
     log = sglog.SgLogSetup().get_logger(logger_name="walgreens")
     session = SgRequests()
     search = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA], granularity=Grain_8()
+        country_codes=[SearchableCountries.USA], granularity=Grain_4()
     )
 
     for search_code in search:
@@ -30,7 +30,7 @@ def get_data():
             continue
 
         for location in response["results"]:
-            locator_domain = "https://www.walgreens.com/"
+            locator_domain = "https://www.walgreens.com"
             page_url = locator_domain + location["storeSeoUrl"]
             location_name = location["store"]["address"]["street"]
             latitude = location["latitude"]
@@ -45,19 +45,49 @@ def get_data():
             location_type = "<MISSING>"
             country_code = "US"
 
-            x = 0
+            y = 0
+            pharm_closed = "no"
             while True:
-                x = x + 1
-                if x == 10:
+                y = y + 1
+                if y == 10:
                     log.info(search_code)
                     log.info(location_name)
-                    raise Exception
+                    log.info(page_url)
+                    hours = "<MISSING>"
+                    break
                 try:
                     hours_response = session.get(page_url).text
                     hours_soup = bs(hours_response, "html.parser")
-                    hours_parts = hours_soup.find(
-                        "li", attrs={"class": "single-hours-lists"}
-                    ).find_all("ul")
+                    if (
+                        "The Pharmacy at this location is currently closed"
+                        in hours_response
+                    ):
+                        pharm_closed = "yes"
+                        break
+                    pharmacy_check = hours_soup.find_all(
+                        "li", attrs={"class": "accordion__drawer"}
+                    )
+                    x = 0
+                    pharm_found = "no"
+                    for pharm in pharmacy_check:
+                        if "Pharmacy" in pharm.find("h2").text.strip():
+                            pharm_found = "yes"
+                            break
+                        x = x + 1
+
+                    if pharm_found == "yes":
+                        hours_parts = (
+                            pharmacy_check[x]
+                            .find("li", attrs={"class": "single-hours-lists"})
+                            .find_all("ul")
+                        )
+
+                    else:
+                        hours_parts = (
+                            pharmacy_check[0]
+                            .find("li", attrs={"class": "single-hours-lists"})
+                            .find_all("ul")
+                        )
 
                     hours = ""
                     for part in hours_parts:
@@ -89,6 +119,9 @@ def get_data():
                 location["store"]["pharmacyOpenTime"]
 
             except Exception:
+                continue
+
+            if pharm_closed == "yes":
                 continue
 
             yield {

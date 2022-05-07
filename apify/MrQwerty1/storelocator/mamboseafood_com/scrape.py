@@ -43,7 +43,10 @@ def get_data(page_url, sgw: SgWriter):
         latitude, longitude = eval(text.split("=")[-1])
     except:
         latitude, longitude = SgRecord.MISSING, SgRecord.MISSING
-    hours = tree.xpath("//h2/following-sibling::p[last()]/text()")
+
+    hours = tree.xpath(
+        "//h2/following-sibling::p[./a[contains(@href, 'tel:')]]/following-sibling::p[1]/text()"
+    )
     hours = list(filter(None, [h.strip() for h in hours]))
     hours_of_operation = ";".join(hours)
 

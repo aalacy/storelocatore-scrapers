@@ -1,101 +1,85 @@
-import csv
+import json
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgselenium.sgselenium import SgFirefox
+from concurrent import futures
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
-
-    locator_domain = "https://www.monsterselfstorage.com/"
-    api_url = "https://inventory.g5marketingcloud.com/api/v1/locations?client_id=1106&nearby_locations_below=true&page=1&per_page=100&search_radius=500&sort_by=state_then_city"
+def get_urls():
     session = SgRequests()
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
+        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:85.0) Gecko/20100101 Firefox/85.0",
     }
-    r = session.get(api_url, headers=headers)
-    js = r.json()
-    for j in js["locations"]:
+    r = session.get("https://www.monsterselfstorage.com/sitemap.xml", headers=headers)
+    tree = html.fromstring(r.content)
+    return tree.xpath("//url/loc[contains(text(), 'locations')]/text()")
 
-        location_name = j.get("name")
-        location_type = "<MISSING>"
-        street_address = j.get("street")
-        phone = j.get("phone_number")
-        state = j.get("state")
-        postal = j.get("postal_code")
+
+def get_data(url, sgw: SgWriter):
+    locator_domain = "https://www.monsterselfstorage.com/"
+    page_url = "".join(url)
+    if page_url.count("/") != 4:
+        return
+
+    with SgFirefox() as driver:
+        driver.get(page_url)
+        a = driver.page_source
+
+        tree = html.fromstring(a)
+        js_block = "".join(
+            tree.xpath('//script[contains(text(), "openingHours")]/text()')
+        )
+        js = json.loads(js_block)
+        a = js.get("address")
+        street_address = a.get("streetAddress") or "<MISSING>"
+        city = a.get("addressLocality") or "<MISSING>"
+        state = a.get("addressRegion") or "<MISSING>"
+        postal = a.get("postalCode") or "<MISSING>"
         country_code = "US"
-        city = j.get("city")
-        store_number = "<MISSING>"
-        page_url = j.get("home_page_url")
-        latitude = j.get("latitude")
-        longitude = j.get("longitude")
-        session = SgRequests()
-        r = session.get(page_url, headers=headers)
-        tree = html.fromstring(r.text)
-        hours_of_operation = (
-            " ".join(
-                tree.xpath(
-                    '//span[text()="Office Hours"]/following-sibling::div//text()'
-                )
-            )
-            .replace("\n", "")
-            .replace("  ", " ")
-            .strip()
+        location_name = js.get("name") or "<MISSING>"
+        phone = js.get("contactPoint").get("telephone") or "<MISSING>"
+        hours_of_operation = js.get("openingHours") or "<MISSING>"
+        latitude = js.get("geo").get("latitude") or "<MISSING>"
+        longitude = js.get("geo").get("longitude") or "<MISSING>"
+        location_type = "<MISSING>"
+        cms = "".join(tree.xpath('//*[contains(text(), "coming soon")]/text()'))
+        if cms:
+            location_type = "Coming Soon"
+            phone = "<MISSING>"
+
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=SgRecord.MISSING,
+            phone=phone,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
         )
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
-
-    return out
+        sgw.write_row(row)
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
+def fetch_data(sgw: SgWriter):
+    urls = get_urls()
+    with futures.ThreadPoolExecutor(max_workers=10) as executor:
+        future_to_url = {executor.submit(get_data, url, sgw): url for url in urls}
+        for future in futures.as_completed(future_to_url):
+            future.result()
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))) as writer:
+        fetch_data(writer)

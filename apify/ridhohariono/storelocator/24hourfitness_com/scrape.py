@@ -30,12 +30,15 @@ def pull_content(url):
 def get_hoo(url):
     soup = pull_content(url)
     try:
-        hoo = (
-            soup.find("div", id="club-hours-details")
-            .find("table")
-            .get_text(strip=True, separator=",")
-            .replace("day,", "day: ")
-        )
+        content = soup.find("div", id="club-hours-details")
+        if "Open 24 hours per day" in content.text.strip():
+            hoo = "Open 24 hours per day"
+        else:
+            hoo = (
+                content.find("table")
+                .get_text(strip=True, separator=",")
+                .replace("day,", "day: ")
+            )
     except:
         return MISSING
     return hoo.rstrip(",").strip()
