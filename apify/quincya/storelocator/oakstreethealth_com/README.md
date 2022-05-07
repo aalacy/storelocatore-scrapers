@@ -1,1 +1,1 @@
---ignore CentroidValidator (Confirmed on website)
+--ignore CentroidValidator --ignore CountryValidator (Confirmed on website)
