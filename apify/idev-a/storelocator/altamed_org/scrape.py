@@ -14,7 +14,6 @@ base_url = "https://www.altamed.org/find/resultsJson?type=clinic&affiliates=yes"
 def fetch_data():
     with SgRequests() as session:
         locations = session.get(base_url, headers=_headers).json()
-        print(len(locations["items"]))
         for _ in locations["items"]:
             addr = _["address"].split(",")
             yield SgRecord(
