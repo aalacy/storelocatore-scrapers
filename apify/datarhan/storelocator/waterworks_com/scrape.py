@@ -13,7 +13,6 @@ def fetch_data():
     session = SgRequests(proxy_country="us", verify_ssl=False)
     domain = "waterworks.com"
     start_url = "https://www.waterworks.com/us_en/storelocation/index/storelist/"
-
     headers = {
         "accept": "application/json, text/javascript, */*; q=0.01",
         "accept-encoding": "gzip, deflate, br",
