@@ -122,12 +122,20 @@ def fetch_data():
             if temp[1].find("ZipCode") != -1:
                 zip_postal = zip_postal + " " + temp[0]
             i += 1
+        city = city.replace("Inside Mobil),", "")
         hours_of_operation = (
             soup.find("div", {"class": "hours"})
             .get_text(separator="|", strip=True)
             .replace("|", " ")
-            .replace("NOW OFFERING CURBSIDE SERVICE & DELIVERY THROUGH DOOR DASH", "")
         )
+        if "NOW OFFERING" in hours_of_operation:
+            hours_of_operation = hours_of_operation.split("NOW OFFERING")[0]
+        elif "ONLINE ORDERING" in hours_of_operation:
+            hours_of_operation = hours_of_operation.split("ONLINE ORDERING")[0]
+        elif "DELIVERY" in hours_of_operation:
+            hours_of_operation = hours_of_operation.split("DELIVERY")[0]
+        elif "NEW HOURS" in hours_of_operation:
+            hours_of_operation = hours_of_operation.split("NEW HOURS")[0]
         for coords in coords_list:
             if location_name in coords:
                 coords = coords.split(',"googlePlaceId"')[0].split(",")

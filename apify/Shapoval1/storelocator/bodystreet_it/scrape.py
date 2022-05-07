@@ -119,7 +119,9 @@ def fetch_data(sgw: SgWriter):
                 closes = h.get("opening_to")
                 line = f"{day} {opens} - {closes}"
                 tmp.append(line)
-            hours_of_operation = "; ".join(tmp)
+            hours_of_operation = "; ".join(tmp).replace("Alle Werktage", "").strip()
+        if hours_of_operation == "<MISSING>" and location_name == "Bodystreet Bruneck":
+            hours_of_operation = "Coming Soon"
 
         row = SgRecord(
             locator_domain=locator_domain,

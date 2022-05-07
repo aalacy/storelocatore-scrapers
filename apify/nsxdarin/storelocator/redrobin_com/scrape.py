@@ -14,27 +14,37 @@ headers = {
 
 
 def fetch_data():
+    states = []
+    cities = []
     locs = []
-    url = "https://www.redrobin.com/locations"
+    url = "https://locations.redrobin.com/locations-list/us/"
     r = session.get(url, headers=headers)
     for line in r.iter_lines():
-        if '<li><a href="' in line:
-            items = line.split('<li><a href="')
-            for item in items:
-                if "<!DOCTYPE html>" not in item:
-                    stub = item.split('"')[0]
-                    if "https" in stub:
-                        lurl = stub
-                    else:
-                        lurl = "https://redrobin.com" + item.split('"')[0].replace(
-                            ".", "-"
-                        )
-                    if lurl != "https://redrobin.com/locations/" and "/fl/" in lurl:
-                        if "fl/st.petersburg/tyrone-mall-553" in lurl:
-                            lurl = (
-                                "https://locations.redrobin.com/fl/st-petersburg/553/"
-                            )
-                        locs.append(lurl)
+        if '<li><a href="/locations-list/us/' in line:
+            lurl = (
+                "https://locations.redrobin.com" + line.split('href="')[1].split('"')[0]
+            )
+            states.append(lurl)
+    for state in states:
+        logger.info(state)
+        r = session.get(state, headers=headers)
+        for line in r.iter_lines():
+            if '<li><a href="/locations-list/' in line:
+                lurl = (
+                    "https://locations.redrobin.com"
+                    + line.split('href="')[1].split('"')[0]
+                )
+                cities.append(lurl)
+    for city in cities:
+        logger.info(city)
+        r = session.get(city, headers=headers)
+        for line in r.iter_lines():
+            if (
+                '<a href="https://locations.redrobin.com/' in line
+                and "Locations" not in line
+            ):
+                lurl = line.split('href="')[1].split('"')[0]
+                locs.append(lurl)
     for loc in locs:
         try:
             logger.info(loc)
