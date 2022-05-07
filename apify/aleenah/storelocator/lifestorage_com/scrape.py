@@ -18,6 +18,7 @@ headers = {
 DOMAIN = "https://www.lifestorage.com/"
 MISSING = SgRecord.MISSING
 
+
 def fetch_data():
     res = session.get("https://www.lifestorage.com/")
     soup = BeautifulSoup(res.text, "html.parser")
@@ -32,7 +33,9 @@ def fetch_data():
             page_url = "https://www.lifestorage.com" + loc.get("href")
             log.info(page_url)
             res = session.get(page_url)
-            data = res.text.split('<script type="application/ld+json">')[1].split("</script>", 1)[0]
+            data = res.text.split('<script type="application/ld+json">')[1].split(
+                "</script>", 1
+            )[0]
             data = data.replace("\n", "")
             data = (
                 data.replace("[,", "[").replace("}{", "},{").split(',"priceRange"')[0]
