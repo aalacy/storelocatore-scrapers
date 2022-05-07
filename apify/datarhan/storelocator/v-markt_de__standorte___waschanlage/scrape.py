@@ -33,13 +33,13 @@ def fetch_data():
                 '//div[@class="row"]/div[@class="col-md-6"]/p//text()'
             )
         raw_data = [e.strip() for e in raw_data if e.strip()]
-        hoo = loc_dom.xpath(
-            '//div[@class="col-sm-6 col-md-6 vspace-xs"]//table//td/text()'
-        )
         geo = (
             loc_dom.xpath('//a[i[@class="icon-left fa fa-car"]]/@href')[0]
             .split("=")[-1]
             .split(",")
+        )
+        hoo = loc_dom.xpath(
+            '//section[@id="waschstrasse"]//tr[td[contains(text(), "Montag")]]//text()'
         )
         hoo = " ".join([e.strip() for e in hoo if e.strip()])
         phone = loc_dom.xpath('//a[contains(@href, "tel")]/text()')[0]

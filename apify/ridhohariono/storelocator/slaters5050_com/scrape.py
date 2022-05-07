@@ -93,19 +93,24 @@ def fetch_data():
                 location_name = addr[0]
                 raw_address = ",".join(addr[1:-2])
                 phone = addr[-2]
-                hours_of_operation = (
-                    info.find(
-                        "div",
-                        {
-                            "class": "wpb_text_column wpb_content_element vc_custom_1585601459333"
-                        },
+                try:
+                    hours_of_operation = (
+                        info.find(
+                            "div",
+                            {
+                                "class": "wpb_text_column wpb_content_element vc_custom_1585601459333"
+                            },
+                        )
+                        .find("p")
+                        .text.strip()
+                        .replace("HOURS", "")
                     )
-                    .find("p")
-                    .text.strip()
-                    .replace("HOURS", "")
-                )
-                map_link = info.find("iframe")["src"]
-                latitude, longitude = get_latlong(map_link)
+                    map_link = info.find("iframe")["src"]
+                    latitude, longitude = get_latlong(map_link)
+                except:
+                    hours_of_operation = MISSING
+                    latitude = MISSING
+                    longitude = MISSING
                 location_type = MISSING
             else:
                 location_name = row.text
