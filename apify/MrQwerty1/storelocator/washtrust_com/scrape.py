@@ -1,4 +1,4 @@
-import json
+import json5
 import usaddress
 from lxml import html
 from sgscrape.sgrecord import SgRecord
@@ -93,17 +93,25 @@ def fetch_data(sgw: SgWriter):
     r = session.get(api)
     tree = html.fromstring(r.text)
     li = tree.xpath("//div[@class='location-results']/ul/li")
-    coords = dict()
 
+    text = "".join(
+        tree.xpath("//script[contains(text(), 'googleMaps._listInfoWindows')]/text()")
+    )
+    text = text.split("] =")[1].split("};")[0].strip()[:-1] + "}"
+    sources = json5.loads(text)
+
+    coords = dict()
     text = "".join(tree.xpath("//div[@data-dna]/@data-dna"))
-    js = json.loads(text)[1:]
+    js = json5.loads(text)[1:]
     for j in js:
         try:
             lat = j["locations"][0]["lat"]
             lng = j["locations"][0]["lng"]
+            _id = j["locations"][0]["id"]
         except:
             continue
-        source = j["options"]["infoWindowOptions"]["content"]
+
+        source = sources[_id]["content"]
         root = html.fromstring(source)
         name = "".join(root.xpath("./h3/text()")).strip()
         coords[name] = (lat, lng)
