@@ -1,90 +1,75 @@
-
-
-import csv
-from bs4 import BeautifulSoup
-import re
-import json
+from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger('scramblersrestaurants_com')
-
-
-
-session = SgRequests()
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgpostal.sgpostal import International_Parser, parse_address
 
 
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+def fetch_data(sgw: SgWriter):
 
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation",
-                         "page_url"])
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    headers = {'User-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.90 Safari/537.36',
+    locator_domain = "https://scramblersrestaurants.com/"
+    api_url = "https://scramblersrestaurants.com/locations/listing/"
+    session = SgRequests()
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
+    r = session.get(api_url, headers=headers)
+    tree = html.fromstring(r.text)
+    div = tree.xpath('//td[./a[contains(@href, "/locations/")]]')
+    for d in div:
 
-    base_url = "https://scramblersrestaurants.com/"
-    r =  session.get("https://scramblersrestaurants.com/wp-content/plugins/superstorefinder-wp/ssf-wp-xml.php?wpml_lang=&t=1584183158713", headers=headers)
-    soup = BeautifulSoup(r.text, "lxml") 
-    for data in soup.find("store").find_all("item"):
-        location_name = data.find('location').text
-        addr = BeautifulSoup(data.find('description').text, "lxml")
-        address = list(addr.find("div").stripped_strings)
-        if len(address) == 2:
-            street_address = address[0]
-            city = address[1].split(",")[0]
-            state = address[-1].split(",")[1].split("\xa0")[0].strip()
-            zipp = address[-1].split(",")[1].split("\xa0")[-1].strip()
-        else:
-            if "\xa0" in address[0]:
-                street_address = address[-1].split(",")[0].split("\xa0")[0]
-                city = address[0].split(",")[0].split("\xa0")[1]
-                state = address[-1].split(",")[1].split(" ")[1].replace("OH\xa043606","OH")
-                zipp = address[-1].split(",")[1].split(" ")[-1].replace("OH\xa043606","43606")
-            else:
-                addr1 = address[0].replace("12455 W Capitol Dr, Unit C, Brookfield, WI 53005","12455 W Capitol Dr Unit C Brookfield, WI 53005").replace("6313 Pullman Dr., Lewis Center","6313 Pullman Dr. Lewis Center,")
-                street_address = " ".join(addr1.split(",")[0].split(" ")[:-1]).replace("Lewis","").strip()
-                city = addr1.split(",")[0].split(" ")[-1].replace("Center","Lewis Center")
-                state = addr1.split(",")[-1].split(" ")[1]
-                zipp = addr1.split(",")[-1].split(" ")[2]
-        hours = "Open Daily 6:30am-3:00pm"
-        latitude = data.find('latitude').text
-        longitude = data.find("longitude").text
-        phone = data.find("telephone").text
+        page_url = "".join(d.xpath("./a/@href"))
+        ad = "".join(d.xpath("./a/text()"))
+        a = parse_address(International_Parser(), ad)
+        street_address = (
+            f"{a.street_address_1} {a.street_address_2}".replace("None", "").strip()
+            or "<MISSING>"
+        )
+        state = a.state or "<MISSING>"
+        postal = a.postcode or "<MISSING>"
+        country_code = "US"
+        city = a.city or "<MISSING>"
+        if street_address == "567 E.":
+            street_address = ad.split(",")[0].strip()
+        phone = "".join(d.xpath("./following-sibling::td[1]/text()")) or "<MISSING>"
+        r = session.get(page_url, headers=headers)
+        tree = html.fromstring(r.text)
+        hours_of_operation = (
+            " ".join(
+                tree.xpath(
+                    '//p[contains(text(), "Hours of Operation")]/following-sibling::p/text()'
+                )
+            )
+            .replace("\n", "")
+            .strip()
+            or "<MISSING>"
+        )
+        hours_of_operation = " ".join(hours_of_operation.split())
 
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=SgRecord.MISSING,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=SgRecord.MISSING,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=SgRecord.MISSING,
+            longitude=SgRecord.MISSING,
+            hours_of_operation=hours_of_operation,
+            raw_address=ad,
+        )
 
-        store = []
-        store.append(base_url)
-        store.append(location_name)
-        store.append(street_address)
-        store.append(city)
-        store.append(state)
-        store.append(zipp)
-        store.append("US")
-        store.append("<MISSING>")
-        store.append(phone)
-        store.append("<MISSING>")
-        store.append(latitude)
-        store.append(longitude)
-        store.append(hours)
-        store.append("<MISSING>")
-        store = [x.strip() if type(x) == str else x for x in store]
-        # logger.info("data===="+str(store))
-        # logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
-        yield store
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
-scrape()
+if __name__ == "__main__":
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))) as writer:
+        fetch_data(writer)

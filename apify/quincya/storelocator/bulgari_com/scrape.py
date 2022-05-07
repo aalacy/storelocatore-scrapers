@@ -1,61 +1,39 @@
-import csv
 import json
+import urllib.parse
 
 from bs4 import BeautifulSoup
 
-from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 from sgrequests import SgRequests
 
+from sglogging import SgLogSetup
+
+from sgpostal.sgpostal import parse_address_intl
 
 logger = SgLogSetup().get_logger("bulgari_com")
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def fetch_data(sgw: SgWriter):
 
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-
-    base_links = [
-        "https://www.bulgari.com/en-us/storelocator/united+states",
-        "https://www.bulgari.com/en-us/storelocator/canada",
-    ]
-
-    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36"
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
     headers = {"User-Agent": user_agent}
 
     session = SgRequests()
 
-    data = []
+    base_link = "https://www.bulgari.com/en-us/storelocator/"
 
-    for base_link in base_links:
+    req = session.get(base_link, headers=headers)
+    base = BeautifulSoup(req.text, "lxml")
+
+    found = []
+    base_links = base.find(class_="cell store-continet-list").find_all("a")
+    for i in base_links:
+        base_link = i["href"]
+
         logger.info(base_link)
         req = session.get(base_link, headers=headers)
         base = BeautifulSoup(req.text, "lxml")
@@ -68,27 +46,18 @@ def fetch_data():
         for store in stores:
 
             location_name = store["name"]
-            street_address = (
-                store["storeAddress"]
-                .replace("Hills, Ca", "Hills")
-                .replace("Gables, Fl", "Gables")
-                .replace("Las Vegas, NV", "")
-            )
             city = store["storeCity"].replace("+", " ").title()
+            city = urllib.parse.unquote(city)
 
-            if city in street_address and "las vegas" not in street_address.lower():
-                street_address = (
-                    street_address[: street_address.rfind(city)]
-                    .strip()
-                    .replace("  ", " ")
-                )
-
-            if street_address[-1:] == ",":
-                street_address = street_address[:-1].strip()
-
-            country_code = store["storeCountry"].replace("+", " ").title()
+            country_code = (
+                store["storeCountry"]
+                .replace("+", " ")
+                .replace("r%C3%A9union", "Réunion")
+                .title()
+            )
+            country_code = urllib.parse.unquote(country_code)
             store_number = store["storeId"]
-            location_type = "<MISSING>"
+            location_type = store["itemSubtitle"]
             try:
                 phone = store["storePhone"].strip()
             except:
@@ -105,70 +74,125 @@ def fetch_data():
                 + "-"
                 + store_number
             )
-            logger.info(link)
 
             req = session.get(link, headers=headers)
             base = BeautifulSoup(req.text, "lxml")
 
-            raw_address = (
-                base.find(class_="storelocator-bread-subtitle")["streetaddress"]
-                .strip()
-                .split(",")
-            )
-            state = raw_address[-1].strip()
-            if not state:
-                raw_state = (
-                    base.find(class_="storelocator-bread-subtitle")
-                    .text.replace("\n", " ")
+            try:
+                raw_address = base.find(
+                    class_="storelocator-bread-subtitle"
+                ).a.text.strip()
+            except:
+                continue
+
+            addr = parse_address_intl(raw_address)
+            try:
+                street_address = addr.street_address_1 + " " + addr.street_address_2
+            except:
+                street_address = addr.street_address_1
+
+            state = addr.state
+            try:
+                zip_code = addr.postcode.replace("REGION", "").strip()
+            except:
+                zip_code = ""
+
+            if street_address:
+                for zp in ["Sw1X 7Xl", "277-0842"]:
+                    if zp in street_address:
+                        zip_code = zp
+                        street_address = street_address.replace(zp, "").strip()
+
+            if not street_address or len(street_address) < 10:
+                street_address = "".join(
+                    base.find(class_="storelocator-bread-subtitle")["streetaddress"]
                     .strip()
+                    .split(",")[:-1]
                 )
-                state = raw_state[
-                    raw_state.rfind(",") + 1 : raw_state.rfind(" ")
-                ].strip()
+                if len(street_address) < 10:
+                    street_address = base.find(class_="storelocator-bread-subtitle")[
+                        "streetaddress"
+                    ].strip()
 
-            zip_code = base.find(class_="storelocator-bread-subtitle")[
-                "postalcode"
-            ].strip()
+                if city:
+                    if city in street_address:
+                        street_address = street_address[
+                            : street_address.rfind(city)
+                        ].strip()
 
-            if "Jersey 7631" in zip_code:
-                zip_code = "7631"
-            state = state.replace(zip_code, "").strip()
+            if country_code in ["United States", "Canada"]:
+                n_raw_address = (
+                    base.find(class_="storelocator-bread-subtitle")["streetaddress"]
+                    .strip()
+                    .split(",")
+                )
+                state = n_raw_address[-1].strip()
+                if not state:
+                    raw_state = (
+                        base.find(class_="storelocator-bread-subtitle")
+                        .text.replace("\n", " ")
+                        .strip()
+                    )
+                    state = raw_state[
+                        raw_state.rfind(",") + 1 : raw_state.rfind(" ")
+                    ].strip()
+
+            if state:
+                if state == "Kong":
+                    state = "Hong Kong"
+
+            if zip_code:
+                zip_code = (
+                    zip_code.replace("DOME", "").replace("GOVERNORATE", "").strip()
+                )
+
+            if country_code == "United States":
+                states = ["Tx", "Pa", "Ny", "Fl", "Ct", "Co", "Va"]
+                for st in states:
+                    if st.lower() in street_address.split()[-1].lower():
+                        street_address = " ".join(street_address.split()[:-1])
 
             if country_code == "Canada":
                 zip_code = state[-7:].strip()
                 state = state[:-7].strip()
+
             try:
                 hours_of_operation = " ".join(
                     list(base.find(class_="store-hours clearfix").stripped_strings)
                 )
+                if (
+                    hours_of_operation
+                    == "monday - tuesday - wednesday - thursday - friday - saturday - sunday -"
+                ):
+                    hours_of_operation = ""
             except:
                 hours_of_operation = "<MISSING>"
 
-            data.append(
-                [
-                    locator_domain,
-                    link,
-                    location_name,
-                    street_address,
-                    city,
-                    state,
-                    zip_code,
-                    country_code,
-                    store_number,
-                    phone,
-                    location_type,
-                    latitude,
-                    longitude,
-                    hours_of_operation,
-                ]
+            street_address = street_address.replace("<Br<", "").strip()
+            if location_name + street_address in found:
+                continue
+            found.append(location_name + street_address)
+
+            sgw.write_row(
+                SgRecord(
+                    locator_domain=locator_domain,
+                    page_url=link,
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=zip_code,
+                    country_code=country_code,
+                    store_number=store_number,
+                    phone=phone,
+                    location_type=location_type,
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=hours_of_operation,
+                    raw_address=raw_address,
+                )
             )
 
-    return data
 
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    fetch_data(writer)

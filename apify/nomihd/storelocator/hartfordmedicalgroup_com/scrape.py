@@ -62,23 +62,21 @@ def fetch_data():
             country_code = "US"
             store_number = "<MISSING>"
 
-            phone = "".join(store.xpath("@data-phone")).strip()
+            phone = store.xpath("@data-phone")
             if len(phone) <= 0:
-                phone = "".join(
-                    store_sel.xpath('//p[./strong[contains(text(),"Phone")]]/a/text()')
-                ).strip()
+                phone = store_sel.xpath(
+                    '//p[./strong[contains(text(),"Phone")]]/a/text()'
+                )
                 if len(phone) <= 0:
-                    phone = "".join(
-                        store_sel.xpath(
-                            '//div[./h2[contains(text(),"Contact Us:")]]//a/text()'
-                        )
-                    ).strip()
+                    phone = store_sel.xpath(
+                        '//div[./h2[contains(text(),"Contact Us:")]]//a/text()'
+                    )
                 if len(phone) <= 0:
                     phone = store_sel.xpath(
                         './/div[@class="middle"]//a[contains(@href,"tel:")]/text()'
                     )
-                    if len(phone) > 0:
-                        phone = phone[0]
+            if len(phone) > 0:
+                phone = phone[0]
 
             if len("".join(phone)) <= 0:
                 phone = "<MISSING>"
@@ -93,16 +91,22 @@ def fetch_data():
             )
             location_name = location_name + location_type
 
-            hours_of_operation = (
-                " ".join(
-                    store_sel.xpath(
-                        '//div[./h2[contains(text(),"Hours:")]]/h2/span//text()'
-                    )
+            hours_of_operation = "".join(
+                store_sel.xpath(
+                    '//td[./strong[contains(text(),"Primary Care Hours:")]]/text()'
                 )
-                .strip()
-                .replace("\n", "")
-                .strip()
-            )
+            ).strip()
+            if len(hours_of_operation) <= 0:
+                hours_of_operation = (
+                    " ".join(
+                        store_sel.xpath(
+                            '//div[./h2[contains(text(),"Hours:")]]/h2/span//text()'
+                        )
+                    )
+                    .strip()
+                    .replace("\n", "")
+                    .strip()
+                )
             if len(hours_of_operation) <= 0:
                 hours_of_operation = (
                     " ".join(

@@ -2,7 +2,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
-import json
+import dirtyjson as json
 from sglogging import SgLogSetup
 from sgscrape.sgpostal import parse_address_intl
 from sgscrape.sgrecord_id import SgRecordID
@@ -24,14 +24,26 @@ def fetch_data():
     with SgRequests() as session:
         soup = bs(session.get(base_url, headers=_headers).text, "lxml")
         locations = soup.select("ol.search-results li.store-item")
-        logger.info(f"[********] {len(locations)} found in {base_url}")
+        logger.info(f"[********] {len(locations)} found")
 
         for _ in locations:
             page_url = locator_domain + _.h3.a["href"]
-            sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
-            loc = json.loads(
-                sp1.find("script", type="application/ld+json").string.strip()
-            )
+            logger.info(f"{page_url}")
+            res = session.get(page_url, headers=_headers)
+            if res.url == "https://www.gucci.com/int/en/store":
+                continue
+            sp1 = bs(res.text, "lxml")
+            try:
+                loc = json.loads(
+                    sp1.find("script", type="application/ld+json").string.strip()
+                )
+            except:
+                loc = json.loads(
+                    sp1.find("script", type="application/ld+json")
+                    .string.replace('""Shop', '"Shop')
+                    .replace('Shanghai"', "Shanghai")
+                    .strip()
+                )
             hours = []
             for hh in loc["openingHoursSpecification"]:
                 day = f"{hh['dayOfWeek'][0]}-{hh['dayOfWeek'][-1]}"
@@ -56,6 +68,14 @@ def fetch_data():
                 .split("T:")[0]
                 .strip()
             )
+            addr = parse_address_intl(f'{aa["addressLocality"]} {state} {zip_postal}')
+            state = addr.state
+            if state:
+                state = " ".join(list(set(state.split(" "))))
+
+            if addr.country:
+                country_code = addr.country
+
             if (
                 "korea" in street_address.lower()
                 or "china" in street_address.lower()
@@ -65,18 +85,28 @@ def fetch_data():
                 street_address = addr.street_address_1 or ""
                 if addr.street_address_2:
                     street_address += " " + addr.street_address_2
-                if not country_code:
+                if addr.country:
                     country_code = addr.country
 
-            addr = parse_address_intl(f'{aa["addressLocality"]} {state} {zip_postal}')
-            state = addr.state
-            if state:
-                state = " ".join(list(set(state.split(" "))))
+            raw_address = " ".join(_.select_one("p.address").stripped_strings)
+            addr = parse_address_intl(raw_address)
+            if addr.country:
+                country_code = addr.country
+
+            city = aa["addressLocality"]
+            if city and not country_code:
+                if city in ["London"]:
+                    country_code = "UK"
+                elif city in ["Paris"]:
+                    country_code = "FR"
+                elif city in ["Seoul"]:
+                    country_code = "KR"
+                elif city in ["Dalian"]:
+                    country_code = "CN"
             zip_postal = addr.postcode
             phone = loc["telephone"].split("(x")[0]
-            if phone == "n/a":
+            if phone == "n/a" or phone == "N/A":
                 phone = ""
-            logger.info(f"[{aa['addressCountry']}] {page_url}")
 
             yield SgRecord(
                 page_url=page_url,
@@ -84,7 +114,7 @@ def fetch_data():
                 location_type=_["data-store-type"],
                 location_name=_["data-store-name"],
                 street_address=street_address,
-                city=aa["addressLocality"],
+                city=city,
                 state=state,
                 zip_postal=zip_postal,
                 latitude=_["data-latitude"],
@@ -93,7 +123,7 @@ def fetch_data():
                 phone=phone,
                 locator_domain=locator_domain,
                 hours_of_operation="; ".join(hours),
-                raw_address=" ".join(_.select_one("p.address").stripped_strings),
+                raw_address=raw_address,
             )
 
 

@@ -1,7 +1,6 @@
 --extra-index-url https://dl.cloudsmith.io/KVaWma76J5VNwrOm/crawl/crawl/python/simple/
-sgzip==0.8.1
+tenacity==7.0.0
+sgrequests==0.2.9
+sgscrape==0.2.9
+sgzip==0.10.15
 sglogging==0.0.4
-pgeocode==0.3.0
-sgvalidator==0.0.71
-sgrequests==0.1.12
-sgscrape==0.1.11
