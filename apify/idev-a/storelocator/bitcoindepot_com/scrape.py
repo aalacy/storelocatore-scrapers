@@ -146,7 +146,7 @@ def fetch_records(http):
                 .strip()
             )
         else:
-            hours_of_operation = _["hours_of_operation"]
+            hours_of_operation = _.get("hours_of_operation")
 
         country_code = "US"
         if _["state"] in ca_provinces_codes:

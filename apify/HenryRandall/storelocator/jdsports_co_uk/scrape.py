@@ -1,3 +1,4 @@
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import re
 import json
 from sgselenium import SgChrome
@@ -27,7 +28,7 @@ class ScrapableSite:
     def get_session(self, refresh):
         if not self.session or refresh:
             self.session = SgChrome(is_headless=True).driver()
-            self.session.set_page_load_timeout(30)
+            self.session.set_page_load_timeout(300)
 
         return self.session
 
@@ -68,6 +69,7 @@ class ScrapableSite:
 
 
 sites = [
+    ScrapableSite("jdsports.ie", SearchableCountries.IRELAND),
     ScrapableSite("jdsports.co.uk", SearchableCountries.BRITAIN),
     ScrapableSite("jdsports.es", SearchableCountries.SPAIN),
     ScrapableSite("jdsports.se", SearchableCountries.SWEDEN),
@@ -96,37 +98,44 @@ def format_hours(hours):
     return ", ".join(data)
 
 
+def fetch_locations(site):
+    pois = []
+    locations = site.get_locations()
+    for location in locations:
+        data = site.get_data(location)
+
+        pois.append(
+            SgRecord(
+                page_url=data.get("url"),
+                location_name=data.get("name"),
+                street_address=data["address"]["streetAddress"],
+                city=data["address"]["addressLocality"],
+                state=data["address"]["addressRegion"],
+                country_code=site.country_code,
+                zip_postal=data["address"]["postalCode"],
+                store_number=re.sub(
+                    f"https://www.{site.locator_domain}/", "", data["@id"]
+                ),
+                phone=data["telephone"],
+                latitude=data["geo"]["latitude"],
+                longitude=data["geo"]["longitude"],
+                locator_domain=site.locator_domain,
+                hours_of_operation=format_hours(data["openingHoursSpecification"]),
+            )
+        )
+
+    return pois
+
+
 def fetch_data():
     pois = []
 
-    for site in sites:
-        count = 0
-        locations = site.get_locations()
-        for location in locations:
-            data = site.get_data(location)
+    with ThreadPoolExecutor() as executor:
+        futures = [executor.submit(fetch_locations, site) for site in sites]
+        for future in as_completed(futures):
+            pois.extend(future.result())
 
-            count += 1
-            pois.append(
-                SgRecord(
-                    page_url=data.get("url"),
-                    location_name=data.get("name"),
-                    street_address=data["address"]["streetAddress"],
-                    city=data["address"]["addressLocality"],
-                    state=data["address"]["addressRegion"],
-                    country_code=site.country_code,
-                    zip_postal=data["address"]["postalCode"],
-                    store_number=re.sub(
-                        f"https://www.{site.locator_domain}/", "", data["@id"]
-                    ),
-                    phone=data["telephone"],
-                    latitude=data["geo"]["latitude"],
-                    longitude=data["geo"]["longitude"],
-                    locator_domain=site.locator_domain,
-                    hours_of_operation=format_hours(data["openingHoursSpecification"]),
-                )
-            )
-
-    return pois
+        return pois
 
 
 def scrape():

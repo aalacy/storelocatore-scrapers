@@ -80,7 +80,8 @@ def process_record(raw_results_from_one_coordinate):
         country_code = "PH"
         store_number = str(store["id"])
         phone = store.get("phone", "<MISSING>")
-
+        if phone:
+            phone = phone.split("/")[0].strip()
         location_type = "<MISSING>"
 
         hours_of_operation = "<MISSING>"

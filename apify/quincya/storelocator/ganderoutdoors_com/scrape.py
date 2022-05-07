@@ -56,8 +56,11 @@ def fetch_data(sgw: SgWriter):
                 list(base.find(class_="storehours").stripped_strings)[1:-1]
             )
 
-            latitude = ""
-            longitude = ""
+            geo = base.find("meta", attrs={"name": "geo.position"})["content"].split(
+                ";"
+            )
+            latitude = geo[0]
+            longitude = geo[1]
 
             sgw.write_row(
                 SgRecord(
