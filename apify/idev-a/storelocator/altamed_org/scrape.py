@@ -1,7 +1,7 @@
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 _headers = {
@@ -14,6 +14,7 @@ base_url = "https://www.altamed.org/find/resultsJson?type=clinic&affiliates=yes"
 def fetch_data():
     with SgRequests() as session:
         locations = session.get(base_url, headers=_headers).json()
+        print(len(locations["items"]))
         for _ in locations["items"]:
             addr = _["address"].split(",")
             yield SgRecord(
@@ -36,7 +37,11 @@ def fetch_data():
 
 
 if __name__ == "__main__":
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID({SgRecord.Headers.RAW_ADDRESS, SgRecord.Headers.LOCATION_NAME})
+        )
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
