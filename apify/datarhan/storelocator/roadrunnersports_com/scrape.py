@@ -3,6 +3,10 @@ import json
 from lxml import etree
 
 from sgrequests import SgRequests
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
@@ -31,13 +35,12 @@ def fetch_data():
         for page_url in all_locations:
             loc_response = session.get(page_url)
             loc_dom = etree.HTML(loc_response.text)
+            if loc_dom.xpath('//span[contains(text(), "Coming Soon")]'):
+                continue
+
             raw_address = loc_dom.xpath(
                 '//div[@class="col-8 map-list-item-address mt-10 mb-10"]/span/text()'
             )
-
-            store_url = loc_dom.xpath(
-                '//div[@class="col map-list-item-info mt-10 mb-10"]/a/@href'
-            )[0]
             location_name = loc_dom.xpath(
                 '//h2[@class="map-list-item-name-secondary text-uppercase"]/text()'
             )
