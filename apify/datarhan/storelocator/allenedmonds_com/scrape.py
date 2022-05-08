@@ -22,9 +22,15 @@ def fetch_data():
     )
     with SgFirefox() as driver:
         for code in all_codes:
-            driver.get(start_url)
-            sleep(5)
-            driver.find_element_by_name("zip").send_keys(code)
+            try:
+                driver.get(start_url)
+            except Exception:
+                continue
+            sleep(8)
+            try:
+                driver.find_element_by_name("zip").send_keys(code)
+            except Exception:
+                continue
             sleep(2)
             driver.find_element_by_name("zip").send_keys(Keys.ENTER)
             sleep(3)

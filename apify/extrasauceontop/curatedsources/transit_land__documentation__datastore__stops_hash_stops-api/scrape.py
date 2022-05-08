@@ -1,7 +1,6 @@
 from sgrequests import SgRequests
 from sgscrape import simple_scraper_pipeline as sp
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries, Grain_2
-import json
 import time
 
 
@@ -54,8 +53,6 @@ def get_data():
             )
             response = session.get(url).json()
 
-        with open("file.txt", "w", encoding="utf-8") as output:
-            json.dump(response, output, indent=4)
         if len(response["stops"]) == 0:
             time.sleep(0.5)
         for location in response["stops"]:
@@ -69,7 +66,7 @@ def get_data():
                 location_name = "<MISSING>" + "-" + location["name"]
 
             except Exception:
-                location_name = location["name"]
+                continue
             address = location["name"]
             city = "<MISSING>"
             state = "<MISSING>"
@@ -86,9 +83,7 @@ def get_data():
                 )
 
             except Exception:
-                "<MISSING>"
-                +"_"
-                +location["onestop_id"]
+                continue
             hours = "<MISSING>"
             phone = "<MISSING>"
             location_type_parts = location["served_by_vehicle_types"]
