@@ -84,7 +84,7 @@ def fetch_data():
             ccode = "FR"
         elif "Milano" in address:
             ccode = "IT"
-        elif "Shangai" in address or "Beijing" in address:
+        elif "Shanghai" in address or "Beijing" in address:
             ccode = "CN"
         else:
             ccode = "US"
