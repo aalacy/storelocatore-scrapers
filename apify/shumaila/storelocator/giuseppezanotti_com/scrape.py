@@ -12,7 +12,7 @@ headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
 
-MISSING = SgRecord.MISSING
+MISSING = "<MISSING>"
 
 
 def fetch_data():
@@ -95,6 +95,11 @@ def fetch_data():
                 + loc["url_key"]
                 + "/"
             )
+            city = city.replace(",", "")
+            try:
+                phone = phone.split("-", 1)[0]
+            except:
+                pass
             yield SgRecord(
                 locator_domain="https://www.giuseppezanotti.com",
                 page_url=link,
