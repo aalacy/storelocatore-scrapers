@@ -34,7 +34,6 @@ def fetch_data(sgw: SgWriter):
         street_address = (
             " ".join(raw_address[0].split()[:-1]).replace("Saratoga", "").strip()
         )
-        city_line = raw_address[1].split(",")
         city = raw_address[0].split()[-1].replace("Springs", "Saratoga Springs")
         state = raw_address[1].split()[0]
         zip_code = raw_address[1].split()[1]
