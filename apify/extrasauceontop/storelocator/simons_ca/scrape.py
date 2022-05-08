@@ -59,7 +59,7 @@ def get_data():
             country_code = "CA"
 
             days = location_soup.find("div", attrs={"class": "stores-hoursLeft",}).find_all("p")
-            hours_parts = location_soup.find("div", attrs={"class": "stores-hoursRight,find_all("p")
+            hours_parts = location_soup.find("div", attrs={"class": "stores-hoursRight"}).find_all("p")
 
             hours = ""
             for x in range(len(days)):
