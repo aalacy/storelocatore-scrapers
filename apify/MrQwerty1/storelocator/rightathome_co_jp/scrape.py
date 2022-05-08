@@ -62,7 +62,11 @@ if __name__ == "__main__":
     locator_domain = "http://www.rightathome.co.jp/"
     page_url = "http://www.rightathome.co.jp/company.php"
     headers = {
-        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:97.0) Gecko/20100101 Firefox/97.0",
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:99.0) Gecko/20100101 Firefox/99.0",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+        "Accept-Language": "ru,en-US;q=0.7,en;q=0.3",
+        "Connection": "keep-alive",
+        "Upgrade-Insecure-Requests": "1",
     }
     session = SgRequests(proxy_country="jp")
     with SgWriter(SgRecordDeduper(RecommendedRecordIds.PhoneNumberId)) as writer:
