@@ -23,22 +23,22 @@ def fetch_data():
         url = "https://www.jordans.com/about-us/locations"
         r = session.get(url, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
-        loclist = soup.findAll("div", {"class": "col-lg-7 col-xs-12 right-card"})
+        loclist = soup.findAll("div", {"class": "loc-info-col"})
         for loc in loclist:
             location_name = loc.find("h2").text
             log.info(location_name)
             try:
-                phone = loc.find("p", {"id": "underline"}).text
+                phone = loc.find("a", {"class": "loc-phone-number-link"}).text
             except:
                 phone = MISSING
             hours_of_operation = (
-                loc.find("div", {"class": "mob-box"})
+                loc.find("div", {"class": "loc-details-2"})
                 .get_text(separator="|", strip=True)
                 .replace("|", " ")
                 .replace("Store Hours", " ")
-                .replace("Customer Pickup Hours", "")
+                .replace("Customer Pickup", "")
             )
-            address = loc.find("p", {"class": "inner-info"}).text
+            address = loc.find("a", {"class": "loc-address-link"}).find("p").text
             address = address.replace(",", " ")
             address = usaddress.parse(address)
             i = 0

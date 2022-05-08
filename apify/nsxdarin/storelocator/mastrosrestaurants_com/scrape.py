@@ -86,6 +86,8 @@ def fetch_data():
         hours = (
             hours.replace("<strong>", "").replace("</strong>", "").replace("<br>", "; ")
         )
+        if "the-woodlands" in loc:
+            hours = "Mon: 4:00 PM to 9:00 PM, Tue-Sat: 5:00 PM to 10:00 PM; Sun: 4:00 PM to 9:00 PM"
         if "; <" in hours:
             hours = hours.split("; <")[0].strip()
         if CS is False:

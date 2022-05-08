@@ -63,9 +63,12 @@ def fetch_data():
                 data=json.dumps(data),
             )
 
-            store_list = json.loads(search_res.text)["data"]["stores"]
+            store_list = json.loads(search_res.text)["data"]
+            if "stores" not in store_list:
+                continue
 
-            for store in store_list:
+            stores = store_list["stores"]
+            for store in stores:
 
                 page_url = home_url
 
@@ -91,16 +94,19 @@ def fetch_data():
                 if phone == "-":
                     phone = "<MISSING>"
 
-                phone = (
-                    phone.replace("Food Court", "")
-                    .strip()
-                    .replace("pick up", "")
-                    .strip()
-                )
+                if phone:
+                    phone = (
+                        phone.replace("Food Court", "")
+                        .strip()
+                        .replace("pick up", "")
+                        .strip()
+                    )
                 location_type = "<MISSING>"
                 hours_list = []
                 hours_sel = lxml.html.fromstring(store["description"])
-                hours = hours_sel.xpath("//p/text()")
+                hours = list(
+                    filter(str, [x.strip() for x in hours_sel.xpath("//p/text()")])
+                )
                 for hour in hours:
                     hours_list.append("".join(hour).strip())
 

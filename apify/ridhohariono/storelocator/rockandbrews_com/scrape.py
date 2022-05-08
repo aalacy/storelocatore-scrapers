@@ -16,7 +16,7 @@ HEADERS = {
 }
 log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
 
-session = SgRequests()
+session = SgRequests(verify_ssl=False)
 
 MISSING = "<MISSING>"
 
