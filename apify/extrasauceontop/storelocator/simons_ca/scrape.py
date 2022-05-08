@@ -11,7 +11,7 @@ ssl._create_default_https_context = ssl._create_unverified_context
 
 def get_data():
     user_agent = (
-        "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0"
+        "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0",
     )
     url = "https://www.simons.ca/en/stores/our-stores--a13090"
 
@@ -24,7 +24,7 @@ def get_data():
         response = driver.page_source
         soup = bs(response, "html.parser")
 
-        a_tags = soup.find_all("a", attrs={"class": "simonsLandingStoreCardLink"})
+        a_tags = soup.find_all("a", attrs={"class": "simonsLandingStoreCardLink",})
         class_name = "stores-title"
         for a_tag in a_tags:
             locator_domain = "simons.ca"
@@ -37,16 +37,16 @@ def get_data():
             location_response = driver.page_source
             location_soup = bs(location_response.replace("<br>", "\n"), "html.parser")
 
-            location_name = location_soup.find("h1", attrs={"class": "stores-title"}).text.strip()
+            location_name = location_soup.find("h1", attrs={"class": "stores-title",}).text.strip()
 
-            lat_lon_parts = location_soup.find("a", attrs={"class": "stores-mapLink"})["href"]
+            lat_lon_parts = location_soup.find("a", attrs={"class": "stores-mapLink",})["href"]
             try:
                 latitude = lat_lon_parts.split("@")[1].split(",")[0]
                 longitude = lat_lon_parts.split("@")[1].split(",")[1]
             except Exception:
                 latitude = "<MISSING>"
                 longitude = "<MISSING>"
-            address_parts = location_soup.find("p", attrs={"class": "stores-address"}).text.strip().split("\n")
+            address_parts = location_soup.find("p", attrs={"class": "stores-address",}).text.strip().split("\n")
 
             city = address_parts[-1].split(", ")[0]
             store_number = "<MISSING>"
@@ -58,8 +58,8 @@ def get_data():
             location_type = "<MISSING>"
             country_code = "CA"
 
-            days = location_soup.find("div", attrs={"class": "stores-hoursLeft"}).find_all("p")
-            hours_parts = location_soup.find("div", attrs={"class": "stores-hoursRight"}).find_all("p")
+            days = location_soup.find("div", attrs={"class": "stores-hoursLeft",}).find_all("p")
+            hours_parts = location_soup.find("div", attrs={"class": "stores-hoursRight,find_all("p")
 
             hours = ""
             for x in range(len(days)):
