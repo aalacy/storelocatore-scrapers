@@ -32,36 +32,33 @@ def fetch_data():
                 res = session.get(page_url, headers=_headers).text
                 sp1 = bs(res, "lxml")
                 logger.info(page_url)
+                tr = sp1.select("div.storeTbl table tr")
+                raw_address = tr[0].td.text.strip()
+                addr = parse_address_intl("中国" + raw_address)
+                street_address = addr.street_address_1
+                if addr.street_address_2:
+                    street_address += " " + addr.street_address_2
                 try:
-                    tr = sp1.select("div.storeTbl table tr")
-                    raw_address = tr[0].td.text.strip()
-                    addr = parse_address_intl("中国" + raw_address)
-                    street_address = addr.street_address_1
-                    if addr.street_address_2:
-                        street_address += " " + addr.street_address_2
-                    try:
-                        coord = res.split("new BMap.Point(")[1].split(")")[0].split(",")
-                    except:
+                    coord = res.split("new BMap.Point(")[1].split(")")[0].split(",")
+                    if len(coord) == 1:
                         coord = ["", ""]
-                    yield SgRecord(
-                        page_url=page_url,
-                        store_number=page_url.split("/")[-1].split(".")[0],
-                        location_name=_.a.text.strip(),
-                        street_address=street_address,
-                        city=addr.city,
-                        state=addr.state,
-                        zip_postal=tr[1].td.text.strip(),
-                        country_code="China",
-                        phone=tr[2].td.text.strip(),
-                        latitude=coord[1],
-                        longitude=coord[0],
-                        locator_domain=locator_domain,
-                        raw_address=raw_address,
-                    )
                 except:
-                    import pdb
-
-                    pdb.set_trace()
+                    coord = ["", ""]
+                yield SgRecord(
+                    page_url=page_url,
+                    store_number=page_url.split("/")[-1].split(".")[0],
+                    location_name=_.a.text.strip(),
+                    street_address=street_address,
+                    city=addr.city,
+                    state=addr.state,
+                    zip_postal=tr[1].td.text.strip(),
+                    country_code="China",
+                    phone=tr[2].td.text.strip(),
+                    latitude=coord[1],
+                    longitude=coord[0],
+                    locator_domain=locator_domain,
+                    raw_address=raw_address,
+                )
 
 
 if __name__ == "__main__":

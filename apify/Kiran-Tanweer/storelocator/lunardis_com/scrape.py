@@ -1,124 +1,82 @@
+from sglogging import sglog
 from bs4 import BeautifulSoup
-import csv
-import time
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-
-
-logger = SgLogSetup().get_logger("lunardis_com")
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
-
+website = "lunardis_com"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
+session = SgRequests()
 headers = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.141 Safari/537.36",
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
 }
 
-
-def write_output(data):
-    with open("data.csv", mode="w", newline="", encoding="utf8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        temp_list = []
-        for row in data:
-            comp_list = [
-                row[2].strip(),
-                row[3].strip(),
-                row[4],
-                row[5].strip(),
-                row[6].strip(),
-                row[8].strip(),
-                row[10].strip(),
-            ]
-            if comp_list not in temp_list:
-                temp_list.append(comp_list)
-                writer.writerow(row)
-        logger.info(f"No of records being processed: {len(temp_list)}")
+DOMAIN = "https://www.lunardis.com/"
+MISSING = SgRecord.MISSING
 
 
 def fetch_data():
-    data = []
-    search_url = "https://www.lunardis.com/locations"
-    stores_req = session.get(search_url, headers=headers)
-    soup = BeautifulSoup(stores_req.text, "html.parser")
-    divlist = soup.findAll("div", {"class": "_31Ne5"})
-    for div in divlist:
-        details = div.text
-        details = details.split("\n")
-        hours = details[-1]
-        if hours.find("Hours") != -1:
-            hoo = details[-1]
-            phone = details[-2]
-        else:
-            hoo = details[-2]
-            phone = details[-3]
-            if phone.find("Store Phone:") == -1:
-                phone = details[-4]
-        hoo = hoo.lstrip("Hours: Open Daily ").strip()
-        hoo = hoo.replace("PEN DAILY ", "").strip()
-        hoo = "Mon - Sat: " + hoo
-        phone = phone.lstrip("Store Phone:").strip()
-        title = div.findAll("div", {"class": "_2bafp"})[2]
-        city = title
-        for t in title:
-            allspan = t.findAll("span")
-            title = allspan[3].text
-            info = div.findAll("div", {"class": "_2bafp"})[3].text
-            info = info.split("\n")
-            if len(info) == 5:
-                street = info[0] + " " + info[1] + " " + info[2]
-            if len(info) == 4:
-                street = info[0] + " " + info[1]
-            if len(info) == 6:
-                street = info[0] + " " + info[1] + " " + info[2] + " " + info[3]
-            street = street.split("Phone")[0].strip()
-
-            data.append(
-                [
-                    "https://www.lunardis.com/",
-                    "https://www.lunardis.com/locations",
-                    title,
-                    street,
-                    city,
-                    "<MISSING>",
-                    "<MISSING>",
-                    "US",
-                    "<MISSING>",
-                    phone,
-                    "<MISSING>",
-                    "<INACCESSIBLE>",
-                    "<INACCESSIBLE>",
-                    hoo,
-                ]
+    if True:
+        search_url = "https://www.lunardis.com/locations"
+        stores_req = session.get(search_url, headers=headers)
+        soup = BeautifulSoup(stores_req.text, "html.parser")
+        divlist = soup.find(
+            "div", {"data-mesh-id": "ContainercdeixinlineContent-gridContainer"}
+        ).findAll("div", {"data-testid": "richTextElement"})
+        for div in divlist:
+            if "Phone" not in div.text:
+                continue
+            div = div.get_text(separator="|", strip=True).split("|")
+            if "Peet's Coffee" in div[-1]:
+                del div[-1]
+            elif "OPEN LONGER TO SERVE YOU" in div[-1]:
+                del div[-1]
+            location_name = div[0]
+            log.info(location_name)
+            hours_of_operation = div[-1].replace("Hours:", "")
+            phone = div[-2].replace("Store Phone:", "").replace("Meat Dept:", "")
+            street_address = " ".join(div[1:-2])
+            if "Store Phone:" in street_address:
+                street_address = street_address.split("Store Phone:")[0]
+            city = location_name
+            country_code = "US"
+            yield SgRecord(
+                locator_domain=DOMAIN,
+                page_url=search_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city.strip(),
+                state=MISSING,
+                zip_postal=MISSING,
+                country_code=country_code,
+                store_number=MISSING,
+                phone=phone,
+                location_type=MISSING,
+                latitude=MISSING,
+                longitude=MISSING,
+                hours_of_operation=hours_of_operation,
             )
-    return data
 
 
 def scrape():
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
-    data = fetch_data()
-    write_output(data)
-    logger.info(time.strftime("%H:%M:%S", time.localtime(time.time())))
+    log.info("Started")
+    count = 0
+    deduper = SgRecordDeduper(
+        SgRecordID(
+            {SgRecord.Headers.STREET_ADDRESS, SgRecord.Headers.HOURS_OF_OPERATION}
+        )
+    )
+    with SgWriter(deduper) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()

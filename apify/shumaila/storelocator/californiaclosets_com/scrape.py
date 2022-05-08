@@ -1,8 +1,10 @@
 from bs4 import BeautifulSoup
-import csv
 import json
-
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
 headers = {
@@ -10,216 +12,179 @@ headers = {
 }
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
 def fetch_data():
-    p = 0
-    data = []
     url = "https://www.californiaclosets.com/showrooms/"
-    r = session.get(url, headers=headers, verify=False)
-    soup = BeautifulSoup(r.text, "html.parser")
-    linklist = soup.select('a:contains("Showroom details")')
-    titlelist = []
-    for link in linklist:
-        link = link["href"]
-        check = 1
-        if "showroom" not in link and "design" not in link:
-            check = 1
-        r = session.get(link, headers=headers, verify=False)
-        soup = BeautifulSoup(r.text, "html.parser")
-        if check == 1:
-            templist = soup.findAll("a", {"class": "Teaser-titleLink"})
-            for temp in templist:
-                if temp["href"] in titlelist:
-                    pass
-                else:
-                    link = temp["href"]
-                    r = session.get(link, headers=headers, verify=False)
-                    check = 0
-                    break
+    r = session.get(url, headers=headers)
+    loclist = r.text.split('<script type="application/ld+json">')[1:]
+    for loc in loclist:
+        loc = loc.split("</script>", 1)[0]
+        loc = json.loads(loc)
+        title = loc["name"]
+        link = loc["url"]
+        phone = loc["telephone"]
+        street = loc["address"]["streetAddress"]
+        city = loc["address"]["addressLocality"]
+        state = loc["address"]["addressRegion"]
+        pcode = loc["address"]["postalCode"]
         try:
-            content = r.text.split('<script type="application/ld+json">')[1].split(
-                "</script>"
-            )[0]
-            content = json.loads(content)
-            street = content["address"]["streetAddress"]
-            pcode = content["address"]["postalCode"]
-            state = content["address"]["addressRegion"]
-            city = content["address"]["addressLocality"]
-            phone = content["telephone"]
-            link = content["url"]
-            try:
-                lat = content["geo"]["latitude"]
-                longt = content["geo"]["longitude"]
-            except:
+            ccode = loc["address"]["addressCountry"]
+        except:
+            if pcode.strip().isdigit():
+                ccode = "US"
+            else:
+                ccode = "CA"
+        ltype = loc["image"]
+        if len(phone) < 3:
+            ltype = "Coming Soon"
+        else:
+            ltype = "<MISSING>"
+        lat = longt = hours = "<MISSING>"
+        try:
+            r = session.get(link, headers=headers)
+            soup = BeautifulSoup(r.text, "html.parser")
+            if len(pcode) < 3:
                 try:
-                    lat, longt = (
-                        r.text.split('"https://www.google.com/maps/place/', 1)[1]
-                        .split('"')[0]
-                        .split(",")
+                    pcode = (
+                        r.text.split('"streetAddress":"' + street, 1)[1]
+                        .split('"postalCode":"', 1)[1]
+                        .split('"', 1)[0]
+                        .strip()
                     )
                 except:
-                    lat = longt = "<MISSING>"
-            title = content["name"]
-            try:
-                ccode = content["address"]["addressCountry"]
-            except:
-                if pcode.strip().isdigit:
-                    ccode = "US"
-                else:
-                    ccode = "CA"
-            try:
-                hourslist = content["openingHoursSpecification"]
-                hours = ""
-                for hr in hourslist:
-                    day = hr["dayOfWeek"]
                     try:
-                        opens = hr["opens"] + " AM - "
-
-                        close = hr["closes"]
-                        cttime = (int)(close.split(":", 1)[0])
-                        if cttime > 12:
-                            cttime = cttime - 12
-                        hours = (
-                            hours
-                            + day
-                            + " "
-                            + opens
-                            + str(cttime)
-                            + ":"
-                            + close.split(":", 1)[1]
-                            + " PM "
+                        pcode = (
+                            r.text.split('"postalCode":"', 1)[1]
+                            .split('"', 1)[0]
+                            .strip()
                         )
                     except:
-                        hours = hours + day + " Closed "
+                        pcode = soup.find(
+                            "span", {"class": "c-address-postal-code"}
+                        ).text
+            try:
+                lat = r.text.split('"latitude":', 1)[1].split(",", 1)[0]
+                longt = r.text.split('"longitude":', 1)[1].split("}", 1)[0]
+            except:
+                try:
+                    lat = r.text.split('latitude" content="', 1)[1].split('"', 1)[0]
+                    longt = r.text.split('longitude" content="', 1)[1].split('"', 1)[0]
+                except:
+                    try:
+                        lat, longt = (
+                            r.text.split('data-coordinates="', 1)[1]
+                            .split('"', 1)[0]
+                            .split(",", 1)
+                        )
+                    except:
+
+                        lat = longt = "<MISSING>"
+            soup = BeautifulSoup(r.text, "html.parser")
+            try:
+                try:
+                    hours = (
+                        soup.find("table", {"class": "hours"})
+                        .text.replace("Day of the WeekHours", "")
+                        .replace("PM", "PM ")
+                        .replace("day", "day ")
+                        .replace("losed", "losed ")
+                        .strip()
+                    )
+                except:
+
+                    hours = (
+                        soup.find("div", {"class": "hours"})
+                        .text.replace("SHOWROOM HOURS", "")
+                        .replace("\n", " ")
+                        .strip()
+                    )
+                    try:
+                        hours = hours.split("Mon", 1)[1]
+                        hours = "Mon" + hours
+                    except:
+                        pass
+                    try:
+                        hours = hours.split("More", 1)[0]
+                    except:
+                        pass
             except:
                 hours = "<MISSING>"
-        except:
             try:
-                address = (
-                    soup.find("div", {"class": "address-nav"})
-                    .text.lstrip()
-                    .splitlines()
-                )
+                if "Canada" in ccode:
+                    ccode = "CA"
+                elif "USA" in ccode:
+                    ccode = "US"
+                elif "Mexico" in ccode or "Santiago" in ccode or "Garcia" in ccode:
+                    ccode = "MX"
+                elif "Domingo" in ccode:
+                    ccode = "DO"
+                elif "San Juan" in ccode:
+                    ccode = "PR"
+                else:
+                    if pcode.isdigit():
+                        ccode = "US"
+                    elif len(pcode) > 5:
+                        ccode = "CA"
+                    else:
+                        ccode = soup.find("span", {"itemprop": "addressCountry"}).text
             except:
-                continue
-            street = address[1]
-            city, state = address[2].split(", ")
-            pcode = address[3]
-            phone = address[5]
-            hours = (
-                soup.findAll("div", {"class": "address-nav"})[1]
-                .text.split("Make", 1)[0]
-                .replace("Working Hours", "")
-                .replace("\n", " ")
-                .strip()
-            )
-            ccode = "CA"
-
-            title = soup.find("title").text.split("-")[0]
+                try:
+                    ccode = (
+                        r.text.split('"streetAddress":"' + street, 1)[1]
+                        .split('"addressCountry":"', 1)[1]
+                        .split('"', 1)[0]
+                    )
+                except:
+                    try:
+                        ccode = soup.find("span", {"itemprop": "addressCountry"}).text
+                    except:
+                        if pcode.strip().isdigit():
+                            ccode = "US"
+                        else:
+                            ccode = "CA"
+            if "Canada" in ccode:
+                ccode = "CA"
             try:
-                lat, longt = (
-                    r.text.split('"https://www.google.com/maps/place/', 1)[1]
-                    .split('"')[0]
-                    .split(",")
-                )
-            except:
-
-                lat = longt = "<MISSING>"
-        if hours.find("call") > -1:
-            hours = "<MISSING>"
-        if len(pcode) < 2:
-            pcode = "<MISSING>"
-        if state == "Washington":
-            state = "WA"
-        if state == "Wisconsin":
-            state = "WI"
-        if state == "Boise" and city == "Idaho":
-            state = "ID"
-            city = "Boise"
-        link = r.url
-        if len(state) > 3 or link in titlelist:
-            continue
-        titlelist.append(link)
-        if "showroom" in hours.lower() or "For questions please" in hours:
-            try:
-                hours = hours.split("Monday", 1)[1]
-                hours = "Monday" + hours
+                phone = phone.split("<", 1)[0]
             except:
                 pass
-        data.append(
-            [
-                "https://www.californiaclosets.com/",
-                link,
-                title,
-                street,
-                city,
-                state,
-                pcode,
-                ccode,
-                "<MISSING>",
-                phone,
-                "<MISSING>",
-                lat,
-                longt,
-                hours,
-            ]
+            if "22000 Willamette Dr" in street:
+                street = street + " Suite 103"
+            try:
+                hours = hours.split("MORE", 1)[0]
+            except:
+                pass
+        except:
+            pass
+        yield SgRecord(
+            locator_domain="https://www.californiaclosets.com/",
+            page_url=link,
+            location_name=title.replace("&#8211;", "-").strip(),
+            street_address=street.replace(" </br>", "")
+            .replace("<br>", " ")
+            .replace("<br/>", " ")
+            .strip(),
+            city=city.strip(),
+            state=state.strip(),
+            zip_postal=pcode.strip(),
+            country_code=ccode,
+            store_number=SgRecord.MISSING,
+            phone=phone.strip(),
+            location_type=ltype,
+            latitude=str(lat).replace('"', ""),
+            longitude=str(longt).replace('"', ""),
+            hours_of_operation=hours,
         )
-
-        p += 1
-    data.append(
-        [
-            "https://www.californiaclosets.com/",
-            "<MISSING>",
-            "CHANTILLY",
-            "4262 Entre Court",
-            "Chantilly",
-            "VA",
-            "20151",
-            "US",
-            "<MISSING>",
-            "703.214.6514",
-            "<MISSING>",
-            "<MISSING>",
-            "<MISSING>",
-            "<MISSING>",
-        ]
-    )
-    return data
 
 
 def scrape():
 
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        deduper=SgRecordDeduper(SgRecordID({SgRecord.Headers.LOCATION_NAME}))
+    ) as writer:
+
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()

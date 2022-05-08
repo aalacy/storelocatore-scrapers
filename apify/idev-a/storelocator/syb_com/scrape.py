@@ -3,7 +3,8 @@ from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
-from sgscrape.sgpostal import parse_address_intl
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 logger = SgLogSetup().get_logger("syb")
 
@@ -12,65 +13,62 @@ _headers = {
 }
 
 
-def _v(val):
-    val = val.strip()
-    if val.endswith(":"):
-        val = val[:-1]
-    return val
-
-
 def fetch_data():
     locator_domain = "https://syb.com"
     base_url = "https://syb.com/locations/?ext=."
     with SgRequests() as session:
         soup = bs(session.get(base_url, headers=_headers).text, "lxml")
-        links = soup.select("div.container .col-sm-9 a.button")
+        links = soup.select("div.locations-view div.location-container")
         logger.info(f"{len(links)} found")
-        for link in links:
-            page_url = locator_domain + link["href"]
-            logger.info(page_url)
-            sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
-            locations = sp1.select("div.location")
-            for _ in locations:
-                if _.img:
-                    _name = _.img.find_next_sibling().text
-                    coord = _.img["src"].split("ll=")[1].split("&")[0].split(",")
-                else:
-                    _name = _.select_one(".location_name").text
-                    coord = _.a["href"].split("ll=")[1].split("&")[0].split(",")
-                _addr = list(_.select_one("p.address").stripped_strings)
-                del _addr[-1]
-                if "Direction" in _addr[-1]:
-                    del _addr[-1]
-                addr = parse_address_intl(" ".join(_addr[:-2]))
-                street_address = addr.street_address_1
-                if addr.street_address_2:
-                    street_address += " " + addr.street_address_2
-                try:
-                    yield SgRecord(
-                        page_url=page_url,
-                        location_name=_v(_name),
-                        street_address=street_address,
-                        city=addr.city,
-                        state=addr.state,
-                        zip_postal=addr.postcode,
-                        country_code="US",
-                        phone=_addr[-2].replace("(Louisville)", ""),
-                        latitude=coord[0],
-                        longitude=coord[1],
-                        locator_domain=locator_domain,
-                        hours_of_operation=_addr[-1]
-                        .replace("–", "-")
-                        .replace(",", ";"),
+        for _ in links:
+            addr = []
+            for aa in list(_.select_one("div.address-contact").stripped_strings)[1:]:
+                if "Get Directions" in aa:
+                    break
+                addr.append(
+                    " ".join(
+                        [
+                            dd.strip()
+                            for dd in aa.replace("\n", "").split()
+                            if dd.strip()
+                        ]
                     )
-                except:
-                    import pdb
+                )
+            phone = ""
+            if _.select_one("div.phone"):
+                phone = list(_.select_one("div.phone").stripped_strings)[-1]
+            location_type = "branch"
+            for ll in _.select("div.services ul li"):
+                if ll.text.strip() == "atm":
+                    location_type += ", atm"
+            coord = (
+                _.select_one("div.directions a")["href"].split("?daddr=")[1].split(",")
+            )
+            hours = []
+            for hh in _.select("div.hours table tbody tr"):
+                td = list(hh.stripped_strings)
+                hours.append(f"{td[0]}: {td[1]}")
 
-                    pdb.set_trace()
+            yield SgRecord(
+                page_url=base_url,
+                location_name=_.select_one("div.location-title").text.strip(),
+                street_address=addr[0],
+                city=addr[-1].split(",")[0].strip(),
+                state=addr[-1].split(",")[1].strip().split(" ")[0].strip(),
+                zip_postal=addr[-1].split(",")[1].strip().split(" ")[-1].strip(),
+                country_code="US",
+                phone=phone,
+                location_type=location_type,
+                latitude=coord[0],
+                longitude=coord[1],
+                locator_domain=locator_domain,
+                hours_of_operation="; ".join(hours),
+                raw_address=" ".join(addr),
+            )
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

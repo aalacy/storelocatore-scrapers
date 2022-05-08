@@ -1,84 +1,50 @@
 from lxml import etree
 from urllib.parse import urljoin
-from time import sleep
-from random import uniform
 
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 
 
 def fetch_data():
     session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
-
-    start_url = "https://www.yellowmap.de/partners/AldiNord/Html/Poi.aspx"
+    start_url = "https://www.aldi.pt/tools/lojas-e-horarios-de-funcionamento.html"
     domain = "aldi.pt"
 
-    search_url = "https://www.yellowmap.de/Partners/AldiNord/Search.aspx?BC=ALDI|ALDN&Search=1&Layout2=True&Locale=pt-PT&PoiListMinSearchOnCountZeroMaxRadius=50000&SupportsStoreServices=true&GeoFormatDatabase=3&GeoFormatIn=3&Country=P&Zip={}&Town=&Street=&Radius=100000"
-    all_codes = DynamicZipSearch(
-        country_codes=[SearchableCountries.PORTUGAL], expected_search_radius_miles=100
-    )
-    for code in all_codes:
-        sleep(uniform(0, 5))
-        response = session.get(search_url.format(code))
-        session_id = response.url.split("=")[-1]
-        hdr = {
-            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-            "Content-Type": "application/x-www-form-urlencoded",
-            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:91.0) Gecko/20100101 Firefox/91.0",
-        }
-        dom = etree.HTML(
-            response.text.replace('<?xml version="1.0" encoding="utf-8"?>', "")
-        )
-        option = dom.xpath('//select[@name="Loc"]/option/@value')
-        loc = option[0] if option else ""
+    response = session.get(start_url)
+    dom = etree.HTML(response.text)
+    all_cities = dom.xpath('//div[@class="mod-stores__multicolumn"]//a/@href')
+    for url in all_cities:
+        response = session.get(urljoin(start_url, url))
+        dom = etree.HTML(response.text)
 
-        frm = {
-            "SessionGuid": session_id,
-            "View": "",
-            "ClearParas": "AdminUnitID,AdminUnitName,WhereCondition",
-            "ClearGroups": "GeoMap,MapNav",
-            "Locale": "pt-PT",
-            "Loc": loc,
-        }
+        all_locations = dom.xpath('//div[@class="mod-stores__multicolumn"]//a/@href')
+        for url in all_locations:
+            store_url = urljoin(start_url, url)
+            loc_response = session.get(store_url)
+            loc_dom = etree.HTML(loc_response.text)
 
-        response = session.post(start_url, headers=hdr, data=frm)
-        dom = etree.HTML(
-            response.text.replace('<?xml version="1.0" encoding="utf-8"?>', "")
-        )
-
-        all_locations = dom.xpath('//tr[@class="ItemTemplate"]')
-        all_locations += dom.xpath('//tr[@class="AlternatingItemTemplate"]')
-        next_page = dom.xpath('//a[@title="página seguinte"]/@href')
-        while next_page:
-            response = session.get(urljoin(start_url, next_page[0]))
-            dom = etree.HTML(
-                response.text.replace('<?xml version="1.0" encoding="utf-8"?>', "")
+            location_name = loc_dom.xpath('//p[@itemprop="name"]/text()')[0]
+            street_address = loc_dom.xpath('//span[@itemprop="streetAddress"]/text()')[
+                0
+            ]
+            zip_code = loc_dom.xpath('//span[@itemprop="postalCode"]/text()')[0]
+            city = loc_dom.xpath('//span[@itemprop="addressLocality"]/text()')[0]
+            hoo = loc_dom.xpath(
+                '//div[@class="mod-stores__overview-openhours"]//text()'
             )
-            all_locations += dom.xpath('//td[@class="ItemTemplateColumnLocation"]')
-            all_locations += dom.xpath(
-                '//td[@class="AlternatingItemTemplateColumnLocation"]'
-            )
-            next_page = dom.xpath('//a[@title="página seguinte"]/@href')
-
-        for poi_html in all_locations:
-            location_name = poi_html.xpath('.//p[@class="PoiListItemTitle"]/text()')[0]
-            raw_adr = poi_html.xpath(".//address/text()")
-            raw_adr = [e.strip() for e in raw_adr]
-            hoo = poi_html.xpath('.//td[contains(@class,"OpeningHours")]//text()')
             hoo = " ".join([e.strip() for e in hoo if e.strip()])
 
             item = SgRecord(
                 locator_domain=domain,
                 page_url="https://www.aldi.pt/tools/lojas-e-horarios-de-funcionamento.html",
                 location_name=location_name,
-                street_address=raw_adr[0],
-                city=" ".join(raw_adr[1].split()[1:]),
+                street_address=street_address,
+                city=city,
                 state=SgRecord.MISSING,
-                zip_postal=raw_adr[1].split()[0],
+                zip_postal=zip_code,
                 country_code="PT",
                 store_number=SgRecord.MISSING,
                 phone=SgRecord.MISSING,

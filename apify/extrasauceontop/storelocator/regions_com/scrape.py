@@ -2,8 +2,10 @@ import re
 import json
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
-from sgzip.static import static_zipcode_list, SearchableCountries
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries, Grain_1_KM
 from sgscrape import simple_scraper_pipeline as sp
+from sglogging import sglog
+import html
 
 
 def extract_json(html_string):
@@ -38,11 +40,13 @@ def extract_json(html_string):
 
 
 def get_data():
+    log = sglog.SgLogSetup().get_logger(logger_name="regions")
     page_urls = []
     session = SgRequests()
-    search = static_zipcode_list(country_code=SearchableCountries.USA, radius=30)
+    search = DynamicZipSearch(
+        country_codes=[SearchableCountries.USA], granularity=Grain_1_KM()
+    )
 
-    x = 0
     for search_code in search:
         url = (
             "https://www.regions.com/Locator?regions-get-directions-starting-coords=&daddr=&autocompleteAddLat=&autocompleteAddLng=&r=&geoLocation="
@@ -71,13 +75,14 @@ def get_data():
             except Exception:
                 page_url = "<MISSING>"
 
-            location_name = location["title"]
+            location_name = html.unescape(location["title"])
             latitude = location["lat"]
             longitude = location["lng"]
+
             address = location["address"].split("<br />")[0]
             if bool(re.search("[a-zA-Z]", address)) is False:
                 address = "<MISSING>"
-            city = location["address"].split("<br />")[1].split(",")[0]
+            city = html.unescape(location["address"].split("<br />")[1].split(",")[0])
 
             state_parts = (
                 location["address"].split("<br />")[1].split(",")[1].split(" ")
@@ -94,6 +99,7 @@ def get_data():
             location_type = location["type"]
 
             if page_url != "<MISSING>":
+                page_url = page_url.lower()
                 if page_url in page_urls or "-atm-" in page_url:
                     continue
 
@@ -106,6 +112,7 @@ def get_data():
                         try:
                             phone = item["telephone"].replace("+", "")
                         except Exception:
+                            phone = "<MISSING>"
                             pass
 
                         hours = ""
@@ -124,8 +131,9 @@ def get_data():
                                             + part["closes"]
                                             + ", "
                                         )
-
+                            hours = hours[:-2]
                         except Exception:
+                            hours = "<MISSING>"
                             pass
 
                 page_urls.append(page_url)
@@ -133,6 +141,12 @@ def get_data():
             else:
                 phone = "<MISSING>"
                 hours = "<MISSING>"
+
+            if "locator/branch/bank-branch-oxmoor-valley-birmingham" in page_url:
+                log.info(search_code)
+                log.info(page_url)
+                log.info(address)
+                log.info("")
 
             x = x + 1
             yield {
@@ -151,10 +165,6 @@ def get_data():
                 "hours": hours,
                 "country_code": country_code,
             }
-
-        x = x + 1
-        # if x == 5:
-        #     break
 
 
 def scrape():

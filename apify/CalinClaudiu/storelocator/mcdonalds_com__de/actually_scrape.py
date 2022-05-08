@@ -214,6 +214,9 @@ def strip_locale(country):
 
 def pull_map_poi(coord, url, session, locale, lang, country):
     lat, lng = coord
+
+    if lang == "en-nb-no":
+        lang = "en-no"
     headers = {}
     headers[
         "user-agent"
@@ -235,8 +238,8 @@ def pull_from_map(session, country):
     try:
         search = DynamicGeoSearch(
             country_codes=[SearchableCountry],
-            expected_search_radius_miles=None,
-            max_search_results=None,
+            expected_search_radius_miles=8,
+            max_search_results=25,
             granularity=Grain_8(),
         )
     except Exception as e:
@@ -245,6 +248,7 @@ def pull_from_map(session, country):
         )
     lang2 = lang.split("-")[1]
     lang2 = "en-" + lang
+
     if search:
         with SgRequests(proxy_country=locale) as session2:
             for coord in search:

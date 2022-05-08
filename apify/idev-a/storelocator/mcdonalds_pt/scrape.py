@@ -52,6 +52,31 @@ def request_with_retries(url):
     return session.get(url, headers=_headers)
 
 
+def _la(val):
+    return (
+        val.replace("&#39;", "'")
+        .replace("&#170;", "å")
+        .replace("&#231;", "ç")
+        .replace("&#227;", "ã")
+        .replace("&#233;", "é")
+        .replace("&#201;", "É")
+        .replace("&#186;", "°")
+        .replace("&#225;", "á")
+        .replace("&#243;", "ó")
+        .replace("&#234;", "ê")
+        .replace("&#193;", "Á")
+        .replace("&#226;", "â")
+        .replace("&#250;", "ú")
+        .replace("&#245;", "õ")
+        .replace("&#237;", "í")
+        .replace("&#160;", "")
+        .replace("&#195;", "Ã")
+        .replace("&#199;", "Ç")
+        .replace("&#218;", "Ú")
+        .replace("&#211;", "Ó")
+    )
+
+
 def fetch_data():
     with SgRequests() as session:
         locations = json.loads(
@@ -71,11 +96,11 @@ def fetch_data():
             addr = ss["address"]
             yield SgRecord(
                 page_url=page_url,
-                location_name=ss["name"],
-                street_address=addr["streetAddress"],
-                city=addr["addressLocality"].replace("&#170;", "å"),
-                state=addr["addressRegion"],
-                zip_postal=addr["postalCode"],
+                location_name=_la(ss["name"]),
+                street_address=_la(addr["streetAddress"]),
+                city=_la(addr["addressLocality"]),
+                state=_la(addr["addressRegion"]),
+                zip_postal=_la(addr["postalCode"]),
                 latitude=_["Lat"],
                 longitude=_["Lng"],
                 country_code="Portugal",

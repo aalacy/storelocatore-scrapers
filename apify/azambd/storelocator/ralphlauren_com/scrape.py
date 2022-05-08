@@ -1,53 +1,99 @@
 from lxml import html
 import time
+import random
 import json
-import ast
-import pycountry
-from sgpostal.sgpostal import parse_address_intl
-
 from sglogging import sglog
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
-from sgrequests import SgRequests
-
+from sgselenium.sgselenium import SgChrome
+from webdriver_manager.chrome import ChromeDriverManager
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.action_chains import ActionChains
+from selenium.common.exceptions import NoSuchElementException
 import ssl
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
-
-DOMAIN = "ralphlauren.com"
-website = "https://www.ralphlauren.com"
+website = "ralphlauren.com"
+start_url = "https://www.ralphlauren.com/findstores?dwfrm_storelocator_distanceUnit=mi&dwfrm_storelocator_searchKey=10002&dwfrm_storelocator_maxdistance=50000&dwfrm_storelocator_latitude=&dwfrm_storelocator_longitude=&countryCode=&postalCode=&usePlaceDetailsAddress=false&dwfrm_storelocator_findbysearchkey=Search&findByValue=KeySearch"
+user_agent = (
+    "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0"
+)
 MISSING = SgRecord.MISSING
 
-log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
+xpath_px_captcha = '//*[@id="px-captcha"]'
+EXPLICIT_WAIT_TIME = 10
 
 
-headers = {
-    "authority": "www.ralphlauren.com",
-    "cache-control": "max-age=0",
-    "sec-ch-ua": '"Chromium";v="92", " Not A;Brand";v="99", "Google Chrome";v="92"',
-    "sec-ch-ua-mobile": "?0",
-    "upgrade-insecure-requests": "1",
-    "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.159 Safari/537.36",
-    "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-    "sec-fetch-site": "cross-site",
-    "sec-fetch-mode": "navigate",
-    "sec-fetch-user": "?1",
-    "sec-fetch-dest": "document",
-    "accept-language": "en-US,en;q=0.9",
-    "Cookie": "_pxhd=X6pf-dLqFYkjA1LCKGtlPcl6cBFRCPs2iYVwqyoWVpmiFne2kEErCndacgOYkLxn29-FWBi6qwzPKYEWlZwMxw==:12sFThbmi9og/ljBydM0KoHlehInIUBYxzxYO6/WGs7n2lITdGW7TYErdUnag15C7RF6ZBTBgKthZz3cwHYRWl8QaT7avj6thDZEdTbEvcA=",
-}
-
-
-def do_fuzzy_search(country):
+def driver_sleep(driver, time=2):
     try:
-        result = pycountry.countries.search_fuzzy(country)
+        WebDriverWait(driver, time).until(
+            EC.presence_of_element_located((By.ID, MISSING))
+        )
     except Exception:
-        return None
+        pass
+
+
+def random_sleep(driver, start=5, limit=3):
+    driver_sleep(driver, random.randint(start, start + limit))
+
+
+def check_if_xpath_exists(driver, xpath):
+    try:
+        driver.find_element_by_xpath(xpath)
+    except NoSuchElementException:
+        return False
+    return True
+
+
+log = sglog.SgLogSetup().get_logger(logger_name=website)
+
+
+def fetch_page_cf(driver, url):
+    driver.get(url)
+    random_sleep(driver, 5)
+    driver.execute_script("window.scrollTo(0, document.documentElement.scrollHeight);")
+    driver.execute_script("window.scrollTo(0, 0);")
+    driver.execute_script("window.scrollTo(0, document.documentElement.scrollHeight);")
+    random_sleep(driver, 2)
+
+    if check_if_xpath_exists(driver, xpath_px_captcha) is True:
+        try:
+            log.info("Dealing with CF ...")
+            WebDriverWait(driver, EXPLICIT_WAIT_TIME).until(
+                EC.presence_of_element_located((By.ID, "px-captcha"))
+            )
+            block_button_px = driver.find_element_by_id("px-captcha")
+            action = ActionChains(driver)
+            x = 50
+            y = 50
+            action.move_to_element_with_offset(block_button_px, x, y)
+            log.debug(f"Moving the cursor closer to the PRESS & HOLD button {x}, {y}")
+            random_sleep(driver, 10)
+            action.click_and_hold()
+            log.debug("Perform click and hold")
+            action.perform()
+            log.debug("Holding for a few seconds")
+            random_sleep(driver, 8)
+            log.debug("Pressed button")
+            action.release().perform()
+            log.debug("PRESS & HOLD BUTTON RELEASED")
+
+            random_sleep(driver, 30)
+
+            driver.execute_script("window.scrollTo(0, 0);")
+            random_sleep(driver, 10)
+            log.debug(f"Reloading again {url} ...")
+            return fetch_page_cf(driver, url)
+        except Exception as e:
+            log.debug(f"Retrying ...{e}")
+            return fetch_page_cf(driver, url)
     else:
-        return result[0].alpha_2
+        random_sleep(driver, 5)
 
 
 def get_var_name(value):
@@ -67,140 +113,93 @@ def get_JSON_object_variable(Object, varNames, noVal=MISSING):
             Object = Object[varName]
         except Exception:
             return noVal
-    if value is None or value == "None" or value == "":
+    if value is None:
+        return MISSING
+    value = str(value).replace("null", "").replace("None", "").strip()
+    if len(value) == 0:
         return MISSING
     return value
 
 
-def get_address(raw_address):
-    try:
-        if raw_address is not None and raw_address != MISSING:
-            data = parse_address_intl(raw_address)
-            street_address = data.street_address_1
-            if data.street_address_2 is not None:
-                street_address = street_address + " " + data.street_address_2
-            city = data.city
-            state = data.state
-            zip_postal = data.postcode
+def fetch_stores(driver):
+    fetch_page_cf(driver, start_url)
+    body = html.fromstring(driver.page_source, "lxml")
+    data = body.xpath('//*[contains(@data-storejson, "[")]/@data-storejson')[0]
+    stores = json.loads(data)
+    jsons = body.xpath('//script[contains(@type, "application/ld+json")]/text()')
+    dataJSON = []
+    for jsonData in jsons:
+        if '"openingHours"' in jsonData:
+            dataJSON = json.loads(jsonData)
+            dataJSON = dataJSON["store"]
+            break
 
-            if street_address is None or len(street_address) == 0:
-                street_address = MISSING
-            if city is None or len(city) == 0:
-                city = MISSING
-            if state is None or len(state) == 0:
-                state = MISSING
-            if zip_postal is None or len(zip_postal) == 0:
-                zip_postal = MISSING
-            return street_address, city, state
-    except Exception as e:
-        log.info(f"No Address {e}")
-        pass
-    return MISSING, MISSING, MISSING
+    for store in stores:
+        store["location_name"] = MISSING
+        store["street_address"] = MISSING
+        store["hoo"] = MISSING
+        store["country_code"] = "US"
 
-
-def fetch_stores(http):
-    response = http.get(f"{website}/Stores-ShowCountries", headers=headers)
-
-    body = html.fromstring(response.text, "lxml")
-    countries = body.xpath('//a[contains(@class, "store-directory-countrylink")]/@href')
-    log.debug(f"Total countries ={len(countries)}")
-
-    countryCount = 0
-
-    stores = []
-    for country in countries:
-        countryCount = countryCount + 1
-        log.debug(f"{countryCount}. scrapping country {country}")
-        response = http.get(f"{website}{country}", headers=headers)
-        body = html.fromstring(response.text, "lxml")
-        cities = body.xpath('//a[contains(@class, "store-directory-citylink")]/@href')
-        log.debug(f"{countryCount}. total city = {len(cities)}")
-
-        cityCount = 0
-        for city in cities:
-            cityCount = cityCount + 1
-            pages = body.xpath(
-                '//a[contains(@class, "store-directory-citylink")]/@href'
-            )
-            log.debug(f"{countryCount}==> {cityCount}. scrapping city {len(pages)}")
-            for page in pages:
-                response = http.get(f"{website}{page}", headers=headers)
-                body = html.fromstring(response.text, "lxml")
-                dataSet = body.xpath(
-                    '//div[contains(@class,"storeJSON")]/@data-storejson'
+        if "latitude" not in store:
+            continue
+        for data in dataJSON:
+            if data["telephone"] == "":
+                data_phone = "None"
+            else:
+                data_phone = data["telephone"]
+            if (
+                "latitude" in data["geo"]
+                and f"{data_phone}" == f'{store["phone"]}'
+                and f'{data["geo"]["latitude"]} {data["geo"]["longitude"]}'
+                == f'{store["latitude"]} {store["longitude"]}'
+            ):
+                store["location_name"] = data["name"]
+                store["street_address"] = data["address"]["streetAddress"]
+                store["country_code"] = data["address"]["addressCountry"]
+                store["hoo"] = (
+                    data["openingHours"]
+                    .replace("<br/>\n", "; ")
+                    .replace("<br/>", " ")
+                    .replace("<br>", "; ")
+                    .replace("\n", " ")
+                    .strip()
                 )
-                for data in dataSet:
-                    stores = stores + json.loads(data)
+
     return stores
 
 
-def fetch_data(http):
-    stores = fetch_stores(http)
+def fetch_data(driver):
+    stores = fetch_stores(driver)
     log.info(f"Total stores = {len(stores)}")
     for store in stores:
-
         location_type = MISSING
 
         store_number = get_JSON_object_variable(store, "id")
-        page_url = f"{website}/Stores-Details?StoreID={store_number}"
+        page_url = f"https://www.ralphlauren.com/Stores-Details?StoreID={store_number}"
         location_name = get_JSON_object_variable(store, "location_name")
         location_name = location_name.split("-")[0].strip()
+        street_address = get_JSON_object_variable(store, "street_address")
+        city = get_JSON_object_variable(store, "city")
         zip_postal = get_JSON_object_variable(store, "postalCode")
-        country = get_JSON_object_variable(store, "countryCode")
-        country_code = do_fuzzy_search(country)
+        street_address = street_address.replace(f",{zip_postal}", "")
+        state = get_JSON_object_variable(store, "stateCode")
+        country_code = get_JSON_object_variable(store, "countryCode")
         phone = get_JSON_object_variable(store, "phone")
         latitude = get_JSON_object_variable(store, "latitude")
         longitude = get_JSON_object_variable(store, "longitude")
 
-        if location_name == MISSING:
-            log.debug(f"Fetching page_url {page_url} ...")
-            time.sleep(5)
-            response = http.get(f"{page_url}", headers=headers)
-            body = html.fromstring(response.text, "lxml")
-            jsonData = body.xpath(
-                '//script[contains(@type, "application/ld+json")]/text()'
-            )[3].strip()
-            data = ast.literal_eval(jsonData)
-            location_name = data["name"]
-            location_name = location_name.split("-")[0].strip()
-            log.info(f"Location Name: {location_name}")
-            street_address = data["address"]["streetAddress"]
-            log.info(f"Street Address: {street_address}")
-            address2 = data["address"]["addressLocality"]
-            raw_address = f"{street_address}, {address2}"
+        hours_of_operation = get_JSON_object_variable(store, "hoo")
 
-            street_address, city, state = get_address(raw_address)
-            log.info(f"street_address: {street_address} city:{city}, state:{state}")
-            hoo = []
-            hoos = body.xpath('//tr[@class="store-hourrow"]')
-            if len(hoos) > 1:
-                for h in hoos:
-                    day = (
-                        h.xpath('./td[@class="store-hours-day"]/text()')[0]
-                        .strip()
-                        .replace(">", "")
-                    )
-                    try:
-                        hrs = h.xpath('./td[@class="store-hours-open"]/text()')[0]
-                        hoo.append(f"{day}:{hrs}")
-                    except:
-                        hoo.append(f"{day}")
-                        pass
-
-            else:
-                for h in hoos:
-                    day = (
-                        "".join(h.xpath('./td[@class="store-hours-day"]/text()'))
-                        .strip()
-                        .replace("\n", ",")
-                    )
-                    hoo.append(f"{day}")
-
-            hours_of_operation = ";".join(hoo)
-            log.info(f"HOO: {hours_of_operation}")
+        raw_address = f"{street_address}, {city}, {state} {zip_postal}".replace(
+            MISSING, ""
+        )
+        raw_address = " ".join(raw_address.split())
+        raw_address = raw_address.replace(", ,", ",").replace(",,", ",")
+        if raw_address[len(raw_address) - 1] == ",":
+            raw_address = raw_address[:-1]
 
         yield SgRecord(
-            locator_domain=DOMAIN,
+            locator_domain=website,
             store_number=store_number,
             page_url=page_url,
             location_name=location_name,
@@ -220,15 +219,22 @@ def fetch_data(http):
 
 
 def scrape():
-    log.info("Crawling started ...")
+    log.info(f"Start scrapping {website} ...")
     start = time.time()
-    with SgRequests() as http:
+    count = 0
+    with SgChrome(
+        executable_path=ChromeDriverManager().install(),
+        is_headless=True,
+        user_agent=user_agent,
+    ) as driver:
         with SgWriter(
-            deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
+            deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)
         ) as writer:
-            for rec in fetch_data(http):
+            for rec in fetch_data(driver):
                 writer.write_row(rec)
+                count = count + 1
     end = time.time()
+    log.info(f"Total Rows Added= {count}")
     log.info(f"Scrape took {end-start} seconds.")
 
 

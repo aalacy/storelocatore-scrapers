@@ -1,38 +1,14 @@
-import csv
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 session = SgRequests()
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
 days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
-
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
 
 
 def format_hours(hours_dict):
@@ -81,7 +57,6 @@ def get_hours(hours, status):
 def fetch_data():
     url = "https://www.kfc.co.uk/cms/api/data/restaurants_all"
     r = session.get(url, headers=headers)
-
     data = r.json()
     for item in data:
         name = item["name"]
@@ -120,27 +95,65 @@ def fetch_data():
         if city == "" or city is None:
             city = "<MISSING>"
         city = city.replace('"', "").replace("\r", "").replace("\n", "")
-        yield [
-            website,
-            page_url,
-            name,
-            street,
-            city,
-            state,
-            zc,
-            country,
-            store,
-            phone,
-            typ,
-            lat,
-            lng,
-            hours,
-        ]
+        if city == "<MISSING>":
+            city = name.split("-")[0].strip()
+        if "Ireland" in zc or "Eire" in zc:
+            zc = "<MISSING>"
+        if "Crown Hill Retail Park" in name:
+            city = "<MISSING>"
+        if "Ferrybridge Services" in name:
+            city = "<MISSING>"
+        hours = (
+            hours.replace("1100", "11:00")
+            .replace("1200", "12:00")
+            .replace("1000", "10:00")
+        )
+        hours = (
+            hours.replace("2100", "21:00")
+            .replace("2200", "22:00")
+            .replace("2300", "23:00")
+        )
+        hours = (
+            hours.replace("2130", "21:30")
+            .replace("2230", "22:30")
+            .replace("2330", "23:30")
+        )
+        hours = (
+            hours.replace("1130", "11:30")
+            .replace("1230", "12:30")
+            .replace("1030", "10:30")
+        )
+        hours = (
+            hours.replace("1900", "19:00")
+            .replace("2000", "20:00")
+            .replace("1930", "19:30")
+        )
+        hours = hours.replace(" - 100", " - 1:00").replace(" - 200", " - 2:00")
+        hours = hours.replace("- 0", "- 00:00")
+        if "Norwich Road" not in name:
+            yield SgRecord(
+                locator_domain=website,
+                page_url=page_url,
+                location_name=name,
+                street_address=street,
+                city=city,
+                state=state,
+                zip_postal=zc,
+                country_code=country,
+                phone=phone,
+                location_type=typ,
+                store_number=store,
+                latitude=lat,
+                longitude=lng,
+                hours_of_operation=hours,
+            )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()

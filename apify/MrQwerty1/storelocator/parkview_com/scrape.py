@@ -1,93 +1,55 @@
-import csv
-
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
-    url = "https://www.parkview.com/"
-    api_url = "https://www.parkview.com/_services/LocationsService.asmx/GetLocations"
-
-    session = SgRequests()
-    r = session.get(api_url)
+def fetch_data(sgw: SgWriter):
+    api = "https://www.parkview.com/_services/LocationsService.asmx/GetLocations"
+    r = session.get(api, headers=headers)
     tree = html.fromstring(r.content)
     js = tree.xpath("//location")
 
     for j in js:
-        locator_domain = url
-        location_name = "".join(j.xpath("./name/text()")) or "<MISSING>"
-        street_address = (
-            f"{''.join(j.xpath('./address1/text()'))} {''.join(j.xpath('./address2/text()')) or ''}".strip()
-            or "<MISSING>"
-        )
-        city = "".join(j.xpath("./city/text()")) or "<MISSING>"
-        state = "".join(j.xpath("./state/text()")) or "<MISSING>"
-        postal = "".join(j.xpath("./zip/text()")) or "<MISSING>"
+        location_name = "".join(j.xpath("./name/text()"))
+        adr1 = "".join(j.xpath("./address1/text()"))
+        adr2 = "".join(j.xpath("./address2/text()"))
+        street_address = f"{adr1} {adr2}".strip()
+        city = "".join(j.xpath("./city/text()"))
+        state = "".join(j.xpath("./state/text()"))
+        postal = "".join(j.xpath("./zip/text()"))
         country_code = "US"
-        store_number = "".join(j.xpath("./id/text()")) or "<MISSING>"
+        store_number = "".join(j.xpath("./id/text()"))
         page_url = f"https://www.parkview.com/locations/location-details?location={store_number}"
-        phone = "".join(j.xpath("./phone/text()")) or "<MISSING>"
-        latitude = "".join(j.xpath("./latitude/text()")) or "<MISSING>"
-        longitude = "".join(j.xpath("./longitude/text()")) or "<MISSING>"
-        location_type = "<MISSING>"
-        hours_of_operation = "<MISSING>"
+        phone = "".join(j.xpath("./phone/text()"))
+        latitude = "".join(j.xpath("./latitude/text()"))
+        longitude = "".join(j.xpath("./longitude/text()"))
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
+        row = SgRecord(
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            latitude=latitude,
+            longitude=longitude,
+            phone=phone,
+            store_number=store_number,
+            locator_domain=locator_domain,
+        )
 
-        out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://www.parkview.com/"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:97.0) Gecko/20100101 Firefox/97.0",
+    }
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        fetch_data(writer)

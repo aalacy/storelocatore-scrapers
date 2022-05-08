@@ -1,43 +1,15 @@
-import csv
 import json
-
-from concurrent import futures
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
-
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from concurrent import futures
 
 
 def get_urls():
     urls = []
-    session = SgRequests()
     r = session.get("https://www.landmarktheatres.com/?portal")
     tree = html.fromstring(r.text)
     aa = tree.xpath("//a[@class='accordion-region-link']")
@@ -53,10 +25,7 @@ def get_urls():
     return urls
 
 
-def get_data(page_url):
-    locator_domain = "https://www.bangor.com/"
-
-    session = SgRequests()
+def get_data(page_url, sgw: SgWriter):
     r = session.get(page_url)
     tree = html.fromstring(r.text)
 
@@ -71,63 +40,54 @@ def get_data(page_url):
     state = line.split(",")[-2].strip()
     postal = line.split(",")[-1].strip()
 
-    if state.find("Washington") != -1:
-        city = "Washington"
+    if "." in state:
+        city = "Washington D.C."
         state = "WA"
 
-    country_code = "US"
-    store_number = "<MISSING>"
     try:
         phone = tree.xpath("//p[@class=' ta_c']/text()")[-2].strip() or "<MISSING>"
     except IndexError:
-        phone = "<MISSING>"
+        phone = SgRecord.MISSING
 
     div = "".join(tree.xpath("//div[@data-map]/@data-map"))
     j = json.loads(div)
-    latitude = j.get("lat") or "<MISSING>"
-    longitude = j.get("lng") or "<MISSING>"
-    location_type = "<MISSING>"
+    latitude = j.get("lat")
+    longitude = j.get("lng")
+    hours_of_operation = SgRecord.MISSING
+    if tree.xpath("//strong[contains(text(), 'COMING SOON')]"):
+        hours_of_operation = "Coming Soon"
 
-    hours_of_operation = "<MISSING>"
+    row = SgRecord(
+        page_url=page_url,
+        location_name=location_name,
+        street_address=street_address,
+        city=city,
+        state=state,
+        zip_postal=postal,
+        country_code="US",
+        store_number=SgRecord.MISSING,
+        phone=phone,
+        location_type=SgRecord.MISSING,
+        latitude=str(latitude),
+        longitude=str(longitude),
+        locator_domain=locator_domain,
+        hours_of_operation=hours_of_operation,
+    )
 
-    row = [
-        locator_domain,
-        page_url,
-        location_name,
-        street_address,
-        city,
-        state,
-        postal,
-        country_code,
-        store_number,
-        phone,
-        location_type,
-        latitude,
-        longitude,
-        hours_of_operation,
-    ]
-
-    return row
+    sgw.write_row(row)
 
 
-def fetch_data():
-    out = []
+def fetch_data(sgw: SgWriter):
     urls = get_urls()
 
     with futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {executor.submit(get_data, url): url for url in urls}
+        future_to_url = {executor.submit(get_data, url, sgw): url for url in urls}
         for future in futures.as_completed(future_to_url):
-            row = future.result()
-            if row:
-                out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+            future.result()
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://www.landmarktheatres.com/"
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        fetch_data(writer)

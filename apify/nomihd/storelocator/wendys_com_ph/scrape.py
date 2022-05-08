@@ -84,7 +84,7 @@ def fetch_data():
             location_name = store["branch"] + ", " + city
 
             phone = store["contact"]
-            store_number = store["id"]
+            store_number = str(store["id"])
 
             location_type = "<MISSING>"
 

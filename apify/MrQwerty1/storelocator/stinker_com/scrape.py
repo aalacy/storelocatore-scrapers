@@ -3,9 +3,10 @@ from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgzip.dynamic import SearchableCountries, DynamicGeoSearch
+from sglogging import sglog
 
 
 def get_token():
@@ -49,22 +50,31 @@ def get_address(line):
     a = usaddress.tag(line, tag_mapping=tag)[0]
     street_address = f"{a.get('address1')} {a.get('address2') or ''}".strip()
     if street_address == "None":
-        street_address = "<MISSING>"
-    city = a.get("city") or "<INACCESSIBLE>"
+        street_address = SgRecord.MISSING
+    city = a.get("city")
     if city == "USA":
-        city = "<INACCESSIBLE>"
-    state = a.get("state") or "<INACCESSIBLE>"
-    postal = a.get("postal") or "<INACCESSIBLE>"
+        city = SgRecord.MISSING
+    state = a.get("state")
+    postal = a.get("postal")
 
     return street_address, city, state, postal
 
 
-def fetch_data(coord, sgw: SgWriter):
+def fetch_data(coord, sgw: SgWriter, retry=0):
     lat, lng = coord
     api = f"https://www.stinker.com/system/wp-admin/admin-ajax.php?action=lookupLocations&lkp={token}&lat={lat}&lng={lng}"
 
     r = session.get(api, headers=headers)
-    js = r.json()["locations"]
+    try:
+        js = r.json()["locations"]
+    except:
+        logger.info(f"{coord}: Error, retries={retry}")
+        if retry == 3:
+            return
+        else:
+            retry += 1
+            fetch_data(coord, sgw, retry)
+            return
 
     for j in js:
         loc = j.get("latLng")
@@ -74,7 +84,6 @@ def fetch_data(coord, sgw: SgWriter):
 
         line = j.get("location")
         street_address, city, state, postal = get_address(line)
-        page_url = j.get("permalink")
         location_name = j.get("title").replace("&#038;", "&")
         store_number = location_name.split()[0].replace("#", "")
         if not store_number.isdigit():
@@ -104,7 +113,6 @@ def fetch_data(coord, sgw: SgWriter):
             country_code="US",
             store_number=store_number,
             phone=phone,
-            location_type=SgRecord.MISSING,
             latitude=latitude,
             longitude=longitude,
             locator_domain=locator_domain,
@@ -117,13 +125,21 @@ def fetch_data(coord, sgw: SgWriter):
 if __name__ == "__main__":
     session = SgRequests()
     locator_domain = "https://stinker.com/"
+    page_url = "https://www.stinker.com/store-search/"
+    logger = sglog.SgLogSetup().get_logger(logger_name="stinker.com")
+
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:88.0) Gecko/20100101 Firefox/88.0"
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:99.0) Gecko/20100101 Firefox/99.0",
     }
     token = get_token()
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID({SgRecord.Headers.STREET_ADDRESS}),
+            duplicate_streak_failure_factor=-1,
+        )
+    ) as writer:
         search = DynamicGeoSearch(
-            country_codes=[SearchableCountries.USA], expected_search_radius_miles=200
+            country_codes=[SearchableCountries.USA], expected_search_radius_miles=25
         )
         for geo in search:
             fetch_data(geo, writer)
