@@ -4,6 +4,9 @@ from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import lxml.html
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgpostal import sgpostal as parser
 
 
 website = "mygadgetmd.com"
@@ -22,26 +25,6 @@ headers = {
     "sec-fetch-dest": "document",
     "accept-language": "en-US,en;q=0.9,ar;q=0.8",
 }
-
-
-def split_fulladdress(address_info):
-    street_address = " ".join(address_info[0:-1]).strip(" ,.")
-
-    city_state_zip = (
-        address_info[-1].replace(",", " ").replace(".", " ").replace("  ", " ").strip()
-    )
-
-    city = " ".join(city_state_zip.split(" ")[:-2]).strip()
-    state = city_state_zip.split(" ")[-2].strip()
-    zip = city_state_zip.split(" ")[-1].strip()
-
-    if not city:
-        city = state
-        state = zip
-        zip = "<MISSING>"
-
-    country_code = "US"
-    return street_address, city, state, zip, country_code
 
 
 def fetch_data():
@@ -63,17 +46,25 @@ def fetch_data():
 
         location_name = "".join(store.xpath(".//h5//text()")).strip()
 
-        address_raw = "".join(
-            store_sel.xpath("//div[@data-address]/@data-address")
-        ).strip()
+        raw_address = (
+            "".join(store_sel.xpath("//div[@data-address]/@data-address"))
+            .strip()
+            .replace("H-E-B,", "")
+            .strip()
+            .split(", USA")[0]
+            .strip()
+            .split(", United States")[0]
+            .strip()
+        )
+        formatted_addr = parser.parse_address_usa(raw_address)
+        street_address = formatted_addr.street_address_1
+        if formatted_addr.street_address_2:
+            street_address = street_address + ", " + formatted_addr.street_address_2
 
-        full_address = []
-        full_address.append(",".join(address_raw.split(",")[:-3]))
-        full_address.append(",".join(address_raw.split(",")[-3:-1]))
-
-        street_address, city, state, zip, country_code = split_fulladdress(full_address)
-
-        street_address = street_address.replace("H-E-B,", "").strip()
+        city = formatted_addr.city
+        state = formatted_addr.state
+        zip = formatted_addr.postcode
+        country_code = "US"
         store_number = "<MISSING>"
         phone = (
             "".join(
@@ -109,8 +100,6 @@ def fetch_data():
 
         latitude, longitude = map_link.split(",")[0], map_link.split(",")[1]
 
-        raw_address = "<MISSING>"
-
         yield SgRecord(
             locator_domain=locator_domain,
             page_url=page_url,
@@ -133,7 +122,9 @@ def fetch_data():
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
