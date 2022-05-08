@@ -50,9 +50,13 @@ def fetch_data():
                 data["stores"].update(data_2["stores"])
                 added = True
             for i, poi in data["stores"].items():
-                page_url = f"https://www.birkenstock.com/{country.lower()}/storelocator"
-                if country == "FI":
-                    page_url = "https://www.birkenstock.com/fi-en/storelocator"
+                page_url = poi["storeDetailsFlyinLink"]
+                if not page_url:
+                    page_url = (
+                        f"https://www.birkenstock.com/{country.lower()}/storelocator"
+                    )
+                    if country == "FI":
+                        page_url = "https://www.birkenstock.com/fi-en/storelocator"
                 street_address = poi["address1"]
                 if poi["address2"]:
                     street_address += ", " + poi["address2"]
@@ -68,6 +72,13 @@ def fetch_data():
                 if len(zip_code) == 2:
                     zip_code = poi["state"]
                     state = poi["postalCode"]
+                try:
+                    location_type = all_types[country][str(poi["storeType"])]
+                except Exception:
+                    location_type = ""
+                phone = ""
+                if poi["phone"]:
+                    phone = poi["phoneAreaCode"] + " " + poi["phone"]
 
                 item = SgRecord(
                     locator_domain=domain,
@@ -79,8 +90,8 @@ def fetch_data():
                     zip_postal=zip_code,
                     country_code=poi["countryCode"],
                     store_number=poi["id"],
-                    phone=poi["phone"],
-                    location_type=all_types[country][str(poi["storeType"])],
+                    phone=phone,
+                    location_type=location_type,
                     latitude=poi["latitude"],
                     longitude=poi["longitude"],
                     hours_of_operation=hoo,
