@@ -16,20 +16,27 @@ def fetch_data():
     start_url = "https://www.adecco.com.pe/sucursales/"
     domain = "adecco.com.pe"
     hdr = {
-        'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36'
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
     response = session.get(start_url, headers=hdr)
     dom = etree.HTML(response.text)
 
     all_locations = dom.xpath('//div[@class="addc_maps_Sucursales"]')
     for poi_html in all_locations:
-        location_name = poi_html.xpath('.//strong/text()')[0]
-        raw_address = poi_html.xpath('.//div[@class="addc_maps_Description"]/p/text()')[0]
+        location_name = poi_html.xpath(".//strong/text()")[0]
+        raw_address = poi_html.xpath('.//div[@class="addc_maps_Description"]/p/text()')[
+            0
+        ]
         addr = parse_address_intl(raw_address)
         street_address = addr.street_address_1
         if addr.street_address_2:
-            street_address += ' ' + addr.street_address_2
-        geo = poi_html.xpath('.//iframe/@src')[0].split('!2d')[-1].split('!2m')[0].split('!3d')
+            street_address += " " + addr.street_address_2
+        geo = (
+            poi_html.xpath(".//iframe/@src")[0]
+            .split("!2d")[-1]
+            .split("!2m")[0]
+            .split("!3d")
+        )
 
         item = SgRecord(
             locator_domain=domain,
