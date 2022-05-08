@@ -4,4 +4,4 @@ lxml==4.6.2
 sgrequests==0.3.5
 beautifulsoup4==4.9.3
 sglogging==0.0.4
-sgzip==0.11.0f
+sgzip==0.11.0
