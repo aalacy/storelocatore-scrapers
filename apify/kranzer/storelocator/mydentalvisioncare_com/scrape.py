@@ -3,7 +3,7 @@ from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
-from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from concurrent import futures
 
@@ -14,11 +14,11 @@ def get_urls():
         "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:85.0) Gecko/20100101 Firefox/85.0",
     }
     r = session.get(
-        "https://kidsdentalvisioncare.com/sitemaps-1-section-locations-1-sitemap.xml",
+        "https://kidsdentalvisioncare.com/sitemaps-1-sitemap.xml",
         headers=headers,
     )
     tree = html.fromstring(r.content)
-    return tree.xpath("//url/loc/text()")
+    return tree.xpath("//loc/text()")
 
 
 def get_data(url, sgw: SgWriter):
@@ -110,5 +110,5 @@ def fetch_data(sgw: SgWriter):
 
 if __name__ == "__main__":
     session = SgRequests()
-    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))) as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PhoneNumberId)) as writer:
         fetch_data(writer)
