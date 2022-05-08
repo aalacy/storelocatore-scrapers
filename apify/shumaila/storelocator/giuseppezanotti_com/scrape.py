@@ -12,8 +12,6 @@ headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
 
-MISSING = "<MISSING>"
-
 
 def fetch_data():
 
@@ -97,9 +95,19 @@ def fetch_data():
             )
             city = city.replace(",", "")
             try:
-                phone = phone.split("-", 1)[0]
+                phone = phone.split(" - ", 1)[0]
             except:
                 pass
+            if state.isdigit():
+                state = "<MISSING>"
+            try:
+                pcode = pcode.split("-")[-1]
+            except:
+                pass
+            if pcode.isdigit():
+                pass
+            else:
+                pcode = "<MISSING>"
             yield SgRecord(
                 locator_domain="https://www.giuseppezanotti.com",
                 page_url=link,
