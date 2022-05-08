@@ -53,6 +53,8 @@ def parse_simon(location):
     data["phone"] = location[0]["phones"]["information"]
     if data["phone"] == "":
         data["phone"] = location[0]["phones"]["office"]
+    if data["phone"] is None:
+        data["phone"] = "<MISSING>"
     data["latitude"] = location[0]["latitude"]
     data["longitude"] = location[0]["longitude"]
     data["raw_address"] = ", ".join(
