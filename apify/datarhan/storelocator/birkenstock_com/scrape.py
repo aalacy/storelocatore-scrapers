@@ -78,7 +78,10 @@ def fetch_data():
                     location_type = ""
                 phone = ""
                 if poi["phone"]:
-                    phone = poi["phoneAreaCode"] + " " + poi["phone"]
+                    if poi["phoneAreaCode"]:
+                        phone = poi["phoneAreaCode"] + " " + poi["phone"]
+                    else:
+                        phone = poi["phone"]
 
                 item = SgRecord(
                     locator_domain=domain,

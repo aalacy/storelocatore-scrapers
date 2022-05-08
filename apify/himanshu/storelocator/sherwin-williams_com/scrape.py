@@ -100,11 +100,14 @@ def fetch_data(sgw: SgWriter):
                 phone = store_data["phone"] or "<MISSING>"
 
                 link = "https://www.sherwin-williams.com" + store_data["url"]
-                location_request = session.get(
-                    link,
-                    headers=headers,
-                )
-                location_soup = BeautifulSoup(location_request.text, "lxml")
+                try:
+                    location_request = session.get(
+                        link,
+                        headers=headers,
+                    )
+                    location_soup = BeautifulSoup(location_request.text, "lxml")
+                except:
+                    continue
 
                 hours = ""
                 try:
