@@ -42,8 +42,8 @@ def fetch_data():
             '//section[@id="tankstelle"]//tbody[tr[td[contains(text(), "Montag")]]]//text()'
         )
         hoo = " ".join([e.strip() for e in hoo if e.strip()])
-        if not hoo and '24 Stunden' in loc_response.text:
-            hoo = '24 Stunden'
+        if not hoo and "24 Stunden" in loc_response.text:
+            hoo = "24 Stunden"
         phone = loc_dom.xpath('//a[contains(@href, "tel")]/text()')[0]
 
         item = SgRecord(
