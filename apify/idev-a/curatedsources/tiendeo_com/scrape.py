@@ -13,9 +13,11 @@ from concurrent.futures import ThreadPoolExecutor
 from tenacity import retry, wait_random, stop_after_attempt
 import random
 from webdriver_manager.chrome import ChromeDriverManager
-import ssl
+import os
 
-ssl._create_default_https_context = ssl._create_unverified_context
+os.environ[
+    "PROXY_URL"
+] = "http://groups-RESIDENTIAL,country-us:{}@proxy.apify.com:8000/"
 
 logger = SgLogSetup().get_logger("")
 

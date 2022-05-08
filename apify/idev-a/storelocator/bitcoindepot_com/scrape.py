@@ -67,16 +67,16 @@ def fetchConcurrentSingle(loc, locations):
     store = dict(
         hours_of_operation=loc.select_one("span.list-country-list-time").text.strip(),
         name=_i[1].split(",")[1].strip(),
-        street_address=street_address,
+        address=street_address,
         city=_i[0],
-        state=addr.state,
-        zip_postal=addr.postcode,
+        state=addr.state or "",
+        zip_postal=addr.postcode or "",
     )
     logger.info(page_url)
     try:
         res = request_with_retries(page_url)
         if res.status_code != 200:
-            return None
+            return page_url, store
         loc = json.loads(
             bs(res.text, "lxml").find("script", type="application/ld+json").string
         )
@@ -145,6 +145,8 @@ def fetch_records(http):
                 .replace("Unknown", "")
                 .strip()
             )
+        else:
+            hours_of_operation = _.get("hours_of_operation")
 
         country_code = "US"
         if _["state"] in ca_provinces_codes:
@@ -159,9 +161,9 @@ def fetch_records(http):
             city=_["city"],
             state=_["state"],
             zip_postal=_["zip"].replace("Canada", "").replace(",", "").strip(),
-            location_type=_["type"],
-            latitude=_["lat"],
-            longitude=_["lng"],
+            location_type=_.get("type"),
+            latitude=_.get("lat"),
+            longitude=_.get("lng"),
             country_code=country_code,
             locator_domain=locator_domain,
             hours_of_operation=hours_of_operation,
