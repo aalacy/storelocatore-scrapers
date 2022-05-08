@@ -38,10 +38,18 @@ def fetch_data():
 
             street_address = loc_dom.xpath(
                 '//div[div[@itemprop="streetAddress"]]/div/text()'
-            )
+            )[:3]
             street_address = " ".join(
                 [e.strip() for e in street_address if e.strip() and e.strip() != ","]
             )
+            if not street_address:
+                street_address = loc_dom.xpath(
+                    '//span[@itemprop="streetAddress"]/text()'
+                )
+                if not street_address:
+                    continue
+                street_address = street_address[0]
+            street_address = street_address.replace("Offering Online Programs", "")
             city = loc_dom.xpath('//span[@itemprop="addressLocality"]/text()')
             city = city[0] if city else ""
             state = loc_dom.xpath('//span[@itemprop="addressRegion"]/text()')

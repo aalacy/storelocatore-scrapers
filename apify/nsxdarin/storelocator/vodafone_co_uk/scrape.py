@@ -19,27 +19,27 @@ def fetch_data():
     website = "vodafone.co.uk"
     typ = "<MISSING>"
     country = "GB"
-    loc = "<MISSING>"
+    loc = "https://www.vodafone.co.uk/help-and-information/store-locator"
     logger.info("Pulling Stores")
     for line in r.iter_lines():
-        if '"CMSStoreLocator":{"jsonData"' in line:
+        if 'CMSStoreLocator_":{"jsonData":"' in line:
             items = line.split("storecode")
             for item in items:
                 if "eshoptown" in item:
                     phone = "<MISSING>"
-                    store = item.split('\\": \\"')[1].split("\\")[0]
-                    name = item.split('"name\\": \\"')[1].split('\\",')[0].strip()
-                    city = item.split('eshoptown\\": \\"')[1].split('\\"')[0].strip()
+                    store = item.split('\\":\\"')[1].split("\\")[0]
+                    name = item.split('"name\\":\\"')[1].split('\\",')[0].strip()
+                    city = item.split('eshoptown\\":\\"')[1].split('\\"')[0].strip()
                     state = "<MISSING>"
-                    zc = item.split('"postcode\\": \\"')[1].split("\\")[0].strip()
-                    lat = item.split('"lat\\": \\"')[1].split("\\")[0].strip()
-                    lng = item.split('"lng\\": \\"')[1].split("\\")[0].strip()
-                    hours = item.split('"hours\\": \\"')[1].split('\\"')[0].strip()
+                    zc = item.split('"postcode\\":\\"')[1].split("\\")[0].strip()
+                    lat = item.split('"lat\\":\\"')[1].split("\\")[0].strip()
+                    lng = item.split('"lng\\":\\"')[1].split("\\")[0].strip()
+                    hours = item.split('"hours\\":\\"')[1].split('\\"')[0].strip()
                     if "Store Mobile:" in hours:
                         phone = hours.split("Store Mobile:")[1].strip()
                     if ", Store" in hours:
                         hours = hours.split(", Store")[0].strip()
-                    add = item.split('"address\\": \\"')[1].split('\\",')[0]
+                    add = item.split('"address\\":\\"')[1].split('\\",')[0]
                     add = (
                         add.replace("  ", " ")
                         .replace("  ", " ")

@@ -7,3 +7,4 @@ sgscrape==0.2.6
 selenium-wire==4.2.5
 undetected_chromedriver==2.1.2
 webdriver_manager==3.5.2
+sgpostal==0.1.0

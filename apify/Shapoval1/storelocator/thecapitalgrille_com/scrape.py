@@ -58,6 +58,10 @@ def fetch_data(sgw: SgWriter):
                     )
                 )
                 .replace("\n", "")
+                .replace("Millenia Mall", "")
+                .replace("Hynes Convention Ctr", "")
+                .replace("Lasalle Plaza", "")
+                .replace("City Centre Four", "")
                 .strip()
             )
             ad = (
@@ -89,7 +93,17 @@ def fetch_data(sgw: SgWriter):
                 tree.xpath('//script[@type="application/ld+json"]/text()')
             )
             js = json.loads(js_block)
-            hours_of_operation = " ".join(js.get("openingHours"))
+            hours_of_operation = " ".join(js.get("openingHours")) or "<MISSING>"
+            if hours_of_operation == "<MISSING>":
+                hours_of_operation = (
+                    " ".join(tree.xpath('//ul[@class="inline top-bar"]/li//text()'))
+                    .replace("Today", "")
+                    .replace("(", "")
+                    .replace(")", "")
+                    .replace("None", "")
+                    .strip()
+                )
+                hours_of_operation = " ".join(hours_of_operation.split())
             store_number = js.get("branchCode")
         if page_url.find("mexico") != -1:
             street_address = (

@@ -1,11 +1,11 @@
 from sgrequests import SgRequests
 from sgscrape import simple_scraper_pipeline as sp
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries, Grain_8
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries, Grain_2
 
 
 def get_data():
     search = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA], granularity=Grain_8()
+        country_codes=[SearchableCountries.USA], granularity=Grain_2()
     )
     session = SgRequests(retry_behavior=False)
     headers = {

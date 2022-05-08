@@ -13,7 +13,7 @@ def fetch_data():
     session = SgRequests()
 
     domain = "mon-voisin.com"
-    start_url = "https://www.mon-voisin.com/fr/trouver-un-magasin/"
+    start_url = "https://www.mon-voisin.com/en/store-locator/"
 
     headers = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
@@ -24,7 +24,7 @@ def fetch_data():
 
     all_locations = dom.xpath('//div[contains(@class, "store-result")]')
     for poi_html in all_locations:
-        page_url = poi_html.xpath('.//a[@class="outline button"]/@href')[0]
+        page_url = poi_html.xpath(".//h4/a/@href")[0]
         page_url = urljoin(start_url, page_url)
         location_name = poi_html.xpath('.//span[@class="name"]/text()')[0]
         street_address = poi_html.xpath(
@@ -40,8 +40,17 @@ def fetch_data():
         hoo_data = json.loads(poi_html.xpath("@data-hours")[0].replace("\\u00e0", "-"))
         hoo = []
         for day, hours in hoo_data.items():
+            if not hours:
+                continue
             hoo.append(f"{day}: {hours}")
         hoo = " ".join(hoo)
+        if not hoo:
+            loc_response = session.get(page_url, headers=headers)
+            loc_dom = etree.HTML(loc_response.text)
+            hoo = loc_dom.xpath(
+                '//h3[contains(text(), "Store Hours")]/following-sibling::h4/text()'
+            )
+            hoo = " ".join(hoo)
 
         item = SgRecord(
             locator_domain=domain,
@@ -66,9 +75,7 @@ def fetch_data():
 def scrape():
     with SgWriter(
         SgRecordDeduper(
-            SgRecordID(
-                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
-            )
+            SgRecordID({SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STORE_NUMBER})
         )
     ) as writer:
         for item in fetch_data():

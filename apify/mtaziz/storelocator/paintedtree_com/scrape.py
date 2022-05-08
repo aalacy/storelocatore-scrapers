@@ -5,7 +5,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
-from sgscrape.sgpostal import parse_address_usa
+from sgpostal.sgpostal import parse_address_usa
 import json
 from lxml import html
 
@@ -67,8 +67,15 @@ def fetch_data():
     num = 0
     for row in contents:
         coming_soon = row.find("div", {"class": "elementor-ribbon-inner"})
-        if coming_soon and "Coming Soon!" in coming_soon.text.strip():
-            continue
+
+        location_type = ""
+        if coming_soon:
+            csoon = coming_soon.text.strip()
+            csoon = " ".join(csoon.split())
+            csoon = csoon.lower()
+            if "coming soon" in csoon:
+                location_type = "Coming Soon"
+
         page_url = row.find("div", {"data-pafe-section-link": True})[
             "data-pafe-section-link"
         ]
@@ -95,7 +102,6 @@ def fetch_data():
         hours_of_operation = hoo or ""
         latitude = coords[num]["latLang"]["lat"]
         longitude = coords[num]["latLang"]["lng"]
-        location_type = MISSING
         log.info("Append {} => {}".format(location_name, street_address))
         yield SgRecord(
             locator_domain=DOMAIN,

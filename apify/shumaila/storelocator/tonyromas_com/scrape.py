@@ -1,4 +1,5 @@
 from bs4 import BeautifulSoup
+import re
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
@@ -16,72 +17,68 @@ MISSING = SgRecord.MISSING
 
 
 def fetch_data():
+    pattern = re.compile(r"\s\s+")
+    cleanr = re.compile(r"<[^>]+>")
 
-    url = "https://tonyromas.com/sitemap.html"
+    url = "https://tonyromas.com/locations/"
     r = session.get(url, headers=headers)
     soup = BeautifulSoup(r.text, "html.parser")
-    divlist = soup.select("a[href*=locations-]")
+    divlist = soup.find("div", {"id": "locations-directory"}).findAll("a")
 
     for div in divlist:
-        div = div["href"]
-        r = session.get(div, headers=headers)
-        soup = BeautifulSoup(r.text, "html.parser")
-        linklist = soup.select("a[href*=location]")
-        for link in linklist:
-            link = link["href"]
-            r = session.get(link, headers=headers)
-            soup = BeautifulSoup(r.text, "html.parser")
-            title = soup.find("div", {"class": "page-title"}).text
 
-            address = soup.find("div", {"class": "ad1"}).text.replace("\n", " ").strip()
-            phone = (
-                soup.find("div", {"class": "phone"}).text.replace("Phone:", "").strip()
-            )
-            hours = (
-                soup.find("div", {"class": "hours"})
-                .text.replace("\n", " ")
-                .replace("day", "day ")
-                .replace("CLOSED", "CLOSED ")
-                .replace("PM", "PM ")
-                .replace("pm", "pm ")
-                .strip()
-            )
-            if len(hours) < 4:
-                hours = "<MISSING>"
-            if len(phone) < 4:
+        url = "https://tonyromas.com/wp-admin/admin-ajax.php"
+        dataobj = {
+            "the_location": div.text,
+            "search_distance": "100",
+            "current_lat": "",
+            "current_lng": "",
+            "current_page": "1",
+            "action": "locationsubmit",
+        }
+        r = session.post(url, headers=headers, data=dataobj).json()
+        coordlist = r["newresults"]
+
+        coordlist = BeautifulSoup(coordlist, "html.parser").findAll(
+            "div", {"class": "a-location-data"}
+        )
+        loclist = r["newresults2"]
+        loclist = BeautifulSoup(loclist, "html.parser").findAll(
+            "div", {"class": "a-result"}
+        )
+
+        for i in range(0, len(loclist)):
+
+            lat = coordlist[i]["data-lat"]
+            longt = coordlist[i]["data-lng"]
+            title = loclist[i].find("div", {"class": "title"}).text
+            address = str(loclist[i].find("div", {"class": "address"}))
+            address = re.sub(cleanr, " ", str(address)).strip()
+            try:
+                phone = loclist[i].find("div", {"class": "phone"}).text
+            except:
                 phone = "<MISSING>"
+            try:
+                hours = loclist[i].find("div", {"class": "hours"}).text
+            except:
+                hours = "<MISSING>"
+            link = loclist[i].find("a", {"class": "visit"})["href"]
+
             ltype = "<MISSING>"
-            if "coming-soon" in link:
-                ltype = "Coming Soon"
-            coordlink = soup.find("iframe")["src"]
-            r = session.get(coordlink, headers=headers)
+            if "COMING SOON" in title:
+                ltype = "COMING SOON"
             try:
-                lat, longt = (
-                    r.text.split('",null,[null,null,', 1)[1]
-                    .split("]", 1)[0]
-                    .split(",", 1)
-                )
+                phone = phone.split(":", 1)[1].strip()
             except:
-                lat = longt = "<MISSING>"
+                pass
             try:
-
-                if len(address) < 5:
-
-                    address = (
-                        r.text.split('"Tony Roma')[3].split(", ", 1)[1].split('"', 1)[0]
-                    )
-                    if "family-friendly steakhouse" in address:
-                        address = (
-                            r.text.split('"Tony Roma')[3]
-                            .split("[", 1)[1]
-                            .split("]", 1)[0]
-                        )
-                        address = (
-                            " ".join(address[0:]).replace(",", "").replace('"', "")
-                        )
+                hours = hours.split(":", 1)[1].strip()
             except:
-                continue
+                pass
             raw_address = address
+            raw_address = raw_address.replace("\n", " ").strip()
+            raw_address = re.sub(pattern, " ", raw_address).strip()
+
             pa = parse_address_intl(raw_address)
 
             street_address = pa.street_address_1
@@ -96,9 +93,6 @@ def fetch_data():
             zip_postal = pa.postcode
             pcode = zip_postal.strip() if zip_postal else MISSING
 
-            ccode = pa.country
-            ccode = ccode.strip() if ccode else MISSING
-
             yield SgRecord(
                 locator_domain="https://tonyromas.com/",
                 page_url=link,
@@ -107,14 +101,14 @@ def fetch_data():
                 city=city.strip(),
                 state=state.strip(),
                 zip_postal=pcode.strip(),
-                country_code=ccode,
+                country_code=div.text,
                 store_number=SgRecord.MISSING,
                 phone=phone.strip(),
                 location_type=ltype,
                 latitude=str(lat),
                 longitude=str(longt),
                 hours_of_operation=hours,
-                raw_address=raw_address,
+                raw_address=raw_address.replace("\n", " ").strip(),
             )
 
 

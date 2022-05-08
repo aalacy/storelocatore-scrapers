@@ -22,12 +22,18 @@ def fetch_data(sgw: SgWriter):
     )
 
     for d in divs:
-        try:
-            js = d.xpath(".//div[@data-block-json]/@data-block-json")[0]
-            j = json.loads(js)["location"]
-        except:
-            j = dict()
         location_name = "".join(d.xpath(".//h3[1]//text()"))
+        js = d.xpath(".//div[@data-block-json]/@data-block-json")[0]
+        try:
+            j = json.loads(js)["location"]
+            latitude = j.get("markerLat")
+            longitude = j.get("markerLng")
+        except:
+            if "thumbnailUrl" in js:
+                latitude, longitude = js.split("center=")[-1].split("&")[0].split(",")
+            else:
+                latitude, longitude = SgRecord.MISSING, SgRecord.MISSING
+
         location_type = SgRecord.MISSING
         if "coming soon" in location_name.lower():
             location_type = "Coming Soon"
@@ -46,8 +52,7 @@ def fetch_data(sgw: SgWriter):
             )
         except IndexError:
             phone = SgRecord.MISSING
-        latitude = j.get("markerLat")
-        longitude = j.get("markerLng")
+
         hours_of_operation = " ".join(
             ";".join(
                 d.xpath(

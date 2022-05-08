@@ -18,38 +18,59 @@ def fetch_data(sgw: SgWriter):
     }
     r = session.get(page_url, headers=headers)
     tree = html.fromstring(r.text)
-    div = (
-        "".join(tree.xpath('//script[contains(text(), "roadmap")]/text()'))
-        .split("var features = [")[1]
-        .split("];")[0]
-        .split("position:")[1:]
-    )
-
+    div = tree.xpath('//div[./img[@class="product-icon"]]')[1:]
     for d in div:
-
-        ht_block = d.split("message:")[1].split("}")[0].strip()
-        a = html.fromstring(ht_block)
-        info = a.xpath("//*//text()")
+        info = d.xpath(".//text()")
         info = list(filter(None, [a.strip() for a in info]))
-        location_name = "".join(info[0]).replace('"', "").strip()
-        ad = " ".join(info[1:4]).replace('"', "").strip()
-
-        if ad.find("Hours") != -1:
-            ad = ad.split("Hours")[0].strip()
-        phone_list = re.findall(
-            re.compile(r".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), ad
+        info_s = " ".join(info)
+        phone_lst = re.findall(
+            re.compile(r".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), info_s
         )
-        sub_phone = "".join(phone_list).strip() or "<MISSING>"
-        if ad.find(f"{sub_phone}") != -1:
-            ad = ad.split(f"{sub_phone}")[0].strip()
-        if ad.find("http") != -1:
-            ad = ad.split("http")[0].strip()
-        if ad.find("Mon") != -1:
-            ad = ad.split("Mon")[0].strip()
-        if ad.find("opening") != -1:
-            ad = ad.split("opening")[0].strip()
-        ad = ad.replace("Check for Seasonal", "").replace("sdfasdf", "").strip()
-        a = parse_address(International_Parser(), ad)
+        phone = "".join(phone_lst) or "<MISSING>"
+        location_name = "".join(info[0]).strip()
+        adr = (
+            " ".join(info[1:])
+            .replace("Open", "")
+            .replace("Coming soon", "")
+            .replace("sdfasdf", "")
+            .replace("HokuliaAthens.com", "")
+            .replace("Closed for the season", "")
+            .strip()
+        )
+        hours_of_operation = "<MISSING>"
+        if adr.find("http") != -1:
+            adr = adr.split("http")[0].strip()
+        if adr.find(f"{phone}") != -1:
+            adr = adr.split(f"{phone}")[0].strip()
+        if "Coming soon" in info_s:
+            hours_of_operation = "Coming Soon"
+        if "Closed for the season" in info_s:
+            hours_of_operation = "Temporarily Closed"
+        if "Hours" in adr:
+            hours_of_operation = adr.split("Hours:")[1].strip()
+            adr = adr.split("Hours")[0].strip()
+        if "opening" in adr:
+            hours_of_operation = adr.split("from")[1].strip()
+            adr = adr.split("opening")[0].strip()
+        adr = (
+            adr.replace("Next to Burberry/Blaze Pizza", "")
+            .replace("(Inside Walmart)", "")
+            .replace("(In front of the HEB)", "")
+            .replace("(Fresh Market)", "")
+            .replace("(Ft. Union Blvd)", "")
+            .replace("(by Burt Bros.)", "")
+            .replace("(Fresh Market Parking Lot)", "")
+            .replace("(Down East Lot)", "")
+            .replace("(By Daylight Donuts)", "")
+            .replace("(Near Honeybaked Ham)", "")
+            .replace("(Near Smith's Food & Drug)", "")
+            .replace("(Dominos Parking Lot)", "")
+            .replace("Stars Recreation Center -", "")
+            .replace("In Harvey Park by Splashpad", "")
+            .strip()
+        )
+        adr = " ".join(adr.split())
+        a = parse_address(International_Parser(), adr)
         street_address = (
             f"{a.street_address_1} {a.street_address_2}".replace("None", "").strip()
             or "<MISSING>"
@@ -58,42 +79,42 @@ def fetch_data(sgw: SgWriter):
         postal = a.postcode or "<MISSING>"
         country_code = "US"
         city = a.city or "<MISSING>"
-        adr = " ".join(info)
-        ph_list = re.findall(re.compile(r".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), adr)
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
-        if d.find("LatLng") != -1:
-            latitude = d.split("LatLng(")[1].split(",")[0].strip()
-            longitude = d.split("LatLng(")[1].split(",")[1].split(")")[0].strip()
-        phone = "".join(ph_list) or "<MISSING>"
-        if phone == "832-548-0988832-548-0988":
-            phone = "832-548-0988"
-
-        tmp = []
-        for i in info:
-            if (
-                "12pm-9pm" in i
-                or "PM" in i
-                or "-9p" in i
-                or "Mon" in i
-                or "8pm" in i
-                or "pm" in i
-                or "Closed" in i
-            ):
-                tmp.append(i)
-        hours_of_operation = " ".join(tmp) or "<MISSING>"
-        if hours_of_operation.find("Hours:") != -1:
-            hours_of_operation = hours_of_operation.replace(
-                "Hours: M-Th12-7p & F-Sun 12-8pm 12-7 pm", ""
-            ).strip()
-        ht_info = tree.xpath(f'//div[contains(text(), "{location_name}")]//text()')
-        ht_info = list(filter(None, [a.strip() for a in ht_info]))
-        ht_i = " ".join(ht_info)
-        location_type = "<MISSING>"
-        if "Coming soon" in ht_i:
-            location_type = "Coming soon"
-        if "Closed for the season" in ht_i:
-            location_type = "Temporarily Closed"
+        if "Am Fork" in street_address:
+            city = "Am Fork"
+            street_address = street_address.split("Am Fork")[0].strip()
+        text = "".join(d.xpath('.//a[contains(@href, "tel")]/@href'))
+        try:
+            if text.find("ll=") != -1:
+                latitude = text.split("ll=")[1].split(",")[0]
+                longitude = text.split("ll=")[1].split(",")[1].split("&")[0]
+            else:
+                latitude = text.split("@")[1].split(",")[0]
+                longitude = text.split("@")[1].split(",")[1]
+        except IndexError:
+            latitude, longitude = "<MISSING>", "<MISSING>"
+        if latitude == "<MISSING>":
+            latitude = (
+                "".join(
+                    tree.xpath(f'//script[contains(text(), "{location_name}")]/text()')
+                )
+                .split(f"{location_name}")[0]
+                .split("LatLng(")[-1]
+                .split(",")[0]
+                .strip()
+            )
+            longitude = (
+                "".join(
+                    tree.xpath(f'//script[contains(text(), "{location_name}")]/text()')
+                )
+                .split(f"{location_name}")[0]
+                .split("LatLng(")[-1]
+                .split(",")[1]
+                .split(")")[0]
+                .strip()
+            )
+        if street_address == "189 N Harrisville Rd":
+            latitude = "35"
+            longitude = "-98"
 
         row = SgRecord(
             locator_domain=locator_domain,
@@ -106,11 +127,10 @@ def fetch_data(sgw: SgWriter):
             country_code=country_code,
             store_number=SgRecord.MISSING,
             phone=phone,
-            location_type=location_type,
+            location_type=SgRecord.MISSING,
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hours_of_operation,
-            raw_address=ad,
         )
 
         sgw.write_row(row)
@@ -119,6 +139,10 @@ def fetch_data(sgw: SgWriter):
 if __name__ == "__main__":
     session = SgRequests()
     with SgWriter(
-        SgRecordDeduper(SgRecordID({SgRecord.Headers.LOCATION_NAME}))
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
     ) as writer:
         fetch_data(writer)
