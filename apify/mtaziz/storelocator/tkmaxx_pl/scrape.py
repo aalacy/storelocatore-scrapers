@@ -3,12 +3,10 @@ from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
-from concurrent import futures
 from sglogging import SgLogSetup
 from tenacity import retry, stop_after_attempt
 import tenacity
 import json
-import urllib.parse
 import time
 import random
 from lxml import html
@@ -30,36 +28,22 @@ headers_custom = {
 }
 
 logger = SgLogSetup().get_logger(logger_name="tkmaxx_pl")
-DOMAIN = "tkmaxx.pl"
 MISSING = SgRecord.MISSING
 LOCATION_URL = "https://www.tkmaxx.pl/znajdz-sklep"
 MAX_WORKERS = 8
 
 
-@retry(stop=stop_after_attempt(20), wait=tenacity.wait_fixed(5))
-def get_response_pu(url):
-    with SgRequests(verify_ssl=False) as http:
+@retry(stop=stop_after_attempt(10), wait=tenacity.wait_fixed(30), reraise=True)
+def get_response_simple(url, headers_custom):
+    with SgRequests() as http:
         r = http.get(url, headers=headers_custom)
-        try:
-            if r.status_code == 200:
-                try:
-                    if "website has not been found" not in r.text:
-                        tree = html.fromstring(r.text)
-                        d = tree.xpath("//div[@class='nearby-store active-store']")[0]
-                        location_name = "".join(d.xpath("./a/text()")).strip()
-                        logger.info(
-                            f"HTTP status code for PAGE URL: {r.status_code} for {url} | {location_name}"
-                        )
-                        return r
-                    raise Exception(f"Please fix the issue of redirection{url}")
-                except Exception as e:
-                    raise Exception(f"Please fix it {e} | {url}")
-            raise Exception(f"Please fix {url}")
-        except Exception as e:
-            raise Exception(f"Please fix it {e} | {url}")
+        if r.status_code == 200:
+            logger.info(f"HttpStatusCode: {r.status_code} for {url} ")
+            return r
+        raise Exception(f"Please GetResponseError at {url}")
 
 
-@retry(stop=stop_after_attempt(5), wait=tenacity.wait_fixed(5))
+@retry(stop=stop_after_attempt(10), wait=tenacity.wait_fixed(30))
 def get_response(url):
     with SgRequests() as http:
         r = http.get(url, headers=headers)
@@ -87,20 +71,19 @@ def get_urls(loc_url):
     return urls
 
 
-def fetch_records(idx, slug, sgw: SgWriter):
-    page_url = urllib.parse.unquote(f"https://www.tkmaxx.pl{slug}").replace(" ", "_")
-
-    try:
-        r = get_response_pu(page_url)
-        time.sleep(random.randint(10, 20))
-        logger.info(f"Pulling the data from {page_url}")
-
+def fetch_records():
+    urls = get_urls(LOCATION_URL)
+    for idx, slug in enumerate(urls[0:]):
+        page_url = f"https://www.tkmaxx.pl{slug}"
+        logger.info(f"Page URL: {page_url}")
         try:
+
+            r = get_response_simple(page_url, headers_custom)
+            time.sleep(random.randint(3, 10))
+            logger.info(f"[{r.status_code}] Pulling the data from {page_url}")
             tree = html.fromstring(r.text)
             d = tree.xpath("//div[@class='nearby-store active-store']")[0]
-        except IndexError:
-            return
-        except AttributeError:
+        except:
             return
 
         location_name = "".join(d.xpath("./a/text()")).strip()
@@ -135,27 +118,11 @@ def fetch_records(idx, slug, sgw: SgWriter):
             location_type=MISSING,
             latitude=latitude,
             longitude=longitude,
-            locator_domain=DOMAIN,
+            locator_domain="tkmaxx.pl",
             hours_of_operation=hours_of_operation,
         )
 
-        sgw.write_row(row)
-
-    except Exception as e:
-        raise Exception(f" {e} >> Error Encountered at {page_url}")
-
-
-def fetch_data(sgw: SgWriter):
-    urls = get_urls(LOCATION_URL)
-    logger.info(f"Total Store Count: {len(urls)}")
-    with futures.ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
-        future_to_url = {
-            executor.submit(fetch_records, idx, url, sgw): url
-            for idx, url in enumerate(urls[0:])
-        }
-        for future in futures.as_completed(future_to_url):
-            if future.result() is not None:
-                future.result()
+        yield row
 
 
 def scrape():
@@ -173,7 +140,9 @@ def scrape():
             )
         )
     ) as writer:
-        fetch_data(writer)
+        results = fetch_records()
+        for rec in results:
+            writer.write_row(rec)
     logger.info("Finished")
 
 

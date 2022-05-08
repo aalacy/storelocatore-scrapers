@@ -4,17 +4,16 @@ from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgselenium.sgselenium import SgFirefox
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from sgselenium.sgselenium import SgFirefox
 
 
 def fetch_data(sgw: SgWriter):
 
     locator_domain = "https://www.sodimac.com.mx/"
     api_url = "https://www.sodimac.com.mx/sodimac-mx/content/a40055/Tiendas"
-    session = SgRequests()
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
@@ -30,11 +29,12 @@ def fetch_data(sgw: SgWriter):
         with SgFirefox() as driver:
 
             driver.get(page_url)
-            driver.implicitly_wait(100)
-            driver.maximize_window()
-            driver.switch_to.frame(0)
+            iframe = driver.find_element_by_xpath(
+                '//h3[contains(text(), "Localización")]/following-sibling::iframe[1]'
+            )
+            driver.switch_to.frame(iframe)
             try:
-                WebDriverWait(driver, 100).until(
+                WebDriverWait(driver, 200).until(
                     EC.presence_of_element_located(
                         (By.XPATH, '//div[@class="address"]')
                     )
@@ -77,12 +77,9 @@ def fetch_data(sgw: SgWriter):
             phone = driver.find_element_by_xpath(
                 '//span[text()="Venta Telefónica"]/following-sibling::span'
             ).text
-            hours = driver.find_element_by_xpath(
-                '//div[./strong[text()="Nuestra Tienda"]]/div/span[2]'
+            hours_of_operation = driver.find_element_by_xpath(
+                '//span[./strong[text()="Horarios de Tienda:"]]/following-sibling::span[1]'
             ).text
-            hours_of_operation = (
-                "".join(hours).replace("\n", " ").strip() or "<MISSING>"
-            )
 
             row = SgRecord(
                 locator_domain=locator_domain,

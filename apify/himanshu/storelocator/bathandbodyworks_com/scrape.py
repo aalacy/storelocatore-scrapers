@@ -3,7 +3,7 @@ from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgselenium import SgChrome
 import ssl
@@ -51,8 +51,11 @@ def fetch_data():
     base_url = (
         "https://www.bathandbodyworks.com/north-america/global-locations-canada.html"
     )
-    r = session.get(base_url, headers=headers)
-    soup = BeautifulSoup(r.text, "lxml")
+    with SgChrome(is_headless=True) as driver:
+        url = "https://www.bathandbodyworks.com/north-america/global-locations-canada.html"
+        driver.get(url)
+        response = driver.page_source
+    soup = BeautifulSoup(response, "lxml")
     data = soup.find_all("div", {"class": "store-location"})
     for i in data:
         data2 = i.find("p", {"class": "location"})
@@ -104,10 +107,22 @@ def fetch_data():
         store_number = key
         latitude = store_data["latitude"]
         longitude = store_data["longitude"]
-        hours_of_operation = " ".join(
-            list(BeautifulSoup(store_data["storeHours"], "lxml").stripped_strings)
+        hours_of_operation = (
+            (
+                BeautifulSoup(store_data["storeHours"], "html.parser")
+                .get_text(separator="|", strip=True)
+                .replace("|", " ")
+            )
+            .replace("<br>", " ")
+            .strip()
         )
         url = "https://www.bathandbodyworks.com/store-locator"
+        if (
+            "Mon: CLOSED Tue: CLOSED Wed: CLOSED Thu: CLOSED Fri: CLOSED Sat: CLOSED Sun: CLOSED"
+            in hours_of_operation
+        ):
+            hours_of_operation = MISSING
+
         yield SgRecord(
             locator_domain=DOMAIN,
             page_url=url,
@@ -127,18 +142,15 @@ def fetch_data():
 
 
 def scrape():
-    log.info("Started")
-    count = 0
     with SgWriter(
-        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PhoneNumberId)
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
     ) as writer:
-        results = fetch_data()
-        for rec in results:
-            writer.write_row(rec)
-            count = count + 1
-
-    log.info(f"No of records being processed: {count}")
-    log.info("Finished")
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":

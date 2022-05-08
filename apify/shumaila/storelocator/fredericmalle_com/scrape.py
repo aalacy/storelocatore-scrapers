@@ -80,8 +80,12 @@ def fetch_data():
             phone = phone.split(":", 1)[1].strip()
         except:
             pass
-        if "Paris" in address or "Milano" in address:
+        if "Paris" in address:
             ccode = "FR"
+        elif "Milano" in address:
+            ccode = "IT"
+        elif "Shangai" or "Beijing" in address:
+            ccode = "CN"
         else:
             ccode = "US"
         yield SgRecord(

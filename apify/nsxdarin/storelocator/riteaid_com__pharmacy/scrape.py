@@ -81,6 +81,31 @@ def fetch_data():
                                                 hours = hours + "; " + hrs
                             if hours == "":
                                 hours = "<MISSING>"
+                            hours = (
+                                hours.replace("1000", "10:00")
+                                .replace("1100", "11:00")
+                                .replace("1200", "12:00")
+                                .replace("1300", "13:00")
+                                .replace("1400", "14:00")
+                                .replace("1500", "15:00")
+                                .replace("1600", "16:00")
+                                .replace("1700", "17:00")
+                                .replace("1800", "18:00")
+                                .replace("1900", "19:00")
+                            )
+                            hours = hours.replace("1730", "17:30").replace(
+                                "2130", "21:30"
+                            )
+                            hours = (
+                                hours.replace("2000", "20:00")
+                                .replace("2100", "21:00")
+                                .replace("2200", "22:00")
+                                .replace("2300", "23:00")
+                                .replace("600", "6:00")
+                                .replace("700", "7:00")
+                                .replace("800", "8:00")
+                                .replace("900", "9:00")
+                            )
                             yield SgRecord(
                                 locator_domain=website,
                                 page_url=lurl,
