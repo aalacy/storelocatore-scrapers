@@ -215,6 +215,7 @@ def fetch_data():
                             and "pop-up" not in name.lower()
                             and "N/A" not in city
                             and "OPENING" not in hours
+                            and add != ""
                         ):
                             yield SgRecord(
                                 locator_domain=website,
@@ -432,6 +433,7 @@ def fetch_data():
             and "pop-up" not in name.lower()
             and "N/A" not in city
             and "OPENING" not in hours
+            and add != ""
         ):
             yield SgRecord(
                 locator_domain=website,
@@ -653,6 +655,7 @@ def fetch_data():
             and "pop-up" not in name.lower()
             and "N/A" not in city
             and "OPENING" not in hours
+            and add != ""
         ):
             yield SgRecord(
                 locator_domain=website,
@@ -838,6 +841,7 @@ def fetch_data():
                                 and "pop-up" not in name.lower()
                                 and "N/A" not in city
                                 and "OPENING" not in hours
+                                and add != ""
                             ):
                                 yield SgRecord(
                                     locator_domain=website,

@@ -21,7 +21,7 @@ def fetch_data(sgw: SgWriter):
         slug = "".join(d.xpath(".//@href"))
         page_url = f"https://www.superhealthpharmacy.com{slug}"
         location_name = "".join(d.xpath(".//text()"))
-        if "Coming" in location_name:
+        if "COMING" in location_name:
             continue
         r = session.get(page_url, headers=headers)
         tree = html.fromstring(r.text)
