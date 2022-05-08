@@ -62,7 +62,7 @@ def fetch_data():
                     page_url = "https://www.heffins.com" + page_url
                     log.info(page_url)
                     store_req = session.get(page_url, headers=headers)
-                    if isinstance(store_req, SgRequestError):
+                    if not isinstance(store_req, SgRequestError):
                         store_sel = lxml.html.fromstring(store_req.text)
                         map_link = "".join(
                             store_sel.xpath(
