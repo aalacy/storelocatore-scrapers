@@ -1,4 +1,3 @@
-import json
 from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
@@ -18,23 +17,13 @@ def get_street(line):
 
 
 def fetch_data(sgw: SgWriter):
-    coords = dict()
     page_url = "https://www.abrakebabra.com/locations/"
     r = session.get(page_url, headers=headers)
     tree = html.fromstring(r.text)
 
-    blocks = tree.xpath("//div[@data-x-params]/@data-x-params")
-    for b in blocks:
-        j = json.loads(b)
-        key = str(j.get("markerInfo")).lower()
-        lat = j.get("lat")
-        lng = j.get("lng")
-        coords[key] = (lat, lng)
-
     divs = tree.xpath("//div[contains(@class, 'x-col') and .//ul]")
     for d in divs:
         location_name = "".join(d.xpath(".//h1/text()")).strip()
-        key = location_name.lower()
         raw_address = " ".join("".join(d.xpath(".//div/text()")).split())
         line = raw_address.split(", ")
         pp = line.pop()
@@ -58,13 +47,6 @@ def fetch_data(sgw: SgWriter):
         street_address = get_street(raw_address)
         country_code = "IE"
         phone = "".join(d.xpath(".//a[contains(@href, 'tel:')]/text()")).strip()
-        try:
-            latitude, longitude = coords.get(key) or (
-                SgRecord.MISSING,
-                SgRecord.MISSING,
-            )
-        except KeyError:
-            latitude, longitude = SgRecord.MISSING, SgRecord.MISSING
 
         row = SgRecord(
             page_url=page_url,
@@ -73,8 +55,6 @@ def fetch_data(sgw: SgWriter):
             city=city,
             zip_postal=postal,
             country_code=country_code,
-            latitude=latitude,
-            longitude=longitude,
             phone=phone,
             locator_domain=locator_domain,
             raw_address=raw_address,
