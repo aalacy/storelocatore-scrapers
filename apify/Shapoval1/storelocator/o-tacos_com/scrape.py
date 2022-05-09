@@ -45,6 +45,13 @@ def fetch_data(sgw: SgWriter):
             postal = a.get("zip") or "<MISSING>"
             country_code = a.get("country") or "<MISSING>"
             city = a.get("city") or "<MISSING>"
+        if (
+            street_address == "BOULEVARD DESTRELLAN"
+            or street_address == "2 route de cluny"
+            or street_address == "100 chemin Lafaguyès"
+            or street_address == "35 Rue de la Compagnie"
+        ):
+            continue
         location_name = j.get("name") or "<MISSING>"
         store_number = j.get("id") or "<MISSING>"
         latitude = j.get("lat") or "<MISSING>"

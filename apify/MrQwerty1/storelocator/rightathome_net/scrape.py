@@ -6,6 +6,7 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgzip.dynamic import SearchableCountries, DynamicGeoSearch
+from sglogging import sglog
 
 
 def fetch_data(sgw: SgWriter):
@@ -28,7 +29,6 @@ def fetch_data(sgw: SgWriter):
                 "license",
                 "number",
                 "ahccs",
-                "airport",
                 "hcs",
                 "hha",
                 "ahca",
@@ -54,7 +54,11 @@ def fetch_data(sgw: SgWriter):
                 _tmp.append(line.replace("\xa0", " ").strip().replace("\n", " "))
 
             street_address = ", ".join(_tmp[:-1])
-            csz = _tmp.pop()
+            try:
+                csz = _tmp.pop()
+            except:
+                logger.info(f"something went wrong: {page_url}")
+                continue
             city = csz.split(",")[0].strip()
             csz = csz.split(",")[1].strip()
             state, postal = csz.split()
@@ -90,6 +94,7 @@ def fetch_data(sgw: SgWriter):
 
 if __name__ == "__main__":
     locator_domain = "https://www.rightathome.net/"
+    logger = sglog.SgLogSetup().get_logger(logger_name="rightathome.net")
     session = SgRequests()
     with SgWriter(
         SgRecordDeduper(

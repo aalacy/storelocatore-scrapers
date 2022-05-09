@@ -43,7 +43,7 @@ def fetch_data():
                     log.info(page_url)
                     try:
                         driver.get(page_url)
-                        time.sleep(15)
+                        time.sleep(3)
                         store_sel = lxml.html.fromstring(driver.page_source)
 
                         temp_addr = store_sel.xpath(
@@ -56,7 +56,12 @@ def fetch_data():
                                 if len(add_2) > 0:
                                     address = address + add_2
 
-                            log.info(address)
+                        else:
+                            address = store_sel.xpath(
+                                '//div[./p[@class="font_8"]]/p[@class="font_8"]//text()'
+                            )
+
+                        log.info(address)
                         for add in address:
                             if len("".join(add).strip()) > 0:
                                 add_list.append("".join(add).strip())
@@ -107,8 +112,6 @@ def fetch_data():
                     .replace("; PM", "PM")
                 )
             else:
-                log.info("hahah")
-                continue
                 store_number = location_name.split(" ")[-1].strip()
                 page_url = search_url
                 address = store.xpath(".//div[@data-packed='false'][2]//text()")

@@ -16,6 +16,7 @@ def fetch_data(sgw: SgWriter):
         js = s.get("stores") or []
 
         for j in js:
+            status = j.get("status")
             location_name = j.get("name") or ""
             raw_address = j.get("location") or ""
             street_address = raw_address.split(", ")[0]
@@ -39,6 +40,8 @@ def fetch_data(sgw: SgWriter):
                 _tmp.append(f"{day}: {start}-{end}")
 
             hours_of_operation = ";".join(_tmp)
+            if status == "inactive":
+                hours_of_operation = "Temporarily Closed"
 
             row = SgRecord(
                 page_url=page_url,
