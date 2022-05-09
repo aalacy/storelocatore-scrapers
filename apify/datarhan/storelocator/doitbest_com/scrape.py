@@ -14,7 +14,7 @@ import json
 domain = "doitbest.com"
 log = sglog.SgLogSetup().get_logger(domain)
 
-session = SgRequests()
+session = SgRequests(retries_with_fresh_proxy_ip=7)
 
 hdr = {
     "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
