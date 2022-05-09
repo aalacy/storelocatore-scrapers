@@ -1,6 +1,6 @@
 from typing import Iterable, Tuple, Callable
 from sgscrape.sgrecord_id import RecommendedRecordIds
-from sgscrape.sgrecord_deduper import SgRecordDeduper13
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.pause_resume import CrawlStateSingleton, SerializableRequest
@@ -217,7 +217,13 @@ if __name__ == "__main__":
 
     with SgWriter(
         deduper=SgRecordDeduper(
-            RecommendedRecordIds.StoreNumAndPageUrlId,
+            SgRecordID(
+                {
+                    SgRecord.Headers.LATITUDE,
+                    SgRecord.Headers.LONGITUDE,
+                    SgRecord.Headers.PAGE_URL,
+                }
+            ),
             duplicate_streak_failure_factor=-1,
         )
     ) as writer:
