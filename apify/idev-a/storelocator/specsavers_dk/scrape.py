@@ -53,6 +53,8 @@ def fetch_data():
                 except:
                     coord = ["", ""]
                 sp1 = bs(res, "lxml")
+                if not sp1.select_one("div.store p"):
+                    continue
                 addr = list(sp1.select_one("div.store p").stripped_strings)
                 hours = [
                     ": ".join(hh.stripped_strings)
