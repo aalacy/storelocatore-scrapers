@@ -90,9 +90,14 @@ def fetch_data():
                         add_list.append("".join(temp).strip())
 
                 raw_address = ", ".join(add_list).strip()
-                phone = "".join(
-                    store.xpath('div[1]/div[@class="phone"]//text()')
-                ).strip()
+                phone = (
+                    "".join(store.xpath('div[1]/div[@class="phone"]//text()'))
+                    .strip()
+                    .encode("ascii", "replace")
+                    .decode("utf-8")
+                    .replace("?", "-")
+                    .strip()
+                )
                 phone = (
                     phone.split("/")[0]
                     .strip()
