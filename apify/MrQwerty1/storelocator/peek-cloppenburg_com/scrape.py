@@ -61,6 +61,8 @@ def get_phone(page_url):
 def get_data(api, sgw: SgWriter):
     r = session.get(api, headers=headers)
     logger.info(f"{api}: {r.status_code}")
+    if r.status_code != 200:
+        return
     js = r.json()["pageProps"]["pageDoc"]["data"]["body"][1]["data"]["body"]
 
     for j in js:
