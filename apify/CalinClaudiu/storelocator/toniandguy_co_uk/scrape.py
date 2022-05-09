@@ -1,19 +1,20 @@
 from typing import Iterable, Tuple, Callable
 from sgscrape.sgrecord_id import RecommendedRecordIds
-from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_deduper import SgRecordDeduper13
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-from sgscrape.pause_resume import CrawlStateSingleton
+from sgscrape.pause_resume import CrawlStateSingleton, SerializableRequest
 from sgrequests import SgRequests
 from sgzip.dynamic import SearchableCountries, Grain_8
 from sgzip.parallel import DynamicSearchMaker, ParallelDynamicSearch, SearchIteration
 from sglogging import sglog
 from sgscrape import sgpostal as parser
 from sgselenium import SgChrome
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.support.ui import WebDriverWait  # noqa
+from selenium.webdriver.common.by import By  # noqa
+from selenium.webdriver.support import expected_conditions as EC  # noqa
+from selenium.webdriver.common.keys import Keys  # noqa
+from bs4 import BeautifulSoup as b4
 
 logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
 
@@ -54,7 +55,7 @@ def ret_record(soup, url, lat, lng):
     except Exception:
         pass
     try:
-        location_name = str(record["name"])
+        location_name = soup.find("title").text.strip()
     except Exception:
         pass
     try:
@@ -64,7 +65,7 @@ def ret_record(soup, url, lat, lng):
             raw_address = soup.find("address").text.strip()
     except Exception:
         pass
-    parsed = parser.parse_address_intl(raw_a)
+    parsed = parser.parse_address_intl(raw_address)
     try:
         street_address = (
             parsed.street_address_1 if parsed.street_address_1 else "<MISSING>"
@@ -98,21 +99,12 @@ def ret_record(soup, url, lat, lng):
         pass
 
     try:
-        store_number = str(record["storeNumber"].split("-")[0])
+        phone = soup.find(
+            "a", {"href": lambda x: x and x.startswith("tel:")}
+        ).text.strip()
     except Exception:
         pass
 
-    try:
-        phone = str(record["phoneNumber"])
-    except Exception:
-        pass
-
-    try:
-        location_type = str(
-            str(record["brandName"]) + " - " + str(record["ownershipTypeCode"])
-        )
-    except Exception:
-        pass
     try:
         coords = (
             soup.find("a", {"href": lambda x: x and "google.com/maps?q=" in x})["href"]
@@ -143,10 +135,10 @@ def ret_record(soup, url, lat, lng):
         street_address=street_address,
         city=city,
         state=state,
-        zip_postal=clean(zip_postal),
+        zip_postal=zip_postal,
         country_code=country_code,
         store_number=store_number,
-        phone=clean(phone),
+        phone=phone,
         location_type=location_type,
         latitude=latitude,
         longitude=longitude,
@@ -179,9 +171,9 @@ class ExampleSearchIteration(SearchIteration):
         :param found_location_at: The equivalent of `search.found_location_at(lat, long)`
         """
 
-        with SgChrome() as http:
+        with SgChrome() as driver:
             lat, lng = coord
-            url = str(f"https://toniandguy.com/salon-finder")
+            url = "https://toniandguy.com/salon-finder"
             driver.get(url)
             searchbox_xpath = '//*[@id="content"]/main/section/section/div/div/div/form/div/div[1]/input'  # Might break
             inputel = WebDriverWait(driver, 30).until(
@@ -208,7 +200,7 @@ def fetch_records(http, state):
         lat = next_r.context.get("lat")
         lng = next_r.context.get("lng")
         url = next_r.url
-        page = SgRequests.raise_on_err(http.get(url, headers=headers))
+        page = SgRequests.raise_on_err(http.get(url))
         try:
             soup = b4(page.text, "lxml")
             return ret_record(soup, url, lat, lng)
@@ -247,5 +239,7 @@ if __name__ == "__main__":
         state.get_misc_value(
             "init", default_factory=lambda: record_initial_requests(par_search, state)
         )
-        for rec in fetch_records(http, state):
-            writer.write_row(rec)
+
+        with SgRequests() as http:
+            for rec in fetch_records(http, state):
+                writer.write_row(rec)
