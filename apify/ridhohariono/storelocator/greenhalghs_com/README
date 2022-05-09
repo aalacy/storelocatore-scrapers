@@ -1,0 +1,2 @@
+--ignore CountryCodeFillRateChecker (Country code not US/CA)
+--ignore LatLngDuplicationValidator (Confirmed scrape correctly. Some lat/long are duplicate)

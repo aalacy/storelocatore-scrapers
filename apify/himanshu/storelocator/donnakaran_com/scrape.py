@@ -1,158 +1,116 @@
-import csv
+from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
-from bs4 import BeautifulSoup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
+from concurrent import futures
 
-session = SgRequests()
 
+def get_data(coords, sgw: SgWriter):
+    lat, long = coords
+    locator_domain = "https://donnakaran.com/"
 
-def write_output(data):
-    with open("data.csv", mode="w", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+    cookies = {
+        "form_key": "Em72IvTDRlpDrBGl",
+    }
+
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0",
+        "Accept": "*/*",
+        "Accept-Language": "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3",
+        "X-NewRelic-ID": "VwYHWVJTDhAIVlRVAQgBVVM=",
+        "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+        "X-Requested-With": "XMLHttpRequest",
+        "Origin": "https://www.dkny.com",
+        "Connection": "keep-alive",
+        "Referer": "https://www.dkny.com/donnakaran/store-locator/",
+        "Sec-Fetch-Dest": "empty",
+        "Sec-Fetch-Mode": "cors",
+        "Sec-Fetch-Site": "same-origin",
+    }
+
+    data = {
+        "latitude": f"{str(lat)}",
+        "longitude": f"{str(long)}",
+        "form_key": "Em72IvTDRlpDrBGl",
+    }
+
+    r = session.post(
+        "https://www.dkny.com/donnakaran/odlocator/index/ajax/",
+        headers=headers,
+        data=data,
+        cookies=cookies,
+    )
+    js = r.json()["sources"]
+    for j in js:
+
+        page_url = j.get("url") or "<MISSING>"
+        location_name = j.get("name") or "<MISSING>"
+        street_address = "<MISSING>"
+        city = j.get("city") or "<MISSING>"
+        state = j.get("region") or "<MISSING>"
+        postal = j.get("postcode") or "<MISSING>"
+        country_code = "<MISSING>"
+        phone = j.get("phone") or "<MISSING>"
+        latitude = j.get("latitude") or "<MISSING>"
+        longitude = j.get("longitude") or "<MISSING>"
+        hours = j.get("schedule")
+        hours_of_operation = "<MISSING>"
+        if hours:
+            a = html.fromstring(hours)
+            hours_of_operation = " ".join(
+                a.xpath('//div[@class="schedule-list"]//text()')
+            )
+            hours_of_operation = " ".join(hours_of_operation.split())
+        if (
+            hours_of_operation
+            == "Monday - Tuesday - Wednesday - Thursday - Friday - Saturday - Sunday -"
+        ):
+            hours_of_operation = "<MISSING>"
+        store_number = j.get("source_code")
+
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
         )
 
-        writer.writerow(
-            [
-                "locator_domain",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-                "page_url",
-            ]
+        sgw.write_row(row)
+
+
+def fetch_data(sgw: SgWriter):
+    for country in SearchableCountries.ALL:
+        coords = DynamicGeoSearch(
+            country_codes=[f"{country}"],
+            max_search_distance_miles=10,
+            max_search_results=None,
         )
 
-        for row in data:
-            writer.writerow(row)
+        with futures.ThreadPoolExecutor(max_workers=1) as executor:
+            future_to_url = {executor.submit(get_data, url, sgw): url for url in coords}
+            for future in futures.as_completed(future_to_url):
+                future.result()
 
 
-def fetch_data():
-    base_url = "https://www.donnakaran.com"
-    return_main_object = []
-    r = session.get(
-        "https://www.donnakaran.com/store-locator/all-stores.do?countryCode=US"
-    )
-    soup = BeautifulSoup(r.text, "html.parser")
-
-    for location in soup.find_all("div", {"class": "ml-storelocator-item-wrapper"}):
-        store = []
-        name = location.find(
-            "div", {"class": "eslStore ml-storelocator-headertext"}
-        ).text
-        try:
-            address1 = location.find("div", {"class": "eslAddress1"}).text
-            try:
-                address2 = location.find("div", {"class": "eslAddress2"}).text
-            except:
-                address2 = ""
-            street_address = address1 + address2
-        except:
-            address2 = location.find("div", {"class": "eslAddress2"}).text
-            address3 = location.find("div", {"class": "eslAddress3"}).text
-            street_address = address2 + address3
-        city = location.find("span", {"class": "eslCity"}).text.split(",")[0]
-        state = location.find("span", {"class": "eslStateCode"}).text
-        zip_code = location.find("span", {"class": "eslPostalCode"}).text
-        phone = location.find("a", {"class": "eslPhone"}).text.strip()
-        store.append("https://www.donnakaran.com")
-        store.append(name)
-        store.append(street_address.replace("Temporarily Closed", ""))
-        store.append(city)
-        store.append(state.strip())
-        store.append(zip_code)
-        store.append("US")
-        store.append("<MISSING>")
-        store.append(phone)
-        store.append("donna karan")
-        url = location.find(
-            "div", {"class": "eslStore ml-storelocator-headertext"}
-        ).find("a")["href"]
-        location_request = session.get(base_url + url)
-        location_soup = BeautifulSoup(location_request.text, "html.parser")
-        for script in location_soup.find_all("script"):
-            if 'location":' in script.text:
-                store.append(
-                    script.text.split('location":')[1]
-                    .split('"latitude":')[1]
-                    .split(",")[0]
-                )
-                store.append(
-                    script.text.split('location":')[1]
-                    .split('"longitude":')[1]
-                    .split("}")[0]
-                )
-        store.append("<MISSING>")
-        store.append(base_url + url)
-        return_main_object.append(store)
-    r = session.get(
-        "https://www.donnakaran.com/store-locator/all-stores.do?countryCode=CA"
-    )
-    soup = BeautifulSoup(r.text, "html.parser")
-
-    for location in soup.find_all("div", {"class": "ml-storelocator-item-wrapper"}):
-        store = []
-        name = location.find(
-            "div", {"class": "eslStore ml-storelocator-headertext"}
-        ).text
-        try:
-            address1 = location.find("div", {"class": "eslAddress1"}).text
-            try:
-                address2 = location.find("div", {"class": "eslAddress2"}).text
-            except:
-                address2 = ""
-            street_address = address1 + address2
-        except:
-            address2 = location.find("div", {"class": "eslAddress2"}).text
-            address3 = location.find("div", {"class": "eslAddress3"}).text
-            street_address = address2 + address3
-        city = location.find("span", {"class": "eslCity"}).text.split(",")[0]
-        state = location.find("span", {"class": "eslStateCode"}).text
-        zip_code = location.find("span", {"class": "eslPostalCode"}).text
-        phone = location.find("a", {"class": "eslPhone"}).text.strip()
-        store.append("https://www.donnakaran.com")
-        store.append(name)
-        store.append(street_address.replace("Temporarily Closed", ""))
-        store.append(city)
-        store.append(state.strip())
-        store.append(zip_code)
-        store.append("CA")
-        store.append("<MISSING>")
-        store.append(phone)
-        store.append("donna karan")
-        url = location.find(
-            "div", {"class": "eslStore ml-storelocator-headertext"}
-        ).find("a")["href"]
-        location_request = session.get(base_url + url)
-        location_soup = BeautifulSoup(location_request.text, "html.parser")
-        for script in location_soup.find_all("script"):
-            if 'location":' in script.text:
-                store.append(
-                    script.text.split('location":')[1]
-                    .split('"latitude":')[1]
-                    .split(",")[0]
-                )
-                store.append(
-                    script.text.split('location":')[1]
-                    .split('"longitude":')[1]
-                    .split("}")[0]
-                )
-        store.append("<MISSING>")
-        store.append(base_url + url)
-        return_main_object.append(store)
-    return return_main_object
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+if __name__ == "__main__":
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID({SgRecord.Headers.STORE_NUMBER}),
+            duplicate_streak_failure_factor=-1,
+        )
+    ) as writer:
+        fetch_data(writer)

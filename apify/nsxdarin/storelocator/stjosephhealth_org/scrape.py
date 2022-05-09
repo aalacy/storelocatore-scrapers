@@ -19,7 +19,7 @@ def fetch_data():
     country = "US"
     typ = "<MISSING>"
     store = "<MISSING>"
-    for x in range(1, 20):
+    for x in range(1, 75):
         logger.info("Page " + str(x))
         url = (
             "https://www.providence.org/locations?postal=99501&lookup=&lookupvalue=&page="
@@ -43,7 +43,7 @@ def fetch_data():
                         )
                     if lurl not in locs:
                         locs.append(lurl)
-    for x in range(1, 201):
+    for x in range(1, 501):
         logger.info("Page " + str(x))
         url = (
             "https://www.providence.org/locations?postal=90210&lookup=&lookupvalue=&page="
@@ -100,7 +100,7 @@ def fetch_data():
                     "</div"
                 )[0]
                 hours2 = hours2.replace("<p>", "").replace("</p>", "")
-            if '"name":"' in line2:
+            if '"name":"' in line2 and name == "":
                 name = line2.split('"name":"')[1].split('"')[0]
                 try:
                     hours = line2.split(',"openingHours":"')[1].split('"')[0]
@@ -164,6 +164,29 @@ def fetch_data():
             if "<!--" in hours:
                 hours = "<MISSING>"
             if "<h4>Family" in hours or "<b>Clinic" in hours:
+                hours = "<MISSING>"
+            name = (
+                name.replace("&#039;", "'")
+                .replace("\\u0026", "&")
+                .replace("&amp;", "&")
+            )
+            if " " in zc:
+                zc = zc.split(" ", 1)[1]
+            if "," in city:
+                city = city.split(",")[0].strip()
+            hours = hours.replace("<br />", "").strip()
+            hours = hours.replace("<strong>", "").replace("</strong>", "")
+            if "<span" in hours:
+                hours = hours.split('">')[1]
+            hours = hours.replace("</span>", "")
+            if "Medical Oncology" in hours:
+                hours = "<MISSING>"
+            if "<em>" in hours:
+                hours = hours.split("<em>")[0].strip()
+            hours = hours.replace("&amp;", "&").replace("&ndash;", "-")
+            add = add.replace("\\u0026", "&")
+            name = name.replace("\\u0026", "&")
+            if "<span" in hours:
                 hours = "<MISSING>"
             yield SgRecord(
                 locator_domain=website,

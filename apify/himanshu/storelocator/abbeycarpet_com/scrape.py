@@ -1,63 +1,39 @@
-import csv
 import re
-import time
-
 from bs4 import BeautifulSoup
-
 from sglogging import SgLogSetup
-
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgrequests import SgRequests
-
 from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 
-logger = SgLogSetup().get_logger("abbeycarpet_com")
+
+DOMAIN = "abbeycarpet.com"
+BASE_URL = "https://www.abbeycarpet.com"
+LOCATION_URL = "https://www.abbeycarpet.com/StoreLocator.aspx?searchZipCode="
+HEADERS = {
+    "Accept": "*/*",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.82 Safari/537.36",
+}
+
+logger = SgLogSetup().get_logger(DOMAIN)
 session = SgRequests()
 
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-                "page_url",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
+MISSING = "<MISSING>"
 
 
-def fetch_data():
-
+def fetch_data(sgw: SgWriter):
     adress = []
     adress2 = []
+    geos = []
     all_links = []
     all_zips = []
     links_data = []
-
-    headers = {
-        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36",
-    }
-    base_url = "https://www.abbeycarpet.com"
     search = DynamicZipSearch(
         country_codes=[SearchableCountries.USA],
         max_search_results=5,
-        max_radius_miles=50,
+        max_search_distance_miles=100,
     )
     logger.info("Running sgzips ..")
 
@@ -112,13 +88,15 @@ def fetch_data():
         )
 
     for location_url in all_zips:
+        logger.info("Pull locations for => " + location_url)
         try:
-            r = session.get(location_url, headers=headers)
+            r = session.get(location_url, headers=HEADERS)
             soup = BeautifulSoup(r.text, "lxml")
         except:
             continue
 
         results = soup.find_all(class_="search-store__results-item")
+        logger.info(f"Found {len(results)} locations")
         for result in results:
 
             # Skip if location already found
@@ -130,7 +108,7 @@ def fetch_data():
             adress.append(st)
 
             try:
-                page_url = base_url + result.find(
+                page_url = BASE_URL + result.find(
                     class_="search-store__results-links-site"
                 ).get("href")
             except:
@@ -159,12 +137,12 @@ def fetch_data():
                     continue
                 phone = raw_address[-1]
                 page_url = location_url
-                store_number = "<MISSING>"
-                hours_of_operation = "<MISSING>"
-                location_type = "<MISSING>"
+                store_number = MISSING
+                hours_of_operation = MISSING
+                location_type = MISSING
 
                 store = []
-                store.append(base_url)
+                store.append(BASE_URL)
                 store.append(name)
                 store.append(street.strip())
                 store.append(city.strip())
@@ -177,37 +155,39 @@ def fetch_data():
                 store.append(store_number)
                 store.append(phone.split("&")[0].replace("T:", "").strip())
                 store.append(location_type)
-                store.append("<MISSING>")
-                store.append("<MISSING>")
+                store.append(MISSING)
+                store.append(MISSING)
                 store.append(hours_of_operation)
                 store.append(page_url)
-                yield store
+                write_store(sgw, store)
 
     # Get data from page_url
     logger.info("Processing %s links.." % (len(all_links)))
     for page_url in all_links:
         got_page = False
-
-        store_number = "<MISSING>"
-        phone = "<MISSING>"
-        hours_of_operation = "<MISSING>"
-        location_type = "<MISSING>"
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
-
+        store_number = MISSING
+        phone = MISSING
+        hours_of_operation = MISSING
+        location_type = MISSING
+        latitude = MISSING
+        longitude = MISSING
+        logger.info("Pull address for => " + page_url)
         try:
-            home = session.get(page_url, headers=headers)
+            home = session.get(page_url, headers=HEADERS)
         except:
             try:
-                time.sleep(10)
-                home = session.get(page_url, headers=headers)
+                logger.info("Retry => " + page_url)
+                home = session.get(page_url, headers=HEADERS)
             except:
                 logger.info("Error loading page %s..skipping" % (page_url))
                 continue
 
-        if ".abbeycarpet.com" in home.url:
-            page_url = home.url
-            got_page = True
+        try:
+            if ".abbeycarpet.com" in home.url:
+                page_url = home.url
+                got_page = True
+        except:
+            pass
 
         if not got_page:
             logger.info("---- Saving from result list ----")
@@ -226,7 +206,7 @@ def fetch_data():
             phone = raw_address[-1]
 
             store = []
-            store.append(base_url)
+            store.append(BASE_URL)
             store.append(name)
             store.append(street.strip())
             store.append(city.strip())
@@ -241,28 +221,31 @@ def fetch_data():
             store.append(store_number)
             store.append(phone.split("&")[0].replace("T:", "").strip())
             store.append(location_type)
-            store.append("<MISSING>")
-            store.append("<MISSING>")
+            store.append(MISSING)
+            store.append(MISSING)
             store.append(hours_of_operation)
             store.append(page_url)
             if street in adress2:
                 continue
             adress2.append(street)
             logger.info(street)
-            yield store
+            write_store(sgw, store)
         else:
             data_style = ""
             page_soup = BeautifulSoup(home.text, "lxml")
             if page_soup.find(class_="home__showroom-information"):
                 data_style = "showroom"
                 show_data = page_soup.find_all(class_="home__showroom-information")
+                for i, show in enumerate(show_data):
+                    if "Take a 3D" in show.text:
+                        show_data.pop(i)
                 row_data = []
                 for i, show in enumerate(show_data):
                     if i % 2 == 0:
                         try:
                             row_data.append([show, show_data[i + 1]])
                         except:
-                            row_data.append([show, "<MISSING>"])
+                            row_data.append([show, MISSING])
 
                 addresses = []
                 hours = []
@@ -289,12 +272,12 @@ def fetch_data():
 
             if data_style:
                 for i, address in enumerate(addresses):
-                    store_number = "<MISSING>"
-                    phone = "<MISSING>"
-                    hours_of_operation = "<MISSING>"
-                    location_type = "<MISSING>"
-                    latitude = "<MISSING>"
-                    longitude = "<MISSING>"
+                    store_number = MISSING
+                    phone = MISSING
+                    hours_of_operation = MISSING
+                    location_type = MISSING
+                    latitude = MISSING
+                    longitude = MISSING
                     if data_style == "footer":
                         address = address["href"].split("/")[-1]
                         if len(address.split(",")) == 4:
@@ -311,7 +294,7 @@ def fetch_data():
                             state = address.split(",")[-1].split()[0]
                         zip_code = address.split(",")[-1].split()[-1]
                         phone = phones[i].text
-                        location_type = "<MISSING>"
+                        location_type = MISSING
                         hrs = hours[i].text.split("  ")
                         try:
                             hours_of_operation = ""
@@ -333,9 +316,9 @@ def fetch_data():
                                 re.sub(" +", " ", hours_of_operation)
                             ).strip()
                         except:
-                            hours_of_operation = "<MISSING>"
+                            hours_of_operation = MISSING
                         if not hours_of_operation:
-                            hours_of_operation = "<MISSING>"
+                            hours_of_operation = MISSING
                     else:
                         try:
                             name = address.find(class_="home__showroom-title").text
@@ -343,7 +326,7 @@ def fetch_data():
                                 class_="home__showroom-address-line"
                             ).text
                         except:
-                            name = address.strong.text.strip()
+                            name = address.strong.text.replace("(NOW OPEN)", "").strip()
                             street = (
                                 address.find(class_="home__showroom-address-line")
                                 .text.split("\n\n")[1]
@@ -352,14 +335,18 @@ def fetch_data():
                         city_line = address.find_all(
                             class_="home__showroom-address-line"
                         )[1].text
+                        if "," not in city_line:
+                            city_line = address.find_all(
+                                class_="home__showroom-address-line"
+                            )[2].text
                         city = city_line.split(",")[0]
                         state = city_line.split(",")[-1].split()[0]
                         zip_code = city_line.split(",")[-1].split()[-1]
                         try:
                             phone = address.a.text
                         except:
-                            phone = "<MISSING>"
-                        location_type = "<MISSING>"
+                            phone = MISSING
+                        location_type = MISSING
 
                         try:
                             hrs = (
@@ -373,10 +360,8 @@ def fetch_data():
                                 re.sub(" +", " ", hours_of_operation)
                             ).strip()
                         except:
-                            hours_of_operation = "<MISSING>"
+                            hours_of_operation = MISSING
 
-                    iframe = ""
-                    src = None
                     if i == 0:
                         if page_soup.find("div", {"class": "mapWrapper"}) is not None:
                             iframe = page_soup.find(
@@ -466,6 +451,11 @@ def fetch_data():
                             longitude = geo[1]
                         except:
                             pass
+                    if latitude + longitude in geos:
+                        latitude = ""
+                        longitude = ""
+                    else:
+                        geos.append(latitude + longitude)
 
                     if name == "font>":
                         name = "Southern Carpet & Interiors"
@@ -474,7 +464,7 @@ def fetch_data():
                         zip_code = "06897"
 
                     store = []
-                    store.append(base_url)
+                    store.append(BASE_URL)
                     store.append(name)
                     store.append(street.strip())
                     store.append(city.strip())
@@ -489,21 +479,45 @@ def fetch_data():
                     store.append(store_number)
                     store.append(phone.split("&")[0].replace("T:", "").strip())
                     store.append(location_type)
-                    store.append(str(latitude) if latitude else "<MISSING>")
-                    store.append(str(longitude) if longitude else "<MISSING>")
+                    store.append(str(latitude) if latitude else MISSING)
+                    store.append(str(longitude) if longitude else MISSING)
                     store.append(hours_of_operation)
                     store.append(page_url)
                     if street in adress2:
                         continue
                     adress2.append(street)
-                    yield store
+                    write_store(sgw, store)
             else:
                 raise
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
+def write_store(sgw, store):
+    address = store[2].replace("Floor & Home", "").strip()
+    state = store[4]
+    zip_postal = store[5]
+    if address == "156 Tilco Drive" or zip_postal == "Carolina":
+        state = "NC"
+        zip_postal = "28590"
+    logger.info("Append {} => {}".format(store[1], address))
+    sgw.write_row(
+        SgRecord(
+            locator_domain=store[0],
+            location_name=store[1],
+            street_address=address,
+            city=store[3],
+            state=state,
+            zip_postal=zip_postal,
+            country_code=store[6],
+            store_number=store[7],
+            phone=store[8],
+            location_type=store[9],
+            latitude=store[10],
+            longitude=store[11],
+            hours_of_operation=store[12].replace("SHOP AT HOME", "").strip(),
+            page_url=store[13],
+        )
+    )
 
 
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PhoneNumberId)) as writer:
+    fetch_data(writer)

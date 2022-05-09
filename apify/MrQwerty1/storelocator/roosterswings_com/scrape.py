@@ -1,47 +1,18 @@
-import csv
-
-from concurrent import futures
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
-from sgzip.static import static_coordinate_list, SearchableCountries
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgzip.dynamic import SearchableCountries, DynamicGeoSearch
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def get_data(coord):
-    rows = []
-    lat, lon = coord
-    locator_domain = "https://roosterswings.com/"
+def fetch_data(coords, sgw):
+    lat, lon = coords
     data = {"lat": lat, "lng": lon}
 
-    session = SgRequests()
-    r = session.post("https://roosterswings.com/assets/inc/map_query.php", data=data)
+    r = session.post(
+        "https://roosterswings.com/assets/inc/map_query.php", data=data, headers=headers
+    )
     js = r.json()["locations"]
 
     for j in js:
@@ -49,16 +20,16 @@ def get_data(coord):
             f'https://roosterswings.com/locations/view-all-locations/{j.get("slug")}'
         )
         location_name = j.get("location_name").strip()
-        street_address = j.get("address") or "<MISSING>"
-        city = j.get("city") or "<MISSING>"
-        state = j.get("state") or "<MISSING>"
-        postal = j.get("zip") or "<MISSING>"
+        street_address = j.get("address")
+        city = j.get("city")
+        state = j.get("state")
+        postal = j.get("zip")
         country_code = "US"
-        store_number = j.get("id") or "<MISSING>"
-        phone = j.get("phone") or "<MISSING>"
-        latitude = j.get("lat") or "<MISSING>"
-        longitude = j.get("long") or "<MISSING>"
-        location_type = j.get("type") or "<MISSING>"
+        store_number = j.get("id")
+        phone = j.get("phone")
+        latitude = j.get("lat")
+        longitude = j.get("long")
+        location_type = j.get("type")
 
         _tmp = []
         for i in range(1, 5):
@@ -66,52 +37,55 @@ def get_data(coord):
             if line:
                 _tmp.append(line)
 
-        hours_of_operation = ";".join(_tmp) or "<MISSING>"
+        hours_of_operation = ";".join(_tmp)
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
+        if j.get("coming_soon") == "1":
+            hours_of_operation = "Coming Soon"
 
-        rows.append(row)
+        row = SgRecord(
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            phone=phone,
+            latitude=latitude,
+            longitude=longitude,
+            store_number=store_number,
+            location_type=location_type,
+            locator_domain=locator_domain,
+            hours_of_operation=hours_of_operation,
+        )
 
-    return rows
-
-
-def fetch_data():
-    out = []
-    s = set()
-    coords = static_coordinate_list(radius=30, country_code=SearchableCountries.USA)
-
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {executor.submit(get_data, coord): coord for coord in coords}
-        for future in futures.as_completed(future_to_url):
-            rows = future.result()
-            for row in rows:
-                _id = row[8]
-                if _id not in s:
-                    s.add(_id)
-                    out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://roosterswings.com/"
+    session = SgRequests()
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:91.0) Gecko/20100101 Firefox/91.0",
+        "Accept": "*/*",
+        "Accept-Language": "ru,en-US;q=0.7,en;q=0.3",
+        "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+        "X-Requested-With": "XMLHttpRequest",
+        "Origin": "https://roosterswings.com",
+        "Connection": "keep-alive",
+        "Referer": "https://roosterswings.com/locations/view-all-locations/",
+        "Sec-Fetch-Dest": "empty",
+        "Sec-Fetch-Mode": "cors",
+        "Sec-Fetch-Site": "same-origin",
+    }
+    with SgWriter(
+        SgRecordDeduper(
+            RecommendedRecordIds.PageUrlId, duplicate_streak_failure_factor=-1
+        )
+    ) as writer:
+        countries = [SearchableCountries.USA]
+        search = DynamicGeoSearch(
+            country_codes=countries, expected_search_radius_miles=50
+        )
+        for coord in search:
+            fetch_data(coord, writer)

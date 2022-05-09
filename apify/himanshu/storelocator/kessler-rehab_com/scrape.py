@@ -1,110 +1,80 @@
 import re
-import csv
-import json
-from lxml import etree
-from urllib.parse import urljoin
-
+from sglogging import sglog
+from bs4 import BeautifulSoup
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
+session = SgRequests()
+website = "kessler-rehab_com"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
+session = SgRequests()
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+}
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+DOMAIN = "https://www.kessler-rehab.com"
+MISSING = SgRecord.MISSING
 
 
 def fetch_data():
-    # Your scraper here
-    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
-
-    items = []
-
     start_url = "https://www.kessler-rehab.com//sxa/search/results/?s={75078478-6727-4E71-8FC2-BED8FAD1B00B}&itemid={AF08CF64-F629-40A6-81AA-0B56D5A0185A}&sig=locations-cards&o=Title%2CAscending&p=20&v=%7BDD817789-9335-4441-B604-DC2901221E22%7D"
-    domain = re.findall("://(.+?)/", start_url)[0].replace("www.", "")
-    hdr = {
-        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
-    }
-    response = session.get(start_url, headers=hdr)
-    data = json.loads(response.text)
-
-    for poi in data["Results"]:
-        poi_html = etree.HTML(poi["Html"])
-        store_url = poi_html.xpath('//a[contains(text(), "View location")]/@href')[0]
-        store_url = urljoin(start_url, store_url)
-        location_name = poi_html.xpath('//h3[@class="loc-result-card-name"]/text()')
-        location_name = location_name[0] if location_name else "<MISSING>"
-        raw_address = poi_html.xpath(
-            '//div[@class="loc-result-card-address-container"]/div/text()'
+    stores = session.get(start_url, headers=headers).json()["Results"]
+    for store in stores:
+        soup = BeautifulSoup(store["Html"], "html.parser")
+        page_url = DOMAIN + soup.find("a", string=re.compile("details"))["href"]
+        log.info(page_url)
+        location_name = soup.find("h3", {"class": "loc-result-card-name"}).text
+        address = soup.findAll("a")[1].get_text(separator="|", strip=True).split("|")
+        street_address = address[0]
+        address = address[1].split(",")
+        city = address[0]
+        address = address[1].split()
+        state = address[0]
+        zip_postal = address[1]
+        phone = soup.select_one("a[href*=tel]").text
+        latitude, longitude = soup.find("img", {"class": "lazy"})["data-latlong"].split(
+            "|"
         )
-        street_address = raw_address[0].strip()
-        city = raw_address[-1].split(", ")[0]
-        state = raw_address[-1].split(", ")[-1].split()[0]
-        zip_code = raw_address[-1].split(", ")[-1].split()[-1]
-        country_code = "<MISSING>"
-        store_number = "<MISSING>"
-        phone = poi_html.xpath(
-            '//div[@class="loc-result-card-phone-container"]//a/text()'
+        hours_of_operation = (
+            soup.find("div", {"class": "hours-table"})
+            .get_text(separator="|", strip=True)
+            .replace("|", " ")
         )
-        phone = phone[0] if phone else "<MISSING>"
-        location_type = "<MISSING>"
-        geo = poi_html.xpath("//@data-latlong")[0].split("|")
-        latitude = geo[0]
-        longitude = geo[1]
-        hoo = poi_html.xpath(
-            '//div[@class="mobile-container field-businesshours"]//text()'
+        country_code = "US"
+        yield SgRecord(
+            locator_domain=DOMAIN,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address.strip(),
+            city=city.strip(),
+            state=state.strip(),
+            zip_postal=zip_postal.strip(),
+            country_code=country_code,
+            store_number=MISSING,
+            phone=phone.strip(),
+            location_type=MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation.strip(),
         )
-        hoo = [e.strip() for e in hoo if e.strip()]
-        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
-
-        item = [
-            domain,
-            store_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip_code,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-
-        items.append(item)
-
-    return items
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    log.info("Started")
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.GeoSpatialId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
 
 
 if __name__ == "__main__":

@@ -15,4 +15,4 @@ Please make sure that:
 - Page loading has problem while crawling. It fixed. 
 - Total Locations: 31 as of 21st July, 2021 
 - `store_number` is missing 
-
+- HOO is missing for 2 locations: `https://www.pizzadepot.ca/2114-albert-st-regina/` and `https://www.pizzadepot.ca/3373-28a-ave-nw-edmonton/` as of 28th July 2021

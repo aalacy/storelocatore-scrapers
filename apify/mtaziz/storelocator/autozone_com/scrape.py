@@ -36,14 +36,14 @@ def get_result(url, headers):
 
 
 def get_all_raw_store_urls():
-    with SgRequests() as session1:
-        url_sitemap_main = "https://www.autozone.com/locations/sitemap.xml"
-        r = session1.get(url_sitemap_main, headers=headers, timeout=500)
-        logger.info("Please wait until Sitemap page fully loaded!")
-        time.sleep(180)
-        datar = html.fromstring(bytes(r.text, encoding="utf8"))
-        raw_store_urls = datar.xpath("//url/loc/text()")
-        return raw_store_urls
+    session_sitemap = SgRequests().requests_retry_session(retries=5, backoff_factor=0.3)
+    url_sitemap_main = "https://www.autozone.com/locations/sitemap.xml"
+    r = session_sitemap.get(url_sitemap_main, headers=headers, timeout=500)
+    time.sleep(30)
+    logger.info("Please wait until Sitemap page fully loaded!")
+    datar = html.fromstring(bytes(r.text, encoding="utf8"))
+    raw_store_urls = datar.xpath("//url/loc/text()")
+    return raw_store_urls
 
 
 all_raw_store_urls = get_all_raw_store_urls()

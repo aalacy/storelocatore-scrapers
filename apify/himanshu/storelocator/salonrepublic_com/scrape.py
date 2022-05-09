@@ -41,9 +41,19 @@ def fetch_data():
         except:
             continue
         temp = json.loads(temp)
+        location_name = temp["name"]
+        address = temp["address"]
+        street_address = address["streetAddress"].replace(")", "")
+        city = address["addressLocality"]
+        state = address["addressRegion"]
+        zip_postal = address["postalCode"]
+        country_code = "US"
         try:
             hours_of_operation = (
-                str(temp["openingHours"]).replace("['", "").replace("]'", "")
+                str(temp["openingHours"])
+                .replace("['", "")
+                .replace("]'", "")
+                .replace("']", "")
             )
 
         except:

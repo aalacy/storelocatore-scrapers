@@ -1,40 +1,23 @@
-import csv
 import json
 import re
 
 from bs4 import BeautifulSoup
 
+from sglogging import SgLogSetup
+
 from sgrequests import SgRequests
 
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
+from sgpostal.sgpostal import parse_address_intl
+
+logger = SgLogSetup().get_logger("brandymelville.com")
 
 
-def fetch_data():
+def fetch_data(sgw: SgWriter):
 
     user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36"
     headers = {"User-Agent": user_agent}
@@ -45,17 +28,14 @@ def fetch_data():
     req = session.get(base_link, headers=headers)
     base = BeautifulSoup(req.text, "lxml")
 
-    data = []
-
     locator_domain = "brandymelville.com"
 
     all_scripts = base.find_all("script")
     for script in all_scripts:
         if "locations = {" in str(script):
+            logger.info("Got locations!")
             script = str(script)
             break
-
-    locator_domain = "menards.com"
 
     js = script.split('data":')[1].split("};\n\n")[0].strip()
     items = json.loads(js)
@@ -65,62 +45,88 @@ def fetch_data():
         states = items[i]
 
         for state in states:
+            logger.info(state)
             stores = states[state]
 
             for store in stores:
-                street_address = store[1]
+                street_address = (
+                    store[1]
+                    .split(", Nashville")[0]
+                    .split(", Naples")[0]
+                    .split(", Charleston")[0]
+                    .replace(", Beijing", "")
+                    .replace(", Hong Kong", "")
+                    .strip()
+                )
+                raw_address = street_address
                 city = store[0]
                 state = state.replace("Washington", "WA")
                 location_name = "Brandy Melville - " + city
-                zip_code = "<MISSING>"
                 phone = store[2]
                 hours_of_operation = store[4]
-                latitude = "<MISSING>"
-                longitude = "<MISSING>"
+
+                map_link = store[3]
+                if "@" in map_link:
+                    latitude = map_link.split("@")[1].split(",")[0]
+                    longitude = map_link.split("@")[1].split(",")[1].split(",")[0]
+                else:
+                    latitude = "<MISSING>"
+                    longitude = "<MISSING>"
+
                 store_number = "<MISSING>"
                 location_type = "<MISSING>"
                 if city == "London":
                     state = "<MISSING>"
+                zip_code = "<MISSING>"
                 if not phone:
                     phone = "<MISSING>"
+                if "coming" in phone:
+                    phone = "<MISSING>"
+
+                if country_code == "United States":
+                    try:
+                        zip_code = re.findall(r"[(\d)]{5}", store[1][-10:])[0]
+                    except:
+                        pass
 
                 if country_code in ["United States", "Canada"]:
-                    digit = re.search(r"\d", street_address).start(0)
-                    if digit != 0:
-                        street_address = street_address[digit:]
+                    if re.search(r"\d", street_address):
+                        digit = str(re.search(r"\d", street_address))
+                        start = int(digit.split("(")[1].split(",")[0])
+                        street_address = street_address[start:]
 
-                if country_code in ["Europe"]:
+                if country_code == "Europe":
                     country = state
-                    fin_state = "<MISSING>"
+                    fin_state = ""
                 else:
-                    fin_state = state
                     country = country_code
+                    fin_state = state
+                if country_code == "Asia":
+                    country = "China"
+                if country in ["China", "Australia"]:
+                    addr = parse_address_intl(raw_address)
+                    street_address = addr.street_address_1.split("Shop")[0].strip()
 
-                # Store data
-                data.append(
-                    [
-                        locator_domain,
-                        base_link,
-                        location_name,
-                        street_address,
-                        city,
-                        fin_state,
-                        zip_code,
-                        country,
-                        store_number,
-                        phone,
-                        location_type,
-                        latitude,
-                        longitude,
-                        hours_of_operation,
-                    ]
+                sgw.write_row(
+                    SgRecord(
+                        locator_domain=locator_domain,
+                        page_url=base_link,
+                        location_name=location_name,
+                        street_address=street_address,
+                        city=city,
+                        state=fin_state,
+                        zip_postal=zip_code,
+                        country_code=country,
+                        store_number=store_number,
+                        phone=phone,
+                        location_type=location_type,
+                        latitude=latitude,
+                        longitude=longitude,
+                        hours_of_operation=hours_of_operation,
+                        raw_address=raw_address,
+                    )
                 )
-    return data
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))) as writer:
+    fetch_data(writer)
