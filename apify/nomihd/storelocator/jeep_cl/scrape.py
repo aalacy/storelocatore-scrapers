@@ -92,7 +92,7 @@ def fetch_data():
             phone = store_info[-2]
             if ":" in phone:
                 phone = phone.split(":")[1].strip()
-            
+
             phone = (
                 phone.split("/")[0]
                 .strip()
