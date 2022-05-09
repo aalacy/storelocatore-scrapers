@@ -30,6 +30,11 @@ def fetch_data(sgw: SgWriter):
             hours = j.get("schedule") or []
             hours_of_operation = ";".join(hours).replace(" - ", ";")
 
+            black = [";Domingos", ";Fines", ";Los"]
+            for b in black:
+                if b in hours_of_operation:
+                    hours_of_operation = hours_of_operation.split(b)[0].strip()
+
             row = SgRecord(
                 page_url=page_url,
                 location_name=location_name,
@@ -47,8 +52,8 @@ def fetch_data(sgw: SgWriter):
 
 
 if __name__ == "__main__":
-    locator_domain = "https://www.tiendasjumbo.co/"
-    page_url = "https://www.tiendasjumbo.co/institucional/nuestras-tiendas"
+    locator_domain = "https://www.tiendasmetro.co/"
+    page_url = "https://www.tiendasmetro.co/institucional/nuestras-tiendas"
     headers = {
         "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:97.0) Gecko/20100101 Firefox/97.0",
     }
