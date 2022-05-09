@@ -48,7 +48,6 @@ def fetch_data():
                 pass
 
             for poi in all_locations:
-                print(poi)
                 poi = poi.replace("null", '""')
                 if poi.startswith("["):
                     continue
