@@ -1,69 +1,72 @@
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
-from bs4 import BeautifulSoup as bs
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sglogging import SgLogSetup
-import dirtyjson as json
-
-logger = SgLogSetup().get_logger("kiplingmexico")
 
 _headers = {
+    "accept": "*/*",
+    "accept-encoding": "gzip, deflate, br",
+    "accept-language": "en-US,en;q=0.9",
+    "content-type": "application/json",
+    "origin": "https://www.kiplingmexico.com",
+    "referer": "https://www.kiplingmexico.com/stores",
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
 }
 
 locator_domain = "https://kiplingmexico.com"
-base_url = "https://kiplingmexico.com/apps/store-locator/"
+base_url = "https://www.kiplingmexico.com/_v/private/graphql/v1?workspace=master&maxAge=long&appsEtag=remove&domain=store&locale=es-MX"
+days = [
+    "Sunday",
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+]
 
 
 def fetch_data():
     with SgRequests() as session:
-        locations = (
-            session.get(base_url, headers=_headers)
-            .text.replace("&lt;", "<")
-            .replace("&gt;", ">")
-            .replace("&#039;", '"')
-            .split("markersCoords.push(")[1:-2]
-        )
-        for loc in locations:
-            _ = json.loads(loc.split(");")[0].strip())
-            if not _["address"]:
-                continue
-            info = bs(_["address"], "lxml")
-            street_address = info.select_one(".address").text.strip()
-            addr2 = info.select_one(".address2")
-            if addr2 and addr2.text.strip():
-                street_address += " " + addr2.text.strip()
-            zip_postal = state = ""
-            if info.select_one(".postal_zip"):
-                zip_postal = info.select_one(".postal_zip").text.strip()
-
-            if info.select_one(".prov_state"):
-                state = info.select_one(".prov_state").text.strip()
-            url = f"https://stores.boldapps.net/front-end/get_store_info.php?shop=kipling-mx.myshopify.com&data=detailed&store_id={_['id']}&tm="
-            logger.info(url)
-            ss = bs(session.get(url, headers=_headers).json()["data"], "lxml")
-            phone = hours = ""
-            if ss.select_one(".phone"):
-                phone = ss.select_one(".phone").text.strip()
-
-            if ss.select_one(".hours"):
-                hours = ss.select_one(".hours").text.strip()
+        payload = {
+            "operationName": "getStores",
+            "variables": {},
+            "extensions": {
+                "persistedQuery": {
+                    "version": "1",
+                    "sha256Hash": "471f622bb6d6b106a74e009f2bdd42176342c97f8026842c1d7730bfed53af6d",
+                    "sender": "vtex.store-locator@0.x",
+                    "provider": "vtex.store-locator@0.x",
+                },
+                "variables": "eyJmaWx0ZXJCeVRhZyI6Ik1hcmtldHBsYWNlIn0=",
+            },
+        }
+        locations = session.post(base_url, headers=_headers, json=payload).json()[
+            "data"
+        ]["getStores"]["items"]
+        for _ in locations:
+            addr = _["address"]
+            page_url = f"https://www.kiplingmexico.com/store/{_['name'].lower().replace(' ', '-')}-{addr['state'].lower().replace(' ','-')}-{addr['postalCode']}/{_['id']}"
+            hours = []
+            for hh in _["businessHours"]:
+                hours.append(
+                    f"{days[hh['dayOfWeek']]}: {hh['openingTime']} - {hh['closingTime']}"
+                )
             yield SgRecord(
-                page_url=base_url,
+                page_url=page_url,
                 store_number=_["id"],
-                location_name="Kipling",
-                street_address=street_address,
-                city=info.select_one(".city").text.strip(),
-                state=state,
-                zip_postal=zip_postal,
+                location_name=_["name"],
+                street_address=addr["street"],
+                city=addr["city"],
+                state=addr["state"],
+                zip_postal=addr["postalCode"],
                 country_code="Mexico",
-                phone=phone,
-                latitude=_["lat"],
-                longitude=_["lng"],
+                phone=_["instructions"],
+                latitude=addr["location"]["latitude"],
+                longitude=addr["location"]["longitude"],
                 locator_domain=locator_domain,
-                hours_of_operation=hours,
+                hours_of_operation="; ".join(hours),
             )
 
 

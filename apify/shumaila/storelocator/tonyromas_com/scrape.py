@@ -4,6 +4,7 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgpostal.sgpostal import parse_address_intl
 
 session = SgRequests()
 headers = {
@@ -11,75 +12,84 @@ headers = {
 }
 
 
+MISSING = SgRecord.MISSING
+
+
 def fetch_data():
 
-    url = "https://locations.tonyromas.com/sitemap"
+    url = "https://tonyromas.com/locations/"
     r = session.get(url, headers=headers)
     soup = BeautifulSoup(r.text, "html.parser")
-    linklist = soup.select('a:contains("Details")')
+    divlist = soup.select("a[href*=address]")
+    for div in divlist:
 
-    for link in linklist:
-        link = link["href"]
-
-        link = "https://locations.tonyromas.com/" + link
-
-        r = session.get(link, headers=headers)
-        soup = BeautifulSoup(r.text, "html.parser")
-        coord = soup.find("span", {"class": "coordinates"}).findAll("meta")
-        lat = coord[0]["content"]
-        longt = coord[1]["content"]
-        title = soup.find("span", {"class": "LocationName"}).text
-        address = soup.find("address", {"class": "c-address"}).findAll("meta")
-        city = address[0]["content"]
-        street = address[1]["content"]
-        address = soup.find("address", {"class": "c-address"}).findAll("abbr")
-        if len(address) == 1:
-            ccode = address[0].text
-            state = "<MISSING>"
-        else:
-            state = address[0].text
-            ccode = address[1].text
+        divlink = div["href"]
+        ccode = divlink.split("country=", 1)[1]
+        divlink = divlink.replace("&per_page=5", "&per_page=25")
+        r = session.get(divlink, headers=headers)
         try:
-            pcode = (
-                soup.find("address", {"class": "c-address"})
-                .find("span", {"class": "c-address-postal-code"})
-                .text
-            )
+            soup = BeautifulSoup(r.text, "html.parser")
         except:
-            pcode = "<MISSING>"
-        try:
-            phone = soup.find("span", {"id": "telephone"}).text
-        except:
-            phone = "<MISSING>"
-        try:
-            hours = soup.find("table", {"class": "c-location-hours-details"}).text
-            hours = (
-                hours.split("Hours", 1)[1]
-                .replace("Closed", "Closed ")
-                .replace("day", "day ")
-                .replace("PM", "PM ")
-                .strip()
-            )
-        except:
-            hours = "<MISSING>"
-        store = r.text.split('"id"', 1)[1].split(":", 1)[1].split(",", 1)[0]
+            continue
+        loclist = soup.find("ul", {"class": "posts-list-wrapper"}).findAll("li")
 
-        yield SgRecord(
-            locator_domain="https://tonyromas.com/",
-            page_url=link,
-            location_name=title,
-            street_address=street.strip(),
-            city=city.strip(),
-            state=state.strip(),
-            zip_postal=pcode.strip(),
-            country_code=ccode,
-            store_number=str(store),
-            phone=phone.strip(),
-            location_type=SgRecord.MISSING,
-            latitude=str(lat),
-            longitude=str(longt),
-            hours_of_operation=hours,
-        )
+        for loc in loclist:
+            try:
+                if "single-post" in loc["id"]:
+                    address = loc.find("span", {"class": "address"}).text
+                    title = loc.find("h2").text.strip()
+                    link = loc.find("h2").find("a")["href"]
+                    try:
+                        phone = loc.select_one("a[href*=tel]").text
+                    except:
+                        phone = "<MISSING>"
+                    try:
+                        hours = loc.find("ul", {"class": "gmw-hours-of-operation"}).text
+                    except:
+                        hours = "<MISSING>"
+                    lat = link.split("lat=", 1)[1].split("&", 1)[0]
+                    longt = link.split("lng", 1)[1]
+                    ltype = "<MISSING>"
+                    if "Temporarily Closed" in title:
+                        ltype = "Temporarily Closed"
+                    elif "COMING SOON" in title:
+                        ltype = "COMING SOON"
+                    raw_address = address
+                    raw_address = raw_address.replace("\n", " ").strip()
+
+                    pa = parse_address_intl(raw_address)
+
+                    street_address = pa.street_address_1
+                    street = street_address if street_address else MISSING
+
+                    city = pa.city
+                    city = city.strip() if city else MISSING
+
+                    state = pa.state
+                    state = state.strip() if state else MISSING
+
+                    zip_postal = pa.postcode
+                    pcode = zip_postal.strip() if zip_postal else MISSING
+
+                    yield SgRecord(
+                        locator_domain="https://tonyromas.com/",
+                        page_url=link,
+                        location_name=title,
+                        street_address=street.strip(),
+                        city=city.strip(),
+                        state=state.strip(),
+                        zip_postal=pcode.strip(),
+                        country_code=ccode,
+                        store_number=SgRecord.MISSING,
+                        phone=phone.strip(),
+                        location_type=ltype,
+                        latitude=str(lat),
+                        longitude=str(longt),
+                        hours_of_operation=hours,
+                        raw_address=raw_address.replace("\n", " ").strip(),
+                    )
+            except:
+                continue
 
 
 def scrape():

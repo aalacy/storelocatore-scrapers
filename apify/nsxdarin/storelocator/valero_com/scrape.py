@@ -4,10 +4,13 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
+import ssl
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 logger = SgLogSetup().get_logger("valero_com")
 
-session = SgRequests()
+session = SgRequests(verify_ssl=False)
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36",
     "x-requested-with": "XMLHttpRequest",
@@ -17,29 +20,28 @@ headers = {
 
 def fetch_data():
     url = "https://locations.valero.com/en-us/Home/SearchForLocations"
-    for coord in range(-60, -170, -2):
-        for latcoord in range(70, 10, -2):
+    for coord in range(-170, -60, 1):
+        for latcoord in range(10, 70, 1):
             logger.info(
                 str(coord)
                 + "-"
-                + str(coord - 2)
+                + str(coord - 1)
                 + "; "
                 + str(latcoord)
                 + ","
-                + str(latcoord - 2)
+                + str(latcoord - 1)
             )
             payload = {
                 "NEBound_Lat": str(latcoord),
                 "NEBound_Long": str(coord),
-                "SWBound_Lat": str(latcoord - 2),
-                "SWBound_Long": str(coord - 2),
+                "SWBound_Lat": str(latcoord - 1),
+                "SWBound_Long": str(coord - 1),
                 "center_Lat": "",
                 "center_Long": "",
             }
 
             r = session.post(url, headers=headers, data=payload)
             for line in r.iter_lines():
-                line = str(line.decode("utf-8"))
                 if '"Name":"' in line:
                     items = line.split('"Name":"')
                     for item in items:

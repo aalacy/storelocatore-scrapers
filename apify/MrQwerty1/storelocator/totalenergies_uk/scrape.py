@@ -5,8 +5,19 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 
 
+def isalways(code):
+    api = f"https://datastore-webapp-p.azurewebsites.net/REVERSE/api/Info/Poi?Lang=fr_FR&AdditionalData=Items&AdditionalDataFields=Items_Code,Items_Price,Items_Availability,Items_UpdateDate&Code={code}"
+    r = session.get(api, headers=headers)
+    j = r.json()["Pois"][0]
+    message = j.get("RequMessage") or ""
+    if "24" in message:
+        return True
+    return False
+
+
 def fetch_data(sgw: SgWriter):
     for cnt in range(1, 5000):
+        is24 = False
         store_number = "TEUK" + str(cnt).zfill(3)
         api = f"https://api.woosmap.com/stores/{store_number}"
         r = session.get(api, headers=headers, params=params)
@@ -56,6 +67,18 @@ def fetch_data(sgw: SgWriter):
                 continue
             _tmp.append(f"{day}: {start}-{end}")
         hours_of_operation = ";".join(_tmp)
+
+        tags = j.get("tags") or []
+        for t in tags:
+            if "24" in t:
+                is24 = True
+                break
+
+        if not is24 and not hours_of_operation:
+            is24 = isalways(store_number)
+
+        if is24:
+            hours_of_operation = "Open 24hrs Monday - Sunday"
 
         row = SgRecord(
             page_url=page_url,

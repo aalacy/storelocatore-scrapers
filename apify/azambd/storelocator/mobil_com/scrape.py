@@ -16,7 +16,7 @@ website = "exxon.com"
 json_url = "https://www.exxon.com/en/api/locator/Locations?Latitude1={}&Latitude2={}&Longitude1={}&Longitude2={}&DataSource=RetailGasStations&Country=US&Customsort=False"
 MISSING = SgRecord.MISSING
 store_numbers = []
-max_workers = 4
+max_workers = 10
 
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
@@ -28,7 +28,7 @@ log = sglog.SgLogSetup().get_logger(logger_name=website)
 
 def request_with_retries(payload):
     lat, lng = payload
-    url = json_url.format(lat, lat + 20.0, lng, lng - 22.0)
+    url = json_url.format(lat, lat + 1.5, lng, lng + 1.5)
     log.info(f"URL: {url}")
     response = session.get(url, headers=headers)
     log.info(f"Response: {response}")
@@ -47,7 +47,12 @@ def request_with_retries(payload):
         if store["AddressLine2"]:
             street_address += ", " + store["AddressLine2"]
 
-        location_type = store["EntityType"]
+        if "exxon" in store["BrandingImage"]:
+            location_type = "exxon"
+        elif "mobil" in store["BrandingImage"]:
+            location_type = "mobil"
+        else:
+            location_type = store["EntityType"]
 
         city = store["City"]
         state = store["StateProvince"]
@@ -57,6 +62,7 @@ def request_with_retries(payload):
         latitude = store["Latitude"]
         longitude = store["Longitude"]
         page_url = f'https://www.exxon.com/en/find-station/exxon-{city.replace(" ", "").lower()}-{state.lower()}-{location_name.lower().replace(" ", "")}-{store_number}'
+        page_url = page_url.replace("#", "")
 
         hoo = ""
         if store["WeeklyOperatingHours"]:
@@ -95,7 +101,7 @@ def request_with_retries(payload):
 def fetch_data():
     all_coords = DynamicGeoSearch(
         country_codes=[SearchableCountries.USA],
-        expected_search_radius_miles=10,
+        expected_search_radius_miles=1,
     )
     count = 0
 

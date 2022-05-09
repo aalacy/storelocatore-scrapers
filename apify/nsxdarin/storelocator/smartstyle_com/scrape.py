@@ -153,6 +153,10 @@ def fetch_data():
             hours_of_operation = get_hoo(
                 page_url, get_JSON_object(store, "store_hours")
             )
+            if "0" not in hours_of_operation:
+                hours_of_operation = "Temporarily Closed"
+            if "Sun" not in hours_of_operation:
+                hours_of_operation = hours_of_operation + "; Sun:Closed"
             raw_address = f"{street_address}, {city}, {state} {zip_postal}".replace(
                 MISSING, ""
             )

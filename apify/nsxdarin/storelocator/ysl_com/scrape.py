@@ -43,20 +43,17 @@ def fetch_data():
             city = item["city"]
             zc = item["postalCode"]
             state = item["stateCode"]
-            try:
-                phone = item["phone"]
-            except:
-                phone = "<MISSING>"
+            phone = item["phone"]
             lat = item["latitude"]
             lng = item["longitude"]
             loc = item["detailsUrl"]
-            hours = "Sun: " + item["sunHours"]
-            hours = hours + "; Mon: " + item["monHours"]
-            hours = hours + "; Tue: " + item["tueHours"]
-            hours = hours + "; Wed: " + item["wedHours"]
-            hours = hours + "; Thu: " + item["thuHours"]
-            hours = hours + "; Fri: " + item["friHours"]
-            hours = hours + "; Sat: " + item["satHours"]
+            hours = "Sun: " + item["openingHours"]["sun"]["openFromTo"]
+            hours = hours + "; Mon: " + item["openingHours"]["mon"]["openFromTo"]
+            hours = hours + "; Tue: " + item["openingHours"]["tue"]["openFromTo"]
+            hours = hours + "; Wed: " + item["openingHours"]["wed"]["openFromTo"]
+            hours = hours + "; Thu: " + item["openingHours"]["thu"]["openFromTo"]
+            hours = hours + "; Fri: " + item["openingHours"]["fri"]["openFromTo"]
+            hours = hours + "; Sat: " + item["openingHours"]["sat"]["openFromTo"]
             yield SgRecord(
                 locator_domain=website,
                 page_url=loc,

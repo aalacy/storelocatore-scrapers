@@ -13,7 +13,7 @@ def get_urls():
     tree = html.fromstring(r.content)
     links = tree.xpath("//loc/text()")
     for link in links:
-        if link.count("/") == 5:
+        if link.count("/") == 6:
             urls.append(link)
 
     return urls
@@ -24,7 +24,10 @@ def get_data(page_url, sgw: SgWriter):
     j = r.json()["profile"]
     a = j.get("address") or {}
 
-    location_name = j["c_heroSection"]["storeName"]
+    try:
+        location_name = j["c_heroSection"]["storeName"]
+    except:
+        location_name = j.get("name")
     street_address = f'{a.get("line1")} {a.get("line2") or ""}'.strip()
     city = a.get("city")
     state = a.get("region")
