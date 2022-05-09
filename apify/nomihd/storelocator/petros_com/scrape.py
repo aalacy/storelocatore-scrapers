@@ -4,6 +4,8 @@ from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from bs4 import BeautifulSoup
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "petros.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -32,17 +34,21 @@ def fetch_data():
                 page_url = search_url
                 location_type = "<MISSING>"
                 location_name = raw_info[0].strip()
+                if "Coming Soon" in location_name:
+                    continue
                 locator_domain = website
                 street_address = ""
                 city_state_zip = ""
                 hours_of_operation = ""
+                address_found = False
                 for index in range(1, len(raw_info)):
-                    if ", " in raw_info[index]:
+                    if ", " in raw_info[index] and address_found is False:
                         street_address = ", ".join(raw_info[1:index]).strip()
                         if "," in street_address:
                             street_address = street_address.split(",")[1].strip()
 
                         city_state_zip = raw_info[index]
+                        address_found = True
                     if "Mondays" in raw_info[index] or "Open" in raw_info[index]:
                         hours_of_operation = (
                             "; ".join(raw_info[index:-1])
@@ -61,7 +67,19 @@ def fetch_data():
                 if len(location_name) <= 0:
                     location_name = city
 
-                phone = raw_info[-1].strip()
+                if location_name == "Petro's Nashville":
+                    phone = raw_info[5].strip()
+                else:
+                    phone = raw_info[-1].strip().split("\n")[-1].strip()
+                if (
+                    not phone.replace("(", "")
+                    .replace(")", "")
+                    .replace("-", "")
+                    .replace(" ", "")
+                    .strip()
+                    .isdigit()
+                ):
+                    phone = "<MISSING>"
 
                 store_number = "<MISSING>"
 
@@ -82,8 +100,35 @@ def fetch_data():
                     location_type=location_type,
                     latitude=latitude,
                     longitude=longitude,
-                    hours_of_operation=hours_of_operation,
+                    hours_of_operation=hours_of_operation.split("; (")[0].strip(),
                 )
+                if location_name == "Petro's Nashville":
+                    yield SgRecord(
+                        locator_domain=locator_domain,
+                        page_url=page_url,
+                        location_name=raw_info[-5],
+                        street_address=raw_info[-3],
+                        city=raw_info[-2].strip().split(",")[0].strip(),
+                        state=raw_info[-2]
+                        .strip()
+                        .split(",")[-1]
+                        .strip()
+                        .split(" ")[0]
+                        .strip(),
+                        zip_postal=raw_info[-2]
+                        .strip()
+                        .split(",")[-1]
+                        .strip()
+                        .split(" ")[-1]
+                        .strip(),
+                        country_code=country_code,
+                        store_number=store_number,
+                        phone=raw_info[-1],
+                        location_type=location_type,
+                        latitude=latitude,
+                        longitude=longitude,
+                        hours_of_operation=hours_of_operation.split("; (")[0].strip(),
+                    )
 
     loc_list = []
     title_list = []
@@ -108,13 +153,15 @@ def fetch_data():
         street_address = ""
         city_state_zip = ""
         hours_of_operation = ""
+        address_found = False
         for index in range(0, len(raw_info)):
-            if ", " in raw_info[index]:
+            if ", " in raw_info[index] and address_found is False:
                 street_address = ", ".join(raw_info[:index]).strip()
                 if "," in street_address:
                     street_address = street_address.split(",")[1].strip()
 
                 city_state_zip = raw_info[index]
+                address_found = True
             if "Mondays" in raw_info[index] or "Open" in raw_info[index]:
                 hours_of_operation = (
                     "; ".join(raw_info[index:-1])
@@ -133,7 +180,16 @@ def fetch_data():
         if len(location_name) <= 0:
             location_name = city
 
-        phone = raw_info[-1].strip()
+        phone = raw_info[-1].strip().split("\n")[-1].strip()
+        if (
+            not phone.replace("(", "")
+            .replace(")", "")
+            .replace("-", "")
+            .replace(" ", "")
+            .strip()
+            .isdigit()
+        ):
+            phone = "<MISSING>"
 
         store_number = "<MISSING>"
 
@@ -154,14 +210,24 @@ def fetch_data():
             location_type=location_type,
             latitude=latitude,
             longitude=longitude,
-            hours_of_operation=hours_of_operation,
+            hours_of_operation=hours_of_operation.split("; (")[0].strip(),
         )
 
 
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.CITY,
+                    SgRecord.Headers.ZIP,
+                }
+            )
+        )
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
