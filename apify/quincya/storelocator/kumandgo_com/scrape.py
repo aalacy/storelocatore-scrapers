@@ -20,18 +20,17 @@ def fetch_data(sgw: SgWriter):
     headers = {"User-Agent": user_agent}
 
     session = SgRequests()
-    session1 = SgRequests()
+    session1 = SgRequests(verify_ssl=False)
 
     locator_domain = "kumandgo.com"
 
     found = []
     max_distance = 500
-    max_results = 100
 
     search = DynamicGeoSearch(
         country_codes=[SearchableCountries.USA],
         max_search_distance_miles=max_distance,
-        max_search_results=max_results,
+        expected_search_radius_miles=max_distance,
     )
 
     for lat, lng in search:
@@ -67,7 +66,13 @@ def fetch_data(sgw: SgWriter):
             found.append(store_number)
             link = store["permalink"]
             req = session1.get(link, headers=headers)
-            base = BeautifulSoup(req.text, "lxml")
+
+            try:
+                base = BeautifulSoup(req.text, "lxml")
+            except:
+                session1 = SgRequests(verify_ssl=False)
+                req = session1.get(link, headers=headers)
+                base = BeautifulSoup(req.text, "lxml")
 
             location_type = ", ".join(
                 list(base.find(class_="no-decoration feature-icons").stripped_strings)

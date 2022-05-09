@@ -54,8 +54,17 @@ def fetch_data():
             country_code = "US"
             phone = temp[1].find("a").text
             hours_of_operation = (
-                loc.find("table").get_text(separator="|", strip=True).replace("|", " ")
+                loc.find("table")
+                .get_text(separator="|", strip=True)
+                .replace("|", " ")
+                .replace("Hours Lobby Hours", "")
             )
+            hours_of_operation = hours_of_operation.split("Drive Thru")[0]
+            if "ITM Hours*" in hours_of_operation:
+                hours_of_operation = hours_of_operation.split("ITM Hours*")[0]
+            if "S Boone" in city:
+                city = city.replace("S", "")
+                street_address = street_address + " S"
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url=url,
