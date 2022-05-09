@@ -4,6 +4,7 @@ from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgpostal.sgpostal import International_Parser, parse_address
 
 
 def fetch_data(sgw: SgWriter):
@@ -23,24 +24,32 @@ def fetch_data(sgw: SgWriter):
 
         page_url = "https://www.wetzels.com/find-a-location"
         location_name = j.get("name")
-        ad = "".join(j.get("address")).replace("\n", "").replace("\r", "").strip()
-        street_address = " ".join(ad.split(",")[:-3]).strip()
-        if ad.find("República de Panamá") != -1:
-            street_address = " ".join(ad.split(",")[:-2]).strip()
-        state = ad.split(",")[-2].strip()
-        if state == "Tocumen":
-            state = ad.split(",")[-1].strip()
-        postal = ad.split(",")[-1].strip()
-        if postal == "República de Panamá" or postal == "USA":
-            postal = "<MISSING>"
+        ad = (
+            "".join(j.get("address"))
+            .replace("\n", " ")
+            .replace("\r", " ")
+            .replace("The Bronx", ",The Bronx")
+            .strip()
+        )
+        a = parse_address(International_Parser(), ad)
+        street_address = (
+            f"{a.street_address_1} {a.street_address_2}".replace("None", "").strip()
+            or "<MISSING>"
+        )
+        if (
+            str(street_address) == "<MISSING>"
+            or street_address.isdigit()
+            or street_address.replace("#", "").strip().isdigit()
+        ):
+            street_address = ad.split(",")[0].strip()
+        state = a.state or "<MISSING>"
+        postal = a.postcode or "<MISSING>"
         country_code = "US"
+        city = a.city or "<MISSING>"
         if not postal.isdigit() and postal != "<MISSING>":
             country_code = "CA"
         if ad.find("República de Panamá") != -1:
             country_code = "PA"
-        city = ad.split(",")[-3].strip()
-        if ad.find("República de Panamá") != -1:
-            city = ad.split(",")[-2].strip()
         latitude = j.get("latitude")
         longitude = j.get("longitude")
         phone = "".join(j.get("phone")) or "<MISSING>"
