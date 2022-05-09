@@ -25,6 +25,8 @@ def get_data():
     soup = bs(response, "html.parser")
     grids = soup.find_all("div", attrs={"class": "accordion__item"})
     for grid in grids:
+        if len(grid.find_all("div", attrs={"class": "accordion__item"})) != 0:
+            continue
         city = grid.find("button").text.strip()
         u_lists = grid.find_all("ul")
         for location in u_lists:
