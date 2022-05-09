@@ -22,7 +22,7 @@ def fetch_data(sgw: SgWriter):
         slug_js = slug.split("/")[-1].strip()
         page_url = f"https://docbsrestaurant.com{slug}"
         r = session.get(
-            f"https://docbsrestaurant.com/_next/data/zc-i6VAPi5HXka6E6gACu/en-US/locations/{slug_js}.json"
+            f"https://docbsrestaurant.com/_next/data/PI0o1xLcRglqwy3PXpW92/en-US/menus/{slug_js}.json"
         )
         js = r.json()["pageProps"]["location"]
 
