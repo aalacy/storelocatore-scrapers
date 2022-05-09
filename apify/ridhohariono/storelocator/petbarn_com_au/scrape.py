@@ -98,11 +98,11 @@ def fetch_data():
         except:
             raw_address = ", ".join(row["a"])
         try:
+            hours_of_operation = get_hoo(store.select("div#open-hrs table tr td"))
+        except:
             hours_of_operation = get_hoo(
                 bs(row["oh"], "lxml").select("div#open-hrs table tr td")
             )
-        except:
-            hours_of_operation = get_hoo(store.select("div#open-hrs table tr td"))
         street_address, city, state, zip_postal = getAddress(raw_address)
         if city == MISSING:
             city = row["a"][1]
@@ -110,6 +110,9 @@ def fetch_data():
             state = row["a"][3]
         if zip_postal == MISSING:
             zip_postal = row["a"][2]
+        if "830" in state:
+            state = "NT"
+            zip_postal = "830"
         country_code = "AU"
         phone = row["p"]
         if "Petbarn" in row["m"]:
