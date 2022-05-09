@@ -1,4 +1,3 @@
-from concurrent.futures import ThreadPoolExecutor, as_completed
 import re
 import json
 from sgselenium import SgChrome
@@ -11,7 +10,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sglogging import SgLogSetup
 
 headers = {
-    "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
+    "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTM    L, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
 }
 
 logger = SgLogSetup().get_logger("jdsports_co_ul")
@@ -130,12 +129,8 @@ def fetch_locations(site):
 def fetch_data():
     pois = []
 
-    with ThreadPoolExecutor() as executor:
-        futures = [executor.submit(fetch_locations, site) for site in sites]
-        for future in as_completed(futures):
-            pois.extend(future.result())
-
-        return pois
+    for site in sites:
+        pois.extend(fetch_locations(site))
 
 
 def scrape():

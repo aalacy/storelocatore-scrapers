@@ -27,7 +27,8 @@ def fetch_data():
             store_number = loc["store_id"]
             location_name = loc["store_name"]
             page_url = (
-                "https://missoulafm.com/" + location_name.split("-")[1].strip().lower()
+                "https://missoulafm.com/"
+                + location_name.split("Market")[1].strip().lower()
             )
             log.info(page_url)
             phone = loc["store_phone"]
