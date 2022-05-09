@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-# --extra-index-url https://dl.cloudsmith.io/KVaWma76J5VNwrOm/crawl/crawl/python/simple/
 from lxml import etree
 
 from sgrequests import SgRequests
@@ -39,7 +38,8 @@ def fetch_data():
         if not phone.startswith("+"):
             phone = poi_html.xpath(
                 './/following-sibling::p[1]//span[contains(text(), "Phone:")]/following-sibling::span[1]/text()'
-            )[0]
+            )
+            phone = phone[0] if phone else ""
         if phone.endswith(")"):
             phone += poi_html.xpath(".//following-sibling::p[1]//text()")[-1]
 
