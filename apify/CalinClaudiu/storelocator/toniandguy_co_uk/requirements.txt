@@ -7,3 +7,4 @@ sgpostal==0.1.0
 beautifulsoup4==4.7.1
 sgselenium==0.2.4
 sgzip==0.11.0
+selenium==4.1.3
