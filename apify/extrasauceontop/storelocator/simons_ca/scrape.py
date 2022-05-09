@@ -24,12 +24,17 @@ def get_data():
         response = driver.page_source
         soup = bs(response, "html.parser")
 
-        a_tags = soup.find_all("a", attrs={"class": "simonsLandingStoreCardLink",})
+        a_tags = soup.find_all(
+            "a",
+            attrs={
+                "class": "simonsLandingStoreCardLink",
+            },
+        )
         class_name = "stores-title"
         for a_tag in a_tags:
             locator_domain = "simons.ca"
             page_url = a_tag["href"]
-            
+
             driver.get(page_url)
             WebDriverWait(driver, 20).until(
                 EC.presence_of_element_located((By.CLASS_NAME, class_name))
@@ -37,29 +42,59 @@ def get_data():
             location_response = driver.page_source
             location_soup = bs(location_response.replace("<br>", "\n"), "html.parser")
 
-            location_name = location_soup.find("h1", attrs={"class": "stores-title",}).text.strip()
+            location_name = location_soup.find(
+                "h1",
+                attrs={
+                    "class": "stores-title",
+                },
+            ).text.strip()
 
-            lat_lon_parts = location_soup.find("a", attrs={"class": "stores-mapLink",})["href"]
+            lat_lon_parts = location_soup.find(
+                "a",
+                attrs={
+                    "class": "stores-mapLink",
+                },
+            )["href"]
             try:
                 latitude = lat_lon_parts.split("@")[1].split(",")[0]
                 longitude = lat_lon_parts.split("@")[1].split(",")[1]
             except Exception:
                 latitude = "<MISSING>"
                 longitude = "<MISSING>"
-            address_parts = location_soup.find("p", attrs={"class": "stores-address",}).text.strip().split("\n")
+            address_parts = (
+                location_soup.find(
+                    "p",
+                    attrs={
+                        "class": "stores-address",
+                    },
+                )
+                .text.strip()
+                .split("\n")
+            )
 
             city = address_parts[-1].split(", ")[0]
             store_number = "<MISSING>"
             address = address_parts[0]
             state = address_parts[-1].split(", ")[1].split(" ")[0]
-            zipp = "".join(part + " " for part in address_parts[-1].split(", ")[1].split(" ")[1:])
+            zipp = "".join(
+                part + " " for part in address_parts[-1].split(", ")[1].split(" ")[1:]
+            )
 
-            phone = location_soup.find("a", attrs={"class": "stores-tel"})["href"].replace("tel:", "")
+            phone = location_soup.find("a", attrs={"class": "stores-tel"})[
+                "href"
+            ].replace("tel:", "")
             location_type = "<MISSING>"
             country_code = "CA"
 
-            days = location_soup.find("div", attrs={"class": "stores-hoursLeft",}).find_all("p")
-            hours_parts = location_soup.find("div", attrs={"class": "stores-hoursRight"}).find_all("p")
+            days = location_soup.find(
+                "div",
+                attrs={
+                    "class": "stores-hoursLeft",
+                },
+            ).find_all("p")
+            hours_parts = location_soup.find(
+                "div", attrs={"class": "stores-hoursRight"}
+            ).find_all("p")
 
             hours = ""
             for x in range(len(days)):
@@ -67,10 +102,9 @@ def get_data():
                 part = hours_parts[x].text.strip()
 
                 hours = hours + day + " " + part + ", "
-            
+
             hours = hours[:-2]
 
-            
             yield {
                 "locator_domain": locator_domain,
                 "page_url": page_url,
