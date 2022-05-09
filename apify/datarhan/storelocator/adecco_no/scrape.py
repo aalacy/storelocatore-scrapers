@@ -35,7 +35,7 @@ def fetch_data():
             raw_address = loc_dom.xpath(
                 '//p[contains(text(), "Besøksadresse:")]/following-sibling::p[1]/text()'
             )
-        raw_address = raw_address[0]
+        raw_address = " ".join(raw_address)
         addr = parse_address_intl(raw_address)
         street_address = addr.street_address_1
         if addr.street_address_2:
@@ -63,8 +63,8 @@ def fetch_data():
             store_number="",
             phone=phone,
             location_type="",
-            latitude=geo[0],
-            longitude=geo[1],
+            latitude=geo[1],
+            longitude=geo[0],
             hours_of_operation=hoo,
             raw_address=raw_address,
         )
