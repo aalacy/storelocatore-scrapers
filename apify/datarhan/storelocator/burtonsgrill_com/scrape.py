@@ -5,6 +5,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
+from sgpostal.sgpostal import parse_address_intl
 
 
 def fetch_data():
@@ -23,20 +24,16 @@ def fetch_data():
         loc_dom = etree.HTML(loc_response.text)
 
         location_name = loc_dom.xpath('//h1[@class="title h3"]/text()')
-        location_name = location_name[0] if location_name else "<MISSING>"
+        location_name = location_name[0] if location_name else ""
         raw_address = loc_dom.xpath('//a[contains(@href, "maps")]/text()')
         if not raw_address:
+            all_locations += loc_dom.xpath('//div[@class="locations-group"]//a/@href')
             continue
         raw_address = raw_address[0].split(", ")
         street_address = raw_address[0]
-        city = raw_address[1]
-        state = raw_address[-1].split()[0]
-        zip_code = raw_address[-1].split()[-1]
-        country_code = "<MISSING>"
-        store_number = "<MISSING>"
+        addr = parse_address_intl(" ".join(raw_address))
         phone = loc_dom.xpath('//a[contains(@href, "tel")]/text()')
-        phone = phone[0] if phone else "<MISSING>"
-        location_type = "<MISSING>"
+        phone = phone[0] if phone else ""
         geo = (
             loc_dom.xpath('//a[contains(@href, "maps")]/@href')[0]
             .split("/@")[-1]
@@ -57,16 +54,17 @@ def fetch_data():
             page_url=page_url,
             location_name=location_name,
             street_address=street_address,
-            city=city,
-            state=state,
-            zip_postal=zip_code,
-            country_code=country_code,
-            store_number=store_number,
+            city=addr.city,
+            state=addr.state,
+            zip_postal=addr.postcode,
+            country_code="",
+            store_number="",
             phone=phone,
-            location_type=location_type,
+            location_type="",
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hours_of_operation,
+            raw_address=" ".join(raw_address),
         )
 
         yield item
