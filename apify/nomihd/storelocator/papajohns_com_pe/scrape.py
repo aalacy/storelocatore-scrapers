@@ -110,7 +110,14 @@ def fetch_data():
                 for hour in hours:
                     hours_list.append("".join(hour).strip())
 
-                hours_of_operation = "; ".join(hours_list).strip()
+                hours_of_operation = (
+                    "; ".join(hours_list)
+                    .strip()
+                    .split("; De Domingo")[0]
+                    .strip()
+                    .split("; De Lunes")[0]
+                    .strip()
+                )
                 latitude = store["latitude"]
                 longitude = store["longtitude"]
                 if latitude == "0.000":
