@@ -1,3 +1,5 @@
+from urllib.parse import urljoin
+
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
@@ -16,7 +18,7 @@ def fetch_data():
         "France": "https://kong-proxy-aws.toyota-europe.com/dxp/dealers/api/lexus/fr/fr/drive/0.428551/44.064432?count=500&extraCountries=AD|MC&isCurrentLocation=false",
         "Estonia": "https://kong-proxy-aws.toyota-europe.com/dxp/dealers/api/lexus/ee/et/drive/24.745369/59.437216?count=500&extraCountries=&isCurrentLocation=false",
     }
-    page_url = {
+    l_url = {
         "hr": "https://www.lexus.hr/contact/dealers",
         "bg": "https://www.lexus.bg/contact/dealers",
         "ch": "https://de.lexus.ch/#/publish/my_lexus_my_dealers",
@@ -32,7 +34,7 @@ def fetch_data():
     for country_code, start_url in start_urls.items():
         data = session.get(start_url, headers=hdr).json()
         for poi in data["dealers"]:
-            country_code = poi["country"]
+            page_url = urljoin(l_url[poi["country"]], poi["t1Url"])
             hoo = ""
             if poi.get("openingDays"):
                 hoo = []
@@ -47,13 +49,13 @@ def fetch_data():
 
             item = SgRecord(
                 locator_domain=domain,
-                page_url=page_url[country_code],
+                page_url=page_url,
                 location_name=poi["name"],
                 street_address=poi["address"]["address1"],
                 city=poi["address"]["city"],
                 state=poi["address"]["region"],
                 zip_postal=poi["address"]["zip"],
-                country_code=country_code,
+                country_code=poi["country"],
                 store_number="",
                 phone=poi["phone"],
                 location_type=location_type,
