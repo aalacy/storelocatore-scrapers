@@ -73,7 +73,7 @@ def fetch_data():
     driver = get_driver(api_url)
     time.sleep(10)
     driver.get(
-        "https://www.jenningsbet.com/shop-locator-app.118b9ee-9a56dc3-d0c54ca8.js"
+        "https://www.jenningsbet.com/shop-locator-app.118b9ee-9a56dc3-38e30873a.js"
     )
     time.sleep(20)
     storeLocations = json.loads(
