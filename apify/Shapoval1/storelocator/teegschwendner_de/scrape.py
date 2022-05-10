@@ -50,7 +50,7 @@ def fetch_data(sgw: SgWriter):
                 closes = h.get("to1")
                 line = f"{day} {opens} - {closes}"
                 tmp.append(line)
-            hours_of_operation = "; ".join(tmp)
+            hours_of_operation = "; ".join(tmp).replace("None - None", "Closed").strip()
         city_slug = str(city).replace(" ", "-").lower()
         street_address_slug = str(street_address).replace(" ", "-").lower()
         page_url = f"https://www.teegschwendner.de/Fachgeschaefte/#!/l/{city_slug}/{street_address_slug}/{store_number}"

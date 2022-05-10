@@ -103,7 +103,7 @@ def fetch_data():
             if city:
                 city = city.replace("Great Clacton", "").strip()
 
-            zip = formatted_addr.postcode
+            zip = " ".join(raw_address.split(" ")[-2:]).strip()
 
             country_code = "GB"
 
