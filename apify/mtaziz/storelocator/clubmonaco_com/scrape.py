@@ -181,6 +181,15 @@ def fetch_records(coord, search, current_country, sgw: SgWriter):
                     lng = _["geo"]["longitude"] or ""
                     lt = _["@type"] or ""
                     hoo = fix_hours(_["openingHours"])
+                    extra_text_in_hoo = "Stores are open and operating under listed hours unless otherwise noted."
+                    hoo = (
+                        hoo.replace(extra_text_in_hoo, "")
+                        .strip()
+                        .rstrip(";")
+                        .strip()
+                        .rstrip(";")
+                    )
+
                     raw_address = staraw
                     search.found_location_at(float(lat), float(lng))
                     store_number = ""

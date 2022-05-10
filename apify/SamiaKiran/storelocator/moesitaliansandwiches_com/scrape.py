@@ -122,7 +122,7 @@ def fetch_data():
             if temp[1].find("ZipCode") != -1:
                 zip_postal = zip_postal + " " + temp[0]
             i += 1
-        city = city.replace("Inside Mobil),", "")
+        city = city.replace("(Inside Mobil)", "").replace("inside Mobil", "")
         hours_of_operation = (
             soup.find("div", {"class": "hours"})
             .get_text(separator="|", strip=True)

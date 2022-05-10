@@ -71,8 +71,10 @@ def fetch_data():
                         ],
                     )
                 )
-            raw_address = " ".join(store_info[1:]).split("Tel")[0].strip()
 
+            raw_address = " ".join(store_info[1:]).split("Tel")[0].strip()
+            if len(raw_address) <= 0:
+                continue
             formatted_addr = parser.parse_address_intl(raw_address)
             street_address = formatted_addr.street_address_1
             if formatted_addr.street_address_2:
@@ -105,18 +107,21 @@ def fetch_data():
 
             hours_of_operation = "<MISSING>"
 
-            latitude, longitude = (
-                store_res.text.split('"latitude":')[1]
-                .split(",")[0]
-                .strip('" ')
-                .strip(),
-                store_res.text.split('"longitude":')[1]
-                .split("},")[0]
-                .strip('" ')
-                .strip()
-                .replace('"', "")
-                .strip(),
-            )
+            try:
+                latitude, longitude = (
+                    store_res.text.split('"latitude":')[1]
+                    .split(",")[0]
+                    .strip('" ')
+                    .strip(),
+                    store_res.text.split('"longitude":')[1]
+                    .split("},")[0]
+                    .strip('" ')
+                    .strip()
+                    .replace('"', "")
+                    .strip(),
+                )
+            except:
+                latitude, longitude = "<MISSING>", "<MISSING>"
 
             yield SgRecord(
                 locator_domain=locator_domain,

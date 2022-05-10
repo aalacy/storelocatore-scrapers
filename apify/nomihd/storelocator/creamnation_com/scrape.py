@@ -20,8 +20,11 @@ headers = {
 def fetch_data():
     # Your scraper here
     api_url = "https://creamnation.com/wp-admin/admin-ajax.php?action=store_search&lat=37.09024&lng=-95.712891&max_results=1000&search_radius=5000&autoload=1"
-    with SgRequests(dont_retry_status_codes=([404])) as session:
+    with SgRequests(dont_retry_status_codes=([404]), proxy_country="us") as session:
         api_res = session.get(api_url, headers=headers)
+        while len(api_res.text) <= 0:
+            log.info("trying again")
+            api_res = session.get(api_url, headers=headers)
 
         stores_list = json.loads(api_res.text)
 
