@@ -13,7 +13,7 @@ def get_international(line):
         "None", ""
     ).strip()
     city = adr.city
-    state = adr.state
+    state = adr.state or SgRecord.MISSING
     postal = adr.postcode
 
     return street_address, city, state, postal
@@ -22,32 +22,26 @@ def get_international(line):
 def fetch_data(sgw: SgWriter):
     r = session.get(page_url, headers=headers)
     tree = html.fromstring(r.text)
-    divs = tree.xpath("//div[@class='feature-two-column-short__list ']//li[./h3]")
+    divs = tree.xpath(
+        "//h2[./span[contains(text(), 'R&D')]]/following-sibling::div//div[@class='centers-item']"
+    )
 
     for d in divs:
-        location_name = "".join(d.xpath(".//h3/text()")).strip()
+        location_name = "".join(d.xpath(".//strong/text()")).strip()
 
         _tmp = []
-        lines = d.xpath(".//p[@class='feature-two-column-short__list-desc']/text()")
-        black = ["R&D", "Device", "System", "Testing", "Development", "Center"]
+        lines = d.xpath(".//p[@class='item-desc']/text()")
         for line in lines:
             if not line.strip():
                 continue
-            for b in black:
-                if b in line:
-                    break
-            else:
-                _tmp.append(line.strip())
+            line = " ".join(line.split())
+            _tmp.append(line)
 
-        raw_address = ", ".join(_tmp).replace(",,", ",")
+        raw_address = "".join(_tmp)
         street_address, city, state, postal = get_international(raw_address)
-
-        if state:
-            if state[0].isdigit():
-                postal, state = state, SgRecord.MISSING
-
-        if not city:
-            city = location_name
+        if state[0].isdigit():
+            postal = state
+            state = SgRecord.MISSING
 
         row = SgRecord(
             page_url=page_url,
@@ -66,7 +60,7 @@ def fetch_data(sgw: SgWriter):
 if __name__ == "__main__":
     session = SgRequests()
     locator_domain = (
-        "https://www.samsung.com/semiconductor/about-us/location/research-development/"
+        "https://www.samsung.com/semiconductor/about-us/location/manufacturing-centers/"
     )
     page_url = locator_domain
     headers = {

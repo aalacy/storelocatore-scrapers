@@ -38,7 +38,17 @@ def fetch_data():
         poi = loc_dom.xpath('//script[@class="yoast-schema-graph"]/text()')[0]
         poi = json.loads(poi)
         phone = poi["@graph"][0]["telephone"]
-        hoo = " ".join(poi["@graph"][0]["openingHours"])
+        if not phone:
+            phone = loc_dom.xpath('//address/a[contains(@href, "tel")]/text()')[0]
+        hoo = poi["@graph"][0].get("openingHours")
+        if not hoo:
+            hoo = loc_dom.xpath('//div[@id="hours-popper"]//text()')
+        hoo = [e.strip() for e in hoo if e.strip()]
+        hoo = " ".join(hoo).split("Access Hours:")[-1].strip()
+        if "sa " not in hoo:
+            hoo += " sa closed"
+        if "su " not in hoo:
+            hoo += " su closed"
 
         item = SgRecord(
             locator_domain=domain,

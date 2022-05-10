@@ -28,8 +28,11 @@ def fetch_data():
         if link.find("https:") == -1:
             link = "https://www.traviniaitaliankitchen.com/mobile/" + link
         r = session.get(link, headers=headers)
-        soup = BeautifulSoup(r.text, "html.parser")
-        content = soup.find("h3").text
+        try:
+            soup = BeautifulSoup(r.text, "html.parser")
+            content = soup.find("h3").text
+        except:
+            continue
         content = re.sub(pattern, "\n", content).strip().splitlines()
 
         title = content[0]
@@ -52,7 +55,15 @@ def fetch_data():
                 .split(",")
             )
         except:
-            lat = longt = "<MISSING>"
+            try:
+                lat, longt = (
+                    r.text.split('"https://www.google.com/maps', 1)[1]
+                    .split("@", 1)[1]
+                    .split(",16z", 1)[0]
+                    .split(",")
+                )
+            except:
+                lat = longt = "<MISSING>"
         if len(street) < 3:
             street = title
             title = city

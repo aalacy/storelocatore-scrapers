@@ -1,182 +1,85 @@
-from bs4 import BeautifulSoup
-import csv
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+import json
 import re
-from sgrequests import SgRequests
+import ssl
 
-session = SgRequests()
-headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
-}
+ssl._create_default_https_context = ssl._create_unverified_context
+from sgselenium import SgSelenium
 
-
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+driver = SgSelenium().chrome()
 
 
 def fetch_data():
-    data = []
-    titlelist = []
-    pattern = re.compile(r"\s\s+")
-    states = [
-        "AL",
-        "AK",
-        "AZ",
-        "AR",
-        "CA",
-        "CO",
-        "CT",
-        "DC",
-        "DE",
-        "FL",
-        "GA",
-        "HI",
-        "ID",
-        "IL",
-        "IN",
-        "IA",
-        "KS",
-        "KY",
-        "LA",
-        "ME",
-        "MD",
-        "MA",
-        "MI",
-        "MN",
-        "MS",
-        "MO",
-        "MT",
-        "NE",
-        "NV",
-        "NH",
-        "NJ",
-        "NM",
-        "NY",
-        "NC",
-        "ND",
-        "OH",
-        "OK",
-        "OR",
-        "PA",
-        "RI",
-        "SC",
-        "SD",
-        "TN",
-        "TX",
-        "UT",
-        "VT",
-        "VA",
-        "WA",
-        "WV",
-        "WI",
-        "WY",
-    ]
 
-    p = 0
-    for i in range(0, len(states)):
-        url = "https://www.abcsupply.com/locations/location-results"
-        result = session.post(url, data={"State": states[i]}, headers=headers)
-        soup = BeautifulSoup(result.text, "html.parser")
-        divlist = soup.findAll("div", {"class": "location"})
-        maplist = result.text.split("var marker = new google.maps.Marker({")[1:]
-        for div in divlist:
+    cleanr = re.compile(r"<[^>]+>")
+    url = "https://www.abcsupply.com/locations/"
+    driver.get(url)
+    code = driver.page_source.split('"nonce":"', 1)[1].split('"', 1)[0]
+    url = (
+        "https://www.abcsupply.com/wp-admin/admin-ajax.php?action=fetch_all_locations&_ajax_nonce="
+        + str(code)
+    )
+    driver.get(url)
+    divlist = json.loads(re.sub(cleanr, "", driver.page_source))
+    for div in divlist:
+        loclist = div["locations"]
+        for loc in loclist:
 
-            title = (
-                div.find("div", {"class": "location-name"})
-                .text.replace("\n", " ")
-                .strip()
-            )
-            store = (
-                div.find("div", {"class": "location-name"})
-                .find("a")["id"]
-                .split("_", 1)[1]
-            )
-            link = (
-                "https://www.abcsupply.com"
-                + div.find("div", {"class": "location-name"}).find("a")["href"]
-            )
-            address = div.find("div", {"class": "location-address"}).text
-            address = re.sub(pattern, "\n", address).strip().splitlines()
-            street = address[0]
+            store = loc["branchNumber"]
+            street = loc["address1"] + str(loc["address2"])
+            street = street.replace("None", "")
+            city = loc["city"]
+            state = loc["state"]
+            pcode = loc["postalCode"]
+            lat = loc["latitude"]
+            longt = loc["longitude"]
             try:
-                city, state = address[1].split(", ", 1)
+                phone = loc["phoneNumber"].strip()
             except:
-                street = street + " " + address[1]
-                city, state = address[2].split(", ", 1)
-            state, pcode = state.split(" ", 1)
-            phone = address[-1]
-            try:
-                hours = div.find("div", {"class": "hours-detail"}).text
-                hours = re.sub(pattern, " ", hours).strip()
-            except:
-                hours = "Mon - Fri: 7:00 AM - 5:00 PM"
-            lat = longt = "<MISSING>"
-            for coord in maplist:
-                coord = coord.split(");", 1)[0]
-                if title + " - ABC Supply #" + store in coord:
-                    lat = coord.split("lat: ", 1)[1].split(",", 1)[0]
-                    longt = coord.split("lng: ", 1)[1].split(" }", 1)[0]
-                    break
-            if store in titlelist:
-                continue
-            titlelist.append(store)
-            if len(phone) < 3:
                 phone = "<MISSING>"
-            if len(lat) < 3:
-                lat = "<MISSING>"
-            if len(longt) < 3:
-                longt = "<MISSING>"
-            data.append(
-                [
-                    "https://www.abcsupply.com/",
-                    link,
-                    title,
-                    street,
-                    city,
-                    state,
-                    pcode,
-                    "US",
-                    store,
-                    phone,
-                    "<MISSING>",
-                    lat,
-                    longt,
-                    hours,
-                ]
-            )
 
-            p += 1
-    return data
+            try:
+                hourslist = loc["seasonalHours"][0]["hourDetails"][0]
+                hours = (
+                    hourslist["hoursText"]
+                    + " "
+                    + hourslist["openTime"]
+                    + " - "
+                    + hourslist["closeTime"]
+                )
+            except:
+                hours = "<MISSING>"
+            link = "https://www.abcsupply.com/locations/location/?id=" + str(store)
+            title = "ABC Supply - " + city + ", " + state
+            yield SgRecord(
+                locator_domain="https://www.abcsupply.com/",
+                page_url=link,
+                location_name=title,
+                street_address=street.strip(),
+                city=city.strip(),
+                state=state.strip(),
+                zip_postal=pcode.strip(),
+                country_code="US",
+                store_number=str(store),
+                phone=phone.strip(),
+                location_type="<MISSING>",
+                latitude=str(lat),
+                longitude=str(longt),
+                hours_of_operation=hours,
+            )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()

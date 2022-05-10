@@ -1,10 +1,10 @@
-import usaddress
 from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgpostal.sgpostal import International_Parser, parse_address
 
 
 def fetch_data(sgw: SgWriter):
@@ -12,97 +12,48 @@ def fetch_data(sgw: SgWriter):
     locator_domain = "https://www.nightlitepediatrics.com/"
     api_url = "https://www.nightlitepediatrics.com/locations-pediatrics-urgent-care-in-florida"
     session = SgRequests()
-    tag = {
-        "Recipient": "recipient",
-        "AddressNumber": "address1",
-        "AddressNumberPrefix": "address1",
-        "AddressNumberSuffix": "address1",
-        "StreetName": "address1",
-        "StreetNamePreDirectional": "address1",
-        "StreetNamePreModifier": "address1",
-        "StreetNamePreType": "address1",
-        "StreetNamePostDirectional": "address1",
-        "StreetNamePostModifier": "address1",
-        "StreetNamePostType": "address1",
-        "CornerOf": "address1",
-        "IntersectionSeparator": "address1",
-        "LandmarkName": "address1",
-        "USPSBoxGroupID": "address1",
-        "USPSBoxGroupType": "address1",
-        "USPSBoxID": "address1",
-        "USPSBoxType": "address1",
-        "BuildingName": "address2",
-        "OccupancyType": "address2",
-        "OccupancyIdentifier": "address2",
-        "SubaddressIdentifier": "address2",
-        "SubaddressType": "address2",
-        "PlaceName": "city",
-        "StateName": "state",
-        "ZipCode": "postal",
-    }
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
     r = session.get(api_url, headers=headers)
     tree = html.fromstring(r.text)
-    div = tree.xpath(
-        '//div[@class="wp-block-columns alignwide locationstext1 has-white-color has-text-color has-background"]/div[1]/h2[1]/a'
-    )
+    div = tree.xpath('//div[./ul[@class="fa-ul"]]')
     for d in div:
-        slug = "".join(d.xpath(".//@href"))
-        page_url = f"{locator_domain}{slug}"
-        phone = (
-            "".join(d.xpath(".//following::h2[1]/a/text()")).split("Phone:")[1].strip()
-        )
 
-        if page_url.find("telemedicine") != -1:
-            continue
-
-        session = SgRequests()
-        r = session.get(page_url, headers=headers)
-        tree = html.fromstring(r.text)
-
+        page_url = "".join(d.xpath('.//a[text()="Learn More"]/@href'))
+        location_name = "".join(d.xpath("./p[1]//text()"))
         ad = (
             " ".join(
-                tree.xpath(
-                    '//strong[text()="Get Google Maps Directions to"]/following-sibling::text()'
+                d.xpath(
+                    './/i[@class="fal fa-map-marker-alt"]/following-sibling::text()'
                 )
             )
             .replace("\n", "")
             .strip()
         )
-        a = usaddress.tag(ad, tag_mapping=tag)[0]
-        street_address = f"{a.get('address1')} {a.get('address2')}".replace(
+        a = parse_address(International_Parser(), ad)
+        street_address = f"{a.street_address_1} {a.street_address_2}".replace(
             "None", ""
         ).strip()
-        city = a.get("city") or "<MISSING>"
-        state = a.get("state") or "<MISSING>"
-        postal = a.get("postal") or "<MISSING>"
-        location_name = (
+        state = a.state or "<MISSING>"
+        postal = a.postcode or "<MISSING>"
+        country_code = "US"
+        city = a.city or "<MISSING>"
+        map_link = "".join(d.xpath(".//preceding::iframe[1]/@src"))
+        latitude = map_link.split("!3d")[1].strip().split("!")[0].strip()
+        longitude = map_link.split("!2d")[1].strip().split("!")[0].strip()
+        phone = (
             "".join(
-                tree.xpath(
-                    '//h2[./a[contains(@href, "maps")]]/preceding-sibling::h1/text()'
+                d.xpath(
+                    './/i[@class="fal fa-phone-volume"]/following-sibling::a/text()'
                 )
             )
-            .replace("Directions to", "")
+            .replace("\n", "")
             .strip()
         )
-        country_code = "US"
-        text = "".join(tree.xpath('//a[contains(@href, "maps")]/@href'))
-        try:
-            if text.find("ll=") != -1:
-                latitude = text.split("ll=")[1].split(",")[0]
-                longitude = text.split("ll=")[1].split(",")[1].split("&")[0]
-            else:
-                latitude = text.split("@")[1].split(",")[0]
-                longitude = text.split("@")[1].split(",")[1]
-        except IndexError:
-            latitude, longitude = "<MISSING>", "<MISSING>"
-
         hours_of_operation = (
-            " ".join(tree.xpath('//strong[text()="Hours:"]/following-sibling::text()'))
+            " ".join(d.xpath('.//li[./i[@class="fal fa-clock"]]//text()'))
             .replace("\n", "")
-            .replace("Open", "")
             .strip()
         )
 
@@ -121,6 +72,7 @@ def fetch_data(sgw: SgWriter):
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hours_of_operation,
+            raw_address=f"{street_address} {city}, {state} {postal}",
         )
 
         sgw.write_row(row)
@@ -128,7 +80,5 @@ def fetch_data(sgw: SgWriter):
 
 if __name__ == "__main__":
     session = SgRequests()
-    with SgWriter(
-        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
-    ) as writer:
+    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))) as writer:
         fetch_data(writer)

@@ -25,7 +25,7 @@ def fetch_data(sgw: SgWriter):
     for store in stores:
 
         store_number = store["storeId"]
-        location_name = store["name"]
+        location_name = "GAP"
         city = store["city"]
         state = store["state"]
         zip_code = store["postalCode"]

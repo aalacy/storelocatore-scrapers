@@ -3,8 +3,7 @@ from sgrequests import SgRequests
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 from sglogging import SgLogSetup
 from sgscrape import sgpostal as parser
-from requests import exceptions  # noqa
-from urllib3 import exceptions as urllibException
+import json
 
 logger = SgLogSetup().get_logger("penn-station_com")
 
@@ -15,42 +14,9 @@ headers["Content-Type"] = "application/x-www-form-urlencoded"
 
 search = DynamicGeoSearch(
     country_codes=[SearchableCountries.CANADA, SearchableCountries.USA],
-    max_radius_miles=100,
+    max_search_distance_miles=100,
     max_search_results=15,
 )
-
-
-def api_get(start_url, headers, data, attempts, maxRetries):
-    error = False
-    session = SgRequests()
-    try:
-        results = session.post(start_url, headers=headers, data=data)
-    except exceptions.RequestException as requestsException:
-        if "ProxyError" in str(requestsException):
-            attempts += 1
-            error = True
-        else:
-            raise requestsException
-
-    except urllibException.SSLError as urlException:
-        if "BAD_RECORD_MAC" in str(urlException):
-            attempts += 1
-            error = True
-        else:
-            raise urllibException
-
-    if error:
-        if attempts < maxRetries:
-            results = api_get(start_url, headers, data, attempts, maxRetries)
-        else:
-            TooManyRetries = (
-                "Retried "
-                + str(maxRetries)
-                + " times, got either SSLError or ProxyError"
-            )
-            raise TooManyRetries
-    else:
-        return results
 
 
 def parse_address(raw_address):
@@ -81,7 +47,7 @@ def parse_address(raw_address):
 
 
 def fetch_data():
-    session = SgRequests(proxy_rotation_failure_threshold=20)
+    session = SgRequests()
     maxZ = search.items_remaining()
     total = 0
     for lat, lng in search:
@@ -92,10 +58,10 @@ def fetch_data():
         data = "ajax=1&action=get_nearby_stores&distance=1000&lat={lat}&lng={lng}&products=1".format(
             lat=lat, lng=lng
         )
-        try:
-            r2 = session.post(url, headers=headers, data=data).json()
-        except Exception:
-            r2 = api_get(url, headers, data, 0, 15).json()
+
+        r2 = session.post(url, headers=headers, data=data)
+        decoded_data = r2.text.encode().decode("utf-8-sig")
+        r2 = json.loads(decoded_data)
 
         if r2["success"] == 1:
             for store in r2["stores"]:
@@ -175,6 +141,7 @@ def scrape():
         data_fetcher=fetch_data,
         field_definitions=field_defs,
         log_stats_interval=5,
+        duplicate_streak_failure_factor=-1,
     )
 
     pipeline.run()
