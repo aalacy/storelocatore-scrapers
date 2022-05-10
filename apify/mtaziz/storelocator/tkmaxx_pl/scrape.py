@@ -30,7 +30,6 @@ headers_custom = {
 logger = SgLogSetup().get_logger(logger_name="tkmaxx_pl")
 MISSING = SgRecord.MISSING
 LOCATION_URL = "https://www.tkmaxx.pl/znajdz-sklep"
-MAX_WORKERS = 8
 
 
 @retry(stop=stop_after_attempt(10), wait=tenacity.wait_fixed(30), reraise=True)
@@ -80,49 +79,205 @@ def fetch_records():
 
             r = get_response_simple(page_url, headers_custom)
             time.sleep(random.randint(3, 10))
-            logger.info(f"[{r.status_code}] Pulling the data from {page_url}")
+            logger.info(f"[{idx}] [{r.status_code}] Pulling the data from {page_url}")
             tree = html.fromstring(r.text)
             d = tree.xpath("//div[@class='nearby-store active-store']")[0]
+
+            location_name = "".join(d.xpath("./a/text()")).strip()
+            store_number = "".join(d.xpath("./@data-store-id"))
+            latitude = "".join(d.xpath("./@data-latitude"))
+            longitude = "".join(d.xpath("./@data-longitude"))
+            b = d.xpath("./following-sibling::div[1]")[0]
+            street_address = "".join(
+                b.xpath(".//p[@itemprop='streetAddress']/text()")
+            ).strip()
+            city = "".join(b.xpath(".//p[@itemprop='addressLocality']/text()")).strip()
+            postal = "".join(b.xpath(".//p[@itemprop='zipCode']/text()")).strip()
+            phone = "".join(b.xpath(".//p[@itemprop='telephone']/text()")).strip()
+            logger.info(f"[{idx}] Phone: {phone}")
+            try:
+                hours_of_operation = b.xpath(
+                    ".//span[@itemprop='openingHours']/text()"
+                )[0].strip()
+            except IndexError:
+                hours_of_operation = SgRecord.MISSING
+
+            row = SgRecord(
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=MISSING,
+                zip_postal=postal,
+                country_code="PL",
+                store_number=store_number,
+                phone=phone,
+                location_type=MISSING,
+                latitude=latitude,
+                longitude=longitude,
+                locator_domain="tkmaxx.pl",
+                hours_of_operation=hours_of_operation,
+            )
+
+            yield row
         except:
-            return
+            try:
+                r = get_response_simple(page_url, headers_custom)
+                time.sleep(random.randint(3, 10))
+                logger.info(
+                    f"[{idx}] [{r.status_code}] Pulling the data from {page_url}"
+                )
+                tree = html.fromstring(r.text)
+                d = tree.xpath("//div[@class='nearby-store active-store']")[0]
 
-        location_name = "".join(d.xpath("./a/text()")).strip()
-        store_number = "".join(d.xpath("./@data-store-id"))
-        latitude = "".join(d.xpath("./@data-latitude"))
-        longitude = "".join(d.xpath("./@data-longitude"))
-        b = d.xpath("./following-sibling::div[1]")[0]
-        street_address = "".join(
-            b.xpath(".//p[@itemprop='streetAddress']/text()")
-        ).strip()
-        city = "".join(b.xpath(".//p[@itemprop='addressLocality']/text()")).strip()
-        postal = "".join(b.xpath(".//p[@itemprop='zipCode']/text()")).strip()
-        phone = "".join(b.xpath(".//p[@itemprop='telephone']/text()")).strip()
-        logger.info(f"[{idx}] Phone: {phone}")
-        try:
-            hours_of_operation = b.xpath(".//span[@itemprop='openingHours']/text()")[
-                0
-            ].strip()
-        except IndexError:
-            hours_of_operation = SgRecord.MISSING
+                location_name = "".join(d.xpath("./a/text()")).strip()
+                store_number = "".join(d.xpath("./@data-store-id"))
+                latitude = "".join(d.xpath("./@data-latitude"))
+                longitude = "".join(d.xpath("./@data-longitude"))
+                b = d.xpath("./following-sibling::div[1]")[0]
+                street_address = "".join(
+                    b.xpath(".//p[@itemprop='streetAddress']/text()")
+                ).strip()
+                city = "".join(
+                    b.xpath(".//p[@itemprop='addressLocality']/text()")
+                ).strip()
+                postal = "".join(b.xpath(".//p[@itemprop='zipCode']/text()")).strip()
+                phone = "".join(b.xpath(".//p[@itemprop='telephone']/text()")).strip()
+                logger.info(f"[{idx}] Phone: {phone}")
+                try:
+                    hours_of_operation = b.xpath(
+                        ".//span[@itemprop='openingHours']/text()"
+                    )[0].strip()
+                except IndexError:
+                    hours_of_operation = SgRecord.MISSING
 
-        row = SgRecord(
-            page_url=page_url,
-            location_name=location_name,
-            street_address=street_address,
-            city=city,
-            state=MISSING,
-            zip_postal=postal,
-            country_code="PL",
-            store_number=store_number,
-            phone=phone,
-            location_type=MISSING,
-            latitude=latitude,
-            longitude=longitude,
-            locator_domain="tkmaxx.pl",
-            hours_of_operation=hours_of_operation,
-        )
+                row = SgRecord(
+                    page_url=page_url,
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city,
+                    state=MISSING,
+                    zip_postal=postal,
+                    country_code="PL",
+                    store_number=store_number,
+                    phone=phone,
+                    location_type=MISSING,
+                    latitude=latitude,
+                    longitude=longitude,
+                    locator_domain="tkmaxx.pl",
+                    hours_of_operation=hours_of_operation,
+                )
 
-        yield row
+                yield row
+            except:
+                try:
+                    r = get_response_simple(page_url, headers_custom)
+                    time.sleep(random.randint(3, 10))
+                    logger.info(
+                        f"[{idx}] [{r.status_code}] Pulling the data from {page_url}"
+                    )
+                    tree = html.fromstring(r.text)
+                    d = tree.xpath("//div[@class='nearby-store active-store']")[0]
+
+                    location_name = "".join(d.xpath("./a/text()")).strip()
+                    store_number = "".join(d.xpath("./@data-store-id"))
+                    latitude = "".join(d.xpath("./@data-latitude"))
+                    longitude = "".join(d.xpath("./@data-longitude"))
+                    b = d.xpath("./following-sibling::div[1]")[0]
+                    street_address = "".join(
+                        b.xpath(".//p[@itemprop='streetAddress']/text()")
+                    ).strip()
+                    city = "".join(
+                        b.xpath(".//p[@itemprop='addressLocality']/text()")
+                    ).strip()
+                    postal = "".join(
+                        b.xpath(".//p[@itemprop='zipCode']/text()")
+                    ).strip()
+                    phone = "".join(
+                        b.xpath(".//p[@itemprop='telephone']/text()")
+                    ).strip()
+                    logger.info(f"[{idx}] Phone: {phone}")
+                    try:
+                        hours_of_operation = b.xpath(
+                            ".//span[@itemprop='openingHours']/text()"
+                        )[0].strip()
+                    except IndexError:
+                        hours_of_operation = SgRecord.MISSING
+
+                    row = SgRecord(
+                        page_url=page_url,
+                        location_name=location_name,
+                        street_address=street_address,
+                        city=city,
+                        state=MISSING,
+                        zip_postal=postal,
+                        country_code="PL",
+                        store_number=store_number,
+                        phone=phone,
+                        location_type=MISSING,
+                        latitude=latitude,
+                        longitude=longitude,
+                        locator_domain="tkmaxx.pl",
+                        hours_of_operation=hours_of_operation,
+                    )
+
+                    yield row
+                except:
+                    try:
+                        r = get_response_simple(page_url, headers_custom)
+                        time.sleep(random.randint(3, 10))
+                        logger.info(
+                            f"[{idx}] [{r.status_code}] Pulling the data from {page_url}"
+                        )
+                        tree = html.fromstring(r.text)
+                        d = tree.xpath("//div[@class='nearby-store active-store']")[0]
+
+                        location_name = "".join(d.xpath("./a/text()")).strip()
+                        store_number = "".join(d.xpath("./@data-store-id"))
+                        latitude = "".join(d.xpath("./@data-latitude"))
+                        longitude = "".join(d.xpath("./@data-longitude"))
+                        b = d.xpath("./following-sibling::div[1]")[0]
+                        street_address = "".join(
+                            b.xpath(".//p[@itemprop='streetAddress']/text()")
+                        ).strip()
+                        city = "".join(
+                            b.xpath(".//p[@itemprop='addressLocality']/text()")
+                        ).strip()
+                        postal = "".join(
+                            b.xpath(".//p[@itemprop='zipCode']/text()")
+                        ).strip()
+                        phone = "".join(
+                            b.xpath(".//p[@itemprop='telephone']/text()")
+                        ).strip()
+                        logger.info(f"[{idx}] Phone: {phone}")
+                        try:
+                            hours_of_operation = b.xpath(
+                                ".//span[@itemprop='openingHours']/text()"
+                            )[0].strip()
+                        except IndexError:
+                            hours_of_operation = SgRecord.MISSING
+
+                        row = SgRecord(
+                            page_url=page_url,
+                            location_name=location_name,
+                            street_address=street_address,
+                            city=city,
+                            state=MISSING,
+                            zip_postal=postal,
+                            country_code="PL",
+                            store_number=store_number,
+                            phone=phone,
+                            location_type=MISSING,
+                            latitude=latitude,
+                            longitude=longitude,
+                            locator_domain="tkmaxx.pl",
+                            hours_of_operation=hours_of_operation,
+                        )
+
+                        yield row
+                    except:
+                        logger.info(f"Failed {page_url}")
+                        return
 
 
 def scrape():

@@ -39,6 +39,8 @@ def get_urls():
     js = r.json()["pageProps"]["layoutDocs"]["countriesDoc"]
     for j in js:
         cc = j.get("country")
+        if cc == "en":
+            continue
         url = api.replace("/en/", f"/{cc}/")
         logger.info(f"Country {cc} was added")
         urls.append(url)
@@ -59,11 +61,16 @@ def get_phone(page_url):
 def get_data(api, sgw: SgWriter):
     r = session.get(api, headers=headers)
     logger.info(f"{api}: {r.status_code}")
+    if r.status_code != 200:
+        return
     js = r.json()["pageProps"]["pageDoc"]["data"]["body"][1]["data"]["body"]
 
     for j in js:
-        latitude = j["items"][1]["tab_map"]["latitude"]
-        longitude = j["items"][1]["tab_map"]["longitude"]
+        try:
+            latitude = j["items"][1]["tab_map"]["latitude"]
+            longitude = j["items"][1]["tab_map"]["longitude"]
+        except:
+            latitude, longitude = SgRecord.MISSING, SgRecord.MISSING
         j = j.get("primary") or {}
 
         store_number = j.get("store_id")
