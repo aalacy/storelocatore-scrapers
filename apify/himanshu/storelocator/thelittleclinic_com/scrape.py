@@ -1,3 +1,4 @@
+import time
 import json
 import ssl
 from bs4 import BeautifulSoup
@@ -15,11 +16,25 @@ log = sglog.SgLogSetup().get_logger(logger_name="thelittleclinic.com")
 ssl._create_default_https_context = ssl._create_unverified_context
 
 
+def query(link, driver, retry=0):
+    try:
+        time.sleep(3)
+        driver.get(link)
+        soup = BeautifulSoup(driver.page_source, "lxml")
+        return json.loads(soup.text)
+    except Exception as e:
+        time.sleep(10)
+        if retry < 3:
+            return query(link, driver, retry + 1)
+
+        log.error(e)
+
+
 def fetch_data():
 
     user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
 
-    driver = SgChrome(user_agent=user_agent).driver()
+    driver = SgChrome(user_agent=user_agent, is_headless=False).driver()
 
     zip_codes = DynamicZipSearch(
         country_codes=[SearchableCountries.USA],
@@ -33,13 +48,11 @@ def fetch_data():
             % (zip_code, zip_codes.items_remaining())
         )
         link = (
-            "https://www.kroger.com/appointment-management/v1/clinics?filter.businessName=tlc&filter.reasonId=29&filter.freeFormAddress=%s&filter.maxResults=100&page.size=100"
+            "https://www.kroger.com/appointment-management/v1/clinics?filter.businessName=tlc&filter.reasonId=29&filter.freeFormAddress=%s&filter.maxResults=50&page.size=50"
             % zip_code
         )
 
-        driver.get(link)
-        soup = BeautifulSoup(driver.page_source, "lxml")
-        json_data = json.loads(soup.text)
+        json_data = query(link, driver)
         j = json_data["data"]["clinics"]
 
         for i in j:
