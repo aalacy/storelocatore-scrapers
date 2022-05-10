@@ -92,10 +92,18 @@ def fetch_data():
             phone = store_info[-2]
             if ":" in phone:
                 phone = phone.split(":")[1].strip()
-            else:
-                phone = "<MISSING>"
 
-            phone = phone.split("/")[0].strip().split("-")[0].strip()
+            phone = (
+                phone.split("/")[0]
+                .strip()
+                .split("-")[0]
+                .strip()
+                .lower()
+                .split("anexo")[0]
+                .strip()
+            )
+            if "v" == phone:
+                phone = "<MISSING>"
             hours_of_operation = "<MISSING>"
 
             latitude, longitude = location_list[no - 1][1], location_list[no - 1][2]
