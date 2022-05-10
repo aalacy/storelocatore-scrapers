@@ -1,6 +1,6 @@
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
@@ -111,7 +111,7 @@ class ExampleSearchIteration(SearchIteration):
                     continue
 
                 state = _["state"] if _["country"] == "US" else _["province"]
-                location_type = "the north face"
+                location_type = ""
                 north_store = _.get("northface")
                 if north_store == "1":
                     location_type = "the north face store"
@@ -207,7 +207,7 @@ def fetch_records():
                         zip_postal=addr["postalCode"],
                         country_code="US",
                         phone=_["telephone"],
-                        location_type=_["@type"],
+                        location_type="the north face",
                         latitude=_["geo"]["latitude"],
                         longitude=_["geo"]["longitude"],
                         locator_domain=locator_domain,
@@ -229,15 +229,7 @@ if __name__ == "__main__":
                 )
         with SgWriter(
             SgRecordDeduper(
-                SgRecordID(
-                    {
-                        SgRecord.Headers.STORE_NUMBER,
-                        SgRecord.Headers.LATITUDE,
-                        SgRecord.Headers.LONGITUDE,
-                        SgRecord.Headers.PAGE_URL,
-                    }
-                ),
-                duplicate_streak_failure_factor=1000,
+                RecommendedRecordIds.GeoSpatialId, duplicate_streak_failure_factor=1000
             )
         ) as writer:
             search_maker = DynamicSearchMaker(

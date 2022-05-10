@@ -1,60 +1,53 @@
 from lxml import etree
-from urllib.parse import urljoin
+from time import sleep
 
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
+from sgselenium.sgselenium import SgFirefox
 
 
 def fetch_data():
-    session = SgRequests().requests_retry_session(retries=2, backoff_factor=0.3)
-    start_url = "https://www.aldi-nord.de/tools/filialen-und-oeffnungszeiten.html"
+    session = SgRequests()
+    start_url = "https://uberall.com/api/storefinders/ALDINORDDE_UimhY3MWJaxhjK9QdZo3Qa4chq1MAu/locations/all?v=20211005&language=de&fieldMask=id&fieldMask=identifier&fieldMask=googlePlaceId&fieldMask=lat&fieldMask=lng&fieldMask=name&fieldMask=country&fieldMask=city&fieldMask=province&fieldMask=streetAndNumber&fieldMask=zip&fieldMask=businessId&fieldMask=addressExtra&"
     domain = "aldi-nord.de"
 
-    response = session.get(start_url)
-    dom = etree.HTML(response.text)
-    all_cities = dom.xpath('//div[@class="mod-stores__multicolumn"]//a/@href')
-    for url in all_cities:
-        response = session.get(urljoin(start_url, url))
-        dom = etree.HTML(response.text)
+    data = session.get(start_url).json()
+    for poi in data["response"]["locations"]:
+        city = poi["city"]
+        street_address = poi["streetAndNumber"]
+        store_number = poi["id"]
+        page_url = f"https://www.aldi-nord.de/filialen-und-oeffnungszeiten.html/l/{city.lower()}/{street_address.lower().replace(' ', '-')}/{store_number}"
+        with SgFirefox() as driver:
+            driver.get(page_url)
+            sleep(10)
+            loc_dom = etree.HTML(driver.page_source)
 
-        all_locations = dom.xpath('//div[@class="mod-stores__multicolumn"]//a/@href')
-        for url in all_locations:
-            store_url = urljoin(start_url, url)
-            loc_response = session.get(store_url)
-            loc_dom = etree.HTML(loc_response.text)
+        hoo = loc_dom.xpath(
+            '//div[@class="ubsf_location-page-opening-hours-list"]//text()'
+        )
+        hoo = " ".join([e.strip() for e in hoo if e.strip()])
 
-            location_name = loc_dom.xpath('//p[@itemprop="name"]/text()')[0]
-            street_address = loc_dom.xpath('//span[@itemprop="streetAddress"]/text()')[
-                0
-            ]
-            zip_code = loc_dom.xpath('//span[@itemprop="postalCode"]/text()')[0]
-            city = loc_dom.xpath('//span[@itemprop="addressLocality"]/text()')[0]
-            hoo = loc_dom.xpath(
-                '//div[@class="mod-stores__overview-openhours"]//text()'
-            )
-            hoo = " ".join([e.strip() for e in hoo if e.strip()])
+        item = SgRecord(
+            locator_domain=domain,
+            page_url="https://www.aldi-nord.de/filialen-und-oeffnungszeiten.html",
+            location_name=poi["name"],
+            street_address=street_address,
+            city=city,
+            state=poi["province"],
+            zip_postal=poi["zip"],
+            country_code=poi["country"],
+            store_number=store_number,
+            phone="",
+            location_type="",
+            latitude=poi["lat"],
+            longitude=poi["lng"],
+            hours_of_operation=hoo,
+        )
 
-            item = SgRecord(
-                locator_domain=domain,
-                page_url=store_url,
-                location_name=location_name,
-                street_address=street_address,
-                city=city,
-                state=SgRecord.MISSING,
-                zip_postal=zip_code,
-                country_code="DE",
-                store_number=SgRecord.MISSING,
-                phone=SgRecord.MISSING,
-                location_type=SgRecord.MISSING,
-                latitude=SgRecord.MISSING,
-                longitude=SgRecord.MISSING,
-                hours_of_operation=hoo,
-            )
-
-            yield item
+        yield item
 
 
 def scrape():
