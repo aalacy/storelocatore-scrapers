@@ -68,7 +68,9 @@ def fetch_data():
 
             store_json = json.loads(store_res.text)
 
-            page_url = store_json.get("url", "<MISSING>")
+            page_url = store_json.get("url", None)
+            if not page_url:
+                page_url = search_url
 
             location_name = "".join(store.xpath(".//h2//text()")).strip()
             location_type = "<MISSING>"
