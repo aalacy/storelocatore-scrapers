@@ -69,7 +69,9 @@ def fetch_data():
             )
             raw_address = [e.strip() for e in raw_address if e.strip()]
             if not raw_address:
-                raw_address = loc_dom.xpath('//small[contains(text(), "Address")]/following-sibling::p[1]/text()')
+                raw_address = loc_dom.xpath(
+                    '//small[contains(text(), "Address")]/following-sibling::p[1]/text()'
+                )
             raw_address = [e.strip() for e in raw_address if e.strip()]
         raw_address = " ".join(raw_address)
         addr = parse_address_intl(raw_address)
