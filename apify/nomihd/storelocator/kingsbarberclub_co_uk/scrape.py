@@ -46,8 +46,10 @@ def fetch_data():
 
             phone = " ".join(store.xpath('.//a[contains(@href,"tel:")]/text()')).strip()
 
-            raw_address = " ".join(store_info[1:])
-
+            if "CONTACT NUMBER" in store_info[0].upper():
+                raw_address = " ".join(store_info[1:])
+            else:
+                raw_address = " ".join(store_info)
             formatted_addr = parser.parse_address_intl(raw_address)
             street_address = formatted_addr.street_address_1
             if formatted_addr.street_address_2:
@@ -57,7 +59,8 @@ def fetch_data():
                 street_address = street_address.replace("Ste", "Suite")
 
             city = formatted_addr.city
-
+            if not city:
+                city = raw_address.split(",")[-2]
             state = formatted_addr.state
             zip = formatted_addr.postcode
 
