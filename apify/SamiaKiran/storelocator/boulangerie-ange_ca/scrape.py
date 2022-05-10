@@ -39,6 +39,8 @@ def fetch_data():
                 del address[-1]
             phone = address[-1]
             raw_address = " ".join(address[:-1])
+            if "(" in raw_address:
+                raw_address = raw_address.split("(")[0]
             pa = parse_address_intl(raw_address)
 
             street_address = pa.street_address_1
@@ -52,6 +54,20 @@ def fetch_data():
 
             zip_postal = pa.postcode
             zip_postal = zip_postal.strip() if zip_postal else MISSING
+
+            if zip_postal == MISSING:
+                temp = raw_address.split()
+                zip_postal = temp[-3] + " " + temp[-2]
+                city = temp[-1]
+            if city == MISSING:
+                city = raw_address.split()[-1]
+            longitude, latitude = (
+                soup.select_one("iframe[src*=maps]")["src"]
+                .split("!2d", 1)[1]
+                .split("!2m", 1)[0]
+                .split("!3d")
+            )
+
             hours_of_operation = "<INACCESSIBLE>"
             country_code = "CA"
             yield SgRecord(
@@ -66,8 +82,8 @@ def fetch_data():
                 store_number=MISSING,
                 phone=phone,
                 location_type=MISSING,
-                latitude=MISSING,
-                longitude=MISSING,
+                latitude=latitude,
+                longitude=longitude,
                 hours_of_operation=hours_of_operation,
                 raw_address=raw_address,
             )
