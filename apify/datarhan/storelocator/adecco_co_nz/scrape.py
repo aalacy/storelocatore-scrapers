@@ -27,7 +27,6 @@ def fetch_data():
     all_locations = dom.xpath('//div[@class="branch-locator__results"]//a/@href')
     for url in all_locations:
         page_url = urljoin(start_url, url)
-        print(page_url)
         loc_response = session.get(page_url)
         loc_dom = etree.HTML(loc_response.text)
 
