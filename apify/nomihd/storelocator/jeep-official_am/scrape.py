@@ -99,7 +99,7 @@ class _SearchIteration(SearchIteration):
                 if "data" in stores_req.text:
 
                     for store in json.loads(stores_req.text)["data"]:
-                        page_url = "<MISSING>"
+                        page_url = store.get("dealer_website", "<MISSING>")
                         locator_domain = website
                         location_name = store["name"]
                         raw_address = (
