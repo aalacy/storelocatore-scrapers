@@ -78,68 +78,73 @@ class _SearchIteration(SearchIteration):
                 .replace(']}"', "]}")
                 + "]"
             )
-            stores = json.loads(maplist, strict=False)
+            try:
+                stores = json.loads(maplist, strict=False)
+                for store in stores:
+                    location_name = store["location_name"]
+                    locator_domain = website
+                    store_number = store["lid"]
 
-            for store in stores:
-                location_name = store["location_name"]
-                locator_domain = website
-                store_number = store["lid"]
+                    page_url = store["website"]
+                    if not page_url:
+                        page_url = "https://www.valvoline.com/en/locations/"
+                    location_type = "<MISSING>"
 
-                page_url = store["website"]
-                if not page_url:
-                    page_url = "https://www.valvoline.com/en/locations/"
-                location_type = "<MISSING>"
+                    phone = store["local_phone"]
 
-                phone = store["local_phone"]
+                    street_address = store.get("address_1", "<MISSING>")
+                    if store["address_2"] and len(store["address_2"]) > 0:
+                        street_address = street_address + ", " + store["address_2"]
 
-                street_address = store.get("address_1", "<MISSING>")
-                if store["address_2"] and len(store["address_2"]) > 0:
-                    street_address = street_address + ", " + store["address_2"]
+                    city = store.get("city", "<MISSING>")
 
-                city = store.get("city", "<MISSING>")
+                    state = store.get("region", "<MISSING>")
+                    zip = store.get("post_code", "<MISSING>")
 
-                state = store.get("region", "<MISSING>")
-                zip = store.get("post_code", "<MISSING>")
+                    country_code = store.get("country_name", "<MISSING>")
 
-                country_code = store.get("country_name", "<MISSING>")
+                    hours_list = []
+                    try:
+                        hours = store["hours_sets"]["days"]
+                        for day in hours.keys():
+                            if isinstance(hours[day][0], dict):
+                                time = (
+                                    hours[day][0]["open"]
+                                    + " - "
+                                    + hours[day][0]["close"]
+                                )
+                            elif isinstance(hours[day][0], str):
+                                time = hours[day]
 
-                hours_list = []
-                try:
-                    hours = store["hours_sets"]["days"]
-                    for day in hours.keys():
-                        if isinstance(hours[day][0], dict):
-                            time = (
-                                hours[day][0]["open"] + " - " + hours[day][0]["close"]
-                            )
-                        elif isinstance(hours[day][0], str):
-                            time = hours[day]
+                            hours_list.append(day + ":" + time)
+                    except:
+                        pass
 
-                        hours_list.append(day + ":" + time)
-                except:
-                    pass
+                    hours_of_operation = "; ".join(hours_list).strip()
+                    latitude, longitude = (
+                        store["lat"],
+                        store["lng"],
+                    )
+                    found_location_at(latitude, longitude)
+                    yield SgRecord(
+                        locator_domain=locator_domain,
+                        page_url=page_url,
+                        location_name=location_name,
+                        street_address=street_address,
+                        city=city,
+                        state=state,
+                        zip_postal=zip,
+                        country_code=country_code,
+                        store_number=store_number,
+                        phone=phone,
+                        location_type=location_type,
+                        latitude=latitude,
+                        longitude=longitude,
+                        hours_of_operation=hours_of_operation,
+                    )
 
-                hours_of_operation = "; ".join(hours_list).strip()
-                latitude, longitude = (
-                    store["lat"],
-                    store["lng"],
-                )
-                found_location_at(latitude, longitude)
-                yield SgRecord(
-                    locator_domain=locator_domain,
-                    page_url=page_url,
-                    location_name=location_name,
-                    street_address=street_address,
-                    city=city,
-                    state=state,
-                    zip_postal=zip,
-                    country_code=country_code,
-                    store_number=store_number,
-                    phone=phone,
-                    location_type=location_type,
-                    latitude=latitude,
-                    longitude=longitude,
-                    hours_of_operation=hours_of_operation,
-                )
+            except:
+                log.error("error while parsing json")
 
 
 def scrape():

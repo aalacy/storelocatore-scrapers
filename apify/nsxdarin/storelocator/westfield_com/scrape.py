@@ -17,29 +17,21 @@ def fetch_data():
     locs = []
     url = "https://www.westfield.com"
     r = session.get(url, headers=headers)
-    if r.encoding is None:
-        r.encoding = "utf-8"
     website = "westfield.com"
-    for line in r.iter_lines(decode_unicode=True):
-        if '<h2 class="tile-centre__header u-font--flama"> <a href="/' in line:
-            items = line.split(
-                '<h2 class="tile-centre__header u-font--flama"> <a href="/'
+    for line in r.iter_lines():
+        if 'class="js-centre-name"' in line:
+            city = line.split('data-track="click center tile" data-track-label="')[
+                1
+            ].split(" home")[0]
+            locs.append(
+                "https://www.westfield.com"
+                + line.split('href="')[1].split('"')[0]
+                + "|"
+                + city
             )
-            for item in items:
-                if 'class="js-centre-name" data-track="click center tile"' in item:
-                    city = (
-                        item.split('<div class="tile-centre__subtitle">')[1]
-                        .split(",")[0]
-                        .strip()
-                    )
-                    locs.append(
-                        "https://www.westfield.com/" + item.split('"')[0] + "|" + city
-                    )
     for loc in locs:
         logger.info((loc.split("|")[0]))
         r2 = session.get(loc.split("|")[0], headers=headers)
-        if r2.encoding is None:
-            r2.encoding = "utf-8"
         typ = "Center"
         store = "<MISSING>"
         name = ""
@@ -52,40 +44,59 @@ def fetch_data():
         lat = "<MISSING>"
         lng = "<MISSING>"
         hours = "<MISSING>"
-        for line2 in r2.iter_lines(decode_unicode=True):
+        for line2 in r2.iter_lines():
             if 'name="title" content="' in line2:
                 name = line2.split('name="title" content="')[1].split('"')[0]
-            if '<div class="content"><a href="/' in line2:
-                info = line2.split('<div class="content"><a href="/')[1]
-                addinfo = info.split('">')[1].split("<")[0].strip()
+            if '"addresses":"' in line2:
+                addinfo = line2.split('"addresses":"')[1].split('"')[0]
                 zc = addinfo.rsplit(" ", 1)[1]
                 state = addinfo.rsplit(" ", 2)[1].split(" ")[0]
-                phone = info.split('<a href="tel:')[1].split('"')[0]
                 add = addinfo.split(city)[0].strip()
+            if '<a href="tel:' in line2:
+                phone = line2.split('<a href="tel:')[1].split('"')[0]
         loc2 = loc.split("|")[0] + "/access"
-        r3 = session.get(loc2, headers=headers)
-        if r3.encoding is None:
-            r3.encoding = "utf-8"
-        for line3 in r3.iter_lines(decode_unicode=True):
-            if '<span class="date">' in line3:
-                items = line3.split('<span class="date">')
-                for item in items:
-                    if '<span class="schedule">' in item:
-                        hrs = (
-                            item.split("<")[0]
-                            + ": "
-                            + item.split('<span class="schedule">')[1].split("<")[0]
-                        )
-                        if hours == "":
-                            hours = hrs
-                        else:
-                            hours = hours + "; " + hrs
+        try:
+            r3 = session.get(loc2, headers=headers)
+            for line3 in r3.iter_lines():
+                if '<span class="date">' in line3:
+                    items = line3.split('<span class="date">')
+                    for item in items:
+                        if '<span class="schedule">' in item:
+                            hrs = (
+                                item.split("<")[0]
+                                + ": "
+                                + item.split('<span class="schedule">')[1].split("<")[0]
+                            )
+                            if hours == "":
+                                hours = hrs
+                            else:
+                                hours = hours + "; " + hrs
+        except:
+            hours = "<MISSING>"
         if add != "":
             if "annapolis" in loc.split("|")[0]:
                 add = "2002 Annapolis Mall"
                 city = "Annapolis"
                 state = "MD"
                 zc = "21401"
+            if "southcenter" in loc.split("|")[0]:
+                add = "2800 Southcenter Mall"
+                city = "Seattle"
+            if "gardenstate" in loc.split("|")[0]:
+                add = "One Garden State Plaza"
+                city = "Paramus"
+            if "oldorchard" in loc.split("|")[0]:
+                add = "4905 Old Orchard Center"
+                city = "Skokie"
+            if "plazabonita" in loc.split("|")[0]:
+                add = "3030 Plaza Bonita Road, Suite 2075"
+                city = "National City"
+            if "gardenstate" in loc.split("|")[0]:
+                add = "One Garden State Plaza"
+                city = "Paramus"
+            if "topanga" in loc.split("|")[0]:
+                add = "6600 Topanga Canyon Boulevard"
+                city = "Canoga Park"
             if " (" in add:
                 add = add.split(" (")[0]
             if "brandon" in loc.split("|")[0]:
@@ -98,6 +109,24 @@ def fetch_data():
                 city = "Valencia"
                 state = "CA"
                 zc = "91355"
+            cities = [
+                "Sherman Oaks",
+                "Los Angeles",
+                "San Diego",
+                "Bethesda",
+                "Escondido",
+                "San Francisco",
+                "Arcadia",
+                "Bay Shore",
+                "Canoga Park",
+                "Valencia",
+                "Santa Clara",
+                "New York",
+            ]
+            for cname in cities:
+                if cname in add:
+                    add = add.split(cname)[0].strip()
+                    city = cname
             yield SgRecord(
                 locator_domain=website,
                 page_url=loc.split("|")[0],

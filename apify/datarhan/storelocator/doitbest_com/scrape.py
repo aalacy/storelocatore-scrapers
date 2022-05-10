@@ -11,10 +11,14 @@ from sgscrape.sgwriter import SgWriter
 from sglogging import sglog
 import json
 
+from tenacity import retry, stop_after_attempt
+import tenacity
+import random
+
 domain = "doitbest.com"
 log = sglog.SgLogSetup().get_logger(domain)
 
-session = SgRequests()
+session = SgRequests(retries_with_fresh_proxy_ip=7)
 
 hdr = {
     "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
@@ -74,11 +78,26 @@ def get_headers_cookies(url_location):
 headers = get_headers_cookies("https://doitbest.com/store-locator")
 
 
+@retry(stop=stop_after_attempt(5), wait=tenacity.wait_fixed(5))
+def get_response(url):
+    with SgRequests() as http:
+        response = http.post(url, headers=headers, json=payload)
+        log.info(f"Retry POST RESPONSE: {response} ")
+        time.sleep(random.randint(1, 3))
+        if response.status_code == 200:
+            log.info(f"{url} >> HTTP STATUS: {response.status_code}")
+            return response
+        raise Exception(f"{url} >> HTTP Error Code: {response.status_code}")
+
+
 def fetch_data():
     url = "https://www.doitbest.com/StoreLocator/Submit"
     all_locations = []
     response = session.post(url, headers=headers, json=payload)
     log.info(f"POST RESPONSE: {response} ")
+    if response.status_code != 200:
+        response = get_response(url)
+
     data = json.loads(response.text)
     all_locations += data["Response"]["Stores"]
     log.info(f" Total Location: {len(all_locations)}")
