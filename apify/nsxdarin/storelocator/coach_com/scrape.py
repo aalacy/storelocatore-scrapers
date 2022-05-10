@@ -115,7 +115,108 @@ def fetch_data():
                         else:
                             typ = "Coach"
                             name = "Coach"
-                        if "popup" not in name.lower() and "pop-up" not in name.lower():
+                        if hours[-1:] == ";":
+                            hours = hours[:-1]
+                        phone = phone.replace("&ndash;", "-")
+                        city = (
+                            city.replace("&Eacute;", "E")
+                            .replace("&Aacute;", "A")
+                            .replace("&Iacute;", "I")
+                            .replace("&Uacute;", "U")
+                            .replace("&Oacute;", "O")
+                            .replace("&Ntilde;", "N")
+                            .replace("&Uuml;", "U")
+                            .replace("&Auml;", "A")
+                            .replace("&Ouml;", "O")
+                            .replace("&Acirc;", "A")
+                            .replace("&#8364;", "E")
+                            .replace("&ldquo;", '"')
+                            .replace("&rdquo;", '"')
+                            .replace("&#40;", "(")
+                            .replace("&#41;", ")")
+                            .replace("&Egrave;", "E")
+                            .replace("&ndash;", "-")
+                            .replace("&ordm;", "o")
+                            .replace("&Atilde;", "A")
+                            .replace("&Ccedil;", "C")
+                            .replace("&#35;", "#")
+                            .replace("&rsquo;", '"')
+                            .replace("&#39;", "'")
+                            .replace("&nbsp;", " ")
+                            .replace("&deg;", "o")
+                            .replace("&Ocirc;", "O")
+                        )
+                        add = (
+                            add.replace("&Eacute;", "E")
+                            .replace("&Aacute;", "A")
+                            .replace("&Iacute;", "I")
+                            .replace("&Uacute;", "U")
+                            .replace("&Oacute;", "O")
+                            .replace("&Ntilde;", "N")
+                            .replace("&Uuml;", "U")
+                            .replace("&Auml;", "A")
+                            .replace("&Ouml;", "O")
+                            .replace("&Acirc;", "A")
+                            .replace("&#8364;", "E")
+                            .replace("&ldquo;", '"')
+                            .replace("&rdquo;", '"')
+                            .replace("&#40;", "(")
+                            .replace("&#41;", ")")
+                            .replace("&Egrave;", "E")
+                            .replace("&ndash;", "-")
+                            .replace("&ordm;", "o")
+                            .replace("&Atilde;", "A")
+                            .replace("&Ccedil;", "C")
+                            .replace("&#35;", "#")
+                            .replace("&rsquo;", '"')
+                            .replace("&#39;", "'")
+                            .replace("&nbsp;", " ")
+                            .replace("&deg;", "o")
+                            .replace("&Ocirc;", "O")
+                        )
+                        name = (
+                            name.replace("&Eacute;", "E")
+                            .replace("&Aacute;", "A")
+                            .replace("&Iacute;", "I")
+                            .replace("&Uacute;", "U")
+                            .replace("&Oacute;", "O")
+                            .replace("&Ntilde;", "N")
+                            .replace("&Uuml;", "U")
+                            .replace("&Auml;", "A")
+                            .replace("&Ouml;", "O")
+                            .replace("&Acirc;", "A")
+                            .replace("&#8364;", "E")
+                            .replace("&ldquo;", '"')
+                            .replace("&rdquo;", '"')
+                            .replace("&#40;", "(")
+                            .replace("&#41;", ")")
+                            .replace("&Egrave;", "E")
+                            .replace("&ndash;", "-")
+                            .replace("&ordm;", "o")
+                            .replace("&Atilde;", "A")
+                            .replace("&Ccedil;", "C")
+                            .replace("&#35;", "#")
+                            .replace("&rsquo;", '"')
+                            .replace("&#39;", "'")
+                            .replace("&nbsp;", " ")
+                            .replace("&deg;", "o")
+                            .replace("&Ocirc;", "O")
+                        )
+                        zc = zc.replace(",", "").strip()
+                        add = add.replace("N/A", "").strip()
+                        if add == "NA" or add == "TBC":
+                            add = "<MISSING>"
+                        if loc == "<MISSING>":
+                            loc = "https://uk.coach.com/stores-edit-country?dwfrm_storelocator_address_international=GB&dwfrm_storelocator_findbycountry=Search%2Bcountry"
+                        if "N/A" in phone or "NO PHONE" in phone:
+                            phone = "<MISSING>"
+                        if (
+                            "popup" not in name.lower()
+                            and "pop-up" not in name.lower()
+                            and "N/A" not in city
+                            and "OPENING" not in hours
+                            and add != ""
+                        ):
                             yield SgRecord(
                                 locator_domain=website,
                                 page_url=loc,
@@ -232,7 +333,108 @@ def fetch_data():
             name = "Coach Outlet"
         if "outlet" in typ.lower():
             name = "Coach Outlet"
-        if "popup" not in name.lower() and "pop-up" not in name.lower():
+        if hours[-1:] == ";":
+            hours = hours[:-1]
+        phone = phone.replace("&ndash;", "-")
+        city = (
+            city.replace("&Eacute;", "E")
+            .replace("&Aacute;", "A")
+            .replace("&Iacute;", "I")
+            .replace("&Uacute;", "U")
+            .replace("&Oacute;", "O")
+            .replace("&Ntilde;", "N")
+            .replace("&Uuml;", "U")
+            .replace("&Auml;", "A")
+            .replace("&Ouml;", "O")
+            .replace("&Acirc;", "A")
+            .replace("&#8364;", "E")
+            .replace("&ldquo;", '"')
+            .replace("&rdquo;", '"')
+            .replace("&#40;", "(")
+            .replace("&#41;", ")")
+            .replace("&Egrave;", "E")
+            .replace("&ndash;", "-")
+            .replace("&ordm;", "o")
+            .replace("&Atilde;", "A")
+            .replace("&Ccedil;", "C")
+            .replace("&#35;", "#")
+            .replace("&rsquo;", '"')
+            .replace("&#39;", "'")
+            .replace("&nbsp;", " ")
+            .replace("&deg;", "o")
+            .replace("&Ocirc;", "O")
+        )
+        add = (
+            add.replace("&Eacute;", "E")
+            .replace("&Aacute;", "A")
+            .replace("&Iacute;", "I")
+            .replace("&Uacute;", "U")
+            .replace("&Oacute;", "O")
+            .replace("&Ntilde;", "N")
+            .replace("&Uuml;", "U")
+            .replace("&Auml;", "A")
+            .replace("&Ouml;", "O")
+            .replace("&Acirc;", "A")
+            .replace("&#8364;", "E")
+            .replace("&ldquo;", '"')
+            .replace("&rdquo;", '"')
+            .replace("&#40;", "(")
+            .replace("&#41;", ")")
+            .replace("&Egrave;", "E")
+            .replace("&ndash;", "-")
+            .replace("&ordm;", "o")
+            .replace("&Atilde;", "A")
+            .replace("&Ccedil;", "C")
+            .replace("&#35;", "#")
+            .replace("&rsquo;", '"')
+            .replace("&#39;", "'")
+            .replace("&nbsp;", " ")
+            .replace("&deg;", "o")
+            .replace("&Ocirc;", "O")
+        )
+        name = (
+            name.replace("&Eacute;", "E")
+            .replace("&Aacute;", "A")
+            .replace("&Iacute;", "I")
+            .replace("&Uacute;", "U")
+            .replace("&Oacute;", "O")
+            .replace("&Ntilde;", "N")
+            .replace("&Uuml;", "U")
+            .replace("&Auml;", "A")
+            .replace("&Ouml;", "O")
+            .replace("&Acirc;", "A")
+            .replace("&#8364;", "E")
+            .replace("&ldquo;", '"')
+            .replace("&rdquo;", '"')
+            .replace("&#40;", "(")
+            .replace("&#41;", ")")
+            .replace("&Egrave;", "E")
+            .replace("&ndash;", "-")
+            .replace("&ordm;", "o")
+            .replace("&Atilde;", "A")
+            .replace("&Ccedil;", "C")
+            .replace("&#35;", "#")
+            .replace("&rsquo;", '"')
+            .replace("&#39;", "'")
+            .replace("&nbsp;", " ")
+            .replace("&deg;", "o")
+            .replace("&Ocirc;", "O")
+        )
+        zc = zc.replace(",", "").strip()
+        add = add.replace("N/A", "").strip()
+        if add == "NA" or add == "TBC":
+            add = "<MISSING>"
+        if loc == "<MISSING>":
+            loc = "https://uk.coach.com/stores-edit-country?dwfrm_storelocator_address_international=GB&dwfrm_storelocator_findbycountry=Search%2Bcountry"
+        if "N/A" in phone or "NO PHONE" in phone:
+            phone = "<MISSING>"
+        if (
+            "popup" not in name.lower()
+            and "pop-up" not in name.lower()
+            and "N/A" not in city
+            and "OPENING" not in hours
+            and add != ""
+        ):
             yield SgRecord(
                 locator_domain=website,
                 page_url=loc,
@@ -353,7 +555,108 @@ def fetch_data():
             typ = "Coach Outlet"
         if "outlet" in typ.lower():
             name = "Coach Outlet"
-        if "popup" not in name.lower() and "pop-up" not in name.lower():
+        if hours[-1:] == ";":
+            hours = hours[:-1]
+        phone = phone.replace("&ndash;", "-")
+        city = (
+            city.replace("&Eacute;", "E")
+            .replace("&Aacute;", "A")
+            .replace("&Iacute;", "I")
+            .replace("&Uacute;", "U")
+            .replace("&Oacute;", "O")
+            .replace("&Ntilde;", "N")
+            .replace("&Uuml;", "U")
+            .replace("&Auml;", "A")
+            .replace("&Ouml;", "O")
+            .replace("&Acirc;", "A")
+            .replace("&#8364;", "E")
+            .replace("&ldquo;", '"')
+            .replace("&rdquo;", '"')
+            .replace("&#40;", "(")
+            .replace("&#41;", ")")
+            .replace("&Egrave;", "E")
+            .replace("&ndash;", "-")
+            .replace("&ordm;", "o")
+            .replace("&Atilde;", "A")
+            .replace("&Ccedil;", "C")
+            .replace("&#35;", "#")
+            .replace("&rsquo;", '"')
+            .replace("&#39;", "'")
+            .replace("&nbsp;", " ")
+            .replace("&deg;", "o")
+            .replace("&Ocirc;", "O")
+        )
+        add = (
+            add.replace("&Eacute;", "E")
+            .replace("&Aacute;", "A")
+            .replace("&Iacute;", "I")
+            .replace("&Uacute;", "U")
+            .replace("&Oacute;", "O")
+            .replace("&Ntilde;", "N")
+            .replace("&Uuml;", "U")
+            .replace("&Auml;", "A")
+            .replace("&Ouml;", "O")
+            .replace("&Acirc;", "A")
+            .replace("&#8364;", "E")
+            .replace("&ldquo;", '"')
+            .replace("&rdquo;", '"')
+            .replace("&#40;", "(")
+            .replace("&#41;", ")")
+            .replace("&Egrave;", "E")
+            .replace("&ndash;", "-")
+            .replace("&ordm;", "o")
+            .replace("&Atilde;", "A")
+            .replace("&Ccedil;", "C")
+            .replace("&#35;", "#")
+            .replace("&rsquo;", '"')
+            .replace("&#39;", "'")
+            .replace("&nbsp;", " ")
+            .replace("&deg;", "o")
+            .replace("&Ocirc;", "O")
+        )
+        name = (
+            name.replace("&Eacute;", "E")
+            .replace("&Aacute;", "A")
+            .replace("&Iacute;", "I")
+            .replace("&Uacute;", "U")
+            .replace("&Oacute;", "O")
+            .replace("&Ntilde;", "N")
+            .replace("&Uuml;", "U")
+            .replace("&Auml;", "A")
+            .replace("&Ouml;", "O")
+            .replace("&Acirc;", "A")
+            .replace("&#8364;", "E")
+            .replace("&ldquo;", '"')
+            .replace("&rdquo;", '"')
+            .replace("&#40;", "(")
+            .replace("&#41;", ")")
+            .replace("&Egrave;", "E")
+            .replace("&ndash;", "-")
+            .replace("&ordm;", "o")
+            .replace("&Atilde;", "A")
+            .replace("&Ccedil;", "C")
+            .replace("&#35;", "#")
+            .replace("&rsquo;", '"')
+            .replace("&#39;", "'")
+            .replace("&nbsp;", " ")
+            .replace("&deg;", "o")
+            .replace("&Ocirc;", "O")
+        )
+        zc = zc.replace(",", "").strip()
+        add = add.replace("N/A", "").strip()
+        if add == "NA" or add == "TBC":
+            add = "<MISSING>"
+        if "N/A" in phone or "NO PHONE" in phone:
+            phone = "<MISSING>"
+        if loc == "<MISSING>":
+            loc = "https://uk.coach.com/stores-edit-country?dwfrm_storelocator_address_international=GB&dwfrm_storelocator_findbycountry=Search%2Bcountry"
+        if (
+            "popup" not in name.lower()
+            and "pop-up" not in name.lower()
+            and "N/A" not in city
+            and "OPENING" not in hours
+            and add != ""
+        ):
             yield SgRecord(
                 locator_domain=website,
                 page_url=loc,
@@ -437,9 +740,108 @@ def fetch_data():
                             ):
                                 typ = "Coach Department & Specialty Store"
                             name = typ
+                            hours = hours.strip()
+                            if hours[-1:] == ";":
+                                hours = hours[:-1]
+                            phone = phone.replace("&ndash;", "-")
+                            city = (
+                                city.replace("&Eacute;", "E")
+                                .replace("&Aacute;", "A")
+                                .replace("&Iacute;", "I")
+                                .replace("&Uacute;", "U")
+                                .replace("&Oacute;", "O")
+                                .replace("&Ntilde;", "N")
+                                .replace("&Uuml;", "U")
+                                .replace("&Auml;", "A")
+                                .replace("&Ouml;", "O")
+                                .replace("&Acirc;", "A")
+                                .replace("&#8364;", "E")
+                                .replace("&ldquo;", '"')
+                                .replace("&rdquo;", '"')
+                                .replace("&#40;", "(")
+                                .replace("&#41;", ")")
+                                .replace("&Egrave;", "E")
+                                .replace("&ndash;", "-")
+                                .replace("&ordm;", "o")
+                                .replace("&Atilde;", "A")
+                                .replace("&Ccedil;", "C")
+                                .replace("&#35;", "#")
+                                .replace("&rsquo;", '"')
+                                .replace("&#39;", "'")
+                                .replace("&nbsp;", " ")
+                                .replace("&deg;", "o")
+                                .replace("&Ocirc;", "O")
+                            )
+                            add = (
+                                add.replace("&Eacute;", "E")
+                                .replace("&Aacute;", "A")
+                                .replace("&Iacute;", "I")
+                                .replace("&Uacute;", "U")
+                                .replace("&Oacute;", "O")
+                                .replace("&Ntilde;", "N")
+                                .replace("&Uuml;", "U")
+                                .replace("&Auml;", "A")
+                                .replace("&Ouml;", "O")
+                                .replace("&Acirc;", "A")
+                                .replace("&#8364;", "E")
+                                .replace("&ldquo;", '"')
+                                .replace("&rdquo;", '"')
+                                .replace("&#40;", "(")
+                                .replace("&#41;", ")")
+                                .replace("&Egrave;", "E")
+                                .replace("&ndash;", "-")
+                                .replace("&ordm;", "o")
+                                .replace("&Atilde;", "A")
+                                .replace("&Ccedil;", "C")
+                                .replace("&#35;", "#")
+                                .replace("&rsquo;", '"')
+                                .replace("&#39;", "'")
+                                .replace("&nbsp;", " ")
+                                .replace("&deg;", "o")
+                                .replace("&Ocirc;", "O")
+                            )
+                            name = (
+                                name.replace("&Eacute;", "E")
+                                .replace("&Aacute;", "A")
+                                .replace("&Iacute;", "I")
+                                .replace("&Uacute;", "U")
+                                .replace("&Oacute;", "O")
+                                .replace("&Ntilde;", "N")
+                                .replace("&Uuml;", "U")
+                                .replace("&Auml;", "A")
+                                .replace("&Ouml;", "O")
+                                .replace("&Acirc;", "A")
+                                .replace("&#8364;", "E")
+                                .replace("&ldquo;", '"')
+                                .replace("&rdquo;", '"')
+                                .replace("&#40;", "(")
+                                .replace("&#41;", ")")
+                                .replace("&Egrave;", "E")
+                                .replace("&ndash;", "-")
+                                .replace("&ordm;", "o")
+                                .replace("&Atilde;", "A")
+                                .replace("&Ccedil;", "C")
+                                .replace("&#35;", "#")
+                                .replace("&rsquo;", '"')
+                                .replace("&#39;", "'")
+                                .replace("&nbsp;", " ")
+                                .replace("&deg;", "o")
+                                .replace("&Ocirc;", "O")
+                            )
+                            if add == "NA" or add == "TBC":
+                                add = "<MISSING>"
+                            zc = zc.replace(",", "").strip()
+                            add = add.replace("N/A", "").strip()
+                            if loc == "<MISSING>":
+                                loc = "https://uk.coach.com/stores-edit-country?dwfrm_storelocator_address_international=GB&dwfrm_storelocator_findbycountry=Search%2Bcountry"
+                            if "N/A" in phone or "NO PHONE" in phone:
+                                phone = "<MISSING>"
                             if (
                                 "popup" not in name.lower()
                                 and "pop-up" not in name.lower()
+                                and "N/A" not in city
+                                and "OPENING" not in hours
+                                and add != ""
                             ):
                                 yield SgRecord(
                                     locator_domain=website,

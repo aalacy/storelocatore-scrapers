@@ -56,7 +56,11 @@ def fetch_data():
     store_list = search_sel.xpath('//div[@data-pub-type="page-list"]/div/div')
     log.info(len(store_list))
     for store in store_list:
-        location_name = "".join(store.xpath(".//h2/text()")).strip()
+        location_name = "".join(
+            store.xpath(
+                ".//div[@class='pub__card__info']//span[contains(@class,'pub__h2')]/text()"
+            )
+        ).strip()
         if "Customer Ordering and Collection point" in location_name:
             continue
 
@@ -91,8 +95,6 @@ def fetch_data():
         zip = formatted_addr.postcode
 
         country_code = "AE"
-
-        location_name = "".join(store.xpath(".//h2/text()")).strip()
 
         phone = "<MISSING>"
         store_number = "<MISSING>"

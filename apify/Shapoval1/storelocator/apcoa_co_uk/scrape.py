@@ -24,6 +24,7 @@ def fetch_data(sgw: SgWriter):
     }
     r = session.get(api_url, headers=headers)
     div = r.text.split("uid:")[1:]
+
     for d in div:
 
         location_name = (
@@ -143,5 +144,9 @@ def fetch_data(sgw: SgWriter):
 
 if __name__ == "__main__":
     session = SgRequests()
-    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))) as writer:
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID({SgRecord.Headers.PAGE_URL, SgRecord.Headers.LOCATION_NAME})
+        )
+    ) as writer:
         fetch_data(writer)

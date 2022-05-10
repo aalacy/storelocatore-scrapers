@@ -628,10 +628,10 @@ def lesser_datasource():
 
 
 def fix_rec(x):
-    x["Address1x"] = x["Address1"]
-    x["Address2x"] = x["Address2"]
-    x["Address3x"] = x["Address3"]
-    x["Address4x"] = x["Address4"]
+    x["Address1x"] = x.get("Address1")
+    x["Address2x"] = x.get("Address2")
+    x["Address3x"] = x.get("Address3")
+    x["Address4x"] = x.get("Address4")
     try:
         if (
             any(j in x for j in ["UITE", "LOOR", "NIT", "uite", "loor", "nit"])
@@ -744,7 +744,7 @@ def fetch_data():
     #    file.write(json.dumps(megafails)) # noqa
 
     for i in lesser_datasource():
-        yield i
+        yield fix_rec(i)
     logzilla.info(f"Finished grabbing data!!☺ ")  # noqa
 
 
@@ -876,8 +876,7 @@ def scrape():
         ),
         raw_address=sp.MultiMappingField(
             mapping=[["Address1x"], ["Address2x"], ["Address3x"], ["Address4x"]],
-            multi_mapping_concat_with=", ",
-            value_transform=fix_comma,
+            multi_mapping_concat_with=" ",
             is_required=False,
         ),
     )

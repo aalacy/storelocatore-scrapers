@@ -1,6 +1,8 @@
 import ssl
 import json
+import usaddress
 from sglogging import sglog
+from bs4 import BeautifulSoup
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgselenium.sgselenium import SgChrome
@@ -44,7 +46,7 @@ def get_driver(url, class_name, driver=None):
             ).driver()
             driver.get(url)
 
-            WebDriverWait(driver, 10).until(
+            WebDriverWait(driver, 2).until(
                 EC.presence_of_element_located((By.CLASS_NAME, class_name))
             )
             break
@@ -68,32 +70,78 @@ def fetch_data():
             driver = get_driver(url, class_name)
         else:
             driver = get_driver(url, class_name, driver=driver)
-        loclist = driver.page_source.split('<script type="application/ld+json">')[1:]
+        loclist = driver.page_source.split("customLocationContent")[1:]
         if len(loclist) == 0:
             continue
         else:
             break
     coords_list = driver.page_source.split('"lat":')[1:]
     for loc in loclist:
-        loc = json.loads(loc.split("</script>")[0])
-        location_name = loc["name"]
-        address = loc["address"]
-        phone = address["telephone"]
-        street_address = address["streetAddress"]
-        city = address["addressLocality"]
-        state = address["addressRegion"]
-        zip_postal = address["postalCode"]
+        loc = (
+            '{"customLocationContent'
+            + loc.split(',"showLocationPhotoInLocationSearch')[0]
+            + "}"
+        )
+        loc = json.loads(loc)
+        page_url = (
+            DOMAIN
+            + BeautifulSoup(loc["customLocationContent"], "html.parser").find("a")[
+                "href"
+            ]
+        )
+        log.info(page_url)
+        driver = get_driver(page_url, class_name)
+        soup = BeautifulSoup(driver.page_source, "html.parser")
+        location_name = soup.find("h4").text
+        temp = soup.findAll("p")
+        phone = temp[1].text
+        address = temp[0].get_text(separator="|", strip=True).replace("|", " ")
+        address = address.replace(",", " ")
+        address = usaddress.parse(address)
+        i = 0
+        street_address = ""
+        city = ""
+        state = ""
+        zip_postal = ""
+        while i < len(address):
+            temp = address[i]
+            if (
+                temp[1].find("Address") != -1
+                or temp[1].find("Street") != -1
+                or temp[1].find("Recipient") != -1
+                or temp[1].find("Occupancy") != -1
+                or temp[1].find("BuildingName") != -1
+                or temp[1].find("USPSBoxType") != -1
+                or temp[1].find("USPSBoxID") != -1
+            ):
+                street_address = street_address + " " + temp[0]
+            if temp[1].find("PlaceName") != -1:
+                city = city + " " + temp[0]
+            if temp[1].find("StateName") != -1:
+                state = state + " " + temp[0]
+            if temp[1].find("ZipCode") != -1:
+                zip_postal = zip_postal + " " + temp[0]
+            i += 1
+        city = city.replace("(Inside Mobil)", "").replace("inside Mobil", "")
+        hours_of_operation = (
+            soup.find("div", {"class": "hours"})
+            .get_text(separator="|", strip=True)
+            .replace("|", " ")
+        )
+        if "NOW OFFERING" in hours_of_operation:
+            hours_of_operation = hours_of_operation.split("NOW OFFERING")[0]
+        elif "ONLINE ORDERING" in hours_of_operation:
+            hours_of_operation = hours_of_operation.split("ONLINE ORDERING")[0]
+        elif "DELIVERY" in hours_of_operation:
+            hours_of_operation = hours_of_operation.split("DELIVERY")[0]
+        elif "NEW HOURS" in hours_of_operation:
+            hours_of_operation = hours_of_operation.split("NEW HOURS")[0]
         for coords in coords_list:
-            if str(phone) in coords:
+            if location_name in coords:
                 coords = coords.split(',"googlePlaceId"')[0].split(",")
                 latitude = coords[0]
                 longitude = coords[1].replace('"lng":', "")
                 break
-        country_code = "US"
-        page_url = DOMAIN + city.lower()
-        log.info(page_url)
-        hours_of_operation = loc["openingHours"]
-        hours_of_operation = " ".join(hours_of_operation)
         country_code = "US"
         yield SgRecord(
             locator_domain=DOMAIN,
