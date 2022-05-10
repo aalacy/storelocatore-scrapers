@@ -5,9 +5,8 @@ from sgscrape.sgwriter import SgWriter
 from sgpostal import sgpostal as parser
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgselenium import SgChrome
+from sgselenium import SgFirefox
 import time
-from webdriver_manager.chrome import ChromeDriverManager
 import ssl
 import json
 
@@ -38,101 +37,76 @@ headers = {
 }
 
 
-def get_driver(url, driver=None):
-    if driver is not None:
-        driver.quit()
-
-    user_agent = (
-        "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0"
-    )
-    x = 0
-    while True:
-        x = x + 1
-        try:
-            driver = SgChrome(
-                executable_path=ChromeDriverManager().install(),
-                user_agent=user_agent,
-                is_headless=True,
-            ).driver()
-            driver.get(url)
-            break
-        except Exception:
-            driver.quit()
-            if x == 10:
-                raise Exception(
-                    "Make sure this ran with a Proxy, will fail without one"
-                )
-            continue
-    return driver
-
-
 def fetch_data():
     # Your scraper here
 
     api_url = "https://www.jenningsbet.com/shops/"
-    driver = get_driver(api_url)
-    time.sleep(10)
-    driver.get(
-        "https://www.jenningsbet.com/shop-locator-app.118b9ee-9a56dc3-38e30873a.js"
-    )
-    time.sleep(20)
-    storeLocations = json.loads(
-        driver.page_source.split("JSON.parse('")[1].strip().split("');")[0].strip()
-    )["storeLocations"]
-    for loc in storeLocations:
-        state = loc["areaName"]
-        stores = loc["shops"]
-        for store in stores:
-            locator_domain = website
-            page_url = api_url
-            location_name = store["name"]
+    with SgFirefox(block_third_parties=True) as driver:
+        driver.get(api_url)
+        time.sleep(10)
+        driver.get(
+            "https://www.jenningsbet.com/shop-locator-app.118b9ee-9a56dc3-38e30873a.js"
+        )
+        time.sleep(20)
+        storeLocations = json.loads(
+            driver.page_source.split("JSON.parse('")[1].strip().split("');")[0].strip()
+        )["storeLocations"]
+        for loc in storeLocations:
+            state = loc["areaName"]
+            stores = loc["shops"]
+            for store in stores:
+                locator_domain = website
+                page_url = api_url
+                location_name = store["name"]
 
-            location_type = "<MISSING>"
+                location_type = "<MISSING>"
 
-            raw_address = store["address"]
+                raw_address = store["address"]
 
-            formatted_addr = parser.parse_address_intl(raw_address)
-            street_address = formatted_addr.street_address_1
-            if formatted_addr.street_address_2:
-                street_address = street_address + ", " + formatted_addr.street_address_2
+                formatted_addr = parser.parse_address_intl(raw_address)
+                street_address = formatted_addr.street_address_1
+                if formatted_addr.street_address_2:
+                    street_address = (
+                        street_address + ", " + formatted_addr.street_address_2
+                    )
 
-            if street_address is not None:
-                street_address = street_address.replace("Ste", "Suite")
+                if street_address is not None:
+                    street_address = street_address.replace("Ste", "Suite")
 
-            city = formatted_addr.city
-            if city:
-                city = city.replace("Great Clacton", "").strip()
+                city = formatted_addr.city
+                if city:
+                    city = city.replace("Great Clacton", "").strip()
 
-            zip = " ".join(raw_address.split(" ")[-2:]).strip()
+                zip = " ".join(raw_address.split(" ")[-2:]).strip()
 
-            country_code = "GB"
+                country_code = "GB"
 
-            phone = "<MISSING>"
+                phone = "<MISSING>"
 
-            hours_of_operation = "<MISSING>"
+                hours_of_operation = "<MISSING>"
 
-            store_number = "<MISSING>"
+                store_number = "<MISSING>"
 
-            latitude = store["lat"]
-            longitude = store["lon"]
+                latitude = store["lat"]
+                longitude = store["lon"]
 
-            yield SgRecord(
-                locator_domain=locator_domain,
-                page_url=page_url,
-                location_name=location_name,
-                street_address=street_address,
-                city=city,
-                state=state,
-                zip_postal=zip,
-                country_code=country_code,
-                store_number=store_number,
-                phone=phone,
-                location_type=location_type,
-                latitude=latitude,
-                longitude=longitude,
-                hours_of_operation=hours_of_operation,
-                raw_address=raw_address,
-            )
+                yield SgRecord(
+                    locator_domain=locator_domain,
+                    page_url=page_url,
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=zip,
+                    country_code=country_code,
+                    store_number=store_number,
+                    phone=phone,
+                    location_type=location_type,
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=hours_of_operation,
+                    raw_address=raw_address,
+                )
 
 
 def scrape():
