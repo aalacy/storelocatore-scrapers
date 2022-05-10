@@ -65,9 +65,9 @@ def fetch_data():
                             .split(",", 1)
                         )
                     except:
-                        continue
+                        lat = longt = "<MISSING>"
                     ltype = "<MISSING>"
-                    if "Temporarily Closed" in title:
+                    if "temporarily closed" in title.lower():
                         ltype = "Temporarily Closed"
                     elif "COMING SOON" in title:
                         ltype = "COMING SOON"
