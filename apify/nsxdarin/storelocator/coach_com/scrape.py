@@ -216,6 +216,7 @@ def fetch_data():
                             and "N/A" not in city
                             and "OPENING" not in hours
                             and add != ""
+                            and add != "<MISSING>"
                         ):
                             yield SgRecord(
                                 locator_domain=website,
@@ -434,6 +435,7 @@ def fetch_data():
             and "N/A" not in city
             and "OPENING" not in hours
             and add != ""
+            and add != "<MISSING>"
         ):
             yield SgRecord(
                 locator_domain=website,
@@ -656,6 +658,7 @@ def fetch_data():
             and "N/A" not in city
             and "OPENING" not in hours
             and add != ""
+            and add != "<MISSING>"
         ):
             yield SgRecord(
                 locator_domain=website,
@@ -842,6 +845,7 @@ def fetch_data():
                                 and "N/A" not in city
                                 and "OPENING" not in hours
                                 and add != ""
+                                and add != "<MISSING>"
                             ):
                                 yield SgRecord(
                                     locator_domain=website,
