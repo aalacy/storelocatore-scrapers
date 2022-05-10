@@ -97,7 +97,7 @@ def fetch_data():
                 open_time = hour.find("span", {"class": "open"}).text
                 close_time = hour.find("span", {"class": "close"}).text
                 hours_of_operation = (
-                    hours_of_operation + day + " " + open_time + " " + close_time + " "
+                    hours_of_operation + day + " " + open_time + "-" + close_time + " "
                 )
             yield SgRecord(
                 locator_domain=DOMAIN,
