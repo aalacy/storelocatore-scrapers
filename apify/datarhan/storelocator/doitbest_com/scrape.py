@@ -93,10 +93,8 @@ def get_response(url):
 def fetch_data():
     url = "https://www.doitbest.com/StoreLocator/Submit"
     all_locations = []
-    response = session.post(url, headers=headers, json=payload)
-    log.info(f"POST RESPONSE: {response} ")
-    if response.status_code != 200:
-        response = get_response(url)
+
+    response = get_response(url)
 
     data = json.loads(response.text)
     all_locations += data["Response"]["Stores"]
