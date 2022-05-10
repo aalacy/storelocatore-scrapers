@@ -11,9 +11,9 @@ def fetch_data():
     domain = "fm.bank"
 
     hdr = {
-        'accept': '*/*',
-        'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/101.0.4951.54 Safari/537.36',
-        'x-requested-with': 'XMLHttpRequest'
+        "accept": "*/*",
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/101.0.4951.54 Safari/537.36",
+        "x-requested-with": "XMLHttpRequest",
     }
     all_locations = session.get(start_url, headers=hdr).json()
     for poi in all_locations:
