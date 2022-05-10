@@ -32,8 +32,31 @@ def get_data(url, sgw: SgWriter):
     street_address = "".join(tree.xpath('//meta[@name="sp_address_line1"]/@content'))
     if not street_address:
         return
-    location_name = "".join(tree.xpath('//meta[@name="sp_displayName"]/@content'))
+    location_name = (
+        "".join(tree.xpath('//meta[@name="sp_displayName"]/@content'))
+        .replace("- OB/GYN", "")
+        .replace("Stanford Express Care Clinic -", "Stanford Express Care Clinic")
+        .strip()
+    )
+    if location_name.find(" in ") != -1:
+        location_name = location_name.split(" in ")[0].strip()
+    if location_name.find(" at ") != -1:
+        location_name = location_name.split(" at ")[0].strip()
+    if location_name.find(f"{street_address}") != -1:
+        location_name = location_name.split("-")[0].strip()
+    if location_name.find("–") != -1:
+        location_name = location_name.split("–")[0].strip()
+    if (
+        location_name.find(f"{street_address.split()[0]}") != -1
+        and street_address.find("-") != -1
+    ):
+        street_address = street_address.split("-")[0].strip()
+    if location_name.find("Clinic -") != -1 or location_name.find("Center -") != -1:
+        location_name = location_name.split("-")[0].strip()
+
     city = "".join(tree.xpath('//meta[@name="sp_city"]/@content'))
+    if location_name.find(f"{city}") != -1:
+        location_name = location_name.replace(f"{city}", "").strip()
     state = "".join(tree.xpath('//meta[@name="sp_state"]/@content'))
     postal = "".join(tree.xpath('//meta[@name="sp_zip"]/@content'))
     country_code = "US"
@@ -77,7 +100,7 @@ def get_data(url, sgw: SgWriter):
 
 def fetch_data(sgw: SgWriter):
     urls = get_urls()
-    with futures.ThreadPoolExecutor(max_workers=5) as executor:
+    with futures.ThreadPoolExecutor(max_workers=10) as executor:
         future_to_url = {executor.submit(get_data, url, sgw): url for url in urls}
         for future in futures.as_completed(future_to_url):
             future.result()
