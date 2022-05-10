@@ -45,7 +45,6 @@ def fetch_data():
         while True:
             x = x + 1
             if x == 10:
-                print(loc_dom)
                 raise Exception
             try:
                 with SgFirefox() as driver:
