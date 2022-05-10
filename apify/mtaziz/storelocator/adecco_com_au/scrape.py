@@ -158,6 +158,6 @@ def scrape():
 if __name__ == "__main__":
     logger.info("Pulling Headers")
     headers = get_headers_for(start_url)
-    logger.info(f"Scrape Started")
+    logger.info("Scrape Started")
     scrape()
     logger.info("Scrape Finished!")
