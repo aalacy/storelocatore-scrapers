@@ -59,8 +59,6 @@ def fetch_data():
 
             locator_domain = website
 
-            page_url = search_url
-
             headers["Referer"] = "https://www.jeep.cl/concesionarios/"
 
             data["action"] = "get_chile_dealers_details"
@@ -69,6 +67,8 @@ def fetch_data():
             store_res = session.post(api_url, headers=headers, data=data)
 
             store_json = json.loads(store_res.text)
+
+            page_url = store_json.get("url", "<MISSING>")
 
             location_name = "".join(store.xpath(".//h2//text()")).strip()
             location_type = "<MISSING>"
