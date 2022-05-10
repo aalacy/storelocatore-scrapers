@@ -1,7 +1,7 @@
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sglogging import SgLogSetup
 import math
@@ -29,7 +29,7 @@ hr_obj = {
     "7": "Sunday",
 }
 
-max_workers = 24
+max_workers = 32
 
 
 def fetchConcurrentSingle(store):
@@ -65,11 +65,56 @@ def request_with_retries(url):
         return session.get(url, headers=_headers)
 
 
+def parse_cn(raw_address):
+    raw_address = raw_address.replace("中国", "")
+    state = street_address = city = ""
+    if "澳门" in raw_address:
+        city = "澳门"
+        street_address = raw_address.replace("澳门", "")
+    if "香港" in raw_address:
+        city = "香港"
+        street_address = raw_address.replace("香港", "")
+    if "省" in raw_address:
+        state = raw_address.split("省")[0] + "省"
+        raw_address = raw_address.split("省")[-1]
+    if "自治区" in raw_address:
+        state = raw_address.split("自治区")[0] + "自治区"
+        raw_address = raw_address.split("自治区")[-1]
+    if "内蒙古" in raw_address:
+        state = "内蒙古"
+        raw_address = raw_address.replace("内蒙古", "")
+    if "自治州" in raw_address:
+        state = raw_address.split("自治州")[0] + "自治州"
+        raw_address = raw_address.split("自治州")[-1]
+
+    if "路" in city:
+        _cc = city.split("路")
+        city = _cc[-1]
+        street_address = _cc[0] + "路" + street_address
+    if "号" in city:
+        _cc = city.split("号")
+        city = _cc[-1]
+        street_address = _cc[0] + "号" + street_address
+    if "区" in city:
+        _cc = city.split("区")
+        city = _cc[-1]
+        street_address = _cc[0] + "区" + street_address
+
+    if "市" in raw_address:
+        _ss = raw_address.split("市")
+        street_address = _ss[-1]
+        city = _ss[0]
+        if "市" not in city:
+            city += "市"
+
+    return street_address, city, state
+
+
 def fetch_data():
     with SgRequests() as http:
         for a in range(1, 11):
-            for b in range(20):
-                for c in range(10):
+            for b in range(26):
+                for c in range(20):
                     logger.info(f"{a, b, c}")
                     try:
                         data = http.get(
@@ -100,27 +145,65 @@ def fetch_data():
                         if phone:
                             phone = phone.split(",")[0]
 
-                        city = addr["city"]
                         zip_postal = addr.get("zipcode")
-                        if "Excellium" in city:
-                            city = ""
-                        if city and city.isdigit():
-                            city = ""
+                        if addr["country_code"] == "CN":
+                            street_address, city, state = parse_cn(raw_address)
+                        else:
+                            street_address = " ".join(addr["lines"]).strip()
+                            city = addr["city"]
+                            zip_postal = addr.get("zipcode")
+                            if "Excellium" in city:
+                                city = ""
+                            if city and city.isdigit():
+                                city = ""
 
-                        if city:
-                            city = city.split(",")[0]
+                            if city:
+                                city = city.split(",")[0]
+
+                        # clean the street_address
+                        if street_address:
+                            if street_address.lower() in [
+                                "-",
+                                "#n/a",
+                                "republic of korea",
+                            ]:
+                                street_address = ""
+                            if phone and street_address == phone:
+                                street_address = ""
+                            if " km " in street_address:
+                                street_address = street_address.split(" km")[-1].strip()
+
+                            _street = street_address.split()
+                            if _street:
+                                if _street[-1].strip() == addr["country_code"]:
+                                    del _street[-1]
+                                if city and _street[-1].strip() == city:
+                                    del _street[-1]
+
+                                street_address = " ".join(_street)
+
+                        latitude = loc["geometry"]["coordinates"][1]
+                        longitude = loc["geometry"]["coordinates"][0]
+                        if latitude:
+                            street_address = street_address.replace(
+                                str(latitude), ""
+                            ).strip()
+                        if longitude:
+                            street_address = street_address.replace(
+                                str(longitude), ""
+                            ).strip()
 
                         yield SgRecord(
                             page_url=base_url,
                             store_number=_["store_id"],
                             location_name=_["name"],
-                            street_address=" ".join(addr["lines"]),
+                            street_address=street_address.strip(),
                             city=city,
                             zip_postal=zip_postal,
                             country_code=addr["country_code"],
                             phone=phone,
-                            latitude=loc["geometry"]["coordinates"][1],
-                            longitude=loc["geometry"]["coordinates"][0],
+                            latitude=latitude,
+                            longitude=longitude,
                             hours_of_operation="; ".join(hours),
                             location_type=_["user_properties"]["brand"],
                             locator_domain=locator_domain,
@@ -131,7 +214,8 @@ def fetch_data():
 if __name__ == "__main__":
     with SgWriter(
         SgRecordDeduper(
-            RecommendedRecordIds.StoreNumberId, duplicate_streak_failure_factor=100
+            SgRecordID({SgRecord.Headers.STORE_NUMBER}),
+            duplicate_streak_failure_factor=100,
         )
     ) as writer:
         results = fetch_data()

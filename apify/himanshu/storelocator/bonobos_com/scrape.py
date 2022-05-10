@@ -62,6 +62,8 @@ def fetch_data():
             ):
                 street = street + " " + temp[0]
             if temp[1].find("PlaceName") != -1:
+                if temp[0] in city:
+                    continue
                 city = city + " " + temp[0]
             if temp[1].find("StateName") != -1:
                 state = state + " " + temp[0]
@@ -107,7 +109,7 @@ def fetch_data():
         except:
             pass
         try:
-            street = street.split(" Corner of ", 1)[0]
+            city = city.split(" Located ", 1)[0]
         except:
             pass
         yield SgRecord(
