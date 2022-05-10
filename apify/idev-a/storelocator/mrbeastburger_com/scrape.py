@@ -92,9 +92,6 @@ def fetch_data():
     driver = get_driver()
     driver.get(base_url)
     locations = bs(driver.page_source, "lxml").select("restaurant")
-    import pdb
-
-    pdb.set_trace()
     for _, page_url, ca in fetchConcurrentList(locations):
         hours = []
         for hr in ca:

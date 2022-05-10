@@ -24,7 +24,8 @@ max_workers = 16
 
 def fetchConcurrentSingle(link):
     if link.a:
-        page_url = link.a["href"]
+        page_url = link.select_one("a.store-card__link")["href"]
+        logger.info(page_url)
         response = request_with_retries(page_url)
         return page_url, link, bs(response.text, "lxml")
 
@@ -57,41 +58,39 @@ def request_with_retries(url):
 def fetch_data():
     with SgRequests() as session:
         soup = bs(session.get(base_url, headers=_headers).text, "lxml")
-        links = soup.select("div.card-store")
+        links = soup.select("div.store-card")
         logger.info(f"{len(links)} found")
         for page_url, link, sp1 in fetchConcurrentList(links):
-            logger.info(page_url)
             if (
-                sp1.select_one("div.blockquote__inner")
-                and "soon!" in sp1.select_one("div.blockquote__inner").text
+                sp1.select_one("span.crumb-collective__header-link")
+                and "soon!" in sp1.select_one("span.crumb-collective__header-link").text
             ):
                 continue
-            raw_address = link.p.text.replace("\n", " ").replace("\r", " ").strip()
+            raw_address = (
+                link.select_one("div.store-card__address")
+                .text.replace("\n", " ")
+                .replace("\r", " ")
+                .strip()
+            )
             if "Australia" not in raw_address:
                 raw_address += ", Australia"
             addr = parse_address_intl(raw_address)
             street_address = addr.street_address_1
             if addr.street_address_2:
                 street_address += " " + addr.street_address_2
-            coord = (
-                sp1.select_one("div.single-store__map-wrapper")
-                .find_next_sibling()["href"]
-                .split("&daddr=")[1]
-                .split(",")
-            )
+            coord = sp1.select_one("div.single-store-content__map-map")
             hours = [
                 ": ".join(hh.stripped_strings)
-                for hh in sp1.select(
-                    "div.single-store__mobile-hours-table div.single-store__hour-row"
-                )
+                for hh in sp1.select("ul.single-store-content__details-oh-list li")
+                if "Anzac" not in hh.text
             ]
 
             phone = ""
-            if sp1.select_one("a.single-store__number"):
-                phone = sp1.select_one("a.single-store__number").text.strip()
+            if link.select_one("a.store-card__phone"):
+                phone = link.select_one("a.store-card__phone").text.strip()
             yield SgRecord(
                 page_url=page_url,
-                location_name=link.h3.text.strip(),
+                location_name=link.h4.text.strip(),
                 street_address=street_address,
                 city=addr.city,
                 state=addr.state,
@@ -99,8 +98,8 @@ def fetch_data():
                 country_code="AUS",
                 phone=phone,
                 locator_domain=locator_domain,
-                latitude=coord[0],
-                longitude=coord[1],
+                latitude=coord["data-lat"],
+                longitude=coord["data-lng"],
                 hours_of_operation="; ".join(hours).replace("–", "-"),
                 raw_address=raw_address,
             )

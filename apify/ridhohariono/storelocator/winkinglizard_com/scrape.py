@@ -8,26 +8,14 @@ from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgpostal import parse_address_intl
 import re
 import json
-from sgselenium import SgSelenium
-import ssl
-
-try:
-    _create_unverified_https_context = (
-        ssl._create_unverified_context
-    )  # Legacy Python that doesn't verify HTTPS certificates by default
-except AttributeError:
-    pass
-else:
-    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
-
 
 DOMAIN = "winkinglizard.com"
 BASE_URL = "https://www.winkinglizard.com/"
 LOCATION_URL = "https://www.winkinglizard.com/locations"
 HEADERS = {
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.",
-    "accept-encoding": "gzip, deflate, br",
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
+    "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/101.0.4951.54 Safari/537.36",
+    "upgrade-insecure-request": "1",
 }
 log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
 
@@ -70,11 +58,7 @@ def pull_content(url):
 
 def fetch_data():
     log.info("Fetching store_locator data")
-    driver = SgSelenium().chrome()
-    driver.get(LOCATION_URL)
-    driver.implicitly_wait(10)
-    soup = bs(driver.page_source, "lxml")
-    driver.quit()
+    soup = pull_content(LOCATION_URL)
     info = soup.find("script", {"id": "popmenu-apollo-state"})
     info = re.search(r"window\.POPMENU_APOLLO_STATE\s+=\s+(.*);", info.string).group(1)
     info = json.loads(info)
@@ -134,7 +118,6 @@ def scrape():
         for rec in results:
             writer.write_row(rec)
             count = count + 1
-
     log.info(f"No of records being processed: {count}")
     log.info("Finished")
 
