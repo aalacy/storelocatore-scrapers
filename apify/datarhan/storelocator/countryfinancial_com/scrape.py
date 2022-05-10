@@ -17,6 +17,7 @@ def fetch_data():
     hdr = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
+
     response = session.get(start_url, headers=hdr)
     dom = etree.HTML(response.text)
     all_states = dom.xpath('//ul[@class="plain column-list-two"]/li/a/@href')
