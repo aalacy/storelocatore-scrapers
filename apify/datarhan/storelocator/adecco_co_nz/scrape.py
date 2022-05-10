@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # --extra-index-url https://dl.cloudsmith.io/KVaWma76J5VNwrOm/crawl/crawl/python/simple/
+from time import sleep
 from lxml import etree
 from urllib.parse import urljoin
 
@@ -9,6 +10,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
 from sgpostal.sgpostal import parse_address_intl
+from sgselenium.sgselenium import SgFirefox
 
 
 def fetch_data():
@@ -25,6 +27,7 @@ def fetch_data():
     all_locations = dom.xpath('//div[@class="branch-locator__results"]//a/@href')
     for url in all_locations:
         page_url = urljoin(start_url, url)
+        print(page_url)
         loc_response = session.get(page_url)
         loc_dom = etree.HTML(loc_response.text)
 
@@ -38,20 +41,6 @@ def fetch_data():
             .split(":")[-1]
             .strip()
         )
-        raw_data = loc_dom.xpath(
-            '//small[contains(text(), "Address")]/following-sibling::div/text()'
-        )
-        raw_data = [e.strip() for e in raw_data if e.strip()]
-        if not raw_data:
-            raw_data = loc_dom.xpath(
-                '//small[contains(text(), "Address")]/following-sibling::p[1]/text()'
-            )
-            raw_data = [e.strip() for e in raw_data if e.strip()]
-        raw_address = " ".join(raw_data)
-        addr = parse_address_intl(raw_address)
-        street_address = addr.street_address_1
-        if addr.street_address_2:
-            street_address += " " + addr.street_address_2
         latitude = ""
         longitude = ""
         geo = loc_dom.xpath('//iframe[contains(@src, "maps")]/@src')
@@ -61,6 +50,32 @@ def fetch_data():
             longitude = geo[1]
         hoo = loc_dom.xpath('//div[@class="branch-locator__opening"]//li/text()')
         hoo = " ".join([e.strip() for e in hoo if e.strip()])
+
+        with SgFirefox() as driver:
+            driver.get(page_url)
+            sleep(5)
+            try:
+                driver.switch_to.frame(
+                    driver.find_element_by_xpath('//iframe[contains(@src, "maps")]')
+                )
+                loc_dom = etree.HTML(driver.page_source)
+            except Exception:
+                loc_response = session.get(page_url)
+                loc_dom = etree.HTML(loc_response.text)
+        raw_address = loc_dom.xpath('//div[@class="address"]/text()')
+        if not raw_address:
+            raw_address = loc_dom.xpath(
+                '//small[contains(text(), "Address")]/following-sibling::div/text()'
+            )
+            raw_address = [e.strip() for e in raw_address if e.strip()]
+            if not raw_address:
+                raw_address = loc_dom.xpath('//small[contains(text(), "Address")]/following-sibling::p[1]/text()')
+            raw_address = [e.strip() for e in raw_address if e.strip()]
+        raw_address = " ".join(raw_address)
+        addr = parse_address_intl(raw_address)
+        street_address = addr.street_address_1
+        if addr.street_address_2:
+            street_address += " " + addr.street_address_2
 
         item = SgRecord(
             locator_domain=domain,
