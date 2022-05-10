@@ -47,6 +47,8 @@ def _v(val):
         .replace("á", "&aacute;")
         .replace("é", "&eacute;")
         .replace("í", "&iacute;")
+        .replace("\xad", " ")
+        .replace("Ã", "&Atilde;")
     )
 
 
