@@ -17,6 +17,7 @@ def fetch_data():
     hdr = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
+
     response = session.get(start_url, headers=hdr)
     dom = etree.HTML(response.text)
     all_states = dom.xpath('//ul[@class="plain column-list-two"]/li/a/@href')
@@ -34,7 +35,12 @@ def fetch_data():
                 while not loc_dom:
                     loc_response = session.get(page_url, headers=hdr)
                     loc_dom = etree.HTML(loc_response.text)
-                poi = loc_dom.xpath('//script[contains(text(), "address")]/text()')[1]
+                try:
+                    poi = loc_dom.xpath('//script[contains(text(), "address")]/text()')[
+                        1
+                    ]
+                except Exception:
+                    continue
                 poi = demjson.decode(poi.replace("\n", ""))[0]
                 data = (
                     loc_dom.xpath('//script[contains(text(), "JSContext =")]/text()')[0]

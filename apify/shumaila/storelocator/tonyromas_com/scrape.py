@@ -36,41 +36,60 @@ def fetch_data():
         for loc in loclist:
             try:
                 if "single-post" in loc["id"]:
-                    address = loc.find("span", {"class": "address"}).text
+
                     title = loc.find("h2").text.strip()
                     link = loc.find("h2").find("a")["href"]
+
+                    r = session.get(link, headers=headers)
+                    soup = BeautifulSoup(r.text, "html.parser")
+
                     try:
-                        phone = loc.select_one("a[href*=tel]").text
+                        phone = soup.select_one("a[href*=tel]").text.strip()
                     except:
                         phone = "<MISSING>"
                     try:
-                        hours = loc.find("ul", {"class": "gmw-hours-of-operation"}).text
+                        hours = (
+                            loc.find("ul", {"class": "gmw-hours-of-operation"})
+                            .text.replace("pm", "pm ")
+                            .replace("losed", "losed ")
+                        )
                     except:
                         hours = "<MISSING>"
-                    lat = link.split("lat=", 1)[1].split("&", 1)[0]
-                    longt = link.split("lng", 1)[1]
+                    try:
+                        coord = soup.findAll("iframe")[1]["src"]
+                        r = session.get(coord, headers=headers)
+                        lat, longt = (
+                            r.text.split('",null,[null,null,', 1)[1]
+                            .split("]", 1)[0]
+                            .split(",", 1)
+                        )
+                    except:
+                        lat = longt = "<MISSING>"
                     ltype = "<MISSING>"
-                    if "Temporarily Closed" in title:
+                    if "temporarily closed" in title.lower():
                         ltype = "Temporarily Closed"
                     elif "COMING SOON" in title:
                         ltype = "COMING SOON"
-                    raw_address = address
-                    raw_address = raw_address.replace("\n", " ").strip()
+                    try:
+                        address = soup.find("div", {"class": "ad1"}).text.strip()
+                        raw_address = address
+                        raw_address = raw_address.replace("\n", " ").strip()
 
-                    pa = parse_address_intl(raw_address)
+                        pa = parse_address_intl(raw_address)
 
-                    street_address = pa.street_address_1
-                    street = street_address if street_address else MISSING
+                        street_address = pa.street_address_1
+                        street = street_address if street_address else MISSING
 
-                    city = pa.city
-                    city = city.strip() if city else MISSING
+                        city = pa.city
+                        city = city.strip() if city else MISSING
 
-                    state = pa.state
-                    state = state.strip() if state else MISSING
+                        state = pa.state
+                        state = state.strip() if state else MISSING
 
-                    zip_postal = pa.postcode
-                    pcode = zip_postal.strip() if zip_postal else MISSING
-
+                        zip_postal = pa.postcode
+                        pcode = zip_postal.strip() if zip_postal else MISSING
+                    except:
+                        street = city = state = pcode = "<MISSING>"
                     yield SgRecord(
                         locator_domain="https://tonyromas.com/",
                         page_url=link,

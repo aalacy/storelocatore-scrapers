@@ -1,25 +1,25 @@
 # -*- coding: utf-8 -*-
 from sgrequests import SgRequests
 from sglogging import sglog
-import lxml.html
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 import json
+from sgpostal import sgpostal as parser
 
 website = "bitcoinofamerica.org"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
-session = SgRequests()
-
 headers = {
-    "authority": "www.bitcoinofamerica.org",
-    "sec-ch-ua": "^\\^Chromium^\\^;v=^\\^92^\\^, ^\\^",
+    "authority": "storerocket.io",
+    "cache-control": "max-age=0",
+    "sec-ch-ua": '" Not A;Brand";v="99", "Chromium";v="98", "Google Chrome";v="98"',
     "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": '"Windows"',
     "upgrade-insecure-requests": "1",
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.107 Safari/537.36",
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.102 Safari/537.36",
     "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-    "sec-fetch-site": "cross-site",
+    "sec-fetch-site": "none",
     "sec-fetch-mode": "navigate",
     "sec-fetch-user": "?1",
     "sec-fetch-dest": "document",
@@ -29,65 +29,80 @@ headers = {
 
 def fetch_data():
     # Your scraper here
-
-    search_url = "https://www.bitcoinofamerica.org/bitcoin-atm-locations/"
-    stores_req = session.get(search_url, headers=headers)
-    stores = eval(
-        stores_req.text.split("var LocationData = ")[1].strip().split("];")[0].strip()
-        + "]"
-    )
-    for store in stores:
-        page_url = "https://www.bitcoinofamerica.org/bitcoin-atm-locations/" + store[4]
-        log.info(page_url)
-        store_req = session.get(page_url, headers=headers)
-        store_sel = lxml.html.fromstring(store_req.text)
-
-        location_name = store[2]
-        location_type = "<MISSING>"
-        locator_domain = website
-
-        store_json = json.loads(
-            "".join(
-                store_sel.xpath('//script[@type="application/ld+json"]/text()')
-            ).strip()
+    with SgRequests() as session:
+        stores_req = session.get(
+            "https://storerocket.io/api/user/aDJkvOR4Od/locations", headers=headers
         )
+        stores = json.loads(stores_req.text)["results"]["locations"]
+        for store in stores:
+            if store["visible"] != 1:
+                continue
+            locator_domain = website
+            location_name = store["name"]
+            street_address = store["address_line_1"]
+            if len(store["address_line_2"]) > 0:
+                street_address = street_address + ", " + store["address_line_2"]
 
-        street_address = store_json["address"]["streetAddress"]
-        city = store_json["address"]["addressLocality"]
-        state = store_json["address"]["addressRegion"]
-        zip = store_json["address"]["postalCode"]
+            raw_address = street_address
+            city = store["city"]
+            if city:
+                raw_address = raw_address + ", " + city
 
-        country_code = "US"
-        store_number = "<MISSING>"
-        phone = store_json["telePhone"]
-        hours_of_operation = store_json["openingHours"]
+            state = store["state"]
+            if state:
+                raw_address = raw_address + ", " + state
 
-        latitude = store[0]
-        longitude = store[1]
+            zip = store["postcode"]
+            if zip:
+                raw_address = raw_address + ", " + zip
 
-        yield SgRecord(
-            locator_domain=locator_domain,
-            page_url=page_url,
-            location_name=location_name,
-            street_address=street_address,
-            city=city,
-            state=state,
-            zip_postal=zip,
-            country_code=country_code,
-            store_number=store_number,
-            phone=phone,
-            location_type=location_type,
-            latitude=latitude,
-            longitude=longitude,
-            hours_of_operation=hours_of_operation,
-        )
+            formatted_addr = parser.parse_address_intl(raw_address)
+            city = formatted_addr.city
+            if not city:
+                city = location_name.split(" ")[0].strip()
+
+            country_code = store["country"]
+
+            store_number = store["id"]
+            phone = store["phone"]
+            location_type = store["locationType"]["name"]
+            slug = store["slug"]
+
+            page_url = f"https://www.bitcoinofamerica.org/locations/?location=/{slug}"
+            latitude = store["lat"]
+            longitude = store["lng"]
+            hours = store["hours"]
+            hours_list = []
+            for d in hours.keys():
+                if hours[d] and hours[d] != "Missing":
+                    hours_list.append(d + ":" + hours[d])
+
+            hours_of_operation = "; ".join(hours_list).strip()
+
+            yield SgRecord(
+                locator_domain=locator_domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+                raw_address=raw_address,
+            )
 
 
 def scrape():
     log.info("Started")
     count = 0
     with SgWriter(
-        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.StoreNumberId)
     ) as writer:
         results = fetch_data()
         for rec in results:
