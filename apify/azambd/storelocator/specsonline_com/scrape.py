@@ -38,8 +38,11 @@ def parse_json(location, page_url, soup):
         data["location_type"] = "Coming soon"
 
     data["street_address"] = location["address"].split("<br")[0].replace("<p>", "")
-    data["city"] = (location["address"].split("\n")[1].split(",")[0]).replace(
-        "</p>", ""
+    data["city"] = (
+        (location["address"].split("\n")[1].split(",")[0])
+        .replace("</p>", "")
+        .replace("<br />", "")
+        .replace("76022", "")
     )
     try:
         data["state"] = re.findall("[A-Z]{2}", location["address"])[0]

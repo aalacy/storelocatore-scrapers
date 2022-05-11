@@ -26,7 +26,11 @@ def fetch_data():
         loc_response = session.get(page_url)
         loc_dom = etree.HTML(loc_response.text)
 
-        location_name = loc_dom.xpath("//h1/text()")[0]
+        location_name = (
+            loc_dom.xpath("//h1/text()")[0]
+            .replace("Happy Birthday ", "")
+            .replace("\u200b", "")
+        )
         hoo = loc_dom.xpath(
             '//h2[strong[contains(text(), "Store opening hours")]]/following-sibling::p//text()'
         )
@@ -40,7 +44,7 @@ def fetch_data():
                     location_name
                 )
             )
-        hoo = " ".join(hoo)
+        hoo = " ".join(hoo).strip()
         geo = loc_dom.xpath('//a[contains(text(), "View full map")]/@href')
         phone = ""
         street_address = ""
@@ -69,6 +73,11 @@ def fetch_data():
             zip_code = addr.postcode
             city = addr.city
             phone = dom.xpath('//a[contains(@href, "tel")]/text()')[0]
+        if not hoo:
+            hoo = dom.xpath(
+                f'//section[div[div[h2[contains(text(), "{location_name}")]]]]//h3[strong[contains(text(), "STORE OPENING HOURS")]]/following-sibling::p[1]//text()'
+            )
+            hoo = " ".join(hoo)
 
         item = SgRecord(
             locator_domain=domain,

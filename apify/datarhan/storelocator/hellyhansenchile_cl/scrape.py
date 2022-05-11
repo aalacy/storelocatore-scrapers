@@ -25,12 +25,16 @@ def fetch_data():
         )
         for poi_html in all_locations:
             location_name = poi_html.xpath("text()")[0]
-            street_address = poi_html.xpath(".//following::text()")[0]
+            street_address = poi_html.xpath(".//following::text()")[1]
             city = c_html.xpath(".//h4/text()")[0]
             phone = poi_html.xpath(".//following-sibling::strong[1]/text()")[0]
             phone = phone.split(":")[-1] if "Fono" in phone else ""
-            hoo = poi_html.xpath(".//following-sibling::strong[2]/text()")
-            hoo = hoo[0].split("Horario:")[-1] if hoo and "Horario" in hoo[0] else ""
+            hoo = " ".join(
+                poi_html.xpath(
+                    './/following-sibling::strong[contains(text(), "Horario:")]/following::text()'
+                )
+            ).split("Abierto")[0]
+            hoo = hoo.replace("(", "").replace(")", "").split("*")[0]
 
             item = SgRecord(
                 locator_domain=domain,
