@@ -1,140 +1,133 @@
-import csv
-
-from concurrent import futures
+import json
+import usaddress
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
-
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from concurrent import futures
 
 
 def get_urls():
-    session = SgRequests()
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:86.0) Gecko/20100101 Firefox/86.0"
-    }
-    r = session.get(
-        "https://pizzarev.com/locations-pizza-places-near-me/", headers=headers
-    )
+    r = session.get("https://pizzarev.com/locations/", headers=headers)
     tree = html.fromstring(r.text)
 
-    return tree.xpath("//ul[contains(@class, 'states')]//li/a/@href")
+    return tree.xpath("//div[./div/h4]/following-sibling::div//a/@href")
 
 
-def get_data(page_url):
-    locator_domain = "https://pizzarev.com/"
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:86.0) Gecko/20100101 Firefox/86.0"
+def get_address(line):
+    tag = {
+        "Recipient": "recipient",
+        "AddressNumber": "address1",
+        "AddressNumberPrefix": "address1",
+        "AddressNumberSuffix": "address1",
+        "StreetName": "address1",
+        "StreetNamePreDirectional": "address1",
+        "StreetNamePreModifier": "address1",
+        "StreetNamePreType": "address1",
+        "StreetNamePostDirectional": "address1",
+        "StreetNamePostModifier": "address1",
+        "StreetNamePostType": "address1",
+        "CornerOf": "address1",
+        "IntersectionSeparator": "address1",
+        "LandmarkName": "address1",
+        "USPSBoxGroupID": "address1",
+        "USPSBoxGroupType": "address1",
+        "USPSBoxID": "address1",
+        "USPSBoxType": "address1",
+        "OccupancyType": "address2",
+        "OccupancyIdentifier": "address2",
+        "SubaddressIdentifier": "address2",
+        "SubaddressType": "address2",
+        "PlaceName": "city",
+        "StateName": "state",
+        "ZipCode": "postal",
     }
 
-    session = SgRequests()
+    a = usaddress.tag(line, tag_mapping=tag)[0]
+    adr1 = a.get("address1") or ""
+    adr2 = a.get("address2") or ""
+    street_address = f"{adr1} {adr2}".strip()
+    city = a.get("city")
+    state = a.get("state")
+    postal = a.get("postal")
+
+    return street_address, city, state, postal
+
+
+def get_data(slug, sgw: SgWriter):
+    page_url = f"https://pizzarev.com{slug}"
     r = session.get(page_url, headers=headers)
     tree = html.fromstring(r.text)
 
-    location_name = "".join(tree.xpath("//div[@class='loc_name']/a/text()")).strip()
-    line = tree.xpath("//div[@class='col-left']/p/text()")
-    line = list(filter(None, [l.strip() for l in line]))
-
-    street_address = ", ".join(line[:-1]).strip() or "<MISSING>"
-    line = line[-1]
-    city = line.split(",")[0].strip()
-    state = line.split(",")[1].strip()
-    postal = line.split(",")[-1].strip()
+    location_name = "".join(tree.xpath("//h2[@class='loc_name']/text()")).strip()
+    raw_address = " ".join(
+        " ".join(
+            tree.xpath("//h2[@class='loc_name']/following-sibling::div/h5//text()")
+        ).split()
+    )
+    street_address, city, state, postal = get_address(raw_address)
+    city = location_name.split("–")[-1]
     country_code = "US"
-    store_number = "<MISSING>"
     phone = (
-        "".join(
-            tree.xpath("//div[@class='col-left']/p/a[contains(@href, 'tel')]/text()")
-        )
+        "".join(tree.xpath("//a[contains(@href, 'tel:')]/text()"))
         .replace("Phone:", "")
         .strip()
-        or "<MISSING>"
     )
 
-    text = "".join(
-        tree.xpath("//script[contains(text(),'var pizza_stores = [')]/text()")
-    )
-    try:
-        text = eval(text.split("var pizza_stores = [")[1].split("];")[0])
-        latitude = text[0]
-        longitude = text[1]
-    except IndexError:
-        latitude, longitude = "<MISSING>", "<MISSING>"
-    location_type = "<MISSING>"
+    text = "".join(tree.xpath("//script[contains(text(), 'var wpslMap_0')]/text()"))
+    text = text.split('"locations":')[1].split("};")[0]
+    j = json.loads(text)[0]
+    store_number = j.get("id")
+    latitude = j.get("lat")
+    longitude = j.get("lng")
 
     _tmp = []
-    days = tree.xpath("//span[@class='day']/text()")
-    times = tree.xpath("//span[@class='time']/text()")
+    hours = tree.xpath(
+        "//h4[contains(text(), 'Hours of Operation')]/following-sibling::div/h5/span[@class='day']"
+    )
+    for h in hours:
+        day = "".join(h.xpath("./text()")).strip()
+        inter = "".join(h.xpath("./following-sibling::span[1]/text()")).strip()
+        _tmp.append(f"{day} {inter}")
 
-    for d, t in zip(days, times):
-        _tmp.append(f"{d.strip()}: {t.strip()}")
+    hours_of_operation = ";".join(_tmp)
 
-    hours_of_operation = ";".join(_tmp) or "<MISSING>"
+    row = SgRecord(
+        page_url=page_url,
+        location_name=location_name,
+        street_address=street_address,
+        city=city,
+        state=state,
+        zip_postal=postal,
+        country_code=country_code,
+        store_number=store_number,
+        latitude=latitude,
+        longitude=longitude,
+        phone=phone,
+        locator_domain=locator_domain,
+        raw_address=raw_address,
+        hours_of_operation=hours_of_operation,
+    )
 
-    row = [
-        locator_domain,
-        page_url,
-        location_name,
-        street_address,
-        city,
-        state,
-        postal,
-        country_code,
-        store_number,
-        phone,
-        location_type,
-        latitude,
-        longitude,
-        hours_of_operation,
-    ]
-
-    return row
+    sgw.write_row(row)
 
 
-def fetch_data():
-    out = []
+def fetch_data(sgw: SgWriter):
     urls = get_urls()
 
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {executor.submit(get_data, url): url for url in urls}
+    with futures.ThreadPoolExecutor(max_workers=3) as executor:
+        future_to_url = {executor.submit(get_data, url, sgw): url for url in urls}
         for future in futures.as_completed(future_to_url):
-            row = future.result()
-            if row:
-                out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+            future.result()
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://pizzarev.com/"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0"
+    }
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        fetch_data(writer)

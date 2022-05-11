@@ -4,6 +4,7 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgpostal.sgpostal import parse_address_intl
 
 session = SgRequests()
 headers = {
@@ -11,68 +12,101 @@ headers = {
 }
 
 
+MISSING = SgRecord.MISSING
+
+
 def fetch_data():
 
-    url = "https://locations.tonyromas.com/sitemap"
+    url = "https://tonyromas.com/locations/"
     r = session.get(url, headers=headers)
     soup = BeautifulSoup(r.text, "html.parser")
-    checklist = []
-    linklist = soup.select("a[href*=canada]")
-    linklist = linklist + soup.select("a[href*=united-states]")
-    for link in linklist:
-        link = link["href"]
-        check = link.split("/")
-        if len(check) < 4 or link in checklist:
-            continue
-        checklist.append(link)
-        link = "https://locations.tonyromas.com/" + link
-        r = session.get(link, headers=headers)
-        soup = BeautifulSoup(r.text, "html.parser")
-        coord = soup.find("span", {"class": "coordinates"}).findAll("meta")
-        lat = coord[0]["content"]
-        longt = coord[1]["content"]
-        title = soup.find("span", {"class": "LocationName"}).text
-        address = soup.find("address", {"class": "c-address"}).findAll("meta")
-        city = address[0]["content"]
-        street = address[1]["content"]
-        address = soup.find("address", {"class": "c-address"}).findAll("abbr")
-        state = address[0].text
-        ccode = address[1].text
-        pcode = (
-            soup.find("address", {"class": "c-address"})
-            .find("span", {"class": "c-address-postal-code"})
-            .text
-        )
-        phone = soup.find("span", {"id": "telephone"}).text
-        try:
-            hours = soup.find("table", {"class": "c-location-hours-details"}).text
-            hours = (
-                hours.split("Hours", 1)[1]
-                .replace("Closed", "Closed ")
-                .replace("day", "day ")
-                .replace("PM", "PM ")
-                .strip()
-            )
-        except:
-            hours = "<MISSING>"
-        store = r.text.split('"id"', 1)[1].split(":", 1)[1].split(",", 1)[0]
+    divlist = soup.select("a[href*=address]")
+    for div in divlist:
 
-        yield SgRecord(
-            locator_domain="https://tonyromas.com/",
-            page_url=link,
-            location_name=title,
-            street_address=street.strip(),
-            city=city.strip(),
-            state=state.strip(),
-            zip_postal=pcode.strip(),
-            country_code=ccode,
-            store_number=str(store),
-            phone=phone.strip(),
-            location_type=SgRecord.MISSING,
-            latitude=str(lat),
-            longitude=str(longt),
-            hours_of_operation=hours,
-        )
+        divlink = div["href"]
+        ccode = divlink.split("country=", 1)[1]
+        divlink = divlink.replace("&per_page=5", "&per_page=25")
+        r = session.get(divlink, headers=headers)
+        try:
+            soup = BeautifulSoup(r.text, "html.parser")
+        except:
+            continue
+        loclist = soup.find("ul", {"class": "posts-list-wrapper"}).findAll("li")
+
+        for loc in loclist:
+            try:
+                if "single-post" in loc["id"]:
+                    address = loc.find("span", {"class": "address"}).text
+                    title = loc.find("h2").text.strip()
+                    link = loc.find("h2").find("a")["href"]
+
+                    r = session.get(link, headers=headers)
+                    soup = BeautifulSoup(r.text, "html.parser")
+                    address = soup.find("div", {"class": "ad1"}).text.strip()
+
+                    try:
+                        phone = soup.select_one("a[href*=tel]").text.strip()
+                    except:
+                        phone = "<MISSING>"
+                    try:
+                        hours = (
+                            loc.find("ul", {"class": "gmw-hours-of-operation"})
+                            .text.replace("pm", "pm ")
+                            .replace("losed", "losed ")
+                        )
+                    except:
+                        hours = "<MISSING>"
+                    try:
+                        coord = soup.findAll("iframe")[1]["src"]
+                        r = session.get(coord, headers=headers)
+                        lat, longt = (
+                            r.text.split('",null,[null,null,', 1)[1]
+                            .split("]", 1)[0]
+                            .split(",", 1)
+                        )
+                    except:
+                        lat = longt = "<MISSING>"
+                    ltype = "<MISSING>"
+                    if "temporarily closed" in title.lower():
+                        ltype = "Temporarily Closed"
+                    elif "COMING SOON" in title:
+                        ltype = "COMING SOON"
+                    raw_address = address
+                    raw_address = raw_address.replace("\n", " ").strip()
+
+                    pa = parse_address_intl(raw_address)
+
+                    street_address = pa.street_address_1
+                    street = street_address if street_address else MISSING
+
+                    city = pa.city
+                    city = city.strip() if city else MISSING
+
+                    state = pa.state
+                    state = state.strip() if state else MISSING
+
+                    zip_postal = pa.postcode
+                    pcode = zip_postal.strip() if zip_postal else MISSING
+
+                    yield SgRecord(
+                        locator_domain="https://tonyromas.com/",
+                        page_url=link,
+                        location_name=title,
+                        street_address=street.strip(),
+                        city=city.strip(),
+                        state=state.strip(),
+                        zip_postal=pcode.strip(),
+                        country_code=ccode,
+                        store_number=SgRecord.MISSING,
+                        phone=phone.strip(),
+                        location_type=ltype,
+                        latitude=str(lat),
+                        longitude=str(longt),
+                        hours_of_operation=hours,
+                        raw_address=raw_address.replace("\n", " ").strip(),
+                    )
+            except:
+                continue
 
 
 def scrape():

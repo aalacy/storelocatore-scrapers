@@ -32,7 +32,7 @@ headers = {
 
 def fetch_data():
     # Your scraper here
-    search_url = "https://ww8.ikea.com/ext/iplugins/v2/sv_SE/data/store-selector-lsp-list/data.json"
+    search_url = "https://www.ikea.com/global/assets/variera/swe-digital-products/store-selector-lsp-list/data.json"
     search_res = session.get(search_url, headers=headers)
 
     stores = json.loads(search_res.text)
@@ -98,8 +98,19 @@ def fetch_data():
 
         hours_of_operation = "; ".join(hours_list).strip().split("; Handla")[0].strip()
 
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
+        try:
+            latitude = (
+                store_req.text.split('"latitude": "')[1].strip().split('"')[0].strip()
+            )
+        except:
+            latitude = "<MISSING>"
+
+        try:
+            longitude = (
+                store_req.text.split('"longitude": "')[1].strip().split('"')[0].strip()
+            )
+        except:
+            longitude = "<MISSING>"
 
         yield SgRecord(
             locator_domain=locator_domain,

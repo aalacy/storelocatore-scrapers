@@ -13,7 +13,9 @@ def fetch_data(sgw: SgWriter):
 
     r = session.get(api_url)
     tree = html.fromstring(r.text)
-    page_urls = tree.xpath('//ul[@id="top-menu"]/li[1]/ul[1]/li/a/@href')
+    page_urls = tree.xpath(
+        '//ul[@id="top-menu"]/li[1]/ul[1]/li[position() > 1]/a/@href'
+    )
     for i in page_urls:
 
         tag = {
@@ -48,17 +50,9 @@ def fetch_data(sgw: SgWriter):
         subr = session.get(i)
         trees = html.fromstring(subr.text)
         block = trees.xpath('//div[@class="et_pb_blurb_container"]')
-
         for b in block:
-            ad = "".join(
-                b.xpath(
-                    './/div[contains(@class,"et_pb_blurb_description")]/p[2]/text()'
-                )
-            ) or "".join(
-                b.xpath(
-                    './/div[contains(@class,"et_pb_blurb_description")]/p[3]/text()'
-                )
-            )
+            ad = "".join(b.xpath(".//h1/following-sibling::div[1]/p[2]/text()"))
+
             a = usaddress.tag(ad, tag_mapping=tag)[0]
             street_address = f"{a.get('address1')} {a.get('address2')}".replace(
                 "None", ""
