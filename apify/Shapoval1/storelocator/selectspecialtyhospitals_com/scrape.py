@@ -4,6 +4,7 @@ from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgpostal.sgpostal import International_Parser, parse_address
 
 
 def fetch_data(sgw: SgWriter):
@@ -33,23 +34,28 @@ def fetch_data(sgw: SgWriter):
             location_type = "Regency Hospital"
         if page_url.find("selectspecialtyhospitals") != -1:
             location_type = "Select Specialty Hospital"
-        street_address = "".join(
-            a.xpath('//a[contains(@href, "maps")]/text()[1]')
-        ).strip()
         ad = (
-            "".join(a.xpath('//a[contains(@href, "maps")]/text()[2]'))
+            " ".join(
+                a.xpath('//div[@class="loc-result-card-address-container"]//text()')
+            )
             .replace("\n", "")
             .strip()
         )
+        ad = " ".join(ad.split())
         phone = "".join(
             a.xpath(
                 '//span[text()="PHONE"]/following-sibling::a[contains(@href, "tel")]/text()'
             )
         ).strip()
-        city = ad.split(",")[0].strip()
-        state = ad.split(",")[1].split()[0].strip()
-        postal = ad.split(",")[1].split()[1].strip()
+        b = parse_address(International_Parser(), ad)
+        street_address = (
+            f"{b.street_address_1} {b.street_address_2}".replace("None", "").strip()
+            or "<MISSING>"
+        )
+        state = b.state or "<MISSING>"
+        postal = b.postcode or "<MISSING>"
         country_code = "US"
+        city = b.city or "<MISSING>"
         ll = "".join(a.xpath('//a[contains(@href, "maps")]/@href'))
         try:
             latitude = ll.split("=")[2].split(",")[0].strip()
@@ -90,6 +96,7 @@ def fetch_data(sgw: SgWriter):
                     )
                     .replace("Hours:", "")
                     .replace("Visiting hours:", "")
+                    .replace("Updated Visitor Policy", "")
                     .strip()
                     or "<MISSING>"
                 )
@@ -104,6 +111,8 @@ def fetch_data(sgw: SgWriter):
                     )
             if hours_of_operation.find(". Visitors") != -1:
                 hours_of_operation = hours_of_operation.split(". Visitors")[0].strip()
+            if hours_of_operation.find("Please") != -1:
+                hours_of_operation = hours_of_operation.split("Please")[0].strip()
 
         row = SgRecord(
             locator_domain=locator_domain,
@@ -120,6 +129,7 @@ def fetch_data(sgw: SgWriter):
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hours_of_operation,
+            raw_address=ad,
         )
 
         sgw.write_row(row)

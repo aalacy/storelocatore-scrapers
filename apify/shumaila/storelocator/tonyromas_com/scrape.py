@@ -39,18 +39,35 @@ def fetch_data():
                     address = loc.find("span", {"class": "address"}).text
                     title = loc.find("h2").text.strip()
                     link = loc.find("h2").find("a")["href"]
+
+                    r = session.get(link, headers=headers)
+                    soup = BeautifulSoup(r.text, "html.parser")
+                    address = soup.find("div", {"class": "ad1"}).text.strip()
+
                     try:
-                        phone = loc.select_one("a[href*=tel]").text
+                        phone = soup.select_one("a[href*=tel]").text.strip()
                     except:
                         phone = "<MISSING>"
                     try:
-                        hours = loc.find("ul", {"class": "gmw-hours-of-operation"}).text
+                        hours = (
+                            loc.find("ul", {"class": "gmw-hours-of-operation"})
+                            .text.replace("pm", "pm ")
+                            .replace("losed", "losed ")
+                        )
                     except:
                         hours = "<MISSING>"
-                    lat = link.split("lat=", 1)[1].split("&", 1)[0]
-                    longt = link.split("lng", 1)[1]
+                    try:
+                        coord = soup.findAll("iframe")[1]["src"]
+                        r = session.get(coord, headers=headers)
+                        lat, longt = (
+                            r.text.split('",null,[null,null,', 1)[1]
+                            .split("]", 1)[0]
+                            .split(",", 1)
+                        )
+                    except:
+                        lat = longt = "<MISSING>"
                     ltype = "<MISSING>"
-                    if "Temporarily Closed" in title:
+                    if "temporarily closed" in title.lower():
                         ltype = "Temporarily Closed"
                     elif "COMING SOON" in title:
                         ltype = "COMING SOON"

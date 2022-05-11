@@ -31,6 +31,14 @@ def fetch_data():
     data = session.post(start_url, headers=hdr, json=frm).json()
 
     for poi in data["data"]["getStores"]["items"]:
+        hoo = []
+        days = {0: "Sun", 1: "Mon", 2: "Tue", 3: "Wed", 4: "Thu", 5: "Fri", 6: "Sat"}
+        if poi["businessHours"]:
+            for e in poi["businessHours"]:
+                hoo.append(
+                    f'{days[e["dayOfWeek"]]}: {e["openingTime"][:-3]} - {e["closingTime"][:-3]}'
+                )
+        hoo = " ".join(hoo)
 
         item = SgRecord(
             locator_domain=domain,
@@ -46,7 +54,7 @@ def fetch_data():
             location_type="",
             latitude=poi["address"]["location"]["latitude"],
             longitude=poi["address"]["location"]["longitude"],
-            hours_of_operation="",
+            hours_of_operation=hoo,
         )
 
         yield item

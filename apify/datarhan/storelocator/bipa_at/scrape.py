@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import re
 import json
-import time
 from lxml import etree
 from urllib.parse import urljoin
 
@@ -18,33 +17,35 @@ def fetch_data():
     domain = "bipa.at"
 
     all_codes = DynamicZipSearch(
-        country_codes=[SearchableCountries.AUSTRIA], expected_search_radius_miles=50
+        country_codes=[SearchableCountries.AUSTRIA], expected_search_radius_miles=20
     )
-    with SgFirefox(is_headless=True) as driver:
+    with SgFirefox() as driver:
         for code in all_codes:
             driver.get(start_url)
-            time.sleep(5)
             try:
                 driver.find_element_by_xpath(
                     '//button[contains(text(), "Cookies erlauben")]'
                 ).click()
             except Exception:
                 pass
-            time.sleep(3)
             driver.find_element_by_id("addressstring").send_keys(code)
             driver.find_element_by_id("findButton").click()
             dom = etree.HTML(driver.page_source)
 
             all_locations = dom.xpath("//@data-options")
             try:
+                count = 0
                 next_page = driver.find_element_by_class_name("next_link")
+                while next_page:
+                    if count > 9:
+                        break
+                    next_page.click()
+                    dom = etree.HTML(driver.page_source)
+                    all_locations += dom.xpath("//@data-options")
+                    next_page = driver.find_element_by_class_name("next_link")
+                    count += 1
             except Exception:
-                next_page = ""
-            while next_page:
-                next_page.click()
-                dom = etree.HTML(driver.page_source)
-                all_locations += dom.xpath("//@data-options")
-                next_page = driver.find_element_by_class_name("next_link")
+                pass
 
             for poi in all_locations:
                 poi = poi.replace("null", '""')

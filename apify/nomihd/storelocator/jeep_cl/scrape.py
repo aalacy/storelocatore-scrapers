@@ -59,8 +59,6 @@ def fetch_data():
 
             locator_domain = website
 
-            page_url = search_url
-
             headers["Referer"] = "https://www.jeep.cl/concesionarios/"
 
             data["action"] = "get_chile_dealers_details"
@@ -69,6 +67,10 @@ def fetch_data():
             store_res = session.post(api_url, headers=headers, data=data)
 
             store_json = json.loads(store_res.text)
+
+            page_url = store_json.get("url", None)
+            if not page_url:
+                page_url = search_url
 
             location_name = "".join(store.xpath(".//h2//text()")).strip()
             location_type = "<MISSING>"
@@ -92,10 +94,18 @@ def fetch_data():
             phone = store_info[-2]
             if ":" in phone:
                 phone = phone.split(":")[1].strip()
-            else:
-                phone = "<MISSING>"
 
-            phone = phone.split("/")[0].strip().split("-")[0].strip()
+            phone = (
+                phone.split("/")[0]
+                .strip()
+                .split("-")[0]
+                .strip()
+                .lower()
+                .split("anexo")[0]
+                .strip()
+            )
+            if "v" == phone:
+                phone = "<MISSING>"
             hours_of_operation = "<MISSING>"
 
             latitude, longitude = location_list[no - 1][1], location_list[no - 1][2]
