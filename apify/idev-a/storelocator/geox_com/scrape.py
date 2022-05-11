@@ -3,6 +3,8 @@ from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 logger = SgLogSetup().get_logger("geox")
 
@@ -37,25 +39,36 @@ def fetch_data():
                             if "Extra" in hh:
                                 break
                             hours.append(hh)
+
+                    zip_postal = _["postalCode"]
+                    if zip_postal == "000":
+                        zip_postal = ""
+                    state = _["stateCode"]
+                    if "ON" in zip_postal:
+                        state = "ON"
+                        zip_postal = zip_postal.replace("ON", "").strip()
+                    phone = _["phone"]
+                    if phone:
+                        phone = phone.split("/")[-1]
                     yield SgRecord(
                         page_url=page_url,
                         store_number=_["storeId"],
                         location_name=_["name"],
                         street_address=_["address"],
                         city=_["city"],
-                        state=_["stateCode"],
-                        zip_postal=_["postalCode"],
+                        state=state,
+                        zip_postal=zip_postal,
                         latitude=_["lat"],
                         longitude=_["long"],
                         country_code=_["countryCode"],
-                        phone=_["phone"],
+                        phone=phone,
                         locator_domain=locator_domain,
                         hours_of_operation="; ".join(hours),
                     )
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

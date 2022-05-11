@@ -5,9 +5,11 @@ from sgrequests import SgRequests
 from sglogging import sglog
 import lxml.html
 import json
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "bahamabreeze.com"
-session = SgRequests()
+session = SgRequests(dont_retry_status_codes=([404]), proxy_country="us")
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 
 
@@ -80,9 +82,14 @@ def fetch_data():
         if location_name == "":
             location_name = "<MISSING>"
 
-        street_address = "".join(
-            store_sel.xpath('//p[@id="info-link-webhead"]/text()[1]')
-        ).strip()
+        street_address = (
+            "".join(store_sel.xpath('//p[@id="info-link-webhead"]/text()[1]'))
+            .strip()
+            .replace("\n", ", ")
+            .strip()
+            .replace(" , ", ", ")
+            .strip()
+        )
         city_state_Zip = "".join(
             store_sel.xpath('//p[@id="info-link-webhead"]/text()[2]')
         ).strip()
@@ -146,7 +153,9 @@ def fetch_data():
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

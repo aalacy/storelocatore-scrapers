@@ -1,65 +1,122 @@
-import json
+import ssl
 from sglogging import sglog
-from sgrequests import SgRequests
+from bs4 import BeautifulSoup
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
+from sgselenium.sgselenium import SgChrome
+from selenium.webdriver.common.by import By
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from selenium.webdriver.support.ui import WebDriverWait
+from webdriver_manager.chrome import ChromeDriverManager
+from selenium.webdriver.support import expected_conditions as EC
 
-session = SgRequests()
+ssl._create_default_https_context = ssl._create_unverified_context
+
 website = "moesitaliansandwiches_com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
-headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-}
 
-DOMAIN = "https://www.moesitaliansandwiches.com/"
+DOMAIN = "https://www.moesitaliansandwiches.com"
 MISSING = SgRecord.MISSING
 
 
-def fetch_data():
-    if True:
-        url = "https://www.moesitaliansandwiches.com/locations"
-        r = session.get(url, headers=headers)
-        loclist = r.text.split('<script type="application/ld+json">')[1:]
-        coords_list = r.text.split('"lat":')[1:]
-        for loc in loclist:
-            loc = json.loads(loc.split("</script>")[0])
-            location_name = loc["name"]
-            address = loc["address"]
-            phone = address["telephone"]
-            street_address = address["streetAddress"]
-            city = address["addressLocality"]
-            state = address["addressRegion"]
-            zip_postal = address["postalCode"]
-            for coords in coords_list:
-                if str(phone) in coords:
-                    coords = coords.split(',"googlePlaceId"')[0].split(",")
-                    latitude = coords[0]
-                    longitude = coords[1].replace('"lng":', "")
-                    break
-            country_code = "US"
-            page_url = DOMAIN + city.lower()
-            log.info(page_url)
-            hours_of_operation = loc["openingHours"]
-            hours_of_operation = " ".join(hours_of_operation)
-            country_code = "US"
-            yield SgRecord(
-                locator_domain=DOMAIN,
-                page_url=page_url,
-                location_name=location_name,
-                street_address=street_address.strip(),
-                city=city.strip(),
-                state=state.strip(),
-                zip_postal=zip_postal.strip(),
-                country_code=country_code,
-                store_number=MISSING,
-                phone=phone.strip(),
-                location_type=MISSING,
-                latitude=latitude,
-                longitude=longitude,
-                hours_of_operation=hours_of_operation,
+def get_driver(url, class_name, driver=None):
+    if driver is not None:
+        driver.quit()
+
+    user_agent = (
+        "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:89.0) Gecko/20100101 Firefox/89.0"
+    )
+    x = 0
+    while True:
+        x = x + 1
+        try:
+            driver = SgChrome(
+                executable_path=ChromeDriverManager().install(),
+                user_agent=user_agent,
+                is_headless=True,
+            ).driver()
+            driver.get(url)
+
+            WebDriverWait(driver, 30).until(
+                EC.presence_of_element_located((By.CLASS_NAME, class_name))
             )
+            break
+        except Exception:
+            driver.quit()
+            if x == 10:
+                raise Exception(
+                    "Make sure this ran with a Proxy, will fail without one"
+                )
+            continue
+    return driver
+
+
+def fetch_data():
+    x = 0
+    while True:
+        x = x + 1
+        class_name = "location"
+        url = "https://www.moesitaliansandwiches.com/locations"
+        if x == 1:
+            driver = get_driver(url, class_name)
+        else:
+            driver = get_driver(url, class_name, driver=driver)
+        loclist = (
+            driver.page_source.split("window.POPMENU_APOLLO_STATE = ")[1]
+            .split("[]}};")[0]
+            .split("RestaurantLocation:")[1:-1]
+        )
+        if len(loclist) == 0:
+            continue
+        else:
+            break
+    for loc in loclist:
+        try:
+            page_url = loc.split('"customLocationContent":"')[1].split("View")[0]
+        except:
+            continue
+        page_url = (
+            BeautifulSoup(page_url, "html.parser")
+            .find("a")["href"]
+            .replace('"/', "")
+            .replace('"', "")
+        )
+        page_url = DOMAIN + page_url
+        log.info(page_url)
+        store_number = loc.split('"id":')[1].split('"')[0]
+        location_name = loc.split('"name":"')[1].split('"')[0]
+        log.info(page_url)
+        phone = loc.split('"displayPhone":"')[1].split('"')[0]
+        street_address = loc.split('"streetAddress":"')[1].split('"')[0]
+        city = loc.split('"city":"')[1].split('"')[0]
+        state = loc.split('"state":"')[1].split('"')[0]
+        zip_postal = loc.split('"postalCode":"')[1].split('"')[0]
+        country_code = loc.split('"country":"')[1].split('"')[0]
+        latitude = loc.split('"lat":')[1].split(",")[0]
+        longitude = loc.split('"lng":')[1].split(",")[0]
+        hours_of_operation = (
+            loc.split('"schemaHours":[')[1]
+            .split("]")[0]
+            .replace('","', " ")
+            .replace('"', "")
+        )
+        yield SgRecord(
+            locator_domain=DOMAIN,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address.strip(),
+            city=city.strip(),
+            state=state.strip(),
+            zip_postal=zip_postal.strip(),
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+        )
 
 
 def scrape():

@@ -4,17 +4,16 @@ from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgselenium.sgselenium import SgFirefox
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from sgselenium.sgselenium import SgFirefox
 
 
 def fetch_data(sgw: SgWriter):
 
     locator_domain = "https://www.sodimac.com.mx/"
     api_url = "https://www.sodimac.com.mx/sodimac-mx/content/a40055/Tiendas"
-    session = SgRequests()
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
@@ -30,11 +29,12 @@ def fetch_data(sgw: SgWriter):
         with SgFirefox() as driver:
 
             driver.get(page_url)
-            driver.implicitly_wait(20)
-            driver.maximize_window()
-            driver.switch_to.frame(0)
+            iframe = driver.find_element_by_xpath(
+                '//h3[contains(text(), "Localización")]/following-sibling::iframe[1]'
+            )
+            driver.switch_to.frame(iframe)
             try:
-                WebDriverWait(driver, 20).until(
+                WebDriverWait(driver, 200).until(
                     EC.presence_of_element_located(
                         (By.XPATH, '//div[@class="address"]')
                     )
@@ -50,15 +50,24 @@ def fetch_data(sgw: SgWriter):
                 ad = "<MISSING>"
                 ll = "<MISSING>"
             ll = "".join(ll)
-            ad = "".join(ad)
+            ad = (
+                "".join(ad)
+                .replace(", N.L.", "")
+                .replace(", Mor.", "")
+                .replace(", Méx.", "")
+                .replace(", S.L.P.", "")
+                .replace(", Ver.", "")
+                .replace(", Gto.", "")
+                .strip()
+            )
             driver.switch_to.default_content()
             location_name = "".join(location_name)
             street_address = "<MISSING>"
             country_code = "MX"
-            city = "<MISSING>"
+            city = page_url.split("Tienda-")[1].replace("-", " ").strip()
+            postal = "<MISSING>"
             if ad != "<MISSING>":
-                postal = ad.split(",")[-2].split()[0].strip()
-                city = " ".join(ad.split(",")[-2].split()[1:])
+                postal = ad.split(",")[-1].split()[0].strip()
                 street_address = ad.split(f", {postal}")[0].strip()
             try:
                 latitude = ll.split("ll=")[1].split(",")[0].strip()
@@ -68,12 +77,9 @@ def fetch_data(sgw: SgWriter):
             phone = driver.find_element_by_xpath(
                 '//span[text()="Venta Telefónica"]/following-sibling::span'
             ).text
-            hours = driver.find_element_by_xpath(
-                '//span[text()="Venta Telefónica"]/following::div[@class="horario"][1]/span'
+            hours_of_operation = driver.find_element_by_xpath(
+                '//span[./strong[text()="Horarios de Tienda:"]]/following-sibling::span[1]'
             ).text
-            hours_of_operation = (
-                "".join(hours).replace("\n", " ").strip() or "<MISSING>"
-            )
 
             row = SgRecord(
                 locator_domain=locator_domain,
@@ -82,7 +88,7 @@ def fetch_data(sgw: SgWriter):
                 street_address=street_address,
                 city=city,
                 state=SgRecord.MISSING,
-                zip_postal=SgRecord.MISSING,
+                zip_postal=postal,
                 country_code=country_code,
                 store_number=SgRecord.MISSING,
                 phone=phone,
@@ -90,6 +96,7 @@ def fetch_data(sgw: SgWriter):
                 latitude=latitude,
                 longitude=longitude,
                 hours_of_operation=hours_of_operation,
+                raw_address=ad,
             )
 
             sgw.write_row(row)

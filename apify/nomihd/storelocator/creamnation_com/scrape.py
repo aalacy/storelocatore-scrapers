@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from sgrequests import SgRequests
 from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
@@ -7,7 +6,17 @@ import lxml.html
 import json
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgselenium import SgFirefox
+import ssl
 
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
 website = "creamnation.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -19,11 +28,13 @@ headers = {
 
 def fetch_data():
     # Your scraper here
-    api_url = "https://creamnation.com/wp-admin/admin-ajax.php?action=store_search&lat=37.09024&lng=-95.712891&max_results=1000&search_radius=5000&autoload=1"
-    with SgRequests() as session:
-        api_res = session.get(api_url, headers=headers)
 
-        stores_list = json.loads(api_res.text)
+    api_url = "https://creamnation.com/wp-admin/admin-ajax.php?action=store_search&lat=37.09024&lng=-95.712891&max_results=1000&search_radius=5000&autoload=1"
+    with SgFirefox(block_third_parties=True) as driver:
+        driver.get(api_url)
+        stores_sel = lxml.html.fromstring(driver.page_source)
+        json_data = "".join(stores_sel.xpath('//div[@id="json"]/text()')).strip()
+        stores_list = json.loads(json_data)
 
         for store in stores_list:
 
