@@ -1,3 +1,4 @@
+import time
 from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
@@ -18,7 +19,7 @@ def fetch_data(sgw: SgWriter):
     tmp = []
     for d in div[1:]:
         tmp.append(d.split('"')[0])
-    api_url = "https://www.monsterselfstorage.com/_nuxt/da80618.js"
+    api_url = "https://www.monsterselfstorage.com/_nuxt/23b7782.js"
     session = SgRequests()
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
@@ -44,7 +45,9 @@ def fetch_data(sgw: SgWriter):
             str(block).split(',phone_number:"')[1].split('"')[0].strip() or "<MISSING>"
         )
         with SgFirefox() as driver:
+            time.sleep(5)
             driver.get(page_url)
+            time.sleep(5)
             a = driver.page_source
 
             tree = html.fromstring(a)
