@@ -95,7 +95,6 @@ def get_data(store_number, sgw: SgWriter):
 
 def fetch_data(sgw: SgWriter):
     ids = get_ids()
-    # ids = ['66645', '66424', '44347', '40164']
 
     with futures.ThreadPoolExecutor(max_workers=5) as executor:
         future_to_url = {executor.submit(get_data, _id, sgw): _id for _id in ids}
