@@ -20,7 +20,6 @@ def fetch_data(sgw: SgWriter):
         location_request = session.get(base_url + option["value"])
         lcoation_soup = BeautifulSoup(location_request.text, "lxml")
         for location in lcoation_soup.find_all("div", {"class": "center-search-item"}):
-            store = []
             location_address = list(
                 location.find(
                     "div", {"class": "center-search-item-addr"}
