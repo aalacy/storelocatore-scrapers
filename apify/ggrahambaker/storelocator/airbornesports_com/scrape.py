@@ -104,6 +104,18 @@ def fetch_data(sgw: SgWriter):
             except:
                 hours = "<MISSING>"
 
+            hours = (
+                hours.replace("Open Jump (all ages)", "")
+                .replace(": Midnight  Teen Flight Night", "")
+                .replace("Weekday’s Open Til 8 PM", "")
+                .replace("Weekday’s Open Til 9 PM", "")
+                .replace("Open until 9 PM", "")
+                .replace("Open Jump Open until 11pm", "")
+                .split("Sundays")[0]
+                .strip()
+            )
+            hours = (re.sub(" +", " ", hours)).strip()
+
         sgw.write_row(
             SgRecord(
                 locator_domain="https://airbornesports.com/",

@@ -4,6 +4,8 @@ from sgrequests import SgRequests
 import json
 from bs4 import BeautifulSoup as bs
 from sglogging import SgLogSetup
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 logger = SgLogSetup().get_logger("mycarecompass")
 
@@ -12,7 +14,7 @@ _headers = {
 }
 
 locator_domain = "https://fruits-passion.com"
-base_url = "https://fruits-passion.com/en-ca/amlocator/"
+base_url = "https://fruits-passion.com/en_ca/amlocator/"
 
 
 def _p(val):
@@ -89,7 +91,7 @@ def fetch_data():
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

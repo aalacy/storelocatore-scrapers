@@ -1,90 +1,157 @@
-import csv
-import os
-from sgselenium import SgSelenium
-import time
+import ssl
+from sglogging import sglog
+from bs4 import BeautifulSoup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgselenium.sgselenium import SgChrome
+from selenium.webdriver.common.by import By
+from sgpostal.sgpostal import parse_address_intl
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from selenium.webdriver.support.ui import WebDriverWait
+from webdriver_manager.chrome import ChromeDriverManager
 
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+from selenium.webdriver.support import expected_conditions as EC
 
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
-        # Body
-        for row in data:
-            writer.writerow(row)
 
-def addy_ext(addy):
-    addy = addy.split(',')
-    city = addy[0]
-    state_zip = addy[1].strip().split(' ')
-    state = state_zip[0]
-    zip_code = state_zip[1]
-    return city, state, zip_code
+try:
+    _create_unverified_https_context = (
+        ssl._create_unverified_context
+    )  # Legacy Python that doesn't verify HTTPS certificates by default
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
 
-def fetch_data():
-    locator_domain = 'https://genesishcc.com/'
-    ext = 'findlocations'
 
-    driver = SgSelenium().chrome()
-    driver.get(locator_domain + ext)
-    time.sleep(2)
-    driver.implicitly_wait(5)
-    locs = driver.find_elements_by_css_selector('div.p-1.nano')
-    all_store_data = []
-    for loc in locs:
-        location_name = loc.find_element_by_css_selector('div.cI-title').text
+website = "genesishcc_com"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
 
-        page_url = loc.find_element_by_css_selector('a').get_attribute('href')
-        
-        addy = loc.find_element_by_css_selector('div.cI-address').text.split('\n')
-        if len(addy) > 3:
-            addy = addy[1:]
+DOMAIN = "https://genesishcc.com"
+MISSING = SgRecord.MISSING
 
-        street_address = addy[0]
-        
-        city, state, zip_code = addy_ext(addy[1])
-        
-        country_code = 'US'
-        store_number = '<MISSING>'
-        
-        location_type = '<MISSING>'
-        
-        lat = '<MISSING>'
-        longit = '<MISSING>'
-        
-        hours = '<MISSING>'
-        
-        phone_number = '<MISSING>'
-        
-        store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
-                    store_number, phone_number, location_type, lat, longit, hours, page_url]
 
-        all_store_data.append(store_data)
+def get_driver(url, class_name, driver=None):
+    if driver is not None:
+        driver.quit()
 
-    for data in all_store_data:
-        url = data[-1].replace('https', 'http')
-
-        while data[-6] == '<MISSING>':
-
+    user_agent = (
+        "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:89.0) Gecko/20100101 Firefox/89.0"
+    )
+    x = 0
+    while True:
+        x = x + 1
+        try:
+            driver = SgChrome(
+                executable_path=ChromeDriverManager().install(),
+                user_agent=user_agent,
+                is_headless=True,
+            ).driver()
             driver.get(url)
 
-            driver.implicitly_wait(10)
-            time.sleep(2)
-            try:
-                phone_number = driver.find_element_by_xpath('//a[contains(@href,"tel:")]').text.replace('Phone:', '').strip()
-            except:
-                try:
-                    phone_number = driver.find_element_by_css_selector('i.fa-phone').find_element_by_xpath('..').text.replace('tel', '').strip()
-                except:
-       
-                    continue
-            data[-6] = phone_number
+            WebDriverWait(driver, 30).until(
+                EC.presence_of_element_located((By.CLASS_NAME, class_name))
+            )
+            break
+        except Exception:
+            driver.quit()
+            if x == 10:
+                raise Exception(
+                    "Make sure this ran with a Proxy, will fail without one"
+                )
+            continue
+    return driver
 
-    driver.quit()
-    return all_store_data
+
+def fetch_data():
+    x = 0
+    while True:
+        x = x + 1
+        class_name = "nano"
+        url = "https://genesishcc.com/findlocations/"
+        if x == 1:
+            driver = get_driver(url, class_name)
+        else:
+            driver = get_driver(url, class_name, driver=driver)
+        soup = BeautifulSoup(driver.page_source, "html.parser")
+        loclist = soup.findAll("div", {"class": "nano"})
+        if len(loclist) == 0:
+            continue
+        else:
+            break
+    for loc in loclist:
+        page_url = DOMAIN + loc.find("a")["href"]
+        log.info(page_url)
+        location_name = loc.find("div", {"class": "cI-title"}).text
+        raw_address = (
+            loc.find("div", {"class": "cI-address"})
+            .get_text(separator="|", strip=True)
+            .replace("|", " ")
+        )
+
+        # Parse the address
+        pa = parse_address_intl(raw_address)
+
+        street_address = pa.street_address_1
+        street_address = street_address if street_address else MISSING
+
+        city = pa.city
+        city = city.strip() if city else MISSING
+
+        state = pa.state
+        state = state.strip() if state else MISSING
+
+        zip_postal = pa.postcode
+        zip_postal = zip_postal.strip() if zip_postal else MISSING
+        street_address = street_address.replace("Rating Not Currently Available", "")
+        try:
+            driver.get(page_url)
+        except:
+            driver.get(page_url)
+            WebDriverWait(driver, 30)
+        soup = BeautifulSoup(driver.page_source, "html.parser")
+        try:
+            phone = (
+                soup.select_one("a[href*=tel]")
+                .get_text(separator="|", strip=True)
+                .replace("|", " ")
+                .replace("Phone: ", "")
+            )
+        except:
+            phone = MISSING
+        yield SgRecord(
+            locator_domain=DOMAIN,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address.strip(),
+            city=city.strip(),
+            state=state.strip(),
+            zip_postal=zip_postal.strip(),
+            country_code="US",
+            store_number=MISSING,
+            phone=phone.strip(),
+            location_type=MISSING,
+            latitude=MISSING,
+            longitude=MISSING,
+            hours_of_operation=MISSING,
+            raw_address=raw_address,
+        )
+
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    log.info("Started")
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
 
-scrape()
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
+
+
+if __name__ == "__main__":
+    scrape()

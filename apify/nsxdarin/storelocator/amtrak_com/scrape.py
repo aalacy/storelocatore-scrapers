@@ -4,10 +4,10 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
+import time
 
 logger = SgLogSetup().get_logger("amtrak_com")
 
-session = SgRequests()
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
@@ -31,6 +31,7 @@ def fetch_data():
         "PE",
     ]
     url = "https://www.amtrak.com/sitemap.xml"
+    session = SgRequests()
     r = session.get(url, headers=headers)
     if r.encoding is None:
         r.encoding = "utf-8"
@@ -44,7 +45,17 @@ def fetch_data():
                         + item.split("<")[0]
                     )
                     locs.append(lurl)
+        if "<loc>https://beta.amtrak.com/stations/" in line:
+            items = line.split("<loc>https://beta.amtrak.com/stations/")
+            for item in items:
+                if "<?xml" not in item:
+                    lurl = (
+                        "https://beta.amtrak.com/content/amtrak/en-us/stations/"
+                        + item.split("<")[0]
+                    )
+                    locs.append(lurl)
     for loc in locs:
+        time.sleep(2)
         logger.info(("Pulling Location %s..." % loc))
         website = "amtrak.com"
         typ = "<MISSING>"
@@ -60,6 +71,7 @@ def fetch_data():
         phone = "215-856-7924"
         store = loc.rsplit("/", 1)[1].split(".")[0]
         lurl = "https://www.amtrak.com/content/amtrak/en-us/stations/" + store + ".html"
+        session = SgRequests()
         r2 = session.get(lurl, headers=headers)
         if r2.encoding is None:
             r2.encoding = "utf-8"
@@ -76,7 +88,10 @@ def fetch_data():
                     csz = line2.split('card_block-address">')[1].split("<")[0].strip()
                     city = csz.split(",")[0]
                     state = csz.split(",")[1].strip().split(" ")[0]
-                    zc = csz.rsplit(" ", 1)[1]
+                    if state not in canada:
+                        zc = csz.rsplit(" ", 1)[1]
+                    else:
+                        zc = csz.rsplit(" ", 2)[1] + " " + csz.rsplit(" ", 1)[1]
             if 'station-type">' in line2:
                 typ = line2.split('station-type">')[1].split("<")[0]
             if "maps/dir//" in line2:

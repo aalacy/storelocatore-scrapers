@@ -10,3 +10,4 @@ Please make sure that:
 * The resulting output passes https://github.com/SafeGraphInc/crawl-service/blob/master/scripts/validate.py
 
 1 address with no number,zip code not ain state this website
+hours set to "<INACCESSIBLE>" when page fails to load.

@@ -1,122 +1,104 @@
-import csv
-import json
+from sgselenium import SgChrome
+import time
 from lxml import etree
 
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 from sgrequests import SgRequests
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
 
 from sglogging import sglog
+import json
 
-log = sglog.SgLogSetup().get_logger("doitbest.com")
+from tenacity import retry, stop_after_attempt
+import tenacity
+import random
+
+domain = "doitbest.com"
+log = sglog.SgLogSetup().get_logger(domain)
+
+session = SgRequests()
+
+hdr = {
+    "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
+}
+
+response = session.get("https://doitbest.com/store-locator", headers=hdr)
+log.info(f"CSRF & Token Response: {response}")
+dom = etree.HTML(response.text)
+csrfid = dom.xpath('//input[@id="StoreLocatorForm_CSRFID"]/@value')[0]
+token = dom.xpath('//input[@id="StoreLocatorForm_CSRFToken"]/@value')[0]
+
+payload = {
+    "StoreLocatorForm": {
+        "Location": "TX",
+        "Filter": "All Locations",
+        "Range": "1900",
+        "CSRFID": csrfid,
+        "CSRFToken": token,
+    }
+}
+
+headers = {
+    "authority": "www.doitbest.com",
+    "accept": "application/json, text/javascript, */*; q=0.01",
+    "accept-language": "en-US,en;q=0.9",
+    "content-type": "application/json; charset=UTF-8",
+    "origin": "https://www.doitbest.com",
+    "referer": "https://www.doitbest.com/store-locator",
+    "sec-ch-ua": '" Not A;Brand";v="99", "Chromium";v="101", "Google Chrome";v="101"',
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": '"Linux"',
+    "sec-fetch-dest": "empty",
+    "sec-fetch-mode": "cors",
+    "sec-fetch-site": "same-origin",
+    "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/101.0.4951.54 Safari/537.36",
+    "x-mod-sbb-ctype": "xhr",
+    "x-requested-with": "XMLHttpRequest",
+}
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def get_headers_cookies(url_location):
+    with SgChrome() as driver:
+        driver.get(url_location)
+        time.sleep(10)
+        cookies_ = driver.get_cookies()
 
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+    cookies_custom = []
+    for cookie in cookies_:
+        cookie_formatted = f"{cookie['name']}={cookie['value']}"
+        cookies_custom.append(cookie_formatted)
+
+    headers["cookie"] = "; ".join(cookies_custom)
+
+    return headers
+
+
+headers = get_headers_cookies("https://doitbest.com/store-locator")
+
+
+@retry(stop=stop_after_attempt(5), wait=tenacity.wait_fixed(5))
+def get_response(url):
+    with SgRequests() as http:
+        response = http.post(url, headers=headers, json=payload)
+        log.info(f"Retry POST RESPONSE: {response} ")
+        time.sleep(random.randint(1, 3))
+        if response.status_code == 200:
+            log.info(f"{url} >> HTTP STATUS: {response.status_code}")
+            return response
+        raise Exception(f"{url} >> HTTP Error Code: {response.status_code}")
 
 
 def fetch_data():
-    # Your scraper here
-    session = SgRequests(proxy_rotation_failure_threshold=0).requests_retry_session(
-        retries=1,
-        backoff_factor=0.3,
-        status_forcelist=[
-            418,
-        ],
-    )
-
-    items = []
-    scraped_items = []
-
-    DOMAIN = "doitbest.com"
-    start_url = "https://doitbest.com/StoreLocator/Submit"
-
-    hdr = {
-        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
-    }
-
-    response = session.get("https://doitbest.com/store-locator", headers=hdr)
-    dom = etree.HTML(response.text)
-    csrfid = dom.xpath('//input[@id="StoreLocatorForm_CSRFID"]/@value')[0]
-    token = dom.xpath('//input[@id="StoreLocatorForm_CSRFToken"]/@value')[0]
-
-    headers = {
-        "content-type": "application/json; charset=UTF-8",
-        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
-        "x-mod-sbb-ctype": "xhr",
-        "x-requested-with": "XMLHttpRequest",
-    }
-
+    url = "https://www.doitbest.com/StoreLocator/Submit"
     all_locations = []
-    all_codes = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA], max_radius_miles=30
-    )
-    for code in all_codes:
-        str_zip = str(code)
-        if len(str_zip) == 4:
-            str_zip = "0" + str_zip
-            log.info(f"appended zero:{code} => {str_zip}")
-        if len(str_zip) == 3:
-            str_zip = "00" + str_zip
-            log.info(f"appended zeros:{code} => {str_zip}")
-        log.info(f"Fetching location for: {str_zip}")
-        body = {
-            "StoreLocatorForm": {
-                "Location": str_zip,
-                "Filter": "All Locations",
-                "Range": "50",
-                "CSRFID": csrfid,
-                "CSRFToken": token,
-            }
-        }
-        response = session.post(start_url, headers=headers, json=body, verify=False)
-        if response.status_code != 200:
-            response = session.get("https://doitbest.com/store-locator", headers=hdr)
-            dom = etree.HTML(response.text)
-            csrfid = dom.xpath('//input[@id="StoreLocatorForm_CSRFID"]/@value')[0]
-            token = dom.xpath('//input[@id="StoreLocatorForm_CSRFToken"]/@value')[0]
-            body = {
-                "StoreLocatorForm": {
-                    "Location": str_zip,
-                    "Filter": "All Locations",
-                    "Range": "50",
-                    "CSRFID": csrfid,
-                    "CSRFToken": token,
-                }
-            }
-            response = session.post(start_url, headers=headers, json=body, verify=False)
-            if not response.text:
-                continue
-        data = json.loads(response.text)
-        if not data["Response"].get("Stores"):
-            continue
-        all_locations += data["Response"]["Stores"]
 
+    response = get_response(url)
+
+    data = json.loads(response.text)
+    all_locations += data["Response"]["Stores"]
+    log.info(f" Total Location: {len(all_locations)}")
     for poi in all_locations:
         store_url = poi["WebsiteURL"]
         store_url = "https://" + store_url if store_url else "<MISSING>"
@@ -147,32 +129,36 @@ def fetch_data():
         longitude = longitude if longitude else "<MISSING>"
         hours_of_operation = "<MISSING>"
 
-        item = [
-            DOMAIN,
-            store_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip_code,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        if store_number not in scraped_items:
-            scraped_items.append(store_number)
-            items.append(item)
+        item = SgRecord(
+            locator_domain=domain,
+            page_url=store_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zip_code,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+        )
 
-    return items
+        yield item
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":

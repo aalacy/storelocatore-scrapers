@@ -1,149 +1,116 @@
-import re
-import usaddress
-from sglogging import sglog
-from bs4 import BeautifulSoup
-from sgrequests import SgRequests
-from sgscrape.sgrecord import SgRecord
+import json
 from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+import ssl
 
+ssl._create_default_https_context = ssl._create_unverified_context
 
-website = "risingroll_com"
-log = sglog.SgLogSetup().get_logger(logger_name=website)
-session = SgRequests()
-headers = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36",
-    "Accept": "application/json",
-}
+from sgselenium.sgselenium import SgChrome
+
+user_agent = (
+    "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0"
+)
 
 
 def fetch_data():
-    if True:
-        url = "https://risingroll.com/locations/"
-        r = session.get(url, headers=headers)
-        soup = BeautifulSoup(r.text, "html.parser")
-        loclist = soup.findAll("div", {"class": "et_pb_blurb_content"})
-        for loc in loclist:
-            if "coming soon" in loc.text.lower():
-                continue
-            page_url = loc.find("a")["href"]
-            log.info(page_url)
-            r = session.get(page_url, headers=headers)
-            soup = BeautifulSoup(r.text, "html.parser")
-            location_name = (
-                soup.find("div", {"class": "header-content"}).find("h1").text
-            )
-            temp = (
-                soup.findAll("div", {"class": "et_pb_text_inner"})[1]
-                .get_text(separator="|", strip=True)
-                .replace("30308,", "30308")
-                .replace("Ralph G. Anderson", "")
-                .split("|")[1:]
-            )
-            if "Georgia Institute" in temp[0]:
-                temp.pop(0)
-            for i, s in enumerate(temp):
-                if "Owner:" in s or "Owners:" in s or "States" in s:
-                    indice = i
-            address = temp[:indice]
-            temp_address = address[-1].split()
-            if temp_address[-1].isdigit() and len(temp_address[-1]) == 5:
-                if "University" in address[1]:
-                    address = address[2:]
-            else:
-                del address[-1]
-            address = " ".join(x for x in address)
-            latitude, longitude = (
-                soup.find("iframe", {"src": re.compile("mapquest.com")})["src"]
-                .split("center=", 1)[1]
-                .split("&zoom=", 1)[0]
-                .split(",")
-            )
-            indice = indice + 1
-            temp = " ".join(x for x in temp[indice:])
-            try:
-                hours_of_operation = temp.split("Open:", 1)[1]
-                if "We are following" in hours_of_operation:
-                    hours_of_operation = hours_of_operation.split(
-                        "We are following", 1
-                    )[0]
-                elif "The health and safety" in hours_of_operation:
-                    hours_of_operation = hours_of_operation.split(
-                        "The health and safety", 1
-                    )[0]
-                elif "Breakfast" in hours_of_operation:
-                    hours_of_operation = hours_of_operation.split("Breakfast", 1)[0]
-                else:
-                    hours_of_operation = hours_of_operation.split("Lunch", 1)[0]
+    with SgChrome(user_agent=user_agent) as driver:
+        url = "https://www.risingroll.com/locations"
+        driver.get(url)
+        divlist = driver.page_source.split('<script type="application/ld+json">')[1:]
+        divlist = driver.page_source.split(',"RestaurantLocation:')[1:]
+        for div in divlist:
 
-            except:
-                hours_of_operation = "<MISSING>"
+            div = div.split(":", 1)[1]
             try:
-                phone = temp.split("P:", 1)[1].split()[0]
+                div = json.loads(div)
             except:
                 try:
-                    phone = temp.split("T: ")[1]
+                    div = div.split('},"CustomPage:', 1)[0] + "}"
+                    div = json.loads(div)
                 except:
-                    try:
-                        phone = temp.split("P :")[1]
-                    except:
-                        phone = "<MISSING>"
-            address = address.replace(",", " ")
-            address = usaddress.parse(address)
-            i = 0
-            street_address = ""
-            city = ""
-            state = ""
-            zip_postal = ""
-            while i < len(address):
-                temp = address[i]
-                if (
-                    temp[1].find("Address") != -1
-                    or temp[1].find("Street") != -1
-                    or temp[1].find("Recipient") != -1
-                    or temp[1].find("Occupancy") != -1
-                    or temp[1].find("BuildingName") != -1
-                    or temp[1].find("USPSBoxType") != -1
-                    or temp[1].find("USPSBoxID") != -1
-                ):
-                    street_address = street_address + " " + temp[0]
-                if temp[1].find("PlaceName") != -1:
-                    city = city + " " + temp[0]
-                if temp[1].find("StateName") != -1:
-                    state = state + " " + temp[0]
-                if temp[1].find("ZipCode") != -1:
-                    zip_postal = zip_postal + " " + temp[0]
-                i += 1
+                    div = div.split('},"Dish:', 1)[0] + "}"
+                    div = json.loads(div)
+            store = div["id"]
+            city = div["city"]
+            title = div["name"]
 
+            state = div["state"]
+            try:
+                phone = div["displayPhone"].strip()
+            except:
+                phone = "<MISSING>"
+            lat = div["lat"]
+            longt = div["lng"]
+            pcode = div["postalCode"]
+            try:
+                link = "https://www.risingroll.com/menu-" + div["slug"].strip()
+            except:
+                link = "<MISSING>"
+            state = div["stateName"]
+            street = div["streetAddress"].replace("\n", " ").strip()
+
+            try:
+                hourslist = div["schemaHours"]
+
+                timestr = hourslist[0].split(" ", 1)[1]
+
+                start, endstr = timestr.split("-")
+                close = int(endstr.split(":", 1)[0])
+                if close > 12:
+                    close = close - 12
+                hours = (
+                    hourslist[0].split(" ", 1)[0]
+                    + " - "
+                    + hourslist[-1].split(" ", 1)[0]
+                    + " : "
+                    + start
+                    + " am - "
+                    + str(close)
+                    + ":"
+                    + endstr.split(":", 1)[1]
+                    + " pm "
+                )
+                if "Sa " not in hours:
+                    hours = hours + "Sat - Sun : Closed"
+                else:
+                    hours = hours + "Sun : Closed"
+            except:
+                hours = "<MISSING>"
+            ltype = "<MISSING>"
+            try:
+                if "Coming Soon" in div["customLocationContent"]:
+                    ltype = "Coming Soon"
+            except:
+                pass
             yield SgRecord(
-                locator_domain="https://risingroll.com/",
-                page_url=page_url,
-                location_name=location_name.strip(),
-                street_address=street_address.strip(),
+                locator_domain="https://www.risingroll.com/",
+                page_url=link,
+                location_name=title,
+                street_address=street.strip(),
                 city=city.strip(),
                 state=state.strip(),
-                zip_postal=zip_postal.strip(),
+                zip_postal=pcode.strip(),
                 country_code="US",
-                store_number="<MISSING>",
+                store_number=str(store),
                 phone=phone.strip(),
-                location_type="<MISSING>",
-                latitude=latitude.strip(),
-                longitude=longitude.strip(),
-                hours_of_operation=hours_of_operation.strip(),
+                location_type=ltype,
+                latitude=lat,
+                longitude=longt,
+                hours_of_operation=hours,
             )
 
 
 def scrape():
-    log.info("Started")
-    count = 0
-    with SgWriter() as writer:
+
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.GeoSpatialId)
+    ) as writer:
+
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
-            count = count + 1
-
-    log.info(f"No of records being processed: {count}")
-    log.info("Finished")
 
 
-if __name__ == "__main__":
-    scrape()
+scrape()

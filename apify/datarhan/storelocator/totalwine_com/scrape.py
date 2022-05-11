@@ -1,47 +1,20 @@
-import csv
 from tenacity import retry, stop_after_attempt
 from sgrequests import SgRequests
 
-
 from sglogging import SgLogSetup
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
 
 logger = SgLogSetup().get_logger("totalwine_com")
-
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf-8") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
 
 
 @retry(stop=stop_after_attempt(5))
 def get_url(url):
     headers = {
-        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36"
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:94.0) Gecko/20100101 Firefox/94.0",
+        "Accept": "application/json, text/plain, */*",
     }
     session = SgRequests()
     response = session.get(url, headers=headers)
@@ -49,9 +22,7 @@ def get_url(url):
 
 
 def fetch_data():
-    items = []
-
-    DOMAIN = "totalwine.com"
+    domain = "totalwine.com"
 
     states = [
         "AL",
@@ -121,7 +92,7 @@ def fetch_data():
         location_name = location_name if location_name else "<MISSING>"
         street_address = poi.get("address1")
         if street_address:
-            if poi["address2"]:
+            if poi.get("address2"):
                 street_address = poi["address2"]
         else:
             street_address = poi.get("address2")
@@ -138,6 +109,8 @@ def fetch_data():
         phone = poi.get("phone")
         phone = phone if phone else "<MISSING>"
         location_type = "<MISSING>"
+        if poi["marketingStatus"] == "COMINGSOON":
+            continue
         latitude = poi["latitude"]
         latitude = latitude if latitude else "<MISSING>"
         longitude = poi["longitude"]
@@ -158,31 +131,36 @@ def fetch_data():
             poi["state"].lower(), city.replace(" ", "-"), store_number
         )
 
-        item = [
-            DOMAIN,
-            store_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip_code,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
+        item = SgRecord(
+            locator_domain=domain,
+            page_url=store_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zip_code,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+        )
 
-        items.append(item)
-
-    return items
+        yield item
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":

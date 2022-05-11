@@ -1,58 +1,34 @@
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sglogging import SgLogSetup
 import json
-import re
-import ssl
-
-try:
-    _create_unverified_https_context = (
-        ssl._create_unverified_context
-    )  # Legacy Python that doesn't verify HTTPS certificates by default
-except AttributeError:
-    pass
-else:
-    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
+import html
+from tenacity import retry, stop_after_attempt
+import tenacity
 
 
 logger = SgLogSetup().get_logger("tsb_co_uk")
-
 URL_BRANCH_LOCATOR = "http://www.tsb.co.uk/branch-locator/"
-MISSING = "<MISSING>"
-DOMAIN = "https://www.tsb.co.uk"
-session = SgRequests()
+DOMAIN = "tsb.co.uk"
+MISSING = SgRecord.MISSING
 headers_tsb = {
     "accept": "application/json, text/plain, */*",
     "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.114 Safari/537.36",
 }
 
 
-def permissive_json_loads(text):
-    backslash_finding_pattern = re.compile(r"""(\d+)\)$""", re.MULTILINE)
-
-    i = 0
-    #  Make sure the loop is going to terminate.
-    #  There wont be more iterations than the double amout of characters
-    while True:
-        i += 1
-        if i > len(text) * 2:
-            return
-        try:
-            data = json.loads(text)
-        except ValueError as exc:
-            exc_msg = str(exc)
-            if exc_msg.startswith("Invalid \\escape"):
-                m = re.search(backslash_finding_pattern, exc_msg)
-                if not m:
-                    return
-                pos = int(m.groups()[0])
-                logger.info(f"Replacing at: {pos}")
-                text = text[:pos] + "\\" + text[pos:]
-            else:
-                raise
-        else:
-            return data
+@retry(stop=stop_after_attempt(10), wait=tenacity.wait_fixed(10))
+def get_response(url):
+    with SgRequests() as http:
+        logger.info(f"Pulling the data from: {url}")
+        r = http.post(url, headers=headers_tsb)
+        if r.status_code == 200:
+            logger.info(f"HTTP Status Code: {r.status_code}")
+            return r
+        raise Exception(f"{url} >> Temporary Error: {r.status_code}")
 
 
 def get_hours(data_hours):
@@ -110,12 +86,12 @@ def get_hours(data_hours):
 def fetch_data():
     s = set()
     url = "https://www.tsb.co.uk/sites/Satellite?c=Page&pagename=public%2FseBranchLocator&longitude=-4.3878&latitude=56.5685&filter=null&numBranches=1&rows=1000&isAppend=false"
-    r = session.post(url, headers=headers_tsb)
-    text = r.text
+    r = get_response(url)
+    text = html.unescape(r.content.decode("unicode-escape"))
     sp1 = text.split("jsonBranches = ")[-1]
     sp2 = sp1.split(";")[0]
     sp3 = sp2.replace("'", "")
-    sp4 = permissive_json_loads(sp3)
+    sp4 = json.loads(sp3)
     all_branches = sp4["branches"]
     logger.info(f"Total Number of Branches found: {len(all_branches)}")
     for idx, data in enumerate(all_branches):
@@ -196,7 +172,9 @@ def fetch_data():
 def scrape():
     logger.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.StoreNumberId)
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

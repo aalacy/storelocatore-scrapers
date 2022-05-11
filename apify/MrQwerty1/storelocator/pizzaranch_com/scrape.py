@@ -1,38 +1,14 @@
-import csv
 import json
-
+from sglogging import sglog
 from concurrent import futures
 from lxml import html
 from sgrequests import SgRequests
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
 
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
+log = sglog.SgLogSetup().get_logger(logger_name="pizzaranch.com")
 
 
 def get_hours(url):
@@ -41,15 +17,12 @@ def get_hours(url):
     r = session.get(url)
     tree = html.fromstring(r.text)
 
-    hours = tree.xpath(
-        "//div[@class='location-info-right-wrapper']//table[@class='c-location-hours-details']"
-        "//tr[contains(@class, 'c-location-hours-details')]"
-    )
+    hours = tree.xpath("//div[@id='c-hours-collapse']//table/tbody/tr")
     for h in hours:
         day = "".join(h.xpath("./td[@class='c-location-hours-details-row-day']/text()"))
         time = " ".join(
             h.xpath(
-                ".//span[@class='c-location-hours-details-row-intervals-instance ']//text()"
+                ".//span[@class='c-location-hours-details-row-intervals-instance js-location-hours-interval-instance']//text()"
             )
         )
         if time:
@@ -57,26 +30,20 @@ def get_hours(url):
         else:
             _tmp.append(f"{day} Closed")
 
-    hours_of_operation = ";".join(_tmp) or "<MISSING>"
-
-    if hours_of_operation.count("Closed") == 7:
-        hours_of_operation = "Closed"
+    hours_of_operation = ";".join(_tmp).replace("day", "day:") or "<MISSING>"
 
     return hours_of_operation
 
 
 def fetch_data():
-    out = []
     locator_domain = "https://pizzaranch.com"
     session = SgRequests()
 
-    for i in range(1, 5000):
+    search_url = "https://pizzaranch.com/all-locations/search-results/p1?state=*"
+    while True:
         urls = set()
         hours = dict()
-
-        r = session.get(
-            f"https://pizzaranch.com/all-locations/search-results/p{i}?state=*"
-        )
+        r = session.get(search_url)
         tree = html.fromstring(r.text)
         size = tree.xpath("//location-info-panel")
         text = "".join(
@@ -110,40 +77,53 @@ def fetch_data():
             longitude = j.get("lng")
             page_url = j.get("website") or "<MISSING>"
 
+            hours_of_operation = "<MISSING>"
             try:
                 key = page_url.split("/")[-1]
                 hours_of_operation = hours[key]
             except:
                 hours_of_operation = "<MISSING>"
 
-            row = [
-                locator_domain,
-                page_url,
-                location_name,
-                street_address,
-                city,
-                state,
-                postal,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
-
-            out.append(row)
+            yield SgRecord(
+                locator_domain=locator_domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=postal,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
 
         if len(size) < 12:
             break
 
-    return out
+        next_page = "".join(tree.xpath('//li[@class="next"]/a/@href')).strip()
+        if len(next_page) > 0:
+            search_url = next_page
+        else:
+            break
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    log.info("Started")
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.StoreNumberId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
 
 
 if __name__ == "__main__":

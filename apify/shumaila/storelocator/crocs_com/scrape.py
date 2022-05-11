@@ -1,155 +1,159 @@
-from bs4 import BeautifulSoup
-import csv
-import re
-
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from sgrequests import SgRequests
+import json
+from sgzip.dynamic import SearchableCountries, DynamicGeoSearch
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
 headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.183 Safari/537.36"
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+def fetch_locations(lat, lng):
+    headers = {
+        "Connection": "keep-alive",
+        "sec-ch-ua": '"Google Chrome";v="95", "Chromium";v="95", ";Not A Brand";v="99"',
+        "Accept": "application/json, text/javascript, */*; q=0.01",
+        "Content-Type": "application/json",
+        "X-Requested-With": "XMLHttpRequest",
+        "sec-ch-ua-mobile": "?0",
+        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36",
+        "sec-ch-ua-platform": '"Linux"',
+        "Origin": "https://stores.crocs.com",
+        "Sec-Fetch-Site": "same-origin",
+        "Sec-Fetch-Mode": "cors",
+        "Sec-Fetch-Dest": "empty",
+        "Referer": "https://stores.crocs.com/index_new_int.html",
+        "Accept-Language": "en-US,en;q=0.9",
+    }
+
+    data = {
+        "request": {
+            "appkey": "1BC4F6AA-9BB9-11E6-953B-FA25F3F215A2",
+            "formdata": {
+                "geoip": False,
+                "dataview": "store_default",
+                "order": "tblstoretype DESC,_distance",
+                "limit": 100,
+                "geolocs": {"geoloc": [{"latitude": f"{lat}", "longitude": f"{lng}"}]},
+                "searchradius": "100",
+                "radiusuom": "mile",
+                "where": {
+                    "tblstorestatus": {"in": "Open,OPEN,open"},
+                    "or": {
+                        "crocsretail": {"eq": "1"},
+                        "crocsoutlet": {"eq": "1"},
+                        "otherretailer": {"eq": "1"},
+                    },
+                },
+                "false": "0",
+            },
+        }
+    }
+    try:
+        loclist = session.post(
+            "https://stores.crocs.com/rest/locatorsearch",
+            headers=headers,
+            data=json.dumps(data),
+        ).json()["response"]["collection"]
+    except:
+        return []
+
+    weeklist = ["mon", "tue", "wed", "thr", "fri", "sat", "sun"]
+    locations = []
+    for loc in loclist:
+        title = loc["name"]
+        store = loc["clientkey"]
+        phone = loc["phone"]
+        city = loc["city"]
+        state = loc["state"]
+        pcode = loc["postalcode"]
+        lat = loc["latitude"]
+        longt = loc["longitude"]
+        try:
+            street = loc["address1"] + " " + str(loc["address2"])
+
+            street = street.replace("&#xa0;", " ").replace("&#x96;", " ").strip()
+        except:
+            return []
+        street = street.replace("None", "")
+        ccode = loc["country"]
+        ltype = "Outlet"
+        hours = "<MISSING>"
+
+        if loc["crocsoutlet"] == 0:
+            ltype = "Dealer"
+
+            link = "<MISSING>"
+        else:
+            hours = ""
+            try:
+                link = (
+                    "https://locations.crocs.com/"
+                    + state
+                    + "-"
+                    + city
+                    + "-"
+                    + str(store)
+                )
+            except:
+                link = "<MISSING>"
+            try:
+                for day in weeklist:
+                    hours = hours + day + " " + loc[day] + " "
+            except:
+                hours = "<MISSING>"
+        locations.append(
+            SgRecord(
+                locator_domain="https://www.crocs.com/",
+                page_url=link,
+                location_name=title,
+                street_address=street,
+                city=city,
+                state=state,
+                zip_postal=pcode,
+                country_code=ccode,
+                store_number=str(store),
+                phone=phone,
+                location_type=ltype,
+                latitude=str(lat),
+                longitude=str(longt),
+                hours_of_operation=hours,
+            )
         )
 
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+    return locations
 
 
 def fetch_data():
-    data = []
-    url = "https://locations.crocs.com/"
-    r = session.get(url, headers=headers, verify=False)
-    soup = BeautifulSoup(r.text, "html.parser")
-    state_list = soup.findAll("div", {"class": "itemlist"})
-    p = 0
-    for states in state_list:
-        states = states.find("a")
-        states = states["href"]
-        r = session.get(states, headers=headers, verify=False)
-        soup = BeautifulSoup(r.text, "html.parser")
-        city_list = soup.findAll("div", {"class": "itemlist"})
 
-        for cities in city_list:
-            cities = cities.find("a")
-            cities = cities["href"]
-            r = session.get(cities, headers=headers, verify=False)
+    mylist = DynamicGeoSearch(
+        country_codes=SearchableCountries.ALL,
+        expected_search_radius_miles=100,
+        max_search_distance_miles=100,
+    )
+    search = list(mylist)
 
-            soup = BeautifulSoup(r.text, "html.parser")
-            branch_list = soup.findAll("div", {"class": "itemlist_fullwidth"})
-
-            for branch in branch_list:
-                branch = branch.find("a")
-                link = branch["href"]
-
-                r = session.get(link, headers=headers, verify=False)
-
-                soup = BeautifulSoup(r.text, "html.parser")
-                detail = soup.findAll("script", {"type": "application/ld+json"})
-                detail = str(detail[1])
-                start = detail.find("@id")
-                start = detail.find(":", start) + 2
-                end = detail.find('"', start)
-                store = detail[start:end]
-                start = detail.find("streetAddress")
-                start = detail.find(":", start) + 2
-                end = detail.find('"', start)
-                street = detail[start:end]
-                start = detail.find("addressLocality")
-                start = detail.find(":", start) + 2
-                end = detail.find('"', start)
-                city = detail[start:end]
-                start = detail.find("addressRegion")
-                start = detail.find(":", start) + 2
-                end = detail.find('"', start)
-                state = detail[start:end]
-                start = detail.find("postalCode")
-                start = detail.find(":", start) + 2
-                end = detail.find('"', start)
-                pcode = detail[start:end]
-                start = detail.find("addressCountry")
-                start = detail.find(":", start) + 2
-                end = detail.find('"', start)
-                ccode = detail[start:end]
-                start = detail.find("latitude")
-                start = detail.find(":", start) + 1
-                end = detail.find(",", start)
-                lat = detail[start:end]
-                start = detail.find("longitude")
-                start = detail.find(":", start) + 1
-                end = detail.find("}", start)
-                longt = detail[start:end]
-                longt = longt.replace("\n", "")
-                longt = longt.rstrip()
-                start = detail.find("telephone")
-                start = detail.find(":", start) + 2
-                end = detail.find('"', start)
-                phone = detail[start:end]
-
-                title = soup.find("h1").text.replace("\n", "")
-                title = re.sub("\\s+", " ", title).strip()
-                hours = (
-                    soup.find("div", {"class": "hrs"})
-                    .find("table")
-                    .text.replace("\n", " ")
-                )
-                hours = re.sub("\\s+", " ", hours).strip()
-                hours = hours.replace(
-                    "Holiday hours may vary. Please call store for details.", ""
-                )
-                hours = hours.replace("*", "").replace("day ", "day : ")
-
-                data.append(
-                    [
-                        "https://www.crocs.com/",
-                        link,
-                        title,
-                        street,
-                        city,
-                        state,
-                        pcode,
-                        ccode,
-                        store,
-                        phone,
-                        "store",
-                        lat,
-                        longt,
-                        hours,
-                    ]
-                )
-
-                p += 1
-    return data
+    with ThreadPoolExecutor() as executor:
+        futures = [executor.submit(fetch_locations, lat, lng) for lat, lng in search]
+        for future in as_completed(futures):
+            yield from future.result()
 
 
 def scrape():
 
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        deduper=SgRecordDeduper(
+            RecommendedRecordIds.StoreNumberId, duplicate_streak_failure_factor=-1
+        )
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()

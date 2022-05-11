@@ -1,1 +1,7 @@
-rewrite of https://github.com/SafeGraphInc/crawl-service/blob/master/apify/richard/storelocator/anthropologie_com/scrape.py
+# Following Validation Checks Ignored:
+
+- --ignore StreetAddressHasStateName
+- --ignore GeoConsistencyValidator
+- --ignore CountryValidator
+- --ignore StreetAddressHasNumber
+

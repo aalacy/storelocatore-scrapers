@@ -1,92 +1,155 @@
-import csv
-import urllib.request, urllib.error, urllib.parse
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
-logger = SgLogSetup().get_logger('westfield_com')
-
-
+logger = SgLogSetup().get_logger("westfield_com")
 
 session = SgRequests()
-headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
-           }
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+}
 
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-        for row in data:
-            writer.writerow(row)
 
 def fetch_data():
     locs = []
-    url = 'https://www.westfield.com'
+    url = "https://www.westfield.com"
     r = session.get(url, headers=headers)
-    if r.encoding is None: r.encoding = 'utf-8'
-    website = 'westfield.com'
-    for line in r.iter_lines(decode_unicode=True):
-        if '<h2 class="tile-centre__header u-font--flama"> <a href="/' in line:
-            items = line.split('<h2 class="tile-centre__header u-font--flama"> <a href="/')
-            for item in items:
-                if 'class="js-centre-name" data-track="click center tile"' in item:
-                    city = item.split('<div class="tile-centre__subtitle">')[1].split(',')[0].strip()
-                    locs.append('https://www.westfield.com/' + item.split('"')[0] + '|' + city)
+    website = "westfield.com"
+    for line in r.iter_lines():
+        if 'class="js-centre-name"' in line:
+            city = line.split('data-track="click center tile" data-track-label="')[
+                1
+            ].split(" home")[0]
+            locs.append(
+                "https://www.westfield.com"
+                + line.split('href="')[1].split('"')[0]
+                + "|"
+                + city
+            )
     for loc in locs:
-        logger.info((loc.split('|')[0]))
-        r2 = session.get(loc.split('|')[0], headers=headers)
-        if r2.encoding is None: r2.encoding = 'utf-8'
-        typ = 'Center'
-        store = '<MISSING>'
-        name = ''
-        add = ''
-        city = loc.split('|')[1]
-        state = ''
-        zc = ''
-        country = 'US'
-        phone = ''
-        lat = '<MISSING>'
-        lng = '<MISSING>'
-        hours = '<MISSING>'
-        for line2 in r2.iter_lines(decode_unicode=True):
-            if "var centerName = '" in line2:
-                name = line2.split("var centerName = '")[1].split("'")[0]
-            if '<div class="content"> <a href="/' in line2:
-                info = line2.split('<div class="content"> <a href="/')[1]
-                addinfo = info.split('">')[1].split('<')[0].strip()
-                zc = addinfo.rsplit(' ',1)[1]
-                state = addinfo.rsplit(' ',2)[1].split(' ')[0]
-                phone = info.split('<a href="tel:')[1].split('"')[0]
+        logger.info((loc.split("|")[0]))
+        r2 = session.get(loc.split("|")[0], headers=headers)
+        typ = "Center"
+        store = "<MISSING>"
+        name = ""
+        add = ""
+        city = loc.split("|")[1]
+        state = ""
+        zc = ""
+        country = "US"
+        phone = ""
+        lat = "<MISSING>"
+        lng = "<MISSING>"
+        hours = "<MISSING>"
+        for line2 in r2.iter_lines():
+            if 'name="title" content="' in line2:
+                name = line2.split('name="title" content="')[1].split('"')[0]
+            if '"addresses":"' in line2:
+                addinfo = line2.split('"addresses":"')[1].split('"')[0]
+                zc = addinfo.rsplit(" ", 1)[1]
+                state = addinfo.rsplit(" ", 2)[1].split(" ")[0]
                 add = addinfo.split(city)[0].strip()
-        loc2 = loc.split('|')[0] + '/access'
-        r3 = session.get(loc2, headers=headers)
-        if r3.encoding is None: r3.encoding = 'utf-8'
-        for line3 in r3.iter_lines(decode_unicode=True):
-            if '<h3 class="whats-hot-title text-uppercase "> <span>' in line3:
-                hours = line3.split('<h3 class="whats-hot-title text-uppercase "> <span>')[1].split('<span class="title-separator"></span> </h3>')[0]
-                hours = hours.replace('<span class=" title-light">','').replace('<span>','').replace('</span>','').replace('<span class="title-separator">','; ').replace('  ',' ')
-                hours = hours.strip().replace(' ;',';')
-        if add != '':
-            if 'annapolis' in loc.split('|')[0]:
-                add = '2002 Annapolis Mall'
-                city = 'Annapolis'
-                state = 'MD'
-                zc = '21401'
-            if ' (' in add:
-                add = add.split(' (')[0]
-            if 'brandon' in loc.split('|')[0]:
-                add = '459 Brandon Town Center'
-                city = 'Brandon'
-                state = 'FL'
-                zc = '33511'
-            if 'valencia' in add.split('|')[0]:
-                add = '24201 West Valencia Blvd Suite 150'
-                city = 'Valencia'
-                state = 'CA'
-                zc = '91355'
-            yield [website, loc.split('|')[0], name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+            if '<a href="tel:' in line2:
+                phone = line2.split('<a href="tel:')[1].split('"')[0]
+        loc2 = loc.split("|")[0] + "/access"
+        try:
+            r3 = session.get(loc2, headers=headers)
+            for line3 in r3.iter_lines():
+                if '<span class="date">' in line3:
+                    items = line3.split('<span class="date">')
+                    for item in items:
+                        if '<span class="schedule">' in item:
+                            hrs = (
+                                item.split("<")[0]
+                                + ": "
+                                + item.split('<span class="schedule">')[1].split("<")[0]
+                            )
+                            if hours == "":
+                                hours = hrs
+                            else:
+                                hours = hours + "; " + hrs
+        except:
+            hours = "<MISSING>"
+        if add != "":
+            if "annapolis" in loc.split("|")[0]:
+                add = "2002 Annapolis Mall"
+                city = "Annapolis"
+                state = "MD"
+                zc = "21401"
+            if "southcenter" in loc.split("|")[0]:
+                add = "2800 Southcenter Mall"
+                city = "Seattle"
+            if "gardenstate" in loc.split("|")[0]:
+                add = "One Garden State Plaza"
+                city = "Paramus"
+            if "oldorchard" in loc.split("|")[0]:
+                add = "4905 Old Orchard Center"
+                city = "Skokie"
+            if "plazabonita" in loc.split("|")[0]:
+                add = "3030 Plaza Bonita Road, Suite 2075"
+                city = "National City"
+            if "gardenstate" in loc.split("|")[0]:
+                add = "One Garden State Plaza"
+                city = "Paramus"
+            if "topanga" in loc.split("|")[0]:
+                add = "6600 Topanga Canyon Boulevard"
+                city = "Canoga Park"
+            if " (" in add:
+                add = add.split(" (")[0]
+            if "brandon" in loc.split("|")[0]:
+                add = "459 Brandon Town Center"
+                city = "Brandon"
+                state = "FL"
+                zc = "33511"
+            if "valencia" in add.split("|")[0]:
+                add = "24201 West Valencia Blvd Suite 150"
+                city = "Valencia"
+                state = "CA"
+                zc = "91355"
+            cities = [
+                "Sherman Oaks",
+                "Los Angeles",
+                "San Diego",
+                "Bethesda",
+                "Escondido",
+                "San Francisco",
+                "Arcadia",
+                "Bay Shore",
+                "Canoga Park",
+                "Valencia",
+                "Santa Clara",
+                "New York",
+            ]
+            for cname in cities:
+                if cname in add:
+                    add = add.split(cname)[0].strip()
+                    city = cname
+            yield SgRecord(
+                locator_domain=website,
+                page_url=loc.split("|")[0],
+                location_name=name,
+                street_address=add,
+                city=city,
+                state=state,
+                zip_postal=zc,
+                country_code=country,
+                phone=phone,
+                location_type=typ,
+                store_number=store,
+                latitude=lat,
+                longitude=lng,
+                hours_of_operation=hours,
+            )
+
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        for rec in results:
+            writer.write_row(rec)
+
 
 scrape()

@@ -1,6 +1,9 @@
-import csv
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 logger = SgLogSetup().get_logger("aspencreekgrill_com")
 
@@ -11,41 +14,12 @@ headers = {
 }
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
-
-
 def fetch_data():
     url = "https://aspencreekgrill.com/"
     locs = []
-    r = session.get(url, headers=headers, verify=False)
-    if r.encoding is None:
-        r.encoding = "utf-8"
+    r = session.get(url, headers=headers)
     Found = False
-    for line in r.iter_lines(decode_unicode=True):
+    for line in r.iter_lines():
         if '<ul class="sub-menu">' in line and len(locs) == 0:
             Found = True
         if Found and "Menus</a>" in line:
@@ -55,6 +29,8 @@ def fetch_data():
             if (
                 "-menu" not in lurl
                 and lurl not in locs
+                and "/gift" not in lurl
+                and "/mom" not in lurl
                 and "uploads" not in lurl
                 and "/cart" not in lurl
                 and "contact-" not in lurl
@@ -79,9 +55,7 @@ def fetch_data():
         website = "aspencreekgrill.com"
         typ = "Restaurant"
         r2 = session.get(loc, headers=headers)
-        if r2.encoding is None:
-            r2.encoding = "utf-8"
-        lines = r2.iter_lines(decode_unicode=True)
+        lines = r2.iter_lines()
         for line2 in lines:
             if "<title>" in line2 and name == "":
                 name = line2.split("<title>")[1].split("<")[0]
@@ -128,27 +102,35 @@ def fetch_data():
         phone = "<MISSING>"
         store = "<MISSING>"
         country = "US"
-        yield [
-            website,
-            loc,
-            name,
-            add,
-            city,
-            state,
-            zc,
-            country,
-            store,
-            phone,
-            typ,
-            lat,
-            lng,
-            hours,
-        ]
+        if (
+            "/star" not in loc
+            and city != "<MISSING>"
+            and "campfire-cocktails" not in loc
+            and "harvest" not in loc
+        ):
+            yield SgRecord(
+                locator_domain=website,
+                page_url=loc,
+                location_name=name,
+                street_address=add,
+                city=city,
+                state=state,
+                zip_postal=zc,
+                country_code=country,
+                phone=phone,
+                location_type=typ,
+                store_number=store,
+                latitude=lat,
+                longitude=lng,
+                hours_of_operation=hours,
+            )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    results = fetch_data()
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()

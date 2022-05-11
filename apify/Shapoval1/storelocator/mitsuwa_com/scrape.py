@@ -1,53 +1,16 @@
-import csv
 import usaddress
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
-from concurrent import futures
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def fetch_data(sgw: SgWriter):
 
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def get_urls():
-    session = SgRequests()
-
-    r = session.get("https://mitsuwa.com/")
-    tree = html.fromstring(r.text)
-    return tree.xpath('//div[@class="store-listing"]/ul/li/a/@href')
-
-
-def get_data(url):
     locator_domain = "https://mitsuwa.com/"
-    page_url = "".join(url)
-    if page_url.find("now-hiring") != -1:
-        return
-
+    api_url = "https://mitsuwa.com/"
     session = SgRequests()
     tag = {
         "Recipient": "recipient",
@@ -77,70 +40,88 @@ def get_data(url):
         "StateName": "state",
         "ZipCode": "postal",
     }
-
-    r = session.get(page_url)
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
+    }
+    r = session.get(api_url, headers=headers)
     tree = html.fromstring(r.text)
-    ad = (
-        " ".join(tree.xpath("//h1/following-sibling::table//td[1]/p[1]/text()"))
-        .replace("\t", "")
-        .replace("\n", "")
-        .strip()
-    )
-    a = usaddress.tag(ad, tag_mapping=tag)[0]
-    street_address = f"{a.get('address1')} {a.get('address2')}".replace(
-        "None", ""
-    ).strip()
-    city = a.get("city")
-    state = a.get("state")
-    postal = a.get("postal")
-    country_code = "US"
-    store_number = "<MISSING>"
-    hours_of_operation = "".join(
-        tree.xpath('//h2[contains(text(), "Hours")]/following-sibling::p//text()')
-    )
-    location_name = "".join(tree.xpath('//div[@class="head_page_title"]/text()'))
-    phone = "".join(tree.xpath("//h1/following-sibling::table//td[1]/p[2]/text()"))
-    location_type = "<MISSING>"
-    longitude = "<MISSING>"
-    latitude = "<MISSING>"
+    div = tree.xpath('//div[@class="store-listing"]//ul/li[@id]//a')
+    for d in div:
 
-    row = [
-        locator_domain,
-        page_url,
-        location_name,
-        street_address,
-        city,
-        state,
-        postal,
-        country_code,
-        store_number,
-        phone,
-        location_type,
-        latitude,
-        longitude,
-        hours_of_operation,
-    ]
+        page_url = "".join(d.xpath(".//@href"))
 
-    return row
+        session = SgRequests()
+        r = session.get(page_url, headers=headers)
+        tree = html.fromstring(r.text)
 
+        location_name = "".join(
+            tree.xpath(
+                '//h1[text()="Store Information"]/following-sibling::table//tr/td[1]/h2[1]/text()'
+            )
+        ).strip()
+        ad = (
+            " ".join(
+                tree.xpath(
+                    '//h1[text()="Store Information"]/following-sibling::table//tr/td[1]/p[1]/text()'
+                )
+            )
+            .replace("\n", "")
+            .strip()
+        )
+        ad = " ".join(ad.split())
+        a = usaddress.tag(ad, tag_mapping=tag)[0]
+        street_address = (
+            f"{a.get('address1')} {a.get('address2')}".replace("None", "").strip()
+            or "<MISSING>"
+        )
+        city = a.get("city") or "<MISSING>"
+        state = a.get("state") or "<MISSING>"
+        postal = a.get("postal") or "<MISSING>"
+        country_code = "US"
+        phone = (
+            "".join(
+                tree.xpath(
+                    '//h1[text()="Store Information"]/following-sibling::table//tr/td[1]/p[2]/text()'
+                )
+            )
+            .replace("\n", "")
+            .strip()
+            or "<MISSING>"
+        )
+        hours_of_operation = (
+            " ".join(
+                tree.xpath('//h2[text()="Store Hours"]/following-sibling::p/text()')
+            )
+            .replace("\n", "")
+            .strip()
+            or "<MISSING>"
+        )
+        hours_of_operation = " ".join(hours_of_operation.split())
 
-def fetch_data():
-    out = []
-    urls = get_urls()
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {executor.submit(get_data, url): url for url in urls}
-        for future in futures.as_completed(future_to_url):
-            row = future.result()
-            if row:
-                out.append(row)
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=SgRecord.MISSING,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=SgRecord.MISSING,
+            longitude=SgRecord.MISSING,
+            hours_of_operation=hours_of_operation,
+            raw_address=ad,
+        )
 
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
+    ) as writer:
+        fetch_data(writer)

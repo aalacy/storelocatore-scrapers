@@ -1,64 +1,79 @@
-import csv
+# -*- coding: utf-8 -*-
+from lxml import etree
+
 from sgrequests import SgRequests
-from bs4 import BeautifulSoup
-import re
-import json
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
+from sgpostal.sgpostal import parse_address_intl
 
-
-session = SgRequests()
-
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-        # Body
-        for row in data:
-            writer.writerow(row)
 
 def fetch_data():
-    base_url = "http://timesoil.com"
-    return_main_object = []
-    headers={"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"}
-    r = session.get(base_url+'/locations/',headers=headers)
-    soup=BeautifulSoup(r.text,'lxml')
-    main=soup.find('div',{'class':'elementor-section-wrap'}).find_all('section',{"class":'elementor-element'})
-    del main[0]
-    for sec in main:
-        main1=list(sec.find('div',{'class':'elementor-icon-box-content'}).stripped_strings)
-        name=main1[0].strip()
-        country="US"
-        lat=''
-        lng=''
-        hour=''
-        storeno=name.split('-')[0].strip()
-        madd=main1[1].strip().split(',')
-        address=re.sub(r'\s+',' ',str(madd[0]))
-        state=madd[1].strip().split(' ')[0].strip()
-        zip=madd[1].strip().split(' ')[1].strip()
-        phone=''
-        if sec.find('div',{"class":'elementor-text-editor'})!=None:
-            phone=sec.find('div',{"class":'elementor-text-editor'}).find('p').text.strip()
-        store=[]
-        store.append(base_url)
-        store.append(name if name else "<MISSING>")
-        store.append(address if address else "<MISSING>")
-        store.append("<INACCESSIBLE>")
-        store.append(state if state else "<MISSING>")
-        store.append(zip if zip else "<MISSING>")
-        store.append(country if country else "<MISSING>")
-        store.append("<MISSING>")
-        store.append(phone if phone else "<MISSING>")
-        store.append("timesoil")
-        store.append(lat if lat else "<MISSING>")
-        store.append(lng if lng else "<MISSING>")
-        store.append(hour if hour else "<MISSING>")
-        return_main_object.append(store)                
-    return return_main_object
+    session = SgRequests()
+
+    start_url = "http://timesoil.com/locations/"
+    domain = "timesoil.com"
+    hdr = {
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
+    }
+    response = session.get(start_url, headers=hdr)
+    dom = etree.HTML(response.text)
+
+    all_locations = dom.xpath('//div[@class="content-left"]/h3')
+    for poi_html in all_locations:
+        location_name = poi_html.xpath("text()")[0].strip()
+        raw_data = poi_html.xpath(".//following-sibling::p[1]/text()")
+        raw_data = [
+            e.strip()
+            for e in raw_data
+            if e.strip() and not e.split("-")[-1].isnumeric()
+        ]
+        if len(raw_data) == 4:
+            raw_data = raw_data[:-1]
+        raw_address = " ".join(raw_data)
+        addr = parse_address_intl(raw_address)
+        street_address = addr.street_address_1
+        if addr.street_address_2:
+            street_address += ", " + addr.street_address_2
+        phone = poi_html.xpath(".//following-sibling::p[2]/text()")[0]
+        if not phone[0].strip():
+            phone = poi_html.xpath(".//following-sibling::p[1]/text()")[-1]
+        if not phone.strip():
+            phone = poi_html.xpath(".//following-sibling::p[1]/b/text()")[0]
+
+        item = SgRecord(
+            locator_domain=domain,
+            page_url=start_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=addr.city,
+            state=addr.state,
+            zip_postal=addr.postcode,
+            country_code="",
+            store_number="",
+            phone=phone,
+            location_type="",
+            latitude="",
+            longitude="",
+            hours_of_operation="",
+            raw_address=raw_address,
+        )
+
+        yield item
+
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
-scrape()
+
+if __name__ == "__main__":
+    scrape()

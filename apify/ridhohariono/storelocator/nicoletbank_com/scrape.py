@@ -1,9 +1,11 @@
-import csv
+import re
 from bs4 import BeautifulSoup as bs
 from sgrequests import SgRequests
 from sglogging import sglog
-import re
-
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 DOMAIN = "nicoletbank.com"
 BASE_URL = "https://nicoletbank.com"
@@ -15,48 +17,13 @@ HEADERS = {
 log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
 
 session = SgRequests()
-
-
-def write_output(data):
-    log.info("Write Output of " + DOMAIN)
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+MISSING = "<MISSING>"
 
 
 def pull_content(url):
     log.info("Pull content => " + url)
     soup = bs(session.get(url, headers=HEADERS).content, "lxml")
     return soup
-
-
-def handle_missing(field):
-    if field is None or (isinstance(field, str) and len(field.strip()) == 0):
-        return "<MISSING>"
-    return field
 
 
 def is_multiple(location_name, locations):
@@ -69,8 +36,12 @@ def is_multiple(location_name, locations):
 def get_hoo(link):
     soup = pull_content(link)
     hoo = soup.find("div", {"class": "branch-hours"}).find_all("p")
-    hoo = hoo[1].find("span")
-    hours_of_operations = "{}: {}".format(hoo.text, hoo.next_sibling.strip())
+    hours_of_operations = (
+        hoo[1]
+        .get_text(strip=True, separator=",")
+        .replace("Lobby Hours,", "")
+        .replace("day,", "day: ")
+    )
     return hours_of_operations
 
 
@@ -81,56 +52,53 @@ def fetch_data():
         soup.find("div", {"class": "locator-branches"})
         .find("div", {"class": "branches"})
         .find("div", {"class": "branch-scroll"})
-        .find_all("div", {"class": "branch clearfix"})
+        .find_all("div", {"class": "branch"})
     )
-    locations = []
     for row in content:
         page_url = BASE_URL + row.find("a", {"class": "branch-ico"})["href"]
         location_name = row["data-asodata1"].strip()
-        street_address = handle_missing(row["data-asodata2"]).strip()
+        street_address = row["data-asodata2"].strip()
         city_state = row["data-asodata3"].split(",")
-        city = handle_missing(city_state[0])
-        state = (
-            handle_missing(re.sub(r"\d+", "", city_state[1])).replace("-", "").strip()
-        )
-        zip_code = handle_missing(
-            re.sub(r"\D+", "", city_state[1].split("-")[0])
-        ).strip()
+        city = city_state[0]
+        state = re.sub(r"\d+", "", city_state[1]).replace("-", "").strip()
+        zip_postal = re.sub(r"\D+", "", city_state[1].split("-")[0]).strip()
         country_code = "US"
-        store_number = "<MISSING>"
+        store_number = MISSING
         phone = row["data-info-address"].split("<br />")[1].strip()
         hours_of_operation = get_hoo(page_url)
-        location_type = "nicoletbank"
-        latitude = handle_missing(row["data-latitude"])
-        longitude = handle_missing(row["data-longitude"])
+        location_type = "BRANCH_ATM"
+        latitude = row["data-latitude"]
+        longitude = row["data-longitude"]
         log.info("Append {} => {}".format(location_name, street_address))
-        locations.append(
-            [
-                DOMAIN,
-                page_url,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip_code,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
+        yield SgRecord(
+            locator_domain=DOMAIN,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address.strip(),
+            city=city.strip(),
+            state=state.strip(),
+            zip_postal=zip_postal.strip(),
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone.strip(),
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
         )
-    return locations
 
 
 def scrape():
-    log.info("Start {} Scraper".format(DOMAIN))
-    data = fetch_data()
-    log.info("Found {} locations".format(len(data)))
-    write_output(data)
-    log.info("Finish processed " + str(len(data)))
+    log.info("start {} Scraper".format(DOMAIN))
+    count = 0
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
 
 
 scrape()

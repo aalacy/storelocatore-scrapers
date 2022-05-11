@@ -49,6 +49,12 @@ def fetch_data(sgw: SgWriter):
             temp_list = soup.find(
                 "div", {"class": "wpb_text_column wpb_content_element"}
             ).findAll("p")
+            longitude, latitude = (
+                soup.select_one("iframe[src*=maps]")["src"]
+                .split("!2d", 1)[1]
+                .split("!2m", 1)[0]
+                .split("!3d")
+            )
             location_name = soup.find("h1").text
             phone = temp_list[0].get_text(separator="|", strip=True).split("|")[1]
             address = temp_list[1].get_text(separator="|", strip=True).split("|")
@@ -81,8 +87,8 @@ def fetch_data(sgw: SgWriter):
                     store_number=MISSING,
                     phone=phone,
                     location_type=MISSING,
-                    latitude=MISSING,
-                    longitude=MISSING,
+                    latitude=latitude,
+                    longitude=longitude,
                     hours_of_operation=hours_of_operation,
                 )
             )
