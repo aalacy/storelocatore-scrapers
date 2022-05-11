@@ -10,12 +10,12 @@ from sgpostal.sgpostal import International_Parser, parse_address
 def fetch_data(sgw: SgWriter):
 
     locator_domain = "https://www.kehe.com"
-    api_url = "https://www.kehe.com/locations/"
+    page_url = "https://www.kehe.com/locations/"
     session = SgRequests()
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
-    r = session.get(api_url, headers=headers)
+    r = session.get(page_url, headers=headers)
     tree = html.fromstring(r.text)
     div = "".join(
         tree.xpath('//script[contains(text(), "var locations")]/text()')
@@ -24,7 +24,6 @@ def fetch_data(sgw: SgWriter):
 
         info_block = str(d).split("info :")[1].split("}")[0].strip()
         tree = html.fromstring(info_block)
-        page_url = "<MISSING>"
         location_name = "".join(tree.xpath("//h4//text()"))
         location_type = (
             "".join(tree.xpath('//span[@class="channels"]/text()')) or "<MISSING>"
