@@ -3,7 +3,7 @@ from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from concurrent import futures
 from sgscrape.sgpostal import parse_address, International_Parser
 from sglogging import sglog
@@ -60,10 +60,11 @@ def get_phone(page_url):
 
 def get_data(api, sgw: SgWriter):
     r = session.get(api, headers=headers)
-    logger.info(f"{api}: {r.status_code}")
     if r.status_code != 200:
         return
+
     js = r.json()["pageProps"]["pageDoc"]["data"]["body"][1]["data"]["body"]
+    logger.info(f"{api}: {r.status_code} | {len(js)} records found")
 
     for j in js:
         try:
@@ -81,7 +82,16 @@ def get_data(api, sgw: SgWriter):
         for li in lines:
             text = li.get("text")
             if "Telefon" in text:
-                phone = text.replace("Telefon", "").replace(":", "").strip()
+                phone = (
+                    text.replace("Telefon", "")
+                    .replace(":", "")
+                    .replace("as", "")
+                    .strip()
+                )
+                if "Pro" in phone:
+                    phone = " ".join(phone.split("Pro")[0].split())
+                if "Dar" in phone:
+                    phone = " ".join(phone.split("Dar")[0].split())
                 continue
             if text:
                 line.append(text)
@@ -146,5 +156,7 @@ if __name__ == "__main__":
         "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0"
     }
     session = SgRequests()
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.RAW_ADDRESS}))
+    ) as writer:
         fetch_data(writer)
