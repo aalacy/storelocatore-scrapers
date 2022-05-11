@@ -3,7 +3,7 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup as b4
 from sgzip.utils import country_names_by_code
 from fuzzywuzzy import process
-from sgzip.dynamic import DynamicGeoSearch, Grain_8
+from sgzip.dynamic import DynamicGeoSearch, Grain_4
 
 logzilla = sglog.SgLogSetup().get_logger(logger_name="Scraper")
 
@@ -77,7 +77,7 @@ def fetch_data(session, apiKey, country):
     url = "https://uberall.com/api/storefinders/{}/locations/all?v=20171219&language=de&full=true&identifier=true".format(
         apiKey
     )
-    data = session.get(url, headers=headers).json()
+    data = SgRequests.raise_on_err(session.get(url, headers=headers)).json()
     for store in data["response"]["locations"]:
         store["locator_domain"] = country["page"]
         yield transform_germany(store)
@@ -88,7 +88,7 @@ def getAPIKey(session, country, url):
     headers[
         "user-agent"
     ] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
-    soup = b4(session.get(url, headers=headers).text, "lxml")
+    soup = b4(SgRequests.raise_on_err(session.get(url, headers=headers)).text, "lxml")
     apiKey = soup.find(
         "div",
         {
@@ -110,7 +110,7 @@ def getLocsPage(session, country):
     headers[
         "user-agent"
     ] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
-    soup = session.get(country["page"], headers=headers).text
+    soup = SgRequests.raise_on_err(session.get(country["page"], headers=headers)).text
     soup = b4(soup, "lxml")
     locsPage = soup.find(
         "a",
@@ -230,8 +230,10 @@ def pull_map_poi(coord, url, session, locale, lang, country):
     headers[
         "user-agent"
     ] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
-    data = session.get(
-        url.format(lat=lat, lng=lng, locale=locale, lang=lang), headers=headers
+    data = SgRequests.raise_on_err(
+        session.get(
+            url.format(lat=lat, lng=lng, locale=locale, lang=lang), headers=headers
+        )
     ).json()
     for raw in data["features"]:
         good = transform_item_map(raw, country)
@@ -247,9 +249,7 @@ def pull_from_map(session, country):
     try:
         search = DynamicGeoSearch(
             country_codes=[SearchableCountry],
-            expected_search_radius_miles=None,
-            max_search_results=None,
-            granularity=Grain_8(),
+            granularity=Grain_4(),
         )
     except Exception as e:
         logzilla.warning(
@@ -266,7 +266,8 @@ def pull_from_map(session, country):
                     ):
                         search.found_location_at(rec["latitude"], rec["longitude"])
                         yield rec
-                except Exception:
+                except Exception as e:
+                    logzilla.error(f"dropped_record\n{str(coord)}", exc_info=e)
                     pass
                 try:
                     for rec in pull_map_poi(
@@ -274,7 +275,8 @@ def pull_from_map(session, country):
                     ):
                         search.found_location_at(rec["latitude"], rec["longitude"])
                         yield rec
-                except Exception:
+                except Exception as e:
+                    logzilla.error(f"dropped_record\n{str(coord)}", exc_info=e)
                     pass
 
 
@@ -285,7 +287,9 @@ def test_for_map(locationsPage, country, session, domain):
     headers[
         "user-agent"
     ] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
-    soup = session.get(domain + locationsPage, headers=headers).text
+    soup = SgRequests.raise_on_err(
+        session.get(domain + locationsPage, headers=headers)
+    ).text
     if "map-list-view" in soup:
         return True
     else:
@@ -301,7 +305,7 @@ def fetch_germany_ISH(country):
             logzilla.info(f"Found locations page {locationsPage}\nLooking for API key")
             apiKey = getAPIKey(session, country, str(domain + locationsPage))
         if locationsPage and apiKey:
-            logzilla.info(f"Onto something with {country['text']}\nAPI Key: {apiKey}")
+            logzilla.info(f"on {country['text']}\nAPI Key: {apiKey}")
             for rec in fetch_data(session, apiKey, country):
                 yield rec
         elif locationsPage:
