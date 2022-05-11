@@ -1,4 +1,5 @@
 from lxml import html
+from typing import List
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
@@ -27,7 +28,7 @@ def fetch_data(sgw: SgWriter):
     locations = []
     pp = tree.xpath("//div[@class='rich-text']/p")
     pp.pop(0)
-    _tmp = []
+    _tmp = []  # type: List[str]
     for p in pp:
         text = " ".join("".join(p.xpath(".//text()")).split())
         if "HEADQUARTERS" in text or "EUROPE" in text or "UNITED STATES" in text:
