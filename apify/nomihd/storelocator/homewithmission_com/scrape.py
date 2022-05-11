@@ -115,6 +115,12 @@ def fetch_data():
                         country_code = "US"
 
                         location_name = store["title"]
+                        if "Bonneville" in location_name:
+                            continue
+                        location_type = "<MISSING>"
+                        if "Headquarters" in location_name:
+                            location_type = "Headquarters"
+
                         if (
                             location_name
                             == "dvanced Healthcare Services Home Health- Newark"
@@ -136,8 +142,6 @@ def fetch_data():
                         ).strip()
 
                         store_number = "<MISSING>"
-
-                        location_type = "<MISSING>"
 
                         hours_of_operation = "<MISSING>"
                         latitude, longitude = "<MISSING>", "<MISSING>"

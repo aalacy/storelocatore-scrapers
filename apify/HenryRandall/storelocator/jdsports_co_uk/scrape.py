@@ -1,3 +1,4 @@
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import re
 import json
 from sgselenium import SgChrome
@@ -97,40 +98,45 @@ def format_hours(hours):
     return ", ".join(data)
 
 
+def fetch_location(site, location):
+    data = site.get_data(location)
+
+    return SgRecord(
+        page_url=data.get("url"),
+        location_name=data.get("name"),
+        street_address=data["address"]["streetAddress"],
+        city=data["address"]["addressLocality"],
+        state=data["address"]["addressRegion"],
+        country_code=site.country_code,
+        zip_postal=data["address"]["postalCode"],
+        store_number=re.sub(f"https://www.{site.locator_domain}/", "", data["@id"]),
+        phone=data["telephone"],
+        latitude=data["geo"]["latitude"],
+        longitude=data["geo"]["longitude"],
+        locator_domain=site.locator_domain,
+        hours_of_operation=format_hours(data["openingHoursSpecification"]),
+    )
+
+
 def fetch_locations(site):
     pois = []
     locations = site.get_locations()
-    for location in locations:
-        data = site.get_data(location)
-
-        pois.append(
-            SgRecord(
-                page_url=data.get("url"),
-                location_name=data.get("name"),
-                street_address=data["address"]["streetAddress"],
-                city=data["address"]["addressLocality"],
-                state=data["address"]["addressRegion"],
-                country_code=site.country_code,
-                zip_postal=data["address"]["postalCode"],
-                store_number=re.sub(
-                    f"https://www.{site.locator_domain}/", "", data["@id"]
-                ),
-                phone=data["telephone"],
-                latitude=data["geo"]["latitude"],
-                longitude=data["geo"]["longitude"],
-                locator_domain=site.locator_domain,
-                hours_of_operation=format_hours(data["openingHoursSpecification"]),
-            )
-        )
+    with ThreadPoolExecutor() as executor:
+        futures = [
+            executor.submit(fetch_location, site, location) for location in locations
+        ]
+        for future in as_completed(futures):
+            pois.append(future.result())
 
     return pois
 
 
 def fetch_data():
     pois = []
-
     for site in sites:
         pois.extend(fetch_locations(site))
+
+    return pois
 
 
 def scrape():

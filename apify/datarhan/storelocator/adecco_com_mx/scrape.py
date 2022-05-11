@@ -7,7 +7,6 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
-from sgpostal.sgpostal import parse_address_intl
 
 
 def fetch_data():
@@ -36,21 +35,16 @@ def fetch_data():
                 all_locations.append(l)
 
     for poi in all_locations:
-        raw_address = poi["address"]
-        addr = parse_address_intl(raw_address)
-        street_address = addr.street_address_1
-        if addr.street_address_2:
-            street_address += " " + addr.street_address_2
         phone = poi["phone"].split("/")[0] if poi["phone"] != "0" else ""
 
         item = SgRecord(
             locator_domain=domain,
             page_url="https://adecco.com.mx/sucursales/",
             location_name=poi["name"],
-            street_address=street_address,
-            city=addr.city,
-            state=addr.state,
-            zip_postal=addr.postcode,
+            street_address=poi["address"],
+            city=poi["city"],
+            state=poi["state"],
+            zip_postal=poi["zip"],
             country_code="MX",
             store_number=poi["id"],
             phone=phone,
@@ -58,7 +52,6 @@ def fetch_data():
             latitude=poi["latitude"],
             longitude=poi["longitude"],
             hours_of_operation="",
-            raw_address=raw_address,
         )
 
         yield item
