@@ -98,7 +98,7 @@ def fetch_data():
             state = formatted_addr.state
             zip = formatted_addr.postcode
 
-            country_code = "NL"
+            country_code = "BE"
 
             store_number = "<MISSING>"
             phone = "".join(store_sel.xpath('//jum-list-item[@icon="phone"]//text()'))
