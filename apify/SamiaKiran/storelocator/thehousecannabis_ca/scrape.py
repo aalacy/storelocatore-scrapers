@@ -1,9 +1,10 @@
 import json
 from sglogging import sglog
+from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
-from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
@@ -17,102 +18,98 @@ headers = {
 DOMAIN = "https://thehousecannabis.ca"
 MISSING = SgRecord.MISSING
 
-api_url = "https://mystudio.academy/Api/general/getcompanyDetailsForLandingPage"
-
 
 def fetch_data():
-    daylist = {
-        0: "Sunday",
-        1: "Monday",
-        2: "Tuesday",
-        3: "Wednesday",
-        4: "Thursday",
-        5: "Friday",
-        6: "Saturday",
-    }
     if True:
         url = "https://thehousecannabis.ca/stores/"
-        r = session.get(url)
-        log.info("Fetching the Token for the API....")
-        token_url = DOMAIN + r.text.split('"app":["')[1].split('"')[0]
-        r = session.get(token_url)
-        token = r.text.split('Authorization:"')[2].split('"')[0]
-        api_url = "https://plus.dutchie.com/plus/2021-07/graphql"
-        payload = json.dumps(
-            {
-                "operationName": "Retailer",
-                "variables": {},
-                "query": "fragment hoursDayFragment on HoursDay {\n  active\n  start\n  end\n  __typename\n}\n\nfragment hoursFragment on Hours {\n  Sunday {\n    ...hoursDayFragment\n    __typename\n  }\n  Monday {\n    ...hoursDayFragment\n    __typename\n  }\n  Tuesday {\n    ...hoursDayFragment\n    __typename\n  }\n  Wednesday {\n    ...hoursDayFragment\n    __typename\n  }\n  Thursday {\n    ...hoursDayFragment\n    __typename\n  }\n  Friday {\n    ...hoursDayFragment\n    __typename\n  }\n  Saturday {\n    ...hoursDayFragment\n    __typename\n  }\n  __typename\n}\n\nquery Retailer {\n  retailers {\n    id\n    name\n    address\n    hours {\n      delivery {\n        ...hoursFragment\n        __typename\n      }\n      pickup {\n        ...hoursFragment\n        __typename\n      }\n      special {\n        startDate\n        endDate\n        hoursPerDay {\n          date\n          deliveryHours {\n            ...hoursDayFragment\n            __typename\n          }\n          pickupHours {\n            ...hoursDayFragment\n            __typename\n          }\n          __typename\n        }\n        name\n        __typename\n      }\n      __typename\n    }\n    coordinates {\n      latitude\n      longitude\n      __typename\n    }\n    __typename\n  }\n}\n",
-            }
-        )
-        headers = {
-            "authority": "plus.dutchie.com",
-            "accept": "*/*",
-            "accept-language": "en-US,en;q=0.9",
-            "authorization": token,
-            "content-type": "application/json",
-            "origin": "https://thehousecannabis.ca",
-            "sec-ch-ua": '" Not A;Brand";v="99", "Chromium";v="101", "Google Chrome";v="101"',
-            "sec-ch-ua-mobile": "?0",
-            "sec-ch-ua-platform": '"Windows"',
-            "sec-fetch-dest": "empty",
-            "sec-fetch-mode": "cors",
-            "sec-fetch-site": "cross-site",
-            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/101.0.4951.54 Safari/537.36",
-        }
-        loclist = session.post(api_url, headers=headers, data=payload).json()["data"][
-            "retailers"
-        ]
+        r = session.get(url, headers=headers)
+        soup = BeautifulSoup(r.text, "html.parser")
+        loclist = soup.select("a[href*=location]")
+        page_list = []
         for loc in loclist:
-            location_name = loc["name"]
-            log.info(location_name)
-            phone = MISSING
-            address = loc["address"].split(",")
-            street_address = address[0]
-            country_code = address[-1]
-            city = address[1]
-            address = address[2].split()
-            state = address[0]
-            zip_postal = address[-2] + " " + address[-1]
-            latitude = loc["coordinates"]["latitude"]
-            longitude = loc["coordinates"]["longitude"]
-            hour_list = loc["hours"]["delivery"]
-            hours_of_operation = ""
-            for idx, hour in enumerate(hour_list):
+            page_url = DOMAIN + loc["href"]
+            page_url = page_url.strip("/")
+            if page_url in page_list:
+                continue
+            page_list.append(page_url)
+            r = session.get(page_url, headers=headers)
+            if r.status_code == 200:
+                log.info(page_url)
+                soup = BeautifulSoup(r.text, "html.parser")
+                temp_street = soup.find("h3").text
+                schema = r.text.split(
+                    '<script data-react-helmet="true" type="application/ld+json">'
+                )[1].split("</script>", 1)[0]
+                schema = schema.replace("\n", "")
+                loc = json.loads(schema)
+                address = loc["address"]
+                country_code = address["addressCountry"]
+                street_address = address["streetAddress"]
+                if temp_street.split()[0] == street_address.split()[0]:
+                    street_address = address["streetAddress"]
+                    latitude = loc["geo"]["latitude"]
+                    longitude = loc["geo"]["longitude"]
+                    city = address["addressLocality"]
+                    state = address["addressRegion"]
+                    zip_postal = address["postalCode"]
+                else:
+                    street_address = soup.find("h3").text
+                    latitude = MISSING
+                    longitude = MISSING
+                    city = page_url.split("/")[-2]
+                    state = MISSING
+                    zip_postal = MISSING
+                location_name = "House of Cannabis " + city
+                phone = soup.select_one("a[href*=tel]").text
                 try:
-                    day = daylist[idx]
+                    temp_list = r.text.split("MONDAY")[1].split("Order Online")[0]
                 except:
-                    continue
-                time = hour_list[day]["start"] + "-" + hour_list[day]["end"]
-                hours_of_operation = hours_of_operation + " " + day + " " + time
-            yield SgRecord(
-                locator_domain=DOMAIN,
-                page_url=url,
-                location_name=location_name,
-                street_address=street_address,
-                city=city,
-                state=state,
-                zip_postal=zip_postal,
-                country_code=country_code,
-                store_number=MISSING,
-                phone=phone,
-                location_type=MISSING,
-                latitude=latitude,
-                longitude=longitude,
-                hours_of_operation=hours_of_operation,
-            )
+                    temp_list = r.text.split("Monday")[1].split("Order Online")[0]
+                temp_list = "MONDAY " + BeautifulSoup(
+                    temp_list, "html.parser"
+                ).get_text(separator="|", strip=True).replace("|", " ")
+                temp_list = (
+                    temp_list.replace("SUNDAY", "SUNSAY#")
+                    .replace(" - ", "-")
+                    .split("#")
+                )
+                day_list = temp_list[0].split()
+                time_list = temp_list[1].split()
+                hours_of_operation = ""
+                for day, time in zip(day_list, time_list):
+                    hours_of_operation = hours_of_operation + " " + day + " " + time
+                hours_of_operation = hours_of_operation.lower()
+                yield SgRecord(
+                    locator_domain=DOMAIN,
+                    page_url=page_url,
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=zip_postal,
+                    country_code=country_code,
+                    store_number=MISSING,
+                    phone=phone,
+                    location_type=MISSING,
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=hours_of_operation,
+                )
 
 
 def scrape():
+    log.info("Started")
+    count = 0
     with SgWriter(
-        SgRecordDeduper(
-            SgRecordID(
-                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
-            )
-        )
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
     ) as writer:
-        for item in fetch_data():
-            writer.write_row(item)
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
 
 
 if __name__ == "__main__":
