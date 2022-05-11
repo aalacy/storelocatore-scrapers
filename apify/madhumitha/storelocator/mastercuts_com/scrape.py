@@ -1,3 +1,4 @@
+import re
 from lxml import etree
 from urllib.parse import urljoin
 
@@ -64,6 +65,7 @@ def fetch_location(poi_html, retry=0):
             '//div[@class="salondetailspagelocationcomp"]//div[@class="store-hours sdp-store-hours"]//text()'
         )
         hoo = " ".join(hoo).split(" Monday")[0]
+        hoo = re.sub(r"\s\s+", " ", re.sub("\t|\n", "", hoo))
         if not hoo:
             hoo = loc_dom.xpath('//div[@class="salon-timings"]//text()')
             hoo = " ".join([e.strip() for e in hoo if e.strip()])

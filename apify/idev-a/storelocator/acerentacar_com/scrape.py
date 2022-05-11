@@ -3,88 +3,69 @@ from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from bs4 import BeautifulSoup as bs
-from sglogging import SgLogSetup
-
-logger = SgLogSetup().get_logger("")
-
+from datetime import datetime
 
 _headers = {
-    "accept": "*/*",
-    "accept-encoding": "gzip, deflate, br",
-    "accept-language": "en-US,en;q=0.9,ko;q=0.8",
-    "content-type": "application/json; charset=UTF-8",
-    "origin": "https://www.acerentacar.com",
-    "referer": "https://www.acerentacar.com/Locator.aspx",
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
 }
 
 locator_domain = "https://www.acerentacar.com"
-base_url = "https://www.acerentacar.com/AceWebService.asmx/GetNearbyLocations"
-urls = [
-    "https://www.acerentacar.com/LocationsUs.aspx",
-    "https://www.acerentacar.com/LocationsIntl.aspx",
-]
+base_url = "https://www.acerentacar.com/_next/data/7t-yefaZGWA-O4Far4a4N/Locations.json"
+days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+
+
+def _t(hh):
+    return datetime.strptime(hh, "%Y-%m-%dT%H:%M:%S").strftime("%I:%M%p")
 
 
 def fetch_data():
     with SgRequests() as session:
-        for url in urls:
-            us_locs = bs(session.get(url, headers=_headers).text, "lxml").select(
-                "div.divLocation"
+        locations = session.get(base_url, headers=_headers).json()["pageProps"][
+            "locations"
+        ]
+        for _ in locations:
+            street_address = _["addressOne"]
+            if _["addressTwo"]:
+                street_address += " " + _["addressTwo"]
+            if not street_address and not _["city"]:
+                continue
+            hours = []
+            hr = _.get("locationHours", {})
+            for day in days:
+                day = day.lower()
+                times = None
+                if hr.get(f"{day}Closed"):
+                    times = "closed"
+                else:
+                    start = hr.get(f"{day}Open")
+                    end = hr.get(f"{day}Close")
+                    if start:
+                        times = f"{_t(start)} - {_t(end)}"
+                if times:
+                    hours.append(f"{day}: {times}")
+
+            zip_postal = _["postalCode"]
+            if zip_postal == "0000" or zip_postal == "000000" or zip_postal == "00000":
+                zip_postal = ""
+            yield SgRecord(
+                page_url=base_url,
+                store_number=_["locationCode"],
+                location_name=_["locationName"],
+                street_address=street_address,
+                city=_["city"],
+                state=_["state"],
+                zip_postal=zip_postal,
+                latitude=_["latitude"],
+                longitude=_["longitude"],
+                country_code=_["countryISO"],
+                phone=_.get("phoneNumber"),
+                locator_domain=locator_domain,
+                hours_of_operation="; ".join(hours),
             )
-            for us_loc in us_locs:
-                loc_id = bs(
-                    session.get(us_loc.a["href"], headers=_headers).text, "lxml"
-                ).select_one("select#bookingBox_ddlReturnLocation option")["value"]
-                logger.info("loc_id")
-                data = {"Location": loc_id}
-                locations = session.post(base_url, headers=_headers, json=data).json()[
-                    "d"
-                ]
-                for _ in locations:
-                    page_url = locator_domain + _["PagePath"]
-                    street_address = _["Address1"]
-                    if _["Address2"]:
-                        street_address += " " + _["Address2"]
-                    if not street_address and not _["City"]:
-                        continue
-                    hours = []
-                    if _["Monday"]:
-                        hours.append(f"Monday: {_['Monday']}")
-                    if _["Tuesday"]:
-                        hours.append(f"Tuesday: {_['Tuesday']}")
-                    if _["Wednesday"]:
-                        hours.append(f"Wednesday: {_['Wednesday']}")
-                    if _["Thursday"]:
-                        hours.append(f"Thursday: {_['Thursday']}")
-                    if _["Friday"]:
-                        hours.append(f"Friday: {_['Friday']}")
-                    if _["Saturday"]:
-                        hours.append(f"Saturday: {_['Saturday']}")
-                    if _["Sunday"]:
-                        hours.append(f"Sunday: {_['Sunday']}")
-                    zip_postal = _["ZipCode"]
-                    if zip_postal == "0000":
-                        zip_postal = ""
-                    yield SgRecord(
-                        page_url=page_url,
-                        location_name=_["Name"],
-                        street_address=street_address,
-                        city=_["City"],
-                        state=_["State"],
-                        zip_postal=zip_postal,
-                        latitude=_["Latitude"],
-                        longitude=_["Longitude"],
-                        country_code=_["Country"],
-                        phone=_.get("ArrivalPhone"),
-                        locator_domain=locator_domain,
-                        hours_of_operation="; ".join(hours),
-                    )
 
 
 if __name__ == "__main__":
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
