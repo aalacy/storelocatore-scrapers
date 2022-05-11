@@ -106,6 +106,8 @@ def fetch_data():
             store_info.find("div", {"class": "address"}).text.replace("\n", ",").strip()
         )
         street_address, city, state, zip_postal = getAddress(raw_address)
+        if street_address == MISSING:
+            street_address = raw_address.split("-")[1].strip()
         phone = info[-1].strip()
         country_code = "UAE"
         hours_of_operation = MISSING

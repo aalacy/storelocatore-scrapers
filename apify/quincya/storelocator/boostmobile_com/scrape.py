@@ -86,6 +86,17 @@ def fetch_data(sgw: SgWriter):
             hours_of_operation = " ".join(store["openingHoursSpecification"])
         except:
             hours_of_operation = ""
+        if not hours_of_operation:
+            try:
+                if (
+                    "opening soon"
+                    in base.find(
+                        class_="lm-list-item__details lm-grid__flex"
+                    ).text.lower()
+                ):
+                    hours_of_operation = "Opening Soon"
+            except:
+                pass
 
         latitude = store["geo"]["latitude"]
         longitude = store["geo"]["longitude"]

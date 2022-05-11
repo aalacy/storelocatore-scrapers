@@ -10,8 +10,8 @@ headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36",
     "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
     "X-Requested-With": "XMLHttpRequest",
-    "Cookie": "ARRAffinity=e8b8d3148c29a06ebdae2d72da15134fada0945dbd963bce5c880255c35ebb72; ARRAffinitySameSite=e8b8d3148c29a06ebdae2d72da15134fada0945dbd963bce5c880255c35ebb72; .AspNetCore.Antiforgery.w5W7x28NAIs=CfDJ8Gh1N-Mm6ilPv9N490CiUlMvUsskJGqscbdbdcSPdnWvhFxKjiLC2iiiPc2L0Vh1k2S8fzsn7HbMN5zcHqRgjrC4RWlgKuQ6gU6YNxeTh3vycs3PouwYAf_fsyi6YDHNkdHo0JwBCuLK1LciveDm5-0; _ga=GA1.2.907074146.1609869384; _gid=GA1.2.609014934.1609869384; _gcl_au=1.1.356148459.1609869385; _fbp=fb.1.1609869385636.390311309; _gat=1",
-    "RequestVerificationToken": "CfDJ8Gh1N-Mm6ilPv9N490CiUlPwipLb31Qgv4C5y2KuPzqnZpZX0V6dke465fek_7lXkDM4drwDGL1pQvvyR9gBLrfj0fUhnyrBDINgxzBB-LYvcvYUnnsNdqy401iKbXaJDOs5wPCKHWgs6smPLGeUXjY",
+    "Cookie": "ARRAffinity=eeb07ed981018f5b52e2782779334447fffe71fbeeea9200f63be35f6a12f44a; ARRAffinitySameSite=eeb07ed981018f5b52e2782779334447fffe71fbeeea9200f63be35f6a12f44a; _gid=GA1.2.1309746962.1650226169; _gcl_au=1.1.1195149783.1650226169; ai_user=IbtUz|2022-04-17T20:09:29.200Z; _scid=63d870d2-fe27-402a-a144-eadd86fcb33f; _fbp=fb.1.1650226169697.449239281; _sctr=1|1650168000000; .AspNetCore.Antiforgery.w5W7x28NAIs=CfDJ8Cr3cY5hsCtFsO8Yv7yKxa1vyu9AYTG7VEiO36alCYbFxbkAsjSOYlPzUx8tzaA6XiQTYQLo9uH86iPpWIpyuPDxFx2GEzVZ67CyCAiVa2Uefq5-941m2z-gM_-cAL9GRK5kFAgvzWpzw_3j7w50Egc; _ga=GA1.1.1992558319.1650226169; _ga_XQLV2EFWD7=GS1.1.1650226169.1.1.1650226401.0; ai_session=1Ceh4|1650226170581|1650226507488.8",
+    "RequestVerificationToken": "CfDJ8Cr3cY5hsCtFsO8Yv7yKxa3VeKcxluv-UDLzi1TfDiPby0QsTNkDfZwm974pjUeaJr90ufX_1Avo1GPSydUQw5qw_sq4o_keP74BbYluivW3a68Q6qXQwgP5FgaHUCEK0N_t-pOYqyEhveeU8m7hBls",
 }
 
 logger = SgLogSetup().get_logger("larosas_com")

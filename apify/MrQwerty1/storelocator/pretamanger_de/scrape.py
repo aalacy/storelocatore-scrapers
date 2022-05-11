@@ -14,41 +14,41 @@ def fetch_data(sgw: SgWriter):
     }
     r = session.get(page_url, headers=headers)
     tree = html.fromstring(r.text)
-    location_name = "".join(
-        tree.xpath("//a[contains(@href, 'google')]/preceding-sibling::h3/text()")
-    ).strip()
-    street_address = location_name
+    divs = tree.xpath("//div[contains(@class, 'tabs-section')]")
 
-    text = "".join(
-        tree.xpath("//script[contains(text(), 'google.maps.LatLng')]/text()")
-    )
-    latitude, longitude = text.split("google.maps.LatLng(")[1].split("),")[0].split(",")
+    for d in divs:
+        location_name = "".join(d.xpath(".//h3/text()")).strip()
+        raw_address = "".join(
+            d.xpath(".//h3[1]/following-sibling::p[1]/text()")
+        ).strip()
+        line = raw_address.split(", ")
+        line.pop()
+        zc = line.pop()
+        post = zc.split()[0]
+        city = zc.replace(post, "").strip()
+        street_address = ", ".join(line)
+        latitude, longitude = "".join(d.xpath(".//div/@data-position")).split(", ")
+        phone = "".join(d.xpath(".//a[@class='telephone']/text()")).strip()
 
-    _tmp = []
-    li = tree.xpath("//h3[text()='Opening hours']/following-sibling::p")
-    for l in li:
-        _tmp.append(" ".join("".join(l.xpath("./text()")).split()))
-    hours_of_operation = ";".join(_tmp)
-    if "closed" in hours_of_operation:
-        hours_of_operation = "Temporarily Closed"
+        row = SgRecord(
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            zip_postal=post,
+            country_code="DE",
+            latitude=latitude,
+            longitude=longitude,
+            phone=phone,
+            locator_domain=locator_domain,
+            raw_address=raw_address,
+        )
 
-    row = SgRecord(
-        page_url=page_url,
-        location_name=location_name,
-        street_address=street_address,
-        city="Berlin",
-        country_code="DE",
-        latitude=latitude,
-        longitude=longitude,
-        locator_domain=locator_domain,
-        hours_of_operation=hours_of_operation,
-    )
-
-    sgw.write_row(row)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
     session = SgRequests()
     locator_domain = "https://www.pretamanger.de/"
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
         fetch_data(writer)

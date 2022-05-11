@@ -26,13 +26,14 @@ def fetch_data():
         for store in stores:
             locator_domain = website
             location_name = "".join(store.xpath(".//h2//text()")).strip()
+            log.info(location_name)
             country_code = "US"
             phone = "".join(
                 store.xpath('.//p//a[contains(@href,"tel:")][1]//text()')
             ).strip()
             location_type = "<MISSING>"
 
-            temp_url = store.xpath('.//a[@style="cursor:pointer"]/@href')
+            temp_url = store.xpath('.//a[@class="_2wYm8"]/@href')
             if len(temp_url) > 0:
                 page_url = "".join(temp_url[-1]).strip()
                 store_number = page_url.split("-")[-1].strip()
@@ -42,12 +43,25 @@ def fetch_data():
                     log.info(page_url)
                     try:
                         driver.get(page_url)
-                        time.sleep(15)
+                        time.sleep(3)
                         store_sel = lxml.html.fromstring(driver.page_source)
 
-                        address = store_sel.xpath(
-                            "//div[@data-packed='false'][1]//text()"
+                        temp_addr = store_sel.xpath(
+                            "//p[@class='font_8']/span[@style='font-size:17px;']"
                         )
+                        if len(temp_addr) > 0:
+                            address = temp_addr[0].xpath("span//text()")
+                            if len(address) == 1:
+                                add_2 = temp_addr[1].xpath("span//text()")
+                                if len(add_2) > 0:
+                                    address = address + add_2
+
+                        else:
+                            address = store_sel.xpath(
+                                '//div[./p[@class="font_8"]]/p[@class="font_8"]//text()'
+                            )
+
+                        log.info(address)
                         for add in address:
                             if len("".join(add).strip()) > 0:
                                 add_list.append("".join(add).strip())
@@ -56,7 +70,14 @@ def fetch_data():
 
                 street_address = "".join(add_list[0]).strip()
                 city = add_list[1]
-                state_zip = add_list[2].replace(",", "").strip()
+                try:
+                    state_zip = add_list[2].replace(",", "").strip()
+                except:
+                    pass
+
+                if page_url == "http://tubbys.com/location-page/tubbys-redford-104":
+                    state_zip = "MI 48240"
+
                 state = state_zip.split(" ")[0].strip()
                 if state == "City":
                     state = "MI"
@@ -69,16 +90,12 @@ def fetch_data():
                 )
                 hours_list = []
                 for hour in hours:
-                    day = "".join(hour.xpath("span[1]/text()")).strip()
-                    tim = "".join(hour.xpath("span[2]/text()")).strip()
+                    day = "".join(hour.xpath("span[1]//text()")).strip()
+                    if len(hour.xpath("span")) == 2:
+                        tim = "".join(hour.xpath("span[2]//text()")).strip()
+                    elif len(hour.xpath("span")) == 3:
+                        tim = "".join(hour.xpath("span[3]//text()")).strip()
                     hours_list.append(day + tim)
-
-                if len(hours_list) <= 0:
-                    hours = store_sel.xpath(
-                        '//div[@data-packed="true"]/p[@class="font_8" and not(@style)]'
-                    )
-                    for hour in hours:
-                        hours_list.append("".join(hour.xpath(".//text()")).strip())
 
                 hours_of_operation = (
                     "; ".join(hours_list)

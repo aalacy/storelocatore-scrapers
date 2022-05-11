@@ -29,14 +29,13 @@ def fetch_data():
             _hr = sp1.find("p", string=re.compile(r"^BUSINESS HOURS", re.IGNORECASE))
             hours = []
             if _hr:
-                hours = [
-                    hh.text.strip()
-                    for hh in _hr.find_parent()
+                hours = list(
+                    _hr.find_parent()
                     .find_parent()
                     .find_parent()
                     .find_next_sibling("div")
-                    .select("p")
-                ]
+                    .stripped_strings
+                )
             _addr = list(
                 sp1.select_one('div[data-widget_type="heading.default"]')
                 .find_next_sibling("div")
@@ -47,14 +46,16 @@ def fetch_data():
             street_address = addr.street_address_1
             if addr.street_address_2:
                 street_address += " " + addr.street_address_2
-            phone = (
-                sp1.find("p", string=re.compile(r"Telephone"))
-                .text.split(":")[-1]
-                .replace("Telephone", "")
-                .strip()
-                .split("Fax")[0]
-                .strip()
-            )
+            phone = ""
+            if sp1.find("", string=re.compile(r"^Telephone:")):
+                phone = (
+                    sp1.find("", string=re.compile(r"^Telephone:"))
+                    .text.split(":")[-1]
+                    .replace("Telephone", "")
+                    .strip()
+                    .split("Fax")[0]
+                    .strip()
+                )
 
             yield SgRecord(
                 page_url=page_url,

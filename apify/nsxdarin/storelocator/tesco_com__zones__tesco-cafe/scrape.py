@@ -36,90 +36,93 @@ def fetch_data():
                 locs.append(lurl)
     for loc in locs:
         Cafe = False
-        try:
-            website = "tesco.com/zones/tesco-cafe"
-            typ = "<MISSING>"
-            country = "GB"
-            state = "<MISSING>"
-            hours = ""
-            name = ""
-            store = ""
-            add = ""
-            city = ""
-            zc = ""
-            phone = ""
-            lat = ""
-            lng = ""
-            logger.info(loc)
-            r = get_response(loc)
-            for line in r.iter_lines():
-                if 'itemprop="name">Caf' in line:
-                    Cafe = True
-                if '"main store Caf"' in line and Cafe is True:
+        website = "tesco.com/zones/tesco-cafe"
+        typ = "<MISSING>"
+        country = "GB"
+        state = "<MISSING>"
+        hours = ""
+        name = ""
+        store = ""
+        add = ""
+        city = ""
+        zc = ""
+        phone = ""
+        lat = ""
+        lng = ""
+        logger.info(loc)
+        r = get_response(loc)
+        for line in r.iter_lines():
+            if 'itemprop="name">Caf' in line:
+                Cafe = True
+            if "main store Caf" in line and Cafe is True:
+                try:
                     days = (
-                        line.split('"main store Caf"')[1]
+                        line.split("main store Caf")[2]
                         .split("data-days='[")[1]
                         .split("]' data-utc")[0]
                         .split('"day":"')
                     )
-                    for day in days:
-                        if '"intervals"' in day:
-                            if '"isClosed":false' not in day:
-                                hrs = day.split('"')[0] + ": Closed"
-                            else:
-                                hrs = (
-                                    day.split('"')[0]
-                                    + ": "
-                                    + day.split('"start":')[1].split("}")[0]
-                                    + "-"
-                                    + day.split('"end":')[1].split(",")[0]
-                                )
-                            if hours == "":
-                                hours = hrs
-                            else:
-                                hours = hours + "; " + hrs
-                if '"pageName":"' in line:
-                    name = line.split('"pageName":"')[1].split('"')[0]
-                    store = line.split('"storeID":"')[1].split('"')[0]
-                if 'data-feature="Caf' in line:
-                    phone = (
-                        line.split('data-feature="Caf"')[1]
-                        .split('Phone-display">')[1]
-                        .split("<")[0]
-                        .strip()
+                except:
+                    days = (
+                        line.split("main store Caf")[1]
+                        .split("data-days='[")[1]
+                        .split("]' data-utc")[0]
+                        .split('"day":"')
                     )
-                if 'itemprop="latitude" content="' in line:
-                    lat = line.split('itemprop="latitude" content="')[1].split('"')[0]
-                    lng = line.split('itemprop="longitude" content="')[1].split('"')[0]
-                if 'itemprop="postalCode">' in line:
-                    zc = line.split('itemprop="postalCode">')[1].split("<")[0]
-                if 'Address-city">' in line:
-                    city = line.split('Address-city">')[1].split("<")[0]
-                if 'itemprop="streetAddress" content="' in line:
-                    add = line.split('itemprop="streetAddress" content="')[1].split(
-                        '"'
-                    )[0]
-            if "id=;" in hours:
-                hours = hours.split("id=;")[1]
-            if Cafe:
-                yield SgRecord(
-                    locator_domain=website,
-                    page_url=loc,
-                    location_name=name,
-                    street_address=add,
-                    city=city,
-                    state=state,
-                    zip_postal=zc,
-                    country_code=country,
-                    phone=phone,
-                    location_type=typ,
-                    store_number=store,
-                    latitude=lat,
-                    longitude=lng,
-                    hours_of_operation=hours,
+                for day in days:
+                    if '"intervals"' in day:
+                        if '"isClosed":false' not in day:
+                            hrs = day.split('"')[0] + ": Closed"
+                        else:
+                            hrs = (
+                                day.split('"')[0]
+                                + ": "
+                                + day.split('"start":')[1].split("}")[0]
+                                + "-"
+                                + day.split('"end":')[1].split(",")[0]
+                            )
+                        if hours == "":
+                            hours = hrs
+                        else:
+                            hours = hours + "; " + hrs
+            if '"pageName":"' in line:
+                name = line.split('"pageName":"')[1].split('"')[0]
+                store = line.split('"storeID":"')[1].split('"')[0]
+            if 'data-feature="Caf' in line:
+                phone = (
+                    line.split('data-feature="Caf')[1]
+                    .split('Phone-display">')[1]
+                    .split("<")[0]
+                    .strip()
                 )
-        except:
-            pass
+            if 'itemprop="latitude" content="' in line:
+                lat = line.split('itemprop="latitude" content="')[1].split('"')[0]
+                lng = line.split('itemprop="longitude" content="')[1].split('"')[0]
+            if 'itemprop="postalCode">' in line:
+                zc = line.split('itemprop="postalCode">')[1].split("<")[0]
+            if 'Address-city">' in line:
+                city = line.split('Address-city">')[1].split("<")[0]
+            if 'itemprop="streetAddress" content="' in line:
+                add = line.split('itemprop="streetAddress" content="')[1].split('"')[0]
+        if "id=;" in hours:
+            hours = hours.split("id=;")[1]
+        if Cafe:
+            yield SgRecord(
+                locator_domain=website,
+                page_url=loc,
+                location_name=name,
+                street_address=add,
+                city=city,
+                state=state,
+                zip_postal=zc,
+                country_code=country,
+                phone=phone,
+                location_type=typ,
+                store_number=store,
+                latitude=lat,
+                longitude=lng,
+                hours_of_operation=hours,
+            )
 
 
 def scrape():

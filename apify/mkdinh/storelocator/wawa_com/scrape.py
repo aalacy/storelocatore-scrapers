@@ -1,4 +1,5 @@
 import re
+import time
 import json
 import threading
 from sgselenium import SgChrome
@@ -8,7 +9,9 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
+from sglogging import SgLogSetup
 
+logger = SgLogSetup().get_logger("wawa.com")
 
 local = threading.local()
 
@@ -53,20 +56,28 @@ def fetch_location(id, retry_count=0):
         with SgChrome(is_headless=True).driver() as driver:
             driver.get(url)
 
-            soup = BeautifulSoup(driver.page_source)
+            time.sleep(2)
+            soup = BeautifulSoup(driver.page_source, "html.parser")
+
+            if "404 - File or directory not found." in soup.text:
+                logger.info(f"Failed to fetch: {id}")
+                return None
+
             result = json.loads(soup.pre.text)
 
             store_number = get(result, "locationID")
             page_url = f"https://www.wawa.com/Handlers/LocationByStoreNumber.ashx?storeNumber={store_number}"
             location_name = get(result, "storeName")
-            location_type = SgRecord.MISSING
 
             addresses = result.get("addresses", [])
             if not len(addresses):
                 return None
 
             address = find_address_by_context("friendly", addresses)
-            street_address = get(address, "address")
+
+            street_address = re.sub(
+                r"\s*\(.*\)?\s*|\s*@.*\s*", "", get(address, "address")
+            )
             city = get(address, "city")
             state = get(address, "state")
             zip_postal = get(address, "zip")
@@ -85,7 +96,6 @@ def fetch_location(id, retry_count=0):
                 page_url=page_url,
                 store_number=store_number,
                 location_name=location_name,
-                location_type=location_type,
                 street_address=street_address,
                 city=city,
                 state=state,
@@ -96,11 +106,12 @@ def fetch_location(id, retry_count=0):
                 hours_of_operation=hours_of_operation,
                 phone=phone,
             )
-    except:
+    except Exception as e:
+        logger.error(e)
         if retry_count < 5:
             return fetch_location(id, retry_count + 1)
         else:
-            raise Exception(f"fail to fetch: {page_url}")
+            return None
 
 
 def write_data(data):
@@ -117,7 +128,6 @@ def write_data(data):
 
 def fetch_data():
     store_numbers = fetch_store_numbers()
-
     for num in store_numbers:
         location = fetch_location(num)
         if location:

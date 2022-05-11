@@ -11,9 +11,14 @@ def get_urls():
     urls = []
     for i in range(50):
         r = session.get(f"https://stores.bang-olufsen.com/sitemap.xml.{i}")
+        if r.status_code == 404:
+            break
         tree = html.fromstring(r.content)
+        check = tree.xpath("//loc")
         links = tree.xpath("//loc[contains(text(), '/en/')]/text()")
         for link in links:
+            if "/headphones" in link or "/home-theater" in link:
+                continue
             if "united-states" not in link:
                 if link.count("/") >= 6:
                     urls.append(link)
@@ -21,7 +26,7 @@ def get_urls():
                 if link.count("/") > 6:
                     urls.append(link)
 
-        if not links:
+        if not check:
             break
 
     return set(urls)
@@ -91,7 +96,7 @@ def get_data(page_url, sgw: SgWriter):
 def fetch_data(sgw: SgWriter):
     urls = get_urls()
 
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
+    with futures.ThreadPoolExecutor(max_workers=3) as executor:
         future_to_url = {executor.submit(get_data, url, sgw): url for url in urls}
         for future in futures.as_completed(future_to_url):
             future.result()

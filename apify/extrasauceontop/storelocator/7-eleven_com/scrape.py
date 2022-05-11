@@ -1,9 +1,11 @@
 from sgrequests import SgRequests
 from sgscrape import simple_scraper_pipeline as sp
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries, Grain_4
+from sglogging import sglog
 
 
 def get_data():
+    log = sglog.SgLogSetup().get_logger(logger_name="7eleven")
     search = DynamicGeoSearch(
         country_codes=[SearchableCountries.USA], granularity=Grain_4()
     )
@@ -37,7 +39,18 @@ def get_data():
     for search_lat, search_lon in search:
         url = f"https://api.7-eleven.com/v4/stores?lat={search_lat}&lon={search_lon}&radius=10000&curr_lat={search_lat}&curr_lon={search_lon}&limit=500&features="
 
-        data = session.get(url, headers=headers).json()
+        x = 0
+        while True:
+            x = x + 1
+            if x == 10:
+                log.info(url)
+                log.info(session.get(url, headers=headers).text)
+                raise Exception
+            try:
+                data = session.get(url, headers=headers).json()
+                break
+            except Exception:
+                continue
 
         locations = data["results"]
 

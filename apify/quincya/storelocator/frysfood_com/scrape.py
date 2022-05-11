@@ -36,7 +36,7 @@ def fetch_data(sgw: SgWriter):
 
     for item in items:
         link = item.text
-        if "stores/details" in link:
+        if "stores/search" not in link:
             log.info(link)
             try:
                 req = session.get(link, headers=headers)
