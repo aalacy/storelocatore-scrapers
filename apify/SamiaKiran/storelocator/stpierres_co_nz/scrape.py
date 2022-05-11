@@ -33,6 +33,7 @@ def fetch_data():
         soup = BeautifulSoup(r.text, "html.parser")
         city_list = soup.find("select", {"id": "region-select"}).findAll("option")
         for city_url in city_list:
+            city = city_url.text
             city_url = "https://stpierres.co.nz/stores?region=" + city_url["value"]
             r = session.get(city_url, headers=headers)
             soup = BeautifulSoup(r.text, "html.parser")
@@ -45,20 +46,17 @@ def fetch_data():
                     .replace("\n", " ")
                 )
                 log.info(location_name)
-                phone = soup.select_one("a[href*=tel]").text
+                phone = loc.select_one("a[href*=tel]").text
                 raw_address = strip_accents(
                     loc.find("p", {"class": "store-address"})
                     .get_text(separator="|", strip=True)
                     .replace("|", " ")
                 ).replace("\n", " ")
-                # Parse the address
+
                 pa = parse_address_intl(raw_address)
 
                 street_address = pa.street_address_1
                 street_address = street_address if street_address else MISSING
-
-                city = pa.city
-                city = city.strip() if city else MISSING
 
                 state = pa.state
                 state = state.strip() if state else MISSING
@@ -67,12 +65,10 @@ def fetch_data():
                 zip_postal = zip_postal.strip() if zip_postal else MISSING
                 try:
                     hours_of_operation = (
-                        "Mon"
-                        + loc.find("div", {"class": "store-hours"})
+                        loc.find("div", {"class": "store-hours"})
                         .get_text(separator="|", strip=True)
                         .replace("|", " ")
                         .split("Normal Hours")[1]
-                        .split("Mon")[1]
                     )
                 except:
                     hours_of_operation = (
@@ -82,6 +78,7 @@ def fetch_data():
                     )
                 if "(Hours" in hours_of_operation:
                     hours_of_operation = hours_of_operation.split("(Hours")[0]
+                hours_of_operation = "Mon" + hours_of_operation.split("Mon")[1]
                 latitude = loc["data-lat"]
                 longitude = loc["data-lng"]
                 store_number = loc["data-store-id"]
