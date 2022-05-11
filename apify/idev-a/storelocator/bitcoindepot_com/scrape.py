@@ -151,7 +151,7 @@ def fetch_records(http):
         country_code = "US"
         if _["state"] in ca_provinces_codes:
             country_code = "CA"
-        if hours_of_operation.strip().endswith(";"):
+        if hours_of_operation and hours_of_operation.strip().endswith(";"):
             hours_of_operation = hours_of_operation[:-1]
 
         yield SgRecord(
