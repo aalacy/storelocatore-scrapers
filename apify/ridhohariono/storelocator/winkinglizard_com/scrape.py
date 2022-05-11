@@ -13,12 +13,13 @@ DOMAIN = "winkinglizard.com"
 BASE_URL = "https://www.winkinglizard.com/"
 LOCATION_URL = "https://www.winkinglizard.com/locations"
 HEADERS = {
-    "Accept": "application/json, text/plain, */*",
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
+    "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/101.0.4951.54 Safari/537.36",
+    "upgrade-insecure-request": "1",
 }
 log = sglog.SgLogSetup().get_logger(logger_name=DOMAIN)
 
-session = SgRequests()
+session = SgRequests(verify_ssl=False)
 
 MISSING = "<MISSING>"
 
@@ -33,7 +34,6 @@ def getAddress(raw_address):
             city = data.city
             state = data.state
             zip_postal = data.postcode
-
             if street_address is None or len(street_address) == 0:
                 street_address = MISSING
             if city is None or len(city) == 0:
@@ -51,7 +51,8 @@ def getAddress(raw_address):
 
 def pull_content(url):
     log.info("Pull content => " + url)
-    soup = bs(session.get(url, headers=HEADERS).content, "lxml")
+    req = session.get(url, headers=HEADERS)
+    soup = bs(req.content, "lxml")
     return soup
 
 
@@ -81,6 +82,8 @@ def fetch_data():
             latitude = value["lat"]
             longitude = value["lng"]
             hours_of_operation = ", ".join(value["schemaHours"])
+            if "Su" not in hours_of_operation:
+                hours_of_operation = "SU Closed " + hours_of_operation
             log.info("Append {} => {}".format(location_name, street_address))
             yield SgRecord(
                 locator_domain=DOMAIN,
@@ -117,7 +120,6 @@ def scrape():
         for rec in results:
             writer.write_row(rec)
             count = count + 1
-
     log.info(f"No of records being processed: {count}")
     log.info("Finished")
 

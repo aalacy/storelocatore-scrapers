@@ -1,106 +1,101 @@
-import csv
 import re
-import pdb
-import requests
-from lxml import etree
 import json
-import usaddress
+from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
+session = SgRequests()
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+}
 
-base_url = 'http://teahousebeverage.com'
-
-
-def validate(item):    
-    if item == None:
-        item = ''
-    if type(item) == int or type(item) == float:
-        item = str(item)
-    if type(item) == list:
-        item = ' '.join(item)
-    return item.strip()
-
-def get_value(item):
-    if item == None :
-        item = '<MISSING>'
-    item = validate(item)
-    if item == '':
-        item = '<MISSING>'    
-    return item
-
-def eliminate_space(items):
-    rets = []
-    for item in items:
-        item = validate(item)
-        if item != '':
-            rets.append(item)
-    return rets
-
-def parse_address(address):
-    address = usaddress.parse(address)
-    street = ''
-    city = ''
-    state = ''
-    zipcode = ''
-    for addr in address:
-        if addr[1] == 'PlaceName':
-            city += addr[0].replace(',', '') + ' '
-        elif addr[1] == 'ZipCode':
-            zipcode = addr[0].replace(',', '')
-        elif addr[1] == 'StateName':
-            state = addr[0].replace(',', '')
-        else:
-            street += addr[0].replace(',', '') + ' '
-    return { 
-        'street': get_value(street), 
-        'city' : get_value(city), 
-        'state' : get_value(state), 
-        'zipcode' : get_value(zipcode)
-    }
-
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-        for row in data:
-            writer.writerow(row)
 
 def fetch_data():
-    output_list = []
+
+    pattern = re.compile(r"\s\s+")
+    cleanr = re.compile(r"<[^>]+>")
     url = "http://teahousebeverage.com/locations/"
-    session = requests.Session()
-    request = session.get(url).text
-    source = validate(request.split('wpgmaps_localize_marker_data = ')[1].split('var wpgmaps_localize_cat_ids')[0])[:-1]
-    store_list = json.loads(source)['1']
-    for key, store in list(store_list.items()):
-        output = []
-        output.append(base_url) # url
-        output.append(get_value(store['title'])) #location name
-        address = parse_address(validate(store['address']).replace('<br />', ','))
-        output.append(address['street']) #address
-        output.append(address['city']) #city
-        output.append(address['state']) #state
-        output.append(address['zipcode']) #zipcode   
-        output.append('US') #country code
-        output.append('<MISSING>') #store_number
-        detail = eliminate_space(etree.HTML(validate(store['desc'])).xpath('.//text()'))
-        if len(detail) == 1:
-            output.append('<MISSING>') #phone
-        else:
-            output.append(detail[0]) #phone
-        output.append('The Teahouse - Tapioca & Tea') #location type
-        output.append(get_value(store['lat'])) #latitude
-        output.append(get_value(store['lng'])) #longitude
-        if len(detail) == 1:
-            if 'coming' not in validate(detail).lower():
-                output.append('<MISSING>') #opening hours          
-                output_list.append(output)
-        else:
-            output.append(get_value(detail[1:]).replace(validate(store['address']), '')) #opening hours
-            output_list.append(output)
-    return output_list
+
+    r = session.get(url, headers=headers)
+    loclist = r.text.split('{"map_id":"')[1:]
+    for loc in loclist:
+        loc = loc.split("}", 1)[0]
+        loc = "{" + loc.split(",", 1)[1] + "}"
+        loc = json.loads(loc)
+        store = loc["marker_id"]
+        title = loc["title"]
+        address = loc["address"]
+        address = re.sub(cleanr, "\n", address)
+        address = re.sub(pattern, "\n", address).replace(", United States", "").strip()
+        address = address.replace("\n", ", ")
+
+        try:
+            street, city, state = address.split(", ", 2)
+            state, pcode = state.split(" ", 1)
+            state = state.replace(",", "")
+        except:
+            try:
+                street, city = address.split(", ", 1)
+                city, state = city.strip().split(" ", 1)
+                state, pcode = state.split(" ", 1)
+                state = state.replace(",", "")
+            except:
+                street = address
+                city = pcode = "<MISSING>"
+                state = "TX"
+        lat = loc["lat"]
+        longt = loc["lng"]
+        content = loc["desc"]
+        content = re.sub(cleanr, "\n", content)
+        content = re.sub(pattern, "\n", content).strip()
+
+        try:
+            phone = content.split("\n", 1)[0]
+            hours = content.split("\n", 1)[1]
+        except:
+            phone = hours = "<MISSING>"
+        try:
+            hours = hours.split("Holiday", 1)[0]
+        except:
+            pass
+        hours = hours.replace("\n", " ").strip()
+
+        if "USA" in pcode:
+            pcode = "<MISSING>"
+        if "Suite" in pcode:
+            pcode, temp = pcode.split(", ", 1)
+            street = street + " " + temp
+        if " " + pcode + " " in hours:
+            hours = hours.split(pcode + " ", 1)[1]
+        yield SgRecord(
+            locator_domain="http://teahousebeverage.com/",
+            page_url=url,
+            location_name=title,
+            street_address=street.strip(),
+            city=city.strip(),
+            state=state.strip(),
+            zip_postal=pcode.strip(),
+            country_code="US",
+            store_number=str(store),
+            phone=phone.strip(),
+            location_type=SgRecord.MISSING,
+            latitude=str(lat),
+            longitude=str(longt),
+            hours_of_operation=hours,
+        )
+
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.StoreNumberId)
+    ) as writer:
+
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+
 
 scrape()

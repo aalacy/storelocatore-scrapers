@@ -1,5 +1,4 @@
 from lxml import etree
-
 from sgrequests import SgRequests
 from sglogging import SgLogSetup
 from sgscrape.sgrecord import SgRecord
@@ -23,22 +22,9 @@ def fetch_data():
     for line in response.iter_lines():
         line = str(line)
         if "<loc>https://www.econolube.com/locations/" in line and "-" in line:
-            lurl = line.split("<loc>")[1].split("<")[0]
-            if (
-                "0" in lurl
-                or "1" in lurl
-                or "2" in lurl
-                or "3" in lurl
-                or "4" in lurl
-                or "5" in lurl
-                or "6" in lurl
-                or "7" in lurl
-                or "8" in lurl
-                or "9" in lurl
-            ):
-                all_locations.append(line.split("<loc>")[1].split("<")[0])
-
+            all_locations.append(line.split("<loc>")[1].split("<")[0])
     for page_url in all_locations:
+        logger.info(page_url)
         loc_response = session.get(page_url)
         loc_dom = etree.HTML(loc_response.text)
         location_name = loc_dom.xpath('//div[@class="segment-store-info"]/h2/a/text()')
@@ -71,7 +57,7 @@ def fetch_data():
             locator_domain=domain,
             page_url=page_url,
             location_name=location_name,
-            street_address=raw_address[0],
+            street_address=raw_address[0].replace(",", "").replace(".", ""),
             city=raw_address[-1].split(", ")[0],
             state=raw_address[-1].split(", ")[-1].split()[0],
             zip_postal=raw_address[-1].split(", ")[-1].split()[-1],

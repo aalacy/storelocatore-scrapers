@@ -63,6 +63,8 @@ def fetch_data():
             state = raw_address[2].split()[0]
             if len(state) > 2:
                 state = raw_address[1]
+            if len(city) == 2:
+                city = location_name
             zip_code = raw_address[2].split()[-1]
             country_code = ""
             phone = loc_dom.xpath('//h3[contains(text(), "Ph.:")]/text()')
