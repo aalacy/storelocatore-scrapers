@@ -3,13 +3,16 @@ from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sglogging import SgLogSetup
+
+logger = SgLogSetup().get_logger("")
 
 _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
 }
 
 locator_domain = "https://www.conforama.ch/"
-base_url = "https://api.conforama.ch/occ/v2/conforama/stores?fields=stores(name%2CdisplayName%2CformattedDistance%2CopeningHours(weekDayOpeningList(FULL)%2CspecialDayOpeningList(FULL))%2CgeoPoint(latitude%2Clongitude)%2Caddress(line1%2Cline2%2Ctown%2Cregion(FULL)%2CpostalCode%2Cphone%2Ccountry%2Cemail)%2C%20features)%2Cpagination(DEFAULT)%2Csorts(DEFAULT)&query=&pageSize=-1&lang=de&curr=CHF"
+base_url = "https://api.conforama.ch/occ/v2/conforama/stores?fields=FULL&query=&pageSize=-1&lang=de&curr=CHF"
 
 
 def fetch_data():
@@ -22,8 +25,11 @@ def fetch_data():
                 street_address += " " + addr.get("line2")
             if "Mock" in street_address:
                 continue
+            url = f"https://api.conforama.ch/occ/v2/conforama/selectedStore/custom/{_['name']}?fields=FULL&lang=de&curr=CHF"
+            logger.info(url)
+            d = session.get(url, headers=_headers).json()
             hours = []
-            for hh in _["openingHours"]["weekDayOpeningList"]:
+            for hh in d["openingHours"]["weekDayOpeningList"]:
                 if hh["closed"]:
                     times = "closed"
                 else:
@@ -41,6 +47,7 @@ def fetch_data():
                 latitude = ""
             if longitude == 0.0:
                 longitude = ""
+
             yield SgRecord(
                 page_url=page_url,
                 location_name=_["name"],
