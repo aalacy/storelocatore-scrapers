@@ -1,123 +1,103 @@
 # -*- coding: utf-8 -*-
-from sgrequests import SgRequests
+from sgrequests import SgRequests, SgRequestError
 from sglogging import sglog
+import lxml.html
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-import lxml.html
-from sgpostal import sgpostal as parser
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+import json
 
 website = "jumbo.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36",
+    "authority": "www.jumbo.com",
+    "sec-ch-ua": '" Not A;Brand";v="99", "Chromium";v="99", "Google Chrome";v="99"',
+    "accept": "application/json, text/javascript, */*; q=0.01",
+    "x-requested-with": "XMLHttpRequest",
+    "sec-ch-ua-mobile": "?0",
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.84 Safari/537.36",
+    "sec-ch-ua-platform": '"Windows"',
+    "sec-fetch-site": "same-origin",
+    "sec-fetch-mode": "cors",
+    "sec-fetch-dest": "empty",
+    "accept-language": "en-US,en-GB;q=0.9,en;q=0.8",
 }
 
-
-def get_latlng(map_link):
-    if "z/data" in map_link:
-        lat_lng = map_link.split("@")[1].split("z/data")[0]
-        latitude = lat_lng.split(",")[0].strip()
-        longitude = lat_lng.split(",")[1].strip()
-    elif "ll=" in map_link:
-        lat_lng = map_link.split("ll=")[1].split("&")[0]
-        latitude = lat_lng.split(",")[0]
-        longitude = lat_lng.split(",")[1]
-    elif "!2d" in map_link and "!3d" in map_link:
-        latitude = map_link.split("!3d")[1].strip().split("!")[0].strip()
-        longitude = map_link.split("!2d")[1].strip().split("!")[0].strip()
-    else:
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
-    return latitude, longitude
+params = {
+    "address": "",
+}
 
 
 def fetch_data():
     # Your scraper here
-    base = "https://www.jumbo.com"
-    search_url = "https://www.jumbo.com/nl-be/winkels"
 
-    with SgRequests() as session:
-        search_res = session.get(search_url, headers=headers)
+    with SgRequests(dont_retry_status_codes=([404])) as session:
+        home_req = session.get("https://www.jumbo.com/winkels", headers=headers)
+        synchronizertoken = (
+            home_req.text.split("var SYNCHRONIZER_TOKEN_VALUE = '")[1]
+            .strip()
+            .split("'")[0]
+            .strip()
+        )
 
-        search_sel = lxml.html.fromstring(search_res.text)
+        headers["synchronizertoken"] = synchronizertoken
 
-        stores = search_sel.xpath('//div[@class="cl-12" and ./div[@class="image"]]')
+        stores_req = session.get(
+            "https://www.jumbo.com/INTERSHOP/rest/WFS/Jumbo-Grocery-Site/webapi/stores",
+            headers=headers,
+            params=params,
+        )
+        stores = json.loads(stores_req.text)["stores"]
 
-        for no, store in enumerate(stores, 1):
-
+        for store in stores:
+            latitude = store["latitude"]
+            longitude = store["longitude"]
+            location_type = store["locationType"]
             locator_domain = website
+            store_number = store["sapStoreID"]
 
-            page_url = "".join(store.xpath("./span/jum-button/@href"))
-            page_url = base + page_url
-            log.info(page_url)
-            store_res = session.get(page_url, headers=headers)
-
-            store_sel = lxml.html.fromstring(store_res.text)
-
-            location_name = "".join(store_sel.xpath("//h1//text()")).strip()
-
-            location_type = "<MISSING>"
-
-            store_info = list(
-                filter(
-                    str,
-                    [
-                        x.strip()
-                        for x in store_sel.xpath(
-                            '//jum-list-item[@icon="marker-pin-outline"]//text()'
-                        )
-                    ],
-                )
+            location_name = store["addressName"]
+            page_url = (
+                "https://www.jumbo.com/winkel/"
+                + location_name.lower()
+                .encode("ascii", "replace")
+                .decode("utf-8")
+                .replace("?", "")
+                .strip()
+                .replace("-", "")
+                .replace(" ", "-")
+                .strip()
+                .replace("'", "")
+                .strip()
+                .replace(".", "")
+                .strip()
             )
+            log.info(page_url)
+            store_req = session.get(page_url, headers=headers)
+            if isinstance(store_req, SgRequestError):
+                continue
 
-            if not store_info:
-                store_info = list(
-                    filter(
-                        str,
-                        [
-                            x.strip()
-                            for x in store.xpath('./div[@class="text"]//text()')
-                        ],
-                    )
-                )
-
-            raw_address = " ".join(store_info).strip()
-
-            formatted_addr = parser.parse_address_intl(raw_address)
-            street_address = formatted_addr.street_address_1
-            if formatted_addr.street_address_2:
-                street_address = street_address + ", " + formatted_addr.street_address_2
-
-            if street_address is not None:
-                street_address = street_address.replace("Ste", "Suite")
-
-            city = formatted_addr.city
-
-            state = formatted_addr.state
-            zip = formatted_addr.postcode
+            store_sel = lxml.html.fromstring(store_req.text)
+            street_address = store["street"] + " " + store["street2"]
+            city = store["city"]
+            state = "<MISSING>"
+            zip = store["postalCode"]
 
             country_code = "NL"
 
-            store_number = "<MISSING>"
-            phone = "".join(store_sel.xpath('//jum-list-item[@icon="phone"]//text()'))
+            phone = "".join(
+                store_sel.xpath('//jum-list-item[@icon="phone"]/text()')
+            ).strip()
+            log.info(phone)
+            hours_list = []
+            hours = store_sel.xpath('//div[@class="opening-hours__line"]')
+            for hour in hours:
+                day = "".join(hour.xpath("span[@class='day']/text()")).strip()
+                time = "".join(hour.xpath("span[@class='time']/text()")).strip()
+                hours_list.append(day + ":" + time)
 
-            hours = list(
-                filter(
-                    str,
-                    [x.strip() for x in store_sel.xpath("//table//text()")],
-                )
-            )
-
-            hours_of_operation = "; ".join(hours).replace("dag;", "dag:")
-
-            map_link = "".join(
-                store_sel.xpath('//jum-button[contains(@href,"maps")]/@href')
-            )
-
-            log.info(map_link)
-            latitude, longitude = get_latlng(map_link)
+            hours_of_operation = "; ".join(hours_list).strip()
 
             yield SgRecord(
                 locator_domain=locator_domain,
@@ -134,7 +114,6 @@ def fetch_data():
                 latitude=latitude,
                 longitude=longitude,
                 hours_of_operation=hours_of_operation,
-                raw_address=raw_address,
             )
 
 
@@ -142,7 +121,7 @@ def scrape():
     log.info("Started")
     count = 0
     with SgWriter(
-        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.StoreNumberId)
     ) as writer:
         results = fetch_data()
         for rec in results:

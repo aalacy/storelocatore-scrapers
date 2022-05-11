@@ -68,7 +68,9 @@ def get_cities_in_state(state_url):
     for line in r.iter_lines():
         if 'title="Locations in' in line:
             lurl = line.split('href="')[1].split('"')[0]
-            cities.append(lurl)
+            cities.append(
+                lurl.replace("clinic-locator/", "clinic-locator/clinic-directory/")
+            )
 
     return cities
 
@@ -92,7 +94,7 @@ def get_locations_in_city(city_url):
     r = session.get(city_url, headers=headers)
 
     for line in r.iter_lines():
-        if 'class="covid-standalone-details">' in line:
+        if '">View Clinic' in line:
             locs.append(line.split('href="')[1].split('"')[0])
 
     return locs

@@ -47,6 +47,11 @@ def fetch_data():
                 .strip()
                 .replace(", ,", ", ")
                 .strip()
+                .replace(",,", ",")
+                .strip()
+                .replace("\r", "")
+                .replace("\t", "")
+                .strip()
             )
 
             formatted_addr = parser.parse_address_intl(raw_address)

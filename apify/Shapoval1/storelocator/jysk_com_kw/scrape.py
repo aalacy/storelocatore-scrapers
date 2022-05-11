@@ -1,3 +1,4 @@
+from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
@@ -37,44 +38,45 @@ def fetch_data(sgw: SgWriter):
     js = r.json()["items"]
     for j in js:
 
-        page_url = "https://jysk.com.kw/stores"
-        location_name = j.get("name") or "<MISSING>"
-        street_address = j.get("address") or "<MISSING>"
-        state = j.get("state") or "<MISSING>"
-        postal = "".join(j.get("zip")) or "<MISSING>"
-        if postal.count("0") > 3:
-            postal = "<MISSING>"
+        latitude = j.get("lat")
+        longitude = j.get("lng")
+        store_number = j.get("id")
+        info = j.get("popup_html")
+        a = html.fromstring(info)
+
+        location_name = "".join(a.xpath('//div[@class="amlocator-title"]//text()'))
+        page_url = "".join(a.xpath('//div[@class="amlocator-title"]/a/@href'))
+        info_addr = a.xpath("//*//text()")
+        info_addr = list(filter(None, [b.strip() for b in info_addr]))
+        street_address = "<MISSING>"
+        for i in info_addr:
+            if "Address" in i:
+                street_address = str(i).replace("Address:", "").replace(",", "").strip()
+        state = "<MISSING>"
+        for i in info_addr:
+            if "Governorate" in i:
+                state = str(i).replace("Governorate:", "").strip()
+        postal = "<MISSING>"
         country_code = "KW"
-        city = j.get("city") or "<MISSING>"
-        latitude = j.get("lat") or "<MISSING>"
-        longitude = j.get("lng") or "<MISSING>"
-        phone = j.get("phone") or "<MISSING>"
-        h = eval(j.get("schedule_string"))
-        days = [
-            "monday",
-            "tuesday",
-            "wednesday",
-            "thursday",
-            "friday",
-            "saturday",
-            "sunday",
-        ]
-        tmp = []
-        for d in days:
-            day = d
-            opens = (
-                h.get(f"{d}").get("from").get("hours")
-                + "."
-                + h.get(f"{d}").get("from").get("minutes")
+        city = "<MISSING>"
+        for i in info_addr:
+            if "Area" in i:
+                city = str(i).replace("Area:", "").strip()
+        info_addr_str = " ".join(info_addr)
+        phone = info_addr_str.split("Telephone:")[1].strip()
+        if phone.find("Email") != -1:
+            phone = phone.split("Email")[0].strip()
+        r = session.get(page_url, headers=headers)
+        tree = html.fromstring(r.text)
+
+        hours_of_operation = (
+            " ".join(
+                tree.xpath('//div[@class="amlocator-schedule-table"]//div//text()')
             )
-            closes = (
-                h.get(f"{d}").get("to").get("hours")
-                + "."
-                + h.get(f"{d}").get("to").get("minutes")
-            )
-            line = f"{day} {opens} - {closes}"
-            tmp.append(line)
-        hours_of_operation = "; ".join(tmp) or "<MISSING>"
+            .replace("\n", "")
+            .strip()
+        )
+        hours_of_operation = " ".join(hours_of_operation.split()) or "<MISSING>"
 
         row = SgRecord(
             locator_domain=locator_domain,
@@ -85,7 +87,7 @@ def fetch_data(sgw: SgWriter):
             state=state,
             zip_postal=postal,
             country_code=country_code,
-            store_number=SgRecord.MISSING,
+            store_number=store_number,
             phone=phone,
             location_type=SgRecord.MISSING,
             latitude=latitude,
@@ -98,7 +100,5 @@ def fetch_data(sgw: SgWriter):
 
 if __name__ == "__main__":
     session = SgRequests()
-    with SgWriter(
-        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
-    ) as writer:
+    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.LATITUDE}))) as writer:
         fetch_data(writer)

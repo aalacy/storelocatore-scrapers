@@ -20,7 +20,7 @@ def fetch_data():
         locations = json.loads(
             bs(session.get(base_url, headers=_headers).text, "lxml")
             .select_one("section.locations-map")["x-data"]
-            .replace("locations(", "")[:-1]
+            .replace("locations2(", "")[:-1]
         )["locations"]
         for _ in locations:
             if (
