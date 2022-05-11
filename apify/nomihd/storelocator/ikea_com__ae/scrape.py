@@ -84,7 +84,7 @@ def fetch_data():
             )
         )
 
-        raw_address = " ".join(store_info)
+        raw_address = " ".join(store_info).split("Get directions")[0].strip()
         formatted_addr = parser.parse_address_intl(raw_address)
         street_address = formatted_addr.street_address_1
         if formatted_addr.street_address_2:
