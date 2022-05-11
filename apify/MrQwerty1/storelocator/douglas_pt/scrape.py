@@ -10,13 +10,13 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 def fetch_data(sgw: SgWriter):
     api = "https://www.douglas.pt/StoreLocator/search"
     data = {
-        'lat': '0',
-        'lng': '0',
-        'distance': '0',
-        'input': '',
-        'country': 'PT',
-        'catFilter': '',
-        'byname': '',
+        "lat": "0",
+        "lng": "0",
+        "distance": "0",
+        "input": "",
+        "country": "PT",
+        "catFilter": "",
+        "byname": "",
     }
     r = session.post(api, headers=headers, data=data)
     tree = html.fromstring(r.text)
@@ -30,7 +30,6 @@ def fetch_data(sgw: SgWriter):
         raw_address = "".join(
             d.xpath(".//div[contains(@class, 'address')]/span/text()")
         ).strip()
-        print(raw_address)
         postal = "".join(re.findall(r"\d{4}.\d{3}", raw_address))
         street_address = raw_address.split(postal)[0].strip()
         if street_address.endswith(","):
