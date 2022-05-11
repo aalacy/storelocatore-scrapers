@@ -53,7 +53,6 @@ def fetch_data(sgw: SgWriter):
                         jn.split("id")[o].split(",")[0].replace('":', "").strip()
                     )
     for index, i in enumerate(k):
-        tem_var = []
         name = name1[index].text.strip().lstrip()
         try:
             phone = list(i.stripped_strings)[-1]
