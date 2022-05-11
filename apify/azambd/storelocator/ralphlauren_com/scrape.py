@@ -2,7 +2,7 @@ from lxml import html
 import time
 import json
 from sglogging import sglog
-from sgrequests import SgRequests, ProxySettings
+from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
