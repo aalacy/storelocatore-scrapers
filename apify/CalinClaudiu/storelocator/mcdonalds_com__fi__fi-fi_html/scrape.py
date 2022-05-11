@@ -58,6 +58,14 @@ def fix_comma(x):
         return x.replace("  ", " ")
 
 
+def fix_storeno(x):
+    better = []
+    for i in x:
+        if i.isdigit():
+            better.append(i)
+    return "".join(better)
+
+
 def scrape():
     field_defs = sp.SimpleScraperPipeline.field_definitions(
         locator_domain=sp.MappingField(
@@ -96,8 +104,7 @@ def scrape():
             is_required=False,
         ),
         store_number=sp.MappingField(
-            mapping=["store_number"],
-            is_required=False,
+            mapping=["store_number"], is_required=False, value_transform=fix_storeno
         ),
         hours_of_operation=sp.MappingField(
             mapping=["hours_of_operation"], is_required=False
