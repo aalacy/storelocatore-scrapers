@@ -209,9 +209,7 @@ def fetch_br():
             else:
                 break
         except:
-            import pdb
-
-            pdb.set_trace()
+            pass
 
     if driver:
         driver.close()
