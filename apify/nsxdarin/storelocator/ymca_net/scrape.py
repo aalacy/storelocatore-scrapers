@@ -24,6 +24,13 @@ def fetch_data():
         for line in r.iter_lines():
             if "<loc>https://www.ymca.org/locations/" in line:
                 locs.append(line.split("<loc>")[1].split("<")[0])
+            if "<loc>http://national/locations/" in line:
+                lurl = (
+                    line.split("<loc>")[1]
+                    .split("<")[0]
+                    .replace("national", "www.ymca.org")
+                )
+                locs.append(lurl)
     for loc in locs:
         r = session.get(loc, headers=headers)
         website = "ymca.org"
