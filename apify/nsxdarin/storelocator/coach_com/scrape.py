@@ -864,7 +864,20 @@ def fetch_data():
 def scrape():
     results = fetch_data()
     with SgWriter(
-        deduper=SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
+        deduper=SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.STORE_NUMBER,
+                    SgRecord.Headers.PHONE,
+                    SgRecord.Headers.COUNTRY_CODE,
+                    SgRecord.Headers.LATITUDE,
+                    SgRecord.Headers.LONGITUDE,
+                },
+                fail_on_empty_id=True,
+            ),
+            duplicate_streak_failure_factor=-1,
+        )
     ) as writer:
         for rec in results:
             writer.write_row(rec)
