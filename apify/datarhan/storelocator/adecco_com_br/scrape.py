@@ -37,6 +37,9 @@ def fetch_data():
         zip_code = addr.postcode
         if zip_code:
             zip_code = zip_code.replace("CEP", "")
+        if not zip_code and "CEP:" in raw_address:
+            zip_code = raw_address.split("CEP:")[-1].split()[0].replace(",", "")
+        state = raw_address.split("/")[-1]
 
         item = SgRecord(
             locator_domain=domain,
@@ -44,7 +47,7 @@ def fetch_data():
             location_name=location_name,
             street_address=street_address,
             city=city,
-            state=addr.state,
+            state=state,
             zip_postal=zip_code,
             country_code="BR",
             store_number="",

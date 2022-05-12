@@ -86,16 +86,26 @@ def _d(page_url, location_name, raw_address, lat, lng, phone, hours):
 
 
 def _latlng(sp1, x):
+    lat = lng = ""
     try:
-        lng, lat = (
-            sp1.select("div.fusion-no-small-visibility p iframe")[x]["src"]
-            .split("!2d")[1]
-            .split("!2m")[0]
-            .split("!3m")[0]
-            .split("!3d")
-        )
+        if sp1.select("div p iframe")[x].get("src"):
+            lng, lat = (
+                sp1.select("div p iframe")[x]["src"]
+                .split("!2d")[1]
+                .split("!2m")[0]
+                .split("!3m")[0]
+                .split("!3d")
+            )
+        elif sp1.select("div p iframe")[x].get("nitro-lazy-src"):
+            lng, lat = (
+                sp1.select("div p iframe")[x]["nitro-lazy-src"]
+                .split("!2d")[1]
+                .split("!2m")[0]
+                .split("!3m")[0]
+                .split("!3d")
+            )
     except:
-        lat = lng = ""
+        pass
 
     return lat, lng
 

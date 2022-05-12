@@ -2,7 +2,6 @@
 import re
 import json
 from lxml import etree
-from urllib.parse import urljoin
 
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
@@ -17,7 +16,7 @@ def fetch_data():
     domain = "bipa.at"
 
     all_codes = DynamicZipSearch(
-        country_codes=[SearchableCountries.AUSTRIA], expected_search_radius_miles=50
+        country_codes=[SearchableCountries.AUSTRIA], expected_search_radius_miles=5
     )
     with SgFirefox() as driver:
         for code in all_codes:
@@ -37,12 +36,15 @@ def fetch_data():
                 count = 0
                 next_page = driver.find_element_by_class_name("next_link")
                 while next_page:
-                    if count > 9:
+                    if count > 10:
                         break
                     next_page.click()
                     dom = etree.HTML(driver.page_source)
                     all_locations += dom.xpath("//@data-options")
-                    next_page = driver.find_element_by_class_name("next_link")
+                    try:
+                        next_page = driver.find_element_by_class_name("next_link")
+                    except Exception:
+                        pass
                     count += 1
             except Exception:
                 pass
@@ -69,8 +71,6 @@ def fetch_data():
                     else:
                         hours.append(f"{d}: closed")
                 hours = ", ".join(hours)
-                page_url = re.findall('url":"(.+?)",', poi)[0][0]
-                page_url = urljoin(start_url, page_url)
                 store_number = re.findall('storeid":"(.+?)"', poi)[0]
                 latitude = re.findall('latitude":(.+?),', poi)[0]
                 longitude = re.findall('longitude":(.+?),', poi)[0]
@@ -99,7 +99,11 @@ def scrape():
     with SgWriter(
         SgRecordDeduper(
             SgRecordID(
-                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+                {
+                    SgRecord.Headers.LOCATION_NAME,
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.CITY,
+                }
             )
         )
     ) as writer:
