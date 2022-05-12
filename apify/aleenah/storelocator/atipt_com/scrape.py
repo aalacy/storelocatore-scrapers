@@ -36,7 +36,6 @@ def record_initial_requests(http: SgRequests, state: CrawlState) -> bool:
             soup = BeautifulSoup(res.text, "html.parser")
             stores = soup.find_all("a", {"class": "name"})
             for store in stores:
-                loccation_name = store.find("h3").text
                 loc = "https://locations.atipt.com" + store.get("href")
                 store_url_list.append(loc)
                 log.info(loc)
