@@ -68,7 +68,7 @@ def fetch_data():
             zip_postal = pa.postcode
             zip_postal = zip_postal.strip() if zip_postal else MISSING
 
-            country_code = "US"
+            country_code = "United States"
             latitude = MISSING
             longitude = MISSING
         yield SgRecord(
