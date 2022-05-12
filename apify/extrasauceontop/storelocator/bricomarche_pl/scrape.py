@@ -14,7 +14,6 @@ def get_data():
     for location in response["results"]:
         locator_domain = "bricomarche.pl"
         page_url = "https://www.bricomarche.pl/sklep/" + location["Slug"]
-        print(page_url)
         location_name = location["Name"]
         latitude = location["Lat"]
         longitude = location["Lng"]
@@ -33,7 +32,6 @@ def get_data():
 
         try:
             hours_response = session.get(page_url)
-            print(hours_response.status_code)
             hours_response = hours_response.text
         except Exception:
             continue
