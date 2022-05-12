@@ -12,28 +12,30 @@ def get_urls():
     urls = set()
     api = "https://www.intermarche.pt/umbraco/Api/Pos/Get"
     r = session.get(api, headers=headers)
-    logger.info(f'{api}: {r.status_code}')
-    js = r.json()['list']
+    logger.info(f"{api}: {r.status_code}")
+    js = r.json()["list"]
     for j in js:
-        urls.add(j.get('url'))
+        urls.add(j.get("url"))
 
     return urls
 
 
 def get_data(page_url, sgw: SgWriter):
     r = session.get(page_url, headers=headers)
-    logger.info(f'{page_url}: {r.status_code}')
+    logger.info(f"{page_url}: {r.status_code}")
     tree = html.fromstring(r.text)
 
-    location_name = ''.join(tree.xpath("//h1[@itemprop='name']/text()")).strip()
-    street_address = ''.join(tree.xpath("//span[@itemprop='streetAddress']/text()")).strip()
-    city = ''.join(tree.xpath("//span[@itemprop='addressLocality']/text()")).strip()
-    postal = ''.join(tree.xpath("//span[@itemprop='postalCode']/text()")).strip()
-    country_code = 'PT'
-    phone = ''.join(tree.xpath("//a[@itemprop='telephone']/text()")).strip()
-    store_number = ''.join(tree.xpath("//div[@id='pos-map']/@data-pos"))
-    latitude = ''.join(tree.xpath("//div[@id='pos-map']/@data-latitude"))
-    longitude = ''.join(tree.xpath("//div[@id='pos-map']/@data-longitude"))
+    location_name = "".join(tree.xpath("//h1[@itemprop='name']/text()")).strip()
+    street_address = "".join(
+        tree.xpath("//span[@itemprop='streetAddress']/text()")
+    ).strip()
+    city = "".join(tree.xpath("//span[@itemprop='addressLocality']/text()")).strip()
+    postal = "".join(tree.xpath("//span[@itemprop='postalCode']/text()")).strip()
+    country_code = "PT"
+    phone = "".join(tree.xpath("//a[@itemprop='telephone']/text()")).strip()
+    store_number = "".join(tree.xpath("//div[@id='pos-map']/@data-pos"))
+    latitude = "".join(tree.xpath("//div[@id='pos-map']/@data-latitude"))
+    longitude = "".join(tree.xpath("//div[@id='pos-map']/@data-longitude"))
     hours_of_operation = ";".join(tree.xpath("//span[@itemprop='time']/text()")).strip()
 
     row = SgRecord(
@@ -56,7 +58,7 @@ def get_data(page_url, sgw: SgWriter):
 
 def fetch_data(sgw: SgWriter):
     urls = get_urls()
-    logger.info(f'{len(urls)} URLs are ready to crawl')
+    logger.info(f"{len(urls)} URLs are ready to crawl")
 
     with futures.ThreadPoolExecutor(max_workers=3) as executor:
         future_to_url = {executor.submit(get_data, url, sgw): url for url in urls}
@@ -66,7 +68,7 @@ def fetch_data(sgw: SgWriter):
 
 if __name__ == "__main__":
     locator_domain = "https://www.intermarche.pt/"
-    logger = sglog.SgLogSetup().get_logger(logger_name='intermarche.pt')
+    logger = sglog.SgLogSetup().get_logger(logger_name="intermarche.pt")
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0"
     }
