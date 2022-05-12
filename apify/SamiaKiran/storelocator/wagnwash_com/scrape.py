@@ -1,18 +1,22 @@
 import json
-from sgscrape.sgrecord import SgRecord
-from sgscrape.sgwriter import SgWriter
-from sgrequests import SgRequests
 from sglogging import sglog
 from bs4 import BeautifulSoup
+from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
+session = SgRequests()
 website = "wagnwash_com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 session = SgRequests()
-
-
 headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
 }
+
+DOMAIN = "https://wagnwash.com/"
+MISSING = SgRecord.MISSING
 
 
 def fetch_data():
@@ -24,11 +28,9 @@ def fetch_data():
         page_url = loc.find("a")["href"]
         log.info(page_url)
         session_1 = SgRequests()
-        r = session_1.get(page_url, headers=headers, allow_redirects=True)
-        temp = r.text.split("var locations = [ { ")[1].split(
-            ',"fran_add_to_schema"', 1
-        )[0]
-        temp = "{" + temp + "}"
+        r = session_1.get(page_url, headers=headers)
+        temp = r.text.split("var locations = [ ")[1].split("}];", 1)[0]
+        temp = temp + "}"
         temp = json.loads(temp)
         location_name = temp["name"]
         store_number = temp["id"]
@@ -48,6 +50,7 @@ def fetch_data():
         zip_postal = temp["fran_zip"]
         country_code = temp["fran_country"]
         hours_of_operation = temp["fran_hours"]
+        location_type = MISSING
         soup = BeautifulSoup(hours_of_operation, "html.parser")
         hours_of_operation = (
             soup.find("p").get_text(separator="|", strip=True).split("|")
@@ -60,8 +63,12 @@ def fetch_data():
             hours_of_operation = hours_of_operation.split("Grooming", 1)[0]
         if "Curbside" in hours_of_operation:
             hours_of_operation = hours_of_operation.split("Curbside", 1)[0]
+        if "COMING SOON!" in hours_of_operation:
+            hours_of_operation = MISSING
+            location_type = "COMING SOON"
+        hours_of_operation = hours_of_operation.replace("Hours", "")
         yield SgRecord(
-            locator_domain="https://wagnwash.com/",
+            locator_domain=DOMAIN,
             page_url=page_url,
             location_name=location_name.strip(),
             street_address=street_address.strip(),
@@ -71,7 +78,7 @@ def fetch_data():
             country_code=country_code,
             store_number=store_number,
             phone=phone,
-            location_type="<MISSING>",
+            location_type=location_type,
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hours_of_operation.strip(),
@@ -81,7 +88,9 @@ def fetch_data():
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.GeoSpatialId)
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

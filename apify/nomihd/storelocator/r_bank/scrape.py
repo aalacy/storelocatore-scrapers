@@ -30,28 +30,27 @@ headers = {
 def fetch_data():
     # Your scraper here
 
-    search_url = "https://www.r.bank/hours-locations"
+    search_url = "https://www.r.bank/about/convenient-locations/"
     stores_req = session.get(search_url, headers=headers)
     stores_sel = lxml.html.fromstring(stores_req.text)
-    names = stores_sel.xpath(
-        '//div[@class="field-item even"]/h3[@class="locationHeader"]/text()'
-    )
-    stores = stores_sel.xpath(
-        '//div[@class="field-item even"]/div[@class="row"]/div[2][.//p[contains(text(),"Locations")]]'
-    )
-    for index in range(0, len(stores)):
+    stores = stores_sel.xpath('//div[@class="row row-loc"]')
+    latlngList = stores_req.text.split("google.maps.LatLng(")[2:]
+    for index, store in enumerate(stores, 0):
         page_url = search_url
 
-        location_name = names[index]
+        location_name = "".join(store.xpath("div[1]/h2/text()")).strip()
         location_type = "<MISSING>"
         locator_domain = website
 
         raw_address = list(
             filter(
                 str,
-                stores[index].xpath(
-                    'div/div[./p[contains(text(),"Locations")]]//a//text()'
-                ),
+                [
+                    x.strip()
+                    for x in store.xpath(
+                        "div[3]//div[@class='large-12 medium-12 small-16 columns']//a[1]/text()"
+                    )
+                ],
             )
         )
 
@@ -72,8 +71,8 @@ def fetch_data():
 
         country_code = "US"
         store_number = "<MISSING>"
-        phone = stores[index].xpath(
-            'div/div[./p[contains(text(),"Contact")]]/p[contains(text(),"Phone:")]/text()'
+        phone = store.xpath(
+            'div[3]//div[./h3[contains(text(),"Contact")]]/p[contains(text(),"Phone:")]/text()'
         )
         try:
             phone = phone[0].replace("Phone:", "").strip()
@@ -82,8 +81,8 @@ def fetch_data():
 
         if phone == "":
             phone = "".join(
-                stores[index].xpath(
-                    'div/div[./p[contains(text(),"Contact")]]/p[contains(text(),"Phone:")]/font/text()'
+                store.xpath(
+                    'div[3]//div[./h3[contains(text(),"Contact")]]/p[contains(text(),"Phone:")]/font/text()'
                 )
             ).strip()
 
@@ -91,8 +90,8 @@ def fetch_data():
             "; ".join(
                 filter(
                     str,
-                    stores[index].xpath(
-                        'div/div[./p[contains(text(),"Lobby Hours")]]/p[2]/text()'
+                    store.xpath(
+                        'div[3]//div[./h3[contains(text(),"Lobby Hours")]]/p/text()'
                     ),
                 )
             )
@@ -103,8 +102,9 @@ def fetch_data():
         if hours_of_operation[-1] == ";":
             hours_of_operation = "".join(hours_of_operation[:-1]).strip()
 
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
+        latlng = latlngList[index].split(");")[0].strip()
+        latitude = latlng.split(",")[0].strip()
+        longitude = latlng.split(",")[1].strip()
 
         yield SgRecord(
             locator_domain=locator_domain,

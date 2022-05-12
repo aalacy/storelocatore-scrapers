@@ -1,35 +1,9 @@
-import csv
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
-
-
-def write_output(datta):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in datta:
-            writer.writerow(row)
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
 def get_info(page_url):
@@ -72,8 +46,8 @@ def get_info(page_url):
     return phone, latitude, longitude, hours_of_operations
 
 
-def fetch_data():
-    out = []
+def fetch_data(sgw: SgWriter):
+
     locator_domain = "https://www.mgbwhome.com"
     session = SgRequests()
     countries = ["CA", "US"]
@@ -94,9 +68,10 @@ def fetch_data():
             location_name = "".join(t.xpath('.//span[@itemprop="name"]/text()'))
             if location_name == "":
                 continue
-            street_address = "".join(
-                t.xpath('.//span[@itemprop="streetAddress"]/text()')
-            ).strip()
+            street_address = (
+                "".join(t.xpath('.//span[@itemprop="streetAddress"]/text()')).strip()
+                or "<MISSING>"
+            )
             city = (
                 "".join(t.xpath('.//span[@itemprop="addressLocality"]/text()'))
                 .replace(",", "")
@@ -112,6 +87,8 @@ def fetch_data():
             page_url = (
                 "".join(t.xpath('.//a[@itemprop="url"]/@href')).strip() or "<MISSING>"
             )
+            if page_url.find("virtual-store") != -1:
+                continue
             if page_url != "<MISSING>":
                 phone, latitude, longitude, hours_of_operation = get_info(page_url)
 
@@ -125,6 +102,18 @@ def fetch_data():
             if street_address.find("-") != -1 and street_address.find("(") == -1:
                 phone = street_address
                 street_address = "<MISSING>"
+            if not street_address[0].isdigit():
+                r = session.get(page_url)
+                tree = html.fromstring(r.text)
+                street_address = (
+                    "".join(
+                        tree.xpath(
+                            '//h3[text()="LOCATION"]/following-sibling::p[1]/text()[1] | //h3[contains(text(), "LOCATION")]/following-sibling::text()[1]'
+                        )
+                    )
+                    .replace("\n", "")
+                    .strip()
+                )
             if page_url.find("Toronto-Signature") != -1:
                 session = SgRequests()
                 r = session.get(page_url)
@@ -134,34 +123,32 @@ def fetch_data():
                     .replace("\n", "")
                     .strip()
                 )
+            street_address = street_address.replace(
+                "Tanger Outlets San Marcos", ""
+            ).strip()
             country_code = country
-            store_number = "<MISSING>"
-            location_type = "<MISSING>"
-            row = [
-                locator_domain,
-                page_url,
-                location_name,
-                street_address,
-                city,
-                state,
-                postal,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
-            out.append(row)
 
-    return out
+            row = SgRecord(
+                locator_domain=locator_domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=postal,
+                country_code=country_code,
+                store_number=SgRecord.MISSING,
+                phone=phone,
+                location_type=SgRecord.MISSING,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
 
-
-def scrape():
-    datta = fetch_data()
-    write_output(datta)
+            sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))) as writer:
+        fetch_data(writer)

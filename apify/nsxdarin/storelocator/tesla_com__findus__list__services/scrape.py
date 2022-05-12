@@ -93,14 +93,24 @@ castates = [
 def fetch_data():
     locs = []
     session = SgRequests()
-    url = "https://www.tesla.com/findus/list/services"
+    url = "https://www.tesla.com/findus/list"
     r = session.get(url, headers=headers)
     website = "tesla.com/findus/list/services"
     typ = "<MISSING>"
     logger.info("Pulling Stores")
+    states = []
     for line in r.iter_lines():
-        if '<a href="/findus/location/service/' in line:
-            locs.append("https://www.tesla.com" + line.split('href="')[1].split('"')[0])
+        if '<a href="/findus/list/services/' in line:
+            states.append(
+                "https://www.tesla.com" + line.split('href="')[1].split('"')[0]
+            )
+    for state in states:
+        logger.info(state)
+        r2 = session.get(state, headers=headers)
+        for line2 in r2.iter_lines():
+            if '<a href="/findus/location/service/' in line2:
+                lurl = "https://www.tesla.com" + line2.split('href="')[1].split('"')[0]
+                locs.append(lurl)
     for loc in locs:
         logger.info(loc)
         name = ""

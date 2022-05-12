@@ -4,7 +4,8 @@ from sglogging import sglog
 import lxml.html
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-import us
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "tidalhealth.org"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -20,6 +21,7 @@ def fetch_data():
 
     search_url = "https://www.tidalhealth.org/our-locations?cat=All&text=&page=0"
     while True:
+        log.info(search_url)
         stores_req = session.get(search_url, headers=headers)
         stores_sel = lxml.html.fromstring(stores_req.text)
 
@@ -46,10 +48,7 @@ def fetch_data():
             city = address[-1].strip().split(",")[0].strip()
             state = address[-1].strip().split(",")[-1].strip().split(" ")[0].strip()
             zip = address[-1].strip().split(",")[-1].strip().split(" ")[-1].strip()
-            country_code = ""
-            if us.states.lookup(state):
-                country_code = "US"
-
+            country_code = "US"
             phone = "".join(
                 store_sel.xpath(
                     '//div[@class="views-field views-field-field-prime-location"]/div/a[@title="Contact Us"]/text()'
@@ -112,7 +111,9 @@ def fetch_data():
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
