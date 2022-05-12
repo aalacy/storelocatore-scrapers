@@ -123,6 +123,8 @@ def fetch_data():
                 "Santa Clara",
                 "New York",
             ]
+            if " CA " in add:
+                add = add.split(" CA ")[0].strip()
             for cname in cities:
                 if cname in add:
                     add = add.split(cname)[0].strip()
