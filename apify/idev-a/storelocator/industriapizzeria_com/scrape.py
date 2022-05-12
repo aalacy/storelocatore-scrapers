@@ -36,7 +36,7 @@ def fetch_data():
                 temp = list(_hr.find_parent().find_next_sibling().stripped_strings)
                 for x in range(0, len(temp), 2):
                     hours.append(f"{temp[x]} {temp[x+1]}")
-            if hours and not re.search(r"tel:", hours[-1], re.IGNORECASE):
+            if hours and re.search(r"tel:", hours[-1], re.IGNORECASE):
                 del hours[-1]
             raw_address = []
             for aa in list(
