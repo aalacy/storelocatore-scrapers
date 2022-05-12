@@ -33,7 +33,7 @@ def fetch_data():
     # Your scraper here
     search_url = "https://www.bmr.ca/fr/storelocator/index/loadstore/"
     stores_req = session.get(search_url, headers=headers)
-    stores = json.loads(stores_req.text)["storesjson"]
+    stores = stores_req.json()["storesjson"]
     openingTimes = json.loads(stores_req.text)["openingTimes"]
     for store in stores:
         page_url = "https://www.bmr.co/en/" + store["rewrite_request_path"]
