@@ -90,7 +90,7 @@ def fetch_data(sgw: SgWriter):
                 city=city,
                 state=state,
                 zip_postal=zip_code,
-                country_code="US",
+                country_code=country_code,
                 store_number=store_number,
                 phone=phone,
                 location_type=location_type,
