@@ -7,6 +7,13 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
+
+from tenacity import retry, stop_after_attempt
+import tenacity
+import random
+import time
+
+
 session = SgRequests()
 website = "burger21_com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -19,6 +26,17 @@ DOMAIN = "https://www.burger21.com"
 MISSING = SgRecord.MISSING
 
 
+@retry(stop=stop_after_attempt(5), wait=tenacity.wait_fixed(5))
+def get_response(url):
+    with SgRequests() as http:
+        response = http.get(url, headers=headers)
+        time.sleep(random.randint(1, 3))
+        if response.status_code == 200:
+            log.info(f"{url} >> HTTP STATUS: {response.status_code}")
+            return response
+        raise Exception(f"{url} >> HTTP Error Code: {response.status_code}")
+
+
 def fetch_data():
     if True:
         url = "https://www.burger21.com/locations/"
@@ -29,6 +47,8 @@ def fetch_data():
             page_url = loc.find("a")["href"]
             log.info(page_url)
             r = session.get(page_url, headers=headers)
+            if r.status_code != 200:
+                r = get_response(page_url)
             soup = BeautifulSoup(r.text, "html.parser")
             location_name = soup.find("h1").text
             address = soup.find("h2").get_text(separator="|", strip=True).split("|")
