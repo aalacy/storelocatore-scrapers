@@ -6,10 +6,14 @@ import random
 from sglogging import sglog
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
-
-from sgselenium.sgselenium import SgFirefox
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
+
+from sgselenium.sgselenium import SgFirefox
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.common.by import By
+
 
 import ssl
 
@@ -36,6 +40,7 @@ def driverSleep(driver, time=2):
             EC.presence_of_element_located((By.ID, MISSING))
         )
     except Exception as e1:
+        log.info(f"Driver Err: {e1}")
         pass
 
 
@@ -120,7 +125,7 @@ def fetch_stores():
                                 store["country_code"] = data["address"][
                                     "addressCountry"
                                 ]
-                                print(f"Weeks openingHours: {data['openingHours']}")
+
                                 ooh = []
                                 if (
                                     data["openingHours"] == "LOCATION CLOSED"
