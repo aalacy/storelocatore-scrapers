@@ -10,6 +10,9 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 import time
 from sgpostal.sgpostal import parse_address_intl
 from webdriver_manager.chrome import ChromeDriverManager
+import ssl
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 logger = SgLogSetup().get_logger("salsafrescagrill")
 map_url = r"api\.maptiler\.com/tiles/v3"
