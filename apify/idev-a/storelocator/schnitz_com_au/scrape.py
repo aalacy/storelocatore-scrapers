@@ -78,6 +78,23 @@ def fetch_data():
             street_address = addr.street_address_1
             if addr.street_address_2:
                 street_address += " " + addr.street_address_2
+            city = addr.city
+            if "Brunswick" in raw_address:
+                city = "Brunswick"
+            if "Airport West" in raw_address:
+                city = "Airport West"
+            if "Balaclava" in raw_address:
+                city = "Balaclava"
+            if "Frankston" in raw_address:
+                city = "Frankston"
+            if "Broadmeadows" in raw_address:
+                city = "Broadmeadows"
+            if "Caroline Springs" in raw_address:
+                city = "Caroline Springs"
+            if "Chadstone" in raw_address:
+                city = "Chadstone"
+            if "Charlestown" in raw_address:
+                city = "Charlestown"
             coord = sp1.select_one("div.single-store-content__map-map")
             hours = [
                 ": ".join(hh.stripped_strings)
@@ -92,7 +109,7 @@ def fetch_data():
                 page_url=page_url,
                 location_name=link.h4.text.strip(),
                 street_address=street_address,
-                city=addr.city,
+                city=city,
                 state=addr.state,
                 zip_postal=addr.postcode,
                 country_code="AUS",
