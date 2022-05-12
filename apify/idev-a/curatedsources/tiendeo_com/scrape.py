@@ -398,7 +398,7 @@ def fetch_data():
 
 
 if __name__ == "__main__":
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId, duplicate_streak_failure_factor=10)) as writer:
         results = fetch_data()
         for rec in results:
             if rec:
