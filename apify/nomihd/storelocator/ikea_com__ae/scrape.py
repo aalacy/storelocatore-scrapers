@@ -84,13 +84,17 @@ def fetch_data():
             )
         )
 
-        raw_address = " ".join(store_info)
+        raw_address = " ".join(store_info).split("Get directions")[0].strip()
         formatted_addr = parser.parse_address_intl(raw_address)
         street_address = formatted_addr.street_address_1
         if formatted_addr.street_address_2:
             street_address = street_address + ", " + formatted_addr.street_address_2
 
         city = formatted_addr.city
+        if not city:
+            if "Dubai" in street_address:
+                city = "Dubai"
+
         state = formatted_addr.state
         zip = formatted_addr.postcode
 

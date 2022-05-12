@@ -9,9 +9,7 @@ def fetch_data():
     session = SgRequests()
 
     start_urls = {
-        "UK": "https://www.lexus.co.uk/api/dealers/all",
         "Austria": "https://www.lexus.at/api/dealers/all",
-        "Germany": "https://www.lexus.de/api/dealers/all",
         "Hungary": "https://www.lexus.hu/api/dealers/all",
         "Italy": "https://www.lexus.it/api/dealers/all",
         "Latvia": "https://lv.lexus.lv/api/dealers/all",
@@ -20,7 +18,6 @@ def fetch_data():
         "Poland": "https://www.lexus-polska.pl/api/dealers/all",
         "Portugal": "https://www.lexus.pt/api/dealers/all",
         "Sweden": "https://www.lexus.se/api/dealers/all",
-        "Ukrain": "https://www.lexus.ua/api/dealers/all",
     }
 
     hdr = {
