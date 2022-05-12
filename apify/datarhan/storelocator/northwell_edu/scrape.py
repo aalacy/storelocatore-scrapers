@@ -6,10 +6,6 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
 from sglogging import SgLogSetup
-from sgselenium import SgChrome, SgSelenium
-from webdriver_manager.chrome import ChromeDriverManager
-
-
 import ssl
 
 
@@ -29,10 +25,19 @@ logger = SgLogSetup().get_logger(logger_name="northwell_edu")
 start_url = "https://www.northwell.edu/api/locations/108781?browse_all=true"
 
 
-def get_headers_for(url: str) -> dict:
-    with SgChrome(executable_path=ChromeDriverManager().install()) as chrome:
-        headers = SgSelenium.get_default_headers_for(chrome, url)
-    return headers  # type: ignore
+hdr = {
+    "Host": "www.northwell.edu",
+    "Connection": "keep-alive",
+    "Upgrade-Insecure-Requests": "1",
+    "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.121 Safari/537.36",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+    "Sec-Fetch-Site": "none",
+    "Sec-Fetch-Mode": "navigate",
+    "Sec-Fetch-User": "?1",
+    "Sec-Fetch-Dest": "document",
+    "Accept-Encoding": "gzip, deflate, br",
+    "Accept-Language": "en-US",
+}
 
 
 def get_api_urls():
@@ -143,6 +148,4 @@ def scrape():
 
 
 if __name__ == "__main__":
-    hdr = get_headers_for(start_url)
-    logger.info(f"Headers: {hdr}")
     scrape()
