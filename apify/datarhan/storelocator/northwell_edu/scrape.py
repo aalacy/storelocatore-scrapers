@@ -64,13 +64,15 @@ def fetch_data():
                 latitude = ""
                 longitude = ""
         store_response = session.get(store_url, headers=hdr)
-        store_dom = etree.HTML(store_response.text)
-        hours_of_operation = store_dom.xpath(
-            '//div[contains(@class, "card__hours")]/table//text()'
-        )
-        hours_of_operation = " ".join(
-            [elem.strip() for elem in hours_of_operation if elem.strip()][2:]
-        )
+        hours_of_operation = ""
+        if store_response.status_code == 200:
+            store_dom = etree.HTML(store_response.text)
+            hours_of_operation = store_dom.xpath(
+                '//div[contains(@class, "card__hours")]/table//text()'
+            )
+            hours_of_operation = " ".join(
+                [elem.strip() for elem in hours_of_operation if elem.strip()][2:]
+            )
 
         item = SgRecord(
             locator_domain=domain,

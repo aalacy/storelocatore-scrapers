@@ -97,20 +97,26 @@ def fetch_data(sgw: SgWriter):
         source = "".join(d.xpath(".//div[@class='hrs_status']/@data-hours")) or "{}"
         hours = json5.loads(source)
 
-        if isinstance(hours, dict):
-            for index, v in hours.items():
-                day = days[int(index)]
-                start = v.get("open")
-                end = v.get("close")
-                _tmp.append(f"{day}: {start}-{end}")
-        else:
-            index = 0
-            for v in hours:
-                day = days[index]
-                start = v.get("open")
-                end = v.get("close")
-                _tmp.append(f"{day}: {start}-{end}")
-                index += 1
+        i = 0
+        for day in days:
+            if isinstance(hours, dict):
+                v = hours.get(str(i))
+                if not v:
+                    _tmp.append(f"{day}: Closed")
+                    i += 1
+                    continue
+            else:
+                try:
+                    v = hours[i]
+                except IndexError:
+                    _tmp.append(f"{day}: Closed")
+                    i += 1
+                    continue
+
+            start = v.get("open")
+            end = v.get("close")
+            _tmp.append(f"{day}: {start}-{end}")
+            i += 1
 
         hours_of_operation = ";".join(_tmp)
 
