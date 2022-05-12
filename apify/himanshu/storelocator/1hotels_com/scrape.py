@@ -24,16 +24,20 @@ MISSING = SgRecord.MISSING
 
 def fetch_data():
     start_url = "https://www.1hotels.com/about-us/contact-us"
-    domain = re.findall(r"://(.+?)/", start_url)[0].replace("www.", "")
+    domain = "https://www.1hotels.com"
     response = session.get(start_url, headers=headers)
-    dom = etree.HTML(response.text)
-    all_locations = dom.xpath("//header/a/@href")
-    for url in all_locations:
-        if domain not in url:
+    base = BeautifulSoup(response.text, "lxml")
+    all_locations = base.find_all(class_="accordion-link")
+    for i in all_locations:
+        url = i.a["href"].replace("/contact-us", "").replace("/more", "")
+        if "http" not in url:
+            page_url = domain + url
+        else:
+            page_url = url
+        if "sprouting-soon" in url:
             continue
-        page_url = url.replace("/contact-us", "")
-        loc_response = session.get(page_url)
         log.info(page_url)
+        loc_response = session.get(page_url)
         loc_dom = etree.HTML(loc_response.text)
         poi = loc_dom.xpath('//script[contains(text(), "PostalAddress")]/text()')
         if poi:
@@ -90,7 +94,9 @@ def fetch_data():
                 .find("p")
                 .text
             )
-            phone = loc_response.text.split('<a href="tel:')[1].split('"')[0]
+            phone = (
+                loc_dom.find(string="Hotel: ").find_previous("a")["href"].split(":")[1]
+            )
             if "Planning an upcoming trip" in raw_address:
                 raw_address = (
                     loc_dom.find("p", {"class": "directions__address"})
@@ -115,6 +121,8 @@ def fetch_data():
 
             country_code = pa.country
             country_code = country_code.strip() if country_code else MISSING
+            if "San Lucas" in street_address:
+                country_code = "Mexico"
 
             store_number = MISSING
 
