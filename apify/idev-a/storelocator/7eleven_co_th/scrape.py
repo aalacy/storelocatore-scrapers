@@ -7,7 +7,6 @@ import random
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from tenacity import retry, wait_random, stop_after_attempt
-from sgrequests import ProxySettings
 
 logger = SgLogSetup().get_logger("7eleven")
 
@@ -95,7 +94,6 @@ def get_locs(data):
     with SgRequests(
         proxy_country="th",
         retries_with_fresh_proxy_ip=10,
-        proxy_escalation_order=ProxySettings.TEST_PROXY_ESCALATION_ORDER,
     ) as session:
         locations = session.post(
             base_url,
