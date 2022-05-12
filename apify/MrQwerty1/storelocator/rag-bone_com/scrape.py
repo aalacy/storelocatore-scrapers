@@ -43,10 +43,10 @@ def fetch_data(sgw: SgWriter):
             latitude, longitude = SgRecord.MISSING, SgRecord.MISSING
 
         hours = d.xpath(
-            ".//div[@class='sl__store-details-hours sl__store-details-txt']/text()"
+            ".//div[@class='sl__store-details-hours sl__store-details-txt']/text()|.//div[text()='Store Hours']/following-sibling::p[1]/text()"
         )
         hours = list(filter(None, [h.strip() for h in hours]))
-        hours_of_operation = ";".join(hours)
+        hours_of_operation = ";".join(hours) or "Closed"
 
         row = SgRecord(
             page_url=page_url,

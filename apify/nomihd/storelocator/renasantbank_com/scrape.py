@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from sgrequests import SgRequests
+from sgrequests import SgRequests, SgRequestError
 from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
@@ -33,6 +33,7 @@ def fetch_data():
                 country_codes=[SearchableCountries.USA],
                 expected_search_radius_miles=100,
                 max_search_results=50,
+                use_state=False,
                 granularity=Grain_8(),
             )
             for lat, lng in search:
@@ -40,6 +41,8 @@ def fetch_data():
                 stores_req = session.get(
                     search_url.format(zip_code, lat, lng), headers=headers
                 )
+                if isinstance(stores_req, SgRequestError):
+                    continue
                 stores = json.loads(stores_req.text)["LocationItemList"]
                 if stores is not None:
                     for store in stores:
@@ -87,12 +90,18 @@ def fetch_data():
                             if (
                                 "far fa-clock"
                                 == "".join(
-                                    sec.xpath('div[@class="info-icon"]/i/@class')
+                                    sec.xpath('div[@class="info-icon"]/*/@class')
                                 ).strip()
                             ):
-                                hours_of_operation = "; ".join(
-                                    sec.xpath('div[@class="info-info"]/p/text()')
-                                ).strip()
+                                hours_of_operation = (
+                                    "; ".join(
+                                        sec.xpath('div[@class="info-info"]/p/text()')
+                                    )
+                                    .strip()
+                                    .replace("\n", "")
+                                    .strip()
+                                )
+                                break
 
                         latitude = store["Latitude"]
                         longitude = store["Longitude"]

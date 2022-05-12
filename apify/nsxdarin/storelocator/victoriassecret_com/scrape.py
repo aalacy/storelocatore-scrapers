@@ -18,7 +18,6 @@ def fetch_data():
     urls = [
         "https://api.victoriassecret.com/stores/v1/search?countryCode=CA",
         "https://api.victoriassecret.com/stores/v1/search?countryCode=US",
-        "https://api.victoriassecret.com/stores/v1/search?countryCode=GB",
     ]
     for url in urls:
         logger.info(url)
@@ -75,6 +74,8 @@ def fetch_data():
                 phone = "<MISSING>"
             if phone == "":
                 phone = "<MISSING>"
+            if add == "@":
+                add = "<MISSING>"
             yield SgRecord(
                 locator_domain=website,
                 page_url=purl,
@@ -96,7 +97,6 @@ def fetch_data():
     r = session.get(url, headers=headers)
     typ = "<MISSING>"
     for line in r.iter_lines():
-        line = str(line.decode("utf-8"))
         if '"storeId\\":' in line:
             items = line.split('"storeId\\":')
             for item in items:
@@ -108,11 +108,12 @@ def fetch_data():
                     add = item.split('"streetAddress1\\":\\"')[1].split('\\"')[0]
                     city = item.split('"city\\":\\"')[1].split('\\"')[0]
                     zc = item.split('"postalCode\\":\\"')[1].split('\\"')[0]
-                    lat = item.split('"latitudeDegrees\\":')[1].split(",")[0]
-                    lng = item.split('"longitudeDegrees\\":')[1].split(",")[0]
+                    lng = item.split('"latitudeDegrees\\":')[1].split(",")[0]
+                    lat = item.split('"longitudeDegrees\\":')[1].split(",")[0]
                     hours = "<MISSING>"
                     state = "<MISSING>"
                     country = item.split('countryCode\\":\\"')[1].split('\\"')[0]
+                    store = store + "-" + country
                     try:
                         phone = item.split('"phone\\":\\"')[1].split('\\"')[0]
                     except:
@@ -121,23 +122,22 @@ def fetch_data():
                         add = name
                     if zc == "":
                         zc = "<MISSING>"
-                    if country != "GBR":
-                        yield SgRecord(
-                            locator_domain=website,
-                            page_url=purl,
-                            location_name=name,
-                            street_address=add,
-                            city=city,
-                            state=state,
-                            zip_postal=zc,
-                            country_code=country,
-                            phone=phone,
-                            location_type=typ,
-                            store_number=store,
-                            latitude=lat,
-                            longitude=lng,
-                            hours_of_operation=hours,
-                        )
+                    yield SgRecord(
+                        locator_domain=website,
+                        page_url=purl,
+                        location_name=name,
+                        street_address=add,
+                        city=city,
+                        state=state,
+                        zip_postal=zc,
+                        country_code=country,
+                        phone=phone,
+                        location_type=typ,
+                        store_number=store,
+                        latitude=lat,
+                        longitude=lng,
+                        hours_of_operation=hours,
+                    )
 
 
 def scrape():

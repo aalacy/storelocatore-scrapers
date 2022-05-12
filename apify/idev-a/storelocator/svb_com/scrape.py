@@ -19,18 +19,23 @@ locator_domain = "https://www.svb.com"
 base_url = "https://www.svb.com/locations"
 
 
-def _d(_, country):
+def _d(_, country, url):
     _title = _.select_one("div.collapsible-boxes__item-title")
-    location_type = ""
-    if _title.get("data-branch") == "True":
-        location_type = "branch"
     _addr = list(_.p.stripped_strings)
-    raw_address = " ".join(_addr)
+    raw_address = " ".join(_addr).split("Get")[0]
     addr = parse_address_intl(raw_address + ", " + country)
     street_address = addr.street_address_1
     if addr.street_address_2:
         street_address += " " + addr.street_address_2
 
+    city = addr.city
+    state = addr.state
+    if country == "US":
+        _addr = parse_address_intl(_title.text.strip())
+        if _addr.city:
+            city = _addr.city
+        if _addr.state:
+            state = _addr.state
     phone = ""
     if _.find("a", href=re.compile(r"tel:")):
         phone = _.find("a", href=re.compile(r"tel:")).text.strip()
@@ -38,25 +43,42 @@ def _d(_, country):
         coord = json.loads(_title["data-map-coord"])
     except:
         coord = {"latitude": "", "longitude": ""}
-    hours = ""
+    hours = []
     _hr = _.find("li", string=re.compile(r"Branch hours are"))
     if _hr:
-        hours = _hr.text.split("Branch hours are")[-1].split("(")[0].strip()
+        hours = [_hr.text.split("Branch hours are")[-1].split("(")[0].strip()]
+    elif _.table:
+        for hh in _.table.select("table tr"):
+            if "Days" in hh.text or "Hours" in hh.text:
+                continue
+            hours.append(": ".join(hh.stripped_strings).split("(")[0].strip())
+    location_type = []
+    if _.caption:
+        caption = _.caption.text.lower().strip()
+        if "office" in caption:
+            location_type.append("office")
+        if "atm" in caption:
+            location_type.append("atm")
+    if "Corporate office only" in _.text:
+        location_type = ["corporate office"]
+    if _.find("span", {"class": re.compile(r"fa-university")}):
+        location_type = ["branch"]
+
     return SgRecord(
-        page_url=base_url,
+        page_url=f"{url}&office_id={_title['data-id']}",
         store_number=_title["data-id"],
         location_name=_title.text.strip(),
         street_address=street_address,
-        city=addr.city,
-        state=addr.state,
+        city=city,
+        state=state,
         zip_postal=addr.postcode,
         country_code=country,
+        location_type=", ".join(location_type),
         phone=phone,
         latitude=coord["latitude"],
         longitude=coord["longitude"],
-        location_type=location_type,
         locator_domain=locator_domain,
-        hours_of_operation=hours,
+        hours_of_operation="; ".join(hours),
         raw_address=raw_address,
     )
 
@@ -73,7 +95,7 @@ def fetch_data():
                 "ul.collapsible-boxes > li"
             )
             for _ in locations:
-                yield _d(_, "US")
+                yield _d(_, "US", url)
 
         for option in soup.select("select#ddlCountries option"):
             if not option.get("value"):
@@ -84,7 +106,7 @@ def fetch_data():
                 "ul.collapsible-boxes > li"
             )
             for _ in locations:
-                yield _d(_, option.get("value"))
+                yield _d(_, option.get("value"), url)
 
 
 if __name__ == "__main__":
@@ -102,4 +124,5 @@ if __name__ == "__main__":
     ) as writer:
         results = fetch_data()
         for rec in results:
-            writer.write_row(rec)
+            if rec:
+                writer.write_row(rec)

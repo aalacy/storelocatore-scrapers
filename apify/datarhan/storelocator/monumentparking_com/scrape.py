@@ -28,8 +28,14 @@ def fetch_data():
     )
     for code in all_codes:
         with SgChrome() as driver:
-            driver.get(start_url)
-            driver.find_element_by_id("address").clear()
+            try:
+                driver.get(start_url)
+            except Exception:
+                continue
+            try:
+                driver.find_element_by_id("address").clear()
+            except Exception:
+                continue
             driver.find_element_by_id("address").send_keys(code)
             sleep(1)
             driver.find_element_by_xpath('//input[@value="Search"]').click()

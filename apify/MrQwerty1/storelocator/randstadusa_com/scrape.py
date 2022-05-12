@@ -1,139 +1,107 @@
-import csv
-
-from concurrent import futures
-from lxml import html
+from typing import Optional
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
+def get_value(data: Optional[list] = None):
+    if data:
+        return data.pop()
+    return ""
+
+
+def clean_phone(text: str):
+    black_list = [",", "e", "o", "x", "&"]
+    for b in black_list:
+        if b in text:
+            return text.split(b)[0].strip()
+    return text
+
+
+def fetch_data(sgw: SgWriter):
+    data = '{"callback":"@Callbacks/getOverviewResults","currentRoute":{"path":"/locations/:searchParams*","url":"/locations/gv-map/","isExact":true,"params":{"searchParams":"gv-map/"},"routeName":"locations"},"data":{"language":"en"}}'
+    api = "https://www.randstadusa.com/api/branches/get-callback"
+    r = session.post(api, headers=headers, data=data)
+    js = r.json()["searchResults"]["hits"]["hits"]
+
+    for j in js:
+        j = j.get("_source") or {}
+        location_name = get_value(j.get("title"))
+        slug = get_value(j.get("url"))
+        page_url = f"https://www.randstadusa.com{slug}"
+        adr1 = get_value(j.get("address_line1"))
+        adr2 = get_value(j.get("address_line2"))
+        street_address = f"{adr1} {adr2}".strip()
+        city = get_value(j.get("city"))
+        state = get_value(j.get("state"))
+        postal = get_value(j.get("postal_code"))
+        country = "US"
+
+        phone = clean_phone(get_value(j.get("field_phone")))
+        latitude = get_value(j.get("lat"))
+        longitude = get_value(j.get("lng"))
+        store_number = get_value(j.get("field_office_id"))
+
+        _tmp = []
+        starts = j.get("starthours") or []
+        ends = j.get("endhours") or []
+        days = j.get("day") or []
+        _days = [
+            "Monday",
+            "Tuesday",
+            "Wednesday",
+            "Thursday",
+            "Friday",
+            "Saturday",
+            "Sunday",
+        ]
+        cnt = 0
+        for day in _days:
+            try:
+                s = starts[cnt]
+                e = ends[cnt]
+                s = str(s).zfill(4)
+                e = str(e).zfill(4)
+                start = f"{s[:2]}:{s[2:]}"
+                end = f"{e[:2]}:{e[2:]}"
+                inter = f"{start}-{end}"
+            except IndexError:
+                inter = "Closed"
+            _tmp.append(f"{day}: {inter}")
+            cnt += 1
+
+        hours_of_operation = ";".join(_tmp)
+        if not days:
+            hours_of_operation = SgRecord.MISSING
+
+        row = SgRecord(
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country,
+            store_number=store_number,
+            phone=phone,
+            latitude=latitude,
+            longitude=longitude,
+            locator_domain=locator_domain,
+            hours_of_operation=hours_of_operation,
         )
 
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def get_urls():
-    session = SgRequests()
-    r = session.get("https://www.randstadusa.com/locations/")
-    tree = html.fromstring(r.text)
-
-    return tree.xpath(
-        "//div[@class='title card-title']/a[contains(@href, '/locations/')]/@href"
-    )
-
-
-def get_data(url):
-    locator_domain = "https://www.randstadusa.com/"
-    page_url = f"https://www.randstadusa.com{url}"
-
-    session = SgRequests()
-    r = session.get(page_url)
-    tree = html.fromstring(r.text)
-
-    location_name = "".join(
-        tree.xpath("//div[@class='title card-title']/h2/text()")
-    ).strip()
-    line = tree.xpath("//div[@class='branch-info']//div[@class='address']/text()")
-    line = list(filter(None, [l.strip() for l in line]))
-    street_address = ", ".join(line[:-1]).replace("Remote Location", "") or "<MISSING>"
-    line = line[-1]
-    city = line.split(",")[0].strip()
-    line = line.split(",")[1].strip()
-    postal = line.split()[-1]
-    state = line.replace(postal, "").strip()
-    if not postal.isdigit():
-        postal = "<MISSING>"
-        state = line
-
-    country_code = "US"
-    store_number = page_url.split("_")[-1].replace("/", "")
-    try:
-        phone = tree.xpath("//div[@class='phone']//text()")[0].strip()
-    except IndexError:
-        phone = "<MISSING>"
-
-    try:
-        script = "".join(
-            tree.xpath("//script[contains(text(), 'var jsonData')]/text()")
-        )
-        longitude, latitude = eval(
-            script.split("jsonData ")[-1].split('"coordinates":')[1].split("},")[0]
-        )
-    except:
-        latitude, longitude = "<MISSING>", "<MISSING>"
-    location_type = "<MISSING>"
-
-    _tmp = []
-    hours = tree.xpath("//div[@id='collapse_hours']/div[@class='hours']")
-    for h in hours:
-        _tmp.append(" ".join(h.xpath(".//text()")))
-
-    hours_of_operation = ";".join(_tmp) or "<MISSING>"
-
-    row = [
-        locator_domain,
-        page_url,
-        location_name,
-        street_address,
-        city,
-        state,
-        postal,
-        country_code,
-        store_number,
-        phone,
-        location_type,
-        latitude,
-        longitude,
-        hours_of_operation,
-    ]
-
-    return row
-
-
-def fetch_data():
-    out = []
-    s = set()
-    urls = get_urls()
-
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {executor.submit(get_data, url): url for url in urls}
-        for future in futures.as_completed(future_to_url):
-            row = future.result()
-            if row:
-                check = tuple(row[2:7])
-                if check not in s:
-                    s.add(check)
-                    out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://www.randstadusa.com/"
+
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:96.0) Gecko/20100101 Firefox/96.0",
+        "Content-Type": "application/json;charset=utf-8",
+    }
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        fetch_data(writer)

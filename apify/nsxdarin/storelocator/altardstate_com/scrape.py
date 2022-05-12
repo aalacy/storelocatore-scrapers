@@ -33,19 +33,22 @@ def fetch_data():
         zc = item["postalCode"]
         phone = item["phone"]
         hours = str(item["storeHours"])
-        hours = (
-            hours.split("<td>", 1)[1]
-            .replace("\n", "")
-            .replace("\r", "")
-            .replace("\t", "")
-        )
-        hours = hours.replace("</td>    </tr>    <tr>        <td>", "; ")
-        hours = (
-            hours.replace("</td><td>", ": ")
-            .replace("</td></tr><tr><td>", "; ")
-            .replace("</td>    </tr></table>", "")
-            .replace("</td></tr></tbody></table>", "")
-        )
+        try:
+            hours = (
+                hours.split("<td>", 1)[1]
+                .replace("\n", "")
+                .replace("\r", "")
+                .replace("\t", "")
+            )
+            hours = hours.replace("</td>    </tr>    <tr>        <td>", "; ")
+            hours = (
+                hours.replace("</td><td>", ": ")
+                .replace("</td></tr><tr><td>", "; ")
+                .replace("</td>    </tr></table>", "")
+                .replace("</td></tr></tbody></table>", "")
+            )
+        except:
+            hours = "<MISSING>"
         yield SgRecord(
             locator_domain=website,
             page_url=loc,
