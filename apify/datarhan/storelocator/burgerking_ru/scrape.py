@@ -1,66 +1,45 @@
-from w3lib.url import add_or_replace_parameter
+import json
+from lxml import etree
 
-from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
+from sgselenium.sgselenium import SgFirefox
 from sgpostal.sgpostal import parse_address_intl
 
 
 def fetch_data():
-    session = SgRequests()
-
-    start_url = "https://burgerking.ru/middleware/restaurants/search?latitude=55.751326&longitude=37.616425&limit=10&offset=0"
+    start_url = "https://burgerkingrus.ru/api-web-front/middleware/restaurants/search"
     domain = "burgerking.ru"
 
-    all_locations = []
-    data = session.get(start_url).json()
-    total = data["total"]
-    all_locations += data["items"]
-    for i in range(9, total + 10, 9):
-        data = session.get(add_or_replace_parameter(start_url, "offset", str(i))).json()
-        if not data.get("items"):
-            continue
-        all_locations += data["items"]
+    with SgFirefox() as driver:
+        driver.get(start_url)
+        dom = etree.HTML(driver.page_source)
+    data = json.loads(dom.xpath('//div[@id="json"]/text()')[0])
 
-    for poi in all_locations:
-        addr = parse_address_intl(poi["address"])
+    for poi in data["items"]:
+        addr = parse_address_intl(poi["name"])
         street_address = addr.street_address_1
         if addr.street_address_2:
             street_address += " " + addr.street_address_2
-        hoo = []
-        days = [
-            "Понедельник",
-            "Вторник",
-            "Среда",
-            "Четверг",
-            "Пятница",
-            "Суббота",
-            "Воскресенье",
-        ]
-        for i, e in enumerate(poi["timetable"]["hall"]):
-            opens = e["timeFrom"]
-            closes = e["timeTill"]
-            hoo.append(f"{days[i]} {opens} {closes}")
-        hours_of_operation = " ".join(hoo)
 
         item = SgRecord(
             locator_domain=domain,
-            page_url="https://burgerking.ru/restaurants",
+            page_url="https://burgerkingrus.ru/restaurants",
             location_name=poi["name"],
             street_address=street_address,
             city=addr.city,
-            state=addr.state,
+            state="",
             zip_postal="",
-            country_code=SgRecord.MISSING,
+            country_code="",
             store_number=poi["id"],
             phone=poi["phone"],
-            location_type=SgRecord.MISSING,
+            location_type="",
             latitude=poi["latitude"],
             longitude=poi["longitude"],
-            hours_of_operation=hours_of_operation,
-            raw_address=poi["address"],
+            hours_of_operation="",
+            raw_address=poi["name"],
         )
 
         yield item

@@ -49,16 +49,6 @@ def get_data(zips, sgw: SgWriter):
         )
         info = d.xpath("./div/text()")
         info = list(filter(None, [a.strip() for a in info]))
-
-        street_address = "".join(info[2]).strip()
-        ad = "".join(info[3]).strip()
-        city = " ".join(ad.split()[1:]).strip()
-        postal = ad.split()[0].strip()
-        country_code = "DE"
-        phone = "<MISSING>"
-        for i in info:
-            if "Telefon" in i:
-                phone = str(i).replace("Telefon:", "").strip()
         text = "".join(d.xpath('.//a[contains(@href, "maps")]/@href'))
         try:
             if text.find("ll=") != -1:
@@ -69,6 +59,22 @@ def get_data(zips, sgw: SgWriter):
                 longitude = text.split("@")[1].split(",")[1]
         except IndexError:
             latitude, longitude = "<MISSING>", "<MISSING>"
+        street_address = "".join(info[2]).strip()
+        if latitude == "51.8495106":
+            street_address = "".join(info[1]).strip()
+        ad = "".join(info[3]).strip()
+        if latitude == "51.8495106":
+            ad = "".join(info[2]).strip()
+        city = " ".join(ad.split()[1:]).strip()
+        if city.find("/") != -1:
+            city = city.split("/")[0].strip()
+        postal = ad.split()[0].strip()
+        country_code = "DE"
+        phone = "<MISSING>"
+        for i in info:
+            if "Telefon" in i:
+                phone = str(i).replace("Telefon:", "").strip()
+
         hours_of_operation = "".join(info[-1]).strip()
 
         row = SgRecord(
