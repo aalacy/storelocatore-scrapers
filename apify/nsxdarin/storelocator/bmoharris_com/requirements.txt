@@ -1,2 +1,4 @@
-sgrequests
-sglogging
+sgrequests==0.3.7
+sglogging==0.0.4
+sgscrape==0.2.9
+sgzip==0.11.0
