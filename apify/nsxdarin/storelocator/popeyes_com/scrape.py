@@ -140,6 +140,8 @@ def fetch_data():
                         store = store.split("&")[0]
                     if "?" in store:
                         store = store.split("?")[0]
+                    if len(phone) <= 5:
+                        phone = "<MISSING>"
                     yield SgRecord(
                         locator_domain=website,
                         page_url=loc,
@@ -276,6 +278,8 @@ def fetch_data():
                         store = store.split("&")[0]
                     if "?" in store:
                         store = store.split("?")[0]
+                    if len(phone) <= 5:
+                        phone = "<MISSING>"
                     yield SgRecord(
                         locator_domain=website,
                         page_url=loc,
@@ -421,6 +425,8 @@ def fetch_data():
                                 store = store.split("&")[0]
                             if "?" in store:
                                 store = store.split("?")[0]
+                            if len(phone) <= 5:
+                                phone = "<MISSING>"
                             yield SgRecord(
                                 locator_domain=website,
                                 page_url=loc,

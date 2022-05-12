@@ -38,13 +38,14 @@ def fetch_data():
             zip_code = raw_address.split()[-1].replace(".", "")
         if zip_code:
             zip_code = zip_code.split("-")[-1]
+        city = addr.city if addr.city else location_name
 
         item = SgRecord(
             locator_domain=domain,
             page_url=start_url,
             location_name=location_name,
             street_address=street_address,
-            city=addr.city,
+            city=city,
             state=addr.state,
             zip_postal=zip_code,
             country_code="IN",
