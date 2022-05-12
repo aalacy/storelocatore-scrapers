@@ -14,6 +14,9 @@ from tenacity import retry, wait_random, stop_after_attempt
 import random
 from webdriver_manager.chrome import ChromeDriverManager
 import os
+import ssl
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 os.environ[
     "PROXY_URL"
