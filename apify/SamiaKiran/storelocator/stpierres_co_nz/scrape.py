@@ -31,70 +31,75 @@ def fetch_data():
         url = "https://stpierres.co.nz/stores"
         r = session.get(url, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
-        loclist = soup.findAll("article", {"class": "store"})
-        for loc in loclist:
-            location_name = strip_accents(
-                loc.find("h5", {"class": "store-name"})
-                .get_text(separator="|", strip=True)
-                .replace("|", "")
-            )
-            log.info(location_name)
-            phone = soup.select_one("a[href*=tel]").text
-            raw_address = strip_accents(
-                loc.find("p", {"class": "store-address"})
-                .get_text(separator="|", strip=True)
-                .replace("|", " ")
-            )
-            # Parse the address
-            pa = parse_address_intl(raw_address)
-
-            street_address = pa.street_address_1
-            street_address = street_address if street_address else MISSING
-
-            city = pa.city
-            city = city.strip() if city else MISSING
-
-            state = pa.state
-            state = state.strip() if state else MISSING
-
-            zip_postal = pa.postcode
-            zip_postal = zip_postal.strip() if zip_postal else MISSING
-            try:
-                hours_of_operation = (
-                    loc.find("div", {"class": "store-hours"})
+        city_list = soup.find("select", {"id": "region-select"}).findAll("option")
+        for city_url in city_list:
+            city = city_url.text
+            city_url = "https://stpierres.co.nz/stores?region=" + city_url["value"]
+            r = session.get(city_url, headers=headers)
+            soup = BeautifulSoup(r.text, "html.parser")
+            loclist = soup.findAll("article", {"class": "store"})
+            for loc in loclist:
+                location_name = strip_accents(
+                    loc.find("h5", {"class": "store-name"})
+                    .get_text(separator="|", strip=True)
+                    .replace("|", "")
+                    .replace("\n", " ")
+                )
+                log.info(location_name)
+                phone = loc.select_one("a[href*=tel]").text
+                raw_address = strip_accents(
+                    loc.find("p", {"class": "store-address"})
                     .get_text(separator="|", strip=True)
                     .replace("|", " ")
-                    .split("Normal Hours")[1]
+                ).replace("\n", " ")
+
+                pa = parse_address_intl(raw_address)
+
+                street_address = pa.street_address_1
+                street_address = street_address if street_address else MISSING
+
+                state = pa.state
+                state = state.strip() if state else MISSING
+
+                zip_postal = pa.postcode
+                zip_postal = zip_postal.strip() if zip_postal else MISSING
+                try:
+                    hours_of_operation = (
+                        loc.find("div", {"class": "store-hours"})
+                        .get_text(separator="|", strip=True)
+                        .replace("|", " ")
+                        .split("Normal Hours")[1]
+                    )
+                except:
+                    hours_of_operation = (
+                        loc.find("div", {"class": "store-hours"})
+                        .get_text(separator="|", strip=True)
+                        .replace("|", " ")
+                    )
+                if "(Hours" in hours_of_operation:
+                    hours_of_operation = hours_of_operation.split("(Hours")[0]
+                hours_of_operation = "Mon" + hours_of_operation.split("Mon")[1]
+                latitude = loc["data-lat"]
+                longitude = loc["data-lng"]
+                store_number = loc["data-store-id"]
+                country_code = "NZ"
+                yield SgRecord(
+                    locator_domain=DOMAIN,
+                    page_url=url,
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=zip_postal,
+                    country_code=country_code,
+                    store_number=store_number,
+                    phone=phone,
+                    location_type=MISSING,
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=hours_of_operation,
+                    raw_address=raw_address,
                 )
-            except:
-                hours_of_operation = (
-                    loc.find("div", {"class": "store-hours"})
-                    .get_text(separator="|", strip=True)
-                    .replace("|", " ")
-                )
-            if "(Hours" in hours_of_operation:
-                hours_of_operation = hours_of_operation.split("(Hours")[0]
-            latitude = loc["data-lat"]
-            longitude = loc["data-lng"]
-            store_number = loc["data-store-id"]
-            country_code = "NZ"
-            yield SgRecord(
-                locator_domain=DOMAIN,
-                page_url=url,
-                location_name=location_name,
-                street_address=street_address,
-                city=city,
-                state=state,
-                zip_postal=zip_postal,
-                country_code=country_code,
-                store_number=store_number,
-                phone=phone,
-                location_type=MISSING,
-                latitude=latitude,
-                longitude=longitude,
-                hours_of_operation=hours_of_operation,
-                raw_address=raw_address,
-            )
 
 
 def scrape():

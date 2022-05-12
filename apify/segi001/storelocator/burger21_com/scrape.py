@@ -1,123 +1,112 @@
-import req
-import bs4
-import csv
+import usaddress
+from sglogging import sglog
+from bs4 import BeautifulSoup
+from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
+session = SgRequests()
+website = "burger21_com"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36"
+}
 
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
+DOMAIN = "https://www.burger21.com"
+MISSING = SgRecord.MISSING
 
 
 def fetch_data():
-    # Your scraper here
-    locator_domain = "https://www.burger21.com/"
-    missingString = "<MISSING>"
+    if True:
+        url = "https://www.burger21.com/locations/"
+        r = session.get(url, headers=headers)
+        soup = BeautifulSoup(r.text, "html.parser")
+        loclist = soup.findAll("div", {"class": "location-item"})
+        for loc in loclist:
+            page_url = loc.find("a")["href"]
+            log.info(page_url)
+            r = session.get(page_url, headers=headers)
+            soup = BeautifulSoup(r.text, "html.parser")
+            location_name = soup.find("h1").text
+            address = soup.find("h2").get_text(separator="|", strip=True).split("|")
+            phone = address[-1].replace("P:", "")
+            if "P:" not in address[-1]:
+                phone = MISSING
+            raw_address = " ".join(address[:-1])
+            address = raw_address.replace(",", " ")
+            address = usaddress.parse(address)
+            i = 0
+            street_address = ""
+            city = ""
+            state = ""
+            zip_postal = ""
+            while i < len(address):
+                temp = address[i]
+                if (
+                    temp[1].find("Address") != -1
+                    or temp[1].find("Street") != -1
+                    or temp[1].find("Recipient") != -1
+                    or temp[1].find("Occupancy") != -1
+                    or temp[1].find("BuildingName") != -1
+                    or temp[1].find("USPSBoxType") != -1
+                    or temp[1].find("USPSBoxID") != -1
+                ):
+                    street_address = street_address + " " + temp[0]
+                if temp[1].find("PlaceName") != -1:
+                    city = city + " " + temp[0]
+                if temp[1].find("StateName") != -1:
+                    state = state + " " + temp[0]
+                if temp[1].find("ZipCode") != -1:
+                    zip_postal = zip_postal + " " + temp[0]
+                i += 1
 
-    def sendreq(l):
-        return req.Req().get(l)
-
-    def initSoup(l):
-        return bs4.BeautifulSoup(sendreq(l).text, features="lxml")
-
-    def allStores():
-        b = initSoup("https://www.burger21.com/locations/")
-        r = []
-        for e in b.findAll("div", {"class": "location-item"}):
-            a = e.find("h2").find("a")["href"]
-            r.append(a)
-        return r
-
-    s = allStores()
-    result = []
-
-    for ss in s:
-        b = initSoup(ss)
-        g = b.find("div", {"class": "location-slide-wrap"})
-        name = g.find("h1").text.strip()
-        link = ss
-        addr = g.find("h2").get_text(separator="\n").split("\n")
-        street = addr[0]
-        city = addr[1].split(",")[0].strip()
-        state = addr[1].split(",")[1].strip().split(" ")[0]
-        if len(addr) == 3:
-            if len(addr[1].split(",")[1].strip().split(" ")) == 2:
-                zp = addr[1].split(",")[1].strip().split(" ")[1]
-            else:
-                zp = missingString
-        elif len(addr) == 2:
-            zp = missingString
-        phone = addr[-1].strip().replace("P:", "").strip()
-        if "Tampa,  FL 33607" in phone:
-            phone = missingString
-            zp = "33607"
-        if "Tampa International Airport,  Tampa" in phone:
-            phone = missingString
-        timeArr = list(
-            filter(
-                None,
-                g.find("div", {"class": "store-hours"})
-                .text.strip()
-                .replace(
-                    "Our patios + dining rooms are open, complying with all state and local regulations.",
-                    "",
-                )
-                .replace("INDOOR DINING AREA IS OPEN", "")
-                .replace("CURRENT HOURS:", "")
-                .replace("oo", "00")
-                .replace("We’re Open:", "")
-                .split("\n"),
+            country_code = "US"
+            hours_of_operation = (
+                soup.find("div", {"class": "store-hours"})
+                .get_text(separator="|", strip=True)
+                .replace("|", " ")
+                .replace("Weâ€™re Open:", "")
+                .replace("INDOOR DINING & PATIO ARE OPEN CURRENT HOURS:", "")
             )
-        )
-        hours = ", ".join(timeArr).replace(u"\xa0", u" ")
-        result.append(
-            [
-                locator_domain,
-                link,
-                name,
-                street,
-                city,
-                state,
-                zp,
-                missingString,
-                missingString,
-                phone,
-                missingString,
-                missingString,
-                missingString,
-                hours,
-            ]
-        )
-    return result
+            if "Thanksgiving" in hours_of_operation:
+                hours_of_operation = hours_of_operation.split("Thanksgiving")[0]
+            elif "Holiday Hours: " in hours_of_operation:
+                hours_of_operation = hours_of_operation.split("Holiday Hours: ")[0]
+            yield SgRecord(
+                locator_domain=DOMAIN,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_postal,
+                country_code=country_code,
+                store_number=MISSING,
+                phone=phone,
+                location_type=MISSING,
+                latitude=MISSING,
+                longitude=MISSING,
+                hours_of_operation=hours_of_operation,
+                raw_address=raw_address,
+            )
 
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    log.info("Started")
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
+
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
 
 
 if __name__ == "__main__":
