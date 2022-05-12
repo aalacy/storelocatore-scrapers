@@ -4,7 +4,7 @@ from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgpostal import parse_address_usa
 import re
 
@@ -83,35 +83,61 @@ def fetch_data():
             longitude = MISSING
         else:
             if "las-vegas" in page_url:
-                addr = (
-                    info.select_one(
-                        "div.vc_column-inner.vc_custom_1512389166631 div.wpb_text_column.wpb_content_element"
-                    )
-                    .get_text(strip=True, separator="@@")
-                    .split("@@")
+                stores = info.select(
+                    "div.vc_column-inner.vc_custom_1512389166631 div.wpb_text_column.wpb_content_element"
                 )
-                location_name = addr[0]
-                raw_address = ",".join(addr[1:-2])
-                phone = addr[-2]
-                try:
-                    hours_of_operation = (
-                        info.find(
-                            "div",
-                            {
-                                "class": "wpb_text_column wpb_content_element vc_custom_1585601459333"
-                            },
+                for i in range(len(stores)):
+                    if i % 2 == 0:
+                        addr = (
+                            stores[i].get_text(strip=True, separator="@@").split("@@")
                         )
-                        .find("p")
-                        .text.strip()
-                        .replace("HOURS", "")
-                    )
-                    map_link = info.find("iframe")["src"]
-                    latitude, longitude = get_latlong(map_link)
-                except:
-                    hours_of_operation = MISSING
-                    latitude = MISSING
-                    longitude = MISSING
-                location_type = MISSING
+                        location_name = addr[0].replace("(Now Open!)", "")
+                        raw_address = ",".join(addr[1:-2])
+                        phone = addr[-2]
+                        try:
+                            hours_of_operation = (
+                                info.find(
+                                    "div",
+                                    {
+                                        "class": "wpb_text_column wpb_content_element vc_custom_1585601459333"
+                                    },
+                                )
+                                .find("p")
+                                .text.strip()
+                                .replace("HOURS", "")
+                            )
+                            map_link = info.find("iframe")["src"]
+                            latitude, longitude = get_latlong(map_link)
+                        except:
+                            hours_of_operation = MISSING
+                            latitude = MISSING
+                            longitude = MISSING
+                        location_type = MISSING
+                        street_address, city, state, zip_postal = getAddress(
+                            raw_address
+                        )
+                        country_code = "US"
+                        store_number = MISSING
+                        log.info(
+                            "Append {} => {}".format(location_name, street_address)
+                        )
+                        yield SgRecord(
+                            locator_domain=DOMAIN,
+                            page_url=page_url,
+                            location_name=location_name,
+                            street_address=street_address,
+                            city=city,
+                            state=state,
+                            zip_postal=zip_postal,
+                            country_code=country_code,
+                            store_number=store_number,
+                            phone=phone,
+                            location_type=location_type,
+                            latitude=latitude,
+                            longitude=longitude,
+                            hours_of_operation=hours_of_operation,
+                            raw_address=raw_address,
+                        )
             else:
                 location_name = row.text
                 hoo_content = info.find("div", {"class": "hours"}).find("p")
@@ -155,7 +181,16 @@ def fetch_data():
 def scrape():
     log.info("start {} Scraper".format(DOMAIN))
     count = 0
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.PAGE_URL,
+                    SgRecord.Headers.LOCATION_NAME,
+                }
+            )
+        )
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

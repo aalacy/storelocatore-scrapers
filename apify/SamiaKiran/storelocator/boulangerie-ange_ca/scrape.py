@@ -67,7 +67,7 @@ def fetch_data():
                 .split("!2m", 1)[0]
                 .split("!3d")
             )
-
+            street_address = street_address.replace(zip_postal, "")
             hours_of_operation = "<INACCESSIBLE>"
             country_code = "CA"
             yield SgRecord(
