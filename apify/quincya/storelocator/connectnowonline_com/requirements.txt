@@ -2,4 +2,4 @@
 lxml==4.6.2
 beautifulsoup4==4.10.0
 sgscrape==0.2.9
-sgrequests==0.3.5
+sgrequests==0.3.7
