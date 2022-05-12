@@ -34,6 +34,7 @@ def fetch_data():
             location_type = "<MISSING>"
 
             temp_url = store.xpath('.//a[@class="_2wYm8"]/@href')
+
             if len(temp_url) > 0:
                 page_url = "".join(temp_url[-1]).strip()
                 store_number = page_url.split("-")[-1].strip()
@@ -43,7 +44,7 @@ def fetch_data():
                     log.info(page_url)
                     try:
                         driver.get(page_url)
-                        time.sleep(15)
+                        time.sleep(3)
                         store_sel = lxml.html.fromstring(driver.page_source)
 
                         temp_addr = store_sel.xpath(
@@ -56,7 +57,12 @@ def fetch_data():
                                 if len(add_2) > 0:
                                     address = address + add_2
 
-                            log.info(address)
+                        else:
+                            address = store_sel.xpath(
+                                '//div[./p[@class="font_8"]]/p[@class="font_8"]//text()'
+                            )
+
+                        log.info(address)
                         for add in address:
                             if len("".join(add).strip()) > 0:
                                 add_list.append("".join(add).strip())
@@ -92,6 +98,16 @@ def fetch_data():
                         tim = "".join(hour.xpath("span[3]//text()")).strip()
                     hours_list.append(day + tim)
 
+                if len(hours_list) <= 0:
+                    hours_list = store_sel.xpath(
+                        '//div[./p[contains(text(),"M: ")]]/p//text()'
+                    )
+
+                if len(hours_list) <= 0:
+                    hours_list = store_sel.xpath(
+                        '//p[@class="font_8"]/span[@style="font-size:16px;"]//text()'
+                    )
+
                 hours_of_operation = (
                     "; ".join(hours_list)
                     .strip()
@@ -107,8 +123,6 @@ def fetch_data():
                     .replace("; PM", "PM")
                 )
             else:
-                log.info("hahah")
-                continue
                 store_number = location_name.split(" ")[-1].strip()
                 page_url = search_url
                 address = store.xpath(".//div[@data-packed='false'][2]//text()")
