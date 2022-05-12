@@ -108,6 +108,8 @@ class _SearchIteration(SearchIteration):
                             .strip()
                             .replace("carring@carring.ee", "")
                             .strip()
+                            .replace("\r", "")
+                            .strip()
                         )
                         formatted_addr = parser.parse_address_intl(raw_address)
                         street_address = formatted_addr.street_address_1
