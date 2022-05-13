@@ -36,8 +36,11 @@ def get_url_for_all_countries():
     r = session.get(URL_LOCATION, headers=headers)
     sel = html.fromstring(r.text, "lxml")
     urls_for_all_countries = sel.xpath('//ul[@class="cms-menu"]/li/ul/li/a/@href')
-    url_germany = "https://www.byredo.com/us_en/store-germany"
-    urls_for_all_countries.append(url_germany)
+    url_germany = [
+        "https://www.byredo.com/uk_en/find-a-store/united-kingdom",
+        "https://www.byredo.com/us_en/store-germany",
+    ]
+    urls_for_all_countries.extend(url_germany)
     return urls_for_all_countries
 
 
@@ -54,6 +57,7 @@ def fetch_data_global():
             or "united-kingdom" in base_url
             or "united-states" in base_url
             or "store-germany" in base_url
+            or "spain" in base_url
         ):
             r = session.get(base_url, headers=headers)
             tree = html.fromstring(r.text, "lxml")
@@ -101,8 +105,9 @@ def fetch_data_global():
                 locator_domain = DOMAIN
                 page_url = base_url
                 page_url = page_url if page_url else MISSING
-
-                country_code = r.url.split("/")[-1]
+                response_url = str(r.url)
+                logger.info(f"Response URL: {response_url} | BaseURL: {base_url} ")
+                country_code = response_url.split("/")[-1]
                 if country_code == "china":
                     country_code = "CH"
                 if country_code == "france":
@@ -121,6 +126,8 @@ def fetch_data_global():
                     country_code = "US"
                 if country_code == "store-germany":
                     country_code = "DE"
+                if country_code == "spain":
+                    country_code = "ES"
 
                 store_number = MISSING
                 phone = ""
@@ -258,8 +265,9 @@ def fetch_data_china():
                 locator_domain = DOMAIN
                 page_url = base_url
                 page_url = page_url if page_url else MISSING
-
-                country_code = r.url.split("/")[-1]
+                response_url = str(r.url)
+                logger.info(f"Response URL: {response_url} | BaseURL: {base_url} ")
+                country_code = response_url.split("/")[-1]
                 if country_code == "china":
                     country_code = "CH"
                 if country_code == "france":
@@ -393,8 +401,10 @@ def fetch_data_russia():
                 locator_domain = DOMAIN
                 page_url = base_url
                 page_url = page_url if page_url else MISSING
+                response_url = str(r.url)
+                logger.info(f"Response URL: {response_url} | BaseURL: {base_url} ")
+                country_code = response_url.split("/")[-1]
 
-                country_code = r.url.split("/")[-1]
                 if country_code == "china":
                     country_code = "CH"
                 if country_code == "france":
@@ -541,8 +551,9 @@ def fetch_data_uae():
                 locator_domain = DOMAIN
                 page_url = base_url
                 page_url = page_url if page_url else MISSING
-
-                country_code = r.url.split("/")[-1]
+                response_url = str(r.url)
+                logger.info(f"Response URL: {response_url} | BaseURL: {base_url} ")
+                country_code = response_url.split("/")[-1]
                 if country_code == "china":
                     country_code = "CH"
                 if country_code == "france":
@@ -684,8 +695,9 @@ def fetch_data_korea():
                 locator_domain = DOMAIN
                 page_url = base_url
                 page_url = page_url if page_url else MISSING
-
-                country_code = r.url.split("/")[-1]
+                response_url = str(r.url)
+                logger.info(f"Response URL: {response_url} | BaseURL: {base_url} ")
+                country_code = response_url.split("/")[-1]
                 if country_code == "china":
                     country_code = "CH"
                 if country_code == "france":

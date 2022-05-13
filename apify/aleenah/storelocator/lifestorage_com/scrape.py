@@ -2,43 +2,41 @@ import json
 from sglogging import sglog
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
-from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
 website = "lifestorage_com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 
 headers = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.77 Safari/537.36",
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36"
 }
 
 DOMAIN = "https://www.lifestorage.com/"
-MISSING = "<MISSING>"
+MISSING = SgRecord.MISSING
 
 
 def fetch_data():
     res = session.get("https://www.lifestorage.com/")
     soup = BeautifulSoup(res.text, "html.parser")
-    sls = soup.find("div", {"class": "footerStates"}).find_all("a")
-
-    for sl in sls:
-        url = "https://www.lifestorage.com" + sl.get("href")
+    state_list = soup.find("div", {"class": "footerStates"}).find_all("a")
+    for state_url in state_list:
+        url = "https://www.lifestorage.com" + state_url.get("href")
         log.info(url)
         res = session.get(url)
         soup = BeautifulSoup(res.text, "html.parser")
-        sa = soup.find_all("a", {"class": "btn store"})
-        for a in sa:
-            page_url = "https://www.lifestorage.com" + a.get("href")
+        loclist = soup.find_all("a", {"class": "btn store"})
+        for loc in loclist:
+            page_url = "https://www.lifestorage.com" + loc.get("href")
             log.info(page_url)
-            try:
-                req = session.get(page_url)
-            except:
-                continue
-            soup = BeautifulSoup(req.text, "lxml")
-            data = "".join(
-                soup.find_all("script", {"type": "application/ld+json"})[-1].contents
-            )
+            res = session.get(page_url)
+            data = res.text.split('<script type="application/ld+json">')[1].split(
+                "</script>", 1
+            )[0]
+            data = data.replace("\n", "")
             data = (
                 data.replace("[,", "[").replace("}{", "},{").split(',"priceRange"')[0]
                 + "}]}"
@@ -78,14 +76,16 @@ def fetch_data():
                 location_type=location_type,
                 latitude=latitude,
                 longitude=longitude,
-                hours_of_operation=hours_of_operation.strip(),
+                hours_of_operation=hours_of_operation,
             )
 
 
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

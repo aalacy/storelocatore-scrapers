@@ -46,23 +46,27 @@ def get_driver():
         executable_path=ChromeDriverManager().install(),
         user_agent="Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0",
         is_headless=True,
-    ).driver()
+    )
 
 
 @retry(wait=wait_fixed(10), stop=stop_after_attempt(5))
-def get_url(driver=None, url=None):
-    if not driver:
-        driver = get_driver()
-    try:
-        driver.get(url)
-        soup = bs(driver.page_source, "lxml")
-        list(soup.select_one("div.store p").stripped_strings)
-    except:
-        driver = get_driver()
-        raise Exception
+def get_url(url=None):
+    soup = None
+    with SgChrome(
+        executable_path=ChromeDriverManager().install(),
+        user_agent="Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0",
+        is_headless=True,
+    ) as driver:
+        try:
+            driver.get(url)
+            soup = bs(driver.page_source, "lxml")
+        except:
+            raise Exception
+
+    return soup
 
 
-def _d(driver, page_url, res, soup, location_type):
+def _d(page_url, res, soup, location_type):
     with SgRequests(proxy_country="us") as http:
         dr = soup.find("script", src=re.compile(r"https://knowledgetags.yextpages.net"))
         try:
@@ -97,8 +101,7 @@ def _d(driver, page_url, res, soup, location_type):
                 if soup.select_one("div.store p"):
                     addr = list(soup.select_one("div.store p").stripped_strings)
                 else:
-                    get_url(driver, page_url)
-                    soup = bs(driver.page_source, "lxml")
+                    soup = get_url(page_url)
                     addr = list(soup.select_one("div.store p").stripped_strings)
 
                 raw_address = " ".join(addr).replace("\n", "").replace("\r", "")
@@ -148,7 +151,6 @@ def _d(driver, page_url, res, soup, location_type):
 
 
 def fetch_data():
-    driver = get_driver()
     with SgRequests(proxy_country="us") as session:
         soup = bs(session.get(base_url, headers=_headers).text, "lxml")
         store_links = soup.select("div.item-list ul li a")
@@ -161,7 +163,7 @@ def fetch_data():
                 location_type = (
                     "Hearing Centre" if "hearing" in page_url else "Optician"
                 )
-                yield _d(driver, page_url, res, soup, location_type)
+                yield _d(page_url, res, soup, location_type)
 
 
 if __name__ == "__main__":
