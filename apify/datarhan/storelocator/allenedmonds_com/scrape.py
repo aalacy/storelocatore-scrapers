@@ -20,18 +20,18 @@ def fetch_data():
     all_codes = DynamicZipSearch(
         country_codes=[SearchableCountries.USA], expected_search_radius_miles=50
     )
-    with SgFirefox() as driver:
+    with SgFirefox(is_headless=False) as driver:
         for code in all_codes:
             try:
                 driver.get(start_url)
             except Exception:
                 continue
-            sleep(8)
+            sleep(10)
             try:
                 driver.find_element_by_name("zip").send_keys(code)
             except Exception:
                 continue
-            sleep(2)
+            sleep(5)
             driver.find_element_by_name("zip").send_keys(Keys.ENTER)
             sleep(3)
             dom = etree.HTML(driver.page_source)
