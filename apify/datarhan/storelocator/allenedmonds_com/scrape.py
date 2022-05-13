@@ -20,7 +20,7 @@ def fetch_data():
     all_codes = DynamicZipSearch(
         country_codes=[SearchableCountries.USA], expected_search_radius_miles=50
     )
-    with SgFirefox(is_headless=False) as driver:
+    with SgFirefox() as driver:
         for code in all_codes:
             try:
                 driver.get(start_url)
