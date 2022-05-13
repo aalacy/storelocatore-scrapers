@@ -32,7 +32,7 @@ def fetch_data():
 
             hours = []
             for hh in bs(_["hours"], "lxml").stripped_strings:
-                if "Hour" in hh or "Please" in hh:
+                if "Hour" in hh or "Please" in hh or "*" in hh:
                     break
                 hours.append(hh)
             if "coming" in _["hours"].lower():
