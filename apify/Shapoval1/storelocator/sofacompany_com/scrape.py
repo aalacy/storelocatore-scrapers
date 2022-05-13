@@ -35,7 +35,7 @@ def fetch_data(sgw: SgWriter):
             city = city.split("(")[0].strip()
         if city.find(".") != -1:
             city = city.split(".")[0].strip()
-        if country_code == "NL":
+        if country_code == "NL" and str(postal).find(" ") != -1:
             state = postal.split()[1].strip()
             postal = postal.split()[0].strip()
         latitude = j.get("storelocator_lat") or "<MISSING>"
