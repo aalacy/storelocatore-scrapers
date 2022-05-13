@@ -27,7 +27,6 @@ def fetch_data(sgw: SgWriter):
     website = "corkyskitchenandbakery.com"
     typ = "<MISSING>"
     country = "US"
-    loc = "<MISSING>"
     store = "<MISSING>"
     hours = "<MISSING>"
     text = str(base).replace("\r", "").replace("\n", "").replace("\t", "")
