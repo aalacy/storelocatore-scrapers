@@ -4,6 +4,8 @@ from sglogging import sglog
 import lxml.html
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "oldspaghettifactory.ca"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -12,6 +14,27 @@ headers = {
     "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36",
     "Accept": "application/json",
 }
+
+
+def get_latlng(map_link):
+    if "z/data" in map_link:
+        lat_lng = map_link.split("@")[1].split("z/data")[0]
+        latitude = lat_lng.split(",")[0].strip()
+        longitude = lat_lng.split(",")[1].strip()
+    elif "ll=" in map_link:
+        lat_lng = map_link.split("ll=")[1].split("&")[0]
+        latitude = lat_lng.split(",")[0]
+        longitude = lat_lng.split(",")[1]
+    elif "!2d" in map_link and "!3d" in map_link:
+        latitude = map_link.split("!3d")[1].strip().split("!")[0].strip()
+        longitude = map_link.split("!2d")[1].strip().split("!")[0].strip()
+    elif "/@" in map_link:
+        latitude = map_link.split("/@")[1].split(",")[0].strip()
+        longitude = map_link.split("/@")[1].split(",")[1].strip()
+    else:
+        latitude = "<MISSING>"
+        longitude = "<MISSING>"
+    return latitude, longitude
 
 
 def fetch_data():
@@ -55,15 +78,25 @@ def fetch_data():
             for hour in hours:
                 day = "".join(hour.xpath("span[1]/text()")).strip()
                 time = "".join(hour.xpath("span[2]/text()")).strip()
-                hours_list.append(day + time)
+                if len(day) > 0 and len(time) > 0:
+                    hours_list.append(day + time)
         except:
             pass
 
-        hours_of_operation = "; ".join(hours_list).strip()
+        hours_of_operation = (
+            "; ".join(hours_list)
+            .strip()
+            .replace("OPEN DURING CASCADE SHOPS RENOVATIONS:;", "")
+            .strip()
+            .split("; Thurs February 10th, 2022:Closed")[0]
+            .strip()
+        )
         store_number = "<MISSING>"
 
-        latitude = "".join(store_sel.xpath('//div[@class="marker"]/@data-lat'))
-        longitude = "".join(store_sel.xpath('//div[@class="marker"]/@data-lng'))
+        map_link = "".join(
+            store_sel.xpath('//iframe[contains(@data-src,"maps/embed?")]/@data-src')
+        ).strip()
+        latitude, longitude = get_latlng(map_link)
 
         yield SgRecord(
             locator_domain=locator_domain,
@@ -86,7 +119,9 @@ def fetch_data():
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

@@ -27,6 +27,7 @@ def fetch_data():
                     locs.append(lurl)
     for loc in locs:
         time.sleep(30)
+        CS = False
         logger.info(loc)
         r2 = session.get(loc, headers=headers)
         website = "kimptonhotels.com"
@@ -44,6 +45,8 @@ def fetch_data():
         rawadd = ""
         store = loc.split("/hoteldetail")[0].rsplit("/", 1)[1]
         for line2 in r2.iter_lines():
+            if "Opening Soon" in line2:
+                CS = True
             if 'property="og:title" content="' in line2 and name == "":
                 name = line2.split('property="og:title" content="')[1].split('"')[0]
             if '<span class="visible-content">' in line2 and rawadd == "":
@@ -74,7 +77,7 @@ def fetch_data():
                 )
             if phone == "" and '<a href="tel:' in line2:
                 phone = line2.split('<a href="tel:')[1].split('"')[0]
-        if " Hotels" not in name and name != "":
+        if " Hotels" not in name and name != "" and CS is False:
             if country == "United States":
                 state = city.rsplit(" ", 1)[1]
                 city = city.rsplit(" ", 1)[0]

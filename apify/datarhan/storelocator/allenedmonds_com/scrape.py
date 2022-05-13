@@ -18,7 +18,7 @@ def fetch_data():
     start_url = "https://www.allenedmonds.com/stores"
 
     all_codes = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA], expected_search_radius_miles=100
+        country_codes=[SearchableCountries.USA], expected_search_radius_miles=50
     )
     with SgFirefox() as driver:
         for code in all_codes:
