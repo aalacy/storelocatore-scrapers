@@ -8,7 +8,7 @@ from sgpostal.sgpostal import parse_address_intl
 
 
 def fetch_data():
-    session = SgRequests()
+    session = SgRequests(verify_ssl=False)
     start_url = "https://www.toyota.co.th/index.php/app/dealer/fnc/json_list/lang/en"
     domain = "toyota.co.th"
     hdr = {
@@ -16,11 +16,7 @@ def fetch_data():
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/101.0.4951.54 Safari/537.36",
         "X-Requested-With": "XMLHttpRequest",
     }
-    import requests
-
-    proxy = {"https": "127.0.0.1:24000", "http": "127.0.0.1:24000"}
-    session = Session()
-    data = session.get(start_url, headers=hdr, proxies=proxy, verify=False).json()
+    data = session.get(start_url, headers=hdr).json()
     for poi in data["dealer"]:
         raw_address = poi["address"]
         addr = parse_address_intl(raw_address)
