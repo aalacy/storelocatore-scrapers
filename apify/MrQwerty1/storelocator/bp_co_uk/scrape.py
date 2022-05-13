@@ -117,6 +117,7 @@ if __name__ == "__main__":
                 "GR",
                 "LU",
                 "NL",
+                "NZ",
                 "PL",
                 "RU",
                 "SA",

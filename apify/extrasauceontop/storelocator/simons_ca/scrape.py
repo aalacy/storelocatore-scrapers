@@ -5,6 +5,7 @@ from sgselenium.sgselenium import SgChrome
 from bs4 import BeautifulSoup as bs
 from sgscrape import simple_scraper_pipeline as sp
 import ssl
+from webdriver_manager.chrome import ChromeDriverManager
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
@@ -16,6 +17,7 @@ def get_data():
     url = "https://www.simons.ca/en/stores/our-stores--a13090"
 
     with SgChrome(
+        executable_path=ChromeDriverManager().install(),
         user_agent=user_agent,
         is_headless=True,
     ).driver() as driver:
@@ -124,38 +126,58 @@ def get_data():
 
 
 def scrape():
-    field_defs = sp.SimpleScraperPipeline.field_definitions(
-        locator_domain=sp.MappingField(mapping=["locator_domain"]),
-        page_url=sp.MappingField(mapping=["page_url"], part_of_record_identity=True),
-        location_name=sp.MappingField(
-            mapping=["location_name"], part_of_record_identity=True
-        ),
-        latitude=sp.MappingField(mapping=["latitude"], part_of_record_identity=True),
-        longitude=sp.MappingField(mapping=["longitude"], part_of_record_identity=True),
-        street_address=sp.MultiMappingField(
-            mapping=["street_address"], is_required=False
-        ),
-        city=sp.MappingField(
-            mapping=["city"],
-        ),
-        state=sp.MappingField(mapping=["state"], is_required=False),
-        zipcode=sp.MultiMappingField(mapping=["zip"], is_required=False),
-        country_code=sp.MappingField(mapping=["country_code"]),
-        phone=sp.MappingField(mapping=["phone"], is_required=False),
-        store_number=sp.MappingField(
-            mapping=["store_number"], part_of_record_identity=True
-        ),
-        hours_of_operation=sp.MappingField(mapping=["hours"], is_required=False),
-        location_type=sp.MappingField(mapping=["location_type"], is_required=False),
-    )
+    x = 0
+    while True:
+        x = x + 1
+        if x == 10:
+            raise Exception
+        try:
+            field_defs = sp.SimpleScraperPipeline.field_definitions(
+                locator_domain=sp.MappingField(mapping=["locator_domain"]),
+                page_url=sp.MappingField(
+                    mapping=["page_url"], part_of_record_identity=True
+                ),
+                location_name=sp.MappingField(
+                    mapping=["location_name"], part_of_record_identity=True
+                ),
+                latitude=sp.MappingField(
+                    mapping=["latitude"], part_of_record_identity=True
+                ),
+                longitude=sp.MappingField(
+                    mapping=["longitude"], part_of_record_identity=True
+                ),
+                street_address=sp.MultiMappingField(
+                    mapping=["street_address"], is_required=False
+                ),
+                city=sp.MappingField(
+                    mapping=["city"],
+                ),
+                state=sp.MappingField(mapping=["state"], is_required=False),
+                zipcode=sp.MultiMappingField(mapping=["zip"], is_required=False),
+                country_code=sp.MappingField(mapping=["country_code"]),
+                phone=sp.MappingField(mapping=["phone"], is_required=False),
+                store_number=sp.MappingField(
+                    mapping=["store_number"], part_of_record_identity=True
+                ),
+                hours_of_operation=sp.MappingField(
+                    mapping=["hours"], is_required=False
+                ),
+                location_type=sp.MappingField(
+                    mapping=["location_type"], is_required=False
+                ),
+            )
 
-    pipeline = sp.SimpleScraperPipeline(
-        scraper_name="Crawler",
-        data_fetcher=get_data,
-        field_definitions=field_defs,
-        log_stats_interval=15,
-    )
-    pipeline.run()
+            pipeline = sp.SimpleScraperPipeline(
+                scraper_name="Crawler",
+                data_fetcher=get_data,
+                field_definitions=field_defs,
+                log_stats_interval=15,
+            )
+            pipeline.run()
+            break
+
+        except Exception:
+            continue
 
 
 scrape()
