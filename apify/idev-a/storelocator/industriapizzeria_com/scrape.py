@@ -13,15 +13,11 @@ logger = SgLogSetup().get_logger("industriapizzeria")
 _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
 }
-
-
-def _valid(val):
-    return val.replace("–", "-").strip()
+locator_domain = "https://industriapizzeria.com"
+base_url = "https://industriapizzeria.com/our-restaurants"
 
 
 def fetch_data():
-    locator_domain = "https://industriapizzeria.com"
-    base_url = "https://industriapizzeria.com/our-restaurants/ottawa/"
     with SgRequests() as session:
         soup = bs(session.get(base_url, headers=_headers).text, "lxml")
         locations = soup.select("div.restaurant-list ul li a")
@@ -30,10 +26,9 @@ def fetch_data():
             logger.info(page_url)
             soup1 = bs(session.get(page_url, headers=_headers).text, "lxml")
             coming = [
-                hh.text
-                for hh in soup1.select("div.entry-content.our-restaurants p")[1:]
+                hh.text for hh in soup1.select("div.entry-content.our-restaurants p")
             ]
-            if "COMING SOON" in coming:
+            if "OPENING SOON" in " ".join(coming):
                 continue
             hours = []
             _hr = soup1.find("strong", string=re.compile(r"^OPENING HOURS"))
@@ -41,7 +36,7 @@ def fetch_data():
                 temp = list(_hr.find_parent().find_next_sibling().stripped_strings)
                 for x in range(0, len(temp), 2):
                     hours.append(f"{temp[x]} {temp[x+1]}")
-            if hours and not re.search(r"tel:", hours[-1], re.IGNORECASE):
+            if hours and re.search(r"tel:", hours[-1], re.IGNORECASE):
                 del hours[-1]
             raw_address = []
             for aa in list(
@@ -58,7 +53,7 @@ def fetch_data():
                     break
                 raw_address.append(", ".join(aa.split("|")))
             addr = parse_address_intl(" ".join(raw_address) + ", Canada")
-            street_address = addr.street_address_1
+            street_address = addr.street_address_1 or ""
             if addr.street_address_2:
                 street_address += " " + addr.street_address_2
             city = addr.city

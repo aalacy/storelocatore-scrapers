@@ -1,8 +1,12 @@
+from lxml import etree
+from time import sleep
+
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
+from sgselenium.sgselenium import SgFirefox
 
 
 def fetch_data():
@@ -12,21 +16,36 @@ def fetch_data():
 
     data = session.get(start_url).json()
     for poi in data["response"]["locations"]:
+        city = poi["city"]
+        street_address = poi["streetAndNumber"]
+        store_number = poi["id"]
+        page_url = f"https://www.aldi.nl/supermarkt.html/l/{city.lower().replace(' ', '-')}/{street_address.lower().replace(' ', '-')}/{store_number}"
+        with SgFirefox() as driver:
+            driver.get(page_url)
+            sleep(10)
+            loc_dom = etree.HTML(driver.page_source)
+        hoo = loc_dom.xpath(
+            '//div[@class="ubsf_location-page-opening-hours-list"]//text()'
+        )
+        hoo = " ".join([e.strip() for e in hoo if e.strip() and e != "gesloten"])
+        phone = loc_dom.xpath('//li[@class="ubsf_details-phone"]/span/text()')
+        phone = phone[0] if phone else ""
+
         item = SgRecord(
             locator_domain=domain,
-            page_url="https://www.aldi.nl/supermarkt.html",
+            page_url=page_url,
             location_name=poi["name"],
-            street_address=poi["streetAndNumber"],
-            city=poi["city"],
+            street_address=street_address,
+            city=city,
             state=poi["province"],
             zip_postal=poi["zip"],
             country_code=poi["country"],
-            store_number=poi["id"],
-            phone="",
+            store_number=store_number,
+            phone=phone,
             location_type="",
             latitude=poi["lat"],
             longitude=poi["lng"],
-            hours_of_operation="",
+            hours_of_operation=hoo,
         )
 
         yield item
