@@ -144,10 +144,10 @@ def fetch_global():
                         city = location_name.split("-")[0].strip()
 
                 location_type = " "
-                if "Bloomingdales" in raw_address:
-                    location_type = "Bloomingdales"
-                if "Nordstroms" in raw_address:
-                    location_type = "Nordstroms"
+                if "Bloomingdale" in raw_address:
+                    location_type = "Bloomingdale's"
+                if "Nordstrom" in raw_address:
+                    location_type = "Nordstrom's"
                 yield SgRecord(
                     page_url=locator_url,
                     location_name=location_name,
