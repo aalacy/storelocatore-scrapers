@@ -36,7 +36,7 @@ def fetch_data():
                 count = 0
                 next_page = driver.find_element_by_class_name("next_link")
                 while next_page:
-                    if count > 10:
+                    if count > 20:
                         break
                     next_page.click()
                     dom = etree.HTML(driver.page_source)
