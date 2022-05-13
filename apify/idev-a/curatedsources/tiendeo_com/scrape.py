@@ -12,7 +12,6 @@ import math
 from concurrent.futures import ThreadPoolExecutor
 from tenacity import retry, wait_random, stop_after_attempt
 import random
-from webdriver_manager.chrome import ChromeDriverManager
 import os
 import ssl
 
@@ -325,7 +324,6 @@ def _d(loc, domain, country):
 
 def get_driver():
     return SgChrome(
-        executable_path=ChromeDriverManager().install(),
         user_agent="Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0",
         is_headless=True,
     ).driver()
