@@ -35,11 +35,7 @@ def fetch_data():
             raw_address = " ".join(
                 sp1.select_one("p.slm-info-address").stripped_strings
             )
-            location_type = " "
-            if "Bloomingdales" in raw_address:
-                location_type = "Bloomingdales"
-            if "Nordstroms" in raw_address:
-                location_type = "Nordstroms"
+
             yield SgRecord(
                 page_url=page_url,
                 store_number=_["BR"],
