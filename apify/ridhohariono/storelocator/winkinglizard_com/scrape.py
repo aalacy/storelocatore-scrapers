@@ -82,6 +82,8 @@ def fetch_data():
             latitude = value["lat"]
             longitude = value["lng"]
             hours_of_operation = ", ".join(value["schemaHours"])
+            if "Su" not in hours_of_operation:
+                hours_of_operation = "SU Closed " + hours_of_operation
             log.info("Append {} => {}".format(location_name, street_address))
             yield SgRecord(
                 locator_domain=DOMAIN,
