@@ -16,7 +16,7 @@ def fetch_data():
     domain = "bipa.at"
 
     all_codes = DynamicZipSearch(
-        country_codes=[SearchableCountries.AUSTRIA], expected_search_radius_miles=5
+        country_codes=[SearchableCountries.AUSTRIA], expected_search_radius_miles=1
     )
     with SgFirefox() as driver:
         for code in all_codes:
