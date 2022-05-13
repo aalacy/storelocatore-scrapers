@@ -8,46 +8,41 @@ from sgpostal import sgpostal as parser
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-
-website = "pizzahutdelivery.ie"
+website = "gantstore.fi"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 headers = {
-    "authority": "pizzahutdelivery.ie",
-    "sec-ch-ua": '" Not A;Brand";v="99", "Chromium";v="90", "Google Chrome";v="90"',
-    "sec-ch-ua-mobile": "?0",
-    "upgrade-insecure-requests": "1",
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.93 Safari/537.36",
-    "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-    "sec-fetch-site": "none",
-    "sec-fetch-mode": "navigate",
-    "sec-fetch-user": "?1",
-    "sec-fetch-dest": "document",
-    "accept-language": "en-US,en;q=0.9,ar;q=0.8",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+    "Accept-Language": "en-US,en;q=0.9,ar;q=0.8",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.75 Safari/537.36",
 }
 
 
 def fetch_data():
     # Your scraper here
-    base = "https://pizzahutdelivery.ie/"
-    search_url = "https://pizzahutdelivery.ie/locations.php"
-    with SgRequests(dont_retry_status_codes=([404]), verify_ssl=False) as session:
+    base = "https://www.gantstore.fi"
+    search_url = "https://www.gantstore.fi/myymalat"
 
+    with SgRequests() as session:
         search_res = session.get(search_url, headers=headers)
 
         search_sel = lxml.html.fromstring(search_res.text)
 
-        store_list = search_sel.xpath("//h5[./a]")
+        stores = search_sel.xpath('//div[@class="views-row"]')
 
-        for store in store_list:
+        for store in stores:
 
-            page_url = "".join(store.xpath("./a/@href"))
-            if "http" not in page_url:
-                page_url = base + page_url
             locator_domain = website
 
+            page_url = base + "".join(store.xpath(".//a[@hreflang]/@href"))
             log.info(page_url)
+
             store_res = session.get(page_url, headers=headers)
+
             store_sel = lxml.html.fromstring(store_res.text)
+
+            location_name = "".join(
+                store_sel.xpath("//h2[not(@class)]//text()")
+            ).strip()
 
             store_info = list(
                 filter(
@@ -55,62 +50,58 @@ def fetch_data():
                     [
                         x.strip()
                         for x in store_sel.xpath(
-                            '//h2[text()="ADDRESS"]/../div//text()'
+                            '//div[contains(@class,"bs-region")]/div[contains(@class,"myymalan-osoite")]/div[2]/p[1]//text()'
                         )
                     ],
                 )
             )
 
-            full_address = store_info[:-1]
-            raw_address = " ".join(full_address).strip()
-            zip = raw_address.split(",")[-1].strip()
-            raw_address = raw_address.replace(zip, "").strip()
+            location_type = "<MISSING>"
 
+            raw_address = ", ".join(store_info).strip()
             formatted_addr = parser.parse_address_intl(raw_address)
             street_address = formatted_addr.street_address_1
             if formatted_addr.street_address_2:
                 street_address = street_address + ", " + formatted_addr.street_address_2
 
-            state = "<MISSING>"
-            country_code = "IE"
+            if street_address is not None:
+                street_address = street_address.replace("Ste", "Suite")
 
-            location_name = " ".join(store.xpath(".//text()")).strip()
-            city = location_name.split(" ")[0].strip()
-            street_address = (
-                street_address.replace(city, "").strip().replace("  ", " ").strip()
-            )
-            phone = store_info[-1].strip()
+            city = formatted_addr.city
+
+            state = formatted_addr.state
+            zip = formatted_addr.postcode
+
+            country_code = "FI"
 
             store_number = "<MISSING>"
-
-            location_type = "<MISSING>"
-
+            phone = "".join(
+                store_sel.xpath(
+                    '//div[contains(@class,"region")]/div[contains(@class,"myymalan-osoite")]/div[2]/p/a[contains(@href,"tel:")]/text()'
+                )
+            ).strip()
+            if len(phone) <= 0:
+                phone = "".join(
+                    store_sel.xpath(
+                        '//div[contains(@class,"region")]/div[contains(@class,"myymalan-osoite")]/div[2]/p/a[contains(text(),"puh.")]/text()'
+                    )
+                ).strip()
             hours = list(
                 filter(
                     str,
                     [
                         x.strip()
                         for x in store_sel.xpath(
-                            '//h2[contains(text(),"HOURS")]/../div//text()'
+                            '//div[contains(@class,"aukioloajat")]//text()'
                         )
                     ],
                 )
             )
-            hours_of_operation = (
-                "; ".join(hours).replace(":;", ":").replace("day;", "day:").strip()
-            )
 
-            lat_lng_info = (
-                store_res.text.split(
-                    f"""stores[storesc-1][0] = '{location_name.split(" ")[0]}"""
-                )[1]
-                .strip()
-                .split("),(")[0]
-                .strip()
-                .split("(")[1]
-                .strip()
-            )
-            latitude, longitude = lat_lng_info.split(",")[0], lat_lng_info.split(",")[1]
+            hours_of_operation = "; ".join(hours[1:])
+            latitude = "".join(store_sel.xpath("//div[@data-lat]/@data-lat")).strip()
+
+            longitude = "".join(store_sel.xpath("//div[@data-lat]/@data-lon")).strip()
 
             yield SgRecord(
                 locator_domain=locator_domain,
@@ -122,7 +113,7 @@ def fetch_data():
                 zip_postal=zip,
                 country_code=country_code,
                 store_number=store_number,
-                phone=phone,
+                phone=phone.replace("puh.", "").strip(),
                 location_type=location_type,
                 latitude=latitude,
                 longitude=longitude,
