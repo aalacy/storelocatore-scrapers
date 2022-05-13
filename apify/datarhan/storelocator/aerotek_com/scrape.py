@@ -16,6 +16,8 @@ def fetch_data():
         "https://www.aerotek.com/en/locations/canada",
         "https://aerotek.com/en/locations/united-states",
         "https://www.aerotek.com/en-gb/locations/emea/united-kingdom",
+        "https://www.aerotek.com/en-au/locations/apac/china",
+        "https://www.aerotek.com/en-au/locations/apac/australia",
     ]
 
     for url in start_urls:
