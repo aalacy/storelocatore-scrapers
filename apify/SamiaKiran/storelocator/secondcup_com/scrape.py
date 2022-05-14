@@ -43,6 +43,16 @@ def fetch_data():
                 .get_text(separator="|", strip=True)
                 .replace("|", " ")
             )
+            if (
+                "Sunday: Closed Monday: Closed Tuesday: Closed Wednesday: Closed Thursday: Closed Friday: Closed Saturday: Closed"
+                in hours_of_operation
+            ):
+                hours_of_operation = MISSING
+            elif (
+                "Sunday: Monday: Tuesday: Wednesday: Thursday: Friday: Saturday:"
+                in hours_of_operation
+            ):
+                hours_of_operation = MISSING
             pa = parse_address_intl(raw_address)
 
             street_address = pa.street_address_1

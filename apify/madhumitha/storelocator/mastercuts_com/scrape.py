@@ -1,7 +1,7 @@
+import re
 from lxml import etree
 from urllib.parse import urljoin
 
-from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
@@ -14,7 +14,7 @@ hdr = {
     "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
 }
 
-driver = SgFirefox().driver()
+driver = SgFirefox(is_headless=True).driver()
 
 
 def get_driver(retry=0):
@@ -34,8 +34,6 @@ def fetch_location(poi_html, retry=0):
         loc_dom = etree.HTML(driver.page_source)
 
         location_name = loc_dom.xpath("//h2/text()")
-        if not location_name:
-            return None
         location_name = location_name[0]
         street_address = loc_dom.xpath('//span[@itemprop="streetAddress"]/text()')
         street_address = street_address[0] if street_address else ""
@@ -56,14 +54,14 @@ def fetch_location(poi_html, retry=0):
         phone = loc_dom.xpath('//a[@id="sdp-phone"]/text()')
         phone = phone[0] if phone else ""
         latitude = loc_dom.xpath('//meta[@itemprop="latitude"]/@content')
-        if not latitude:
-            return None
+
         latitude = latitude[0] if latitude else ""
         longitude = loc_dom.xpath('//meta[@itemprop="longitude"]/@content')[0]
         hoo = loc_dom.xpath(
             '//div[@class="salondetailspagelocationcomp"]//div[@class="store-hours sdp-store-hours"]//text()'
         )
         hoo = " ".join(hoo).split(" Monday")[0]
+        hoo = re.sub(r"\s\s+", " ", re.sub("\t|\n", "", hoo))
         if not hoo:
             hoo = loc_dom.xpath('//div[@class="salon-timings"]//text()')
             hoo = " ".join([e.strip() for e in hoo if e.strip()])
@@ -92,14 +90,12 @@ def fetch_location(poi_html, retry=0):
 
 
 def fetch_data():
-    session = SgRequests()
-
-    response = session.get(start_url, headers=hdr)
-    dom = etree.HTML(response.text)
+    driver.get(start_url)
+    dom = etree.HTML(driver.page_source)
     all_states = dom.xpath('//a[@class="btn btn-primary"]/@href')
     for url in all_states:
-        response = session.get(urljoin(start_url, url))
-        dom = etree.HTML(response.text)
+        driver.get(urljoin(start_url, url))
+        dom = etree.HTML(driver.page_source)
         all_locations = dom.xpath("//td/a")
         for poi_html in all_locations:
             poi = fetch_location(poi_html)
