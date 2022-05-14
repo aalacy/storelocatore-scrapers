@@ -51,7 +51,7 @@ def get_data(store_number, sgw: SgWriter):
 
     dates = set()
     for i in range(7):
-        date = (datetime.today() + timedelta(days=i)).strftime(f"%d-%m-%Y")
+        date = (datetime.today() + timedelta(days=i)).strftime("%d-%m-%Y")
         dates.add(date)
 
     for h in hours:
