@@ -8,7 +8,6 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgpostal import parse_address_usa
 from urllib.parse import unquote
-import re
 
 DOMAIN = "donairdude.com"
 LOCATION_URL = "https://www.donairdude.com/locations"
