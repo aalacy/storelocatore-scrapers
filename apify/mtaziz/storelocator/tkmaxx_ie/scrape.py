@@ -6,7 +6,6 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sglogging import SgLogSetup
 import ssl
-import time
 
 try:
     _create_unverified_https_context = (
