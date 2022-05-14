@@ -26,17 +26,7 @@ start_url = "https://www.northwell.edu/api/locations/108781?browse_all=true"
 
 
 hdr = {
-    "Host": "www.northwell.edu",
-    "Connection": "keep-alive",
-    "Upgrade-Insecure-Requests": "1",
-    "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.121 Safari/537.36",
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-    "Sec-Fetch-Site": "none",
-    "Sec-Fetch-Mode": "navigate",
-    "Sec-Fetch-User": "?1",
-    "Sec-Fetch-Dest": "document",
-    "Accept-Encoding": "gzip, deflate, br",
-    "Accept-Language": "en-US",
+    "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
 }
 
 
@@ -44,6 +34,7 @@ def get_api_urls():
     with SgRequests() as http:
         response = http.get(start_url, headers=hdr)
         logger.info(f"Pulling API Endpoin URLs[HTTP {response.status_code} OK!]")
+        logger.info(f"Source: {response.text}")
         data = json.loads(response.text)
         start = int(data["showing"].get("start"))
         total = data["showing"].get("total")
