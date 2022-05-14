@@ -815,7 +815,6 @@ def fetch_data_kuwait():
                 latlng_from_googlemap_url_deduped[0].split("@")[1].split(",")[1]
                 or MISSING
             )
-            locator_domain = DOMAIN
             page_url = base_url
             page_url = page_url if page_url else MISSING
             response_url = str(r.url)
