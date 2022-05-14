@@ -64,8 +64,12 @@ def fetch_records(http: SgRequests, state: CrawlState) -> Iterable[SgRecord]:
         location_type = jso["name"]
         phone = jso["telephone"]
         location_name = jso["name"]
-        hours_of_operation = list(jso["openingHours"])
-        hours_of_operation = " ".join(hours_of_operation)
+        hours_of_operation = (
+            str(jso["openingHours"])
+            .replace('","', " ")
+            .replace('["', " ")
+            .replace('"]', " ")
+        )
         country_code = "US"
         yield SgRecord(
             locator_domain=DOMAIN,
