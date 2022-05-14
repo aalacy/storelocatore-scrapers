@@ -1,3 +1,4 @@
+import json
 from sglogging import sglog
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
@@ -9,8 +10,9 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 session = SgRequests()
 website = "thehousecannabis_ca"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
+
 headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36"
 }
 
 DOMAIN = "https://thehousecannabis.ca"
@@ -22,68 +24,77 @@ def fetch_data():
         url = "https://thehousecannabis.ca/stores/"
         r = session.get(url, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
-        loclist = soup.findAll("a", {"class": "LocationTile__Container-sc-s93sol-1"})
+        loclist = soup.select("a[href*=location]")
+        page_list = []
         for loc in loclist:
             page_url = DOMAIN + loc["href"]
-            log.info(page_url)
+            page_url = page_url.strip("/")
+            if page_url in page_list:
+                continue
+            page_list.append(page_url)
             r = session.get(page_url, headers=headers)
-            soup = BeautifulSoup(r.text, "html.parser")
-            location_name = soup.find(
-                "h2", {"class": "LocationMap__Title-sc-1tudpe1-2"}
-            ).text
-            temp = soup.findAll(
-                "div", {"class": "StoreFacts__Description-sc-19jbc8c-3"}
-            )
-            address = temp[0].get_text(separator="|", strip=True).split("|")
-            street_address = address[0].replace("in Chinatown", "")
-            address = address[1].split(",")
-            city = address[0]
-            address = address[1].split()
-            state = address[0]
-            zip_postal = address[1] + " " + address[2]
-            phone = temp[-1].get_text(separator="|", strip=True).split("|")[-1]
-            hour_list = (
-                soup.find("div", {"class": "LocationMap__Hours-sc-1tudpe1-4"})
-                .get_text(separator="|", strip=True)
-                .replace("|", " ")
-                .lower()
-                .strip()
-                .replace("sunday", "sunday |")
-            )
-            hour_list = hour_list.split("|")
-            day_list = hour_list[0].split()
-            time_list = hour_list[1].replace(" - ", "-").split()
-            hours_of_operation = ""
-            for day, time in zip(day_list, time_list):
-                hours_of_operation = (
-                    hours_of_operation + " " + day + " " + time.replace("-", " - ")
+            if r.status_code == 200:
+                log.info(page_url)
+                soup = BeautifulSoup(r.text, "html.parser")
+                temp_street = soup.find("h3").text
+                schema = r.text.split(
+                    '<script data-react-helmet="true" type="application/ld+json">'
+                )[1].split("</script>", 1)[0]
+                schema = schema.replace("\n", "")
+                loc = json.loads(schema)
+                address = loc["address"]
+                country_code = address["addressCountry"]
+                street_address = address["streetAddress"]
+                if temp_street.split()[0] == street_address.split()[0]:
+                    street_address = address["streetAddress"]
+                    latitude = loc["geo"]["latitude"]
+                    longitude = loc["geo"]["longitude"]
+                    city = address["addressLocality"]
+                    state = address["addressRegion"]
+                    zip_postal = address["postalCode"]
+                else:
+                    street_address = soup.find("h3").text
+                    latitude = MISSING
+                    longitude = MISSING
+                    city = page_url.split("/")[-2]
+                    state = MISSING
+                    zip_postal = MISSING
+                location_name = "House of Cannabis " + city
+                phone = soup.select_one("a[href*=tel]").text
+                try:
+                    temp_list = r.text.split("MONDAY")[1].split("Order Online")[0]
+                except:
+                    temp_list = r.text.split("Monday")[1].split("Order Online")[0]
+                temp_list = "MONDAY " + BeautifulSoup(
+                    temp_list, "html.parser"
+                ).get_text(separator="|", strip=True).replace("|", " ")
+                temp_list = (
+                    temp_list.replace("SUNDAY", "SUNSAY#")
+                    .replace(" - ", "-")
+                    .split("#")
                 )
-            temp_zip = r.text.split('"postalCode":"')[1].split('"')[0]
-            if temp_zip == zip_postal:
-                latitude = r.text.split('"latitude":')[1].split(",")[0]
-                longitude = (
-                    r.text.split('"longitude":')[1].split(",")[0].replace("}", "")
+                day_list = temp_list[0].split()
+                time_list = temp_list[1].split()
+                hours_of_operation = ""
+                for day, time in zip(day_list, time_list):
+                    hours_of_operation = hours_of_operation + " " + day + " " + time
+                hours_of_operation = hours_of_operation.lower()
+                yield SgRecord(
+                    locator_domain=DOMAIN,
+                    page_url=page_url,
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=zip_postal,
+                    country_code=country_code,
+                    store_number=MISSING,
+                    phone=phone,
+                    location_type=MISSING,
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=hours_of_operation,
                 )
-            else:
-                latitude = MISSING
-                longitude = MISSING
-            country_code = "CA"
-            yield SgRecord(
-                locator_domain=DOMAIN,
-                page_url=page_url,
-                location_name=location_name,
-                street_address=street_address.strip(),
-                city=city.strip(),
-                state=state.strip(),
-                zip_postal=zip_postal.strip(),
-                country_code=country_code,
-                store_number=MISSING,
-                phone=phone.strip(),
-                location_type=MISSING,
-                latitude=latitude,
-                longitude=longitude,
-                hours_of_operation=hours_of_operation.strip(),
-            )
 
 
 def scrape():

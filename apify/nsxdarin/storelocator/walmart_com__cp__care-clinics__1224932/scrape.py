@@ -66,6 +66,7 @@ def other_source(session, state):
     url = "https://www.walmart.com/store/directory"
     main = SgRequests.raise_on_err(session.get(url, headers=headers))
     soup = b4(main.text, "lxml")
+    logger.info(f"{len(main.text)}")
     allstates = (
         soup.find("div", {"class": "store-directory-container"})
         .find("ul")

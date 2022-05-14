@@ -3,6 +3,8 @@ import re
 
 from bs4 import BeautifulSoup
 
+from sglogging import SgLogSetup
+
 from sgrequests import SgRequests
 
 from sgscrape.sgwriter import SgWriter
@@ -11,6 +13,8 @@ from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 from sgpostal.sgpostal import parse_address_intl
+
+logger = SgLogSetup().get_logger("brandymelville.com")
 
 
 def fetch_data(sgw: SgWriter):
@@ -29,6 +33,7 @@ def fetch_data(sgw: SgWriter):
     all_scripts = base.find_all("script")
     for script in all_scripts:
         if "locations = {" in str(script):
+            logger.info("Got locations!")
             script = str(script)
             break
 
@@ -40,6 +45,7 @@ def fetch_data(sgw: SgWriter):
         states = items[i]
 
         for state in states:
+            logger.info(state)
             stores = states[state]
 
             for store in stores:

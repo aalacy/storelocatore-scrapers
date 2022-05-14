@@ -36,6 +36,11 @@ def fetch_data(sgw: SgWriter):
                 log.info(f"Crawling: {page_url}")
                 location_name = j.get("name")
                 street_address = j.get("address1")
+                address_sub = j.get("address2")
+                if address_sub:
+                    street_address = f"{j.get('address1')} {j.get('address2')}".replace(
+                        "None", ""
+                    ).strip()
                 postal = j.get("postalCode")
                 country_code = j.get("country")
                 city = j.get("city")
