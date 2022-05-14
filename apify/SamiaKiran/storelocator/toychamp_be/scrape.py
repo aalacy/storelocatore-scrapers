@@ -63,11 +63,6 @@ def fetch_data():
             zip_postal = zip_postal.strip() if zip_postal else MISSING
 
             country_code = "BE"
-            hours_of_operation = (
-                soup.find("table", {"class": "store-detail-hours"})
-                .get_text(separator="|", strip=True)
-                .replace("|", " ")
-            )
             phone = MISSING
             yield SgRecord(
                 locator_domain=DOMAIN,
