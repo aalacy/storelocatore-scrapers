@@ -18,7 +18,7 @@ import random
 domain = "doitbest.com"
 log = sglog.SgLogSetup().get_logger(domain)
 
-session = SgRequests(retries_with_fresh_proxy_ip=7)
+session = SgRequests()
 
 hdr = {
     "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
@@ -34,7 +34,7 @@ payload = {
     "StoreLocatorForm": {
         "Location": "TX",
         "Filter": "All Locations",
-        "Range": "2000",
+        "Range": "1900",
         "CSRFID": csrfid,
         "CSRFToken": token,
     }
@@ -60,7 +60,7 @@ headers = {
 
 
 def get_headers_cookies(url_location):
-    with SgChrome(is_headless=True) as driver:
+    with SgChrome() as driver:
         driver.get(url_location)
         time.sleep(10)
         cookies_ = driver.get_cookies()
