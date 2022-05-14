@@ -165,7 +165,7 @@ def fetch_data(sgw: SgWriter):
             try:
                 hours_list = list(hours_tag.parent.parent.stripped_strings)
             except:
-                hours_list = ""
+                hours_list = []
             hours_of_operation = " ".join(hours_list)
 
             if not hours_of_operation:
