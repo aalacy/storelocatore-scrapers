@@ -485,7 +485,6 @@ def fetch_data(sgw: SgWriter):
 
 def scrape():
     logger.info("Started")
-    count = 0
     with SgWriter(
         SgRecordDeduper(
             SgRecordID(
