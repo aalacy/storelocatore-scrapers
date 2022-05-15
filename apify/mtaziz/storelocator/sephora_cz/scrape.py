@@ -290,7 +290,7 @@ def fetch_data(sgw: SgWriter):
         tasks = []
         task = [
             executor.submit(fetch_records, idx, store_url, sgw)
-            for idx, store_url in enumerate(page_urls[0:2])
+            for idx, store_url in enumerate(page_urls[0:])
         ]
         tasks.extend(task)
         for future in as_completed(tasks):
