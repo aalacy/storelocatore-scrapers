@@ -34,20 +34,28 @@ def get_urls():
     return urls
 
 
-def get_data(slug, sgw: SgWriter):
+def get_data(slug, sgw: SgWriter, retry=0):
     page_url = f"https://www.homesense.com{slug}"
     r = session.get(page_url)
     tree = html.fromstring(r.text)
     try:
         d = tree.xpath("//div[@class='store-details-panel']")[0]
-    except:
-        return
+    except IndexError:
+        if retry == 3:
+            return
+        else:
+            retry += 1
+            get_data(slug, sgw, retry)
+            return
 
     location_name = "".join(d.xpath(".//h2[@itemprop='name']/text()")).strip()
     adr1 = "".join(d.xpath(".//span[@itemprop='streetAddress']/text()")).strip()
     adr2 = "".join(d.xpath(".//span[@itemprop='addressLocality']/text()")).strip()
     adr = f"{adr1} {adr2}"
     street_address, city = get_international(adr)
+    city = location_name
+    if "(" in city:
+        city = city.split("(")[0].strip()
     postal = "".join(d.xpath(".//span[@itemprop='zipCode']/text()")).strip()
     phone = "".join(d.xpath(".//p[@itemprop='telephone']/text()")).strip()
     hours_of_operation = "".join(

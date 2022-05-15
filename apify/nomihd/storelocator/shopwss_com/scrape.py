@@ -18,13 +18,13 @@ headers = {
 
 def fetch_data():
     # Your scraper here
-    search_url = "https://cdn.shopify.com/s/files/1/0069/3442/9751/t/7/assets/sca.storelocatordata.json"
+    search_url = "https://cdn.shopify.com/s/files/1/0069/3442/9751/t/11/assets/sca.storelocatordata.json"
     stores_req = session.get(search_url, headers=headers)
     stores = json.loads(stores_req.text)
     for store in stores:
         if "description" in store and "opening" in store["description"].lower():
             continue
-        page_url = "<MISSING>"
+        page_url = "https://www.shopwss.com/pages/store-locator"
         locator_domain = website
         location_name = store["name"]
         store_number = store["name"].split("-")[0].replace("Store", "").strip()
@@ -44,7 +44,13 @@ def fetch_data():
         longitude = store["lng"]
         hours_of_operation = "<MISSING>"
         if "schedule" in store:
-            hours_of_operation = "; ".join(store["schedule"].split("\r<br>")).strip()
+            hours_of_operation = (
+                "; ".join("; ".join(store["schedule"].split("\r<br>")).split("<br>"))
+                .strip()
+                .replace("Holiday Hours;", "")
+                .replace("Holiday Hours", "")
+                .strip()
+            )
 
         yield SgRecord(
             locator_domain=locator_domain,

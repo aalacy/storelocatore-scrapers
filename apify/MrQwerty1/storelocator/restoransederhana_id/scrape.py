@@ -33,6 +33,8 @@ def fetch_data(sgw: SgWriter):
             country = "MY"
 
         street_address, city, state, postal = get_international(raw_address)
+        if "1/" in city:
+            city = "Jkt Utara"
         phone = "".join(d.xpath("./following-sibling::p[2]/text()")).strip()
 
         row = SgRecord(

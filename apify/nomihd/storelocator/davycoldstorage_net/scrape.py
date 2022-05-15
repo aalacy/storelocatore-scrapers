@@ -4,6 +4,8 @@ from sglogging import sglog
 import lxml.html
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "davycoldstorage.net"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -24,7 +26,7 @@ def fetch_data():
         "//section[contains(@class,'elementor-section elementor-inner-section')]//p[@class='elementor-heading-title elementor-size-default']"
     )
     maps = stores_sel.xpath(
-        '//iframe[@loading="lazy" and contains(@src,"maps/embed?")]/@src'
+        '//div[@class="textwidget custom-html-widget"]/iframe[contains(@src,"maps/embed?")]/@src'
     )
     index = 0
     for store in stores:
@@ -88,7 +90,9 @@ def fetch_data():
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.GeoSpatialId)
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)
