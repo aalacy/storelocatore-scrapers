@@ -143,6 +143,11 @@ def fetch_records(idx, store_url, headers, sgw: SgWriter):
         hours_of_operation = get_human_hours(data_store)
 
         raw_address = MISSING
+
+        # Fix Zip Code
+        if zip_postal == state:
+            zip_postal = MISSING
+
         item = SgRecord(
             locator_domain=locator_domain,
             page_url=page_url,

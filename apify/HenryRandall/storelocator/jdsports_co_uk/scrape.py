@@ -11,7 +11,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sglogging import SgLogSetup
 
 headers = {
-    "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
+    "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTM    L, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
 }
 
 logger = SgLogSetup().get_logger("jdsports_co_ul")
@@ -98,44 +98,45 @@ def format_hours(hours):
     return ", ".join(data)
 
 
+def fetch_location(site, location):
+    data = site.get_data(location)
+
+    return SgRecord(
+        page_url=data.get("url"),
+        location_name=data.get("name"),
+        street_address=data["address"]["streetAddress"],
+        city=data["address"]["addressLocality"],
+        state=data["address"]["addressRegion"],
+        country_code=site.country_code,
+        zip_postal=data["address"]["postalCode"],
+        store_number=re.sub(f"https://www.{site.locator_domain}/", "", data["@id"]),
+        phone=data["telephone"],
+        latitude=data["geo"]["latitude"],
+        longitude=data["geo"]["longitude"],
+        locator_domain=site.locator_domain,
+        hours_of_operation=format_hours(data["openingHoursSpecification"]),
+    )
+
+
 def fetch_locations(site):
     pois = []
     locations = site.get_locations()
-    for location in locations:
-        data = site.get_data(location)
-
-        pois.append(
-            SgRecord(
-                page_url=data.get("url"),
-                location_name=data.get("name"),
-                street_address=data["address"]["streetAddress"],
-                city=data["address"]["addressLocality"],
-                state=data["address"]["addressRegion"],
-                country_code=site.country_code,
-                zip_postal=data["address"]["postalCode"],
-                store_number=re.sub(
-                    f"https://www.{site.locator_domain}/", "", data["@id"]
-                ),
-                phone=data["telephone"],
-                latitude=data["geo"]["latitude"],
-                longitude=data["geo"]["longitude"],
-                locator_domain=site.locator_domain,
-                hours_of_operation=format_hours(data["openingHoursSpecification"]),
-            )
-        )
+    with ThreadPoolExecutor() as executor:
+        futures = [
+            executor.submit(fetch_location, site, location) for location in locations
+        ]
+        for future in as_completed(futures):
+            pois.append(future.result())
 
     return pois
 
 
 def fetch_data():
     pois = []
+    for site in sites:
+        pois.extend(fetch_locations(site))
 
-    with ThreadPoolExecutor() as executor:
-        futures = [executor.submit(fetch_locations, site) for site in sites]
-        for future in as_completed(futures):
-            pois.extend(future.result())
-
-        return pois
+    return pois
 
 
 def scrape():
