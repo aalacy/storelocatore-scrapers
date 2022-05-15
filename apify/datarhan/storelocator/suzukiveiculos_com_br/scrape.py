@@ -5,7 +5,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
-from sgpostal.sgpostal import parse_address_intl
+from sgpostal.sgpostal import International_Parser, parse_address
 
 
 def fetch_data():
@@ -31,7 +31,7 @@ def fetch_data():
         raw_address = poi_html.xpath(".//address/text()")[0].split(" - CEP: ")
         state = raw_address[0].split()[-1]
         page_url = f"https://www.suzukiveiculos.com.br/concessionarias/{state}/{location_name.lower().replace(' - ', ' ').replace(' ', '-')}/{store_number}"
-        addr = parse_address_intl(" ".join(raw_address))
+        addr = parse_address(International_Parser(), " ".join(raw_address))
         city = addr.city
         if city and city.endswith("/"):
             city = city[:-1]

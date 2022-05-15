@@ -73,7 +73,9 @@ def fetch_data():
                         hoo.append(f"{day} {opens} - {closes}")
                     else:
                         hoo.append(f"{day} closed")
-            hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
+            hours_of_operation = " ".join(hoo) if hoo else ""
+            if not hours_of_operation:
+                hours_of_operation = "open 24h"
 
             item = SgRecord(
                 locator_domain=domain,

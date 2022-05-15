@@ -12,7 +12,7 @@ from pyppeteer_stealth import stealth
 import json
 import ssl
 import pyppdf.patch_pyppeteer
-
+import logging
 
 try:
     _create_unverified_https_context = (
@@ -34,13 +34,15 @@ headers = {
 # To fix - certificate verify failed: unable to get local issuer, we have used this library pyppdf
 logger.info(f"pyppdf loaded: {pyppdf.patch_pyppeteer}")
 
+pyppeteer_level = logging.WARNING
+logging.getLogger("pyppeteer").setLevel(pyppeteer_level)
+logging.getLogger("websockets.protocol").setLevel(pyppeteer_level)
+
 
 def get_store_urls(http: SgRequests):
     res = http.get(LOCATION_URL, headers=headers)
     sel_stores = html.fromstring(res.text)
-    store_urls = sel_stores.xpath(
-        '//p[contains(text(),"Honda")]/preceding-sibling::ul/li/a/@href'
-    )
+    store_urls = sel_stores.xpath('//li/a[contains(@href, "stihldealer")]/@href')
     return store_urls
 
 
@@ -126,12 +128,12 @@ def main_generator():
 def scrape():
     for rec in main_generator():
         count = 0
+
         with SgWriter(
             SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))
         ) as writer:
             writer.write_row(rec)
             count = count + 1
-    logger.info(f"No of records being processed: {count}")
     logger.info("Finished")
 
 

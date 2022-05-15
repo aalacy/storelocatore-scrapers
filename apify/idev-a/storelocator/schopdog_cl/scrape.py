@@ -9,6 +9,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
 from sgpostal.sgpostal import parse_address_intl
 import ssl
+import time
 
 try:
     _create_unverified_https_context = (
@@ -21,7 +22,6 @@ else:
 
 locator_domain = "https://www.schopdog.cl"
 base_url = "https://www.schopdog.cl/sucursales"
-graph_url = "https://api.getjusto.com/graphql?operationName=getPlaceDetails_cached"
 
 
 def fetch_data():
@@ -35,6 +35,7 @@ def fetch_data():
                 )
             )
         )
+        time.sleep(10)
         soup = bs(driver.page_source, "lxml")
         locations = soup.select("div.ct-stores div.col-xs-12.col-sm-6.col-md-3")
         for loc in locations:
@@ -53,6 +54,8 @@ def fetch_data():
             street_address = addr.street_address_1
             if addr.street_address_2:
                 street_address += " " + addr.street_address_2
+            if not street_address:
+                street_address = raw_address
             yield SgRecord(
                 page_url=base_url,
                 location_name=info[0].text.strip(),

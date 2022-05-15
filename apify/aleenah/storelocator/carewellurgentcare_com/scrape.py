@@ -1,91 +1,94 @@
-import csv
-import re
+import json
+from sglogging import sglog
 from bs4 import BeautifulSoup
-import requests
-import time
-from sglogging import SgLogSetup
+from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-logger = SgLogSetup().get_logger('carewellurgentcare_com')
+session = SgRequests()
+website = "carewellurgentcare_com"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+}
 
+DOMAIN = "https://www.carewellurgentcare.com"
+MISSING = SgRecord.MISSING
 
-
-headers={"user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.120 Safari/537.36"}
-
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
-        # Body
-        for row in data:
-            writer.writerow(row)
 
 def fetch_data():
-    # Your scraper here
-    locs = []
-    street = []
-    states=[]
-    cities = []
-    types=[]
-    phones = []
-    zips = []
-    long = []
-    lat = []
-    timing = []
-    ids=[]
-    page_url=[]
+    if True:
+        url = "https://www.carewellurgentcare.com/centers/"
+        r = session.get(url, headers=headers)
+        loclist = (
+            r.text.split("var centersJSON = '")[1]
+            .split("<div>")[0]
+            .split("'</script>")[0]
+        )
+        loclist = json.loads(loclist)
+        for loc in loclist:
+            location_name = loc["title"]
+            store_number = loc["id"]
+            phone = MISSING
+            page_url = DOMAIN + loc["link"]
+            log.info(page_url)
+            r = session.get(page_url, headers=headers)
+            soup = BeautifulSoup(r.text, "html.parser")
+            phone = soup.select_one("a[href*=tel]").text
+            address = (
+                BeautifulSoup(loc["address"]["address"], "html.parser")
+                .get_text(separator="|", strip=True)
+                .split("|")
+            )
+            street_address = address[0]
+            address = address[1].split(",")
+            city = address[0]
+            address = address[1].split()
+            state = address[0]
+            zip_postal = address[1]
+            country_code = "US"
+            latitude = loc["address"]["lat"]
+            longitude = loc["address"]["lng"]
+            hours_of_operation = (
+                soup.find("p", {"class": "hours"})
+                .get_text(separator="|", strip=True)
+                .split("|")[:-1]
+            )
+            if len(hours_of_operation) > 2:
+                del hours_of_operation[0]
+            hours_of_operation = " ".join(hours_of_operation)
+            country_code = "US"
+            yield SgRecord(
+                locator_domain=DOMAIN,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address.strip(),
+                city=city.strip(),
+                state=state.strip(),
+                zip_postal=zip_postal.strip(),
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone.strip(),
+                location_type=MISSING,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
 
-    res = requests.get("https://www.carewellurgentcare.com/centers/",headers=headers)
-    time.sleep(0.1)
-    soup = BeautifulSoup(res.text, 'html.parser')
-    #logger.info(soup)
-    divs = soup.find_all('div', {'class': 'centers-list'})
-    latlng= soup.find('div', {'id': 'et-main-area'}).find("script").text
-    #logger.info(latlng)
-    for div in divs:
-
-        locs.append(div.find('div', {'class': 'center-name'}).text)
-        addr=div.find('div', {'class': 'center-address'}).text
-        timing.append(div.find('div', {'class': 'center-hours'}).text.replace("\n"," ").replace("\r"," "))
-        #logger.info(div.find('div', {'class': 'center-hours'}).text.replace("\n"," ").replace("\r"," "))
-        addr=addr.split("\n")
-        street.append(addr[0].strip())
-        addr=addr[1].split(",")
-        cities.append(addr[0])
-        addr=addr[1].strip().split(" ")
-        states.append(addr[0])
-        z= re.findall(r'[0-9]{5}',addr[1])[0]
-        zips.append(z)
-        phones.append(addr[1].replace(z,""))
-
-    lat = re.findall(r'"lat":"([^"]*)"',latlng)
-    long = re.findall(r'"lng":"([^"]*)"', latlng)
-    ids = re.findall(r'"id":([0-9]+)', latlng)
-
-    all = []
-    for i in range(0, len(locs)):
-        row = []
-        row.append("https://www.carewellurgentcare.com")
-        row.append(locs[i])
-        row.append(street[i])
-        row.append(cities[i])
-        row.append(states[i])
-        row.append(zips[i])
-        row.append("US")
-        row.append(ids[i])  # store #
-        row.append(phones[i])  # phone
-        row.append("<MISSING>")  # type
-        row.append(lat[i])  # lat
-        row.append(long[i])  # long
-        row.append(timing[i])  # timing
-        row.append("https://www.carewellurgentcare.com/centers/")  # page url
-
-        all.append(row)
-    return all
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
-scrape()
+
+if __name__ == "__main__":
+    scrape()

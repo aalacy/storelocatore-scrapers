@@ -18,14 +18,7 @@ from selenium.webdriver.common.by import By
 
 import ssl
 
-try:
-    _create_unverified_https_context = (
-        ssl._create_unverified_context
-    )  # Legacy Python that doesn't verify HTTPS certificates by default
-except AttributeError:
-    pass
-else:
-    ssl._create_default_https_context = _create_unverified_https_context  # Handle target environment that doesn't support HTTPS verification
+ssl._create_default_https_context = ssl._create_unverified_context
 
 
 DOMAIN = "pizzadepot.ca"
@@ -70,13 +63,14 @@ def get_driver(url, xpath_name, driver=None):
             address = mapembedaddress.find("div", {"class": "address"}).text
             driver.switch_to.default_content()
             break
-        except Exception:
+        except Exception as e:
             driver.quit()
-            if x == 10:
-                raise Exception(
-                    "Make sure this ran with a Proxy, will fail without one"
-                )
+            if x == 3:
+                log.info(f"Page is not valid {url} : {e}")
+                break
+            return driver, MISSING
             continue
+
     return driver, address
 
 
@@ -124,6 +118,8 @@ def fetchData():
         page_url = website + grid.get("href")
         log.info(f"Now Crawling: {page_url}")
         driver, raw_address = get_driver(page_url, xpath_name)
+        if raw_address == MISSING:
+            continue
         time.sleep(15)
         street_address, city, state, zip_postal = getAddress(raw_address)
         html = driver.page_source

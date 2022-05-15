@@ -4,6 +4,8 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
+from tenacity import retry, stop_after_attempt
+import tenacity
 
 session = SgRequests()
 headers = {
@@ -11,6 +13,16 @@ headers = {
 }
 
 logger = SgLogSetup().get_logger("tesco_co_uk__metro")
+
+
+@retry(stop=stop_after_attempt(7), wait=tenacity.wait_fixed(7))
+def get_response(url):
+    with SgRequests() as http:
+        response = http.get(url, headers=headers)
+        if response.status_code == 200:
+            logger.info(f"{url} >> HTTP STATUS: {response.status_code}")
+            return response
+        raise Exception(f"{url} >> HTTP Error Code: {response.status_code}")
 
 
 def fetch_data():
@@ -38,7 +50,7 @@ def fetch_data():
             lat = ""
             lng = ""
             logger.info(loc)
-            r = session.get(loc, headers=headers)
+            r = get_response(loc)
             for line in r.iter_lines():
                 if '"pageName":"' in line:
                     name = line.split('"pageName":"')[1].split('"')[0]

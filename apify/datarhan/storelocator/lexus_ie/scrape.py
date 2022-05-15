@@ -49,7 +49,7 @@ def fetch_data():
             city=addr.city,
             state="",
             zip_postal=addr.postcode,
-            country_code="GR",
+            country_code="IE",
             store_number="",
             phone=poi["contactPoint"]["telephone"],
             location_type=poi["@type"],

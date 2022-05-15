@@ -1,54 +1,28 @@
-import csv
 import json
+import time
 
 from bs4 import BeautifulSoup
 
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+
 from sgrequests import SgRequests
 
-session = SgRequests()
 
+def fetch_data(sgw: SgWriter):
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
+    headers = {"User-Agent": user_agent}
 
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-                "page_url",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
     session = SgRequests()
-    headers = {
-        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
-    }
 
     locator_domain = "https://www.jaycfoods.com/"
     ext = "storelocator-sitemap.xml"
     r = session.get(locator_domain + ext, headers=headers)
 
-    soup = BeautifulSoup(r.content, "html.parser")
+    soup = BeautifulSoup(r.text, "html.parser")
     loc_urls = soup.find_all("loc")
 
     link_list = []
@@ -57,15 +31,32 @@ def fetch_data():
             continue
         link_list.append(loc.text)
 
-    all_store_data = []
     for link in link_list:
         r = session.get(link, headers=headers)
-        soup = BeautifulSoup(r.content, "html.parser")
-        loc_json = json.loads(
-            str(soup.find("script", {"type": "application/ld+json"}))
-            .split(">")[1]
-            .split("<")[0]
-        )
+        soup = BeautifulSoup(r.text, "html.parser")
+        try:
+            loc_json = json.loads(
+                soup.find("script", {"type": "application/ld+json"}).contents[0]
+            )
+        except:
+            try:
+                session = SgRequests()
+                time.sleep(5)
+                req = session.get(link, headers=headers)
+                time.sleep(4)
+                soup = BeautifulSoup(req.text, "lxml")
+                loc_json = json.loads(
+                    soup.find("script", {"type": "application/ld+json"}).contents[0]
+                )
+            except:
+                session = SgRequests()
+                time.sleep(10)
+                req = session.get(link, headers=headers)
+                time.sleep(10)
+                soup = BeautifulSoup(req.text, "lxml")
+                loc_json = json.loads(
+                    soup.find("script", {"type": "application/ld+json"}).contents[0]
+                )
 
         try:
             addy = loc_json["address"]
@@ -95,38 +86,40 @@ def fetch_data():
         location_name = soup.find("h1", {"class": "StoreDetails-header"}).text
 
         phone_number = soup.find("span", {"class": "PhoneNumber-phone"}).text
-        hours = " ".join(loc_json["openingHours"])
+        hours = (
+            " ".join(loc_json["openingHours"])
+            .replace("Su-Sa", "Sun - Sat:")
+            .replace("Su-Fr", "Sun - Fri:")
+            .replace("-00:00", " - Midnight")
+            .replace("Su ", "Sun ")
+            .replace("Mo-Fr", "Mon - Fri")
+            .replace("Sa ", "Sat ")
+            .replace("  ", " ")
+        )
         country_code = "US"
-        page_url = link
 
         location_type = "<MISSING>"
-        store_number = page_url.split("/")[-1]
+        store_number = link.split("/")[-1]
 
-        store_data = [
-            locator_domain,
-            location_name,
-            street_address,
-            city,
-            state,
-            zip_code,
-            country_code,
-            store_number,
-            phone_number,
-            location_type,
-            lat,
-            longit,
-            hours,
-            page_url,
-        ]
-
-        all_store_data.append(store_data)
-
-    return all_store_data
+        sgw.write_row(
+            SgRecord(
+                locator_domain=locator_domain,
+                page_url=link,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_code,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone_number,
+                location_type=location_type,
+                latitude=lat,
+                longitude=longit,
+                hours_of_operation=hours,
+            )
+        )
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    fetch_data(writer)

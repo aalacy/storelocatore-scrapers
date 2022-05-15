@@ -1,3 +1,5 @@
+import time
+
 from sgrequests import SgRequests
 
 from sgscrape.sgwriter import SgWriter
@@ -25,7 +27,8 @@ def fetch_data(sgw: SgWriter):
 
     search = DynamicZipSearch(
         country_codes=[SearchableCountries.USA, SearchableCountries.CANADA],
-        max_radius_miles=max_distance,
+        max_search_distance_miles=max_distance,
+        expected_search_radius_miles=max_distance,
     )
 
     logger.info("Running sgzip ..")
@@ -34,15 +37,12 @@ def fetch_data(sgw: SgWriter):
         logger.info(base_link)
 
         try:
-            stores = session.get(base_link, headers=headers, timeout=20).json()[
-                "locations"
-            ]
+            stores = session.get(base_link, headers=headers).json()["locations"]
         except:
             logger.info("Timeout..Retrying ..")
+            time.sleep(10)
             session = SgRequests()
-            stores = session.get(base_link, headers=headers, timeout=40).json()[
-                "locations"
-            ]
+            stores = session.get(base_link, headers=headers).json()["locations"]
 
         for store in stores:
             locator_domain = "poolcorp.com"
@@ -63,7 +63,7 @@ def fetch_data(sgw: SgWriter):
             zip_code = store["zip"]
             store_number = store["sitenumber"]
             try:
-                phone = store["phone"]
+                phone = store["phone"].replace("(", "").replace(")", "")
             except:
                 phone = ""
             latitude = store["latlon"].split(",")[0]

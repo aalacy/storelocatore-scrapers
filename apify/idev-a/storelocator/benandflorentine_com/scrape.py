@@ -3,7 +3,9 @@ from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
 import json
 from bs4 import BeautifulSoup as bs
-from sgscrape.sgpostal import parse_address_intl
+from sgpostal.sgpostal import parse_address_intl
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 _headers = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1",
@@ -36,7 +38,6 @@ def fetch_data():
             .strip()[:-1]
         )["KOObject"][0]["locations"]
         for x, _ in enumerate(locations):
-            hours = []
             blocks = [
                 list(p.stripped_strings)
                 for p in bs(_["description"], "lxml").select("p")
@@ -47,8 +48,9 @@ def fetch_data():
             phone = ""
             if _p(" ".join(blocks[-1])):
                 phone = " ".join(blocks[-1])
+                del blocks[-1]
             hours = []
-            for hh in blocks[1]:
+            for hh in blocks[-1]:
                 if "temporarily closed" in hh.lower():
                     hours = ["Temporarily closed"]
                     break
@@ -57,7 +59,8 @@ def fetch_data():
                 if "take-out" in hh.lower() or "open" in hh.lower():
                     continue
                 hours.append(hh)
-            addr = parse_address_intl(" ".join(blocks[0]))
+            raw_address = " ".join(blocks[0]).replace(".", ". ")
+            addr = parse_address_intl(raw_address)
             street_address = addr.street_address_1
             if addr.street_address_2:
                 street_address += " " + addr.street_address_2
@@ -76,7 +79,7 @@ def fetch_data():
                 store_number=x,
                 location_name=_["title"],
                 street_address=street_address,
-                city=addr.city,
+                city=addr.city or _["title"],
                 state=state.replace("Local", ""),
                 zip_postal=zip_postal,
                 latitude=_["latitude"],
@@ -85,11 +88,12 @@ def fetch_data():
                 phone=phone,
                 locator_domain=locator_domain,
                 hours_of_operation="; ".join(hours),
+                raw_address=raw_address,
             )
 
 
 if __name__ == "__main__":
-    with SgWriter() as writer:
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

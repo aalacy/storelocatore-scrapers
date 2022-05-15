@@ -1,123 +1,130 @@
-import csv
 import json
-import re
-
-from bs4 import BeautifulSoup
-
+from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
-
-session = SgRequests()
-
-
-def write_output(data):
-    with open("data.csv", "w") as output_file:
-        writer = csv.writer(output_file, delimiter=",")
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-                "page_url",
-            ]
-        )
-        for i in data or []:
-            writer.writerow(i)
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgpostal.sgpostal import USA_Best_Parser, parse_address
 
 
-def fetch_data():
-    addressess = []
+def fetch_data(sgw: SgWriter):
+
+    locator_domain = "https://fit4lifehealthclubs.com/"
+    api_url = "https://fit4lifehealthclubs.com/find-a-gym/"
+    session = SgRequests()
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
-    base_url = "https://fit4lifehealthclubs.com"
-    r_data = session.get("https://fit4lifehealthclubs.com/find-a-gym/", headers=headers)
-    r_soup = BeautifulSoup(r_data.text, "lxml")
-    json_data = json.loads(str(r_soup).split('places":')[1].split(',"listing":')[0])
+    r = session.get(api_url, headers=headers)
+    tree = html.fromstring(r.text)
+    div = (
+        "".join(tree.xpath('//script[contains(text(), "map_options")]/text()'))
+        .split('"places":')[1]
+        .split(',"listing"')[0]
+    )
+    js = json.loads(div)
+    for j in js:
 
-    for value in json_data:
-        if "Hope Mills" in value["title"]:
-            continue
-        location_name = value["title"]
-        city = value["location"]["city"].replace("Anderson Creek", "Spring Lake")
-        state = value["location"]["state"]
-        zipp = value["location"]["postal_code"]
-        if location_name == "McGee's Crossroads":
-            street_address = "".join(
-                value["address"].replace(", USA", "").split(",")[:2]
-            ).replace(city, "")
-        elif location_name == "Raeford":
-            street_address = "4550 Fayetteville Rd."
-        else:
-            street_address = value["address"].replace(", USA", "").split(",")[0]
-
+        location_name = j.get("title")
+        info = j.get("content")
+        b = html.fromstring(info)
+        page_url = "".join(b.xpath("//a/@href"))
+        content = "<MISSING>"
+        if page_url == "https://fit4lifehealthclubs.com/fayetteville-2/":
+            page_url = api_url
+            content = (
+                "".join(b.xpath("//text()[1]"))
+                .replace("\n", "")
+                .replace("\r", "")
+                .split("•")[-2]
+                .strip()
+            )
+        ad = j.get("address")
+        a = parse_address(USA_Best_Parser(), ad)
+        street_address = f"{a.street_address_1} {a.street_address_2}".replace(
+            "None", ""
+        ).strip()
+        state = j.get("location").get("state")
+        postal = j.get("location").get("postal_code")
         country_code = "US"
-        store_number = value["id"]
-        content = value["content"]
-        reg = re.compile(
-            r"(\d{3}[-\.\s]??\d{3}[-\.\s]??\d{4}|\(\d{3}\)\s*\d{3}[-\.\s]??\d{4}|\d{3}[-\.\s]??\d{4})"
-        )
-        phone = reg.findall(content)[0]
-        location_type = "<MISSING>"
-        latitude = value["location"]["lat"]
-        longitude = value["location"]["lng"]
-        page_url = content.split('<a href="')[1].split('">Location Page')[0]
-
-        if location_name == "Fayetteville - Owens Dr.":
-            page_url = "https://fit4lifehealthclubs.com/fayetteville-owen-dr/"
-            phone = "910-223-9970"
-
+        city = j.get("location").get("city")
+        store_number = j.get("id")
+        latitude = j.get("location").get("lat")
+        longitude = j.get("location").get("lng")
         r = session.get(page_url, headers=headers)
-        soup = BeautifulSoup(r.text, "lxml")
-
-        hours_of_operation = "<MISSING>"
-        raw_hours = soup.find_all("div", {"class": "wpb_wrapper"})[30:]
-        for hour in raw_hours:
-            if "hours:" in hour.text.lower():
-                hours_of_operation = (
-                    " ".join(list(hour.stripped_strings))
-                    .replace(": :", ": ")
-                    .replace("/span>", "")
+        tree = html.fromstring(r.text)
+        phone = (
+            "".join(
+                tree.xpath(
+                    '//*[./*[contains(text(), "PHONE")]]/following-sibling::text()[1]'
                 )
+            )
+            .replace("\n", "")
+            .strip()
+            or "<MISSING>"
+        )
+        if phone == "<MISSING>":
+            phone = (
+                "".join(tree.xpath('//*[./*[contains(text(), "PHONE")]]//span/text()'))
+                .replace("\n", "")
+                .strip()
+                or "<MISSING>"
+            )
+        if phone == "<MISSING>":
+            phone = content
+        hours_of_operation = (
+            " ".join(
+                tree.xpath(
+                    "//div[.//iframe]/following::h2[1]/following-sibling::p[1]//text()"
+                )
+            )
+            .replace("\n", "")
+            .strip()
+            or "<MISSING>"
+        )
+        hours_of_operation = " ".join(hours_of_operation.split())
+        if hours_of_operation == "<MISSING>":
+            hours_of_operation = (
+                " ".join(
+                    tree.xpath(
+                        "//div[.//iframe]/following::h1[1]/following-sibling::p[1]//text()"
+                    )
+                )
+                .replace("\n", "")
+                .strip()
+                or "<MISSING>"
+            )
+            hours_of_operation = " ".join(hours_of_operation.split())
+        cms = "".join(tree.xpath('//*[contains(text(), "Opening Soon")]/text()'))
+        if cms:
+            hours_of_operation = "Coming Soon"
+        hours_of_operation = hours_of_operation.replace("/span>", "").strip()
 
-        if location_name == "Mt. Olive":
-            street_address = street_address.replace("Mount Olive", "").strip()
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+            raw_address=ad,
+        )
 
-        store = []
-        store.append(base_url if base_url else "<MISSING>")
-        store.append(location_name if location_name else "<MISSING>")
-        store.append(street_address if street_address else "<MISSING>")
-        store.append(city if city else "<MISSING>")
-        store.append(state if state else "<MISSING>")
-        store.append(zipp if zipp else "<MISSING>")
-        store.append(country_code)
-        store.append(store_number)
-        store.append(phone if phone else "<MISSING>")
-        store.append(location_type)
-        store.append(latitude)
-        store.append(longitude)
-        store.append(hours_of_operation)
-        store.append(page_url)
-        store = [x.replace("–", "-") if type(x) == str else x for x in store]
-        if store[2] in addressess:
-            continue
-        addressess.append(store[2])
-        yield store
+        sgw.write_row(row)
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+if __name__ == "__main__":
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
+    ) as writer:
+        fetch_data(writer)
