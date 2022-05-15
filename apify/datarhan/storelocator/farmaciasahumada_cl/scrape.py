@@ -29,6 +29,8 @@ def fetch_data():
     for poi_html in all_locations:
         geo = poi_html.xpath(".//a/@onclick")[0].split("Map(")[-1].split(",")[:2]
         street_address = poi_html.xpath(".//h4/strong/text()")[0]
+        if street_address == "Default Source":
+            continue
         city = (
             poi_html.xpath(".//p[1]//text()")[0]
             .strip()

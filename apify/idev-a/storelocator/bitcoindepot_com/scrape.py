@@ -154,13 +154,16 @@ def fetch_records(http):
         if hours_of_operation and hours_of_operation.strip().endswith(";"):
             hours_of_operation = hours_of_operation[:-1]
 
+        zip_postal = _["zip"]
+        if zip_postal:
+            zip_postal = zip_postal.replace("Canada", "").replace(",", "").strip()
         yield SgRecord(
             page_url=page_url,
             location_name=_["name"],
             street_address=_["address"].replace(",", ""),
             city=_["city"],
             state=_["state"],
-            zip_postal=_["zip"].replace("Canada", "").replace(",", "").strip(),
+            zip_postal=zip_postal,
             location_type=_.get("type"),
             latitude=_.get("lat"),
             longitude=_.get("lng"),
