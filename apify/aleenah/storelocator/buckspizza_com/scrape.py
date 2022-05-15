@@ -26,15 +26,28 @@ def fetch_data():
         loclist = soup.findAll(
             "div",
             {"class": "nd_options_display_table_cell nd_options_vertical_align_bottom"},
-        )[:-2]
+        )
         for loc in loclist:
-            page_url = loc.find("a")["href"]
+            page_url = loc.find("a")["href"].strip("/") + "/"
             if "franchise-information" in page_url:
                 continue
             log.info(page_url)
             r = session.get(page_url, headers=headers)
             soup = BeautifulSoup(r.text, "html.parser")
-            location_name = soup.find("h1").text
+            try:
+                longitude, latitude = (
+                    soup.select_one("iframe[src*=maps]")["src"]
+                    .split("!2d", 1)[1]
+                    .split("!2m", 1)[0]
+                    .split("!3d")
+                )
+            except:
+                longitude = MISSING
+                latitude = MISSING
+            try:
+                location_name = soup.find("h1").text
+            except:
+                continue
             temp = soup.findAll("div", {"class": "wpb_wrapper"})[1].findAll("h3")
             try:
                 address = temp[0].get_text(separator="|", strip=True).split("|")
@@ -60,9 +73,14 @@ def fetch_data():
                 soup.findAll("p")[2]
                 .get_text(separator="|", strip=True)
                 .replace("|", " ")
+                .replace("Temporary Hours:", "")
+                .replace("Hours:", "")
             )
+
             if "DINE-IN" in hours_of_operation:
                 hours_of_operation = MISSING
+            elif "Temporarily Closed" in hours_of_operation:
+                hours_of_operation = "Temporarily Closed"
             country_code = "US"
             yield SgRecord(
                 locator_domain=DOMAIN,
@@ -76,8 +94,8 @@ def fetch_data():
                 store_number=MISSING,
                 phone=phone.strip(),
                 location_type=MISSING,
-                latitude=MISSING,
-                longitude=MISSING,
+                latitude=latitude,
+                longitude=longitude,
                 hours_of_operation=hours_of_operation.strip(),
             )
 

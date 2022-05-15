@@ -47,6 +47,14 @@ def get_address(line):
     return street_address, city, state, postal
 
 
+def get_raw(page_url):
+    r = session.get(page_url)
+    tree = html.fromstring(r.text)
+    raw = "".join(tree.xpath("//title/text()")).split("|")[0].strip()
+
+    return raw
+
+
 def fetch_data(sgw: SgWriter):
     api = "https://www.hutchs.net/locations/"
 
@@ -59,12 +67,14 @@ def fetch_data(sgw: SgWriter):
 
     for d in divs:
         page_url = "".join(d.xpath(".//a[@class='location-link']/@href"))
-        raw_address = "".join(d.xpath(".//a[@class='location-link']/h3/text()")).strip()
-        street_address, city, state, postal = get_address(raw_address)
-        country_code = "US"
-        location_name = "".join(
+        raw_address = " ".join(
             d.xpath(".//a[@class='location-link']/following-sibling::h5[1]/text()")
         ).strip()
+        if raw_address == ",":
+            raw_address = get_raw(page_url)
+        street_address, city, state, postal = get_address(raw_address)
+        country_code = "US"
+        location_name = "".join(d.xpath(".//a[@class='location-link']//text()")).strip()
         store_number = location_name.split()[-1]
         phone = "".join(d.xpath(".//a[contains(@href, 'tel:')]/h5/text()")).strip()
 
@@ -77,11 +87,15 @@ def fetch_data(sgw: SgWriter):
         except:
             latitude = SgRecord.MISSING
             longitude = SgRecord.MISSING
-        hours_of_operation = "".join(
-            d.xpath(
-                ".//div[@class='location-amenities']/preceding-sibling::h5[1]/text()"
+        hours_of_operation = (
+            "".join(
+                d.xpath(
+                    ".//div[@class='location-amenities']/preceding-sibling::h5[1]/text()"
+                )
             )
-        ).strip()
+            .strip()
+            .replace("\r\n", ";")
+        )
 
         row = SgRecord(
             page_url=page_url,

@@ -79,7 +79,7 @@ def fetch_data():
             city=city.strip(),
             state=state,
             zip_postal=pcode,
-            country_code="PT",
+            country_code="IT",
             store_number=MISSING,
             phone=phone,
             location_type=MISSING,
