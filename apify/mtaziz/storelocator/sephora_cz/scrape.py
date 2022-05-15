@@ -49,8 +49,6 @@ LOCATION_URLS_GRID = [
     "https://www.sephora.se/butiker/",
 ]  # Store locators for all countries
 
-# LOCATION_URLS_GRID = sorted(NEW_STORE_LOCATOR_URLS)
-
 LOCATION_URLS_GRID = sorted(LOCATION_URLS_GRID)
 
 
