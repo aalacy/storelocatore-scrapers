@@ -3,6 +3,9 @@ from selenium import webdriver  # noqa
 import undetected_chromedriver as uc
 import time
 from sgscrape import simple_scraper_pipeline as sp
+import ssl
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 
 def get_driver(url, driver=None):
