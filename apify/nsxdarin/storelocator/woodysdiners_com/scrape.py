@@ -12,7 +12,7 @@ user_agent = (
 
 def fetch_data():
     with SgFirefox(is_headless=True) as driver:
-        
+
         url = "https://www.woodysdiners.com/locations"
         loc = "https://www.woodysdiners.com/locations"
 
