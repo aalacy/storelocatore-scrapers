@@ -356,6 +356,16 @@ def fetch_data():
         )
         if city == "" or city is None:
             city = "<MISSING>"
+        hours = hours.strip()
+        if hours[-1:] == ";":
+            hours = hours[:-1]
+        if "." not in lat:
+            lat = "<MISSING>"
+        if "." not in lng:
+            lng = "<MISSING>"
+        hours = hours.replace("sedSun", "sed; Sun").replace("pmSun", "pm; Sun")
+        if "appointment" in hours.lower():
+            hours = "Monday-Sunday: Closed"
         yield SgRecord(
             locator_domain=website,
             page_url=loc,
