@@ -99,9 +99,19 @@ def fetch_data():
                 if day_val == "7":
                     day = "Sunday:"
 
-                hours_list.append(
-                    day + hours[index].split(",", 1)[1].replace(",", " - ").strip()
+                ftime = hours[index].split(",", 1)[1].replace(",", " - ").strip()
+                hour_time = (
+                    ftime.split(" - ")[0].strip()[:2]
+                    + ":"
+                    + ftime.split(" - ")[0].strip()[2:]
                 )
+                minute_time = (
+                    ftime.split(" - ")[1].strip()[:2]
+                    + ":"
+                    + ftime.split(" - ")[1].strip()[2:]
+                )
+                time = hour_time + " - " + minute_time
+                hours_list.append(day + time)
 
         hours_of_operation = (
             "; ".join(hours_list)

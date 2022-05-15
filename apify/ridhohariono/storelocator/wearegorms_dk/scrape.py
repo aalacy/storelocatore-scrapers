@@ -76,7 +76,11 @@ def fetch_data():
         country_code = "DK"
         hours_of_operation = MISSING
         store_number = MISSING
-        location_type = MISSING
+        location_type = (
+            row.find_previous("div", id=re.compile(r"restauranter|pizzabarer"))
+            .find("h2")
+            .text.strip()
+        )
         latitude = MISSING
         longitude = MISSING
         log.info("Append {} => {}".format(location_name, street_address))

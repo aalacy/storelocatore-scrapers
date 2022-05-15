@@ -35,8 +35,8 @@ def fetch_data(sgw: SgWriter):
             ).strip()
             or "<MISSING>"
         )
-        latitude = "".join(d.xpath("./@data-lat")) or "<MISSING>"
-        longitude = "".join(d.xpath("./@data-lng")) or "<MISSING>"
+        latitude = "".join(d.xpath("./@data-lat")).replace(",", ".") or "<MISSING>"
+        longitude = "".join(d.xpath("./@data-lng")).replace(",", ".") or "<MISSING>"
         if latitude == longitude:
             latitude, longitude = "<MISSING>", "<MISSING>"
         hours_of_operation = (

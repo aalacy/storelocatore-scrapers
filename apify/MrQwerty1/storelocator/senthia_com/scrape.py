@@ -31,6 +31,7 @@ def fetch_data(sgw: SgWriter):
         ).strip()
         raw_address = " ".join(" ".join(d.xpath(".//address//text()")).split())
         street_address, city, state, postal = get_international(raw_address)
+        city = d.xpath(".//address//text()")[-1].strip()
 
         _tmp = []
         hours = d.xpath(".//tr")

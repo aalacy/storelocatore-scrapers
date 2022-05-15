@@ -20,10 +20,15 @@ def fetch_data():
         for _ in locations:
             p = _.select("p")
             coord = p[3].a["href"].split("/@")[1].split("/data")[0].split(",")
+            location_name = p[0].text.strip()
+            city = ""
+            if "–" in location_name or "-" in location_name:
+                city = location_name.split("-")[0].split("–")[0].strip()
             yield SgRecord(
                 page_url=base_url,
-                location_name=p[0].text.strip(),
+                location_name=location_name,
                 street_address=p[1].text.strip(),
+                city=city,
                 country_code="CL",
                 latitude=coord[0],
                 longitude=coord[1],

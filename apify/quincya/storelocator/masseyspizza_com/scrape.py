@@ -52,7 +52,9 @@ def fetch_data(sgw: SgWriter):
         street_address = (
             street_address.replace("Indian Mound Mall", "").split("Wal-")[0].strip()
         )
-        hours_of_operation = hours_of_operation.split("DINING")[0].strip()
+        hours_of_operation = (
+            hours_of_operation.split("DINING")[0].split("VIEW")[0].strip()
+        )
         map_link = ""
         try:
             map_link = item.find("a", string="View Map")["href"]

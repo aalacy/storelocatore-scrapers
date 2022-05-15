@@ -1,0 +1,8 @@
+# Ignore following validation checks
+
+- --ignore CountryCodeFillRateChecker
+- --ignore CentroidValidator
+- --ignore StreetAddressHasNumber
+- --ignore StreetAddressHasStateName
+- --ignore GeoConsistencyValidator
+- --ignore CountryValidator

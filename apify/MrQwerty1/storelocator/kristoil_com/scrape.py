@@ -38,13 +38,19 @@ def get_address(line):
 
     try:
         a = usaddress.tag(line, tag_mapping=tag)[0]
-        street_address = f"{a.get('address1')} {a.get('address2') or ''}".strip()
-        if street_address == "None":
-            street_address = "<MISSING>"
+        adr1 = a.get("address1") or ""
+        adr2 = a.get("address2") or ""
+        street_address = f"{adr1} {adr2}".strip()
     except usaddress.RepeatedLabelError:
         street_address = line.split(",")[0]
         a = usaddress.tag(",".join(line.split(",")[1:]), tag_mapping=tag)[0]
 
+    if "Box" in street_address:
+        street_address = street_address.split("Box")[0].strip()
+    if "PO" in street_address:
+        street_address = street_address.split("PO")[0].strip()
+    if street_address.endswith(","):
+        street_address = street_address[:-1]
     city = a.get("city")
     state = a.get("state")
     postal = a.get("postal")
@@ -53,7 +59,7 @@ def get_address(line):
 
 
 def fetch_data(sgw: SgWriter):
-    api = "https://kristoil.com/wp-content/themes/krist-mar-2022/ajax/map.php"
+    api = "https://kristoil.com/wp-content/themes/krist-oil-apr-2022-4/ajax/map.php"
     r = session.get(api, headers=headers)
     js = r.json().values()
     r = session.get(page_url, headers=headers)

@@ -28,15 +28,15 @@ def fetch_data():
             .split("Order Online")[:-1]
         )
         for loc in loclist:
-            loc = (
-                BeautifulSoup(loc, "html.parser")
-                .get_text(separator="|", strip=True)
-                .split("|")
-            )
+            loc = BeautifulSoup(loc, "html.parser")
+            coords = loc.select_one("a[href*=maps]")["href"].split("@")[1].split(",")
+            latitude = coords[0]
+            longitude = coords[1]
+            loc = loc.get_text(separator="|", strip=True).split("|")
             location_name = loc[0]
             log.info(location_name)
             street_address = loc[1]
-            city = MISSING
+            city = location_name
             state = "Ontario"
             zip_postal = MISSING
             country_code = "CA"
@@ -53,8 +53,8 @@ def fetch_data():
                 store_number=MISSING,
                 phone=phone.strip(),
                 location_type=MISSING,
-                latitude=MISSING,
-                longitude=MISSING,
+                latitude=latitude,
+                longitude=longitude,
                 hours_of_operation=MISSING,
             )
 

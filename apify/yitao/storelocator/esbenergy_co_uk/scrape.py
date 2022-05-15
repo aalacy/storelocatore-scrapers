@@ -57,7 +57,7 @@ def _make_sg_record(station_obj: Dict[str, Any]) -> SgRecord:
         page_url=PAGE_URL,
         location_name=station_obj["caption"],
         street_address=station_obj["addressAddress1"],
-        city=station_obj["addressCity"],
+        city=station_obj["addressCity"].split("(")[0].strip(),
         zip_postal=station_obj["addressZipCode"],
         country_code=station_obj["addressCountryIso2Code"],
         store_number=station_obj["id"],
