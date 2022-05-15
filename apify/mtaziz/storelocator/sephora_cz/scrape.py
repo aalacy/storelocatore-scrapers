@@ -25,9 +25,9 @@ else:
 DOMAIN = "sephora.cz"
 MISSING = SgRecord.MISSING
 logger = SgLogSetup().get_logger("sephora_cz")  # noqa
+
 headers = {
-    "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-    "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.159 Safari/537.36",
+    "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.159 Safari/537.36"
 }
 MAX_WORKERS = 10
 
@@ -48,8 +48,6 @@ LOCATION_URLS_GRID = [
     "https://www.sephora.sa/en/store",
     "https://www.sephora.se/butiker/",
 ]  # Store locators for all countries
-
-LOCATION_URLS_GRID = sorted(LOCATION_URLS_GRID)
 
 
 # Middle East
@@ -295,9 +293,6 @@ def fetch_data(sgw: SgWriter):
         tasks.extend(task)
         for future in as_completed(tasks):
             future.result()
-
-
-1
 
 
 def scrape():
