@@ -98,8 +98,6 @@ def get_state(url, driver, retry=0):
         if retry < 3:
             return get_state(url, driver, retry + 1)
 
-        print(e)
-
 
 def fetch_data():
     locations = []
