@@ -94,7 +94,7 @@ def get_state(url, driver, retry=0):
         driver.get(url)
         dom = etree.HTML(driver.page_source)
         return dom.xpath("//td/a")
-    except Exception as e:
+    except:
         if retry < 3:
             return get_state(url, driver, retry + 1)
 
