@@ -1,9 +1,22 @@
+import os
+import ssl
 from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+
+os.environ[
+    "PROXY_URL"
+] = "http://groups-RESIDENTIAL,country-ua:{}@proxy.apify.com:8000/"
+
+try:
+    _create_unverified_https_context = ssl._create_unverified_context
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context
 
 
 def fetch_data(sgw: SgWriter):
