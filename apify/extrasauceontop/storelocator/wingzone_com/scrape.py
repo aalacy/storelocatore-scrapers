@@ -28,7 +28,6 @@ def get_data():
         1
     ].click()
     time.sleep(2)
-    response = driver.page_source
 
     data = driver.execute_async_script(
         """
