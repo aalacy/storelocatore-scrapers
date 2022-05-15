@@ -165,20 +165,22 @@ def scrape():
     logger.info(f"Start Crawling {DOMAIN} ...")
     field_defs = sp.SimpleScraperPipeline.field_definitions(
         locator_domain=sp.ConstantField(DOMAIN),
-        page_url=sp.MappingField(mapping=["page_url"]),
-        location_name=sp.MappingField(mapping=["location_name"]),
-        latitude=sp.MappingField(mapping=["latitude"]),
-        longitude=sp.MappingField(mapping=["longitude"]),
-        street_address=sp.MappingField(mapping=["street_address"]),
-        city=sp.MappingField(mapping=["city"]),
-        state=sp.MappingField(mapping=["state"]),
-        zipcode=sp.MappingField(mapping=["zip_postal"]),
-        country_code=sp.MappingField(mapping=["country_code"]),
-        phone=sp.MappingField(mapping=["phone"]),
+        page_url=sp.MappingField(mapping=["page_url"], is_required=False),
+        location_name=sp.MappingField(mapping=["location_name"], is_required=False),
+        latitude=sp.MappingField(mapping=["latitude"], is_required=False),
+        longitude=sp.MappingField(mapping=["longitude"], is_required=False),
+        street_address=sp.MappingField(mapping=["street_address"], is_required=False),
+        city=sp.MappingField(mapping=["city"], is_required=False),
+        state=sp.MappingField(mapping=["state"], is_required=False),
+        zipcode=sp.MappingField(mapping=["zip_postal"], is_required=False),
+        country_code=sp.MappingField(mapping=["country_code"], is_required=False),
+        phone=sp.MappingField(mapping=["phone"], is_required=False),
         store_number=sp.MappingField(
             mapping=["store_number"], part_of_record_identity=True
         ),
-        hours_of_operation=sp.MappingField(mapping=["hours_of_operation"]),
+        hours_of_operation=sp.MappingField(
+            mapping=["hours_of_operation"], is_required=False
+        ),
         location_type=sp.MappingField(mapping=["location_type"], is_required=False),
     )
 

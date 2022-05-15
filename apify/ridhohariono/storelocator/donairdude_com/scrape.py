@@ -1,3 +1,4 @@
+import json
 from bs4 import BeautifulSoup as bs
 from sgrequests import SgRequests
 from sglogging import sglog
@@ -6,7 +7,7 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgpostal import parse_address_usa
-import re
+from urllib.parse import unquote
 
 DOMAIN = "donairdude.com"
 LOCATION_URL = "https://www.donairdude.com/locations"
@@ -54,41 +55,24 @@ def pull_content(url):
 def fetch_data():
     log.info("Fetching store_locator data")
     soup = pull_content(LOCATION_URL)
-    contents = soup.select(
-        "div#Containerynusx div[data-testid='mesh-container-content'] div[data-testid='inline-content']"
-    )
-    for row in contents:
-        location_name = (
-            row.find_previous("h4", {"class": "font_4"}).text.replace("\n", " ").strip()
-        )
-        info = re.sub(
-            r"Address:@@\s?|@@\s?Phone:|@@\s?Email.*",
-            "",
-            row.find_all("div", {"data-testid": "richTextElement"})[1].get_text(
-                strip=True, separator="@@"
-            ),
-        ).split("@@")
-        raw_address = info[0].strip()
+    contents = soup.find("div", {"class": "elfsight-widget-google-maps"})[
+        "data-elfsight-google-maps-options"
+    ]
+    data = json.loads(unquote(contents))["markers"]
+    for row in data:
+        location_name = row["infoTitle"].strip()
+        if "Coming Soon" in location_name:
+            continue
+        raw_address = row["infoAddress"].replace("\n", "").strip()
         street_address, city, state, zip_postal = getAddress(raw_address)
+        phone = row["infoPhone"]
         country_code = "US"
-        phone = info[1].strip()
-        hours_of_operation = (
-            " ".join(
-                re.sub(
-                    r"^​,|STORE HOURS,",
-                    "",
-                    row.find_all("div", {"data-testid": "richTextElement"})[
-                        -1
-                    ].get_text(strip=True, separator=","),
-                ).split()
-            )
-            .replace("day.", "day")
-            .strip()
-        )
+        hours_of_operation = row["infoWorkingHours"].strip()
         location_type = MISSING
         store_number = MISSING
-        latitude = MISSING
-        longitude = MISSING
+        latlong = row["coordinates"].split(",")
+        latitude = latlong[0].strip()
+        longitude = latlong[1].strip()
         log.info("Append {} => {}".format(location_name, street_address))
         yield SgRecord(
             locator_domain=DOMAIN,
