@@ -35,7 +35,6 @@ def fetch_data():
             zip_postal = loc["col_postcode"]
             country_code = "GB"
             latitude = loc["col_latitude"]
-            print(loc["col_latitude"])
             longitude = loc["col_longitude"]
             if "nan" in latitude:
                 latitude = MISSING
