@@ -8,7 +8,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 def fetch_data(sgw: SgWriter):
 
     locator_domain = "https://www.megamart.ru/"
-    api_url = "https://www.megamart.ru/ajax/getmap.php?x1=56.70693920243262&y1=60.16725341992184&x2=56.932862828554796&y2=61.05989258007811&section=300000"
+    api_url = "https://www.megamart.ru/ajax/getmap.php?x1=-21.608137966364627&y1=-107.49648449218752&x2=63.92338234213621&y2=121.01914050781247&section=300"
     session = SgRequests()
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",

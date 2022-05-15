@@ -125,6 +125,8 @@ def fetch_data():
             if not zip:
                 zip = raw_address.split(",")[-1].strip()
 
+            if zip:
+                zip = zip.replace("CLWYD LL14 1PA", "LL14 1PA").strip()
             country_code = "GB"
 
             store_number = page_url.split("?id=")[1].strip()

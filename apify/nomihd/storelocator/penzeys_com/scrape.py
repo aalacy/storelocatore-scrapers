@@ -30,7 +30,7 @@ def fetch_data():
     stores = session.get(search_url, headers=headers).json()["Locations"]
 
     for store in stores:
-        page_url = "<MISSING>"
+        page_url = "https://www.penzeys.com/locations/"
 
         locator_domain = website
         location_name = "Penzeys"
@@ -65,10 +65,21 @@ def fetch_data():
         if store["IsActive"] is False:
             location_type = "NOW CLOSED"
 
-        hours_of_operation = "<MISSING>"
+        hours = store.get("HoursOfOperation", [])
+        hours_list = []
+        for hour in hours:
+            day = hour["daysOfWeek"]
+            if day == "NOW OPEN":
+                continue
+            time = hour["timeOpen"] + " - " + hour["timeClose"]
+            hours_list.append(day + ":" + time)
+
+        hours_of_operation = "; ".join(hours_list).strip()
 
         latitude = store["Lat"]
         longitude = store["Long"]
+        if latitude == longitude == 0:
+            latitude = longitude = "<MISSING>"
 
         yield SgRecord(
             locator_domain=locator_domain,

@@ -50,8 +50,8 @@ def fetch_data():
                 for store in stores.keys():
                     locator_domain = website
                     location_name = stores[store]["name"]
-                    if location_name != "Hibbett Sports":
-                        continue
+                    if "hibbett" in location_name.lower():
+                        location_name = "Hibbett Sports"
                     street_address = stores[store]["address1"]
                     if len(stores[store]["address2"]) > 0:
                         street_address = (

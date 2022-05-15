@@ -4,6 +4,8 @@ from sglogging import sglog
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 import lxml.html
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "simplefloors.com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
@@ -46,51 +48,49 @@ def get_latlng(lat_lng_href):
 def fetch_data():
     # Your scraper here
 
-    search_url = "https://www.simplefloors.com/page/store-locations"
+    search_url = "https://simplefloors.com/pages/copy-of-residential"
     search_res = session.get(search_url, headers=headers)
     search_sel = lxml.html.fromstring(search_res.text)
 
-    store_list = search_sel.xpath("//table//table//tr")
+    store_list = search_sel.xpath("//table//tr/td")
 
     for store in store_list:
 
         page_url = search_url
         locator_domain = website
 
-        location_name = " ".join(
-            list(
-                filter(
-                    str,
-                    store.xpath('.//a[not(contains(@href,"maps"))]//text()'),
+        location_name = "".join(store.xpath("strong/text()")).strip()
+        if len(location_name) <= 0:
+            location_name = " ".join(store.xpath("p/strong/text()")).strip()
+            if len(location_name) <= 0:
+                continue
+        raw_info = list(filter(str, ([x.strip() for x in store.xpath(".//text()")])))
+        address_info = []
+        phone = "<MISSING>"
+        hours_of_operation = "<MISSING>"
+        for index in range(0, len(raw_info)):
+            if "Tel:" in raw_info[index]:
+                phone = raw_info[index].strip().replace("Tel:", "").strip()
+
+            if "Store Hours" in raw_info[index]:
+                hours_of_operation = (
+                    "; ".join(raw_info[index + 1 :])
+                    .strip()
+                    .replace("PM; ", "PM ")
+                    .strip()
                 )
-            )
-        ).strip()
 
-        address_info = list(
-            filter(
-                str,
-                store.xpath('.//a[not(contains(@href,"maps"))]/../text()'),
-            )
-        )
+            if raw_info[index].split(" ")[0].strip().isdigit():
+                address_info = raw_info[index : index + 2]
 
-        address_info = list(filter(str, ([x.strip() for x in address_info])))
         street_address, city, state, zip, country_code = split_fulladdress(address_info)
 
         store_number = "<MISSING>"
 
-        phone = "".join(store.xpath("./td[2]/div[1]//text()")).strip()
-
         location_type = "<MISSING>"
 
-        hours_info = list(filter(str, store.xpath("./td[2]/div[2]//text()")))
-        hours_info = list(filter(str, [x.strip() for x in hours_info]))
+        latitude, longitude = "<MISSING>", "<MISSING>"
 
-        hours_of_operation = "; ".join(hours_info)
-
-        lat_lng_href = "".join(store.xpath('.//a[contains(@href,"maps")]/@href'))
-        latitude, longitude = get_latlng(lat_lng_href)
-
-        raw_address = "<MISSING>"
         yield SgRecord(
             locator_domain=locator_domain,
             page_url=page_url,
@@ -106,14 +106,23 @@ def fetch_data():
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hours_of_operation,
-            raw_address=raw_address,
         )
 
 
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.CITY,
+                    SgRecord.Headers.ZIP,
+                }
+            )
+        )
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

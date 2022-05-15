@@ -47,7 +47,12 @@ def request_with_retries(payload):
         if store["AddressLine2"]:
             street_address += ", " + store["AddressLine2"]
 
-        location_type = store["EntityType"]
+        if "exxon" in store["BrandingImage"]:
+            location_type = "exxon"
+        elif "mobil" in store["BrandingImage"]:
+            location_type = "mobil"
+        else:
+            location_type = store["EntityType"]
 
         city = store["City"]
         state = store["StateProvince"]
@@ -57,6 +62,7 @@ def request_with_retries(payload):
         latitude = store["Latitude"]
         longitude = store["Longitude"]
         page_url = f'https://www.exxon.com/en/find-station/exxon-{city.replace(" ", "").lower()}-{state.lower()}-{location_name.lower().replace(" ", "")}-{store_number}'
+        page_url = page_url.replace("#", "")
 
         hoo = ""
         if store["WeeklyOperatingHours"]:

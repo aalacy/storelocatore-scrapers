@@ -24,7 +24,7 @@ def fetch_data():
 
         search_sel = lxml.html.fromstring(search_res.text)
 
-        stores = search_sel.xpath("//div[h5]")
+        stores = search_sel.xpath("//div[@class='home-map-card']")
 
         for no, store in enumerate(stores, 1):
 
@@ -33,9 +33,9 @@ def fetch_data():
 
             page_url = search_url
 
-            location_name = "".join(store.xpath("./h5//text()")).strip()
+            location_name = "".join(store.xpath("./h2//text()")).strip()
 
-            location_type = "<MISSING>"
+            location_type = "".join(store.xpath("./h5//text()")).strip()
 
             store_info = list(
                 filter(
@@ -43,8 +43,6 @@ def fetch_data():
                     [x.strip() for x in store.xpath(".//p//text()")],
                 )
             )
-
-            log.info(store_info)
 
             if "." in store_info[-2]:
                 phone = store_info[-2]
@@ -69,8 +67,6 @@ def fetch_data():
             zip = formatted_addr.postcode
 
             country_code = "US"
-            location_name = city + " - " + location_name
-
             latitude, longitude = "<MISSING>", "<MISSING>"
 
             yield SgRecord(

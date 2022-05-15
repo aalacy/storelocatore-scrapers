@@ -17,11 +17,9 @@ headers = {
 def fetch_data():
     url = "https://aspencreekgrill.com/"
     locs = []
-    r = session.get(url, headers=headers, verify=False)
-    if r.encoding is None:
-        r.encoding = "utf-8"
+    r = session.get(url, headers=headers)
     Found = False
-    for line in r.iter_lines(decode_unicode=True):
+    for line in r.iter_lines():
         if '<ul class="sub-menu">' in line and len(locs) == 0:
             Found = True
         if Found and "Menus</a>" in line:
@@ -31,6 +29,8 @@ def fetch_data():
             if (
                 "-menu" not in lurl
                 and lurl not in locs
+                and "/gift" not in lurl
+                and "/mom" not in lurl
                 and "uploads" not in lurl
                 and "/cart" not in lurl
                 and "contact-" not in lurl
@@ -55,9 +55,7 @@ def fetch_data():
         website = "aspencreekgrill.com"
         typ = "Restaurant"
         r2 = session.get(loc, headers=headers)
-        if r2.encoding is None:
-            r2.encoding = "utf-8"
-        lines = r2.iter_lines(decode_unicode=True)
+        lines = r2.iter_lines()
         for line2 in lines:
             if "<title>" in line2 and name == "":
                 name = line2.split("<title>")[1].split("<")[0]

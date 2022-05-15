@@ -81,6 +81,8 @@ def fetch_data():
             hoo = hoo.replace("Our opening hours have changed ", "")
             if city:
                 city = city.replace(" Ze2", "")
+            if not street_address:
+                street_address = location_name
 
             item = SgRecord(
                 locator_domain=domain,
