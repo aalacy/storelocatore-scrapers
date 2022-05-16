@@ -103,6 +103,8 @@ def fetch_data():
                     country2 = line2.split('itemprop="addressCountry">')[1].split("<")[
                         0
                     ]
+                if '"postalCode": "' in line2:
+                    zc2 = line2.split('"postalCode": "')[1].split('"')[0]
             if add == "":
                 add = add2
             if city == "":
@@ -137,6 +139,8 @@ def fetch_data():
                 city = "<MISSING>"
             state = state.replace("&nbsp;", "")
             city = city.replace("&nbsp;", "")
+            rawadd = add + " " + city + " " + state + " " + zc
+            rawadd = rawadd.strip().replace("<MISSING>", "").replace("  ", " ")
             if " Hotels" not in name and name != "":
                 yield SgRecord(
                     locator_domain=website,
@@ -152,6 +156,7 @@ def fetch_data():
                     store_number=store,
                     latitude=lat,
                     longitude=lng,
+                    raw_address=rawadd,
                     hours_of_operation=hours,
                 )
         except:
