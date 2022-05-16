@@ -44,9 +44,6 @@ def get_url_for_all_countries():
     return urls_for_all_countries
 
 
-urls_for_all_countries = get_url_for_all_countries()
-
-
 def fetch_data_global():
     session = SgRequests()
 
@@ -109,7 +106,7 @@ def fetch_data_global():
                 logger.info(f"Response URL: {response_url} | BaseURL: {base_url} ")
                 country_code = response_url.split("/")[-1]
                 if country_code == "china":
-                    country_code = "CH"
+                    country_code = "CN"
                 if country_code == "france":
                     country_code = "FR"
                 if country_code == "korea":
@@ -128,6 +125,9 @@ def fetch_data_global():
                     country_code = "DE"
                 if country_code == "spain":
                     country_code = "ES"
+
+                if country_code == "kuwait":
+                    country_code = "KW"
 
                 store_number = MISSING
                 phone = ""
@@ -269,7 +269,7 @@ def fetch_data_china():
                 logger.info(f"Response URL: {response_url} | BaseURL: {base_url} ")
                 country_code = response_url.split("/")[-1]
                 if country_code == "china":
-                    country_code = "CH"
+                    country_code = "CN"
                 if country_code == "france":
                     country_code = "FR"
                 if country_code == "korea":
@@ -406,7 +406,7 @@ def fetch_data_russia():
                 country_code = response_url.split("/")[-1]
 
                 if country_code == "china":
-                    country_code = "CH"
+                    country_code = "CN"
                 if country_code == "france":
                     country_code = "FR"
                 if country_code == "korea":
@@ -555,7 +555,7 @@ def fetch_data_uae():
                 logger.info(f"Response URL: {response_url} | BaseURL: {base_url} ")
                 country_code = response_url.split("/")[-1]
                 if country_code == "china":
-                    country_code = "CH"
+                    country_code = "CN"
                 if country_code == "france":
                     country_code = "FR"
                 if country_code == "korea":
@@ -699,7 +699,7 @@ def fetch_data_korea():
                 logger.info(f"Response URL: {response_url} | BaseURL: {base_url} ")
                 country_code = response_url.split("/")[-1]
                 if country_code == "china":
-                    country_code = "CH"
+                    country_code = "CN"
                 if country_code == "france":
                     country_code = "FR"
                 if country_code == "korea":
@@ -782,6 +782,62 @@ def fetch_data_korea():
                     hours_of_operation=hours_of_operation,
                     raw_address=raw_address,
                 )
+
+
+def fetch_data_kuwait():
+    session = SgRequests()
+    for urlnum, base_url in enumerate(urls_for_all_countries[0:]):
+        if "kuwait" in base_url:
+            r = session.get(base_url, headers=headers)
+            tree = html.fromstring(r.text, "lxml")
+            add_kw = tree.xpath('//div[*[contains(text(), "Kuwait")]]//text()')
+            add_kw_new = [" ".join(i.split()) for i in add_kw]
+            address_data = [i for i in add_kw_new if i]
+            phone = "+" + address_data[-2]
+            location_name = address_data[1]
+
+            # Raw Address - Grand Avenue, Ghazali St, Al-Rai, Kuwait
+            # City Address and Street Address are kind of hard-coded.
+
+            street_address = "Grand Avenue, Ghazali St"
+            city = "Al-Rai"
+            zip_postal = ""
+            country_code = "KW"
+            latlng_from_googlemap_url = tree.xpath('//a[contains(text(), "Map")]/@href')
+            latlng_from_googlemap_url_deduped = list(
+                dict.fromkeys(latlng_from_googlemap_url)
+            )
+            latitude = (
+                latlng_from_googlemap_url_deduped[0].split("@")[1].split(",")[0]
+                or MISSING
+            )
+            longitude = (
+                latlng_from_googlemap_url_deduped[0].split("@")[1].split(",")[1]
+                or MISSING
+            )
+            page_url = base_url
+            page_url = page_url if page_url else MISSING
+            response_url = str(r.url)
+            logger.info(f"Response URL: {response_url} | BaseURL: {base_url} ")
+            raw_address = "Grand Avenue, Ghazali St, Al-Rai, Kuwait"
+
+            yield SgRecord(
+                locator_domain=DOMAIN,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state="",
+                zip_postal=zip_postal,
+                country_code=country_code,
+                store_number="",
+                phone=phone,
+                location_type="",
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation="",
+                raw_address=raw_address,
+            )
 
 
 def get_location_name(r_address, country_code):
@@ -882,7 +938,7 @@ def get_location_name(r_address, country_code):
             location_name = locname
 
     # Rules for China ( CH )
-    if "CH" in country_code:
+    if "CN" in country_code:
         if "Shanghai Byredo Plaza" in locname:
             location_name = "Byredo Plaza"
 
@@ -961,6 +1017,10 @@ def scrape():
         global_data.extend(uae_data)
         korea_data = list(fetch_data_korea())
         global_data.extend(korea_data)
+
+        kuwait_data = list(fetch_data_kuwait())
+        global_data.extend(kuwait_data)
+
         for rec in global_data:
             writer.write_row(rec)
             count = count + 1
@@ -970,4 +1030,8 @@ def scrape():
 
 
 if __name__ == "__main__":
+    urls_for_all_countries = get_url_for_all_countries()
+    logger.info(f"Store Locator URLs: {urls_for_all_countries}")
+    logger.info("Scrape Started")
     scrape()
+    logger.info("Scrape Finished")

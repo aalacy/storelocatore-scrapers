@@ -4,7 +4,7 @@ from sgrequests import SgRequests
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from bs4 import BeautifulSoup as bs
-from sgscrape.sgpostal import parse_address_intl
+from sgpostal.sgpostal import parse_address_intl
 from sglogging import SgLogSetup
 
 logger = SgLogSetup().get_logger("mamasandpapas")
@@ -21,7 +21,7 @@ def fetch_data():
     with SgRequests() as session:
         locations = session.get(base_url, headers=_headers).json()
         for _ in locations:
-            if _["tagsvalue"] != "Store":
+            if _.get("tagsvalue") != "Store":
                 continue
             hours = []
             if _["schedule"]:
