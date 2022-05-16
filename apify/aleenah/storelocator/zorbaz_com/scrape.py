@@ -1,5 +1,6 @@
 import ssl
 from sglogging import sglog
+import undetected_chromedriver as uc
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgselenium.sgselenium import SgChrome
@@ -30,11 +31,14 @@ def get_driver(url, class_name, driver=None):
     while True:
         x = x + 1
         try:
-            driver = SgChrome(
-                executable_path=ChromeDriverManager().install(),
-                user_agent=user_agent,
-                is_headless=True,
-            ).driver()
+            options = webdriver.ChromeOptions()
+            options.add_argument("start-maximized")
+            options.add_argument("--headless")
+            options.add_argument("--no-sandbox")
+            options.add_argument("--disable-dev-shm-usage")
+            driver = uc.Chrome(
+                executable_path=ChromeDriverManager().install(), options=options
+            )
             driver.get(url)
 
             WebDriverWait(driver, 30).until(
@@ -42,7 +46,6 @@ def get_driver(url, class_name, driver=None):
             )
             break
         except Exception:
-            driver.quit()
             if x == 10:
                 raise Exception(
                     "Make sure this ran with a Proxy, will fail without one"
@@ -72,6 +75,7 @@ def fetch_data():
         else:
             break
     for loc in loclist:
+        print(loc)
         try:
             phone = loc.split('"displayPhone":"')[1].split('"')[0]
         except:
@@ -79,7 +83,7 @@ def fetch_data():
         location_name = loc.split('"name":"')[1].split('"')[0]
         page_url = DOMAIN + loc.split('">Vizit Uz/Eventz')[0].split('"')[0]
         store_number = loc.split('"id":')[1].split(",")[0]
-        log.info(location_name)
+        log.info(page_url)
         street_address = loc.split('"streetAddress":"')[1].split('"')[0]
         city = loc.split('"city":"')[1].split('"')[0]
         state = loc.split('"state":"')[1].split('"')[0]
