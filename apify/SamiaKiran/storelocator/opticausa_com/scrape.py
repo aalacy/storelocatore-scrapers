@@ -2,20 +2,22 @@ import re
 from sglogging import sglog
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
-from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgpostal.sgpostal import parse_address_intl
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
 website = "opticausa_com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
-session = SgRequests()
+
 headers = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36",
-    "Accept": "application/json",
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36"
 }
 
-DOMAIN = "https://www.opticausa.com/"
-MISSING = "<MISSING>"
+DOMAIN = "https://www.opticausa.com"
+MISSING = SgRecord.MISSING
 
 
 def fetch_data():
@@ -30,27 +32,35 @@ def fetch_data():
             r = session.get(page_url, headers=headers)
             soup = BeautifulSoup(r.text, "html.parser")
             temp = soup.find("div", {"class": "col-12 col-md-4 text-center"})
-            address = (
-                temp.find("address").get_text(separator="|", strip=True).split("|")
-            )
             location_name = temp.find("h1").text
             phone = temp.select_one("a[href*=tel]").text
-            if len(address) == 6:
-                street_address = address[0]
-                address = address[1].split(",")
-            else:
-                street_address = address[1]
-                address = address[2].split(",")
-            city = address[0]
-            address = address[1].split()
-            state = address[0]
-            zip_postal = address[1]
             country_code = "US"
             hours_of_operation = (
                 temp.find("section", {"id": "hours"})
                 .get_text(separator="|", strip=True)
                 .replace("|", " ")
             )
+            raw_address = (
+                temp.find("address")
+                .get_text(separator="|", strip=True)
+                .replace("|", " ")
+                .split("Tel:")[0]
+            )
+
+            pa = parse_address_intl(raw_address)
+
+            street_address = pa.street_address_1
+            street_address = street_address if street_address else MISSING
+
+            city = pa.city
+            city = city.strip() if city else MISSING
+
+            state = pa.state
+            state = state.strip() if state else MISSING
+
+            zip_postal = pa.postcode
+            zip_postal = zip_postal.strip() if zip_postal else MISSING
+
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url=page_url,
@@ -66,13 +76,16 @@ def fetch_data():
                 latitude=MISSING,
                 longitude=MISSING,
                 hours_of_operation=hours_of_operation.strip(),
+                raw_address=raw_address,
             )
 
 
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

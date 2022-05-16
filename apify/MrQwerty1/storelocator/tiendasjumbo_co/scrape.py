@@ -30,6 +30,11 @@ def fetch_data(sgw: SgWriter):
             hours = j.get("schedule") or []
             hours_of_operation = ";".join(hours).replace(" - ", ";")
 
+            black = [";Domingos", ";Aplica", ";Adultos", ";Los"]
+            for b in black:
+                if b in hours_of_operation:
+                    hours_of_operation = hours_of_operation.split(b)[0].strip()
+
             row = SgRecord(
                 page_url=page_url,
                 location_name=location_name,

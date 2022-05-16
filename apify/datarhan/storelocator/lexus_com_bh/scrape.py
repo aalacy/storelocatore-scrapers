@@ -35,6 +35,9 @@ def fetch_data():
         geo = poi["node"]["field_longitude"].split(",")
         hoo = [e.replace("OPENING HOURS: ", "") for e in raw_data if "HOURS:" in e]
         hoo = hoo[0] if hoo else ""
+        if not hoo:
+            hoo = poi_html.xpath("//p/text()")
+            hoo = [e.strip() for e in hoo if "am –" in e][0]
 
         item = SgRecord(
             locator_domain=domain,
