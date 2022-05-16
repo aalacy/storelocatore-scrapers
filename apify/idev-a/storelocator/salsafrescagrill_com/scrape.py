@@ -1,6 +1,6 @@
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-from sgselenium import SgFirefox
+from sgselenium import SgChrome
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
@@ -9,6 +9,10 @@ from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 import time
 from sgpostal.sgpostal import parse_address_intl
+from webdriver_manager.chrome import ChromeDriverManager
+import ssl
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 logger = SgLogSetup().get_logger("salsafrescagrill")
 map_url = r"api\.maptiler\.com/tiles/v3"
@@ -17,7 +21,7 @@ base_url = "https://www.salsafrescagrill.com/locations"
 
 
 def fetch_data():
-    with SgFirefox(block_third_parties=True) as driver:
+    with SgChrome(executable_path=ChromeDriverManager().install()) as driver:
         driver.get(base_url)
         WebDriverWait(driver, 20).until(
             EC.presence_of_element_located((By.XPATH, "//iframe"))
@@ -25,6 +29,7 @@ def fetch_data():
         time.sleep(10)
         iframe = driver.find_element(By.XPATH, "//iframe")
         driver.switch_to.frame(iframe)
+        time.sleep(3)
         driver.find_element(
             By.CSS_SELECTOR,
             "button.maplibregl-ctrl-fullscreen.mapboxgl-ctrl-fullscreen",

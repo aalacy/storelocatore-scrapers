@@ -11,7 +11,6 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "pizzahutdelivery.ie"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
-session = SgRequests()
 headers = {
     "authority": "pizzahutdelivery.ie",
     "sec-ch-ua": '" Not A;Brand";v="99", "Chromium";v="90", "Google Chrome";v="90"',
@@ -31,101 +30,105 @@ def fetch_data():
     # Your scraper here
     base = "https://pizzahutdelivery.ie/"
     search_url = "https://pizzahutdelivery.ie/locations.php"
-    search_res = session.get(search_url, headers=headers)
+    with SgRequests(dont_retry_status_codes=([404]), verify_ssl=False) as session:
 
-    search_sel = lxml.html.fromstring(search_res.text)
+        search_res = session.get(search_url, headers=headers)
 
-    store_list = search_sel.xpath("//h5[./a]")
+        search_sel = lxml.html.fromstring(search_res.text)
 
-    for store in store_list:
+        store_list = search_sel.xpath("//h5[./a]")
 
-        page_url = "".join(store.xpath("./a/@href"))
-        if "http" not in page_url:
-            page_url = base + page_url
-        locator_domain = website
+        for store in store_list:
 
-        log.info(page_url)
-        store_res = session.get(page_url, headers=headers)
-        store_sel = lxml.html.fromstring(store_res.text)
+            page_url = "".join(store.xpath("./a/@href"))
+            if "http" not in page_url:
+                page_url = base + page_url
+            locator_domain = website
 
-        store_info = list(
-            filter(
-                str,
-                [
-                    x.strip()
-                    for x in store_sel.xpath('//h2[text()="ADDRESS"]/../div//text()')
-                ],
+            log.info(page_url)
+            store_res = session.get(page_url, headers=headers)
+            store_sel = lxml.html.fromstring(store_res.text)
+
+            store_info = list(
+                filter(
+                    str,
+                    [
+                        x.strip()
+                        for x in store_sel.xpath(
+                            '//h2[text()="ADDRESS"]/../div//text()'
+                        )
+                    ],
+                )
             )
-        )
 
-        full_address = store_info[:-1]
-        raw_address = " ".join(full_address).strip()
-        zip = raw_address.split(",")[-1].strip()
-        raw_address = raw_address.replace(zip, "").strip()
+            full_address = store_info[:-1]
+            raw_address = " ".join(full_address).strip()
+            zip = raw_address.split(",")[-1].strip()
+            raw_address = raw_address.replace(zip, "").strip()
 
-        formatted_addr = parser.parse_address_intl(raw_address)
-        street_address = formatted_addr.street_address_1
-        if formatted_addr.street_address_2:
-            street_address = street_address + ", " + formatted_addr.street_address_2
+            formatted_addr = parser.parse_address_intl(raw_address)
+            street_address = formatted_addr.street_address_1
+            if formatted_addr.street_address_2:
+                street_address = street_address + ", " + formatted_addr.street_address_2
 
-        state = "<MISSING>"
-        country_code = "IE"
+            state = "<MISSING>"
+            country_code = "IE"
 
-        location_name = " ".join(store.xpath(".//text()")).strip()
-        city = location_name.split(" ")[0].strip()
-        street_address = (
-            street_address.replace(city, "").strip().replace("  ", " ").strip()
-        )
-        phone = store_info[-1].strip()
-
-        store_number = "<MISSING>"
-
-        location_type = "<MISSING>"
-
-        hours = list(
-            filter(
-                str,
-                [
-                    x.strip()
-                    for x in store_sel.xpath(
-                        '//h2[contains(text(),"HOURS")]/../div//text()'
-                    )
-                ],
+            location_name = " ".join(store.xpath(".//text()")).strip()
+            city = location_name.split(" ")[0].strip()
+            street_address = (
+                street_address.replace(city, "").strip().replace("  ", " ").strip()
             )
-        )
-        hours_of_operation = (
-            "; ".join(hours).replace(":;", ":").replace("day;", "day:").strip()
-        )
+            phone = store_info[-1].strip()
 
-        lat_lng_info = (
-            store_res.text.split(
-                f"""stores[storesc-1][0] = '{location_name.split(" ")[0]}"""
-            )[1]
-            .strip()
-            .split("),(")[0]
-            .strip()
-            .split("(")[1]
-            .strip()
-        )
-        latitude, longitude = lat_lng_info.split(",")[0], lat_lng_info.split(",")[1]
+            store_number = "<MISSING>"
 
-        yield SgRecord(
-            locator_domain=locator_domain,
-            page_url=page_url,
-            location_name=location_name,
-            street_address=street_address,
-            city=city,
-            state=state,
-            zip_postal=zip,
-            country_code=country_code,
-            store_number=store_number,
-            phone=phone,
-            location_type=location_type,
-            latitude=latitude,
-            longitude=longitude,
-            hours_of_operation=hours_of_operation,
-            raw_address=raw_address,
-        )
+            location_type = "<MISSING>"
+
+            hours = list(
+                filter(
+                    str,
+                    [
+                        x.strip()
+                        for x in store_sel.xpath(
+                            '//h2[contains(text(),"HOURS")]/../div//text()'
+                        )
+                    ],
+                )
+            )
+            hours_of_operation = (
+                "; ".join(hours).replace(":;", ":").replace("day;", "day:").strip()
+            )
+
+            lat_lng_info = (
+                store_res.text.split(
+                    f"""stores[storesc-1][0] = '{location_name.split(" ")[0]}"""
+                )[1]
+                .strip()
+                .split("),(")[0]
+                .strip()
+                .split("(")[1]
+                .strip()
+            )
+            latitude, longitude = lat_lng_info.split(",")[0], lat_lng_info.split(",")[1]
+
+            yield SgRecord(
+                locator_domain=locator_domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+                raw_address=raw_address,
+            )
 
 
 def scrape():
