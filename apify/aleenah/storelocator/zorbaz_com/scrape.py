@@ -15,7 +15,7 @@ ssl._create_default_https_context = ssl._create_unverified_context
 website = "zorbaz_com"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
 
-DOMAIN = "https://www.zorbaz.com/"
+DOMAIN = "https://www.zorbaz.com"
 MISSING = SgRecord.MISSING
 
 
@@ -77,7 +77,7 @@ def fetch_data():
         except:
             continue
         location_name = loc.split('"name":"')[1].split('"')[0]
-        page_url = DOMAIN + loc.split('"slug":"')[-1].split('"')[0]
+        page_url = DOMAIN + loc.split('">Vizit Uz/Eventz')[0].split('"')[0]
         store_number = loc.split('"id":')[1].split(",")[0]
         log.info(location_name)
         street_address = loc.split('"streetAddress":"')[1].split('"')[0]
