@@ -127,6 +127,10 @@ def fetch_data():
                 zc = zc.split(" Est")[0].strip()
             if "900 Canada Place" in add:
                 zc = "V6C 3L5"
+            if "banff-springs" in loc:
+                country = "CA"
+                phone = "+1 403 762 2211"
+                store = "BSH"
             if "900 West Georgia Street" in add:
                 zc = "V6C 2W6"
             if "1038 Canada Place" in add:

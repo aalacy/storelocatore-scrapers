@@ -86,7 +86,19 @@ def fetch_data(sgw: SgWriter):
             .replace("Öffnungszeiten:", "")
             .strip()
         )
-        hours_of_operation = " ".join(hours_of_operation.split()) or "<MISSING>"
+        hours_of_operation = (
+            " ".join(hours_of_operation.split())
+            .replace("(November - März geschlossen)", "")
+            .strip()
+            or "<MISSING>"
+        )
+        hours_of_operation = (
+            hours_of_operation.replace("(bitte den Shop bei der U6 besuchen)", "")
+            .replace("aktuell geschlossen (currently closed)", "")
+            .strip()
+        )
+        if hours_of_operation.find("(Aufgrund") != -1:
+            hours_of_operation = hours_of_operation.split("(Aufgrund")[0].strip()
 
         row = SgRecord(
             locator_domain=locator_domain,
