@@ -12,8 +12,10 @@ import math
 from concurrent.futures import ThreadPoolExecutor
 from tenacity import retry, wait_random, stop_after_attempt
 import random
-from webdriver_manager.chrome import ChromeDriverManager
 import os
+import ssl
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 os.environ[
     "PROXY_URL"
@@ -322,7 +324,6 @@ def _d(loc, domain, country):
 
 def get_driver():
     return SgChrome(
-        executable_path=ChromeDriverManager().install(),
         user_agent="Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0",
         is_headless=True,
     ).driver()
@@ -398,7 +399,11 @@ def fetch_data():
 
 
 if __name__ == "__main__":
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    with SgWriter(
+        SgRecordDeduper(
+            RecommendedRecordIds.PageUrlId, duplicate_streak_failure_factor=10
+        )
+    ) as writer:
         results = fetch_data()
         for rec in results:
             if rec:

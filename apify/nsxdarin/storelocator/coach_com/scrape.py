@@ -210,13 +210,21 @@ def fetch_data():
                             loc = "https://uk.coach.com/stores-edit-country?dwfrm_storelocator_address_international=GB&dwfrm_storelocator_findbycountry=Search%2Bcountry"
                         if "N/A" in phone or "NO PHONE" in phone:
                             phone = "<MISSING>"
+                        hours = hours.strip()
+                        if hours[-1:] == ";":
+                            hours = hours[:-1]
+                        if "COTAI" in city:
+                            city = "COTAI"
+                        if "SEVILLA FASHION OUTLET" in add:
+                            city = "SEVILLA"
+                        if "," in city:
+                            city = city.split(",")[0].strip()
                         if (
                             "popup" not in name.lower()
                             and "pop-up" not in name.lower()
                             and "N/A" not in city
                             and "OPENING" not in hours
                             and add != ""
-                            and add != "<MISSING>"
                         ):
                             yield SgRecord(
                                 locator_domain=website,
@@ -429,13 +437,15 @@ def fetch_data():
             loc = "https://uk.coach.com/stores-edit-country?dwfrm_storelocator_address_international=GB&dwfrm_storelocator_findbycountry=Search%2Bcountry"
         if "N/A" in phone or "NO PHONE" in phone:
             phone = "<MISSING>"
+        hours = hours.strip()
+        if hours[-1:] == ";":
+            hours = hours[:-1]
         if (
             "popup" not in name.lower()
             and "pop-up" not in name.lower()
             and "N/A" not in city
             and "OPENING" not in hours
             and add != ""
-            and add != "<MISSING>"
         ):
             yield SgRecord(
                 locator_domain=website,
@@ -652,13 +662,15 @@ def fetch_data():
             phone = "<MISSING>"
         if loc == "<MISSING>":
             loc = "https://uk.coach.com/stores-edit-country?dwfrm_storelocator_address_international=GB&dwfrm_storelocator_findbycountry=Search%2Bcountry"
+        hours = hours.strip()
+        if hours[-1:] == ";":
+            hours = hours[:-1]
         if (
             "popup" not in name.lower()
             and "pop-up" not in name.lower()
             and "N/A" not in city
             and "OPENING" not in hours
             and add != ""
-            and add != "<MISSING>"
         ):
             yield SgRecord(
                 locator_domain=website,
@@ -839,13 +851,21 @@ def fetch_data():
                                 loc = "https://uk.coach.com/stores-edit-country?dwfrm_storelocator_address_international=GB&dwfrm_storelocator_findbycountry=Search%2Bcountry"
                             if "N/A" in phone or "NO PHONE" in phone:
                                 phone = "<MISSING>"
+                            hours = hours.strip()
+                            if hours[-1:] == ";":
+                                hours = hours[:-1]
+                            if "COTAI" in city:
+                                city = "COTAI"
+                            if "SEVILLA FASHION OUTLET" in add:
+                                city = "SEVILLA"
+                            if "," in city:
+                                city = city.split(",")[0].strip()
                             if (
                                 "popup" not in name.lower()
                                 and "pop-up" not in name.lower()
                                 and "N/A" not in city
                                 and "OPENING" not in hours
                                 and add != ""
-                                and add != "<MISSING>"
                             ):
                                 yield SgRecord(
                                     locator_domain=website,
@@ -868,7 +888,20 @@ def fetch_data():
 def scrape():
     results = fetch_data()
     with SgWriter(
-        deduper=SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
+        deduper=SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.STORE_NUMBER,
+                    SgRecord.Headers.PHONE,
+                    SgRecord.Headers.COUNTRY_CODE,
+                    SgRecord.Headers.LATITUDE,
+                    SgRecord.Headers.LONGITUDE,
+                },
+                fail_on_empty_id=True,
+            ),
+            duplicate_streak_failure_factor=-1,
+        )
     ) as writer:
         for rec in results:
             writer.write_row(rec)

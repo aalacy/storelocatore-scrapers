@@ -131,14 +131,26 @@ def fetch_data():
                     phone = phone.split(" /")[0].strip()
                 if "a" in phone:
                     phone = phone.split("a")[0].strip()
-                if "9" in city:
-                    city = "<MISSING>"
-                if "No." in city:
-                    city = "<MISSING>"
-                if "Km" in city:
-                    city = "<MISSING>"
+                try:
+                    if "9" in city:
+                        city = "<MISSING>"
+                except:
+                    pass
+                try:
+                    if "No." in city:
+                        city = "<MISSING>"
+                except:
+                    pass
+                try:
+                    if "Km" in city:
+                        city = "<MISSING>"
+                except:
+                    pass
                 rawadd = rawadd.replace("&#39;", "'")
-                city = city.replace("&#39;", "'")
+                try:
+                    city = city.replace("&#39;", "'")
+                except:
+                    city = "<MISSING>"
                 name = (
                     name.replace("&#243;", "o")
                     .replace("&#250;", "u")

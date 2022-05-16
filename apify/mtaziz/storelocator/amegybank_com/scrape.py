@@ -85,7 +85,7 @@ def fetch_records():
 
             item = SgRecord(
                 locator_domain="amegybank.com",
-                page_url="",
+                page_url="https://www.amegybank.com/branch-locator/",
                 location_name=locname,
                 street_address=_["address"],
                 city=_["city"],
