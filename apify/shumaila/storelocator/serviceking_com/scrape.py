@@ -47,9 +47,16 @@ def fetch_data():
             ccode = "US"
         link = "https://www.serviceking.com" + loc["alias"]
         r = session.get(link, headers=headers)
+
         soup = BeautifulSoup(r.text, "html.parser")
-        hours = soup.find("div", {"class": "open-hrs"}).text.replace("pm", "pm ")
+
+        hours = (
+            soup.find("div", {"class": "time-content"})
+            .text.replace("pm", "pm ")
+            .replace("Closed", "Closed ")
+        )
         hours = re.sub(pattern, " ", hours).strip().replace("\n", " ")
+
         yield SgRecord(
             locator_domain="https://www.serviceking.com/",
             page_url=link,
