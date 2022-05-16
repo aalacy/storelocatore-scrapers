@@ -1,15 +1,14 @@
 import ssl
+import time
 from sglogging import sglog
+from selenium import webdriver
 import undetected_chromedriver as uc
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
-from sgselenium.sgselenium import SgChrome
-from selenium.webdriver.common.by import By
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from selenium.webdriver.support.ui import WebDriverWait
 from webdriver_manager.chrome import ChromeDriverManager
-from selenium.webdriver.support import expected_conditions as EC
+
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
@@ -20,68 +19,37 @@ DOMAIN = "https://www.zorbaz.com"
 MISSING = SgRecord.MISSING
 
 
-def get_driver(url, class_name, driver=None):
-    if driver is not None:
-        driver.quit()
+def get_driver(url, driver=None):
 
-    user_agent = (
-        "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:89.0) Gecko/20100101 Firefox/89.0"
-    )
-    x = 0
-    while True:
-        x = x + 1
-        try:
-            options = webdriver.ChromeOptions()
-            options.add_argument("start-maximized")
-            options.add_argument("--headless")
-            options.add_argument("--no-sandbox")
-            options.add_argument("--disable-dev-shm-usage")
-            driver = uc.Chrome(
-                executable_path=ChromeDriverManager().install(), options=options
-            )
-            driver.get(url)
+    options = webdriver.ChromeOptions()
+    options.add_argument("start-maximized")
+    options.add_argument("--headless")
+    options.add_argument("--no-sandbox")
+    options.add_argument("--disable-dev-shm-usage")
+    driver = uc.Chrome(executable_path=ChromeDriverManager().install(), options=options)
 
-            WebDriverWait(driver, 30).until(
-                EC.presence_of_element_located((By.CLASS_NAME, class_name))
-            )
-            break
-        except Exception:
-            if x == 10:
-                raise Exception(
-                    "Make sure this ran with a Proxy, will fail without one"
-                )
-            continue
+    driver.get(url)
     return driver
 
 
 def fetch_data():
-    x = 0
-    while True:
-        x = x + 1
-        class_name = "pm-location"
-        url = "https://www.zorbaz.com/locationz"
-        if x == 1:
-            driver = get_driver(url, class_name)
-        else:
-            driver = get_driver(url, class_name, driver=driver)
-        response = driver.page_source
-        loclist = (
-            response.split("window.POPMENU_APOLLO_STATE = ")[1]
-            .split("[]}};")[0]
-            .split("RestaurantLocation:")[1:]
-        )
-        if len(loclist) == 0:
-            continue
-        else:
-            break
+    class_name = "pm-location"
+    url = "https://www.zorbaz.com/locationz"
+    driver = get_driver(url)
+    time.sleep(2)
+    loclist = (
+        driver.page_source.split("window.POPMENU_APOLLO_STATE = ")[1]
+        .split("[]}};")[0]
+        .split("RestaurantLocation:")[1:]
+    )
+
     for loc in loclist:
-        print(loc)
         try:
             phone = loc.split('"displayPhone":"')[1].split('"')[0]
         except:
             continue
         location_name = loc.split('"name":"')[1].split('"')[0]
-        page_url = DOMAIN + loc.split('">Vizit Uz/Eventz')[0].split('"')[0]
+        page_url = loc.split('">Vizit Uz/Eventz')[0].split('href=\\"')[-1]
         store_number = loc.split('"id":')[1].split(",")[0]
         log.info(page_url)
         street_address = loc.split('"streetAddress":"')[1].split('"')[0]
