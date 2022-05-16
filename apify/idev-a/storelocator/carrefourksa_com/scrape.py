@@ -114,7 +114,9 @@ def fetch_kw():
 
 
 if __name__ == "__main__":
-    search_maker = DynamicSearchMaker(search_type="DynamicGeoSearch")
+    search_maker = DynamicSearchMaker(
+        search_type="DynamicGeoSearch", expected_search_radius_miles=100
+    )
     with SgWriter(
         deduper=SgRecordDeduper(
             SgRecordID(

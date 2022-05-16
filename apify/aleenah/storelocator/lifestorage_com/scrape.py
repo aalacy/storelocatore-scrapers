@@ -25,7 +25,6 @@ def fetch_data():
     state_list = soup.find("div", {"class": "footerStates"}).find_all("a")
     for state_url in state_list:
         url = "https://www.lifestorage.com" + state_url.get("href")
-        log.info(url)
         res = session.get(url)
         soup = BeautifulSoup(res.text, "html.parser")
         loclist = soup.find_all("a", {"class": "btn store"})
@@ -56,12 +55,13 @@ def fetch_data():
                 hours_of_operation += (
                     l["dayOfWeek"] + ": " + l["opens"] + " - " + l["closes"] + " "
                 )
-            if "Sunday:" not in hours_of_operation:
-                hours_of_operation += "Sunday: Closed"
             phone = js["telephone"]
             latitude = js["geo"]["latitude"]
             longitude = js["geo"]["longitude"]
             location_type = js["@type"]
+            if not hours_of_operation:
+                hours_of_operation = MISSING
+                location_type = "COMING SOON"
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url=page_url,
