@@ -200,6 +200,7 @@ def fetch_records(coord, search, current_country, sgw: SgWriter):
                     except:
                         store_number = ""
                         store_url = ""
+                    hoo = hoo.split("Holiday")[0].strip().rstrip(";")
                     item = SgRecord(
                         locator_domain="clubmonaco.com",
                         page_url=store_url,
