@@ -45,6 +45,7 @@ def fetch_data():
                 address = loc["address"]
                 country_code = address["addressCountry"]
                 street_address = address["streetAddress"]
+                phone = soup.select_one("a[href*=tel]").text
                 if temp_street.split()[0] == street_address.split()[0]:
                     street_address = address["streetAddress"]
                     latitude = loc["geo"]["latitude"]
@@ -53,14 +54,24 @@ def fetch_data():
                     state = address["addressRegion"]
                     zip_postal = address["postalCode"]
                 else:
-                    street_address = soup.find("h3").text
+                    temp = soup.find("h3").text
+                    address = (
+                        r.text.split(temp)[2]
+                        .split("</p><p>")[1]
+                        .split("</p>")[0]
+                        .split(",")[-1]
+                        .split()
+                    )
+                    phone = r.text.split("@thehousecannabis.ca</p><p>")[1].split(
+                        "</p>"
+                    )[0]
                     latitude = MISSING
                     longitude = MISSING
                     city = page_url.split("/")[-2]
-                    state = MISSING
-                    zip_postal = MISSING
+                    state = address[-3]
+                    zip_postal = address[-2] + " " + address[-1]
                 location_name = "House of Cannabis " + city
-                phone = soup.select_one("a[href*=tel]").text
+
                 try:
                     temp_list = r.text.split("MONDAY")[1].split("Order Online")[0]
                 except:
