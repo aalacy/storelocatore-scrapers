@@ -9,12 +9,12 @@ from sgzip.dynamic import SearchableCountries, DynamicGeoSearch
 
 def fetch_data(sgw: SgWriter):
     search = DynamicGeoSearch(
-        country_codes=[SearchableCountries.USA], expected_search_radius_miles=30
+        country_codes=[SearchableCountries.USA], expected_search_radius_miles=10
     )
     for lat, lng in search:
         data = {
             "search": "",
-            "radius": "100mi",
+            "radius": "20mi",
             "isAcceptingNewPatients": True,
             "latitude": str(lat),
             "longitude": str(lng),
