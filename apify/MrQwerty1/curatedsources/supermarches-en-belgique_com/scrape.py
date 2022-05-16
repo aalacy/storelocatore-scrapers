@@ -29,10 +29,10 @@ def get_data(page_url, sgw: SgWriter):
         return
     tree = html.fromstring(r.text)
     text = "".join(tree.xpath("//script[contains(text(), 'var dejafull;')]/text()"))
-    text = text.split('var html = "')
-    text.pop(0)
+    tex = text.split('var html = "')
+    tex.pop(0)
 
-    for t in text:
+    for t in tex:
         source = t.split('";')[0]
         d = html.fromstring(source)
         line = d.xpath(".//text()")
