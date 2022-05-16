@@ -24,7 +24,7 @@ def fetch_data():
         if not location_name:
             continue
         location_name = location_name[0]
-        raw_address = poi_html.xpath(".//a//text()")[0]
+        raw_address = poi_html.xpath('.//a[@target="_blank"]//text()')[0]
         addr = parse_address_usa(raw_address)
         street_address = addr.street_address_1
         if addr.street_address_2:

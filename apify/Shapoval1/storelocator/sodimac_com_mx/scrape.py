@@ -26,15 +26,16 @@ def fetch_data(sgw: SgWriter):
         location_name = "".join(d.xpath(".//text()"))
         if page_url.find("Corporativo") != -1:
             continue
-        with SgFirefox() as driver:
+        with SgFirefox(is_headless=True) as driver:
 
             driver.get(page_url)
+            driver.refresh()
             iframe = driver.find_element_by_xpath(
                 '//h3[contains(text(), "Localización")]/following-sibling::iframe[1]'
             )
             driver.switch_to.frame(iframe)
             try:
-                WebDriverWait(driver, 10).until(
+                WebDriverWait(driver, 200).until(
                     EC.presence_of_element_located(
                         (By.XPATH, '//div[@class="address"]')
                     )
@@ -77,12 +78,9 @@ def fetch_data(sgw: SgWriter):
             phone = driver.find_element_by_xpath(
                 '//span[text()="Venta Telefónica"]/following-sibling::span'
             ).text
-            hours = driver.find_element_by_xpath(
-                '//div[./span/strong[text()="Nuestra Tienda"]]/div/span[2]//text()'
+            hours_of_operation = driver.find_element_by_xpath(
+                '//span[./strong[text()="Horarios de Tienda:"]]/following-sibling::span[1]'
             ).text
-            hours_of_operation = (
-                "".join(hours).replace("\n", " ").strip() or "<MISSING>"
-            )
 
             row = SgRecord(
                 locator_domain=locator_domain,

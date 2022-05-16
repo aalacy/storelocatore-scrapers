@@ -77,7 +77,8 @@ def fetch_data():
                 street_address = street_address.split(city)[0].strip()
             state = formatted_addr.state
             zip = formatted_addr.postcode
-
+            if not zip:
+                zip = " ".join(raw_address.split(" ")[-2:]).strip()
             country_code = "GB"
 
             phone = (

@@ -35,16 +35,20 @@ def fetch_data(sgw: SgWriter):
         street_address = addr.street_address_1
         city = addr.city
         state = addr.state
-        zip_code = addr.postcode
+        zip_code = addr.postcode.replace("CEP", "").strip()
         country_code = "BR"
         store_number = ""
         location_type = ""
         phone = item.find(
             class_="elementor-element elementor-element-70290f0 elementor-widget elementor-widget-text-editor"
         ).text.strip()
-        hours_of_operation = item.find(
-            class_="elementor-element elementor-element-92d7138 elementor-widget elementor-widget-text-editor"
-        ).text.strip()
+        hours_of_operation = (
+            item.find(
+                class_="elementor-element elementor-element-92d7138 elementor-widget elementor-widget-text-editor"
+            )
+            .text.replace("\r\n", " ")
+            .strip()
+        )
         latitude = ""
         longitude = ""
         sgw.write_row(

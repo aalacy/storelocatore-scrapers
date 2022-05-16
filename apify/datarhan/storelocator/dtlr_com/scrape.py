@@ -11,11 +11,11 @@ from sgzip.dynamic import DynamicZipSearch, SearchableCountries
 def fetch_data():
     session = SgRequests()
     domain = "dtlr.com"
-    start_url = "https://liveapi.yext.com/v2/accounts/me/entities/geosearch?radius=200&location={}&limit=25&api_key=6216f26c6e320551af7a02385d2ffbce&v=20181201&resolvePlaceholders=true&languages=en&entityTypes=location&savedFilterIds=1035387826"
+    start_url = "https://liveapi.yext.com/v2/accounts/me/entities/geosearch?radius=50&location={}&limit=25&api_key=6216f26c6e320551af7a02385d2ffbce&v=20181201&resolvePlaceholders=true&languages=en&entityTypes=location&savedFilterIds=1035387826"
 
     all_codes = DynamicZipSearch(
         country_codes=[SearchableCountries.USA, SearchableCountries.CANADA],
-        expected_search_radius_miles=200,
+        expected_search_radius_miles=50,
     )
     for code in all_codes:
         response = session.get(start_url.format(code))

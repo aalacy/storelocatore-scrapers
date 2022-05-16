@@ -187,6 +187,22 @@ def get_country_code_list():
     return country_code_and_url_list
 
 
+def fix_jp_zipcode(city_garbage):
+    # This returns clean zipcode for Japan.
+    # Some zipcode contains text which makes
+    # zip code invalid.
+    # Example zipcode - 8802215 Miyazaki
+    # Example zipcode - 8940104 Kagoshima
+
+    jp_words_rm = ""
+    jp_zip_split = city_garbage.split(" ")
+    if len(jp_zip_split) == 2 and not jp_zip_split[1].isdigit():
+        jp_words_rm = jp_zip_split[0]
+    else:
+        jp_words_rm = city_garbage
+    return jp_words_rm
+
+
 def fetch_records(idx, store_url_tuple, headers_apikey, sgw: SgWriter):
     api_endpoint_url = store_url_tuple[0]
     try:
@@ -213,6 +229,16 @@ def fetch_records(idx, store_url_tuple, headers_apikey, sgw: SgWriter):
             l = l1 + ", " + l2
             l = fix_comma(l)
             street_address = l or SgRecord.MISSING
+
+            # Fix street address containing -
+            # Fix street address containing xx
+            # Please see JP, DE and FR
+
+            if street_address == "xx":
+                street_address = SgRecord.MISSING
+            if street_address == "-":
+                street_address = SgRecord.MISSING
+
             city = d["address"]["city"] or SgRecord.MISSING
             state1 = ""
             state2 = ""
@@ -236,8 +262,34 @@ def fetch_records(idx, store_url_tuple, headers_apikey, sgw: SgWriter):
                 state = SgRecord.MISSING
 
             zipcode = d["address"]["zipcode"] or SgRecord.MISSING
-
             country_code = d["address"]["country"] or SgRecord.MISSING
+
+            # Fix Japan zipcode
+            if country_code == "JP" and MISSING not in zipcode:
+                zipcode = fix_jp_zipcode(zipcode)
+
+            # Fix zipcode containing xx or -
+            if zipcode == "xx":
+                zipcode = SgRecord.MISSING
+            if zipcode == "-":
+                zipcode = SgRecord.MISSING
+
+            cities_to_be_replaced_with_state = [
+                "654",
+                "5330021",
+                "5900977",
+                "9638838",
+                "433-8105",
+                "50123 Firenze FI",
+                "601-8201",
+            ]
+            if city in cities_to_be_replaced_with_state:
+                city = state
+
+            # Fix city if it contains X
+            if city == "X":
+                return
+
             store_number = d["baseInfo"]["externalId"] or SgRecord.MISSING
 
             if "phone" in d["contact"]:
@@ -285,7 +337,8 @@ def fetch_records(idx, store_url_tuple, headers_apikey, sgw: SgWriter):
                 hours_of_operation=hours_of_operation,
                 raw_address=raw_address,
             )
-            sgw.write_row(item)
+            if item is not None:
+                sgw.write_row(item)
     except Exception as e:
         logger.info(f"Please fix this >> {e} | {api_endpoint_url}")
 
