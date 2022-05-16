@@ -44,7 +44,7 @@ def fetch_data(sgw: SgWriter):
         location_type = p.get("category")
         raw_address = p.get("address")
         street_address, city, postal = get_international(raw_address)
-        country_code = "US"
+        country_code = "MX"
         store_number = p.get("id")
         location_name = p.get("name")
         slug = p.get("url")
