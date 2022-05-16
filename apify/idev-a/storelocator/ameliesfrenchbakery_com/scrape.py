@@ -34,10 +34,15 @@ def fetch_data():
             if addr.street_address_2:
                 street_address += " " + addr.street_address_2
             hours = []
-            if len(block) == 1:
-                hours = [_bb.find_next_sibling().find_next_sibling().text.strip()]
-            else:
+            if len(block) > 1:
                 hours = block[1:]
+            for hh in _bb.find_next_sibling().find_next_siblings("p"):
+                _hr = hh.text.strip()
+                if not _hr:
+                    break
+                if "Connect" in _hr:
+                    break
+                hours.append(_hr)
 
             yield SgRecord(
                 page_url=page_url,
