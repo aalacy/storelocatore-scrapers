@@ -1,6 +1,8 @@
 from lxml import etree
 from time import sleep
-
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
@@ -13,17 +15,21 @@ def fetch_data():
     session = SgRequests()
     start_url = "https://uberall.com/api/storefinders/ALDINORDNL_8oqeY3lnn9MTZdVzFn4o0WCDVTauoZ/locations/all?v=20211005&language=nl&fieldMask=id&fieldMask=identifier&fieldMask=googlePlaceId&fieldMask=lat&fieldMask=lng&fieldMask=name&fieldMask=country&fieldMask=city&fieldMask=province&fieldMask=streetAndNumber&fieldMask=zip&fieldMask=businessId&fieldMask=addressExtra&"
     domain = "aldi.nl"
-
+    class_name = "ubsf_details-phone"
     data = session.get(start_url).json()
     for poi in data["response"]["locations"]:
         city = poi["city"]
         street_address = poi["streetAndNumber"]
         store_number = poi["id"]
-        page_url = f"https://www.aldi.nl/supermarkt.html/l/{city.lower().replace(' ', '-')}/{street_address.lower().replace(' ', '-')}/{store_number}"
+        page_url = f"https://www.aldi.nl/supermarkt.html/l/{city.lower().replace(' ', '-')}/{street_address.lower().replace(' ', '-').replace('é', 'e').replace('ë', 'e')}/{store_number}"
+
         with SgFirefox() as driver:
             driver.get(page_url)
-            sleep(10)
+            WebDriverWait(driver, 20).until(
+                EC.presence_of_element_located((By.CLASS_NAME, class_name))
+            )
             loc_dom = etree.HTML(driver.page_source)
+
         hoo = loc_dom.xpath(
             '//div[@class="ubsf_location-page-opening-hours-list"]//text()'
         )
@@ -65,3 +71,5 @@ def scrape():
 
 if __name__ == "__main__":
     scrape()
+
+# https://www.aldi.nl/supermarkt.html/l/hardenberg/isra▒l-emanuelplein-9/3187516
