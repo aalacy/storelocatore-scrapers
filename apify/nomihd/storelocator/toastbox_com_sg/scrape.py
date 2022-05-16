@@ -62,7 +62,7 @@ def fetch_data():
                 zip = formatted_addr.postcode
                 country_code = "SG"
                 store_number = "<MISSING>"
-                phone = store["phone"]
+                phone = store.get("phone", "<MISSING>")
 
                 location_type = "<MISSING>"
 
