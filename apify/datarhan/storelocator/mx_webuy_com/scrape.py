@@ -4,6 +4,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
+from sgpostal.sgpostal import parse_address_intl
 
 
 def fetch_data():
@@ -38,26 +39,42 @@ def fetch_data():
             street_address = poi_data["addressLine1"]
             if poi_data["addressLine2"]:
                 street_address += " " + poi_data["addressLine2"]
+            if street_address and street_address.endswith(","):
+                street_address = street_address[:-1]
             hoo = []
             for day, opens in poi_data["timings"]["open"].items():
                 hoo.append(f"{day}: {opens} - {poi_data['timings']['close'][day]}")
             hoo = " ".join(hoo)
+            country_code = page_url.split("//")[1].split(".")[0]
+            raw_city = poi_data["city"]
+            addr = parse_address_intl(raw_city)
+            city = addr.city
+            if not city:
+                city = raw_city
+                if city.endswith(","):
+                    city = city[:-1]
+                city = city.split(",")[-1]
+            if "Loja" in city:
+                city = ""
+            if "Road" in city:
+                city = ""
 
             item = SgRecord(
                 locator_domain=domain,
                 page_url=page_url,
                 location_name=poi["storeName"],
                 street_address=street_address,
-                city=poi_data["city"],
+                city=city,
                 state=poi["regionName"],
                 zip_postal=poi_data["postcode"],
-                country_code=poi_data["country"],
+                country_code=country_code,
                 store_number=store_number,
                 phone=poi["phoneNumber"],
                 location_type="",
                 latitude=poi["latitude"],
                 longitude=poi["longitude"],
                 hours_of_operation=hoo,
+                raw_address=raw_city,
             )
 
             yield item

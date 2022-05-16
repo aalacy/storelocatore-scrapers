@@ -1,27 +1,16 @@
-import os
-import ssl
 from lxml import html
 from sgscrape.sgrecord import SgRecord
+from sglogging import sglog
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-os.environ[
-    "PROXY_URL"
-] = "http://groups-RESIDENTIAL,country-ua:{}@proxy.apify.com:8000/"
-
-try:
-    _create_unverified_https_context = ssl._create_unverified_context
-except AttributeError:
-    pass
-else:
-    ssl._create_default_https_context = _create_unverified_https_context
-
 
 def fetch_data(sgw: SgWriter):
 
     locator_domain = "https://www.oilvinegar.nl/"
+    log = sglog.SgLogSetup().get_logger(logger_name=locator_domain)
     api_url = "https://www.oilvinegar.nl/rest/V1/storelocator/search/?searchCriteria%5Bfilter_groups%5D%5B0%5D%5Bfilters%5D%5B0%5D%5Bfield%5D=country_id&searchCriteria%5Bfilter_groups%5D%5B0%5D%5Bfilters%5D%5B0%5D%5Bvalue%5D=NL&searchCriteria%5Bfilter_groups%5D%5B0%5D%5Bfilters%5D%5B0%5D%5Bcondition_type%5D=eq&_=1652338262228"
     session = SgRequests()
     headers = {
@@ -53,6 +42,9 @@ def fetch_data(sgw: SgWriter):
             "Sec-Fetch-User": "?1",
         }
         r = session.get(page_url, headers=headers)
+        log.info(r.status_code)
+        log.info(f"Location Name: {location_name} & {page_url}")
+
         tree = html.fromstring(r.text)
         phone = (
             "".join(
@@ -72,6 +64,27 @@ def fetch_data(sgw: SgWriter):
             .strip()
             or "<MISSING>"
         )
+        if hours_of_operation == "<MISSING>":
+            r = session.get(page_url, headers=headers)
+            tree = html.fromstring(r.text)
+            phone = (
+                "".join(
+                    tree.xpath(
+                        '//td[./span[contains(text(), "Telefoon")]]/following-sibling::td//text()'
+                    )
+                )
+                or "<MISSING>"
+            )
+            hours_of_operation = (
+                " ".join(
+                    tree.xpath(
+                        '//tr[.//span[text()="Openingstijden"]]/following-sibling::tr//td//text()'
+                    )
+                )
+                .replace("\n", "")
+                .strip()
+                or "<MISSING>"
+            )
 
         row = SgRecord(
             locator_domain=locator_domain,
