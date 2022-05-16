@@ -52,7 +52,7 @@ def fetch_data():
                 raw_address = (
                     street_address + " " + city + " " + state + " " + zip_postal
                 )
-                raw_address = raw_address.replace("\n", " ")
+                raw_address = raw_address.replace("\n", " ").replace("ðŸ“", "")
             else:
                 location_name = loc.find("h2").text
                 phone = loc.select_one("a[href*=tel]").text
