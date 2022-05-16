@@ -40,13 +40,18 @@ def fetch_data():
         country_code = addr.country
         if country_code and len(country_code) > 2:
             country_code = ""
+        city = addr.city
+        if city and len(city) == 2:
+            city = ""
+        if city:
+            city = city.split("/")[0]
 
         item = SgRecord(
             locator_domain=domain,
             page_url=page_url,
             location_name=location_name,
             street_address=raw_data[0],
-            city=addr.city,
+            city=city,
             state="",
             zip_postal=addr.postcode,
             country_code=country_code,

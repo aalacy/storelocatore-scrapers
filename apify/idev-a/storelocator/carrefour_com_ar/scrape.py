@@ -7,7 +7,6 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from tenacity import stop_after_attempt, retry
 import time
 from sglogging import SgLogSetup
-from webdriver_manager.chrome import ChromeDriverManager
 import ssl
 import os
 
@@ -157,7 +156,6 @@ def get_url(url):
 
 def fetch_br():
     with SgChrome(
-        executable_path=ChromeDriverManager().install(),
         user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.75 Safari/537.36",
         is_headless=True,
     ) as driver:
