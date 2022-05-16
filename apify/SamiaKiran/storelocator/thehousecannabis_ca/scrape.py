@@ -64,15 +64,18 @@ def fetch_data():
                 try:
                     temp_list = r.text.split("MONDAY")[1].split("Order Online")[0]
                 except:
-                    temp_list = r.text.split("Monday")[1].split("Order Online")[0]
+                    temp_list = r.text.split("Monday")[2].split("Order Online")[0]
+
                 temp_list = "MONDAY " + BeautifulSoup(
                     temp_list, "html.parser"
-                ).get_text(separator="|", strip=True).replace("|", " ")
-                temp_list = (
-                    temp_list.replace("SUNDAY", "SUNSAY#")
-                    .replace(" - ", "-")
-                    .split("#")
+                ).get_text(separator="|", strip=True).replace("|", " ").replace(
+                    " - ", "-"
                 )
+                if "SUNDAY" in temp_list:
+                    temp_list = temp_list.replace("SUNDAY", "SUNDAY#")
+                elif "Sunday" in temp_list:
+                    temp_list = temp_list.replace("Sunday", "Sunday#")
+                temp_list = temp_list.split("#")
                 day_list = temp_list[0].split()
                 time_list = temp_list[1].split()
                 hours_of_operation = ""
