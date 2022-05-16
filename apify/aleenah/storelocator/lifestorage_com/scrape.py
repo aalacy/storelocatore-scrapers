@@ -33,6 +33,8 @@ def fetch_data():
             page_url = "https://www.lifestorage.com" + loc.get("href")
             log.info(page_url)
             res = session.get(page_url)
+            if "Opening Soon" in res.text:
+                continue
             data = res.text.split('<script type="application/ld+json">')[1].split(
                 "</script>", 1
             )[0]
@@ -56,8 +58,6 @@ def fetch_data():
                 hours_of_operation += (
                     l["dayOfWeek"] + ": " + l["opens"] + " - " + l["closes"] + " "
                 )
-            if "Sunday:" not in hours_of_operation:
-                hours_of_operation += "Sunday: Closed"
             phone = js["telephone"]
             latitude = js["geo"]["latitude"]
             longitude = js["geo"]["longitude"]

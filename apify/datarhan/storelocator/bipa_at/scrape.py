@@ -16,7 +16,7 @@ def fetch_data():
     domain = "bipa.at"
 
     all_codes = DynamicZipSearch(
-        country_codes=[SearchableCountries.AUSTRIA], expected_search_radius_miles=5
+        country_codes=[SearchableCountries.AUSTRIA], expected_search_radius_miles=1
     )
     with SgFirefox() as driver:
         for code in all_codes:
@@ -36,7 +36,7 @@ def fetch_data():
                 count = 0
                 next_page = driver.find_element_by_class_name("next_link")
                 while next_page:
-                    if count > 10:
+                    if count > 20:
                         break
                     next_page.click()
                     dom = etree.HTML(driver.page_source)
