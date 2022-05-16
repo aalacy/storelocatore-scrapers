@@ -11,7 +11,7 @@ from sgpostal.sgpostal import International_Parser, parse_address
 
 os.environ[
     "PROXY_URL"
-] = "http://groups-RESIDENTIAL,country-jp:{}@proxy.apify.com:8000/"
+] = "http://groups-RESIDENTIAL,country-ua:{}@proxy.apify.com:8000/"
 
 try:
     _create_unverified_https_context = ssl._create_unverified_context

@@ -38,7 +38,8 @@ def fetch_data():
         )
         stores = json.loads(stores_req.text)
         for store in stores:
-
+            if store["open"] is False:
+                continue
             store_number = store["storeId"]
             page_url = f"https://www.hemkop.se/butik/{store_number}"
             locator_domain = website
