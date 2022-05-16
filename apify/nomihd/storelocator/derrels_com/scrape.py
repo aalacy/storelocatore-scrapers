@@ -102,7 +102,10 @@ def fetch_data():
 
             country_code = "US"
 
-            store_number = "<MISSING>"
+            store_number = page_url.split("-")[-1].strip().replace("/", "").strip()
+            if not store_number.isdigit():
+                store_number = "<MISSING>"
+
             phone = "".join(store_sel.xpath('//a[@class="phone bold"]/text()')).strip()
             location_type = "<MISSING>"
 
