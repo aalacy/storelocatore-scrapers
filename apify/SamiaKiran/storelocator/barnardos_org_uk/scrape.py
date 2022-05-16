@@ -55,6 +55,8 @@ def fetch_data():
                     .replace("View on Google Maps", " ")
                 )
                 phone = temp[1].get_text(separator="|", strip=True).replace("|", " ")
+                if "Monday" in phone:
+                    phone = MISSING
                 try:
                     hours_of_operation = (
                         temp[2].get_text(separator="|", strip=True).replace("|", " ")

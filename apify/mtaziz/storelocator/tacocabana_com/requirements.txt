@@ -1,5 +1,9 @@
-sgselenium==0.0.15
-pytz==2018.5
-sgrequests==0.1.8
+--extra-index-url https://dl.cloudsmith.io/KVaWma76J5VNwrOm/crawl/crawl/python/simple/
+sgrequests==0.3.4
+sgselenium==0.2.3
+sgscrape==0.2.9
+tenacity==7.0.0
 sglogging==0.0.4
-sgscrape==0.0.23
+webdriver_manager==3.4.2
+lxml==4.6.2
+selenium==4.1.3

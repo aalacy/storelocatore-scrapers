@@ -26,14 +26,15 @@ def fetch_data():
         api_url = (
             r.text.split("var urls = ")[1]
             .split("]")[0]
-            .split('","')[-2]
+            .split('","')[-1]
             .replace("\\/", "/")
         )
         r = session.get(api_url, headers=headers)
         loclist = (
-            r.text.split('"locationsRaw":"')[1]
-            .split('","app_url"')[0]
+            r.text.split("locationsRaw:")[1]
+            .split(",app_url")[0]
             .replace('\\"', '"')
+            .replace("'", "")
         )
         loclist = json.loads(loclist)
         for loc in loclist:
@@ -42,7 +43,7 @@ def fetch_data():
             store_number = str(loc["id"])
             location_name = loc["name"]
             phone = loc["phone"]
-            street_address = loc["address"].split(",")[1]
+            street_address = loc["address"].replace("Jennifer Furniture,", "")
             city = loc["city"]
             state = loc["state"]
             zip_postal = loc["postal"]

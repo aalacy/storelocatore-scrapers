@@ -7,6 +7,7 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
+from sgscrape.pause_resume import CrawlStateSingleton
 
 logger = SgLogSetup().get_logger("sherwin-williams_com")
 
@@ -99,30 +100,8 @@ def fetch_data(sgw: SgWriter):
                 phone = store_data["phone"] or "<MISSING>"
 
                 link = "https://www.sherwin-williams.com" + store_data["url"]
-                location_request = session.get(
-                    link,
-                    headers=headers,
-                )
-                location_soup = BeautifulSoup(location_request.text, "lxml")
 
-                hours = ""
-                try:
-                    hours = (
-                        " ".join(
-                            list(
-                                location_soup.find(
-                                    "div",
-                                    {
-                                        "class": "cmp-storedetailhero__store-hours-container"
-                                    },
-                                ).stripped_strings
-                            )
-                        )
-                        .replace("Store Hours", "")
-                        .strip()
-                    )
-                except:
-                    pass
+                hours = "<INACCESSIBLE>"
 
                 row = SgRecord(
                     locator_domain=locator_domain,
@@ -145,6 +124,7 @@ def fetch_data(sgw: SgWriter):
 
 
 if __name__ == "__main__":
+    CrawlStateSingleton.get_instance().save(override=True)
     session = SgRequests()
     with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))) as writer:
         fetch_data(writer)
