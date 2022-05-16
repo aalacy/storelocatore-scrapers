@@ -81,6 +81,9 @@ def fetch_data():
                 .strip()
                 .replace("\n", "; ")
                 .strip()
+                .replace("\n", "")
+                .replace("\r", "")
+                .strip()
             )
 
             store_number = store_info[8]
