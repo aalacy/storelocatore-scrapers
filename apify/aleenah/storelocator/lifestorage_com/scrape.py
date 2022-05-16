@@ -25,7 +25,6 @@ def fetch_data():
     state_list = soup.find("div", {"class": "footerStates"}).find_all("a")
     for state_url in state_list:
         url = "https://www.lifestorage.com" + state_url.get("href")
-        log.info(url)
         res = session.get(url)
         soup = BeautifulSoup(res.text, "html.parser")
         loclist = soup.find_all("a", {"class": "btn store"})
@@ -33,8 +32,6 @@ def fetch_data():
             page_url = "https://www.lifestorage.com" + loc.get("href")
             log.info(page_url)
             res = session.get(page_url)
-            if "Opening Soon" in res.text:
-                continue
             data = res.text.split('<script type="application/ld+json">')[1].split(
                 "</script>", 1
             )[0]
@@ -62,6 +59,9 @@ def fetch_data():
             latitude = js["geo"]["latitude"]
             longitude = js["geo"]["longitude"]
             location_type = js["@type"]
+            if not hours_of_operation:
+                hours_of_operation = MISSING
+                location_type = "COMING SOON"
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url=page_url,
