@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-# --extra-index-url https://dl.cloudsmith.io/KVaWma76J5VNwrOm/crawl/crawl/python/simple/
 from lxml import etree
 
 from sgrequests import SgRequests
@@ -31,16 +30,24 @@ def fetch_data():
         street_address = addr.street_address_1
         if addr.street_address_2:
             street_address += " " + addr.street_address_2
-        phone = poi_html.xpath('.//span[@class="c-secondary font-normal"]/text()')[-1]
+        phone = poi_html.xpath('.//span[@class="c-secondary font-normal"]/text()')[
+            -1
+        ].split("/")[0]
+        zip_code = addr.postcode
+        if not zip_code:
+            zip_code = raw_address.split()[-1].replace(".", "")
+        if zip_code:
+            zip_code = zip_code.split("-")[-1]
+        city = addr.city if addr.city else location_name
 
         item = SgRecord(
             locator_domain=domain,
             page_url=start_url,
             location_name=location_name,
             street_address=street_address,
-            city=addr.city,
+            city=city,
             state=addr.state,
-            zip_postal=addr.postcode,
+            zip_postal=zip_code,
             country_code="IN",
             store_number="",
             phone=phone,
@@ -48,6 +55,7 @@ def fetch_data():
             latitude="",
             longitude="",
             hours_of_operation="",
+            raw_address=raw_address,
         )
 
         yield item
