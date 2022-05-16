@@ -1,7 +1,6 @@
 import ssl
 import time
 from sglogging import sglog
-from selenium import webdriver
 import undetected_chromedriver as uc
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
@@ -20,20 +19,12 @@ MISSING = SgRecord.MISSING
 
 
 def get_driver(url, driver=None):
-
-    options = webdriver.ChromeOptions()
-    options.add_argument("start-maximized")
-    options.add_argument("--headless")
-    options.add_argument("--no-sandbox")
-    options.add_argument("--disable-dev-shm-usage")
-    driver = uc.Chrome(executable_path=ChromeDriverManager().install(), options=options)
-
+    driver = uc.Chrome(executable_path=ChromeDriverManager().install())
     driver.get(url)
     return driver
 
 
 def fetch_data():
-    class_name = "pm-location"
     url = "https://www.zorbaz.com/locationz"
     driver = get_driver(url)
     time.sleep(2)
