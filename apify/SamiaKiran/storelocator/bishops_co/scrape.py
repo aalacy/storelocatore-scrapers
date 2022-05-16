@@ -54,7 +54,7 @@ def fetch_data():
                     .replace("Hours", "")
                 )
                 if "Phone" in hours_of_operation:
-                    phone = hours_of_operation.split("phone")[1]
+                    phone = hours_of_operation.split("Phone")[1]
                     hours_of_operation = MISSING
                 try:
                     coords = address["href"].split("@")[1].split(",")
