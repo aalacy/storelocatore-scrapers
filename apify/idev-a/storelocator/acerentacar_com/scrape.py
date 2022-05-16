@@ -10,7 +10,7 @@ _headers = {
 }
 
 locator_domain = "https://www.acerentacar.com"
-base_url = "https://www.acerentacar.com/_next/data/7t-yefaZGWA-O4Far4a4N/Locations.json"
+base_url = "https://api.acerentacar.com:6093/api/location"
 days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 
 
@@ -20,9 +20,7 @@ def _t(hh):
 
 def fetch_data():
     with SgRequests() as session:
-        locations = session.get(base_url, headers=_headers).json()["pageProps"][
-            "locations"
-        ]
+        locations = session.get(base_url, headers=_headers).json()
         for _ in locations:
             street_address = _["addressOne"]
             if _["addressTwo"]:
@@ -34,21 +32,24 @@ def fetch_data():
             for day in days:
                 day = day.lower()
                 times = None
-                if hr.get(f"{day}Closed"):
-                    times = "closed"
+                if hr.get(f"{day}TwentyFour"):
+                    hours.append(f"{day}: 24 Hours")
                 else:
-                    start = hr.get(f"{day}Open")
-                    end = hr.get(f"{day}Close")
-                    if start:
-                        times = f"{_t(start)} - {_t(end)}"
-                if times:
-                    hours.append(f"{day}: {times}")
+                    if hr.get(f"{day}Closed"):
+                        times = "closed"
+                    else:
+                        start = hr.get(f"{day}Open")
+                        end = hr.get(f"{day}Close")
+                        if start:
+                            times = f"{_t(start)} - {_t(end)}"
+                    if times:
+                        hours.append(f"{day}: {times}")
 
             zip_postal = _["postalCode"]
             if zip_postal == "0000" or zip_postal == "000000" or zip_postal == "00000":
                 zip_postal = ""
             yield SgRecord(
-                page_url=base_url,
+                page_url="https://www.acerentacar.com/Locations",
                 store_number=_["locationCode"],
                 location_name=_["locationName"],
                 street_address=street_address,
