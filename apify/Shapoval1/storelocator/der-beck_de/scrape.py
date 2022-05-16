@@ -12,7 +12,6 @@ def fetch_data(sgw: SgWriter):
     session = SgRequests()
     session.get("https://www.der-beck.de/csrftoken")
 
-    csrf_token = session._session.cookies.get("__csrf_token-1")
     headers = {
         "Host": "www.der-beck.de",
         "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:92.0) Gecko/20100101 Firefox/92.0",
@@ -31,7 +30,11 @@ def fetch_data(sgw: SgWriter):
         "Sec-Fetch-Site": "same-origin",
     }
 
-    data = {"umkreis": "10000", "plz": "91052", "__csrf_token": f"{csrf_token}"}
+    data = {
+        "umkreis": "10000",
+        "plz": "91052",
+        "__csrf_token": "6RJNBGIomk0al3e06TNRGBgY6JCpjM",
+    }
 
     r = session.post(
         "https://www.der-beck.de/in-ihrer-naehe/filialfinder/#submit",
