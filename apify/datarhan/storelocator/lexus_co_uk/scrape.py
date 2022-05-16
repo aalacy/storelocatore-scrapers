@@ -14,10 +14,18 @@ def fetch_data():
         "Italy": "https://www.lexus.it/api/dealers/all",
         "Latvia": "https://lv.lexus.lv/api/dealers/all",
         "Lithuania": "https://lt.lexus.lt/api/dealers/all",
-        "Netherlands": "https://www.lexus.nl/api/dealers/all",
         "Poland": "https://www.lexus-polska.pl/api/dealers/all",
         "Portugal": "https://www.lexus.pt/api/dealers/all",
-        "Sweden": "https://www.lexus.se/api/dealers/all",
+    }
+
+    loc_url = {
+        "at": "https://www.lexus.at/forms/find-a-retailer",
+        "hu": "https://www.lexus.hu/",
+        "it": "https://www.lexus.it/",
+        "lv": "https://lv.lexus.lv/",
+        "lt": "https://lt.lexus.lt",
+        "pl": "https://www.lexus-polska.pl/",
+        "pt": "https://www.lexus.pt",
     }
 
     hdr = {
@@ -47,7 +55,7 @@ def fetch_data():
 
             item = SgRecord(
                 locator_domain=start_url.split("/")[2].replace("www.", ""),
-                page_url=poi.get("url"),
+                page_url=loc_url[poi["country"]],
                 location_name=poi["name"],
                 street_address=street_address,
                 city=poi["address"]["city"],
