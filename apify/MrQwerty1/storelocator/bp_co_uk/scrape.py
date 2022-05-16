@@ -91,7 +91,7 @@ if __name__ == "__main__":
     page_url = "https://www.bp.com/en_gb/united-kingdom/home/products-and-services/our-sites/find-your-nearest-bp.html"
     search_maker = DynamicSearchMaker(
         search_type="DynamicGeoSearch",
-        expected_search_radius_miles=50,
+        expected_search_radius_miles=15,
     )
 
     with SgWriter(
