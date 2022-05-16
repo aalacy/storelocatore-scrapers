@@ -5,7 +5,6 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-import json
 from sgpostal import sgpostal as parser
 
 website = "jeep.com.bd"
@@ -79,6 +78,54 @@ def fetch_data():
             "https://www.jeep-vn.com/content/dam/cross-regional/asean/jeep/en_vn/fad/vietnam_fad.js",
             "https://www.jeep-vn.com/en/find-a-dealer.html",
         ],
+        "Gabon": [
+            "https://www.jeep.ga/content/dam/cross-regional/fcacountryfinder/assets/glps/africa/jeep/jeep_ga_dealer.js",
+            "https://www.jeep.ga/",
+        ],
+        "Bahrain": [
+            "https://www.jeep-bahrain.com/content/dam/cross-regional/emea/jeep/ar_me/configform/bahrain/fad_Bahrain_ar.js",
+            "https://www.jeep-bahrain.com/ar/find-us.html",
+        ],
+        "Iraq": [
+            "https://www.jeep-iraq.com/content/dam/cross-regional/emea/jeep/ar_me/configform/iraq/fad_iraq_ar.js",
+            "https://www.jeep-iraq.com/ar/find-us.html",
+        ],
+        "Jordan": [
+            "https://www.jeep-jordan.com/content/dam/cross-regional/emea/jeep/ar_me/configform/jordan/fad_Jordon_ar.js",
+            "https://www.jeep-jordan.com/ar/find-us.html",
+        ],
+        "Oman": [
+            "https://www.jeep-oman.com/content/dam/cross-regional/emea/jeep/ar_me/configform/oman/fad_Oman_ar.js",
+            "https://www.jeep-oman.com/ar/find-us.html",
+        ],
+        "Qatar": [
+            "https://www.jeep-qatar.com/content/dam/cross-regional/emea/jeep/ar_me/configform/qatar/fad_qatar_ar.js",
+            "https://www.jeep-qatar.com/ar/find-us.html",
+        ],
+        "UAE (Abudhabi)": [
+            "https://www.jeep-abudhabi.com/content/dam/cross-regional/emea/jeep/en_me/configform/abudhabi/fad_abu_dhabi.js",
+            "https://www.jeep-abudhabi.com/en/find-us.html",
+        ],
+        "UAE (Dubai)": [
+            "https://www.jeep-dubai.com/content/dam/cross-regional/emea/jeep/en_me/find-us/uae/fad_uae.js",
+            "https://www.jeep-dubai.com/en/",
+        ],
+        "Australia": [
+            "https://www.jeep.com.au/content/dam/cross-regional/apac/jeep/en_au/find-a-dealer/new/jeep-dealers.js",
+            "https://www.jeep.com.au/dealers.html",
+        ],
+        "India": [
+            "https://www.jeep-india.com/content/dam/cross-regional/apac/jeep/en_in/find-a-dealer/jeep-dealers.js",
+            "https://www.jeep-india.com/find-dealer.html",
+        ],
+        "Japan": [
+            "https://www.jeep-japan.com/content/dam/cross-regional/apac/jeep/ja_jp/find-a-dealer/jeep-dealers.js",
+            "https://www.jeep-japan.com/dealer.html",
+        ],
+        "South Korea": [
+            "https://www.jeep.co.kr/content/dam/cross-regional/apac/jeep/ko_kr/find-a-dealer/jeep-korea-dealers211108.js",
+            "https://www.jeep.co.kr/find_a_dealer.html",
+        ],
     }
 
     with SgRequests() as session:
@@ -89,7 +136,7 @@ def fetch_data():
                 f"fetching data for country:{country_code} having url: {search_url}"
             )
             search_res = session.get(search_url, headers=headers)
-            store_json = json.loads(search_res.text)
+            store_json = search_res.json()
             if "sales" in store_json:
                 stores = store_json["sales"]
                 for store in stores:
@@ -100,6 +147,10 @@ def fetch_data():
 
                     location_type = store["division"] + " " + store["department"]
                     raw_address = store.get("dealerAddress1", "<MISSING>")
+                    if raw_address:
+                        if ")" in raw_address:
+                            raw_address = raw_address.split(")", 1)[1].strip()
+
                     formatted_addr = parser.parse_address_intl(raw_address)
                     street_address = formatted_addr.street_address_1
                     if street_address:
@@ -116,7 +167,12 @@ def fetch_data():
                             street_address = "CPOBox 154"
 
                     city = store.get("dealerCity", "<MISSING>")
-                    state = store.get("dealerState", "<MISSING>")
+                    state = (
+                        store.get("dealerState", "<MISSING>")
+                        .replace("UAE-AbuDhabi", "")
+                        .replace("United Arab Emirates", "")
+                        .strip()
+                    )
                     zip = store.get("dealerZipCode", "<MISSING>")
                     if zip == "no":
                         zip = "<MISSING>"

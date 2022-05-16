@@ -3,6 +3,7 @@ from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgpostal.sgpostal import International_Parser, parse_address
 
 
 def fetch_data(sgw: SgWriter):
@@ -71,6 +72,15 @@ def fetch_data(sgw: SgWriter):
                 .strip()
                 or "<MISSING>"
             )
+            if street_address != "<MISSING>":
+                ad = street_address
+                a = parse_address(International_Parser(), ad)
+                street_address = (
+                    f"{a.street_address_1} {a.street_address_2}".replace(
+                        "None", ""
+                    ).strip()
+                    or "<MISSING>"
+                )
             state = j.get("state") or j.get("province") or "<MISSING>"
             state = str(state).replace("&#xf1;", "ñ").strip()
             if state == "110001":
@@ -111,6 +121,12 @@ def fetch_data(sgw: SgWriter):
                 latitude=latitude,
                 longitude=longitude,
                 hours_of_operation=hours_of_operation,
+                raw_address=f"{j.get('address1')} {j.get('address2')} {j.get('city')}, {j.get('state')} {j.get('postalcode')}".replace(
+                    "\n", ""
+                )
+                .replace("None", "")
+                .replace("<MISSING>", "")
+                .strip(),
             )
 
             sgw.write_row(row)

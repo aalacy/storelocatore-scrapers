@@ -1,130 +1,71 @@
-import csv
-
-from concurrent import futures
+import tabula as tb  # noqa
+from io import BytesIO
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
+def fetch_data(sgw: SgWriter):
+    r = session.get(page_url)
+    file = BytesIO(r.content)
+    dfs = tb.read_pdf(
+        file,
+        pages="all",
+        pandas_options={
+            "columns": [
+                "store_number",
                 "street_address",
                 "city",
                 "state",
-                "zip",
-                "country_code",
-                "store_number",
+                "zip_postal",
                 "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
+                "hoo",
+                "Diesel",
+                "Rec90",
+                "Brand",
             ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def get_ids():
-    ids = set()
-    session = SgRequests()
-    r = session.get(
-        "https://www.parmarstores.com/wp-json/store-locator-plus/v2/locations/"
+        },
     )
-    js = r.json()
-    for j in js:
-        ids.add(j["sl_id"])
+    for ab in dfs:
+        for _, row in ab.iterrows():
+            store_number = row.store_number
+            street_address = row.street_address
+            city = row.city
+            state = row.state
+            postal = str(row.zip_postal)
+            phone = row.phone
+            hoo = row.hoo
+            location_type = row.Brand
+            if location_type == "Unbrand" or location_type == "x":
+                location_type = SgRecord.MISSING
+            country_code = "US"
+            location_name = "Par Mar Store"
 
-    return ids
+            row = SgRecord(
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=postal,
+                country_code=country_code,
+                location_type=location_type,
+                phone=phone,
+                store_number=store_number,
+                locator_domain=locator_domain,
+                hours_of_operation=hoo,
+            )
 
-
-def get_data(_id):
-    locator_domain = "https://www.parmarstores.com/"
-    api_url = (
-        f"https://www.parmarstores.com/wp-json/store-locator-plus/v2/locations/{_id}"
-    )
-
-    session = SgRequests()
-    r = session.get(api_url)
-    j = r.json()
-
-    page_url = "<MISSING>"
-    location_name = j.get("sl_store").strip()
-    street_address = (
-        f"{j.get('sl_address')} {j.get('sl_address2') or ''}".strip() or "<MISSING>"
-    )
-    city = j.get("sl_city") or "<MISSING>"
-    state = j.get("sl_state") or "<MISSING>"
-    state = state[:2]
-    postal = j.get("sl_zip") or "<MISSING>"
-    country_code = j.get("sl_country") or "US"
-    if country_code == "USA" or country_code == "United States":
-        country_code = "US"
-    store_number = location_name.split("#")[-1].strip()
-    phone = j.get("sl_phone") or "<MISSING>"
-    latitude = j.get("sl_latitude") or "<MISSING>"
-    longitude = j.get("sl_longitude") or "<MISSING>"
-    location_type = "<MISSING>"
-    hours_of_operation = (
-        j.get("sl_hours")
-        .replace("strong", "")
-        .replace("<", "")
-        .replace(">", "")
-        .replace("/", "")
-        .replace("\r\n", ";")
-        or "<MISSING>"
-    )
-
-    row = [
-        locator_domain,
-        page_url,
-        location_name,
-        street_address,
-        city,
-        state,
-        postal,
-        country_code,
-        store_number,
-        phone,
-        location_type,
-        latitude,
-        longitude,
-        hours_of_operation,
-    ]
-
-    return row
-
-
-def fetch_data():
-    out = []
-    s = set()
-    ids = get_ids()
-
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {executor.submit(get_data, _id): _id for _id in ids}
-        for future in futures.as_completed(future_to_url):
-            row = future.result()
-            if row:
-                _id = row[8]
-                if _id not in s:
-                    s.add(_id)
-                    out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+            sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "http://www.parmarstores.com/"
+    page_url = (
+        "http://www.parmarstores.com/wp-content/uploads/2022/03/Par-Mar-Stores.pdf"
+    )
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+        fetch_data(writer)
