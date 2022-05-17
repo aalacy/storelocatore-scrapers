@@ -15,7 +15,6 @@ json_url = r"https://www.thenorthface.cl/graphql\?query\=query\+GetCmsPage"
 def fetch_data():
     with SgChrome(executable_path=ChromeDriverManager().install()) as driver:
         driver.get(base_url)
-        rr = driver.wait_for_request(json_url)
         time.sleep(2)
         soup = bs(driver.page_source, "lxml")
         locations = soup.select("div.store-card")
