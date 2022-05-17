@@ -67,6 +67,7 @@ def fetch_data(sgw: SgWriter):
             .replace("Pittston Bypass", "")
             .replace("Hamilton Square", "")
             .replace("Hudson Mall", "")
+            .replace("Holland Union Building,", "")
             .split("Spencerport")[0]
             .split("(Aka")[0]
             .split(", Penni")[0]
@@ -94,9 +95,7 @@ def fetch_data(sgw: SgWriter):
                 street_address = street_address[start:]
 
         try:
-            location_type = ", ".join(
-                list(base.find(class_="Core-branchServices").stripped_strings)
-            )
+            location_type = base.find(class_="Hero-locationType").text.strip()
         except:
             location_type = ""
 
