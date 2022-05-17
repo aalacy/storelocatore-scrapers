@@ -12,7 +12,7 @@ def fetch_data(sgw: SgWriter):
 
     for j in js:
         slug = j.get("link")
-        page_url = f"https://toom.de{slug}"
+        page_url = f"https://toom.de/{slug}"
         location_name = j.get("name")
 
         a = j.get("address") or {}
