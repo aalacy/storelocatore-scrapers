@@ -115,6 +115,14 @@ def fetch_data():
             except:
                 hours_of_operation = "<MISSING>"
 
+            if "store-locations-waikiki-beach-walk" in page_url:
+                hours_of_operation = (
+                    hours_of_operation
+                    + "; "
+                    + "".join(
+                        store_sel.xpath('//div[contains(text(),"Friday")]/text()')
+                    ).strip()
+                )
             map_link = "".join(
                 store_sel.xpath('//iframe[contains(@src,"maps")]/@src')
             ).strip()
