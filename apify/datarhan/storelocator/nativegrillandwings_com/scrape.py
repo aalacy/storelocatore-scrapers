@@ -25,11 +25,14 @@ def fetch_data():
             loc_dom = etree.HTML(driver.page_source)
             hoo = loc_dom.xpath('//div[@class="hours-body ng-scope"]//text()')
             hoo = " ".join([e.strip() for e in hoo if e.strip()])
+            sub_name = [
+                e["data"] for e in poi["custom_fields"] if e["name"] == "geomodifier"
+            ][0]
 
             item = SgRecord(
                 locator_domain=domain,
                 page_url=poi["store_info"]["website"],
-                location_name=poi["store_info"]["name"],
+                location_name=poi["store_info"]["name"] + f" ({sub_name})",
                 street_address=poi["store_info"]["address"],
                 city=poi["store_info"]["locality"],
                 state=poi["store_info"]["region"],
