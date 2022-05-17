@@ -22,7 +22,7 @@ def fetch_data(sgw: SgWriter):
     for d in div:
 
         page_url = "https://www.daveshotchicken.com/locations"
-        location_name = "".join(d.xpath(".//h2/text()"))
+        location_name = "".join(d.xpath(".//h2//text()"))
         if "@" in location_name:
             continue
         info = d.xpath(".//h2/following-sibling::p/text()")
