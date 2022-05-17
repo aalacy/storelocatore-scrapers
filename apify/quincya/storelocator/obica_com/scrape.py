@@ -47,72 +47,48 @@ def fetch_data(sgw: SgWriter):
                 )
                 .split("Aperitivo")[0]
                 .split("Brunch")[0]
+                .split("Retail")[0]
                 .strip()
             )
             latitude = ""
             longitude = ""
-        elif "/pages/" in item["href"]:
-            link = item["href"]
-            req = session.get(link, headers=headers)
-            base = BeautifulSoup(req.text, "lxml")
 
-            location_name = base.find(class_="shopInfo").tr.td.text
-            raw_address = base.find(class_="shopInfo").find_all("tr")[1].td.text
-            phone = (
-                base.find(class_="shopInfo")
-                .find_all("tr")[-2]
-                .td.text.replace("TEL：", "")
-                .replace("​", "")
-                .strip()
+            city = item.find(class_="restaurant-item-city").text.split(",")[0].strip()
+            country_code = (
+                item.find(class_="restaurant-item-city").text.split(",")[-1].strip()
             )
-            hours_of_operation = (
-                base.find(class_="shopInfo")
-                .find_all("tr")[-1]
-                .td.text.replace("\n", " ")
-                .strip()
+
+            hours_of_operation = hours_of_operation.replace(
+                ")Dinner", ") Dinner"
+            ).replace("  ", " ")
+            addr = parse_address_intl(raw_address)
+            street_address = addr.street_address_1
+            if addr.street_address_2:
+                street_address = addr.street_address_1 + " " + addr.street_address_2
+            state = addr.state
+            zip_code = addr.postcode
+            store_number = ""
+            location_type = ""
+
+            sgw.write_row(
+                SgRecord(
+                    locator_domain=locator_domain,
+                    page_url=link,
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=zip_code,
+                    country_code=country_code,
+                    store_number=store_number,
+                    phone=phone,
+                    location_type=location_type,
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=hours_of_operation,
+                    raw_address=raw_address,
+                )
             )
-            map_link = base.find(class_="shop-map").iframe["src"]
-            lat_pos = map_link.rfind("!3d")
-            latitude = map_link[lat_pos + 3 : map_link.find("!", lat_pos + 5)].strip()
-            lng_pos = map_link.find("!2d")
-            longitude = map_link[lng_pos + 3 : map_link.find("!", lng_pos + 5)].strip()
-
-        city = item.find(class_="restaurant-item-city").text.split(",")[0].strip()
-        country_code = (
-            item.find(class_="restaurant-item-city").text.split(",")[-1].strip()
-        )
-
-        hours_of_operation = hours_of_operation.replace(")Dinner", ") Dinner").replace(
-            "  ", " "
-        )
-        addr = parse_address_intl(raw_address)
-        street_address = addr.street_address_1
-        if addr.street_address_2:
-            street_address = addr.street_address_1 + " " + addr.street_address_2
-        state = addr.state
-        zip_code = addr.postcode
-        store_number = ""
-        location_type = ""
-
-        sgw.write_row(
-            SgRecord(
-                locator_domain=locator_domain,
-                page_url=link,
-                location_name=location_name,
-                street_address=street_address,
-                city=city,
-                state=state,
-                zip_postal=zip_code,
-                country_code=country_code,
-                store_number=store_number,
-                phone=phone,
-                location_type=location_type,
-                latitude=latitude,
-                longitude=longitude,
-                hours_of_operation=hours_of_operation,
-                raw_address=raw_address,
-            )
-        )
 
 
 with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
