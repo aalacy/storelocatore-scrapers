@@ -22,7 +22,7 @@ def fetch_data(sgw: SgWriter):
         "extensions": {
             "persistedQuery": {
                 "version": 1,
-                "sha256Hash": "ce04579ed4b4cf578926ed2bd7fa75454af3f677528997949e3fbf1f16325b3b",
+                "sha256Hash": "43c4c6a895c8c8f4a69ab48dbad5fcfc1d37f0a089f62b8b6dc32f20134c2810",
                 "sender": "vtex.store-locator@0.x",
                 "provider": "vtex.store-locator@0.x",
             },

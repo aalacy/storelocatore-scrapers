@@ -23,11 +23,13 @@ def fetch_data(sgw: SgWriter):
     locator_domain = "https://www.ralphs.com/"
 
     max_distance = 40
+    max_results = 50
 
     search = DynamicZipSearch(
         country_codes=[SearchableCountries.USA, SearchableCountries.CANADA],
         max_search_distance_miles=max_distance,
         expected_search_radius_miles=max_distance,
+        max_search_results=max_results,
         granularity=Grain_1_KM(),
     )
 
@@ -65,8 +67,11 @@ def fetch_data(sgw: SgWriter):
                 location_type = "store"
             latitude = key["location"]["lat"]
             longitude = key["location"]["lng"]
-            search.found_location_at(latitude, longitude)
-
+            if str(latitude) == "0":
+                latitude = ""
+                longitude = ""
+            else:
+                search.found_location_at(latitude, longitude)
             hours = ""
             try:
                 raw_hours = key["formattedHours"]
@@ -135,7 +140,6 @@ def fetch_data(sgw: SgWriter):
                 location_type = "fuel"
             latitude = key1["location"]["lat"]
             longitude = key1["location"]["lng"]
-            search.found_location_at(latitude, longitude)
 
             hours = ""
             try:

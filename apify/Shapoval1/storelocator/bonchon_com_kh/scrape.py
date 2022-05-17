@@ -9,50 +9,38 @@ from sgpostal.sgpostal import International_Parser, parse_address
 
 def fetch_data(sgw: SgWriter):
 
-    locator_domain = "https://www.bonchon.com.kh/"
-    page_url = "https://www.bonchon.com.kh/"
+    locator_domain = "https://www.bonchon.com.kh"
+    page_url = "https://www.bonchon.com.kh/locations/"
     session = SgRequests()
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
     r = session.get(page_url, headers=headers)
     tree = html.fromstring(r.text)
-    div = tree.xpath("//div[./h3/strong]")
+    div = tree.xpath("//div[./h3]")
     for d in div:
 
         location_name = "".join(d.xpath(".//h3//text()"))
         info = d.xpath(".//p//text()")
         info = list(filter(None, [a.strip() for a in info]))
-        ad = "<MISSING>"
-        tmp = []
-        for i in info:
-            if ":" not in i:
-                tmp.append(i)
-            ad = " ".join(tmp)
+        ad = " ".join(info).split("Tel")[0].strip()
         a = parse_address(International_Parser(), ad)
-        street_address = f"{a.street_address_1} {a.street_address_2}".replace(
-            "None", ""
-        ).strip()
+        street_address = (
+            f"{a.street_address_1} {a.street_address_2}".replace("None", "").strip()
+            or "<MISSING>"
+        )
         state = a.state or "<MISSING>"
         postal = a.postcode or "<MISSING>"
         country_code = "KH"
         city = a.city or "<MISSING>"
-        if "Phnom Penh" in location_name:
+        if ad.find("Phnom Penh") != -1:
             city = "Phnom Penh"
+        latitude = "".join(d.xpath(".//@data-lat"))
+        longitude = "".join(d.xpath(".//@data-lng"))
         phone = "<MISSING>"
         for i in info:
             if "Tel" in i:
-                phone = "".join(i).replace("Tel:", "").strip()
-        hours_of_operation = (
-            " ".join(
-                d.xpath(
-                    './/preceding::h1[./strong[text()="Opening Hours"]]/following-sibling::*//text()'
-                )
-            )
-            .replace("\n", "")
-            .strip()
-        )
-        hours_of_operation = " ".join(hours_of_operation.split())
+                phone = str(i).replace("Tel:", "").strip()
 
         row = SgRecord(
             locator_domain=locator_domain,
@@ -66,9 +54,9 @@ def fetch_data(sgw: SgWriter):
             store_number=SgRecord.MISSING,
             phone=phone,
             location_type=SgRecord.MISSING,
-            latitude=SgRecord.MISSING,
-            longitude=SgRecord.MISSING,
-            hours_of_operation=hours_of_operation,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=SgRecord.MISSING,
             raw_address=ad,
         )
 
@@ -78,6 +66,6 @@ def fetch_data(sgw: SgWriter):
 if __name__ == "__main__":
     session = SgRequests()
     with SgWriter(
-        SgRecordDeduper(SgRecordID({SgRecord.Headers.LOCATION_NAME}))
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.RAW_ADDRESS}))
     ) as writer:
         fetch_data(writer)

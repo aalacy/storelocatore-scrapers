@@ -6,8 +6,8 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgzip.dynamic import SearchableCountries, DynamicGeoSearch
 
 
-def fetch_data(coord, sgw):
-    lat, lon = coord
+def fetch_data(coords, sgw):
+    lat, lon = coords
     data = {"lat": lat, "lng": lon}
 
     r = session.post(
@@ -38,6 +38,9 @@ def fetch_data(coord, sgw):
                 _tmp.append(line)
 
         hours_of_operation = ";".join(_tmp)
+
+        if j.get("coming_soon") == "1":
+            hours_of_operation = "Coming Soon"
 
         row = SgRecord(
             page_url=page_url,

@@ -10,6 +10,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.pause_resume import CrawlStateSingleton
 from sgzip.dynamic import SearchableCountries
 from sgzip.parallel import DynamicSearchMaker, ParallelDynamicSearch, SearchIteration
+from sgpostal import sgpostal as parser
 
 
 website = "boschcarservice.com"
@@ -94,6 +95,9 @@ class _SearchIteration(SearchIteration):
                     if zip and len(zip) > 0:
                         raw_address = raw_address + ", " + zip
 
+                    formatted_addr = parser.parse_address_intl(raw_address)
+
+                    city = formatted_addr.city
                     country_code = store["address"]["country"]
                     store_number = store["storeId"]
                     phone = store["address"]["officePhoneNumber"]

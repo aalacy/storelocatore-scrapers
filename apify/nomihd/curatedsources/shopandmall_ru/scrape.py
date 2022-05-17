@@ -29,22 +29,34 @@ headers = {
 def fetch_data():
     # Your scraper here
 
-    search_url = "https://shopandmall.ru/torgovye-centry"
-
+    search_url = "https://shopandmall.ru/torgovye-centry?page={}&per-page=10"
+    URL_LIST = []
     with SgRequests() as session:
+        page_no = 1
         while True:
-            search_res = session.get(search_url, headers=headers)
+            log.info(f"fetching data from page:{page_no}")
+            search_res = session.get(search_url.format(str(page_no)), headers=headers)
             stores_sel = lxml.html.fromstring(search_res.text)
-            stores = stores_sel.xpath('//div[@class="center_in_result"]')
+            stores = stores_sel.xpath(
+                '//div[@class="shopping-centers__item catalog-card"]'
+            )
+            if len(stores) <= 0:
+                break
 
+            is_last_page = False
             for store in stores:
                 locator_domain = website
                 page_url = (
                     "https://shopandmall.ru"
                     + "".join(
-                        store.xpath('div[@class="header-in-list"]/a/@href')
+                        store.xpath('.//a[@class="catalog-card-info__title"]/@href')
                     ).strip()
                 )
+                if page_url in URL_LIST:
+                    is_last_page = True
+                    break
+
+                URL_LIST.append(page_url)
                 log.info(page_url)
                 store_req = session.get(page_url, headers=headers)
 
@@ -54,31 +66,37 @@ def fetch_data():
                 store_sel = lxml.html.fromstring(store_req.text)
 
                 location_name = "".join(
-                    store.xpath('div[@class="header-in-list"]/a/text()')
+                    store.xpath('.//a[@class="catalog-card-info__title"]/text()')
                 ).strip()
                 location_type = "".join(
-                    store.xpath('div[@class="header-in-list"]/text()')
+                    store.xpath(
+                        './/div[@class="catalog-card-info__title-row"]/span/text()'
+                    )
                 ).strip()
 
-                street_address = "".join(
-                    store.xpath('p[@class="adress_center"]/text()')
-                ).strip()
+                raw_address = (
+                    "".join(
+                        store.xpath('.//div[@class="catalog-card-info__adress"]/text()')
+                    )
+                    .strip()
+                    .replace("\r\n", "")
+                    .replace("\n", "")
+                    .split(",")
+                )
+                street_address = ", ".join(raw_address[1:]).strip()
                 city = (
-                    "".join(store.xpath('p[@class="adress_center"]/b/text()'))
+                    "".join(raw_address[0])
                     .strip()
                     .split("(")[0]
+                    .strip()
+                    .replace("Адрес:", "")
                     .strip()
                 )
 
                 state = "<MISSING>"
-                if (
-                    "("
-                    in "".join(
-                        store.xpath('p[@class="adress_center"]/b/text()')
-                    ).strip()
-                ):
+                if "(" in "".join(raw_address[0]).strip():
                     state = (
-                        "".join(store.xpath('p[@class="adress_center"]/b/text()'))
+                        "".join(raw_address[0])
                         .strip()
                         .split("(")[1]
                         .strip()
@@ -101,8 +119,6 @@ def fetch_data():
                     .split("\n")[0]
                     .strip()
                 )
-                log.info(hours_of_operation)
-
                 store_number = "<MISSING>"
                 latitude, longitude = "<MISSING>", "<MISSING>"
 
@@ -123,14 +139,10 @@ def fetch_data():
                     hours_of_operation=hours_of_operation,
                 )
 
-            next_page = stores_sel.xpath(
-                '//a[./li[contains(text(),"следующая")]]/@href'
-            )
-            if len(next_page) > 0:
-                search_url = "https://shopandmall.ru" + next_page[0]
-                log.info(search_url)
-            else:
+            if is_last_page:
                 break
+
+            page_no = page_no + 1
 
 
 def scrape():

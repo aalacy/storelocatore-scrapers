@@ -61,7 +61,9 @@ def fetch_data(coords, sgw):
         city = j.get("city") or ""
         if city.endswith(","):
             city = city[:-1]
-        state = j.get("state")
+        state = j.get("state") or ""
+        if state[-1].isdigit():
+            state = state.split()[0]
         postal = j.get("zip")
         country_code = j.get("country")
         store_number = j.get("id")

@@ -62,12 +62,24 @@ def fetch_data():
     for row in contents:
         page_url = row["href"]
         store = pull_content(page_url)
+        description = store.find("div", {"itemprop": "description"}).text.strip()
+        if "Coming Soon" in description:
+            continue
         info = store.find("div", {"class": "main__restaurant"})
         location_name = info.find("span", {"itemprop": "name"}).text.strip()
         raw_address = info.find("p", {"itemprop": "address"}).text.strip()
         street_address, city, state, zip_postal, country_code = getAddress(raw_address)
+        if zip_postal == MISSING:
+            zip_postal = raw_address.split(",")[-1].strip()
+            street_address = re.sub(
+                zip_postal, "", street_address, flags=re.IGNORECASE
+            ).strip()
+            zip_postal = MISSING if zip_postal in ["Bahrain", "Qatar"] else zip_postal
         if country_code == MISSING:
-            country_code = "GB"
+            if "Bahrain" in location_name:
+                country_code = "BH"
+            else:
+                country_code = "GB"
         phone = info.find("span", {"itemprop": "telephone"}).text.strip()
         try:
             hours_of_operation = re.sub(

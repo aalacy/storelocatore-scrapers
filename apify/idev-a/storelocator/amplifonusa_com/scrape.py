@@ -5,7 +5,7 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sglogging import SgLogSetup
 import json
-from sgzip.dynamic import DynamicGeoSearch, SearchableCountries, Grain_1_KM
+from sgzip.dynamic import DynamicGeoSearch, SearchableCountries, Grain_4
 
 _headers = {
     "accept": "application/json, text/javascript, */*; q=0.01",
@@ -38,18 +38,18 @@ json_url = "https://pnapi.invoca.net/1686/na.jsonp?"
 
 
 def fetch_data(search):
-    with SgRequests(proxy_country="us") as http:
-        for lat, lng in search:
+    for lat, lng in search:
+        with SgRequests(proxy_country="us") as http:
             data = {
                 "countryCode": "US",
                 "latitude": str(lat),
                 "longitude": str(lng),
                 "locale": "en_US",
-                "limit": "15",
+                "limit": "200",
                 "radius": "200000",
                 "networks": "",
                 "subnetworks": "",
-                "maxNumResults": "15",
+                "maxNumResults": "200",
                 "type": "",
             }
             try:
@@ -99,7 +99,7 @@ if __name__ == "__main__":
         )
     ) as writer:
         search = DynamicGeoSearch(
-            country_codes=[SearchableCountries.USA], granularity=Grain_1_KM()
+            country_codes=[SearchableCountries.USA], granularity=Grain_4()
         )
         results = fetch_data(search)
         for rec in results:

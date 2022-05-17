@@ -27,7 +27,7 @@ else:
 logger = SgLogSetup().get_logger("linex_com")
 DOMAIN = "linex.com"
 MISSING = SgRecord.MISSING
-MAX_WORKERS = 7
+MAX_WORKERS = 5
 headers = {
     "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/94.0.4606.81 Safari/537.36"
 }
@@ -57,7 +57,7 @@ def fetch_all_locs(zipcode):
             sleep(2)
             logger.info("zipcode - send_keys executed")
             driver.find_element_by_xpath('//button[contains(text(), "Search")]').click()
-            sleep(20)
+            sleep(25)
             logger.info("Search Button Clicked")
             driver.find_element_by_xpath('//input[@name="location"]').clear()
             code_dom = etree.HTML(driver.page_source)

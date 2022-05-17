@@ -54,7 +54,7 @@ def fetch_data(sgw: SgWriter):
         country_codes=[
             SearchableCountries.USA,
         ],
-        max_radius_miles=max_distance,
+        max_search_distance_miles=max_distance,
     )
 
     driver.get("https://www.mfaoil.com/store-locator/")

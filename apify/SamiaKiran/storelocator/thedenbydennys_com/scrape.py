@@ -33,8 +33,8 @@ def fetch_data():
             coords = loc.find(
                 "div", {"class": "den__map__list__item js--den__map__location"}
             )["data-latlon"].split()
-            longitude = coords[1]
-            latitude = coords[-1]
+            longitude = coords[0]
+            latitude = coords[1]
             log.info(location_name)
             raw_address = (
                 loc.find("p").get_text(separator="|", strip=True).replace("|", " ")
@@ -52,7 +52,7 @@ def fetch_data():
 
             zip_postal = pa.postcode
             zip_postal = zip_postal.strip() if zip_postal else MISSING
-
+            street_address = street_address.replace("Memorial Student Center", "")
             country_code = "US"
             yield SgRecord(
                 locator_domain=DOMAIN,

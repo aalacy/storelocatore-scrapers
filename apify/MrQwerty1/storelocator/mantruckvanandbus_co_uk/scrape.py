@@ -48,6 +48,8 @@ def get_data(slug: str, driver: SgChrome):
     for h in hours:
         day = "".join(h.xpath("./td[1]/text()")).strip()
         inter = "".join(h.xpath("./td[2]/text()")).strip()
+        if not inter:
+            continue
         _tmp.append(f"{day}: {inter}")
 
     hours_of_operation = ";".join(_tmp)
