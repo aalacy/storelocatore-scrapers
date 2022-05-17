@@ -26,9 +26,10 @@ def fetch_data(sgw: SgWriter):
         location_name = "".join(d.xpath(".//text()"))
         if page_url.find("Corporativo") != -1:
             continue
-        with SgFirefox() as driver:
+        with SgFirefox(is_headless=True) as driver:
 
             driver.get(page_url)
+            driver.refresh()
             iframe = driver.find_element_by_xpath(
                 '//h3[contains(text(), "Localización")]/following-sibling::iframe[1]'
             )

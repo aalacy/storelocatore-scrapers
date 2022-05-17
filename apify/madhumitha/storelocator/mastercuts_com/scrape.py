@@ -6,7 +6,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
-from sgselenium.sgselenium import SgFirefox
+from sgselenium import SgFirefox
 
 start_url = "https://www.signaturestyle.com/salon-directory.html"
 domain = "mastercuts.com"
@@ -14,18 +14,18 @@ hdr = {
     "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
 }
 
-driver = SgFirefox(is_headless=True).driver()
+driver = None
 
 
 def get_driver(retry=0):
     global driver
-    if retry:
-        driver = SgFirefox().driver()
+    if not driver or retry:
+        driver = SgFirefox()
 
     return driver
 
 
-def fetch_location(poi_html, retry=0):
+def fetch_location(poi_html, driver, retry=0):
     try:
         url = poi_html.xpath("@href")[0]
         raw_address = poi_html.xpath("text()")[0]
@@ -86,21 +86,34 @@ def fetch_location(poi_html, retry=0):
         return item
     except:
         if retry < 3:
-            return fetch_location(poi_html, retry + 1)
+            return fetch_location(poi_html, driver, retry + 1)
+
+
+def get_state(url, driver, retry=0):
+    try:
+        driver.get(url)
+        dom = etree.HTML(driver.page_source)
+        return dom.xpath("//td/a")
+    except:
+        if retry < 3:
+            return get_state(url, driver, retry + 1)
 
 
 def fetch_data():
-    driver.get(start_url)
-    dom = etree.HTML(driver.page_source)
-    all_states = dom.xpath('//a[@class="btn btn-primary"]/@href')
-    for url in all_states:
-        driver.get(urljoin(start_url, url))
+    locations = []
+    with SgFirefox() as driver:
+        driver.get(start_url)
         dom = etree.HTML(driver.page_source)
-        all_locations = dom.xpath("//td/a")
-        for poi_html in all_locations:
-            poi = fetch_location(poi_html)
-            if poi:
-                yield poi
+        all_states = dom.xpath('//a[@class="btn btn-primary"]/@href')
+        for url in all_states:
+            state_url = urljoin(start_url, url)
+            all_locations = get_state(state_url, driver)
+            for poi_html in all_locations:
+                poi = fetch_location(poi_html, driver)
+                if poi:
+                    locations.append(poi)
+
+    return locations
 
 
 def scrape():
