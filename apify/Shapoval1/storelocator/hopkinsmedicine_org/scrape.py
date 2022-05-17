@@ -20,9 +20,6 @@ def fetch_data(sgw: SgWriter):
     for d in div:
 
         page_url = "".join(d.xpath(".//h3/a/@href"))
-        location_name = "".join(d.xpath(".//h3/a/text()")).replace("\n", "").strip()
-        if location_name.find("— ") != -1:
-            location_name = location_name.split("— ")[0].strip()
         info = d.xpath('.//div[@class="details"]/text()')
         info = list(filter(None, [a.strip() for a in info]))
         for i in info:
@@ -43,6 +40,15 @@ def fetch_data(sgw: SgWriter):
         )
         r = session.get(page_url, headers=headers)
         tree = html.fromstring(r.text)
+        location_name = (
+            " ".join(tree.xpath('//div[@class="content-body"]/p[1]/strong//text()'))
+            .replace("\n", "")
+            .strip()
+            or "<MISSING>"
+        )
+        location_name = (
+            " ".join(location_name.split()).replace("(Main Building)", "").strip()
+        )
         phone_lst = tree.xpath('//a[contains(@href, "tel")]/text()')
         phone_lst = list(filter(None, [a.strip() for a in phone_lst]))
         if phone == "<MISSING>":
@@ -101,7 +107,20 @@ def fetch_data(sgw: SgWriter):
             location_name = location_name.split("—")[0].strip()
         if not location_name:
             continue
-
+        location_name = (
+            " ".join(tree.xpath('//div[@class="content-body"]/p[1]/strong//text()'))
+            .replace("\n", "")
+            .strip()
+        )
+        location_name = " ".join(location_name.split()) or "<MISSING>"
+        if location_name == "<MISSING>":
+            location_name = (
+                "".join(tree.xpath('//h2[@class="text-black"]/text()'))
+                .replace("\n", "")
+                .strip()
+            )
+            if location_name.find("—") != -1:
+                location_name = location_name.split("—")[0].strip()
         location_type = "Community Physicians Locations"
         info = tree.xpath(
             '//a[text()="Google Map"]/preceding-sibling::text() | //strong[contains(text(), "Community Physicians")]/following-sibling::text()'
