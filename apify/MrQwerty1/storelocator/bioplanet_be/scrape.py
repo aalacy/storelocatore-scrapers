@@ -29,7 +29,7 @@ def get_data(store_number, sgw: SgWriter):
     r = session.get(api, headers=headers)
     j = r.json()
 
-    location_name = j.get("branchName")
+    location_name = j.get("commercialName")
     a = j.get("address") or {}
     name = a.get("streetName") or ""
     number = a.get("houseNumber") or ""
@@ -37,6 +37,11 @@ def get_data(store_number, sgw: SgWriter):
     city = a.get("cityName") or ""
     postal = a.get("postalcode")
     country_code = "BE"
+    try:
+        location_type = j["ensign"]["name"] or ""
+    except:
+        location_type = SgRecord.MISSING
+    location_type = location_type.replace("COLR_", "")
     try:
         phone = j["telephones"][0]["number"].replace("..", "")
     except:
@@ -85,6 +90,7 @@ def get_data(store_number, sgw: SgWriter):
         store_number=store_number,
         latitude=latitude,
         longitude=longitude,
+        location_type=location_type,
         phone=phone,
         locator_domain=locator_domain,
         hours_of_operation=hours_of_operation,

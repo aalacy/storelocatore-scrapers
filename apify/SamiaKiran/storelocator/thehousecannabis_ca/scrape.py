@@ -54,9 +54,9 @@ def fetch_data():
                     state = address["addressRegion"]
                     zip_postal = address["postalCode"]
                 else:
-                    temp = soup.find("h3").text
+                    street_address = soup.find("h3").text
                     address = (
-                        r.text.split(temp)[2]
+                        r.text.split(street_address)[2]
                         .split("</p><p>")[1]
                         .split("</p>")[0]
                         .split(",")[-1]

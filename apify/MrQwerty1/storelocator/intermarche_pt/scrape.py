@@ -14,7 +14,8 @@ def get_urls():
     api = "https://www.intermarche.pt/umbraco/Api/Pos/Get"
     r = session.get(api, headers=headers)
     logger.info(f"{api}: {r.status_code}")
-    js = json.loads(r.text)["list"]
+    js = json.loads(json.loads(r.text))["list"]
+
     for j in js:
         urls.add(j.get("url"))
 
