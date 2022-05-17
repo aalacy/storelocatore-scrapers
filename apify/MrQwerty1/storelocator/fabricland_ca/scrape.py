@@ -1,43 +1,15 @@
-import csv
-
-from concurrent import futures
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
-from sgscrape.sgpostal import parse_address, International_Parser
-
-
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from concurrent import futures
 
 
 def get_urls():
     urls = []
-    r = session.get("https://fabricland.ca/sitemap.xml")
+    r = session.get("https://fabricland.ca/sitemap.xml", headers=headers)
     tree = html.fromstring(r.content)
 
     for u in tree.xpath("//loc[contains(text(), 'storelocator')]/text()"):
@@ -52,96 +24,76 @@ def get_coords_from_embed(text):
         latitude = text.split("!3d")[1].strip().split("!")[0].strip()
         longitude = text.split("!2d")[1].strip().split("!")[0].strip()
     except IndexError:
-        latitude, longitude = "<MISSING>", "<MISSING>"
+        latitude, longitude = SgRecord.MISSING, SgRecord.MISSING
 
     return latitude, longitude
 
 
-def get_data(page_url):
-    locator_domain = "https://fabricland.ca/"
-    r = session.get(page_url)
-    tree = html.fromstring(r.text)
-
-    location_name = "".join(tree.xpath("//title/text()")).split("Store")[0].strip()
-    line = (
-        "".join(tree.xpath("//h3[./b[contains(text(), ',')]][1]//text()"))
-        .replace("Fabricland,", "")
-        .strip()
-    )
-    if not line:
+def get_data(page_url, sgw: SgWriter):
+    r = session.get(page_url, headers=headers)
+    if r.status_code != 200:
         return
 
-    adr = parse_address(International_Parser(), line)
-    street_address = (
-        f"{adr.street_address_1} {adr.street_address_2 or ''}".replace(
-            "None", ""
-        ).strip()
-        or "<MISSING>"
+    tree = html.fromstring(r.text)
+    location_name = "".join(tree.xpath("//title/text()")).split("Store")[0].strip()
+    line = tree.xpath(
+        "//div[img[contains(@src, 'pin.')]]/following-sibling::div[1]/p/text()"
     )
+    line = list(filter(None, [li.strip() for li in line]))
 
-    city = adr.city or "<MISSING>"
-    state = adr.state or "<MISSING>"
-    postal = adr.postcode or "<MISSING>"
+    city, state = line.pop().split(", ")
+    street_address = ", ".join(line)
+    if "(" in street_address:
+        street_address = street_address.split("(")[0].strip()
+    if street_address.endswith(","):
+        street_address = street_address[:-1]
     country_code = "CA"
-    store_number = "<MISSING>"
-    phone = "".join(tree.xpath("//h3/b/a/text()")).strip() or "<MISSING>"
+    phone = "".join(tree.xpath("//a[@class='pnumber']/text()")).strip()
     text = "".join(tree.xpath("//iframe/@src"))
     latitude, longitude = get_coords_from_embed(text)
-    location_type = "<MISSING>"
 
     _tmp = []
-    hours = tree.xpath(
-        "//div[./b[text()='Hours']]/following-sibling::h4[not(./a)]/text()|//b[text()='Hours']/following-sibling::h4[not(./a)]/text()"
-    )
-    black = ["July", "statutory", "law", "Holiday Hours", "Easter", "Due"]
+    hours = tree.xpath("//div[span[@class='store__days']]")
     for h in hours:
-        for b in black:
-            if b in h:
-                break
-        else:
-            _tmp.append(h.strip())
+        day = "".join(h.xpath(".//text()")).strip()
+        inter = "".join(h.xpath("./following-sibling::div[1]//text()")).strip()
+        _tmp.append(f"{day}: {inter}")
+        if "Sunday" in day:
+            break
 
-    hours_of_operation = ";".join(_tmp) or "<MISSING>"
+    hours_of_operation = ";".join(_tmp)
 
-    row = [
-        locator_domain,
-        page_url,
-        location_name,
-        street_address,
-        city,
-        state,
-        postal,
-        country_code,
-        store_number,
-        phone,
-        location_type,
-        latitude,
-        longitude,
-        hours_of_operation,
-    ]
+    row = SgRecord(
+        page_url=page_url,
+        location_name=location_name,
+        street_address=street_address,
+        city=city,
+        state=state,
+        country_code=country_code,
+        latitude=latitude,
+        longitude=longitude,
+        phone=phone,
+        locator_domain=locator_domain,
+        hours_of_operation=hours_of_operation,
+    )
 
-    return row
+    sgw.write_row(row)
 
 
-def fetch_data():
-    out = []
+def fetch_data(sgw: SgWriter):
     urls = get_urls()
 
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {executor.submit(get_data, url): url for url in urls}
+    with futures.ThreadPoolExecutor(max_workers=3) as executor:
+        future_to_url = {executor.submit(get_data, url, sgw): url for url in urls}
         for future in futures.as_completed(future_to_url):
-            row = future.result()
-            if row:
-                out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+            future.result()
 
 
 if __name__ == "__main__":
+    locator_domain = "https://fabricland.ca/"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0"
+    }
     session = SgRequests()
-    scrape()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        fetch_data(writer)

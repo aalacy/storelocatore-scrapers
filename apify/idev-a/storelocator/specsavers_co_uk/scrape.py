@@ -81,10 +81,13 @@ def _d(page_url, res, soup, location_type):
             else:
                 latitude = _["displayLat"]
                 longitude = _["displayLng"]
+            street_address = _["address"]
+            if street_address.endswith(","):
+                street_address = street_address[:-1]
             return SgRecord(
                 page_url=page_url,
                 location_name=_["name"],
-                street_address=_["address"],
+                street_address=street_address,
                 city=_["city"],
                 state=_.get("state"),
                 zip_postal=_["zip"],
@@ -106,7 +109,7 @@ def _d(page_url, res, soup, location_type):
 
                 raw_address = " ".join(addr).replace("\n", "").replace("\r", "")
                 addr = raw_address.split(",")
-                street_address = " ".join(addr[:-3])
+                street_address = " ".join(addr[:-3]).strip()
                 if street_address.endswith(","):
                     street_address = street_address[:-1]
                 try:
