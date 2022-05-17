@@ -1,1 +1,1 @@
---ignore StreetAddressHasNumber --ignore StreetAddressHasStateName --ignore GeoConsistencyValidator --ignore StateLevelCountValidator (Confirmed scraped correctly)
+--ignore StreetAddressHasNumber --ignore GeoConsistencyValidator --ignore CountValidator --ignore StateLevelCountValidator (Confirmed scraped correctly)
