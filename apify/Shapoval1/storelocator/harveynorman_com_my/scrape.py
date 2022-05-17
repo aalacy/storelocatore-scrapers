@@ -94,7 +94,7 @@ def fetch_data(sgw: SgWriter):
         driver.get(page_url)
         a = driver.page_source
         tree = html.fromstring(a)
-        div = tree.xpath('//div[./div/h5[text()="Address"]]')
+        div = tree.xpath('//div[./div/h5[contains(text(), "Address")]]')
         for d in div:
             info = d.xpath(
                 './/h5[contains(text(), "Address")]/following-sibling::p[1]/text()'

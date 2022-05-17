@@ -1,3 +1,4 @@
+import json
 from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
@@ -19,15 +20,15 @@ def get_urls():
 def get_data(page_url, sgw: SgWriter):
     r = session.get(page_url, headers=headers)
     tree = html.fromstring(r.text)
+    text = "".join(tree.xpath("//div/@data-locations")).replace("&amp;#039;", "'")
+    j = json.loads(text)[0]
 
     location_name = " ".join(tree.xpath("//h2[@itemprop='name']/text()")).strip()
-    street_address = "".join(
-        tree.xpath("//span[@itemrpop='streetAddress']/text()")
-    ).strip()
-    city = "".join(tree.xpath("//span[@itemrpop='addressLocality']/text()")).strip()
-    postal = "".join(tree.xpath("//span[@itemrpop='postalCode']/text()")).strip()
+    street_address = j.get("address")
+    city = j.get("city")
+    postal = j.get("cp")
     country_code = "FR"
-    phone = "".join(tree.xpath("//p[@itemrpop='telephone']/@content"))
+    phone = j.get("phone")
     latitude = "".join(tree.xpath("//div/@data-lat"))
     longitude = "".join(tree.xpath("//div/@data-long"))
 
