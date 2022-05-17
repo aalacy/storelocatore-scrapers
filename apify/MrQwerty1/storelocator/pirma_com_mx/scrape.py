@@ -1,4 +1,4 @@
-from lxml import html
+from lxml import html, etree
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
@@ -13,6 +13,13 @@ def fetch_data(sgw: SgWriter):
     divs.pop(0)
 
     for d in divs:
+        if len(d.xpath("./td")) == 6:
+            et = etree.XML(html.tostring(d))
+            td = et.xpath('.//td[contains(text(), "30770")]')[0]
+            new_td = td.getparent()
+            new_td.insert(new_td.index(td), etree.XML("<td>Super Mza 51</td>"))
+            d = new_td
+
         store_number = "".join(d.xpath("./td[1]/text()")).strip()
         location_name = "".join(d.xpath("./td[2]/text()")).strip()
         street_address = "".join(d.xpath("./td[3]/text()")).strip()
@@ -20,10 +27,8 @@ def fetch_data(sgw: SgWriter):
         if "," in city:
             city = city.split(",")[0].strip()
         postal = "".join(d.xpath("./td[5]/text()")).strip()
-        phone = "".join(d.xpath("./td[6]/text()")).strip()
-        state = "".join(d.xpath("./td[8]/text()")).strip()
-        latitude = "".join(d.xpath("./td[9]/text()")).strip()
-        longitude = "".join(d.xpath("./td[10]/text()")).strip()
+        state = "".join(d.xpath("./td[6]/text()")).strip()
+        phone = "".join(d.xpath("./td[7]/text()")).strip()
 
         row = SgRecord(
             page_url=page_url,
@@ -33,8 +38,6 @@ def fetch_data(sgw: SgWriter):
             state=state,
             zip_postal=postal,
             country_code="MX",
-            latitude=latitude,
-            longitude=longitude,
             phone=phone,
             store_number=store_number,
             locator_domain=locator_domain,
