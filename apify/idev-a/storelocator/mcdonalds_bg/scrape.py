@@ -49,7 +49,7 @@ def fetch_data():
                 page_url="https://mcdonalds.bg/en/map/",
                 store_number=_["data-post_id"],
                 location_name=_.h3.text.strip(),
-                street_address=street_address,
+                street_address=street_address.split("/")[0],
                 city=_["data-city_title"],
                 latitude=_["data-latitude"],
                 longitude=_["data-longitude"],

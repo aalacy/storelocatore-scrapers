@@ -79,11 +79,12 @@ def fetch_data():
         hours = store.find("span", {"class": "franchise_hours"}).text.strip()
         hours = hours.replace("\n", " ")
         hours = hours.rstrip(" NOW OPEN")
-        hours = hours.replace("\n", " ")
+        hours = hours.replace("\r", "")
         phone = store.find("span", {"class": "franchise_phone"}).text.strip()
         phone = phone.lstrip("Phone: ").strip()
         latitude = lat[j].strip()
         longitude = lng[j].split('",')[0].strip()
+        hours = hours.split("Delivery")[0].strip()
 
         yield SgRecord(
             locator_domain=DOMAIN,

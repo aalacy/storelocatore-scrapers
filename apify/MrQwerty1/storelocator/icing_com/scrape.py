@@ -1,105 +1,76 @@
-import csv
 import json
-
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgzip.dynamic import SearchableCountries, DynamicGeoSearch
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def fetch_data(sgw: SgWriter):
+    search = DynamicGeoSearch(
+        expected_search_radius_miles=1000, country_codes=SearchableCountries.ALL
+    )
+    for lat, lng in search:
+        api = f"https://maps.stores.claires.com/api/getAsyncLocations?template=searchicing&level=search&limit=*&radius=*&lat={lat}&lng={lng}"
+        r = session.get(api, headers=headers)
+        js_init = r.json()["maplist"]
+        js = json.loads("[" + js_init.split(">")[1].split("<")[0][:-1] + "]")
 
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
+        for j in js:
+            page_url = j.get("url")
+            location_name = j.get("location_name")
+            street_address = f"{j.get('address_1')} {j.get('address_2') or ''}".strip()
+            city = j.get("city")
+            state = j.get("region")
+            postal = j.get("post_code")
+            country_code = j.get("country")
+            store_number = str(j.get("fid")).replace("na", "")
+            phone = j.get("local_phone")
+            latitude = j.get("lat")
+            longitude = j.get("lng")
 
-        for row in data:
-            writer.writerow(row)
+            _tmp = []
+            tmp_js = json.loads(j.get("hours_sets:primary")).get("days") or {}
+            for day in tmp_js.keys():
+                line = tmp_js[day]
+                if len(line) == 1:
+                    start = line[0]["open"]
+                    close = line[0]["close"]
+                    _tmp.append(f"{day} {start} - {close}")
+                else:
+                    _tmp.append(f"{day} Closed")
 
+            hours_of_operation = ";".join(_tmp)
 
-def fetch_data():
-    out = []
-    url = "https://stores.icing.com/us/"
-    api_url = "https://maps.stores.claires.com/api/getAsyncLocations?template=searchicing&level=search&limit=*&radius=*"
+            row = SgRecord(
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=postal,
+                country_code=country_code,
+                latitude=latitude,
+                longitude=longitude,
+                phone=phone,
+                store_number=store_number,
+                locator_domain=locator_domain,
+                hours_of_operation=hours_of_operation,
+            )
 
-    session = SgRequests()
-
-    r = session.get(api_url)
-    js_init = r.json()["maplist"]
-    js = json.loads("[" + js_init.split(">")[1].split("<")[0][:-1] + "]")
-
-    for j in js:
-        locator_domain = url
-        page_url = j.get("url") or "<MISSING>"
-        location_name = j.get("location_name") or "<MISSING>"
-        street_address = (
-            f"{j.get('address_1')} {j.get('address_2')}".strip() or "<MISSING>"
-        )
-        city = j.get("city") or "<MISSING>"
-        state = j.get("region") or "<MISSING>"
-        postal = j.get("post_code") or "<MISSING>"
-        country_code = j.get("country") or "<MISSING>"
-        store_number = j.get("fid").replace("na", "")
-        phone = j.get("local_phone") or "<MISSING>"
-        latitude = j.get("lat") or "<MISSING>"
-        longitude = j.get("lng") or "<MISSING>"
-        location_type = "<MISSING>"
-
-        _tmp = []
-        tmp_js = json.loads(j.get("hours_sets:primary")).get("days") or {}
-        for day in tmp_js.keys():
-            line = tmp_js[day]
-            if len(line) == 1:
-                start = line[0]["open"]
-                close = line[0]["close"]
-                _tmp.append(f"{day} {start} - {close}")
-            else:
-                _tmp.append(f"{day} Closed")
-
-        hours_of_operation = ";".join(_tmp) or "<MISSING>"
-
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-
-        out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+            sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://www.icing.com/"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:97.0) Gecko/20100101 Firefox/97.0",
+    }
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(
+            RecommendedRecordIds.PageUrlId, duplicate_streak_failure_factor=-1
+        )
+    ) as writer:
+        fetch_data(writer)

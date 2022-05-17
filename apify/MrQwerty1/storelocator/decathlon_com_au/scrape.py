@@ -16,13 +16,12 @@ def fetch_data(sgw: SgWriter):
     for api in urls:
         r = session.get(api, headers=headers)
         text = (
-            r.text.split('locationsRaw":"')[1]
-            .split('","app_url"')[0]
+            r.text.split("locationsRaw:'")[1]
+            .split("}]'")[0]
             .replace("\\r", "")
             .replace("\\", "")
+            + "}]"
         )
-        if ']"' in text:
-            text = text.split(']"')[0] + "]"
         js = json.loads(text)
 
         for j in js:

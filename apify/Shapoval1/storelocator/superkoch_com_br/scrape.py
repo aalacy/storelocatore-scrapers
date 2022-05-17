@@ -17,13 +17,13 @@ def fetch_data(sgw: SgWriter):
     }
     r = session.get(page_url, headers=headers)
     tree = html.fromstring(r.text)
-    div = tree.xpath('//div[./p/span/strong[contains(text(), "Telefone")]]')
+    div = tree.xpath('//div[@class="pagebuilder-column-group"]/div[2]/div[./p]')[:-1]
     for d in div:
 
-        location_name = "".join(d.xpath("./p[1]//text()")).strip()
-        ad = "".join(d.xpath("./p[2]//text()")).strip()
-        if location_name == "Tijucas / Hiper":
-            ad = "".join(d.xpath("./p[2]/text()[1]")).replace("\n", "").strip()
+        location_name = "".join(d.xpath(".//p[./span][1]//text()")).strip()
+        info = d.xpath(".//p//text()")
+        info = list(filter(None, [b.strip() for b in info]))
+        ad = "".join(info[2])
         a = parse_address(International_Parser(), ad)
         street_address = f"{a.street_address_1} {a.street_address_2}".replace(
             "None", ""
@@ -45,24 +45,8 @@ def fetch_data(sgw: SgWriter):
             latitude, longitude = "<MISSING>", "<MISSING>"
         if latitude == "-27.1274565" and street_address.find("3855 Meia Praia") == -1:
             latitude, longitude = "<MISSING>", "<MISSING>"
-        phone = (
-            "".join(d.xpath("./p[4]//text()")).replace("Telefone:", "").strip()
-            or "<MISSING>"
-        )
-        if phone == "<MISSING>":
-            phone = (
-                "".join(d.xpath("./p[5]//text()")).replace("Telefone:", "").strip()
-                or "<MISSING>"
-            )
-        hours_of_operation = "".join(d.xpath("./p[3]//text()")).strip()
-        if location_name == "Tijucas / Hiper":
-            hours_of_operation = (
-                "".join(d.xpath("./p[2]/text()[2]")).replace("\n", "").strip()
-            )
-            phone = (
-                "".join(d.xpath("./p[3]//text()")).replace("Telefone:", "").strip()
-                or "<MISSING>"
-            )
+        phone = "".join(info[4]).replace("Telefone:", "").strip() or "<MISSING>"
+        hours_of_operation = "".join(info[3]).strip()
 
         row = SgRecord(
             locator_domain=locator_domain,

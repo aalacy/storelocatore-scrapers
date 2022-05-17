@@ -32,7 +32,7 @@ def fetch_data():
                 location_name=poi["name"],
                 street_address=street_address,
                 city=poi["city"],
-                state="stateCode",
+                state=poi.get("stateCode"),
                 zip_postal=poi["postalCode"],
                 country_code=poi["countryCode"],
                 store_number=poi["ID"],

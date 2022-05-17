@@ -3,17 +3,21 @@ import html
 from sglogging import sglog
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
-from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 session = SgRequests()
 website = "9round_ca"
 log = sglog.SgLogSetup().get_logger(logger_name=website)
-session = SgRequests()
+
 headers = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36",
-    "Accept": "application/json",
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36"
 }
+
+DOMAIN = "https://www.9round.ca"
+MISSING = SgRecord.MISSING
 
 
 def fetch_data():
@@ -60,16 +64,17 @@ def fetch_data():
                 city = html.unescape(temp["address"]["addressLocality"])
                 state = temp["address"]["addressRegion"]
                 zip_postal = temp["address"]["postalCode"]
+                country_code = "CA"
                 yield SgRecord(
-                    locator_domain="https://www.9round.ca/",
+                    locator_domain=DOMAIN,
                     page_url=page_url,
                     location_name=location_name.strip(),
                     street_address=street_address.strip(),
                     city=city.strip(),
                     state=state.strip(),
                     zip_postal=zip_postal.strip(),
-                    country_code="CA",
-                    store_number="<MISSING>",
+                    country_code=country_code,
+                    store_number=MISSING,
                     phone=phone.strip(),
                     location_type=location_type,
                     latitude=latitude,
@@ -81,7 +86,9 @@ def fetch_data():
 def scrape():
     log.info("Started")
     count = 0
-    with SgWriter() as writer:
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

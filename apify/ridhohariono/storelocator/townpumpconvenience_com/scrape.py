@@ -74,13 +74,25 @@ def fetch_data():
             row["data"]["address"],
         )
         street_address, city, state, zip_postal = getAddress(raw_address)
+        if city == MISSING or state == MISSING:
+            addr_split = raw_address.split(",")
+            city = addr_split[-2].strip()
+            state = addr_split[-1].strip()
+            street_address = addr_split[0].replace(city, "").strip()
         country_code = "US"
         try:
             phone = row["data"]["phone"]
         except:
             phone = MISSING
         store_number = row["storeid"]
-        location_type = MISSING
+        location_type = row["name"].split("St")[0]
+        if "Casino" in location_name:
+            location_type = "Casino"
+        try:
+            if "Hotel" in row["data"]["description"]:
+                location_type = "Hotel"
+        except:
+            pass
         hours_of_operation = MISSING
         latitude = row["data"]["map_lat"]
         longitude = row["data"]["map_lng"]

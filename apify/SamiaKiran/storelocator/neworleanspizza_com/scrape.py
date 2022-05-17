@@ -30,13 +30,32 @@ def fetch_data():
         url = (
             "https://api.momentfeed.com/v1/analytics/api/llp.json?auth_token="
             + api_token
-            + "&center=43.77166,-79.27583&coordinates=42.509130411498774,-76.93299552734257,45.0080893774996,-81.61866447265534&multi_account=false&page=1&pageSize=30"
+            + "&center=0,0&coordinates=-90,-180,90,180&multi_account=false&page=1&pageSize=35000"
         )
         loclist = session.get(url, headers=headers).json()
         for loc in loclist:
             page_url = "https://locations.neworleanspizza.com/" + loc["llp_url"]
             log.info(page_url)
             loc = loc["store_info"]
+            location_type = MISSING
+            if "temp closed" in loc["status"]:
+                location_type = "Temporarily Closed"
+                hours_of_operation = MISSING
+            else:
+                hours_of_operation = loc["store_hours"]
+                if "7," not in hours_of_operation:
+                    hours_of_operation = hours_of_operation + " " + "Sun Closed"
+                hours_of_operation = (
+                    hours_of_operation.replace("1,", "Mon ")
+                    .replace("2,", "Tue ")
+                    .replace("3,", "Wed ")
+                    .replace("4,", "Thu ")
+                    .replace("5,", "Fri ")
+                    .replace("6,", "Sat ")
+                    .replace("7,", "Sun ")
+                    .replace(";", " ")
+                    .replace(",", "-")
+                )
             location_name = loc["name"]
             phone = loc["phone"]
             street_address = loc["address"]
@@ -46,18 +65,6 @@ def fetch_data():
             country_code = loc["country"]
             latitude = loc["latitude"]
             longitude = loc["longitude"]
-            hours_of_operation = (
-                loc["store_hours"]
-                .replace("1,", "Mon ")
-                .replace("2,", "Tue ")
-                .replace("3,", "Wed ")
-                .replace("4,", "Thu ")
-                .replace("5,", "Fri ")
-                .replace("6,", "Sat ")
-                .replace("7,", "Sun ")
-                .replace(";", " ")
-                .replace(",", "-")
-            )
             yield SgRecord(
                 locator_domain=DOMAIN,
                 page_url=page_url,
@@ -69,7 +76,7 @@ def fetch_data():
                 country_code=country_code,
                 store_number=MISSING,
                 phone=phone.strip(),
-                location_type=MISSING,
+                location_type=location_type,
                 latitude=latitude,
                 longitude=longitude,
                 hours_of_operation=hours_of_operation,

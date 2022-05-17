@@ -5,12 +5,9 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 
 session = SgRequests()
-headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36",
-    "path": "/on/demandware.store/Sites-Carters-Site/default/Stores-GetNearestStores?postalCode=90210&countryCode=US&distanceUnit=imperial&maxdistance=5&carters=false&oshkosh=false&skiphop=true&retail=true&wholesale=true&lat=34.0679551&lng=-118.4011509",
-    "method": "GET",
-    "authority": "www.skiphop.com",
-}
+
+user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
+headers = {"User-Agent": user_agent}
 
 
 def fetch_data():
@@ -23,17 +20,17 @@ def fetch_data():
     lat = "<MISSING>"
     lng = "<MISSING>"
     phone = "<MISSING>"
-    typ = "Skiphop"
+    typ = ""
     hours = "<MISSING>"
     store = "<MISSING>"
     lines = r.iter_lines()
     sid = 0
     for line in lines:
-        if '<ul class="storeList">' in line:
+        if '<ul class="storeList"' in line:
             SFound = True
         if SFound and "</ul>" in line:
             SFound = False
-        if SFound and "<li>" in line:
+        if SFound and "<li" in line:
             sid = sid + 1
             store = str(sid)
             g = next(lines)

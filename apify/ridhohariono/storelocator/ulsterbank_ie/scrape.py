@@ -10,6 +10,7 @@ import re
 
 DOMAIN = "ulsterbank.ie"
 LOCATION_URL = "https://locator.ulsterbank.ie"
+API_URL = "https://www.ulsterbank.ie/content/branchlocator/en/ulsterbank_roi/searchresults/_jcr_content/par/searchresults.search.html"
 HEADERS = {
     "Accept": "application/json, text/plain, */*",
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
@@ -62,17 +63,14 @@ def fetch_data():
         "lng": -7.692053599999999,
         "site": "ulsterbank_roi",
         "pageDepth": 4,
-        "search_term": "ireland",
-        "searchMiles": 5,
-        "offSetMiles": 50,
+        "search_term": "dublin",
+        "searchMiles": 500,
+        "offSetMiles": 1000,
         "maxMiles": 15000,
         "listSizeInNumbers": 10000,
         "search-type": 1,
     }
-    req = session.post(
-        "https://locator.ulsterbank.ie/content/branchlocator/en/ulsterbank_roi/searchresults/_jcr_content/par/searchresults.search.html",
-        data=payload,
-    )
+    req = session.post(API_URL, data=payload)
     contents = bs(req.content, "lxml").select("div.results-marker-link")
     for row in contents:
         page_url = LOCATION_URL + row.find("a")["href"]
