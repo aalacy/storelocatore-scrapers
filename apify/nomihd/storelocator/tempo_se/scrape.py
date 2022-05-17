@@ -61,13 +61,14 @@ def fetch_data():
             location_type = store_json["StoreServices"]
             if location_type:
                 location_type = ", ".join(location_type).strip()
-            hours = store_json.get("OpenHours", [])
+            hours = store_json.get("OpenHours", None)
             hours_list = []
-            for hour in hours:
-                day = hour["Weekday"]
-                time = hour["OpeningHour"] + " - " + hour["ClosingHour"]
+            if hours:
+                for hour in hours:
+                    day = hour["Weekday"]
+                    time = hour["OpeningHour"] + " - " + hour["ClosingHour"]
 
-                hours_list.append(day + ":" + time)
+                    hours_list.append(day + ":" + time)
 
             hours_of_operation = "; ".join(hours_list).strip()
 

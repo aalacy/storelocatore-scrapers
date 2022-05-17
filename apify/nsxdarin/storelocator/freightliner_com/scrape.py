@@ -147,7 +147,10 @@ def fetch_data():
                 except:
                     pass
                 rawadd = rawadd.replace("&#39;", "'")
-                city = city.replace("&#39;", "'")
+                try:
+                    city = city.replace("&#39;", "'")
+                except:
+                    city = "<MISSING>"
                 name = (
                     name.replace("&#243;", "o")
                     .replace("&#250;", "u")
