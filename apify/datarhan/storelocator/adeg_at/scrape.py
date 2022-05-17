@@ -25,8 +25,10 @@ def fetch_data():
             location_name = poi_html.xpath(".//h3/a/text()")[0]
             url = poi_html.xpath(".//h3/a/@href")[0]
             page_url = urljoin(start_url, url)
-            raw_address = poi_html.xpath(".//address/div/text()")
-            raw_address = " ".join([e.strip() for e in raw_address if e.strip()])
+            raw_address = poi_html.xpath(".//address//text()")
+            raw_address = " ".join(
+                [e.strip() for e in raw_address if e.strip()]
+            ).replace("/", "")
             addr = parse_address_intl(raw_address)
             street_address = addr.street_address_1
             if addr.street_address_2:
@@ -51,6 +53,7 @@ def fetch_data():
                 latitude="",
                 longitude="",
                 hours_of_operation=hoo,
+                raw_address=raw_address,
             )
 
             yield item
