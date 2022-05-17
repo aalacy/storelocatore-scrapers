@@ -95,29 +95,63 @@ def fetch_data():
         if city == "" or city is None:
             city = "<MISSING>"
         city = city.replace('"', "").replace("\r", "").replace("\n", "")
-        yield SgRecord(
-            locator_domain=website,
-            page_url=page_url,
-            location_name=name,
-            street_address=street,
-            city=city,
-            state=state,
-            zip_postal=zc,
-            country_code=country,
-            phone=phone,
-            location_type=typ,
-            store_number=store,
-            latitude=lat,
-            longitude=lng,
-            hours_of_operation=hours,
+        if city == "<MISSING>":
+            city = name.split("-")[0].strip()
+        if "Ireland" in zc or "Eire" in zc:
+            zc = "<MISSING>"
+        if "Crown Hill Retail Park" in name:
+            city = "<MISSING>"
+        if "Ferrybridge Services" in name:
+            city = "<MISSING>"
+        hours = (
+            hours.replace("1100", "11:00")
+            .replace("1200", "12:00")
+            .replace("1000", "10:00")
         )
+        hours = (
+            hours.replace("2100", "21:00")
+            .replace("2200", "22:00")
+            .replace("2300", "23:00")
+        )
+        hours = (
+            hours.replace("2130", "21:30")
+            .replace("2230", "22:30")
+            .replace("2330", "23:30")
+        )
+        hours = (
+            hours.replace("1130", "11:30")
+            .replace("1230", "12:30")
+            .replace("1030", "10:30")
+        )
+        hours = (
+            hours.replace("1900", "19:00")
+            .replace("2000", "20:00")
+            .replace("1930", "19:30")
+        )
+        hours = hours.replace(" - 100", " - 1:00").replace(" - 200", " - 2:00")
+        hours = hours.replace("- 0", "- 00:00")
+        if "Norwich Road" not in name:
+            yield SgRecord(
+                locator_domain=website,
+                page_url=page_url,
+                location_name=name,
+                street_address=street,
+                city=city,
+                state=state,
+                zip_postal=zc,
+                country_code=country,
+                phone=phone,
+                location_type=typ,
+                store_number=store,
+                latitude=lat,
+                longitude=lng,
+                hours_of_operation=hours,
+            )
 
 
 def scrape():
     results = fetch_data()
-    with SgWriter(
-        deduper=SgRecordDeduper(RecommendedRecordIds.StoreNumberId)
-    ) as writer:
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
         for rec in results:
             writer.write_row(rec)
 

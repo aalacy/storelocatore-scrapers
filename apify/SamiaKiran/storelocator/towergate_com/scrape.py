@@ -58,6 +58,10 @@ def fetch_data():
             hours_of_operation = temp[-2].text
             if "Weekdays" not in hours_of_operation:
                 hours_of_operation = MISSING
+            if len(street_address) < 2:
+                street_address = raw_address.split(",")[0]
+            if city == MISSING:
+                city = raw_address.split()[-3]
             latitude = r.text.split("lat:")[1].split(",")[0]
             longitude = r.text.split("lng:")[1].split("}")[0]
             country_code = "UK"

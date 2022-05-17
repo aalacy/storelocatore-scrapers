@@ -11,7 +11,7 @@ _headers = {
 }
 
 locator_domain = "https://www.kempsvillebuilding.com"
-base_url = "https://www.kempsvillebuilding.com/#"
+base_url = "https://www.kempsvillebuilding.com/locations"
 
 
 def _p(val):
@@ -36,20 +36,26 @@ def fetch_data():
     with SgRequests() as session:
         soup = bs(session.get(base_url, headers=_headers).text, "lxml")
         for table in soup.find(
-            "h3", string=re.compile(r"^Kempsville Locations")
+            "h2", string=re.compile(r"^Store Locations")
         ).find_next_siblings("table"):
             locations = table.select("td")
             for _ in locations:
-                block = list(_.stripped_strings)
-                addr = block[1:]
+                if not _.text.strip():
+                    continue
+                block = list(_.stripped_strings)[2:]
+                addr = []
                 phone = ""
-                if _p(addr[-1]):
-                    phone = addr[-1]
-                    del addr[-1]
+                hours = ""
+                for x, bb in enumerate(block):
+                    if _p(bb):
+                        phone = bb
+                        addr = block[:x]
+                    if "Store Hours" in bb:
+                        hours = block[x + 1]
 
                 yield SgRecord(
                     page_url=base_url,
-                    location_name=block[0],
+                    location_name=_.strong.text.strip(),
                     street_address=" ".join(addr[:-1]),
                     city=addr[-1].split(",")[0].strip(),
                     state=addr[-1].split(",")[1].strip().split()[0].strip(),
@@ -58,6 +64,7 @@ def fetch_data():
                     phone=phone,
                     locator_domain=locator_domain,
                     raw_address=" ".join(addr),
+                    hours_of_operation=hours,
                 )
 
 

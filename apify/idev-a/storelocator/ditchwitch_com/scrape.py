@@ -3,8 +3,10 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgzip.dynamic import DynamicZipAndGeoSearch, Grain_2
+from sgzip.dynamic import Grain_1_KM
 from sglogging import SgLogSetup
+from sgzip.parallel import DynamicSearchMaker, ParallelDynamicSearch, SearchIteration
+from typing import Iterable, Tuple, Callable
 
 logger = SgLogSetup().get_logger("ditchwitch")
 
@@ -17,25 +19,32 @@ base_url = "https://www.ditchwitch.com/find-a-dealer"
 days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 
 
-def fetch_records(search):
-    total = 0
-    for zip, coord in search:
+class ExampleSearchIteration(SearchIteration):
+    def do(
+        self,
+        coord: Tuple[float, float],
+        zipcode: str,
+        current_country: str,
+        items_remaining: int,
+        found_location_at: Callable[[float, float], None],
+    ) -> Iterable[SgRecord]:
+        total = 0
         lat = coord[0]
         lng = coord[1]
-        with SgRequests(verify_ssl=False) as http:
-            current_country = search.current_country().upper()
+        with SgRequests(verify_ssl=False, proxy_country="us") as http:
+            current_country = current_country.upper()
             logger.info(f"[{current_country}] {lat, lng}")
             if current_country == "US":
-                url = f"https://www.ditchwitch.com/wtgi.php?ajaxPage&ajaxAddress={zip}&lat={lat}&lng={lng}"
+                url = f"https://www.ditchwitch.com/wtgi.php?ajaxPage&ajaxAddress={zipcode}&lat={lat}&lng={lng}"
             else:
-                url = f"https://www.ditchwitch.com/wtgi.php?ajaxPage&ajaxCountryCode={current_country}&ajaxCountryQuery={zip}&ajaxCountryLocal=false&lat={lat}"
+                url = f"https://www.ditchwitch.com/wtgi.php?ajaxPage&ajaxCountryCode={current_country}&ajaxCountryQuery={zipcode}&ajaxCountryLocal=false&lat={lat}&lng={lng}"
             res = http.get(url, headers=headers)
             if res.status_code != 200:
-                continue
+                return
             try:
                 locations = res.json()
             except:
-                continue
+                return
             if "dealers" in locations:
                 total += len(locations["dealers"])
                 for loc in locations["dealers"]:
@@ -54,12 +63,20 @@ def fetch_records(search):
                     street_address = loc["address1"]
                     if loc["address2"]:
                         street_address += " " + loc["address2"]
+                    city = loc["city"]
+                    if "Las Pinas City" in city:
+                        city = "Las Pinas City"
+                    if "MUNRO" in city:
+                        city = "MUNRO"
+                    if "ANDERBOLT" in city:
+                        city = "ANDERBOLT"
                     yield SgRecord(
                         page_url=base_url,
                         store_number=loc["clientkey"],
                         location_name=loc["name"],
+                        locator_domain=locator_domain,
                         street_address=street_address,
-                        city=loc["city"],
+                        city=city,
                         state=loc["state"],
                         zip_postal=loc["postalcode"],
                         country_code=loc["country"],
@@ -67,18 +84,20 @@ def fetch_records(search):
                         hours_of_operation="; ".join(hours),
                     )
 
-                logger.info(f"found: {len(locations['dealers'])} | total: {total}")
+                logger.info(
+                    f"found: [{current_country}] {len(locations['dealers'])} | total: {total}"
+                )
 
 
 if __name__ == "__main__":
     countries = [
+        "co",
+        "cz",
         "ar",
         "au",
         "at",
         "bg",
         "ca",
-        "co",
-        "cz",
         "es",
         "lb",
         "lt",
@@ -98,11 +117,20 @@ if __name__ == "__main__":
         "us",
         "za",
     ]
-    search = DynamicZipAndGeoSearch(country_codes=countries, granularity=Grain_2())
+    search_maker = DynamicSearchMaker(
+        search_type="DynamicZipAndGeoSearch", granularity=Grain_1_KM()
+    )
     with SgWriter(
         deduper=SgRecordDeduper(
             RecommendedRecordIds.StoreNumberId, duplicate_streak_failure_factor=1000
         )
     ) as writer:
-        for rec in fetch_records(search):
+        search_iter = ExampleSearchIteration()
+        par_search = ParallelDynamicSearch(
+            search_maker=search_maker,
+            search_iteration=search_iter,
+            country_codes=countries,
+        )
+
+        for rec in par_search.run():
             writer.write_row(rec)

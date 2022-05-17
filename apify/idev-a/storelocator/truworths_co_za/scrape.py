@@ -33,7 +33,7 @@ def fetch_records(http, search):
             phone = ""
             if _.get("store.telephone"):
                 phone = _["store.telephone"][0]
-            if phone == "0":
+            if phone == "0" or phone == "-":
                 phone = ""
             coord = _["store.geocode"][0].split(",")
             search.found_location_at(coord[1], coord[0])

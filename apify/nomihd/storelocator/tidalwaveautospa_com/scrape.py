@@ -35,9 +35,9 @@ def fetch_data():
         search_res = session.get(search_url, headers=headers)
 
         stores = json.loads(
-            search_res.text.split("var map_info = ")[1].strip().split("];")[0].strip()
-            + "]"
-        )
+            search_res.text.split("var map_info = ")[1].strip().split("]};")[0].strip()
+            + "]}"
+        )["map_info"]
 
         for store in stores:
 

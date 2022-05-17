@@ -8,12 +8,11 @@ from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 
 def fetch_data():
     session = SgRequests("es")
-    start_url = "https://www.sunglasshut.com/AjaxSGHFindPhysicalStoreLocations?latitude={}&longitude={}&radius=100"
+    start_url = "https://www.sunglasshut.com/AjaxSGHFindPhysicalStoreLocations?latitude={}&longitude={}&radius=100&langId=-5&storeId=13251"
     domain = "sunglasshut.com/es"
     hdr = {
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:93.0) Gecko/20100101 Firefox/93.0",
         "Accept": "application/json, text/plain, */*",
-        "Cookie": "WC_PERSISTENT=NA%2FQXr3eTFk3vzd8%2BsV7GW9SdE6Ttdi6ioLfdlb4c7A%3D%3B2021-12-13+11%3A10%3A14.451_1634211929715-371697_13251_1455022385%2C-5%2CEUR%2Cv%2Be4NDm9sJC8b0hVsLLe%2BtNcZcDsjU0wg%2FXJzYsQfif2YbqWcaUpygTI%2BDoQiQNR09blUdnikVTIiyBzzU%2FKrQ%3D%3D_13251; forterToken=b62cfed74f08415a93f7554e6c3284a1_1639393872241__UDF43_6",
     }
 
     all_coords = DynamicGeoSearch(
@@ -35,7 +34,7 @@ def fetch_data():
                 page_url="https://www.sunglasshut.com/es/sunglasses/store-locations",
                 location_name=poi["displayAddress"],
                 street_address=poi["shippingDetails"]["street"],
-                city=poi["shippingDetails"]["city"],
+                city=poi["shippingDetails"]["city"].split(",")[0],
                 state="",
                 zip_postal=poi["shippingDetails"]["zipCode"],
                 country_code=poi["shippingDetails"]["country"],

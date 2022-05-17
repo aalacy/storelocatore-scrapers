@@ -19,9 +19,16 @@ def fetch_data(sgw: SgWriter):
         location_name = "".join(d.xpath(".//h3/text()")).strip()
         page_url = "".join(d.xpath(".//a[./img]/@href"))
         line = "".join(d.xpath(".//h4/text()")).split(",")
-        state = line.pop().strip()
-        city = line.pop().strip()
-        street_address = ",".join(line).strip()
+        if len(line) == 1:
+            line = d.xpath(".//i[@class='fal fa-clock']/following-sibling::text()")
+            line = list(filter(None, [li.strip() for li in line]))
+            adr = line.pop()
+            street_address, city = adr.split(", ")
+            state = SgRecord.MISSING
+        else:
+            state = line.pop().strip()
+            city = line.pop().strip()
+            street_address = ",".join(line).strip()
 
         phone = "".join(
             d.xpath(".//div[@class='location-contact-container']/a/text()")
@@ -30,9 +37,13 @@ def fetch_data(sgw: SgWriter):
         latitude = "".join(o.xpath("./@data-lat"))
         longitude = "".join(o.xpath("./@data-lng"))
         store_number = "".join(o.xpath("./@value"))
+        if not store_number.isdigit():
+            store_number = SgRecord.MISSING
         hours = d.xpath(".//div[@class='location-contact-container']/p/text()")
         hours = list(filter(None, [h.strip() for h in hours]))
         hours_of_operation = ";".join(hours)
+        if "April" in hours_of_operation:
+            hours_of_operation = SgRecord.MISSING
 
         row = SgRecord(
             page_url=page_url,
