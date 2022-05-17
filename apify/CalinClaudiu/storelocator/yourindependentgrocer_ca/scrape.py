@@ -471,6 +471,7 @@ def url_fix(url):
 def get_api_call(url):
     with SgChrome() as driver:
         driver.get(url)
+        time.sleep(30)
         to_click = WebDriverWait(driver, 40).until(
             EC.visibility_of_element_located(
                 (By.XPATH, '//*[@id="root"]/section/div/div[1]/div[2]/div')
