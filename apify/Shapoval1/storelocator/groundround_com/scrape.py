@@ -1,125 +1,123 @@
-import csv
-import json
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def fetch_data(sgw: SgWriter):
 
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
-
-    locator_domain = "https://groundround.com"
-    api_url = "https://groundround.com/Locations/"
+    locator_domain = "http://groundround.com/"
+    api_url = "http://groundround.com/Locator/"
     session = SgRequests()
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
     r = session.get(api_url, headers=headers)
     tree = html.fromstring(r.text)
-    jsblock = (
-        "".join(tree.xpath('//script[contains(text(), "var sites = ")]/text()'))
-        .split("var image")[1]
-        .split("var sites = ")[1]
-        .split("function initialize")[0]
-        .replace("];", "]")
-    )
-    jsblock = jsblock.replace(",	]", "]")
-    js = json.loads(jsblock)
-    for j in js:
-        slug = "".join(j.get("lcontent")).split("a href=")[1].split(">")[0].strip()
-        page_url = f"{locator_domain}{slug}"
-        location_name = j.get("title")
-        location_type = "<MISSING>"
-        street_address = "".join(j.get("laddres")).replace("&#39;", "`")
-        state = j.get("lstate")
-        postal = j.get("lzipe")
-        country_code = "US"
-        city = j.get("lcity")
-        store_number = "<MISSING>"
-        latitude = j.get("lat")
-        longitude = j.get("lng")
-        hours_of_operation = (
-            "".join(j.get("lcontent")).split("<h6>")[1].split("</h6>")[0].strip()
-        )
-        if hours_of_operation.find("temporarily closed") != -1:
-            hours_of_operation = "Temporarily closed"
-        if hours_of_operation.find("OPENING") != -1:
-            hours_of_operation = "Coming Soon"
-        if hours_of_operation.find("Temporarily closed") != -1:
-            hours_of_operation = "Temporarily closed"
-        if (
-            hours_of_operation.find("p.m.") == -1
-            and hours_of_operation != "Temporarily closed"
-            and hours_of_operation != "Temporarily closed"
-            and hours_of_operation != "Coming Soon"
-        ):
-            hours_of_operation = "<MISSING>"
-        hours_of_operation = (
-            hours_of_operation.replace("Hours:", "")
-            .replace("We are open for dine-in & take-out ", "")
-            .strip()
-        )
-
-        session = SgRequests()
+    div = tree.xpath("//h3/following-sibling::p//a")
+    for d in div:
+        page_url = "".join(d.xpath(".//@href")).replace("https", "http")
+        if page_url.find("http") == -1:
+            page_url = f"http://groundround.com{page_url}".replace("https", "http")
+        location_name = "".join(d.xpath(".//text()"))
         r = session.get(page_url, headers=headers)
         tree = html.fromstring(r.text)
-        phone = "".join(
-            tree.xpath('//h6[text()="Telephone"]/following-sibling::p[1]//text()')
+        street_address = (
+            "".join(
+                tree.xpath('//h6[text()="Address"]/following-sibling::p[1]/text()[1]')
+            )
+            .replace("\n", "")
+            .strip()
+        )
+        ad = (
+            "".join(
+                tree.xpath('//h6[text()="Address"]/following-sibling::p[1]/text()[2]')
+            )
+            .replace("\n", "")
+            .strip()
+        )
+        state = ad.split(",")[1].split()[0].strip()
+        postal = (
+            "".join(
+                tree.xpath('//h6[text()="Address"]/following-sibling::p[1]/text()[3]')
+            )
+            .replace("\n", "")
+            .strip()
+        )
+        country_code = "US"
+        city = ad.split(",")[0].strip()
+        store_number = page_url.split("/")[-1].strip()
+        latitude = (
+            "".join(tree.xpath('//script[contains(text(), "LatLng( ")]/text()'))
+            .split("LatLng( ")[1]
+            .split(",")[0]
+            .strip()
+        )
+        longitude = (
+            "".join(tree.xpath('//script[contains(text(), "LatLng( ")]/text()'))
+            .split("LatLng( ")[1]
+            .split(",")[1]
+            .split(")")[0]
+            .strip()
+        )
+        phone = (
+            "".join(
+                tree.xpath('//h6[text()="Telephone"]/following-sibling::p[1]/text()')
+            )
+            .replace("\n", "")
+            .strip()
+        )
+        hours_of_operation = (
+            "".join(
+                tree.xpath(
+                    '//h2[contains(text(), "Hours")]/text() | //h2[contains(text(), "We are open for dine-in & take-out")]/text()'
+                )
+            )
+            .replace("\n", "")
+            .replace("Hours:", "")
+            .replace("We are open for dine-in & take-out", "")
+            .strip()
+            or "<MISSING>"
+        )
+        tmpcls = "".join(
+            tree.xpath(
+                '//*[contains(text(), "temporarily closed")]/text() | //*[contains(text(), "Temporarily closed")]/text()'
+            )
+        )
+        if tmpcls:
+            hours_of_operation = "Temporarily closed"
+        cls = "".join(tree.xpath('//*[contains(text(), "are closed")]/text()'))
+        if cls:
+            hours_of_operation = "Closed"
+        cms = "".join(tree.xpath('//*[contains(text(), "OPENING")]/text()'))
+        if cms:
+            hours_of_operation = "Coming Soon"
+
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=store_number,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
         )
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.STORE_NUMBER}))
+    ) as writer:
+        fetch_data(writer)
