@@ -56,8 +56,11 @@ def fetch_data(sgw: SgWriter):
 
         if city == SgRecord.MISSING and "Praha" in raw_address:
             city = "Praha"
+
         if "New York" in location_name or "Angeles" in location_name:
             country_code = "US"
+        elif city == "Paris":
+            country_code = "FR"
         else:
             country_code = location_name.replace("The", "").strip()
 

@@ -445,13 +445,21 @@ def fetch_data(sgw: SgWriter):
             .split(" *Last ticket")[0]
             .strip()
         )
-        hours_of_operation = hours_of_operation.replace(
-            "HOURS NOW OPEN! *Hours are subject to change – Please call to verify hours before visiting: (865) 436-5096 Ripley’s Believe It or Not!",
-            "",
-        ).replace(
-            "Weather Permitting PRICES Buy discounted and combo tickets online! TICKETS & PRICING GROUPS We offer special rates for groups of 10 or more. To get in touch directly, please call (888) 240-1358, ext. 2156 or email our Groups Department . MORE GROUP INFO",
-            "",
+        hours_of_operation = (
+            hours_of_operation.replace(
+                "HOURS NOW OPEN! *Hours are subject to change – Please call to verify hours before visiting: (865) 436-5096 Ripley’s Believe It or Not!",
+                "",
+            )
+            .replace(
+                "Weather Permitting PRICES Buy discounted and combo tickets online! TICKETS & PRICING GROUPS We offer special rates for groups of 10 or more. To get in touch directly, please call (888) 240-1358, ext. 2156 or email our Groups Department . MORE GROUP INFO",
+                "",
+            )
+            .split("*last")[0]
+            .strip()
         )
+
+        if not hours_of_operation:
+            hours_of_operation = ""
 
         street_address = (
             street_address.replace("•", "")
