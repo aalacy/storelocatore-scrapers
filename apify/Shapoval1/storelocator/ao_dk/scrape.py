@@ -30,8 +30,8 @@ def fetch_data(sgw: SgWriter):
         country_code = "DK"
         city = a.get("By") or "<MISSING>"
         store_number = j.get("LagerNummer") or "<MISSING>"
-        latitude = j.get("Laengdegrad") or "<MISSING>"
-        longitude = j.get("Breddegrad") or "<MISSING>"
+        longitude = j.get("Laengdegrad") or "<MISSING>"
+        latitude = j.get("Breddegrad") or "<MISSING>"
         phone = j.get("Telefonnummer") or "<MISSING>"
         try:
             r = session.get(page_url, headers=headers)
@@ -51,6 +51,8 @@ def fetch_data(sgw: SgWriter):
                     opens = i.get("FormattedOpeningTime")
                     closes = i.get("FormattedClosingTime")
                     line = f"{day} {opens} - {closes}"
+                    if line == f"{day} 00:00 - 00:00":
+                        line = f"{day} Closed"
                     tmp.append(line)
                 hours_of_operation = "; ".join(tmp)
         except:

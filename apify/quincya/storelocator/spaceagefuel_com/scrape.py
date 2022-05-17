@@ -1,4 +1,5 @@
 import json
+import ssl
 import time
 
 from bs4 import BeautifulSoup
@@ -11,6 +12,8 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 from sglogging import sglog
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 
 def fetch_data(sgw: SgWriter):
