@@ -16,6 +16,8 @@ def fetch_data():
         "https://www.aerotek.com/en/locations/canada",
         "https://aerotek.com/en/locations/united-states",
         "https://www.aerotek.com/en-gb/locations/emea/united-kingdom",
+        "https://www.aerotek.com/en-au/locations/apac/china",
+        "https://www.aerotek.com/en-au/locations/apac/australia",
     ]
 
     for url in start_urls:
@@ -122,6 +124,14 @@ def fetch_data():
                     " ".join(hours_of_operation) if hours_of_operation else ""
                 )
             hours_of_operation = hours_of_operation if hours_of_operation else ""
+            if phone:
+                phone = phone.split("/")[0]
+            if not country_code and "china" in page_url:
+                country_code = "China"
+            if not country_code and "australia" in page_url:
+                country_code = "Australia"
+            if not country_code and "united-states" in page_url:
+                country_code = "United States"
 
             item = SgRecord(
                 locator_domain=domain,

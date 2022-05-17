@@ -1,4 +1,3 @@
-import re
 from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
@@ -54,31 +53,25 @@ def fetch_data(sgw: SgWriter):
                     longitude = text.split("@")[1].split(",")[1]
             except IndexError:
                 latitude, longitude = "<MISSING>", "<MISSING>"
-            info_for_phone = " ".join(info)
-            ph = (
-                re.findall(
-                    r"(\d{3}[-\.\s]??\d{3}[-\.\s]??\d{4}|\(\d{3}\)\s*\d{3}[-\.\s]??\d{4}|\d{3}[-\.\s]??\d{4})",
-                    info_for_phone,
-                )
-                or "<MISSING>"
+            tmp = []
+            for i in info:
+                if "@" not in i:
+                    tmp.append(i)
+            phone = (
+                " ".join(tmp)
+                .replace("Ubicación", "")
+                .replace("55 1710 8399", "")
+                .replace("55 9137 0034", "")
             )
+            if phone.find("TEL.") == -1 and phone.find("Tel.") == -1:
+                phone = "<MISSING>"
+            if phone.find("TEL.") != -1:
+                phone = phone.split("TEL.")[1].strip()
+            if phone.find("Tel.") != -1:
+                phone = phone.split("Tel.")[1].strip()
+            if phone.find("y") != -1:
+                phone = phone.split("y")[0].strip()
 
-            phone = "<MISSING>"
-            if ph != "<MISSING>":
-                phone = "".join(ph[0]).strip()
-            if phone == "<MISSING>":
-                phone = (
-                    " ".join(
-                        c.xpath(
-                            './/*[contains(text(), "Tel.")]//text() | .//span[contains(text(), "TEL.")]/text()[1]'
-                        )
-                    )
-                    .replace("\n", "")
-                    .replace("Tel.", "")
-                    .replace("TEL.", "")
-                    .strip()
-                    or "<MISSING>"
-                )
             hours_of_operation = " ".join(info).split("HORARIO")[1].strip()
             if hours_of_operation.find("Facturación") != -1:
                 hours_of_operation = hours_of_operation.split("Facturación")[0].strip()

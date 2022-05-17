@@ -69,8 +69,12 @@ def fetch_data():
 
             location_type = "<MISSING>"
 
-            raw_address = " ".join(store_info[1:-1]).split("Phone:")[0].strip()
-
+            if "We have moved" in store_info[1]:
+                raw_address = ", ".join(store_info[2:-1]).split("Phone:")[0].strip()
+            else:
+                raw_address = ", ".join(store_info[1:-1]).split("Phone:")[0].strip()
+            if "Cruise Ship" in raw_address:
+                continue
             formatted_addr = parser.parse_address_usa(raw_address)
             street_address = formatted_addr.street_address_1
             if formatted_addr.street_address_2:
@@ -94,20 +98,31 @@ def fetch_data():
             else:
                 phone = "<MISSING>"
 
-            hours = (
-                "".join(store_sel.xpath('//meta[@name="description"]/@content'))
-                .split("Hours:")[1]
-                .strip()
-            )
-            hours_of_operation = (
-                hours.replace("day;", "day:")
-                .replace("b;", "b:")
-                .replace("Dia:; ", "")
-                .replace("Hora:; ", "")
-                .replace("PM", "PM; ")
-                .replace("PM;  ", "PM; ")
-                .strip(" ;")
-            )
+            try:
+                hours_of_operation = (
+                    "; ".join(
+                        store_res.text.split("Hours:</strong> <br>")[1]
+                        .strip()
+                        .split("</div>")[0]
+                        .strip()
+                        .split("<br>")
+                    )
+                    .strip()
+                    .replace("</span>", "")
+                    .replace("<span>", "")
+                    .strip()
+                )
+            except:
+                hours_of_operation = "<MISSING>"
+
+            if "store-locations-waikiki-beach-walk" in page_url:
+                hours_of_operation = (
+                    hours_of_operation
+                    + "; "
+                    + "".join(
+                        store_sel.xpath('//div[contains(text(),"Friday")]/text()')
+                    ).strip()
+                )
             map_link = "".join(
                 store_sel.xpath('//iframe[contains(@src,"maps")]/@src')
             ).strip()
