@@ -24,7 +24,7 @@ def fetch_data():
         add = item["address"]
         hours = ""
         name = item["store"].replace("&#8211;", "-")
-        store = item["id"]
+        store = name.split("- #")[1].strip()
         city = item["city"]
         state = item["state"]
         zc = item["zip"]
@@ -44,6 +44,10 @@ def fetch_data():
                 else:
                     hours = hours + "; " + hrs
         loc = item["url"].replace("\\", "")
+        if ", Perry" in add:
+            add = add.split(", Perry")[0].strip()
+        if ", Montgomery" in add:
+            add = add.split(", Montgomery")[0].strip()
         yield SgRecord(
             locator_domain=website,
             page_url=loc,
