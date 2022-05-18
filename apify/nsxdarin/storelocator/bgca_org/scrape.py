@@ -30,7 +30,7 @@ def fetch_data():
             for line in r.iter_lines():
                 if '"City": "' in line:
                     typ = "<MISSING>"
-                    loc = "<MISSING>"
+                    loc = "https://bgca.org/get-involved/find-a-club"
                     hours = "<MISSING>"
                     country = ""
                     website = "bgca.org"
@@ -57,6 +57,8 @@ def fetch_data():
                     name = line.split('"SiteName": "')[1].split('"')[0]
                 if '"Native": "' in line:
                     if country == "US":
+                        if len(phone) <= 3:
+                            phone = "<MISSING>"
                         yield SgRecord(
                             locator_domain=website,
                             page_url=loc,
@@ -89,7 +91,7 @@ def fetch_data():
             for line in r.iter_lines():
                 if '"City": "' in line:
                     typ = "<MISSING>"
-                    loc = "<MISSING>"
+                    loc = "https://bgca.org/get-involved/find-a-club"
                     hours = "<MISSING>"
                     country = ""
                     website = "bgca.org"
@@ -116,6 +118,8 @@ def fetch_data():
                     name = line.split('"SiteName": "')[1].split('"')[0]
                 if '"Native": "' in line:
                     if country == "US":
+                        if len(phone) <= 3:
+                            phone = "<MISSING>"
                         yield SgRecord(
                             locator_domain=website,
                             page_url=loc,
@@ -143,13 +147,13 @@ def fetch_data():
                 + lat
                 + "/"
                 + lng
-                + "/250/"
+                + "/500/"
             )
             r = session.get(url, headers=headers)
             for line in r.iter_lines():
                 if '"City": "' in line:
                     typ = "<MISSING>"
-                    loc = "<MISSING>"
+                    loc = "https://bgca.org/get-involved/find-a-club"
                     hours = "<MISSING>"
                     country = ""
                     website = "bgca.org"
@@ -176,6 +180,8 @@ def fetch_data():
                     name = line.split('"SiteName": "')[1].split('"')[0]
                 if '"Native": "' in line:
                     if country == "US":
+                        if len(phone) <= 3:
+                            phone = "<MISSING>"
                         yield SgRecord(
                             locator_domain=website,
                             page_url=loc,
