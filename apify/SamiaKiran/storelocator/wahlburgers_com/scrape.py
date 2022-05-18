@@ -1,3 +1,4 @@
+import re
 from sglogging import sglog
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
@@ -18,6 +19,7 @@ MISSING = SgRecord.MISSING
 
 
 def fetch_data():
+    pattern = re.compile(r"\s\s+")
     if True:
         url = "https://wahlburgers.com/all-locations"
         r = session.get(url, headers=headers)
@@ -31,6 +33,8 @@ def fetch_data():
                 country_code = "Canada"
             elif "germany" in page_url:
                 country_code = "Germany"
+            elif "australia" in page_url:
+                country_code = "Australia"
             else:
                 country_code = "USA"
             r = session.get(page_url)
@@ -88,14 +92,15 @@ def fetch_data():
                         .split("],")[0]
                         .replace("[", "")
                         .replace("\n", " ")
-                        .replace("         ", " ")
+                        .replace("         ", "")
                         .replace('"', "")
                         .replace(" ,", "")
                         .replace(" P.M.  -", "P.M.")
                     )
                 except:
                     hours_of_operation = MISSING
-
+                raw_address = re.sub(pattern, "\n", raw_address)
+                raw_address = raw_address.replace("\n", " ")
                 pa = parse_address_intl(raw_address)
 
                 street_address = pa.street_address_1

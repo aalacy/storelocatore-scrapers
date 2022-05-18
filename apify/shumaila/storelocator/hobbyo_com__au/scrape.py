@@ -43,6 +43,7 @@ def fetch_data():
                 address = div.find("p")
                 address = re.sub(cleanr, "\n", str(address))
                 address = re.sub(pattern, "\n", str(address)).strip()
+                address1 = address.splitlines()
                 address = address.replace("\n", " ").strip()
                 coordlist = div.find("iframe")["src"]
                 r = session.get(coordlist, headers=headers)
@@ -69,10 +70,7 @@ def fetch_data():
                 content = re.sub(pattern, "\n", str(content)).strip()
                 phone = content.split("PHONE", 1)[1].split("\n", 1)[1].split("\n", 1)[0]
 
-                if "<MISSING>" in city:
-                    city = (
-                        address.split(street, 1)[1].split(state.upper(), 1)[0].strip()
-                    )
+                city = address1[-1].lower().split(state.lower(), 1)[0].upper()
                 try:
                     city = city.split(state.upper(), 1)[0]
                 except:

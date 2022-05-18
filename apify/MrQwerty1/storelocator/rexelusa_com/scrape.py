@@ -57,6 +57,9 @@ def fetch_data(sgw: SgWriter):
         j = j["location"]
         a = j.get("address")
         street_address = f"{a.get('line1')} {a.get('line2') or ''}".strip()
+        if "*" in street_address:
+            street_address = street_address.split("*")[0]
+
         city = a.get("city")
         state = a.get("countrySubdivisionCode")
         postal = a.get("postalCode")

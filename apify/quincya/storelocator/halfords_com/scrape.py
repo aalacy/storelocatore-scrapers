@@ -1,43 +1,16 @@
-import csv
 import json
 
 from bs4 import BeautifulSoup
 
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+
 from sgrequests import SgRequests
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-
+def fetch_data(sgw: SgWriter):
     base_link = "https://www.halfords.com/locations"
 
     user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
@@ -49,7 +22,6 @@ def fetch_data():
 
     stores = json.loads(base.find(class_="js-stores").contents[0])["stores"]
 
-    data = []
     locator_domain = "halfords.com"
 
     for store in stores:
@@ -64,11 +36,21 @@ def fetch_data():
                 street_address = store["address1"].strip()
             except:
                 continue
+        street_address = street_address.replace("Way Whitstable", "Way").replace(
+            "rock, Ess", "rock, Essex"
+        )
         city = store["city"]
         try:
             state = store["stateCode"]
         except:
-            state = "<MISSING>"
+            state = ""
+        words = ["Middlesex", "Essex"]
+        if not state:
+            for word in words:
+                if word in street_address:
+                    state = word
+                    street_address = street_address.replace(word, "").strip()[:-1]
+
         zip_code = store["postalCode"]
         country_code = "UK"
         try:
@@ -117,31 +99,25 @@ def fetch_data():
         except:
             pass
 
-        # Store data
-        data.append(
-            [
-                locator_domain,
-                link,
-                location_name,
-                street_address,
-                city,
-                state,
-                zip_code,
-                country_code,
-                store_number,
-                phone,
-                location_type,
-                latitude,
-                longitude,
-                hours_of_operation,
-            ]
+        sgw.write_row(
+            SgRecord(
+                locator_domain=locator_domain,
+                page_url=link,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_code,
+                country_code=country_code,
+                store_number=store_number,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
         )
-    return data
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    fetch_data(writer)

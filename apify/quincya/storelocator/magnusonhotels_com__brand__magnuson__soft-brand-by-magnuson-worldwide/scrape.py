@@ -15,7 +15,7 @@ from sgselenium.sgselenium import SgChrome
 
 from sglogging import SgLogSetup
 
-logger = SgLogSetup().get_logger("magnusonhotels_com")
+logger = SgLogSetup().get_logger("magnusonhotels.com")
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
@@ -128,7 +128,7 @@ def fetch_data(sgw: SgWriter):
                 latitude = "<MISSING>"
                 longitude = "<MISSING>"
 
-        if phone[:1] == "1":
+        if phone[:1] == "1" and "ON" not in state:
             country_code = "US"
         elif "ON" in state:
             country_code = "CA"
@@ -136,10 +136,10 @@ def fetch_data(sgw: SgWriter):
             country_code = "Germany"
         elif " " in zip_code:
             country_code = "GB"
-        elif "Bahamas" in state:
-            country_code = "Bahamas"
         else:
             country_code = ""
+        if "Bahamas" in state:
+            country_code = "Bahamas"
 
         if str(latitude) == "0.0":
             latitude = ""

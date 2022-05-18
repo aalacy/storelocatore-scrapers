@@ -7,7 +7,6 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 _headers = {
     "accept": "application/json, text/plain, */*",
-    "accept-encoding": "gzip, deflate, br",
     "accept-language": "tr",
     "content-type": "application/json",
     "origin": "https://www.endeksa.com",
@@ -16,7 +15,7 @@ _headers = {
 }
 
 locator_domain = "https://endeksa.com/tr/analiz/turkiye/malls"
-base_url = "https://app.endeksa.com/ShoppingCenters"
+base_url = "https://api.endeksa.com/ShoppingCenters"
 
 
 def fetch_data():

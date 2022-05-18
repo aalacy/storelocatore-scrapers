@@ -36,7 +36,7 @@ def fetch_data(sgw: SgWriter):
         location_name = (
             base.find("h3").text.strip() + " - " + base.find("h2").text.strip()
         )
-        section = base.find("div", attrs={"class": "section_col_content"}).p
+        section = base.find("h2", string="Address").find_next("p")
         raw_data = (
             str(section)
             .replace("<p>", "")

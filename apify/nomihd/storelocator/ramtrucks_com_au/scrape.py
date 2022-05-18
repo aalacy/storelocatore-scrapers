@@ -103,6 +103,19 @@ def fetch_data():
                     '//div[@data-id="ldidSales"]/div[./div[contains(text(),"Hours")]]/div[@class="ldidText"]/text()'
                 )
             ).strip()
+            if len(hours_of_operation) <= 0:
+                hours_of_operation = "; ".join(
+                    store_sel.xpath(
+                        '//div[@data-id="ldidService"]/div[./div[contains(text(),"Hours")]]/div[@class="ldidText"]/text()'
+                    )
+                ).strip()
+
+            if len(hours_of_operation) <= 0:
+                hours_of_operation = "; ".join(
+                    store_sel.xpath(
+                        '//div[@data-id="ldidParts"]/div[./div[contains(text(),"Hours")]]/div[@class="ldidText"]/text()'
+                    )
+                ).strip()
 
             store_number = page_url.split("=")[1].strip()
 

@@ -19,6 +19,7 @@ base_url = "https://www.dealz.ie/rest/dealz/V1/locator/?searchCriteria%5Bscope%5
 
 def fetch_records(http):
     locations = http.get(base_url, headers=_headers).json()["locations"]
+
     for _ in locations:
         addr = _["address"]
         hours = []
@@ -39,6 +40,8 @@ def fetch_records(http):
         phone = _["tel"]
         if phone:
             phone = phone.split("/")[0].strip()
+        if addr["postcode"] and addr["postcode"].replace("-", "").isdigit():
+            continue
         yield SgRecord(
             page_url=page_url,
             location_name=_["name"],
