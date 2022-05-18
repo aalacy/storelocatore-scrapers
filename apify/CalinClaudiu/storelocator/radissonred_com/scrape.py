@@ -296,6 +296,7 @@ def get_subpage(session, url):
 def initial(driver, url, state):
     with SgChrome() as driver:
         driver.get(url)
+        time.sleep(30)
         try:
             locator = WebDriverWait(driver, 30).until(  # noqa
                 EC.visibility_of_element_located(
