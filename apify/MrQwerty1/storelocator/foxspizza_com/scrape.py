@@ -75,6 +75,11 @@ def fetch_data(sgw: SgWriter):
             continue
 
         street_address, city, state, postal = get_address(raw_address)
+        if "," in city:
+            city = city.split(",")[0].strip()
+            street_address = raw_address.split(city)[0].strip()
+        if not city:
+            city = location_name.split(",")[0].strip()
         phone = "".join(tree.xpath("//span[@class='phone_no']/a/text()")).strip()
         text = "".join(
             tree.xpath("//script[contains(text(), 'var locations =')]/text()")
