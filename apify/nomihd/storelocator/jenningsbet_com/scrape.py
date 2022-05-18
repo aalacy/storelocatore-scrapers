@@ -9,6 +9,7 @@ from sgselenium import SgFirefox
 import time
 import ssl
 import json
+import lxml.html
 
 try:
     _create_unverified_https_context = (
