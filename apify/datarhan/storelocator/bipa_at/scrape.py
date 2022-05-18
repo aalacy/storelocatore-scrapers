@@ -8,7 +8,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
-from sgzip.dynamic import DynamicGeoSearch, DynamicZipAndGeoSearch, SearchableCountries
+from sgzip.dynamic import DynamicZipAndGeoSearch, SearchableCountries
 
 
 def fetch_data():
