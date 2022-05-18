@@ -52,7 +52,6 @@ def fetch_data():
             hours_of_operation = MISSING
             coords = loc["href"]
             latitude, longitude = parse_geo(coords)
-            print(latitude)
             country_code = "US"
             yield SgRecord(
                 locator_domain=DOMAIN,
