@@ -100,33 +100,8 @@ def fetch_data(sgw: SgWriter):
                 phone = store_data["phone"] or "<MISSING>"
 
                 link = "https://www.sherwin-williams.com" + store_data["url"]
-                try:
-                    location_request = session.get(
-                        link,
-                        headers=headers,
-                    )
-                    location_soup = BeautifulSoup(location_request.text, "lxml")
-                except:
-                    continue
 
-                hours = ""
-                try:
-                    hours = (
-                        " ".join(
-                            list(
-                                location_soup.find(
-                                    "div",
-                                    {
-                                        "class": "cmp-storedetailhero__store-hours-container"
-                                    },
-                                ).stripped_strings
-                            )
-                        )
-                        .replace("Store Hours", "")
-                        .strip()
-                    )
-                except:
-                    pass
+                hours = "<INACCESSIBLE>"
 
                 row = SgRecord(
                     locator_domain=locator_domain,
@@ -151,5 +126,9 @@ def fetch_data(sgw: SgWriter):
 if __name__ == "__main__":
     CrawlStateSingleton.get_instance().save(override=True)
     session = SgRequests()
-    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))) as writer:
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID({SgRecord.Headers.PAGE_URL}), duplicate_streak_failure_factor=-1
+        )
+    ) as writer:
         fetch_data(writer)

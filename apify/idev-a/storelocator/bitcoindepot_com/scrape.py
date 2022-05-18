@@ -154,7 +154,7 @@ def fetch_records(http):
         if hours_of_operation and hours_of_operation.strip().endswith(";"):
             hours_of_operation = hours_of_operation[:-1]
 
-        zip_postal = _["zip"]
+        zip_postal = _.get("zip")
         if zip_postal:
             zip_postal = zip_postal.replace("Canada", "").replace(",", "").strip()
         yield SgRecord(
