@@ -50,7 +50,9 @@ def fetch_data():
             phone = r.text.split(city + ":")[1].split()
             phone = phone[0] + " " + phone[1]
             hours_of_operation = MISSING
+            coords = loc["href"]
             latitude, longitude = parse_geo(coords)
+            print(latitude)
             country_code = "US"
             yield SgRecord(
                 locator_domain=DOMAIN,
