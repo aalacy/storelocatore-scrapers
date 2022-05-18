@@ -469,16 +469,17 @@ def url_fix(url):
 
 
 def get_api_call(url):
-    with SgChrome() as driver:
+    with SgChrome(block_javascript=False) as driver:
         driver.get(url)
-        to_click = WebDriverWait(driver, 40).until(
+        time.sleep(30)
+        to_click = WebDriverWait(driver, 60).until(
             EC.visibility_of_element_located(
                 (By.XPATH, '//*[@id="root"]/section/div/div[1]/div[2]/div')
             )
         )
         to_click.click()
 
-        input_field = WebDriverWait(driver, 10).until(
+        input_field = WebDriverWait(driver, 60).until(
             EC.visibility_of_element_located(
                 (
                     By.XPATH,
@@ -488,9 +489,9 @@ def get_api_call(url):
         )
         input_field.send_keys("B3L 4T2")
         input_field.send_keys(Keys.RETURN)
-        time.sleep(10)
+        time.sleep(30)
         try:
-            wait_for_loc = WebDriverWait(driver, 30).until(  # noqa
+            wait_for_loc = WebDriverWait(driver, 60).until(  # noqa
                 EC.visibility_of_element_located(
                     (
                         By.XPATH,
