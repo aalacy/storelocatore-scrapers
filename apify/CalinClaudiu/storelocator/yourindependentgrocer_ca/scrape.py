@@ -695,7 +695,6 @@ def fetch_data():
                 return get_api_call(url)
             except Exception as e:
                 logzilla.info(f"Handling this:\n{str(e)}")
-                retry_starting()
 
         if retry:
             retry_starting()
