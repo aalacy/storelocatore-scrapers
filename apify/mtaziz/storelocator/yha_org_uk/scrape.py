@@ -4,7 +4,6 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from concurrent.futures import ThreadPoolExecutor, as_completed
-import json
 from lxml import html
 from sgrequests import SgRequests
 from proxyfier import ProxyProviders
@@ -80,7 +79,7 @@ def fetch_records(idx, store_url, sgw: SgWriter):
             street_address = ""
             city = ""
             state = addr[-2].strip()
-            Zip_ = addr[-1].strip()
+            zip_ = addr[-1].strip()
 
         hours = ""
         try:
