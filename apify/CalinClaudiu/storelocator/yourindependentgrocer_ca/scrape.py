@@ -469,9 +469,11 @@ def url_fix(url):
 
 
 def get_api_call(url):
+    z = None
     with SgChrome(block_javascript=False) as driver:
         driver.get(url)
         time.sleep(30)
+        url = None
         to_click = WebDriverWait(driver, 60).until(
             EC.visibility_of_element_located(
                 (By.XPATH, '//*[@id="root"]/section/div/div[1]/div[2]/div')
@@ -501,18 +503,19 @@ def get_api_call(url):
             )
         except Exception:
             logzilla.info(driver.page_source)
-            z = driver.requests
-            for i in z:
-                logzilla.info(i)
 
         time.sleep(10)
-        headers = {}
-        for r in driver.requests:
-            if "DoSearch2" in r.path:
-                url = r.url
-                headers = r.headers
-        time.sleep(10)
-        return url, headers
+        z = driver.requests
+    headers = {}
+    for r in z:
+        if "DoSearch2" in r.path:
+            url = r.url
+            headers = r.headers
+    if not url:
+        for i in z:
+            logzilla.info(i.path)
+
+    return url, headers
 
 
 def defuzz(record):
@@ -691,17 +694,15 @@ def fetch_data():
             try:
                 return get_api_call(url)
             except Exception as e:
-                logzilla.info(f"Handling this:\n{str(e)}")
-                retry_starting()
-                # shouldn't be to worried,
-                # worst case if their API changes crawl will timeout
-                # rather than just pull from the other (worse) data source
+                logzilla.error("nope\n", exc_info=e)
 
         if retry:
             retry_starting()
+
         return get_api_call(url)
 
     url, headers = rRetry(False)
+
     logzilla.info(f"Found out this bullseye url:\n{url}\n\n& headers:\n{headers}")
 
     logzilla.info(f"Fixing up URL,")  # noqa
