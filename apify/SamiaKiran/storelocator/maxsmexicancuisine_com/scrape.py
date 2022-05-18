@@ -1,3 +1,4 @@
+import re
 from sglogging import sglog
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
@@ -46,9 +47,11 @@ def fetch_data():
 
             zip_postal = pa.postcode
             zip_postal = zip_postal.strip() if zip_postal else MISSING
-            phone = r.text.split(city + ":")[1].split()
-            phone = phone[0] + " " + phone[1]
+            phone=r.text.split(city+":")[1].split()
+            phone = phone[0]+" "+phone[1]
             hours_of_operation = MISSING
+            latitude, longitude = parse_geo(coords)
+            print(latitude)
             country_code = "US"
             yield SgRecord(
                 locator_domain=DOMAIN,
@@ -65,7 +68,7 @@ def fetch_data():
                 latitude=MISSING,
                 longitude=MISSING,
                 hours_of_operation=hours_of_operation,
-                raw_address=raw_address,
+                raw_address = raw_address
             )
 
 
