@@ -21,7 +21,10 @@ def fetch_data():
         store_number = poi["id"]
         page_url = f"https://www.aldi-nord.de/filialen-und-oeffnungszeiten.html/l/{city.lower()}/{street_address.lower().replace(' ', '-')}/{store_number}"
         with SgFirefox() as driver:
-            driver.get(page_url)
+            try:
+                driver.get(page_url)
+            except Exception:
+                continue
             sleep(10)
             loc_dom = etree.HTML(driver.page_source)
 

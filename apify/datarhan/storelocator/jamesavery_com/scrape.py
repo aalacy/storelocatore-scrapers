@@ -30,8 +30,11 @@ def fetch_data():
             page_url = urljoin(start_url, page_url[0]) if page_url else ""
             location_name = poi_html.xpath('.//h3[@itemprop="name"]/a/text()')
             location_name = location_name[0] if location_name else ""
-            address_raw = poi_html.xpath('.//span[@itemprop="address"]/text()')[0]
-            addr = parse_address_intl(address_raw)
+            raw_address = poi_html.xpath(
+                './/p[@class="store-locations__address"]/text()'
+            )
+            raw_address = " ".join([e.strip() for e in raw_address if e.strip()])
+            addr = parse_address_intl(raw_address)
             street_address = addr.street_address_1
             if addr.street_address_2:
                 street_address += " " + addr.street_address_2
@@ -40,7 +43,7 @@ def fetch_data():
             zip_code = addr.postcode
             country_code = addr.country
             phone = poi_html.xpath('.//a[@itemprop="telephone"]/text()')
-            phone = phone[0] if phone else "<MISSING>"
+            phone = phone[0] if phone else ""
             geo = (
                 poi_html.xpath('.//a[@itemprop="map"]/@href')[0]
                 .split("=")[1]
@@ -72,6 +75,7 @@ def fetch_data():
                 latitude=latitude,
                 longitude=longitude,
                 hours_of_operation=hours_of_operation,
+                raw_address=raw_address,
             )
 
             yield item
