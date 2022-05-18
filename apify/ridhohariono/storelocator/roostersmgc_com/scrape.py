@@ -63,7 +63,10 @@ def fetch_data():
             if not url["href"]:
                 continue
             store = pull_content(page_url)
-            location_name = store.find("h1", {"class": "sub-brand"}).text.strip()
+            try:
+                location_name = store.find("h1", {"class": "sub-brand"}).text.strip()
+            except:
+                continue
             raw_address = (
                 store.find("span", {"class": "store-address"})
                 .get_text(strip=True, separator=" ")
