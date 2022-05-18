@@ -60,7 +60,9 @@ def fetch_data():
 
             zip_postal = pa.postcode
             zip_postal = zip_postal.strip() if zip_postal else MISSING
-
+            if zip_postal == MISSING:
+                zip_postal = street_address.split(",")[1].split()[0]
+                street_address = street_address.replace(zip_postal, "")
             country_code = "BE"
             hours_of_operation = loc[-2]
             phone = loc[-3]

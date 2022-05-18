@@ -18,9 +18,11 @@ def fetch_data():
     response = session.get(start_url, headers=headers)
     dom = etree.HTML(response.text)
 
-    data = dom.xpath('//script[contains(text(), "locations")]/text()')[-1].split(
-        "var locations ="
-    )[-1][:-1]
+    data = (
+        dom.xpath('//script[contains(text(), "locations")]/text()')[-1]
+        .split("var locations =")[-1]
+        .strip()[:-1]
+    )
     all_locations = json.loads(data)
     for poi in all_locations:
         store_url = "http://www.usautoforce.com/about/locations/"

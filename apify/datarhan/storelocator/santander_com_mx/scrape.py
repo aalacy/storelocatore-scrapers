@@ -36,15 +36,19 @@ def fetch_data():
                 else:
                     hoo.append(f"{day}: closed")
             hoo = " ".join(hoo)
+            street_address = poi["location"]["address"].split(", C.P")[0]
+            zip_code = poi["location"]["zipcode"]
+            if zip_code:
+                street_address = street_address.split(zip_code)[0]
 
             item = SgRecord(
                 locator_domain=domain,
                 page_url=poi["urlDetailPage"],
                 location_name=poi.get("name"),
-                street_address=poi["location"]["address"].split(", C.P")[0],
+                street_address=street_address,
                 city=poi["location"]["city"],
                 state="",
-                zip_postal=poi["location"]["zipcode"],
+                zip_postal=zip_code,
                 country_code=poi["location"]["country"],
                 store_number=poi["poicode"],
                 phone="",
