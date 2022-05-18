@@ -30,7 +30,6 @@ def fetch_data(sgw: SgWriter):
         with SgFirefox(is_headless=True) as driver:
 
             driver.get(page_url)
-            driver.refresh()
             sleep(10)
             iframe = driver.find_element_by_xpath(
                 '//h3[contains(text(), "Localización")]/following-sibling::iframe[1]'
