@@ -103,7 +103,9 @@ class ExampleSearchIteration(SearchIteration):
 
 if __name__ == "__main__":
     search_maker = DynamicSearchMaker(
-        search_type="DynamicGeoSearch", granularity=Grain_2()
+        search_type="DynamicGeoSearch",
+        granularity=Grain_2(),
+        expected_search_radius_miles=50,
     )
 
     with SgWriter(

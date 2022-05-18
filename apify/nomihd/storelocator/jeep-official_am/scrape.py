@@ -99,10 +99,18 @@ class _SearchIteration(SearchIteration):
                 if "data" in stores_req.text:
 
                     for store in json.loads(stores_req.text)["data"]:
-                        page_url = "<MISSING>"
+                        page_url = store.get("dealer_website", "<MISSING>")
                         locator_domain = website
                         location_name = store["name"]
-                        raw_address = store["address"]
+                        raw_address = (
+                            store["address"]
+                            .replace("\n", " ")
+                            .strip()
+                            .replace("carring@carring.ee", "")
+                            .strip()
+                            .replace("\r", "")
+                            .strip()
+                        )
                         formatted_addr = parser.parse_address_intl(raw_address)
                         street_address = formatted_addr.street_address_1
                         if street_address:
@@ -126,9 +134,25 @@ class _SearchIteration(SearchIteration):
                             store["dealer_phone"]
                             .replace("Showroom:", "")
                             .strip()
+                            .replace("Showroom/ Service:", "")
+                            .strip()
                             .split("Service:")[0]
                             .strip()
+                            .split(";")[0]
+                            .strip()
+                            .split(",")[0]
+                            .strip()
+                            .split(" <br>")[0]
+                            .strip()
+                            .replace("<br>", "")
+                            .strip()
+                            .split(" / ")[0]
+                            .strip()
+                            .split(" - ")[0]
+                            .strip()
                         )
+                        if ":" in phone:
+                            phone = phone.split(":")[1].strip()
                         location_type = "<MISSING>"
                         hours_of_operation = "<MISSING>"
                         latitude = store["lat"]
