@@ -6,7 +6,6 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from lxml import html
 from sgrequests import SgRequests
-from proxyfier import ProxyProviders
 import ssl
 
 MAX_WORKERS = 2
@@ -30,10 +29,7 @@ logger = SgLogSetup().get_logger("yha_org_uk")
 
 
 def get_hostel_urls():
-    with SgRequests(
-        proxy_country="gb",
-        proxy_escalation_order=ProxyProviders.TEST_PROXY_ESCALATION_ORDER,
-    ) as session:
+    with SgRequests(proxy_country="gb") as session:
         sl_r = session.get(STORE_LOCATOR, headers=headers)
         logger.info(f"Store Locator HTTP Status: {sl_r.status_code}")
         sel = html.fromstring(sl_r.text, "lxml")
@@ -51,10 +47,7 @@ def get_hostel_urls():
 
 
 def fetch_records(idx, store_url, sgw: SgWriter):
-    with SgRequests(
-        proxy_country="gb",
-        proxy_escalation_order=ProxyProviders.TEST_PROXY_ESCALATION_ORDER,
-    ) as http:
+    with SgRequests(proxy_country="gb") as http:
         r1 = http.get(store_url, headers=headers)
         logger.info(f"[{idx}] PullingContentFrom {store_url}")
         logger.info(f"[{idx}] HTTPStatus: {r1.status_code}")
