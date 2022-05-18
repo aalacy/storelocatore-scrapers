@@ -60,7 +60,7 @@ def fetch_data():
             loc_response = session.get(page_url, headers=hdr)
             loc_dom = etree.HTML(loc_response.text)
             hoo = loc_dom.xpath('//ul[@class="store-locations__hours"]//text()')
-            hoo = " ".join(hoo) if hoo else ""
+            hoo = " ".join([e.strip() for e in hoo if e.strip()]) if hoo else ""
 
             item = SgRecord(
                 locator_domain=domain,
