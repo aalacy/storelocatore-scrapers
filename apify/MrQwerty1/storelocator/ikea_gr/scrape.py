@@ -37,18 +37,20 @@ def get_data(slug, sgw: SgWriter):
         "".join(tree.xpath("//div[@class='gen-section'][1]/p[1]/text()")).split()
     )
     street_address, city, state, postal = get_international(raw_address)
-    postal = postal.replace("TK ", "")
+    postal = postal.replace("ΤΚ", "").strip()
 
-    phone = (
-        "".join(tree.xpath("//div[@class='gen-section']/span/text()"))
-        .replace("F:", "")
-        .strip()
-    )
+    phone = SgRecord.MISSING
+    lines = tree.xpath("//h5/following-sibling::p/text()")
+    for li in lines:
+        if "διεθνείς" in li:
+            phone = li.split("για")[0].strip()
     text = "".join(
         tree.xpath("//a[@class='button iconBtn s icon-link right blue']/@href")
     )
     if "=" in text:
         latitude, longitude = text.split("=")[-1].split(",")
+    elif "/@" in text:
+        latitude, longitude = text.split("/@")[1].split(",")[:2]
     else:
         latitude, longitude = SgRecord.MISSING, SgRecord.MISSING
 
@@ -80,7 +82,7 @@ def get_data(slug, sgw: SgWriter):
 def fetch_data(sgw: SgWriter):
     urls = get_urls()
 
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
+    with futures.ThreadPoolExecutor(max_workers=3) as executor:
         future_to_url = {executor.submit(get_data, url, sgw): url for url in urls}
         for future in futures.as_completed(future_to_url):
             future.result()

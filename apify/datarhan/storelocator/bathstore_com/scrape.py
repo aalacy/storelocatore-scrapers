@@ -1,4 +1,3 @@
-import re
 from lxml import etree
 from urllib.parse import urljoin
 
@@ -13,7 +12,7 @@ def fetch_data():
     session = SgRequests()
 
     start_url = "https://www.bathstore.com/stores"
-    domain = re.findall(r"://(.+?)/", start_url)[0].replace("www.", "")
+    domain = "bathstore.com"
     hdr = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
@@ -27,7 +26,10 @@ def fetch_data():
         loc_dom = etree.HTML(loc_response.text)
         location_name = loc_dom.xpath(
             '//h3[@class="storeDetailMap_locationName_title"]/text()'
-        )[0]
+        )
+        if not location_name:
+            continue
+        location_name = location_name[0]
         raw_address = loc_dom.xpath('//div[@class="storeDetailMap_address"]/p/text()')
         raw_address = [e.strip() for e in raw_address if e.strip()]
         city = raw_address[-2].split(", ")[-1].strip()

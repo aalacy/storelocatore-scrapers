@@ -44,9 +44,9 @@ def fetch_data():
             loc = json.loads(schema)
             location_name = strip_accents(loc["name"])
             phone = MISSING
-            address = strip_accents(loc["address"])
-            street_address = address["streetAddress"]
-            city = address["addressLocality"]
+            address = loc["address"]
+            street_address = strip_accents(address["streetAddress"])
+            city = strip_accents(address["addressLocality"])
             state = MISSING
             zip_postal = address["postalCode"]
             country_code = "FI"

@@ -1,3 +1,4 @@
+import re
 import json
 from sglogging import sglog
 from bs4 import BeautifulSoup
@@ -21,73 +22,84 @@ MISSING = SgRecord.MISSING
 
 
 def fetch_data():
-    start_url = "https://sharkeyscutsforkids.com/locations/"
-    r = session.get(start_url, headers=headers)
-    soup = BeautifulSoup(r.text, "html.parser")
-    loclist = soup.findAll("div", {"class": "geodir-content"})
-    for loc in loclist:
-        page_url = loc.find("a")["href"]
-        log.info(page_url)
-        r = session.get(page_url)
+    for idx in range(1, 4):
+        pattern = re.compile(r"\s\s+")
+        url = "https://sharkeyscutsforkids.com/locations/page/" + str(idx)
+        r = session.get(url, headers=headers)
+        if r.status_code != 200:
+            continue
         soup = BeautifulSoup(r.text, "html.parser")
-        if '<script type="application/ld+json">' in r.text:
-            schema = r.text.split('<script type="application/ld+json">')[1].split(
-                "</script>", 1
-            )[0]
-            schema = schema.replace("\n", "")
-            poi = json.loads(schema)
-            location_name = poi["name"]
-            street_address = poi["address"]["streetAddress"]
-            city = poi["address"]["addressLocality"]
-            state = poi["address"]["addressRegion"]
-            zip_postal = poi["address"]["postalCode"]
-            country_code = poi["address"]["addressCountry"]
-            phone = poi["telephone"]
-            location_type = poi["@type"]
-            latitude = poi["geo"]["latitude"]
-            longitude = poi["geo"]["longitude"]
-            raw_address = street_address + " " + city + " " + state + " " + zip_postal
-        else:
-            location_name = loc.find("h2").text
-            phone = loc.select_one("a[href*=tel]").text
-            raw_address = (
-                soup.findAll("h2")[1].text.replace(",", "").replace("ðŸ“", "")
+        loclist = soup.findAll("div", {"class": "geodir-content"})
+        for loc in loclist:
+            page_url = loc.find("a")["href"]
+            log.info(page_url)
+            r = session.get(page_url)
+            soup = BeautifulSoup(r.text, "html.parser")
+            if '<script type="application/ld+json">' in r.text:
+                schema = r.text.split('<script type="application/ld+json">')[1].split(
+                    "</script>", 1
+                )[0]
+                schema = schema.replace("\n", "")
+                poi = json.loads(schema)
+                location_name = poi["name"]
+                street_address = poi["address"]["streetAddress"]
+                city = poi["address"]["addressLocality"]
+                state = poi["address"]["addressRegion"]
+                zip_postal = poi["address"]["postalCode"]
+                country_code = poi["address"]["addressCountry"]
+                phone = poi["telephone"]
+                location_type = poi["@type"]
+                latitude = poi["geo"]["latitude"]
+                longitude = poi["geo"]["longitude"]
+                raw_address = (
+                    street_address + " " + city + " " + state + " " + zip_postal
+                )
+                raw_address = raw_address.replace("ðŸ“", "")
+                raw_address = re.sub(pattern, "\n", raw_address)
+                raw_address = raw_address.replace("\n", " ")
+            else:
+                location_name = loc.find("h2").text
+                phone = loc.select_one("a[href*=tel]").text
+                raw_address = (
+                    soup.findAll("h2")[1].text.replace(",", "").replace("ðŸ“", "")
+                )
+                raw_address = raw_address.split("\n")
+                raw_address = " ".join(raw_address)
+
+                pa = parse_address_intl(raw_address)
+
+                street_address = pa.street_address_1
+                street_address = street_address if street_address else MISSING
+
+                city = pa.city
+                city = city.strip() if city else MISSING
+
+                state = pa.state
+                state = state.strip() if state else MISSING
+
+                zip_postal = pa.postcode
+                zip_postal = zip_postal.strip() if zip_postal else MISSING
+
+                country_code = "United States"
+                latitude = MISSING
+                longitude = MISSING
+            yield SgRecord(
+                locator_domain=DOMAIN,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=state,
+                zip_postal=zip_postal,
+                country_code=country_code,
+                store_number=MISSING,
+                phone=phone,
+                location_type=location_type,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=MISSING,
+                raw_address=raw_address,
             )
-
-            pa = parse_address_intl(raw_address)
-
-            street_address = pa.street_address_1
-            street_address = street_address if street_address else MISSING
-
-            city = pa.city
-            city = city.strip() if city else MISSING
-
-            state = pa.state
-            state = state.strip() if state else MISSING
-
-            zip_postal = pa.postcode
-            zip_postal = zip_postal.strip() if zip_postal else MISSING
-
-            country_code = "United States"
-            latitude = MISSING
-            longitude = MISSING
-        yield SgRecord(
-            locator_domain=DOMAIN,
-            page_url=page_url,
-            location_name=location_name,
-            street_address=street_address,
-            city=city,
-            state=state,
-            zip_postal=zip_postal,
-            country_code=country_code,
-            store_number=MISSING,
-            phone=phone,
-            location_type=location_type,
-            latitude=latitude,
-            longitude=longitude,
-            hours_of_operation=MISSING,
-            raw_address=raw_address,
-        )
 
 
 def scrape():
