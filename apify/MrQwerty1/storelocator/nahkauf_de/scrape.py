@@ -28,10 +28,10 @@ def fetch_data(sgw: SgWriter):
     r = session.get(api, headers=headers)
     js = r.json()
 
-    urls = []
+    urls = set()
     for j in js:
         slug = j.get("link")
-        urls.append(f"https://nahkauf.de{slug}")
+        urls.add(f"https://nahkauf.de{slug}")
 
     with futures.ThreadPoolExecutor(max_workers=3) as executor:
         future_to_url = {executor.submit(get_additional, url): url for url in urls}
@@ -42,7 +42,9 @@ def fetch_data(sgw: SgWriter):
     for j in js:
         location_name = j.get("name")
         street_address = j.get("street")
-        city = j.get("city")
+        city = j.get("city") or ""
+        if "/" in city:
+            city = city.split("/")[0].strip()
         postal = j.get("zipCode")
         country_code = "DE"
         store_number = j.get("id")

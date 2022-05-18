@@ -15,12 +15,14 @@ def fetch_data(sgw: SgWriter):
 
     locator_domain = "accessstorage.ca"
 
-    base_link = "https://datavault-api.storagevaultcanada.com/api/location/nearest_locations/?lat=43.7615936&lng=-79.35694010000002&distance=5000&lang=en&brand=as&originlat=43.7615936&originlng=-79.35694010000002"
+    base_link = "https://datavault-api.storagevaultcanada.com/api/location/nearest_locations/?lat=43.7615936&lng=-79.35694010000002&distance=5000&lang=en&originlat=43.7615936&originlng=-79.35694010000002"
 
     stores = session.get(base_link, headers=headers).json()
 
     for store_data in stores:
         link = store_data["url"]
+        if "accessstorage.ca" not in link:
+            continue
         location_name = store_data["title"]
         raw_address = store_data["address"].split(",")
         street_address = ",".join(raw_address[:-1])
