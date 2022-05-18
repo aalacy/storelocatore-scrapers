@@ -42,6 +42,8 @@ def fetch_data():
                 .replace("Openingsuren:", "")
             )
             phone = raw_address[-1].split("info")[0]
+            if "of" in phone:
+                phone = phone.split("of")[0]
             raw_address = raw_address[0]
             pa = parse_address_intl(raw_address)
 
