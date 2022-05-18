@@ -46,17 +46,14 @@ def fetch_data():
                 hoo.append(f"{day}: {opens} - {poi_data['timings']['close'][day]}")
             hoo = " ".join(hoo)
             country_code = page_url.split("//")[1].split(".")[0]
-            raw_city = poi_data["city"]
-            addr = parse_address_intl(raw_city)
+            raw_address = (
+                street_address + " " + poi_data["city"] + " " + poi["regionName"]
+            )
+            addr = parse_address_intl(raw_address)
             city = addr.city
-            if not city:
-                city = raw_city
-                if city.endswith(","):
-                    city = city[:-1]
-                city = city.split(",")[-1]
-            if "Loja" in city:
+            if city and "Loja" in city:
                 city = ""
-            if "Road" in city:
+            if city and "Road" in city:
                 city = ""
 
             item = SgRecord(
@@ -65,7 +62,7 @@ def fetch_data():
                 location_name=poi["storeName"],
                 street_address=street_address,
                 city=city,
-                state=poi["regionName"],
+                state=addr.state,
                 zip_postal=poi_data["postcode"],
                 country_code=country_code,
                 store_number=store_number,
@@ -74,7 +71,7 @@ def fetch_data():
                 latitude=poi["latitude"],
                 longitude=poi["longitude"],
                 hours_of_operation=hoo,
-                raw_address=raw_city,
+                raw_address=raw_address,
             )
 
             yield item
