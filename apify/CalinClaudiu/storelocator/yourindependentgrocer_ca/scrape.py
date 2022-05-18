@@ -474,12 +474,15 @@ def get_api_call(url):
         driver.get(url)
         time.sleep(30)
         url = None
-        to_click = WebDriverWait(driver, 60).until(
-            EC.visibility_of_element_located(
-                (By.XPATH, '//*[@id="root"]/section/div/div[1]/div[2]/div')
+        try:
+            to_click = WebDriverWait(driver, 60).until(
+                EC.visibility_of_element_located(
+                    (By.XPATH, '//*[@id="root"]/section/div/div[1]/div[2]/div')
+                )
             )
-        )
-        to_click.click()
+            to_click.click()
+        except Exception:
+            pass
 
         input_field = WebDriverWait(driver, 60).until(
             EC.visibility_of_element_located(
