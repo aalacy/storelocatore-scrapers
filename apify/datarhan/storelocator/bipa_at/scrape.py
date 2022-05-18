@@ -15,17 +15,21 @@ def fetch_data():
     start_url = "https://www.bipa.at/filialen?dwcont=C1344944564"
     domain = "bipa.at"
 
-    search = DynamicZipAndGeoSearch(expected_search_radius_miles=1, max_search_distance_miles=1, country_codes=[SearchableCountries.AUSTRIA])
+    search = DynamicZipAndGeoSearch(
+        expected_search_radius_miles=1,
+        max_search_distance_miles=1,
+        country_codes=[SearchableCountries.AUSTRIA],
+    )
 
     with SgRequests() as session:
         headers = {
-            'Host': 'www.bipa.at',
-            'Cookie': 'dwsid=g-bfHLgGgRTX4rp9CDtWJUsAqCuiA7nk6kMHWOFpx3afRx43SdhAVLQhACRPFJHEvAiLTAkV79LGYBYSKYRAKg==;'
+            "Host": "www.bipa.at",
+            "Cookie": "dwsid=g-bfHLgGgRTX4rp9CDtWJUsAqCuiA7nk6kMHWOFpx3afRx43SdhAVLQhACRPFJHEvAiLTAkV79LGYBYSKYRAKg==;",
         }
-        session.get('https://www.bipa.at/filialen')
+        session.get("https://www.bipa.at/filialen")
         for code, (lat, lng) in search:
             data = {
-                'dwfrm_storelocator_zipcity': code,
+                "dwfrm_storelocator_zipcity": code,
                 "latitude": str(lat),
                 "longitude": str(lng),
             }
