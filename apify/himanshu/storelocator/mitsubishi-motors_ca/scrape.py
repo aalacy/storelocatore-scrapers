@@ -347,6 +347,21 @@ def fetch_data(sgw: SgWriter):
                     pass
             if not hours:
                 try:
+                    hours = (
+                        " ".join(
+                            list(
+                                soup1.find_all(class_="space-y-4")[-1].stripped_strings
+                            )
+                        )
+                        .replace("\n", "")
+                        .replace("\t", "")
+                    )
+                    if "lundi" not in hours.lower():
+                        hours = ""
+                except:
+                    pass
+            if not hours:
+                try:
                     if (
                         "Today"
                         in soup1.find(class_="top-bar")

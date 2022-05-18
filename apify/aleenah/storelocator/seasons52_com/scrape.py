@@ -51,6 +51,7 @@ def fetch_data():
     stores_req = session.get(url, headers=headers)
     stores_sel = lxml.html.fromstring(stores_req.text)
     stores = stores_sel.xpath('//a[@id="locDetailsId"]/@href')
+    stores.append("/locations/nj/paramus/paramus/4556")
     for store_url in stores:
         page_url = "https://www.seasons52.com" + store_url
         store = page_url.split("/")[-1]
