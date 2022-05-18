@@ -44,10 +44,14 @@ def fetch_data():
             logger.info(page_url)
             sp1 = bs(session.get(page_url, headers=_headers).text, "lxml")
             _ad = sp1.find("", string=re.compile(r"^ADDRESS"))
+            _parent = None
             if _ad.find_parent("h3"):
-                addr = list(_ad.find_parent("h3").find_next_sibling().stripped_strings)
+                _parent = _ad.find_parent("h3")
             elif _ad.find_parent("h4"):
-                addr = list(_ad.find_parent("h4").find_next_sibling().stripped_strings)
+                _parent = _ad.find_parent("h4")
+            elif _ad.find_parent("h5"):
+                _parent = _ad.find_parent("h5")
+            addr = list(_parent.find_next_sibling().stripped_strings)
             if not addr[0].split()[0].isdigit():
                 del addr[0]
 
@@ -62,6 +66,8 @@ def fetch_data():
                 tt = _hr.find_parent("h3").find_next_siblings()
             elif _hr.find_parent("h4"):
                 tt = _hr.find_parent("h4").find_next_siblings()
+            elif _hr.find_parent("h5"):
+                tt = _hr.find_parent("h5").find_next_siblings()
 
             for hh in tt:
                 if not hh.text.strip():

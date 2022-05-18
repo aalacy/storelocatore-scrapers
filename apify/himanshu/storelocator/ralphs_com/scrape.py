@@ -1,118 +1,91 @@
-import csv
-
-import phonenumbers
-
 from sglogging import SgLogSetup
+
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 from sgrequests import SgRequests
 
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries
+from sgzip.dynamic import DynamicZipSearch, SearchableCountries, Grain_1_KM
 
 log = SgLogSetup().get_logger("ralphs_com")
 
 
-def write_output(data):
-    with open("data.csv", mode="w", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-                "page_url",
-            ]
-        )
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
+def fetch_data(sgw: SgWriter):
 
     session = SgRequests()
 
-    locator_domain = "https://www.ralphs.com/"
-    addresses = []
+    headers = {
+        "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Safari/537.36"
+    }
 
-    max_results = 100
-    max_distance = 50
+    locator_domain = "https://www.ralphs.com/"
+
+    max_distance = 40
+    max_results = 50
 
     search = DynamicZipSearch(
         country_codes=[SearchableCountries.USA, SearchableCountries.CANADA],
-        max_radius_miles=max_distance,
+        max_search_distance_miles=max_distance,
+        expected_search_radius_miles=max_distance,
         max_search_results=max_results,
+        granularity=Grain_1_KM(),
     )
 
-    i = 1
     for zip_code in search:
-        headers = {
-            "User-Agent": "PostmanRuntime/7.19.0",
-            "content-type": "application/json;charset=UTF-8",
-        }
-        data = (
-            r'{"query":"\n      query storeSearch($searchText: String!, $filters: [String]!) {\n        storeSearch(searchText: $searchText, filters: $filters) {\n          stores {\n            ...storeSearchResult\n          }\n          fuel {\n            ...storeSearchResult\n          }\n          shouldShowFuelMessage\n        }\n      }\n      \n  fragment storeSearchResult on Store {\n    banner\n    vanityName\n    divisionNumber\n    storeNumber\n    phoneNumber\n    showWeeklyAd\n    showShopThisStoreAndPreferredStoreButtons\n    storeType\n    distance\n    latitude\n    longitude\n    tz\n    ungroupedFormattedHours {\n      displayName\n      displayHours\n      isToday\n    }\n    address {\n      addressLine1\n      addressLine2\n      city\n      countryCode\n      stateCode\n      zip\n    }\n    pharmacy {\n      phoneNumber\n    }\n    departments {\n      code\n    }\n    fulfillmentMethods{\n      hasPickup\n      hasDelivery\n    }\n  }\n","variables":{"searchText":"'
+        base_link = (
+            "https://www.ralphs.com/atlas/v1/stores/v1/search?filter.query="
             + str(zip_code)
-            + '","filters":[]},"operationName":"storeSearch"}'
         )
-
-        # New session every 50
-        if i % 50 == 0:
-            log.info("New session for next 50 zips..", zip_code)
-            session = SgRequests()
-
-        i += 1
-
-        r = session.post(
-            "https://www.ralphs.com/stores/api/graphql", headers=headers, data=data
-        )
+        r = session.get(base_link, headers=headers)
         try:
-            data_store = r.json()["data"]["storeSearch"]["stores"]
+            data_store = r.json()["data"]["storeSearch"]["results"]
         except:
             continue
+
         for key in data_store:
-            location_name = key["vanityName"]
-            street_address = key["address"]["addressLine1"].capitalize()
-            city = key["address"]["city"].capitalize()
-            state = key["address"]["stateCode"]
-            zipp = key["address"]["zip"]
-            country_code = key["address"]["countryCode"]
+            try:
+                location_name = key["vanityName"] + " " + key["facilityName"]
+            except:
+                location_name = key["vanityName"]
+
+            raw_address = key["address"]["address"]
+            street_address = " ".join(raw_address["addressLines"]).strip()
+            city = raw_address["cityTown"]
+            state = raw_address["stateProvince"]
+            zipp = raw_address["postalCode"]
+            country_code = raw_address["countryCode"]
             store_number = key["storeNumber"]
-            if key["phoneNumber"]:
-                phone = phonenumbers.format_number(
-                    phonenumbers.parse(str(key["phoneNumber"]), "US"),
-                    phonenumbers.PhoneNumberFormat.NATIONAL,
-                )
-            else:
-                phone = "<MISSING>"
+            try:
+                phone = key["phoneNumber"]
+            except:
+                phone = ""
             if key["banner"]:
                 location_type = key["banner"]
             else:
                 location_type = "store"
-            latitude = key["latitude"]
-            longitude = key["longitude"]
-            search.found_location_at(latitude, longitude)
-            hours_of_operation = ""
-            if key["ungroupedFormattedHours"]:
-                for hr in key["ungroupedFormattedHours"]:
-                    hours_of_operation += (
-                        hr["displayName"] + ": " + hr["displayHours"] + ", "
-                    )
+            latitude = key["location"]["lat"]
+            longitude = key["location"]["lng"]
+            if str(latitude) == "0":
+                latitude = ""
+                longitude = ""
             else:
-                hours_of_operation = "<MISSING>"
+                search.found_location_at(latitude, longitude)
+            hours = ""
+            try:
+                raw_hours = key["formattedHours"]
+                for raw_hour in raw_hours:
+                    hours = (
+                        hours
+                        + " "
+                        + raw_hour["displayName"]
+                        + " "
+                        + raw_hour["displayHours"]
+                    ).strip()
+                hours = hours.replace("  ", " ")
+            except:
+                pass
             page_url = (
                 "https://www.ralphs.com/stores/details/"
                 + str(key["divisionNumber"])
@@ -120,85 +93,106 @@ def fetch_data():
                 + str(store_number)
             )
 
-            store = []
-            store.append(locator_domain if locator_domain else "<MISSING>")
-            store.append(location_name if location_name else "<MISSING>")
-            store.append(street_address if street_address else "<MISSING>")
-            store.append(city if city else "<MISSING>")
-            store.append(state if state else "<MISSING>")
-            store.append(zipp if zipp else "<MISSING>")
-            store.append(country_code if country_code else "<MISSING>")
-            store.append(store_number if store_number else "<MISSING>")
-            store.append(phone if phone else "<MISSING>")
-            store.append(location_type if location_type else "<MISSING>")
-            store.append(latitude if latitude else "<MISSING>")
-            store.append(longitude if longitude else "<MISSING>")
-            store.append(hours_of_operation if hours_of_operation else "<MISSING>")
-            store.append(page_url)
-            if store[2] in addresses:
-                continue
-            addresses.append(store[2])
-            yield store
+            sgw.write_row(
+                SgRecord(
+                    locator_domain=locator_domain,
+                    page_url=page_url,
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=zipp,
+                    country_code=country_code,
+                    store_number=store_number,
+                    phone=phone,
+                    location_type=location_type,
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=hours,
+                )
+            )
 
         # fuel store
         try:
-            datas1 = r.json()["data"]["storeSearch"]["fuel"]
+            datas1 = r.json()["data"]["storeSearch"]["fuelResults"]
         except:
             continue
         for key1 in datas1:
-            location_name = key1["vanityName"]
-            street_address = key1["address"]["addressLine1"].capitalize()
-            city = key1["address"]["city"].capitalize()
-            state = key1["address"]["stateCode"]
-            zipp = key1["address"]["zip"]
-            country_code = key1["address"]["countryCode"]
+            try:
+                location_name = key1["vanityName"] + " " + key1["facilityName"]
+            except:
+                location_name = key1["vanityName"]
+
+            raw_address = key1["address"]["address"]
+            street_address = " ".join(raw_address["addressLines"]).strip()
+            city = raw_address["cityTown"]
+            state = raw_address["stateProvince"]
+            zipp = raw_address["postalCode"]
+            country_code = raw_address["countryCode"]
             store_number = key1["storeNumber"]
-            phone = key1["phoneNumber"]
-            if key["banner"]:
-                location_type = key["banner"]
+            try:
+                phone = key1["phoneNumber"]
+            except:
+                phone = ""
+            if key1["banner"]:
+                location_type = key1["banner"]
             else:
                 location_type = "fuel"
-            latitude = key1["latitude"]
-            longitude = key1["longitude"]
-            search.found_location_at(latitude, longitude)
-            hours_of_operation = ""
-            if key1["ungroupedFormattedHours"]:
-                for hr in key1["ungroupedFormattedHours"]:
-                    hours_of_operation += (
-                        hr["displayName"] + ": " + hr["displayHours"] + ", "
-                    )
-            else:
-                hours_of_operation = "<MISSING>"
+            latitude = key1["location"]["lat"]
+            longitude = key1["location"]["lng"]
+
+            hours = ""
+            try:
+                raw_hours = key1["formattedHours"]
+                for raw_hour in raw_hours:
+                    hours = (
+                        hours
+                        + " "
+                        + raw_hour["displayName"]
+                        + " "
+                        + raw_hour["displayHours"]
+                    ).strip()
+                hours = hours.replace("  ", " ")
+            except:
+                pass
+            if key1["open24Hours"]:
+                hours = "24 Hours"
             page_url = (
                 "https://www.ralphs.com/stores/details/"
                 + str(key1["divisionNumber"])
                 + "/"
                 + str(store_number)
             )
-            store = []
-            store.append(locator_domain if locator_domain else "<MISSING>")
-            store.append(location_name if location_name else "<MISSING>")
-            store.append(street_address if street_address else "<MISSING>")
-            store.append(city if city else "<MISSING>")
-            store.append(state if state else "<MISSING>")
-            store.append(zipp if zipp else "<MISSING>")
-            store.append(country_code if country_code else "<MISSING>")
-            store.append(store_number if store_number else "<MISSING>")
-            store.append(phone if phone else "<MISSING>")
-            store.append(location_type if location_type else "<MISSING>")
-            store.append(latitude if latitude else "<MISSING>")
-            store.append(longitude if longitude else "<MISSING>")
-            store.append(hours_of_operation if hours_of_operation else "<MISSING>")
-            store.append(page_url)
-            if store[2] in addresses:
-                continue
-            addresses.append(store[2])
-            yield store
+            sgw.write_row(
+                SgRecord(
+                    locator_domain=locator_domain,
+                    page_url=page_url,
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=zipp,
+                    country_code=country_code,
+                    store_number=store_number,
+                    phone=phone,
+                    location_type=location_type,
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=hours,
+                )
+            )
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+with SgWriter(
+    SgRecordDeduper(
+        SgRecordID(
+            {
+                SgRecord.Headers.LOCATION_NAME,
+                SgRecord.Headers.STREET_ADDRESS,
+                SgRecord.Headers.CITY,
+                SgRecord.Headers.LOCATION_TYPE,
+            }
+        )
+    )
+) as writer:
+    fetch_data(writer)

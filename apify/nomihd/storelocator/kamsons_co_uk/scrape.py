@@ -73,6 +73,13 @@ def fetch_data():
         city = formatted_addr.city
         state = formatted_addr.state
         zip = formatted_addr.postcode
+        if not zip:
+            street_address = raw_address.split(",")[0].strip()
+            city = raw_address.split(",")[-3].strip()
+            zip = raw_address.split(",")[-1].strip()
+
+        if street_address and street_address.isdigit():
+            street_address = raw_address.split(",")[0].strip()
 
         country_code = "GB"
         location_type = "<MISSING>"
@@ -81,11 +88,21 @@ def fetch_data():
                 '//div[contains(@class,"c_pharmacy-details")]//p//a[contains(@href,"tel:")]/text()'
             )
         ).strip()
-        hours_of_operation = "; ".join(
-            store_sel.xpath(
-                '//div[contains(@class,"c_pharmacy-details")]//div[@class="c_opening-hours"]/p/text()'
+        hours_of_operation = (
+            "; ".join(
+                store_sel.xpath(
+                    '//div[contains(@class,"c_pharmacy-details")]//div[@class="c_opening-hours"]/p/text()'
+                )
             )
-        ).strip()
+            .strip()
+            .split("Opening hours may vary")[0]
+            .strip()
+            .replace("\r\n", "")
+            .replace("\n", "")
+            .strip()
+        )
+        if len(hours_of_operation) > 0 and hours_of_operation[-1] == ";":
+            hours_of_operation = "".join(hours_of_operation[:-1]).strip()
 
         latitude, longitude = (
             "".join(store.xpath("@data-lat")).strip(),

@@ -15,11 +15,9 @@ def fetch_data(sgw: SgWriter):
         location_name = "".join(d.xpath('.//p[@class="h3 card-title"]/text()'))
         ad = d.xpath(".//address/text()")
         raw_address = " ".join(ad)
-        street_address = " ".join(ad[:-2])
-        ad = "".join(ad[-2])
-        state = SgRecord.MISSING
-        postal = " ".join(ad.split()[:-1])
-        city = ad.split()[-1].strip()
+
+        city = ad.pop()
+        street_address = " ".join(ad[:-1])
         phone = "".join(d.xpath('.//ul[@class="card-block"]/li[1]/text()'))
         hours_of_operation = (
             " ".join(d.xpath(".//table//tr//text()")).replace("\n", "").strip()
@@ -32,8 +30,6 @@ def fetch_data(sgw: SgWriter):
             location_name=location_name,
             street_address=street_address,
             city=city,
-            state=state,
-            zip_postal=postal,
             country_code="SN",
             phone=phone,
             hours_of_operation=hours_of_operation,

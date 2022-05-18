@@ -24,7 +24,7 @@ def fetch_data():
     stores_req = session.get(search_url, headers=headers)
     stores_sel = lxml.html.fromstring(stores_req.text)
     stores = stores_sel.xpath(
-        '//div[./button[contains(text(),"LOCATIONS")]]/ul/li/a/@href'
+        '//div[./button[contains(text(),"Locations")]]/ul/li/a/@href'
     )
     store_header = {
         "authority": "api.momentfeed.com",
@@ -99,9 +99,19 @@ def fetch_data():
                 if day_val == "7":
                     day = "Sunday:"
 
-                hours_list.append(
-                    day + hours[index].split(",", 1)[1].replace(",", " - ").strip()
+                ftime = hours[index].split(",", 1)[1].replace(",", " - ").strip()
+                hour_time = (
+                    ftime.split(" - ")[0].strip()[:2]
+                    + ":"
+                    + ftime.split(" - ")[0].strip()[2:]
                 )
+                minute_time = (
+                    ftime.split(" - ")[1].strip()[:2]
+                    + ":"
+                    + ftime.split(" - ")[1].strip()[2:]
+                )
+                time = hour_time + " - " + minute_time
+                hours_list.append(day + time)
 
         hours_of_operation = (
             "; ".join(hours_list)

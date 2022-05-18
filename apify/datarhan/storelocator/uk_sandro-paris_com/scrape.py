@@ -4,6 +4,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
+from sgpostal.sgpostal import parse_address_intl
 
 
 def fetch_data():
@@ -13,22 +14,39 @@ def fetch_data():
     all_locations = session.get(start_url).json()
     for poi in all_locations:
         location_name = poi["properties"]["title"]
-        location_name = location_name if location_name else "<MISSING>"
-        street_address = poi["properties"]["address"]
-        street_address = street_address if street_address else "<MISSING>"
-        city = poi["properties"]["city"]
-        city = city if city else "<MISSING>"
-        state = poi["properties"]["state"]
-        state = state if state else "<MISSING>"
-        zip_code = poi["properties"]["zip"]
-        zip_code = zip_code.strip() if zip_code else "<MISSING>"
-        if len(zip_code) > 5:
-            state = zip_code[:2]
-            zip_code = zip_code[2:].strip()
+        raw_address = f'{poi["properties"]["address"]}, {poi["properties"]["city"]}, {poi["properties"]["state"]}, {poi["properties"]["zip"]}'
+        addr = parse_address_intl(raw_address.replace("None", ""))
+        street_address = addr.street_address_1
+        if addr.street_address_2:
+            street_address += ", " + addr.street_address_2
+        street_address = street_address.replace("None", "")
+        if street_address.endswith("."):
+            street_address = street_address[:-1]
+        city = addr.city
+        if city:
+            city = city.replace("None", "")
+        if city and len(city) == 3:
+            city = ""
+        if city and city.endswith("."):
+            city = city[:-1]
+        state = addr.state
+        if state:
+            state = state.replace("None", "")
+        if state and "." in state:
+            state = ""
+        zip_code = addr.postcode
+        if zip_code:
+            zip_code = zip_code.replace("None", "").replace("NONE", "")
         country_code = poi["properties"]["countryCode"]
         store_number = poi["id"]
         phone = poi["properties"]["phone"]
-        phone = phone if phone and phone != "0" else "<MISSING>"
+        phone = phone if phone and phone != "0" else ""
+        if "A COMPLETER LIVRAISO" in phone:
+            phone = ""
+        if phone:
+            phone = phone.split("/")[0].strip()
+        if phone == "-":
+            phone = ""
         latitude = poi["lat"]
         longitude = poi["lng"]
         hoo = []
@@ -44,7 +62,7 @@ def fetch_data():
             ]
             hours = poi["properties"]["storeHours"].split(" | ")
             hoo = list(map(lambda d, h: d + " " + h, days, hours))
-        hours_of_operation = " ".join(hoo) if hoo else "<MISSING>"
+        hours_of_operation = " ".join(hoo) if hoo else ""
 
         item = SgRecord(
             locator_domain=domain,
@@ -61,6 +79,7 @@ def fetch_data():
             latitude=latitude,
             longitude=longitude,
             hours_of_operation=hours_of_operation,
+            raw_address=raw_address.replace(" None,", ""),
         )
 
         yield item

@@ -4,10 +4,8 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from typing import Iterable
-from sgscrape.pause_resume import SerializableRequest, CrawlState, CrawlStateSingleton
 from sglogging import SgLogSetup
-import json
+import dirtyjson as json
 
 logger = SgLogSetup().get_logger("bodynbrain")
 
@@ -18,23 +16,22 @@ locator_domain = "https://www.bodynbrain.com"
 base_url = "https://www.bodynbrain.com/locations"
 
 
-def record_initial_requests(http: SgRequests, state: CrawlState) -> bool:
+def fetch_records(http):
     areas = bs(http.get(base_url, headers=_headers).text, "lxml").select(
         "ul.centerList li.link a"
     )
     for area in areas:
         url = locator_domain + area["href"]
-        state.push_request(SerializableRequest(url=url))
+        logger.info(url)
 
-    return True
-
-
-def fetch_records(http: SgRequests, state: CrawlState) -> Iterable[SgRecord]:
-    for next_r in state.request_stack_iter():
-        logger.info(next_r.url)
-
-        sp1 = bs(http.get(next_r.url, headers=_headers).text, "lxml")
-        _ = json.loads(sp1.find("script", type="application/ld+json").string)
+        sp1 = bs(http.get(url, headers=_headers).text, "lxml")
+        ss = sp1.find("script", type="application/ld+json").string
+        try:
+            _ = json.loads(ss)[0]
+        except:
+            _ = json.loads(
+                ss.replace(": https", ': "https').replace(',"open', '","open')
+            )[0]
         addr = _["address"]
         street_address = (
             addr["streetAddress"].split(addr["addressLocality"].strip())[0].strip()
@@ -52,7 +49,7 @@ def fetch_records(http: SgRequests, state: CrawlState) -> Iterable[SgRecord]:
         for x in range(len(days)):
             hours.append(f"{days[x]}: {times[x]}")
         yield SgRecord(
-            page_url=next_r.url,
+            page_url=url,
             location_name=_["name"],
             street_address=street_address,
             city=addr["addressLocality"].strip(),
@@ -68,11 +65,7 @@ def fetch_records(http: SgRequests, state: CrawlState) -> Iterable[SgRecord]:
 
 
 if __name__ == "__main__":
-    state = CrawlStateSingleton.get_instance()
     with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         with SgRequests() as http:
-            state.get_misc_value(
-                "init", default_factory=lambda: record_initial_requests(http, state)
-            )
-            for rec in fetch_records(http, state):
+            for rec in fetch_records(http):
                 writer.write_row(rec)

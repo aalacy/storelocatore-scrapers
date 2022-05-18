@@ -14,17 +14,21 @@ def fetch_data():
     url = "https://www.vw.ca/app/dccsearch/vw-ca/en/Volkswagen%20Dealer%20Search/+/49.87951181643615/-97.1759382/12/+/+/+/+"
     r = session.get(url, headers=headers)
     for line in r.iter_lines():
-        if "%5C%22,%5C%22name%5C%22:%5C%22" in line:
-            items = line.split("%5C%22,%5C%22name%5C%22:%5C%22")
+        if "%5C%22address%5C%22:" in line:
+            items = line.split("%5C%22address%5C%22:")
             for item in items:
-                if "%5C%22address%5C%22:%7B" in item:
+                if "%5C%22city%5C%22:%5C%22" in item:
                     website = "vw.ca"
                     typ = "<MISSING>"
                     country = "CA"
                     store = "<MISSING>"
-                    name = item.split("%5C%22")[0].replace("%20", " ")
+                    name = (
+                        item.split("5C%22name%5C%22:%5C%22")[1]
+                        .split("%5C")[0]
+                        .replace("%20", " ")
+                    )
                     add = (
-                        item.split("C%22street%5C%22:%5C%22")[1]
+                        item.split("%5C%22street%5C%22:%5C%22")[1]
                         .split("%5C")[0]
                         .replace("%20", " ")
                     )
@@ -55,7 +59,7 @@ def fetch_data():
                         .split("%")[0]
                     )
                     hours = "<MISSING>"
-                    loc = "<MISSING>"
+                    loc = "https://www.vw.ca/app/dccsearch/vw-ca/en/Volkswagen%20Dealer%20Search/+/54.44073635000004/-93.75185435/3/+/+/+/+"
                     add = (
                         add.replace("%C3%A8", "e")
                         .replace("%C3%A9", "e")

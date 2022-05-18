@@ -42,6 +42,8 @@ def fetch_data():
                     city = item.split('"city":"')[1].split('"')[0]
                     state = item.split('"stateCode":"')[1].split('"')[0]
                     phone = item.split('"phone":"')[1].split('"')[0]
+                    raw_address = add + " " + city + ", " + state + " " + zc
+                    raw_address = raw_address.strip()
                     lat = item.split('"latitude":"')[1].split('"')[0]
                     lng = item.split('"longitude":"')[1].split('"')[0]
                     try:
@@ -72,8 +74,6 @@ def fetch_data():
                         hours = "Sun: 12:00pm-6:00pm; Mon-Sat: 11:00am-7:00pm"
                     if "; Friday 12/24" in hours:
                         hours = hours.split("; Friday 12/24")[0]
-                    if "," in add:
-                        add = add.rsplit(",", 1)[0].strip()
                     add = add.replace("RUSSIA", "").strip()
                     if "(" in add:
                         add = add.rsplit("(", 1)[0].strip()
@@ -104,6 +104,7 @@ def fetch_data():
                                 store_number=store,
                                 latitude=lat,
                                 longitude=lng,
+                                raw_address=raw_address,
                                 hours_of_operation=hours,
                             )
 

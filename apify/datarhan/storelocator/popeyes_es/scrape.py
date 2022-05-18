@@ -6,7 +6,7 @@ from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
-    session = SgRequests()
+    session = SgRequests(proxy_country="es")
     start_url = "https://api.airtouchpop.com/api/v1/restaurants?language=null&key=3RtSwmF8KAelm98PaNJJYrRpP7iGONJJuOIlXef9w29Psb3Ue6Lzquu9TrKY39i6"
     domain = "popeyes.es"
     hdr = {

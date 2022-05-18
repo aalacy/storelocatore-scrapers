@@ -89,9 +89,10 @@ def fetch_data():
                 phone = ss["phones"][0]["phoneNumber"]
             hours = []
             for hh in ss["openingTimes"]:
-                hours.append(
-                    f"{hr_obj[str(hh['dayOfWeek'])]}: {hh['startTime']} - {hh['endTime']}"
-                )
+                times = f"{hh['startTime']} - {hh['endTime']}"
+                if times == "00:00 - 00:00":
+                    times = "closed"
+                hours.append(f"{hr_obj[str(hh['dayOfWeek'])]}: {times}")
 
             yield SgRecord(
                 page_url=page_url,

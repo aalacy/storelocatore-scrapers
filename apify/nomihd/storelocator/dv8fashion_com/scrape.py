@@ -53,13 +53,13 @@ def fetch_data():
         for no, store in enumerate(stores, 1):
 
             locator_domain = website
-            store_number = "<MISSING>"
-
             page_url = base + "".join(store.xpath("./@href")).strip()
             log.info(page_url)
 
             store_res = session.get(page_url, headers=headers)
             store_sel = lxml.html.fromstring(store_res.text)
+
+            store_number = page_url.split("/cc-")[1].strip().split(".")[0].strip()
 
             location_name = "".join(store.xpath(".//text()")).strip()
 
@@ -76,17 +76,46 @@ def fetch_data():
                     ],
                 )
             )
-
             phone = " ".join(
                 store_sel.xpath('//a[contains(@href,"tel:")]/text()')
             ).strip()
 
             phone_index = 0
+            raw_address = ""
             for phone_index, x in enumerate(store_info, 0):
                 if phone in x:
                     break
             if phone in store_info[phone_index]:
                 raw_address = " ".join(store_info[:phone_index])
+
+            if len(raw_address) <= 0:
+                raw_address = list(
+                    filter(
+                        str,
+                        [
+                            x.strip()
+                            for x in store_sel.xpath(
+                                '//div[@class="custom-page-content product-data-list"]//div[@class="column store-finder-left"]//text()'
+                            )
+                        ],
+                    )
+                )
+                if len(raw_address) <= 0:
+                    raw_address = list(
+                        filter(
+                            str,
+                            [
+                                x.strip()
+                                for x in store_sel.xpath(
+                                    '//div[@class="custom-page-content product-data-list"]//div[@class="column left"]//text()'
+                                )
+                            ],
+                        )
+                    )
+
+                raw_address = (
+                    " ".join(raw_address[1:]).strip().split("Telephone")[0].strip()
+                )
 
             formatted_addr = parser.parse_address_intl(raw_address)
             street_address = formatted_addr.street_address_1
@@ -103,15 +132,16 @@ def fetch_data():
 
             country_code = "IE"
 
-            hours = store_info[phone_index:]
+            hours = store_info
 
+            hours_list = []
             for i, x in enumerate(hours, 0):
                 if "Monday" in x:
-                    hours = hours[i:]
+                    hours_list = hours[i:]
                     break
 
             hours_of_operation = (
-                "; ".join(hours)
+                "; ".join(hours_list)
                 .replace("day; ", "day: ")
                 .replace("day:;", "day:")
                 .replace("OPEN FOR BUSINESS!", "")

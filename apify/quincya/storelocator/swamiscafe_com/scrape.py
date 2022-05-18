@@ -1,4 +1,5 @@
-import re
+import json
+import ssl
 
 from bs4 import BeautifulSoup
 
@@ -7,86 +8,67 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-from sgrequests import SgRequests
+from sgselenium.sgselenium import SgChrome
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 
 def fetch_data(sgw: SgWriter):
 
     base_link = "https://www.swamiscafe.com/our-locations"
 
-    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36"
-    headers = {"User-Agent": user_agent}
+    user_agent = (
+        "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0"
+    )
+    driver = SgChrome(user_agent=user_agent).driver()
 
-    session = SgRequests()
-    req = session.get(base_link, headers=headers)
-    base = BeautifulSoup(req.text, "lxml")
+    driver.get(base_link)
 
-    items = base.find(class_="pm-location-search-list").find_all("section")
-    locator_domain = "https://www.swamiscafe.com"
+    base = BeautifulSoup(driver.page_source, "lxml")
+    locator_domain = "swamiscafe.com"
 
-    script = base.find(id="popmenu-apollo-state")
+    raw_data = base.find(id="popmenu-apollo-state").contents[0]
+    js = raw_data.split("STATE =")[1].strip()[:-1]
+    store_data = json.loads(js)
 
-    lats = re.findall(r'lat":[0-9]{2}\.[0-9]+', str(script))
-    lngs = re.findall(r'lng":-[0-9]{2,3}\.[0-9]+', str(script))
-    phones = re.findall(r'displayPhone":"\([0-9]{3}\) [0-9]{3}-[0-9]{4}', str(script))
+    for loc in store_data:
+        if "RestaurantLocation:" in loc:
+            store = store_data[loc]
 
-    for item in items:
+            location_name = store["name"]
+            street_address = store["streetAddress"]
+            city = store["city"]
+            state = store["state"]
+            zip_code = store["postalCode"]
+            country_code = "US"
+            location_type = "<MISSING>"
+            phone = store["displayPhone"]
+            hours_of_operation = " ".join(store["schemaHours"])
+            link = "https://www.swamiscafe.com/" + store["slug"]
+            store_number = store["id"]
+            latitude = store["lat"]
+            longitude = store["lng"]
 
-        location_name = item.h4.text.strip()
-        raw_address = list(item.a.stripped_strings)
-
-        street_address = item.span.text.strip()
-        city_line = raw_address[-1].strip().split(",")
-        city = city_line[0].strip()
-        state = city_line[-1].strip().split()[0].strip()
-        zip_code = city_line[-1].strip().split()[1].strip()
-        country_code = "US"
-        store_number = "<MISSING>"
-        location_type = "<MISSING>"
-
-        try:
-            phone = re.findall(r"[(\d)]{5} [\d]{3}-[\d]{4}", str(item))[0]
-        except:
-            phone = "<MISSING>"
-
-        try:
-            hours_of_operation = (
-                item.find(class_="hours")
-                .text.replace("\xa0", " ")
-                .replace("pm", "pm ")
-                .strip()
+            sgw.write_row(
+                SgRecord(
+                    locator_domain=locator_domain,
+                    page_url=link,
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=zip_code,
+                    country_code=country_code,
+                    store_number=store_number,
+                    phone=phone,
+                    location_type=location_type,
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=hours_of_operation,
+                )
             )
-        except:
-            hours_of_operation = ""
-
-        link = locator_domain + item.find("a", string="View Menu")["href"]
-
-        latitude = ""
-        longitude = ""
-        for i, ph in enumerate(phones):
-            if ph.split(':"')[1] == phone:
-                latitude = lats[i].split(":")[1]
-                longitude = lngs[i].split(":")[1]
-
-        sgw.write_row(
-            SgRecord(
-                locator_domain=locator_domain,
-                page_url=link,
-                location_name=location_name,
-                street_address=street_address,
-                city=city,
-                state=state,
-                zip_postal=zip_code,
-                country_code=country_code,
-                store_number=store_number,
-                phone=phone,
-                location_type=location_type,
-                latitude=latitude,
-                longitude=longitude,
-                hours_of_operation=hours_of_operation,
-            )
-        )
+    driver.close()
 
 
-with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
     fetch_data(writer)

@@ -122,27 +122,39 @@ class _SearchIteration(SearchIteration):
                                     and "AFTERNOON_TO" in hours[key]
                                 ):
                                     time = (
-                                        hours[key]["MORNING_FROM"]
+                                        hours[key]["MORNING_FROM"][:2]
+                                        + ":"
+                                        + hours[key]["MORNING_FROM"][2:]
                                         + " - "
-                                        + hours[key]["AFTERNOON_TO"]
+                                        + hours[key]["AFTERNOON_TO"][:2]
+                                        + ":"
+                                        + hours[key]["AFTERNOON_TO"][2:]
                                     )
                                 elif (
                                     "MORNING_FROM" in hours[key]
                                     and "MORNING_TO" in hours[key]
                                 ):
                                     time = (
-                                        hours[key]["MORNING_FROM"]
+                                        hours[key]["MORNING_FROM"][:2]
+                                        + ":"
+                                        + hours[key]["MORNING_FROM"][2:]
                                         + " - "
-                                        + hours[key]["MORNING_TO"]
+                                        + hours[key]["MORNING_TO"][:2]
+                                        + ":"
+                                        + hours[key]["MORNING_TO"][2:]
                                     )
                                 elif (
                                     "AFTERNOON_FROM" in hours[key]
                                     and "AFTERNOON_TO" in hours[key]
                                 ):
                                     time = (
-                                        hours[key]["AFTERNOON_FROM"]
+                                        hours[key]["AFTERNOON_FROM"][:2]
+                                        + ":"
+                                        + hours[key]["AFTERNOON_FROM"][2:]
                                         + " - "
-                                        + hours[key]["AFTERNOON_TO"]
+                                        + hours[key]["AFTERNOON_TO"][:2]
+                                        + ":"
+                                        + hours[key]["AFTERNOON_TO"][2:]
                                     )
                                 else:
                                     time = "Closed"

@@ -1,4 +1,5 @@
 import json
+import time
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 from sglogging import sglog
@@ -32,10 +33,36 @@ def fetch_data():
             location_resp = session.get(page_url, headers=headers).text
             location_soup = BeautifulSoup(location_resp, "lxml")
             store_sel = lxml.html.fromstring(location_resp)
-            json_text = "".join(
-                store_sel.xpath('//script[@type="application/ld+json"]/text()')
-            ).strip()
-            data = json.loads(json_text)
+            try:
+                json_text = "".join(
+                    store_sel.xpath('//script[@type="application/ld+json"]/text()')
+                ).strip()
+                data = json.loads(json_text)
+            except:
+                try:
+                    time.sleep(5)
+                    log.info("Retrying ..")
+                    session = SgRequests()
+                    time.sleep(4)
+                    location_resp = session.get(page_url, headers=headers).text
+                    location_soup = BeautifulSoup(location_resp, "lxml")
+                    store_sel = lxml.html.fromstring(location_resp)
+                    json_text = "".join(
+                        store_sel.xpath('//script[@type="application/ld+json"]/text()')
+                    ).strip()
+                    data = json.loads(json_text)
+                except:
+                    time.sleep(10)
+                    log.info("Retrying ..")
+                    session = SgRequests()
+                    time.sleep(10)
+                    location_resp = session.get(page_url, headers=headers).text
+                    location_soup = BeautifulSoup(location_resp, "lxml")
+                    store_sel = lxml.html.fromstring(location_resp)
+                    json_text = "".join(
+                        store_sel.xpath('//script[@type="application/ld+json"]/text()')
+                    ).strip()
+                    data = json.loads(json_text)
             location_name = location_soup.find(
                 "h1", {"data-qa": "storeDetailsHeader"}
             ).text.strip()
@@ -75,7 +102,7 @@ def fetch_data():
             hours_of_operation = (
                 hours.replace("Su-Sa", "Sun - Sat :")
                 .replace("-00:00", " - Midnight")
-                .replace("Su ", "Sun")
+                .replace("Su ", "Sun ")
                 .replace("Mo-Fr", "Mon - Fri")
                 .replace("Sa ", "Sat")
             )

@@ -92,6 +92,11 @@ def fetch_data():
                     if zip == "no":
                         zip = "<MISSING>"
 
+                    if country_code == "New Zealand":
+                        if city and city.isdigit():
+                            zip = city
+                            city = "<MISSING>"
+
                     phone = store.get("phoneNumber", "<MISSING>")
                     if phone == "no":
                         phone = "<MISSING>"

@@ -26,10 +26,10 @@ def fetch_data():
     all_locations = json.loads(data)
     for poi in all_locations:
         page_url = f'https://www.intersport.fi/fi/kauppa/{poi["urlname"]}/'
-        hoo_week = f"Weekdays: {poi['opening_weekdays']}"
-        hoo_saturday = f"Saturday: {poi['opening_saturday']}"
-        hoo_sunday = f"Sunday: {poi['opening_sunday']}"
-        hoo = f"{hoo_week}, {hoo_saturday}, {hoo_sunday}"
+        loc_response = session.get(page_url)
+        loc_dom = etree.HTML(loc_response.text)
+        hoo = loc_dom.xpath('//div[@class="open"]/span/text()')
+        hoo = " ".join([e.strip() for e in hoo])
 
         item = SgRecord(
             locator_domain=domain,

@@ -1,0 +1,28 @@
+--ignore CountryCodeFillRateChecker (AU)
+
+--ignore StreetAddressHasNumber (Confirmed on website)
+
+--ignore GeoConsistencyValidator (Not US State)
+Found 20 concerning rows. Examples:
+     zip state                REASON  rowNumber
+80  6005    WA  ZIPCODE_NOT_IN_STATE         80
+81  6107    WA  ZIPCODE_NOT_IN_STATE         81
+82  6210    WA  ZIPCODE_NOT_IN_STATE         82
+83  6018    WA  ZIPCODE_NOT_IN_STATE         83
+84  6025    WA  ZIPCODE_NOT_IN_STATE         84
+
+
+--ignore CountryValidator (NOT US ZIP)
+Found 22 concerning rows. Examples:
+   state           phone   zip          REASON  rowNumber
+80    WA  (08) 6157 5351  6005  INVALID_US_ZIP         80
+81    WA  (08) 6112 8618  6107  INVALID_US_ZIP         81
+82    WA  (08) 6112 8622  6210  INVALID_US_ZIP         82
+83    WA  (08) 6112 8649  6018  INVALID_US_ZIP         83
+84    WA  (08) 6112 8640  6025  INVALID_US_ZIP         84
+
+
+--ignore LatLngDuplicationValidator (Confirmed on website)
+Found 1 <lat, lng> pair(s) that belong to multiple addresses. Examples:
+        latitude     longitude                                     street_address  num_addrs
+12  -24.88620010  152.31779270  {Shop T409, Stockland Bundaberg , 115-119 Taka...          2
