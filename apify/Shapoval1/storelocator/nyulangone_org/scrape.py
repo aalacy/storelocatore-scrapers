@@ -33,6 +33,8 @@ def fetch_data(sgw: SgWriter):
             slug = j.get("slug")
             page_url = f"https://nyulangone.org/locations/{slug}"
             location_name = j.get("title") or "<MISSING>"
+            if str(location_name).find("—") != -1:
+                location_name = str(location_name).split("—")[0].strip()
             a = j.get("address")
             ad = "".join(a.get("mapApiText"))
 
