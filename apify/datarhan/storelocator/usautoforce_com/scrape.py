@@ -28,10 +28,10 @@ def fetch_data():
         store_url = "http://www.usautoforce.com/about/locations/"
         if poi["tires_warehouse"]:
             location_type = "tires warehouse"
-        elif poi["treadmaxx"]:
-            location_type = "treadmaxx"
-        else:
+        elif poi["maxfinkelstein"]:
             location_type = "maxfinkelstein"
+        else:
+            location_type = "treadmaxx"
 
         item = SgRecord(
             locator_domain=domain,
