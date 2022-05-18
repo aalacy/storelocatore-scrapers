@@ -33,7 +33,7 @@ def fetch_data():
             state = poi["state"]
             zip_code = poi["zip"]
             store_number = poi["extCode"]
-            phone = poi['phone']
+            phone = poi["phone"]
             latitude = poi.get("lat")
             longitude = poi.get("long")
 
