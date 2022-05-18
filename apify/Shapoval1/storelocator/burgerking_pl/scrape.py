@@ -42,7 +42,7 @@ def fetch_data(sgw: SgWriter):
         )
         state = "<MISSING>"
         postal = j.get("addressPostalCode") or "<MISSING>"
-        country_code = "US"
+        country_code = "PL"
         city = j.get("addressCity") or "<MISSING>"
         store_number = j.get("id") or "<MISSING>"
         latitude = j.get("geoLat") or "<MISSING>"

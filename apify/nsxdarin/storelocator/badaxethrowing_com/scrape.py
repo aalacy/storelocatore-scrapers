@@ -14,7 +14,7 @@ logger = SgLogSetup().get_logger("badaxethrowing_com")
 
 
 def fetch_data():
-    locs = []
+    locs = ["https://badaxethrowing.com/locations/axe-throwing-san-francisco/|US"]
     url = "https://badaxethrowing.com/locations/"
     r = session.get(url, headers=headers)
     website = "badaxethrowing.com"
