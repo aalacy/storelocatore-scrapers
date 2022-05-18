@@ -1,4 +1,5 @@
 from lxml import html
+from time import sleep
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
@@ -30,6 +31,7 @@ def fetch_data(sgw: SgWriter):
 
             driver.get(page_url)
             driver.refresh()
+            sleep(10)
             iframe = driver.find_element_by_xpath(
                 '//h3[contains(text(), "Localización")]/following-sibling::iframe[1]'
             )
