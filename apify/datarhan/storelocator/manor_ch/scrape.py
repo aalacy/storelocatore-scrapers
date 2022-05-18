@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
+import json
 from lxml import etree
-from urllib.parse import urljoin
 
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
@@ -12,87 +12,53 @@ from sgscrape.sgwriter import SgWriter
 def fetch_data():
     session = SgRequests()
 
-    start_url = "https://www.manor.ch/store-finder/search"
+    start_url = "https://www.manor.ch/de/store-finder"
     domain = "manor.ch"
     hdr = {
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
     }
-    all_types = ["STORE", "SUPERMARKET", "RESTAURANT", "SANOVIT"]
-    for location_type in all_types:
-        frm = {"doSearch": True, "searchText": "", "shops": [location_type]}
-        response = session.post(start_url, headers=hdr, json=frm)
-        dom = etree.HTML(response.text)
+    response = session.get(start_url, headers=hdr)
+    dom = etree.HTML(response.text)
+    data = dom.xpath('//script[@id="__NEXT_DATA__"]/text()')[0]
+    data = json.loads(data)
 
-        all_locations = dom.xpath('//div[@class="m-store-list-item"]')
-        for poi_html in all_locations:
-            page_url = poi_html.xpath(".//a/@href")[0]
-            page_url = urljoin(start_url, page_url)
+    all_store_numbers = []
+    for k in data["props"]["pageProps"]["initialApolloState"].keys():
+        if "Store:" in k:
+            all_store_numbers.append(k)
 
-            loc_response = session.get(page_url)
-            loc_dom = etree.HTML(loc_response.text)
+    for store_number in all_store_numbers:
+        poi = data["props"]["pageProps"]["initialApolloState"][store_number]
+        poi_data = data["props"]["pageProps"]["initialApolloState"][
+            poi["address"]["__ref"]
+        ]
+        street_address = poi_data["street"] + " " + poi_data["streetNo"]
+        page_url = f'https://www.manor.ch/de/store-finder/store/{poi["siteId"]}'
+        loc_response = session.get(page_url)
+        loc_dom = etree.HTML(loc_response.text)
+        hoo = loc_dom.xpath(
+            '//div[p[contains(text(), "Shops & Öffnungszeiten")]]/following-sibling::div[1]/div[1]//text()'
+        )
+        hoo = " ".join(hoo[:2])
 
-            location_name = poi_html.xpath(
-                './/span[@class="m-store-list-item__store__name"]/text()'
-            )[0]
-            raw_data = loc_dom.xpath(
-                '//div[@class="m-store-details__storeinfo"]/span/text()'
-            )[1:]
-            raw_data = [e.strip() for e in raw_data if e.strip()]
-            latitude = loc_dom.xpath('//input[@class="js-map-latitude"]/@value')
-            latitude = latitude[0] if latitude else ""
-            longitude = loc_dom.xpath('//input[@class="js-map-longitude"]/@value')
-            longitude = longitude[0] if longitude else ""
-            phone = [e.split(":")[-1].strip() for e in raw_data if "Telefon" in e]
-            phone = phone[0] if phone else ""
-            city = " ".join(raw_data[1].split()[1:])
-            phone = phone.split(",")[0].strip()
-            if city in phone:
-                phone = ""
-            if location_type == "RESTAURANT":
-                hoo = loc_dom.xpath(
-                    '//div[div[img[contains(@src, "store-manora-logo")]]]/following-sibling::ul[1]//text()'
-                )
-                if not hoo:
-                    hoo = loc_dom.xpath(
-                        '//div[div[img[contains(@src, "manora-fresh-to-go")]]]/following-sibling::ul[1]//text()'
-                    )
-                if not hoo:
-                    hoo = loc_dom.xpath(
-                        '//div[div[img[contains(@src, "manora-pasta-pizza")]]]/following-sibling::ul[1]//text()'
-                    )
-            if location_type == "SUPERMARKET":
-                hoo = loc_dom.xpath(
-                    '//div[div[img[contains(@src, "manor-food-logo")]]]/following-sibling::ul[1]//text()'
-                )
-            if location_type == "STORE":
-                hoo = loc_dom.xpath(
-                    '//div[div[img[contains(@src, "manor-logo")]]]/following-sibling::ul[1]//text()'
-                )
-            if not hoo:
-                hoo = loc_dom.xpath(
-                    '//ul[contains(@class, "details__shops__worktime__days")]//text()'
-                )
-            hoo = [e.strip() for e in hoo if e.strip()]
-            hoo = " ".join(hoo)
+        item = SgRecord(
+            locator_domain=domain,
+            page_url=page_url,
+            location_name=poi["name"],
+            street_address=street_address,
+            city=poi_data["city"],
+            state="",
+            zip_postal=poi_data["zip"],
+            country_code="",
+            store_number=poi["id"],
+            phone="",
+            location_type=poi["__typename"],
+            latitude=poi["lat"],
+            longitude=poi["lng"],
+            hours_of_operation=hoo,
+        )
 
-            item = SgRecord(
-                locator_domain=domain,
-                page_url=page_url,
-                location_name=location_name,
-                street_address=raw_data[0],
-                city=city,
-                state="",
-                zip_postal=raw_data[1].split()[0],
-                country_code="",
-                store_number="",
-                phone=phone,
-                location_type=location_type,
-                latitude=latitude,
-                longitude=longitude,
-                hours_of_operation=hoo,
-            )
-
-            yield item
+        yield item
 
 
 def scrape():
