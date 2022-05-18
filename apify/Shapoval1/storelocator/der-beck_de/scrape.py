@@ -73,6 +73,7 @@ def fetch_data(sgw: SgWriter):
         hours_of_operation = (
             " ".join(d.xpath('.//div[./strong[text()="Öffnungszeiten"]]//text()'))
             .replace("Öffnungszeiten", "")
+            .replace("Bitte beachten Sie unsere", "")
             .strip()
         )
         hours_of_operation = " ".join(hours_of_operation.split())
