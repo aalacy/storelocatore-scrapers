@@ -126,5 +126,9 @@ def fetch_data(sgw: SgWriter):
 if __name__ == "__main__":
     CrawlStateSingleton.get_instance().save(override=True)
     session = SgRequests()
-    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))) as writer:
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID({SgRecord.Headers.PAGE_URL}), duplicate_streak_failure_factor=-1
+        )
+    ) as writer:
         fetch_data(writer)
