@@ -1,5 +1,3 @@
-import os
-import ssl
 from lxml import html
 from sgscrape.sgrecord import SgRecord
 from sglogging import sglog
@@ -7,17 +5,6 @@ from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-
-os.environ[
-    "PROXY_URL"
-] = "http://groups-RESIDENTIAL,country-ch:{}@proxy.apify.com:8000/"
-
-try:
-    _create_unverified_https_context = ssl._create_unverified_context
-except AttributeError:
-    pass
-else:
-    ssl._create_default_https_context = _create_unverified_https_context
 
 
 def fetch_data(sgw: SgWriter):
@@ -73,6 +60,32 @@ def fetch_data(sgw: SgWriter):
                 or "<MISSING>"
             )
             hours_of_operation = " ".join(hours_of_operation.split())
+            if hours_of_operation == "<MISSING>":
+                r = session.get(page_url, headers=headers)
+                log.info(r.status_code)
+                log.info(f"Location Name: {location_name} & {page_url}")
+                tree = html.fromstring(r.text)
+                phone = (
+                    "".join(
+                        tree.xpath(
+                            '//h3[contains(text(), "Telefon")]/following-sibling::div[1]//text()'
+                        )
+                    )
+                    or "<MISSING>"
+                )
+                hours_of_operation = (
+                    " ".join(
+                        tree.xpath(
+                            '//h4[contains(text(), "Öffnungszeiten")]/following-sibling::div[1]//text()'
+                        )
+                    )
+                    .replace("\n", "")
+                    .replace("\r", "")
+                    .strip()
+                    or "<MISSING>"
+                )
+                hours_of_operation = " ".join(hours_of_operation.split())
+
         row = SgRecord(
             locator_domain=locator_domain,
             page_url=page_url,
