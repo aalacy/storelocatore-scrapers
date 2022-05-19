@@ -11,7 +11,7 @@ from sgpostal.sgpostal import International_Parser, parse_address
 
 os.environ[
     "PROXY_URL"
-] = "http://groups-RESIDENTIAL,country-jp:{}@proxy.apify.com:8000/"
+] = "http://groups-RESIDENTIAL,country-ua:{}@proxy.apify.com:8000/"
 
 try:
     _create_unverified_https_context = ssl._create_unverified_context
@@ -187,6 +187,17 @@ def fetch_data(sgw: SgWriter):
                             phone = "951-" + phone.split("951-")[1].strip()
                         if phone.count("(880)-") > 1:
                             phone = "(880)-" + phone.split("(880)-")[1].strip()
+                        if phone.find("(Yusen") != -1:
+                            phone = phone.split("(Yusen")[0].strip()
+                        if phone.find(" / ") != -1:
+                            phone = phone.split(" / ")[0].strip()
+                        phone = (
+                            phone.replace("(Sales)", "")
+                            .replace("(Logistics)", "")
+                            .replace("(Air Export)", "")
+                            .replace("~ 5", "")
+                            .strip()
+                        )
 
                         row = SgRecord(
                             locator_domain=locator_domain,

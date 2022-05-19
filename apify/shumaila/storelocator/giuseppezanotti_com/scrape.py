@@ -97,9 +97,19 @@ def fetch_data():
             )
             city = city.replace(",", "")
             try:
-                phone = phone.split("-", 1)[0]
+                phone = phone.split(" - ", 1)[0]
             except:
                 pass
+            if state.isdigit():
+                state = "<MISSING>"
+            try:
+                pcode = pcode.split("-")[-1]
+            except:
+                pass
+            if pcode.isdigit():
+                pass
+            else:
+                pcode = "<MISSING>"
             yield SgRecord(
                 locator_domain="https://www.giuseppezanotti.com",
                 page_url=link,
