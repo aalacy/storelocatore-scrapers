@@ -7,48 +7,36 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
-from sgselenium.sgselenium import SgFirefox
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries
+from sgrequests import SgRequests
+from sgzip.dynamic import DynamicZipAndGeoSearch, SearchableCountries
 
 
 def fetch_data():
-    start_url = "https://www.bipa.at/filialen"
+    start_url = "https://www.bipa.at/filialen?dwcont=C1344944564"
     domain = "bipa.at"
 
-    all_codes = DynamicZipSearch(
-        country_codes=[SearchableCountries.AUSTRIA], expected_search_radius_miles=5
+    search = DynamicZipAndGeoSearch(
+        expected_search_radius_miles=1,
+        max_search_distance_miles=1,
+        country_codes=[SearchableCountries.AUSTRIA],
     )
-    with SgFirefox() as driver:
-        for code in all_codes:
-            driver.get(start_url)
-            try:
-                driver.find_element_by_xpath(
-                    '//button[contains(text(), "Cookies erlauben")]'
-                ).click()
-            except Exception:
-                pass
-            driver.find_element_by_id("addressstring").send_keys(code)
-            driver.find_element_by_id("findButton").click()
-            dom = etree.HTML(driver.page_source)
+
+    with SgRequests() as session:
+        headers = {
+            "Host": "www.bipa.at",
+            "Cookie": "dwsid=g-bfHLgGgRTX4rp9CDtWJUsAqCuiA7nk6kMHWOFpx3afRx43SdhAVLQhACRPFJHEvAiLTAkV79LGYBYSKYRAKg==;",
+        }
+        session.get("https://www.bipa.at/filialen")
+        for code, (lat, lng) in search:
+            data = {
+                "dwfrm_storelocator_zipcity": code,
+                "latitude": str(lat),
+                "longitude": str(lng),
+            }
+            response = session.post(start_url, data=data, headers=headers)
+            dom = etree.HTML(response.text)
 
             all_locations = dom.xpath("//@data-options")
-            try:
-                count = 0
-                next_page = driver.find_element_by_class_name("next_link")
-                while next_page:
-                    if count > 10:
-                        break
-                    next_page.click()
-                    dom = etree.HTML(driver.page_source)
-                    all_locations += dom.xpath("//@data-options")
-                    try:
-                        next_page = driver.find_element_by_class_name("next_link")
-                    except Exception:
-                        pass
-                    count += 1
-            except Exception:
-                pass
-
             for poi in all_locations:
                 poi = poi.replace("null", '""')
                 if poi.startswith("["):
