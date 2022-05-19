@@ -61,7 +61,6 @@ def fetch_data():
             hours = ""
             r2 = session.get(loc, headers=headers)
             lines = r2.iter_lines()
-            HFound = False
             for line2 in lines:
                 if "day</span></p>" in line2:
                     hrs = line2.split("<span>")[1].split("<")[0]
