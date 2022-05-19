@@ -1,3 +1,7 @@
+import os
+os.environ.pop("PROXY_PASSWORD", None)
+os.environ.pop("PROXY_URL", None)
+
 from lxml import html
 from time import sleep
 from sgscrape.sgrecord import SgRecord
