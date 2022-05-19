@@ -18,18 +18,20 @@ def fetch_data():
     response = session.get(start_url, headers=headers)
     dom = etree.HTML(response.text)
 
-    data = dom.xpath('//script[contains(text(), "locations")]/text()')[-1].split(
-        "var locations ="
-    )[-1][:-1]
+    data = (
+        dom.xpath('//script[contains(text(), "locations")]/text()')[-1]
+        .split("var locations =")[-1]
+        .strip()[:-1]
+    )
     all_locations = json.loads(data)
     for poi in all_locations:
         store_url = "http://www.usautoforce.com/about/locations/"
         if poi["tires_warehouse"]:
             location_type = "tires warehouse"
-        elif poi["treadmaxx"]:
-            location_type = "treadmaxx"
-        else:
+        elif poi["maxfinkelstein"]:
             location_type = "maxfinkelstein"
+        else:
+            location_type = "treadmaxx"
 
         item = SgRecord(
             locator_domain=domain,
