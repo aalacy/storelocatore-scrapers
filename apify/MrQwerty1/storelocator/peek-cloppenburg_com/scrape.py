@@ -104,7 +104,7 @@ def fetch_data(sgw: SgWriter):
                 except Exception as e:
                     logger.info(f"Error during scraping phone: {e}")
         except:
-            page_url = f"https://www.peek-cloppenburg.com/en/stores/"
+            page_url = "https://www.peek-cloppenburg.com/en/stores/"
 
         country_code = SgRecord.MISSING
         if not page_url.endswith("/stores/"):
