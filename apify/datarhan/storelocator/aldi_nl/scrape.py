@@ -1,13 +1,11 @@
 from lxml import etree
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
 from sgrequests import SgRequests
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
 from sgselenium.sgselenium import SgFirefox
+import time
 
 
 def fetch_data():
@@ -20,14 +18,16 @@ def fetch_data():
         city = poi["city"]
         street_address = poi["streetAndNumber"]
         store_number = poi["id"]
-        page_url = f"https://www.aldi.nl/supermarkt.html/l/{city.lower().replace(' ', '-')}/{street_address.lower().replace(' ', '-').replace('é', 'e').replace('ë', 'e')}/{store_number}"
+        page_url = f"https://www.aldi.nl/supermarkt.html/l/{city.lower().replace(' ', '-')}/{street_address.lower().replace(' ', '-').replace('é', 'e').replace('ë', 'e').replace('ï', 'i')}/{store_number}"
 
         with SgFirefox() as driver:
-            driver.get(page_url)
-            WebDriverWait(driver, 20).until(
-                EC.presence_of_element_located((By.CLASS_NAME, class_name))
-            )
-            loc_dom = etree.HTML(driver.page_source)
+            try:
+                driver.get(page_url)
+                time.sleep(10)
+                loc_dom = etree.HTML(driver.page_source)
+
+            except Exception:
+                raise Exception
 
         hoo = loc_dom.xpath(
             '//div[@class="ubsf_location-page-opening-hours-list"]//text()'
