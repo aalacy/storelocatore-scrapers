@@ -49,7 +49,13 @@ def fetch_data():
             geo = re.findall(r"LatLng\((.+)\)", loc_response.text)[0].split(", ")
             latitude = geo[0]
             longitude = geo[1]
-            hoo = loc_dom.xpath('//div[@class="branch_hours_days clearfix"]//text()')
+            hoo = loc_dom.xpath(
+                '//div[h3[contains(text(), "Lobby Hours")]]/following-sibling::div//text()'
+            )
+            if not hoo:
+                hoo = loc_dom.xpath(
+                    '//div[@class="branch_hours_days clearfix"]//text()'
+                )
             hoo = " ".join(hoo).split("January")[0].strip() if hoo else ""
             hours_of_operation = hoo.strip() if hoo and hoo.strip() else ""
 
