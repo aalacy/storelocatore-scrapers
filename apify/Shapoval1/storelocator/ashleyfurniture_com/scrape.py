@@ -67,6 +67,8 @@ def fetch_data(sgw: SgWriter):
                     .strip()
                     or "<MISSING>"
                 )
+                if street_address == "<MISSING>":
+                    continue
                 city = a.get("addressLocality") or "<MISSING>"
                 state = a.get("addressRegion") or "<MISSING>"
                 if state.isdigit():
@@ -145,6 +147,8 @@ def fetch_data(sgw: SgWriter):
             .strip()
             or "<MISSING>"
         )
+        if street_address == "<MISSING>":
+            continue
         city = a.get("addressLocality") or "<MISSING>"
         state = a.get("addressRegion") or "<MISSING>"
         if state.isdigit():
