@@ -29,7 +29,6 @@ def fetch_data():
         page_url = DOMAIN + url.a["href"]
         log.info(page_url)
         store_resp = session.get(page_url).text
-        store_sel = lxml.html.fromstring(store_resp)
         location_soup = BeautifulSoup(store_resp, "lxml")
         js = location_soup.find(id="__NEXT_DATA__").contents[0]
         store = json.loads(js)["props"]["pageProps"]["data"]["data"]
