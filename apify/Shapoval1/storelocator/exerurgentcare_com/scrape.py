@@ -1,93 +1,85 @@
-import csv
 from lxml import html
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgpostal.sgpostal import International_Parser, parse_address
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+def fetch_data(sgw: SgWriter):
 
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def get_data():
-    rows = []
-    locator_domain = "https://www.fieldandstreamshop.com/"
-    api_url = "https://exerurgentcare.com/wp-admin/admin-ajax.php?action=store_search&lat=34.07362&lng=-118.40036&max_results=50&search_radius=10000&filter=12&autoload=1"
+    locator_domain = "https://exerurgentcare.com/"
+    api_url = "https://exerurgentcare.com/exer-locations/"
     session = SgRequests()
-    r = session.get(api_url)
-    js = r.json()
-    for j in js:
-        street_address = f"{j.get('address')} {j.get('address2')}".replace(
-            "None", ""
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
+    }
+    r = session.get(api_url, headers=headers)
+    tree = html.fromstring(r.text)
+    div = tree.xpath('//div[@class="location-card location-data"]')
+    for d in div:
+
+        page_url = "".join(d.xpath('.//a[@class="location-card__link-holder"]/@href'))
+        location_name = "".join(
+            d.xpath('.//div[@class="location-card__title"]/text()')
         ).strip()
-        city = j.get("city")
-        state = j.get("state")
-        postal = j.get("zip")
+        ad = "".join(d.xpath('.//div[@class="location-card__address"]/text()'))
+        a = parse_address(International_Parser(), ad)
+        street_address = (
+            f"{a.street_address_1} {a.street_address_2}".replace("None", "").strip()
+            or "<MISSING>"
+        )
+        state = a.state or "<MISSING>"
+        if ad.find("CA") != -1:
+            state = "CA"
+        postal = a.postcode or "<MISSING>"
         country_code = "US"
-        store_number = "<MISSING>"
-        location_name = j.get("store")
-        phone = j.get("phone")
-        page_url = j.get("url")
-        latitude = j.get("lat")
-        longitude = j.get("lng")
-        location_type = "<MISSING>"
-        hours = j.get("hours")
-        block = html.fromstring(hours)
-        tmp = []
-        days = block.xpath("//table/tr/td/text()")
-        time = block.xpath("//table/tr/td/time/text()")
-        for d, t in zip(days, time):
-            tmp.append(f"{d.strip()}: {t.strip()}")
-        hours_of_operation = ";".join(tmp) or "<MISSING>"
+        city = a.city or "<MISSING>"
+        latitude = "".join(d.xpath(".//@data-lat"))
+        longitude = "".join(d.xpath(".//@data-lng"))
+        r = session.get(page_url, headers=headers)
+        tree = html.fromstring(r.text)
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
+        phone = (
+            "".join(
+                tree.xpath(
+                    '//div[@class="about__information"]//div[text()="Phone number"]/following-sibling::a/text()'
+                )
+            )
+            or "<MISSING>"
+        )
+        hours_of_operation = (
+            "".join(
+                tree.xpath(
+                    '//div[@class="about__information"]//div[@class="about__schedule"]/text()'
+                )
+            )
+            or "<MISSING>"
+        )
 
-        rows.append(row)
-    return rows
+        row = SgRecord(
+            locator_domain=locator_domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country_code,
+            store_number=SgRecord.MISSING,
+            phone=phone,
+            location_type=SgRecord.MISSING,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+            raw_address=ad,
+        )
 
-
-def scrape():
-    data = get_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.PAGE_URL}))) as writer:
+        fetch_data(writer)
