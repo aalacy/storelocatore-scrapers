@@ -9,18 +9,23 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 
-session = SgRequests()
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
 
 
+def get_locations(retry=0):
+    try:
+        session = SgRequests()
+        url = "https://www.marathonbrand.com/content/includes/mpc-brand-stations/SiteList.csv"
+        return session.get(url, headers=headers).iter_lines()
+    except:
+        if retry < 10:
+            return get_locations(retry + 1)
+
+
 def fetch_data():
-    url = (
-        "https://www.marathonbrand.com/content/includes/mpc-brand-stations/SiteList.csv"
-    )
-    r = session.get(url, headers=headers)
-    for line in r.iter_lines():
+    for line in get_locations():
         if "StoreName" not in line:
             name = line.split(",")[0]
             add = line.split(",")[2]
