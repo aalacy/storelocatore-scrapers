@@ -1,6 +1,7 @@
 import os
 
 from sgselenium import SgChrome
+
 os.environ.pop("PROXY_PASSWORD", None)
 os.environ.pop("PROXY_URL", None)
 
@@ -14,7 +15,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from sgselenium.sgselenium import SgFirefox
+from sgselenium.sgselenium import SgChrome
 
 
 def fetch_data(sgw: SgWriter):
