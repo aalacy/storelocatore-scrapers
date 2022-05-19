@@ -1,4 +1,3 @@
-import lxml.html
 import json
 import re
 from sglogging import sglog
