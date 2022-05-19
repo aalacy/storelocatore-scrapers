@@ -44,6 +44,8 @@ def fetch_data():
             )
             hours_of_operation = " ".join(x.text for x in hours_of_operation[:-1])
             hours_of_operation = hours_of_operation.replace("Opening times", "")
+            if "Virtual shopping" in hours_of_operation:
+                hours_of_operation = hours_of_operation.split("Virtual shopping")[0]
             pa = parse_address_intl(raw_address)
 
             street_address = pa.street_address_1

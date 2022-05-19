@@ -110,7 +110,14 @@ def get_data(coord, sgw: SgWriter):
 
 def fetch_data(sgw: SgWriter):
     postals = DynamicGeoSearch(
-        country_codes=[SearchableCountries.USA, SearchableCountries.JAPAN],
+        country_codes=[
+            SearchableCountries.USA,
+            SearchableCountries.JAPAN,
+            SearchableCountries.BELGIUM,
+            SearchableCountries.GERMANY,
+            SearchableCountries.BRITAIN,
+            SearchableCountries.ITALY,
+        ],
         max_search_distance_miles=300,
         expected_search_radius_miles=50,
         max_search_results=100,

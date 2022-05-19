@@ -46,7 +46,7 @@ def fetch_data(sgw: SgWriter):
         ["https://www.decathlon.ci/nous-contacter", "https://www.decathlon.ci/", "CI"],
         ["https://www.decathlon.cl/contactenos", "https://www.decathlon.cl/", "CL"],
         [
-            "https://www.decathlon.co.ke/en/contact-us",
+            "https://www.decathlon.co.ke/contact-us",
             "https://www.decathlon.co.ke/",
             "KE",
         ],
@@ -84,6 +84,7 @@ def fetch_data(sgw: SgWriter):
         api = param.pop(0)
         locator_domain = param.pop(0)
         country_code = param.pop(0)
+        session = SgRequests(proxy_country=country_code.lower())
         r = session.get(api)
         tree = html.fromstring(r.text)
         text = "".join(
@@ -100,9 +101,14 @@ def fetch_data(sgw: SgWriter):
             page_url = j.get("link") or api
             location_name = j.get("title")
             raw_address = j.get("address") or ""
+            raw_address = (
+                raw_address.replace("&#039", "'").replace(";", "").replace("&amp", "&")
+            )
             street_address, city, state, postal = get_international(raw_address)
             if len(street_address) <= 7:
                 street_address = raw_address.split(", ")[0]
+            if not city:
+                city = raw_address.split(",")[-2].strip()
             store_number = j.get("store_number")
             phone = j.get("phone")
             latitude = j.get("lat")
@@ -145,6 +151,5 @@ def fetch_data(sgw: SgWriter):
 
 
 if __name__ == "__main__":
-    session = SgRequests()
     with SgWriter(SgRecordDeduper(RecommendedRecordIds.GeoSpatialId)) as writer:
         fetch_data(writer)

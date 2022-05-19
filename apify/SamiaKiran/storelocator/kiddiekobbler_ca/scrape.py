@@ -25,6 +25,8 @@ def fetch_data():
         soup = BeautifulSoup(r.text, "html.parser")
         loclist = soup.find("table").findAll("tr")[1:]
         for loc in loclist:
+            if not loc.text:
+                continue
             page_url = loc.find("a")["href"]
             loc = loc.findAll("td")
             location_name = loc[1].text

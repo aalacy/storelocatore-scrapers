@@ -108,7 +108,18 @@ def fetch_data():
         if "singapore" in state.lower():
             country = "SG"
             state = "<MISSING>"
-        if phone.strip() == "0" or len(phone) <= 1:
+        if phone.strip() == "0" or len(phone) <= 5:
+            phone = "<MISSING>"
+        if (
+            "1" not in phone
+            and "2" not in phone
+            and "3" not in phone
+            and "4" not in phone
+            and "5" not in phone
+            and "6" not in phone
+            and "7" not in phone
+            and "8" not in phone
+        ):
             phone = "<MISSING>"
         if RB is False:
             if add != "":

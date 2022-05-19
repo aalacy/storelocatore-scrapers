@@ -1,49 +1,13 @@
-import csv
 import json
-
 import usaddress
+from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 
-def write_output(data):
-    with open("data.csv", mode="w", encoding="utf8", newline="") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
-    out = []
-    locator_domain = "https://www.daisojapan.com/"
-    api_url = (
-        "https://cdn.storelocatorwidgets.com/json/305108bbd6b1fed18ddf5701d3977501"
-    )
-    session = SgRequests()
-    r = session.get(api_url)
-    text = r.text.replace("slw(", "")[:-1]
-    js = json.loads(text)["stores"]
+def get_address(line):
     tag = {
         "Recipient": "recipient",
         "AddressNumber": "address1",
@@ -58,12 +22,10 @@ def fetch_data():
         "StreetNamePostType": "address1",
         "CornerOf": "address1",
         "IntersectionSeparator": "address1",
-        "LandmarkName": "address1",
         "USPSBoxGroupID": "address1",
         "USPSBoxGroupType": "address1",
         "USPSBoxID": "address1",
         "USPSBoxType": "address1",
-        "BuildingName": "address2",
         "OccupancyType": "address2",
         "OccupancyIdentifier": "address2",
         "SubaddressIdentifier": "address2",
@@ -73,41 +35,48 @@ def fetch_data():
         "ZipCode": "postal",
     }
 
+    a = usaddress.tag(line, tag_mapping=tag)[0]
+    adr1 = a.get("address1") or ""
+    adr2 = a.get("address2") or ""
+    street_address = f"{adr1} {adr2}".strip()
+    if not street_address:
+        street_address = line.split(",")[0]
+    city = a.get("city")
+    state = a.get("state")
+    postal = a.get("postal")
+
+    return street_address, city, state, postal
+
+
+def fetch_data(sgw: SgWriter):
+    api = "https://cdn.storelocatorwidgets.com/json/305108bbd6b1fed18ddf5701d3977501"
+    r = session.get(api, headers=headers)
+    text = r.text.replace("slw(", "")[:-1]
+    js = json.loads(text)["stores"]
+
     for j in js:
-        d = j.get("data")
-        line = d.get("address", {}) or ""
-        if "Canada" not in line:
-            a = usaddress.tag(line, tag_mapping=tag)[0]
-            street_address = (
-                f"{a.get('address1')} {a.get('address2') or ''}".replace(
-                    "None", ""
-                ).strip()
-                or "<MISSING>"
-            )
-            if street_address == "None":
-                street_address = "<MISSING>"
-            city = a.get("city") or "<MISSING>"
-            if city.find("(") != -1:
-                city = city.split(",")[-1].strip()
-            state = a.get("state") or "<MISSING>"
-            postal = a.get("postal") or "<MISSING>"
-            country_code = "US"
+        location_name = j.get("name")
+        d = j.get("data") or {}
+        raw_address = d.get("address") or ""
+        country = "US"
+        if "Sample" in raw_address:
+            continue
+
+        if "Canada" in raw_address:
+            country = "CA"
+            street_address = raw_address.split(", ")[0]
+            city = raw_address.split(", ")[1]
+            state = raw_address.split(", ")[2].split()[0]
+            postal = raw_address.split(", ")[2].replace(state, "").strip()
         else:
-            street_address = line.split(",")[0]
-            city = line.split(",")[1].strip()
-            line = line.split(",")[2].strip()
-            state = line.split()[0].strip()
-            postal = line.replace(state, "").strip()
-            country_code = "CA"
-        store_number = j.get("storeid") or "<MISSING>"
-        page_url = "<MISSING>"
-        location_name = j.get("name") or "<MISSING>"
-        phone = d.get("phone") or "<MISSING>"
-        if phone == "TBA":
-            phone = "<MISSING>"
-        latitude = d.get("map_lat") or "<MISSING>"
-        longitude = d.get("map_lng") or "<MISSING>"
-        location_type = "<MISSING>"
+            street_address, city, state, postal = get_address(raw_address)
+
+        if ", " in city:
+            city = city.split(", ")[-1]
+        phone = d.get("phone")
+        latitude = d.get("map_lat")
+        longitude = d.get("map_lng")
+        store_number = j.get("storeid")
 
         _tmp = []
         days = [
@@ -120,36 +89,38 @@ def fetch_data():
             "Sunday",
         ]
         for day in days:
-            time = d.get(f"hours_{day}")
-            _tmp.append(f"{day}: {time}")
+            inter = d.get(f"hours_{day}")
+            _tmp.append(f"{day}: {inter}")
+        hours_of_operation = ";".join(_tmp)
 
-        hours_of_operation = ";".join(_tmp) or "<MISSING>"
+        row = SgRecord(
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country,
+            store_number=store_number,
+            phone=phone,
+            latitude=latitude,
+            longitude=longitude,
+            locator_domain=locator_domain,
+            hours_of_operation=hours_of_operation,
+            raw_address=raw_address,
+        )
 
-        row = [
-            locator_domain,
-            page_url,
-            location_name,
-            street_address,
-            city,
-            state,
-            postal,
-            country_code,
-            store_number,
-            phone,
-            location_type,
-            latitude,
-            longitude,
-            hours_of_operation,
-        ]
-        out.append(row)
-
-    return out
-
-
-def scrape():
-    data = fetch_data()
-    write_output(data)
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://daisoglobal.com/"
+    page_url = "https://www.daisojapan.com/t-storelocator.aspx"
+
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:95.0) Gecko/20100101 Firefox/95.0",
+        "Accept": "*/*",
+    }
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+        fetch_data(writer)
