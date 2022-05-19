@@ -169,7 +169,6 @@ def fetch_br():
         checks.append(driver.find_element_by_css_selector("input#simple-check5"))
         checks.append(driver.find_element_by_css_selector("input#simple-check6"))
         for check in checks:
-            del driver.requests
             driver.execute_script("arguments[0].click();", check)
             time.sleep(10)
             driver.wait_for_request(br_json_url)
