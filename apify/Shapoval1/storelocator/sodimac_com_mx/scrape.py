@@ -1,7 +1,4 @@
 import os
-
-from sgselenium import SgChrome
-
 os.environ.pop("PROXY_PASSWORD", None)
 os.environ.pop("PROXY_URL", None)
 
