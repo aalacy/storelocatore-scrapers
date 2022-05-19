@@ -1,81 +1,73 @@
-import csv
-import os
-from sgselenium import SgSelenium
+# -*- coding: utf-8 -*-
+import json
+from lxml import etree
+from urllib.parse import urljoin
 
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+from sgrequests import SgRequests
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
 
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-        # Body
-        for row in data:
-            writer.writerow(row)
 
 def fetch_data():
-    locator_domain = 'https://www.calgarycoop.com'
-    ext = '/stores/'
+    session = SgRequests()
 
-    driver = SgSelenium().chrome()
-    driver.get(locator_domain + ext)
+    start_url = "https://www.calgarycoop.com/stores"
+    domain = "calgarycoop.com"
+    hdr = {
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
+    }
+    response = session.get(start_url, headers=hdr)
+    dom = etree.HTML(response.text)
 
-    map_data = driver.execute_script('return mapData')
+    data = (
+        dom.xpath('//script[contains(text(), "mapData")]/text()')[0]
+        .split("mapData =")[-1]
+        .strip()[:-1]
+    )
+    all_locations = json.loads(data)
+    for poi in all_locations:
+        page_url = urljoin(start_url, poi["link"])
+        loc_response = session.get(page_url)
+        loc_dom = etree.HTML(loc_response.text)
+        phone = loc_dom.xpath('//p[contains(text(), "Phone")]/span/text()')[0]
+        hoo = loc_dom.xpath(
+            '//h5[contains(text(), "Food Centre")]/following-sibling::p/span[@class="hours"]/text()'
+        )
+        hoo = hoo[0] if hoo else ""
 
-    all_store_data = []
-    for loc in map_data:
-        street_address = loc['address']
+        item = SgRecord(
+            locator_domain=domain,
+            page_url=page_url,
+            location_name=poi["name"],
+            street_address=poi["address"],
+            city=poi["city_prov"].split(", ")[0],
+            state=poi["city_prov"].split(", ")[-1],
+            zip_postal=poi["postal"],
+            country_code="",
+            store_number=poi["id"],
+            phone=phone,
+            location_type=poi["services"],
+            latitude=poi["lat"],
+            longitude=poi["lon"],
+            hours_of_operation=hoo,
+        )
 
-        if ',' in street_address:
-            street_address = street_address.split(',')[1].strip()
+        yield item
 
-        city_state = loc['city_prov'].split(',')
-        city = city_state[0]
-        state = city_state[1].strip()
-        lat = loc['lat']
-        longit = loc['lon']
-        location_name = loc['name']
-        zip_code = loc['postal']
-
-        location_type = loc['services']
-
-        country_code = 'CA'
-        link = loc['link']
-        driver.get(locator_domain + link)
-        driver.implicitly_wait(10)
-
-        main = driver.find_element_by_css_selector('div.store-department-wrapper')
-        depts = main.find_elements_by_css_selector('div.store-department')
-        hours = ''
-        phone_switch = True
-        for dept in depts:
-
-            dept_type = dept.find_element_by_css_selector('h5').text
-            hours += dept_type + ' '
-            hour_info = dept.find_elements_by_css_selector('p')
-            for hour in hour_info:
-                if hour.get_attribute('class') == 'holiday-hours':
-                    continue
-                if 'Phone' in hour.text and phone_switch:
-                    phone_number = hour.text.replace('\n', '').replace('Phone', '').strip()
-
-                    phone_switch = False
-
-                hours += hour.text.replace('\n', ' ') + ' '
-
-        if 'Cardlock' in hours:
-            hours = '<MISSING>'
-
-        store_number = '<MISSING>'
-
-        store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
-                      store_number, phone_number, location_type, lat, longit, hours]
-        all_store_data.append(store_data)
-
-    driver.quit()
-    return all_store_data
 
 def scrape():
-    data = fetch_data()
-    write_output(data)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
-scrape()
+
+if __name__ == "__main__":
+    scrape()

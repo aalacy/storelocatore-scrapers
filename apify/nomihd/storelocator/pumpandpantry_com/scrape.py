@@ -40,51 +40,26 @@ def fetch_data():
 
         street_address = stores[key]["st"]
         city = stores[key]["ct"].strip()
-        state = ""
-        phone = ""
-        hours = []
-        log.info(page_url)
-        store_req = session.get(page_url, headers=headers)
-        store_sel = lxml.html.fromstring(store_req.text)
-        sections = store_sel.xpath(
-            '//div[@class="so-widget-sow-editor so-widget-sow-editor-base"]'
-        )
-        for sec in sections:
-            if (
-                "ADDRESS"
-                in "".join(sec.xpath('h3[@class="widget-title"]/text()')).strip()
-            ):
+        state = stores[key]["rg"].strip()
+        phone = stores[key]["te"].strip()
+        hours_sel = lxml.html.fromstring(stores[key]["de"])
+        hours = hours_sel.xpath('//div[./h3[contains(text(),"HOURS")]]/div/p//text()')
+        if len(hours) <= 0:
+            hours = hours_sel.xpath(
+                '//div[./h3[contains(text(),"HOURS")]]/div/b//text()'
+            )
 
-                address = sec.xpath(".//p/strong/text()")
-                add_list = []
-                for add in address:
-                    if (
-                        len("".join(add).strip()) > 0
-                        and "Pump & Pantry" not in "".join(add).strip()
-                    ):
-                        add_list.append("".join(add).strip())
-
-                if len(street_address) <= 0:
-                    street_address = add_list[0].strip()
-
-                try:
-                    state = add_list[1].split(",")[-1].strip().split(" ")[0].strip()
-                except:
-                    pass
-
-            if (
-                "PHONE"
-                in "".join(sec.xpath('h3[@class="widget-title"]/text()')).strip()
-            ):
-
-                phone = "".join(sec.xpath(".//p/strong/text()")).strip()
-
-            if (
-                "HOURS"
-                in "".join(sec.xpath('h3[@class="widget-title"]/text()')).strip()
-            ):
-
-                hours = sec.xpath(".//p/strong/text()")
+        if len(hours) <= 0:
+            log.info(page_url)
+            store_req = session.get(page_url, headers=headers)
+            store_sel = lxml.html.fromstring(store_req.text)
+            hours = store_sel.xpath(
+                '//div[./h3[contains(text(),"HOURS")]]/div/b//text()'
+            )
+            if len(hours) <= 0:
+                hours = store_sel.xpath(
+                    '//div[./h3[contains(text(),"HOURS")]]/div//text()'
+                )
 
         zip = stores[key]["zp"]
 

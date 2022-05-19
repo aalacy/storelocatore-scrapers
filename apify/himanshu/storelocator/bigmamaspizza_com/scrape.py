@@ -4,8 +4,9 @@ from bs4 import BeautifulSoup as bs
 import re
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+import lxml.html
 
 log = sglog.SgLogSetup().get_logger(logger_name="bigmamaspizza.com")
 
@@ -32,19 +33,35 @@ def fetch_data():
         for location in soup.find("ul", {"class": "locations-list"}).find_all(
             "li", {"class": "location"}
         ):
-            page_url = location.find("a", text=re.compile("Order Online"))["href"]
-            log.info(page_url)
-            soup1 = bs(session.get(page_url, headers=headers).text, "lxml")
-            try:
-                hours_of_operation = " ".join(
-                    list(
-                        soup1.find("div", {"id": "store-hours"})
-                        .find("table")
-                        .stripped_strings
-                    )
+            page_url = location.find("a", text=re.compile("Order Online"))
+            hours_of_operation = "<MISSING>"
+            if page_url:
+                page_url = page_url["href"]
+                log.info(page_url)
+                store_sel = lxml.html.fromstring(
+                    session.get(page_url, headers=headers).text
                 )
-            except:
-                hours_of_operation = "<MISSING>"
+                try:
+                    hours = store_sel.xpath('//div[@id="store-hours"]/table//tr')
+                    hours_list = []
+                    for hour in hours:
+                        day = "".join(hour.xpath("td[1]//text()")).strip()
+                        time = "".join(hour.xpath("td[2]//text()")).strip()
+                        if len(time) > 0:
+                            hours_list.append(day + time)
+
+                    hours_of_operation = "; ".join(hours_list).strip()
+                except:
+                    hours_of_operation = "<MISSING>"
+            else:
+                page_url = "<MISSING>"
+                try:
+                    hours_of_operation = location.find(
+                        "a", {"class": "btn store-order"}
+                    ).text
+                except:
+                    pass
+
             location_details = list(location.stripped_strings)
             locator_domain = "https://bigmamaspizza.com"
             location_name = location_details[0]
@@ -58,9 +75,17 @@ def fetch_data():
             location_type = "big mama's paap's pizzaria"
             latitude = "<MISSING>"
             longitude = "<MISSING>"
-            hours_of_operation = hours_of_operation.replace(
-                "WE ARE CLOSED EARLY AND CANNOT PROCESS YOUR ORDERS FOR TODAY. PLEASE FEEL FREE TO SUBMIT AN ONLINE ORDER NOW FOR A FUTURE DATE.",
-                "",
+            hours_of_operation = (
+                hours_of_operation.replace(
+                    "WE ARE CLOSED EARLY AND CANNOT PROCESS YOUR ORDERS FOR TODAY. PLEASE FEEL FREE TO SUBMIT AN ONLINE ORDER NOW FOR A FUTURE DATE.",
+                    "",
+                )
+                .strip()
+                .replace(
+                    "WE ARE CLOSED AND CANNOT PROCESS YOUR ORDERS FOR TODAY. PLEASE FEEL FREE TO SUBMIT AN ONLINE ORDER NOW FOR A FUTURE DATE.",
+                    "",
+                )
+                .strip()
             )
             yield SgRecord(
                 locator_domain=locator_domain,
@@ -84,7 +109,15 @@ def scrape():
     log.info("Started")
     count = 0
     with SgWriter(
-        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+        deduper=SgRecordDeduper(
+            SgRecordID(
+                {
+                    SgRecord.Headers.STREET_ADDRESS,
+                    SgRecord.Headers.CITY,
+                    SgRecord.Headers.ZIP,
+                }
+            )
+        )
     ) as writer:
         results = fetch_data()
         for rec in results:

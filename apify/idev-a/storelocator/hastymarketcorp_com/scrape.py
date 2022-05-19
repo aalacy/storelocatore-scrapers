@@ -28,9 +28,9 @@ def fetch_data():
             if addr.street_address_2:
                 street_address += " " + addr.street_address_2
             city = addr.city
-            if "fegus" in street_address:
-                street_address = street_address.replace("fegus", "").strip()
-                city = "fegus"
+            if "Fegus" in street_address:
+                street_address = street_address.replace("Fegus", "").strip()
+                city = "Fegus"
             phone = link.telephone.text.replace("TBD", "").replace("N/A", "").strip()
             if phone == "0":
                 phone = ""

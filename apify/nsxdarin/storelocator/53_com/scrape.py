@@ -1,8 +1,9 @@
-import csv
-from sgrequests import SgRequests
-from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
-logger = SgLogSetup().get_logger("53_com")
+from sgrequests import SgRequests
 
 session = SgRequests()
 headers = {
@@ -10,47 +11,17 @@ headers = {
 }
 
 
-def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
-        writer.writerow(
-            [
-                "locator_domain",
-                "page_url",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
-        for row in data:
-            writer.writerow(row)
-
-
-def fetch_data():
+def fetch_data(sgw: SgWriter):
     locs = []
     url = "https://locations.53.com/sitemap.xml"
     r = session.get(url, headers=headers)
-    if r.encoding is None:
-        r.encoding = "utf-8"
-    for line in r.iter_lines(decode_unicode=True):
+    for line in r.iter_lines():
         if "<loc>https://locations.53.com/" in line:
             lurl = line.split(">")[1].split("<")[0]
             count = lurl.count("/")
             if count >= 5:
                 locs.append(lurl)
     for loc in locs:
-        logger.info(("Pulling Location %s..." % loc))
         website = "53.com"
         typ = "Branch"
         name = ""
@@ -64,18 +35,18 @@ def fetch_data():
         country = "US"
         hours = ""
         r2 = session.get(loc, headers=headers)
-        if r2.encoding is None:
-            r2.encoding = "utf-8"
-        for line2 in r2.iter_lines(decode_unicode=True):
-            if '<span class="name">' in line2:
+        for line2 in r2.iter_lines():
+            if '<span class="LocationName"' in line2:
                 name = (
-                    line2.split('<span class="name">')[1]
+                    line2.split('<span class="LocationName-brand">')[1]
                     .split("</span></span>")[0]
-                    .replace('</span> <span class="geomodifier">', " ")
+                    .replace('</span> <span class="LocationName-geo">', " ")
                 )
                 if "<" in name:
                     name = name.split("<")[0]
-                typ = line2.split('<div class="location-type">')[1].split("<")[0]
+                typ = line2.split('<div class="CoreHero-type Text--bold">')[1].split(
+                    "<"
+                )[0]
                 add = line2.split("c-address-street-1")[1].split('">')[1].split("<")[0]
                 city = (
                     line2.split('class="c-address-city')[1].split('">')[1].split("<")[0]
@@ -87,7 +58,13 @@ def fetch_data():
                     .split("<")[0]
                     .strip()
                 )
-                phone = line2.split('href="tel:')[1].split('">')[1].split("<")[0]
+                phone = (
+                    line2.split('href="tel:')[1]
+                    .split('">')[1]
+                    .split("<")[0]
+                    .replace("Call", "")
+                    .strip()
+                )
                 days = (
                     line2.split("data-days='")[1].split("}]' data")[0].split('"day":"')
                 )
@@ -115,43 +92,34 @@ def fetch_data():
                             hours = hrs
                         else:
                             hours = hours + "; " + hrs
-        lat = "<MISSING>"
-        lng = "<MISSING>"
+                lat = line2.split('latitude" content')[1].split('"')[1].split('"')[0]
+                lng = line2.split('longitude" content')[1].split('"')[1].split('"')[0]
         if hours == "":
             hours = "<MISSING>"
         if phone == "":
             phone = "<MISSING>"
         store = "<MISSING>"
         add = add.replace("[{: Closed;", "").strip()
-        if "effingham/200-east-jefferson-ave" in loc:
-            add = "200 East Jefferson Ave"
-            city = "Effingham"
-            state = "IL"
-            zc = "62401"
-            phone = "(217) 342-5700"
-            name = "Fifth Third Bank Effingham"
-            hours = "MONDAY: 900-1700; TUESDAY: 900-1700; WEDNESDAY: 900-1700; THURSDAY: 900-1700; FRIDAY: 900-1800; SATURDAY: 900-1200; SUNDAY: Closed"
-        yield [
-            website,
-            loc,
-            name,
-            add,
-            city,
-            state,
-            zc,
-            country,
-            store,
-            phone,
-            typ,
-            lat,
-            lng,
-            hours,
-        ]
+
+        sgw.write_row(
+            SgRecord(
+                locator_domain=website,
+                page_url=loc,
+                location_name=name,
+                street_address=add,
+                city=city,
+                state=state,
+                zip_postal=zc,
+                country_code=country,
+                store_number=store,
+                phone=phone,
+                location_type=typ,
+                latitude=lat,
+                longitude=lng,
+                hours_of_operation=hours,
+            )
+        )
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-
-scrape()
+with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+    fetch_data(writer)
