@@ -92,7 +92,7 @@ def fetch_data():
                     page_url=page_url,
                     location_name=sp1.h1.text.strip(),
                     street_address=_addr[0].replace("\n", "").replace(",", " ").strip(),
-                    city=addr.city,
+                    city=addr.city or sp1.h1.text.strip(),
                     state=addr.state,
                     zip_postal=addr.postcode,
                     country_code="Netherlands",
