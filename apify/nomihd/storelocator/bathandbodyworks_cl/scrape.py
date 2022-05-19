@@ -5,7 +5,7 @@ import json
 from sgpostal import sgpostal as parser
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 website = "bathandbodyworks.cl"
@@ -26,9 +26,7 @@ def fetch_data():
 
     with SgRequests(dont_retry_status_codes=([404])) as session:
         api_res = session.get(api_url, headers=headers)
-        json_res = json.loads(api_res.text)
-        stores = json_res
-
+        stores = json.loads(api_res.text)
         for store in stores:
 
             page_url = search_url
@@ -94,7 +92,7 @@ def scrape():
     log.info("Started")
     count = 0
     with SgWriter(
-        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.GeoSpatialId)
+        deduper=SgRecordDeduper(SgRecordID({SgRecord.Headers.RAW_ADDRESS}))
     ) as writer:
         results = fetch_data()
         for rec in results:

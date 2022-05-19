@@ -1,10 +1,15 @@
 from lxml import html
 from sgscrape.sgrecord import SgRecord
-from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgselenium.sgselenium import SgChrome
+from webdriver_manager.chrome import ChromeDriverManager
 from sgscrape.sgpostal import parse_address, International_Parser
+import os
+import ssl
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 
 def get_international(line):
@@ -20,8 +25,17 @@ def get_international(line):
 
 
 def fetch_data(sgw: SgWriter):
-    r = session.get(page_url, headers=headers)
-    tree = html.fromstring(r.text)
+    user_agent = (
+        "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0"
+    )
+    with SgChrome(
+        executable_path=ChromeDriverManager().install(),
+        user_agent=user_agent,
+        is_headless=True,
+    ).driver() as driver:
+        driver.get(page_url)
+
+        tree = html.fromstring(driver.page_source)
     divs = tree.xpath("//div[@class='contents_box' and .//table]")
 
     for d in divs:
@@ -59,11 +73,17 @@ def fetch_data(sgw: SgWriter):
 
 
 if __name__ == "__main__":
+    os.environ[
+        "PROXY_URL"
+    ] = "http://groups-RESIDENTIAL,country-jp:{}@proxy.apify.com:8000/"
     locator_domain = "http://www.rightathome.co.jp/"
     page_url = "http://www.rightathome.co.jp/company.php"
     headers = {
-        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:97.0) Gecko/20100101 Firefox/97.0",
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:99.0) Gecko/20100101 Firefox/99.0",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+        "Accept-Language": "ru,en-US;q=0.7,en;q=0.3",
+        "Connection": "keep-alive",
+        "Upgrade-Insecure-Requests": "1",
     }
-    session = SgRequests(proxy_country="jp")
     with SgWriter(SgRecordDeduper(RecommendedRecordIds.PhoneNumberId)) as writer:
         fetch_data(writer)

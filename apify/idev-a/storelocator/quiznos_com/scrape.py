@@ -54,7 +54,10 @@ def fetch_data(search):
                     day = day.lower()
                     open = _[f"hour_open_{day}"]
                     close = _[f"hour_close_{day}"]
-                    hours.append(f"{day}: {open} - {close}")
+                    if "Open 24 Hours" in open:
+                        hours.append(f"{day}: {open}")
+                    else:
+                        hours.append(f"{day}: {open} - {close}")
 
                 country_code = "USA"
                 if _["province"] in ca_provinces_codes:

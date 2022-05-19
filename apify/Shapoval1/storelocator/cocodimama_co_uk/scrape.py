@@ -1,10 +1,9 @@
-from lxml import html
-from sgpostal.sgpostal import International_Parser, parse_address
 from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgpostal.sgpostal import International_Parser, parse_address
 
 
 def fetch_data(sgw: SgWriter):
@@ -18,7 +17,7 @@ def fetch_data(sgw: SgWriter):
     r = session.get(api_url, headers=headers)
     js = r.json()["data"]
     for j in js:
-
+        store_number = j.get("id")
         ad = "".join(j.get("address")).replace("\r\n", " ").replace("\n", " ").strip()
         ad = " ".join(ad.split())
         a = parse_address(International_Parser(), ad)
@@ -30,6 +29,7 @@ def fetch_data(sgw: SgWriter):
         country_code = "UK"
         city = a.city or "<MISSING>"
         page_url = "".join(j.get("link"))
+
         if page_url == "https://www.cocodimama.co.uk/locations/london-cheapside":
             street_address = ad.split(",")[0].strip()
         if (
@@ -82,28 +82,29 @@ def fetch_data(sgw: SgWriter):
         latitude = j.get("latitude")
         longitude = j.get("longitude")
         phone = j.get("phone_number") or "<MISSING>"
-        session = SgRequests()
-        r = session.get(page_url, headers=headers)
-        tree = html.fromstring(r.text)
 
-        openToday = (
-            " ".join(tree.xpath('//p[@class="c-opening-times__today"]/span/text()'))
-            .replace("\n", "")
-            .strip()
+        api_page_url = f"https://www.cocodimama.co.uk/wp-json/locations/get_venue_info_from_id?id={store_number}"
+        r = session.get(api_page_url, headers=headers)
+        js = r.json()["data"]
+        days = [
+            "monday",
+            "tuesday",
+            "wednesday",
+            "thursday",
+            "friday",
+            "saturday",
+            "sunday",
+        ]
+        tmp = []
+        for d in days:
+            day = str(d).capitalize()
+            opens = js.get(f"{d}_opening_times").get("open_time")
+            closes = js.get(f"{d}_opening_times").get("close_time")
+            line = f"{day} {opens} - {closes}"
+            tmp.append(line)
+        hours_of_operation = (
+            "; ".join(tmp).replace("closed - ", "closed").strip() or "<MISSING>"
         )
-        openToday = " ".join(openToday.split())
-
-        openingTime = (
-            " ".join(
-                tree.xpath(
-                    '//div[@class="c-opening-times__tables-holder"]//table//tr/td/text()'
-                )
-            )
-            .replace("\n", "")
-            .strip()
-        )
-        openingTime = " ".join(openingTime.split())
-        hours_of_operation = openToday + " " + openingTime
 
         row = SgRecord(
             locator_domain=locator_domain,
@@ -114,7 +115,7 @@ def fetch_data(sgw: SgWriter):
             state=state,
             zip_postal=postal,
             country_code=country_code,
-            store_number=SgRecord.MISSING,
+            store_number=store_number,
             phone=phone,
             location_type=SgRecord.MISSING,
             latitude=latitude,
@@ -128,6 +129,6 @@ def fetch_data(sgw: SgWriter):
 if __name__ == "__main__":
     session = SgRequests()
     with SgWriter(
-        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.STORE_NUMBER}))
     ) as writer:
         fetch_data(writer)

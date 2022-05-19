@@ -72,7 +72,15 @@ def fetch_data():
                     )
                 )
 
-            raw_address = " ".join(store_info[1:]).split("Tel")[0].strip()
+            raw_address = (
+                " ".join(store_info[1:])
+                .split("Tel")[0]
+                .strip()
+                .split("Reservations")[0]
+                .strip()
+                .replace("Canada.", "")
+                .strip()
+            )
             if len(raw_address) <= 0:
                 continue
             formatted_addr = parser.parse_address_intl(raw_address)
