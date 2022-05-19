@@ -32,13 +32,21 @@ def fetch_data():
             continue
         location_name = location_name[0]
         raw_address = loc_dom.xpath('//div[@class="storeDetailMap_address"]/p/text()')
-        raw_address = " ".join([e.strip() for e in raw_address if e.strip()])
+        raw_address = " ".join([e.strip() for e in raw_address if e.strip()]).replace(
+            ", ,", ","
+        )
         addr = parse_address_intl(raw_address)
         street_address = addr.street_address_1
         if street_address and addr.street_address_2:
             street_address += " " + addr.street_address_2
         else:
             street_address = addr.street_address_2
+        if not street_address:
+            street_address = loc_dom.xpath(
+                '//div[@class="storeDetailMap_address"]/p/text()'
+            )[0]
+        if street_address and street_address.endswith(","):
+            street_address = street_address[:-1]
         phone = loc_dom.xpath(
             '//div[@class="storeDetailMap_locationInformation"]//a[contains(@href, "tel")]/text()'
         )
