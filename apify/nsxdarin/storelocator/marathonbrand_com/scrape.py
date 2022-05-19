@@ -1,3 +1,8 @@
+import os
+
+os.environ.pop("PROXY_PASSWORD", None)
+os.environ.pop("PROXY_URL", None)
+
 from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
