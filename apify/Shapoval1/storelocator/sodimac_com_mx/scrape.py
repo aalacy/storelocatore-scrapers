@@ -1,4 +1,6 @@
 import os
+
+from sgselenium import SgChrome
 os.environ.pop("PROXY_PASSWORD", None)
 os.environ.pop("PROXY_URL", None)
 
@@ -31,7 +33,7 @@ def fetch_data(sgw: SgWriter):
         location_name = "".join(d.xpath(".//text()"))
         if page_url.find("Corporativo") != -1:
             continue
-        with SgFirefox(is_headless=True) as driver:
+        with SgChrome(is_headless=True) as driver:
 
             driver.get(page_url)
             sleep(10)
