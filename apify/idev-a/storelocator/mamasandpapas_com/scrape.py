@@ -17,6 +17,24 @@ locator_domain = "https://www.mamasandpapas.com"
 base_url = "https://cdn.shopify.com/s/files/1/0414/6023/6453/t/1/assets/sca.storelocatordata.json?v=1630403613&formattedAddress=&boundsNorthEast=&boundsSouthWest=&_=1631007103630"
 
 
+def _p(val):
+    if (
+        val
+        and val.replace("(", "")
+        .replace(")", "")
+        .replace("+", "")
+        .replace("-", "")
+        .replace(".", " ")
+        .replace("to", "")
+        .replace(" ", "")
+        .strip()
+        .isdigit()
+    ):
+        return val
+    else:
+        return ""
+
+
 def fetch_data():
     with SgRequests() as session:
         locations = session.get(base_url, headers=_headers).json()
@@ -36,12 +54,18 @@ def fetch_data():
                 page_url = f"https://www.mamasandpapas.com/pages/{_['name'].lower().replace(',','').replace(' ','-')}"
             logger.info(page_url)
             res = session.get(page_url, headers=_headers)
+            phone = _.get("phone")
             if res.status_code == 200:
                 sp1 = bs(res.text, "lxml")
-                raw_address = list(
+                block = list(
                     sp1.select_one("div.storeloc-details-address").stripped_strings
-                )[1:-1]
-                addr = parse_address_intl(", ".join(raw_address))
+                )[1:]
+                if _p(block[-1]):
+                    phone = block[-1]
+                    del block[-1]
+
+                raw_address = ", ".join(block)
+                addr = parse_address_intl(raw_address)
                 city = addr.city
                 state = addr.state
             else:
@@ -57,11 +81,11 @@ def fetch_data():
                 zip_postal=_.get("postal"),
                 latitude=_["lat"],
                 longitude=_["lng"],
-                country_code="UK",
-                phone=_.get("phone"),
+                country_code=_["country"],
+                phone=phone,
                 locator_domain=locator_domain,
                 hours_of_operation="; ".join(hours),
-                raw_address=", ".join(raw_address),
+                raw_address=raw_address,
             )
 
 
