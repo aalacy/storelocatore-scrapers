@@ -18,12 +18,21 @@ def fetch_data():
         if poi["filters"] != ["Cinnabon"]:
             continue
         hoo = ""
-        raw_data = poi["data"]["address"].replace("\r\n", ", ").split(", ")
+        raw_data = (
+            poi["data"]["address"].replace("\r\n", ", ").replace(",,", ",").split(", ")
+        )
         raw_address = ", ".join(raw_data)
         addr = parse_address_intl(raw_address)
         street_address = addr.street_address_1
         if addr.street_address_2:
             street_address += ", " + addr.street_address_2
+        city = addr.city
+        zip_code = addr.postcode
+        if not zip_code:
+            zip_code = raw_address.split(",")[-1].strip()
+            if zip_code:
+                if len(zip_code.split()[-1]) > 3:
+                    zip_code = ""
 
         if poi["data"].get("hours_Monday"):
             mon = f'Monday: {poi["data"]["hours_Monday"]}'
@@ -31,7 +40,7 @@ def fetch_data():
             wed = f'Wednesday: {poi["data"]["hours_Wednesday"]}'
             thu = f'Thursday: {poi["data"]["hours_Thursday"]}'
             fri = f'Friday" {poi["data"]["hours_Friday"]}'
-            sat = f'Saturday: {poi["data"]["hours_Saturday"]}'
+            sat = f'Saturday: {poi.get("data", {}).get("hours_Saturday")}'
             sun = f'Sunday: {poi["data"]["hours_Sunday"]}'
             hoo = f"{mon}, {tue}, {wed}, {thu}, {fri}, {sat}, {sun}"
 
@@ -40,9 +49,9 @@ def fetch_data():
             page_url="https://www.cinnabon.uk/stores",
             location_name=poi["name"],
             street_address=street_address,
-            city=addr.city,
+            city=city,
             state="",
-            zip_postal=addr.postcode,
+            zip_postal=zip_code,
             country_code="",
             store_number=poi["storeid"],
             phone=poi["data"].get("phone"),

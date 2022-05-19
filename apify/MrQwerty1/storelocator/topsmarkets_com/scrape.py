@@ -11,7 +11,7 @@ def get_states():
     r = session.get("https://www.topsmarkets.com/StoreLocator/")
     tree = html.fromstring(r.text)
 
-    return tree.xpath("//div[@class='col-md-9']//a[contains(@href, '.las')]/@href")
+    return tree.xpath("//a[contains(@href, '../StoreLocator/State/')]/@href")
 
 
 def get_urls():
@@ -41,9 +41,7 @@ def get_data(page_url, sgw: SgWriter):
     postal = line.split()[1]
     country_code = "US"
 
-    location_name = "".join(
-        tree.xpath("//div[@class='gmap-responsive']/following-sibling::h3/text()")
-    ).strip()
+    location_name = "".join(tree.xpath("//h3/text()")).strip()
     try:
         phone = tree.xpath("//p[@class='PhoneNumber']/a/text()")[0].strip()
     except IndexError:
@@ -70,7 +68,6 @@ def get_data(page_url, sgw: SgWriter):
         country_code=country_code,
         store_number=store_number,
         phone=phone,
-        location_type=SgRecord.MISSING,
         latitude=latitude,
         longitude=longitude,
         locator_domain=locator_domain,
@@ -83,7 +80,7 @@ def get_data(page_url, sgw: SgWriter):
 def fetch_data(sgw: SgWriter):
     urls = get_urls()
 
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
+    with futures.ThreadPoolExecutor(max_workers=3) as executor:
         future_to_url = {executor.submit(get_data, url, sgw): url for url in urls}
         for future in futures.as_completed(future_to_url):
             future.result()

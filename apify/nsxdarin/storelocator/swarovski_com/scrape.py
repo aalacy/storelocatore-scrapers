@@ -11,6 +11,7 @@ from sgzip.parallel import DynamicSearchMaker, ParallelDynamicSearch, SearchIter
 
 import json
 
+
 session = SgRequests()
 
 

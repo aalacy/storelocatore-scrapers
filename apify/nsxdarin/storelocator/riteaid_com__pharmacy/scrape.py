@@ -50,48 +50,80 @@ def fetch_data():
                         name = "Rite Aid #" + store
                         hours = ""
                         lurl = "https://www.riteaid.com/locations/" + store
-                        r2 = session.get(lurl, headers=headers)
-                        for line2 in r2.iter_lines():
-                            if "Pharmacy Hours</h3>" in line2:
-                                days = (
-                                    line2.split("Pharmacy Hours</h3>")[1]
-                                    .split("data-showOpenToday")[0]
-                                    .split('"day":"')
-                                )
-                                for day in days:
-                                    if '"intervals"' in day:
-                                        try:
-                                            hrs = (
-                                                day.split('"')[0]
-                                                + ": "
-                                                + day.split('"start":')[1].split("}")[0]
-                                                + "-"
-                                                + day.split('"end":')[1].split(",")[0]
-                                            )
-                                        except:
-                                            hrs = day.split('"')[0] + ": Closed"
-                                        if hours == "":
-                                            hours = hrs
-                                        else:
-                                            hours = hours + "; " + hrs
-                        if hours == "":
-                            hours = "<MISSING>"
-                        yield SgRecord(
-                            locator_domain=website,
-                            page_url=lurl,
-                            location_name=name,
-                            street_address=add,
-                            city=city,
-                            state=state,
-                            zip_postal=zc,
-                            country_code=country,
-                            phone=phone,
-                            location_type=typ,
-                            store_number=store,
-                            latitude=lat,
-                            longitude=lng,
-                            hours_of_operation=hours,
-                        )
+                        try:
+                            r2 = session.get(lurl, headers=headers)
+                            for line2 in r2.iter_lines():
+                                if "Pharmacy Hours</h3>" in line2:
+                                    days = (
+                                        line2.split("Pharmacy Hours</h3>")[1]
+                                        .split("data-showOpenToday")[0]
+                                        .split('"day":"')
+                                    )
+                                    for day in days:
+                                        if '"intervals"' in day:
+                                            try:
+                                                hrs = (
+                                                    day.split('"')[0]
+                                                    + ": "
+                                                    + day.split('"start":')[1].split(
+                                                        "}"
+                                                    )[0]
+                                                    + "-"
+                                                    + day.split('"end":')[1].split(",")[
+                                                        0
+                                                    ]
+                                                )
+                                            except:
+                                                hrs = day.split('"')[0] + ": Closed"
+                                            if hours == "":
+                                                hours = hrs
+                                            else:
+                                                hours = hours + "; " + hrs
+                            if hours == "":
+                                hours = "<MISSING>"
+                            hours = (
+                                hours.replace("1000", "10:00")
+                                .replace("1100", "11:00")
+                                .replace("1200", "12:00")
+                                .replace("1300", "13:00")
+                                .replace("1400", "14:00")
+                                .replace("1500", "15:00")
+                                .replace("1600", "16:00")
+                                .replace("1700", "17:00")
+                                .replace("1800", "18:00")
+                                .replace("1900", "19:00")
+                            )
+                            hours = hours.replace("1730", "17:30").replace(
+                                "2130", "21:30"
+                            )
+                            hours = (
+                                hours.replace("2000", "20:00")
+                                .replace("2100", "21:00")
+                                .replace("2200", "22:00")
+                                .replace("2300", "23:00")
+                                .replace("600", "6:00")
+                                .replace("700", "7:00")
+                                .replace("800", "8:00")
+                                .replace("900", "9:00")
+                            )
+                            yield SgRecord(
+                                locator_domain=website,
+                                page_url=lurl,
+                                location_name=name,
+                                street_address=add,
+                                city=city,
+                                state=state,
+                                zip_postal=zc,
+                                country_code=country,
+                                phone=phone,
+                                location_type=typ,
+                                store_number=store,
+                                latitude=lat,
+                                longitude=lng,
+                                hours_of_operation=hours,
+                            )
+                        except:
+                            pass
 
 
 def scrape():

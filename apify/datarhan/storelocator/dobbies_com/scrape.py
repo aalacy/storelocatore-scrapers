@@ -1,22 +1,21 @@
+import ssl
 from lxml import etree
 from time import sleep
-from selenium.webdriver.firefox.options import Options
 
 from sgrequests import SgRequests
-from sgselenium import SgFirefox
+from sgselenium import SgChrome
 from sgpostal.sgpostal import parse_address_intl
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
 
-geoAllowed = Options()
-geoAllowed.set_preference("geo.prompt.testing", True)
-geoAllowed.set_preference("geo.prompt.testing.allow", True)
-geoAllowed.set_preference(
-    "geo.provider.network.url",
-    'data:application/json,{"location": {"lat": 51.47, "lng": 0.0}, "accuracy": 100.0}',
-)
+try:
+    _create_unverified_https_context = ssl._create_unverified_context
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context
 
 
 def fetch_data():
@@ -25,7 +24,10 @@ def fetch_data():
     domain = "dobbies.com"
     start_url = "https://www.dobbies.com/store-locator"
 
-    with SgFirefox(firefox_options=geoAllowed) as driver:
+    params = {"latitude": 50.1109, "longitude": 8.6821, "accuracy": 100}
+
+    with SgChrome() as driver:
+        driver.execute_cdp_cmd("Page.setGeolocationOverride", params)
         driver.get(start_url)
         sleep(20)
         driver.find_element_by_xpath(

@@ -51,7 +51,7 @@ def fetch_data():
         location_type = MISSING
         if "TEMPORARILY CLOSED" in hours_of_operation:
             location_type = "TEMPORARILY CLOSED"
-            hours_of_operation = MISSING
+            hours_of_operation = "TEMPORARILY CLOSED"
         store_number = row["identifier"].replace("TC-", "").strip()
         log.info("Append {} => {}".format(location_name, street_address))
         yield SgRecord(

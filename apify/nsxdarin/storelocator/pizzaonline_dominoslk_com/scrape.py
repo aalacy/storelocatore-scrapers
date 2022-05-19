@@ -22,7 +22,6 @@ def fetch_data():
     website = "pizzaonline.dominoslk.com"
     typ = "<MISSING>"
     country = "LK"
-    loc = "https://m.dominoslk.com/changeAddress?redirectUrl=landing&deliveryType=D"
     logger.info("Pulling Stores")
     for item in json.loads(r.content)["data"]:
         if item != "TEST":
@@ -44,7 +43,7 @@ def fetch_data():
             add = locitem["address"]
             state = locitem["region"]
             hours = "<MISSING>"
-            loc = "<MISSING>"
+            loc = "https://m.dominoslk.com/changeAddress?redirectUrl=landing&deliveryType=D"
             rawadd = add
             add = add.replace("\r", "").replace("\n", "").replace("\t", "")
             if "ph no" in add:

@@ -1,7 +1,7 @@
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgrequests import SgRequests
-from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 _headers = {
@@ -9,17 +9,19 @@ _headers = {
 }
 
 locator_domain = "https://www.haidilao.com"
-base_url = "https://www.haidilao.com/eportal/store/listObjByPosition?longitude=123.47109664&latitude=41.68383007&country=CN&language=zh"
-sg_url = "https://www.haidilao.com/eportal/store/listObjByPosition?country=SG&longitude=&latitude=&language=zh"
+base_url = "https://www.haidilao.com/cn/eportal/store/listObjByPosition?longitude=-95.712891&latitude=37.09024&mapType=0&country=CN&language=zh"
+sg_url = "https://www.haidilao.com/sg/eportal/store/listObjByPosition?longitude=-118.3887&latitude=33.956&mapType=0&country=SG&language=en"
 
 
-def _d(_, street_address, city, state, zip_postal=None):
+def _d(_, page_url, street_address, city, state, zip_postal=None):
     phone = _["storeTelephone"]
     if phone:
-        phone = phone.split(",")[0]
+        phone = phone.split(",")[0].replace("022-69198883", "").strip()
+    hours_of_operation = _["openTime"]
+    if "暂停营业" in hours_of_operation:
+        hours_of_operation = ""
     return SgRecord(
-        page_url="https://www.haidilao.com/serve/storeSearch",
-        store_number=_["storeId"],
+        page_url=page_url,
         location_name=_["storeName"],
         street_address=street_address,
         city=city.replace("SM", ""),
@@ -30,7 +32,7 @@ def _d(_, street_address, city, state, zip_postal=None):
         country_code=_["countryId"],
         phone=phone,
         locator_domain=locator_domain,
-        hours_of_operation=_["openTime"],
+        hours_of_operation=hours_of_operation,
         raw_address=_["storeAddress"].replace("\n", ""),
     )
 
@@ -81,7 +83,13 @@ def fetch_data():
                 if "市" not in city:
                     city += "市"
 
-            yield _d(_, street_address, city, state)
+            yield _d(
+                _,
+                "https://www.haidilao.com/cn/serve/storeSearch",
+                street_address,
+                city,
+                state,
+            )
 
         locations = session.get(sg_url, headers=_headers).json()["value"]
         for _ in locations:
@@ -92,11 +100,20 @@ def fetch_data():
             zip_postal = addr[-1].strip().split()[-1]
             street_address = ", ".join(addr[:-1])
 
-            yield _d(_, street_address, city, state, zip_postal)
+            yield _d(
+                _,
+                "https://www.haidilao.com/sg/serve/storeSearch",
+                street_address,
+                city,
+                state,
+                zip_postal,
+            )
 
 
 if __name__ == "__main__":
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.RAW_ADDRESS}))
+    ) as writer:
         results = fetch_data()
         for rec in results:
             writer.write_row(rec)

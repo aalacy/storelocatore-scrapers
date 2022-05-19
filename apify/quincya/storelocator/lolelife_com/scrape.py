@@ -22,12 +22,7 @@ def fetch_data(sgw: SgWriter):
 
     locator_domain = "lolelife.com"
 
-    items = (
-        base.split("store-locator")[-1]
-        .split('png",')[1]
-        .split(',"Search')[0]
-        .split(",")
-    )
+    items = base.split('png",')[1].split(',"Search')[0].split(",")
 
     for item in items:
         link = "https://www.lolelife.com/store-locator/" + item.replace('"', "")

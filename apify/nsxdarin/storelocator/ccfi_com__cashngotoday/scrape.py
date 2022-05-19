@@ -33,7 +33,7 @@ def fetch_data():
                 for item in items:
                     if '"lng":"' in item:
                         country = "US"
-                        loc = "<MISSING>"
+                        loc = "https://www.ccfi.com/locations/"
                         lng = item.split('"lng":"')[1].split('"')[0]
                         lat = item.split('"')[0]
                         add = item.split(',"street":"')[1].split('"')[0]
@@ -104,9 +104,9 @@ def fetch_data():
                         if typ == "":
                             typ = "ccfi"
                         name = typ.title() + " - " + city
-                        if lat == "":
+                        if lat == "" or "." not in lat:
                             lat = "<MISSING>"
-                        if lng == "":
+                        if lng == "" or "." not in lng:
                             lng = "<MISSING>"
                         yield SgRecord(
                             locator_domain=website,

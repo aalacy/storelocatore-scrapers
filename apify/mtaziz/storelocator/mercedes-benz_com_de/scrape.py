@@ -226,6 +226,9 @@ def fetch_records(idx, store_url_tuple, headers_apikey, sgw: SgWriter):
             l = l1 + ", " + l2
             l = fix_comma(l)
             street_address = l or MISSING
+            if street_address == ".":
+                street_address = MISSING
+
             city = d["address"]["city"] or MISSING
 
             # State

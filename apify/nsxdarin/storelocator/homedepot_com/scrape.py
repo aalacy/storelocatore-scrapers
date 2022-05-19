@@ -4,7 +4,6 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
-import time
 
 logger = SgLogSetup().get_logger("homedepot_com")
 
@@ -41,13 +40,20 @@ def fetch_data():
                             surl = "https://www.homedepot.com/" + item.split('"')[0]
                             if surl not in locs:
                                 locs.append(surl)
+
+    logger.info(len(locs))
+
     for loc in locs:
+        if "/designcenter" in loc:
+            continue
+        if loc == "https://www.homedepot.com/l/storeDirectory":
+            continue
+
         Found = True
         rcount = 0
         while Found and rcount <= 3:
             try:
                 rcount = rcount + 1
-                time.sleep(3)
                 logger.info("Pulling Location %s..." % loc)
                 website = "homedepot.com"
                 typ = "<MISSING>"
@@ -96,25 +102,33 @@ def fetch_data():
                 if state == "GU":
                     country = "Guam"
                     state = "<MISSING>"
-                if "/designcenter" not in loc:
-                    yield SgRecord(
-                        locator_domain=website,
-                        page_url=loc,
-                        location_name=name,
-                        street_address=add,
-                        city=city,
-                        state=state,
-                        zip_postal=zc,
-                        country_code=country,
-                        phone=phone,
-                        location_type=typ,
-                        store_number=store,
-                        latitude=lat,
-                        longitude=lng,
-                        hours_of_operation=hours,
-                    )
-            except:
-                pass
+
+                if name == "" or name == "<MISSING>":
+                    continue
+
+                yield SgRecord(
+                    locator_domain=website,
+                    page_url=loc,
+                    location_name=name,
+                    street_address=add,
+                    city=city,
+                    state=state,
+                    zip_postal=zc,
+                    country_code=country,
+                    phone=phone,
+                    location_type=typ,
+                    store_number=store,
+                    latitude=lat,
+                    longitude=lng,
+                    hours_of_operation=hours,
+                )
+
+            except Exception:
+                if rcount == 3:
+                    raise Exception
+
+                else:
+                    pass
 
     website = "homedepot.com"
     typ = "<MISSING>"
@@ -179,10 +193,16 @@ def fetch_data():
 
 
 def scrape():
-    results = fetch_data()
-    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
-        for rec in results:
-            writer.write_row(rec)
+
+    x = 0
+    while x != 3:
+        x = x + 1
+        results = fetch_data()
+        with SgWriter(
+            deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)
+        ) as writer:
+            for rec in results:
+                writer.write_row(rec)
 
 
 scrape()
